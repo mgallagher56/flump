@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flump E17: warmth and life options</title>
+<style>
+/* ---------- Tokens: copied from packages/tokens/src/index.ts (Direction C) ---------- */
+:root,.t-light{
+  --canvas:#f5f1ea;--card:#fffdf9;--sunken:#eae3d8;--subtle:#f0ebe2;--overlay:#ffffff;--hero:#12483f;--onc:#f6f1e8;
+  --t1:#2b2620;--t2:#564f46;--t3:#6a6258;--bd:#dcd4c8;--bd-subtle:#e8e1d6;--bd-strong:#b5ab9c;--bd-input:#867c6e;
+  --pri:#0f6b5e;--pri-solid:#0f6b5e;--pri-hover:#0a564b;--pri-subtle:#e1f0eb;--pri-border:#9ccfc2;--chart-pri:#0f6b5e;
+  --tint-teal:#dcede6;--tint-apricot:#fae5cc;--tint-sage:#e5edda;--wealth:#64885c;--debt:#c26a18;
+  --grid:rgba(43,38,32,.08);--neu-bg:#ece6dc;--neu-bd:#c9c0b2;--ground:#eae3d8;--sun-op:.5;
+  --pos:#3a5c08;--warn:#b06a10;--dang:#b64030;--info:#4f46e5;
+  --shadow:0 1px 2px rgba(43,38,32,.08),0 4px 14px rgba(43,38,32,.07);
+  --shadow-float:0 10px 25px -4px rgba(43,38,32,.14),0 4px 10px -2px rgba(43,38,32,.07);
+  color-scheme:light;
+}
+.t-dark,:root[data-theme=dark]{
+  --canvas:#1d1a17;--card:#272320;--sunken:#171412;--subtle:#2e2a26;--overlay:#36322d;--hero:#1b5448;--onc:#fffdf9;
+  --t1:#f4efe7;--t2:#cbc3b7;--t3:#a59d90;--bd:#3b362f;--bd-subtle:#302c27;--bd-strong:#5c554a;--bd-input:#8f8678;
+  --pri:#6fd0ba;--pri-solid:#0f6b5e;--pri-hover:#0a564b;--pri-subtle:#1e3b35;--pri-border:#2e6055;--chart-pri:#5cc4ae;
+  --tint-teal:#1f322d;--tint-apricot:#2e261c;--tint-sage:#272f22;--wealth:#9ad0a0;--debt:#eda45f;
+  --grid:rgba(244,239,231,.08);--neu-bg:#2e2a26;--neu-bd:#4a443b;--ground:#2e2a26;--sun-op:.15;
+  --pos:#c5de4c;--warn:#e0a04a;--dang:#be5337;--info:#8f92ff;
+  --shadow:0 1px 2px rgba(0,0,0,.35);--shadow-float:0 10px 28px -6px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --canvas:#1d1a17;--card:#272320;--sunken:#171412;--subtle:#2e2a26;--overlay:#36322d;--hero:#1b5448;--onc:#fffdf9;
+  --t1:#f4efe7;--t2:#cbc3b7;--t3:#a59d90;--bd:#3b362f;--bd-subtle:#302c27;--bd-strong:#5c554a;--bd-input:#8f8678;
+  --pri:#6fd0ba;--pri-solid:#0f6b5e;--pri-hover:#0a564b;--pri-subtle:#1e3b35;--pri-border:#2e6055;--chart-pri:#5cc4ae;
+  --tint-teal:#1f322d;--tint-apricot:#2e261c;--tint-sage:#272f22;--wealth:#9ad0a0;--debt:#eda45f;
+  --grid:rgba(244,239,231,.08);--neu-bg:#2e2a26;--neu-bd:#4a443b;--ground:#2e2a26;--sun-op:.15;
+  --pos:#c5de4c;--warn:#e0a04a;--dang:#be5337;--info:#8f92ff;
+  --shadow:0 1px 2px rgba(0,0,0,.35);--shadow-float:0 10px 28px -6px rgba(0,0,0,.6);
+  color-scheme:dark;
+}}
+/* Roles the mock-ups read. These defaults are "today". Each option overrides them below. */
+:root,.t-light,.t-dark{
+  --fl-sun:transparent;--fl-halo:transparent;--fl-bar:transparent;
+  --ci-bg:var(--card);--ci-bd:var(--bd);--tile-bg:var(--pri-subtle);--tile-fg:var(--pri);
+  --s2:var(--wealth);--s2-area:0;--scene-sun:var(--debt);--scene-acc:var(--pri-solid);--chart-bg:var(--card);--chart-bd:var(--bd);
+  --ease:cubic-bezier(.2,.6,.2,1);--ease-enter:cubic-bezier(0,0,.2,1);--ease-exit:cubic-bezier(.4,0,1,1);--ease-settle:cubic-bezier(.16,1,.3,1);
+  --fast:120ms;--base:200ms;--slow:320ms;--draw:600ms;--scene:900ms;
+}
+/* Option A: Damson */
+.t-light.opt-a{--acc:#7a3f66;--acc-sub:#f1e4ee;--acc-bd:#d6b4cc}
+.t-dark.opt-a{--acc:#dba6c9;--acc-sub:#33242f;--acc-bd:#6a4560}
+.opt-a{--fl-sun:#e3b5d1;--fl-halo:rgba(227,181,209,.3);--fl-bar:rgba(255,255,255,.14);--ci-bg:var(--acc-sub);--ci-bd:var(--acc-bd);--tile-bg:var(--card);--tile-fg:var(--acc);--s2:var(--acc);--scene-acc:var(--acc)}
+/* Option B: Harbour */
+.t-light.opt-b{--acc:#2f6690;--acc-sub:#e0eaf1;--acc-bd:#a9c4d8}
+.t-dark.opt-b{--acc:#86cfd6;--acc-sub:#1e2c38;--acc-bd:#3a5a73}
+.opt-b{--fl-sun:#a9cfe6;--fl-halo:rgba(169,207,230,.3);--fl-bar:rgba(255,255,255,.14);--ci-bg:var(--acc-sub);--ci-bd:var(--acc-bd);--tile-bg:var(--card);--tile-fg:var(--acc);--s2:var(--acc);--scene-acc:var(--acc)}
+/* Option C: Sunlight (fills only) */
+.t-light.opt-c{--sun:#e8b541;--sun-soft:#f5dc9a;--sun-op:.95}
+.t-dark.opt-c{--sun:#f3e08a;--sun-soft:#5a4f25;--sun-op:.6}
+.opt-c{--fl-sun:var(--sun);--fl-halo:rgba(232,181,65,.3);--fl-bar:rgba(255,255,255,.14);--tile-bg:var(--sun);--tile-fg:#2b2620;--scene-sun:var(--sun)}
+/* Option D: no new hue */
+.opt-d{--fl-sun:rgba(246,241,232,.32);--fl-halo:rgba(246,241,232,.12);--fl-bar:rgba(255,255,255,.14);--ci-bg:var(--tint-teal);--ci-bd:transparent;--tile-bg:var(--card);--tile-fg:var(--pri);--s2-area:.22}
+.opt-d .d-chart .tile{background:var(--tint-sage)}
+
+/* ---------- Page ---------- */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+html.rm{scroll-behavior:auto}
+body{margin:0;background:var(--canvas);color:var(--t1);font:16px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Plus Jakarta Sans Variable','Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.2;margin:0;letter-spacing:-.01em}
+p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--subtle);border:1px solid var(--bd-subtle);border-radius:6px;padding:1px 5px;white-space:nowrap}
+a{color:var(--pri)}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.bar{position:sticky;top:0;z-index:20;background:var(--canvas);border-bottom:1px solid var(--bd)}
+.bar .wrap{display:flex;align-items:center;gap:16px;min-height:56px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+.bar strong{font-family:'Plus Jakarta Sans Variable','Plus Jakarta Sans',sans-serif;font-weight:700}
+.bar nav{display:flex;gap:4px;flex:1;min-width:0;overflow-x:auto}
+.bar nav a{color:var(--t2);text-decoration:none;font-size:14px;padding:8px 10px;border-radius:8px;white-space:nowrap}
+.bar nav a:hover{background:var(--subtle);color:var(--t1)}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--sunken);border-radius:10px;padding:3px}
+.seg button,.switch{font:inherit;font-size:13px;font-weight:500;color:var(--t2);background:transparent;border:0;border-radius:8px;padding:6px 10px;cursor:pointer;min-height:32px}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--t1);box-shadow:var(--shadow)}
+.switch{border:1px solid var(--bd-strong);display:inline-flex;gap:8px;align-items:center}
+.switch i{width:26px;height:14px;border-radius:9px;background:var(--bd-strong);position:relative;display:block}
+.switch i::after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--card);transition:transform var(--fast) var(--ease)}
+.switch[aria-pressed=true]{color:var(--t1);border-color:var(--pri)}
+.switch[aria-pressed=true] i{background:var(--pri)}
+.switch[aria-pressed=true] i::after{transform:translateX(12px)}
+
+.intro{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:32px;align-items:center;padding:56px 0 40px}
+.intro h1{font-size:clamp(30px,4.6vw,48px);font-weight:700;max-width:15ch}
+.intro p{color:var(--t2);max-width:60ch;margin-top:16px;font-size:18px}
+.intro .how{font-size:15px;margin-top:20px;color:var(--t3)}
+.intro figure{margin:0;text-align:center}
+.intro figcaption{font-size:13px;color:var(--t3);margin-top:4px}
+.scene{display:block;width:100%;height:auto}
+section.part{padding:48px 0;border-top:1px solid var(--bd)}
+.part>h2{font-size:clamp(24px,3vw,32px);font-weight:700}
+.part>.lede{color:var(--t2);max-width:68ch;margin-top:10px}
+.opt{margin-top:40px}
+.opt-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.letter{flex:none;width:40px;height:40px;border-radius:12px;background:var(--hero);color:var(--onc);display:grid;place-items:center;font:700 18px 'Plus Jakarta Sans Variable','Plus Jakarta Sans',sans-serif}
+.opt-head h3{font-size:22px;font-weight:700}
+.opt-head p{color:var(--t2);max-width:70ch;margin-top:2px}
+.pick{display:inline-block;font-size:12px;font-weight:600;color:var(--pri);background:var(--pri-subtle);border-radius:999px;padding:2px 10px;margin-left:8px;vertical-align:middle;font-family:sans-serif;letter-spacing:0}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cap{font-size:13px;color:var(--t3);margin:0 0 6px}
+.mock{background:var(--canvas);color:var(--t1);border:1px solid var(--bd);border-radius:20px;padding:14px;container-type:inline-size}
+.spec{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;min-width:0}
+.panel h4{font-size:15px;font-weight:600;margin-bottom:10px}
+.panel ul{margin:0;padding-left:18px;color:var(--t2);font-size:14px}
+.panel li+li{margin-top:4px}
+.panel p{font-size:14px;color:var(--t2)}
+.panel h4+p+h4,.panel ul+h4{margin-top:14px}
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 8px 7px 0;border-bottom:1px solid var(--bd-subtle);vertical-align:top}
+th{font-weight:600;color:var(--t2);font-size:12.5px}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.sw{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;box-shadow:inset 0 0 0 1px rgba(128,128,128,.35)}
+.hex{font-variant-numeric:tabular-nums;white-space:nowrap}
+.neigh{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.neigh span{font-size:12px;color:var(--t2);display:inline-flex;align-items:center;gap:5px;border:1px solid var(--bd);border-radius:999px;padding:3px 9px 3px 4px;background:var(--card)}
+.neigh i{width:16px;height:16px;border-radius:50%;display:block}
+
+/* ---------- Dashboard mock ---------- */
+.d-hero{background:var(--hero);color:var(--onc);border-radius:20px;padding:18px 20px;display:flex;justify-content:space-between;align-items:flex-end;overflow:hidden;position:relative;min-height:112px}
+.d-hero-label{font-size:13px;opacity:.85}
+.d-hero-fig{font:700 34px/1.1 'Plus Jakarta Sans Variable','Plus Jakarta Sans',sans-serif;margin-top:2px;font-variant-numeric:tabular-nums}
+.d-hero-sub{font-size:12.5px;opacity:.85;margin-top:6px}
+.d-fl{width:128px;height:96px;flex:none;margin:-18px -12px -18px 0;align-self:flex-end}
+.d-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.d-kpi{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:10px 12px;box-shadow:var(--shadow);min-width:0}
+.d-kpi span{display:block;font-size:12px;color:var(--t2)}
+.d-kpi b{display:block;font:600 18px/1.3 sans-serif;font-variant-numeric:tabular-nums}
+.d-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;margin-top:10px}
+.d-card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.d-card header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.d-card h4{font-size:14.5px;font-weight:600}
+.tile{flex:none;width:28px;height:28px;border-radius:9px;background:var(--tile-bg);color:var(--tile-fg);display:grid;place-items:center}
+.tile svg,.ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.d-chart{background:var(--chart-bg);border-color:var(--chart-bd)}
+.d-chart svg.plot{display:block;width:100%;height:auto}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--t2);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--chart-pri);vertical-align:middle;margin-right:5px;border-radius:2px}
+.legend i.two{border-top:3px dashed var(--s2)}
+.d-ci{background:var(--ci-bg);border-color:var(--ci-bd);display:flex;flex-direction:column}
+.d-ci p{font-size:13px;color:var(--t2)}
+.d-ci .row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:auto;padding-top:10px}
+.d-ci .scene{width:92px;flex:none;margin:-6px -4px -8px 0}
+.btn{font:600 13.5px/1.4 sans-serif;color:#fff;background:var(--pri-solid);border:0;border-radius:8px;padding:8px 14px;min-height:36px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--pri-hover)}
+.btn.ghost{background:transparent;color:var(--pri);padding-left:8px;padding-right:8px}
+.btn.ghost:hover{background:var(--pri-subtle)}
+.btn.out{background:var(--card);color:var(--t1);border:1px solid var(--bd-strong)}
+.btn.out:hover{background:var(--subtle)}
+.d-notice{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--t2);background:var(--neu-bg);border:1px solid var(--neu-bd);border-radius:12px;padding:8px 12px;margin-top:10px}
+.d-notice .ico{flex:none;margin-top:1px}
+
+.d-empty{display:flex;align-items:center;gap:14px;margin-top:10px;border-top:1px dashed var(--bd-strong);padding-top:12px}
+.d-empty .scene{width:120px;flex:none}
+.d-empty b{font-weight:600;font-size:14.5px}
+.d-empty p{font-size:13px;color:var(--t2)}
+@container (max-width:470px){
+  .d-grid{grid-template-columns:1fr}
+  .d-hero-fig{font-size:28px}
+  .d-kpi{padding:8px 9px}.d-kpi b{font-size:15px}.d-kpi span{font-size:11.5px}
+  .d-fl{width:104px;height:78px}
+}
+
+/* ---------- Scenes (same roles as Illustration.styles.ts) ---------- */
+.s-sand{fill:var(--ground)}
+.s-sun{fill:var(--scene-sun);fill-opacity:var(--sun-op)}
+.s-sage{fill:var(--wealth)}
+.s-soft{fill:var(--pri-border)}
+.s-teal{fill:var(--pri-solid)}
+.s-leaf{fill:var(--pri)}
+.s-paper{fill:var(--card)}
+.s-acc{fill:var(--scene-acc)}
+.s-dots{stroke:var(--t3);fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:1 9}
+.s-stem{stroke:var(--wealth);fill:none;stroke-width:4;stroke-linecap:round}
+.s-pole{stroke:var(--pri-solid);fill:none;stroke-width:5;stroke-linecap:round}
+.s-tickdisc{fill:#0f6b5e}
+.s-tick{stroke:#fff;fill:none;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- Setup row ---------- */
+.setup-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.frame{container-type:inline-size;min-width:0}
+.frame.phone{max-width:340px}
+.frame .cap{margin-top:14px}.frame .cap:first-child{margin-top:0}
+.su{background:var(--card);border:1px solid var(--bd);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.su-row{display:flex;align-items:center;gap:12px;padding:8px 6px 8px 14px;min-height:56px}
+.su-txt{flex:1;min-width:0}
+.su-title{font-weight:600;font-size:15px}
+.su-sub{font-size:13px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icb{flex:none;width:44px;height:44px;border:0;background:transparent;color:var(--t2);border-radius:8px;display:grid;place-items:center;cursor:pointer}
+.icb:hover{background:var(--subtle)}
+.icb .ico{width:18px;height:18px}
+.icb.up .ico{transform:rotate(180deg)}
+.ring{flex:none;width:36px;height:36px;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:5}
+.ring .trk{stroke:var(--bd)}
+.ring .prg{stroke:var(--pri);stroke-linecap:round;stroke-dasharray:94.25;stroke-dashoffset:31.4}
+.su-body{border-top:1px solid var(--bd-subtle);padding:6px 14px 12px}
+.su-list{list-style:none;margin:0;padding:0}
+.su-list li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:14px}
+.su-list li+li{border-top:1px solid var(--bd-subtle)}
+.dot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--bd-input);margin-top:1px;display:grid;place-items:center}
+.dot.done{background:var(--pri-solid);border-color:var(--pri-solid);color:#fff}
+.dot .ico{width:12px;height:12px;stroke-width:3}
+.su-list .done-t{color:var(--t3)}
+.su-next{background:var(--pri-subtle);border-radius:12px;padding:10px 12px !important;border-top:0 !important;margin:4px 0}
+.su-next+li{border-top:0 !important}
+.su-next b{font-weight:600}
+.su-next p{font-size:13px;color:var(--t2);margin:2px 0 8px}
+.su-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.lnk{font:500 13px sans-serif;color:var(--t2);background:none;border:0;padding:8px;min-height:36px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;border-radius:6px}
+.su .hide-n{display:none}
+@container (max-width:520px){.su .hide-n{display:none !important}.su .only-w{display:none}}
+@container (min-width:521px){.su .only-w{display:inline-flex}.su .only-n{display:none}}
+.su-sub a{color:var(--pri);font-weight:500}
+/* B: track and cards */
+.track{display:flex;gap:4px;flex:none;width:96px}
+.track i{flex:1;height:8px;border-radius:4px;background:var(--bd)}
+.track i.on{background:var(--pri)}
+.cards{display:flex;gap:10px;overflow-x:auto;padding:12px 14px 14px;scroll-snap-type:x proximity;border-top:1px solid var(--bd-subtle)}
+.sc-card{flex:none;width:168px;scroll-snap-align:start;border:1px solid var(--bd);border-radius:14px;padding:10px;background:var(--card);display:flex;flex-direction:column;gap:4px}
+.sc-card .scene{background:var(--subtle);border-radius:10px;padding:6px 14px 0}
+.sc-card b{font-size:13.5px;font-weight:600;line-height:1.3;margin-top:4px}
+.sc-card small{font-size:12px;color:var(--t2);line-height:1.35}
+.sc-card .btn{align-self:flex-start;margin-top:6px;font-size:13px;padding:6px 10px;min-height:32px}
+.sc-card.is-done{background:var(--subtle)}
+.sc-card.is-done .scene{opacity:.55;background:transparent}
+.state{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--t2);margin-top:6px}
+.state .ico{width:14px;height:14px;color:var(--pri);stroke-width:3}
+/* C: compact */
+.su-c .su-row{min-height:48px}
+.su-c .su-title{font-size:14.5px}
+.su-c .left{font-size:13px;color:var(--t3);white-space:nowrap}
+.pbar{height:3px;background:var(--bd-subtle)}
+.pbar i{display:block;height:100%;width:66.6%;background:var(--pri);border-radius:0 3px 3px 0}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;list-style:none;margin:0;padding:10px 14px 12px;border-top:1px solid var(--bd-subtle)}
+.cols li{display:flex;gap:8px;align-items:center;font-size:14px;min-height:36px}
+.cols a{color:var(--pri);font-weight:500}
+.cols .ico{width:15px;height:15px;color:var(--pri);stroke-width:3;flex:none}
+.cols .o{width:15px;height:15px;border-radius:50%;border:2px solid var(--bd-input);flex:none}
+@container (max-width:520px){.cols{grid-template-columns:1fr}.track{width:60px;gap:3px}.su-title{white-space:nowrap}}
+.fin{display:flex;align-items:center;gap:12px;padding:8px 6px 8px 14px;min-height:56px}
+.fin .scene{width:56px;flex:none;margin:-6px 0}
+.fin .su-sub{white-space:normal}
+.after{font-size:14px;color:var(--t2);margin-top:12px;max-width:72ch}
+.after b{color:var(--t1);font-weight:600}
+
+/* ---------- Illustrations ---------- */
+.badge{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px;border:1px solid var(--bd-strong);color:var(--t2);white-space:nowrap}
+.badge.now{background:var(--pri-solid);border-color:var(--pri-solid);color:#fff}
+.badge.have{background:var(--pri-subtle);border-color:var(--pri-border);color:var(--pri)}
+.scenes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:20px}
+.sc-fig{margin:0;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px 14px 12px}
+.sc-fig.dk{background:var(--card)}
+.sc-fig figcaption{font-size:13px;color:var(--t2);margin-top:6px}
+.sc-fig figcaption b{color:var(--t1);font-weight:600;display:block;font-size:14px}
+.sheet{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.gridbox{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px}
+.roles{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:13.5px;color:var(--t2);align-items:center}
+.roles i{width:22px;height:22px;border-radius:7px;display:block;box-shadow:inset 0 0 0 1px rgba(128,128,128,.3)}
+
+/* ---------- Motion demos ---------- */
+.demos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:24px}
+.demo{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.demo-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.demo-h h3{font-size:16px;font-weight:600}
+.verdict{font-size:12px;font-weight:600;border-radius:999px;padding:2px 10px;white-space:nowrap;border:1px solid var(--bd-strong);color:var(--t2)}
+.verdict.first{background:var(--pri-solid);border-color:var(--pri-solid);color:#fff}
+.stage{background:var(--canvas);border:1px solid var(--bd-subtle);border-radius:12px;min-height:132px;padding:16px;display:grid;place-items:center;position:relative;overflow:hidden}
+.demo dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:13px}
+.demo dt{color:var(--t3)}
+.demo dd{margin:0;color:var(--t2)}
+.play{align-self:flex-start}
+/* 1 cross-fade */
+.acct{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px 14px;min-width:220px;position:relative;overflow:hidden}
+.acct span{font-size:13px;color:var(--t2);display:block}
+.acct b{font:600 22px/1.3 sans-serif;font-variant-numeric:tabular-nums;display:block;transition:opacity var(--fast) var(--ease)}
+.acct.out b{opacity:0}
+.acct::before{content:"";position:absolute;inset:0;background:var(--pri-subtle);opacity:0;pointer-events:none}
+.acct>*{position:relative}
+.acct.wash::before{animation:wash var(--scene) var(--ease) 1}
+@keyframes wash{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+/* 3 check-in advance */
+.ci-stage{width:240px;height:92px;position:relative}
+.ci-card{position:absolute;inset:0;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+.ci-card span{font-size:12.5px;color:var(--t3);display:block}
+.ci-card b{font-weight:600;display:block}
+.ci-card em{font-style:normal;font-size:13px;color:var(--t2)}
+.ci-card.leave{animation:leaveL var(--fast) var(--ease-exit) forwards}
+.ci-card.enter{animation:enterR var(--base) var(--ease-enter) both}
+@keyframes leaveL{to{opacity:0;transform:translateX(-24px)}}
+@keyframes enterR{from{opacity:0;transform:translateX(24px)}}
+/* 4 ring */
+.bigring{width:72px;height:72px;transform:rotate(-90deg)}
+.bigring circle{fill:none;stroke-width:5}
+.bigring .trk{stroke:var(--bd)}
+.bigring .prg{stroke:var(--pri);stroke-linecap:round;stroke-dasharray:94.25;stroke-dashoffset:47.1;transition:stroke-dashoffset var(--slow) var(--ease)}
+.ringwrap{display:flex;align-items:center;gap:14px}
+.ringwrap b{font-weight:600}
+.ringwrap span{font-size:13px;color:var(--t2);display:block}
+/* 5 save */
+.savebtn{min-width:132px;justify-content:center}
+.savebtn .ico{width:16px;height:16px;stroke-width:3;stroke-dasharray:22;stroke-dashoffset:22}
+.savebtn.saved .ico{animation:tick var(--base) var(--ease) var(--fast) forwards}
+@keyframes tick{to{stroke-dashoffset:0}}
+/* 6 line */
+.plot2{width:100%;max-width:300px}
+.plot2 .ln{fill:none;stroke:var(--chart-pri);stroke-width:3;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0}
+.plot2.go .ln{animation:drawl var(--draw) var(--ease) 1 both}
+@keyframes drawl{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+/* 7 scene */
+.scn7{width:200px}
+.scn7 .sprout{transform-origin:168px 58px;transform-box:view-box}
+.scn7 .sunup{transform-box:view-box}
+.scn7.go .sprout{animation:grow var(--scene) var(--ease-settle) 1 both}
+.scn7.go .sunup{animation:rise var(--scene) var(--ease-settle) 1 both}
+@keyframes grow{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes rise{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* 8 button */
+.pressy{transition:background-color var(--fast) var(--ease),transform var(--fast) var(--ease)}
+.pressy:active{transform:scale(.97)}
+/* 9 tabs */
+.tabs{position:relative;display:inline-grid;grid-template-columns:repeat(3,96px);background:var(--sunken);border-radius:10px;padding:3px}
+.tabs button{position:relative;z-index:1;font:500 13.5px sans-serif;color:var(--t2);background:none;border:0;min-height:36px;cursor:pointer;border-radius:8px}
+.tabs button[aria-selected=true]{color:var(--t1)}
+.tabs .ind{position:absolute;top:3px;left:3px;width:96px;height:36px;border-radius:8px;background:var(--card);box-shadow:var(--shadow);transition:transform var(--base) var(--ease)}
+/* 10 toast */
+.toast{position:absolute;bottom:12px;left:50%;background:var(--overlay);color:var(--t1);border:1px solid var(--bd);border-radius:12px;box-shadow:var(--shadow-float);padding:10px 14px;font-size:14px;display:flex;gap:8px;align-items:center;white-space:nowrap;opacity:0;transform:translate(-50%,8px);pointer-events:none}
+.toast .ico{color:var(--pri);stroke-width:3}
+.toast.show{animation:toastIn var(--base) var(--ease-enter) forwards}
+.toast.bye{animation:toastOut var(--fast) var(--ease-exit) forwards}
+@keyframes toastIn{to{opacity:1;transform:translate(-50%,0)}}
+@keyframes toastOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,0)}}
+/* Reduced motion: the switch in the top bar adds .rm; the page also adds it when the system asks */
+.rm .acct b{transition:none}.rm .acct.wash::before{animation:none}
+.rm .ci-card.leave{animation:none;opacity:0}.rm .ci-card.enter{animation:fadeOnly var(--fast) linear both}
+@keyframes fadeOnly{from{opacity:0}}
+.rm .bigring .prg,.rm .tabs .ind,.rm .pressy,.rm .switch i::after{transition:none}
+.rm .pressy:active{transform:none}
+.rm .savebtn.saved .ico{animation:none;stroke-dashoffset:0}
+.rm .plot2.go .ln,.rm .scn7.go .sprout,.rm .scn7.go .sunup{animation:none}
+.rm .toast.show{animation:fadeToast var(--fast) linear forwards}
+.rm .toast.bye{animation:none;opacity:0}
+@keyframes fadeToast{from{opacity:0;transform:translate(-50%,0)}to{opacity:1;transform:translate(-50%,0)}}
+.rmnote{font-size:14px;color:var(--t2);background:var(--neu-bg);border:1px solid var(--neu-bd);border-radius:12px;padding:10px 14px;margin-top:16px;max-width:76ch}
+
+/* ---------- Section 5: sections and results ---------- */
+.mock.half{zoom:.5;padding:28px;border-radius:36px}
+.phones{display:grid;grid-template-columns:repeat(2,minmax(0,340px));gap:16px;justify-content:center;margin-top:16px}
+.stack>*+*{margin-top:12px}
+.sub5{font-size:16px;font-weight:600;margin:28px 0 10px}
+.zc{container-type:inline-size;min-width:0}
+.z{border:1px dashed var(--bd);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.z-head{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between}
+.z-head h4{font-size:18px;font-weight:600}
+.z-badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--t2);background:var(--neu-bg);border:1px solid var(--neu-bd);border-radius:999px;padding:2px 10px 2px 7px;white-space:nowrap}
+.z-badge .ico{width:14px;height:14px;stroke-dasharray:3 3.3}
+.z-basis{flex-basis:100%;font-size:13.5px;color:var(--t2)}
+.z-split{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.z-inputs{display:flex;flex-direction:column;gap:12px;min-width:0}
+.fld b{display:block;font-size:14px;font-weight:500}
+.fld small{display:block;font-size:12.5px;color:var(--t2)}
+.fld i{display:flex;align-items:center;font-style:normal;height:40px;border:1px solid var(--bd-input);border-radius:8px;background:var(--card);padding:0 12px;margin-top:5px;font-variant-numeric:tabular-nums;color:var(--t1);font-size:15px}
+.z-result{min-width:0}
+.z-q{font-size:13.5px;color:var(--t2)}
+.z-lead{display:block;font-size:15px;color:var(--t1);margin-top:2px}
+.z-fig{display:block;font:600 24px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums}
+.z-why{font-size:13.5px;color:var(--t2);margin-top:8px;max-width:56ch}
+.z-row{display:flex;justify-content:space-between;gap:12px;margin:10px 0 0;padding-top:10px;border-top:1px solid var(--bd-subtle);font-size:14px}
+.z-row dt{color:var(--t2)}.z-row dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+.z-more{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:500;border-top:1px solid var(--bd-subtle);padding-top:12px;color:var(--t1)}
+.z-more .ico{color:var(--t2)}
+.z-notice{font-size:12.5px;color:var(--t2);display:flex;gap:8px}
+.z-notice .ico{flex:none;margin-top:1px}
+.z .new,.z .z-tile{display:none}
+.v-a .z .old,.v-b .z .old,.v-c .z .old{display:none}
+.v-a .z .new,.v-b .z .new,.v-c .z .new{display:block}
+.v-a .z-fig,.v-b .z-fig,.v-c .z-fig{font:700 36px/1.1 'Plus Jakarta Sans Variable','Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;letter-spacing:-.01em;margin-top:2px}
+.v-a .z-q,.v-b .z-q,.v-c .z-q{font-size:14px;font-weight:600;color:var(--t1)}
+.v-a .z-lead,.v-b .z-lead,.v-c .z-lead{color:var(--t2);font-size:14px;margin-top:6px}
+@container (min-width:600px){.v0 .z-split,.v-a .z-split,.v-c .z-split{grid-template-columns:5fr 7fr;gap:24px;align-items:start}}
+/* A: headers and a result card */
+.v-a .z{border-color:var(--bd-input)}
+.v-a .z-result,.v-c .z-result{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow)}
+/* B: bands, result first */
+.v-b .z{border-color:var(--bd-input)}
+.v-b .z-result{order:-1;background:var(--pri-subtle);border-radius:16px;padding:16px 18px}
+.v-b .z-row{border-top-color:var(--pri-border)}
+@container (min-width:600px){.v-b .z-result{display:grid;grid-template-columns:auto 1fr;gap:4px 32px;align-items:end}.v-b .z-result .z-q,.v-b .z-result .z-a{grid-column:1}.v-b .z-result .z-why{grid-column:2;grid-row:1/3;margin:0;align-self:center}.v-b .z-result .z-row{grid-column:1/-1}.v-b .z-inputs{flex-direction:row}.v-b .z-inputs .fld{flex:1}}
+/* C: accent zone */
+.v-c .z{background:var(--acc-sub);border-color:var(--acc)}
+.v-c .z-more,.v-c .z-row{border-top-color:var(--acc-bd)}
+.v-c .z-result .z-row{border-top-color:var(--bd-subtle)}
+.v-c .z-badge{background:var(--card);border-color:var(--acc-bd)}
+/* Budget page mock */
+.bp{display:flex;flex-direction:column;gap:20px;container-type:inline-size}
+.bp-title h3{font-size:24px;font-weight:700}
+.bp-title p{font-size:14px;color:var(--t2)}
+.bp-sec>header{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.bp-sec>header h4{font-size:16px;font-weight:600}
+.bp-sec>header p,.bp-sec>header .tile{display:none}
+.bp-sec>header p{font-size:13px;color:var(--t2)}
+.bp-body{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow)}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;font-size:14px}
+.bars i{display:block;height:10px;border-radius:5px;background:var(--chart-pri)}
+.bars span:nth-child(3n){font-variant-numeric:tabular-nums;text-align:right}
+.ed{list-style:none;margin:0;padding:0;font-size:14px}
+.ed li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--bd-subtle)}
+.ed li span:last-child{font-variant-numeric:tabular-nums;font-weight:500}
+.ed+.btn{margin-top:12px}
+.bp-band{display:contents}
+.v-a .bp{gap:36px}
+.v-a .bp-sec>header p{display:block}.v-a .bp-sec>header .tile{display:grid}
+.v-a .bp-sec>header{align-items:flex-start}
+.v-b .bp{gap:24px}
+.v-b .bp-sec{border-top:1px solid var(--bd-strong);padding-top:14px}
+.v-b .bp-band{display:block;background:var(--sunken);margin:0 -28px -28px;padding:28px;border-radius:0 0 36px 36px}
+.v-b.mock:not(.half) .bp-band{margin:0 -14px -14px;padding:20px 14px;border-radius:0 0 20px 20px}
+.v-c .bp{gap:48px}
+.v-c .bp-sec>header h4{font-size:19px}
+.labels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.labels .z-result{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px 18px}
+.labels .z-q{font-size:14px;font-weight:600;color:var(--t1)}
+.labels .z-lead{color:var(--t2);font-size:14px;margin-top:6px}
+.labels .z-fig{font:700 36px/1.1 'Plus Jakarta Sans Variable','Plus Jakarta Sans',-apple-system,sans-serif;margin-top:2px}
+.slot{font-size:12px;color:var(--t3);margin-top:10px}
+@media (max-width:980px){.labels{grid-template-columns:1fr}}
+@media (max-width:740px){.phones{grid-template-columns:minmax(0,340px)}}
+
+/* ---------- Summary ---------- */
+.sum{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:16px;margin-top:24px}
+.sum .lead{background:var(--hero);color:var(--onc);border-radius:20px;padding:22px}
+.sum .lead h3{font-size:20px;font-weight:700;margin-bottom:10px}
+.sum .lead ul{margin:0;padding-left:18px}
+.sum .lead li{margin-top:6px}
+.sum .lead p{margin-top:12px;font-size:14.5px;opacity:.92}
+footer{padding:28px 0 56px;color:var(--t3);font-size:13px}
+
+@media (max-width:980px){
+  .pair,.spec,.sheet,.sum{grid-template-columns:1fr}
+  .setup-grid{grid-template-columns:1fr}
+  .scenes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .intro{grid-template-columns:1fr;padding-top:36px}
+  .intro figure{max-width:260px}
+}
+@media (max-width:640px){
+  .wrap{padding:0 16px}
+  .demos{grid-template-columns:1fr}
+  .bar{position:static}
+  .bar nav{order:3;flex-basis:100%}
+  .mock{padding:10px}
+  .opt-head h3{font-size:20px}
+}
+</style>
+<script>
+(function(){try{var t=localStorage.getItem('e17-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}
+if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('rm');})();
+</script>
+</head>
+<body>
+
+<!-- Shared artwork: icons and scenes -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-dash" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+
+    <!-- Existing: the Budget empty-state scene (Illustration scene "onboarding") -->
+    <symbol id="sc-budget" viewBox="0 0 240 170">
+      <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+      <circle class="s-sun" cx="190" cy="40" r="34" opacity=".4"/><circle class="s-sun" cx="190" cy="40" r="20"/>
+      <path class="s-dots" d="M52 96C80 62 118 54 148 44"/>
+      <rect class="s-sage" x="26" y="108" width="52" height="44" rx="14"/>
+      <rect class="s-soft" x="84" y="84" width="52" height="68" rx="14"/>
+      <rect class="s-teal" x="142" y="58" width="52" height="94" rx="14"/>
+      <path class="s-stem" d="M168 58V38"/>
+      <path class="s-sage" d="M168 44c-13 0-19-6-19-17 12 0 19 6 19 17z"/>
+      <path class="s-leaf" d="M168 38c11 0 17-5 17-14-11 0-17 5-17 14z"/>
+    </symbol>
+    <!-- Existing: empty-accounts -->
+    <symbol id="sc-accounts" viewBox="0 0 240 170">
+      <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+      <circle class="s-sun" cx="196" cy="38" r="30" opacity=".4"/><circle class="s-sun" cx="196" cy="38" r="18"/>
+      <rect class="s-sage" x="98" y="66" width="108" height="62" rx="14" transform="rotate(8 152 97)"/>
+      <rect class="s-soft" x="56" y="68" width="108" height="62" rx="14" transform="rotate(-6 110 99)"/>
+      <rect class="s-teal" x="64" y="76" width="112" height="66" rx="14"/>
+      <rect class="s-paper" x="78" y="92" width="40" height="10" rx="5" opacity=".85"/>
+      <circle class="s-sun" cx="160" cy="118" r="8"/>
+      <path class="s-dots" d="M40 70C52 54 66 46 84 42"/>
+    </symbol>
+    <!-- New: monthly check-in -->
+    <symbol id="sc-checkin" viewBox="0 0 240 170">
+      <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+      <circle class="s-sun" cx="44" cy="46" r="30" opacity=".4"/><circle class="s-sun" cx="44" cy="46" r="18"/>
+      <path class="s-dots" d="M74 34C96 22 124 22 146 32"/>
+      <rect class="s-soft" x="64" y="54" width="112" height="96" rx="14"/>
+      <path class="s-teal" d="M64 68a14 14 0 0 1 14-14h84a14 14 0 0 1 14 14v16H64z"/>
+      <rect class="s-paper" x="88" y="44" width="9" height="22" rx="4.5"/><rect class="s-paper" x="143" y="44" width="9" height="22" rx="4.5"/>
+      <rect class="s-paper" x="78" y="96" width="24" height="18" rx="6" opacity=".85"/><rect class="s-paper" x="108" y="96" width="24" height="18" rx="6" opacity=".85"/><rect class="s-paper" x="138" y="96" width="24" height="18" rx="6" opacity=".85"/>
+      <rect class="s-paper" x="78" y="120" width="24" height="18" rx="6" opacity=".85"/><rect class="s-acc" x="108" y="120" width="24" height="18" rx="6"/>
+      <circle class="s-tickdisc" cx="172" cy="132" r="20"/><path class="s-tick" d="M163 132l6.5 6.5L182 125"/>
+      <path class="s-leaf" d="M50 150c-12 0-18-6-18-16 11 0 18 5 18 16z"/>
+    </symbol>
+    <!-- New: pension -->
+    <symbol id="sc-pension" viewBox="0 0 240 170">
+      <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+      <circle class="s-sun" cx="192" cy="42" r="32" opacity=".4"/><circle class="s-sun" cx="192" cy="42" r="19"/>
+      <path class="s-dots" d="M36 112C44 82 62 62 90 52"/>
+      <rect class="s-sage" x="30" y="136" width="40" height="14" rx="7"/><rect class="s-soft" x="36" y="120" width="40" height="14" rx="7"/>
+      <path class="s-stem" d="M120 88V44"/>
+      <path class="s-sage" d="M120 64c-18 0-27-9-27-24 17 0 27 9 27 24z"/>
+      <path class="s-leaf" d="M120 52c16 0 24-7 24-21-16 0-24 7-24 21z"/>
+      <rect class="s-teal" x="84" y="94" width="72" height="58" rx="18"/>
+      <rect class="s-soft" x="76" y="84" width="88" height="18" rx="9"/>
+      <circle class="s-acc" cx="120" cy="126" r="9"/>
+    </symbol>
+    <!-- New: debt -->
+    <symbol id="sc-debt" viewBox="0 0 240 170">
+      <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+      <circle class="s-sun" cx="196" cy="38" r="30" opacity=".4"/><circle class="s-sun" cx="196" cy="38" r="18"/>
+      <rect class="s-teal" x="28" y="58" width="50" height="94" rx="14"/>
+      <rect class="s-soft" x="84" y="86" width="50" height="66" rx="14"/>
+      <rect class="s-sage" x="140" y="114" width="50" height="38" rx="14"/>
+      <path class="s-dots" d="M86 52C122 54 158 70 186 98"/>
+      <circle class="s-acc" cx="53" cy="82" r="8"/>
+      <path class="s-leaf" d="M206 150c12 0 18-6 18-16-11 0-18 5-18 16z"/>
+    </symbol>
+    <!-- New: savings -->
+    <symbol id="sc-savings" viewBox="0 0 240 170">
+      <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+      <circle class="s-sun" cx="46" cy="44" r="30" opacity=".4"/><circle class="s-sun" cx="46" cy="44" r="18"/>
+      <path class="s-dots" d="M76 32C92 20 106 18 116 22"/>
+      <circle class="s-acc" cx="124" cy="34" r="10"/>
+      <rect class="s-soft" x="78" y="62" width="88" height="90" rx="22"/>
+      <rect class="s-teal" x="72" y="56" width="100" height="14" rx="7"/>
+      <rect class="s-paper" x="92" y="98" width="60" height="13" rx="6.5" opacity=".85"/>
+      <rect class="s-sage" x="92" y="114" width="60" height="13" rx="6.5"/>
+      <rect class="s-teal" x="92" y="130" width="60" height="13" rx="6.5"/>
+      <path class="s-leaf" d="M198 150c12 0 18-6 18-16-11 0-18 5-18 16z"/>
+    </symbol>
+    <!-- Sketch: mortgage -->
+    <symbol id="sc-mortgage" viewBox="0 0 240 170">
+      <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+      <circle class="s-sun" cx="194" cy="40" r="30" opacity=".4"/><circle class="s-sun" cx="194" cy="40" r="18"/>
+      <rect class="s-sage" x="84" y="50" width="72" height="72" rx="14" transform="rotate(45 120 86)"/>
+      <rect class="s-teal" x="74" y="86" width="92" height="66" rx="14"/>
+      <path class="s-paper" d="M109 152v-26a11 11 0 0 1 22 0v26z" opacity=".9"/>
+      <rect class="s-soft" x="142" y="100" width="14" height="14" rx="5"/>
+      <path class="s-dots" d="M30 120C36 96 48 80 66 70"/>
+      <path class="s-leaf" d="M56 150c-12 0-18-6-18-16 11 0 18 5 18 16z"/>
+    </symbol>
+    <!-- Sketch: self-employed or rental income -->
+    <symbol id="sc-income" viewBox="0 0 240 170">
+      <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+      <circle class="s-sun" cx="48" cy="44" r="30" opacity=".4"/><circle class="s-sun" cx="48" cy="44" r="18"/>
+      <rect class="s-sage" x="96" y="50" width="84" height="100" rx="14" transform="rotate(7 138 100)"/>
+      <rect class="s-soft" x="72" y="48" width="84" height="104" rx="14"/>
+      <rect class="s-teal" x="86" y="64" width="40" height="11" rx="5.5"/>
+      <rect class="s-paper" x="86" y="86" width="56" height="9" rx="4.5" opacity=".85"/><rect class="s-paper" x="86" y="102" width="56" height="9" rx="4.5" opacity=".85"/><rect class="s-paper" x="86" y="118" width="34" height="9" rx="4.5" opacity=".85"/>
+      <circle class="s-acc" cx="150" cy="130" r="13"/>
+      <path class="s-dots" d="M176 44C190 50 200 62 206 78"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="wrap">
+    <strong>Flump E17 options</strong>
+    <nav aria-label="Sections">
+      <a href="#accents">1 Accent colours</a><a href="#setup">2 Finish setting up</a><a href="#scenes">3 Illustrations</a><a href="#motion">4 Motion</a><a href="#sections">5 Sections</a><a href="#summary">Summary</a>
+    </nav>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Theme">
+        <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button><button type="button" data-theme-set="light" aria-pressed="false">Light</button><button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+      </div>
+      <button type="button" class="switch" id="rm" aria-pressed="false"><i></i>Reduced motion</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<div class="intro">
+  <div>
+    <h1>More warmth and life, without losing the calm</h1>
+    <p>Five choices to make: an accent colour, a new "Finish setting up" row, where illustrations go, which small animations to add, and how sections and results stand apart. Every option is drawn with today's tokens so you can compare like with like.</p>
+    <p class="how">Each option has a letter. Reply with the letters you want, for example "A, 2A, 3A, motion first pass, 5A". Nothing here changes the app.</p>
+  </div>
+  <figure>
+    <svg class="scene" viewBox="0 0 240 170" role="img" aria-label="The Budget empty-state scene: three rounded bars, a dotted arc, a sprout and a sun"><use href="#sc-budget" width="240" height="170"/></svg>
+    <figcaption>The Budget scene. Everything below is built to sit beside it.</figcaption>
+  </figure>
+</div>
+
+<!-- ================= 1. ACCENTS ================= -->
+<section class="part" id="accents">
+  <h2>1. Accent colours</h2>
+  <p class="lede">The same small dashboard five times: today, then four options. The figures, the KPI strip, the primary button and the notice never take an accent. Figures stay neutral and the teal stays in charge. Look at the hero corner, the check-in card and its icon tile, the second chart line, and the empty-state scene under each mock-up.</p>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter" style="background:var(--neu-bg);color:var(--t2)">0</span><div><h3>Today</h3><p>For reference. Teal, sage and sand, with apricot only in the scene's sun.</p></div></div>
+    <div class="pair">
+      <div><p class="cap">Light</p><div class="mock t-light" data-tpl="dash"></div></div>
+      <div><p class="cap">Dark</p><div class="mock t-dark" data-tpl="dash"></div></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter">A</span><div><h3>Damson <span class="pick">Recommended</span></h3><p>A soft plum: the warm opposite of teal, like fruit against leaves. It reads as cosy and a little grown-up.</p></div></div>
+    <div class="pair">
+      <div><p class="cap">Light</p><div class="mock t-light opt-a" data-tpl="dash"></div></div>
+      <div><p class="cap">Dark</p><div class="mock t-dark opt-a" data-tpl="dash"></div></div>
+    </div>
+    <div class="spec">
+      <div class="panel"><h4>Tokens</h4><div class="tscroll"><table>
+        <tr><th>Token</th><th>Light</th><th>Dark</th></tr>
+        <tr><td><code>accent</code></td><td class="hex"><i class="sw" style="background:#7a3f66"></i>#7a3f66</td><td class="hex"><i class="sw" style="background:#dba6c9"></i>#dba6c9</td></tr>
+        <tr><td><code>accent.subtle</code></td><td class="hex"><i class="sw" style="background:#f1e4ee"></i>#f1e4ee</td><td class="hex"><i class="sw" style="background:#33242f"></i>#33242f</td></tr>
+        <tr><td><code>accent.border</code></td><td class="hex"><i class="sw" style="background:#d6b4cc"></i>#d6b4cc</td><td class="hex"><i class="sw" style="background:#6a4560"></i>#6a4560</td></tr>
+        <tr><td><code>accent.onHero</code></td><td class="hex"><i class="sw" style="background:#e3b5d1"></i>#e3b5d1</td><td class="hex"><i class="sw" style="background:#e3b5d1"></i>#e3b5d1</td></tr>
+        <tr><td><code>chart.accent</code></td><td colspan="2">Same values; it replaces <code>chart.accentPurple</code>, which is too close to keep both</td></tr>
+      </table></div>
+      <p style="margin-top:10px">Next to the status colours, so you can see it is none of them:</p>
+      <div class="neigh"><span><i style="background:#7a3f66"></i>accent</span><span><i style="background:var(--pos)"></i>positive</span><span><i style="background:var(--warn)"></i>warning</span><span><i style="background:var(--dang)"></i>danger</span><span><i style="background:var(--info)"></i>info</span></div></div>
+      <div class="panel"><h4>Contrast (WCAG)</h4><div class="tscroll"><table>
+        <tr><th>Pairing</th><th class="r">Light</th><th class="r">Dark</th></tr>
+        <tr><td>accent on surface.card (icon, chart line)</td><td class="r">7.57</td><td class="r">7.65</td></tr>
+        <tr><td>accent on surface.canvas</td><td class="r">6.83</td><td class="r">8.50</td></tr>
+        <tr><td>accent on accent.subtle</td><td class="r">6.25</td><td class="r">7.19</td></tr>
+        <tr><td>text.primary on accent.subtle</td><td class="r">12.19</td><td class="r">12.79</td></tr>
+        <tr><td>text.secondary on accent.subtle</td><td class="r">6.56</td><td class="r">8.39</td></tr>
+        <tr><td>text.muted on accent.subtle</td><td class="r">4.88</td><td class="r">5.46</td></tr>
+        <tr><td>accent.onHero on surface.hero (shape)</td><td class="r">5.83</td><td class="r">4.90</td></tr>
+      </table></div></div>
+      <div class="panel"><h4>Allowed</h4><ul><li>One tinted card or section per page (it takes the place of a domain tint, not an extra)</li><li>Icon tiles and one small shape per scene</li><li>One chart series, always with a label and a dash</li><li>One sun shape in the hero corner, with no bars or arrows beside the figure</li></ul>
+      <h4>Not allowed</h4><ul><li>Any figure, KPI card, table cell or amount</li><li>Buttons, links, focus rings (teal only)</li><li>Notices and status messages</li><li>Around a KpiStrip, ScenarioZone or chart frame</li></ul></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter">B</span><div><h3>Harbour</h3><p>A dusty sea blue, fresh and airy. The cream looks warmer beside it, but the blue adds no warmth of its own.</p></div></div>
+    <div class="pair">
+      <div><p class="cap">Light</p><div class="mock t-light opt-b" data-tpl="dash"></div></div>
+      <div><p class="cap">Dark</p><div class="mock t-dark opt-b" data-tpl="dash"></div></div>
+    </div>
+    <div class="spec">
+      <div class="panel"><h4>Tokens</h4><div class="tscroll"><table>
+        <tr><th>Token</th><th>Light</th><th>Dark</th></tr>
+        <tr><td><code>accent</code></td><td class="hex"><i class="sw" style="background:#2f6690"></i>#2f6690</td><td class="hex"><i class="sw" style="background:#86cfd6"></i>#86cfd6</td></tr>
+        <tr><td><code>accent.subtle</code></td><td class="hex"><i class="sw" style="background:#e0eaf1"></i>#e0eaf1</td><td class="hex"><i class="sw" style="background:#1e2c38"></i>#1e2c38</td></tr>
+        <tr><td><code>accent.border</code></td><td class="hex"><i class="sw" style="background:#a9c4d8"></i>#a9c4d8</td><td class="hex"><i class="sw" style="background:#3a5a73"></i>#3a5a73</td></tr>
+        <tr><td><code>accent.onHero</code></td><td class="hex"><i class="sw" style="background:#a9cfe6"></i>#a9cfe6</td><td class="hex"><i class="sw" style="background:#a9cfe6"></i>#a9cfe6</td></tr>
+        <tr><td><code>chart.accent</code></td><td colspan="2">Same values; <code>chart.accentCyan</code> would fold into it</td></tr>
+      </table></div>
+      <p style="margin-top:10px">Next to the status colours:</p>
+      <div class="neigh"><span><i style="background:#2f6690"></i>accent</span><span><i style="background:var(--pos)"></i>positive</span><span><i style="background:var(--warn)"></i>warning</span><span><i style="background:var(--dang)"></i>danger</span><span><i style="background:var(--info)"></i>info</span></div></div>
+      <div class="panel"><h4>Contrast (WCAG)</h4><div class="tscroll"><table>
+        <tr><th>Pairing</th><th class="r">Light</th><th class="r">Dark</th></tr>
+        <tr><td>accent on surface.card (icon, chart line)</td><td class="r">6.04</td><td class="r">8.84</td></tr>
+        <tr><td>accent on surface.canvas</td><td class="r">5.45</td><td class="r">9.82</td></tr>
+        <tr><td>accent on accent.subtle</td><td class="r">5.03</td><td class="r">8.09</td></tr>
+        <tr><td>text.primary on accent.subtle</td><td class="r">12.28</td><td class="r">12.46</td></tr>
+        <tr><td>text.secondary on accent.subtle</td><td class="r">6.61</td><td class="r">8.17</td></tr>
+        <tr><td>text.muted on accent.subtle</td><td class="r">4.92</td><td class="r">5.31</td></tr>
+        <tr><td>accent.onHero on surface.hero (shape)</td><td class="r">6.30</td><td class="r">5.30</td></tr>
+      </table></div></div>
+      <div class="panel"><h4>Allowed and not allowed</h4><p>The same rules as A.</p>
+      <h4 style="margin-top:14px">Watch for</h4><ul><li>Blue is the nearest free hue to the indigo of <code>status.info</code>. The dark value leans towards sea green to keep them apart, and the two must never share a card.</li><li>Blue next to teal is a quieter pairing than plum next to teal. This is the calmest of the three new hues and the least warm.</li></ul></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter">C</span><div><h3>Sunlight</h3><p>A golden yellow used for shapes only, never for words. The scene's sun becomes a real sun. This is the brightest and most playful choice.</p></div></div>
+    <div class="pair">
+      <div><p class="cap">Light</p><div class="mock t-light opt-c" data-tpl="dash"></div></div>
+      <div><p class="cap">Dark</p><div class="mock t-dark opt-c" data-tpl="dash"></div></div>
+    </div>
+    <div class="spec">
+      <div class="panel"><h4>Tokens</h4><div class="tscroll"><table>
+        <tr><th>Token</th><th>Light</th><th>Dark</th></tr>
+        <tr><td><code>accent.sun</code></td><td class="hex"><i class="sw" style="background:#e8b541"></i>#e8b541</td><td class="hex"><i class="sw" style="background:#f3e08a"></i>#f3e08a</td></tr>
+        <tr><td><code>accent.sunSoft</code></td><td class="hex"><i class="sw" style="background:#f5dc9a"></i>#f5dc9a</td><td class="hex"><i class="sw" style="background:#5a4f25"></i>#5a4f25</td></tr>
+        <tr><td><code>accent.onSun</code></td><td class="hex"><i class="sw" style="background:#2b2620"></i>#2b2620</td><td class="hex"><i class="sw" style="background:#2b2620"></i>#2b2620</td></tr>
+      </table></div>
+      <p style="margin-top:10px">The scenes stop borrowing <code>chart.debt</code> for the sun, so decoration no longer shares a colour with debt. Next to the status colours:</p>
+      <div class="neigh"><span><i style="background:#e8b541"></i>sun</span><span><i style="background:var(--pos)"></i>positive</span><span><i style="background:var(--warn)"></i>warning</span><span><i style="background:var(--dang)"></i>danger</span><span><i style="background:var(--info)"></i>info</span></div></div>
+      <div class="panel"><h4>Contrast (WCAG)</h4><div class="tscroll"><table>
+        <tr><th>Pairing</th><th class="r">Light</th><th class="r">Dark</th></tr>
+        <tr><td>accent.onSun on accent.sun (icon in tile)</td><td class="r">7.94</td><td class="r">11.31</td></tr>
+        <tr><td>accent.sun on surface.hero (shape)</td><td class="r">5.49</td><td class="r">6.58</td></tr>
+        <tr><td>accent.sun on surface.card</td><td class="r">1.86</td><td class="r">11.75</td></tr>
+      </table></div><p style="margin-top:10px">The last row is why this is shapes only: in light it is too pale on a card to carry any meaning, so it never draws a line, a ring or a word.</p></div>
+      <div class="panel"><h4>Allowed</h4><ul><li>The sun in every scene, and one sun in the hero corner</li><li>Icon tiles, with the icon in <code>accent.onSun</code></li></ul>
+      <h4>Not allowed</h4><ul><li>Text, lines, charts, progress, borders</li><li>Any tinted surface: a pale yellow card sits too close to the warning background</li><li>Everything in A's "not allowed" list</li></ul>
+      <h4>Watch for</h4><ul><li>Yellow is the nearest free hue to the amber of <code>status.warning</code>. The dark value is a pale butter yellow to keep the two apart, and it stays in round shapes away from figures.</li></ul></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter">D</span><div><h3>No new colour</h3><p>The conservative choice: the tints you already have, used on whole cards instead of small tiles. It adds nothing to learn, and it is fresher than today but not much warmer.</p></div></div>
+    <div class="pair">
+      <div><p class="cap">Light</p><div class="mock t-light opt-d" data-tpl="dash"></div></div>
+      <div><p class="cap">Dark</p><div class="mock t-dark opt-d" data-tpl="dash"></div></div>
+    </div>
+    <div class="spec">
+      <div class="panel"><h4>Tokens</h4><p>None added. It uses <code>surface.tint.teal</code>, <code>surface.tint.sage</code>, <code>chart.wealth</code> and <code>text.onContrast</code> at low strength in the hero corner.</p><p style="margin-top:10px">No rule changes. The one tinted card a page is allowed becomes a habit instead of a rarity, the second chart series gets a soft sage fill, and icon tiles take their domain tint.</p></div>
+      <div class="panel"><h4>Contrast (WCAG)</h4><div class="tscroll"><table>
+        <tr><th>Pairing</th><th class="r">Light</th><th class="r">Dark</th></tr>
+        <tr><td>text.primary on tint.teal</td><td class="r">12.35</td><td class="r">11.82</td></tr>
+        <tr><td>text.secondary on tint.teal</td><td class="r">6.65</td><td class="r">7.75</td></tr>
+        <tr><td>text.muted on tint.teal</td><td class="r">4.94</td><td class="r">5.04</td></tr>
+        <tr><td>primary on surface.card (icon in tile)</td><td class="r">6.29</td><td class="r">8.47</td></tr>
+        <tr><td>primary on tint.sage (icon in tile)</td><td class="r">5.31</td><td class="r">7.52</td></tr>
+        <tr><td>chart.wealth on surface.card (line)</td><td class="r">3.96</td><td class="r">8.83</td></tr>
+      </table></div></div>
+      <div class="panel"><h4>Watch for</h4><ul><li>Apricot means debt and sage means savings, so a general card like this one can only take the teal tint. That leaves D with one usable colour on most pages.</li><li>Dark mode barely changes, because the dark tints are close to the card colour.</li><li>D can be combined with A, B or C: it costs nothing.</li></ul></div>
+    </div>
+  </div>
+
+  <p class="after" style="margin-top:28px"><b>Looked at and ruled out:</b> coral and rose (too close to the danger red), marigold and orange (apricot already means debt, amber already means warning), any green (positive), lilac (too close to info indigo and the purple chart series).</p>
+</section>
+
+<!-- ================= 2. SETUP ================= -->
+<section class="part" id="setup">
+  <h2>2. "Finish setting up"</h2>
+  <p class="lede">Today this is a plain bar that reads "Finish setting up: 4 of 6 done". Three redesigns follow, each collapsed and expanded, at desktop width on the left and phone width on the right. All three stay one row when collapsed and can be hidden with the cross for good. Each adds a quiet "Not for me", so a step that does not apply counts as done without comment.</p>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter">2A</span><div><h3>Ring and next step <span class="pick">Recommended</span></h3><p>A small progress ring, the next step named in words, and one action. On a phone the next step is itself the link, so the closed row is still useful.</p></div></div>
+    <div class="setup-grid">
+      <div class="frame"><p class="cap">Desktop, collapsed</p><div data-tpl="su-a-c"></div><p class="cap">Desktop, expanded</p><div data-tpl="su-a-e"></div></div>
+      <div class="frame phone"><p class="cap">Phone, collapsed</p><div data-tpl="su-a-c"></div><p class="cap">Phone, expanded</p><div data-tpl="su-a-e"></div></div>
+    </div>
+    <p class="after"><b>When every step is done:</b> the ring closes, the row reads "Setup finished" for the rest of that visit with only the cross, and it is gone on the next visit. No banner, no confetti.</p>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter">2B</span><div><h3>Track and illustrated cards</h3><p>A six-part track when collapsed. Opened, each step is a small card with its own scene. It has the most character and is the tallest when open.</p></div></div>
+    <div class="setup-grid">
+      <div class="frame"><p class="cap">Desktop, collapsed</p><div data-tpl="su-b-c"></div><p class="cap">Desktop, expanded (cards scroll sideways)</p><div data-tpl="su-b-e"></div></div>
+      <div class="frame phone"><p class="cap">Phone, collapsed</p><div data-tpl="su-b-c"></div><p class="cap">Phone, expanded (swipe sideways)</p><div data-tpl="su-b-e"></div></div>
+    </div>
+    <p class="after"><b>When every step is done:</b> the track fills and the row reads "Setup finished". It stays for that visit, then does not return.</p>
+  </div>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter">2C</span><div><h3>Compact checklist with a finish state</h3><p>Closest to today: the same slim bar with a hairline of progress under it and a tight two-column list. There is one small moment when the last step is done.</p></div></div>
+    <div class="setup-grid">
+      <div class="frame"><p class="cap">Desktop, collapsed</p><div data-tpl="su-c-c"></div><p class="cap">Desktop, expanded</p><div data-tpl="su-c-e"></div><p class="cap">Desktop, finished</p><div data-tpl="su-c-f"></div></div>
+      <div class="frame phone"><p class="cap">Phone, collapsed</p><div data-tpl="su-c-c"></div><p class="cap">Phone, expanded</p><div data-tpl="su-c-e"></div><p class="cap">Phone, finished</p><div data-tpl="su-c-f"></div></div>
+    </div>
+    <p class="after"><b>When every step is done:</b> the row swaps to the finish state above, with the sprout growing once (see motion demo 7). It stays until it is hidden or the visit ends. The message is about Flump being set up, not about the person's money.</p>
+  </div>
+</section>
+
+<!-- ================= 3. ILLUSTRATIONS ================= -->
+<section class="part" id="scenes">
+  <h2>3. Illustrations</h2>
+  <p class="lede">Scenes earn a place where a page has nothing of the user's to show yet, or at the start and end of a short task. They never sit beside figures. Four new scenes are drawn below in the Budget scene's style. Two quick sketches follow, so every setup step has one.</p>
+
+  <div class="scenes">
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="A calendar with a tick"><use href="#sc-checkin" width="240" height="170"/></svg><figcaption><b>Monthly check-in</b>Start and summary of the check-in</figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="A plant growing from a pot beside two coins"><use href="#sc-pension" width="240" height="170"/></svg><figcaption><b>Pension</b>A pot and a plant</figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="Three bars of different heights with a dotted path"><use href="#sc-debt" width="240" height="170"/></svg><figcaption><b>Debts</b>Three balances and a path; no red, no finish line</figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="A jar with a coin dropping in"><use href="#sc-savings" width="240" height="170"/></svg><figcaption><b>Savings</b>A jar</figcaption></figure>
+  </div>
+  <div class="scenes t-dark" style="background:var(--canvas);border-radius:20px;padding:16px;margin-top:16px;color:var(--t1)">
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="Check-in scene in dark"><use href="#sc-checkin" width="240" height="170"/></svg><figcaption><b>Monthly check-in</b>Dark</figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="Pension scene in dark"><use href="#sc-pension" width="240" height="170"/></svg><figcaption><b>Pension</b>Dark</figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="Debts scene in dark"><use href="#sc-debt" width="240" height="170"/></svg><figcaption><b>Debts</b>Dark</figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="Savings scene in dark"><use href="#sc-savings" width="240" height="170"/></svg><figcaption><b>Savings</b>Dark</figcaption></figure>
+  </div>
+  <div class="scenes" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="A house made of rounded shapes"><use href="#sc-mortgage" width="240" height="170"/></svg><figcaption><b>Mortgage (sketch)</b>For people who use the mortgage page</figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="Two sheets of paper and a coin"><use href="#sc-income" width="240" height="170"/></svg><figcaption><b>Self-employed or rental income (sketch)</b></figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="The existing Budget scene"><use href="#sc-budget" width="240" height="170"/></svg><figcaption><b>Budget (exists)</b>The reference</figcaption></figure>
+    <figure class="sc-fig"><svg class="scene" viewBox="0 0 240 170" role="img" aria-label="The existing accounts scene"><use href="#sc-accounts" width="240" height="170"/></svg><figcaption><b>Accounts (exists)</b></figcaption></figure>
+  </div>
+
+  <h3 style="font-size:20px;margin-top:36px">How far to go</h3>
+  <div class="spec">
+    <div class="panel"><h4>3A. The "now" set <span class="pick">Recommended</span></h4><p>Savings, debts, pension and the check-in get their own scene, and the marketing not-found page reuses the signpost. Five places, four drawings.</p></div>
+    <div class="panel"><h4>3B. Every empty state</h4><p>3A plus mortgage, Self Assessment, forecast, take-home pay and the onboarding steps. About ten drawings, and the app never repeats a scene.</p></div>
+    <div class="panel"><h4>3C. Tidy up only</h4><p>No new drawings. Keep the four scenes that exist and accept that savings, debts and pension share the accounts scene.</p></div>
+  </div>
+  <h3 style="font-size:20px;margin-top:36px">Where scenes go</h3>
+  <div class="panel" style="margin-top:12px"><div class="tscroll"><table>
+    <tr><th>Place</th><th>Scene</th><th>When</th><th>Note</th></tr>
+    <tr><td>Dashboard, first visit</td><td>Budget bars</td><td><span class="badge have">Exists</span></td><td>Keep</td></tr>
+    <tr><td>Budget empty state</td><td>Budget bars</td><td><span class="badge have">Exists</span></td><td>Keep</td></tr>
+    <tr><td>Accounts empty state</td><td>Stacked cards</td><td><span class="badge have">Exists</span></td><td>Keep; stop reusing it on other pages</td></tr>
+    <tr><td>Savings empty state</td><td>Jar</td><td><span class="badge now">Now</span></td><td>Uses the accounts scene today</td></tr>
+    <tr><td>Debts empty state</td><td>Bars and a path</td><td><span class="badge now">Now</span></td><td>Uses the accounts scene today</td></tr>
+    <tr><td>Pension empty state</td><td>Pot and plant</td><td><span class="badge now">Now</span></td><td>Uses the accounts scene today</td></tr>
+    <tr><td>Monthly check-in: start</td><td>Calendar</td><td><span class="badge now">Now</span></td><td>Small, above the first step</td></tr>
+    <tr><td>Monthly check-in: summary</td><td>Calendar with tick</td><td><span class="badge now">Now</span></td><td>Same scene; the tick is the only change</td></tr>
+    <tr><td>"Finish setting up" finish state</td><td>Sprout from the Budget scene</td><td><span class="badge now">Now</span></td><td>Only if 2B or 2C is chosen</td></tr>
+    <tr><td>Mortgage empty state</td><td>House</td><td><span class="badge">Later</span></td><td>Shown on the mortgage page and its own setup step, and only to people who have that page turned on</td></tr>
+    <tr><td>Self Assessment empty state</td><td>Papers and coin</td><td><span class="badge">Later</span></td><td></td></tr>
+    <tr><td>Forecast and take-home pay empty states</td><td>To draw</td><td><span class="badge">Later</span></td><td>These pages open with tools, so a scene matters less</td></tr>
+    <tr><td>Onboarding steps</td><td>One per step, small</td><td><span class="badge">Later</span></td><td>The welcome step has the Budget scene already</td></tr>
+    <tr><td>Goals empty state, not-found page, error page</td><td>Target, signpost</td><td><span class="badge have">Exists</span></td><td>Keep</td></tr>
+    <tr><td>Marketing: home hero</td><td>A wider scene made from the same parts</td><td><span class="badge">Later</span></td><td>Needs its own composition at 2:1</td></tr>
+    <tr><td>Marketing: monthly picture, tools index, security</td><td>Calendar, bars, to draw</td><td><span class="badge">Later</span></td><td>One scene per section at most</td></tr>
+    <tr><td>Marketing: not-found page</td><td>Signpost</td><td><span class="badge now">Now</span></td><td>Reuse the app's scene</td></tr>
+    <tr><td>Marketing: pricing</td><td>None</td><td><span class="badge">No</span></td><td>Prices stay plain</td></tr>
+    <tr><td>Any page with figures on it, any notice, any error about money</td><td>None</td><td><span class="badge">No</span></td><td>A scene beside a balance would comment on it</td></tr>
+  </table></div></div>
+
+  <h3 style="font-size:20px;margin-top:36px">Style sheet for the scene family</h3>
+  <div class="sheet">
+    <div class="gridbox">
+      <svg class="scene" viewBox="0 0 240 170" role="img" aria-label="The scene grid">
+        <use href="#sc-pension" width="240" height="170" opacity=".35"/>
+        <g fill="none" stroke="var(--pri)" stroke-width="1" stroke-dasharray="3 3"><rect x="20" y="10" width="200" height="142"/><path d="M14 152h212M120 4v162"/></g>
+        <circle cx="192" cy="42" r="32" fill="none" stroke="var(--t2)" stroke-width="1"/>
+      </svg>
+      <p style="font-size:13.5px;color:var(--t2);margin-top:6px"><b style="color:var(--t1)">Grid.</b> 240 by 170. Everything stands on the ground line at 152. Keep 20 clear at the sides and 10 at the top. The sun sits in a top corner, 36 to 40 across with a halo of about 1.7 times that.</p>
+    </div>
+    <div class="gridbox">
+      <div class="roles">
+        <i style="background:var(--pri-solid)"></i><span><b style="color:var(--t1)">Deep teal</b>: the main object, one per scene</span>
+        <i style="background:var(--pri-border)"></i><span><b style="color:var(--t1)">Pale teal</b>: its partner or its back</span>
+        <i style="background:var(--wealth)"></i><span><b style="color:var(--t1)">Sage</b>: the third form, stems and leaves</span>
+        <i style="background:var(--debt);opacity:.6"></i><span><b style="color:var(--t1)">Sun</b>: one disc and its halo, muted</span>
+        <i style="background:var(--ground)"></i><span><b style="color:var(--t1)">Sand</b>: the ground, nothing else</span>
+        <i style="background:var(--card)"></i><span><b style="color:var(--t1)">Paper</b>: small details on teal</span>
+      </div>
+      <p style="font-size:13.5px;color:var(--t2);margin-top:10px"><b style="color:var(--t1)">Colour.</b> Five fills and paper, all from tokens, so dark mode comes free. If an accent is chosen in section 1, it colours one small shape per scene (a day on the calendar, a coin) and nothing more.</p>
+    </div>
+    <div class="gridbox">
+      <ul style="margin:0;padding-left:18px;font-size:13.5px;color:var(--t2)">
+        <li><b style="color:var(--t1)">Shapes.</b> Rounded rectangles with a 14 corner, circles, and the leaf (a quarter-round with a point). No outlines.</li>
+        <li style="margin-top:6px"><b style="color:var(--t1)">Three lines only.</b> The dotted arc (3 wide, dots 10 apart), the stem (4) and the pole (5), all with round ends.</li>
+        <li style="margin-top:6px"><b style="color:var(--t1)">One of each.</b> One sun, one dotted arc, at most one leaf or sprout. Three to five solid forms.</li>
+        <li style="margin-top:6px"><b style="color:var(--t1)">No people, faces, coins with symbols, arrows or red.</b> Nothing that grades a situation.</li>
+        <li style="margin-top:6px"><b style="color:var(--t1)">Mobile.</b> Keep each scene as a list of shapes (kind, position, colour role) in one shared file. The web draws it as SVG; the mobile app draws the same list with its own SVG library. No image files.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4. MOTION ================= -->
+<section class="part" id="motion">
+  <h2>4. Micro-animations</h2>
+  <p class="lede">Ten small demos. Press Play on each. Five are marked for a first pass; the rest wait or are left out. Everything plays once, in answer to something the user did, and nothing loops. Turn on "Reduced motion" in the top bar and play them again to see what people who ask for less motion get.</p>
+  <p class="rmnote">Proposed additions to the motion tokens: <code>durations.draw</code> 600ms, <code>durations.scene</code> 900ms and <code>easings.settle</code> cubic-bezier(0.16, 1, 0.3, 1), a soft landing with no bounce. Everything else uses the existing <code>fast</code> 120ms, <code>base</code> 200ms, <code>slow</code> 320ms, <code>standard</code>, <code>enter</code> and <code>exit</code>.</p>
+
+  <div class="demos">
+    <article class="demo">
+      <div class="demo-h"><h3>1. A saved figure changes</h3><span class="verdict first">First pass</span></div>
+      <div class="stage"><div class="acct" id="d1"><span>Current account</span><b class="num">£1,840.00</b></div></div>
+      <button class="btn out play" type="button" data-play="1">Play</button>
+      <dl><dt>Tokens</dt><dd>Cross-fade <code>fast</code> <code>standard</code>; a pale teal wash fades over <code>scene</code></dd><dt>Plays</dt><dd>Once, when a balance is saved. Not on page load.</dd><dt>Reduced</dt><dd>The figure swaps at once, no wash.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>2. A figure counts to its new value</h3><span class="verdict">Leave out</span></div>
+      <div class="stage"><div class="acct"><span>Current account</span><b class="num" id="d2">£1,840.00</b></div></div>
+      <button class="btn out play" type="button" data-play="2">Play</button>
+      <dl><dt>Tokens</dt><dd><code>draw</code> <code>settle</code></dd><dt>Why not</dt><dd>Rule M3 says figures never count or roll. For half a second the screen shows amounts that were never true, and a moving balance feels like a slot machine. Demo 1 does the same job.</dd><dt>Reduced</dt><dd>Swaps at once.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>3. The check-in moves to the next account</h3><span class="verdict first">First pass</span></div>
+      <div class="stage"><div class="ci-stage" id="d3"><div class="ci-card"><span>Account 2 of 5</span><b>Current account</b><em>What is the balance today?</em></div></div></div>
+      <button class="btn out play" type="button" data-play="3">Play</button>
+      <dl><dt>Tokens</dt><dd>Leaves over <code>fast</code> <code>exit</code>, arrives over <code>base</code> <code>enter</code>, 24px travel (the existing <code>slideInRight</code>)</dd><dt>Plays</dt><dd>On each "Next" in the check-in. Back runs it the other way.</dd><dt>Reduced</dt><dd>A short fade, no travel.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>4. Setup progress fills</h3><span class="verdict first">First pass</span></div>
+      <div class="stage"><div class="ringwrap"><svg class="bigring" viewBox="0 0 36 36" aria-hidden="true"><circle class="trk" cx="18" cy="18" r="15"/><circle class="prg" id="d4" cx="18" cy="18" r="15"/></svg><div><b>Finish setting up</b><span class="num" id="d4t">3 of 6 done</span></div></div></div>
+      <button class="btn out play" type="button" data-play="4">Play</button>
+      <dl><dt>Tokens</dt><dd><code>slow</code> <code>standard</code></dd><dt>Plays</dt><dd>Once, the first time the dashboard is seen after a step is done. Never on later visits.</dd><dt>Reduced</dt><dd>The ring is drawn at its new length.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>5. Save confirmation</h3><span class="verdict first">First pass</span></div>
+      <div class="stage"><button class="btn savebtn" type="button" id="d5" data-play="5"><span>Save balance</span></button></div>
+      <button class="btn out play" type="button" data-play="5">Play</button>
+      <dl><dt>Tokens</dt><dd>Label swaps over <code>fast</code>; the tick draws over <code>base</code> <code>standard</code>; returns after 2 seconds</dd><dt>Plays</dt><dd>On every successful save, in the button that was pressed.</dd><dt>Reduced</dt><dd>The label changes to "Saved" with a finished tick.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>6. A chart line draws in</h3><span class="verdict">Already governed</span></div>
+      <div class="stage"><svg class="plot2" id="d6" viewBox="0 0 300 100" aria-hidden="true"><g stroke="var(--grid)" stroke-width="1"><path d="M0 20h300M0 50h300M0 80h300"/></g><path class="ln" pathLength="1" d="M6 78C50 74 80 62 120 58S190 40 230 32 280 22 294 18"/></svg></div>
+      <button class="btn out play" type="button" data-play="6">Play</button>
+      <dl><dt>Tokens</dt><dd><code>draw</code> <code>standard</code></dd><dt>Plays</dt><dd>Once, when a chart first appears. Never while a slider is dragged. <code>useChartAnimation</code> already decides this; the only change would be naming its duration as a token.</dd><dt>Reduced</dt><dd>The line is there from the start.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>7. A scene settles on first view</h3><span class="verdict first">First pass</span></div>
+      <div class="stage">
+        <svg class="scene scn7" id="d7" viewBox="0 0 240 170" aria-hidden="true">
+          <ellipse class="s-sand" cx="120" cy="152" rx="106" ry="18"/>
+          <g class="sunup"><circle class="s-sun" cx="190" cy="40" r="34" opacity=".4"/><circle class="s-sun" cx="190" cy="40" r="20"/></g>
+          <path class="s-dots" d="M52 96C80 62 118 54 148 44"/>
+          <rect class="s-sage" x="26" y="108" width="52" height="44" rx="14"/><rect class="s-soft" x="84" y="84" width="52" height="68" rx="14"/><rect class="s-teal" x="142" y="58" width="52" height="94" rx="14"/>
+          <g class="sprout"><path class="s-stem" d="M168 58V38"/><path class="s-sage" d="M168 44c-13 0-19-6-19-17 12 0 19 6 19 17z"/><path class="s-leaf" d="M168 38c11 0 17-5 17-14-11 0-17 5-17 14z"/></g>
+        </svg>
+      </div>
+      <button class="btn out play" type="button" data-play="7">Play</button>
+      <dl><dt>Tokens</dt><dd><code>scene</code> <code>settle</code>: the sprout grows from its base, the sun rises 10px</dd><dt>Plays</dt><dd>Once, the first time an empty state is shown in a visit. Then the scene is still.</dd><dt>Reduced</dt><dd>The scene is still from the start.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>8. Button hover and press</h3><span class="verdict">Second pass</span></div>
+      <div class="stage"><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn pressy" type="button">Add account</button><button class="btn out pressy" type="button">Not now</button></div></div>
+      <p style="font-size:13px;color:var(--t3)">Hover and press the two buttons.</p>
+      <dl><dt>Tokens</dt><dd>Colour over <code>fast</code>; press scales to 0.97 over <code>fast</code> <code>standard</code></dd><dt>Plays</dt><dd>On hover and press.</dd><dt>Reduced</dt><dd>Colour change only.</dd><dt>Why wait</dt><dd>Small gain; touches every button story and snapshot.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>9. The tab marker slides</h3><span class="verdict">Second pass</span></div>
+      <div class="stage"><div class="tabs" role="tablist" id="d9"><span class="ind"></span><button role="tab" aria-selected="true" type="button">Summary</button><button role="tab" aria-selected="false" type="button">Schedule</button><button role="tab" aria-selected="false" type="button">History</button></div></div>
+      <p style="font-size:13px;color:var(--t3)">Choose a tab.</p>
+      <dl><dt>Tokens</dt><dd><code>base</code> <code>standard</code></dd><dt>Plays</dt><dd>When a tab is chosen.</dd><dt>Reduced</dt><dd>The marker jumps.</dd><dt>Why wait</dt><dd>Best done once, inside the single Tabs component.</dd></dl>
+    </article>
+
+    <article class="demo">
+      <div class="demo-h"><h3>10. A toast arrives</h3><span class="verdict">Second pass</span></div>
+      <div class="stage"><div class="toast" id="d10" role="status"><svg class="ico"><use href="#i-check"/></svg>Account added</div></div>
+      <button class="btn out play" type="button" data-play="10">Play</button>
+      <dl><dt>Tokens</dt><dd>Arrives over <code>base</code> <code>enter</code> (the existing <code>slideUp</code>, 8px); leaves over <code>fast</code> <code>exit</code></dd><dt>Plays</dt><dd>When there is something to confirm away from the button, for example after a sheet closes.</dd><dt>Reduced</dt><dd>Fades in and out without moving.</dd><dt>Why wait</dt><dd>Demo 5 covers most saves; add toasts where a real gap shows.</dd></dl>
+    </article>
+  </div>
+  <p class="after" style="margin-top:20px"><b>On celebration.</b> Rule M5 says no celebratory animation on a financial event, and none of these is one. The only "well done" in this page is the setup finish state, which is about the app being ready. Paying off a debt, a balance going up, a goal being reached: none of those gets motion.</p>
+</section>
+
+<!-- ================= 5. SECTIONS ================= -->
+<section class="part" id="sections">
+  <h2>5. Separating sections and showing the result</h2>
+  <p class="lede">The Budget page's "Model a change to your budget" zone gets lost on the page. Below is today, then three ways to fix it, each shown on the zone itself and on the whole Budget page. In every option the dashed outline and the "Illustration, not saved" badge still mean "not saved", and the notice stays quiet.</p>
+  <p class="lede">Options A, B and C also use the new plain-language result: the question "If your income stopped" and the answer "Your money would last about 1.5 months".</p>
+
+  <div class="opt">
+    <div class="opt-head"><span class="letter" style="background:var(--neu-bg);color:var(--t2)">0</span><div><h3>Today</h3><p>For reference, drawn from the current components. The outline is faint and the result is the same size as a field label.</p></div></div>
+    <h4 class="sub5">The modelling zone, desktop</h4>
+    <div class="stack"><div class="mock v0 t-light"><div class="zc" data-tpl="zone"></div></div><div class="mock v0 t-dark"><div class="zc" data-tpl="zone"></div></div></div>
+    <h4 class="sub5">The modelling zone, phone</h4>
+    <div class="phones" style="margin-top:0"><div class="mock v0 t-light"><div class="zc" data-tpl="zone"></div></div><div class="mock v0 t-dark"><div class="zc" data-tpl="zone"></div></div></div>
+    <h4 class="sub5">The whole Budget page, desktop (shown at half size)</h4>
+    <div class="pair"><div class="mock v0 half t-light" data-tpl="bpage"></div><div class="mock v0 half t-dark" data-tpl="bpage"></div></div>
+    <h4 class="sub5">The whole Budget page, phone</h4>
+    <div class="phones" style="margin-top:0"><div class="mock v0 t-light" data-tpl="bpage"></div><div class="mock v0 t-dark" data-tpl="bpage"></div></div>
+    
+  </div>
+  <div class="opt">
+    <div class="opt-head"><span class="letter">5A</span><div><h3>Headers and a result card <span class="pick">Recommended</span></h3><p>The smallest change that fixes the problem: every section gets a proper header, and the answer gets a card of its own with a large figure.</p></div></div>
+    <h4 class="sub5">The modelling zone, desktop</h4>
+    <div class="stack"><div class="mock v-a t-light"><div class="zc" data-tpl="zone"></div></div><div class="mock v-a t-dark"><div class="zc" data-tpl="zone"></div></div></div>
+    <h4 class="sub5">The modelling zone, phone</h4>
+    <div class="phones" style="margin-top:0"><div class="mock v-a t-light"><div class="zc" data-tpl="zone"></div></div><div class="mock v-a t-dark"><div class="zc" data-tpl="zone"></div></div></div>
+    <h4 class="sub5">The whole Budget page, desktop (shown at half size)</h4>
+    <div class="pair"><div class="mock v-a half t-light" data-tpl="bpage"></div><div class="mock v-a half t-dark" data-tpl="bpage"></div></div>
+    <h4 class="sub5">The whole Budget page, phone</h4>
+    <div class="phones" style="margin-top:0"><div class="mock v-a t-light" data-tpl="bpage"></div><div class="mock v-a t-dark" data-tpl="bpage"></div></div>
+    <div class="spec">
+      <div class="panel"><h4>What changes</h4><ul><li>Every section opens with an icon tile, a title and one line saying what it is.</li><li>Gaps between sections grow from 20 to 36.</li><li>The dashed outline rises from 1.3:1 to 3.6:1 against the canvas, so it can be seen.</li><li>The result sits in its own card with a figure at 36, to the right of the inputs on desktop and under them on a phone.</li></ul></div>
+      <div class="panel"><h4>The rule for every page</h4><ul><li>Saved sections are cards on the canvas. A modelling zone is the only dashed outline on a page and has no fill.</li><li>A zone holds exactly one result card. Nothing else inside a zone is a card.</li><li>The result card never uses <code>surface.hero</code> or a tint.</li></ul></div>
+      <div class="panel"><h4>Components that change</h4><ul><li><code>ScenarioZone</code>: border goes from <code>border</code> to <code>border.input</code>; gains a result slot.</li><li>New <code>ResultBlock</code> in <code>packages/ui</code>: label, lead-in, figure, note, one supporting row.</li><li><code>SectionHeader</code> (icon tile, title, description) and the section gap in <code>PageBody</code>.</li><li>Each calculator swaps its own outcome markup for <code>ResultBlock</code>.</li></ul></div>
+    </div>
+  </div>
+  <div class="opt">
+    <div class="opt-head"><span class="letter">5B</span><div><h3>Bands, result first</h3><p>The page is split into two halves by a sand band, and the answer is read before the inputs. The strongest separation, and the biggest change to layout rules.</p></div></div>
+    <h4 class="sub5">The modelling zone, desktop</h4>
+    <div class="stack"><div class="mock v-b t-light"><div class="zc" data-tpl="zone"></div></div><div class="mock v-b t-dark"><div class="zc" data-tpl="zone"></div></div></div>
+    <h4 class="sub5">The modelling zone, phone</h4>
+    <div class="phones" style="margin-top:0"><div class="mock v-b t-light"><div class="zc" data-tpl="zone"></div></div><div class="mock v-b t-dark"><div class="zc" data-tpl="zone"></div></div></div>
+    <h4 class="sub5">The whole Budget page, desktop (shown at half size)</h4>
+    <div class="pair"><div class="mock v-b half t-light" data-tpl="bpage"></div><div class="mock v-b half t-dark" data-tpl="bpage"></div></div>
+    <h4 class="sub5">The whole Budget page, phone</h4>
+    <div class="phones" style="margin-top:0"><div class="mock v-b t-light" data-tpl="bpage"></div><div class="mock v-b t-dark" data-tpl="bpage"></div></div>
+    <div class="spec">
+      <div class="panel"><h4>What changes</h4><ul><li>Each section starts with a ruled line and a plain title.</li><li>The modelling zone sits in a full-width sand band that closes the page, so "your figures" and "try a change" are two clear halves.</li><li>The result is pinned above the inputs as a pale teal strip, so the answer is read first.</li></ul></div>
+      <div class="panel"><h4>The rule for every page</h4><ul><li>At most one band per page. It always holds the modelling zone and is always last.</li><li>One tinted result strip per page, never two.</li><li>The result comes before the inputs at every width.</li></ul>
+      <h4>Watch for</h4><ul><li>The layout law says inputs sit beside what they control. Result-above-inputs needs that law changed for zones.</li><li>In dark the band is darker than the page, which reads as a well.</li></ul></div>
+      <div class="panel"><h4>Components that change</h4><ul><li><code>PageBody</code>: a full-width band slot.</li><li><code>ScenarioZone</code>: stronger border, result slot above the body; zones stop using <code>SimulatorSplitLayout</code>.</li><li>New <code>ResultBlock</code> with a strip layout.</li><li>AGENTS.md section 3 and the UX guidelines.</li></ul></div>
+    </div>
+  </div>
+  <div class="opt">
+    <div class="opt-head"><span class="letter">5C</span><div><h3>Accent zone</h3><p>The accent colour is given one job: it marks what is not saved. The zone is impossible to miss.</p></div></div>
+    <h4 class="sub5">The modelling zone, desktop</h4>
+    <div class="stack"><div class="mock v-c opt-a t-light"><div class="zc" data-tpl="zone"></div></div><div class="mock v-c opt-a t-dark"><div class="zc" data-tpl="zone"></div></div></div>
+    <h4 class="sub5">The modelling zone, phone</h4>
+    <div class="phones" style="margin-top:0"><div class="mock v-c opt-a t-light"><div class="zc" data-tpl="zone"></div></div><div class="mock v-c opt-a t-dark"><div class="zc" data-tpl="zone"></div></div></div>
+    <h4 class="sub5">The whole Budget page, desktop (shown at half size)</h4>
+    <div class="pair"><div class="mock v-c opt-a half t-light" data-tpl="bpage"></div><div class="mock v-c opt-a half t-dark" data-tpl="bpage"></div></div>
+    <h4 class="sub5">The whole Budget page, phone</h4>
+    <div class="phones" style="margin-top:0"><div class="mock v-c opt-a t-light" data-tpl="bpage"></div><div class="mock v-c opt-a t-dark" data-tpl="bpage"></div></div>
+    <div class="spec">
+      <div class="panel"><h4>What changes</h4><ul><li>The zone takes the accent tint from section 1 (Damson shown) with a dashed accent outline.</li><li>The result is a white card inside it, right of the inputs on desktop.</li><li>Sections get larger titles and the widest gaps (48), with no tiles or rules.</li></ul></div>
+      <div class="panel"><h4>The rule for every page</h4><ul><li>The accent tint means "not saved" and nothing else may use it. The check-in card in section 1 would go back to plain.</li><li>One zone per page, so one tinted area per page.</li><li>The dashed outline and the badge stay, so the meaning never rests on colour alone.</li></ul>
+      <h4>Watch for</h4><ul><li>This is the loudest zone. The saved sections above it now look quieter than the illustration, which is the opposite of today's intent.</li></ul></div>
+      <div class="panel"><h4>Components that change</h4><ul><li>Needs the <code>accent</code> tokens first (A or B in section 1; not possible with C or D).</li><li><code>ScenarioZone</code> styles and a result slot.</li><li>New <code>ResultBlock</code>.</li><li>Section gap and heading size in <code>PageBody</code>.</li></ul></div>
+    </div>
+  </div>
+  <h3 style="font-size:20px;margin-top:40px">The result block with other labels</h3>
+  <p class="lede">The block has four slots, so the final wording can be dropped in without a layout change: a label, an optional lead-in, the figure, and a note.</p>
+  <div class="labels" style="margin-top:16px">
+    <div><div class="z-result"><p class="z-q">If your income stopped</p><p class="z-a"><span class="z-lead">Your money would last about</span><b class="z-fig">1.5 months</b></p></div><p class="slot">Leading candidate: label as a question, lead-in, figure</p></div>
+    <div><div class="z-result"><p class="z-q">How long your money would last</p><p class="z-a"><b class="z-fig">1.5 months</b></p></div><p class="slot">A statement label, no lead-in</p></div>
+    <div><div class="z-result"><p class="z-q">Months of cover</p><p class="z-a"><b class="z-fig">1.5 months</b></p></div><p class="slot">Today's label in the new block</p></div>
+  </div>
+</section>
+
+<!-- ================= SUMMARY ================= -->
+<section class="part" id="summary">
+  <h2>Summary</h2>
+  <div class="sum">
+    <div class="lead">
+      <h3>Recommended combination</h3>
+      <ul>
+        <li><b>Accent A, Damson</b>, with D's bolder tints alongside it</li>
+        <li><b>Setup 2A</b>, the ring and next step, borrowing 2C's finish state</li>
+        <li><b>Scenes 3A:</b> the four "now" scenes and the style sheet</li>
+        <li><b>Motion:</b> demos 1, 3, 4, 5 and 7</li>
+        <li><b>Sections 5A:</b> headers and a result card, on every page</li>
+      </ul>
+      <p>Plum is the one free hue that is warm, sits well against teal and cannot be read as good or bad. The ring row says what to do next in one line. The scenes and five animations add life only where the user has just done something or has nothing yet.</p>
+    </div>
+    <div class="panel">
+      <h4>Cost to build</h4>
+      <ul>
+        <li><b>PR 1, tokens:</b> the <code>accent</code> group, three motion tokens, contrast tests, native tokens regenerated. Touches <code>packages/tokens</code>, the Panda preset in <code>packages/ui</code>, AGENTS.md section 2 and the style guide.</li>
+        <li><b>PR 2, scenes:</b> four scenes and the accent shape in <code>packages/ui</code> Illustration; empty states and check-in in <code>apps/web</code>.</li>
+        <li><b>PR 3, setup row:</b> a small ProgressRing in <code>packages/ui</code>; SetupChecklist in <code>apps/web</code>; "Not for me" needs one saved preference.</li>
+        <li><b>PR 4, motion:</b> the five first-pass animations in <code>packages/ui</code> and the check-in.</li>
+        <li><b>PR 5, sections:</b> <code>ResultBlock</code>, <code>SectionHeader</code>, <code>ScenarioZone</code> and <code>PageBody</code> in <code>packages/ui</code>; every page with a zone in <code>apps/web</code>.</li>
+        <li><b>Later, one PR:</b> marketing scenes and the second-pass motion.</li>
+      </ul>
+      <p style="margin-top:10px">Five PRs now, one later. Choosing D alone takes the accent tokens out of PR 1.</p>
+    </div>
+    <div class="panel">
+      <h4>What affects the mobile app</h4>
+      <ul>
+        <li>Accent and motion tokens reach mobile through the generated native tokens, so they must land there in PR 1.</li>
+        <li>Scenes should be stored as shape lists, not web-only SVG, so mobile can draw the same ones.</li>
+        <li>The ring, the setup row, the result block and the section header join the parity matrix in CROSS-PLATFORM.</li>
+        <li>Demo 3 uses the platform's own screen transition on mobile (rule M6); the other four can match the web timings.</li>
+        <li>Mobile must honour the system reduce-motion setting in the same way.</li>
+      </ul>
+      <h4 style="margin-top:14px">Rules that would change</h4>
+      <ul><li><code>accent</code> becomes a seventh colour namespace.</li><li>M5 gains one line: the setup finish state is allowed.</li></ul>
+    </div>
+  </div>
+</section>
+
+<footer>Options only. No app, token or component file was changed. Colours and motion values are copied from <code>packages/tokens</code> as of 15 November 2026.</footer>
+</main>
+
+<!-- ================= TEMPLATES ================= -->
+<template id="dash">
+  <div class="d-hero">
+    <div><p class="d-hero-label">Net worth</p><p class="d-hero-fig">£184,250</p><p class="d-hero-sub">From your saved figures, 3 November</p></div>
+    <svg class="d-fl" viewBox="0 0 128 96" aria-hidden="true"><circle cx="92" cy="50" r="30" fill="var(--fl-halo)"/><circle cx="92" cy="50" r="17" fill="var(--fl-sun)"/></svg>
+  </div>
+  <div class="d-kpis">
+    <div class="d-kpi"><span>Savings</span><b>£12,400</b></div>
+    <div class="d-kpi"><span>Debts</span><b>£3,150</b></div>
+    <div class="d-kpi"><span>Pension</span><b>£48,900</b></div>
+  </div>
+  <div class="d-grid">
+    <section class="d-card d-chart">
+      <header><span class="tile"><svg><use href="#i-chart"/></svg></span><h4>Over the last six months</h4></header>
+      <svg class="plot" viewBox="0 0 300 110" aria-hidden="true">
+        <g stroke="var(--grid)" stroke-width="1"><path d="M0 20h300M0 50h300M0 80h300M0 108h300"/></g>
+        <path d="M6 96C60 94 100 90 150 84S250 72 294 66V108H6z" fill="var(--s2)" opacity="var(--s2-area)"/>
+        <path d="M6 96C60 94 100 90 150 84S250 72 294 66" fill="none" stroke="var(--s2)" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 6"/>
+        <path d="M6 70C50 66 80 54 120 50S190 34 230 28 280 20 294 16" fill="none" stroke="var(--chart-pri)" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div class="legend"><span><i></i>Net worth</span><span><i class="two"></i>Pension</span></div>
+    </section>
+    <section class="d-card d-ci">
+      <header><span class="tile"><svg><use href="#i-cal"/></svg></span><h4>Monthly check-in</h4></header>
+      <p>Update your balances for November. It takes about three minutes.</p>
+      <div class="row"><button class="btn" type="button">Start check-in</button></div>
+    </section>
+  </div>
+  <p class="d-notice"><svg class="ico"><use href="#i-info"/></svg><span>Pension figures are estimates based on what you have entered.</span></p>
+  <div class="d-empty"><svg class="scene" viewBox="0 0 240 170" aria-hidden="true"><use href="#sc-savings" width="240" height="170"/></svg><div><p class="cap" style="margin:0">On another page: an empty state</p><b>No savings accounts yet</b><p>Add an account to see its rate and balance here.</p></div></div>
+</template>
+
+<template id="su-a-c">
+  <div class="su"><div class="su-row">
+    <svg class="ring" viewBox="0 0 36 36" role="img" aria-label="4 of 6 done"><circle class="trk" cx="18" cy="18" r="15"/><circle class="prg" cx="18" cy="18" r="15"/></svg>
+    <div class="su-txt"><div class="su-title">Finish setting up</div><div class="su-sub"><span class="num">4 of 6 done.</span> <span class="only-w">Next: add your pension details</span><a class="only-n" href="#setup">Add pension details</a></div></div>
+    <a class="btn only-w" href="#setup">Add pension details</a>
+    <button class="icb" type="button" aria-label="Show setup steps"><svg class="ico"><use href="#i-chev"/></svg></button>
+    <button class="icb" type="button" aria-label="Hide setup checklist"><svg class="ico"><use href="#i-x"/></svg></button>
+  </div></div>
+</template>
+<template id="su-a-e">
+  <div class="su"><div class="su-row">
+    <svg class="ring" viewBox="0 0 36 36" role="img" aria-label="4 of 6 done"><circle class="trk" cx="18" cy="18" r="15"/><circle class="prg" cx="18" cy="18" r="15"/></svg>
+    <div class="su-txt"><div class="su-title">Finish setting up</div><div class="su-sub"><span class="num">4 of 6 done</span></div></div>
+    <button class="icb up" type="button" aria-label="Hide setup steps"><svg class="ico"><use href="#i-chev"/></svg></button>
+    <button class="icb" type="button" aria-label="Hide setup checklist"><svg class="ico"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="su-body"><ul class="su-list">
+    <li class="su-next"><span class="dot"></span><div><b>Add your pension details</b><p>Add what your employer pays in, and any other pension pots.</p><div class="su-acts"><a class="btn" href="#setup">Add pension details</a><button class="lnk" type="button">Not for me</button></div></div></li>
+    <li><span class="dot"></span><div>Add self-employed or rental income <button class="lnk" type="button" style="padding:0 6px;min-height:0">Not for me</button></div></li>
+    <li><span class="dot done"><svg class="ico"><use href="#i-check"/></svg></span><span class="done-t">Monthly spending added</span></li>
+    <li><span class="dot done"><svg class="ico"><use href="#i-check"/></svg></span><span class="done-t">Accounts added</span></li>
+    <li><span class="dot done"><svg class="ico"><use href="#i-check"/></svg></span><span class="done-t">Savings rates added</span></li>
+    <li><span class="dot done"><svg class="ico"><use href="#i-check"/></svg></span><span class="done-t">Mortgage details added</span></li>
+  </ul></div></div>
+</template>
+
+<template id="su-b-c">
+  <div class="su"><div class="su-row">
+    <span class="track" role="img" aria-label="4 of 6 done"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>
+    <div class="su-txt"><div class="su-title">Finish setting up</div><div class="su-sub"><span class="num">4 of 6 done.</span> Next: pension details</div></div>
+    <button class="icb" type="button" aria-label="Show setup steps"><svg class="ico"><use href="#i-chev"/></svg></button>
+    <button class="icb" type="button" aria-label="Hide setup checklist"><svg class="ico"><use href="#i-x"/></svg></button>
+  </div></div>
+</template>
+<template id="su-b-e">
+  <div class="su"><div class="su-row">
+    <span class="track" role="img" aria-label="4 of 6 done"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>
+    <div class="su-txt"><div class="su-title">Finish setting up</div><div class="su-sub"><span class="num">4 of 6 done</span></div></div>
+    <button class="icb up" type="button" aria-label="Hide setup steps"><svg class="ico"><use href="#i-chev"/></svg></button>
+    <button class="icb" type="button" aria-label="Hide setup checklist"><svg class="ico"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="cards" tabindex="0" role="list" aria-label="Setup steps">
+    <div class="sc-card" role="listitem"><svg class="scene" viewBox="0 0 240 170" aria-hidden="true"><use href="#sc-pension" width="240" height="170"/></svg><b>Pension details</b><small>What your employer pays in, and any other pots.</small><a class="btn" href="#setup">Add pension details</a><button class="lnk" type="button" style="align-self:flex-start;padding:4px 0">Not for me</button></div>
+    <div class="sc-card" role="listitem"><svg class="scene" viewBox="0 0 240 170" aria-hidden="true"><use href="#sc-income" width="240" height="170"/></svg><b>Self-employed or rental income</b><small>For an estimate of your Self Assessment bill.</small><a class="btn out" href="#setup">Open Self Assessment</a><button class="lnk" type="button" style="align-self:flex-start;padding:4px 0">Not for me</button></div>
+    <div class="sc-card is-done" role="listitem"><svg class="scene" viewBox="0 0 240 170" aria-hidden="true"><use href="#sc-budget" width="240" height="170"/></svg><b>Monthly spending</b><span class="state"><svg class="ico"><use href="#i-check"/></svg>Added</span></div>
+    <div class="sc-card is-done" role="listitem"><svg class="scene" viewBox="0 0 240 170" aria-hidden="true"><use href="#sc-accounts" width="240" height="170"/></svg><b>Accounts</b><span class="state"><svg class="ico"><use href="#i-check"/></svg>Added</span></div>
+    <div class="sc-card is-done" role="listitem"><svg class="scene" viewBox="0 0 240 170" aria-hidden="true"><use href="#sc-savings" width="240" height="170"/></svg><b>Savings rates</b><span class="state"><svg class="ico"><use href="#i-check"/></svg>Added</span></div>
+    <div class="sc-card is-done" role="listitem"><svg class="scene" viewBox="0 0 240 170" aria-hidden="true"><use href="#sc-mortgage" width="240" height="170"/></svg><b>Mortgage details</b><span class="state"><svg class="ico"><use href="#i-check"/></svg>Added</span></div>
+  </div></div>
+</template>
+
+<template id="su-c-c">
+  <div class="su su-c"><div class="su-row">
+    <div class="su-txt"><div class="su-title">Finish setting up: <span class="num">4 of 6 done</span></div></div>
+    <span class="left only-w">Next: pension details</span>
+    <button class="icb" type="button" aria-label="Show setup steps"><svg class="ico"><use href="#i-chev"/></svg></button>
+    <button class="icb" type="button" aria-label="Hide setup checklist"><svg class="ico"><use href="#i-x"/></svg></button>
+  </div><div class="pbar"><i></i></div></div>
+</template>
+<template id="su-c-e">
+  <div class="su su-c"><div class="su-row">
+    <div class="su-txt"><div class="su-title">Finish setting up: <span class="num">4 of 6 done</span></div></div>
+    <button class="icb up" type="button" aria-label="Hide setup steps"><svg class="ico"><use href="#i-chev"/></svg></button>
+    <button class="icb" type="button" aria-label="Hide setup checklist"><svg class="ico"><use href="#i-x"/></svg></button>
+  </div><div class="pbar"><i></i></div>
+  <ul class="cols">
+    <li><span class="o"></span><a href="#setup">Add your pension details</a><button class="lnk" type="button" style="padding:0 4px;min-height:0;margin-left:auto">Not for me</button></li>
+    <li><span class="o"></span><a href="#setup">Add self-employed or rental income</a><button class="lnk" type="button" style="padding:0 4px;min-height:0;margin-left:auto">Not for me</button></li>
+    <li><svg class="ico"><use href="#i-check"/></svg><span style="color:var(--t3)">Monthly spending added</span></li>
+    <li><svg class="ico"><use href="#i-check"/></svg><span style="color:var(--t3)">Accounts added</span></li>
+    <li><svg class="ico"><use href="#i-check"/></svg><span style="color:var(--t3)">Savings rates added</span></li>
+    <li><svg class="ico"><use href="#i-check"/></svg><span style="color:var(--t3)">Mortgage details added</span></li>
+  </ul></div>
+</template>
+<template id="su-c-f">
+  <div class="su su-c"><div class="fin">
+    <svg class="scene" viewBox="150 14 60 50" aria-hidden="true"><path class="s-stem" d="M168 58V38"/><path class="s-sage" d="M168 44c-13 0-19-6-19-17 12 0 19 6 19 17z"/><path class="s-leaf" d="M168 38c11 0 17-5 17-14-11 0-17 5-17 14z"/></svg>
+    <div class="su-txt"><div class="su-title">Setup finished</div><div class="su-sub">Flump has what it needs for the pages you use.</div></div>
+    <button class="icb" type="button" aria-label="Hide"><svg class="ico"><use href="#i-x"/></svg></button>
+  </div></div>
+</template>
+<template id="zone">
+  <section class="z">
+    <header class="z-head"><h4>Model a change to your budget</h4><span class="z-badge"><svg class="ico"><use href="#i-dash"/></svg>Illustration, not saved</span><p class="z-basis">Starting from your saved budget and accounts.</p></header>
+    <div class="z-split">
+      <div class="z-inputs">
+        <div class="fld"><b>Redundancy pay or lump sum</b><small>Added to what you can draw on</small><i>£0</i></div>
+        <div class="fld"><b>Spending you would cut each month</b><i>£0</i></div>
+      </div>
+      <div class="z-result">
+        <p class="z-q"><span class="old">Months of cover</span><span class="new">If your income stopped</span></p>
+        <p class="z-a"><span class="new z-lead">Your money would last about</span><b class="z-fig">1.5 months</b></p>
+        <p class="z-why">An estimate of how long the money you can draw on would last if your income stopped, covering essential spending and minimum debt payments.</p>
+        <dl class="z-row"><dt>Money to draw on</dt><dd>£12,302</dd></dl>
+      </div>
+    </div>
+    <div class="z-more">More options<svg class="ico"><use href="#i-chev"/></svg></div>
+    <p class="z-notice"><svg class="ico"><use href="#i-info"/></svg><span>Guidance, not advice. Flump works from the figures you enter and shows estimates, which can differ from what happens in practice. It is not financial, tax, investment or debt advice.</span></p>
+  </section>
+</template>
+<template id="bpage">
+  <div class="bp">
+    <div class="bp-title"><h3>Your budget</h3><p>Your income, spending and how long your money lasts.</p></div>
+    <div class="d-kpis" style="margin:0"><div class="d-kpi"><span>Income</span><b>£3,200</b></div><div class="d-kpi"><span>Spending</span><b>£2,740</b></div><div class="d-kpi"><span>Left over each month</span><b>£460</b></div></div>
+    <section class="bp-sec"><header><span class="tile"><svg><use href="#i-chart"/></svg></span><div><h4>Where your money goes</h4><p>Your monthly spending by group.</p></div></header>
+      <div class="bp-body"><div class="bars"><span>Housing</span><i style="width:100%"></i><span>£1,150</span><span>Living costs</span><i style="width:68%"></i><span>£780</span><span>Bills</span><i style="width:37%"></i><span>£420</span><span>Extras</span><i style="width:34%"></i><span>£390</span></div></div></section>
+    <section class="bp-sec"><header><span class="tile"><svg><use href="#i-cal"/></svg></span><div><h4>Income and spending</h4><p>The figures you have saved. Change them at any time.</p></div></header>
+      <div class="bp-body"><ul class="ed"><li><span>Take-home pay</span><span>£3,200</span></li><li><span>Rent</span><span>£1,150</span></li><li><span>Food and travel</span><span>£780</span></li></ul><button class="btn out" type="button">Add a category</button></div></section>
+    <div class="bp-band"><div class="zc" data-tpl="zone"></div></div>
+  </div>
+</template>
+
+<script>
+(function(){
+  var doc=document.documentElement;
+  // Fill mock-ups from templates
+  for(var pass=0;pass<3;pass++){document.querySelectorAll('[data-tpl]:not([data-filled])').forEach(function(el){
+    var t=document.getElementById(el.getAttribute('data-tpl'));
+    el.setAttribute('data-filled','');
+    if(t) el.appendChild(t.content.cloneNode(true));
+  });}
+  // Theme
+  var themeBtns=document.querySelectorAll('[data-theme-set]');
+  function showTheme(v){themeBtns.forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-theme-set')===v));});}
+  showTheme(doc.getAttribute('data-theme')||'auto');
+  themeBtns.forEach(function(b){b.addEventListener('click',function(){
+    var v=b.getAttribute('data-theme-set');
+    if(v==='auto') doc.removeAttribute('data-theme'); else doc.setAttribute('data-theme',v);
+    try{ if(v==='auto') localStorage.removeItem('e17-theme'); else localStorage.setItem('e17-theme',v);}catch(e){}
+    showTheme(v);
+  });});
+  // Reduced motion switch
+  var rmBtn=document.getElementById('rm');
+  function rm(){return doc.classList.contains('rm');}
+  rmBtn.setAttribute('aria-pressed',String(rm()));
+  rmBtn.addEventListener('click',function(){doc.classList.toggle('rm');rmBtn.setAttribute('aria-pressed',String(rm()));});
+
+  function restart(el,cls){el.classList.remove(cls);void el.getBoundingClientRect();el.classList.add(cls);}
+  var gbp=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'});
+  var st={v1:false,v2:false,ci:2,ring:3,saveT:0,toastT:0};
+  var accounts=['Joint account','Current account','Easy access saver','Cash ISA','Credit card'];
+  var plays={
+    1:function(){
+      var box=document.getElementById('d1'),b=box.querySelector('b');st.v1=!st.v1;
+      var next=gbp.format(st.v1?2315.4:1840);
+      if(rm()){b.textContent=next;return;}
+      box.classList.add('out');
+      setTimeout(function(){b.textContent=next;box.classList.remove('out');restart(box,'wash');},120);
+    },
+    2:function(){
+      var b=document.getElementById('d2'),from=st.v2?2315.4:1840,to=st.v2?1840:2315.4;st.v2=!st.v2;
+      if(rm()){b.textContent=gbp.format(to);return;}
+      var t0=performance.now();
+      (function step(now){var p=Math.min(1,(now-t0)/600),e=1-Math.pow(1-p,4);b.textContent=gbp.format(from+(to-from)*e);if(p<1)requestAnimationFrame(step);})(t0);
+    },
+    3:function(){
+      var stage=document.getElementById('d3'),old=stage.querySelector('.ci-card');
+      st.ci=st.ci%5+1;
+      var card=document.createElement('div');card.className='ci-card enter';
+      card.innerHTML='<span>Account '+st.ci+' of 5</span><b>'+accounts[st.ci-1]+'</b><em>What is the balance today?</em>';
+      old.classList.remove('enter');old.classList.add('leave');
+      setTimeout(function(){old.remove();stage.appendChild(card);},rm()?0:120);
+    },
+    4:function(){
+      st.ring=st.ring>=6?3:st.ring+1;
+      document.getElementById('d4').style.strokeDashoffset=String(94.25*(1-st.ring/6));
+      document.getElementById('d4t').textContent=st.ring===6?'Setup finished':st.ring+' of 6 done';
+    },
+    5:function(){
+      var b=document.getElementById('d5');clearTimeout(st.saveT);
+      b.innerHTML='<svg class="ico"><use href="#i-check"/></svg><span>Saved</span>';restart(b,'saved');
+      st.saveT=setTimeout(function(){b.classList.remove('saved');b.innerHTML='<span>Save balance</span>';},2000);
+    },
+    6:function(){restart(document.getElementById('d6'),'go');},
+    7:function(){restart(document.getElementById('d7'),'go');},
+    10:function(){
+      var t=document.getElementById('d10');clearTimeout(st.toastT);t.classList.remove('bye');restart(t,'show');
+      st.toastT=setTimeout(function(){t.classList.remove('show');t.classList.add('bye');},2600);
+    }
+  };
+  document.querySelectorAll('[data-play]').forEach(function(b){b.addEventListener('click',function(){plays[b.getAttribute('data-play')]();});});
+  // Tabs
+  var tabs=document.getElementById('d9'),ind=tabs.querySelector('.ind');
+  tabs.querySelectorAll('button').forEach(function(b,i){b.addEventListener('click',function(){
+    tabs.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-selected',String(x===b));});
+    ind.style.transform='translateX('+(i*96)+'px)';
+  });});
+})();
+</script>
+</body>
+</html>
