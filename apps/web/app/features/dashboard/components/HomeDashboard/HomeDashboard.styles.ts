@@ -2,19 +2,11 @@ import { cva } from "@repo/ui/styled-system/css";
 
 export const sectionsRegion = cva({
   base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4",
-    minWidth: 0,
     // Places the section cards so the first-view fold falls between cards or through a card's
     // padding, never between a card's label and its figure, for both seeded households at
     // 1280x800, 1440x900 and 390x844 (checked 2026-11-14; ruling on the first-view count).
     marginTop: "3.5",
   },
-});
-
-export const sectionHeading = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
 });
 
 export const widgetGrid = cva({

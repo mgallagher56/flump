@@ -7,10 +7,11 @@ import {
   Icon,
   PageBody,
   PageHeader,
+  PageSection,
   ProjectionNotice,
   VisuallyHidden,
 } from "@repo/ui";
-import { SlidersHorizontal } from "lucide-react";
+import { LayoutGrid, SlidersHorizontal } from "lucide-react";
 import { type FC, type ReactNode, useMemo, useRef, useState } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { NetWorthBasisLine } from "~/features/accounts/components/NetWorthBasisLine";
@@ -48,7 +49,6 @@ import {
   dashboardHeader,
   housekeepingGroup,
   noticeLeadLine,
-  sectionHeading,
   sectionsRegion,
   showHideButton,
   showHideText,
@@ -341,10 +341,15 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         </div>
       )}
 
-      <section aria-labelledby="dashboard-sections-title" className={sectionsRegion()}>
-        <h2 className={sectionHeading()} id="dashboard-sections-title">
-          Your sections
-        </h2>
+      <PageSection
+        className={sectionsRegion()}
+        description="A short summary of each area of your money, with a link to its page."
+        headingId="dashboard-sections-title"
+        icon={LayoutGrid}
+        id="dashboard-sections"
+        title="Your sections"
+        tone="accent"
+      >
         {cards.length === 0 ? (
           <DashboardEmptyState
             reason={anyShown ? "setup" : "hidden"}
@@ -391,7 +396,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             }
           />
         ) : null}
-      </section>
+      </PageSection>
 
       {footer}
 
