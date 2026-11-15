@@ -5,10 +5,15 @@ import { Illustration } from "./Illustration";
 import { illustrationScenes } from "./Illustration.scenes";
 
 describe("Illustration primitive", () => {
-  it("offers the four scenes", () => {
+  it("offers all nine scenes from the shared shape definitions", () => {
     expect(illustrationScenes).toEqual([
       "empty-accounts",
       "empty-goals",
+      "empty-savings",
+      "empty-debt",
+      "empty-pension",
+      "check-in",
+      "check-in-done",
       "onboarding",
       "not-found",
     ]);
@@ -21,9 +26,18 @@ describe("Illustration primitive", () => {
     expect(svg?.getAttribute("focusable")).toBe("false");
     expect(svg?.getAttribute("role")).toBe("presentation");
     expect(svg?.getAttribute("data-scene")).toBe(scene);
+    expect(svg?.hasAttribute("data-scene-settle")).toBe(true);
     expect(svg?.getAttribute("data-testid")).toBe("art");
     expect(svg?.querySelectorAll("title, text")).toHaveLength(0);
+    expect(svg?.querySelector('[data-scene-part="sun"]')).not.toBeNull();
     expect(svg?.children.length).toBeGreaterThan(3);
+  });
+
+  it("tags sprout shapes on scenes that grow a sprout", () => {
+    for (const scene of ["empty-pension", "onboarding"] as const) {
+      const { container } = render(<Illustration scene={scene} />);
+      expect(container.querySelector('[data-scene-part="sprout"]')).not.toBeNull();
+    }
   });
 
   it("never embeds a raw colour", () => {

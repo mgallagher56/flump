@@ -4,6 +4,10 @@ export const checkInIntro = cva({
   base: { margin: 0, textStyle: "body.sm", color: "text.secondary" },
 });
 
+export const checkInScene = cva({
+  base: { display: "flex", justifyContent: "center" },
+});
+
 export const monthPicker = cva({
   base: {
     display: "grid",

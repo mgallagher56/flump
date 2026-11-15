@@ -5,6 +5,7 @@ import {
   controlProps,
   Dialog,
   FormField,
+  Illustration,
   Select,
   Sheet,
   StatusBadge,
@@ -34,6 +35,7 @@ import {
   accountRow,
   accountStatus,
   checkInIntro,
+  checkInScene,
   connectedValue,
   footerRow,
   monthPicker,
@@ -139,10 +141,15 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
         onDone={() => handleOpenChange(false)}
         summary={summary}
       />
-    ) : phone ? (
-      <CheckInCard checkIn={checkIn} />
     ) : (
-      <CheckInList checkIn={checkIn} />
+      <>
+        {showInstructions ? (
+          <div className={checkInScene()}>
+            <Illustration id="checkin-start-scene" scene="check-in" size="sm" />
+          </div>
+        ) : null}
+        {phone ? <CheckInCard checkIn={checkIn} /> : <CheckInList checkIn={checkIn} />}
+      </>
     );
 
   // Opened with every account already recorded, only the short summary shows: from md that is a

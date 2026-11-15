@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { type IllustrationScene, scenes } from "./Illustration.scenes";
+import { type IllustrationScene, SceneShapeList, sceneDefinitions } from "./Illustration.scenes";
 import { illustrationRecipe } from "./Illustration.styles";
 
 export type { IllustrationScene } from "./Illustration.scenes";
@@ -17,19 +17,19 @@ export interface IllustrationProps {
  * an outcome.
  */
 export const Illustration: FC<IllustrationProps> = ({ scene, size = "md", id }) => {
-  const Scene = scenes[scene];
   return (
     <svg
       id={id}
       data-testid={id}
       data-scene={scene}
+      data-scene-settle=""
       aria-hidden="true"
       className={illustrationRecipe({ size })}
       focusable="false"
       role="presentation"
       viewBox="0 0 240 180"
     >
-      <Scene />
+      <SceneShapeList shapes={sceneDefinitions[scene]} />
     </svg>
   );
 };

@@ -64,6 +64,7 @@ describe("CheckInSheet", () => {
     it("goes account by account in one list from md, skipping connected accounts", () => {
       setup();
       expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
+      expect(screen.getByTestId("checkin-start-scene").getAttribute("data-scene")).toBe("check-in");
       expect(screen.getByTestId("checkin-list")).toBeDefined();
       expect(screen.getByText("Current balance: £1,500")).toBeDefined();
       expect(screen.getByRole("textbox", { name: /New balance.*Current account/ })).toBeDefined();

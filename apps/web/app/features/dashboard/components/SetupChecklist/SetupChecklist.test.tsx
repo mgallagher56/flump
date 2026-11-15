@@ -32,14 +32,23 @@ const renderChecklist = (props: Partial<SetupChecklistProps> = {}) =>
 describe("SetupChecklist", () => {
   beforeEach(() => window.localStorage.clear());
 
-  it("is one collapsed row that says how far setup has got", () => {
+  it("renders the compact 2A row with ProgressRing, next step and single collapsed action", () => {
     renderChecklist();
-    const toggle = screen.getByRole("button", { name: "Finish setting up: 2 of 5 done" });
+    const ring = screen.getByRole("progressbar", { name: "Setup progress" });
+    expect(ring.getAttribute("aria-valuetext")).toBe("2 of 5");
+    expect(ring.textContent).toBe("2/5");
+
+    const toggle = screen.getByRole("button", { name: /Finish setting up/ });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByRole("link")).toBeNull();
+    expect(toggle.textContent).toContain("Next: Add your savings rates");
+
+    const collapsedLinks = screen.getAllByRole("link");
+    expect(collapsedLinks).toHaveLength(1);
+    expect(collapsedLinks[0]?.textContent).toBe("Add savings rates");
+    expect(collapsedLinks[0]?.getAttribute("href")).toBe("/app/savings");
   });
 
-  it("expands on click to list the steps left, each with one link", () => {
+  it("expands on click to highlight the next step and offer Not for me on unfinished steps", () => {
     renderChecklist();
     fireEvent.click(screen.getByRole("button", { name: /Finish setting up/ }));
     expect(screen.getByRole("link", { name: "Add savings rates" }).getAttribute("href")).toBe(
@@ -47,9 +56,38 @@ describe("SetupChecklist", () => {
     );
     expect(screen.getByRole("link", { name: "Add pension details" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Add mortgage details" })).toBeTruthy();
-    // Done steps have no link.
+    // Done steps have no link or Not for me button.
     expect(screen.queryByRole("link", { name: "Add account" })).toBeNull();
     expect(screen.getAllByLabelText("Done")).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: /Not for me/ })).toHaveLength(3);
+    expect(document.querySelector('[data-setup-next="true"]')?.textContent).toContain(
+      "Add your savings rates",
+    );
+  });
+
+  it("marks skipped steps via onSkipStep", () => {
+    const onSkipStep = vi.fn();
+    renderChecklist({ onSkipStep });
+    fireEvent.click(screen.getByRole("button", { name: /Finish setting up/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Not for me, skip Add your savings rates" }),
+    );
+    expect(onSkipStep).toHaveBeenCalledWith("savings");
+  });
+
+  it("shows the 2C Setup finished card with sprout when the last step completes during the visit", () => {
+    renderChecklist({
+      completedSteps: ["budget", "accounts", "savings", "pension"],
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Finish setting up/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Not for me, skip Add your mortgage details" }),
+    );
+    expect(screen.getByTestId("setup-checklist-finished")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Setup finished" })).toBeTruthy();
+    expect(screen.getByText("Flump has what it needs for the pages you use.")).toBeTruthy();
+    expect(document.querySelector("[data-setup-finished]")).not.toBeNull();
+    expect(document.querySelector('[data-scene-part="sprout"]')).not.toBeNull();
   });
 
   it("only lists app housekeeping: no forecasts or scenarios", () => {
@@ -70,7 +108,7 @@ describe("SetupChecklist", () => {
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("disappears when every step is done", () => {
+  it("disappears when every step is already done on mount", () => {
     const { container } = renderChecklist({
       completedSteps: ["budget", "accounts", "savings", "pension", "mortgage"],
     });
