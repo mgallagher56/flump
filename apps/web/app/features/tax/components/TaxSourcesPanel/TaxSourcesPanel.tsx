@@ -1,9 +1,10 @@
 import { isRecordActiveInTaxYear, type TaxRecord } from "@flump/finance-engine";
-import { Briefcase, Home, Laptop, type LucideIcon, PiggyBank } from "lucide-react";
+import { PageSection } from "@repo/ui";
+import { Briefcase, Home, Laptop, Layers, type LucideIcon, PiggyBank } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { SOURCE_OPTIONS } from "../../tax-labels";
 import TaxIncomeSectionCard from "../TaxIncomeSectionCard";
-import { header, heading, list, root } from "./TaxSourcesPanel.styles";
+import { list } from "./TaxSourcesPanel.styles";
 
 const SOURCE_ICON: Record<(typeof SOURCE_OPTIONS)[number]["value"], LucideIcon> = {
   "self-employed": Laptop,
@@ -40,13 +41,15 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({ records, taxYear, ac
   );
 
   return (
-    <section aria-labelledby="tax-sources-heading" className={root()}>
-      <div className={header()}>
-        <h2 className={heading()} id="tax-sources-heading">
-          Income sources
-        </h2>
-        {action}
-      </div>
+    <PageSection
+      action={action}
+      description="Your income in this tax year, by where it comes from."
+      domain="tax"
+      headingId="tax-sources-heading"
+      icon={Layers}
+      id="tax-sources"
+      title="Income sources"
+    >
       <ul className={list()}>
         {ORDER.map((source) => (
           <TaxIncomeSectionCard
@@ -60,7 +63,7 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({ records, taxYear, ac
           />
         ))}
       </ul>
-    </section>
+    </PageSection>
   );
 };
 
