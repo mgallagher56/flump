@@ -9,14 +9,6 @@ export const listRoot = cva({
   },
 });
 
-export const group = cva({
-  base: { display: "flex", flexDirection: "column", gap: "12px", minWidth: 0 },
-});
-
-export const groupTitle = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
-});
-
 export const accountCell = cva({
   base: { display: "flex", alignItems: "center", gap: "12px", minWidth: 0 },
 });

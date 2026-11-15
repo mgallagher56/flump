@@ -12,9 +12,11 @@ import {
   IconTile,
   type IconTileDomain,
   Money,
+  PageSection,
 } from "@repo/ui";
 import {
   CreditCard,
+  EyeOff,
   HandCoins,
   Home,
   Landmark,
@@ -35,9 +37,7 @@ import {
   accountLink,
   accountName,
   accountType,
-  group,
   groupsGrid,
-  groupTitle,
   isaLink,
   listInCard,
   listRoot,
@@ -209,16 +209,25 @@ const toItem = (row: AccountRow): DataListItem => {
 interface GroupProps {
   id: string;
   title: string;
+  /** One line saying what the group is (E17 5A section header). */
+  description: string;
+  icon: LucideIcon;
+  domain?: "net-worth" | "debt";
   rows: AccountRow[];
   total?: { text: string; value: number };
   footnote?: string;
 }
 
-const Group: FC<GroupProps> = ({ id, title, rows, total, footnote }) => (
-  <section aria-labelledby={id} className={group()}>
-    <h2 className={groupTitle()} id={id}>
-      {title}
-    </h2>
+const Group: FC<GroupProps> = ({ id, title, description, icon, domain, rows, total, footnote }) => (
+  <PageSection
+    description={description}
+    domain={domain}
+    headingId={id}
+    icon={icon}
+    id={id.replace(/-heading$/, "")}
+    title={title}
+    tone={domain ? undefined : "neutral"}
+  >
     <Card padding="none">
       <DataList
         className={listInCard()}
@@ -237,7 +246,7 @@ const Group: FC<GroupProps> = ({ id, title, rows, total, footnote }) => (
       ) : null}
     </Card>
     {footnote ? <p className={note()}>{footnote}</p> : null}
-  </section>
+  </PageSection>
 );
 
 /**
@@ -298,6 +307,9 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
       <div className={groupsGrid()}>
         {own.length > 0 ? (
           <Group
+            description="Money and property you own, from your saved balances."
+            domain="net-worth"
+            icon={Wallet}
             id="accounts-own-heading"
             rows={own}
             title="What you own"
@@ -307,7 +319,10 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         ) : null}
         {owe.length > 0 ? (
           <Group
+            description="Your debts, from your saved balances."
+            domain="debt"
             footnote={countedStudentLoan ? studentLoanFootnote(true) : undefined}
+            icon={CreditCard}
             id="accounts-owe-heading"
             rows={owe}
             title="What you owe"
@@ -317,7 +332,9 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         {notCounted.length > 0 ? (
           <Group
             // The heading and the line under net worth already say it is left out; keep the facts.
+            description="Accounts your net worth choices leave out."
             footnote={leftOutStudentLoan ? STUDENT_LOAN_FACTS : undefined}
+            icon={EyeOff}
             id="accounts-not-counted-heading"
             rows={notCounted}
             title="Not counted in net worth"
