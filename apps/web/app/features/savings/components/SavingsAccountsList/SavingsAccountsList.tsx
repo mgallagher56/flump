@@ -1,5 +1,13 @@
-import { Button, Card, CollapsibleDrawer, Icon, Money, VisuallyHidden } from "@repo/ui";
-import { Pencil } from "lucide-react";
+import {
+  Button,
+  Card,
+  CollapsibleDrawer,
+  Icon,
+  Money,
+  PageSection,
+  VisuallyHidden,
+} from "@repo/ui";
+import { Pencil, PiggyBank } from "lucide-react";
 import { type FC, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
@@ -15,9 +23,6 @@ import {
   balance,
   drawerWrap,
   editLabel,
-  listHeader,
-  listRoot,
-  listTitle,
   row,
   rowEnd,
   rowList,
@@ -94,18 +99,14 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) 
   const rest = accounts.slice(VISIBLE_ROWS);
 
   return (
-    <section
-      aria-labelledby="savings-accounts-heading"
-      className={listRoot()}
-      data-testid="savings-accounts"
+    <PageSection
+      description="Select edit on an account to see or change its details."
+      domain="savings"
+      headingId="savings-accounts-heading"
+      icon={PiggyBank}
       id="savings-accounts"
+      title="Your accounts"
     >
-      <div className={listHeader()}>
-        <h2 className={listTitle()} id="savings-accounts-heading">
-          Your accounts
-        </h2>
-      </div>
-
       <Card padding="none">
         {renderRows(visible)}
         {rest.length > 0 && (
@@ -157,7 +158,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) 
           }}
         />
       )}
-    </section>
+    </PageSection>
   );
 };
 

@@ -10,6 +10,7 @@ import {
   formatAxisCurrency,
   Money,
   pickTicks,
+  ResultBlock,
   SimulatorSplitLayout,
   SliderField,
   Table,
@@ -37,13 +38,9 @@ import {
   chartWrap,
   forecastContent,
   forecastControls,
-  goalLine,
   moreOptions,
-  outcome,
-  outcomeLabel,
   outcomeSupport,
   outcomeSupportItem,
-  outcomeValue,
 } from "./SavingsForecast.styles";
 import {
   formatDuration,
@@ -234,24 +231,20 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
 
   const content = (
     <div className={forecastContent()}>
+      {/* The zone's one result card (E17 5A); the goal line is its sentence. */}
       {result.flat ? null : (
-        <div
-          className={outcome()}
-          data-testid="savings-forecast-outcome"
+        <ResultBlock
+          figure={formatEstimate(result.final)}
           id="savings-forecast-outcome"
-        >
-          <p className={outcomeLabel()}>Estimated balance in {formatYears(values.years)}</p>
-          <p className={outcomeValue()}>{formatEstimate(result.final)}</p>
-          {goalText ? (
-            <p
-              className={goalLine()}
-              data-testid="savings-forecast-goal"
-              id="savings-forecast-goal"
-            >
-              {goalText}
-            </p>
-          ) : null}
-        </div>
+          label={`Estimated balance in ${formatYears(values.years)}`}
+          note={
+            goalText ? (
+              <span data-testid="savings-forecast-goal" id="savings-forecast-goal">
+                {goalText}
+              </span>
+            ) : undefined
+          }
+        />
       )}
       <ChartFigure
         dataTable={
