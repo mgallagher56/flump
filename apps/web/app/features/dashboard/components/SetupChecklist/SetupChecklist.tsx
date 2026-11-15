@@ -5,6 +5,7 @@ import {
   InlineAlert,
   ProgressRing,
   SceneShapeList,
+  useSetupProgressOnce,
 } from "@repo/ui";
 import { ChevronDown, ChevronUp, Circle, CircleCheck, X } from "lucide-react";
 import { type FC, useId, useMemo, useState } from "react";
@@ -163,6 +164,7 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
     [props, mergedCompleted],
   );
   const completedCount = steps.filter((s) => s.isComplete).length;
+  const { currentValue: animatedCompletedCount } = useSetupProgressOnce(completedCount);
   const nextStep = steps.find((s) => !s.isComplete) ?? null;
 
   const handleDismiss = () => {
@@ -236,6 +238,7 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
     >
       <div className={header()}>
         <ProgressRing
+          animatedValue={animatedCompletedCount}
           id="setup-checklist-ring"
           label="Setup progress"
           max={steps.length}

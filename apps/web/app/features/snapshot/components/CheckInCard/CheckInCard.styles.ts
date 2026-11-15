@@ -26,7 +26,65 @@ export const cardBody = cva({
 
 /** The account on the sheet's own surface: no bordered card nested inside the sheet. */
 export const cardSurface = cva({
-  base: { minWidth: 0 },
+  base: { minWidth: 0, position: "relative" },
+  variants: {
+    motion: {
+      idle: {},
+      leaveNext: {
+        _motionSafe: {
+          animationName: "slideOutLeft",
+          animationDuration: "fast",
+          animationTimingFunction: "exit",
+          animationFillMode: "forwards",
+        },
+        _motionReduce: {
+          animation: "none",
+          opacity: 0,
+        },
+      },
+      enterNext: {
+        _motionSafe: {
+          animationName: "slideInRight",
+          animationDuration: "base",
+          animationTimingFunction: "enter",
+          animationFillMode: "both",
+        },
+        _motionReduce: {
+          animationName: "fadeIn",
+          animationDuration: "fast",
+          animationTimingFunction: "standard",
+          animationFillMode: "both",
+        },
+      },
+      leaveBack: {
+        _motionSafe: {
+          animationName: "slideOutRight",
+          animationDuration: "fast",
+          animationTimingFunction: "exit",
+          animationFillMode: "forwards",
+        },
+        _motionReduce: {
+          animation: "none",
+          opacity: 0,
+        },
+      },
+      enterBack: {
+        _motionSafe: {
+          animationName: "slideInLeft",
+          animationDuration: "base",
+          animationTimingFunction: "enter",
+          animationFillMode: "both",
+        },
+        _motionReduce: {
+          animationName: "fadeIn",
+          animationDuration: "fast",
+          animationTimingFunction: "standard",
+          animationFillMode: "both",
+        },
+      },
+    },
+  },
+  defaultVariants: { motion: "idle" },
 });
 
 /**

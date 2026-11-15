@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { FC } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -126,5 +126,34 @@ describe("CheckInCard", () => {
       .payload.values;
     expect(values).toHaveLength(4);
     expect(values).toContainEqual({ accountId: isa, value: 14200, source: "confirmed" });
+  });
+
+  it("animates the step transition when advancing and going back", async () => {
+    vi.useFakeTimers();
+    try {
+      setup();
+      const section = document.querySelector("section");
+      expect(section?.getAttribute("data-animation")).toBe("idle");
+
+      fireEvent.click(screen.getByRole("button", { name: "No change" }));
+      await act(async () => {});
+      expect(document.querySelector("section")?.getAttribute("data-animation")).toBe("enterNext");
+
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(document.querySelector("section")?.getAttribute("data-animation")).toBe("idle");
+
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+      await act(async () => {});
+      expect(document.querySelector("section")?.getAttribute("data-animation")).toBe("enterBack");
+
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(document.querySelector("section")?.getAttribute("data-animation")).toBe("idle");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

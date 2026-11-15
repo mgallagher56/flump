@@ -122,6 +122,20 @@ describe("Button Primitive", () => {
       fireEvent.click(btn);
       expect(onClick).toHaveBeenCalledTimes(1);
     });
+
+    it("renders saved state with tick icon and disables clicks", () => {
+      const onClick = vi.fn();
+      render(
+        <Button onClick={onClick} saved>
+          Save balance
+        </Button>,
+      );
+      const btn = screen.getByRole("button", { name: "Saved" });
+      expect(btn.getAttribute("data-saved")).toBe("true");
+      expect(btn.querySelector("svg polyline")).not.toBeNull();
+      fireEvent.click(btn);
+      expect(onClick).not.toHaveBeenCalled();
+    });
   });
 });
 

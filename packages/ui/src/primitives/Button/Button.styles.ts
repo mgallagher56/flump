@@ -152,3 +152,53 @@ export const buttonSpinnerRecipe = cva({
     },
   },
 });
+
+/** E17 Demo 5: Saved confirmation label with fast cross-fade */
+export const buttonSavedContentRecipe = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "2",
+    _motionSafe: {
+      animationName: "fadeIn",
+      animationDuration: "fast",
+      animationTimingFunction: "standard",
+      animationFillMode: "both",
+    },
+    _motionReduce: {
+      animation: "none",
+    },
+  },
+});
+
+/** E17 Demo 5: Tick icon that draws over base standard after fast delay */
+export const buttonTickIconRecipe = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    width: "1.1em",
+    height: "1.1em",
+    "& svg": {
+      width: "100%",
+      height: "100%",
+    },
+    "& path, & polyline": {
+      strokeDasharray: "24",
+      strokeDashoffset: "24",
+      _motionSafe: {
+        animationName: "tick",
+        animationDuration: "base",
+        animationTimingFunction: "standard",
+        animationDelay: "fast",
+        animationFillMode: "forwards",
+      },
+      _motionReduce: {
+        animation: "none",
+        strokeDashoffset: "0",
+      },
+    },
+  },
+});

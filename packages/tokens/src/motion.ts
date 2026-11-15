@@ -60,4 +60,37 @@ export const motionKeyframes = {
     "0%": { backgroundPosition: "-200% 0" },
     "100%": { backgroundPosition: "200% 0" },
   },
+  // E17: Demo 1 - wash behind a figure that was just saved over durations.scene
+  wash: {
+    "0%": { opacity: "0" },
+    "20%": { opacity: "1" },
+    "100%": { opacity: "0" },
+  },
+  // E17: Demo 3 - check-in advancing between accounts
+  slideInLeft: {
+    from: { opacity: "0", transform: "translateX(-24px)" },
+    to: { opacity: "1", transform: "translateX(0)" },
+  },
+  slideOutLeft: {
+    from: { opacity: "1", transform: "translateX(0)" },
+    to: { opacity: "0", transform: "translateX(-24px)" },
+  },
+  slideOutRight: {
+    from: { opacity: "1", transform: "translateX(0)" },
+    to: { opacity: "0", transform: "translateX(24px)" },
+  },
+  // E17: Demo 5 - save confirmation tick draws over durations.base
+  tick: {
+    from: { strokeDashoffset: "24" },
+    to: { strokeDashoffset: "0" },
+  },
+  // E17: Demo 7 - illustration scene sprout grows and sun rises over durations.scene with easings.settle
+  sceneGrow: {
+    from: { transform: "scale(0.2)", opacity: "0" },
+    to: { transform: "scale(1)", opacity: "1" },
+  },
+  sceneRise: {
+    from: { transform: "translateY(10px)", opacity: "0" },
+    to: { transform: "translateY(0)", opacity: "1" },
+  },
 } as const;

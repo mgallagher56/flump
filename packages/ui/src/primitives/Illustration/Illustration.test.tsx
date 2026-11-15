@@ -59,4 +59,18 @@ describe("Illustration primitive", () => {
     );
     expect(container.querySelector('svg[data-scene="empty-accounts"]')).not.toBeNull();
   });
+
+  it("marks sun and sprout parts with data-scene-part and supports data-scene-settle", () => {
+    const { container } = render(<Illustration scene="onboarding" settle />);
+    const svg = container.querySelector("svg");
+    expect(svg?.hasAttribute("data-scene-settle")).toBe(true);
+    expect(svg?.querySelector('[data-scene-part="sun"]')).not.toBeNull();
+    expect(svg?.querySelector('[data-scene-part="sprout"]')).not.toBeNull();
+  });
+
+  it("drops data-scene-settle when settle is false", () => {
+    const { container } = render(<Illustration scene="onboarding" settle={false} />);
+    const svg = container.querySelector("svg");
+    expect(svg?.hasAttribute("data-scene-settle")).toBe(false);
+  });
 });

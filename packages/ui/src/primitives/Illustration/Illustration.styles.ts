@@ -1,7 +1,44 @@
 import { css, cva } from "../../../styled-system/css";
 
 export const illustrationRecipe = cva({
-  base: { display: "block", width: "100%", height: "auto", flexShrink: 0 },
+  base: {
+    display: "block",
+    width: "100%",
+    height: "auto",
+    flexShrink: 0,
+    '& [data-scene-part="sun"]': {
+      transformBox: "view-box",
+    },
+    '& [data-scene-part="sprout"]': {
+      transformOrigin: "168px 58px",
+      transformBox: "view-box",
+    },
+    // E17 Demo 7: scene settling once on first view
+    "&[data-scene-settle]": {
+      '& [data-scene-part="sun"]': {
+        _motionSafe: {
+          animationName: "sceneRise",
+          animationDuration: "scene",
+          animationTimingFunction: "settle",
+          animationFillMode: "both",
+        },
+        _motionReduce: {
+          animation: "none",
+        },
+      },
+      '& [data-scene-part="sprout"]': {
+        _motionSafe: {
+          animationName: "sceneGrow",
+          animationDuration: "scene",
+          animationTimingFunction: "settle",
+          animationFillMode: "both",
+        },
+        _motionReduce: {
+          animation: "none",
+        },
+      },
+    },
+  },
   variants: {
     size: {
       sm: { maxWidth: "140px" },
