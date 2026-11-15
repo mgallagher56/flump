@@ -3,10 +3,13 @@
  *
  * `audit_events` refuses every UPDATE and every TRUNCATE, and refuses a DELETE unless the
  * transaction has said why it is deleting (migration AuditEventsDeleteAndTruncateGuards1795100000000).
- * Two reasons exist, and each has exactly one caller:
+ * Two reasons exist. In the running service each has exactly one caller:
  *
  * - `retention`: the daily purge of rows past 13 months (`jobs/retention.ts`, ruling D4).
  * - `erasure`: the account-deletion sweep (`modules/privacy/account-deletion.service.ts`).
+ *
+ * Outside the service, the staging reseed (`scripts/ops/seed-synthetic.ts`) declares `erasure` and
+ * the test cleanup helper (`testing/emptyTables.ts`) declares `retention`.
  *
  * The reason is a transaction-local Postgres setting, so it ends with the transaction and never
  * leaks to the next user of a pooled connection. Like the UPDATE trigger, this stops a bug in the

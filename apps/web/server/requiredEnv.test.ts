@@ -17,6 +17,12 @@ describe("assertProductionEnv (SEC-A)", () => {
     ).toThrow("WEB_CLIENT_IP_HMAC_KEY is required in production.");
   });
 
+  it("treats a padded NODE_ENV as production, as the backend does", () => {
+    expect(() => assertProductionEnv({ NODE_ENV: " production " })).toThrow(
+      "WEB_CLIENT_IP_HMAC_KEY is required in production.",
+    );
+  });
+
   it("refuses a short key in production without printing it", () => {
     const short = key(31);
     let message = "";
