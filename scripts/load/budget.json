@@ -1,0 +1,33 @@
+{
+  "$comment": "BE-17 (finding M23). The budget the load smoke enforces and the baseline it was set from. See scripts/load/README.md, \"Baseline and budget\", before changing either.",
+  "budget": {
+    "routeP95Ms": 400,
+    "overallP95Ms": 250,
+    "overallP99Ms": 600,
+    "maxErrors": 0,
+    "minRequests": 500
+  },
+  "baseline": {
+    "recordedAt": "2026-11-15",
+    "where": "local: Apple silicon laptop, Postgres 18 in Docker, while image builds were running",
+    "commit": "working tree before the first push",
+    "plan": { "rate": 4, "healthRate": 10, "durationSeconds": 45 },
+    "overall": {
+      "count": 630,
+      "errors": 0,
+      "p50Ms": 4.6,
+      "p95Ms": 45.6,
+      "p99Ms": 94.3,
+      "maxMs": 229.1
+    },
+    "routes": {
+      "GET /account-details": { "p50Ms": 7, "p95Ms": 66.4, "p99Ms": 131.8 },
+      "GET /accounts": { "p50Ms": 7, "p95Ms": 50.6, "p99Ms": 57.4 },
+      "GET /budget-entries": { "p50Ms": 7.9, "p95Ms": 89.3, "p99Ms": 141.7 },
+      "GET /health/ready": { "p50Ms": 3.4, "p95Ms": 37.3, "p99Ms": 69.8 },
+      "GET /portfolio-snapshot": { "p50Ms": 7.8, "p95Ms": 94.7, "p99Ms": 229.1 },
+      "GET /tax-records": { "p50Ms": 5.3, "p95Ms": 41, "p99Ms": 42.4 },
+      "GET /user-profile": { "p50Ms": 6.6, "p95Ms": 51.1, "p99Ms": 87.6 }
+    }
+  }
+}

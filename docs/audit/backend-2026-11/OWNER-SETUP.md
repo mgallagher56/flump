@@ -139,6 +139,7 @@ Not required, on purpose:
 - `⚡ Vitest web` and `⚡ Vitest backend and packages`: covered by `⚡ Vitest Tests`. Requiring the aggregate keeps the gate stable if the shards change.
 - `🖼️ Visual regression`: still bedding in (`continue-on-error`; see `apps/e2e/README.md`, "Making it required").
 - `🕷️ DAST (ZAP baseline, passive)`: scheduled only.
+- `🏋️ Backend load smoke`: weekly, on demand and on pull requests that change the load smoke (BE-17). Shared runners are too noisy for it to block a merge.
 
 The same settings with the GitHub CLI, if you prefer it to the web page (run it yourself). It replaces the whole protection rule for `main`:
 
@@ -290,3 +291,37 @@ The migration `AuditActionUserExported1795000000000` lets `audit_events` hold th
 - [ ] `GET /health/ready` answers 200 with `"configWarnings": 0`. Date: ____ When it is not 0, the names are in the backend boot log (Railway, backend service, deploy logs) as `warn` lines, one per unset variable, in this form: `<VARIABLE_NAME> is not set in production. See docs/audit/backend-2026-11/OWNER-SETUP.md (BE-04 / BE-15).`
 - [ ] Download your data export in the web app, then in `railway connect Postgres`: `SELECT action FROM audit_events ORDER BY created_at DESC LIMIT 1;` shows `user.exported`.
 - [ ] Then tell the agent to start SEC-A, which makes these variables required.
+
+---
+
+## BE-17 / SEC-E: load smoke, E2E retries and image hardening (findings M23, L10, M17, N6, S7, S8, S9)
+
+Everything in this PR is in the repository; nothing needs a setting to take effect. These are the things only the owner can do or decide.
+
+### 1. Nothing to add to branch protection
+
+The PR adds one job, `🏋️ Backend load smoke`, in its own workflow. Leave it out of the required checks. It runs every Tuesday at 04:23 UTC; a red run means a read route got much slower or started failing. How to read it: `scripts/load/README.md`.
+
+The new image checks (file ownership, web image contents, the build token canary) are steps inside `🐳 Docker images`, which is already required.
+
+### 2. Sentry build token (web service, Railway)
+
+Railway's builder cannot use secret mounts, so the web image takes `SENTRY_AUTH_TOKEN` as a build argument. CI now proves on every image change that the value is not in the final image's history, config or files. It can still sit in Railway's build cache for the build stage.
+
+- [ ] Check the token in the web service's variables is a Sentry **organisation token** with source map upload only (Sentry, Settings, Developer Settings, Organization Tokens), not a personal token. Date: ____
+
+### 3. E2E retries are off
+
+The required `🎭 E2E smoke` check no longer retries a failed test. If a test starts failing now and then, the fix is to repair it or add it to `apps/e2e/quarantine.ts` with a reason (`apps/e2e/README.md`), not to re-run until green.
+
+### 4. Decision: Semgrep rule packs (the rest of finding S7)
+
+The Semgrep image is pinned by digest, but the rule packs (`p/owasp-top-ten`, `p/typescript`, `p/react`, `p/nodejsscan`) are fetched from the Semgrep registry on each run and cannot be pinned to a version. The re-score suggests copying the rules into the repository. They were not copied: the registry rules come under the Semgrep Rules License, which limits redistribution, and this repository is public. Choose one:
+
+- [ ] Accept the remaining risk (a changed upstream rule can add or remove findings; it cannot run code in CI beyond the pinned Semgrep image). Date: ____
+- [ ] Or ask for a follow-up that replaces the registry packs with rules whose licence allows copying, kept in the repository.
+
+### How to know it worked
+
+- [ ] The first scheduled `🏋️ Load smoke` run is green, and its summary shows p95 figures near the baseline in `scripts/load/budget.json`. Date: ____
+- [ ] After the next deploy, the web app loads and signs in as before (the web image now holds the build output only). Date: ____

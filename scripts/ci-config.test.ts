@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+
+import {
+  MAX_QUARANTINED,
+  QUARANTINE,
+  quarantinePattern,
+  quarantineProblems,
+  quarantineSummary,
+} from "../apps/e2e/quarantine";
 
 const repoRoot = resolve(import.meta.dir, "..");
 
@@ -190,6 +198,7 @@ describe("merge gate (BE-01)", () => {
       "security-scan.yml",
       "visual-regression.yml",
       "backup.yml",
+      "load-smoke.yml",
     ]) {
       for (const [id, job] of Object.entries(readWorkflow(file).jobs))
         for (const name of renderedNames(id, job)) {
@@ -222,6 +231,8 @@ describe("supply chain (BE-01 L8, M17)", () => {
       "release-please.yml",
       "visual-regression.yml",
       "backup.yml",
+      "a11y-gate.yml",
+      "load-smoke.yml",
     ].map((f) => `.github/workflows/${f}`),
     ".github/actions/bun-setup/action.yml",
   ];
@@ -282,5 +293,201 @@ describe("backend type safety (BE-01 M21)", () => {
     expect(tsconfig.compilerOptions.strict).toBe(true);
     const { scripts } = readJson("package.json");
     expect(scripts["check:laws"]).toContain("bun scripts/check-backend-laws.ts");
+  });
+});
+
+// SEC-E (S7, S8, S9) and BE-17 (M17, L10). Every workflow file is read from disk, so a new
+// workflow is covered without being added to a list.
+type Step = { uses?: string; with?: Record<string, unknown> };
+type HardenedJob = {
+  container?: string | { image?: string };
+  services?: Record<string, { image?: string }>;
+  steps?: Step[];
+};
+type HardenedWorkflow = {
+  on: Record<string, unknown>;
+  permissions?: Record<string, string> | string;
+  jobs: Record<string, HardenedJob>;
+};
+
+const workflowFiles = readdirSync(resolve(repoRoot, ".github/workflows")).filter((f) =>
+  /\.ya?ml$/.test(f),
+);
+const hardened = workflowFiles.map((file) => ({
+  file,
+  source: readFileSync(resolve(repoRoot, ".github/workflows", file), "utf8"),
+  workflow: Bun.YAML.parse(
+    readFileSync(resolve(repoRoot, ".github/workflows", file), "utf8"),
+  ) as HardenedWorkflow,
+}));
+
+describe("CI hardening (SEC-E)", () => {
+  test("the workflow list is the one this file knows", () => {
+    expect(workflowFiles.sort()).toEqual([
+      "a11y-gate.yml",
+      "backup.yml",
+      "ci-pipeline.yml",
+      "load-smoke.yml",
+      "release-please.yml",
+      "security-scan.yml",
+      "visual-regression.yml",
+    ]);
+  });
+
+  test("every checkout drops its credentials (S8)", () => {
+    const persisted: string[] = [];
+    let checkouts = 0;
+    for (const { file, workflow } of hardened)
+      for (const [id, job] of Object.entries(workflow.jobs))
+        for (const step of job.steps ?? []) {
+          if (!step.uses?.startsWith("actions/checkout@")) continue;
+          checkouts++;
+          if (step.with?.["persist-credentials"] !== false) persisted.push(`${file}#${id}`);
+        }
+    expect(checkouts).toBeGreaterThan(10);
+    expect(persisted).toEqual([]);
+  });
+
+  test("no job pushes with git, so no checkout needs its credentials", () => {
+    for (const { file, source } of hardened)
+      expect(source, file).not.toMatch(/git\s+(push|commit)\b/);
+  });
+
+  test("every service and container image is pinned by digest (S7)", () => {
+    const tagPinned: string[] = [];
+    let images = 0;
+    for (const { file, workflow } of hardened)
+      for (const [id, job] of Object.entries(workflow.jobs)) {
+        const container = typeof job.container === "string" ? job.container : job.container?.image;
+        const all = [container, ...Object.values(job.services ?? {}).map((s) => s.image)];
+        for (const image of all) {
+          if (image === undefined) continue;
+          images++;
+          if (!/@sha256:[0-9a-f]{64}$/.test(image)) tagPinned.push(`${file}#${id}: ${image}`);
+        }
+      }
+    expect(images).toBeGreaterThan(8);
+    expect(tagPinned).toEqual([]);
+  });
+
+  test("images named in workflow scripts are pinned by digest too", () => {
+    for (const { file, source } of hardened)
+      for (const line of source.split("\n").filter((l) => /^\s*[A-Z_]+_IMAGE:\s/.test(l)))
+        expect(line, file).toMatch(/@sha256:[0-9a-f]{64}\s*$/);
+  });
+
+  test("no workflow runs with a privileged trigger or broad default permissions", () => {
+    for (const { file, source, workflow } of hardened) {
+      expect(Object.keys(workflow.on), file).not.toContain("pull_request_target");
+      expect(Object.keys(workflow.on), file).not.toContain("workflow_run");
+      // Attacker-controlled text must never be interpolated into a script.
+      expect(source, file).not.toMatch(
+        /\$\{\{\s*github\.(head_ref|event\.(pull_request\.(title|body|head\.ref)|head_commit\.message|issue\.title|comment\.body))/,
+      );
+      // release-please opens the release PR, so it alone holds write permissions at the top.
+      if (file === "release-please.yml") continue;
+      expect(workflow.permissions, file).toEqual({ contents: "read" });
+    }
+  });
+});
+
+describe("image ownership and contents (SEC-E S9, BE-17 M17)", () => {
+  const runnerStage = (app: string) => {
+    const dockerfile = readFileSync(resolve(repoRoot, `apps/${app}/Dockerfile`), "utf8");
+    const at = dockerfile.indexOf("FROM base AS runner");
+    expect(at).toBeGreaterThan(0);
+    return { build: dockerfile.slice(0, at), runner: dockerfile.slice(at) };
+  };
+
+  test("app files are copied as root and the server runs as bun", () => {
+    for (const app of ["backend", "web", "marketing"]) {
+      const { runner } = runnerStage(app);
+      const copies = runner.split("\n").filter((l) => l.startsWith("COPY "));
+      expect(copies.length).toBeGreaterThan(2);
+      for (const line of copies) expect(line, app).not.toContain("--chown");
+      const instructions = runner.split("\n").filter((l) => !l.startsWith("#"));
+      expect(instructions.join("\n"), app).not.toMatch(/\bchown\b|\bchmod\b/);
+      expect(runner, app).toMatch(/^USER bun$/m);
+      // USER comes after the last COPY, so nothing is written as the runtime user.
+      expect(runner.lastIndexOf("\nCOPY ")).toBeLessThan(runner.indexOf("\nUSER bun"));
+    }
+  });
+
+  test("CI checks ownership inside the built images", () => {
+    const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
+    const step = ci.slice(ci.indexOf("Image hardening (non-root"));
+    const body = step.slice(0, step.indexOf("- name:", 1));
+    expect(body).toContain("for app in backend web marketing");
+    expect(body).toContain('find /app -user "$(id -u)"');
+    expect(body).toContain("find /app -writable");
+  });
+
+  test("the web runtime image copies the runtime file set, not the app source", () => {
+    const { runner } = runnerStage("web");
+    expect(runner).not.toMatch(/COPY --from=build\s+\/app\/apps\/web\s/);
+    expect(runner).toContain("COPY --from=build /runtime/web ./apps/web");
+    const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
+    expect(ci).toContain("Web image holds built output only");
+  });
+
+  test("the Sentry build token stays in the web build stage and is never a secret mount", () => {
+    const { build, runner } = runnerStage("web");
+    // Railway's builder rejects secret mounts, so the token is a build-stage ARG.
+    expect(build).toContain("ARG SENTRY_AUTH_TOKEN");
+    expect(build + runner).not.toMatch(/^RUN .*--mount=type=secret/m);
+    expect(runner).not.toMatch(/SENTRY_AUTH_TOKEN/);
+    expect(runner).not.toMatch(/^(ARG|ENV)\s+SENTRY/m);
+    expect(build).not.toMatch(/^ENV\s+SENTRY_AUTH_TOKEN/m);
+    // The runner starts again from the base image: nothing of the build stage is inherited.
+    expect(runner.startsWith("FROM base AS runner")).toBe(true);
+    const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
+    expect(ci).toContain('--build-arg "SENTRY_AUTH_TOKEN=$TOKEN_CANARY"');
+    expect(ci).toContain("Build token is not in the web image");
+  });
+});
+
+describe("E2E retries and quarantine (BE-17 L10)", () => {
+  test("the smoke suite never retries", () => {
+    for (const config of readdirSync(resolve(repoRoot, "apps/e2e")).filter((f) =>
+      /^playwright\..*config\.ts$/.test(f),
+    )) {
+      const source = readFileSync(resolve(repoRoot, "apps/e2e", config), "utf8");
+      const retries = source.match(/^\s*retries:.*$/gm) ?? [];
+      expect(retries.length, config).toBe(1);
+      expect(retries[0]?.trim(), config).toBe("retries: 0,");
+    }
+  });
+
+  test("the quarantine list is well formed and short", () => {
+    expect(quarantineProblems()).toEqual([]);
+    expect(QUARANTINE.length).toBeLessThanOrEqual(MAX_QUARANTINED);
+    const bad = [{ file: "x.ts", title: "", reason: "flaky", since: "last week" }];
+    expect(quarantineProblems(bad).length).toBe(4);
+  });
+
+  test("the pattern matches the quarantined test only, and nothing when the list is empty", () => {
+    expect(quarantinePattern([])).toBeUndefined();
+    const pattern = quarantinePattern([
+      {
+        file: "mortgage.spec.ts",
+        title: "shows the payment (monthly)",
+        reason: "Fails about one run in ten on the chart animation.",
+        since: "2026-11-15",
+      },
+    ]) as RegExp;
+    expect(pattern.test("chromium mortgage.spec.ts Mortgage shows the payment (monthly)")).toBe(
+      true,
+    );
+    expect(pattern.test("chromium mortgage.spec.ts shows the payment (monthly)")).toBe(true);
+    expect(
+      pattern.test("chromium mortgage.spec.ts Mortgage shows the payment (monthly) twice"),
+    ).toBe(false);
+    expect(pattern.test("chromium budget.spec.ts shows the payment (monthly)")).toBe(false);
+  });
+
+  test("CI names quarantined specs in the job summary", () => {
+    const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
+    expect(ci).toContain('bun apps/e2e/quarantine.ts >> "$GITHUB_STEP_SUMMARY"');
+    expect(quarantineSummary([])).toContain("No quarantined tests");
   });
 });

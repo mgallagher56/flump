@@ -311,13 +311,14 @@ export class BankConnectionSync {
         `SELECT 1 FROM "bank_connections" WHERE "id" = $1 AND "user_id" = $2 FOR UPDATE`,
         [connectionId, userId],
       );
-      // Compared as text so this keeps working when account_id becomes uuid (BE-08).
-      const owned = `SELECT "id"::text FROM "accounts" WHERE "connection_id" = $1 AND "user_id" = $2`;
-      await manager.query(`DELETE FROM "account_details" WHERE "account_id"::text IN (${owned})`, [
+      // uuid against uuid (N6): account_id has been a uuid key to accounts since
+      // AccountIdForeignKeys1794358200000, so no cast is needed and the account_id indexes apply.
+      const owned = `SELECT "id" FROM "accounts" WHERE "connection_id" = $1 AND "user_id" = $2`;
+      await manager.query(`DELETE FROM "account_details" WHERE "account_id" IN (${owned})`, [
         connectionId,
         userId,
       ]);
-      await manager.query(`DELETE FROM "transactions" WHERE "account_id"::text IN (${owned})`, [
+      await manager.query(`DELETE FROM "transactions" WHERE "account_id" IN (${owned})`, [
         connectionId,
         userId,
       ]);

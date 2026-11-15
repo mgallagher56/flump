@@ -20,6 +20,11 @@ concurrency:
   # Cancel superseded PR runs only; never cancel a push-to-main run mid-flight.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# SEC-E (S7, S8), asserted by scripts/ci-config.test.ts: every checkout sets
+# persist-credentials: false (no job pushes, so the token never needs to sit in .git/config), and
+# every service and container image is pinned by digest. To bump a digest:
+# docker buildx imagetools inspect <image>:<tag> and copy the index digest (Renovate does it too).
+#
 # Least privilege by default; each job declares what it needs. actions: write is
 # for the turborepo-gh-artifacts cache server, which every turbo job uses.
 permissions:
@@ -40,6 +45,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # check-openapi-breaking needs the merge base with main (BE-09)
+          persist-credentials: false
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -136,7 +142,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -156,6 +162,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -203,7 +211,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -223,6 +231,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -242,6 +252,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -281,6 +293,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -330,7 +344,7 @@ jobs:
     # The database name must contain the word e2e (apps/e2e refuses any other).
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -350,6 +364,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -382,8 +398,14 @@ jobs:
       - name: 🛡️ Web server integration test
         run: bun run --cwd apps/web test:server
 
+      # Retries are off (L10), so a flaky spec fails here instead of passing on a second try. A
+      # spec parked in apps/e2e/quarantine.ts is skipped by the run and named in the job summary.
       - name: 🎭 Run E2E smoke tests
         run: bun run test:e2e
+
+      - name: 🧾 Report quarantined specs
+        if: always()
+        run: bun apps/e2e/quarantine.ts >> "$GITHUB_STEP_SUMMARY"
 
       # Trace, screenshots and the HTML report only matter when something failed.
       - name: 📎 Upload Playwright report and traces
@@ -409,11 +431,14 @@ jobs:
     timeout-minutes: 25
     permissions:
       contents: read
+    env:
+      # Stands in for the web image's Sentry build token (see the build step). Not a secret.
+      TOKEN_CANARY: flump-ci-canary-not-a-token
 
     # Throwaway database for the backend boot smoke below (fake credentials, CI only).
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
         env:
           POSTGRES_USER: flump_ci
           POSTGRES_PASSWORD: flump-ci-not-a-secret
@@ -431,6 +456,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: 🔎 Did anything that goes into an image change?
         id: changed
@@ -456,8 +482,15 @@ jobs:
         run: |
           set -u
           pids=""
+          # The web image takes its Sentry token as a build ARG (Railway cannot use secret mounts).
+          # CI passes a canary in its place, alone, so nothing is uploaded; the next step fails if
+          # the canary reached the final image. It is a fixed public string, not a secret.
           for app in backend web marketing; do
-            docker build --progress=plain -f "apps/$app/Dockerfile" -t "flump-$app-ci" . > "docker-$app.log" 2>&1 &
+            if [ "$app" = "web" ]; then
+              docker build --progress=plain --build-arg "SENTRY_AUTH_TOKEN=$TOKEN_CANARY" -f "apps/$app/Dockerfile" -t "flump-$app-ci" . > "docker-$app.log" 2>&1 &
+            else
+              docker build --progress=plain -f "apps/$app/Dockerfile" -t "flump-$app-ci" . > "docker-$app.log" 2>&1 &
+            fi
             pids="$pids $!:$app"
           done
           failed=0
@@ -492,7 +525,46 @@ jobs:
             case "$hc" in ""|"<nil>") echo "$app image has no HEALTHCHECK"; exit 1 ;; esac
             envs=$(docker run --rm --entrypoint find "$img" /app -name '.env*' ! -name '.env.example')
             [ -z "$envs" ] || { echo "$app image contains env files:"; echo "$envs"; exit 1; }
+            # S9: the runtime user owns nothing under /app and can write nowhere in it, so a
+            # compromised server process cannot rewrite its own code.
+            owned=$(docker run --rm --entrypoint sh "$img" -c 'find /app -user "$(id -u)" | head -n 5')
+            [ -z "$owned" ] || { echo "$app image: files under /app are owned by the runtime user:"; echo "$owned"; exit 1; }
+            writable=$(docker run --rm --entrypoint sh "$img" -c 'find /app -writable ! -type l | head -n 5')
+            [ -z "$writable" ] || { echo "$app image: the runtime user can write under /app:"; echo "$writable"; exit 1; }
           done
+
+      # BE-17 (M17): the web runtime image holds the build output, the translation files and the
+      # Express server only. Routes, components, tests, stories and build config stay out.
+      - name: 📦 Web image holds built output only
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          set -e
+          extra=$(docker run --rm --entrypoint sh flump-web-ci -c '
+            cd /app/apps/web
+            ls -A | grep -vxE "app|build|node_modules|package\.json|public|server|server\.ts" || true
+            ls -A app | grep -vx security || true
+            ls -A public | grep -vx locales || true
+            find app server -type f ! -name "*.ts" || true
+            find app server -type f \( -name "*.test.ts" -o -name "*.stories.*" \) || true')
+          [ -z "$extra" ] || { echo "web image carries files beyond its runtime set:"; echo "$extra"; exit 1; }
+          docker run --rm --entrypoint sh flump-web-ci -c 'test -f /app/apps/web/build/server/index.js && test -d /app/apps/web/build/client'
+
+      # The Sentry token is a build ARG in the web build stage. The runner stage starts from the
+      # base image and copies files out, so the value must not be in the final image: not in its
+      # layer history or config, and not in any file.
+      - name: 🔑 Build token is not in the web image
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          set -e
+          if docker history --no-trunc --format '{{.CreatedBy}}' flump-web-ci | grep -qE "$TOKEN_CANARY|SENTRY_AUTH_TOKEN"; then
+            echo "the web image history names the build token"; exit 1
+          fi
+          if docker inspect flump-web-ci | grep -q "$TOKEN_CANARY"; then
+            echo "the web image config carries the build token"; exit 1
+          fi
+          hits=$(docker run --rm --user 0 --entrypoint sh -e "CANARY=$TOKEN_CANARY" flump-web-ci -c 'grep -rlF "$CANARY" /app /home /root /tmp /usr/local 2>/dev/null | head -n 5 || true')
+          [ -z "$hits" ] || { echo "the build token is in the web image's files:"; echo "$hits"; exit 1; }
+          echo "token canary absent from history, config and files"
 
       # Boots the production image with NODE_ENV=production. Strict config resolution plus
       # migrationsRun mean the server only listens once the config is valid and every
@@ -586,6 +658,14 @@ jobs:
               echo "$headers" | grep -qi '^x-frame-options: DENY' || { echo "missing X-Frame-Options"; echo "$headers"; exit 1; }
               echo "$headers" | grep -qi '^content-security-policy: frame-ancestors' || { echo "missing CSP"; echo "$headers"; exit 1; }
               if echo "$headers" | grep -qi '^x-powered-by'; then echo "X-Powered-By is set"; exit 1; fi
+              # A server-rendered document (the 404 page) proves the slim image has everything a
+              # render needs, including the translation files read from ./public/locales.
+              page=$(curl -s -o render-probe.html -w '%{http_code}' http://127.0.0.1:3100/ci-render-probe)
+              [ "$page" = "404" ] || { echo "render probe answered $page, expected the 404 page"; exit 1; }
+              grep -q '<html' render-probe.html || { echo "render probe did not return a document"; exit 1; }
+              code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3100/locales/en/common.json)
+              [ "$code" = "200" ] || { echo "translations are missing from the image ($code)"; exit 1; }
+              if docker logs flump-web-smoke 2>&1 | grep -qE 'ENOENT|EACCES'; then echo "web server logged a missing or unreadable file"; exit 1; fi
               exit 0
             fi
             [ "$(docker inspect -f '{{.State.Running}}' flump-web-smoke)" = "true" ] || { echo "web container exited"; exit 1; }
@@ -604,6 +684,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
