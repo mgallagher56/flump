@@ -113,7 +113,15 @@ export class SnapshotsService {
       if (!(SNAPSHOT_WRITE_SOURCES as readonly string[]).includes(source)) {
         throw new BadRequestException("source must be manual, confirmed or calculated");
       }
-      return { accountId, value, asOfDate, source: source as SnapshotWriteSource };
+      return {
+        accountId,
+        value,
+        asOfDate,
+        // False when the date is the default: a repeat of the same save on a later day must still
+        // read as the same save (see checkVersions).
+        asOfDateGiven: entry.asOfDate !== undefined,
+        source: source as SnapshotWriteSource,
+      };
     });
     // Stable lock order for concurrent batches (the response keeps this order).
     rows.sort((x, y) => (x.accountId < y.accountId ? -1 : x.accountId > y.accountId ? 1 : 0));
@@ -178,7 +186,7 @@ export class SnapshotsService {
    * The `If-Match` check (BE-16). Locks the month's existing rows for the request's accounts, so
    * a concurrent write waits and is then checked against what this one stored. A row is stale
    * when its version (to the millisecond, as the ETag carries it) is not one the client read. A
-   * stale row that already holds the same value, date and source is let through: that is a
+   * stale row that already holds the same value, source and (when the request names one) date is let through: that is a
    * repeat of a save whose answer was lost, and writing it again changes nothing.
    */
   private async checkVersions(
@@ -188,11 +196,22 @@ export class SnapshotsService {
       accountId: string;
       value: number;
       asOfDate: string;
+      asOfDateGiven: boolean;
       source: SnapshotWriteSource;
     }>,
     target: { year: number; month: number },
     expected: readonly Date[],
   ): Promise<void> {
+    // Lock order: accounts first, then their month rows, as connected sync does
+    // (bank-connection-sync.ts). A current-month write updates the account balance afterwards, so
+    // taking the month rows first could deadlock with a sync of the same account.
+    await manager.query(
+      `SELECT "id" FROM "accounts"
+        WHERE "user_id" = $1 AND "id" = ANY($2::uuid[])
+        ORDER BY "id"
+          FOR UPDATE`,
+      [userId, rows.map((r) => r.accountId)],
+    );
     const existing: Array<{
       account_id: string;
       value: string;
@@ -217,7 +236,7 @@ export class SnapshotsService {
       const same =
         row !== undefined &&
         pence(Number(stored.value)) === pence(row.value) &&
-        stored.as_of_date === row.asOfDate &&
+        (!row.asOfDateGiven || stored.as_of_date === row.asOfDate) &&
         stored.source === row.source;
       if (!same) throw preconditionFailed();
     }
