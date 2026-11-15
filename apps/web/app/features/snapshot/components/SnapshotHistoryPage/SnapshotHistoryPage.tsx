@@ -5,7 +5,16 @@ import {
   resolveNetWorthScope,
   selectRecordedMonthComparison,
 } from "@flump/finance-engine";
-import { Button, CollapsibleDrawer, EmptyState, HeroFigure, PageBody, PageHeader } from "@repo/ui";
+import {
+  Button,
+  CollapsibleDrawer,
+  EmptyState,
+  HeroFigure,
+  PageBody,
+  PageHeader,
+  PageSection,
+} from "@repo/ui";
+import { ChartLine } from "lucide-react";
 import { type FC, type MouseEvent, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
@@ -272,7 +281,14 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
             />
           )}
 
-          <section className={sectionStack()}>
+          <PageSection
+            className={sectionStack()}
+            description="Your net worth each month, from your recorded balances."
+            icon={ChartLine}
+            id="snapshot-chart"
+            title="Net worth over time"
+            tone="neutral"
+          >
             <NetWorthHistoryChart
               dataActions={
                 <>
@@ -300,7 +316,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
               recordedMonths={recordedMonths}
               summary={summary}
             />
-          </section>
+          </PageSection>
 
           {changes ? (
             <CollapsibleDrawer
