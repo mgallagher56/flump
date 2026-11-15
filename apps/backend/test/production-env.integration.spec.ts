@@ -216,3 +216,59 @@ describe.skipIf(dbMode === "skip")("production-shaped environment (real Postgres
     expect(statuses.filter((line) => /^50[02] /.test(line))).toEqual([]);
   });
 });
+
+/**
+ * SEC-A kept the `account_deletion_unavailable` 503 because a strict environment that is not
+ * production can still reach it: here a Railway service whose NODE_ENV is not production, with no
+ * DELETION_TOMBSTONE_KEY. Boot succeeds (the key is required only in production) and account
+ * deletion fails closed over HTTP, deleting nothing.
+ */
+describe.skipIf(dbMode === "skip")(
+  "strict environment that is not production, no tombstone key (real Postgres)",
+  () => {
+    let h: AuthzHarness;
+    const savedEnv = { ...process.env };
+
+    beforeAll(async () => {
+      h = await bootAuthzHarness({
+        env: {
+          RAILWAY_ENVIRONMENT: "staging",
+          // A Railway service never uses the development banking key (S3).
+          BANKING_TOKEN_ENCRYPTION_KEY: runtimeValue("b"),
+          MCP_AUDIT_HMAC_KEY: runtimeValue("m"),
+          DELETION_TOMBSTONE_KEY: undefined,
+        },
+        likeMain: true,
+      });
+    }, 120_000);
+
+    afterAll(async () => {
+      await h?.close();
+      for (const name of Object.keys(process.env)) {
+        if (!(name in savedEnv)) delete process.env[name];
+      }
+      Object.assign(process.env, savedEnv);
+    });
+
+    it("account deletion refuses with account_deletion_unavailable and deletes nothing", async () => {
+      expect(process.env.NODE_ENV).not.toBe("production");
+      const created = await h.call("post", "/budget-entries", h.tokens.a, {
+        category: "housing",
+        name: "Rent",
+        amount: 900,
+      });
+      expect(created.status).toBe(201);
+      const res = await h.call("delete", "/user-profile", h.tokens.a, { confirmation: "DELETE" });
+      expect(res.status).toBe(503);
+      expect(res.body).toMatchObject({ code: "account_deletion_unavailable" });
+      expect(typeof res.body.message).toBe("string");
+      expect(typeof res.body.requestId).toBe("string");
+      // Not the rate limiter: its refusals carry Retry-After.
+      expect(res.headers["retry-after"]).toBeUndefined();
+      const entry = await h.dataSource
+        .getRepository(BudgetEntry)
+        .findOneBy({ id: created.body.id });
+      expect(entry?.userId).toBe(USER_A);
+    });
+  },
+);

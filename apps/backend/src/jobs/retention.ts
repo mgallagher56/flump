@@ -10,7 +10,11 @@
 import { IDEMPOTENCY_KEY_TTL_HOURS } from "@flump/api-contract";
 import { allowAuditDelete } from "../audit/audit-delete-guard";
 
-/** Anything that runs a parameterised query (a TypeORM DataSource or QueryRunner, a pg client). */
+/**
+ * One dedicated connection that runs a parameterised query: a TypeORM QueryRunner or a pg client.
+ * Never a pool or a DataSource: the advisory lock and the `audit_events` batch transaction
+ * (BEGIN, the delete reason, the delete, COMMIT) must all run on the same connection.
+ */
 export interface Queryable {
   query(sql: string, params?: unknown[]): Promise<unknown>;
 }
@@ -144,7 +148,8 @@ async function deleteAuditBatch(
     await db.query("COMMIT");
     return deleted;
   } catch (error) {
-    await db.query("ROLLBACK");
+    // A failed ROLLBACK (a dead connection) must not hide the error that caused it.
+    await db.query("ROLLBACK").catch(() => undefined);
     throw error;
   }
 }
