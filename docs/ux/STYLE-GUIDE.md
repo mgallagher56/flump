@@ -33,29 +33,32 @@ Three layers. Components use only the middle one.
 | Semantic tokens   | Purpose names with a light and a dark value                         | Every component, every platform |
 | Component recipes | A component's use of semantic tokens                                | That component                  |
 
-The semantic namespaces are fixed: `surface`, `text`, `border`, `primary`, `status`, `chart`.
+The semantic namespaces are fixed: `surface`, `text`, `border`, `primary`, `accent`, `status`, `chart`. `accent` is the seventh, added by owner decision in E17 (section 2.6).
 
 **Rule C1.** No hex, rgb or primitive scale name in component or page code, on any platform. **Enforced by** `scripts/check-design-tokens.ts` (web and marketing); **Proposed check** for mobile (CROSS-PLATFORM section 7).
 
 ### 2.2 Core palette
 
-| Token                                               | Light                                         | Dark                                          | Use                                                   |
-| --------------------------------------------------- | --------------------------------------------- | --------------------------------------------- | ----------------------------------------------------- |
-| `surface.canvas`                                    | `#f5f1ea`                                     | `#1d1a17`                                     | Page background                                       |
-| `surface.card`                                      | `#fffdf9`                                     | `#272320`                                     | Cards, tables, drawers                                |
-| `surface.subtle`                                    | `#f0ebe2`                                     | `#2e2a26`                                     | Hover fills, the scenario zone **[PR 2]**             |
-| `surface.sunken`                                    | `#eae3d8`                                     | `#171412`                                     | Wells, input tracks                                   |
-| `surface.overlay`                                   | `#ffffff`                                     | `#36322d`                                     | Dialogs, sheets, menus, popovers                      |
-| `surface.contrast`                                  | `#22302c`                                     | `#3a352f`                                     | Rare inverted blocks                                  |
-| `surface.hero`                                      | `#12483f`                                     | `#1b5448`                                     | The one headline block on a page                      |
-| `surface.tint.teal` / `apricot` / `sage` **[PR 1]** | `#dcede6` / `#fae5cc` / `#e5edda`             | `#1f322d` / `#2e261c` / `#272f22`             | Icon tiles; at most one tinted section per page       |
-| `surface.scrim`                                     | `rgba(43,38,32,.4)`                           | `rgba(8,6,4,.6)`                              | Backdrop behind dialogs and sheets; never behind text |
-| `text.primary` / `secondary` / `muted`              | `#2b2620` / `#564f46` / `#6a6258`             | `#f4efe7` / `#cbc3b7` / `#a59d90`             | Body, supporting, quiet                               |
-| `text.onContrast`                                   | `#f6f1e8`                                     | `#fffdf9`                                     | Text on `surface.hero` and `surface.contrast`         |
-| `border` / `subtle` / `strong` / `input`            | `#dcd4c8` / `#e8e1d6` / `#b5ab9c` / `#867c6e` | `#3b362f` / `#302c27` / `#5c554a` / `#8f8678` | Card edge, dividers, emphasis, form controls          |
-| `border.focusRing`, `primary`                       | `#0f6b5e`                                     | `#6fd0ba`                                     | Focus ring, links, selected state, icons              |
-| `primary.solid` / `hover`                           | `#0f6b5e` / `#0a564b`                         | same in dark                                  | Fill behind `primary.foreground` (white) only         |
-| `primary.subtle` / `border`                         | `#e1f0eb` / `#9ccfc2`                         | `#1e3b35` / `#2e6055`                         | Selected nav item, quiet accent fills                 |
+| Token                                               | Light                                         | Dark                                          | Use                                                                             |
+| --------------------------------------------------- | --------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------- |
+| `surface.canvas`                                    | `#f5f1ea`                                     | `#1d1a17`                                     | Page background                                                                 |
+| `surface.card`                                      | `#fffdf9`                                     | `#272320`                                     | Cards, tables, drawers                                                          |
+| `surface.subtle`                                    | `#f0ebe2`                                     | `#2e2a26`                                     | Hover fills, the scenario zone **[PR 2]**                                       |
+| `surface.sunken`                                    | `#eae3d8`                                     | `#171412`                                     | Wells, input tracks                                                             |
+| `surface.overlay`                                   | `#ffffff`                                     | `#36322d`                                     | Dialogs, sheets, menus, popovers                                                |
+| `surface.contrast`                                  | `#22302c`                                     | `#3a352f`                                     | Rare inverted blocks                                                            |
+| `surface.hero`                                      | `#12483f`                                     | `#1b5448`                                     | The one headline block on a page                                                |
+| `surface.tint.teal` / `apricot` / `sage` **[PR 1]** | `#dcede6` / `#fae5cc` / `#e5edda`             | `#1f322d` / `#2e261c` / `#272f22`             | Icon tiles; at most one tinted section per page                                 |
+| `surface.scrim`                                     | `rgba(43,38,32,.4)`                           | `rgba(8,6,4,.6)`                              | Backdrop behind dialogs and sheets; never behind text                           |
+| `text.primary` / `secondary` / `muted`              | `#2b2620` / `#564f46` / `#6a6258`             | `#f4efe7` / `#cbc3b7` / `#a59d90`             | Body, supporting, quiet                                                         |
+| `text.onContrast`                                   | `#f6f1e8`                                     | `#fffdf9`                                     | Text on `surface.hero` and `surface.contrast`                                   |
+| `border` / `subtle` / `strong` / `input`            | `#dcd4c8` / `#e8e1d6` / `#b5ab9c` / `#867c6e` | `#3b362f` / `#302c27` / `#5c554a` / `#8f8678` | Card edge, dividers, emphasis, form controls                                    |
+| `border.focusRing`, `primary`                       | `#0f6b5e`                                     | `#6fd0ba`                                     | Focus ring, links, selected state, icons                                        |
+| `primary.solid` / `hover`                           | `#0f6b5e` / `#0a564b`                         | same in dark                                  | Fill behind `primary.foreground` (white) only                                   |
+| `primary.subtle` / `border`                         | `#e1f0eb` / `#9ccfc2`                         | `#1e3b35` / `#2e6055`                         | Selected nav item, quiet accent fills                                           |
+| `accent` **[E17]**                                  | `#7a3f66`                                     | `#dba6c9`                                     | Icons, shapes and lines; text on card, canvas and `accent.subtle` (section 2.6) |
+| `accent.subtle` / `border` **[E17]**                | `#f1e4ee` / `#d6b4cc`                         | `#33242f` / `#6a4560`                         | The one tinted card or section on a page, and its edge                          |
+| `accent.onHero` **[E17]**                           | `#e3b5d1`                                     | `#e3b5d1`                                     | One sun shape on `surface.hero`; never text                                     |
 
 ### 2.3 Status colours
 
@@ -108,6 +111,24 @@ Light mode had only two colours in practice (sand and teal). The polish plan add
 | Any two page surfaces                                      | 2.0 deltaE                                              | `tokens.a11y.test.ts` |
 
 Both themes are tested. A new token is not added until its pairs are in the matrix.
+
+### 2.6 The accent (E17, "Damson")
+
+A soft plum, the warm opposite of the teal. It adds warmth and a second voice to light mode without touching data. The approved options and mock-ups are in `docs/design/e17-options/`.
+
+| Token           | Light     | Dark      | Role                                                                                   |
+| --------------- | --------- | --------- | -------------------------------------------------------------------------------------- |
+| `accent`        | `#7a3f66` | `#dba6c9` | Icons, shapes, lines, and text on `surface.card`, `surface.canvas` and `accent.subtle` |
+| `accent.subtle` | `#f1e4ee` | `#33242f` | A tinted card or section                                                               |
+| `accent.border` | `#d6b4cc` | `#6a4560` | The edge of an `accent.subtle` surface (decorative)                                    |
+| `accent.onHero` | `#e3b5d1` | `#e3b5d1` | One shape on `surface.hero`                                                            |
+| `chart.accent`  | `#7a3f66` | `#dba6c9` | One chart series, with a direct label and a dash                                       |
+
+**Rule C7. Where the accent may go.** One tinted card or section per page, counted with the domain tints (a page has one tinted section in total, never an accent one and a domain one). Icon tiles. One small shape per illustration scene. One chart series. One sun shape in the corner of the hero, with no bars or arrows beside the figure. **Review only**; contrast and separation **Enforced by** `tokens.a11y.test.ts` ("E17 accent namespace").
+
+**Rule C8. Where the accent never goes.** A figure, KPI card, table cell or amount. A button, link or focus ring (teal only). A notice or status message. Around a `KpiStrip`, a `ScenarioZone` or a chart frame. And it never says that anything about a person's money is good or bad: it is not a status colour, and it is never paired with a gain, a loss, a debt or a target. **Review only**; `tokens.a11y.test.ts` keeps it at least 25 deltaE from every status colour and from `chart.debt`, `chart.warning` and `chart.wealth`.
+
+**Bolder tints (E17).** The existing sand, sage and teal tints are used more often, not changed: the one tinted section a page is allowed is the norm on pages that have a natural candidate (for example a prompt card), and icon tiles take their domain tint. No tint value changed, and the limits in section 2.4 stand.
 
 ## 3. Typography
 
@@ -265,13 +286,16 @@ Chart behaviour rules are in UX-GUIDELINES section 8 and [`docs/design/data-viz.
 
 ## 11. Motion values
 
-| Token                                 | Value                                                         | Use                                                             |
-| ------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
-| `durations.fast`                      | 120ms                                                         | Hover, press, a scenario result changing                        |
-| `durations.base`                      | 200ms                                                         | Tabs, disclosure, toasts                                        |
-| `durations.slow`                      | 320ms                                                         | Sheets and dialogs                                              |
-| `durations.loop`                      | 800ms                                                         | One turn of a continuous loop (the pending spinner in `Button`) |
-| `easings.standard` / `enter` / `exit` | `cubic-bezier(0.2,0.6,0.2,1)` / `(0,0,0.2,1)` / `(0.4,0,1,1)` | Moving within the screen / arriving / leaving                   |
+| Token                                 | Value                                                         | Use                                                                                  |
+| ------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `durations.fast`                      | 120ms                                                         | Hover, press, a scenario result changing                                             |
+| `durations.base`                      | 200ms                                                         | Tabs, disclosure, toasts                                                             |
+| `durations.slow`                      | 320ms                                                         | Sheets and dialogs                                                                   |
+| `durations.loop`                      | 800ms                                                         | One turn of a continuous loop (the pending spinner in `Button`)                      |
+| `easings.standard` / `enter` / `exit` | `cubic-bezier(0.2,0.6,0.2,1)` / `(0,0,0.2,1)` / `(0.4,0,1,1)` | Moving within the screen / arriving / leaving                                        |
+| `durations.draw` **[E17]**            | 600ms                                                         | A line or tick drawing itself in, once                                               |
+| `durations.scene` **[E17]**           | 900ms                                                         | An illustration settling on first view; the wash behind a figure that was just saved |
+| `easings.settle` **[E17]**            | `cubic-bezier(0.16,1,0.3,1)`                                  | A soft landing with no overshoot, for `durations.scene` motion                       |
 
 **M1.** Durations and easings come from tokens. **Enforced by** `scripts/check-style-literals.ts` **[PR 1]**. Behaviour rules are in UX-GUIDELINES section 12.
 

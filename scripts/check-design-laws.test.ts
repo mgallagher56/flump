@@ -32,6 +32,16 @@ describe("E16 token rules", () => {
       ),
     ).toBe(0);
   });
+  test("E17: accent.* and chart.accent are semantic tokens; an accent scale step and a raw plum are not", () => {
+    expect(
+      countTokenViolations(
+        `css({ color: "accent", bg: "accent.subtle", b: "accent.border", f: "accent.onHero", s: "chart.accent" })`,
+      ),
+    ).toBe(0);
+    expect(
+      countTokenViolations(`css({ color: "accent.500", bg: "#7a3f66", b: "accent.DEFAULT" })`),
+    ).toBe(3);
+  });
   test("a literal .DEFAULT token path counts (Panda resolves it to nothing); the group name does not", () => {
     expect(
       countTokenViolations(`css({ borderColor: "border.DEFAULT", bg: "primary.DEFAULT" })`),

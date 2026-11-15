@@ -44,7 +44,15 @@ describe("native.generated.ts", () => {
   it("has every semantic colour path, with Panda's DEFAULT folding", () => {
     expect(Object.keys(native.light.colors)).toEqual(colorKeys);
     expect(colorKeys).toEqual([...flatten(semanticTokens.colors).keys()].sort(compareKeys));
-    for (const key of ["border", "primary", "surface", "surface.canvas", "chart.band"]) {
+    for (const key of [
+      "accent",
+      "accent.subtle",
+      "border",
+      "primary",
+      "surface",
+      "surface.canvas",
+      "chart.band",
+    ]) {
       expect(native.light.colors).toHaveProperty(key);
     }
     expect(colorKeys.some((k) => k.includes("DEFAULT"))).toBe(false);
@@ -111,15 +119,18 @@ describe("native.generated.ts", () => {
   it("emits motion, stacking and breakpoints as numbers", () => {
     expect(native.durations).toEqual({
       base: 200,
+      draw: 600,
       fast: 120,
       instant: 0,
       loop: 800,
       pendingDelay: 200,
       pendingMinimum: 400,
       reveal: 150,
+      scene: 900,
       slow: 320,
     });
     expect(native.easings.standard).toEqual([0.2, 0.6, 0.2, 1]);
+    expect(native.easings.settle).toEqual([0.16, 1, 0.3, 1]);
     expect(native.zIndex.modal).toBe(50);
     expect(native.zIndex.hide).toBe(-1);
     expect(native.breakpoints).toMatchObject({ md: 768, lg: 1024, nav: 768 });

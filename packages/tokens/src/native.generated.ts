@@ -7,11 +7,16 @@
  */
 
 export type ColorKey =
+  | "accent"
+  | "accent.border"
+  | "accent.onHero"
+  | "accent.subtle"
   | "border"
   | "border.focusRing"
   | "border.input"
   | "border.strong"
   | "border.subtle"
+  | "chart.accent"
   | "chart.accentCyan"
   | "chart.accentPurple"
   | "chart.band"
@@ -82,11 +87,16 @@ export interface NativeTheme {
 
 export const light: NativeTheme = {
   colors: {
+    accent: "#7a3f66",
+    "accent.border": "#d6b4cc",
+    "accent.onHero": "#e3b5d1",
+    "accent.subtle": "#f1e4ee",
     border: "#dcd4c8",
     "border.focusRing": "#0f6b5e",
     "border.input": "#867c6e",
     "border.strong": "#b5ab9c",
     "border.subtle": "#e8e1d6",
+    "chart.accent": "#7a3f66",
     "chart.accentCyan": "#2f7fa0",
     "chart.accentPurple": "#7e67a8",
     "chart.band": "rgba(15, 107, 94, 0.14)",
@@ -159,11 +169,16 @@ export const light: NativeTheme = {
 
 export const dark: NativeTheme = {
   colors: {
+    accent: "#dba6c9",
+    "accent.border": "#6a4560",
+    "accent.onHero": "#e3b5d1",
+    "accent.subtle": "#33242f",
     border: "#3b362f",
     "border.focusRing": "#6fd0ba",
     "border.input": "#8f8678",
     "border.strong": "#5c554a",
     "border.subtle": "#302c27",
+    "chart.accent": "#dba6c9",
     "chart.accentCyan": "#6db5d6",
     "chart.accentPurple": "#a98fe0",
     "chart.band": "rgba(92, 196, 174, 0.15)",
@@ -452,18 +467,21 @@ export const textStyles = {
 
 export const durations = {
   base: 200,
+  draw: 600,
   fast: 120,
   instant: 0,
   loop: 800,
   pendingDelay: 200,
   pendingMinimum: 400,
   reveal: 150,
+  scene: 900,
   slow: 320,
 } as const;
 
 export const easings = {
   enter: [0, 0, 0.2, 1],
   exit: [0.4, 0, 1, 1],
+  settle: [0.16, 1, 0.3, 1],
   standard: [0.2, 0.6, 0.2, 1],
 } as const;
 

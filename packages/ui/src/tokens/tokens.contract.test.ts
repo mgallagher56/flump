@@ -35,7 +35,15 @@ interface Spec {
 
 const UI_ROOT = path.resolve(__dirname, "../..");
 const SCRATCH = "node_modules/.cache/flump-token-contract";
-const SEMANTIC_COLOR_ROOTS = new Set(["border", "chart", "primary", "status", "surface", "text"]);
+const SEMANTIC_COLOR_ROOTS = new Set([
+  "accent",
+  "border",
+  "chart",
+  "primary",
+  "status",
+  "surface",
+  "text",
+]);
 const PRIMITIVE_SHADOWS = new Set(["cardLight", "cardHoverLight", "floatingLight"]);
 const LEGACY_SHADOWS = new Set(["cardHover", "floating"]);
 

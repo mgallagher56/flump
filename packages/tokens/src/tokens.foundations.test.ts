@@ -250,9 +250,11 @@ describe("E15 motion", () => {
       reveal: "150ms",
       pendingDelay: "200ms",
       pendingMinimum: "400ms",
+      draw: "600ms",
+      scene: "900ms",
     });
     for (const e of Object.values(easings)) expect(e.value).toMatch(/^cubic-bezier\(/);
-    expect(Object.keys(easings).sort()).toEqual(["enter", "exit", "standard"]);
+    expect(Object.keys(easings).sort()).toEqual(["enter", "exit", "settle", "standard"]);
   });
 
   it("defines the six keyframes", () => {

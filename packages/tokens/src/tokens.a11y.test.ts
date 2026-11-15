@@ -54,10 +54,10 @@ describe("Tokens & Typography A11y Suite", () => {
     expect(fonts.mono.value).not.toMatch(/jetbrains/i);
   });
 
-  it("enforces the 6 canonical semantic token namespaces and eliminates redundancies", () => {
+  it("enforces the 7 canonical semantic token namespaces and eliminates redundancies", () => {
     const namespaces = Object.keys(semanticTokens.colors);
     expect(namespaces.sort()).toEqual(
-      ["border", "chart", "primary", "status", "surface", "text"].sort(),
+      ["accent", "border", "chart", "primary", "status", "surface", "text"].sort(),
     );
 
     const legacyNamespaces = [
@@ -67,7 +67,8 @@ describe("Tokens & Typography A11y Suite", () => {
       "card",
       "popover",
       "muted",
-      "accent",
+      // "accent" left this list in E17: it is now the seventh namespace (owner decision), with its
+      // own rules and tests below. It is not the old shadcn hover fill.
       "secondary",
       "destructive",
       "success",
@@ -749,6 +750,94 @@ describe("E16 light card separation", () => {
         const bg = resolveColor(s, theme);
         expect(contrast(edge, bg, bg), `${s} (${theme})`).toBeGreaterThanOrEqual(1.3);
       }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// E17: the accent namespace ("Damson"). See docs/design/e17-options/README.md.
+// ---------------------------------------------------------------------------
+
+/** Surfaces the accent may be drawn on as an icon, a shape, a line or text. */
+const ACCENT_GROUNDS = ["surface.card", "surface.canvas", "accent.subtle"];
+/** Every colour that says something about money or state: the accent must read as none of them. */
+const MEANING_COLOURS = [
+  ...STATUSES.flatMap((s) => [`status.${s}.solid`, `status.${s}.text`]).filter(
+    (t) => !t.startsWith("status.neutral"),
+  ),
+  "chart.debt",
+  "chart.warning",
+  "chart.wealth",
+];
+const MIN_ACCENT_MEANING_DELTA_E = 25;
+const MIN_ACCENT_TINT_DELTA_E = 5;
+
+describe("E17 accent namespace", () => {
+  it("has exactly the four roles", () => {
+    expect(Object.keys(semanticTokens.colors.accent).sort()).toEqual(
+      ["DEFAULT", "border", "onHero", "subtle"].sort(),
+    );
+  });
+
+  it.each(ACCENT_GROUNDS)("accent carries text at 4.5:1 on %s in both themes", (bg) => {
+    assertPair({ fg: "accent", bg, themes: BOTH, min: 4.5, role: "text" });
+  });
+
+  it("accent.subtle carries text.primary, text.secondary and text.muted at 4.5:1 in both themes", () => {
+    for (const fg of TEXTS)
+      assertPair({ fg, bg: "accent.subtle", themes: BOTH, min: 4.5, role: "text" });
+  });
+
+  it("the controls that may sit on an accent.subtle card keep their contrast", () => {
+    assertPair({ fg: "primary", bg: "accent.subtle", themes: BOTH, min: 4.5, role: "text" });
+    assertPair({ fg: "border.input", bg: "accent.subtle", themes: BOTH, min: 3, role: "ui" });
+    assertPair({ fg: "border.focusRing", bg: "accent.subtle", themes: BOTH, min: 3, role: "ui" });
+  });
+
+  it("accent.onHero is a 3:1 shape on surface.hero in both themes", () => {
+    assertPair({ fg: "accent.onHero", bg: "surface.hero", themes: BOTH, min: 3, role: "graphic" });
+  });
+
+  it("chart.accent is the accent, and a 3:1 line on a card", () => {
+    for (const theme of BOTH)
+      expect(resolveColor("chart.accent", theme)).toBe(resolveColor("accent", theme));
+    assertPair({ fg: "chart.accent", bg: "surface.card", themes: BOTH, min: 3, role: "graphic" });
+  });
+
+  it(`accent is at least ${MIN_ACCENT_MEANING_DELTA_E} deltaE76 from every status colour and from debt, warning and wealth in charts`, () => {
+    for (const theme of BOTH) {
+      for (const other of MEANING_COLOURS) {
+        expect(
+          deltaE("accent", other, theme),
+          `accent vs ${other} (${theme})`,
+        ).toBeGreaterThanOrEqual(MIN_ACCENT_MEANING_DELTA_E);
+      }
+    }
+  });
+
+  it(`accent.subtle is at least ${MIN_ACCENT_TINT_DELTA_E} deltaE76 from every status background, page surface and domain tint`, () => {
+    for (const theme of BOTH) {
+      const others = [
+        ...STATUSES.map((s) => `status.${s}.bg`),
+        ...PAGE_SURFACES.map((s) => `surface.${s}`),
+        ...TINTS,
+        "primary.subtle",
+      ];
+      for (const other of others) {
+        expect(
+          deltaE("accent.subtle", other, theme),
+          `accent.subtle vs ${other} (${theme})`,
+        ).toBeGreaterThanOrEqual(MIN_ACCENT_TINT_DELTA_E);
+      }
+    }
+  });
+
+  it("the accent.subtle edge reads against its fill, like a card edge", () => {
+    for (const theme of BOTH) {
+      const bg = resolveColor("accent.subtle", theme);
+      expect(contrast(resolveColor("accent.border", theme), bg, bg), theme).toBeGreaterThanOrEqual(
+        1.3,
+      );
     }
   });
 });

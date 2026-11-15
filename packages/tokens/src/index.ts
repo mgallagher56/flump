@@ -208,6 +208,23 @@ export const semanticTokens = {
       foreground: { value: "#ffffff" },
     },
 
+    // 1b. Accent (E17, "Damson"): a soft plum, the warm opposite of the teal. Decoration and
+    // wayfinding only: one tinted card or section per page (in place of a domain tint), icon tiles,
+    // one small shape per scene, one chart series (chart.accent) and one sun shape on surface.hero.
+    // Never on a figure, KPI card, table cell, button, link, focus ring, notice or status message,
+    // and never to say that anything about a person's money is good or bad. Hue ~320 keeps it clear
+    // of every status colour and of chart.debt (tests in tokens.a11y.test.ts).
+    accent: {
+      // Icons, shapes and lines; also text on card, canvas and accent.subtle (>= 4.5:1).
+      DEFAULT: { value: { base: "#7a3f66", _dark: "#dba6c9" } },
+      // The tinted surface. text.primary, secondary and muted clear 4.5:1 on it.
+      subtle: { value: { base: "#f1e4ee", _dark: "#33242f" } },
+      // The edge of an accent.subtle surface. Decorative, like border.DEFAULT.
+      border: { value: { base: "#d6b4cc", _dark: "#6a4560" } },
+      // The one shape allowed on surface.hero (>= 3:1 there in both themes). Never text.
+      onHero: { value: { base: "#e3b5d1", _dark: "#e3b5d1" } },
+    },
+
     // 2. Layered Surfaces (Canonical surface namespace)
     surface: {
       DEFAULT: { value: { base: "#fffdf9", _dark: "{colors.dark.surface}" } },
@@ -299,6 +316,9 @@ export const semanticTokens = {
       warning: { value: { base: "#94750f", _dark: "#e3b452" } },
       accentPurple: { value: { base: "#7e67a8", _dark: "#a98fe0" } },
       accentCyan: { value: { base: "#2f7fa0", _dark: "#6db5d6" } },
+      // E17: the accent as a chart series (same values as accent.DEFAULT). At most one series per
+      // chart, always with a direct label and a dash. Never for debt, a loss or a gain.
+      accent: { value: { base: "#7a3f66", _dark: "#dba6c9" } },
       series1: { value: { base: "{colors.teal.600}", _dark: "#5cc4ae" } },
       series2: { value: { base: "#64885c", _dark: "#9ad0a0" } },
       series3: { value: { base: "#c26a18", _dark: "#eda45f" } },
