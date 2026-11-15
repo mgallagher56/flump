@@ -36,7 +36,7 @@ These restate rules already in force: copy guide 2.3 ("Copy never judges someone
 
 ## 3. Three option sets
 
-`docs/design/e17-options/` (the approved micro-animations and illustrations) was not on main when this was written. Set 1 names moments, not animations, and should be matched to that folder when it lands.
+The E17 design decisions reached main on 15 November (`docs/design/e17-options/`, UX guidelines M5 and M7). M5 allows motion on two things that are not financial events: the confirmation that a save worked, and the setup checklist's finish scene, which may settle once. Set 1 stays inside that: every moment below is a save confirmation or the setup finish, and uses only motion from the approved list (STYLE-GUIDE 11.1).
 
 ### Set 1. Warm confirmations (light)
 
@@ -51,7 +51,7 @@ These restate rules already in force: copy guide 2.3 ("Copy never judges someone
 - **Tests:** W pass. N1, N2, N3 pass (nothing is counted or compared). N4 pass only if the wording names the action and any motion is identical whichever way a figure moved. N5 pass: the same line for a first account that is a debt.
 - **Data:** none new (`snapshot_checkins`, `SetupChecklist`, `CheckInSummary`).
 - **Turning it off:** one switch in Settings, "Animations". The device's reduced-motion setting is always honoured.
-- **Risks:** UX guideline O7 bans confetti on anything financial. The motion must be small and attached to the task, never to a number.
+- **Risks:** UX guidelines O7 and M5 ban confetti and celebratory animation on a financial event. The motion is the approved save confirmation, attached to the task and never to a number.
 
 ### Set 2. Goals that are the user's own (middle)
 
@@ -127,7 +127,7 @@ Not applied in this PR. Exact wording for the owner to approve.
 
 - O7, amended: "No streaks, points, scores, grades, ranks, badges, confetti, countdowns or leaderboards on anything financial. Progress is shown as the user's own figures over time."
 - O11, new: "Every encouragement feature states its benefit to the person in its plan. None is justified or measured by visits, time in the app or retention."
-- O12, new: "A finished action may be acknowledged with one short approved animation, identical whatever the figures show. It follows the reduced-motion setting and one Settings switch."
+- O12, new: "A finished action is acknowledged in words that name the action. Any motion is the approved save confirmation (M5, M7), identical whatever the figures show, and follows the reduced-motion setting and one Settings switch."
 - O13, new: "Goals belong to the user. Flump never suggests a goal, an amount or a date, accepts any size without comment, and lets a goal be changed or removed without a question."
 - O14, new: "An unreached goal or a passed date changes nothing on screen."
 
@@ -139,13 +139,14 @@ The mobile plan (E12, decision O3) has push notifications off at launch. Nothing
 
 ## 7. First step, and how to tell whether it helps the person
 
-**Build Set 1 only, after `docs/design/e17-options/` reaches main.** E30 D11 stands, with one clarifying line: a one-off confirmation of a finished action is not a badge.
+**Build Set 1 only, using the approved E17 motion.** E30 D11 stands, with one clarifying line: a one-off confirmation of a finished action is not a badge.
 
 | Measure of benefit | How | Reading |
 | --- | --- | --- |
 | Do people feel more in control? | One optional question after a check-in, at most once a quarter: "After this check-in, how do you feel about your money?" with "More in control", "About the same", "More worried" | More "in control" than "worried" |
 | Does anyone feel worse? | A second optional question: "Did anything here make you feel worse? Tell us what." | Every answer is read |
-| Are records easier to keep current? | Share of accounts with a figure entered or confirmed for the month, from `snapshot_checkins` and snapshot rows | Accurate figures are the benefit; visits are not counted |
+| Are records easier to keep current? | Check-ins completed, and the share of accounts with a figure entered or confirmed for the month, from `snapshot_checkins` and snapshot rows | Accurate figures are the benefit; visits and time in the app are not counted |
+| Is debt being paid down, where that is the person's goal? (Set 2) | In aggregate only, for debts with a goal the user set: the change in balance since the goal was set | Direction only; never a target Flump sets |
 | Do people reach goals they set? (Set 2) | In aggregate only: of goals whose date has passed, how many were reached. Never shown to a user and never used to message one | Direction only |
 | Do people keep it on? | The Settings switch | See the stop rules |
 
