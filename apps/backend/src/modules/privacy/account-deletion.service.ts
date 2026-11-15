@@ -1,6 +1,7 @@
 import type { AccountExportKey, DeleteUserResponse } from "@flump/api-contract";
 import { Inject, Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { DataSource, type EntityManager, In, LessThan } from "typeorm";
+import { allowAuditDelete } from "../../audit/audit-delete-guard";
 import { recordAuditEvent } from "../../audit/audit-events";
 import type { ErasedAccountCheck } from "../../auth/erased-account";
 import { safeErrorSummary } from "../../common/log-safe";
@@ -101,6 +102,9 @@ export class AccountDeletionService implements ErasedAccountCheck {
         (await manager.getRepository(AccountDetail).delete({ accountId: In(accountIds) })).affected,
       );
     }
+    // SEC-F: audit_events refuses a DELETE unless the transaction declares why. Transaction-local,
+    // so it ends when the erasure transaction does.
+    await allowAuditDelete(manager, "erasure");
     for (const t of USER_DATA_REGISTRY) {
       add(t.key, (await manager.getRepository(t.entity).delete({ userId })).affected);
     }
@@ -111,7 +115,8 @@ export class AccountDeletionService implements ErasedAccountCheck {
     const key = this.key;
     if (!key) {
       // N1: the operator needs to know which variable to set; the person gets a stable code and a
-      // plain message. The variable's name only, never a value.
+      // plain message. The variable's name only, never a value. Production cannot get here (boot
+      // requires the key, SEC-A); a strict environment that is not production still can.
       this.logger.error(
         `Account deletion refused: ${TOMBSTONE_KEY_ENV_VAR} is not set or too short. Set it (see OWNER-SETUP.md) to enable erasure.`,
       );

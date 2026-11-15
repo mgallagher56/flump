@@ -592,6 +592,9 @@ jobs:
             -e WORKOS_CLIENT_ID=client_ci_dummy \
             -e CORS_ALLOWED_ORIGINS=https://example.invalid \
             -e MCP_AUDIT_HMAC_KEY="$(openssl rand -hex 32)" \
+            -e DELETION_TOMBSTONE_KEY="$(openssl rand -hex 32)" \
+            -e WEB_CLIENT_IP_HMAC_KEY="$(openssl rand -hex 32)" \
+            -e WORKOS_API_KEY="sk_ci_$(openssl rand -hex 8)" \
             -e BETA_OPEN=true \
             flump-backend-ci
           # BE-07 launch gate: the bank flag must refuse boot until BE-12 flips the gate. Bounded by
@@ -601,7 +604,8 @@ jobs:
             -e DATABASE_URL=postgres://flump_ci:flump-ci-not-a-secret@127.0.0.1:5432/flump_ci \
             -e DB_SSL=false -e BANKING_TOKEN_ENCRYPTION_KEY="$key" \
             -e WORKOS_CLIENT_ID=client_ci_dummy -e CORS_ALLOWED_ORIGINS=https://example.invalid \
-            -e MCP_AUDIT_HMAC_KEY="$key" -e BETA_OPEN=true -e BANK_CONNECTIONS_ENABLED=true \
+            -e MCP_AUDIT_HMAC_KEY="$key" -e DELETION_TOMBSTONE_KEY="$key" -e WEB_CLIENT_IP_HMAC_KEY="$key" \
+            -e WORKOS_API_KEY="sk_ci_$(openssl rand -hex 8)" -e BETA_OPEN=true -e BANK_CONNECTIONS_ENABLED=true \
             flump-backend-ci > bank-gate.log 2>&1
           gate_status=$?
           set -e
@@ -657,6 +661,7 @@ jobs:
             -e WORKOS_COOKIE_PASSWORD="$(openssl rand -hex 32)" \
             -e WORKOS_REDIRECT_URI=https://web.example.invalid/callback \
             -e VITE_API_URL=https://api.example.invalid \
+            -e WEB_CLIENT_IP_HMAC_KEY="$(openssl rand -hex 32)" \
             flump-web-ci
           for i in $(seq 1 30); do
             code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3100/healthz || true)

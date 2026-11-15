@@ -8,6 +8,9 @@ const PROD = {
   MCP_AUDIT_HMAC_KEY: "k".repeat(32),
   WORKOS_CLIENT_ID: "client_123",
   BANKING_TOKEN_ENCRYPTION_KEY: "b".repeat(64),
+  DELETION_TOMBSTONE_KEY: "t".repeat(32),
+  WEB_CLIENT_IP_HMAC_KEY: "h".repeat(32),
+  WORKOS_API_KEY: "w".repeat(32),
 };
 
 function issuesOf(env: Record<string, string | undefined>) {
@@ -64,6 +67,50 @@ describe("parseBackendEnv", () => {
       "MCP_AUDIT_HMAC_KEY",
     );
     expect(() => parseBackendEnv({ MCP_AUDIT_HMAC_KEY: "short" })).not.toThrow();
+  });
+
+  it("requires the three SEC-A keys in production (N1, N2, M9)", () => {
+    expect(PRODUCTION_REQUIRED).toEqual(
+      expect.arrayContaining([
+        "DELETION_TOMBSTONE_KEY",
+        "WEB_CLIENT_IP_HMAC_KEY",
+        "WORKOS_API_KEY",
+      ]),
+    );
+  });
+
+  it("refuses a short DELETION_TOMBSTONE_KEY in production only, without printing it", () => {
+    const short = "t".repeat(31);
+    expect(issuesOf({ ...PROD, DELETION_TOMBSTONE_KEY: short })).toEqual([
+      {
+        variable: "DELETION_TOMBSTONE_KEY",
+        problem: "must be at least 32 characters in production",
+      },
+    ]);
+    expect(() => parseBackendEnv({ DELETION_TOMBSTONE_KEY: short })).not.toThrow();
+    try {
+      parseBackendEnv({ ...PROD, DELETION_TOMBSTONE_KEY: short });
+    } catch (error) {
+      expect((error as Error).message).not.toContain(short);
+    }
+  });
+
+  it("names every missing SEC-A key at once, and no value from the environment", () => {
+    const issues = issuesOf({
+      ...PROD,
+      DELETION_TOMBSTONE_KEY: undefined,
+      WEB_CLIENT_IP_HMAC_KEY: "  ",
+      WORKOS_API_KEY: "",
+    });
+    expect(issues.map((i) => i.variable)).toEqual([
+      "DELETION_TOMBSTONE_KEY",
+      "WEB_CLIENT_IP_HMAC_KEY",
+      "WORKOS_API_KEY",
+    ]);
+  });
+
+  it("TERMS_VERSION stays optional in production", () => {
+    expect(() => parseBackendEnv({ ...PROD, TERMS_VERSION: undefined })).not.toThrow();
   });
 
   it.each([

@@ -152,6 +152,21 @@ describe("resolveBankingKey", () => {
     expect(key.length).toBeGreaterThanOrEqual(32);
   });
 
+  it.each(["development", "test"])(
+    "never uses the default on Railway, even with NODE_ENV=%s (S3)",
+    (NODE_ENV) => {
+      const onRailway = { NODE_ENV, RAILWAY_ENVIRONMENT: "staging" };
+      expect(() => resolveBankingKey(onRailway)).toThrow(
+        "BANKING_TOKEN_ENCRYPTION_KEY must be set",
+      );
+      expect(() =>
+        resolveBankingKey({ ...onRailway, BANKING_TOKEN_ENCRYPTION_KEY: "short" }),
+      ).toThrow("BANKING_TOKEN_ENCRYPTION_KEY must be set");
+      expect(resolveBankingKey({ ...onRailway, BANKING_TOKEN_ENCRYPTION_KEY: KEY_A })).toBe(KEY_A);
+      expect(() => resolveBankingKeyring(onRailway)).toThrow("BANKING_TOKEN_ENCRYPTION_KEY");
+    },
+  );
+
   it.each(["development", "test"])("returns the variable when set in %s", (NODE_ENV) => {
     expect(resolveBankingKey({ NODE_ENV, BANKING_TOKEN_ENCRYPTION_KEY: "short" })).toBe("short");
   });

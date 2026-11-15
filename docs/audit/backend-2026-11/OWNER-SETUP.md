@@ -219,7 +219,7 @@ The backend now validates its whole environment at boot and refuses to start wit
 
 | Variable | Value |
 |---|---|
-| `WEB_CLIENT_IP_HMAC_KEY` | Same value as the backend. Without it, every web user shares the web server's per-IP bucket |
+| `WEB_CLIENT_IP_HMAC_KEY` | Same value as the backend, at least 32 characters. Required in production since SEC-A: the web server does not start without it |
 | `SENTRY_AUTH_TOKEN` | A Sentry organisation token (or a personal token with the `project:releases` scope). Set it as an ordinary service variable: Railway passes it to the Docker build as a build argument, used in the build stage only, so it is not in the final image. Railway's builder does not support BuildKit secret mounts. Optional: without it the build skips source map upload |
 | `SENTRY_ORG`, `SENTRY_PROJECT` | Your Sentry org and web project slugs (build variables) |
 | `CSP_REPORT_ONLY` | Leave unset. Set to `true` only as an emergency rollback if the enforced CSP breaks a page |
@@ -261,20 +261,20 @@ The retention purge is a command a Railway cron service runs once a day (ruling 
 ### Follow-ups the owner decides
 
 - **Inactive-account erasure (D4).** Flump now records `last_active_at` and the job reports accounts past 24 months. Erasing them automatically needs a notice email some weeks before (no email sending exists yet) and a run of the account-deletion service from the job. The earliest any beta account can reach 24 months is late 2028.
-- **Restricted database role for `audit_events`.** The append-only trigger stops the app rewriting a row by mistake; it does not stop someone holding the app's database credential from deleting rows or dropping the trigger. A separate app role without DELETE or TRUNCATE on `audit_events` (with the retention job on its own role) closes that. Optional before public launch.
+- **Restricted database role for `audit_events`.** See "SEC-A / SEC-F" below: SEC-F added the TRUNCATE and DELETE guards, and the role is the remaining owner step.
 - **Terms acceptance record (M-PRIV3).** The backend route exists since BE-15 (`POST /v1/user-profile/terms-acceptance`, see below). The web acceptance step that calls it is still a follow-up.
 
 ## BE-04 / BE-15: account deletion and privacy variables (findings N1, N2, N3, M-PRIV3)
 
-Four backend variables keep account deletion, the client-IP rate limit and terms acceptance working in production. None of them fails boot yet, so a deploy before they are set keeps every other route working. While one is unset in production, the backend logs one warning naming it at boot, and `GET /health/ready` still answers 200 but counts it in `configWarnings` (a number only: the public route never names a variable). SEC-A will add them to the production-required list, so boot fails without them, once they are set in Railway.
+Four backend variables keep account deletion, the client-IP rate limit and terms acceptance working in production. Since SEC-A the first three are required: the backend refuses to start in production without them (see "SEC-A / SEC-F" below). `TERMS_VERSION` stays optional: while it is unset in production, the backend logs one warning naming it at boot, and `GET /health/ready` still answers 200 but counts it in `configWarnings` (a number only: the public route never names a variable).
 
 ### 1. Backend service variables (Railway, production)
 
 | Variable | What it does | What breaks while it is unset |
 |---|---|---|
-| `DELETION_TOMBSTONE_KEY` | HMAC key for the hashed user id kept after an account is erased (`openssl rand -hex 32`, at least 32 characters). **Never rotate it**: old tombstones become unfindable | Account deletion answers 503 with the code `account_deletion_unavailable`, and the backend logs an error naming the variable on each attempt |
-| `WEB_CLIENT_IP_HMAC_KEY` | Verifies the signed client-IP header from the web service (BE-07). Same value on the web service | Every web user shares the web server's per-IP rate-limit bucket |
-| `WORKOS_API_KEY` | Lets account deletion remove the WorkOS login, and lets the password reset and name updates reach WorkOS | An erasure deletes the data but stays `identity_pending` for good: the login is never removed (N2) |
+| `DELETION_TOMBSTONE_KEY` | HMAC key for the hashed user id kept after an account is erased (`openssl rand -hex 32`, at least 32 characters). **Never rotate it**: old tombstones become unfindable | The backend does not start (SEC-A). Also refused when shorter than 32 characters |
+| `WEB_CLIENT_IP_HMAC_KEY` | Verifies the signed client-IP header from the web service (BE-07). Same value on the web service | The backend does not start (SEC-A) |
+| `WORKOS_API_KEY` | Lets account deletion remove the WorkOS login, and lets the password reset and name updates reach WorkOS | The backend does not start (SEC-A) |
 | `TERMS_VERSION` | The terms and privacy notice version people accept, for example `2026-11-01` (1 to 64 letters, digits, dots, dashes or underscores). Change it whenever the legal pages change | `POST /v1/user-profile/terms-acceptance` answers 503 `terms_not_configured`. A request naming any other version gets 409 `terms_version_mismatch` |
 
 ### 2. Database
@@ -288,9 +288,65 @@ The migration `AuditActionUserExported1795000000000` lets `audit_events` hold th
 
 ### How to know it worked
 
-- [ ] `GET /health/ready` answers 200 with `"configWarnings": 0`. Date: ____ When it is not 0, the names are in the backend boot log (Railway, backend service, deploy logs) as `warn` lines, one per unset variable, in this form: `<VARIABLE_NAME> is not set in production. See docs/audit/backend-2026-11/OWNER-SETUP.md (BE-04 / BE-15).`
+- [ ] `GET /health/ready` answers 200 with `"configWarnings": 0` (`1` while `TERMS_VERSION` is unset, which is expected until the terms are published). Date: ____ When it is higher than expected, the names are in the backend boot log (Railway, backend service, deploy logs) as `warn` lines, one per unset variable, in this form: `<VARIABLE_NAME> is not set in production. See docs/audit/backend-2026-11/OWNER-SETUP.md (BE-04 / BE-15).`
 - [ ] Download your data export in the web app, then in `railway connect Postgres`: `SELECT action FROM audit_events ORDER BY created_at DESC LIMIT 1;` shows `user.exported`.
-- [ ] Then tell the agent to start SEC-A, which makes these variables required.
+- [x] SEC-A has made the three keys required (owner confirmed them set on 15 November 2026).
+
+## SEC-A / SEC-F: keys required at boot, audit-trail integrity (findings N1, M9, S3, S10)
+
+### 1. Variables production now refuses to start without
+
+Check these **before** deploying the release that contains SEC-A. A service that is missing one exits at boot with a message naming the variable (never its value), and Railway keeps the previous deployment running.
+
+| Service | Variable | Rule |
+|---|---|---|
+| backend | `DELETION_TOMBSTONE_KEY` | Set, at least 32 characters. Never rotate it |
+| backend | `WEB_CLIENT_IP_HMAC_KEY` | Set, at least 32 characters, the same value as on the web service |
+| backend | `WORKOS_API_KEY` | Set |
+| web | `WEB_CLIENT_IP_HMAC_KEY` | Set, at least 32 characters, the same value as on the backend |
+
+These join the variables the backend already required in production: `DATABASE_URL` (or `DB_HOST`), `CORS_ALLOWED_ORIGINS`, `MCP_AUDIT_HMAC_KEY` (at least 32 characters), `WORKOS_CLIENT_ID`, `BANKING_TOKEN_ENCRYPTION_KEY` (at least 32 characters), and a beta allow-list or `BETA_OPEN=true`. `TERMS_VERSION` is still optional. The marketing service is unchanged.
+
+"Production" means `NODE_ENV=production`, which both Docker images set. The web server also treats an unset `NODE_ENV` as production.
+
+- [ ] Before the release: `GET /health/ready` on the current production backend shows `"configWarnings": 1` (only `TERMS_VERSION` unset). That proves the three backend keys are set and the tombstone key is long enough. A higher number means a key is missing or too short: fix it first. Date: ____
+- [ ] Before the release: the web service's `WEB_CLIENT_IP_HMAC_KEY` is the same value as the backend's (compare in Railway; do not paste either anywhere). Date: ____
+- [ ] After the release: both services are running the new deployment, and `GET /health/ready` still shows `"configWarnings": 1`. Date: ____
+
+Also in SEC-A (S3): a Railway service never uses the committed development banking key, whatever its `NODE_ENV`. Production already required `BANKING_TOKEN_ENCRYPTION_KEY`, so nothing changes there.
+
+### 2. Database
+
+The migration `AuditEventsDeleteAndTruncateGuards1795100000000` adds two triggers to `audit_events` and changes no row. After it, the table refuses every UPDATE and every TRUNCATE, and refuses a DELETE unless the transaction declares one of two reasons: `retention` (the daily purge) or `erasure` (account deletion, and the staging reseed). Its `down()` drops only the two triggers and their functions.
+
+- [ ] After deploy, in `railway connect Postgres`, inside `BEGIN; ... ROLLBACK;`: `TRUNCATE audit_events;` fails with `audit_events cannot be truncated`, and `DELETE FROM audit_events;` fails with `audit_events rows are deleted only by retention or erasure`. Date: ____
+- [ ] The next retention run still logs `retention audit_events deleted=<n>` and exits 0. Date: ____
+
+To remove audit rows by hand (only ever on a database that is not production), declare the reason in the same transaction: `BEGIN; SELECT set_config('flump.audit_delete', 'erasure', true); DELETE FROM audit_events WHERE ...; COMMIT;`
+
+### 3. Restricted database role (owner step, optional before public launch)
+
+The triggers stop a bug in the app from rewriting or removing audit rows. They do not stop someone holding the app's database credential, who can declare a reason or drop a trigger. A role that does not own the table closes that. Sketch, to adapt and run as the database owner:
+
+```sql
+-- The API's role: reads and appends audit rows, cannot delete, truncate or alter the table.
+CREATE ROLE flump_app LOGIN PASSWORD '<generate>';
+GRANT USAGE ON SCHEMA public TO flump_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO flump_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO flump_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON audit_events FROM flump_app;
+```
+
+Three things must be settled before using it, which is why it is not done here:
+
+- Migrations run at backend boot as the backend's role, and need to own the tables. The API would need a second connection, or migrations a separate deploy step.
+- Account deletion deletes the person's audit rows as the API's role. It would need its own narrow path (for example a `SECURITY DEFINER` function owned by the table owner), or the decision below.
+- The retention cron keeps the owner role, or a role with DELETE on the tables it purges.
+
+### Follow-ups the owner decides
+
+- **N12: keep a pseudonymised audit copy on erasure?** Today erasure deletes the person's `audit_events` rows (the `user.deleted` row has no user id). Keeping a copy keyed by the tombstone hash would preserve the security trail; it also keeps more data after an erasure. Not decided, so the behaviour is unchanged.
+- **`agent_audit_events`** has no UPDATE, TRUNCATE or DELETE guard. The same triggers would fit; not in SEC-F because finding S10 covers `audit_events` only.
 
 ---
 

@@ -1,6 +1,8 @@
 import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { validateBootEnv } from "../src/config/boot-guards";
+import { EnvValidationError } from "../src/config/env.schema";
 import { AuditEvent } from "../src/entities/audit-event.entity";
 import { BudgetEntry } from "../src/entities/budget-entry.entity";
 import { resolveDbTestMode } from "../src/testing/dbTestMode";
@@ -12,13 +14,14 @@ vi.mock("../src/config/typeorm.options", async (importOriginal) =>
 );
 
 /**
- * BE-15: the real AppModule booted the way main.ts boots it (validateBootEnv, request context,
- * applySecurity) in a production-shaped environment on real Postgres: NODE_ENV=production on
- * Railway, every PRODUCTION_REQUIRED variable set, and the four privacy variables
- * (DELETION_TOMBSTONE_KEY, WEB_CLIENT_IP_HMAC_KEY, WORKOS_API_KEY, TERMS_VERSION) unset. Proves the
- * service degrades exactly as documented (account deletion and terms acceptance refuse with their
- * own 503 codes) and nothing else breaks. Auth is the authz harness's real WorkOsJwtVerifier on a
- * throwaway JWKS; no guard is weakened.
+ * BE-15 and SEC-A: the real AppModule booted the way main.ts boots it (validateBootEnv, request
+ * context, applySecurity) in a production-shaped environment on real Postgres: NODE_ENV=production
+ * on Railway, every PRODUCTION_REQUIRED variable set (DELETION_TOMBSTONE_KEY,
+ * WEB_CLIENT_IP_HMAC_KEY and WORKOS_API_KEY among them since SEC-A) and TERMS_VERSION unset. Proves
+ * the service boots and works with the terms version off (terms acceptance refuses with its own 503
+ * code), and that the same boot check refuses to start when any one of the three keys is missing.
+ * Auth is the authz harness's real WorkOsJwtVerifier on a throwaway JWKS; no guard is weakened.
+ * Account deletion is not called here: with a WorkOS key set it would reach the real WorkOS API.
  */
 const dbMode = resolveDbTestMode(process.env);
 
@@ -37,14 +40,21 @@ const PRODUCTION_ENV: Record<string, string | undefined> = {
   // Production closes AI connections to an allow-list (MCP_OPEN_ACCESS defaults to false there).
   MCP_ALLOWED_USER_IDS: USER_A,
   MCP_OPEN_ACCESS: undefined,
-  DELETION_TOMBSTONE_KEY: undefined,
-  WEB_CLIENT_IP_HMAC_KEY: undefined,
-  WORKOS_API_KEY: undefined,
+  DELETION_TOMBSTONE_KEY: runtimeValue("t"),
+  WEB_CLIENT_IP_HMAC_KEY: runtimeValue("h"),
+  WORKOS_API_KEY: runtimeValue("w"),
   TERMS_VERSION: undefined,
   BANK_CONNECTIONS_ENABLED: undefined,
   CONTRACT_MODE: undefined,
   TRUST_PROXY_HOPS: undefined,
 };
+
+/** The three keys SEC-A made boot requirements. */
+const SEC_A_REQUIRED = [
+  "DELETION_TOMBSTONE_KEY",
+  "WEB_CLIENT_IP_HMAC_KEY",
+  "WORKOS_API_KEY",
+] as const;
 
 const BUCKET_KEY = /^rl1:[0-9a-f]{32}$/;
 
@@ -52,7 +62,6 @@ describe.skipIf(dbMode === "skip")("production-shaped environment (real Postgres
   let h: AuthzHarness;
   const savedEnv = { ...process.env };
   const statuses: string[] = [];
-  let entryId: string;
 
   const call = async (method: HttpMethod, path: string, body?: object) => {
     const res = await h.call(method, path, h.tokens.a, body);
@@ -78,12 +87,39 @@ describe.skipIf(dbMode === "skip")("production-shaped environment (real Postgres
     Object.assign(process.env, savedEnv);
   });
 
-  it("boots, and /health/ready is 200 with the four privacy variables counted", async () => {
+  it("boots with the three keys set and TERMS_VERSION unset; /health/ready counts only that one", async () => {
+    expect(process.env.TERMS_VERSION).toBeUndefined();
     const res = await h.call("get", "/health/ready");
     statuses.push(`${res.status} GET /health/ready`);
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("ok");
-    expect(res.body.configWarnings).toBe(4);
+    expect(res.body.configWarnings).toBe(1);
+  });
+
+  it.each(SEC_A_REQUIRED)("refuses to boot without %s, naming it and printing no value", (name) => {
+    // The exact check main.ts runs first, on this spec's real production environment less one key.
+    const env = { ...process.env, [name]: undefined };
+    let thrown: unknown;
+    try {
+      validateBootEnv(env);
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(EnvValidationError);
+    const error = thrown as EnvValidationError;
+    expect(error.issues).toEqual([{ variable: name, problem: "is required in production" }]);
+    expect(error.message).toBe(`Invalid environment: ${name} is required in production`);
+    for (const other of SEC_A_REQUIRED) {
+      const value = process.env[other];
+      if (value) expect(error.message).not.toContain(value);
+    }
+  });
+
+  it("refuses to boot with a DELETION_TOMBSTONE_KEY shorter than 32 characters", () => {
+    const short = runtimeValue("t").slice(0, 31);
+    expect(() => validateBootEnv({ ...process.env, DELETION_TOMBSTONE_KEY: short })).toThrow(
+      "Invalid environment: DELETION_TOMBSTONE_KEY must be at least 32 characters in production",
+    );
   });
 
   it("an ordinary rate-limited write succeeds", async () => {
@@ -93,7 +129,6 @@ describe.skipIf(dbMode === "skip")("production-shaped environment (real Postgres
       amount: 900,
     });
     expect(res.status).toBe(201);
-    entryId = res.body.id;
     expect(await budgetRows()).toBe(1);
   });
 
@@ -120,22 +155,6 @@ describe.skipIf(dbMode === "skip")("production-shaped environment (real Postgres
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ success: true });
     expect(await budgetRows()).toBe(1);
-  });
-
-  it("account deletion refuses with account_deletion_unavailable and deletes nothing", async () => {
-    const bucketsBefore = await bucketKeys();
-    const res = await call("delete", "/user-profile", { confirmation: "DELETE" });
-    expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ code: "account_deletion_unavailable" });
-    expect(typeof res.body.message).toBe("string");
-    expect(typeof res.body.requestId).toBe("string");
-    // Not the rate limiter: its refusals are 429 rate_limited or a 503 with another code, and the
-    // destructive hit went through the shared store (a bucket row exists for it).
-    expect(res.headers["retry-after"]).toBeUndefined();
-    expect((await bucketKeys()).length).toBeGreaterThanOrEqual(bucketsBefore.length);
-    expect(await budgetRows()).toBe(1);
-    const entry = await h.dataSource.getRepository(BudgetEntry).findOneBy({ id: entryId });
-    expect(entry?.userId).toBe(USER_A);
   });
 
   it("terms acceptance refuses with terms_not_configured", async () => {

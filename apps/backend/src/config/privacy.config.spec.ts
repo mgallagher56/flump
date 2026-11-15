@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseBackendEnv } from "./env.schema";
+import { PRODUCTION_REQUIRED, parseBackendEnv } from "./env.schema";
 import {
   PRIVACY_PRODUCTION_VARIABLES,
   privacyConfigWarnings,
@@ -7,39 +7,22 @@ import {
   resolveTermsVersion,
 } from "./privacy.config";
 
-describe("privacyConfigWarnings (BE-15, N1 and N2)", () => {
-  it("names every unset privacy variable in production, in a fixed order", () => {
-    expect(privacyConfigWarnings({ NODE_ENV: "production" })).toEqual([
-      "DELETION_TOMBSTONE_KEY",
-      "WEB_CLIENT_IP_HMAC_KEY",
-      "WORKOS_API_KEY",
+describe("privacyConfigWarnings (BE-15; SEC-A)", () => {
+  it("warns about TERMS_VERSION only: the three keys are boot requirements now (SEC-A)", () => {
+    expect(privacyConfigWarnings({ NODE_ENV: "production" })).toEqual(["TERMS_VERSION"]);
+    expect(PRIVACY_PRODUCTION_VARIABLES).toEqual(["TERMS_VERSION"]);
+    for (const name of ["DELETION_TOMBSTONE_KEY", "WEB_CLIENT_IP_HMAC_KEY", "WORKOS_API_KEY"]) {
+      expect(PRODUCTION_REQUIRED).toContain(name);
+    }
+  });
+
+  it("treats blank as unset and says nothing once it is set", () => {
+    expect(privacyConfigWarnings({ NODE_ENV: "production", TERMS_VERSION: "   " })).toEqual([
       "TERMS_VERSION",
     ]);
-  });
-
-  it("treats blank as unset and leaves out the ones that are set", () => {
-    expect(
-      privacyConfigWarnings({
-        NODE_ENV: "production",
-        DELETION_TOMBSTONE_KEY: "t".repeat(48),
-        WEB_CLIENT_IP_HMAC_KEY: "   ",
-        WORKOS_API_KEY: "w".repeat(40),
-        TERMS_VERSION: "2026-11-01",
-      }),
-    ).toEqual(["WEB_CLIENT_IP_HMAC_KEY"]);
-  });
-
-  it("counts a tombstone key shorter than 32 characters as unset, like resolveTombstoneKey", () => {
-    const base = {
-      NODE_ENV: "production",
-      WEB_CLIENT_IP_HMAC_KEY: "h".repeat(40),
-      WORKOS_API_KEY: "w".repeat(40),
-      TERMS_VERSION: "2026-11-01",
-    };
-    expect(privacyConfigWarnings({ ...base, DELETION_TOMBSTONE_KEY: "t".repeat(31) })).toEqual([
-      "DELETION_TOMBSTONE_KEY",
-    ]);
-    expect(privacyConfigWarnings({ ...base, DELETION_TOMBSTONE_KEY: "t".repeat(32) })).toEqual([]);
+    expect(privacyConfigWarnings({ NODE_ENV: "production", TERMS_VERSION: "2026-11-01" })).toEqual(
+      [],
+    );
   });
 
   it("says nothing outside production", () => {
@@ -55,7 +38,7 @@ describe("privacyConfigWarnings (BE-15, N1 and N2)", () => {
     }
   });
 
-  it("are none of them production-required yet (SEC-A makes them required later)", () => {
+  it("TERMS_VERSION stays optional at production boot", () => {
     expect(() => parseBackendEnv(productionBase())).not.toThrow();
   });
 });
@@ -73,7 +56,7 @@ describe("resolveTermsVersion (M-PRIV3)", () => {
   });
 });
 
-/** A production env with every PRODUCTION_REQUIRED variable and none of the privacy ones. */
+/** A production env with every PRODUCTION_REQUIRED variable and no TERMS_VERSION. */
 function productionBase(): Record<string, string> {
   return {
     NODE_ENV: "production",
@@ -82,5 +65,8 @@ function productionBase(): Record<string, string> {
     MCP_AUDIT_HMAC_KEY: "m".repeat(32),
     WORKOS_CLIENT_ID: "client_test",
     BANKING_TOKEN_ENCRYPTION_KEY: "b".repeat(32),
+    DELETION_TOMBSTONE_KEY: "t".repeat(32),
+    WEB_CLIENT_IP_HMAC_KEY: "h".repeat(32),
+    WORKOS_API_KEY: "w".repeat(32),
   };
 }

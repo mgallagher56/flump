@@ -25,6 +25,7 @@ import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../testing/dbTestMode";
 import { discoverMigrations } from "../../testing/discoverMigrations";
+import { emptyEntityTables } from "../../testing/emptyTables";
 import { at } from "../../testing/must";
 import { LoggingBankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountIntakeService } from "../finance/account-intake.service";
@@ -85,8 +86,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
   });
 
   beforeEach(async () => {
-    const tables = ds.entityMetadatas.map((m) => `"${m.tableName}"`).join(", ");
-    await ds.query(`TRUNCATE ${tables} CASCADE`);
+    await emptyEntityTables(ds);
     identity = new InMemoryIdentityAdapter();
     deletion = new AccountDeletionService(ds, identity, new LoggingBankConsentRevoker());
     exporter = new AccountExportService(ds);

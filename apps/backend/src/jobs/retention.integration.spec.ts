@@ -1,11 +1,13 @@
 import { DataSource, type DataSourceOptions, type QueryRunner } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { AUDIT_DELETE_SETTING, allowAuditDelete } from "../audit/audit-delete-guard";
 import { recordAuditEvent } from "../audit/audit-events";
 import { grantConsent, withdrawConsent } from "../audit/consents";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations } from "../testing/discoverMigrations";
+import { emptyTables } from "../testing/emptyTables";
 import { RETENTION_LOCK_KEY, RETENTION_POLICIES, runRetentionPurge } from "./retention";
 
 // BE-06 (H12, M-PRIV2; rulings D4, D5) on real Postgres: the retention job deletes exactly the rows
@@ -57,10 +59,18 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     beforeEach(async () => {
-      await ds.query(
-        `TRUNCATE audit_events, agent_audit_events, import_batches, mcp_tokens, bank_oauth_states,
-         account_deletion_tombstones, consents, idempotency_keys, user_profiles, accounts CASCADE`,
-      );
+      await emptyTables(ds, [
+        "audit_events",
+        "agent_audit_events",
+        "import_batches",
+        "mcp_tokens",
+        "bank_oauth_states",
+        "account_deletion_tombstones",
+        "consents",
+        "idempotency_keys",
+        "user_profiles",
+        "accounts",
+      ]);
     });
 
     const count = async (table: string): Promise<number> =>
@@ -210,13 +220,62 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("audit_events")).toBe(0);
     });
 
-    it("audit_events is append-only: an UPDATE is refused, a DELETE is allowed", async () => {
+    it("audit_events refuses UPDATE, TRUNCATE and an undeclared DELETE (SEC-F, S10)", async () => {
       await recordAuditEvent(ds.manager, { userId: OWNER_ID, action: "mcp_token.revoked" });
       await expect(ds.query(`UPDATE audit_events SET action = 'account.deleted'`)).rejects.toThrow(
         /append-only/,
       );
-      await ds.query("DELETE FROM audit_events");
-      expect(await count("audit_events")).toBe(0);
+      await expect(ds.query("TRUNCATE audit_events")).rejects.toThrow(/cannot be truncated/);
+      await expect(ds.query("TRUNCATE audit_events, consents CASCADE")).rejects.toThrow(
+        /cannot be truncated/,
+      );
+      await expect(ds.query("DELETE FROM audit_events")).rejects.toThrow(
+        /deleted only by retention or erasure/,
+      );
+      // A reason the guard does not know is refused too.
+      await expect(
+        ds.transaction(async (manager) => {
+          await manager.query(`SELECT set_config('${AUDIT_DELETE_SETTING}', 'cleanup', true)`);
+          await manager.query("DELETE FROM audit_events");
+        }),
+      ).rejects.toThrow(/deleted only by retention or erasure/);
+      expect(await count("audit_events")).toBe(1);
+    });
+
+    it.each(["retention", "erasure"] as const)(
+      "a transaction that declares %s may delete, and the reason ends with it",
+      async (reason) => {
+        await recordAuditEvent(ds.manager, { userId: OWNER_ID, action: "mcp_token.revoked" });
+        await recordAuditEvent(ds.manager, { userId: OWNER_ID, action: "mcp_token.minted" });
+        const scoped = ds.createQueryRunner();
+        try {
+          await scoped.connect();
+          await scoped.startTransaction();
+          await allowAuditDelete(scoped, reason);
+          await scoped.query(`DELETE FROM audit_events WHERE action = 'mcp_token.revoked'`);
+          await scoped.commitTransaction();
+          // Same connection, after COMMIT: the reason has gone, so the next delete is refused.
+          await expect(scoped.query("DELETE FROM audit_events")).rejects.toThrow(
+            /deleted only by retention or erasure/,
+          );
+        } finally {
+          await scoped.release();
+        }
+        expect(await count("audit_events")).toBe(1);
+      },
+    );
+
+    it("the purge leaves no delete reason behind on its connection", async () => {
+      await ds.query(
+        `INSERT INTO audit_events (user_id, action, created_at) VALUES ($1, 'mcp_token.minted', ${ago("14 months")}), ($1, 'mcp_token.minted', ${ago("1 day")})`,
+        [OWNER_ID],
+      );
+      const report = await runRetentionPurge(runner, NOW);
+      expect(report.deleted.audit_events).toBe(1);
+      await expect(runner.query("DELETE FROM audit_events")).rejects.toThrow(
+        /deleted only by retention or erasure/,
+      );
+      expect(await count("audit_events")).toBe(1);
     });
 
     it("refuses an unknown audit action at the database", async () => {

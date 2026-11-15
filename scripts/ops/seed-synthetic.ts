@@ -199,6 +199,10 @@ export async function seedSynthetic(
       );
     }
 
+    // SEC-F: audit_events refuses a DELETE unless the transaction declares why (apps/backend
+    // src/audit/audit-delete-guard.ts). A reseed erases every user in this staging database, so it
+    // declares `erasure`. Transaction-local: it ends at COMMIT or ROLLBACK below.
+    await db.query("SELECT set_config('flump.audit_delete', 'erasure', true)");
     for (const table of USER_DATA_TABLES) await db.query(`DELETE FROM "${table}"`);
     for (const [key, userId] of entries) {
       await insertPersona(db, SYNTHETIC_PERSONAS[key], userId);

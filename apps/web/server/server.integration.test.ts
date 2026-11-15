@@ -93,6 +93,57 @@ function assertSecurityHeaders(res: Reply, csp = SECURITY_HEADERS["Content-Secur
   expect(res.headers.get("x-powered-by")).toBeNull();
 }
 
+/** Runs `bun server.ts` to exit with the given environment; resolves its exit code and output. */
+function runToExit(
+  env: Record<string, string | undefined>,
+): Promise<{ code: number | null; output: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("bun", ["server.ts"], { cwd: webDir, env: { ...process.env, ...env } });
+    let output = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error(`server did not exit:\n${output}`));
+    }, 20_000);
+    child.stdout?.on("data", (d) => {
+      output += d;
+    });
+    child.stderr?.on("data", (d) => {
+      output += d;
+    });
+    child.once("exit", (code) => {
+      clearTimeout(timer);
+      resolve({ code, output });
+    });
+  });
+}
+
+// SEC-A: the check runs before the build is loaded, so these need no `bun run build`.
+describe("web express server production boot (SEC-A)", () => {
+  it("refuses to start in production without WEB_CLIENT_IP_HMAC_KEY, naming it", async () => {
+    const { code, output } = await runToExit({
+      NODE_ENV: "production",
+      PORT: String(await freePort()),
+      HOST: "127.0.0.1",
+      WEB_CLIENT_IP_HMAC_KEY: "",
+    });
+    expect(code).toBe(1);
+    expect(output).toContain("[web] WEB_CLIENT_IP_HMAC_KEY is required in production.");
+  }, 30_000);
+
+  it("refuses a short key in production without printing it", async () => {
+    const short = randomBytes(8).toString("hex");
+    const { code, output } = await runToExit({
+      NODE_ENV: "production",
+      PORT: String(await freePort()),
+      HOST: "127.0.0.1",
+      WEB_CLIENT_IP_HMAC_KEY: short,
+    });
+    expect(code).toBe(1);
+    expect(output).toContain("[web] WEB_CLIENT_IP_HMAC_KEY must be at least 32 characters.");
+    expect(output).not.toContain(short);
+  }, 30_000);
+});
+
 describe.skipIf(!buildReady)("web express server (built)", () => {
   let child: ChildProcess;
   let base: string;
@@ -125,6 +176,8 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
         // Production boot requires an https redirect URI and VITE_API_URL; both are fake.
         WORKOS_REDIRECT_URI: "https://web.example.invalid/callback",
         VITE_API_URL: "https://api.example.invalid",
+        // Production boot requires the client-IP signing key (SEC-A); random per run.
+        WEB_CLIENT_IP_HMAC_KEY: randomBytes(32).toString("hex"),
       },
     });
     child.stdout?.on("data", (d) => {

@@ -57,11 +57,15 @@ function fakeDataSource() {
       insert: entity.name === "AuditEvent" ? auditInsert : undefined,
     };
   };
+  // SEC-F: the sweep declares its audit-delete reason on the transaction's manager first.
+  const managerQuery = vi.fn(async (_sql: string, _params?: unknown[]) => []);
   const ds = {
-    transaction: vi.fn(async (cb: (m: unknown) => unknown) => cb({ getRepository: repoFor })),
+    transaction: vi.fn(async (cb: (m: unknown) => unknown) =>
+      cb({ getRepository: repoFor, query: managerQuery }),
+    ),
     getRepository: repoFor,
   };
-  return { ds, deletes, tombstoneRepo, auditInsert, current: () => tombstone };
+  return { ds, deletes, tombstoneRepo, auditInsert, managerQuery, current: () => tombstone };
 }
 
 describe("AccountDeletionService", () => {
@@ -96,6 +100,11 @@ describe("AccountDeletionService", () => {
     const order = USER_DATA_REGISTRY.map((t) => t.entity.name);
     expect(f.deletes).toEqual([...order, ...order]);
     expect(f.ds.transaction).toHaveBeenCalledTimes(2);
+    // SEC-F: each sweep declares the erasure reason inside its own transaction.
+    expect(f.managerQuery.mock.calls).toEqual([
+      ["SELECT set_config($1, $2, true)", ["flump.audit_delete", "erasure"]],
+      ["SELECT set_config($1, $2, true)", ["flump.audit_delete", "erasure"]],
+    ]);
     expect(identity.deletedUsers).toEqual(["user_A"]);
     expect(revoke).toHaveBeenCalledWith("user_A", [
       { id: "c1", institutionId: "monzo", authType: "oauth" },

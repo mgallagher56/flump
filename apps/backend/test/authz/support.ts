@@ -15,6 +15,7 @@ import { McpService } from "../../src/modules/agent/mcp.service";
 import { requestContextMiddleware } from "../../src/observability/request-context.middleware";
 import { RateLimitStore } from "../../src/security/rate-limit.store";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
+import { emptyEntityTables } from "../../src/testing/emptyTables";
 
 /**
  * Two-user IDOR harness (E20-N22).
@@ -224,8 +225,8 @@ export function parseResponseViolation(message: unknown): string[] {
 
 /** Empties every entity table (derived from the entity metadata, so a new entity is included). */
 export async function truncateAll(dataSource: DataSource): Promise<void> {
-  const tables = dataSource.entityMetadatas.map((m) => `"${m.tableName}"`).join(", ");
-  await dataSource.query(`TRUNCATE ${tables} CASCADE`);
+  // audit_events refuses TRUNCATE (SEC-F); the helper deletes its rows the allowed way.
+  await emptyEntityTables(dataSource);
 }
 
 /**

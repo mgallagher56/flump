@@ -3,38 +3,24 @@ import { isProduction } from "./env.schema";
 type Raw = Record<string, string | undefined>;
 
 /**
- * Privacy variables production should set but does not yet require (BE-15, findings N1 and N2).
- * Boot does not fail without them, so a deploy before the owner sets them keeps every other route
- * working; SEC-A moves them into PRODUCTION_REQUIRED once they are set. Until then each one unset in
- * production is logged once at boot and counted in `/health/ready` `configWarnings`.
+ * Privacy variables production should set but does not require (BE-15). Boot does not fail without
+ * them; each one unset in production is logged once at boot and counted in `/health/ready`
+ * `configWarnings`.
+ *
+ * SEC-A moved `DELETION_TOMBSTONE_KEY`, `WEB_CLIENT_IP_HMAC_KEY` and `WORKOS_API_KEY` out of this
+ * list into `PRODUCTION_REQUIRED` (env.schema.ts): production no longer boots without them, so
+ * they can never be a warning.
  */
 export const PRIVACY_PRODUCTION_VARIABLES = [
-  /** Account deletion refuses with `account_deletion_unavailable` while unset. */
-  "DELETION_TOMBSTONE_KEY",
-  /** The signed client-IP header cannot be verified, so rate limits fall back to the proxy IP. */
-  "WEB_CLIENT_IP_HMAC_KEY",
-  /** An erasure removes the data but the WorkOS login stays: `identity_pending` for good (N2). */
-  "WORKOS_API_KEY",
   /** Terms acceptance answers `terms_not_configured` while unset (M-PRIV3). */
   "TERMS_VERSION",
 ] as const;
 export type PrivacyProductionVariable = (typeof PRIVACY_PRODUCTION_VARIABLES)[number];
 
-/**
- * Same rule as `resolveTombstoneKey` in `modules/privacy/tombstone-key.ts`: a key shorter than 32
- * characters is refused there, so it counts as unset here. Duplicated because platform code
- * may not import `src/modules` (module-boundaries law).
- */
-const MIN_TOMBSTONE_KEY_LENGTH = 32;
-
 /** The privacy variables unset in production, in a fixed order. Empty outside production. */
 export function privacyConfigWarnings(env: Raw): PrivacyProductionVariable[] {
   if (!isProduction(env)) return [];
-  return PRIVACY_PRODUCTION_VARIABLES.filter((name) =>
-    name === "DELETION_TOMBSTONE_KEY"
-      ? (env[name] ?? "").length < MIN_TOMBSTONE_KEY_LENGTH
-      : (env[name]?.trim() ?? "") === "",
-  );
+  return PRIVACY_PRODUCTION_VARIABLES.filter((name) => (env[name]?.trim() ?? "") === "");
 }
 
 /** The boot log line for one unset variable. Names the variable, never a value. */
