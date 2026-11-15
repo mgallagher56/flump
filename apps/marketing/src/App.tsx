@@ -4,6 +4,7 @@ import { ContactPage } from "./pages/ContactPage";
 import { HomePage } from "./pages/HomePage";
 import { McpPage } from "./pages/McpPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { PreviewPage } from "./pages/PreviewPage";
 import { PricingPage } from "./pages/PricingPage";
 import { SecurityPage } from "./pages/SecurityPage";
 import { ToolPage } from "./pages/ToolPage";
@@ -14,6 +15,7 @@ export default function App() {
     <ThemeProvider>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/preview" element={<PreviewPage />} />
         <Route path="/tools" element={<ToolsIndexPage />} />
         <Route path="/tools/:slug" element={<ToolPage />} />
         <Route path="/pricing" element={<PricingPage />} />
