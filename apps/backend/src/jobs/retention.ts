@@ -8,6 +8,7 @@
  */
 
 import { IDEMPOTENCY_KEY_TTL_HOURS } from "@flump/api-contract";
+import { allowAuditDelete } from "../audit/audit-delete-guard";
 
 /** Anything that runs a parameterised query (a TypeORM DataSource or QueryRunner, a pg client). */
 export interface Queryable {
@@ -22,6 +23,11 @@ export interface RetentionPolicy {
   where: string;
   /** Why the rows go at that point, for the data map and reviewers. */
   reason: string;
+  /**
+   * True for `audit_events` only (SEC-F): the table refuses a DELETE unless the transaction has
+   * declared the `retention` reason, so each batch runs in its own transaction that sets it.
+   */
+  guardedAuditDelete?: boolean;
 }
 
 /** Ruling D4: audit records 13 months, import batches 30 days, inactive accounts 24 months. */
@@ -31,6 +37,7 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     table: "audit_events",
     where: `"created_at" < $1::timestamptz - interval '13 months'`,
     reason: "audit records are kept 13 months (D4)",
+    guardedAuditDelete: true,
   },
   {
     name: "agent_audit_events",
@@ -109,20 +116,46 @@ async function tableExists(db: Queryable, table: string): Promise<boolean> {
   return Boolean(row?.t);
 }
 
+async function deleteBatch(db: Queryable, policy: RetentionPolicy, now: Date): Promise<number> {
+  return rowsOf(
+    await db.query(
+      `WITH doomed AS (
+         SELECT ctid FROM "${policy.table}" WHERE ${policy.where} LIMIT ${RETENTION_BATCH_SIZE}
+       )
+       DELETE FROM "${policy.table}" WHERE ctid IN (SELECT ctid FROM doomed) RETURNING 1`,
+      [now],
+    ),
+  ).length;
+}
+
+/**
+ * One batch of `audit_events` in its own transaction, which declares the `retention` reason the
+ * table's delete guard asks for (SEC-F). The reason is transaction-local, so it is gone at COMMIT.
+ */
+async function deleteAuditBatch(
+  db: Queryable,
+  policy: RetentionPolicy,
+  now: Date,
+): Promise<number> {
+  await db.query("BEGIN");
+  try {
+    await allowAuditDelete(db, "retention");
+    const deleted = await deleteBatch(db, policy, now);
+    await db.query("COMMIT");
+    return deleted;
+  } catch (error) {
+    await db.query("ROLLBACK");
+    throw error;
+  }
+}
+
 async function purgeTable(db: Queryable, policy: RetentionPolicy, now: Date): Promise<number> {
+  const batch = policy.guardedAuditDelete ? deleteAuditBatch : deleteBatch;
   let total = 0;
   for (;;) {
-    const rows = rowsOf(
-      await db.query(
-        `WITH doomed AS (
-           SELECT ctid FROM "${policy.table}" WHERE ${policy.where} LIMIT ${RETENTION_BATCH_SIZE}
-         )
-         DELETE FROM "${policy.table}" WHERE ctid IN (SELECT ctid FROM doomed) RETURNING 1`,
-        [now],
-      ),
-    );
-    total += rows.length;
-    if (rows.length < RETENTION_BATCH_SIZE) return total;
+    const deleted = await batch(db, policy, now);
+    total += deleted;
+    if (deleted < RETENTION_BATCH_SIZE) return total;
   }
 }
 

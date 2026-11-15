@@ -16,14 +16,20 @@ const LEGACY_KEY_VERSION = 1;
 const LEGACY_TOKEN_PATTERN = /^[0-9a-f]{24}:[0-9a-f]{32}:[0-9a-f]+$/i;
 const VERSIONED_TOKEN_PATTERN = /^v([1-9][0-9]*):([0-9a-f]{24}):([0-9a-f]{32}):([0-9a-f]+)$/i;
 
+/**
+ * Strict unless NODE_ENV is explicitly development or test AND the process is not on Railway
+ * (SEC-A, finding S3): a Railway service never uses the committed development key, whatever its
+ * NODE_ENV. The same rule as the dev auth bypass and the tombstone key in apps/backend.
+ */
 function isStrictEnv(env: Record<string, string | undefined>): boolean {
   const nodeEnv = env.NODE_ENV;
-  return nodeEnv !== "development" && nodeEnv !== "test";
+  return (nodeEnv !== "development" && nodeEnv !== "test") || Boolean(env.RAILWAY_ENVIRONMENT);
 }
 
 /**
  * Resolves the banking token encryption secret. Outside `development` and `test`
- * (including when NODE_ENV is unset) a key of at least 32 characters is required;
+ * (including when NODE_ENV is unset), and on any Railway service, a key of at least 32
+ * characters is required;
  * otherwise the committed development default is used when the variable is unset.
  * Error messages never include key material.
  */

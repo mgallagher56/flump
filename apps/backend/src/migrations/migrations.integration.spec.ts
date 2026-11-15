@@ -16,6 +16,7 @@ import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { AddRateLimitBuckets1794632012000 } from "./AddRateLimitBuckets1794632012000";
 import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndexes1794358100000";
 import { AuditActionUserExported1795000000000 } from "./AuditActionUserExported1795000000000";
+import { AuditEventsDeleteAndTruncateGuards1795100000000 } from "./AuditEventsDeleteAndTruncateGuards1795100000000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
@@ -1630,6 +1631,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       );
       return rows.map((r) => r.action);
     };
+    /** Undoes the one later migration (SEC-F), so this one is the last applied. */
+    const undoLaterMigrations = async (): Promise<void> => {
+      await ds.undoLastMigration();
+      expect(await applied()).not.toContain("AuditEventsDeleteAndTruncateGuards1795100000000");
+      expect(await applied()).toContain(NAME);
+    };
 
     it("up allows user.exported and still rejects actions outside the list", async () => {
       await ds.runMigrations();
@@ -1640,6 +1647,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     it("down with no user.exported rows restores the seven-value check", async () => {
       await ds.runMigrations();
       await insertAction("financial_data.reset");
+      await undoLaterMigrations();
       await ds.undoLastMigration();
       expect(await applied()).not.toContain(NAME);
       expect(await actionCheck()).not.toContain("user.exported");
@@ -1651,6 +1659,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       await insertAction("user.exported");
       await insertAction("account.deleted");
+      await undoLaterMigrations();
       await expect(ds.undoLastMigration()).rejects.toThrow(
         "audit_events contains user.exported rows; export or archive them before reverting",
       );
@@ -1662,6 +1671,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
     it("up runs again after down, and is idempotent", async () => {
       await ds.runMigrations();
+      await undoLaterMigrations();
       await ds.undoLastMigration();
       await ds.runMigrations();
       expect(await applied()).toContain(NAME);
@@ -1669,6 +1679,97 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         undefined,
       );
       await insertAction("user.exported");
+    });
+  });
+
+  describe("AuditEventsDeleteAndTruncateGuards1795100000000 (SEC-F, S10)", () => {
+    const NAME = "AuditEventsDeleteAndTruncateGuards1795100000000";
+    const insertAction = (action: string): Promise<unknown> =>
+      ds.query("INSERT INTO audit_events (user_id, action) VALUES ('u1', $1)", [action]);
+    const auditCount = async (): Promise<number> => {
+      const rows: Array<{ n: number }> = await ds.query(
+        "SELECT count(*)::int AS n FROM audit_events",
+      );
+      return Number(at(rows, 0)?.n);
+    };
+    const triggers = async (): Promise<string[]> => {
+      const rows: Array<{ tgname: string }> = await ds.query(
+        `SELECT tgname FROM pg_trigger
+          WHERE tgrelid = 'audit_events'::regclass AND NOT tgisinternal ORDER BY tgname`,
+      );
+      return rows.map((r) => r.tgname);
+    };
+    const guardFunctions = async (): Promise<string[]> => {
+      const rows: Array<{ proname: string }> = await ds.query(
+        `SELECT proname FROM pg_proc
+          WHERE proname IN ('audit_events_guard_delete', 'audit_events_refuse_truncate')
+          ORDER BY proname`,
+      );
+      return rows.map((r) => r.proname);
+    };
+    const deleteWithReason = (reason: string): Promise<unknown> =>
+      ds.transaction(async (manager) => {
+        await manager.query("SELECT set_config('flump.audit_delete', $1, true)", [reason]);
+        await manager.query("DELETE FROM audit_events");
+      });
+
+    it("up refuses TRUNCATE and an undeclared DELETE, and keeps the UPDATE refusal", async () => {
+      await ds.runMigrations();
+      expect(await triggers()).toEqual([
+        "TRG_audit_events_append_only",
+        "TRG_audit_events_guard_delete",
+        "TRG_audit_events_no_truncate",
+      ]);
+      await insertAction("account.deleted");
+      await expect(ds.query("TRUNCATE audit_events")).rejects.toThrow(/cannot be truncated/);
+      await expect(ds.query("DELETE FROM audit_events")).rejects.toThrow(
+        /deleted only by retention or erasure/,
+      );
+      await expect(deleteWithReason("anything else")).rejects.toThrow(
+        /deleted only by retention or erasure/,
+      );
+      await expect(ds.query("UPDATE audit_events SET action = action")).rejects.toThrow(
+        /append-only/,
+      );
+      expect(await auditCount()).toBe(1);
+    });
+
+    it("audit_events has no foreign key, so no delete elsewhere can cascade into it", async () => {
+      await ds.runMigrations();
+      const rows: unknown[] = await ds.query(
+        `SELECT conname FROM pg_constraint
+          WHERE contype = 'f' AND 'audit_events'::regclass IN (conrelid, confrelid)`,
+      );
+      expect(rows).toEqual([]);
+    });
+
+    it.each(["retention", "erasure"])(
+      "a transaction that declares %s may delete",
+      async (reason) => {
+        await ds.runMigrations();
+        await insertAction("account.deleted");
+        await deleteWithReason(reason);
+        expect(await auditCount()).toBe(0);
+      },
+    );
+
+    it("down removes only the two guards and keeps every audit row; up is repeatable", async () => {
+      await ds.runMigrations();
+      await insertAction("account.deleted");
+      await insertAction("user.exported");
+      await ds.undoLastMigration();
+      expect(await applied()).not.toContain(NAME);
+      expect(await triggers()).toEqual(["TRG_audit_events_append_only"]);
+      expect(await guardFunctions()).toEqual([]);
+      expect(await auditCount()).toBe(2);
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      await expect(
+        runUpInTransaction(new AuditEventsDeleteAndTruncateGuards1795100000000()),
+      ).resolves.toBe(undefined);
+      expect(await triggers()).toHaveLength(3);
+      expect(await guardFunctions()).toHaveLength(2);
+      expect(await auditCount()).toBe(2);
     });
   });
 });

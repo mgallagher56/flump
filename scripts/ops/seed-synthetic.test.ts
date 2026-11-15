@@ -119,6 +119,11 @@ describe.skipIf(!DB_TESTS_ENABLED)("seed-synthetic (real Postgres, all migration
       await client.query(
         `INSERT INTO user_profiles (user_id, display_name) VALUES ('${REAL_LOOKING}', 'old')`,
       );
+      // A stale audit row: audit_events refuses an undeclared DELETE (SEC-F), so the reseed only
+      // gets past it by declaring its reason.
+      await client.query(
+        `INSERT INTO audit_events (user_id, action) VALUES ('${REAL_LOOKING}', 'account.deleted')`,
+      );
       // account_id is a uuid foreign key to accounts (BE-08), so it names the stale account.
       await client.query(
         `INSERT INTO transactions (account_id, user_id, amount, description, category)

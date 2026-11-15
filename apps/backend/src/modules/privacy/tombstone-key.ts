@@ -36,9 +36,11 @@ export interface TombstoneKeyResolution {
  *   refused (null).
  * - Development and test (and not on Railway) with no key fall back to a fixed public key, with a
  *   warning.
- * - Anywhere else with no key: null, so account deletion fails closed with a 503 rather than writing
- *   tombstones a known key could reverse. Boot is not blocked, so a deploy before the owner sets
- *   the key keeps every other route working.
+ * - Production (NODE_ENV=production) never reaches the null answer: boot is refused without a key
+ *   of at least 32 characters (SEC-A, `PRODUCTION_REQUIRED` in config/env.schema.ts).
+ * - Any other strict environment with no key (NODE_ENV unset or unknown, or a Railway service that
+ *   is not production): null, so account deletion fails closed with a 503 rather than writing
+ *   tombstones a known key could reverse.
  */
 export function resolveTombstoneKey(
   env: Record<string, string | undefined>,

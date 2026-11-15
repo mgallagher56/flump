@@ -60,17 +60,14 @@ describe("HealthController", () => {
   });
 
   it("readiness stays 200 and counts unset privacy variables in configWarnings, without naming them (BE-15, N1)", async () => {
-    const { controller } = makeController(async () => [{ "?column?": 1 }], {}, [
-      "DELETION_TOMBSTONE_KEY",
-      "TERMS_VERSION",
-    ]);
+    const { controller } = makeController(async () => [{ "?column?": 1 }], {}, ["TERMS_VERSION"]);
     const res = makeRes();
     const body = await controller.ready(res as never);
     expect(body).toMatchObject({
       status: "ok",
-      configWarnings: 2,
+      configWarnings: 1,
     });
-    expect(JSON.stringify(body)).not.toContain("DELETION_TOMBSTONE_KEY");
+    expect(JSON.stringify(body)).not.toContain("TERMS_VERSION");
     expect(ReadinessResponse.safeParse(body).success).toBe(true);
     expect(res.status).not.toHaveBeenCalled();
   });

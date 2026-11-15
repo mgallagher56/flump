@@ -104,6 +104,7 @@ const backendEnvSchema = z.looseObject({
 
   // Keys
   BANKING_TOKEN_ENCRYPTION_KEY: optional(z.string().min(32, "must be at least 32 characters")),
+  /** Required in production, at least 32 characters there (SEC-A). Never rotate it. */
   DELETION_TOMBSTONE_KEY: text(),
   MCP_AUDIT_HMAC_KEY: text(),
   /** Shared with the web service: verifies the signed client-IP header (BE-07, M9). */
@@ -182,16 +183,26 @@ const backendEnvSchema = z.looseObject({
 
 export type BackendEnv = z.infer<typeof backendEnvSchema>;
 
-/** Present when NODE_ENV=production, or boot fails. `DATABASE_URL` may be replaced by DB_HOST. */
+/**
+ * Present when NODE_ENV=production, or boot fails. `DATABASE_URL` may be replaced by DB_HOST.
+ * The last three joined with SEC-A (findings N1, N2, M9): without them account erasure cannot write
+ * its tombstone, the signed client address cannot be verified (every web user shares one rate-limit
+ * bucket) and an erased account keeps its WorkOS login.
+ */
 export const PRODUCTION_REQUIRED = [
   "DATABASE_URL",
   "CORS_ALLOWED_ORIGINS",
   "MCP_AUDIT_HMAC_KEY",
   "WORKOS_CLIENT_ID",
   "BANKING_TOKEN_ENCRYPTION_KEY",
+  "DELETION_TOMBSTONE_KEY",
+  "WEB_CLIENT_IP_HMAC_KEY",
+  "WORKOS_API_KEY",
 ] as const;
 
 const MIN_PRODUCTION_HMAC_KEY = 32;
+/** HMAC keys with a production minimum length. WEB_CLIENT_IP_HMAC_KEY has one in every environment. */
+const PRODUCTION_HMAC_KEYS = ["MCP_AUDIT_HMAC_KEY", "DELETION_TOMBSTONE_KEY"] as const;
 
 export interface EnvIssue {
   variable: string;
@@ -216,12 +227,14 @@ function productionIssues(env: Raw): EnvIssue[] {
     if (name === "DATABASE_URL" && present("DB_HOST")) continue;
     if (!present(name)) issues.push({ variable: name, problem: "is required in production" });
   }
-  const hmac = env.MCP_AUDIT_HMAC_KEY?.trim() ?? "";
-  if (hmac !== "" && hmac.length < MIN_PRODUCTION_HMAC_KEY) {
-    issues.push({
-      variable: "MCP_AUDIT_HMAC_KEY",
-      problem: `must be at least ${MIN_PRODUCTION_HMAC_KEY} characters in production`,
-    });
+  for (const name of PRODUCTION_HMAC_KEYS) {
+    const key = env[name]?.trim() ?? "";
+    if (key !== "" && key.length < MIN_PRODUCTION_HMAC_KEY) {
+      issues.push({
+        variable: name,
+        problem: `must be at least ${MIN_PRODUCTION_HMAC_KEY} characters in production`,
+      });
+    }
   }
   return issues;
 }
