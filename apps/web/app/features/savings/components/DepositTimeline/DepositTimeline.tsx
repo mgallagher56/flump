@@ -3,19 +3,13 @@ import {
   formatMoney,
   formatMonthYear,
   niceStep,
+  ResultBlock,
   SimulatorSplitLayout,
   SliderField,
 } from "@repo/ui";
 import type { FC } from "react";
 import { formatDuration } from "../SavingsForecast/savingsForecast.utils";
-import {
-  timelineControls,
-  timelineLabel,
-  timelineOutcome,
-  timelineSupport,
-  timelineSupportItem,
-  timelineValue,
-} from "./DepositTimeline.styles";
+import { timelineControls } from "./DepositTimeline.styles";
 
 /** Scenario inputs only. Unknown values stay null (an empty field), never 0. */
 // A type alias (not an interface) so it satisfies useScenarioState's record constraint.
@@ -118,8 +112,8 @@ const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 
 /**
  * How long a target takes at a monthly saving (E32, R2-8): two sliders like "How it could
- * grow", starting from the saved total (the zone says so), one outcome (the time) and two
- * supporting figures. Plain arithmetic from the engine: no
+ * grow", starting from the saved total (the zone says so), one result card with the time, one
+ * supporting row and one sentence. Plain arithmetic from the engine: no
  * interest. Lives inside a ScenarioZone, so nothing here is saved.
  */
 export const DepositTimeline: FC<DepositTimelineProps> = ({
@@ -159,39 +153,34 @@ export const DepositTimeline: FC<DepositTimelineProps> = ({
       }
       controlsSpan={4}
       content={
-        <div className={timelineOutcome()}>
-          {outcome.kind === "months" ? (
-            <>
-              {/* The target is the input beside it, so the label does not repeat it. */}
-              <p className={timelineLabel()}>{DEPOSIT_OUTCOME_LABEL}</p>
-              <p
-                className={timelineValue()}
-                data-testid="deposit-timeline-outcome"
-                id="deposit-timeline-outcome"
-              >
-                {formatDuration(outcome.months)}
-              </p>
-              <dl className={timelineSupport()}>
-                <div className={timelineSupportItem()}>
-                  <dt>Reached by</dt>
-                  <dd>{reachedByMonth(today, outcome.months)}</dd>
-                </div>
-                <div className={timelineSupportItem()}>
-                  <dt>Still to save</dt>
-                  <dd>{money(outcome.stillToSave)}</dd>
-                </div>
-              </dl>
-            </>
-          ) : (
-            <p
-              className={timelineLabel()}
-              data-testid="deposit-timeline-outcome"
-              id="deposit-timeline-outcome"
-            >
+        // The zone's one result card (E17 5A): the time, the month it is reached as its one row
+        // and what is still to save as its sentence. The target is the input beside it, so the
+        // label does not repeat it.
+        <ResultBlock
+          emptyPrompt={
+            <span data-testid="deposit-timeline-outcome" id="deposit-timeline-outcome">
               {depositOutcomeText(values)}
-            </p>
-          )}
-        </div>
+            </span>
+          }
+          figure={
+            outcome.kind === "months" ? (
+              <span data-testid="deposit-timeline-outcome" id="deposit-timeline-outcome">
+                {formatDuration(outcome.months)}
+              </span>
+            ) : null
+          }
+          hideLabel={outcome.kind !== "months"}
+          id="deposit-timeline-result"
+          label={DEPOSIT_OUTCOME_LABEL}
+          note={
+            outcome.kind === "months" ? `Still to save: ${money(outcome.stillToSave)}.` : undefined
+          }
+          row={
+            outcome.kind === "months"
+              ? { label: "Reached by", value: reachedByMonth(today, outcome.months) }
+              : undefined
+          }
+        />
       }
     />
   );

@@ -8,22 +8,7 @@ export const forecastContent = cva({
   base: { display: "flex", flexDirection: "column", gap: "6", minWidth: 0 },
 });
 
-/** One outcome figure plus at most 2 supporting (P1.7), plain text on the zone surface. */
-export const outcome = cva({ base: { display: "flex", flexDirection: "column", gap: "1" } });
-
-export const outcomeLabel = cva({
-  base: { margin: "0", textStyle: "body.sm", color: "text.secondary" },
-});
-
-export const outcomeValue = cva({
-  base: {
-    margin: "0",
-    textStyle: "numeric.kpi",
-    fontVariantNumeric: "tabular-nums",
-    color: "text.primary",
-  },
-});
-
+/** The split behind the result, shown with the chart's data table. */
 export const outcomeSupport = cva({
   base: { display: "flex", flexWrap: "wrap", gap: "6", margin: "0", mt: "2" },
 });
@@ -41,16 +26,6 @@ export const outcomeSupportItem = cva({
       color: "text.primary",
       fontVariantNumeric: "tabular-nums",
     },
-  },
-});
-
-export const goalLine = cva({
-  base: {
-    margin: "0",
-    mt: "2",
-    textStyle: "body.sm",
-    color: "text.secondary",
-    fontVariantNumeric: "tabular-nums",
   },
 });
 

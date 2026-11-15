@@ -86,13 +86,13 @@ function Harness({ initial, onChange }: { initial: DepositTimelineValues; onChan
 }
 
 describe("<DepositTimeline />", () => {
-  it("shows one figure and two supporting figures, and updates as a slider moves", () => {
+  it("shows one result card with one row and one sentence, and updates as a slider moves", () => {
     const onChange = vi.fn();
     render(<Harness initial={values({ targetDeposit: 6000 })} onChange={onChange} />);
     expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("3 months");
     expect(screen.getByText(DEPOSIT_OUTCOME_LABEL)).toBeDefined();
     expect(screen.getByText("Reached by").nextElementSibling?.textContent).toBe("Feb 2027");
-    expect(screen.getByText("Still to save").nextElementSibling?.textContent).toBe("£1,000");
+    expect(screen.getByText("Still to save: £1,000.")).toBeDefined();
     fireEvent.change(screen.getByLabelText("Target amount"), { target: { value: "20000" } });
     expect(onChange).toHaveBeenCalled();
     expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("3 years 2 months");
