@@ -248,10 +248,56 @@ Detail and the migration table: [`docs/design/e15/iconography.md`](../design/e15
 - Illustrations are for empty states, onboarding and "not found" only. One per screen at most. Never beside real figures.
 - Style: flat shapes in the palette's own tokens (sand, teal, sage, apricot), soft rounded forms that echo the logo, no outlines, no people's faces, no piles of coins or cash, no upward-arrow "growth" clichés.
 - They are decorative: hidden from assistive technology, and the text beside them carries the meaning.
-- The four scenes today are `empty-accounts`, `empty-goals`, `onboarding` and `not-found` (`Illustration` primitive). A new scene is added to the primitive, drawn with token colours so it follows the theme, and exported as SVG so mobile can use the same source.
-- The hero block may carry one soft decorative shape at low opacity **[PR 2]**. Nothing else is decorated.
+- The four scenes today are `empty-accounts`, `empty-goals`, `onboarding` and `not-found` (`Illustration` primitive). A new scene is added to the primitive and drawn with token colours so it follows the theme.
+- The hero block may carry one sun shape in `accent.onHero` **[E17]**, with no bars or arrows beside the figure. Nothing else is decorated.
 
 **IL1.** Illustrations use semantic tokens and follow the theme. **Enforced by** `scripts/check-design-tokens.ts`. **IL2.** Placement. **Review only**.
+
+### 8.1 The scene family (E17)
+
+Every scene is built to one sheet, so a new one sits beside the Budget scene without a second look. Samples are in [`docs/design/e17-options/options.html`](../design/e17-options/options.html), section 3.
+
+| Part   | Rule                                                                                                   |
+| ------ | ------------------------------------------------------------------------------------------------------ |
+| Grid   | 240 by 170. Everything stands on a ground line at 152. Keep 20 clear at the sides and 10 at the top    |
+| Sun    | One per scene, in a top corner: a disc 36 to 40 across with a halo about 1.7 times as wide             |
+| Shapes | Rounded rectangles with a 14 corner, circles, and the leaf (a quarter-round with a point). No outlines |
+| Lines  | Three only, all with round ends: the dotted arc (3 wide, dots 10 apart), the stem (4) and the pole (5) |
+| Count  | One sun, one dotted arc, at most one leaf or sprout, and three to five solid forms                     |
+| Never  | People, faces, coins with symbols, arrows, red, a finish flag, or anything that grades a situation     |
+
+Colour roles, all from tokens so dark mode follows:
+
+| Role      | Token                                             | Use                                                                              |
+| --------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Deep teal | `primary.solid`                                   | The main object, one per scene                                                   |
+| Pale teal | `primary.border`                                  | Its partner or its back                                                          |
+| Sage      | `chart.wealth`                                    | The third form, stems and leaves                                                 |
+| Sun       | `chart.debt` at reduced strength                  | The disc and its halo                                                            |
+| Sand      | `surface.sunken` (light), `surface.subtle` (dark) | The ground, nothing else                                                         |
+| Paper     | `surface.card`                                    | Small details on teal                                                            |
+| Accent    | `accent`                                          | One small shape per scene (a day on the calendar, a coin). Never the main object |
+
+**IL3.** A scene follows the sheet above. **Review only**. **IL4.** Scenes are stored as lists of shapes (kind, position, colour role) in one shared file. The web draws the list as SVG and the mobile app draws the same list with its own SVG library. No image files. **Review only** until the shared file exists.
+
+### 8.2 Where scenes go (E17)
+
+| Place                                                                                | Scene                                                           | When                                   |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------- | -------------------------------------- |
+| Dashboard first visit, Budget empty state                                            | Budget bars                                                     | Exists                                 |
+| Accounts empty state                                                                 | Stacked cards                                                   | Exists; stop reusing it on other pages |
+| Goals empty state, not-found page, error page                                        | Target, signpost                                                | Exists                                 |
+| Savings empty state                                                                  | Jar                                                             | Now                                    |
+| Debts empty state                                                                    | Three balances and a dotted path                                | Now                                    |
+| Pension empty state                                                                  | Pot and plant                                                   | Now                                    |
+| Monthly check-in, start and summary                                                  | Calendar; the tick is the only change                           | Now                                    |
+| "Finish setting up" finish state                                                     | Sprout from the Budget scene                                    | Now                                    |
+| Marketing not-found page                                                             | Signpost                                                        | Now                                    |
+| Mortgage, Self Assessment, forecast and take-home pay empty states; onboarding steps | To draw                                                         | Later                                  |
+| Marketing home hero and sections                                                     | A wider scene made from the same parts, one per section at most | Later                                  |
+| Marketing pricing; any page with figures on it; any notice; any error about money    | None                                                            | Never                                  |
+
+The mortgage scene is shown only to people who use the mortgage page, so renting is never set against owning.
 
 ## 9. Logo
 
@@ -296,6 +342,28 @@ Chart behaviour rules are in UX-GUIDELINES section 8 and [`docs/design/data-viz.
 | `durations.draw` **[E17]**            | 600ms                                                         | A line or tick drawing itself in, once                                               |
 | `durations.scene` **[E17]**           | 900ms                                                         | An illustration settling on first view; the wash behind a figure that was just saved |
 | `easings.settle` **[E17]**            | `cubic-bezier(0.16,1,0.3,1)`                                  | A soft landing with no overshoot, for `durations.scene` motion                       |
+
+### 11.1 Approved animations (E17)
+
+Five small animations are approved for a first pass. Each plays once, in answer to something the user did or the first time a thing is seen. None plays on every page load and none loops. Working demos are in the options page, section 4.
+
+| Animation                              | Tokens                                                                                   | Plays                                                           | With reduced motion                               |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------- |
+| A saved figure changes                 | Cross-fade over `fast`, `standard`; a pale teal wash fades over `scene`                  | Once, when a balance is saved                                   | The figure swaps at once, no wash                 |
+| The check-in moves to the next account | Leaves over `fast`, `exit`; arrives over `base`, `enter`; 24px travel                    | On each "Next" in the check-in; Back runs it the other way      | A short fade, no travel                           |
+| Setup progress fills                   | `slow`, `standard`                                                                       | Once, the first time the dashboard is seen after a step is done | The ring is drawn at its new length               |
+| Save confirmation                      | Label swaps over `fast`; the tick draws over `base`, `standard`; returns after 2 seconds | On every successful save, in the button that was pressed        | The label changes to "Saved" with a finished tick |
+| A scene settles on first view          | `scene`, `settle`: the sprout grows from its base, the sun rises 10px                    | Once, the first time an empty state is shown in a visit         | The scene is still from the start                 |
+
+Left out, and why:
+
+| Animation                        | Decision    | Reason                                                                               |
+| -------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| A figure counts to its new value | Never       | UX-GUIDELINES M3: figures never count or roll. It shows amounts that were never true |
+| A chart line draws in            | No change   | `useChartAnimation` already governs it                                               |
+| Button hover and press scale     | Second pass | Small gain; touches every button story and snapshot                                  |
+| The tab marker slides            | Second pass | Best done once, inside the single tabs component                                     |
+| A toast arrives                  | Second pass | The save confirmation covers most saves                                              |
 
 **M1.** Durations and easings come from tokens. **Enforced by** `scripts/check-style-literals.ts` **[PR 1]**. Behaviour rules are in UX-GUIDELINES section 12.
 
@@ -356,6 +424,43 @@ One rule for every modal surface. Enforced by: `Dialog.styles.ts` and `Sheet.sty
 - **From md, use a `Sheet`** (a panel at the side) for a long list or a task done step by step that keeps the page visible behind it. The monthly check-in and adding earlier months are sheets.
 - A confirmation opened from inside a dialog replaces the dialog's actions with the question, or closes the dialog first; never stack a second modal on top of the first.
 
+### 12.4 Setup progress (E17)
+
+The dashboard's "Finish setting up" row is a progress ring with the next step named.
+
+- **Collapsed:** one row. A ring showing steps done, the title "Finish setting up", the count and the next step in words, one button for that step, a control to open the list and a cross to hide the row. On a phone the next step is itself the link and the button is dropped, so the row stays one line.
+- **Expanded:** the next step with its one-line description and its button, then the remaining steps, then the finished steps in quiet text with a tick.
+- **"Not for me"** sits on every unfinished step. A step that does not apply counts as done, without comment.
+- **Hidden means hidden.** The cross hides the row for good. The row never reappears, never badges the navigation and never sends a reminder.
+- **Finish state:** when every step is done the row reads "Setup finished" for the rest of that visit, with the sprout from the Budget scene settling once, and it is gone on the next visit. The message is about the app being set up, never about the person's money.
+- The ring uses `primary` on a `border` track, and the count is always given in words as well.
+
+**SP1.** One row when collapsed, dismissible, never nags. **Review only** (UX-GUIDELINES O4).
+
+### 12.5 Section headers and the result block (E17)
+
+- **Section header.** Every section on a page opens with an icon tile, a title and one line saying what it is. Sections sit 36 apart (`spacing.page.*`), so each reads as its own block.
+- **Saved sections are cards** on the canvas. A modelling zone is the only dashed outline on a page and has no fill.
+- **Result block.** A section's key figure sits in one result block: a card of its own holding a label, an optional lead-in, the figure at 36, a note and at most one supporting row. One result block per section, for that section's key figure. It never uses `surface.hero` or a tint.
+- **A saved result has its own section.** A figure worked out from saved details (for example "Breathing room") is shown in a result block in a section of its own. It never sits inside a modelling zone.
+- **A modelling zone presents its result** in one result block: to the right of the inputs from tablet width up, and under them on a phone. Nothing else inside a zone is a card.
+- **"Illustration, not saved" stays recognisable.** The zone keeps its dashed outline, now at 3:1 or more against the canvas (`border.input`), and the "Illustration, not saved" badge. The meaning never rests on colour alone, and the notice at the foot of the zone stays quiet.
+
+**SR1.** One result block per section; a saved result is never inside a zone. **Review only**; `ScenarioZone` contrast **Proposed check** in `tokens.a11y.test.ts` when the component changes.
+
+### 12.6 Naming: "Breathing room" (E17)
+
+"Breathing room" replaces "Months of cover" everywhere a person reads it. The wording is the owner's and is fixed:
+
+| Part           | Wording                                           |
+| -------------- | ------------------------------------------------- |
+| Label          | Breathing room                                    |
+| Description    | How long your savings would cover the essentials. |
+| Value          | About 1.5 months                                  |
+| Dashboard line | Breathing room: about 1.5 months                  |
+
+The detail goes behind the info tip, not in the description: "savings" means the accounts the person can draw on, and "the essentials" means essential spending and minimum debt payments.
+
 ## 13. What this guide replaces
 
 | Older document                        | Status                                                                                                                             |
@@ -366,3 +471,18 @@ One rule for every modal surface. Enforced by: `Dialog.styles.ts` and `Sheet.sty
 | `docs/design/e15/scenario-zone.md`    | Still the decision record; its "Visual" section is superseded by the lighter zone in section 12.2 once PR 2 merges                 |
 | `docs/agents/component-guidelines.md` | Still the how-to for building a component                                                                                          |
 | `docs/design/e16-polish/PLAN.md`      | The work plan that gets the product to this guide. When PR 13 closes it, this guide and UX-GUIDELINES remain as the standing rules |
+
+## 14. Decisions
+
+### 15 November 2026: E17, warmth and life
+
+Decider: the owner. Visual reference: [`docs/design/e17-options/options.html`](../design/e17-options/options.html), with the approved combination and later rulings in [`docs/design/e17-options/README.md`](../design/e17-options/README.md).
+
+| Area           | Decision                                                                                                                                                                | Where it is written                          |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Accent         | Option A, "Damson": a soft plum for decoration and wayfinding, never for good or bad. The existing sand, sage and teal tints are used more often, with no value changed | Section 2.6, rules C7 and C8                 |
+| Setup progress | Option 2A, the ring and next step, with the finish state from 2C                                                                                                        | Section 12.4; UX-GUIDELINES O4               |
+| Illustrations  | Option 3A: scenes for savings, debts, pension and the monthly check-in, built to one style sheet and stored as shape lists                                              | Sections 8.1 and 8.2                         |
+| Motion         | Three new tokens and five first-pass animations; five others left out                                                                                                   | Section 11 and 11.1; UX-GUIDELINES M5 and M7 |
+| Sections       | Option 5A: section headers and one result block per section, on every page                                                                                              | Section 12.5; UX-GUIDELINES S10              |
+| Naming         | "Breathing room" replaces "Months of cover", and that saved result sits in its own section, never inside a modelling zone                                               | Section 12.6; COPY-GUIDE glossary            |

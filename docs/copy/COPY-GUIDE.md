@@ -317,7 +317,7 @@ Say what happened, in the reader's words, and what to do. Do not blame. Do not a
 MCP text is read by a model first and a person second. The same rules apply (R7), plus:
 
 - A tool description says what the tool calculates or returns, from what data, in one or two sentences. It asks for calculations and summaries. It never tells the model to recommend, rank, prioritise or advise.
-- Use the glossary's words, so the model's answer uses them too: "debts", "what you own", "months of cover".
+- Use the glossary's words, so the model's answer uses them too: "debts", "what you own", "breathing room".
 - Result keys are neutral (`projectedOutcome`, `monthlySetAsideEstimateGbp`). Never `recommendation`, `best*`, `guaranteed*`, `favoursOption`.
 - Every result carries the notice and its assumptions. Parameter descriptions say the unit and the format: "Yearly amount in pounds", "Month in the form 2026-04".
 
@@ -340,7 +340,7 @@ One approved word for each concept. Use it in headings, labels, hints, errors, M
 | Spending a person can vary                      | flexible spending                                                   | discretionary, discretionary allowance                                                                                  |
 | Spending a person cannot easily vary            | essential spending; bills                                           | fixed costs, non-discretionary                                                                                          |
 | Money left this week after bills and saving     | safe to spend                                                       | guilt-free, allowance                                                                                                   |
-| Cash divided by monthly essential spending      | months of cover                                                     | runway, emergency runway, survival                                                                                      |
+| Cash divided by monthly essential spending      | breathing room (E17; replaces "months of cover" as pages adopt it)  | months of cover, runway, emergency runway, survival                                                                     |
 | Money in current and instant-access accounts    | cash you can get at quickly                                         | liquid cash, liquidity                                                                                                  |
 | How pay is split across tax, bills and the rest | where your pay goes                                                 | cashflow waterfall, allocation engine                                                                                   |
 | Balance-weighted mean rate                      | average rate                                                        | weighted by balance, blended rate                                                                                       |
