@@ -1,5 +1,6 @@
-import { Card, EmptyState, Illustration } from "@repo/ui";
-import type { FC } from "react";
+import { Card, EmptyState, Illustration, PageSection } from "@repo/ui";
+import { History } from "lucide-react";
+import type { FC, ReactNode } from "react";
 import { useMemo } from "react";
 import { useLoaderData } from "react-router";
 import AccountDetailChart, { type AccountChartRow } from "~/components/charts/AccountDetailChart";
@@ -49,6 +50,19 @@ export const accountChartRows = (
   ];
 };
 
+/** The section around the history (E17 5A): a header with an icon tile, a title and one line. */
+const HistorySection: FC<{ children: ReactNode }> = ({ children }) => (
+  <PageSection
+    description="This account's balance each month, as recorded."
+    domain="net-worth"
+    icon={History}
+    id="account-balance-history"
+    title="Balance history"
+  >
+    {children}
+  </PageSection>
+);
+
 /**
  * Balance history: one chart drawn like net worth history, with every month and how it was given
  * ("Calculated", "Confirmed") in its "Show data" table. No tabs and no year table.
@@ -69,24 +83,28 @@ const AccountDetails: FC = () => {
 
   if (!accountDetails || accountDetails.length === 0) {
     return (
-      <Card padding="none">
-        <EmptyState
-          description="Record this account's balance each month and its history shows here."
-          headingLevel="h3"
-          illustration={<Illustration scene="onboarding" />}
-          title="No balance history yet"
-        />
-      </Card>
+      <HistorySection>
+        <Card padding="none">
+          <EmptyState
+            description="Record this account's balance each month and its history shows here."
+            headingLevel="h3"
+            illustration={<Illustration scene="onboarding" />}
+            title="No balance history yet"
+          />
+        </Card>
+      </HistorySection>
     );
   }
 
   return (
-    <div className={detailsRoot()}>
-      <AccountDetailChart
-        accountDetails={rows}
-        title={`${account?.name ?? "Account"} balance history`}
-      />
-    </div>
+    <HistorySection>
+      <div className={detailsRoot()}>
+        <AccountDetailChart
+          accountDetails={rows}
+          title={`${account?.name ?? "Account"} balance history`}
+        />
+      </div>
+    </HistorySection>
   );
 };
 
