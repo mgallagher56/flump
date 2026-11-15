@@ -8,20 +8,6 @@ export const detailsRoot = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
-export const detailsHeader = cva({
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "12px",
-  },
-});
-
-export const detailsTitle = cva({
-  base: { margin: 0, textStyle: "heading.lg", color: "text.primary" },
-});
-
 export const buttonRow = cva({
   base: { display: "flex", gap: "8px" },
 });

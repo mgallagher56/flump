@@ -5,9 +5,10 @@ import {
   controlProps,
   FormField,
   Icon,
+  PageSection,
   PercentInput,
 } from "@repo/ui";
-import { Check, Pencil, X } from "lucide-react";
+import { Check, ClipboardList, Pencil, X } from "lucide-react";
 import { type FC, type FormEvent, type ReactNode, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
@@ -15,9 +16,7 @@ import {
   checkHint,
   checkRow,
   checkStack,
-  detailsHeader,
   detailsRoot,
-  detailsTitle,
   editGrid,
   editRow,
   factList,
@@ -245,77 +244,74 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
       : "No salary sacrifice";
 
   return (
-    <section
-      aria-labelledby="pension-details-title"
-      className={detailsRoot()}
-      data-testid="pension-details"
+    <PageSection
+      description="Your pots and the salary and contributions you saved."
+      domain="pension"
+      headingId="pension-details-title"
+      icon={ClipboardList}
       id="pension-details"
-      tabIndex={-1}
+      title="Your details"
     >
-      <div className={detailsHeader()}>
-        <h2 className={detailsTitle()} id="pension-details-title">
-          Your details
-        </h2>
-      </div>
-
-      {children}
-      {/* Each thing has one edit button: pots on their rows, salary and contributions inside
+      <div className={detailsRoot()}>
+        {children}
+        {/* Each thing has one edit button: pots on their rows, salary and contributions inside
           their own drawer, which the form replaces while editing. */}
-      {isEditing ? (
-        <DetailsForm
-          annualSalary={annualSalary}
-          employeePercent={employeePercent}
-          employerPercent={employerPercent}
-          isSalarySacrifice={isSalarySacrifice}
-          isSalarySacrificeEmployerNi={isSalarySacrificeEmployerNi}
-          onEditingChange={onEditingChange}
-          onSave={onSave}
-        />
-      ) : (
-        // The saved facts sit behind a quiet drawer, closed by default, so the first view keeps
-        // to the headline and the strip (E16 P1.1).
-        <CollapsibleDrawer
-          defaultOpen={factsOpen || reopenFacts}
-          key={factsOpen ? "open" : "closed"}
-          title="Salary and contributions"
-          variant="quiet"
-        >
-          <dl className={factList()}>
-            <div className={factRow()}>
-              <dt>Salary</dt>
-              <dd className={factValue({ unset: !hasSalary })}>
-                {hasSalary ? `${formatCurrency(annualSalary)} a year` : NOT_SET}
-              </dd>
+        {isEditing ? (
+          <DetailsForm
+            annualSalary={annualSalary}
+            employeePercent={employeePercent}
+            employerPercent={employerPercent}
+            isSalarySacrifice={isSalarySacrifice}
+            isSalarySacrificeEmployerNi={isSalarySacrificeEmployerNi}
+            onEditingChange={onEditingChange}
+            onSave={onSave}
+          />
+        ) : (
+          // The saved facts sit behind a quiet drawer, closed by default, so the first view keeps
+          // to the headline and the strip (E16 P1.1).
+          <CollapsibleDrawer
+            defaultOpen={factsOpen || reopenFacts}
+            key={factsOpen ? "open" : "closed"}
+            title="Salary and contributions"
+            variant="quiet"
+          >
+            <dl className={factList()}>
+              <div className={factRow()}>
+                <dt>Salary</dt>
+                <dd className={factValue({ unset: !hasSalary })}>
+                  {hasSalary ? `${formatCurrency(annualSalary)} a year` : NOT_SET}
+                </dd>
+              </div>
+              <div className={factRow()}>
+                <dt>You pay</dt>
+                <dd className={factValue()}>{formatPercent(employeePercent)} of salary</dd>
+              </div>
+              <div className={factRow()}>
+                <dt>Employer pays</dt>
+                <dd className={factValue()}>{formatPercent(employerPercent)} of salary</dd>
+              </div>
+              <div className={factRow()}>
+                <dt>Method</dt>
+                <dd className={factValue({ unset: !methodSet, wrap: true })}>{method}</dd>
+              </div>
+            </dl>
+            {ratesAssumed && <p className={mutedNote()}>{ASSUMED_RATE_LABEL}</p>}
+            <div className={editRow()}>
+              <Button
+                aria-label="Edit salary and contributions"
+                size="sm"
+                type="button"
+                variant="ghost"
+                onClick={startEditing}
+              >
+                <Icon icon={Pencil} size="sm" />
+                Edit
+              </Button>
             </div>
-            <div className={factRow()}>
-              <dt>You pay</dt>
-              <dd className={factValue()}>{formatPercent(employeePercent)} of salary</dd>
-            </div>
-            <div className={factRow()}>
-              <dt>Employer pays</dt>
-              <dd className={factValue()}>{formatPercent(employerPercent)} of salary</dd>
-            </div>
-            <div className={factRow()}>
-              <dt>Method</dt>
-              <dd className={factValue({ unset: !methodSet, wrap: true })}>{method}</dd>
-            </div>
-          </dl>
-          {ratesAssumed && <p className={mutedNote()}>{ASSUMED_RATE_LABEL}</p>}
-          <div className={editRow()}>
-            <Button
-              aria-label="Edit salary and contributions"
-              size="sm"
-              type="button"
-              variant="ghost"
-              onClick={startEditing}
-            >
-              <Icon icon={Pencil} size="sm" />
-              Edit
-            </Button>
-          </div>
-        </CollapsibleDrawer>
-      )}
-    </section>
+          </CollapsibleDrawer>
+        )}
+      </div>
+    </PageSection>
   );
 };
 
