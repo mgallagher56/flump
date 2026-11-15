@@ -1,7 +1,14 @@
-import { Button, Icon, Money, SimulatorSplitLayout, SliderField } from "@repo/ui";
+import {
+  Button,
+  formatMoney,
+  Icon,
+  ResultBlock,
+  SimulatorSplitLayout,
+  SliderField,
+} from "@repo/ui";
 import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
-import { actionRow, outcome, outcomeLabel, outcomeUnit, outcomeValue } from "./PayRiseTool.styles";
+import { actionRow, outcome, outcomeUnit } from "./PayRiseTool.styles";
 
 /** The slider's range: £0 to £20,000 a year, in £500 steps. The pill takes any figure in range. */
 export const PAY_RISE_MAX = 20_000;
@@ -16,7 +23,7 @@ export interface PayRiseToolProps {
   onApplyIncrease: (monthlyIncrease: number) => void;
 }
 
-/** "A pay rise": one input and one outcome, on the ScenarioZone surface (no nested card). */
+/** "A pay rise": one input and one outcome, in the zone's one result card (E17 5A). */
 export const PayRiseTool: FC<PayRiseToolProps> = ({
   salaryIncrease,
   monthlyIncrease,
@@ -25,12 +32,19 @@ export const PayRiseTool: FC<PayRiseToolProps> = ({
 }) => (
   <SimulatorSplitLayout
     content={
-      <div className={outcome()} data-testid="pay-rise-outcome" id="pay-rise-outcome">
-        <p className={outcomeLabel()}>Change in take-home pay</p>
-        <p className={outcomeValue()}>
-          <Money fractionDigits={0} signDisplay="always" size="kpi" value={monthlyIncrease} />
-          <span className={outcomeUnit()}>a month</span>
-        </p>
+      <div className={outcome()}>
+        <ResultBlock
+          figure={
+            <>
+              <span>
+                {formatMoney(monthlyIncrease, { fractionDigits: 0, signDisplay: "always" }).text}
+              </span>{" "}
+              <span className={outcomeUnit()}>a month</span>
+            </>
+          }
+          id="pay-rise-outcome"
+          label="Change in take-home pay"
+        />
         <div className={actionRow()}>
           <Button size="sm" variant="outline" onClick={() => onApplyIncrease(monthlyIncrease)}>
             Model this in savings
