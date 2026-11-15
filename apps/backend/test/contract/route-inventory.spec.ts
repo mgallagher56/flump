@@ -241,7 +241,6 @@ describe("web to backend route inventory", () => {
       "POST /budget-entries",
       "PATCH /budget-entries/:p",
       "DELETE /budget-entries/:p",
-      "POST /budget-entries/seed-defaults",
       "POST /budget-entries/categories",
       "PATCH /accounts/:p",
     ]) {

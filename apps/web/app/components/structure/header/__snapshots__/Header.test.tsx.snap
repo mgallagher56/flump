@@ -58,7 +58,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
           class="d_none navInline:d_block flex_1 min-w_0 ml_3 navInline:ml_1 navWide:ml_3"
         >
           <ul
-            class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
+            class="d_flex ai_center gap_1 navInline:gap_0.5 navWide:gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
           >
             <li
               class="pos_relative flex-sh_0"
@@ -339,7 +339,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
           class="d_none navInline:d_block flex_1 min-w_0 ml_3 navInline:ml_1 navWide:ml_3"
         >
           <ul
-            class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
+            class="d_flex ai_center gap_1 navInline:gap_0.5 navWide:gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
           >
             <li
               class="pos_relative flex-sh_0 d_none navWide:d_list-item"
@@ -517,7 +517,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             >
               <button
                 aria-expanded="false"
-                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_2.5 bdr_full [&_>_svg]:d_none bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
+                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_1.5 navWide:px_2.5 bdr_full [&_>_svg]:d_none bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
                 type="button"
               >
                 <svg
@@ -577,7 +577,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             >
               <button
                 aria-expanded="false"
-                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_2.5 bdr_full [&_>_svg]:d_none bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
+                class="d_inline-flex ai_center gap_2 min-h_8 px_3 navInline:px_1.5 navWide:px_2.5 bdr_full [&_>_svg]:d_none bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
                 type="button"
               >
                 <svg
@@ -876,7 +876,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
           class="d_none navInline:d_block flex_1 min-w_0 ml_3 navInline:ml_1 navWide:ml_3"
         >
           <ul
-            class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
+            class="d_flex ai_center gap_1 navInline:gap_0.5 navWide:gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
           >
             <li
               class="pos_relative flex-sh_0"
