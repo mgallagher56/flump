@@ -1,12 +1,7 @@
-import { Card, Switch } from "@repo/ui";
-import { cx } from "@repo/ui/styled-system/css";
+import { Card, PageSection, Switch } from "@repo/ui";
+import { Scale } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
-import {
-  sectionCard,
-  sectionHeading,
-  sectionLead,
-  statusText,
-} from "~/features/settings/settings.styles";
+import { sectionCard, statusText } from "~/features/settings/settings.styles";
 import { choiceList, choicesAnchor } from "./NetWorthChoices.styles";
 
 /** The anchor the "Change what counts" links point at (/app/profile?tab=profile#net-worth). */
@@ -96,54 +91,53 @@ export const NetWorthChoices: FC<NetWorthChoicesProps> = ({
   if (!showProperty && !showStudentLoan) return null;
 
   return (
-    <Card
-      as="section"
-      aria-labelledby="net-worth-choices-heading"
-      className={cx(sectionCard(), choicesAnchor())}
-      data-testid={NET_WORTH_CHOICES_ID}
+    <PageSection
+      className={choicesAnchor()}
+      // The switches below point at this line, so it keeps its id.
+      description={<span id={HELPER_ID}>{NET_WORTH_CHOICES_HELPER}</span>}
+      headingId="net-worth-choices-heading"
+      icon={Scale}
       id={NET_WORTH_CHOICES_ID}
+      title={NET_WORTH_CHOICES_TITLE}
+      tone="neutral"
     >
-      <h2 className={sectionHeading()} id="net-worth-choices-heading">
-        {NET_WORTH_CHOICES_TITLE}
-      </h2>
-      <p className={sectionLead()} id={HELPER_ID}>
-        {NET_WORTH_CHOICES_HELPER}
-      </p>
-      <div className={choiceList()}>
-        {showProperty ? (
-          <Switch
-            aria-describedby={HELPER_ID}
-            aria-disabled={saving || undefined}
-            checked={values.countProperty}
-            data-testid="net-worth-counts-property"
-            id="net-worth-counts-property"
-            label={PROPERTY_CHOICE_LABEL}
-            onChange={(e) => change("countProperty", e.target.checked)}
-          />
+      <Card className={sectionCard()}>
+        <div className={choiceList()}>
+          {showProperty ? (
+            <Switch
+              aria-describedby={HELPER_ID}
+              aria-disabled={saving || undefined}
+              checked={values.countProperty}
+              data-testid="net-worth-counts-property"
+              id="net-worth-counts-property"
+              label={PROPERTY_CHOICE_LABEL}
+              onChange={(e) => change("countProperty", e.target.checked)}
+            />
+          ) : null}
+          {showStudentLoan ? (
+            <Switch
+              aria-describedby={HELPER_ID}
+              aria-disabled={saving || undefined}
+              checked={values.countStudentLoan}
+              data-testid="net-worth-counts-student-loan"
+              id="net-worth-counts-student-loan"
+              label={STUDENT_LOAN_CHOICE_LABEL}
+              onChange={(e) => change("countStudentLoan", e.target.checked)}
+            />
+          ) : null}
+        </div>
+        {error ? (
+          <p
+            className={statusText({ tone: "danger" })}
+            data-testid="net-worth-choices-error"
+            id="net-worth-choices-error"
+            role="alert"
+          >
+            {error}
+          </p>
         ) : null}
-        {showStudentLoan ? (
-          <Switch
-            aria-describedby={HELPER_ID}
-            aria-disabled={saving || undefined}
-            checked={values.countStudentLoan}
-            data-testid="net-worth-counts-student-loan"
-            id="net-worth-counts-student-loan"
-            label={STUDENT_LOAN_CHOICE_LABEL}
-            onChange={(e) => change("countStudentLoan", e.target.checked)}
-          />
-        ) : null}
-      </div>
-      {error ? (
-        <p
-          className={statusText({ tone: "danger" })}
-          data-testid="net-worth-choices-error"
-          id="net-worth-choices-error"
-          role="alert"
-        >
-          {error}
-        </p>
-      ) : null}
-    </Card>
+      </Card>
+    </PageSection>
   );
 };
 

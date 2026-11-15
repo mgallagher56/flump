@@ -1,5 +1,5 @@
-import { Button, Card, Icon, useOptionalToast } from "@repo/ui";
-import { KeyRound, Mail } from "lucide-react";
+import { Button, Card, Icon, PageSection, useOptionalToast } from "@repo/ui";
+import { Inbox, KeyRound, Mail } from "lucide-react";
 import { type FC, useState } from "react";
 import {
   McpConnectionCard,
@@ -8,7 +8,6 @@ import {
 import { useMcpTokens } from "~/features/ai-connections/useMcpTokens";
 import {
   sectionCard,
-  sectionHeading,
   sectionLead,
   statusText,
   tabStack,
@@ -63,62 +62,68 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email, guideUrl, serverUrl }
 
   return (
     <div className={tabStack()} id="settings-security-tab" data-testid="settings-security-tab">
-      <Card as="section" aria-labelledby="sign-in-heading" className={sectionCard()}>
-        <h2 className={sectionHeading()} id="sign-in-heading">
-          How you sign in
-        </h2>
-        <div className={accountRow()}>
-          <div className={accountIdentity()}>
-            <span aria-hidden="true" className={accountIcon()}>
-              <Icon icon={Mail} size="md" />
-            </span>
-            <div>
-              <p className={accountLabel()}>Account email</p>
-              <div
-                className={accountEmail()}
-                data-testid="user-email-display"
-                id="user-email-display"
-              >
-                {/* No "Verified" badge: nothing here reads the provider's verified flag (ruling 4). */}
-                <span>{email || "Not set"}</span>
+      <PageSection
+        description="Your sign-in email and password."
+        headingId="sign-in-heading"
+        icon={KeyRound}
+        id="settings-sign-in"
+        title="How you sign in"
+        tone="neutral"
+      >
+        <Card className={sectionCard()}>
+          <div className={accountRow()}>
+            <div className={accountIdentity()}>
+              <span aria-hidden="true" className={accountIcon()}>
+                <Icon icon={Mail} size="md" />
+              </span>
+              <div>
+                <p className={accountLabel()}>Account email</p>
+                <div
+                  className={accountEmail()}
+                  data-testid="user-email-display"
+                  id="user-email-display"
+                >
+                  {/* No "Verified" badge: nothing here reads the provider's verified flag (ruling 4). */}
+                  <span>{email || "Not set"}</span>
+                </div>
               </div>
             </div>
+            <Button
+              data-testid="change-password-trigger"
+              id="change-password-trigger"
+              pending={sendingResetEmail}
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={handleSendResetEmail}
+            >
+              <Icon icon={KeyRound} size="sm" />
+              Change password
+            </Button>
           </div>
-          <Button
-            data-testid="change-password-trigger"
-            id="change-password-trigger"
-            pending={sendingResetEmail}
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={handleSendResetEmail}
-          >
-            <Icon icon={KeyRound} size="sm" />
-            Change password
-          </Button>
-        </div>
-        <p className={sectionLead()}>We will email you a link to choose a new password.</p>
-        {passwordSuccess ? (
-          <p
-            className={statusText({ tone: "positive" })}
-            data-testid="password-reset-status"
-            id="password-reset-status"
-            role="status"
-          >
-            {passwordSuccess}
-          </p>
-        ) : null}
-        {passwordError ? (
-          <p
-            className={statusText({ tone: "danger" })}
-            data-testid="password-reset-error"
-            id="password-reset-error"
-            role="alert"
-          >
-            {passwordError}
-          </p>
-        ) : null}
-      </Card>
+          <p className={sectionLead()}>We will email you a link to choose a new password.</p>
+          {passwordSuccess ? (
+            <p
+              className={statusText({ tone: "positive" })}
+              data-testid="password-reset-status"
+              id="password-reset-status"
+              role="status"
+            >
+              {passwordSuccess}
+            </p>
+          ) : null}
+          {passwordError ? (
+            <p
+              className={statusText({ tone: "danger" })}
+              data-testid="password-reset-error"
+              id="password-reset-error"
+              role="alert"
+            >
+              {passwordError}
+            </p>
+          ) : null}
+        </Card>
+      </PageSection>
 
       <McpConnectionCard
         initialTokens={mcp.tokens ?? []}
@@ -132,21 +137,28 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email, guideUrl, serverUrl }
       />
 
       {canStage ? (
-        <Card as="section" aria-labelledby="settings-imports-heading" className={sectionCard()}>
-          <h2 className={sectionHeading()} id="settings-imports-heading">
-            Imports
-          </h2>
-          <p className={sectionLead()}>
-            Balances added through a connection wait in Imports until you review and confirm them.
-          </p>
-          <div>
-            <Button asChild size="sm" variant="outline">
-              <a data-testid="settings-imports-link" href="/app/imports" id="settings-imports-link">
-                Review imports
-              </a>
-            </Button>
-          </div>
-        </Card>
+        <PageSection
+          description="Balances added through a connection wait in Imports until you review and confirm them."
+          headingId="settings-imports-heading"
+          icon={Inbox}
+          id="settings-imports"
+          title="Imports"
+          tone="neutral"
+        >
+          <Card className={sectionCard()}>
+            <div>
+              <Button asChild size="sm" variant="outline">
+                <a
+                  data-testid="settings-imports-link"
+                  href="/app/imports"
+                  id="settings-imports-link"
+                >
+                  Review imports
+                </a>
+              </Button>
+            </div>
+          </Card>
+        </PageSection>
       ) : null}
     </div>
   );
