@@ -354,7 +354,7 @@ export const PensionContainer: FC = () => {
           action={addPotButton("md")}
           description="Add a pension pot to see its value and an estimate of your income at retirement."
           headingLevel="h2"
-          illustration={<Illustration scene="onboarding" />}
+          illustration={<Illustration scene="empty-pension" />}
           title="No pension pots yet"
         />
         {dialog}

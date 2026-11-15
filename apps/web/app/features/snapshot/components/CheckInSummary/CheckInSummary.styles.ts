@@ -4,6 +4,10 @@ export const summaryRoot = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", minWidth: 0 },
 });
 
+export const summaryScene = cva({
+  base: { display: "flex", justifyContent: "center" },
+});
+
 export const summaryHeading = cva({
   base: {
     margin: 0,

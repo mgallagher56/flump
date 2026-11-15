@@ -267,7 +267,7 @@ export const SavingsContainer: FC = () => {
             description="Add a savings account or investment to see your total, what you save each month and where it could get to."
             headingLevel="h2"
             id="savings-empty"
-            illustration={<Illustration scene="onboarding" />}
+            illustration={<Illustration scene="empty-savings" />}
             title="No savings accounts yet"
           />
         </div>

@@ -1,4 +1,4 @@
-import { Button, StatusBadge } from "@repo/ui";
+import { Button, Illustration, StatusBadge } from "@repo/ui";
 import { type FC, useEffect, useRef, useState } from "react";
 import type { CheckInSummary as CheckInSummaryModel } from "../../checkInModel";
 import {
@@ -19,6 +19,7 @@ import {
   summaryHeading,
   summaryLine,
   summaryRoot,
+  summaryScene,
   summarySubheading,
 } from "./CheckInSummary.styles";
 
@@ -49,6 +50,9 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({ summary, onDone, onCha
 
   return (
     <div className={summaryRoot()} data-testid="checkin-summary" id="checkin-summary">
+      <div className={summaryScene()}>
+        <Illustration id="checkin-summary-scene" scene="check-in-done" size="sm" />
+      </div>
       <h3 className={summaryHeading()} ref={heading} tabIndex={-1}>
         {CHECK_IN_COPY.saved}
       </h3>

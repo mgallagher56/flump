@@ -1,3 +1,11 @@
 export * from "./Illustration";
-export { illustrationScenes } from "./Illustration.scenes";
-export { illustrationRecipe } from "./Illustration.styles";
+export {
+  budgetSproutShapes,
+  illustrationScenes,
+  type SceneColorRole,
+  type ScenePart,
+  type SceneShape,
+  SceneShapeList,
+  sceneDefinitions,
+} from "./Illustration.scenes";
+export { illustrationRecipe, sceneClasses } from "./Illustration.styles";

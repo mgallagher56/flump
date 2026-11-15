@@ -35,6 +35,9 @@ const setup = (summary: Partial<Summary> = {}) => {
 describe("CheckInSummary", () => {
   it("states it is saved, what changed and net worth against last month", () => {
     setup();
+    expect(screen.getByTestId("checkin-summary-scene").getAttribute("data-scene")).toBe(
+      "check-in-done",
+    );
     expect(screen.getByRole("heading", { name: "Check-in saved" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "What changed" })).toBeDefined();
     expect(screen.getByText("Account 1")).toBeDefined();

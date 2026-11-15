@@ -32,9 +32,12 @@ type Story = StoryObj<typeof SetupChecklist>;
 // The Storybook decorator renders light and dark side by side, so queries use the first match.
 export const Collapsed: Story = {
   play: async ({ canvasElement }) => {
-    await expect(
-      within(canvasElement).getAllByText("Finish setting up: 2 of 5 done")[0],
-    ).toBeDefined();
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByRole("progressbar", { name: "Setup progress" })[0]).toHaveAttribute(
+      "aria-valuetext",
+      "2 of 5",
+    );
+    await expect(canvas.getAllByText(/Next: Add your savings rates/)[0]).toBeDefined();
   },
 };
 
@@ -45,5 +48,21 @@ export const Expanded: Story = {
     await userEvent.click(toggle);
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
     await expect(within(canvasElement).getAllByText("Add your savings rates")[0]).toBeVisible();
+  },
+};
+
+export const FinishedDuringVisit: Story = {
+  args: {
+    completedSteps: ["budget", "accounts", "savings", "pension"],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const toggle = canvas.getAllByRole("button", { name: /Finish setting up/ })[0];
+    if (!toggle) throw new Error("Toggle missing");
+    await userEvent.click(toggle);
+    const skip = canvas.getAllByRole("button", { name: /Not for me/ })[0];
+    if (!skip) throw new Error("Skip button missing");
+    await userEvent.click(skip);
+    await expect(canvas.getAllByText("Setup finished")[0]).toBeVisible();
   },
 };

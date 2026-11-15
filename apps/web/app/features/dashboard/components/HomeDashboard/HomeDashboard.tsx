@@ -136,7 +136,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   banner,
   footer,
 }) => {
-  const { profile: hookProfile, updateProfile } = useUserProfile();
+  const { profile: hookProfile, updateProfile, markChecklistStep } = useUserProfile();
   const profile = useMemo(
     () => (userProfile ? normalizeProfile(userProfile) : hookProfile),
     [userProfile, hookProfile],
@@ -146,6 +146,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
   // Optimistic copy of dashboardWidgets while a change is saving, or the whole truth when not saved.
   const [visibilityOverride, setVisibilityOverride] = useState<DashboardWidgetKey[] | null>(null);
+  const [skippedChecklistSteps, setSkippedChecklistSteps] = useState<string[]>([]);
+  const [checklistError, setChecklistError] = useState<string | null>(null);
 
   // An empty budget means what is left over and months of cover are unknown, not zero. The
   // loader's picture decides; sample data (no budgetKnown field) falls back to its own totals.
@@ -223,6 +225,23 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       if (seq !== saveSeqRef.current) return;
       setVisibilityOverride(confirmedRef.current);
       setVisibilityError("We could not save that change. Your dashboard is unchanged. Try again.");
+    }
+  };
+
+  const effectiveCompletedSteps = useMemo(
+    () => Array.from(new Set([...checklistProps.completedSteps, ...skippedChecklistSteps])),
+    [checklistProps.completedSteps, skippedChecklistSteps],
+  );
+
+  const handleSkipChecklistStep = async (stepKey: string) => {
+    setChecklistError(null);
+    setSkippedChecklistSteps((prev) => (prev.includes(stepKey) ? prev : [...prev, stepKey]));
+    if (!persistVisibility || !markChecklistStep) return;
+    try {
+      await markChecklistStep(stepKey, true);
+    } catch {
+      setSkippedChecklistSteps((prev) => prev.filter((k) => k !== stepKey));
+      setChecklistError("We could not save that step change. Try again.");
     }
   };
 
@@ -336,7 +355,13 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       {isSample ? null : (
         <div className={housekeepingGroup()}>
-          <SetupChecklist {...checklistProps} enabledPages={enabledPages} />
+          <SetupChecklist
+            {...checklistProps}
+            completedSteps={effectiveCompletedSteps}
+            enabledPages={enabledPages}
+            onSkipStep={handleSkipChecklistStep}
+            skipError={checklistError}
+          />
           {checkIn && hasAccounts ? <CheckInRow {...checkIn} /> : null}
         </div>
       )}

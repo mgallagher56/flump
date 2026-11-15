@@ -335,7 +335,7 @@ export const DebtContainer: FC = () => {
               }
               description="Add a credit card, loan or overdraft to see when it would be paid off at your minimum payments."
               id="debt-empty"
-              illustration={<Illustration scene="empty-accounts" />}
+              illustration={<Illustration scene="empty-debt" />}
               title="No debts added"
             />
           </div>

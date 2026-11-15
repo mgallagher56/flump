@@ -32,6 +32,7 @@ export const sceneClasses = {
   teal: css({ fill: "primary.solid" }),
   leaf: css({ fill: "primary" }),
   paper: css({ fill: "surface.card" }),
+  accent: css({ fill: "accent" }),
   dots: css({
     stroke: "text.muted",
     fill: "none",
@@ -50,5 +51,12 @@ export const sceneClasses = {
     fill: "none",
     strokeWidth: "5",
     strokeLinecap: "round",
+  }),
+  tick: css({
+    stroke: "primary.foreground",
+    fill: "none",
+    strokeWidth: "4.5",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
   }),
 };

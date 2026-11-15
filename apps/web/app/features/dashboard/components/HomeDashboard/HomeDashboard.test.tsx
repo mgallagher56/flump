@@ -16,6 +16,7 @@ import { dashboardHeader, showHideButton } from "./HomeDashboard.styles";
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const mockUpdateProfile = vi.hoisted(() => vi.fn());
+const mockMarkChecklistStep = vi.hoisted(() => vi.fn().mockResolvedValue({}));
 const ALL_ENABLED = ["accounts", "budget", "savings", "pension", "mortgage", "tax", "debt"];
 const mockEnabledPages = vi.hoisted(() => ({ current: null as string[] | null }));
 
@@ -50,6 +51,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
           await mockUpdateProfile(updates);
           if (updates.dashboardWidgets) setWidgets(updates.dashboardWidgets);
         },
+        markChecklistStep: mockMarkChecklistStep,
       };
     },
   };
@@ -352,8 +354,27 @@ describe("HomeDashboard", () => {
       ...noDebt,
       checklistProps: { ...noDebt.checklistProps, completedSteps: [], hasSavings: false },
     });
-    expect(screen.getByRole("button", { name: /Finish setting up: \d of \d done/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Finish setting up/ })).toBeTruthy();
+    expect(screen.getByRole("progressbar", { name: "Setup progress" })).toBeTruthy();
     expect(screen.getByTestId("monthly-check-in-card")).toBeTruthy();
+  });
+
+  it("persists Not for me step skips through markChecklistStep and transitions to Setup finished", async () => {
+    mockMarkChecklistStep.mockClear();
+    renderDashboard({
+      ...noDebt,
+      checklistProps: {
+        ...noDebt.checklistProps,
+        completedSteps: ["budget", "accounts", "pension"],
+        hasSavings: false,
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Finish setting up/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Not for me, skip Add your savings rates" }),
+    );
+    await waitFor(() => expect(mockMarkChecklistStep).toHaveBeenCalledWith("savings", true));
+    expect(screen.getByTestId("setup-checklist-finished")).toBeTruthy();
   });
 
   it("hides the check-in row once this month is recorded", () => {
