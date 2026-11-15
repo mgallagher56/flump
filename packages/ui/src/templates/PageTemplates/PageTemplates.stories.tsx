@@ -150,12 +150,12 @@ const pageBodyPlay: Story["play"] = async ({ canvasElement }) => {
 const PageBodySample = () => (
   <PageBody data-testid="page-body">
     <h1>Your money</h1>
-    <p>Sections sit 32px apart, inside gutters of 16, 24 and 40px, at most 1200px wide.</p>
+    <p>Sections sit 36px apart, inside gutters of 16, 24 and 40px, at most 1200px wide.</p>
     <p>Each child of the page body is one section.</p>
   </PageBody>
 );
 
-/** P13: a header then the hero, exactly one 32px section gap apart (no stacked header margin). */
+/** P13: a header then the hero, exactly one 36px section gap apart (no stacked header margin). */
 const HeaderGapSample = () => (
   <PageBody data-testid="page-body-gap">
     <PageHeader
@@ -172,7 +172,7 @@ const headerGapPlay: Story["play"] = async ({ canvasElement }) => {
   const hero = canvas.getByTestId("page-body-gap-hero");
   if (!header) throw new Error("header missing");
   const gap = hero.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
-  await expect(Math.round(gap)).toBe(32);
+  await expect(Math.round(gap)).toBe(36);
 };
 
 export const PageBodyHeaderGap: Story = { render: () => <HeaderGapSample />, play: headerGapPlay };

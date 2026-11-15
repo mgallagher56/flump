@@ -4,7 +4,7 @@ import { waitForHydration } from "../support/page";
 
 /**
  * Every app page puts the same space between its header and the first thing under it (P13: the
- * PageBody section gap, 32px). A page outside PageBody, or one whose header keeps its own bottom
+ * PageBody section gap, 36px since E17 5A). A page outside PageBody, or one whose header keeps its own bottom
  * margin, shows a different gap.
  */
 const PAGES = [
@@ -17,7 +17,7 @@ const PAGES = [
   "/app/mortgage",
 ];
 
-const GAP = 32;
+const GAP = 36;
 
 for (const width of [1280, 390]) {
   test.describe(`header gap at ${width}px`, () => {
