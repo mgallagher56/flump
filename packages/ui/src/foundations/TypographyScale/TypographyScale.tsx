@@ -29,6 +29,7 @@ const TEXT_STYLE_SPECIMENS = [
   { name: "label.sm", sample: "Updated 12 Nov 2026", cls: css({ textStyle: "label.sm" }) },
   { name: "numeric.hero", sample: "£48,250", cls: css({ textStyle: "numeric.hero" }) },
   { name: "numeric.kpi", sample: "£1,240,500", cls: css({ textStyle: "numeric.kpi" }) },
+  { name: "numeric.result", sample: "1.5 months", cls: css({ textStyle: "numeric.result" }) },
   { name: "numeric.lg", sample: "£85,200.00", cls: css({ textStyle: "numeric.lg" }) },
   { name: "numeric.md", sample: "£1,450.50", cls: css({ textStyle: "numeric.md" }) },
   { name: "numeric.sm", sample: "29.90%", cls: css({ textStyle: "numeric.sm" }) },

@@ -51,6 +51,7 @@ describe("E15 textStyles", () => {
         "numeric.hero",
         "numeric.unset",
         "numeric.kpi",
+        "numeric.result",
         "numeric.lg",
         "numeric.md",
         "numeric.sm",
@@ -60,7 +61,7 @@ describe("E15 textStyles", () => {
 
   it("every numeric style carries tabular-nums", () => {
     const numeric = leaves.filter((l) => l.path.startsWith("numeric."));
-    expect(numeric).toHaveLength(6);
+    expect(numeric).toHaveLength(7);
     for (const l of numeric) expect(l.value.fontVariantNumeric, l.path).toBe("tabular-nums");
   });
 
@@ -294,7 +295,7 @@ describe("E15 layout", () => {
     for (let i = 1; i < values.length; i++) expect(values[i]).toBeGreaterThan(values[i - 1]);
   });
 
-  it("E16 P13 page template: 1200px content, 16/24/40 gutters, 20/32 top, 32 section gap", () => {
+  it("E16 P13 page template: 1200px content, 16/24/40 gutters, 20/32 top, 36 section gap (E17 5A)", () => {
     expect(sizes.page.max.value).toBe("1200px");
     const p = pageSpacing.page;
     expect([p.gutter.sm, p.gutter.md, p.gutter.lg].map((t) => t.value)).toEqual([
@@ -302,7 +303,7 @@ describe("E15 layout", () => {
       "24px",
       "40px",
     ]);
-    expect([p.top.sm.value, p.top.lg.value, p.section.value]).toEqual(["20px", "32px", "32px"]);
+    expect([p.top.sm.value, p.top.lg.value, p.section.value]).toEqual(["20px", "32px", "36px"]);
   });
 
   it("sizes provide control heights, compact heights and a 44px touch target", () => {

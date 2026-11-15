@@ -107,6 +107,32 @@ describe("ScenarioZone", () => {
     expect(cls).toContain("border-style_dashed");
   });
 
+  it("draws the outline in border.input so it can be seen on the canvas (E17 5A)", () => {
+    render(<ScenarioZone>x</ScenarioZone>);
+    expect(screen.getByTestId("scenario-zone").className).toContain("bd-c_border.input");
+  });
+
+  it("puts the result beside the inputs, and further options under both", () => {
+    render(
+      <ScenarioZone extra={<div data-testid="more">More</div>} result={<div>Result card</div>}>
+        <div>Inputs</div>
+      </ScenarioZone>,
+    );
+    const split = screen.getByTestId("scenario-zone-split");
+    expect(split.textContent).toBe("InputsResult card");
+    expect(screen.getByTestId("scenario-zone-result").textContent).toBe("Result card");
+    expect(split.className).toContain("md:grid-tc_minmax(0,_5fr)_minmax(0,_7fr)");
+    // The drawer follows the split, so opening it never pushes the result away from its inputs.
+    expect(split.compareDocumentPosition(screen.getByTestId("more"))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("has no split when there is no result", () => {
+    render(<ScenarioZone>x</ScenarioZone>);
+    expect(screen.queryByTestId("scenario-zone-split")).toBeNull();
+  });
+
   it("keeps the badge inline with the title", () => {
     render(<ScenarioZone>x</ScenarioZone>);
     const title = screen.getByTestId("scenario-zone-title");

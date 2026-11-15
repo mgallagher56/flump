@@ -865,7 +865,7 @@ export interface PageBodyProps extends HTMLAttributes<HTMLDivElement> {}
 
 /**
  * The one page wrapper (plan P13): content at most 1200px wide (`sizes.page.max`), gutters of 16px
- * at 375, 24px from `md` and 40px from `lg`, 20px (32px from `lg`) above the h1, and 32px between
+ * at 375, 24px from `md` and 40px from `lg`, 20px (32px from `lg`) above the h1, and 36px between
  * sections. Children render in the P13 order: `PageHeader`, `HeroFigure`, `KpiStrip`, "Your
  * details", `ScenarioZone`, drawers. It is a plain `div` because `AppShell` already supplies the
  * `main` landmark.

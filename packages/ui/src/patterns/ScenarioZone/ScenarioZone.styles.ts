@@ -3,7 +3,9 @@ import { sva } from "../../../styled-system/css";
 /**
  * E16 4.4 scenario zone: lighter than the saved "Your details" card, so the illustration never
  * outweighs saved facts. No fill: the zone shows the page canvas through a 1px dashed outline, which
- * reads as "not saved" through shape and words, never colour alone. A fill could not be quieter than
+ * reads as "not saved" through shape and words, never colour alone. E17 5A: the outline is
+ * `border.input` (3:1 or more on the canvas in both themes, where `border` was 1.3:1 and got lost),
+ * and the outcome sits in the zone's one `ResultBlock`, beside the inputs from `md` up. A fill could not be quieter than
  * a card in both themes: `surface.subtle` sits below the card in light (#f0ebe2 under #fffdf9) but
  * above it in dark (#2e2a26 over #272320), so in dark the zone outweighed "Your details", and
  * `surface.sunken` reads as a hole in dark. The canvas is the quietest surface in both. Never
@@ -17,6 +19,8 @@ export const scenarioZone = sva({
     "titleGroup",
     "basis",
     "body",
+    "split",
+    "result",
     "footer",
     "footerActions",
     "reset",
@@ -29,7 +33,7 @@ export const scenarioZone = sva({
       backgroundColor: "transparent",
       borderWidth: "1px",
       borderStyle: "dashed",
-      borderColor: "border",
+      borderColor: "border.input",
       borderRadius: "2xl",
       color: "text.primary",
       minWidth: "0",
@@ -65,6 +69,15 @@ export const scenarioZone = sva({
       gap: "4",
       minWidth: "0",
     },
+    /** Inputs then the result: stacked on a phone, 5 to 7 side by side from tablet width. */
+    split: {
+      display: "grid",
+      gridTemplateColumns: { base: "minmax(0, 1fr)", md: "minmax(0, 5fr) minmax(0, 7fr)" },
+      gap: { base: "4", md: "6" },
+      alignItems: "start",
+      minWidth: "0",
+    },
+    result: { minWidth: "0" },
     /** Reset, "Update your details" and the page's single notice. */
     footer: {
       display: "flex",

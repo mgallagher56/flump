@@ -4,7 +4,7 @@ import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon/Icon";
 import { iconTile } from "./IconTile.styles";
 
-export type IconTileTone = "teal" | "sage" | "apricot" | "neutral";
+export type IconTileTone = "teal" | "sage" | "apricot" | "accent" | "neutral";
 
 /** The money domains, each with one colour everywhere (E16 P9.3). */
 export type IconTileDomain =
