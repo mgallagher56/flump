@@ -16,20 +16,6 @@ export const summaryCard = cva({
   },
 });
 
-export const summaryHeader = cva({
-  base: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-});
-
-export const summaryTitle = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
-});
-
 export const summaryActions = cva({
   base: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" },
 });
@@ -51,7 +37,6 @@ export const savedLine = cva({
     alignItems: "center",
     gap: "4px",
     margin: 0,
-    marginTop: "4px",
   },
 });
 

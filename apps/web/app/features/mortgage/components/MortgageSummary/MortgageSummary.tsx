@@ -1,5 +1,5 @@
-import { Button, Icon } from "@repo/ui";
-import { Check } from "lucide-react";
+import { Button, Icon, PageSection } from "@repo/ui";
+import { Check, ClipboardList } from "lucide-react";
 import type { FC } from "react";
 import { formatYearsLeft } from "~/features/mortgage/mortgageFormat";
 import {
@@ -11,8 +11,6 @@ import {
   saveMessage,
   summaryActions,
   summaryCard,
-  summaryHeader,
-  summaryTitle,
 } from "./MortgageSummary.styles";
 
 export type MortgageKind = "repayment" | "interest-only";
@@ -48,22 +46,8 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
 }) => {
   const isBtl = propertyCategory === "btl";
   return (
-    <section
-      aria-labelledby="mortgage-summary-title"
-      className={summaryCard()}
-      data-testid="mortgage-summary"
-      id="mortgage-summary"
-    >
-      <div className={summaryHeader()}>
-        <div>
-          <h2 className={summaryTitle()} id="mortgage-summary-title">
-            Your details
-          </h2>
-          <p className={savedLine()} id="mortgage-saved-line">
-            <Icon icon={Check} size="sm" />
-            Saved{lastUpdated ? `. ${lastUpdated}` : ""}
-          </p>
-        </div>
+    <PageSection
+      action={
         <div className={summaryActions()}>
           {savedText ? (
             <span className={saveMessage()} role="status">
@@ -74,32 +58,45 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
             Edit
           </Button>
         </div>
-      </div>
+      }
+      description="The saved details behind your mortgage figures."
+      domain="mortgage"
+      headingId="mortgage-summary-title"
+      icon={ClipboardList}
+      id="mortgage-summary"
+      title="Your details"
+    >
+      <div className={summaryCard()}>
+        <p className={savedLine()} id="mortgage-saved-line">
+          <Icon icon={Check} size="sm" />
+          Saved{lastUpdated ? `. ${lastUpdated}` : ""}
+        </p>
 
-      <dl className={detailsList()}>
-        <div className={detailRow()}>
-          <dt className={detailLabel()}>Type</dt>
-          <dd className={detailValue()}>{isBtl ? "Buy to let" : "Residential"}</dd>
-        </div>
-        {!isBtl ? (
+        <dl className={detailsList()}>
           <div className={detailRow()}>
-            <dt className={detailLabel()}>Mortgage account</dt>
-            <dd className={detailValue()}>{accountName ?? "None linked"}</dd>
+            <dt className={detailLabel()}>Type</dt>
+            <dd className={detailValue()}>{isBtl ? "Buy to let" : "Residential"}</dd>
           </div>
-        ) : null}
-        <div className={detailRow()}>
-          <dt className={detailLabel()}>Repayment type</dt>
-          <dd className={detailValue()}>
-            {mortgageType === "repayment" ? "Repayment" : "Interest-only"}
-          </dd>
-        </div>
-        {!isBtl && remainingTerm > 0 ? (
+          {!isBtl ? (
+            <div className={detailRow()}>
+              <dt className={detailLabel()}>Mortgage account</dt>
+              <dd className={detailValue()}>{accountName ?? "None linked"}</dd>
+            </div>
+          ) : null}
           <div className={detailRow()}>
-            <dt className={detailLabel()}>Years left</dt>
-            <dd className={detailValue()}>{formatYearsLeft(remainingTerm)}</dd>
+            <dt className={detailLabel()}>Repayment type</dt>
+            <dd className={detailValue()}>
+              {mortgageType === "repayment" ? "Repayment" : "Interest-only"}
+            </dd>
           </div>
-        ) : null}
-      </dl>
-    </section>
+          {!isBtl && remainingTerm > 0 ? (
+            <div className={detailRow()}>
+              <dt className={detailLabel()}>Years left</dt>
+              <dd className={detailValue()}>{formatYearsLeft(remainingTerm)}</dd>
+            </div>
+          ) : null}
+        </dl>
+      </div>
+    </PageSection>
   );
 };

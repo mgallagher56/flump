@@ -17,26 +17,11 @@ export const btlCard = cva({
   },
 });
 
-export const btlHeader = cva({
-  base: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
-    gap: "12px",
-  },
-});
-
-export const btlTitle = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
-});
-
 export const btlSubtitle = cva({
   base: {
     textStyle: "body.sm",
     color: "text.secondary",
     margin: 0,
-    marginTop: "2px",
     fontVariantNumeric: "tabular-nums",
   },
 });

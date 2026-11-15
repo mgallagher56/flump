@@ -1,18 +1,12 @@
-import { Select, SimulatorSplitLayout, SliderField } from "@repo/ui";
+import { ResultBlock, Select, SimulatorSplitLayout, SliderField } from "@repo/ui";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import {
   fieldGroup,
   fieldLabel,
-  ltvBody,
-  outcomeLabel,
-  outcomeValue,
   panel,
   remainingText,
-  resultItem,
-  resultList,
-  resultUnit,
   selectRow,
   simDescription,
   simRoot,
@@ -206,39 +200,32 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
     </div>
   );
 
+  // The zone's one result card (E17 5A): the change, the new payment as its sentence and the
+  // current payment as its one row.
   const content = (
-    <>
-      {paymentsKnown ? (
-        <>
-          <div data-testid="remortgage-outcome" id="remortgage-outcome">
-            <p className={outcomeLabel}>Change in monthly payment (estimate)</p>
-            <p className={outcomeValue}>{outcomeSentence}</p>
-          </div>
-          <dl className={resultList()} data-testid="remortgage-results" id="remortgage-results">
-            <div className={resultItem()}>
-              <dt>Payment at the new rate (estimate)</dt>
-              <dd>
-                {formatCurrency(newMonthly)} <span className={resultUnit}>a month</span>
-              </dd>
-            </div>
-            <div className={resultItem()}>
-              <dt>
-                {currentPaymentIsSaved && hasGivenPayment
+    <ResultBlock
+      emptyPrompt="Add your balance and interest rate to see your payment at a different rate."
+      figure={paymentsKnown ? outcomeSentence : null}
+      id="remortgage-outcome"
+      label="Change in monthly payment (estimate)"
+      note={
+        paymentsKnown
+          ? `Payment at the new rate (estimate): ${formatCurrency(newMonthly)} a month.`
+          : undefined
+      }
+      row={
+        paymentsKnown
+          ? {
+              label:
+                currentPaymentIsSaved && hasGivenPayment
                   ? "Current payment"
-                  : "Current payment (estimate)"}
-              </dt>
-              <dd>
-                {formatCurrency(currentMonthly)} <span className={resultUnit}>a month</span>
-              </dd>
-            </div>
-          </dl>
-        </>
-      ) : (
-        <p className={ltvBody}>
-          Add your balance and interest rate to see your payment at a different rate.
-        </p>
-      )}
-    </>
+                  : "Current payment (estimate)",
+              value: `${formatCurrency(currentMonthly)} a month`,
+              id: "remortgage-results",
+            }
+          : undefined
+      }
+    />
   );
 
   return (

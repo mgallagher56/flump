@@ -64,59 +64,6 @@ export const outcomeColumn = cva({
   },
 });
 
-export const outcomeLabel = css({
-  textStyle: "label.md",
-  color: "text.secondary",
-  margin: 0,
-});
-
-/** Never `surface.hero`: this is a scenario outcome. */
-export const outcomeValue = css({
-  textStyle: "numeric.lg",
-  color: "text.primary",
-  margin: 0,
-  fontVariantNumeric: "tabular-nums",
-});
-
-export const outcomeNote = css({
-  textStyle: "body.sm",
-  color: "text.secondary",
-  margin: 0,
-  fontVariantNumeric: "tabular-nums",
-});
-
-/** The one short prompt shown at £0 in place of an outcome (as on the debt page). */
-export const outcomePrompt = css({
-  textStyle: "body.md",
-  color: "text.secondary",
-  margin: 0,
-});
-
-export const outcomeSupport = cva({
-  base: {
-    display: "grid",
-    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
-    gap: "12px 24px",
-    margin: 0,
-  },
-});
-
-export const supportItem = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-    minWidth: 0,
-    "& dt": { textStyle: "label.sm", color: "text.muted" },
-    "& dd": {
-      margin: 0,
-      textStyle: "numeric.md",
-      color: "text.primary",
-      fontVariantNumeric: "tabular-nums",
-    },
-  },
-});
-
 export const stateNote = css({
   margin: 0,
   fontVariantNumeric: "tabular-nums",

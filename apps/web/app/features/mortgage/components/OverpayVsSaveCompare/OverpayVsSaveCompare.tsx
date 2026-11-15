@@ -5,6 +5,7 @@ import {
   FormField,
   formatAxisCurrency,
   Num,
+  ResultBlock,
   Select,
   SimulatorSplitLayout,
   SliderField,
@@ -21,9 +22,7 @@ import {
   dataCell,
   dataTable,
   noteText,
-  outcomeLabel,
   outcomeNote,
-  outcomeValue,
   panelHint,
   rateList,
   rateRow,
@@ -293,23 +292,19 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
         </p>
       ) : inputsKnown ? (
         <>
-          <div data-testid="overpay-compare-outcome" id="overpay-compare-outcome">
-            {/* One outcome: the label names the option with the higher total, so no extra
-                sentence restates it. */}
-            <p className={outcomeLabel}>{outcomeText}</p>
-            <p className={outcomeValue}>{formatCurrency(difference)}</p>
-          </div>
-
-          <dl className={rateList}>
-            <div className={rateRow}>
-              <dt>Overpaying is worth (estimate)</dt>
-              <dd>{formatCurrency(debtReduction)}</dd>
-            </div>
-            <div className={rateRow}>
-              <dt>Saving is worth (estimate)</dt>
-              <dd>{formatCurrency(savingsBalance)}</dd>
-            </div>
-          </dl>
+          {/* The zone's one result card (E17 5A). The label names the option with the higher
+              total, so no extra sentence restates it; one option's worth is the row and the
+              other's is the sentence. */}
+          <ResultBlock
+            figure={formatCurrency(difference)}
+            id="overpay-compare-outcome"
+            label={outcomeText}
+            note={`Saving is worth (estimate): ${formatCurrency(savingsBalance)}.`}
+            row={{
+              label: "Overpaying is worth (estimate)",
+              value: formatCurrency(debtReduction),
+            }}
+          />
 
           <ChartFigure
             dataTable={
