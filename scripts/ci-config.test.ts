@@ -483,6 +483,10 @@ describe("E2E retries and quarantine (BE-17 L10)", () => {
       pattern.test("chromium mortgage.spec.ts Mortgage shows the payment (monthly) twice"),
     ).toBe(false);
     expect(pattern.test("chromium budget.spec.ts shows the payment (monthly)")).toBe(false);
+    // Playwright appends tags after the title.
+    expect(pattern.test("chromium mortgage.spec.ts shows the payment (monthly) @slow @smoke")).toBe(
+      true,
+    );
   });
 
   test("CI names quarantined specs in the job summary", () => {

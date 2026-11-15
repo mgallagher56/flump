@@ -27,6 +27,11 @@ export function assertLocalTarget(
   for (const marker of RAILWAY_MARKERS) {
     if (env[marker]) throw new Error(`load smoke refused: ${marker} is set (running on Railway)`);
   }
+  // fetch honours proxy variables, and a proxy would carry the requests off this machine.
+  for (const proxy of ["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"]) {
+    if (env[proxy] || env[proxy.toLowerCase()])
+      throw new Error(`load smoke refused: ${proxy} is set, so requests would leave this machine`);
+  }
   let url: URL;
   try {
     url = new URL(raw);

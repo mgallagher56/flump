@@ -65,6 +65,11 @@ function fail(message: string): never {
   process.exit(2);
 }
 
+// Anything unexpected (an unreadable budget, a result file that cannot be written) is "could not
+// run" (2), never "over budget" (1).
+process.on("uncaughtException", (error) => fail(`unexpected error: ${error.message}`));
+process.on("unhandledRejection", (reason) => fail(`unexpected error: ${String(reason)}`));
+
 function numberFromEnv(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw === undefined || raw === "") return fallback;

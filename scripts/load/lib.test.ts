@@ -53,6 +53,13 @@ describe("assertLocalTarget", () => {
     for (const marker of ["RAILWAY_ENVIRONMENT", "RAILWAY_PROJECT_ID", "RAILWAY_SERVICE_ID"])
       expect(() => assertLocalTarget("http://127.0.0.1:4100", { [marker]: "x" })).toThrow(marker);
   });
+
+  test("refuses to run through a proxy", () => {
+    for (const proxy of ["HTTP_PROXY", "http_proxy", "ALL_PROXY", "https_proxy"])
+      expect(() =>
+        assertLocalTarget("http://127.0.0.1:4100", { [proxy]: "http://proxy.example.com:8080" }),
+      ).toThrow(/refused/);
+  });
 });
 
 describe("percentile", () => {

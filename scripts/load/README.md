@@ -22,7 +22,7 @@ route, writes the same to `load-smoke-result.json`, and exits 1 if the run is ov
 
 `assertLocalTarget` in `lib.ts` refuses any target that is not plain `http` on `localhost`,
 `127.0.0.1` or `[::1]`, refuses credentials, paths and queries in the URL, and refuses to run at
-all when a Railway variable is set. There is no flag to turn this off. Requests never follow a
+all when a Railway variable or a proxy variable is set. There is no flag to turn this off. Requests never follow a
 redirect. The backend it talks to must be in development mode with the dev sign-in bypass, which
 the backend itself refuses to start with on Railway (`apps/backend/src/auth/auth.config.ts`).
 
@@ -70,8 +70,9 @@ with the baseline below before changing the budget.
 ## Baseline and budget
 
 `budget.json` holds both. The baseline is one CI run on a GitHub-hosted `ubuntu-latest` runner,
-recorded with its date, commit and run. The budget is set well above it (several times the
-baseline p95) because shared runners are noisy: it is there to catch a route becoming an order of
+recorded with its date, commit and run: overall p95 4.9 ms and p99 6 ms over 630 requests with no
+errors. The budget is set well above it (overall p95 75 ms, any route's p95 100 ms, overall p99
+200 ms) because shared runners are noisy: it is there to catch a route becoming an order of
 magnitude slower or starting to fail, not a 20% drift.
 
 To re-record the baseline after a deliberate change (a new route in the mix, a different rate):
