@@ -196,7 +196,8 @@ export default function App() {
   const { user, userProfile, ENV, isMobileClient } = useLoaderData<typeof loader>();
   const nonce = useNonce();
   const { theme, preference, setPreference, toggleTheme } = useThemePreference();
-  const { setProfile } = useUserProfile();
+  const { profile, setProfile } = useUserProfile();
+  const heldVersion = profile.updatedAt;
   const focused = useIsFocusedShell();
 
   // Sign-out wipes this browser's per-user storage (E19 A6); covers every form posting to /logout.
@@ -210,10 +211,13 @@ export default function App() {
   }, [revalidator]);
 
   useEffect(() => {
-    if (userProfile) {
-      setProfile(userProfile);
-    }
-  }, [userProfile, setProfile]);
+    if (!userProfile) return;
+    // Never go back to an older version: a reload that started before a browser-side profile save
+    // finished would otherwise make the next save send a stale If-Match (BE-16).
+    const loaded = (userProfile as { updatedAt?: string }).updatedAt;
+    if (heldVersion && loaded && loaded < heldVersion) return;
+    setProfile(userProfile);
+  }, [userProfile, setProfile, heldVersion]);
 
   return (
     <html

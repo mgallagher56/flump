@@ -43,6 +43,7 @@ import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
 import { apiFetch } from "~/services/api-client";
+import { BackendError } from "~/services/backend-error";
 import { CONFLICT_MESSAGE, isConflict, versionEtag } from "~/services/conflict";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
@@ -343,7 +344,9 @@ const MortgageContainer: FC = () => {
           });
         }
         revalidator.revalidate();
-        setSaveError(CONFLICT_MESSAGE);
+        // A refused profile save has already said so in a toast (useUserProfile): once is enough.
+        const fromProfile = err instanceof BackendError && err.endpoint === "/user-profile";
+        setSaveError(fromProfile ? null : CONFLICT_MESSAGE);
         return;
       }
       setSaveError("We could not save your mortgage details. Nothing has changed. Try again.");

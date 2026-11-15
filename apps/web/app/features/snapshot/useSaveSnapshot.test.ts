@@ -236,7 +236,8 @@ describe("useSaveSnapshot conditional saves (BE-16, audit M7)", () => {
     expect(sentIfMatch(0)).toBeUndefined();
     expect(sentIfMatch(1)).toBe(etag(V3));
     expect(sentIfMatch(2)).toBe(etag(V1));
-    expect(sentIfMatch(3)).toBe(`${etag(V1)}, ${etag(V3)}`);
+    // One version per row: the one this tab wrote replaces the one the loader read.
+    expect(sentIfMatch(3)).toBe(etag(V3));
   });
 
   it("a check-in save refused with 412 says so, reloads saved data and reports the failure", async () => {

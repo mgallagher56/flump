@@ -449,6 +449,22 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
       expect((await rowsFor(accountA))[0]?.source).toBe("confirmed");
     });
 
+    it("a repeat that names no date is the same save whatever date the first one stored", async () => {
+      // The default date moves with the calendar: a save repeated after midnight must still pass.
+      const first = await put(PAST, h.tokens.a, {
+        values: [{ accountId: accountA, value: 100, asOfDate: "2001-02-03" }],
+      });
+      await pause(5);
+      const changed = await put(PAST, h.tokens.a, {
+        values: [{ accountId: accountA, value: 150, asOfDate: "2001-02-04" }],
+      });
+      expect(changed.status).toBe(200);
+      const repeat = await put(PAST, h.tokens.a, {
+        values: [{ accountId: accountA, value: 150 }],
+      }).set("If-Match", first.headers.etag as string);
+      expect(repeat.status).toBe(200);
+    });
+
     it("a row that does not exist yet is always written, and the check-in flag is kept", async () => {
       const first = await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 100 }] });
       const res = await put(PAST, h.tokens.a, {

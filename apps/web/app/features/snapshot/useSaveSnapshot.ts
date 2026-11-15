@@ -47,18 +47,20 @@ export function snapshotIfMatch(
   written: ReadonlyMap<string, string>,
 ): string | undefined {
   const keys = new Set(payload.values.map((v) => rowKey(month, v.accountId)));
-  const etags = new Set<string>();
+  // One version per row, so the list never outgrows the batch: the one this tab wrote since the
+  // loader last ran, else the one the loader read.
+  const versions = new Map<string, string>();
   for (const row of saved) {
     if (!row.accountId) continue;
-    const rowMonth = `${row.year}-${String(row.month).padStart(2, "0")}`;
-    if (!keys.has(rowKey(rowMonth, row.accountId))) continue;
-    const etag = versionEtag(row.updatedAt);
-    if (etag) etags.add(etag);
+    const key = rowKey(`${row.year}-${String(row.month).padStart(2, "0")}`, row.accountId);
+    const etag = keys.has(key) ? versionEtag(row.updatedAt) : undefined;
+    if (etag) versions.set(key, etag);
   }
   for (const key of keys) {
     const etag = written.get(key);
-    if (etag) etags.add(etag);
+    if (etag) versions.set(key, etag);
   }
+  const etags = new Set(versions.values());
   return etags.size > 0 ? [...etags].join(", ") : undefined;
 }
 
@@ -86,9 +88,11 @@ export function useSaveSnapshot(saved: readonly SavedSnapshotRow[] = []): SaveSn
   const toast = useOptionalToast()?.toast;
   const revalidator = useRevalidator();
   const savedRef = useRef(saved);
-  savedRef.current = saved;
-  // The versions of rows this tab wrote since the loader last ran.
+  // The versions of rows this tab wrote since the loader last ran. Fresh loader data is the
+  // latest truth (it may hold a change made somewhere else), so it replaces them.
   const written = useRef(new Map<string, string>());
+  if (savedRef.current !== saved) written.current.clear();
+  savedRef.current = saved;
   return useMemo<SaveSnapshot>(() => {
     const put = async (month: MonthKey, body: SnapshotPayload) => {
       const { etag } = await apiFetchVersioned(`/snapshots/${month}`, {
