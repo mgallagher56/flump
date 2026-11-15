@@ -346,20 +346,22 @@ describe("BudgetEditor", () => {
     expect(onDeleteCategory).toHaveBeenCalledWith("pets");
   });
 
-  describe("suggested rows", () => {
+  describe("common entries not saved yet", () => {
     const draftHandlers = () => ({
       onDraftChange: vi.fn(),
       onDraftRemove: vi.fn(),
       onSaveDrafts: vi.fn().mockResolvedValue(undefined),
       onRemoveDrafts: vi.fn(),
     });
+    const group = () => screen.getByRole("group", { name: "Common entries not saved yet" });
+    const saveButton = () => screen.getByRole("button", { name: "Save entries" });
 
-    it("shows each suggested row with a Suggested badge under one note", () => {
+    it("shows each draft with a Common entry badge under one labelled group", () => {
       setup({ entries: [], drafts: exampleBudgetDrafts(), ...draftHandlers() });
-      expect(screen.getAllByText("Suggested")).toHaveLength(8);
-      expect(screen.getAllByRole("note")).toHaveLength(1);
-      expect(screen.getByRole("note").textContent).toContain(
-        "These are common entries and are not saved yet.",
+      expect(screen.getAllByText("Common entry")).toHaveLength(8);
+      expect(screen.queryByRole("note")).toBeNull();
+      expect(group().textContent).toContain(
+        "These common entries are not saved yet. Fill in the amounts that apply to you, then save. Entries left blank stay here until you remove them or leave the page.",
       );
       // Income and savings rows have no essential switch; spending rows do.
       expect(screen.queryByLabelText("Essential: Take-home pay")).toBeNull();
@@ -368,7 +370,7 @@ describe("BudgetEditor", () => {
       expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).value).toBe("");
     });
 
-    it("changes and removes a suggested row on the page, with no confirm and no save", () => {
+    it("changes and removes a draft on the page, with no confirm and no save", () => {
       const handlers = draftHandlers();
       const { onUpdate, onDelete } = setup({
         entries: [],
@@ -392,19 +394,87 @@ describe("BudgetEditor", () => {
       expect(onDelete).not.toHaveBeenCalled();
     });
 
-    it("Save rows and Remove suggestions call the page", async () => {
+    it("Save entries is disabled until a draft has a name and an amount above £0", () => {
+      const drafts = exampleBudgetDrafts();
+      const { rerender } = render(
+        <ToastProvider>
+          <BudgetEditor
+            categories={["housing"]}
+            entries={[]}
+            onAdd={vi.fn()}
+            onDelete={vi.fn()}
+            onUpdate={vi.fn()}
+            drafts={drafts}
+            {...draftHandlers()}
+          />
+        </ToastProvider>,
+      );
+      expect((saveButton() as HTMLButtonElement).disabled).toBe(true);
+      const rerenderWith = (next: typeof drafts) =>
+        rerender(
+          <ToastProvider>
+            <BudgetEditor
+              categories={["housing"]}
+              entries={[]}
+              onAdd={vi.fn()}
+              onDelete={vi.fn()}
+              onUpdate={vi.fn()}
+              drafts={next}
+              {...draftHandlers()}
+            />
+          </ToastProvider>,
+        );
+      // An amount with a blank name is not ready.
+      rerenderWith(drafts.map((d, i) => (i === 1 ? { ...d, name: "  ", amount: 900 } : d)));
+      expect((saveButton() as HTMLButtonElement).disabled).toBe(true);
+      rerenderWith(drafts.map((d, i) => (i === 1 ? { ...d, amount: 0 } : d)));
+      expect((saveButton() as HTMLButtonElement).disabled).toBe(true);
+      rerenderWith(drafts.map((d, i) => (i === 1 ? { ...d, amount: 900 } : d)));
+      expect((saveButton() as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it("disables the drafts and buttons while saving, then calls the page once", async () => {
+      const handlers = draftHandlers();
+      let finish: () => void = () => undefined;
+      handlers.onSaveDrafts.mockReturnValue(
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+      );
+      const drafts = exampleBudgetDrafts().map((d, i) => (i === 1 ? { ...d, amount: 900 } : d));
+      setup({ entries: [], drafts, ...handlers });
+      fireEvent.click(saveButton());
+      fireEvent.click(saveButton());
+      expect(handlers.onSaveDrafts).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(saveButton().getAttribute("aria-disabled")).toBe("true"));
+      expect(
+        (screen.getByRole("button", { name: "Remove common entries" }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+      expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).disabled).toBe(true);
+      expect((screen.getByLabelText("Name of Energy") as HTMLInputElement).disabled).toBe(true);
+      expect(
+        (screen.getByRole("button", { name: "Remove Energy" }) as HTMLButtonElement).disabled,
+      ).toBe(true);
+      finish();
+      await waitFor(() =>
+        expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).disabled).toBe(
+          false,
+        ),
+      );
+    });
+
+    it("Remove common entries calls the page", () => {
       const handlers = draftHandlers();
       setup({ entries: [], drafts: exampleBudgetDrafts(), ...handlers });
-      fireEvent.click(screen.getByRole("button", { name: "Save rows" }));
-      await waitFor(() => expect(handlers.onSaveDrafts).toHaveBeenCalledTimes(1));
-      fireEvent.click(screen.getByRole("button", { name: "Remove suggestions" }));
+      fireEvent.click(screen.getByRole("button", { name: "Remove common entries" }));
       expect(handlers.onRemoveDrafts).toHaveBeenCalledTimes(1);
     });
 
-    it("shows no note without suggested rows", () => {
+    it("shows no group without drafts", () => {
       setup();
-      expect(screen.queryByRole("note")).toBeNull();
-      expect(screen.queryByText("Suggested")).toBeNull();
+      expect(screen.queryByRole("group", { name: "Common entries not saved yet" })).toBeNull();
+      expect(screen.queryByText("Common entry")).toBeNull();
     });
   });
 });

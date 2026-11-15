@@ -14,7 +14,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
-import type { DraftBudgetEntry } from "../../exampleDrafts";
+import { type DraftBudgetEntry, isDraftReady } from "../../exampleDrafts";
 import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
 import { rankCategories } from "../BudgetCategoryList";
 import {
@@ -53,17 +53,20 @@ export interface BudgetEditorProps {
   /** Categories that can be removed (the custom ones). */
   removableCategories?: string[];
   /**
-   * Example rows held on the page and not saved. Each shows as an entry row with a "Suggested"
-   * badge, under one note that saves or removes them.
+   * Common entries held on the page and not saved. Each shows as an entry row with a "Common
+   * entry" badge, under one labelled group that saves or removes them.
    */
   drafts?: DraftBudgetEntry[];
   /** Changes one example row on the page. Nothing is saved. */
   onDraftChange?: (id: string, update: Partial<DraftBudgetEntry>) => void;
   /** Removes one example row from the page, with no confirm: it was never saved. */
   onDraftRemove?: (id: string) => void;
-  /** Saves the example rows that have an amount. Rejects on failure (the page shows the error). */
+  /**
+   * Saves the drafts that have a name and an amount above £0. Rejects on failure (the page shows
+   * the error and keeps the drafts not yet saved). The page moves focus once it resolves.
+   */
   onSaveDrafts?: () => Promise<void>;
-  /** Removes every suggested row. */
+  /** Removes every common entry not yet saved. */
   onRemoveDrafts?: () => void;
 }
 
@@ -214,12 +217,14 @@ interface DraftRowProps {
   draft: DraftBudgetEntry;
   onChange: (id: string, update: Partial<DraftBudgetEntry>) => void;
   onRemove: (id: string) => void;
+  /** True while the drafts are saving: every control is disabled. */
+  disabled?: boolean;
 }
 
-/** One example row: laid out like a saved entry, changed on the page only until it is saved. */
-const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove }) => {
+/** One common entry: laid out like a saved entry, changed on the page only until it is saved. */
+const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove, disabled = false }) => {
   const id = draft.id;
-  const label = draft.name.trim() || "suggested entry";
+  const label = draft.name.trim() || "common entry";
   const showEssential = draft.category !== INCOME && draft.category !== "savings";
   return (
     <li className={entryRow()} data-testid={`budget-editor-draft-${id}`}>
@@ -227,13 +232,14 @@ const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove }) => {
         <TextInput
           aria-label={`Name of ${label}`}
           data-testid={`budget-editor-draft-name-${id}`}
+          disabled={disabled}
           id={`budget-editor-draft-name-${id}`}
           size="sm"
           value={draft.name}
           onChange={(event) => onChange(id, { name: event.target.value })}
         />
         <StatusBadge size="sm" variant="neutral">
-          Suggested
+          Common entry
         </StatusBadge>
       </div>
       <div className={rowControls()}>
@@ -241,6 +247,7 @@ const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove }) => {
           <CurrencyInput
             aria-label={`Amount for ${label}`}
             data-testid={`budget-editor-draft-amount-${id}`}
+            disabled={disabled}
             id={`budget-editor-draft-amount-${id}`}
             size="sm"
             value={draft.amount}
@@ -251,6 +258,7 @@ const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove }) => {
           <Select
             aria-label={`How often for ${label}`}
             data-testid={`budget-editor-draft-frequency-${id}`}
+            disabled={disabled}
             id={`budget-editor-draft-frequency-${id}`}
             options={FREQUENCY_OPTIONS}
             size="sm"
@@ -266,6 +274,7 @@ const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove }) => {
               aria-label={`Essential: ${label}`}
               checked={draft.isEssential}
               data-testid={`budget-editor-draft-essential-${id}`}
+              disabled={disabled}
               id={`budget-editor-draft-essential-${id}`}
               label="Essential"
               onChange={(event) => onChange(id, { isEssential: event.target.checked })}
@@ -277,6 +286,7 @@ const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove }) => {
         aria-label={`Remove ${label}`}
         className={removeCell()}
         data-testid={`budget-editor-draft-remove-${id}`}
+        disabled={disabled}
         id={`budget-editor-draft-remove-${id}`}
         size="sm"
         title={`Remove ${label}`}
@@ -425,7 +435,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
 }) => {
   const toastApi = useOptionalToast();
   const [savingDrafts, setSavingDrafts] = useState(false);
-  const headingRef = useRef<HTMLHeadingElement>(null);
+  const savingRef = useRef(false);
   const note = draftNote();
   const { formatCurrency } = useFormatCurrency();
   // One save message at a time: each new one replaces the last, so toasts never pile up.
@@ -468,15 +478,17 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   const draftsFor = (category: string) => drafts.filter((d) => d.category === category);
 
   const saveDrafts = async () => {
-    if (!onSaveDrafts || savingDrafts) return;
+    // The ref, not the state this render captured, stops a double click saving twice.
+    if (!onSaveDrafts || savingRef.current) return;
+    savingRef.current = true;
     setSavingDrafts(true);
     try {
+      // The page moves focus: to this heading, or to its empty-state button if the budget is empty.
       await onSaveDrafts();
-      // The note and its buttons go, so focus moves to the editor's heading (UX A3).
-      requestAnimationFrame(() => headingRef.current?.focus());
     } catch {
       // The page shows what went wrong; the rows not yet saved stay for another try.
     } finally {
+      savingRef.current = false;
       setSavingDrafts(false);
     }
   };
@@ -563,32 +575,34 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
       padding="none"
     >
       <div className={editor.header}>
-        <h2 className={editor.title} id="budget-editor-heading" ref={headingRef} tabIndex={-1}>
+        <h2 className={editor.title} id="budget-editor-heading" tabIndex={-1}>
           Edit your budget
         </h2>
         <p className={editor.hint}>Changes save as you go.</p>
       </div>
 
       {drafts.length > 0 ? (
+        // biome-ignore lint/a11y/useSemanticElements: a fieldset is for form controls with a legend; this labels a note and its two buttons.
         <div
-          aria-label="About the suggested entries"
+          aria-label="Common entries not saved yet"
           className={note.root}
           data-testid="budget-editor-draft-note"
-          role="note"
+          role="group"
         >
           <p className={note.text}>
-            These are common entries and are not saved yet. Fill in the amounts that apply to you,
-            remove the rest, then save.
+            These common entries are not saved yet. Fill in the amounts that apply to you, then
+            save. Entries left blank stay here until you remove them or leave the page.
           </p>
           <div className={note.actions}>
             <Button
               data-testid="budget-editor-save-drafts"
+              disabled={!drafts.some(isDraftReady)}
               id="budget-editor-save-drafts"
               pending={savingDrafts}
               size="sm"
               onClick={saveDrafts}
             >
-              Save rows
+              Save entries
             </Button>
             <Button
               data-testid="budget-editor-remove-drafts"
@@ -598,7 +612,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
               variant="ghost"
               onClick={onRemoveDrafts}
             >
-              Remove suggestions
+              Remove common entries
             </Button>
           </div>
         </div>
@@ -639,6 +653,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                   ))}
                   {sectionDrafts.map((draft) => (
                     <DraftRow
+                      disabled={savingDrafts}
                       draft={draft}
                       key={draft.id}
                       onChange={(id, update) => onDraftChange?.(id, update)}

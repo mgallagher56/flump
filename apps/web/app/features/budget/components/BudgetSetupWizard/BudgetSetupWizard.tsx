@@ -18,12 +18,13 @@ import {
   Plus,
   Rocket,
 } from "lucide-react";
-import { type FC, useState } from "react";
+import { type FC, useRef, useState } from "react";
 import { Link } from "react-router";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { toMonthly } from "~/types/budget";
+import { hasCommonEntry } from "../../commonEntries";
 import { WizardEntryRow } from "../WizardEntryRow";
 import {
   addActions,
@@ -296,29 +297,16 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     if (prev) setCurrentStep(prev);
   };
 
-  // Idempotent: an entry already in the budget under the same name and category (from an
-  // earlier click, or from the page's "Add common entries") is never added again.
-  const sameEntry = (
-    a: { name: string; category: string },
-    b: { name: string; category: string },
-  ) =>
-    a.category === b.category &&
-    a.name
-      .trim()
-      .toLowerCase()
-      .replace(/\s*\/\s*/g, " or ")
-      .replace(/&/g, "and") ===
-      b.name
-        .trim()
-        .toLowerCase()
-        .replace(/\s*\/\s*/g, " or ")
-        .replace(/&/g, "and");
-
+  // Idempotent: a common entry the budget already has, under the same or a synonym name (from an
+  // earlier click, old seed rows, or the page's "Add common entries"), is never added again. The
+  // ref, not the `saving` state captured by this render, stops a double click adding twice.
+  const applyingDefaults = useRef(false);
   const applyDefaults = async () => {
-    if (saving) return;
+    if (applyingDefaults.current) return;
+    applyingDefaults.current = true;
     setSaving(true);
     try {
-      const missing = DEFAULT_ITEMS.filter((item) => !entries.some((e) => sameEntry(e, item)));
+      const missing = DEFAULT_ITEMS.filter((item) => !hasCommonEntry(entries, item));
       for (const item of missing) {
         await onAddEntry(item);
       }
@@ -326,6 +314,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     } catch (err) {
       console.error(err);
     } finally {
+      applyingDefaults.current = false;
       setSaving(false);
     }
   };

@@ -118,8 +118,16 @@ const BudgetContainer: FC = () => {
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  // Suggested rows from "Add common entries": on the page only, saved only by "Save rows".
+  // Common entries from "Add common entries": on the page only, saved only by "Save entries".
   const [drafts, setDrafts] = useState<DraftBudgetEntry[]>([]);
+  // The latest drafts, so a save reads what was typed last, not the state one render ago.
+  const draftsRef = useRef<DraftBudgetEntry[]>(drafts);
+  draftsRef.current = drafts;
+  // Drafts belong to the editing view: leaving it by any path (Finish editing, the wizard, a
+  // category) drops them, so they never come back stale.
+  useEffect(() => {
+    if (view !== "editing") setDrafts((prev) => (prev.length > 0 ? [] : prev));
+  }, [view]);
 
   // Custom categories initialized from profile + any non-standard categories in entries
   const [customCategories, setCustomCategories] = useState<string[]>(() => {
@@ -358,42 +366,76 @@ const BudgetContainer: FC = () => {
     setView("budget");
   };
 
-  // Example rows open in the editor, held on the page. Nothing is saved until "Save rows".
+  // Common entries open in the editor, held on the page. Nothing is saved until "Save entries".
+  // Only the ones the budget does not already have become drafts, so a saved row (old £0 seed rows
+  // included) is never shown twice.
   const handleAddExampleRows = () => {
-    setDrafts(exampleBudgetDrafts());
+    setDrafts(exampleBudgetDrafts(entries));
     setView("editing");
   };
 
   const handleDraftChange = (id: string, update: Partial<DraftBudgetEntry>) => {
-    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...update } : d)));
+    setDrafts((prev) => {
+      const next = prev.map((d) => (d.id === id ? { ...d, ...update } : d));
+      draftsRef.current = next;
+      return next;
+    });
   };
 
   const handleDraftRemove = (id: string) => {
     setDrafts((prev) => prev.filter((d) => d.id !== id));
   };
 
+  const focusEmptyStateButton = () =>
+    requestAnimationFrame(() => document.getElementById("add-suggested-defaults-btn")?.focus());
+
   const handleRemoveDrafts = () => {
     setDrafts([]);
     if (isBudgetEmpty) {
       setView("budget");
-      requestAnimationFrame(() => document.getElementById("add-suggested-defaults-btn")?.focus());
+      focusEmptyStateButton();
     }
   };
 
-  /** Saves the example rows with an amount above £0, one at a time; blank ones are not saved. */
+  /**
+   * Saves the drafts that have a name and an amount above £0, one at a time, from the latest
+   * draft state. Saved drafts leave the list; blank ones stay as drafts. Rejects when a save
+   * fails, after setting one accurate message; the drafts not yet saved stay for another try.
+   */
   const handleSaveDrafts = async () => {
+    const ready = draftsRef.current.filter(isDraftReady);
+    if (ready.length === 0) return;
     let saved = 0;
-    for (const draft of drafts.filter(isDraftReady)) {
-      // A failed save stops here: addEntry shows the error and the unsaved rows stay.
-      await addEntry(entryFromDraft(draft));
-      saved += 1;
-      setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
+    let nonEmpty = !isBudgetEmpty;
+    try {
+      for (const draft of ready) {
+        const latest = draftsRef.current.find((d) => d.id === draft.id) ?? draft;
+        await addEntry(entryFromDraft(latest));
+        saved += 1;
+        nonEmpty = nonEmpty || (latest.amount ?? 0) > 0;
+        setDrafts((prev) => {
+          const next = prev.filter((d) => d.id !== draft.id);
+          draftsRef.current = next;
+          return next;
+        });
+      }
+    } catch (err) {
+      // With nothing saved, addEntry's own message stands; otherwise say exactly what was saved.
+      if (saved > 0) {
+        const noun = ready.length === 1 ? "entry" : "entries";
+        setActionError(
+          `We saved ${saved} of ${ready.length} ${noun}. The others are still here, so you can try again.`,
+        );
+      }
+      throw err;
     }
-    setDrafts([]);
-    if (saved > 0) {
-      toastApi?.toast({ title: "Saved" });
-    } else if (isBudgetEmpty) {
+    toastApi?.toast({ title: `Saved ${saved} ${saved === 1 ? "entry" : "entries"}` });
+    if (nonEmpty) {
+      // The editor stays open, so focus moves to its heading (UX A3).
+      requestAnimationFrame(() => document.getElementById("budget-editor-heading")?.focus());
+    } else {
       setView("budget");
+      focusEmptyStateButton();
     }
   };
 
@@ -469,8 +511,8 @@ const BudgetContainer: FC = () => {
     <PageBody>
       <PageHeader
         actions={
-          view === "editing" && drafts.length === 0 ? (
-            // While example rows are open, the note's own buttons are the way out.
+          // Shown once anything is saved; leaving clears blank common entries, as their note says.
+          view === "editing" && (drafts.length === 0 || !isBudgetEmpty) ? (
             <Button
               data-testid="finish-editing-btn"
               id="finish-editing-btn"

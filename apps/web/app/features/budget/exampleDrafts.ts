@@ -1,4 +1,5 @@
 import type { BudgetEntry } from "~/types/budget";
+import { type CommonEntryKey, hasCommonEntry } from "./commonEntries";
 import { INCOME_CATEGORY } from "./income";
 
 /**
@@ -32,16 +33,23 @@ const EXAMPLE_ROWS: ReadonlyArray<{ category: string; name: string }> = [
 const essentialFor = (category: string) =>
   category === INCOME_CATEGORY ? true : category !== "expenses";
 
-/** Fresh example rows for an empty budget, each monthly with no amount. */
-export const exampleBudgetDrafts = (): DraftBudgetEntry[] =>
-  EXAMPLE_ROWS.map((row, index) => ({
-    id: `example-${index + 1}`,
-    category: row.category,
-    name: row.name,
-    amount: null,
-    frequency: "monthly",
-    isEssential: essentialFor(row.category),
-  }));
+/**
+ * Fresh common-entry rows, each monthly with no amount, for only the common entries the budget
+ * does not already have (by `isSameCommonEntry`), so a saved row is never shown twice.
+ */
+export const exampleBudgetDrafts = (
+  existing: ReadonlyArray<CommonEntryKey> = [],
+): DraftBudgetEntry[] =>
+  EXAMPLE_ROWS.map(
+    (row, index): DraftBudgetEntry => ({
+      id: `example-${index + 1}`,
+      category: row.category,
+      name: row.name,
+      amount: null,
+      frequency: "monthly",
+      isEssential: essentialFor(row.category),
+    }),
+  ).filter((draft) => !hasCommonEntry(existing, draft));
 
 /** Whether an example row has an amount above £0 and a name, so it can be saved. */
 export const isDraftReady = (draft: DraftBudgetEntry): boolean =>
