@@ -44,7 +44,8 @@ export function quarantinePattern(
 ): RegExp | undefined {
   if (list.length === 0) return undefined;
   const alternatives = list.map(
-    (entry) => `${escapeRegExp(entry.file)}\\s(?:.*\\s)?${escapeRegExp(entry.title)}$`,
+    // Playwright appends a test's tags after its title, so trailing " @tag" words are allowed.
+    (entry) => `${escapeRegExp(entry.file)}\\s(?:.*\\s)?${escapeRegExp(entry.title)}(?:\\s@\\S+)*$`,
   );
   return new RegExp(`(?:${alternatives.join("|")})`);
 }

@@ -1,33 +1,35 @@
 {
   "$comment": "BE-17 (finding M23). The budget the load smoke enforces and the baseline it was set from. See scripts/load/README.md, \"Baseline and budget\", before changing either.",
   "budget": {
-    "routeP95Ms": 400,
-    "overallP95Ms": 250,
-    "overallP99Ms": 600,
+    "routeP95Ms": 100,
+    "overallP95Ms": 75,
+    "overallP99Ms": 200,
     "maxErrors": 0,
     "minRequests": 500
   },
   "baseline": {
     "recordedAt": "2026-11-15",
-    "where": "local: Apple silicon laptop, Postgres 18 in Docker, while image builds were running",
-    "commit": "working tree before the first push",
+    "where": "GitHub Actions, ubuntu-latest, Postgres 18 service container",
+    "commit": "c100097d16c47c7c4aefdc1738534ca0ea7ca936",
+    "run": "https://github.com/mgallagher56/flump/actions/runs/43744382220",
     "plan": { "rate": 4, "healthRate": 10, "durationSeconds": 45 },
     "overall": {
       "count": 630,
       "errors": 0,
-      "p50Ms": 4.6,
-      "p95Ms": 45.6,
-      "p99Ms": 94.3,
-      "maxMs": 229.1
+      "p50Ms": 2,
+      "p95Ms": 4.9,
+      "p99Ms": 6,
+      "maxMs": 11.8
     },
     "routes": {
-      "GET /account-details": { "p50Ms": 7, "p95Ms": 66.4, "p99Ms": 131.8 },
-      "GET /accounts": { "p50Ms": 7, "p95Ms": 50.6, "p99Ms": 57.4 },
-      "GET /budget-entries": { "p50Ms": 7.9, "p95Ms": 89.3, "p99Ms": 141.7 },
-      "GET /health/ready": { "p50Ms": 3.4, "p95Ms": 37.3, "p99Ms": 69.8 },
-      "GET /portfolio-snapshot": { "p50Ms": 7.8, "p95Ms": 94.7, "p99Ms": 229.1 },
-      "GET /tax-records": { "p50Ms": 5.3, "p95Ms": 41, "p99Ms": 42.4 },
-      "GET /user-profile": { "p50Ms": 6.6, "p95Ms": 51.1, "p99Ms": 87.6 }
-    }
+      "GET /account-details": { "p50Ms": 3.4, "p95Ms": 5.5, "p99Ms": 5.7 },
+      "GET /accounts": { "p50Ms": 4, "p95Ms": 5.7, "p99Ms": 5.9 },
+      "GET /budget-entries": { "p50Ms": 3.7, "p95Ms": 6, "p99Ms": 6 },
+      "GET /health/ready": { "p50Ms": 1.6, "p95Ms": 3.9, "p99Ms": 5.5 },
+      "GET /portfolio-snapshot": { "p50Ms": 4.4, "p95Ms": 6.2, "p99Ms": 8 },
+      "GET /tax-records": { "p50Ms": 2.8, "p95Ms": 4.3, "p99Ms": 4.6 },
+      "GET /user-profile": { "p50Ms": 3.5, "p95Ms": 5, "p99Ms": 6 }
+    },
+    "localReference": "A laptop run the same day, while Docker image builds were running: overall p95 45.6 ms, p99 94.3 ms, 0 errors."
   }
 }

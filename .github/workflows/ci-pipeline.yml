@@ -404,7 +404,7 @@ jobs:
         run: bun run test:e2e
 
       - name: 🧾 Report quarantined specs
-        if: always()
+        if: ${{ !cancelled() }}
         run: bun apps/e2e/quarantine.ts >> "$GITHUB_STEP_SUMMARY"
 
       # Trace, screenshots and the HTML report only matter when something failed.
@@ -483,11 +483,15 @@ jobs:
           set -u
           pids=""
           # The web image takes its Sentry token as a build ARG (Railway cannot use secret mounts).
-          # CI passes a canary in its place, alone, so nothing is uploaded; the next step fails if
-          # the canary reached the final image. It is a fixed public string, not a secret.
+          # CI passes a canary in its place, with a dummy org and project so the Sentry plugin
+          # really runs, and a dead loopback address so nothing can be uploaded (the plugin warns
+          # and the build carries on). The next steps fail if the canary or a source map reached
+          # the final image. Every value here is a fixed public string, not a secret.
           for app in backend web marketing; do
             if [ "$app" = "web" ]; then
-              docker build --progress=plain --build-arg "SENTRY_AUTH_TOKEN=$TOKEN_CANARY" -f "apps/$app/Dockerfile" -t "flump-$app-ci" . > "docker-$app.log" 2>&1 &
+              docker build --progress=plain --build-arg "SENTRY_AUTH_TOKEN=$TOKEN_CANARY" \
+                --build-arg SENTRY_ORG=flump-ci --build-arg SENTRY_PROJECT=flump-ci \
+                --build-arg SENTRY_URL=http://127.0.0.1:9 -f "apps/$app/Dockerfile" -t "flump-$app-ci" . > "docker-$app.log" 2>&1 &
             else
               docker build --progress=plain -f "apps/$app/Dockerfile" -t "flump-$app-ci" . > "docker-$app.log" 2>&1 &
             fi
@@ -564,7 +568,11 @@ jobs:
           fi
           hits=$(docker run --rm --user 0 --entrypoint sh -e "CANARY=$TOKEN_CANARY" flump-web-ci -c 'grep -rlF "$CANARY" /app /home /root /tmp /usr/local 2>/dev/null | head -n 5 || true')
           [ -z "$hits" ] || { echo "the build token is in the web image's files:"; echo "$hits"; exit 1; }
-          echo "token canary absent from history, config and files"
+          # The plugin ran (it must have tried the upload), and it left no source map behind.
+          grep -q "sentry-vite-plugin\|\[sentry\]" docker-web.log || { echo "the Sentry plugin did not run in the canary build"; exit 1; }
+          maps=$(docker run --rm --entrypoint sh flump-web-ci -c 'find /app/apps/web/build -name "*.map" | head -n 5')
+          [ -z "$maps" ] || { echo "source maps are in the web image:"; echo "$maps"; exit 1; }
+          echo "token canary absent from history, config and files; no source maps"
 
       # Boots the production image with NODE_ENV=production. Strict config resolution plus
       # migrationsRun mean the server only listens once the config is valid and every
