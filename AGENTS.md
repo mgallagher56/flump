@@ -143,6 +143,8 @@ Three documents in `docs/ux/` are the standing rules for how Flump behaves and l
 | Any screen in the mobile app, or any change to tokens, formatting or shared specifications | CROSS-PLATFORM, and run its parity checklist                                                                                                      |
 | User-facing words                                                                          | The copy guide (`docs/copy/COPY-GUIDE.md`, section 11 below) and `docs/compliance/advice-boundary-policy.md`. The UX documents do not set wording |
 
+**Keep mobile in step.** A PR that changes what a user sees or does in a flow the mobile app shares (sign-in, the monthly check-in, navigation, net worth, accounts, settings, loading and error states, shared components, tokens, formatting or fixed wording) adds a dated row to [`docs/audit/plans/E12-mobile-parity-log.md`](./docs/audit/plans/E12-mobile-parity-log.md). The re-sweep session at the end of each design round checks the log against the merged PRs and appends any row that is missing.
+
 **How the rules rank.** Each rule in those documents is marked "Enforced by" a law or test, "Proposed check", or "Review only". If a document and a law or test disagree, the law or test wins: follow it, and correct the document in the same PR. If a document and an older design note under `docs/design/` disagree, the `docs/ux/` document wins. Owner decisions in `docs/audit/plans/DECISIONS.md` outrank all of them.
 
 **Review-only rules still apply.** A PR that touches UI states in its description which review-only rules it checked. The `ui-compliance-reviewer` agent reviews against the laws above and the `docs/ux/` documents.

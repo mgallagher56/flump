@@ -420,14 +420,15 @@ The £100,000 threshold never leads a page: no banner, no headline, no heading o
 
 These strings are fixed. A copy change to any of them needs the owner, and for the notices the solicitor view. The audit never proposes replacements for them.
 
-| String                                                                                      | Where                                                 | Owner                |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------------- |
-| `PROJECTION_NOTICE_TEXT`                                                                    | `packages/ui/src/patterns/ProjectionNotice`           | Owner and solicitor  |
-| `MCP_NOTICE`, `BETA_NOTICE`                                                                 | the canonical disclaimers source (E29-T7)             | Owner and solicitor  |
-| "Unverified estimate" on tax outputs                                                        | tax surfaces, UI and MCP                              | Owner (E25 sign-off) |
-| "Free, impartial debt help is available from MoneyHelper"                                   | `DebtHelpLink`: same line, same place, for every user | Owner (R3 exception) |
-| Any sentence about FCA status, authorisation, regulation, security certification or pricing | marketing and legal pages                             | Owner (E7)           |
-| Privacy policy, terms and cookie text                                                       | legal pages                                           | Owner and solicitor  |
+| String                                                                                      | Where                                                                                                                        | Owner                            |
+| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `PROJECTION_NOTICE_TEXT`                                                                    | `packages/ui/src/patterns/ProjectionNotice`                                                                                  | Owner and solicitor              |
+| `MCP_NOTICE`, `BETA_NOTICE`                                                                 | the canonical disclaimers source (E29-T7)                                                                                    | Owner and solicitor              |
+| "Unverified estimate" on tax outputs                                                        | tax surfaces, UI and MCP                                                                                                     | Owner (E25 sign-off)             |
+| "Free, impartial debt help is available from MoneyHelper"                                   | `DebtHelpLink`: same line, same place, for every user                                                                        | Owner (R3 exception)             |
+| Any sentence about FCA status, authorisation, regulation, security certification or pricing | marketing and legal pages                                                                                                    | Owner (E7)                       |
+| Privacy policy, terms and cookie text                                                       | legal pages                                                                                                                  | Owner and solicitor              |
+| The tagline, "Flump: finance without the fog" (section 2.1)                                 | `TAGLINE` and `SITE_TAGLINE` in `apps/marketing/src/utils/site.ts`; later the mobile sign-in screen and store subtitle (E12) | Owner (ruling, 14 November 2026) |
 
 ### 7.4 Claims (E7)
 
