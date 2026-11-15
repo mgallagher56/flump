@@ -24,6 +24,7 @@ describe("marketing copy (R-10)", () => {
  */
 const PR12_SOURCES = [
   "pages/HomePage/HomePage.tsx",
+  "pages/PreviewPage/PreviewPage.tsx",
   "pages/PricingPage/PricingPage.tsx",
   "pages/SecurityPage/SecurityPage.tsx",
   "pages/McpPage/McpPage.tsx",

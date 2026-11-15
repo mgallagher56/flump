@@ -1,7 +1,15 @@
 import { TOOL_CATALOGUE, TOOL_SLUGS, type ToolSlug } from "@repo/ui/tools";
 
 /** Pure data (no React) so the Express server can read it for the sitemap. */
-export const STATIC_PATHS = ["/", "/tools", "/pricing", "/security", "/mcp", "/contact"] as const;
+export const STATIC_PATHS = [
+  "/",
+  "/preview",
+  "/tools",
+  "/pricing",
+  "/security",
+  "/mcp",
+  "/contact",
+] as const;
 
 /**
  * Tool slugs, order and aliases come from the shared catalogue in `@repo/ui/tools`, which the

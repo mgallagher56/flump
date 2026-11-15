@@ -45,6 +45,7 @@ export const Footer: FC = () => {
         {
           heading: "Product",
           links: [
+            { key: "preview", label: "Interactive preview", href: "/preview" },
             { key: "tools", label: "All calculators", href: "/tools" },
             {
               key: "demo",

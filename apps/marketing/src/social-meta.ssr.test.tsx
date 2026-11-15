@@ -5,6 +5,7 @@ import { render } from "./entry-server";
 
 const PAGES = [
   "/",
+  "/preview",
   "/tools",
   "/tools/uk-100k-tax-trap-calculator",
   "/tools/section-24-landlord-tax-calculator",

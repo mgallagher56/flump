@@ -69,7 +69,7 @@ export const BaselineSnapshotPreview: FC = () => (
       </div>
     </div>
     <figcaption className={previewCaption()}>
-      Example figures for one household. Yours come from the numbers you enter.
+      Example household. These are sample figures.
     </figcaption>
   </figure>
 );

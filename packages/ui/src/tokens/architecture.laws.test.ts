@@ -161,14 +161,18 @@ describe("Architecture & Design System Laws", () => {
       }
       const patterns = getSubdirectories(PATTERNS_DIR);
       for (const expected of [
+        "BreathingRoomPreview",
         "ChartFigure",
         "ChartLegend",
         "ChartTooltipContent",
+        "CheckInPreview",
         "CoachCard",
         "ConfirmDialog",
+        "DashboardPreview",
         "EmptyState",
         "HeroFigure",
         "KpiStrip",
+        "PreviewFrame",
         "ScenarioZone",
       ]) {
         expect(patterns).toContain(expected);
@@ -316,8 +320,9 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
-    it("enforces colocated structure for new marketing MCP pages", () => {
+    it("enforces colocated structure for new marketing pages", () => {
       verifyColocatedStructure(MARKETING_PAGES_DIR, "McpPage");
+      verifyColocatedStructure(MARKETING_PAGES_DIR, "PreviewPage");
     });
 
     it("E16: HeroFigure, IconTile and PageRules take all five files wherever they land", () => {
