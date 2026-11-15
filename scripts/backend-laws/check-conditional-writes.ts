@@ -158,8 +158,15 @@ export function handlerReadsIfMatch(controllerSource: string, route: RouteLike):
   );
   if (!start) return false;
   const rest = controllerSource.slice((start.index ?? 0) + start[0].length);
-  const next = /@(?:Get|Post|Put|Patch|Delete)\(/.exec(rest);
-  const handler = next ? rest.slice(0, next.index) : rest;
+  const prefixes = ["@Get(", "@Post(", "@Put(", "@Patch(", "@Delete("];
+  let nextIndex = -1;
+  for (const p of prefixes) {
+    const idx = rest.indexOf(p);
+    if (idx !== -1 && (nextIndex === -1 || idx < nextIndex)) {
+      nextIndex = idx;
+    }
+  }
+  const handler = nextIndex !== -1 ? rest.slice(0, nextIndex) : rest;
   return /@Headers\(\s*["']if-match["']\s*\)/i.test(handler);
 }
 
