@@ -2,11 +2,16 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RunwayCalculator } from "./RunwayCalculator";
 
-const results = () => within(screen.getByRole("region", { name: "Illustration results" }));
-const outcomeFigure = () => screen.getByTestId("runway-outcome").textContent;
-/** The supporting figure that follows a term in the results ("Money to draw on"). */
-const supporting = (term: string) =>
-  results().getByText(term).closest("div")?.querySelector("dd")?.textContent ?? "";
+const results = () => within(screen.getByTestId("runway-result"));
+/** The illustrated figure in the zone's result card, or its prompt when there is none. */
+const outcomeFigure = () =>
+  screen.getByTestId("runway-result").querySelector('[data-slot="figure"], [data-slot="empty"]')
+    ?.textContent;
+/** The result card's one supporting row ("Money to draw on"). */
+const supporting = (term: string) => {
+  expect(results().getByRole("term").textContent).toBe(term);
+  return results().getByRole("definition").textContent ?? "";
+};
 const openMoreOptions = () => fireEvent.click(screen.getByRole("button", { name: "More options" }));
 
 describe("RunwayCalculator", () => {
@@ -59,8 +64,12 @@ describe("RunwayCalculator", () => {
     expect(screen.getAllByRole("textbox").length).toBeLessThanOrEqual(2);
     expect(screen.getByLabelText("Redundancy pay or lump sum")).toBeDefined();
     expect(screen.getByLabelText("Spending you would cut each month")).toBeDefined();
-    expect(screen.getAllByTestId("runway-outcome")).toHaveLength(1);
-    expect(results().getByText("Months of cover")).toBeDefined();
+    // E17 5A: exactly one result card in the zone, and it is labelled as an illustration.
+    expect(
+      screen.getAllByRole("group", { name: "Breathing room in this illustration" }),
+    ).toHaveLength(1);
+    // The saved figure is not in the zone: it has its own section (BreathingRoom).
+    expect(document.querySelector('[data-figure="monthsOfCover"]')).toBeNull();
     // The line-by-line switches wait behind "More options".
     expect(screen.queryAllByRole("switch")).toHaveLength(0);
     const more = screen.getByRole("button", { name: "More options" });

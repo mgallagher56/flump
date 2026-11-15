@@ -1,5 +1,5 @@
-import { Button, Card, Icon, Money, VisuallyHidden } from "@repo/ui";
-import { ArrowRight, ChevronDown, Plus } from "lucide-react";
+import { Button, Card, Icon, Money, PageSection, VisuallyHidden } from "@repo/ui";
+import { ArrowRight, ChartPie, ChevronDown, Plus } from "lucide-react";
 import { type FC, type ReactNode, useMemo } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import type { BudgetEntry } from "~/types/budget";
@@ -108,101 +108,104 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   const rows = useMemo(() => rankCategories(categories, entries), [categories, entries]);
 
   return (
-    <Card aria-labelledby="budget-categories-heading" as="section" padding="lg">
-      <div className={slots.header}>
-        <h2 className={slots.title} id="budget-categories-heading">
-          Where your money goes
-        </h2>
-      </div>
-      <ul className={slots.list}>
-        {rows.map((row) => {
-          const open = openCategory === row.category;
-          const slug = categorySlug(row.category);
-          const panelId = `budget-category-${slug}-entries`;
-          const meta = metaFor?.(row.category);
-          const link = hrefFor?.(row.category);
-          const notice = noticeFor?.(row.category) ?? null;
-          const identity = (end: ReactNode, spoken?: string) => (
-            <span className={slots.identity}>
-              <span className={slots.text}>
-                <span className={slots.icon}>
-                  <Icon icon={categoryIcon(row.category)} size="sm" />
+    <PageSection
+      description="Your spending each month, by category. Open one to see or change its entries."
+      domain="pay"
+      icon={ChartPie}
+      id="budget-categories"
+      title="Where your money goes"
+    >
+      <Card padding="lg">
+        <ul className={slots.list}>
+          {rows.map((row) => {
+            const open = openCategory === row.category;
+            const slug = categorySlug(row.category);
+            const panelId = `budget-category-${slug}-entries`;
+            const meta = metaFor?.(row.category);
+            const link = hrefFor?.(row.category);
+            const notice = noticeFor?.(row.category) ?? null;
+            const identity = (end: ReactNode, spoken?: string) => (
+              <span className={slots.identity}>
+                <span className={slots.text}>
+                  <span className={slots.icon}>
+                    <Icon icon={categoryIcon(row.category)} size="sm" />
+                  </span>
+                  <span className={slots.name}>
+                    <span>{row.label}</span>
+                    {meta ? <span className={slots.meta}>{meta}</span> : null}
+                  </span>
                 </span>
-                <span className={slots.name}>
-                  <span>{row.label}</span>
-                  {meta ? <span className={slots.meta}>{meta}</span> : null}
+                <span className={rowEnd()}>
+                  {row.count > 0 ? <Money size="sm" value={row.total} /> : null}
+                  {spoken ? <VisuallyHidden>{spoken}</VisuallyHidden> : null}
+                  {end}
                 </span>
               </span>
-              <span className={rowEnd()}>
-                {row.count > 0 ? <Money size="sm" value={row.total} /> : null}
-                {spoken ? <VisuallyHidden>{spoken}</VisuallyHidden> : null}
-                {end}
-              </span>
-            </span>
-          );
-          if (link) {
-            // The visible name, tenure and amount, then what the link does, read as one name.
-            const spoken = `${row.count > 0 ? " a month" : ""}, open the ${link.page}`;
+            );
+            if (link) {
+              // The visible name, tenure and amount, then what the link does, read as one name.
+              const spoken = `${row.count > 0 ? " a month" : ""}, open the ${link.page}`;
+              return (
+                <li className={slots.item} data-list-row="" key={row.category}>
+                  <SampleAwareLink
+                    className={slots.row}
+                    data-testid={`budget-category-${row.category}`}
+                    id={`budget-category-${slug}`}
+                    sampleAriaLabel={`${row.label}, sign up to open the ${link.page}`}
+                    sampleLabel={identity(null)}
+                    to={link.to}
+                  >
+                    {identity(
+                      <span className={chevron({ open: false })}>
+                        <Icon icon={ArrowRight} size="sm" />
+                      </span>,
+                      spoken,
+                    )}
+                  </SampleAwareLink>
+                  {notice}
+                </li>
+              );
+            }
             return (
               <li className={slots.item} data-list-row="" key={row.category}>
-                <SampleAwareLink
+                <button
+                  aria-controls={panelId}
+                  aria-expanded={open}
                   className={slots.row}
                   data-testid={`budget-category-${row.category}`}
                   id={`budget-category-${slug}`}
-                  sampleAriaLabel={`${row.label}, sign up to open the ${link.page}`}
-                  sampleLabel={identity(null)}
-                  to={link.to}
+                  type="button"
+                  onClick={() => onToggleCategory(row.category)}
                 >
                   {identity(
-                    <span className={chevron({ open: false })}>
-                      <Icon icon={ArrowRight} size="sm" />
+                    <span className={chevron({ open })}>
+                      <Icon icon={ChevronDown} size="sm" />
                     </span>,
-                    spoken,
                   )}
-                </SampleAwareLink>
+                </button>
                 {notice}
+                <div className={entriesPanel()} hidden={!open} id={panelId}>
+                  {open ? renderEntries(row.category) : null}
+                </div>
               </li>
             );
-          }
-          return (
-            <li className={slots.item} data-list-row="" key={row.category}>
-              <button
-                aria-controls={panelId}
-                aria-expanded={open}
-                className={slots.row}
-                data-testid={`budget-category-${row.category}`}
-                id={`budget-category-${slug}`}
-                type="button"
-                onClick={() => onToggleCategory(row.category)}
-              >
-                {identity(
-                  <span className={chevron({ open })}>
-                    <Icon icon={ChevronDown} size="sm" />
-                  </span>,
-                )}
-              </button>
-              {notice}
-              <div className={entriesPanel()} hidden={!open} id={panelId}>
-                {open ? renderEntries(row.category) : null}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      {onAddCategory ? (
-        <div className={listFoot()}>
-          <Button
-            data-testid="add-category-btn"
-            id="add-category-btn"
-            size="sm"
-            variant="outline"
-            onClick={onAddCategory}
-          >
-            <Icon icon={Plus} size="sm" />
-            Add category
-          </Button>
-        </div>
-      ) : null}
-    </Card>
+          })}
+        </ul>
+        {onAddCategory ? (
+          <div className={listFoot()}>
+            <Button
+              data-testid="add-category-btn"
+              id="add-category-btn"
+              size="sm"
+              variant="outline"
+              onClick={onAddCategory}
+            >
+              <Icon icon={Plus} size="sm" />
+              Add category
+            </Button>
+          </div>
+        ) : null}
+      </Card>
+    </PageSection>
   );
 };

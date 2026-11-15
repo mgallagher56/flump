@@ -3,6 +3,7 @@ import {
   type Figure,
   isFigureKnown,
   type MonthsOfCover,
+  monthsOfCoverFor,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
 import {
@@ -11,30 +12,28 @@ import {
   FormField,
   Money,
   ProjectionNotice,
+  ResultBlock,
   ScenarioZone,
-  SimulatorSplitLayout,
   Switch,
 } from "@repo/ui";
 import { type FC, useEffect, useMemo, useState } from "react";
-import { formatMonthsOfCover } from "~/features/dashboard/components/BudgetWidget";
 import type { BudgetEntry } from "~/types/budget";
 import { toMonthly } from "~/types/budget";
+import {
+  breathingRoomPhrase,
+  describeBreathingRoom,
+  MONEY_TO_DRAW_ON_LABEL,
+} from "~/utils/breathingRoom";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import type { RunwayScenario } from "~/utils/runwayStorage";
 import {
-  breakdownList,
-  breakdownRow,
   controlsStack,
-  introText,
   optionGroup,
   optionHint,
   optionItems,
   optionLegend,
   optionsStack,
-  outcome,
-  outcomeLabel,
-  runwayRoot,
-  scenarioValue,
+  resultFigure,
 } from "./RunwayCalculator.styles";
 
 interface Account {
@@ -57,8 +56,9 @@ export interface RunwayCalculatorProps {
   accounts: Account[];
   accountDetails: AccountDetail[];
   /**
-   * Months of cover from saved data, from the engine's financial picture (E23). The headline and
-   * the scenario's starting point read only this. Built from the props when not given.
+   * Months of cover from saved data, from the engine's financial picture (E23). The illustration
+   * starts from it. The saved figure itself is shown by `BreathingRoom`, in its own section: this
+   * zone never shows a saved figure (STYLE-GUIDE 12.5). Built from the props when not given.
    */
   baseline?: Figure<MonthsOfCover>;
   /**
@@ -105,13 +105,6 @@ const OptionGroup: FC<{ label: string; items: OptionItem[] }> = ({ label, items 
       </div>
     </fieldset>
   );
-
-const describeCover = (pool: number, monthlyBurn: number) => ({
-  label:
-    monthlyBurn > 0
-      ? formatMonthsOfCover(Math.round((pool / monthlyBurn) * 10) / 10)
-      : "No end date",
-});
 
 export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   entries,
@@ -305,14 +298,39 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   );
 
   // ── Illustration ─────────────────────────────────────────────────────────
-  const pool = totalPool + severanceLump;
+  // The illustration starts from the saved figure's own two numbers and applies only what the
+  // person changed, so an untouched zone shows exactly the saved figure and no second sum of the
+  // rows exists in web to drift from it.
+  const defaultPool = useMemo(
+    () =>
+      poolAccounts
+        .filter((a) => defaultAccounts[a.id])
+        .reduce((s, a) => s + Math.max(0, getLatestBalance(a.id)), 0),
+    [poolAccounts, defaultAccounts, snapshot],
+  );
+  const defaultSelectedExpenses = useMemo(
+    () => expenseEntries.filter((e) => defaultExpenses[e.id]).reduce((s, e) => s + toMonthly(e), 0),
+    [expenseEntries, defaultExpenses],
+  );
+  const pool = saved
+    ? Math.max(0, saved.liquidCash + (totalPool - defaultPool) + severanceLump)
+    : totalPool + severanceLump;
   const monthlyBurn = Math.max(
     0,
-    totalSelectedExpenses + debtNotInBudget - totalKeptIncome - extraMonthlyCut,
+    saved
+      ? saved.monthlyEssentials +
+          (totalSelectedExpenses - defaultSelectedExpenses) -
+          totalKeptIncome -
+          extraMonthlyCut
+      : totalSelectedExpenses + debtNotInBudget - totalKeptIncome - extraMonthlyCut,
   );
-  // With no saved figure and nothing to pay, there is nothing to show yet: "Not set", never infinity.
-  const coverLabel =
-    !saved && monthlyBurn === 0 ? "Not set" : describeCover(pool, monthlyBurn).label;
+  // The ratio and its rounding are the engine's, the same call the saved figure makes.
+  const months = monthsOfCoverFor(pool, monthlyBurn);
+  // Nothing to pay each month: with a saved figure the money has no end date in this illustration;
+  // with none there is nothing to show yet. Never infinity.
+  const wording = months === null ? null : describeBreathingRoom(months);
+  const emptyLabel = saved ? "No end date" : "Not set";
+  const coverLabel = months === null ? emptyLabel : breathingRoomPhrase(months);
 
   const groupedExpenses = useMemo(() => {
     // Standard categories first, then debt and custom ones, so every counted row can be switched.
@@ -393,61 +411,43 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     </CollapsibleDrawer>
   );
 
-  // One outcome and one supporting figure (P1.7).
-  const content = (
-    <div className={outcome()}>
-      {/* Untouched, this is the saved figure (its one place on the page); changed, an illustration. */}
-      <p className={outcomeLabel()}>
-        {isScenarioModified ? "Months of cover in this illustration" : "Months of cover"}
-      </p>
-      <p className={scenarioValue()} data-testid="runway-outcome" id="runway-outcome">
-        {saved && !isScenarioModified ? (
-          // Untouched, the outcome is the saved figure, so the consistency check can read it.
-          <span data-figure="monthsOfCover">{coverLabel}</span>
-        ) : (
-          coverLabel
-        )}
-      </p>
-      <p className={introText()}>
-        An estimate of how long the money you can draw on would last if your income stopped,
-        covering essential spending and minimum debt payments.
-      </p>
-      <dl className={breakdownList()}>
-        <div className={breakdownRow()}>
-          <dt>Money to draw on</dt>
-          <dd>
-            <Money size="sm" value={pool} />
-          </dd>
-        </div>
-      </dl>
-    </div>
+  // The zone's one result card (E17 5A): the illustrated figure and one supporting row.
+  const result = (
+    <ResultBlock
+      emptyPrompt={emptyLabel}
+      figure={
+        wording ? (
+          <span className={resultFigure()} data-testid="runway-outcome" id="runway-outcome">
+            {wording.figure}
+          </span>
+        ) : null
+      }
+      id="runway-result"
+      label="Breathing room in this illustration"
+      leadIn={wording?.leadIn}
+      row={{ label: MONEY_TO_DRAW_ON_LABEL, value: <Money size="sm" value={pool} /> }}
+    />
   );
 
   return (
-    <div className={runwayRoot()}>
-      <ScenarioZone
-        announcement={isScenarioModified ? `${coverLabel} of cover` : ""}
-        // UX-GUIDELINES S5: every zone states the saved figures it starts from.
-        basis={
-          <span data-testid="runway-basis" id="runway-basis">
-            {saved
-              ? "Starting from your saved budget and accounts."
-              : "Starting from your budget. Months of cover shows once it has essential spending."}
-          </span>
-        }
-        isModified={isScenarioModified}
-        notice={<ProjectionNotice />}
-        title="Model a change to your budget"
-        onReset={handleResetScenario}
-      >
-        <SimulatorSplitLayout
-          content={content}
-          contentLabel="Illustration results"
-          controls={controls}
-          controlsLabel="Months of cover illustration"
-        />
-        {moreOptions}
-      </ScenarioZone>
-    </div>
+    <ScenarioZone
+      announcement={isScenarioModified ? `Breathing room, ${coverLabel}` : ""}
+      // UX-GUIDELINES S5: every zone states the saved figures it starts from.
+      basis={
+        <span data-testid="runway-basis" id="runway-basis">
+          {saved
+            ? "Starting from your saved budget and accounts."
+            : "Starting from your budget. Breathing room shows once it has essential spending."}
+        </span>
+      }
+      extra={moreOptions}
+      isModified={isScenarioModified}
+      notice={<ProjectionNotice />}
+      result={result}
+      title="Model a change to your budget"
+      onReset={handleResetScenario}
+    >
+      {controls}
+    </ScenarioZone>
   );
 };

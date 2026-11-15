@@ -161,7 +161,7 @@ describe("BudgetContainer", () => {
     const firstView = hero.parentElement as HTMLElement;
     expect(within(firstView).getByText("Money in each month")).toBeDefined();
     expect(within(firstView).getByText("Going out each month")).toBeDefined();
-    expect(within(firstView).queryByText("Months of cover")).toBeNull();
+    expect(within(firstView).queryByText("Breathing room")).toBeNull();
     expect(within(firstView).queryByText("Bills and essentials")).toBeNull();
     expect(within(firstView).queryByText("Flexible spending")).toBeNull();
     expectPageRules(firstView, { maxFigures: 4, maxNotSet: 1 });
@@ -176,9 +176,20 @@ describe("BudgetContainer", () => {
     // Categories are added in Edit budget, so the read-only list has no Add category.
     expect(screen.queryByRole("button", { name: "Add category" })).toBeNull();
     const zone = screen.getByRole("region", { name: "Model a change to your budget" });
-    // The saved months of cover shows once, as the zone outcome.
-    expect(screen.getAllByText("Months of cover")).toHaveLength(1);
-    expect(within(zone).getByText("Months of cover")).toBeDefined();
+    // Breathing room is a saved figure: its own section, one result card, outside the zone
+    // (owner ruling 15 November 2026, UX-GUIDELINES S10).
+    const room = screen.getByRole("region", { name: "Breathing room" });
+    expect(zone.contains(room)).toBe(false);
+    expect(room.contains(zone)).toBe(false);
+    expect(within(room).getAllByRole("group")).toHaveLength(1);
+    expect(room.querySelector('[data-figure="monthsOfCover"]')).not.toBeNull();
+    expect(zone.querySelector('[data-figure="monthsOfCover"]')).toBeNull();
+    // The zone shows only the illustrated result, in its one result card, after the saved section.
+    expect(within(zone).getAllByRole("group")).toHaveLength(1);
+    expect(
+      within(zone).getByRole("group", { name: "Breathing room in this illustration" }),
+    ).toBeDefined();
+    expect(room.compareDocumentPosition(zone) & 4).toBeTruthy();
     expect(screen.getByRole("link", { name: /MoneyHelper/ })).toBeDefined();
     expectPageRules(container, { maxNotSet: 1, projectionNotices: 1 });
     // The hero and strip come before the list and the zone, and nothing sits above the h1.

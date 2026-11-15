@@ -1,5 +1,6 @@
 import { type FC, type ReactNode, useId } from "react";
 import { cx } from "../../../styled-system/css";
+import { VisuallyHidden } from "../../primitives/VisuallyHidden";
 import { resultBlock } from "./ResultBlock.styles";
 
 export interface ResultBlockRow {
@@ -10,6 +11,11 @@ export interface ResultBlockRow {
 export interface ResultBlockProps {
   /** Names the figure: "Breathing room". Also the accessible name of the block. */
   label: string;
+  /**
+   * Keeps the label as the block's accessible name without drawing it. For a section whose header
+   * already shows the same words, so they are not printed twice.
+   */
+  hideLabel?: boolean;
   /** Sits beside the label: an info tip or an "Estimate" badge. */
   labelAddon?: ReactNode;
   /** A few words read before the figure: "About". */
@@ -37,6 +43,7 @@ export interface ResultBlockProps {
  */
 export const ResultBlock: FC<ResultBlockProps> = ({
   label,
+  hideLabel = false,
   labelAddon,
   leadIn,
   figure,
@@ -59,12 +66,16 @@ export const ResultBlock: FC<ResultBlockProps> = ({
       id={id}
       role="group"
     >
-      <div className={slots.labelRow}>
-        <p className={slots.label} id={labelId}>
-          {label}
-        </p>
-        {labelAddon}
-      </div>
+      {hideLabel ? (
+        <VisuallyHidden id={labelId}>{label}</VisuallyHidden>
+      ) : (
+        <div className={slots.labelRow}>
+          <p className={slots.label} id={labelId}>
+            {label}
+          </p>
+          {labelAddon}
+        </div>
+      )}
       {known ? (
         <p className={slots.answer}>
           {leadIn ? <span className={slots.leadIn}>{leadIn} </span> : null}

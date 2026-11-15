@@ -25,6 +25,7 @@ import { ListChecks, Pencil } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData } from "react-router";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
+import { BreathingRoom } from "~/features/budget/components/BreathingRoom";
 import { BudgetCategoryList } from "~/features/budget/components/BudgetCategoryList";
 import { BudgetEditor } from "~/features/budget/components/BudgetEditor";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
@@ -613,6 +614,9 @@ const BudgetContainer: FC = () => {
               onToggleCategory={(cat) => setOpenCategory((prev) => (prev === cat ? null : cat))}
             />
           )}
+
+          {/* The saved figure, in a section of its own; the zone below only illustrates changes. */}
+          {view === "budget" && !isBudgetEmpty && <BreathingRoom figure={picture.monthsOfCover} />}
 
           {view === "budget" && !isBudgetEmpty && (
             <RunwayCalculator

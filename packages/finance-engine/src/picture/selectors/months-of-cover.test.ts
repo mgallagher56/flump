@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
 import { PortfolioSnapshot } from "../../portfolio.js";
 import { isFigureKnown } from "../figure.js";
-import { selectMonthsOfCover } from "./months-of-cover.js";
+import { monthsOfCoverFor, selectMonthsOfCover } from "./months-of-cover.js";
 
 const row = (over: Partial<BudgetEntryItem>): BudgetEntryItem => ({
   id: "r",
@@ -105,5 +105,21 @@ describe("selectMonthsOfCover agrees with safe to spend on missing essentials", 
       missing: ["budgetEssentials"],
       reason: "not-set",
     });
+  });
+});
+
+describe("monthsOfCoverFor", () => {
+  it("rounds to one decimal place, the same way the saved figure does", () => {
+    expect(monthsOfCoverFor(4200, 2800)).toBe(1.5);
+    expect(monthsOfCoverFor(1000, 300)).toBe(3.3);
+  });
+
+  it("is null, never infinite, when nothing is paid each month", () => {
+    expect(monthsOfCoverFor(4200, 0)).toBeNull();
+    expect(monthsOfCoverFor(4200, -50)).toBeNull();
+  });
+
+  it("treats a negative pool as nothing to draw on", () => {
+    expect(monthsOfCoverFor(-100, 500)).toBe(0);
   });
 });

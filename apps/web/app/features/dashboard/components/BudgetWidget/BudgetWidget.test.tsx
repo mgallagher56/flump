@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { BudgetWidget, formatMonthsOfCover } from "./BudgetWidget";
+import { BudgetWidget } from "./BudgetWidget";
 
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
@@ -20,18 +20,29 @@ describe("BudgetWidget", () => {
     expect(screen.getAllByRole("link")).toHaveLength(1);
   });
 
+  it("shows breathing room as its line when the picture knows it", () => {
+    const { container } = renderWidget({
+      budgetKnown: true,
+      monthlyExpenses: 2150,
+      monthsOfCover: 1.5,
+    });
+    expect(screen.getByText(/Breathing room:/).textContent).toBe(
+      "Breathing room: about 1.5 months",
+    );
+    const figure = container.querySelector('[data-figure="monthsOfCover"]');
+    expect(figure?.textContent).toBe("about 1.5 months");
+    expect(figure?.className).toContain("tabular-nums");
+  });
+
+  it("keeps the plain line when breathing room is not known", () => {
+    renderWidget({ budgetKnown: true, monthlyExpenses: 2150, monthsOfCover: null });
+    expect(screen.getByText("Bills and living costs in your budget.")).toBeTruthy();
+    expect(screen.queryByText(/Breathing room/)).toBeNull();
+  });
+
   it('reads "Not set" with one link when there is no budget', () => {
     renderWidget({ budgetKnown: false, monthlyExpenses: 0 });
     expect(screen.getByText("Not set")).toBeTruthy();
     expect(screen.getByRole("link", { name: /Add your budget/ })).toBeTruthy();
-  });
-});
-
-describe("formatMonthsOfCover", () => {
-  it("formats months and long runways in plain words", () => {
-    expect(formatMonthsOfCover(1)).toBe("1 month");
-    expect(formatMonthsOfCover(4.74)).toBe("4.7 months");
-    expect(formatMonthsOfCover(130)).toBe("10+ years");
-    expect(formatMonthsOfCover(-2)).toBe("0 months");
   });
 });

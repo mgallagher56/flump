@@ -33,7 +33,7 @@ describe("WidgetCard", () => {
     renderCard();
     expect(screen.getByRole("heading", { level: 3, name: "Savings" })).toBeTruthy();
     expect(screen.getByText("£12,000")).toBeTruthy();
-    expect(screen.getByText(props.line)).toBeTruthy();
+    expect(screen.getByText(props.line as string)).toBeTruthy();
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(1);
     expect(links[0].getAttribute("href")).toBe("/app/savings");
