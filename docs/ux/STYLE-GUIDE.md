@@ -177,14 +177,14 @@ Use a text style, not a size. Sizes are the default at a 16px root.
 
 ## 4. Spacing and layout
 
-Spacing is a 4px scale: 0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128. No other gap or padding value.
+Spacing is a 4px scale: 0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128. No other gap or padding value, with one exception: the 36px gap between page sections (`spacing.page.section`, the owner's E17 5A choice).
 
 | What                        | Value                                              |
 | --------------------------- | -------------------------------------------------- |
 | Content width               | 1200px at most (`sizes.page.max`) **[PR 1]**       |
 | Page gutters                | 16px on a phone, 24px from 768px, 40px from 1024px |
 | App header to h1            | 20px on a phone, 32px from 1024px                  |
-| Gap between page sections   | 32px                                               |
+| Gap between page sections   | 36px (`spacing.page.section`, E17 5A; see 12.5)    |
 | Card padding                | 20px (14px in compact density)                     |
 | Gap between cards in a grid | 16px (10px compact)                                |
 | Control heights             | 32, 40, 48px (28, 32, 40px compact)                |
@@ -446,7 +446,9 @@ The dashboard's "Finish setting up" row is a progress ring with the next step na
 - **A modelling zone presents its result** in one result block: to the right of the inputs from tablet width up, and under them on a phone. Nothing else inside a zone is a card.
 - **"Illustration, not saved" stays recognisable.** The zone keeps its dashed outline, now at 3:1 or more against the canvas (`border.input`), and the "Illustration, not saved" badge. The meaning never rests on colour alone, and the notice at the foot of the zone stays quiet.
 
-**SR1.** One result block per section; a saved result is never inside a zone. **Review only**; `ScenarioZone` contrast **Proposed check** in `tokens.a11y.test.ts` when the component changes.
+**Components.** `PageSection` wraps one saved section: a `<section>` named by its `SectionHeader`, with the content under it. `ResultBlock` is the result card; its figure uses `numeric.result` (36px, tabular). `ScenarioZone` takes its one result block in `result`, and anything that follows the inputs and the result (a drawer of further options) in `extra`. When a section header already shows the result's name, the block keeps the name for assistive technology and does not print it twice (`hideLabel`). The icon tile takes the page's money domain; a section outside the money domains is neutral, and at most one header on a page uses the accent tile (rule C7).
+
+**SR1.** One result block per section; a saved result is never inside a zone. **Review only**. The zone outline contrast is **Enforced by** `tokens.a11y.test.ts` ("border.input reaches 3:1 on every surface in both themes") and `ScenarioZone.test.tsx`.
 
 ### 12.6 Naming: "Breathing room" (E17)
 
