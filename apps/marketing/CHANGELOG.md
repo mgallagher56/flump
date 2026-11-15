@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.35.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.34.2...flump/marketing-v1.35.0) (2026-11-15)
+
+
+### Features ✨
+
+* **ci:** BE-17 load smoke, E2E retries off and slim web image; SEC-E checkout credentials, digest pins and root-owned images ([205690c](https://github.com/mgallagher56/flump/commit/205690c96e70c4594e69e8ae2f4692b14e6a571e))
+
 ## [1.34.2](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.34.1...flump/marketing-v1.34.2) (2026-11-14)
 
 
