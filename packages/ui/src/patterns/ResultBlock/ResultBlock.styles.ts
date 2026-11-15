@@ -53,6 +53,7 @@ export const resultBlock = sva({
       flexDirection: "column",
     },
     leadIn: {
+      fontVariantNumeric: "tabular-nums",
       textStyle: "body.sm",
       color: "text.secondary",
     },
@@ -69,6 +70,7 @@ export const resultBlock = sva({
     note: {
       margin: "0",
       marginTop: "1",
+      fontVariantNumeric: "tabular-nums",
       textStyle: "body.sm",
       color: "text.secondary",
       maxWidth: "56ch",

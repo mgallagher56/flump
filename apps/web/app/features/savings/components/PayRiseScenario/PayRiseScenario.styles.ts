@@ -7,12 +7,11 @@ export const rowRoot = cva({
     justifyContent: "space-between",
     flexWrap: "wrap",
     gap: "12px",
-    padding: "12px 16px",
-    borderRadius: "lg",
-    backgroundColor: "surface.card",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
+    // Flat on the zone: the result block is the only card inside a modelling zone (E17 5A).
+    paddingTop: "12px",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border.subtle",
   },
 });
 
