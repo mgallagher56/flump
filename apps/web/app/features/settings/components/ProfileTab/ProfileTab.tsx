@@ -6,24 +6,18 @@ import {
   controlProps,
   FormField,
   Icon,
+  PageSection,
   Select,
   Switch,
   TextInput,
   useOptionalToast,
 } from "@repo/ui";
-import { Camera, Trash2 } from "lucide-react";
+import { Camera, Landmark, LayoutGrid, Trash2, UserRound } from "lucide-react";
 import { type ChangeEvent, type FC, type MouseEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import UserAvatar from "~/components/navigation/UserAvatar";
 import { NetWorthChoices } from "~/features/settings/components/NetWorthChoices";
-import {
-  fieldGrid,
-  sectionCard,
-  sectionHeading,
-  sectionLead,
-  statusText,
-  tabGrid,
-} from "~/features/settings/settings.styles";
+import { fieldGrid, sectionCard, statusText, tabGrid } from "~/features/settings/settings.styles";
 import {
   type TaxRegion,
   type UserProfile,
@@ -271,181 +265,188 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
 
   return (
     <div className={tabGrid()} id="settings-profile-tab" data-testid="settings-profile-tab">
-      <Card as="section" aria-labelledby="your-details-heading" className={sectionCard()}>
-        <h2 className={sectionHeading()} id="your-details-heading">
-          Your details
-        </h2>
-
-        <div className={avatarRow()}>
-          <UserAvatar bordered profile={avatarProfile} size={72} user={user} />
-          <div className={avatarText()}>
-            <p className={avatarTitle()}>Profile picture</p>
-            <p className={avatarHelp()}>
-              {avatarUrl
-                ? "Your picture is shown across Flump."
-                : "Your initials are shown until you add a picture."}
-            </p>
-            <div className={avatarActions()}>
-              <input
-                ref={fileInputRef}
-                hidden
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                aria-label="Upload profile picture"
-                data-testid="profile-picture-input"
-                id="profile-picture-input"
-                type="file"
-                onChange={handleImageUpload}
-              />
-              <Button
-                data-testid="upload-picture-button"
-                disabled={uploadingImage}
-                id="upload-picture-button"
-                size="sm"
-                type="button"
-                variant="secondary"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Icon icon={Camera} size="sm" />
-                {uploadingImage ? "Processing" : avatarUrl ? "Change picture" : "Upload picture"}
-              </Button>
-              {avatarUrl ? (
+      <PageSection
+        description="Your name and profile picture."
+        headingId="your-details-heading"
+        icon={UserRound}
+        id="settings-your-details"
+        title="Your details"
+        tone="neutral"
+      >
+        <Card className={sectionCard()}>
+          <div className={avatarRow()}>
+            <UserAvatar bordered profile={avatarProfile} size={72} user={user} />
+            <div className={avatarText()}>
+              <p className={avatarTitle()}>Profile picture</p>
+              <p className={avatarHelp()}>
+                {avatarUrl
+                  ? "Your picture is shown across Flump."
+                  : "Your initials are shown until you add a picture."}
+              </p>
+              <div className={avatarActions()}>
+                <input
+                  ref={fileInputRef}
+                  hidden
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  aria-label="Upload profile picture"
+                  data-testid="profile-picture-input"
+                  id="profile-picture-input"
+                  type="file"
+                  onChange={handleImageUpload}
+                />
                 <Button
-                  data-testid="remove-picture-button"
+                  data-testid="upload-picture-button"
                   disabled={uploadingImage}
-                  id="remove-picture-button"
+                  id="upload-picture-button"
                   size="sm"
                   type="button"
-                  variant="outline"
-                  onClick={handleRemoveImage}
+                  variant="secondary"
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  <Icon icon={Trash2} size="sm" />
-                  Delete picture
+                  <Icon icon={Camera} size="sm" />
+                  {uploadingImage ? "Processing" : avatarUrl ? "Change picture" : "Upload picture"}
                 </Button>
-              ) : null}
+                {avatarUrl ? (
+                  <Button
+                    data-testid="remove-picture-button"
+                    disabled={uploadingImage}
+                    id="remove-picture-button"
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                    onClick={handleRemoveImage}
+                  >
+                    <Icon icon={Trash2} size="sm" />
+                    Delete picture
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={fieldGrid()}>
-          <FormField id="first-name-input" label="First name">
-            {(field) => (
-              <TextInput
-                {...controlProps(field)}
-                data-testid="first-name-input"
-                autoComplete="given-name"
-                value={form.firstName ?? ""}
-                onBlur={() => saveName("firstName")}
-                onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value || null }))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveName("firstName");
-                }}
-              />
-            )}
-          </FormField>
-          <FormField id="last-name-input" label="Last name">
-            {(field) => (
-              <TextInput
-                {...controlProps(field)}
-                data-testid="last-name-input"
-                autoComplete="family-name"
-                value={form.lastName ?? ""}
-                onBlur={() => saveName("lastName")}
-                onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value || null }))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveName("lastName");
-                }}
-              />
-            )}
-          </FormField>
-        </div>
-        {errorLine("details")}
-      </Card>
+          <div className={fieldGrid()}>
+            <FormField id="first-name-input" label="First name">
+              {(field) => (
+                <TextInput
+                  {...controlProps(field)}
+                  data-testid="first-name-input"
+                  autoComplete="given-name"
+                  value={form.firstName ?? ""}
+                  onBlur={() => saveName("firstName")}
+                  onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value || null }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveName("firstName");
+                  }}
+                />
+              )}
+            </FormField>
+            <FormField id="last-name-input" label="Last name">
+              {(field) => (
+                <TextInput
+                  {...controlProps(field)}
+                  data-testid="last-name-input"
+                  autoComplete="family-name"
+                  value={form.lastName ?? ""}
+                  onBlur={() => saveName("lastName")}
+                  onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value || null }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveName("lastName");
+                  }}
+                />
+              )}
+            </FormField>
+          </div>
+          {errorLine("details")}
+        </Card>
+      </PageSection>
 
-      <Card as="section" aria-labelledby="tax-basis-heading" className={sectionCard()}>
-        <h2 className={sectionHeading()} id="tax-basis-heading">
-          How we work out your tax
-        </h2>
-        <p className={sectionLead()}>
-          Where you pay tax and your student loan plan change your take-home pay. Your salary and
-          pension each have their own page.
-        </p>
-        {/* E23 D06/D-4-C: region and student loan for users who onboarded before they were asked */}
-        <div className={fieldGrid()}>
-          <FormField id="tax-region-select" label="Where do you pay tax?">
-            {(field) => (
-              <Select
-                {...controlProps(field)}
-                data-testid="tax-region-select"
-                options={TAX_REGION_OPTIONS}
-                value={form.taxRegion ?? ""}
-                onChange={(e) =>
-                  void saveFields("tax", {
-                    taxRegion: (e.target.value || null) as TaxRegion | null,
-                  })
-                }
-              />
-            )}
-          </FormField>
-          <FormField id="student-loan-select" label="Student loan plan">
-            {(field) => (
-              <Select
-                {...controlProps(field)}
-                data-testid="student-loan-select"
-                value={
-                  form.studentLoanPlans == null
-                    ? ""
-                    : form.studentLoanPlans.length > 1
-                      ? MULTIPLE_PLANS
-                      : (form.studentLoanPlans[0] ?? "NONE")
-                }
-                onChange={(e) => {
-                  const v = e.target.value;
-                  // Several stored plans are kept as they are unless the user picks one.
-                  if (v === MULTIPLE_PLANS) return;
-                  void saveFields("tax", {
-                    studentLoanPlans: v === "" ? null : v === "NONE" ? [] : [v],
-                  });
+      <PageSection
+        description="Where you pay tax and your student loan plan change your take-home pay. Your salary and pension each have their own page."
+        headingId="tax-basis-heading"
+        icon={Landmark}
+        id="settings-tax-basis"
+        title="How we work out your tax"
+        tone="neutral"
+      >
+        <Card className={sectionCard()}>
+          {/* E23 D06/D-4-C: region and student loan for users who onboarded before they were asked */}
+          <div className={fieldGrid()}>
+            <FormField id="tax-region-select" label="Where do you pay tax?">
+              {(field) => (
+                <Select
+                  {...controlProps(field)}
+                  data-testid="tax-region-select"
+                  options={TAX_REGION_OPTIONS}
+                  value={form.taxRegion ?? ""}
+                  onChange={(e) =>
+                    void saveFields("tax", {
+                      taxRegion: (e.target.value || null) as TaxRegion | null,
+                    })
+                  }
+                />
+              )}
+            </FormField>
+            <FormField id="student-loan-select" label="Student loan plan">
+              {(field) => (
+                <Select
+                  {...controlProps(field)}
+                  data-testid="student-loan-select"
+                  value={
+                    form.studentLoanPlans == null
+                      ? ""
+                      : form.studentLoanPlans.length > 1
+                        ? MULTIPLE_PLANS
+                        : (form.studentLoanPlans[0] ?? "NONE")
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    // Several stored plans are kept as they are unless the user picks one.
+                    if (v === MULTIPLE_PLANS) return;
+                    void saveFields("tax", {
+                      studentLoanPlans: v === "" ? null : v === "NONE" ? [] : [v],
+                    });
+                  }}
+                >
+                  <option value="">Not set (no loan assumed)</option>
+                  {(form.studentLoanPlans?.length ?? 0) > 1 && (
+                    <option value={MULTIPLE_PLANS}>
+                      {form.studentLoanPlans?.map(formatPlan).join(" and ")}
+                    </option>
+                  )}
+                  {STUDENT_LOAN_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </FormField>
+          </div>
+          <div className={linkRow()}>
+            {ELSEWHERE_LINKS.filter(
+              // The mortgage page is for a home someone owns; a renter is not sent there.
+              (link) => link.href !== "/app/mortgage" || ownsHome,
+            ).map((link) => (
+              <ButtonLink
+                data-testid={link.id}
+                href={link.href}
+                id={link.id}
+                key={link.href}
+                size="sm"
+                variant="link"
+                onClick={(e: MouseEvent<HTMLAnchorElement>) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                  e.preventDefault();
+                  navigate(link.href);
                 }}
               >
-                <option value="">Not set (no loan assumed)</option>
-                {(form.studentLoanPlans?.length ?? 0) > 1 && (
-                  <option value={MULTIPLE_PLANS}>
-                    {form.studentLoanPlans?.map(formatPlan).join(" and ")}
-                  </option>
-                )}
-                {STUDENT_LOAN_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </FormField>
-        </div>
-        <div className={linkRow()}>
-          {ELSEWHERE_LINKS.filter(
-            // The mortgage page is for a home someone owns; a renter is not sent there.
-            (link) => link.href !== "/app/mortgage" || ownsHome,
-          ).map((link) => (
-            <ButtonLink
-              data-testid={link.id}
-              href={link.href}
-              id={link.id}
-              key={link.href}
-              size="sm"
-              variant="link"
-              onClick={(e: MouseEvent<HTMLAnchorElement>) => {
-                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-                e.preventDefault();
-                navigate(link.href);
-              }}
-            >
-              {link.label}
-            </ButtonLink>
-          ))}
-        </div>
-        {errorLine("tax")}
-      </Card>
+                {link.label}
+              </ButtonLink>
+            ))}
+          </div>
+          {errorLine("tax")}
+        </Card>
+      </PageSection>
 
       <NetWorthChoices
         countProperty={basis.countProperty}
@@ -455,21 +456,27 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
         onSave={(update) => updateProfile(update)}
       />
 
-      <Card as="section" aria-labelledby="modules-heading" className={sectionCard()}>
-        <h2 className={sectionHeading()} id="modules-heading">
-          Sections you use
-        </h2>
-        <Switch
-          checked={selfAssessmentOn}
-          data-testid="self-assessment-module-toggle"
-          disabled={moduleSaving}
-          hint="Income and cost records by tax year, for self-employed or rental income. Adds a tax page to your menu and dashboard."
-          id="self-assessment-module-toggle"
-          label="Self Assessment"
-          onChange={(e) => handleToggleSelfAssessment(e.target.checked)}
-        />
-        {errorLine("modules")}
-      </Card>
+      <PageSection
+        description="Turn on extra sections for your menu and dashboard."
+        headingId="modules-heading"
+        icon={LayoutGrid}
+        id="settings-modules"
+        title="Sections you use"
+        tone="neutral"
+      >
+        <Card className={sectionCard()}>
+          <Switch
+            checked={selfAssessmentOn}
+            data-testid="self-assessment-module-toggle"
+            disabled={moduleSaving}
+            hint="Income and cost records by tax year, for self-employed or rental income. Adds a tax page to your menu and dashboard."
+            id="self-assessment-module-toggle"
+            label="Self Assessment"
+            onChange={(e) => handleToggleSelfAssessment(e.target.checked)}
+          />
+          {errorLine("modules")}
+        </Card>
+      </PageSection>
     </div>
   );
 };

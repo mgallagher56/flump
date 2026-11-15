@@ -1,12 +1,13 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 /**
- * Layout shared by the three settings tabs. Every section is a `Card` with a `sectionHeading` h2,
- * a `sectionLead` line and at most one action row; a destructive action sits in a danger row with
- * the `danger` button and a type-to-confirm dialog.
+ * Layout shared by the three settings tabs. Every section is a `PageSection` (E17 5A: icon tile,
+ * title and one line) holding a `Card` with at most one action row; a destructive action sits in a
+ * danger row with the `danger` button and a type-to-confirm dialog. Sections sit `page.section`
+ * apart.
  */
 export const tabStack = cva({
-  base: { display: "flex", flexDirection: "column", gap: "6", minWidth: 0 },
+  base: { display: "flex", flexDirection: "column", gap: "page.section", minWidth: 0 },
 });
 
 /**
@@ -19,17 +20,13 @@ export const tabGrid = cva({
     gridTemplateColumns: { base: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" },
     // Cards in a row share a height, so the two columns line up with even gaps.
     alignItems: "stretch",
-    gap: "6",
+    gap: "page.section",
     minWidth: 0,
   },
 });
 
 export const sectionCard = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", minWidth: 0 },
-});
-
-export const sectionHeading = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
 });
 
 export const sectionLead = cva({

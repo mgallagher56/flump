@@ -1,4 +1,5 @@
-import { Button, Card, ConfirmDialog } from "@repo/ui";
+import { Button, Card, ConfirmDialog, PageSection } from "@repo/ui";
+import { UserX } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
 import {
   DELETE_ACCOUNT_CONFIRMATION,
@@ -6,7 +7,7 @@ import {
   RECENT_LOGIN_MESSAGE,
 } from "~/features/settings/account";
 import { SignInAgainButton } from "~/features/settings/components/SignInAgainButton";
-import { sectionCard, sectionHeading, sectionLead } from "~/features/settings/settings.styles";
+import { sectionCard } from "~/features/settings/settings.styles";
 import { deleteDialogBody, deleteList } from "./DeleteAccountSection.styles";
 
 export const IDENTITY_PENDING_MESSAGE =
@@ -56,69 +57,66 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
   };
 
   return (
-    <Card
-      as="section"
-      aria-labelledby="delete-account-heading"
-      className={sectionCard()}
+    <PageSection
+      description="This deletes your Flump account and all your data. To keep a copy, download your data first."
+      headingId="delete-account-heading"
+      icon={UserX}
       id="delete-account-section"
-      data-testid="delete-account-section"
+      title="Delete your account"
+      tone="neutral"
     >
-      <h2 className={sectionHeading()} id="delete-account-heading">
-        Delete your account
-      </h2>
-      <p className={sectionLead()}>
-        This deletes your Flump account and all your data. To keep a copy, download your data first.
-      </p>
-      {/* Danger styling only inside the confirmation (UX D3): at rest this is a plain button. */}
-      <div>
-        <Button
-          data-testid="delete-account-trigger"
-          id="delete-account-trigger"
-          size="sm"
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setAttempted(false);
-            setOpen(true);
-          }}
-        >
-          Delete account
-        </Button>
-      </div>
+      <Card className={sectionCard()}>
+        {/* Danger styling only inside the confirmation (UX D3): at rest this is a plain button. */}
+        <div>
+          <Button
+            data-testid="delete-account-trigger"
+            id="delete-account-trigger"
+            size="sm"
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setAttempted(false);
+              setOpen(true);
+            }}
+          >
+            Delete account
+          </Button>
+        </div>
 
-      <ConfirmDialog
-        id="delete-account-dialog"
-        open={open}
-        onOpenChange={setOpen}
-        title="Delete your account?"
-        description={
-          <div className={deleteDialogBody()}>
-            <span>This deletes the following for good:</span>
-            <ul className={deleteList()}>
-              <li>Your profile and settings</li>
-              <li>Your accounts and their balance history</li>
-              <li>Your budget, savings and tax records</li>
-              <li>Your check-ins and any imports not yet finished</li>
-              <li>Your AI connections and their activity log</li>
-              <li>Your sign-in</li>
-            </ul>
-            <span>
-              We keep a short record that an account was deleted, with no personal details, for 24
-              months.
-            </span>
-            <span>This cannot be undone. You are signed out straight away.</span>
-          </div>
-        }
-        confirmLabel={identityPending ? "Try again" : "Delete my account"}
-        pendingLabel="Deleting"
-        tone="danger"
-        requireText={DELETE_ACCOUNT_CONFIRMATION}
-        pending={status === "submitting"}
-        keepFocusWhilePending
-        error={error}
-        errorAction={needsSignIn ? <SignInAgainButton /> : undefined}
-        onConfirm={handleConfirm}
-      />
-    </Card>
+        <ConfirmDialog
+          id="delete-account-dialog"
+          open={open}
+          onOpenChange={setOpen}
+          title="Delete your account?"
+          description={
+            <div className={deleteDialogBody()}>
+              <span>This deletes the following for good:</span>
+              <ul className={deleteList()}>
+                <li>Your profile and settings</li>
+                <li>Your accounts and their balance history</li>
+                <li>Your budget, savings and tax records</li>
+                <li>Your check-ins and any imports not yet finished</li>
+                <li>Your AI connections and their activity log</li>
+                <li>Your sign-in</li>
+              </ul>
+              <span>
+                We keep a short record that an account was deleted, with no personal details, for 24
+                months.
+              </span>
+              <span>This cannot be undone. You are signed out straight away.</span>
+            </div>
+          }
+          confirmLabel={identityPending ? "Try again" : "Delete my account"}
+          pendingLabel="Deleting"
+          tone="danger"
+          requireText={DELETE_ACCOUNT_CONFIRMATION}
+          pending={status === "submitting"}
+          keepFocusWhilePending
+          error={error}
+          errorAction={needsSignIn ? <SignInAgainButton /> : undefined}
+          onConfirm={handleConfirm}
+        />
+      </Card>
+    </PageSection>
   );
 };

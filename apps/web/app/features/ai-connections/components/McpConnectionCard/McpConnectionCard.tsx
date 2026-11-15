@@ -7,6 +7,7 @@ import {
   FormField,
   Icon,
   InlineAlert,
+  PageSection,
   Select,
   StatusBadge,
   Switch,
@@ -15,15 +16,9 @@ import {
   VisuallyHidden,
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
-import { Check, Copy, Download, KeyRound } from "lucide-react";
+import { Bot, Check, ClipboardCopy, Copy, Download, KeyRound } from "lucide-react";
 import { type FC, useCallback, useState } from "react";
-import {
-  sectionCard,
-  sectionHeading,
-  sectionLead,
-  statusText,
-  tabStack,
-} from "~/features/settings/settings.styles";
+import { sectionCard, statusText, tabStack } from "~/features/settings/settings.styles";
 import {
   actionRow,
   factList,
@@ -342,232 +337,224 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
 
   return (
     <div className={cx(tabStack(), className)}>
-      <Card
-        aria-labelledby="ai-connections-heading"
-        as="section"
-        className={sectionCard()}
-        data-testid="ai-connections-card"
+      <PageSection
+        description="Create a token to let an AI assistant read the figures you have saved in Flump."
+        headingId="ai-connections-heading"
+        icon={Bot}
         id="ai-connections-card"
+        title="AI connections (preview)"
+        tone="neutral"
       >
-        <h2 className={sectionHeading()} id="ai-connections-heading">
-          AI connections (preview)
-        </h2>
-        <p className={sectionLead()}>
-          Create a token to let an AI assistant read the figures you have saved in Flump.
-        </p>
+        <Card className={sectionCard()}>
+          <ul className={factList()} data-testid="ai-connection-facts" id="ai-connection-facts">
+            <li>Flump calculates the figures it sends to the assistant.</li>
+            <li>Bank and provider names are always replaced with generic labels.</li>
+            <li>Flump has no feature to make payments.</li>
+            <li>Each connection can make up to {REQUESTS_PER_MINUTE} requests a minute.</li>
+          </ul>
 
-        <ul className={factList()} data-testid="ai-connection-facts" id="ai-connection-facts">
-          <li>Flump calculates the figures it sends to the assistant.</li>
-          <li>Bank and provider names are always replaced with generic labels.</li>
-          <li>Flump has no feature to make payments.</li>
-          <li>Each connection can make up to {REQUESTS_PER_MINUTE} requests a minute.</li>
-        </ul>
-
-        {actionError ? (
-          <p
-            className={statusText({ tone: "danger" })}
-            data-testid="mcp-token-error"
-            id="mcp-token-error"
-            role="alert"
-          >
-            {actionError}
-          </p>
-        ) : null}
-
-        {newlyCreatedToken ? (
-          <InlineAlert
-            action={
-              <Button
-                size="sm"
-                type="button"
-                variant="outline"
-                onClick={() => handleCopyToken(newlyCreatedToken)}
-              >
-                <Icon icon={copiedToken ? Check : Copy} size="sm" />
-                {copiedToken ? "Copied" : "Copy"}
-              </Button>
-            }
-            data-testid="new-token-banner"
-            id="new-token-banner"
-            title="Token created"
-            tone="positive"
-          >
-            Copy it now. It will not be shown again.
-            <code className={tokenValue()}>{newlyCreatedToken}</code>
-          </InlineAlert>
-        ) : null}
-
-        {!onGenerateToken ? (
-          <p className={statusText()} data-testid="token-creation-unavailable">
-            Connection tokens are not available yet. You can still export a summary below.
-          </p>
-        ) : !showGenerateForm ? (
-          <div className={actionRow()}>
-            <Button
-              data-testid="generate-token-trigger"
-              id="generate-token-trigger"
-              size="sm"
-              variant="primary"
-              onClick={() => setShowGenerateForm(true)}
+          {actionError ? (
+            <p
+              className={statusText({ tone: "danger" })}
+              data-testid="mcp-token-error"
+              id="mcp-token-error"
+              role="alert"
             >
-              <Icon icon={KeyRound} size="sm" />
-              Create token
-            </Button>
-          </div>
-        ) : (
-          <div className={formStack()} data-testid="token-generate-form" id="token-generate-form">
-            <div className={formGrid()}>
-              <FormField id="mcp-token-name" label="Connection name">
-                {(field) => (
-                  <TextInput
-                    {...controlProps(field)}
-                    placeholder="For example, Claude Desktop"
-                    size="sm"
-                    type="text"
-                    value={tokenName}
-                    onChange={(e) => setTokenName(e.target.value)}
-                  />
-                )}
-              </FormField>
-              <FormField id="mcp-token-expiry" label="Token expires after">
-                {(field) => (
-                  <Select
-                    {...controlProps(field)}
-                    options={EXPIRY_OPTIONS}
-                    size="sm"
-                    value={expirySelection}
-                    onChange={(e) => setExpirySelection(e.target.value)}
-                  />
-                )}
-              </FormField>
-            </div>
+              {actionError}
+            </p>
+          ) : null}
 
-            <Switch
-              checked={allowStaging}
-              data-testid="mcp-token-allow-staging"
-              hint={STAGING_TOGGLE_HINT}
-              id="mcp-token-allow-staging"
-              label={STAGING_TOGGLE_LABEL}
-              onChange={(e) => setAllowStaging(e.target.checked)}
-            />
-
-            <div className={formActions()}>
-              <Button size="sm" variant="ghost" onClick={() => setShowGenerateForm(false)}>
-                Cancel
-              </Button>
-              <Button
-                data-testid="confirm-generate-token"
-                disabled={!tokenName.trim()}
-                id="confirm-generate-token"
-                pending={generating}
-                size="sm"
-                variant="primary"
-                onClick={handleCreateToken}
-              >
-                Create token
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {tokenRows}
-
-        <CollapsibleDrawer title={HOW_TO_CONNECT_TITLE} variant="quiet">
-          <div className={setupNote()} data-testid="set-up-panel" id="set-up-panel">
-            <ol className={setupSteps()}>
-              {HOW_TO_CONNECT_STEPS.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-            {serverUrl ? (
-              <div className={serverRow()}>
-                <code className={tokenPrefix()} data-testid="mcp-server-url">
-                  {serverUrl}
-                </code>
+          {newlyCreatedToken ? (
+            <InlineAlert
+              action={
                 <Button
-                  aria-label="Copy the server address"
                   size="sm"
                   type="button"
                   variant="outline"
-                  onClick={async () => {
-                    if (!navigator.clipboard) return;
-                    await navigator.clipboard.writeText(serverUrl);
-                    notify("Address copied");
-                  }}
+                  onClick={() => handleCopyToken(newlyCreatedToken)}
                 >
-                  <Icon icon={Copy} size="sm" />
-                  Copy
+                  <Icon icon={copiedToken ? Check : Copy} size="sm" />
+                  {copiedToken ? "Copied" : "Copy"}
+                </Button>
+              }
+              data-testid="new-token-banner"
+              id="new-token-banner"
+              title="Token created"
+              tone="positive"
+            >
+              Copy it now. It will not be shown again.
+              <code className={tokenValue()}>{newlyCreatedToken}</code>
+            </InlineAlert>
+          ) : null}
+
+          {!onGenerateToken ? (
+            <p className={statusText()} data-testid="token-creation-unavailable">
+              Connection tokens are not available yet. You can still export a summary below.
+            </p>
+          ) : !showGenerateForm ? (
+            <div className={actionRow()}>
+              <Button
+                data-testid="generate-token-trigger"
+                id="generate-token-trigger"
+                size="sm"
+                variant="primary"
+                onClick={() => setShowGenerateForm(true)}
+              >
+                <Icon icon={KeyRound} size="sm" />
+                Create token
+              </Button>
+            </div>
+          ) : (
+            <div className={formStack()} data-testid="token-generate-form" id="token-generate-form">
+              <div className={formGrid()}>
+                <FormField id="mcp-token-name" label="Connection name">
+                  {(field) => (
+                    <TextInput
+                      {...controlProps(field)}
+                      placeholder="For example, Claude Desktop"
+                      size="sm"
+                      type="text"
+                      value={tokenName}
+                      onChange={(e) => setTokenName(e.target.value)}
+                    />
+                  )}
+                </FormField>
+                <FormField id="mcp-token-expiry" label="Token expires after">
+                  {(field) => (
+                    <Select
+                      {...controlProps(field)}
+                      options={EXPIRY_OPTIONS}
+                      size="sm"
+                      value={expirySelection}
+                      onChange={(e) => setExpirySelection(e.target.value)}
+                    />
+                  )}
+                </FormField>
+              </div>
+
+              <Switch
+                checked={allowStaging}
+                data-testid="mcp-token-allow-staging"
+                hint={STAGING_TOGGLE_HINT}
+                id="mcp-token-allow-staging"
+                label={STAGING_TOGGLE_LABEL}
+                onChange={(e) => setAllowStaging(e.target.checked)}
+              />
+
+              <div className={formActions()}>
+                <Button size="sm" variant="ghost" onClick={() => setShowGenerateForm(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  data-testid="confirm-generate-token"
+                  disabled={!tokenName.trim()}
+                  id="confirm-generate-token"
+                  pending={generating}
+                  size="sm"
+                  variant="primary"
+                  onClick={handleCreateToken}
+                >
+                  Create token
                 </Button>
               </div>
-            ) : null}
-            {guideUrl ? (
-              <a className={setupLink()} href={guideUrl} rel="noopener" target="_blank">
-                AI connections on the Flump website
-                <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
-              </a>
-            ) : null}
-          </div>
-        </CollapsibleDrawer>
-      </Card>
+            </div>
+          )}
 
-      <Card
-        aria-labelledby="context-pack-heading"
-        as="section"
-        className={sectionCard()}
-        data-testid="offline-context-pack-card"
+          {tokenRows}
+
+          <CollapsibleDrawer title={HOW_TO_CONNECT_TITLE} variant="quiet">
+            <div className={setupNote()} data-testid="set-up-panel" id="set-up-panel">
+              <ol className={setupSteps()}>
+                {HOW_TO_CONNECT_STEPS.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+              {serverUrl ? (
+                <div className={serverRow()}>
+                  <code className={tokenPrefix()} data-testid="mcp-server-url">
+                    {serverUrl}
+                  </code>
+                  <Button
+                    aria-label="Copy the server address"
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                    onClick={async () => {
+                      if (!navigator.clipboard) return;
+                      await navigator.clipboard.writeText(serverUrl);
+                      notify("Address copied");
+                    }}
+                  >
+                    <Icon icon={Copy} size="sm" />
+                    Copy
+                  </Button>
+                </div>
+              ) : null}
+              {guideUrl ? (
+                <a className={setupLink()} href={guideUrl} rel="noopener" target="_blank">
+                  AI connections on the Flump website
+                  <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+                </a>
+              ) : null}
+            </div>
+          </CollapsibleDrawer>
+        </Card>
+      </PageSection>
+
+      <PageSection
+        description="Copy a summary of your figures to paste into any AI assistant, without connecting one."
+        headingId="context-pack-heading"
+        icon={ClipboardCopy}
         id="offline-context-pack-card"
+        title="Export a summary for an AI assistant"
+        tone="neutral"
       >
-        <h2 className={sectionHeading()} id="context-pack-heading">
-          Export a summary for an AI assistant
-        </h2>
-        <p className={sectionLead()}>
-          Copy a summary of your figures to paste into any AI assistant, without connecting one.
-        </p>
+        <Card className={sectionCard()}>
+          <Switch
+            checked={anonymizeInstitutions}
+            data-testid="mcp-anonymize-toggle"
+            id="mcp-anonymize-toggle"
+            label="Hide bank and provider names in the summary"
+            onChange={(e) => setAnonymizeInstitutions(e.target.checked)}
+          />
 
-        <Switch
-          checked={anonymizeInstitutions}
-          data-testid="mcp-anonymize-toggle"
-          id="mcp-anonymize-toggle"
-          label="Hide bank and provider names in the summary"
-          onChange={(e) => setAnonymizeInstitutions(e.target.checked)}
-        />
-
-        <div className={actionRow()}>
-          <Button
-            data-testid="copy-context-pack-btn"
-            disabled={exportingContextPack}
-            id="copy-context-pack-btn"
-            size="sm"
-            variant="secondary"
-            onClick={() => handleExportContextPack("clipboard")}
-          >
-            <Icon icon={exportedSuccess ? Check : Copy} size="sm" />
-            {exportedSuccess ? "Copied" : "Copy summary"}
-          </Button>
-          <Button
-            data-testid="download-md-btn"
-            disabled={exportingContextPack}
-            id="download-md-btn"
-            size="sm"
-            variant="outline"
-            onClick={() => handleExportContextPack("markdown")}
-          >
-            <Icon icon={Download} size="sm" />
-            Download as Markdown
-          </Button>
-          <Button
-            data-testid="download-json-btn"
-            disabled={exportingContextPack}
-            id="download-json-btn"
-            size="sm"
-            variant="outline"
-            onClick={() => handleExportContextPack("json")}
-          >
-            <Icon icon={Download} size="sm" />
-            Download as JSON
-          </Button>
-        </div>
-      </Card>
+          <div className={actionRow()}>
+            <Button
+              data-testid="copy-context-pack-btn"
+              disabled={exportingContextPack}
+              id="copy-context-pack-btn"
+              size="sm"
+              variant="secondary"
+              onClick={() => handleExportContextPack("clipboard")}
+            >
+              <Icon icon={exportedSuccess ? Check : Copy} size="sm" />
+              {exportedSuccess ? "Copied" : "Copy summary"}
+            </Button>
+            <Button
+              data-testid="download-md-btn"
+              disabled={exportingContextPack}
+              id="download-md-btn"
+              size="sm"
+              variant="outline"
+              onClick={() => handleExportContextPack("markdown")}
+            >
+              <Icon icon={Download} size="sm" />
+              Download as Markdown
+            </Button>
+            <Button
+              data-testid="download-json-btn"
+              disabled={exportingContextPack}
+              id="download-json-btn"
+              size="sm"
+              variant="outline"
+              onClick={() => handleExportContextPack("json")}
+            >
+              <Icon icon={Download} size="sm" />
+              Download as JSON
+            </Button>
+          </div>
+        </Card>
+      </PageSection>
 
       <ConfirmDialog
         confirmLabel="Disconnect"

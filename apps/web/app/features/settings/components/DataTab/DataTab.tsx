@@ -1,4 +1,5 @@
-import { Button, Card, ConfirmDialog } from "@repo/ui";
+import { Button, Card, ConfirmDialog, PageSection } from "@repo/ui";
+import { Eraser } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { RECENT_LOGIN_MESSAGE } from "~/features/settings/account";
@@ -6,13 +7,7 @@ import { DataExportSection } from "~/features/settings/components/DataExportSect
 import { DeleteAccountSection } from "~/features/settings/components/DeleteAccountSection";
 import { SignInAgainButton } from "~/features/settings/components/SignInAgainButton";
 import { useDeleteAccount } from "~/features/settings/hooks/useDeleteAccount";
-import {
-  sectionCard,
-  sectionHeading,
-  sectionLead,
-  statusText,
-  tabStack,
-} from "~/features/settings/settings.styles";
+import { sectionCard, statusText, tabStack } from "~/features/settings/settings.styles";
 import {
   RESET_FINANCIAL_DATA_CONFIRMATION,
   RecentLoginRequiredError,
@@ -95,33 +90,35 @@ export const DataTab: FC = () => {
     <div className={tabStack()} id="settings-data-tab" data-testid="settings-data-tab">
       <DataExportSection />
 
-      <Card as="section" aria-labelledby="reset-data-heading" className={sectionCard()}>
-        <h2 className={sectionHeading()} id="reset-data-heading">
-          Delete your financial data
-        </h2>
-        <p className={sectionLead()}>
-          This deletes your accounts and balances, budget entries and tax records. You then set up
-          Flump again.
-        </p>
-        {/* Danger styling only inside the confirmation (UX D3): at rest this is a plain button. */}
-        <div>
-          <Button
-            data-testid="reset-financial-data-trigger"
-            id="reset-financial-data-trigger"
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setResetError(null);
-              setResetNeedsSignIn(false);
-              setResetSuccess(false);
-              setResetModalOpen(true);
-            }}
-          >
-            Delete all data
-          </Button>
-        </div>
-      </Card>
+      <PageSection
+        description="This deletes your accounts and balances, budget entries and tax records. You then set up Flump again."
+        headingId="reset-data-heading"
+        icon={Eraser}
+        id="settings-reset-data"
+        title="Delete your financial data"
+        tone="neutral"
+      >
+        <Card className={sectionCard()}>
+          {/* Danger styling only inside the confirmation (UX D3): at rest this is a plain button. */}
+          <div>
+            <Button
+              data-testid="reset-financial-data-trigger"
+              id="reset-financial-data-trigger"
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setResetError(null);
+                setResetNeedsSignIn(false);
+                setResetSuccess(false);
+                setResetModalOpen(true);
+              }}
+            >
+              Delete all data
+            </Button>
+          </div>
+        </Card>
+      </PageSection>
 
       <ConfirmDialog
         id="reset-financial-data-dialog"

@@ -1,8 +1,8 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 /**
- * The card sits in the Security tab, so its sections use the shared settings styles
- * (`sectionCard`, `sectionHeading`, `sectionLead`, `statusText`). These recipes cover only what
+ * The card sits in the Security tab, so its sections use `PageSection` headers and the shared
+ * settings styles (`sectionCard`, `sectionLead`, `statusText`). These recipes cover only what
  * those do not: the plain fact list, the token form, the new-token value and the token rows.
  */
 

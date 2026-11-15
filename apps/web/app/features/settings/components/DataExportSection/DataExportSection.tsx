@@ -1,15 +1,11 @@
-import { Button, Card } from "@repo/ui";
+import { Button, Card, PageSection } from "@repo/ui";
+import { Download } from "lucide-react";
 import { type FC, useRef, useState } from "react";
 import {
   AccountExportError,
   downloadAccountExport as defaultDownload,
 } from "~/features/settings/accountExport";
-import {
-  sectionCard,
-  sectionHeading,
-  sectionLead,
-  statusText,
-} from "~/features/settings/settings.styles";
+import { sectionCard, statusText } from "~/features/settings/settings.styles";
 import { exportRow } from "./DataExportSection.styles";
 
 type ExportState = "idle" | "pending" | "done" | "rate_limited" | "failed";
@@ -52,41 +48,40 @@ export const DataExportSection: FC<DataExportSectionProps> = ({ download = defau
   const isError = state === "failed" || state === "rate_limited";
 
   return (
-    <Card
-      as="section"
-      aria-labelledby="export-data-heading"
-      className={sectionCard()}
+    <PageSection
+      description="Get a copy of your Flump data as one JSON file."
+      headingId="export-data-heading"
+      icon={Download}
       id="export-data-section"
-      data-testid="export-data-section"
+      title="Download your data"
+      tone="neutral"
     >
-      <h2 className={sectionHeading()} id="export-data-heading">
-        Download your data
-      </h2>
-      <p className={sectionLead()}>Get a copy of your Flump data as one JSON file.</p>
-      <div className={exportRow()}>
-        <Button
-          id="export-data-button"
-          data-testid="export-data-button"
-          size="sm"
-          type="button"
-          variant="outline"
-          pending={state === "pending"}
-          onClick={handleDownload}
-        >
-          {state === "pending" ? "Preparing your file" : "Download your data"}
-        </Button>
-        {/* The status region stays mounted so the success message is announced; errors are alerts. */}
-        <div role="status">
-          {message && !isError ? (
-            <p className={statusText({ tone: "positive" })}>{message}</p>
+      <Card className={sectionCard()}>
+        <div className={exportRow()}>
+          <Button
+            id="export-data-button"
+            data-testid="export-data-button"
+            size="sm"
+            type="button"
+            variant="outline"
+            pending={state === "pending"}
+            onClick={handleDownload}
+          >
+            {state === "pending" ? "Preparing your file" : "Download your data"}
+          </Button>
+          {/* The status region stays mounted so the success message is announced; errors are alerts. */}
+          <div role="status">
+            {message && !isError ? (
+              <p className={statusText({ tone: "positive" })}>{message}</p>
+            ) : null}
+          </div>
+          {message && isError ? (
+            <p className={statusText({ tone: "danger" })} role="alert">
+              {message}
+            </p>
           ) : null}
         </div>
-        {message && isError ? (
-          <p className={statusText({ tone: "danger" })} role="alert">
-            {message}
-          </p>
-        ) : null}
-      </div>
-    </Card>
+      </Card>
+    </PageSection>
   );
 };
