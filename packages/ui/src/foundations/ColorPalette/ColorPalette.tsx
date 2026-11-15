@@ -155,8 +155,9 @@ export const ColorPalette: FC = () => {
           Flump Color System & Semantic Tokens
         </h1>
         <p className={css({ fontSize: "sm", color: "text.muted", mt: "4px" })}>
-          Strict 6 canonical namespaces: <code>primary</code>, <code>surface</code>,{" "}
-          <code>text</code>, <code>border</code>, <code>status</code>, and <code>chart</code>.
+          Strict 7 canonical namespaces: <code>primary</code>, <code>accent</code>,{" "}
+          <code>surface</code>, <code>text</code>, <code>border</code>, <code>status</code>, and{" "}
+          <code>chart</code>.
         </p>
       </div>
 

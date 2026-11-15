@@ -17,12 +17,19 @@ export const durations = {
   reveal: { value: "150ms" },
   pendingDelay: { value: "200ms" },
   pendingMinimum: { value: "400ms" },
+  // E17: a line or tick drawing itself in, once (a chart line on first view, the saved tick).
+  draw: { value: "600ms" },
+  // E17: an illustration settling on first view, and the wash behind a figure that was just saved.
+  // Plays once per visit, never on a loop and never on a financial event (UX-GUIDELINES M5).
+  scene: { value: "900ms" },
 } as const;
 
 export const easings = {
   standard: { value: "cubic-bezier(0.2, 0.6, 0.2, 1)" },
   enter: { value: "cubic-bezier(0, 0, 0.2, 1)" },
   exit: { value: "cubic-bezier(0.4, 0, 1, 1)" },
+  // E17: a soft landing with no overshoot, for `durations.scene` motion.
+  settle: { value: "cubic-bezier(0.16, 1, 0.3, 1)" },
 } as const;
 
 /** Panda `keyframes`. Reference only under `_motionSafe` (e.g. `_motionSafe: { animation: ... }`). */
