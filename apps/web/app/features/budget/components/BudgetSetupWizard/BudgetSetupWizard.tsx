@@ -111,7 +111,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 const STEP_TITLES: Record<WizardStep, string> = {
   welcome: "Set up your budget",
-  defaults: "Start with example figures",
+  defaults: "Start with common entries",
   income: "Income",
   housing: "Housing",
   bills: "Bills",
@@ -122,7 +122,7 @@ const STEP_TITLES: Record<WizardStep, string> = {
 
 const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
   welcome: "Set up your monthly budget to see where your money goes and your months of cover.",
-  defaults: "Start from example figures, or from a blank budget.",
+  defaults: "Start from common entries, or from a blank budget.",
   income: "Enter your take-home pay and any other income sources.",
   housing: "Rent, mortgage, insurance and other home costs.",
   bills: "Gas, electricity, water, council tax and broadband.",
@@ -141,7 +141,7 @@ const ADD_PLACEHOLDERS: Partial<Record<WizardStep, string>> = {
 
 const WELCOME_POINTS = [
   "Enter your income and monthly spending",
-  "Check any example figures and change them to match yours",
+  "Fill in the amounts for any common entries you add",
   "See what is left over each month",
   "See your months of cover",
 ];
@@ -165,8 +165,9 @@ const defaultItem = (
   isDefault: true,
 });
 
-// Suggested rows are names only: the amount starts at 0 for the person to fill in, so no
-// invented figure reaches budget totals, safe to spend or months of cover (E23).
+// Common entries are names only: the amount starts at 0 for the person to fill in, so no
+// invented figure reaches budget totals, safe to spend or months of cover (E23). The button says
+// "Add common entries", not "example figures", because it adds no figures.
 const DEFAULT_ITEMS: NewEntry[] = [
   defaultItem("Rent / Mortgage", 0, "housing", true),
   defaultItem("Council Tax", 0, "bills", true),
@@ -295,10 +296,30 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     if (prev) setCurrentStep(prev);
   };
 
+  // Idempotent: an entry already in the budget under the same name and category (from an
+  // earlier click, or from the page's "Add common entries") is never added again.
+  const sameEntry = (
+    a: { name: string; category: string },
+    b: { name: string; category: string },
+  ) =>
+    a.category === b.category &&
+    a.name
+      .trim()
+      .toLowerCase()
+      .replace(/\s*\/\s*/g, " or ")
+      .replace(/&/g, "and") ===
+      b.name
+        .trim()
+        .toLowerCase()
+        .replace(/\s*\/\s*/g, " or ")
+        .replace(/&/g, "and");
+
   const applyDefaults = async () => {
+    if (saving) return;
     setSaving(true);
     try {
-      for (const item of DEFAULT_ITEMS) {
+      const missing = DEFAULT_ITEMS.filter((item) => !entries.some((e) => sameEntry(e, item)));
+      for (const item of missing) {
         await onAddEntry(item);
       }
       saveAllAndProceed();
@@ -464,16 +485,16 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             <div className={choiceGrid()}>
               <div className={choiceCard({ featured: true })}>
                 <div>
-                  <h3 className={choiceTitle()}>Example figures</h3>
+                  <h3 className={choiceTitle()}>Common entries</h3>
                   <p className={choiceText()}>
-                    Example: rent or mortgage £1,200, council tax £160, gas and electricity £150,
-                    water £40, broadband £35 and groceries £350 a month. These are examples, not
-                    your figures. You can change each one in the next steps.
+                    Rent or mortgage, council tax, gas and electricity, water, broadband and
+                    groceries, with the amounts left for you to fill in. You can change or remove
+                    each one in the next steps.
                   </p>
                 </div>
                 <Button disabled={saving} type="button" onClick={applyDefaults}>
                   <Icon icon={Rocket} size="sm" />
-                  {saving ? "Adding…" : "Use example figures"}
+                  {saving ? "Adding…" : "Add common entries"}
                 </Button>
               </div>
               <div className={choiceCard()}>

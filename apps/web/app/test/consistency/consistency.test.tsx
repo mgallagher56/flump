@@ -162,6 +162,9 @@ function expectedFigures(picture: FinancialPicture): Record<string, number | nul
     "safeToSpend.weekly": isFigureKnown(picture.safeToSpend)
       ? picture.safeToSpend.value.weekly
       : null,
+    "safeToSpend.monthly": isFigureKnown(picture.safeToSpend)
+      ? picture.safeToSpend.value.monthly
+      : null,
     monthsOfCover: isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value.months : null,
     "tax.estimatedDue": isFigureKnown(picture.estimatedTaxDue)
       ? picture.estimatedTaxDue.value.amount
@@ -321,10 +324,10 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
     // Known figures must actually be on screen somewhere (a page cannot pass by hiding them).
     const shown = new Set(readings.map((r) => r.key));
     if (fixture.accounts.length > 0) expect(shown).toContain("netWorth");
-    // Safe to spend left the dashboard (E16 PR 4; the plan keeps it on budget), and the budget
-    // shows it under its hero, which needs an income row. Follow-up: show it without one.
-    if (expected["safeToSpend.weekly"] !== null && expected["budget.surplus"] !== null)
-      expect(shown).toContain("safeToSpend.weekly");
+    // The budget shows what is free after essentials under its hero, monthly to match "left
+    // over" (owner ruling 2026-11-15), which needs an income row. Follow-up: show it without one.
+    if (expected["safeToSpend.monthly"] !== null && expected["budget.surplus"] !== null)
+      expect(shown).toContain("safeToSpend.monthly");
     if (expected.monthsOfCover !== null) expect(shown).toContain("monthsOfCover");
     if (expected["budget.surplus"] !== null) expect(shown).toContain("budget.surplus");
   });

@@ -51,7 +51,9 @@ export const WithTakeHome: Story = {
   },
   play: async ({ canvasElement }) => {
     await expect(
-      within(canvasElement).getAllByText(/a week is safe to spend after essential spending/)[0],
+      within(canvasElement).getAllByText(
+        /a month after essential spending, debt payments and savings, before flexible spending/,
+      )[0],
     ).toBeDefined();
   },
 };

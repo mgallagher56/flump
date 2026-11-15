@@ -2,6 +2,7 @@ import { ToastProvider } from "@repo/ui";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { BudgetEntry } from "~/types/budget";
+import { exampleBudgetDrafts } from "../../exampleDrafts";
 import { BudgetEditor, type BudgetEditorProps } from "./BudgetEditor";
 
 const row = (overrides: Partial<BudgetEntry>): BudgetEntry => ({
@@ -343,5 +344,67 @@ describe("BudgetEditor", () => {
     expect(removePets.id).toBe("budget-editor-remove-category-pets");
     fireEvent.click(removePets);
     expect(onDeleteCategory).toHaveBeenCalledWith("pets");
+  });
+
+  describe("suggested rows", () => {
+    const draftHandlers = () => ({
+      onDraftChange: vi.fn(),
+      onDraftRemove: vi.fn(),
+      onSaveDrafts: vi.fn().mockResolvedValue(undefined),
+      onRemoveDrafts: vi.fn(),
+    });
+
+    it("shows each suggested row with a Suggested badge under one note", () => {
+      setup({ entries: [], drafts: exampleBudgetDrafts(), ...draftHandlers() });
+      expect(screen.getAllByText("Suggested")).toHaveLength(8);
+      expect(screen.getAllByRole("note")).toHaveLength(1);
+      expect(screen.getByRole("note").textContent).toContain(
+        "These are common entries and are not saved yet.",
+      );
+      // Income and savings rows have no essential switch; spending rows do.
+      expect(screen.queryByLabelText("Essential: Take-home pay")).toBeNull();
+      expect(screen.queryByLabelText("Essential: Savings")).toBeNull();
+      expect(screen.getByLabelText("Essential: Travel")).toBeDefined();
+      expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).value).toBe("");
+    });
+
+    it("changes and removes a suggested row on the page, with no confirm and no save", () => {
+      const handlers = draftHandlers();
+      const { onUpdate, onDelete } = setup({
+        entries: [],
+        drafts: exampleBudgetDrafts(),
+        ...handlers,
+      });
+      fireEvent.change(screen.getByLabelText("Name of Energy"), {
+        target: { value: "Gas and electricity" },
+      });
+      expect(handlers.onDraftChange).toHaveBeenCalledWith("example-4", {
+        name: "Gas and electricity",
+      });
+      fireEvent.change(screen.getByLabelText("How often for Energy"), {
+        target: { value: "annual" },
+      });
+      expect(handlers.onDraftChange).toHaveBeenCalledWith("example-4", { frequency: "annual" });
+      fireEvent.click(screen.getByRole("button", { name: "Remove Energy" }));
+      expect(handlers.onDraftRemove).toHaveBeenCalledWith("example-4");
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(onUpdate).not.toHaveBeenCalled();
+      expect(onDelete).not.toHaveBeenCalled();
+    });
+
+    it("Save rows and Remove suggestions call the page", async () => {
+      const handlers = draftHandlers();
+      setup({ entries: [], drafts: exampleBudgetDrafts(), ...handlers });
+      fireEvent.click(screen.getByRole("button", { name: "Save rows" }));
+      await waitFor(() => expect(handlers.onSaveDrafts).toHaveBeenCalledTimes(1));
+      fireEvent.click(screen.getByRole("button", { name: "Remove suggestions" }));
+      expect(handlers.onRemoveDrafts).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows no note without suggested rows", () => {
+      setup();
+      expect(screen.queryByRole("note")).toBeNull();
+      expect(screen.queryByText("Suggested")).toBeNull();
+    });
   });
 });
