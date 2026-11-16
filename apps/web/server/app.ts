@@ -50,8 +50,8 @@ export function createApp({
     path.posix.join(publicPath, "assets"),
     express.static(path.join(assetsBuildDirectory, "assets"), { immutable: true, maxAge: "1y" }),
   );
-  app.use(publicPath, express.static(assetsBuildDirectory));
-  app.use(express.static(publicDir, { maxAge: "1h" }));
+  app.use(publicPath, express.static(assetsBuildDirectory, { dotfiles: "allow" }));
+  app.use(express.static(publicDir, { maxAge: "1h", dotfiles: "allow" }));
 
   app.use(
     createRequestHandler({

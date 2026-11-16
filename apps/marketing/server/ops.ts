@@ -43,8 +43,8 @@ function configuredSecurityContact(): string | undefined {
 
 /**
  * GET /.well-known/security.txt, only when SECURITY_CONTACT (or a non-placeholder business-details contact) is a valid email or https URL.
- * Otherwise it answers 404 itself: the SPA catch-all would serve HTML (200) for it.
- * Expiry is computed per request, so it never goes stale.
+ * Otherwise it calls `next()` so `sirv` (with `dotfiles: true`) serves the static `.well-known/security.txt`.
+ * Expiry is computed per request when served dynamically, so it never goes stale.
  */
 export function securityTxtRouter(
   env: Env = process.env,
@@ -52,10 +52,10 @@ export function securityTxtRouter(
 ): Router {
   const router = express.Router();
 
-  router.get("/.well-known/security.txt", (_req, res) => {
+  router.get("/.well-known/security.txt", (_req, res, next) => {
     const contact = normaliseSecurityContact(env.SECURITY_CONTACT ?? configuredSecurityContact());
     if (!contact) {
-      res.status(404).type("text/plain").send("Not Found");
+      next();
       return;
     }
     res.status(200).type("text/plain").send(buildSecurityTxt(contact, now()));
