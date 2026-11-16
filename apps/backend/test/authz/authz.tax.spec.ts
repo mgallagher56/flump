@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { decryptReceiptData } from "@flump/banking/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { TaxRecord } from "../../src/entities/tax-record.entity";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
@@ -86,7 +87,8 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
     expect(Number(full?.amount)).toBe(1000);
     expect(full?.endDate).toBeNull();
     expect(full?.receiptFilename).toBe("a-payslip.pdf");
-    expect(row?.receiptData).toBe(RECEIPT_DATA);
+    expect(row?.receiptData).toMatch(/^v1:/);
+    expect(decryptReceiptData(row?.receiptData ?? "", recordId)).toBe(RECEIPT_DATA);
   };
 
   const expectSameAsNotFound = async (method: "get" | "patch" | "delete", body?: object) => {

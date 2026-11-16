@@ -1,9 +1,11 @@
+import { randomUUID } from "node:crypto";
 import {
   MAX_BULK_TAX_RECORDS as CONTRACT_MAX_BULK_TAX_RECORDS,
   type CreateTaxRecordRequest,
   type TaxRecordCap,
   type UpdateTaxRecordRequest,
 } from "@flump/api-contract";
+import { decryptReceiptData, encryptReceiptData } from "@flump/banking/server";
 import { getAnnualRecordEndDate } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -191,7 +193,15 @@ export class TaxService {
       }
     }
     const picked = Array.isArray(body?.records)
-      ? body.records.map((r) => withAnnualEndDate({ ...pickTaxRecordFields(r), userId }))
+      ? body.records.map((r) => {
+          const item = withAnnualEndDate({ ...pickTaxRecordFields(r), userId });
+          if (typeof item.receiptData === "string" && item.receiptData.length > 0) {
+            const id = item.id ?? randomUUID();
+            item.id = id;
+            item.receiptData = encryptReceiptData(item.receiptData, id);
+          }
+          return item;
+        })
       : [];
     if (caps.length === 0 && picked.length === 0) return [];
 
@@ -232,32 +242,35 @@ export class TaxService {
     });
     const notFound = new NotFoundException("Receipt not found");
     if (!record?.receiptData) throw notFound;
+    let plaintextReceipt: string;
     let mime: ReturnType<typeof validateReceipt>;
     try {
+      plaintextReceipt = decryptReceiptData(record.receiptData, record.id);
       mime = validateReceipt({
         receiptFilename: record.receiptFilename,
         receiptMimeType: record.receiptMimeType,
-        receiptData: record.receiptData,
+        receiptData: plaintextReceipt,
       });
     } catch {
       throw notFound;
     }
-    const bytes = Buffer.from(
-      record.receiptData.slice(record.receiptData.indexOf(",") + 1),
-      "base64",
-    );
+    const bytes = Buffer.from(plaintextReceipt.slice(plaintextReceipt.indexOf(",") + 1), "base64");
     const type = mime ?? sniffReceiptMime(bytes);
     if (!type) throw notFound;
     return { bytes, type, filename: record.receiptFilename ?? null };
   }
 
   async createRecord(userId: string, body: CreateTaxRecordRequest): Promise<TaxRecordResponse> {
-    const record = this.taxRecordRepository.create(
-      withAnnualEndDate({
-        ...pickTaxRecordFields(body),
-        userId,
-      }),
-    );
+    const picked = withAnnualEndDate({
+      ...pickTaxRecordFields(body),
+      userId,
+    });
+    if (typeof picked.receiptData === "string" && picked.receiptData.length > 0) {
+      const id = picked.id ?? randomUUID();
+      picked.id = id;
+      picked.receiptData = encryptReceiptData(picked.receiptData, id);
+    }
+    const record = this.taxRecordRepository.create(picked);
     return toTaxRecordResponse(await this.taxRecordRepository.save(record));
   }
 
@@ -278,7 +291,11 @@ export class TaxService {
         const record = await repository.findOne({ where: { id, userId } });
         if (!record) throw notFound();
         // receiptData is not loaded (select: false), so an omitted field keeps the stored bytes.
-        Object.assign(record, pickTaxRecordFields(body));
+        const picked = pickTaxRecordFields(body);
+        if (typeof picked.receiptData === "string" && picked.receiptData.length > 0) {
+          picked.receiptData = encryptReceiptData(picked.receiptData, record.id);
+        }
+        Object.assign(record, picked);
         withAnnualEndDate(record);
         return repository.save(record);
       },
