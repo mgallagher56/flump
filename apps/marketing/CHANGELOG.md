@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.0...flump/marketing-v1.36.1) (2026-11-16)
+
+
+### Bug Fixes 🪲
+
+* **e33:** update McpPage, seed-synthetic, navConfig test, contractResponses, and Storybook play test ([c5e0ee0](https://github.com/mgallagher56/flump/commit/c5e0ee08106ad5acabd04f012dfd1304de9c17d3))
+
 ## [1.36.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.35.0...flump/marketing-v1.36.0) (2026-11-16)
 
 
