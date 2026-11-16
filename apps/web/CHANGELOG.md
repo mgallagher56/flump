@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.42.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.41.0...flump/web-v1.42.0) (2026-11-16)
+
+
+### Features ✨
+
+* **accounts:** E17 5A section headers and result card ([ea0f180](https://github.com/mgallagher56/flump/commit/ea0f180fc439ff7f165f26af6d05e4948e1a2c20))
+* **api:** BE-16 conditional writes on the web, and API tidy (M7, N10, L11) ([6432d65](https://github.com/mgallagher56/flump/commit/6432d65e2a755947d9eb8f832f618884588010cb))
+* **budget:** Breathing room in its own section with a result card; the zone shows only the illustration ([8bdfcd2](https://github.com/mgallagher56/flump/commit/8bdfcd26d95bcd66a89ed229bc1be6e2bc88494d))
+* **copy,ux:** E35 no-shaming copy guardrails (N1-N5) and warm confirmations ([76826ff](https://github.com/mgallagher56/flump/commit/76826ff268c0cb3c07990a6f54b96a5c188d4e94))
+* **dashboard:** E17 5A section headers and result card ([2346358](https://github.com/mgallagher56/flump/commit/2346358a7dad8321239f83865d0f010f3b47f4ca))
+* **history:** E17 5A section headers and result card ([7442a05](https://github.com/mgallagher56/flump/commit/7442a052dd8e8ccbfe766be6a0694771ecf477e2))
+* **mortgage:** E17 5A section headers and result card ([d56b452](https://github.com/mgallagher56/flump/commit/d56b4522e16a810941b38ec8d5721dc3d43ef28d))
+* **motion:** implement approved E17 micro-animations ([81c103d](https://github.com/mgallagher56/flump/commit/81c103de85016a321c9b24b40279d0e969e15a03))
+* **pension:** E17 5A section headers and result card ([302007c](https://github.com/mgallagher56/flump/commit/302007c87b5910ea5e5437346dfbc304ae0b4bb7))
+* rename Months of cover to Breathing room in web, MCP, marketing and the copy guide; Debt page takes the section header and result card ([9d71e80](https://github.com/mgallagher56/flump/commit/9d71e809d94ffbe76774ff18749d0d4924f002fc))
+* **savings:** E17 5A section headers and result card ([97de138](https://github.com/mgallagher56/flump/commit/97de1389e58e6dd9e71f1e75f90d816ef339ee1a))
+* **security:** E36 supply-chain release-age gates, CI laws, and SECURITY.md ([bf91f31](https://github.com/mgallagher56/flump/commit/bf91f3103406dbcc977da0434c71b3ac3b8070d0))
+* **self-assessment:** E17 5A section headers and result card ([25922fc](https://github.com/mgallagher56/flump/commit/25922fc62935406a1dd7372950c473a2ca7f501f))
+* **settings:** E17 5A section headers and result card ([b562de2](https://github.com/mgallagher56/flump/commit/b562de25c61d685132b82c2a8fbe7e808f3ac07e))
+* **take-home:** E17 5A result card in the pay rise tool ([6db426b](https://github.com/mgallagher56/flump/commit/6db426b818d94faf3cbd3c01808a86604f5d9e8a))
+* **ui:** add ProgressRing, E17 3A illustration scenes and setup checklist 2A/2C ([2f0b9f0](https://github.com/mgallagher56/flump/commit/2f0b9f0356078e5008ce19151be76c3ad3cdd590))
+* **ux:** implement E17 house rules B1-B5, B8-B18 and [#737](https://github.com/mgallagher56/flump/issues/737) follow-ups ([f486f5e](https://github.com/mgallagher56/flump/commit/f486f5e42819a8052fcb42dce1caf22c4da2ed5e))
+* **web:** redirect /sandbox to /signup and remove legacy sandbox feature (PR B) ([07c48e2](https://github.com/mgallagher56/flump/commit/07c48e2d382ba8f27e6ed187bb4c357d474686f2))
+
+
+### Bug Fixes 🪲
+
+* **api:** BE-16 review findings: lock order, retry after midnight, one notice ([cf8e699](https://github.com/mgallagher56/flump/commit/cf8e6995fb68402df31729d72d95a1be07f53f90))
+* **backend,web:** align route inventory, PUT account contract test, and literal regex in check-conditional-writes ([5cb907b](https://github.com/mgallagher56/flump/commit/5cb907b8c8677e7979363fb96bc6b9f7c3af2a21))
+* **deps:** update all non-major third-party dependencies ([430cdae](https://github.com/mgallagher56/flump/commit/430cdae297a8e3ba055ca5bcb7f0fbe6a58063c4))
+* **docker:** serve .well-known/security.txt from build/client in web image ([b913733](https://github.com/mgallagher56/flump/commit/b9137338cdf58b1d7399d504c43d31172714cc42))
+* **security:** replace regex in check-conditional-writes with linear prefix scan ([fd1297c](https://github.com/mgallagher56/flump/commit/fd1297c393b96099782be5f03defbad0ac80c2d9))
+* **security:** serve static .well-known/security.txt on marketing and web ([f110ff4](https://github.com/mgallagher56/flump/commit/f110ff41763d627ff292ead55bff9f0b43a7b293))
+* **ui,web:** apply ui-compliance review fixes and add mobile parity row ([ff2e057](https://github.com/mgallagher56/flump/commit/ff2e057938490fd518c6743f960df55ccde2d66c))
+
+
+### Miscellaneous 🙃
+
+* **deps:** update dependency vite-plugin-checker to v1 ([8ab8ce8](https://github.com/mgallagher56/flump/commit/8ab8ce85da1a7d6f16192e36ae2beb14be6a3b2c))
+
 ## [1.41.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.40.0...flump/web-v1.41.0) (2026-11-15)
 
 

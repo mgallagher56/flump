@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.36.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.35.0...flump/backend-v1.36.0) (2026-11-16)
+
+
+### Features ✨
+
+* **api:** BE-16 conditional writes on the web, and API tidy (M7, N10, L11) ([6432d65](https://github.com/mgallagher56/flump/commit/6432d65e2a755947d9eb8f832f618884588010cb))
+* **banking:** BE-18 bank launch readiness (lock-free refresh, strict token prefix, OAuth state tests) ([3b13bf9](https://github.com/mgallagher56/flump/commit/3b13bf97c50f547f48f25ba20a76c57aad5037fd))
+
+
+### Bug Fixes 🪲
+
+* **api:** BE-16 review findings: lock order, retry after midnight, one notice ([cf8e699](https://github.com/mgallagher56/flump/commit/cf8e6995fb68402df31729d72d95a1be07f53f90))
+* **backend,web:** align route inventory, PUT account contract test, and literal regex in check-conditional-writes ([5cb907b](https://github.com/mgallagher56/flump/commit/5cb907b8c8677e7979363fb96bc6b9f7c3af2a21))
+* **banking:** address BE-18 review findings (CAS race, coalescing, NaN expiry) ([3b0c560](https://github.com/mgallagher56/flump/commit/3b0c560a096bf8cfd7ae526c90f3cc333af1c3bf))
+* **deps:** update all non-major third-party dependencies ([430cdae](https://github.com/mgallagher56/flump/commit/430cdae297a8e3ba055ca5bcb7f0fbe6a58063c4))
+* **security:** replace regex in check-conditional-writes with linear prefix scan ([fd1297c](https://github.com/mgallagher56/flump/commit/fd1297c393b96099782be5f03defbad0ac80c2d9))
+
+
+### Tests 🧪
+
+* **backend:** increase testTimeout to 15s for real-Postgres tests ([41cfa72](https://github.com/mgallagher56/flump/commit/41cfa72d48918398717dc2d18877d9280aca32c6))
+
 ## [1.35.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.34.0...flump/backend-v1.35.0) (2026-11-15)
 
 
