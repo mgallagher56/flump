@@ -18,6 +18,7 @@ import { FinanceModule } from "./modules/finance/finance.module";
 import { ImportsModule } from "./modules/imports/imports.module";
 import { PrivacyModule } from "./modules/privacy/privacy.module";
 import { ProfileModule } from "./modules/profile/profile.module";
+import { RetirementModule } from "./modules/retirement/retirement.module";
 import { SnapshotsModule } from "./modules/snapshots/snapshots.module";
 import { TaxModule } from "./modules/tax/tax.module";
 import { ObservabilityModule } from "./observability/observability.module";
@@ -47,6 +48,7 @@ import { SecurityModule } from "./security/security.module";
     }),
     FinanceModule,
     ProfileModule,
+    RetirementModule,
     BudgetModule,
     TaxModule,
     SnapshotsModule,

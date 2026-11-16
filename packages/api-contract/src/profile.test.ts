@@ -142,6 +142,7 @@ describe("AccountExportDocument (BE-04)", () => {
     userId: "user_01HZX3Q9V7C2M8N4P6R0S5T1WA",
     notes: ["a note"],
     profile: null,
+    retirementPlan: null,
     accounts: [],
     accountDetails: [],
     transactions: [],

@@ -68,8 +68,12 @@ export const SCHEMA_DOCUMENT = {
     get_debt_overview: "Debts, APRs and minimum payments.",
     list_tax_records: "Tax records and totals for a tax year.",
     get_tax_year_position: "Income, allowances and tax estimates for a tax year.",
+    get_retirement_picture:
+      "Retirement plan estimate in today's prices, State Pension, housing in retirement, and monthly counted-pots series.",
     simulate_debt_payoff: "Debt payoff timeline under a given strategy and extra payment.",
     project_net_worth: "Net worth estimate at a given return, with optional events.",
+    simulate_retirement:
+      "Retirement income simulation in today's prices with overrides for age, contributions, growth, State Pension, and target.",
     compare_mortgage_overpay_vs_invest:
       "Deprecated: overpaying a mortgage beside investing the same amount.",
     stage_import:

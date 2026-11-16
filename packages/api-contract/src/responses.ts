@@ -49,6 +49,7 @@ export {
   UpdateProfileResponse,
   UserProfileResponse,
 } from "./domains/profile.js";
+export { RetirementPlanResponse } from "./domains/retirement.js";
 export { UpsertSnapshotResponse } from "./domains/snapshots.js";
 export {
   DeleteTaxRecordResponse,

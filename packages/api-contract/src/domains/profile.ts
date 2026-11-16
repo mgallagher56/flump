@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { IsoDateTime, Money, Percent, ResponseMoney, Uuid } from "../primitives.js";
 import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "./budget.js";
+import {
+  RetirementGrowthRatesSchema,
+  RetirementHousingOverrideSchema,
+  RetirementTargetSchema,
+} from "./retirement.js";
 
 const AvatarUrl = z
   .string()
@@ -500,6 +505,24 @@ export const AccountExportConsent = z.strictObject({
   withdrawnAt: NullableExportTimestamp,
 });
 
+export const AccountExportRetirementPlan = z.strictObject({
+  id: Uuid,
+  retirementAge: z.number().int().nullable(),
+  planToAge: z.number().int().nullable(),
+  target: RetirementTargetSchema.nullable(),
+  housingOverride: RetirementHousingOverrideSchema.nullable(),
+  statePensionAge: z.number().int().nullable(),
+  statePensionAnnualForecastGbp: ResponseMoney.nullable(),
+  statePensionQualifyingYears: z.number().int().nullable(),
+  growthRates: RetirementGrowthRatesSchema,
+  inflationRate: z.number().finite(),
+  cashSavingsNominalRate: z.number().finite().nullable(),
+  realRentGrowthRate: z.number().finite(),
+  excludedAccountIds: z.array(Uuid),
+  createdAt: ExportTimestamp,
+  updatedAt: ExportTimestamp,
+});
+
 /** GET /user-profile/export: the whole document (`schemaVersion` first). */
 export const AccountExportDocument = z.strictObject({
   schemaVersion: z.literal(ACCOUNT_EXPORT_SCHEMA_VERSION),
@@ -509,6 +532,7 @@ export const AccountExportDocument = z.strictObject({
   /** Plain-English notes on what is and is not included. */
   notes: z.array(z.string()).optional(),
   profile: AccountExportProfile.nullable(),
+  retirementPlan: AccountExportRetirementPlan.nullable(),
   accounts: z.array(AccountExportAccount),
   accountDetails: z.array(AccountExportAccountDetail),
   transactions: z.array(AccountExportTransaction),
@@ -538,6 +562,7 @@ export type AccountExportKey = Exclude<
  */
 export const ACCOUNT_EXPORT_SECTIONS = {
   profile: AccountExportProfile,
+  retirementPlan: AccountExportRetirementPlan,
   accounts: AccountExportAccount,
   accountDetails: AccountExportAccountDetail,
   transactions: AccountExportTransaction,

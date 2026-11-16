@@ -4,6 +4,7 @@ export type AppPageKey =
   | "debt"
   | "savings"
   | "pension"
+  | "retirement"
   | "mortgage"
   | "tax";
 
@@ -32,6 +33,7 @@ export const ALL_PAGE_KEYS: AppPageKey[] = [
   "debt",
   "savings",
   "pension",
+  "retirement",
   "mortgage",
   "tax",
 ];
@@ -77,6 +79,14 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     category: "wealth",
     badgeColor: "var(--colors-chart-accent-purple)",
   },
+  retirement: {
+    key: "retirement",
+    label: "Retirement plan",
+    route: "/app/retirement",
+    description: "Your retirement target, estimated yearly income in today's prices and housing",
+    category: "planning",
+    badgeColor: "var(--colors-chart-accent-purple)",
+  },
   mortgage: {
     key: "mortgage",
     label: "Mortgage",
@@ -101,6 +111,7 @@ export const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetM
   debt: APP_PAGES.debt,
   savings: APP_PAGES.savings,
   pension: APP_PAGES.pension,
+  retirement: APP_PAGES.retirement,
   mortgage: APP_PAGES.mortgage,
   tax: APP_PAGES.tax,
 };
@@ -122,6 +133,7 @@ export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
   debt: "normal",
   savings: "normal",
   pension: "normal",
+  retirement: "normal",
   mortgage: "normal",
   tax: "normal",
 };

@@ -31,6 +31,7 @@ export const MODULE_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = 
   finance: ["banking", "snapshots"],
   privacy: ["banking"],
   profile: ["banking", "privacy", "snapshots"],
+  retirement: ["privacy"],
   agent: ["finance", "imports", "profile"],
 };
 

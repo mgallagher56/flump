@@ -154,6 +154,7 @@ describe("conditional updates (BE-09, audit M7, L15)", () => {
       "accounts.update",
       "budget.update",
       "profile.update",
+      "retirementPlan.upsert",
       "snapshots.upsert",
       "tax.update",
     ]);

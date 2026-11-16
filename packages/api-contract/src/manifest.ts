@@ -25,6 +25,7 @@ import {
   UpdateChecklistRequest,
   UpdateProfileRequest,
 } from "./domains/profile.js";
+import { UpsertRetirementPlanRequest } from "./domains/retirement.js";
 import { SnapshotMonthParams, UpsertSnapshotRequest } from "./domains/snapshots.js";
 import {
   BulkCreateTaxRecordsRequest,
@@ -65,6 +66,7 @@ import {
   PortfolioSnapshotResponse,
   ReadinessResponse,
   ResetFinancialDataResponse,
+  RetirementPlanResponse,
   RevokeMcpTokenResponse,
   SendPasswordResetResponse,
   SyncBankConnectionResponse,
@@ -581,6 +583,29 @@ export const routes = {
       params: IdParams,
       group: "tax",
       response: DeleteTaxRecordResponse,
+    }),
+  },
+  retirementPlan: {
+    get: defineRoute({
+      id: "retirementPlan.get",
+      method: "GET",
+      path: "retirement-plan",
+      auth: "user",
+      ownership: "user",
+      group: "profile",
+      response: RetirementPlanResponse,
+      etag: "read",
+    }),
+    upsert: defineRoute({
+      id: "retirementPlan.upsert",
+      method: "PUT",
+      path: "retirement-plan",
+      auth: "user",
+      ownership: "user",
+      body: UpsertRetirementPlanRequest,
+      group: "profile",
+      response: RetirementPlanResponse,
+      etag: "conditional",
     }),
   },
   profile: {

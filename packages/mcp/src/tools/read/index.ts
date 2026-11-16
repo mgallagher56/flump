@@ -4,6 +4,7 @@ import { getBudgetSummary } from "./getBudgetSummary.js";
 import { getDataCoverage } from "./getDataCoverage.js";
 import { getDebtOverview } from "./getDebtOverview.js";
 import { getFinancialSnapshot } from "./getFinancialSnapshot.js";
+import { getRetirementPicture } from "./getRetirementPicture.js";
 import { getTaxYearPosition } from "./getTaxYearPosition.js";
 import { listAccounts } from "./listAccounts.js";
 import { listTaxRecords } from "./listTaxRecords.js";
@@ -18,4 +19,5 @@ export const READ_TOOLS: readonly DefinedFlumpTool[] = [
   getDebtOverview,
   listTaxRecords,
   getTaxYearPosition,
+  getRetirementPicture,
 ];

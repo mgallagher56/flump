@@ -90,6 +90,12 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
         description: "navPensionDesc",
         icon: Coins,
       },
+      {
+        key: "retirement",
+        route: "/app/retirement",
+        description: "navRetirementDesc",
+        icon: Coins,
+      },
     ],
   },
   {

@@ -12,6 +12,7 @@ import { Consent } from "../entities/consent.entity";
 import { IdempotencyKey } from "../entities/idempotency-key.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { McpToken } from "../entities/mcp-token.entity";
+import { RetirementPlan } from "../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../entities/tax-record.entity";
 import { Transaction } from "../entities/transaction.entity";
@@ -29,6 +30,7 @@ export const ENTITIES: Function[] = [
   BudgetEntry,
   TaxRecord,
   McpToken,
+  RetirementPlan,
   SnapshotCheckin,
   ImportBatch,
   AgentAuditEvent,
