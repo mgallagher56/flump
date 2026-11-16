@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,9 +30,15 @@ afterEach(() => {
 });
 
 describe("static security.txt", () => {
-  it("is no longer shipped (a placeholder contact must never be served)", () => {
+  it("ships a valid RFC 9116 security.txt with no placeholder contact (E36)", () => {
     const dir = path.dirname(fileURLToPath(import.meta.url));
-    expect(existsSync(path.resolve(dir, "../public/.well-known/security.txt"))).toBe(false);
+    const file = path.resolve(dir, "../public/.well-known/security.txt");
+    expect(existsSync(file)).toBe(true);
+    const text = readFileSync(file, "utf8");
+    expect(text).toMatch(/^Contact: https:\/\//m);
+    expect(text).toMatch(/^Expires: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/m);
+    expect(text).toMatch(/^Preferred-Languages: en$/m);
+    expect(text).not.toMatch(/example\.invalid|PLACEHOLDER|flump\.(app|co\.uk)/);
   });
 });
 

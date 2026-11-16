@@ -223,21 +223,25 @@ describe("merge gate (BE-01)", () => {
   });
 });
 
-describe("supply chain (BE-01 L8, M17)", () => {
-  const files = [
-    ...[
-      "ci-pipeline.yml",
-      "security-scan.yml",
-      "release-please.yml",
-      "visual-regression.yml",
-      "backup.yml",
-      "a11y-gate.yml",
-      "load-smoke.yml",
-    ].map((f) => `.github/workflows/${f}`),
-    ".github/actions/bun-setup/action.yml",
-  ];
+const workflowFiles = readdirSync(resolve(repoRoot, ".github/workflows")).filter((f) =>
+  /\.ya?ml$/.test(f),
+);
 
-  test("every third-party action is pinned to a full commit SHA", () => {
+const actionFiles = readdirSync(resolve(repoRoot, ".github/actions"))
+  .map((dir) => `.github/actions/${dir}/action.yml`)
+  .filter((rel) => existsSync(resolve(repoRoot, rel)));
+
+/**
+ * E36 2(a): allowlist for `trustedDependencies` across all workspace package.json files.
+ * Every entry requires a non-empty documented reason. Empty by default: lifecycle scripts stay off.
+ */
+const TRUSTED_DEPENDENCIES_ALLOWLIST: Record<string, string> = {};
+
+describe("supply chain (BE-01 L8, M17, E36 2(a))", () => {
+  const files = [...workflowFiles.map((f) => `.github/workflows/${f}`), ...actionFiles];
+
+  test("every third-party action across all workflows and composite actions is pinned to a full 40-char commit SHA", () => {
+    expect(workflowFiles.length).toBeGreaterThanOrEqual(7);
     const unpinned = files.flatMap((file) =>
       readFileSync(resolve(repoRoot, file), "utf8")
         .split("\n")
@@ -246,6 +250,91 @@ describe("supply chain (BE-01 L8, M17)", () => {
         .map((line) => `${file}: ${line.trim()}`),
     );
     expect(unpinned).toEqual([]);
+  });
+
+  test("bunfig.toml enforces a 7-day (604800s) minimumReleaseAge gate (E36 2(a))", () => {
+    const bunfigPath = resolve(repoRoot, "bunfig.toml");
+    expect(existsSync(bunfigPath)).toBe(true);
+    const bunfig = Bun.TOML.parse(readFileSync(bunfigPath, "utf8")) as {
+      install?: {
+        minimumReleaseAge?: number;
+        minimumReleaseAgeExcludes?: string[];
+      };
+    };
+    expect(bunfig.install?.minimumReleaseAge).toBe(604800);
+    expect(bunfig.install?.minimumReleaseAgeExcludes ?? []).toEqual([]);
+  });
+
+  test("renovate.json enforces a 7-day minimumReleaseAge for npm packages with no shorter 3-day override (E36 2(a))", () => {
+    const renovateRaw = readFileSync(resolve(repoRoot, "renovate.json"), "utf8");
+    const renovate = JSON.parse(renovateRaw) as {
+      minimumReleaseAge?: string;
+      packageRules?: {
+        matchDatasources?: string[];
+        matchPackageNames?: string[];
+        minimumReleaseAge?: string;
+      }[];
+    };
+    expect(renovate.minimumReleaseAge).toBe("7 days");
+    const rulesWithAge = (renovate.packageRules ?? []).filter(
+      (r) => r.minimumReleaseAge !== undefined,
+    );
+    expect(rulesWithAge.length).toBeGreaterThanOrEqual(2);
+    for (const rule of rulesWithAge) {
+      expect(rule.minimumReleaseAge).toBe("7 days");
+    }
+    expect(renovateRaw).not.toContain('"3 days"');
+  });
+
+  test("no workspace package.json defines unapproved trustedDependencies (E36 2(a))", () => {
+    const manifestPaths = [
+      "package.json",
+      ...["apps", "packages"].flatMap((group) =>
+        readdirSync(resolve(repoRoot, group))
+          .map((dir) => `${group}/${dir}/package.json`)
+          .filter((rel) => existsSync(resolve(repoRoot, rel))),
+      ),
+    ];
+    expect(manifestPaths.length).toBeGreaterThanOrEqual(8);
+
+    const violations: string[] = [];
+    for (const rel of manifestPaths) {
+      const pkg = readJson(rel) as { trustedDependencies?: unknown };
+      if (pkg.trustedDependencies === undefined) continue;
+      if (!Array.isArray(pkg.trustedDependencies)) {
+        violations.push(`${rel}: trustedDependencies is not an array`);
+        continue;
+      }
+      for (const dep of pkg.trustedDependencies) {
+        const reason = TRUSTED_DEPENDENCIES_ALLOWLIST[String(dep)];
+        if (!reason || reason.trim() === "") {
+          violations.push(`${rel}: unapproved trustedDependency "${String(dep)}"`);
+        }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  test("SECURITY.md and RFC 9116 .well-known/security.txt are published without placeholders (E36 H2)", () => {
+    const securityMdPath = resolve(repoRoot, "SECURITY.md");
+    expect(existsSync(securityMdPath)).toBe(true);
+    const securityMd = readFileSync(securityMdPath, "utf8");
+    expect(securityMd).toContain("https://github.com/mgallagher56/flump/security/advisories/new");
+    expect(securityMd).not.toMatch(/example\.invalid|PLACEHOLDER|flump\.(app|co\.uk)/);
+
+    for (const rel of [
+      "apps/web/public/.well-known/security.txt",
+      "apps/marketing/public/.well-known/security.txt",
+    ]) {
+      const full = resolve(repoRoot, rel);
+      expect(existsSync(full), rel).toBe(true);
+      const txt = readFileSync(full, "utf8");
+      expect(txt, rel).toMatch(/^Contact: https:\/\//m);
+      expect(txt, rel).toMatch(/^Expires: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/m);
+      expect(txt, rel).toMatch(/^Preferred-Languages: en$/m);
+      expect(txt, rel).toMatch(/^Policy: https:\/\//m);
+      expect(txt, rel).not.toMatch(/example\.invalid|PLACEHOLDER|flump\.(app|co\.uk)/);
+    }
   });
 
   test("CI and every image install with lifecycle scripts off", () => {
@@ -310,9 +399,6 @@ type HardenedWorkflow = {
   jobs: Record<string, HardenedJob>;
 };
 
-const workflowFiles = readdirSync(resolve(repoRoot, ".github/workflows")).filter((f) =>
-  /\.ya?ml$/.test(f),
-);
 const hardened = workflowFiles.map((file) => ({
   file,
   source: readFileSync(resolve(repoRoot, ".github/workflows", file), "utf8"),

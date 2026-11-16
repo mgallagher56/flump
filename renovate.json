@@ -11,8 +11,14 @@
   "baseBranchPatterns": ["main"],
   "labels": ["dependencies"],
   "osvVulnerabilityAlerts": true,
+  "minimumReleaseAge": "7 days",
   "timezone": "Europe/London",
   "packageRules": [
+    {
+      "description": "E36 2(a): 7-day release-age gate for npm packages (overrides security:minimumReleaseAgeNpm's 3-day preset)",
+      "matchDatasources": ["npm"],
+      "minimumReleaseAge": "7 days"
+    },
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "all non-major third-party dependencies",
@@ -27,7 +33,7 @@
       "description": "The visual regression job's container image must match @playwright/test, and a bump means regenerating its baselines (apps/e2e/README.md)",
       "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
       "groupName": "playwright",
-      "minimumReleaseAge": "3 days",
+      "minimumReleaseAge": "7 days",
       "automerge": false
     },
     {
