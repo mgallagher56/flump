@@ -78,6 +78,46 @@ describe("summariseAccountBalance", () => {
     expect(summary.againstLabel).toBe("October 2026");
   });
 
+  test("scales joint account balance and previous month by sharePercent while keeping ISAs at 100%", () => {
+    const details = [{ account_id: "m1", month: 10, year: 2026, value: -200_000 }];
+    const rows = buildAccountRows(
+      [
+        {
+          id: "m1",
+          name: "Joint Mortgage",
+          type: "Mortgage",
+          balance: -180_000,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+        {
+          id: "i1",
+          name: "Cash ISA",
+          type: "Saving",
+          balance: 20_000,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+      ],
+      details,
+      now,
+    );
+    expect(rows[0]).toMatchObject({
+      id: "m1",
+      ownership: "joint",
+      sharePercent: 50,
+      balance: 90_000,
+      changePercent: -10,
+      favourable: true,
+    });
+    expect(rows[1]).toMatchObject({
+      id: "i1",
+      ownership: "sole",
+      sharePercent: 100,
+      balance: 20_000,
+    });
+  });
+
   test("a recorded month for another account never matches", () => {
     const other = { account_id: "a2", month: 10, year: 2026, value: 500 };
     const summary = summariseAccountBalance({ id: "a1", type: "Current" }, [other], now, true);

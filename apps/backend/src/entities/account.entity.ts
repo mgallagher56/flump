@@ -18,6 +18,11 @@ import { numericTransformer } from "./numeric.transformer";
   "CHK_accounts_liability_balance_non_positive",
   `"type" NOT IN ('Mortgage', 'Credit Card', 'Loan', 'Overdraft', 'Student Loan') OR "balance" <= 0`,
 )
+@Check("CHK_accounts_ownership", `"ownership" IN ('sole', 'joint')`)
+@Check(
+  "CHK_accounts_share_percent",
+  `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 100)`,
+)
 // BE-12 (audit H4): one row per synced bank account (migration BankSyncIntegrity1794358400000).
 @Index("UQ_accounts_user_connection_external", ["userId", "connectionId", "externalAccountId"], {
   unique: true,
@@ -85,6 +90,14 @@ export class Account {
   /** Student Loan accounts only: PLAN_1 | PLAN_2 | PLAN_4 | PLAN_5 | POSTGRAD. */
   @Column({ name: "student_loan_plan", type: "varchar", nullable: true })
   studentLoanPlan: string | null;
+
+  /** E34 Slice 2: "sole" (default) or "joint" for eligible accounts (never ISAs or pensions). */
+  @Column({ type: "varchar", default: "sole" })
+  ownership: "sole" | "joint";
+
+  /** E34 Slice 2: percentage share (1-100) when ownership is "joint"; null when "sole". */
+  @Column({ name: "share_percent", type: "integer", nullable: true })
+  sharePercent: number | null;
 
   @Column({ name: "connection_id", type: "uuid", nullable: true })
   connectionId: string | null;

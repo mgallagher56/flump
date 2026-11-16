@@ -167,6 +167,8 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "isCurrent",
         "currency",
         "studentLoanPlan",
+        "ownership",
+        "sharePercent",
         "connectionId",
         "externalAccountId",
         "createdAt",
@@ -507,6 +509,10 @@ export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reas
  * Keys are `Entity.property` for the unit test; the integration test uses the column names.
  */
 export const NOT_USER_LINK_COLUMNS: Readonly<Record<string, { column: string; reason: string }>> = {
+  "Account.ownership": {
+    column: "ownership",
+    reason: "ownership mode ('sole' | 'joint') for E34, not a link to a user",
+  },
   "UserProfile.propertyOwnershipShare": {
     column: "property_ownership_share",
     reason: "the share of a property the person owns, a percentage, not a link to a user",

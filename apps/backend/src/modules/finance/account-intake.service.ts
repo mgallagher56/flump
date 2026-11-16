@@ -1,5 +1,8 @@
 import { ACCOUNT_TYPES } from "@flump/api-contract";
 import {
+  type AccountOwnership,
+  canAccountBeJoint,
+  DEFAULT_JOINT_SHARE_PERCENT,
   type MonthlyPortfolioHistoryPoint,
   type NetWorthLeftOut,
   netWorthBasisFromProfile,
@@ -48,6 +51,8 @@ export interface CreateAccountDto {
   fixedRateEndDate?: string | null;
   /** Student Loan accounts only. */
   studentLoanPlan?: (typeof STUDENT_LOAN_PLANS)[number] | null;
+  ownership?: AccountOwnership;
+  sharePercent?: number | null;
   isCurrent?: boolean;
   connectionId?: string | null;
   externalAccountId?: string | null;
@@ -139,6 +144,8 @@ function toAccountResponse(account: Account): Account {
     isCurrent: account.isCurrent !== false,
     currency: account.currency,
     studentLoanPlan: account.studentLoanPlan ?? null,
+    ownership: account.ownership === "joint" ? "joint" : "sole",
+    sharePercent: nullableNumber(account.sharePercent),
     connectionId: account.connectionId ?? null,
     externalAccountId: account.externalAccountId ?? null,
     createdAt: account.createdAt,
@@ -181,6 +188,24 @@ function validateStudentLoanPlan(value: unknown): string | null | undefined {
   throw new BadRequestException(
     `studentLoanPlan must be one of ${STUDENT_LOAN_PLANS.join(", ")}, or null`,
   );
+}
+
+const ACCOUNT_OWNERSHIPS = ["sole", "joint"] as const;
+
+function validateOwnership(value: unknown): AccountOwnership | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "string" && (ACCOUNT_OWNERSHIPS as readonly string[]).includes(value)) {
+    return value as AccountOwnership;
+  }
+  throw new BadRequestException(`ownership must be one of ${ACCOUNT_OWNERSHIPS.join(", ")}`);
+}
+
+function validateSharePercent(value: unknown): number | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100) {
+    return value;
+  }
+  throw new BadRequestException("sharePercent must be an integer between 1 and 100, or null");
 }
 
 const MAX_BALANCE_BATCH = 100;
@@ -302,6 +327,8 @@ export class AccountIntakeService implements IAccountIntake {
     if (body.type !== undefined && body.type !== "Student Loan") {
       studentLoanPlan = isCreate && validatedPlan === undefined ? undefined : null;
     }
+    const ownership = validateOwnership(body.ownership);
+    const sharePercent = validateSharePercent(body.sharePercent);
     const fields = {
       name: body.name,
       type: validateAccountType(body.type),
@@ -312,6 +339,8 @@ export class AccountIntakeService implements IAccountIntake {
       termMonths: validateTermMonths(body.termMonths),
       fixedRateEndDate: validateFixedRateEndDate(body.fixedRateEndDate),
       studentLoanPlan,
+      ownership,
+      sharePercent,
       isCurrent: body.isCurrent,
       externalAccountId: body.externalAccountId,
     };
@@ -459,8 +488,19 @@ export class AccountIntakeService implements IAccountIntake {
       // BE-05 (audit H6): creation follows the same sign rule as every other write path.
       fields.balance = storedBalance(fields.type, Number(fields.balance));
     }
+    const effectiveOwnership: AccountOwnership = fields.ownership ?? "sole";
+    if (
+      effectiveOwnership === "joint" &&
+      !canAccountBeJoint({ name: fields.name, type: fields.type })
+    ) {
+      throw new BadRequestException("ISAs and pensions cannot be held jointly");
+    }
+    const effectiveSharePercent =
+      effectiveOwnership === "joint" ? (fields.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT) : null;
     const account: Account = this.accountRepository.create({
       ...fields,
+      ownership: effectiveOwnership,
+      sharePercent: effectiveSharePercent,
       // accounts.currency is NOT NULL and the DTO leaves it optional, so default it here.
       currency: fields.currency || DEFAULT_ACCOUNT_CURRENCY,
       userId,
@@ -527,7 +567,22 @@ export class AccountIntakeService implements IAccountIntake {
       }
 
       const previousType = account.type;
-      Object.assign(account, this.pickAccountFields(body));
+      const picked = this.pickAccountFields(body);
+      Object.assign(account, picked);
+      const effectiveOwnership: AccountOwnership = account.ownership === "joint" ? "joint" : "sole";
+      if (!canAccountBeJoint({ name: account.name, type: account.type })) {
+        if (picked.ownership === "joint") {
+          throw new BadRequestException("ISAs and pensions cannot be held jointly");
+        }
+        account.ownership = "sole";
+        account.sharePercent = null;
+      } else if (effectiveOwnership === "joint") {
+        account.ownership = "joint";
+        account.sharePercent = account.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT;
+      } else {
+        account.ownership = "sole";
+        account.sharePercent = null;
+      }
       const typeChanged = account.type !== previousType;
       if (body.balance !== undefined && body.balance !== null) {
         // Same sign rule as every other write path (liabilities negative).

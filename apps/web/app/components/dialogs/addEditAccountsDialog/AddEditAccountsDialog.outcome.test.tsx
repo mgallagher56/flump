@@ -156,4 +156,68 @@ describe("AddEditAccountsDialog action outcomes", () => {
       expect(lastSubmit()).not.toHaveProperty("studentLoanPlan");
     });
   });
+
+  describe("joint ownership and share percentage (E34 Slice 2)", () => {
+    const lastSubmit = () =>
+      mocks.mockFetcherSubmit.mock.calls.at(-1)?.[0] as Record<string, string>;
+
+    test("shows joint share input and joint-liability notice for a joint mortgage, and hides ownership for pensions and ISAs", async () => {
+      const {
+        getByText,
+        getAllByText,
+        getByLabelText,
+        getByRole,
+        queryByLabelText,
+        queryByRole,
+        user,
+      } = customRender(<AddEditAccountsDialogBtn />);
+
+      await user.click(getByText("addAccount"));
+      await user.selectOptions(getByLabelText("Account type"), "Mortgage");
+      expect(getByLabelText("Ownership")).toBeDefined();
+      expect(queryByLabelText("Your share")).toBeNull();
+      expect(queryByRole("note")).toBeNull();
+
+      await user.selectOptions(getByLabelText("Ownership"), "joint");
+      expect(getByLabelText("Your share")).toBeDefined();
+      expect(getByRole("note").textContent).toContain(
+        "Each borrower on a joint mortgage or loan is legally liable for the whole debt.",
+      );
+
+      // Switching to Pension hides ownership and submits sole
+      await user.selectOptions(getByLabelText("Account type"), "Pension");
+      expect(queryByLabelText("Ownership")).toBeNull();
+      expect(queryByRole("note")).toBeNull();
+
+      // Switching to Saving with "Cash ISA" in name hides ownership
+      await user.selectOptions(getByLabelText("Account type"), "Saving");
+      expect(getByLabelText("Ownership")).toBeDefined();
+      await user.type(getByLabelText("Name"), "Cash ISA");
+      expect(queryByLabelText("Ownership")).toBeNull();
+
+      await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+      expect(lastSubmit()).toMatchObject({ ownership: "sole" });
+      expect(lastSubmit()).not.toHaveProperty("sharePercent");
+    });
+
+    test("submits joint ownership and custom sharePercent for a joint mortgage", async () => {
+      const { getByText, getAllByText, getByLabelText, user } = customRender(
+        <AddEditAccountsDialogBtn />,
+      );
+      await user.click(getByText("addAccount"));
+      await user.type(getByLabelText("Name"), "Home mortgage");
+      await user.selectOptions(getByLabelText("Account type"), "Mortgage");
+      await user.selectOptions(getByLabelText("Ownership"), "joint");
+      const shareInput = getByLabelText("Your share") as HTMLInputElement;
+      await user.clear(shareInput);
+      await user.type(shareInput, "60");
+      await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+      expect(lastSubmit()).toMatchObject({
+        name: "Home mortgage",
+        type: "Mortgage",
+        ownership: "joint",
+        sharePercent: "60",
+      });
+    });
+  });
 });

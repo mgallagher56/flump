@@ -13,6 +13,8 @@ import {
   resolveAccountSharePercent,
   splitJointSavingsInterest,
 } from "./joint-share.js";
+import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
+import { PortfolioSnapshot } from "./portfolio.js";
 
 describe("E34 Slice 1: joint account & mortgage share helpers", () => {
   describe("canAccountBeJoint / ISA & pension exclusions (E34 Section 2)", () => {
@@ -330,6 +332,71 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
 
     it("keeps the joint liability notice strictly neutral with zero advice-lexicon hits", () => {
       expect(findAdviceHits(JOINT_LIABILITY_NOTICE)).toEqual([]);
+    });
+  });
+
+  describe("PortfolioSnapshot joint-share integration (E34 Slice 2)", () => {
+    it("scales joint mortgage, property, savings and history by sharePercent while keeping ISAs and pensions at 100%", () => {
+      const snap = new PortfolioSnapshot(
+        [
+          {
+            id: "home",
+            name: "Home",
+            type: "Property",
+            balance: 400_000,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+          {
+            id: "mort",
+            name: "Joint Mortgage",
+            type: "Mortgage",
+            balance: -280_000,
+            ownership: "joint",
+            sharePercent: 50,
+            monthlyContribution: 1_500,
+          },
+          {
+            id: "isa",
+            name: "Stocks & Shares ISA",
+            type: "Investment",
+            balance: 30_000,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+          {
+            id: "pen",
+            name: "Workplace Pension",
+            type: "Pension",
+            balance: 50_000,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+        ],
+        [
+          { accountId: "home", year: 2026, month: 10, value: 390_000 },
+          { accountId: "mort", year: 2026, month: 10, value: -282_000 },
+        ],
+      );
+
+      expect(snap.getTotalProperty()).toBe(200_000);
+      expect(snap.getTotalMortgageBalance()).toBe(140_000);
+      expect(snap.getTotalInvestments()).toBe(30_000);
+      expect(snap.getTotalPensions()).toBe(50_000);
+      expect(snap.getAccount("mort")?.monthlyContribution).toBe(750);
+      expect(snap.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(
+        200_000 + 30_000 + 50_000 - 140_000,
+      );
+      expect(snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS)).toEqual([
+        {
+          year: 2026,
+          month: 10,
+          label: "Oct 2026",
+          totalAssets: 195_000,
+          totalLiabilities: 141_000,
+          netWorth: 54_000,
+        },
+      ]);
     });
   });
 });

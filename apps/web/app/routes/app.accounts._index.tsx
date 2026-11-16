@@ -35,6 +35,18 @@ export const action = async (args: ActionFunctionArgs) => {
   const rawBalance = formData.get("balance");
   const rawPlan = formData.get("studentLoanPlan");
   const studentLoanPlan = typeof rawPlan === "string" && rawPlan !== "" ? rawPlan : undefined;
+  const rawOwnership = formData.get("ownership");
+  const ownership =
+    rawOwnership === "joint" ? "joint" : rawOwnership === "sole" ? "sole" : undefined;
+  const rawSharePercent = formData.get("sharePercent");
+  const sharePercent =
+    ownership === "sole"
+      ? null
+      : rawSharePercent !== null &&
+          rawSharePercent !== "" &&
+          Number.isFinite(Number(rawSharePercent))
+        ? Math.min(100, Math.max(1, Math.round(Number(rawSharePercent))))
+        : undefined;
   const balance =
     rawBalance !== null && rawBalance !== "" && Number.isFinite(Number(rawBalance))
       ? roundTo2dp(Number(rawBalance))
@@ -51,6 +63,8 @@ export const action = async (args: ActionFunctionArgs) => {
       await post("/accounts", CreateAccountResponse, {
         name,
         type,
+        ...(ownership !== undefined ? { ownership } : {}),
+        ...(sharePercent !== undefined ? { sharePercent } : {}),
         ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
         ...(balance !== undefined ? { balance } : {}),
       });
@@ -63,6 +77,8 @@ export const action = async (args: ActionFunctionArgs) => {
         body: {
           name,
           type,
+          ...(ownership !== undefined ? { ownership } : {}),
+          ...(sharePercent !== undefined ? { sharePercent } : {}),
           ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
           ...(balance !== undefined ? { balance } : {}),
         },

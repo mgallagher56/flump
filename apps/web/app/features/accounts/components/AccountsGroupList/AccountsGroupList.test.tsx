@@ -198,6 +198,26 @@ describe("<AccountsGroupList />", () => {
     );
   });
 
+  test("marks joint accounts with Joint and their share percentage", () => {
+    const { getByRole } = customRender(
+      <AccountsGroupList
+        {...props}
+        rows={[
+          row({
+            id: "m1",
+            name: "Home loan",
+            type: "Mortgage",
+            balance: 140_000,
+            ownership: "joint",
+            sharePercent: 50,
+          }),
+        ]}
+      />,
+    );
+    const owe = getByRole("list", { name: "What you owe" });
+    expect(owe.textContent).toContain("Mortgage · Joint, 50%");
+  });
+
   test("puts an overdrawn current account under what you owe, as the amount owed", () => {
     const { getByRole } = customRender(
       <AccountsGroupList

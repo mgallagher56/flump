@@ -440,6 +440,24 @@
                       "name": {
                         "type": "string"
                       },
+                      "ownership": {
+                        "default": "sole",
+                        "enum": ["sole", "joint"],
+                        "type": "string"
+                      },
+                      "sharePercent": {
+                        "anyOf": [
+                          {
+                            "maximum": 100,
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "default": null
+                      },
                       "studentLoanPlan": {
                         "anyOf": [
                           {
@@ -495,6 +513,8 @@
                       "isCurrent",
                       "currency",
                       "studentLoanPlan",
+                      "ownership",
+                      "sharePercent",
                       "connectionId",
                       "createdAt",
                       "updatedAt",
@@ -678,6 +698,22 @@
                     "minLength": 1,
                     "type": "string"
                   },
+                  "ownership": {
+                    "enum": ["sole", "joint"],
+                    "type": "string"
+                  },
+                  "sharePercent": {
+                    "anyOf": [
+                      {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "studentLoanPlan": {
                     "anyOf": [
                       {
@@ -783,6 +819,24 @@
                     "name": {
                       "type": "string"
                     },
+                    "ownership": {
+                      "default": "sole",
+                      "enum": ["sole", "joint"],
+                      "type": "string"
+                    },
+                    "sharePercent": {
+                      "anyOf": [
+                        {
+                          "maximum": 100,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null
+                    },
                     "studentLoanPlan": {
                       "anyOf": [
                         {
@@ -838,6 +892,8 @@
                     "isCurrent",
                     "currency",
                     "studentLoanPlan",
+                    "ownership",
+                    "sharePercent",
                     "connectionId",
                     "createdAt",
                     "updatedAt"
@@ -1052,6 +1108,24 @@
                       "name": {
                         "type": "string"
                       },
+                      "ownership": {
+                        "default": "sole",
+                        "enum": ["sole", "joint"],
+                        "type": "string"
+                      },
+                      "sharePercent": {
+                        "anyOf": [
+                          {
+                            "maximum": 100,
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "default": null
+                      },
                       "studentLoanPlan": {
                         "anyOf": [
                           {
@@ -1107,6 +1181,8 @@
                       "isCurrent",
                       "currency",
                       "studentLoanPlan",
+                      "ownership",
+                      "sharePercent",
                       "connectionId",
                       "createdAt",
                       "updatedAt"
@@ -1471,6 +1547,24 @@
                     "name": {
                       "type": "string"
                     },
+                    "ownership": {
+                      "default": "sole",
+                      "enum": ["sole", "joint"],
+                      "type": "string"
+                    },
+                    "sharePercent": {
+                      "anyOf": [
+                        {
+                          "maximum": 100,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null
+                    },
                     "studentLoanPlan": {
                       "anyOf": [
                         {
@@ -1526,6 +1620,8 @@
                     "isCurrent",
                     "currency",
                     "studentLoanPlan",
+                    "ownership",
+                    "sharePercent",
                     "connectionId",
                     "createdAt",
                     "updatedAt",
@@ -1712,6 +1808,22 @@
                     "minLength": 1,
                     "type": "string"
                   },
+                  "ownership": {
+                    "enum": ["sole", "joint"],
+                    "type": "string"
+                  },
+                  "sharePercent": {
+                    "anyOf": [
+                      {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "studentLoanPlan": {
                     "anyOf": [
                       {
@@ -1816,6 +1928,24 @@
                     "name": {
                       "type": "string"
                     },
+                    "ownership": {
+                      "default": "sole",
+                      "enum": ["sole", "joint"],
+                      "type": "string"
+                    },
+                    "sharePercent": {
+                      "anyOf": [
+                        {
+                          "maximum": 100,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null
+                    },
                     "studentLoanPlan": {
                       "anyOf": [
                         {
@@ -1871,6 +2001,8 @@
                     "isCurrent",
                     "currency",
                     "studentLoanPlan",
+                    "ownership",
+                    "sharePercent",
                     "connectionId",
                     "createdAt",
                     "updatedAt"
