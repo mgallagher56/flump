@@ -116,10 +116,8 @@ describe("CheckInList", () => {
     await waitFor(() => expect(document.activeElement).toBe(field(everyday)));
   });
 
-  it("records every open row with No change to the rest", async () => {
-    const { onSave } = setup();
-    await userEvent.click(screen.getByRole("button", { name: "No change to the rest" }));
-    await waitFor(() => expect(screen.getByText("Summary")).toBeDefined());
-    expect(onSave.mock.calls[0]?.[0].payload.complete).toBe(true);
+  it("does not render No change to the rest", () => {
+    setup();
+    expect(screen.queryByRole("button", { name: "No change to the rest" })).toBeNull();
   });
 });

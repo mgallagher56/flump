@@ -189,12 +189,13 @@ export const pageBody = css({
   marginInline: "auto",
   px: { base: "page.gutter.sm", md: "page.gutter.md", lg: "page.gutter.lg" },
   pt: { base: "page.top.sm", lg: "page.top.lg" },
+  pb: { base: "12", lg: "16" },
   color: "text.primary",
   // Inside a shell that already pads its content, only the difference to the P13 tokens is added,
   // so gutters and top space apply exactly once (see the PageBody JSDoc). The two values never
   // match the same element, so neither rule depends on CSS order.
   // AppShell's main (`data-page-shell=""`) pads with exactly the P13 values: add nothing.
-  '[data-page-shell=""] &': { px: "0", pt: "0" },
+  '[data-page-shell=""] &': { px: "0", pt: "0", pb: "0" },
   // apps/web root main (`data-page-shell="web"`): its wrapper pads 12px (24px from md) at the
   // sides and the main pads 16px (24px from md) on top. Add the rest: 16/24/40 sides and 20/32
   // top. From md to lg the shell's 24px top is 4px more than P13's 20px, taken back by margin.

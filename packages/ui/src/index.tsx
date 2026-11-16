@@ -50,6 +50,7 @@ export * from "./primitives/Checkbox";
 export * from "./primitives/CollapsibleDrawer";
 export * from "./primitives/CurrencyInput";
 export * from "./primitives/DataList";
+export * from "./primitives/DatePicker";
 export * from "./primitives/Dialog";
 export * from "./primitives/FlumpLogo";
 export * from "./primitives/FormField";

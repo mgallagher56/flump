@@ -97,6 +97,20 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
             cancelRef.current?.focus();
           }}
           onCloseAutoFocus={focusReturn.onCloseAutoFocus}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" || event.defaultPrevented) return;
+            const targetButton = (event.target as HTMLElement | null)?.closest("button");
+            if (
+              targetButton &&
+              targetButton !== cancelRef.current &&
+              targetButton.id !== `${id}-confirm`
+            ) {
+              return;
+            }
+            event.preventDefault();
+            if (pending || !textMatches) return;
+            void onConfirm();
+          }}
           onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}
         >

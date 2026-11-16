@@ -43,16 +43,19 @@ export const MonthlyCheckIn: Story = {
 
 export const MonthlyCheckInDark: Story = { ...MonthlyCheckIn, globals: { theme: "dark" } };
 
-export const NoChangeToTheRest: Story = {
+export const CompleteCheckIn: Story = {
   play: async ({ args }) => {
     const body = within(document.body);
-    await userEvent.click(await body.findByRole("button", { name: "No change to the rest" }));
+    const buttons = await body.findAllByRole("button", { name: /^(No change|Keep this figure)$/ });
+    for (const button of buttons) {
+      await userEvent.click(button);
+    }
     await expect(await body.findByRole("heading", { name: "Check-in saved" })).toBeDefined();
-    await expect(args.onSave).toHaveBeenCalledTimes(1);
+    await expect(args.onSave).toHaveBeenCalledTimes(buttons.length);
   },
 };
 
-export const NoChangeToTheRestDark: Story = { ...NoChangeToTheRest, globals: { theme: "dark" } };
+export const CompleteCheckInDark: Story = { ...CompleteCheckIn, globals: { theme: "dark" } };
 
 /** Every account already recorded this month: the short summary in a dialog from md. */
 export const AlreadyRecorded: Story = {

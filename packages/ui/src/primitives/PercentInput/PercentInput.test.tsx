@@ -142,4 +142,17 @@ describe("PercentInput", () => {
     fireEvent.change(screen.getByLabelText("Interest rate"), { target: { value: "1.2.3" } });
     expect(onInvalid).toHaveBeenCalledWith("1.2.3");
   });
+
+  it("strips leading zeros when typing into a 0 field while keeping 0.50", () => {
+    const onValueChange = vi.fn();
+    render(<PercentInput aria-label="Interest rate" onValueChange={onValueChange} value={0} />);
+    const input = screen.getByLabelText("Interest rate") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "05", selectionStart: 2 } });
+    expect(input.value).toBe("5");
+    expect(onValueChange).toHaveBeenLastCalledWith(5);
+
+    fireEvent.change(input, { target: { value: "0.50", selectionStart: 4 } });
+    expect(input.value).toBe("0.50");
+    expect(onValueChange).toHaveBeenLastCalledWith(0.5);
+  });
 });

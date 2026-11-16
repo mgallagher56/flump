@@ -47,6 +47,12 @@ export const chartCursorProps = {
   strokeWidth: 1,
 } as const;
 
+/** Subtle tokenised tint behind hovered bar groups in bar charts. */
+export const chartBarCursorProps = {
+  fill: CHART_INK.cursorFill,
+  fillOpacity: 0.45,
+} as const;
+
 export interface ChartLinePropsOptions {
   /** Dashed, for forecast data (never colour alone). */
   projection?: boolean;

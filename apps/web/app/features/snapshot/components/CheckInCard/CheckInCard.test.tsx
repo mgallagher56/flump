@@ -61,15 +61,13 @@ describe("CheckInCard", () => {
     await waitFor(() => expect(document.activeElement).toBe(next));
   });
 
-  it("puts Back and No change to the rest in one row of quiet buttons", async () => {
+  it("renders Back as a quiet button and omits No change to the rest", async () => {
     setup();
     await userEvent.click(screen.getByRole("button", { name: "No change" }));
     await waitFor(() => expect(screen.getByText("2 of 4")).toBeDefined());
     const back = screen.getByRole("button", { name: "Back" });
-    const rest = screen.getByRole("button", { name: "No change to the rest" });
     expect(back.dataset.variant).toBe("ghost");
-    expect(rest.dataset.variant).toBe("ghost");
-    expect(back.parentElement?.parentElement).toBe(rest.parentElement);
+    expect(screen.queryByRole("button", { name: "No change to the rest" })).toBeNull();
   });
 
   it("moves to the next account once the answer is saved, and back again", async () => {
@@ -115,17 +113,6 @@ describe("CheckInCard", () => {
     ]);
     expect(screen.getByText("3 of 4")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Stocks ISA" })).toBeDefined();
-  });
-
-  it("records the rest at once with No change to the rest", async () => {
-    const { onSave } = setup();
-    await userEvent.click(screen.getByRole("button", { name: "No change to the rest" }));
-    await waitFor(() => expect(screen.getByText("Summary")).toBeDefined());
-    expect(onSave).toHaveBeenCalledTimes(1);
-    const values = (onSave.mock.calls[0] as unknown as [{ payload: { values: unknown[] } }])[0]
-      .payload.values;
-    expect(values).toHaveLength(4);
-    expect(values).toContainEqual({ accountId: isa, value: 14200, source: "confirmed" });
   });
 
   it("animates the step transition when advancing and going back", async () => {

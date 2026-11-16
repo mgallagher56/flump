@@ -57,14 +57,17 @@ describe("TaxRecordDialog", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
     expect(onSave).not.toHaveBeenCalled();
     expect(within(dialog).getByText(RECORD_DATE_RANGE_ERROR)).toBeDefined();
-    fireEvent.change(within(dialog).getByLabelText(/^First payment/), {
-      target: { value: "2027-04-06" },
-    });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
-    expect(onSave).not.toHaveBeenCalled();
-    fireEvent.change(within(dialog).getByLabelText(/^First payment/), {
-      target: { value: "2027-04-05" },
-    });
+
+    fireEvent.click(within(dialog).getByRole("button", { name: /^First payment/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Choose year/ }));
+    fireEvent.click(screen.getByRole("button", { name: "2027" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Choose month/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Apr" }));
+    expect((screen.getByRole("button", { name: "6 Apr 2027" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "5 Apr 2027" }));
+
     fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
     expect(onSave).toHaveBeenCalledTimes(1);
   });

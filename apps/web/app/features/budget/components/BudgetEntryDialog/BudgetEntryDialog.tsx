@@ -1,4 +1,12 @@
-import { Button, CurrencyInput, controlProps, Dialog, FormField, TextInput } from "@repo/ui";
+import {
+  Button,
+  CurrencyInput,
+  controlProps,
+  DatePicker,
+  Dialog,
+  FormField,
+  TextInput,
+} from "@repo/ui";
 import { type FC, type FormEvent, useState } from "react";
 import type { BudgetEntry } from "~/types/budget";
 import {
@@ -123,11 +131,10 @@ export const BudgetEntryDialog: FC<BudgetEntryDialogProps> = ({
             hint="We show a renewal note 30 days before this date."
           >
             {(field) => (
-              <TextInput
+              <DatePicker
                 {...controlProps(field)}
-                type="date"
                 value={values.contractEndDate}
-                onChange={(e) => set("contractEndDate", e.target.value)}
+                onValueChange={(next) => set("contractEndDate", next)}
               />
             )}
           </FormField>

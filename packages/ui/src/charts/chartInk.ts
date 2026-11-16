@@ -16,4 +16,6 @@ export const CHART_INK = {
   text: "var(--colors-text-primary)",
   /** Chart surface, for ring strokes around overlapping marks. */
   surface: "var(--colors-surface-card)",
+  /** Subtle tint behind hovered bar groups (replaces Recharts' flat grey default). */
+  cursorFill: "var(--colors-primary-subtle)",
 } as const;

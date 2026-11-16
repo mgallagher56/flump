@@ -51,6 +51,10 @@ export const JUDGEMENT_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string 
     reason: "validation error text under a field",
   },
   {
+    path: "packages/ui/src/primitives/DatePicker/",
+    reason: "invalid-state border paired with FormField error text",
+  },
+  {
     path: "packages/ui/src/primitives/TextInput/",
     reason: "invalid-state border paired with FormField error text",
   },

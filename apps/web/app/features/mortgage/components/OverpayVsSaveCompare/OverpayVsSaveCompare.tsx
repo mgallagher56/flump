@@ -13,6 +13,7 @@ import {
 } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { chartBarCursorProps } from "~/features/charts";
 import { OVERPAYMENT_RANGE } from "~/features/mortgage/components/OverpaymentSimulator";
 import { rateFractionDigits } from "~/features/mortgage/mortgageFormat";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -287,9 +288,11 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                   />
                   <Tooltip
                     contentStyle={tooltipContentStyle}
+                    cursor={chartBarCursorProps}
                     formatter={(value) => formatCurrency(Number(value))}
                     itemStyle={tooltipItemStyle}
                     labelStyle={tooltipLabelStyle}
+                    separator=": "
                   />
                   <Bar
                     dataKey="Money paid in"

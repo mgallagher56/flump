@@ -1,4 +1,4 @@
-import { Button, InlineAlert, useStepTransition } from "@repo/ui";
+import { Button, useStepTransition } from "@repo/ui";
 import { type FC, type KeyboardEvent, useEffect } from "react";
 import type { CheckInAnswer, CheckInStep as CheckInStepModel } from "../../checkInModel";
 import { CHECK_IN_COPY, checkInProgress } from "../../snapshotCopy";
@@ -42,7 +42,6 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
   if (!step || !displayedStep) return null;
   const position = steps.indexOf(step) + 1;
   const done = checkIn.isDone(step.accountId);
-  const anyOpen = steps.some((s) => !checkIn.isDone(s.accountId));
   const next = position < steps.length ? position : checkIn.nextOpen(position - 1);
 
   const answer = async (s: CheckInStepModel, a: CheckInAnswer) => {
@@ -114,23 +113,7 @@ export const CheckInCard: FC<CheckInCardProps> = ({ checkIn }) => {
               </Button>
             ) : null}
           </div>
-          {anyOpen ? (
-            <Button
-              data-testid="checkin-rest"
-              id="checkin-rest"
-              onClick={() => void checkIn.rest()}
-              pending={checkIn.restSaving}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              {CHECK_IN_COPY.rest}
-            </Button>
-          ) : null}
         </div>
-        {checkIn.restError ? (
-          <InlineAlert tone="danger">{CHECK_IN_COPY.restError}</InlineAlert>
-        ) : null}
       </div>
     </div>
   );

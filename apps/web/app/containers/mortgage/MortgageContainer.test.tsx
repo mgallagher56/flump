@@ -576,7 +576,7 @@ describe("<MortgageContainer />", () => {
       expect(Array.from(select.options).map((o) => o.value)).toEqual(["m1", "m2"]);
       fireEvent.change(select, { target: { value: "m2" } });
       fireEvent.change(select, { target: { value: "m1" } });
-      expect(field(/Fixed rate end date/).value).toBe("2099-10-01");
+      expect(getByLabelText(/Fixed rate end date/).textContent).toContain("1 Oct 2099");
       fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
       save();
       await findAllByText(/Saved repayment type/);
@@ -714,9 +714,12 @@ describe("<MortgageContainer />", () => {
       const fetchSpy = okFetch();
       const { getByLabelText, findAllByText } = customRender(<MortgageContainer />);
       openEdit();
-      const date = getByLabelText(/Fixed rate end date \(optional\)/) as HTMLInputElement;
-      expect(date.value).toBe("2099-10-01");
-      fireEvent.change(date, { target: { value: "2099-12-31" } });
+      const date = getByLabelText(/Fixed rate end date \(optional\)/);
+      expect(date.textContent).toContain("1 Oct 2099");
+      fireEvent.click(date);
+      fireEvent.click(screen.getByRole("button", { name: /^Choose month/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Dec" }));
+      fireEvent.click(screen.getByRole("button", { name: "31 Dec 2099" }));
       save();
       await findAllByText(/fixed rate end date/);
       const bodyOf = () => {
@@ -732,9 +735,10 @@ describe("<MortgageContainer />", () => {
 
       fetchSpy.mockClear();
       openEdit();
-      const again = getByLabelText(/Fixed rate end date/) as HTMLInputElement;
-      expect(again.value).toBe("2099-12-31");
-      fireEvent.change(again, { target: { value: "" } });
+      const again = getByLabelText(/Fixed rate end date/);
+      expect(again.textContent).toContain("31 Dec 2099");
+      fireEvent.click(again);
+      fireEvent.click(screen.getByRole("button", { name: "Clear" }));
       save();
       await findAllByText(/fixed rate end date/);
       expect(bodyOf()).toEqual({ interestRate: 4.5, termMonths: 240, fixedRateEndDate: null });

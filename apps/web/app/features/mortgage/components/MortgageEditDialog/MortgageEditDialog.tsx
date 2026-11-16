@@ -2,6 +2,7 @@ import {
   Button,
   CurrencyInput,
   controlProps,
+  DatePicker,
   Dialog,
   FormField,
   InlineAlert,
@@ -213,11 +214,10 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
           {canSaveTerm && onEditFixEndDateChange ? (
             <FormField label="Fixed rate end date (optional)">
               {(field) => (
-                <TextInput
+                <DatePicker
                   {...controlProps(field)}
-                  type="date"
                   value={editFixEndDate}
-                  onChange={(e) => onEditFixEndDateChange(e.target.value)}
+                  onValueChange={(next) => onEditFixEndDateChange(next)}
                 />
               )}
             </FormField>
