@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.43.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.42.0...flump/web-v1.43.0) (2026-11-16)
+
+
+### Features ✨
+
+* **accounts:** E34 Slice 2 joint ownership & share percentage ([875f666](https://github.com/mgallagher56/flump/commit/875f66696a9300ac9f3e74bcddbe2879f1a3d37f))
+* **finance-engine,web:** E4 B-07 calculator formulas in engine and E22 stale-rates banners ([45fe66e](https://github.com/mgallagher56/flump/commit/45fe66e77ae2d9e12229f5c9d92e15c73565d963))
+* **retirement:** E33 S2-S5 backend persistence, MCP tools, and /app/retirement UI ([15e1510](https://github.com/mgallagher56/flump/commit/15e15103b6efe9448ad863657daf81a4a6ae18b9))
+
+
+### Bug Fixes 🪲
+
+* **e33:** update McpPage, seed-synthetic, navConfig test, contractResponses, and Storybook play test ([c5e0ee0](https://github.com/mgallagher56/flump/commit/c5e0ee08106ad5acabd04f012dfd1304de9c17d3))
+* **retirement:** add navRetirementDesc i18n key and pass housing into simulate_retirement ([9bf7d4a](https://github.com/mgallagher56/flump/commit/9bf7d4aae1260d5f0302e848b7fca3c51ec1a1d5))
+* **ui,web:** polish CurrencyInput, TopBar, ConfirmDialog, charts, datepicker, and CheckInSheet ([3d53f71](https://github.com/mgallagher56/flump/commit/3d53f71fc37a996eca6259431c73008906d432e2))
+* **ui:** keep TopBar _navWide px at 2.5 so marketing header fits at 1024px ([74026e5](https://github.com/mgallagher56/flump/commit/74026e5900d098c0395b9148ee2001408a889d06))
+
 ## [1.42.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.41.0...flump/web-v1.42.0) (2026-11-16)
 
 

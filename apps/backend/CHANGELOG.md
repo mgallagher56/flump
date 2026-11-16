@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.37.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.36.0...flump/backend-v1.37.0) (2026-11-16)
+
+
+### Features ✨
+
+* **accounts:** E34 Slice 2 joint ownership & share percentage ([875f666](https://github.com/mgallagher56/flump/commit/875f66696a9300ac9f3e74bcddbe2879f1a3d37f))
+* **backend,banking:** SEC-D encrypt tax receipt_data with record id AAD ([7581e25](https://github.com/mgallagher56/flump/commit/7581e259ddf6abb490ce7396e5aca9180e819a08))
+* **privacy,api-contract:** E19 portability CSV data export ([5585fbe](https://github.com/mgallagher56/flump/commit/5585fbee82b14184104336e9aebc2c74b9fe22bb))
+* **retirement:** E33 S2-S5 backend persistence, MCP tools, and /app/retirement UI ([15e1510](https://github.com/mgallagher56/flump/commit/15e15103b6efe9448ad863657daf81a4a6ae18b9))
+* **security:** E36 H2 & H5 SBOMs, fail-closed audit, workspace knip, and MCP prompt-injection suite ([34bdc44](https://github.com/mgallagher56/flump/commit/34bdc44fe6bd8d7001941785f5c6c746c5fbd212))
+
+
+### Bug Fixes 🪲
+
+* **ci:** build @flump/tokens in check-workspace-deps and setup bun for SBOMs ([1996885](https://github.com/mgallagher56/flump/commit/19968856b7025f48263829b3099cac4e11be0821))
+
+
+### Tests 🧪
+
+* **authz:** cover GET /user-profile/export/csv IDOR check ([b8cc744](https://github.com/mgallagher56/flump/commit/b8cc744901f7adf9fe7880bfa467312e1ce7c79f))
+* **backend:** mock RetirementPlan repo in user-profile.service.spec.ts ([b80815f](https://github.com/mgallagher56/flump/commit/b80815f60844acd69f13353f2b90c9c861270757))
+* **backend:** record authn and idor coverage for retirement-plan routes ([66ca64b](https://github.com/mgallagher56/flump/commit/66ca64b1a662ca8d62760570d7a1948b96aefd65))
+* **backend:** update entity, migration, authz, and privacy specs for RetirementPlan ([400adfd](https://github.com/mgallagher56/flump/commit/400adfd13191829602e82db0670b1b8cd6638548))
+
+
+### Miscellaneous 🙃
+
+* **retirement:** rename migration to 1795260000000 and update migrations.integration.spec.ts ([dd19c6d](https://github.com/mgallagher56/flump/commit/dd19c6db2389aa73a3f1ee0d5acd46b5155ee139))
+
 ## [1.36.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.35.0...flump/backend-v1.36.0) (2026-11-16)
 
 
