@@ -1,6 +1,7 @@
-import { Card, Icon, Stepper } from "@repo/ui";
+import { getUkTaxYearContext } from "@flump/finance-engine";
+import { Card, Icon, Stepper, TaxRatesStatusBanner } from "@repo/ui";
 import { TriangleAlert } from "lucide-react";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { deriveOnboardingSummary } from "../../deriveOnboardingSummary";
 import { valuesFromProfile } from "../../draft";
@@ -34,6 +35,7 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
   savedProfile = null,
 }) => {
   const classes = onboardingFlowRecipe();
+  const ratesContext = useMemo(() => getUkTaxYearContext(), []);
   const form = useOnboardingForm(valuesFromProfile(savedProfile));
   const { values, step } = form;
   const summary = deriveOnboardingSummary(values);
@@ -92,6 +94,7 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
           states={stepperStates(form.outcomes, step)}
           steps={STEPPER_STEPS}
         />
+        <TaxRatesStatusBanner {...ratesContext} />
         {alertText ? (
           <div className={classes.alert} role="alert">
             <Icon icon={TriangleAlert} size="sm" />

@@ -3,7 +3,11 @@ import {
   calculateLtvMilestones,
   calculateMonthlyMortgagePayment,
   calculateMortgageAmortization,
+  calculateMortgageCostSummary,
+  calculateMortgagePayment,
   calculateMortgageVsIsa,
+  compareMortgageOverpayVsSave,
+  simulateMortgageOverpayment,
 } from "./mortgage.js";
 
 describe("mortgage module", () => {
@@ -74,6 +78,86 @@ describe("mortgage module", () => {
       expect(res.interestSaved).toBeGreaterThan(0);
       expect(res.monthsShaved).toBeGreaterThan(0);
       expect(res.isaAccumulatedValue).toBeGreaterThan(res.totalIsaContributed);
+    });
+  });
+
+  describe("calculateMortgagePayment", () => {
+    it("returns 0 for missing or non-positive inputs rather than NaN or Infinity", () => {
+      expect(calculateMortgagePayment(0, 4, 25)).toBe(0);
+      expect(calculateMortgagePayment(200000, 0, 25)).toBe(0);
+      expect(calculateMortgagePayment(200000, 4, 0)).toBe(0);
+    });
+
+    it("computes repayment and interest-only monthly payments", () => {
+      expect(calculateMortgagePayment(200000, 4, 25, "repayment")).toBeCloseTo(1055.67, 1);
+      expect(calculateMortgagePayment(200000, 4, 25, "interest-only")).toBeCloseTo(666.67, 1);
+    });
+  });
+
+  describe("calculateMortgageCostSummary", () => {
+    it("returns null when required inputs are missing", () => {
+      expect(calculateMortgageCostSummary(0, 4.5, 20)).toBeNull();
+      expect(calculateMortgageCostSummary(200000, 0, 20)).toBeNull();
+      expect(calculateMortgageCostSummary(200000, 4.5, 0)).toBeNull();
+    });
+
+    it("computes total interest, total paid, and interest share for repayment and interest-only", () => {
+      const repayment = calculateMortgageCostSummary(200000, 4.5, 25, "repayment");
+      expect(repayment).not.toBeNull();
+      expect(repayment?.totalPaid).toBeCloseTo((repayment?.totalInterest ?? 0) + 200000, 2);
+      expect(repayment?.interestPercentage).toBeGreaterThan(0);
+
+      const io = calculateMortgageCostSummary(120000, 5, 10, "interest-only");
+      expect(io?.monthlyPayment).toBeCloseTo(500, 2);
+      expect(io?.totalInterest).toBeCloseTo(60000, 2);
+      expect(io?.totalPaid).toBeCloseTo(180000, 2);
+    });
+  });
+
+  describe("simulateMortgageOverpayment", () => {
+    it("reduces term and interest for repayment overpayments", () => {
+      const sim = simulateMortgageOverpayment({
+        loanAmount: 200000,
+        annualRatePct: 4.5,
+        termYears: 20,
+        overpayment: 250,
+        mortgageType: "repayment",
+      });
+      expect(sim).not.toBeNull();
+      expect(sim?.monthsSaved).toBeGreaterThan(0);
+      expect(sim?.interestSaved).toBeGreaterThan(0);
+      expect(sim?.standardBalances).toHaveLength(241);
+      expect(sim?.overpayBalances.at(-1)).toBe(0);
+    });
+
+    it("reduces principal without shortening term for interest-only overpayments", () => {
+      const sim = simulateMortgageOverpayment({
+        loanAmount: 200000,
+        annualRatePct: 4.5,
+        termYears: 10,
+        overpayment: 200,
+        mortgageType: "interest-only",
+      });
+      expect(sim).not.toBeNull();
+      expect(sim?.principalReduced).toBeGreaterThan(0);
+      expect(sim?.interestSaved).toBeGreaterThan(0);
+    });
+  });
+
+  describe("compareMortgageOverpayVsSave", () => {
+    it("compares overpaying against saving the same monthly amount", () => {
+      const res = compareMortgageOverpayVsSave({
+        loanAmount: 200000,
+        annualRatePct: 5,
+        termYears: 20,
+        overpayment: 200,
+        netSavingsRatePct: 3,
+        horizonYears: 5,
+      });
+      expect(res.totalInvested).toBe(12000);
+      expect(res.debtReduction).toBeGreaterThan(12000);
+      expect(res.savingsBalance).toBeGreaterThan(12000);
+      expect(res.isOverpayBetter).toBe(true);
     });
   });
 });

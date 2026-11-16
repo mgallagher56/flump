@@ -1,4 +1,4 @@
-import { PortfolioSnapshot } from "@flump/finance-engine";
+import { getUkTaxYearContext, PortfolioSnapshot } from "@flump/finance-engine";
 import {
   Button,
   EmptyState,
@@ -9,6 +9,7 @@ import {
   ProjectionNotice,
   ScenarioZone,
   Tabs,
+  TaxRatesStatusBanner,
 } from "@repo/ui";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
@@ -177,6 +178,7 @@ export const SavingsContainer: FC = () => {
         : "";
 
   const hasAccounts = savingsAccounts.length > 0;
+  const ratesContext = useMemo(() => getUkTaxYearContext(), []);
 
   return (
     <PageBody>
@@ -193,6 +195,8 @@ export const SavingsContainer: FC = () => {
         description="Your balances, what you save each month and where it could get to."
         title="Your savings"
       />
+
+      <TaxRatesStatusBanner {...ratesContext} />
 
       {hasAccounts ? (
         <>

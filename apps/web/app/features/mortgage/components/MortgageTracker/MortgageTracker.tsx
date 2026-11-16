@@ -1,3 +1,4 @@
+import { calculateMortgageCostSummary } from "@flump/finance-engine";
 import { ProgressBar } from "@repo/ui";
 import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -41,22 +42,15 @@ export const MortgageTracker: FC<MortgageTrackerProps> = ({
   const { formatCurrency } = useFormatCurrency();
   const isInterestOnly = mortgageType === "interest-only";
 
-  // A zero (or negative) input means the user has not told us that figure yet.
-  const hasInputs = loanAmount > 0 && interestRate > 0 && remainingTerm > 0;
-
-  // Repayment: M = P [ i(1+i)^n ] / [ (1+i)^n - 1 ]. Interest only: M = P * i
-  const monthlyPayment = (() => {
-    if (!hasInputs) return null;
-    const i = interestRate / 100 / 12;
-    const n = remainingTerm * 12;
-    const payment = isInterestOnly
-      ? loanAmount * i
-      : (loanAmount * i * (1 + i) ** n) / ((1 + i) ** n - 1);
-    return Number.isFinite(payment) ? payment : null;
-  })();
+  const costSummary = calculateMortgageCostSummary(
+    loanAmount,
+    interestRate,
+    remainingTerm,
+    mortgageType,
+  );
 
   // The page only opens this drawer when every figure is known; say so plainly otherwise.
-  if (monthlyPayment === null) {
+  if (costSummary === null) {
     return (
       <p className={summaryText} id="tracker-empty">
         Add your balance, interest rate and years left to see what your mortgage costs.
@@ -64,10 +58,7 @@ export const MortgageTracker: FC<MortgageTrackerProps> = ({
     );
   }
 
-  const scheduledTotal = monthlyPayment * remainingTerm * 12;
-  const totalInterest = isInterestOnly ? scheduledTotal : Math.max(0, scheduledTotal - loanAmount);
-  const totalPaid = isInterestOnly ? totalInterest + loanAmount : scheduledTotal;
-  const interestPercentage = totalPaid > 0 ? (totalInterest / totalPaid) * 100 : 0;
+  const { totalInterest, totalPaid, interestPercentage } = costSummary;
 
   return (
     <div className={resultsBody()} data-testid="mortgage-cost-details">

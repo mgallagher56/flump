@@ -1,3 +1,4 @@
+import { simulateMortgageOverpayment } from "@flump/finance-engine";
 import {
   CHART_INK,
   ChartFigure,
@@ -181,84 +182,31 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
   // A zero (or negative) input means the user has not told us that figure yet.
   const hasInputs = loanAmount > 0 && interestRate > 0 && remainingTerm > 0;
 
-  // Run amortisation schedules
+  // Run amortisation schedules via the finance engine
   const simulation = useMemo(() => {
     if (!hasInputs) return null;
 
-    const r = interestRate / 100;
-    const i = r / 12;
-    const totalMonths = Math.round(remainingTerm * 12);
+    const result = simulateMortgageOverpayment({
+      loanAmount,
+      annualRatePct: interestRate,
+      termYears: remainingTerm,
+      overpayment,
+      mortgageType,
+    });
+    if (!result) return null;
 
-    // Monthly scheduled payment
-    let monthlyScheduled = isInterestOnly
-      ? loanAmount * i
-      : (loanAmount * i * (1 + i) ** totalMonths) / ((1 + i) ** totalMonths - 1);
-    if (Number.isNaN(monthlyScheduled) || !Number.isFinite(monthlyScheduled)) {
-      return null;
-    }
-    monthlyScheduled = Math.max(0, monthlyScheduled);
-
-    // 1. Standard schedule
-    const standardBalances: number[] = [loanAmount];
-    let standardBalance = loanAmount;
-    let standardTotalInterest = 0;
-
-    for (let m = 1; m <= totalMonths; m++) {
-      if (isInterestOnly) {
-        const interest = standardBalance * i;
-        standardTotalInterest += interest;
-        standardBalances.push(standardBalance);
-      } else {
-        if (standardBalance <= 0) {
-          standardBalances.push(0);
-          continue;
-        }
-        const interest = standardBalance * i;
-        const principal = Math.min(standardBalance, monthlyScheduled - interest);
-        standardBalance = Math.max(0, standardBalance - principal);
-        standardTotalInterest += interest;
-        standardBalances.push(standardBalance);
-      }
-    }
-
-    // 2. Overpayment schedule
-    const overpayBalances: number[] = [loanAmount];
-    let overpayBalance = loanAmount;
-    let overpayTotalInterest = 0;
-    let overpayMonthsToZero = totalMonths;
-    let finishedOverpay = false;
-
-    for (let m = 1; m <= totalMonths; m++) {
-      if (overpayBalance <= 0) {
-        if (!finishedOverpay) {
-          overpayMonthsToZero = m - 1;
-          finishedOverpay = true;
-        }
-        overpayBalances.push(0);
-        continue;
-      }
-
-      const interest = overpayBalance * i;
-      overpayTotalInterest += interest;
-
-      if (isInterestOnly) {
-        // In interest only, monthly scheduled pays the current interest,
-        // and 100% of the overpayment reduces the loan principal.
-        const principal = Math.min(overpayBalance, overpayment);
-        overpayBalance = Math.max(0, overpayBalance - principal);
-      } else {
-        // Scheduled payment + overpayment
-        const totalPayment = monthlyScheduled + overpayment;
-        const principal = Math.min(overpayBalance, totalPayment - interest);
-        overpayBalance = Math.max(0, overpayBalance - principal);
-      }
-
-      overpayBalances.push(overpayBalance);
-    }
-
-    if (overpayBalance <= 0 && !finishedOverpay) {
-      overpayMonthsToZero = totalMonths;
-    }
+    const {
+      monthlyScheduled,
+      standardBalances,
+      overpayBalances,
+      standardTotalInterest,
+      overpayTotalInterest,
+      interestSaved,
+      monthsSaved,
+      newTermMonths,
+      principalReduced,
+      totalMonths,
+    } = result;
 
     // One point a year, labelled with the calendar year (this year first), and the end of the
     // term as the last point when it falls part way through a year.
@@ -287,23 +235,26 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       else chartData.push(end);
     }
 
-    const monthsSaved = Math.max(0, totalMonths - overpayMonthsToZero);
-    const interestSaved = Math.max(0, standardTotalInterest - overpayTotalInterest);
-    const finalOverpayBalance = overpayBalances[overpayBalances.length - 1] ?? 0;
-    const principalReduced = Math.max(0, loanAmount - finalOverpayBalance);
-
     return {
       monthlyScheduled,
       standardTotalInterest,
       overpayTotalInterest,
       interestSaved,
       monthsSaved,
-      newTermMonths: overpayMonthsToZero,
+      newTermMonths,
       principalReduced,
       totalMonths,
       chartData,
     };
-  }, [hasInputs, loanAmount, interestRate, remainingTerm, overpayment, isInterestOnly]);
+  }, [
+    hasInputs,
+    loanAmount,
+    interestRate,
+    remainingTerm,
+    overpayment,
+    isInterestOnly,
+    mortgageType,
+  ]);
 
   const interestSaved = simulation?.interestSaved ?? null;
   const monthsSaved = simulation?.monthsSaved ?? null;

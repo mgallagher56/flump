@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { calculateCompoundTrajectory, calculateForecast } from "./forecast.js";
+import {
+  calculateCompoundInterestEarned,
+  calculateCompoundTrajectory,
+  calculateForecast,
+  calculateMonthsToSavingsGoal,
+  futureValue,
+  projectCompoundSavings,
+} from "./forecast.js";
 
 describe("forecast module", () => {
   // Independent derivation. Each year a pot is updated B_y = (B_{y-1} + c) * g, g = 1 + r, so
@@ -154,5 +161,79 @@ describe("forecast module", () => {
 
     const zeroRes = calculateCompoundTrajectory(0, 0, 0, 5);
     expect(zeroRes.endBalance).toBe(0);
+  });
+
+  describe("futureValue", () => {
+    it("handles 0% rate without division by zero", () => {
+      expect(futureValue(10000, 100, 0, 60)).toBe(16000);
+    });
+
+    it("matches a month-by-month compounding loop", () => {
+      let expected = 10000;
+      for (let m = 0; m < 60; m++) {
+        expected = expected * 1.004 + 100;
+      }
+      expect(futureValue(10000, 100, 0.004, 60)).toBeCloseTo(expected, 2);
+    });
+  });
+
+  describe("calculateCompoundInterestEarned", () => {
+    it("returns 0 when rate is 0 or negative", () => {
+      expect(calculateCompoundInterestEarned(10000, 0, 200)).toBe(0);
+      expect(calculateCompoundInterestEarned(10000, -1, 200)).toBe(0);
+    });
+
+    it("computes one-year compound interest with monthly contributions", () => {
+      const interest = calculateCompoundInterestEarned(10000, 4.8, 100, 12);
+      expect(interest).toBeCloseTo(517.46, 1);
+    });
+  });
+
+  describe("projectCompoundSavings", () => {
+    it("projects yearly points and marks flat when no growth and no contributions", () => {
+      const flat = projectCompoundSavings({
+        starting: 5000,
+        monthly: 0,
+        annualRatePct: 0,
+        years: 5,
+      });
+      expect(flat.flat).toBe(true);
+      expect(flat.final).toBe(5000);
+      expect(flat.points).toHaveLength(6);
+
+      const growing = projectCompoundSavings({
+        starting: 10000,
+        monthly: 200,
+        annualRatePct: 4,
+        years: 3,
+      });
+      expect(growing.flat).toBe(false);
+      expect(growing.paidIn).toBe(7200);
+      expect(growing.interest).toBeGreaterThan(0);
+      expect(growing.final).toBeGreaterThan(17200);
+    });
+  });
+
+  describe("calculateMonthsToSavingsGoal", () => {
+    it("returns reached, months, or not-reached", () => {
+      expect(
+        calculateMonthsToSavingsGoal({
+          starting: 5000,
+          monthly: 100,
+          annualRatePct: 4,
+          goal: 5000,
+        }),
+      ).toEqual({ status: "reached" });
+      expect(
+        calculateMonthsToSavingsGoal({ starting: 0, monthly: 0, annualRatePct: 0, goal: 1000 }),
+      ).toEqual({ status: "not-reached" });
+      const res = calculateMonthsToSavingsGoal({
+        starting: 1000,
+        monthly: 500,
+        annualRatePct: 0,
+        goal: 3000,
+      });
+      expect(res).toEqual({ status: "months", months: 4 });
+    });
   });
 });

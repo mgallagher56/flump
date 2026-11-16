@@ -222,3 +222,127 @@ export function calculateCompoundTrajectory(
     points,
   };
 }
+
+/**
+ * Future value of a principal with regular monthly contributions compounded at `monthlyRate`
+ * over `months` whole months. Handles `monthlyRate <= 0` without division by zero.
+ */
+export function futureValue(
+  principal: number,
+  monthlyContribution: number,
+  monthlyRate: number,
+  months: number,
+): number {
+  const safePrincipal = Number.isFinite(principal) && principal > 0 ? principal : 0;
+  const safeMonthly =
+    Number.isFinite(monthlyContribution) && monthlyContribution > 0 ? monthlyContribution : 0;
+  const wholeMonths = Math.max(0, Math.round(months));
+  if (!(monthlyRate > 0) || !Number.isFinite(monthlyRate)) {
+    return safePrincipal + safeMonthly * wholeMonths;
+  }
+  let balance = safePrincipal;
+  for (let m = 0; m < wholeMonths; m++) {
+    balance = balance * (1 + monthlyRate) + safeMonthly;
+  }
+  return balance;
+}
+
+/**
+ * Compound interest earned over `months` (default 12) at `annualRatePct` with regular monthly
+ * contributions. Returns 0 when the rate is zero or negative.
+ */
+export function calculateCompoundInterestEarned(
+  balance: number,
+  annualRatePct: number,
+  monthlyContribution: number,
+  months = 12,
+): number {
+  if (!(annualRatePct > 0) || !Number.isFinite(annualRatePct)) return 0;
+  const wholeMonths = Math.max(0, Math.round(months));
+  const endBalance = futureValue(
+    balance,
+    monthlyContribution,
+    annualRatePct / 100 / 12,
+    wholeMonths,
+  );
+  const safePrincipal = Number.isFinite(balance) && balance > 0 ? balance : 0;
+  const safeMonthly =
+    Number.isFinite(monthlyContribution) && monthlyContribution > 0 ? monthlyContribution : 0;
+  return Math.max(0, endBalance - safePrincipal - safeMonthly * wholeMonths);
+}
+
+export interface SavingsCompoundProjectionInput {
+  starting: number;
+  monthly: number;
+  annualRatePct: number;
+  years: number;
+}
+
+export interface SavingsCompoundProjection {
+  points: { year: number; balance: number }[];
+  final: number;
+  paidIn: number;
+  interest: number;
+  flat: boolean;
+}
+
+/**
+ * Projects a savings balance over whole years with monthly compounding and monthly additions.
+ */
+export function projectCompoundSavings(
+  input: SavingsCompoundProjectionInput,
+): SavingsCompoundProjection {
+  const starting = Number.isFinite(input.starting) && input.starting > 0 ? input.starting : 0;
+  const monthly = Number.isFinite(input.monthly) && input.monthly > 0 ? input.monthly : 0;
+  const years = Math.max(0, Math.round(input.years));
+  const rate =
+    Number.isFinite(input.annualRatePct) && input.annualRatePct > 0 ? input.annualRatePct : 0;
+  const monthlyRate = rate / 100 / 12;
+
+  const points: { year: number; balance: number }[] = [{ year: 0, balance: Math.round(starting) }];
+  let balance = starting;
+  for (let year = 1; year <= years; year += 1) {
+    balance = futureValue(balance, monthly, monthlyRate, 12);
+    points.push({ year, balance: Math.round(balance) });
+  }
+
+  const paidIn = monthly * 12 * years;
+  return {
+    points,
+    final: balance,
+    paidIn,
+    interest: Math.max(0, balance - starting - paidIn),
+    flat: monthly <= 0 && (rate <= 0 || starting <= 0),
+  };
+}
+
+export type SavingsGoalMonthsResult =
+  | { status: "reached" }
+  | { status: "months"; months: number }
+  | { status: "not-reached" };
+
+/**
+ * Months until a monthly-compounding savings balance first reaches `goal`, searching up to
+ * `maxMonths` (default 600 = 50 years).
+ */
+export function calculateMonthsToSavingsGoal(input: {
+  starting: number;
+  monthly: number;
+  annualRatePct: number;
+  goal: number;
+  maxMonths?: number;
+}): SavingsGoalMonthsResult {
+  const starting = Number.isFinite(input.starting) && input.starting > 0 ? input.starting : 0;
+  if (starting >= input.goal) return { status: "reached" };
+  const monthly = Number.isFinite(input.monthly) && input.monthly > 0 ? input.monthly : 0;
+  const rate =
+    Number.isFinite(input.annualRatePct) && input.annualRatePct > 0 ? input.annualRatePct : 0;
+  const monthlyRate = rate / 100 / 12;
+  const maxMonths = input.maxMonths ?? 600;
+  let balance = starting;
+  for (let months = 1; months <= maxMonths; months += 1) {
+    balance = balance * (1 + monthlyRate) + monthly;
+    if (balance >= input.goal) return { status: "months", months };
+  }
+  return { status: "not-reached" };
+}

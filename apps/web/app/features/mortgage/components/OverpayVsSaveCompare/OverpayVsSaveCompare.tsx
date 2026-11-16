@@ -1,3 +1,4 @@
+import { compareMortgageOverpayVsSave } from "@flump/finance-engine";
 import {
   ChartFigure,
   chartColor,
@@ -85,103 +86,29 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
 
   const netSavingsRate = savingsRate * taxMultiplier;
 
-  // Comparison simulation
-  const comparisonData = useMemo(() => {
-    // One rule: the simulated horizon is exactly what the slider shows (whole years, at least 1,
-    // capped at the remaining term rounded down). A term under a year simulates one year; the
-    // loan simply clears early because principal is capped at the balance.
-    const H = Math.min(horizonYears, horizonMax);
-    const totalMonths = H * 12;
-
-    const im = interestRate / 100 / 12;
-    const is = netSavingsRate / 100 / 12;
-
-    // Monthly scheduled mortgage payment
-    let monthlyScheduled = 0;
-    if (loanAmount > 0 && interestRate > 0 && remainingTerm > 0) {
-      if (isInterestOnly) {
-        monthlyScheduled = loanAmount * im;
-      } else {
-        const n = remainingTerm * 12;
-        monthlyScheduled = (loanAmount * im * (1 + im) ** n) / ((1 + im) ** n - 1);
-      }
-    }
-    if (Number.isNaN(monthlyScheduled) || !Number.isFinite(monthlyScheduled)) {
-      monthlyScheduled = 0;
-    }
-
-    // 1. Amortize Standard Mortgage
-    let standardBalance = loanAmount;
-    let standardCumulativeInterest = 0;
-    for (let m = 1; m <= totalMonths; m++) {
-      const interest = standardBalance * im;
-      standardCumulativeInterest += interest;
-      if (!isInterestOnly) {
-        const principal = Math.min(standardBalance, monthlyScheduled - interest);
-        standardBalance = Math.max(0, standardBalance - principal);
-      }
-    }
-
-    // 2. Amortize Overpayment Mortgage
-    let overpayBalance = loanAmount;
-    let overpayCumulativeInterest = 0;
-    for (let m = 1; m <= totalMonths; m++) {
-      const interest = overpayBalance * im;
-      overpayCumulativeInterest += interest;
-      if (isInterestOnly) {
-        const principal = Math.min(overpayBalance, overpayment);
-        overpayBalance = Math.max(0, overpayBalance - principal);
-      } else {
-        const principal = Math.min(overpayBalance, monthlyScheduled + overpayment - interest);
-        overpayBalance = Math.max(0, overpayBalance - principal);
-      }
-    }
-
-    // Debt reduction = Standard Balance - Overpay Balance
-    const principalReduced = Math.max(0, standardBalance - overpayBalance);
-    const cumulativeInterestSaved = Math.max(
-      0,
-      standardCumulativeInterest - overpayCumulativeInterest,
-    );
-    const debtReduction = isInterestOnly
-      ? principalReduced + cumulativeInterestSaved
-      : principalReduced;
-
-    // 3. Savings Account Accumulation
-    let savingsBalance = 0;
-    for (let m = 1; m <= totalMonths; m++) {
-      savingsBalance = savingsBalance * (1 + is) + overpayment;
-    }
-
-    const totalInvested = overpayment * totalMonths;
-    const mortgageInterestSaved = isInterestOnly
-      ? cumulativeInterestSaved
-      : Math.max(0, debtReduction - totalInvested);
-    const savingsInterestEarned = Math.max(0, savingsBalance - totalInvested);
-
-    const difference = Math.abs(debtReduction - savingsBalance);
-    const isOverpayBetter = debtReduction > savingsBalance;
-
-    return {
-      debtReduction,
-      savingsBalance,
-      totalInvested,
-      mortgageInterestSaved,
-      savingsInterestEarned,
-      difference,
-      isOverpayBetter,
-      actualHorizon: H,
-    };
-  }, [
-    loanAmount,
-    interestRate,
-    remainingTerm,
-    overpayment,
-    netSavingsRate,
-    horizonYears,
-    horizonMax,
-    isInterestOnly,
-  ]);
+  // Comparison simulation via the finance engine
+  const comparisonData = useMemo(
+    () =>
+      compareMortgageOverpayVsSave({
+        loanAmount,
+        annualRatePct: interestRate,
+        termYears: remainingTerm,
+        overpayment,
+        netSavingsRatePct: netSavingsRate,
+        horizonYears: Math.min(horizonYears, horizonMax),
+        mortgageType,
+      }),
+    [
+      loanAmount,
+      interestRate,
+      remainingTerm,
+      overpayment,
+      netSavingsRate,
+      horizonYears,
+      horizonMax,
+      mortgageType,
+    ],
+  );
 
   const {
     debtReduction,
