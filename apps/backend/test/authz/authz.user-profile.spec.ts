@@ -511,6 +511,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   it("GET /retirement-plan: requires auth and returns only the caller's plan", async () => {
     const unauth = await h.call("get", "/retirement-plan");
     expect(unauth.status).toBe(401);
+    ran("GET /retirement-plan", "authn");
 
     const aRes = await h.call("get", "/retirement-plan", h.tokens.a);
     expect(aRes.status).toBe(200);
@@ -520,12 +521,13 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(bRes.status).toBe(200);
     expect(bRes.body.plan.userId).toBe(USER_B);
     expect(bRes.body.plan.id).not.toBe(aRes.body.plan.id);
-    ran("GET /retirement-plan");
+    ran("GET /retirement-plan", "idor");
   });
 
   it("PUT /retirement-plan: requires auth and scopes updates to the caller", async () => {
     const unauth = await h.call("put", "/retirement-plan", undefined, { retirementAge: 67 });
     expect(unauth.status).toBe(401);
+    ran("PUT /retirement-plan", "authn");
 
     await h.call("put", "/retirement-plan", h.tokens.a, { retirementAge: 65, planToAge: 90 });
     const bPut = await h.call("put", "/retirement-plan", h.tokens.b, {
@@ -538,6 +540,6 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
 
     const aAfter = await h.call("get", "/retirement-plan", h.tokens.a);
     expect(aAfter.body.plan.retirementAge).toBe(65);
-    ran("PUT /retirement-plan");
+    ran("PUT /retirement-plan", "idor");
   });
 });
