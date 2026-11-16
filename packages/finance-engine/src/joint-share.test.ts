@@ -22,11 +22,34 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       ["Stocks & Shares ISA"],
       ["Lifetime ISA"],
       ["Junior ISA"],
+      ["JISA"],
       ["LISA"],
+      ["CASH_ISA"],
+      ["STOCKS_ISA"],
     ])("forbids %s from being marked joint", (type) => {
       expect(isIsaAccount(type)).toBe(true);
       expect(canAccountBeJoint(type)).toBe(false);
       expect(canAccountBeJoint({ type })).toBe(false);
+      expect(canAccountBeJoint({ type: "", rawType: type })).toBe(false);
+    });
+
+    it("forbids Saving or Investment accounts whose name indicates an ISA or LISA", () => {
+      expect(isIsaAccount({ name: "Cash ISA", type: "Saving" })).toBe(true);
+      expect(canAccountBeJoint({ name: "Cash ISA", type: "Saving", ownership: "joint" })).toBe(
+        false,
+      );
+      expect(
+        canAccountBeJoint({ name: "Stocks & Shares ISA", type: "Investment", ownership: "joint" }),
+      ).toBe(false);
+      expect(canAccountBeJoint({ name: "Moneybox LISA", type: "Saving" })).toBe(false);
+      expect(canAccountBeJoint({ name: "Child JISA", type: "Investment" })).toBe(false);
+    });
+
+    it("does not false-positive on words containing 'isa' or 'lisa' substrings", () => {
+      expect(isIsaAccount({ name: "Crisalis Savings", type: "Saving" })).toBe(false);
+      expect(isIsaAccount({ name: "Lisbon Holiday Pot", type: "Saving" })).toBe(false);
+      expect(isIsaAccount({ name: "Visa Card", type: "Credit Card" })).toBe(false);
+      expect(canAccountBeJoint({ name: "Lisbon Holiday Pot", type: "Saving" })).toBe(true);
     });
 
     it("forbids any account flagged with isIsa: true from being joint", () => {
@@ -35,27 +58,40 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       expect(canAccountBeJoint({ type: "Investment", isIsa: true })).toBe(false);
     });
 
-    it.each([["Pension"], ["SIPP"], ["Workplace Pension"], ["Personal Pension"]])(
-      "forbids %s from being marked joint",
-      (type) => {
-        expect(isPensionAccount(type)).toBe(true);
-        expect(canAccountBeJoint(type)).toBe(false);
-        expect(canAccountBeJoint({ type })).toBe(false);
-      },
-    );
+    it.each([
+      ["Pension"],
+      ["SIPP"],
+      ["Workplace Pension"],
+      ["Personal Pension"],
+      ["PENSION_WORKPLACE"],
+      ["PENSION_SIPP"],
+    ])("forbids %s from being marked joint", (type) => {
+      expect(isPensionAccount(type)).toBe(true);
+      expect(canAccountBeJoint(type)).toBe(false);
+      expect(canAccountBeJoint({ type })).toBe(false);
+    });
 
     it.each([
       ["Current"],
+      ["CURRENT"],
       ["checking"],
       ["Saving"],
       ["Savings"],
+      ["SAVINGS"],
       ["Investment"],
+      ["GENERAL_INVESTMENT"],
       ["GIA"],
       ["Mortgage"],
+      ["MORTGAGE_RESIDENTIAL"],
+      ["MORTGAGE_BTL"],
       ["Loan"],
+      ["LOAN_PERSONAL"],
       ["Credit Card"],
+      ["CREDIT_CARD"],
       ["credit_card"],
       ["Overdraft"],
+      ["OVERDRAFT"],
+      ["CAR_FINANCE_PCP_HP"],
       ["Property"],
     ])("allows %s to be marked joint", (type) => {
       expect(canAccountBeJoint(type)).toBe(true);
@@ -79,11 +115,15 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       for (const type of [
         "ISA",
         "Cash ISA",
+        "CASH_ISA",
         "Stocks & Shares ISA",
+        "STOCKS_ISA",
         "Lifetime ISA",
         "Pension",
         "SIPP",
         "Workplace Pension",
+        "PENSION_WORKPLACE",
+        "PENSION_SIPP",
       ]) {
         expect(resolveAccountOwnership({ type, ownership: "joint", sharePercent: 50 })).toBe(
           "sole",
@@ -92,6 +132,15 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
           100,
         );
       }
+
+      expect(
+        resolveAccountSharePercent({
+          name: "Cash ISA",
+          type: "Saving",
+          ownership: "joint",
+          sharePercent: 50,
+        }),
+      ).toBe(100);
 
       expect(
         resolveAccountSharePercent({
@@ -162,18 +211,30 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       ).toBe(33.33);
     });
 
+    it("rounds half-pennies symmetrically for positive and negative amounts", () => {
+      expect(applyAccountShare(20.01, { type: "Current", ownership: "joint" })).toBe(10.01);
+      expect(applyAccountShare(-20.01, { type: "Current", ownership: "joint" })).toBe(-10.01);
+      expect(
+        applyAccountShare(1.005, { type: "Saving", ownership: "joint", sharePercent: 100 }),
+      ).toBe(1.005);
+      expect(
+        applyAccountShare(2.01, { type: "Saving", ownership: "joint", sharePercent: 50 }),
+      ).toBe(1.01);
+    });
+
     it("keeps 100% of sole accounts and individual-only accounts (ISAs and pensions)", () => {
       expect(applyAccountShare(280_000, { type: "Mortgage", ownership: "sole" })).toBe(280_000);
       expect(
         applyAccountShare(20_000, {
-          type: "Stocks & Shares ISA",
+          name: "Stocks & Shares ISA",
+          type: "Investment",
           ownership: "joint",
           sharePercent: 50,
         }),
       ).toBe(20_000);
       expect(
         applyAccountShare(85_000, {
-          type: "Workplace Pension",
+          type: "PENSION_WORKPLACE",
           ownership: "joint",
           sharePercent: 50,
         }),
@@ -208,8 +269,15 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       expect(splitJointSavingsInterest(1_200)).toBe(1_200);
     });
 
-    it("returns 0 taxable interest for ISAs and pensions", () => {
+    it("returns 0 taxable interest for ISAs (by type or name) and pensions", () => {
       expect(splitJointSavingsInterest(1_200, { type: "Cash ISA", ownership: "sole" })).toBe(0);
+      expect(
+        splitJointSavingsInterest(1_200, {
+          name: "Cash ISA",
+          type: "Saving",
+          ownership: "joint",
+        }),
+      ).toBe(0);
       expect(
         splitJointSavingsInterest(1_200, { type: "Saving", isIsa: true, ownership: "joint" }),
       ).toBe(0);
@@ -226,14 +294,23 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
   describe("describeJointLiabilityNotice", () => {
     it.each([
       ["Mortgage"],
+      ["MORTGAGE_RESIDENTIAL"],
+      ["MORTGAGE_BTL"],
       ["Loan"],
+      ["LOAN_PERSONAL"],
       ["Credit Card"],
+      ["CREDIT_CARD"],
       ["credit_card"],
       ["Overdraft"],
+      ["OVERDRAFT"],
       ["Personal Loan"],
       ["car_finance"],
+      ["CAR_FINANCE_PCP_HP"],
     ])("returns the factual UK joint liability notice when %s is marked joint", (type) => {
       expect(describeJointLiabilityNotice({ type, ownership: "joint" })).toBe(
+        JOINT_LIABILITY_NOTICE,
+      );
+      expect(describeJointLiabilityNotice({ type: "", rawType: type, ownership: "joint" })).toBe(
         JOINT_LIABILITY_NOTICE,
       );
     });
@@ -247,6 +324,7 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       expect(describeJointLiabilityNotice({ type: "Investment", ownership: "joint" })).toBeNull();
       expect(describeJointLiabilityNotice({ type: "Cash ISA", ownership: "joint" })).toBeNull();
       expect(describeJointLiabilityNotice({ type: "Student Loan", ownership: "joint" })).toBeNull();
+      expect(describeJointLiabilityNotice({ type: "STUDENT_LOAN", ownership: "joint" })).toBeNull();
       expect(describeJointLiabilityNotice(null)).toBeNull();
     });
 
