@@ -1636,6 +1636,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       while ((await applied()).at(-1) !== NAME) {
         await ds.undoLastMigration();
       }
+      expect(await applied()).not.toContain("AddRetirementPlan1795260000000");
+      expect(await applied()).not.toContain("EncryptTaxReceipts1795200000000");
       expect(await applied()).not.toContain("AuditEventsDeleteAndTruncateGuards1795100000000");
       expect(await applied()).toContain(NAME);
     };

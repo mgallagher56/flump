@@ -4,8 +4,8 @@ import { takeMigrationLock } from "../config/migration-lock";
 /**
  * E33 Slice S2: persistent user retirement plan table (one row per user, versioned by updated_at).
  */
-export class AddRetirementPlan1795200000000 implements MigrationInterface {
-  name = "AddRetirementPlan1795200000000";
+export class AddRetirementPlan1795260000000 implements MigrationInterface {
+  name = "AddRetirementPlan1795260000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await takeMigrationLock(queryRunner);
