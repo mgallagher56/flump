@@ -818,4 +818,15 @@ describe("BudgetContainer", () => {
       expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
     });
   });
+
+  it("shows the stale-rates banner when the calendar is past the latest supported tax year", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-06-01T12:00:00Z"));
+    try {
+      render(<BudgetContainer />);
+      expect(screen.getByText(/Using 2026\/27 rates/)).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

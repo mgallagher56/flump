@@ -269,3 +269,286 @@ export function calculateMortgageVsIsa(
     netWealthDelta: Math.round(netWealthDelta * 100) / 100,
   };
 }
+
+export type MortgageType = "repayment" | "interest-only";
+
+/**
+ * Unrounded monthly mortgage payment supporting both repayment and interest-only mortgages.
+ * Returns 0 when the balance, rate, or (for repayment) term is missing, so callers never render
+ * NaN or Infinity.
+ */
+export function calculateMortgagePayment(
+  loanAmount: number,
+  annualRatePct: number,
+  termYears: number,
+  type: MortgageType = "repayment",
+): number {
+  if (!(loanAmount > 0) || !(annualRatePct > 0)) return 0;
+  const i = annualRatePct / 100 / 12;
+  if (type === "interest-only") return loanAmount * i;
+  if (!(termYears > 0)) return 0;
+  const n = termYears * 12;
+  const payment = (loanAmount * i * (1 + i) ** n) / ((1 + i) ** n - 1);
+  return Number.isFinite(payment) ? payment : 0;
+}
+
+export interface MortgageCostSummary {
+  monthlyPayment: number;
+  scheduledTotal: number;
+  totalInterest: number;
+  totalPaid: number;
+  interestPercentage: number;
+}
+
+/**
+ * Computes total interest, total to pay, and interest share over the remaining mortgage term.
+ * Returns null when any required input is missing or non-positive.
+ */
+export function calculateMortgageCostSummary(
+  loanAmount: number,
+  annualRatePct: number,
+  termYears: number,
+  type: MortgageType = "repayment",
+): MortgageCostSummary | null {
+  if (!(loanAmount > 0 && annualRatePct > 0 && termYears > 0)) return null;
+  const monthlyPayment = calculateMortgagePayment(loanAmount, annualRatePct, termYears, type);
+  if (!(monthlyPayment > 0)) return null;
+  const isInterestOnly = type === "interest-only";
+  const scheduledTotal = monthlyPayment * termYears * 12;
+  const totalInterest = isInterestOnly ? scheduledTotal : Math.max(0, scheduledTotal - loanAmount);
+  const totalPaid = isInterestOnly ? totalInterest + loanAmount : scheduledTotal;
+  const interestPercentage = totalPaid > 0 ? (totalInterest / totalPaid) * 100 : 0;
+  return {
+    monthlyPayment,
+    scheduledTotal,
+    totalInterest,
+    totalPaid,
+    interestPercentage,
+  };
+}
+
+export interface MortgageOverpaymentScheduleInput {
+  loanAmount: number;
+  annualRatePct: number;
+  termYears: number;
+  overpayment: number;
+  mortgageType?: MortgageType;
+}
+
+export interface MortgageOverpaymentScheduleResult {
+  monthlyScheduled: number;
+  standardBalances: number[];
+  overpayBalances: number[];
+  standardTotalInterest: number;
+  overpayTotalInterest: number;
+  interestSaved: number;
+  monthsSaved: number;
+  newTermMonths: number;
+  principalReduced: number;
+  totalMonths: number;
+}
+
+/**
+ * Simulates standard vs overpayment mortgage amortisation month-by-month for repayment and
+ * interest-only mortgages. Returns null when required inputs are missing or non-positive.
+ */
+export function simulateMortgageOverpayment(
+  input: MortgageOverpaymentScheduleInput,
+): MortgageOverpaymentScheduleResult | null {
+  const { loanAmount, annualRatePct, termYears, overpayment, mortgageType = "repayment" } = input;
+  if (!(loanAmount > 0 && annualRatePct > 0 && termYears > 0)) return null;
+
+  const isInterestOnly = mortgageType === "interest-only";
+  const i = annualRatePct / 100 / 12;
+  const totalMonths = Math.round(termYears * 12);
+  const monthlyScheduled = calculateMortgagePayment(
+    loanAmount,
+    annualRatePct,
+    termYears,
+    mortgageType,
+  );
+  if (!(monthlyScheduled > 0)) return null;
+
+  const standardBalances: number[] = [loanAmount];
+  let standardBalance = loanAmount;
+  let standardTotalInterest = 0;
+
+  for (let m = 1; m <= totalMonths; m++) {
+    if (isInterestOnly) {
+      const interest = standardBalance * i;
+      standardTotalInterest += interest;
+      standardBalances.push(standardBalance);
+    } else {
+      if (standardBalance <= 0) {
+        standardBalances.push(0);
+        continue;
+      }
+      const interest = standardBalance * i;
+      const principal = Math.min(standardBalance, monthlyScheduled - interest);
+      standardBalance = Math.max(0, standardBalance - principal);
+      standardTotalInterest += interest;
+      standardBalances.push(standardBalance);
+    }
+  }
+
+  const overpayBalances: number[] = [loanAmount];
+  let overpayBalance = loanAmount;
+  let overpayTotalInterest = 0;
+  let overpayMonthsToZero = totalMonths;
+  let finishedOverpay = false;
+
+  for (let m = 1; m <= totalMonths; m++) {
+    if (overpayBalance <= 0) {
+      if (!finishedOverpay) {
+        overpayMonthsToZero = m - 1;
+        finishedOverpay = true;
+      }
+      overpayBalances.push(0);
+      continue;
+    }
+
+    const interest = overpayBalance * i;
+    overpayTotalInterest += interest;
+
+    if (isInterestOnly) {
+      const principal = Math.min(overpayBalance, overpayment);
+      overpayBalance = Math.max(0, overpayBalance - principal);
+    } else {
+      const totalPayment = monthlyScheduled + overpayment;
+      const principal = Math.min(overpayBalance, totalPayment - interest);
+      overpayBalance = Math.max(0, overpayBalance - principal);
+    }
+
+    overpayBalances.push(overpayBalance);
+  }
+
+  if (overpayBalance <= 0 && !finishedOverpay) {
+    overpayMonthsToZero = totalMonths;
+  }
+
+  const monthsSaved = Math.max(0, totalMonths - overpayMonthsToZero);
+  const interestSaved = Math.max(0, standardTotalInterest - overpayTotalInterest);
+  const finalOverpayBalance = overpayBalances[overpayBalances.length - 1] ?? 0;
+  const principalReduced = Math.max(0, loanAmount - finalOverpayBalance);
+
+  return {
+    monthlyScheduled,
+    standardBalances,
+    overpayBalances,
+    standardTotalInterest,
+    overpayTotalInterest,
+    interestSaved,
+    monthsSaved,
+    newTermMonths: overpayMonthsToZero,
+    principalReduced,
+    totalMonths,
+  };
+}
+
+export interface MortgageOverpayVsSaveInput {
+  loanAmount: number;
+  annualRatePct: number;
+  termYears: number;
+  overpayment: number;
+  netSavingsRatePct: number;
+  horizonYears: number;
+  mortgageType?: MortgageType;
+}
+
+export interface MortgageOverpayVsSaveResult {
+  debtReduction: number;
+  savingsBalance: number;
+  totalInvested: number;
+  mortgageInterestSaved: number;
+  savingsInterestEarned: number;
+  difference: number;
+  isOverpayBetter: boolean;
+  actualHorizon: number;
+}
+
+/**
+ * Compares overpaying a mortgage against putting the same monthly amount into savings over
+ * `horizonYears`.
+ */
+export function compareMortgageOverpayVsSave(
+  input: MortgageOverpayVsSaveInput,
+): MortgageOverpayVsSaveResult {
+  const {
+    loanAmount,
+    annualRatePct,
+    termYears,
+    overpayment,
+    netSavingsRatePct,
+    horizonYears,
+    mortgageType = "repayment",
+  } = input;
+
+  const isInterestOnly = mortgageType === "interest-only";
+  const totalMonths = horizonYears * 12;
+  const im = annualRatePct / 100 / 12;
+  const is = netSavingsRatePct / 100 / 12;
+  const monthlyScheduled = calculateMortgagePayment(
+    loanAmount,
+    annualRatePct,
+    termYears,
+    mortgageType,
+  );
+
+  let standardBalance = loanAmount;
+  let standardCumulativeInterest = 0;
+  for (let m = 1; m <= totalMonths; m++) {
+    const interest = standardBalance * im;
+    standardCumulativeInterest += interest;
+    if (!isInterestOnly) {
+      const principal = Math.min(standardBalance, monthlyScheduled - interest);
+      standardBalance = Math.max(0, standardBalance - principal);
+    }
+  }
+
+  let overpayBalance = loanAmount;
+  let overpayCumulativeInterest = 0;
+  for (let m = 1; m <= totalMonths; m++) {
+    const interest = overpayBalance * im;
+    overpayCumulativeInterest += interest;
+    if (isInterestOnly) {
+      const principal = Math.min(overpayBalance, overpayment);
+      overpayBalance = Math.max(0, overpayBalance - principal);
+    } else {
+      const principal = Math.min(overpayBalance, monthlyScheduled + overpayment - interest);
+      overpayBalance = Math.max(0, overpayBalance - principal);
+    }
+  }
+
+  const principalReduced = Math.max(0, standardBalance - overpayBalance);
+  const cumulativeInterestSaved = Math.max(
+    0,
+    standardCumulativeInterest - overpayCumulativeInterest,
+  );
+  const debtReduction = isInterestOnly
+    ? principalReduced + cumulativeInterestSaved
+    : principalReduced;
+
+  let savingsBalance = 0;
+  for (let m = 1; m <= totalMonths; m++) {
+    savingsBalance = savingsBalance * (1 + is) + overpayment;
+  }
+
+  const totalInvested = overpayment * totalMonths;
+  const mortgageInterestSaved = isInterestOnly
+    ? cumulativeInterestSaved
+    : Math.max(0, debtReduction - totalInvested);
+  const savingsInterestEarned = Math.max(0, savingsBalance - totalInvested);
+  const difference = Math.abs(debtReduction - savingsBalance);
+  const isOverpayBetter = debtReduction > savingsBalance;
+
+  return {
+    debtReduction,
+    savingsBalance,
+    totalInvested,
+    mortgageInterestSaved,
+    savingsInterestEarned,
+    difference,
+    isOverpayBetter,
+    actualHorizon: horizonYears,
+  };
+}

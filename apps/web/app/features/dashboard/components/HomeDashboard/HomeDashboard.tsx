@@ -1,4 +1,4 @@
-import type { NetWorthLeftOut } from "@flump/finance-engine";
+import { getUkTaxYearContext, type NetWorthLeftOut } from "@flump/finance-engine";
 import {
   Button,
   DELTA_PANEL_COPY,
@@ -9,6 +9,7 @@ import {
   PageHeader,
   PageSection,
   ProjectionNotice,
+  TaxRatesStatusBanner,
   VisuallyHidden,
 } from "@repo/ui";
 import { LayoutGrid, SlidersHorizontal } from "lucide-react";
@@ -295,6 +296,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const showsDebtEstimate = cards.includes("debt") && debtCardShowsEstimate(debtData);
   // The sandbox always carries the one projection notice beside its bar (E16 P4.4).
   const showNotice = isSample || showsTaxEstimate || showsDebtEstimate;
+  const ratesContext = useMemo(() => getUkTaxYearContext(), []);
 
   return (
     <PageBody data-testid="dashboard-page" id="dashboard-page">
@@ -321,6 +323,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         className={dashboardHeader()}
         title={isSample ? "Example figures" : "Your money"}
       />
+
+      <TaxRatesStatusBanner {...ratesContext} />
 
       {delta ? (
         <HeroFigure

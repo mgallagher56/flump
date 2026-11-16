@@ -7,6 +7,7 @@ import {
 import {
   DEBT_CATEGORY,
   findPossibleDuplicateDebtRows,
+  getUkTaxYearContext,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
 import {
@@ -18,6 +19,7 @@ import {
   InlineAlert,
   PageBody,
   PageHeader,
+  TaxRatesStatusBanner,
   useOptionalToast,
 } from "@repo/ui";
 import { ListChecks, Pencil } from "lucide-react";
@@ -511,6 +513,8 @@ const BudgetContainer: FC = () => {
     </>
   );
 
+  const ratesContext = useMemo(() => getUkTaxYearContext(), []);
+
   return (
     <PageBody>
       <PageHeader
@@ -540,6 +544,8 @@ const BudgetContainer: FC = () => {
         subtitle="Your income, spending and how long your money lasts."
         title="Your budget"
       />
+
+      <TaxRatesStatusBanner {...ratesContext} />
 
       {actionError && <InlineAlert tone="danger">{actionError}</InlineAlert>}
 

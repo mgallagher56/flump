@@ -1,3 +1,5 @@
+import { calculateMonthsToSavingsGoal, projectCompoundSavings } from "@flump/finance-engine";
+
 /** Inflation taken off the rate when the estimate is shown in today's money. */
 export const TODAYS_MONEY_INFLATION = 2.5;
 
@@ -42,29 +44,17 @@ export const effectiveRateOf = (rate: number, todaysMoney: boolean): number =>
 
 /** Monthly compounding at the AER over whole years, with the monthly amount added each month. */
 export function projectSavings(input: SavingsProjectionInput): SavingsProjection {
-  const starting = safe(input.starting);
-  const monthly = safe(input.monthly);
-  const years = Math.max(0, Math.round(input.years));
   const effectiveRate = effectiveRateOf(input.rate, input.todaysMoney);
-  const monthlyRate = effectiveRate / 100 / 12;
+  const projection = projectCompoundSavings({
+    starting: input.starting,
+    monthly: input.monthly,
+    annualRatePct: effectiveRate,
+    years: input.years,
+  });
 
-  const points: SavingsProjectionPoint[] = [{ year: 0, balance: Math.round(starting) }];
-  let balance = starting;
-  for (let year = 1; year <= years; year += 1) {
-    for (let m = 0; m < 12; m += 1) {
-      balance = balance * (1 + monthlyRate) + monthly;
-    }
-    points.push({ year, balance: Math.round(balance) });
-  }
-
-  const paidIn = monthly * 12 * years;
   return {
-    points,
-    final: balance,
-    paidIn,
-    interest: Math.max(0, balance - starting - paidIn),
+    ...projection,
     effectiveRate,
-    flat: monthly <= 0 && (effectiveRate <= 0 || starting <= 0),
   };
 }
 
@@ -80,16 +70,13 @@ export function monthsToGoal(input: {
   effectiveRate: number;
   goal: number;
 }): GoalResult {
-  const starting = safe(input.starting);
-  if (starting >= input.goal) return { status: "reached" };
-  const monthly = safe(input.monthly);
-  const monthlyRate = safe(input.effectiveRate) / 100 / 12;
-  let balance = starting;
-  for (let months = 1; months <= GOAL_SEARCH_MONTHS; months += 1) {
-    balance = balance * (1 + monthlyRate) + monthly;
-    if (balance >= input.goal) return { status: "months", months };
-  }
-  return { status: "not-reached" };
+  return calculateMonthsToSavingsGoal({
+    starting: input.starting,
+    monthly: input.monthly,
+    annualRatePct: input.effectiveRate,
+    goal: input.goal,
+    maxMonths: GOAL_SEARCH_MONTHS,
+  });
 }
 
 const countFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
