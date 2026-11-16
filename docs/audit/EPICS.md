@@ -36,6 +36,7 @@ Updated on 2026-11-15 from the PRs merged up to #728, the backend hand-overs and
 | 20 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
 | 21 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan awaiting owner approval |
 | 22 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | Plan awaiting owner approval |
+| 23 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Plan awaiting owner approval |
 
 ### Work in progress
 
@@ -954,4 +955,13 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 ### Addendum to E19: portability
 
 Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON and CSV export of every user-owned dataset, CSV import for users arriving from other apps, and an honest statement of what happens to user data if the service closes. Do not publish a "shutdown-proof" claim without a run-off plan.
+
+## E37. Self-employed work tracking and invoice builder
+
+- **Severity:** P2 (self-employed workflow).
+- **Blocked by:** owner approval of the plan and its decisions D1 to D3.
+- **Done when:** a user can set a default hourly rate, log itemised work entries (`date`, `description`, `hoursWorked`, `hourlyRate` pre-filled and overridable, `amount`) linked to a Self Assessment income source, group/filter unbilled entries into numbered draft/issued/paid/void invoices with client details and totals, export invoices via PDF/print and formula-safe CSV, and optionally sync paid invoices into Self Assessment `tax_records` with `If-Match` concurrency, UK GDPR export/deletion coverage, and zero advice strings.
+- **Notes:** four slices (`S0` data model & pure engine calculations -> `S1` CRUD API -> `S2` Work log & Invoice Builder UI -> `S3` SA integration & PDF/CSV export). Plan: [E37-self-employed-invoicing-plan.md](plans/E37-self-employed-invoicing-plan.md).
+- **Status (2026-11-16):** plan only; nothing built.
+- **Labels:** needs-triage
 
