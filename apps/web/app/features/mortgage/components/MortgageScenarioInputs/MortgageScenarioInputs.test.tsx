@@ -5,8 +5,10 @@ import { MortgageScenarioInputs } from "./MortgageScenarioInputs";
 const values = { loanAmount: 180000, interestRate: 4.5, remainingTerm: 20 };
 
 describe("<MortgageScenarioInputs />", () => {
-  it("renders the three starting figures and says they only change the illustration", () => {
+  it("renders the three starting figures and tucks the illustration note into an InfoTip", () => {
     render(<MortgageScenarioInputs isEdited={() => false} values={values} onChange={vi.fn()} />);
+    expect(screen.queryByText(/only changes the illustration/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "About Starting figures" }));
     expect(screen.getByText(/only changes the illustration/i)).toBeDefined();
     expect(screen.queryByText(/Changed from your saved figure/)).toBeNull();
   });

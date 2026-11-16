@@ -1,5 +1,5 @@
 import { Button, Card, Icon, Money, PageSection, VisuallyHidden } from "@repo/ui";
-import { ArrowRight, ChartPie, ChevronDown, Plus } from "lucide-react";
+import { ArrowRight, ChartPie, ChevronDown, Pencil, Plus } from "lucide-react";
 import { type FC, type ReactNode, useMemo } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import type { BudgetEntry } from "~/types/budget";
@@ -45,6 +45,8 @@ export interface BudgetCategoryListProps {
    * the category (e.g. an entry that may already be counted with your debts).
    */
   noticeFor?: (category: string) => ReactNode;
+  /** Opens the in-place budget editor from this section's header. */
+  onEditBudget?: () => void;
 }
 
 export interface CategoryRow {
@@ -103,13 +105,28 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   metaFor,
   hrefFor,
   noticeFor,
+  onEditBudget,
 }) => {
   const slots = categoryList();
   const rows = useMemo(() => rankCategories(categories, entries), [categories, entries]);
 
   return (
     <PageSection
-      description="Your spending each month, by category. Open one to see or change its entries."
+      action={
+        onEditBudget ? (
+          <Button
+            data-testid="where-money-goes-edit-btn"
+            id="where-money-goes-edit-btn"
+            size="sm"
+            variant="outline"
+            onClick={onEditBudget}
+          >
+            <Icon icon={Pencil} size="sm" />
+            Edit budget
+          </Button>
+        ) : undefined
+      }
+      description="Your regular monthly spending, by category (not one-off purchases). Open one to see its entries."
       domain="pay"
       icon={ChartPie}
       id="budget-categories"

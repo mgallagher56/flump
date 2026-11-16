@@ -5,7 +5,15 @@ import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetEntry } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
-import { figure, inlineLink, overviewRoot } from "./BudgetOverview.styles";
+import {
+  equationBar,
+  equationOp,
+  equationResult,
+  equationTerm,
+  figure,
+  inlineLink,
+  overviewRoot,
+} from "./BudgetOverview.styles";
 
 export interface BudgetOverviewProps {
   entries: BudgetEntry[];
@@ -108,6 +116,19 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
           />,
         ]}
       />
+      {hasIncome || goingOut !== null ? (
+        <p className={equationBar()} data-testid="budget-equation" id="budget-equation">
+          <span className={equationTerm()}>Money in</span>
+          <span aria-hidden="true" className={equationOp()}>
+            −
+          </span>
+          <span className={equationTerm()}>Going out</span>
+          <span aria-hidden="true" className={equationOp()}>
+            =
+          </span>
+          <span className={equationResult()}>{isShort ? "Short" : "Left over"}</span>
+        </p>
+      ) : null}
     </div>
   );
 };

@@ -18,6 +18,7 @@ import { type DraftBudgetEntry, isDraftReady } from "../../exampleDrafts";
 import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
 import { rankCategories } from "../BudgetCategoryList";
 import {
+  addActions,
   addAmount,
   addRow,
   amountField,
@@ -68,6 +69,8 @@ export interface BudgetEditorProps {
   onSaveDrafts?: () => Promise<void>;
   /** Removes every common entry not yet saved. */
   onRemoveDrafts?: () => void;
+  /** Exits edit mode. Shown as a "Finished editing" button at the foot of the editor. */
+  onFinishEditing?: () => void;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -183,9 +186,9 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
             }
           />
         </div>
-        {/* Savings count as savings whatever the flag, so only spending rows offer it. */}
+        {/* Only income rows have no Essential switch; savings and spending rows both offer it. */}
         <div className={essentialField()}>
-          {isIncomeEntry(entry) || entry.category === "savings" ? null : (
+          {isIncomeEntry(entry) ? null : (
             <Switch
               aria-label={`Essential: ${entry.name}`}
               checked={entry.isEssential}
@@ -225,7 +228,7 @@ interface DraftRowProps {
 const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove, disabled = false }) => {
   const id = draft.id;
   const label = draft.name.trim() || "common entry";
-  const showEssential = draft.category !== INCOME && draft.category !== "savings";
+  const showEssential = draft.category !== INCOME;
   return (
     <li className={entryRow()} data-testid={`budget-editor-draft-${id}`}>
       <div className={draftName()}>
@@ -304,12 +307,12 @@ interface AddEntryRowProps {
   /** The id fragment for this section's controls. */
   slug: string;
   label: string;
-  onAdd: (name: string, amount: number) => Promise<boolean>;
+  onAdd: (name: string, amount: number, frequency: BudgetEntry["frequency"]) => Promise<boolean>;
 }
 
 /**
- * The add row that closes each section: a quiet "Add to …" button that opens a name and amount
- * row in place, so the editor does not show an empty form under every section.
+ * The add row that closes each section: a quiet "Add to …" button that opens a name, amount and
+ * frequency row in place, so the editor does not show an empty form under every section.
  */
 const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => {
   const [open, setOpen] = useState(false);
@@ -319,6 +322,7 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
   const returnFocus = useRef(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState<number | null>(null);
+  const [frequency, setFrequency] = useState<BudgetEntry["frequency"]>("monthly");
   const [adding, setAdding] = useState(false);
 
   const submit = async (event: FormEvent) => {
@@ -326,7 +330,7 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
     const trimmed = name.trim();
     if (!trimmed || adding) return;
     setAdding(true);
-    const added = await onAdd(trimmed, amount ?? 0);
+    const added = await onAdd(trimmed, amount ?? 0, frequency);
     setAdding(false);
     // Keep what was typed when the save failed, so it can be tried again.
     if (added) close();
@@ -336,6 +340,7 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
     returnFocus.current = true;
     setName("");
     setAmount(null);
+    setFrequency("monthly");
     setOpen(false);
   };
 
@@ -388,27 +393,40 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
           onValueChange={setAmount}
         />
       </div>
-      <Button
-        aria-label={`Add to ${label}`}
-        data-testid={`budget-editor-add-${slug}`}
-        disabled={!name.trim() || adding}
-        id={`budget-editor-add-${slug}`}
-        size="sm"
-        type="submit"
-        variant="outline"
-      >
-        <Icon icon={Plus} size="sm" />
-        {adding ? "Adding…" : "Add"}
-      </Button>
-      <Button
-        data-testid={`budget-editor-cancel-add-${slug}`}
-        id={`budget-editor-cancel-add-${slug}`}
-        size="sm"
-        variant="ghost"
-        onClick={close}
-      >
-        Cancel
-      </Button>
+      <div className={frequencyField()}>
+        <Select
+          aria-label={`How often for new entry in ${label}`}
+          data-testid={`budget-editor-new-frequency-${slug}`}
+          id={`budget-editor-new-frequency-${slug}`}
+          options={FREQUENCY_OPTIONS}
+          size="sm"
+          value={frequency}
+          onChange={(event) => setFrequency(event.target.value as BudgetEntry["frequency"])}
+        />
+      </div>
+      <div className={addActions()}>
+        <Button
+          aria-label={`Add to ${label}`}
+          data-testid={`budget-editor-add-${slug}`}
+          disabled={!name.trim() || adding}
+          id={`budget-editor-add-${slug}`}
+          size="sm"
+          type="submit"
+          variant="outline"
+        >
+          <Icon icon={Plus} size="sm" />
+          {adding ? "Adding…" : "Add"}
+        </Button>
+        <Button
+          data-testid={`budget-editor-cancel-add-${slug}`}
+          id={`budget-editor-cancel-add-${slug}`}
+          size="sm"
+          variant="ghost"
+          onClick={close}
+        >
+          Cancel
+        </Button>
+      </div>
     </form>
   );
 };
@@ -432,6 +450,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   onDraftRemove,
   onSaveDrafts,
   onRemoveDrafts,
+  onFinishEditing,
 }) => {
   const toastApi = useOptionalToast();
   const [savingDrafts, setSavingDrafts] = useState(false);
@@ -504,27 +523,29 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     }
   };
 
-  const add = (category: string) => async (name: string, amount: number) => {
-    const isIncome = category === INCOME;
-    try {
-      await onAdd({
-        category,
-        name,
-        amount,
-        frequency: "monthly",
-        isIncome,
-        isPrimaryIncome: false,
-        // The wizard's defaults: spending is essential except everyday expenses.
-        isEssential: isIncome ? true : category !== "expenses",
-        notes: null,
-        isDefault: false,
-      });
-      // The new row on the page is the confirmation, so no message.
-      return true;
-    } catch {
-      return false;
-    }
-  };
+  const add =
+    (category: string) =>
+    async (name: string, amount: number, frequency: BudgetEntry["frequency"] = "monthly") => {
+      const isIncome = category === INCOME;
+      try {
+        await onAdd({
+          category,
+          name,
+          amount,
+          frequency,
+          isIncome,
+          isPrimaryIncome: false,
+          // Spending is essential by default except everyday expenses and savings.
+          isEssential: isIncome ? true : category !== "expenses" && category !== "savings",
+          notes: null,
+          isDefault: false,
+        });
+        // The new row on the page is the confirmation, so no message.
+        return true;
+      } catch {
+        return false;
+      }
+    };
 
   /** The next row's name field in the deleted entry's section, else that section's heading. */
   const focusTargetAfterDelete = (entry: BudgetEntry) => {
@@ -681,18 +702,29 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         })}
       </div>
 
-      {onAddCategory ? (
+      {onAddCategory || onFinishEditing ? (
         <div className={editor.foot}>
-          <Button
-            data-testid="budget-editor-add-category-btn"
-            id="budget-editor-add-category-btn"
-            size="sm"
-            variant="outline"
-            onClick={onAddCategory}
-          >
-            <Icon icon={Plus} size="sm" />
-            Add category
-          </Button>
+          {onAddCategory ? (
+            <Button
+              data-testid="budget-editor-add-category-btn"
+              id="budget-editor-add-category-btn"
+              size="sm"
+              variant="outline"
+              onClick={onAddCategory}
+            >
+              <Icon icon={Plus} size="sm" />
+              Add category
+            </Button>
+          ) : null}
+          {onFinishEditing ? (
+            <Button
+              data-testid="budget-editor-finish-editing-btn"
+              id="budget-editor-finish-editing-btn"
+              onClick={onFinishEditing}
+            >
+              Finished editing
+            </Button>
+          ) : null}
         </div>
       ) : null}
 

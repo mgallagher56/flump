@@ -141,14 +141,14 @@ describe("<OverpaymentSimulator />", () => {
     expect(figure.textContent).not.toMatch(/Projection, not a forecast/);
   });
 
-  test("the early repayment charge fact is a quiet helper line under the slider", () => {
-    const { getByLabelText, getByText, container } = customRender(
+  test("the early repayment charge fact is tucked into an InfoTip", () => {
+    const { getByRole, getByText, queryByText, container } = customRender(
       <OverpaymentSimulator {...props} />,
     );
     expect(OVERPAYMENT_ERC_NOTE).toMatch(/^Many fixed-rate deals allow overpayments/);
-    const helper = getByText(OVERPAYMENT_ERC_NOTE);
-    const describedBy = getByLabelText("Extra each month").getAttribute("aria-describedby") ?? "";
-    expect(describedBy.split(" ")).toContain(helper.id);
+    expect(queryByText(OVERPAYMENT_ERC_NOTE)).toBeNull();
+    fireEvent.click(getByRole("button", { name: "About Early repayment charges" }));
+    expect(getByText(OVERPAYMENT_ERC_NOTE)).toBeDefined();
     expect(container.querySelectorAll("[data-notice='projection']")).toHaveLength(0);
   });
 });

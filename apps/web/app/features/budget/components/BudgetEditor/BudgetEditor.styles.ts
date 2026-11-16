@@ -12,6 +12,10 @@ export const budgetEditor = sva({
     sections: { display: "flex", flexDirection: "column", gap: "6" },
     foot: {
       display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: "3",
       mt: "6",
       pt: "4",
       borderTopWidth: "1px",
@@ -118,24 +122,36 @@ export const removeCell = cva({
   },
 });
 
-/** The add row closing each section: name, amount and the Add button. */
+/** The add row closing each section: matches entryRow columns on md so inputs align. */
 export const addRow = cva({
   base: {
-    // Name on its own line on a phone, then amount, Add and Cancel; one line from md.
-    display: "flex",
+    display: { base: "flex", md: "grid" },
     flexWrap: "wrap",
-    gap: "3",
+    gridTemplateColumns: { md: "minmax(0, 1fr) 140px 120px minmax(136px, auto)" },
+    columnGap: { base: "2", md: "3" },
+    rowGap: "2",
     alignItems: "center",
     pt: "2",
-    "& > :first-child": { flex: { base: "1 1 100%", md: "1 1 0" }, minWidth: 0 },
+    "& > :first-child": {
+      flex: { base: "1 1 100%", md: "none" },
+      minWidth: 0,
+    },
     fontVariantNumeric: "tabular-nums",
   },
 });
 
 export const addAmount = cva({
   base: {
-    width: "140px",
+    width: { base: "104px", md: "100%" },
     fontVariantNumeric: "tabular-nums",
+  },
+});
+
+export const addActions = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    gap: "2",
   },
 });
 

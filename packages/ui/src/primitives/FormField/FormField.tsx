@@ -15,6 +15,8 @@ export interface FormFieldControlState {
 
 export interface FormFieldProps {
   label: string;
+  /** Optional element (such as an InfoTip) rendered inline beside the label. */
+  labelAddon?: ReactNode;
   hint?: string;
   error?: string;
   required?: boolean;
@@ -40,6 +42,7 @@ export const controlProps = (field: FormFieldControlState) => ({
 
 export const FormField: FC<FormFieldProps> = ({
   label,
+  labelAddon,
   hint,
   error,
   required = false,
@@ -63,14 +66,28 @@ export const FormField: FC<FormFieldProps> = ({
       data-testid={`${controlId}-field`}
       id={`${controlId}-field`}
     >
-      <label className={classes.label} htmlFor={controlId}>
-        {label}
-        {optional ? (
-          <span aria-hidden="true" className={classes.optional}>
-            {optionalText}
-          </span>
-        ) : null}
-      </label>
+      {labelAddon ? (
+        <div className={classes.labelRow} data-field-label-row="">
+          <label className={classes.label} htmlFor={controlId}>
+            {label}
+            {optional ? (
+              <span aria-hidden="true" className={classes.optional}>
+                {optionalText}
+              </span>
+            ) : null}
+          </label>
+          {labelAddon}
+        </div>
+      ) : (
+        <label className={classes.label} data-field-label-row="" htmlFor={controlId}>
+          {label}
+          {optional ? (
+            <span aria-hidden="true" className={classes.optional}>
+              {optionalText}
+            </span>
+          ) : null}
+        </label>
+      )}
       {children({ id: controlId, describedBy, invalid: Boolean(error), required })}
       {hint ? (
         <p className={classes.hint} data-testid={hintId} id={hintId}>

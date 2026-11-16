@@ -6,6 +6,7 @@ import {
   chartColor,
   formatAxisCurrency,
   formatMonthTick,
+  InfoTip,
   niceYDomain,
   ResultBlock,
   SimulatorSplitLayout,
@@ -263,13 +264,8 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
   const controls = (
     <div className={controlsBody()}>
-      <p className={toolHint}>
-        Model an extra payment each month to see the estimated payoff date.
-      </p>
-
       <SliderField
         format="currency"
-        helperText={OVERPAYMENT_ERC_NOTE}
         label="Extra each month"
         max={OVERPAYMENT_RANGE.max}
         min={OVERPAYMENT_RANGE.min}
@@ -277,6 +273,10 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         value={overpayment}
         onChange={onOverpaymentChange}
       />
+      <p className={toolHint}>
+        Early repayment limits{" "}
+        <InfoTip term="Early repayment charges">{OVERPAYMENT_ERC_NOTE}</InfoTip>
+      </p>
     </div>
   );
 

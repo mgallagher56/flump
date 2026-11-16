@@ -1,4 +1,4 @@
-import { SliderField } from "@repo/ui";
+import { InfoTip, SliderField } from "@repo/ui";
 import type { FC } from "react";
 import { rateFractionDigits } from "~/features/mortgage/mortgageFormat";
 import {
@@ -54,8 +54,11 @@ export const MortgageScenarioInputs: FC<MortgageScenarioInputsProps> = ({
   return (
     <div className={inputsBody()}>
       <p className={inputsHint()}>
-        Try a different balance, rate or term. This only changes the illustration. To change what is
-        saved, edit your details.
+        Illustration only{" "}
+        <InfoTip term="Starting figures">
+          Try a different balance, rate or term. This only changes the illustration. To change what
+          is saved, edit your details.
+        </InfoTip>
       </p>
       <div className={inputsGrid()}>
         <div>

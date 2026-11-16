@@ -920,13 +920,18 @@ const MortgageContainer: FC = () => {
         />
       ) : null}
 
+      <MortgageSummary
+        accountName={selectedAccount ? String(selectedAccount.name ?? "Mortgage") : null}
+        lastUpdated={lastUpdated}
+        mortgageType={mortgageType}
+        propertyCategory={propertyCategory}
+        remainingTerm={remainingTerm}
+        saveMessage={saveMessage}
+        onEdit={startEditing}
+      />
+
       <ScenarioZone
         announcement={scenarioAnnouncement}
-        footer={
-          <Button size="sm" variant="ghost" onClick={startEditing}>
-            Update your details
-          </Button>
-        }
         id={SCENARIO_ZONE_ID}
         isModified={scenario.isModified}
         notice={<ProjectionNotice />}
@@ -984,17 +989,6 @@ const MortgageContainer: FC = () => {
           />
         </CollapsibleDrawer>
       </ScenarioZone>
-
-      {/* Below the zone, so the first view is the hero and three figures (number budget). */}
-      <MortgageSummary
-        accountName={selectedAccount ? String(selectedAccount.name ?? "Mortgage") : null}
-        lastUpdated={lastUpdated}
-        mortgageType={mortgageType}
-        propertyCategory={propertyCategory}
-        remainingTerm={remainingTerm}
-        saveMessage={saveMessage}
-        onEdit={startEditing}
-      />
 
       {!isBtl ? (
         <CollapsibleDrawer title="Show cost details" variant="quiet">

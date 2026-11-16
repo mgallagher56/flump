@@ -150,7 +150,9 @@ describe("BudgetContainer", () => {
   it("with a budget: Edit budget, the hero and 2 KPIs first, one list, one zone with the notice", () => {
     mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
     const { container } = render(<BudgetContainer />);
-    expect(screen.getByRole("button", { name: "Edit budget" })).toBeDefined();
+    expect(screen.getAllByRole("button", { name: "Edit budget" })).toHaveLength(2);
+    expect(screen.getByTestId("setup-wizard-btn")).toBeDefined();
+    expect(screen.getByTestId("where-money-goes-edit-btn")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Set up your budget" })).toBeNull();
     const hero = screen.getByTestId("hero-figure");
     expect(hero.textContent).toContain("Left over each month");
@@ -175,6 +177,7 @@ describe("BudgetContainer", () => {
     expect(screen.queryByRole("heading", { name: "Your details" })).toBeNull();
     // Categories are added in Edit budget, so the read-only list has no Add category.
     expect(screen.queryByRole("button", { name: "Add category" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Model a change to your budget/i }));
     const zone = screen.getByRole("region", { name: "Model a change to your budget" });
     // Breathing room is a saved figure: its own section, one result card, outside the zone
     // (owner ruling 15 November 2026, UX-GUIDELINES S10).
@@ -413,7 +416,7 @@ describe("BudgetContainer", () => {
       expect(screen.queryByRole("group", GROUP)).toBeNull();
       // Leaving the editor drops any drafts, so reopening it shows none.
       fireEvent.click(screen.getByTestId("finish-editing-btn"));
-      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      fireEvent.click(screen.getByTestId("setup-wizard-btn"));
       expect(draftNames(screen.getByTestId("budget-editor"))).toEqual([]);
     });
 
@@ -453,7 +456,7 @@ describe("BudgetContainer", () => {
   it("opens Add Category modal and allows adding a new category", async () => {
     mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    fireEvent.click(screen.getByTestId("setup-wizard-btn"));
     fireEvent.click(screen.getByTestId("budget-editor-add-category-btn"));
 
     expect(screen.getByText("Add budget category")).toBeDefined();
@@ -486,7 +489,7 @@ describe("BudgetContainer", () => {
   it("Edit budget edits the page in place, with no wizard, and Finish editing returns", async () => {
     mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    fireEvent.click(screen.getByTestId("setup-wizard-btn"));
 
     // No wizard steps: the hero stays, the list and the scenario zone give way to the editor.
     expect(screen.queryByText(/Step 1 of/)).toBeNull();
@@ -520,7 +523,9 @@ describe("BudgetContainer", () => {
     fireEvent.click(finish);
     expect(screen.queryByTestId("budget-editor")).toBeNull();
     expect(screen.getByTestId("budget-category-housing")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Edit budget" })).toBeDefined();
+    expect(screen.getAllByRole("button", { name: "Edit budget" })).toHaveLength(2);
+    expect(screen.getByTestId("setup-wizard-btn")).toBeDefined();
+    expect(screen.getByTestId("where-money-goes-edit-btn")).toBeDefined();
   });
 
   it("with no budget, Set up your budget still opens the wizard", () => {
@@ -541,6 +546,7 @@ describe("BudgetContainer", () => {
     const savedStrip = strip();
     const requestsBefore = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length;
 
+    fireEvent.click(screen.getByRole("button", { name: /Model a change to your budget/i }));
     fireEvent.change(screen.getByLabelText(/Redundancy pay or lump sum/i), {
       target: { value: "9000" },
     });
@@ -553,6 +559,7 @@ describe("BudgetContainer", () => {
     // ...and is gone after a reload (a fresh mount).
     unmount();
     render(<BudgetContainer />);
+    fireEvent.click(screen.getByRole("button", { name: /Model a change to your budget/i }));
     expect((screen.getByLabelText(/Redundancy pay or lump sum/i) as HTMLInputElement).value).toBe(
       "",
     );
@@ -563,7 +570,7 @@ describe("BudgetContainer", () => {
     global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 500 })) as any;
 
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    fireEvent.click(screen.getByTestId("setup-wizard-btn"));
     fireEvent.click(screen.getByRole("button", { name: "Delete Mortgage" }));
     fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
 
@@ -590,7 +597,7 @@ describe("BudgetContainer", () => {
     vi.mocked(apiFetchAll).mockResolvedValueOnce(serverRows as never);
 
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    fireEvent.click(screen.getByTestId("setup-wizard-btn"));
     const amount = screen.getByTestId("budget-editor-amount-b-1");
     fireEvent.focus(amount);
     fireEvent.change(amount, { target: { value: "1250" } });
@@ -645,6 +652,7 @@ describe("BudgetContainer", () => {
     fireEvent.click(housingRow);
     expect(screen.getAllByTestId("housing-details")).toHaveLength(1);
     expect(screen.queryByLabelText("Rent each month")).toBeNull();
+    vi.mocked(apiFetch).mockResolvedValueOnce(row({ amount: 950 }) as any);
     fireEvent.click(screen.getByRole("button", { name: "Edit your rent" }));
     fireEvent.change(await screen.findByLabelText("Rent each month"), {
       target: { value: "950" },
@@ -655,6 +663,12 @@ describe("BudgetContainer", () => {
         housingStatus: "renting",
         monthlyHousingCost: 950,
       }),
+    );
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        "/budget-entries/b-1",
+        expect.objectContaining({ method: "PATCH", body: { amount: 950, frequency: "monthly" } }),
+      ),
     );
     await waitFor(() => expect(screen.queryByLabelText("Rent each month")).toBeNull());
   });
@@ -752,7 +766,7 @@ describe("BudgetContainer", () => {
         "false",
       );
       // Not in the editor.
-      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      fireEvent.click(screen.getByTestId("setup-wizard-btn"));
       expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
     });
 
