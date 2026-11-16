@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { type IncomingHttpHeaders, request } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -245,6 +245,11 @@ describe("createApp default CSP for non-document responses", () => {
     writeFileSync(path.join(publicDir, "note.txt"), "hello");
     writeFileSync(path.join(publicDir, "logo.svg"), '<svg xmlns="http://www.w3.org/2000/svg"/>');
     writeFileSync(path.join(publicDir, "page.html"), "<!doctype html><p>static document");
+    mkdirSync(path.join(publicDir, ".well-known"), { recursive: true });
+    writeFileSync(
+      path.join(publicDir, ".well-known/security.txt"),
+      "Contact: https://github.com/mgallagher56/flump/security/advisories/new\n",
+    );
     const app = createApp({
       build,
       mode: "production",
@@ -288,6 +293,14 @@ describe("createApp default CSP for non-document responses", () => {
     expect(res.status).toBe(200);
     expect(res.headers["content-security-policy"]).toBe(FRAME_ONLY);
     expect(countHeader(res.rawHeaders, "content-security-policy")).toBe(1);
+  });
+
+  it("serves /.well-known/security.txt as text/plain with dotfiles allowed", async () => {
+    await start();
+    const res = await fetchRaw(port, { path: "/.well-known/security.txt" });
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/^text\/plain/);
+    expect(res.headers["content-security-policy"]).toBe(NON_DOCUMENT);
   });
 
   it("keeps the default on a 304 (no Content-Type) so a cached file's policy is not rewritten", async () => {
@@ -350,5 +363,13 @@ describe("createApp default CSP for non-document responses", () => {
     expect(res.headers["content-type"]).toMatch(/^application\/json/);
     expect(res.headers["content-security-policy"]).toBe(FRAME_ONLY);
     expect(countHeader(res.rawHeaders, "content-security-policy")).toBe(1);
+  });
+
+  it("serves /.well-known/security.txt as text/plain with dotfiles allowed", async () => {
+    await start();
+    const res = await fetchRaw(port, { path: "/.well-known/security.txt" });
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/^text\/plain/);
+    expect(res.headers["content-security-policy"]).toBe(NON_DOCUMENT);
   });
 });

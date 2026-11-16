@@ -4,6 +4,7 @@ import type { AddressInfo } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
+import sirv from "sirv";
 import { afterEach, describe, expect, it } from "vitest";
 import { securityTxtRouter } from "./ops";
 import { buildSecurityTxt, normaliseSecurityContact } from "./security";
@@ -11,10 +12,12 @@ import { buildSecurityTxt, normaliseSecurityContact } from "./security";
 type Env = Record<string, string | undefined>;
 
 const servers: { close: () => void }[] = [];
+const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");
 
 async function start(env: Env, now?: () => Date) {
   const app = express();
   app.use(securityTxtRouter(env, now));
+  app.use(sirv(publicDir, { extensions: [], dotfiles: true }) as express.RequestHandler);
   app.use((_req, res) => {
     res.status(200).type("html").end("<html>spa</html>");
   });
@@ -85,16 +88,25 @@ describe("buildSecurityTxt", () => {
 });
 
 describe("GET /.well-known/security.txt", () => {
-  it("is a 404 (falls through, no body of ours) when SECURITY_CONTACT is unset", async () => {
+  it("falls through to the static security.txt when SECURITY_CONTACT is unset", async () => {
     const base = await start({});
     const res = await fetch(`${base}/.well-known/security.txt`);
-    expect(res.status).toBe(404);
-    expect(await res.text()).not.toMatch(/Contact:/);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toMatch(/^text\/plain/);
+    const body = await res.text();
+    expect(body).toMatch(
+      /^Contact: https:\/\/github\.com\/mgallagher56\/flump\/security\/advisories\/new$/m,
+    );
+    expect(body).not.toContain("<html>spa</html>");
   });
 
-  it("is a 404 when SECURITY_CONTACT is invalid", async () => {
+  it("ignores invalid SECURITY_CONTACT and serves the static file instead", async () => {
     const base = await start({ SECURITY_CONTACT: "nonsense" });
-    expect((await fetch(`${base}/.well-known/security.txt`)).status).toBe(404);
+    const res = await fetch(`${base}/.well-known/security.txt`);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).not.toContain("nonsense");
+    expect(body).toMatch(/^Contact: https:\/\//m);
   });
 
   it("serves text/plain with the contact when SECURITY_CONTACT is set", async () => {
