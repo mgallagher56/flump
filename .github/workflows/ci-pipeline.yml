@@ -403,16 +403,6 @@ jobs:
       - name: 🏗️ Build all packages
         run: bun run build
 
-      - name: 📜 Generate workspace CycloneDX SBOM
-        run: bun scripts/generate-sbom.ts --app workspace --root . --out sboms/sbom-workspace.cdx.json
-
-      - name: 📎 Upload workspace CycloneDX SBOM
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: sbom-workspace
-          path: sboms/sbom-workspace.cdx.json
-          retention-days: 30
-
       # Spawns the built apps/web server (server.ts) and checks headers on every response kind,
       # the query-free access log and graceful shutdown. Needs the build above.
       - name: 🛡️ Web server integration test
