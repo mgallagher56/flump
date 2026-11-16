@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { CheckInSummary as Summary } from "../../checkInModel";
-import { CheckInSummary } from "./CheckInSummary";
+import { CheckInSummary, formatWarmConfirmation } from "./CheckInSummary";
 
 const changes = (n: number): Summary["changed"] =>
   Array.from({ length: n }, (_, i) => ({
@@ -92,5 +92,16 @@ describe("CheckInSummary", () => {
     await userEvent.click(screen.getByRole("button", { name: "Change a balance" }));
     expect(onDone).toHaveBeenCalled();
     expect(onChangeBalance).toHaveBeenCalled();
+  });
+
+  it("formats the E35 Set 1 check-in finished warm confirmation without praise or shaming", () => {
+    expect(
+      formatWarmConfirmation({
+        kind: "checkInFinished",
+        month: "2026-11",
+        change: 1150,
+        previousMonth: "2026-10",
+      }),
+    ).toBe("November is checked in. Net worth changed by +£1,150 since October 2026.");
   });
 });

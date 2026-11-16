@@ -93,8 +93,27 @@ describe("copy rules", () => {
     ["<p>Your spending is categorized here</p>", "us-spelling"],
     ["<p>Supercharge your savings</p>", "hype"],
     ["<p>Net worth — this month</p>", "em-dash"],
+    ["<p>Keep your 3-month streak going</p>", "no-shaming"],
+    ["<p>Check the monthly leaderboard</p>", "no-shaming"],
+    ["<p>Your financial score is 72</p>", "no-shaming"],
+    ["<p>See your money score</p>", "no-shaming"],
+    ["<p>People like you save £200 a month</p>", "no-shaming"],
+    ["<p>You are ahead of peers this year</p>", "no-shaming"],
+    ["<p>Your savings are behind peers</p>", "no-shaming"],
   ])("%s -> %s", (jsx, rule) => {
     expect(rules(`export const A = () => ${jsx};`)).toContain(rule);
+  });
+
+  test("allows E35 Set 1 warm confirmations that acknowledge the action without grading amounts", () => {
+    const source = `export const A = () => (
+      <section aria-label="Check-in summary">
+        <p>November is checked in.</p>
+        <p>Net worth changed by +£1,150 since October 2026.</p>
+        <p>Budget added.</p>
+        <p>Setup is finished. Everything on your dashboard now uses your own figures.</p>
+        <p>Your first account is in.</p>
+      </section>);`;
+    expect(rules(source)).toEqual([]);
   });
 
   test("plain, neutral copy has no hits", () => {

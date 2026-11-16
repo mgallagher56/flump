@@ -160,3 +160,53 @@ export function checkInNetWorthChange(change: number | null, since: MonthKey): s
   const direction = rounded > 0 ? "Up" : "Down";
   return `${direction} ${gbp(0).format(Math.abs(rounded))} on ${formatMonth(since)}.`;
 }
+
+export type WarmSetupStepKey = "budget" | "accounts" | "savings" | "pension" | "mortgage" | "tax";
+
+export type WarmConfirmationInput =
+  | {
+      kind: "checkInFinished";
+      month: MonthKey;
+      change?: number | null;
+      previousMonth?: MonthKey | null;
+    }
+  | { kind: "setupStepFinished"; step: WarmSetupStepKey }
+  | { kind: "setupComplete" }
+  | { kind: "firstAccountAdded" };
+
+const WARM_SETUP_STEP_CONFIRMATIONS: Readonly<Record<WarmSetupStepKey, string>> = {
+  budget: "Budget added.",
+  accounts: "Accounts added.",
+  savings: "Savings rates added.",
+  pension: "Pension details added.",
+  mortgage: "Mortgage details added.",
+  tax: "Self Assessment details added.",
+};
+
+function monthNameOnly(month: MonthKey): string {
+  const formatted = formatMonth(month);
+  const space = formatted.indexOf(" ");
+  return space > 0 ? formatted.slice(0, space) : formatted;
+}
+
+/**
+ * E35 Set 1 warm confirmations (copy guide 2.5): plain, factual acknowledgements of a finished
+ * action in Flump, identical whichever way a figure moved and for every starting point (N1 to N5).
+ */
+export function formatWarmConfirmation(input: WarmConfirmationInput): string {
+  switch (input.kind) {
+    case "checkInFinished": {
+      const headline = `${monthNameOnly(input.month)} is checked in.`;
+      if (typeof input.change === "number" && input.previousMonth) {
+        return `${headline} ${netWorthChangeSentence(input.change, input.previousMonth)}`;
+      }
+      return headline;
+    }
+    case "setupStepFinished":
+      return WARM_SETUP_STEP_CONFIRMATIONS[input.step];
+    case "setupComplete":
+      return "Setup is finished. Everything on your dashboard now uses your own figures.";
+    case "firstAccountAdded":
+      return "Your first account is in.";
+  }
+}

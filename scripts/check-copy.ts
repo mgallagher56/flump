@@ -1,16 +1,18 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { COPY_OWNERS, copyOwner } from "./lib/copy-owners";
-import { type CopyHit, findCopyHits } from "./lib/copy-rules";
+import { COPY_RULES, type CopyHit, type CopyRule, findCopyHits } from "./lib/copy-rules";
 import { extractCopyStrings, extractJsonStrings } from "./lib/copy-strings";
 import { compareToBaseline } from "./lib/design-tokens";
 import { collectFiles, readSource, repoRoot } from "./lib/scan";
 
+export { COPY_RULES, type CopyHit, type CopyRule, findCopyHits };
+
 /**
  * Copy guard: the mechanical rules of docs/copy/COPY-GUIDE.md (banned words, Title Case,
- * exclamation marks, jargon, en-US spelling) as a ratchet. Existing hits sit in
- * scripts/copy-baseline.json; a file may never gain hits, and the baseline shrinks as copy is
- * fixed.
+ * exclamation marks, jargon, en-US spelling, and E35 N1–N3 no-shaming/gamification rules) as a
+ * ratchet. Existing hits sit in scripts/copy-baseline.json; a file may never gain hits, and the
+ * baseline shrinks as copy is fixed.
  *
  *   bun scripts/check-copy.ts                    check against the baseline
  *   bun scripts/check-copy.ts --write-baseline   regenerate after fixing copy
