@@ -1,13 +1,18 @@
 import { sva } from "../../../styled-system/css";
 
 export const formFieldRecipe = sva({
-  slots: ["root", "label", "required", "optional", "hint", "error", "errorText"],
+  slots: ["root", "labelRow", "label", "required", "optional", "hint", "error", "errorText"],
   base: {
     root: {
       display: "flex",
       flexDirection: "column",
       gap: "1.5",
       minWidth: 0,
+    },
+    labelRow: {
+      display: "flex",
+      alignItems: "center",
+      gap: "1",
     },
     label: {
       textStyle: "label.md",

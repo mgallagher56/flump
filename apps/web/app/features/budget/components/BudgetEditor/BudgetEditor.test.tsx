@@ -363,9 +363,9 @@ describe("BudgetEditor", () => {
       expect(group().textContent).toContain(
         "These common entries are not saved yet. Fill in the amounts that apply to you, then save. Entries left blank stay here until you remove them or leave the page.",
       );
-      // Income and savings rows have no essential switch; spending rows do.
+      // Income rows have no essential switch; savings and spending rows do (savings defaults off).
       expect(screen.queryByLabelText("Essential: Take-home pay")).toBeNull();
-      expect(screen.queryByLabelText("Essential: Savings")).toBeNull();
+      expect((screen.getByLabelText("Essential: Savings") as HTMLInputElement).checked).toBe(false);
       expect(screen.getByLabelText("Essential: Travel")).toBeDefined();
       expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).value).toBe("");
     });

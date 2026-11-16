@@ -80,11 +80,21 @@ export const chevron = cva({
   variants: { open: { true: { transform: "rotate(180deg)" }, false: {} } },
 });
 
-/** The opened entries, indented under their category so they read as its parts. */
+/** The opened entries, clearly indented and nested under their category. */
 export const entriesPanel = cva({
-  // Indented under the group; the right inset matches the chevron, so entry amounts line up with
-  // the group amounts above them.
-  base: { pt: "1", pb: "4", pl: { base: "4", md: "9" }, pr: "6" },
+  base: {
+    mt: "1",
+    mb: "3",
+    ml: { base: "3", md: "4" },
+    pl: { base: "4", md: "6" },
+    pr: "6",
+    py: "2",
+    borderLeftWidth: "2px",
+    borderLeftStyle: "solid",
+    borderLeftColor: "border.subtle",
+    bg: "surface.subtle",
+    borderRadius: "md",
+  },
 });
 
 export const listFoot = cva({

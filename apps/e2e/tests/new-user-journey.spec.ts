@@ -120,7 +120,7 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
     await expect(page.getByText("Money in each month", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: /^Income/ })).toHaveCount(0);
     // Entries are added in place with Edit budget (round 3); the change saves as you go.
-    await page.getByRole("button", { name: "Edit budget" }).click();
+    await page.getByTestId("setup-wizard-btn").click();
     await page.getByRole("button", { name: "Add to expenses" }).click();
     await page.getByRole("textbox", { name: "New entry name in Expenses" }).fill(ENTRY.name);
     await page

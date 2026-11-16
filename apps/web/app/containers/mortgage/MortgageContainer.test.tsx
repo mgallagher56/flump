@@ -258,11 +258,11 @@ describe("<MortgageContainer />", () => {
       loaderData = loaded();
       const { container } = customRender(<MortgageContainer />);
       expectPageRules(container, { maxNotSet: 0, projectionNotices: 1 });
-      // First view: the hero and three KPIs. "Your details" sits below the scenario zone.
+      // "Your details" sits above the scenario zone.
       expect(countFigures(container.querySelector("#mortgage-saved") as HTMLElement)).toBe(4);
       const zone = container.querySelector("#mortgage-scenario") as HTMLElement;
       const summary = container.querySelector("#mortgage-summary") as HTMLElement;
-      expect(zone.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(summary.compareDocumentPosition(zone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
     test("the fixed rate end date is the hero subline", () => {
@@ -453,13 +453,13 @@ describe("<MortgageContainer />", () => {
       expect(outcome.textContent).not.toMatch(/\u2212£/);
     });
 
-    test("Update your details opens the dialog with the saved values, not the scenario", () => {
+    test("Edit in Your details opens the dialog with the saved values, not the scenario", () => {
       loaderData = loaded();
-      const { container, getByRole, getByLabelText } = customRender(<MortgageContainer />);
+      const { container, getByRole } = customRender(<MortgageContainer />);
       fireEvent.click(getByRole("button", { name: "Starting figures" }));
       const slider = container.querySelector("input[type='range']") as HTMLInputElement;
       fireEvent.change(slider, { target: { value: "500000" } });
-      fireEvent.click(getByRole("button", { name: "Update your details" }));
+      fireEvent.click(getByRole("button", { name: "Edit" }));
       expect(field(/^Interest rate/).value).toMatch(/^4\.50?$/);
       expect(field(/^Years left/).value).toBe("20");
     });

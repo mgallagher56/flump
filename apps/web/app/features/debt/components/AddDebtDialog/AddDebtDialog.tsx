@@ -5,6 +5,7 @@ import {
   controlProps,
   Dialog,
   FormField,
+  InfoTip,
   InlineAlert,
   PercentInput,
   Select,
@@ -164,15 +165,23 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
       <div className={fieldRow()}>
         <FormField
           error={aprError}
-          hint="A percentage, such as the rate on your statement. Leave blank if you do not know it yet."
           label="Interest rate (APR) (optional)"
+          labelAddon={
+            <InfoTip term="Interest rate (APR)">
+              The rate on your statement. Leave blank if you do not know it yet.
+            </InfoTip>
+          }
         >
           {(field) => <PercentInput {...controlProps(field)} value={apr} onValueChange={setApr} />}
         </FormField>
         <FormField
           error={minimumError}
-          hint="The amount on your statement. Leave blank if you do not know it yet."
           label="Minimum payment each month (optional)"
+          labelAddon={
+            <InfoTip term="Minimum payment">
+              The amount on your statement. Leave blank if you do not know it yet.
+            </InfoTip>
+          }
         >
           {(field) => (
             <CurrencyInput

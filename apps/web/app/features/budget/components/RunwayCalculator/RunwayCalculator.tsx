@@ -16,7 +16,7 @@ import {
   ScenarioZone,
   Switch,
 } from "@repo/ui";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import type { BudgetEntry } from "~/types/budget";
 import { toMonthly } from "~/types/budget";
 import {
@@ -68,6 +68,10 @@ export interface RunwayCalculatorProps {
    */
   scenario?: RunwayScenario | null;
   onScenarioChange?: (scenario: RunwayScenario) => void;
+  /** When true, wraps the modelling zone in a collapsed-by-default drawer with a summary. */
+  collapsible?: boolean;
+  /** When true, hides the inline "Accounts and spending to include" drawer (rendered beside BreathingRoom). */
+  hideIncludePanel?: boolean;
 }
 
 const EXPENSE_CATEGORIES: BudgetEntry["category"][] = ["housing", "bills", "expenses"];
@@ -106,6 +110,147 @@ const OptionGroup: FC<{ label: string; items: OptionItem[] }> = ({ label, items 
     </fieldset>
   );
 
+export interface RunwayIncludePanelProps {
+  entries: BudgetEntry[];
+  accounts: Account[];
+  accountDetails: AccountDetail[];
+  scenario?: RunwayScenario | null;
+  onScenarioChange?: (scenario: RunwayScenario) => void;
+}
+
+/**
+ * Collapsible "Accounts and spending to include" panel, synced with each entry's Essential toggle.
+ * Shares the same defaults and scenario state as RunwayCalculator.
+ */
+export const RunwayIncludePanel: FC<RunwayIncludePanelProps> = ({
+  entries,
+  accounts,
+  accountDetails,
+  scenario,
+  onScenarioChange,
+}) => {
+  const snapshot = useMemo(
+    () => new PortfolioSnapshot(accounts as never, accountDetails as never),
+    [accounts, accountDetails],
+  );
+  const poolAccounts = useMemo(
+    () =>
+      accounts.filter((a) => {
+        const category = snapshot.getAccount(a.id)?.category;
+        return category === "cash" || category === "savings" || category === "investments";
+      }),
+    [accounts, snapshot],
+  );
+  const nonPrimaryIncome = useMemo(
+    () => entries.filter((e) => e.isIncome && !e.isPrimaryIncome),
+    [entries],
+  );
+  const expenseEntries = useMemo(
+    () => entries.filter((e) => !e.isIncome && e.category !== "savings"),
+    [entries],
+  );
+  const groupedExpenses = useMemo(() => {
+    const extra = expenseEntries
+      .map((e) => e.category)
+      .filter((c, i, all) => !EXPENSE_CATEGORIES.includes(c) && all.indexOf(c) === i);
+    return [...EXPENSE_CATEGORIES, ...extra].flatMap((cat) =>
+      expenseEntries.filter((e) => e.category === cat),
+    );
+  }, [expenseEntries]);
+
+  const defaultAccounts = useMemo(
+    () =>
+      Object.fromEntries(
+        poolAccounts.map((a) => {
+          const category = snapshot.getAccount(a.id)?.category;
+          return [a.id, category === "cash" || category === "savings"];
+        }),
+      ),
+    [poolAccounts, snapshot],
+  );
+  const defaultIncome = useMemo(
+    () => Object.fromEntries(nonPrimaryIncome.map((e) => [e.id, false])),
+    [nonPrimaryIncome],
+  );
+  const defaultExpenses = useMemo(
+    () =>
+      Object.fromEntries(
+        expenseEntries.map((e) => [e.id, e.isEssential || e.category === DEBT_CATEGORY]),
+      ),
+    [expenseEntries],
+  );
+
+  const includedAccounts = { ...defaultAccounts, ...(scenario?.includedAccounts ?? {}) };
+  const keptIncome = { ...defaultIncome, ...(scenario?.keptIncome ?? {}) };
+  const keptExpenses = { ...defaultExpenses, ...(scenario?.keptExpenses ?? {}) };
+
+  const emit = (next: Partial<RunwayScenario>) => {
+    onScenarioChange?.({
+      includedAccounts,
+      keptIncome,
+      keptExpenses,
+      severanceLump: scenario?.severanceLump ?? 0,
+      extraMonthlyCut: scenario?.extraMonthlyCut ?? 0,
+      ...next,
+    });
+  };
+
+  const includedAccountCount = poolAccounts.filter((a) => includedAccounts[a.id]).length;
+  const keptExpenseCount = groupedExpenses.filter((e) => keptExpenses[e.id]).length;
+
+  return (
+    <CollapsibleDrawer
+      subtitle={`${includedAccountCount} of ${poolAccounts.length} accounts · ${keptExpenseCount} of ${groupedExpenses.length} spending items`}
+      title="Accounts and spending to include"
+    >
+      <div className={optionsStack()}>
+        <OptionGroup
+          items={poolAccounts.map((acc) => ({
+            id: acc.id,
+            name: acc.name,
+            amount: snapshot.getLatestBalance(acc.id),
+            perMonth: false,
+            checked: !!includedAccounts[acc.id],
+            onToggle: () =>
+              emit({
+                includedAccounts: { ...includedAccounts, [acc.id]: !includedAccounts[acc.id] },
+              }),
+          }))}
+          label="Accounts to draw on"
+        />
+        <OptionGroup
+          items={nonPrimaryIncome.map((e) => ({
+            id: e.id,
+            name: e.name,
+            amount: toMonthly(e),
+            perMonth: true,
+            checked: !!keptIncome[e.id],
+            onToggle: () =>
+              emit({
+                keptIncome: { ...keptIncome, [e.id]: !keptIncome[e.id] },
+              }),
+          }))}
+          label="Income you would keep"
+        />
+        <OptionGroup
+          items={groupedExpenses.map((e) => ({
+            id: e.id,
+            name: e.name,
+            amount: toMonthly(e),
+            perMonth: true,
+            checked: !!keptExpenses[e.id],
+            onToggle: () =>
+              emit({
+                keptExpenses: { ...keptExpenses, [e.id]: !keptExpenses[e.id] },
+              }),
+          }))}
+          label="Spending you would keep"
+        />
+      </div>
+    </CollapsibleDrawer>
+  );
+};
+
 export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   entries,
   accounts,
@@ -113,6 +258,8 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   baseline: baselineProp,
   scenario,
   onScenarioChange,
+  collapsible = false,
+  hideIncludePanel = false,
 }) => {
   // The saved figure: the same engine selector the dashboard, Budget overview and MCP use.
   const baseline = useMemo(
@@ -201,7 +348,9 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     () => initialScenario?.extraMonthlyCut ?? 0,
   );
 
-  // New accounts or lines added while the page is open take their default.
+  // New accounts or lines added while the page is open take their default; if an entry's
+  // Essential toggle changed in BudgetEditor, sync its default into keptExpenses.
+  const prevDefaultExpensesRef = useRef(defaultExpenses);
   useEffect(() => {
     setIncludedAccounts((prev) => ({ ...defaultAccounts, ...prev }));
   }, [defaultAccounts]);
@@ -209,8 +358,26 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     setKeptIncome((prev) => ({ ...defaultIncome, ...prev }));
   }, [defaultIncome]);
   useEffect(() => {
-    setKeptExpenses((prev) => ({ ...defaultExpenses, ...prev }));
+    const prevDefaults = prevDefaultExpensesRef.current;
+    prevDefaultExpensesRef.current = defaultExpenses;
+    setKeptExpenses((prev) => {
+      const next = { ...defaultExpenses, ...prev };
+      for (const id of Object.keys(defaultExpenses)) {
+        if (prevDefaults[id] !== undefined && prevDefaults[id] !== defaultExpenses[id]) {
+          next[id] = defaultExpenses[id];
+        }
+      }
+      return next;
+    });
   }, [defaultExpenses]);
+
+  // Keep local state in sync when the external RunwayIncludePanel updates scenario.
+  useEffect(() => {
+    if (!scenario) return;
+    setIncludedAccounts((prev) => ({ ...defaultAccounts, ...prev, ...scenario.includedAccounts }));
+    setKeptIncome((prev) => ({ ...defaultIncome, ...prev, ...scenario.keptIncome }));
+    setKeptExpenses((prev) => ({ ...defaultExpenses, ...prev, ...scenario.keptExpenses }));
+  }, [scenario, defaultAccounts, defaultIncome, defaultExpenses]);
 
   // Everything here is a scenario input: it goes to the container's session memory only.
   const emit = (next: Partial<RunwayScenario>) => {
@@ -429,7 +596,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     />
   );
 
-  return (
+  const zone = (
     <ScenarioZone
       announcement={isScenarioModified ? `Breathing room, ${coverLabel}` : ""}
       // UX-GUIDELINES S5: every zone states the saved figures it starts from.
@@ -440,7 +607,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
             : "Starting from your budget. Breathing room shows once it has essential spending."}
         </span>
       }
-      extra={moreOptions}
+      extra={hideIncludePanel ? undefined : moreOptions}
       isModified={isScenarioModified}
       notice={<ProjectionNotice />}
       result={result}
@@ -450,4 +617,17 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
       {controls}
     </ScenarioZone>
   );
+
+  if (collapsible) {
+    const summaryText = saved
+      ? `Currently ${breathingRoomPhrase(saved.months).toLowerCase()} · Test redundancy pay or spending cuts`
+      : "Test redundancy pay, spending cuts, or included accounts";
+    return (
+      <CollapsibleDrawer subtitle={summaryText} title="Model a change to your budget">
+        {zone}
+      </CollapsibleDrawer>
+    );
+  }
+
+  return zone;
 };
