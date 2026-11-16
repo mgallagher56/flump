@@ -436,6 +436,28 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("GET /user-profile/export");
   });
 
+  it("GET /user-profile/export/csv: each caller downloads only their own data as RFC 4180 CSV", async () => {
+    await seedFinancialData(h.tokens.a, "A");
+    await seedFinancialData(h.tokens.b, "B");
+
+    const res = await h.call("get", "/user-profile/export/csv", h.tokens.b).buffer(true);
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toBe("text/csv; charset=utf-8");
+    expect(res.headers["content-disposition"]).toMatch(
+      /^attachment; filename="flump-export-\d{4}-\d{2}-\d{2}\.csv"$/,
+    );
+    expect(res.headers["cache-control"]).toBe("no-store");
+    const text = res.text;
+    expect(text).toContain("section,accounts\r\n");
+    expect(text).toContain("B saver");
+    expect(text).toContain("B rent");
+    expect(text).toContain("B pay");
+    expect(text).not.toContain(USER_A);
+    expect(text).not.toContain("A Secret Name");
+    expect(text).not.toContain("A saver");
+    ran("GET /user-profile/export/csv");
+  });
+
   it("POST /user-profile/terms-acceptance: records only the caller's acceptance, once per version", async () => {
     const termsRows = () =>
       h.dataSource
