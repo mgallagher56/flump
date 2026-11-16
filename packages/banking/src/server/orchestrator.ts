@@ -16,17 +16,17 @@ export class BankSyncOrchestrator {
   }
 
   /**
-   * Decrypts a banking token. Throws if a non-empty token is not encrypted or cannot be
-   * decrypted (unknown key version, wrong key, wrong AAD or corruption); empty input is returned
-   * unchanged. Legacy unprefixed tokens are read with the version-1 key and no AAD.
+   * Decrypts a versioned banking token (`v<version>:iv:tag:ciphertext`). Throws if a non-empty
+   * token is not in the versioned encrypted format or cannot be decrypted (unknown key version,
+   * wrong key, wrong AAD or corruption); empty input is returned unchanged.
    */
   static decryptToken(token: string, aad?: string): string {
     return safeDecryptBankingToken(token, { aad });
   }
 
   /**
-   * True when a stored token is in the legacy format or under a key version that is not the
-   * active one, so the caller should re-encrypt it on its next write.
+   * True when a stored versioned token is under a key version that is not the active one, so the
+   * caller should re-encrypt it on its next write.
    */
   static tokenNeedsReencrypt(token: string): boolean {
     return bankingTokenNeedsReencrypt(token);
