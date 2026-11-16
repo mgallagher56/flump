@@ -218,6 +218,38 @@ describe("root App landmarks", () => {
     expect(main?.tagName).toBe("MAIN");
     expect(main?.getAttribute("tabindex")).toBe("-1");
   });
+
+  it("renders AppFooter for signed-in users", async () => {
+    const SignedInStub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: rootData(mockUser),
+        Component: App as any,
+        HydrateFallback: NullFallback,
+      },
+    ]);
+    render(<SignedInStub initialEntries={["/"]} />, { container: document });
+    const footer = await screen.findByRole("contentinfo");
+    expect(within(footer).getByRole("link", { name: "Settings" }).getAttribute("href")).toBe(
+      "/app/profile",
+    );
+  });
+
+  it("omits AppFooter when signed out", async () => {
+    const SignedOutStub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: rootData(null),
+        Component: App as any,
+        HydrateFallback: NullFallback,
+      },
+    ]);
+    render(<SignedOutStub initialEntries={["/"]} />, { container: document });
+    await screen.findByRole("main");
+    expect(screen.queryByRole("contentinfo")).toBeNull();
+  });
 });
 
 describe("root loader", () => {

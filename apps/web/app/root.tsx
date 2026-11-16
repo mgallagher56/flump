@@ -18,6 +18,7 @@ import {
 } from "react-router";
 import { AppBottomBar } from "./components/navigation/AppBottomBar";
 import { NavigationProgress } from "./components/navigation/NavigationProgress";
+import { AppFooter } from "./components/structure/footer/AppFooter";
 import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
@@ -173,19 +174,14 @@ function AppShell({ user, focused = false, children }: AppShellProps) {
                 // One gap between the sticky header and every page's first block, so no
                 // page title or banner sits flush against the header.
                 paddingTop: { base: "4", md: "6" },
-                paddingBottom: {
-                  // Reads the wrapper's bottom-bar offset so the two never drift apart.
-                  base: hasBottomBarOffset
-                    ? "calc(var(--app-bottom-bar-offset) + env(safe-area-inset-bottom, 0px))"
-                    : "0",
-                  _navInline: "0",
-                },
+                paddingBottom: "0",
               })}
             >
               {children}
             </main>
             {!focused && <AppBottomBar user={user} />}
           </div>
+          {hasBottomBarOffset && <AppFooter />}
         </ToastProvider>
       </div>
     </>
