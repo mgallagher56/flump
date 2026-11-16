@@ -4313,6 +4313,6 @@ exports[`per-tool output size (E17-N1) > calls every registered tool and pins th
   "list_tax_records": 1000,
   "project_net_worth": 2000,
   "simulate_debt_payoff": 1000,
-  "stage_import": 1000,
+  "stage_import": 1500,
 }
 `;
