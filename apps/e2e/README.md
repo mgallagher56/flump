@@ -106,8 +106,8 @@ another spec, run `bunx playwright test --project=chromium`. To run only the jou
 ## Visual regression
 
 `visual/pages.spec.ts` (config `playwright.visual.config.ts`) takes full-page screenshots of every
-row in `visual/routes.ts`: each signed-in screen, the signed-out tools index, one calculator and
-`/sandbox` in the web app, and the marketing home, pricing, tools and MCP pages. Each one is shot
+row in `visual/routes.ts`: each signed-in screen, the signed-out tools index and one calculator in
+the web app, and the marketing home, pricing, tools and MCP pages. Each one is shot
 at 375 and 1280 wide, light and dark (four Playwright projects). Before each shot it also checks:
 
 - no horizontal overflow at 375 (names the elements that stick out);

@@ -119,9 +119,6 @@ export const SWEEP_SETS: SweepSet[] = [
     pages: [
       page("/tools"),
       ...toolPages(""),
-      { name: "sandbox", url: "/sandbox?persona=medium" },
-      { name: "sandbox--debt", url: "/sandbox?persona=debt" },
-      { name: "sandbox--high", url: "/sandbox?persona=high" },
       page("/nope-404"),
       page("/signup"),
       // Last: with the test-only dev session, /login signs the context in.

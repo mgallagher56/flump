@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("document responses carry the security headers", async ({ request }) => {
-  const response = await request.get("/sandbox");
+  const response = await request.get("/tools");
   expect(response.status()).toBe(200);
   const headers = response.headers();
 
@@ -51,7 +51,7 @@ test("healthz keeps its own no-store", async ({ request }) => {
 test("documents carry one enforced nonce CSP that includes frame-ancestors (E20-N11, BE-07 M8)", async ({
   request,
 }) => {
-  const response = await request.get("/sandbox");
+  const response = await request.get("/tools");
   expect(response.status()).toBe(200);
   const headers = response.headers();
 
@@ -74,7 +74,7 @@ test("documents carry one enforced nonce CSP that includes frame-ancestors (E20-
   for (const tag of scripts) expect(tag).toContain(`nonce="${nonce}"`);
 
   // A fresh nonce per request.
-  const again = await request.get("/sandbox");
+  const again = await request.get("/tools");
   expect(again.headers()["content-security-policy"]).not.toBe(policy);
 });
 

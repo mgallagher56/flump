@@ -230,7 +230,7 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
   });
 
   it("enforces one nonce CSP on a document, matching its inline scripts (E20-N11, BE-07 M8)", async () => {
-    const res = await send(`${base}/sandbox`);
+    const res = await send(`${base}/tools`);
     expect(res.status).toBe(200);
     const policy = res.headers.get("content-security-policy") ?? "";
     assertSecurityHeaders(res, policy);
@@ -248,7 +248,7 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
     expect(scripts.length).toBeGreaterThan(0);
     for (const tag of scripts) expect(tag).toContain(`nonce="${nonce}"`);
     // A second request gets a different nonce.
-    const again = await send(`${base}/sandbox`);
+    const again = await send(`${base}/tools`);
     expect(again.headers.get("content-security-policy")).not.toBe(policy);
   });
 

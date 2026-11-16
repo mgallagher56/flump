@@ -15,10 +15,6 @@ const SETTINGS_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/settings/components",
 );
-const SANDBOX_FEATURES_DIR = path.resolve(
-  __dirname,
-  "../../../../apps/web/app/features/sandbox/components",
-);
 const AI_CONNECTIONS_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/ai-connections/components",
@@ -288,16 +284,6 @@ describe("Architecture & Design System Laws", () => {
       expect(calculators.length).toBeGreaterThanOrEqual(7);
       for (const comp of calculators) {
         verifyColocatedStructure(CALCULATORS_DIR, comp);
-      }
-    });
-
-    it("enforces colocated structure for features/sandbox components", () => {
-      if (fs.existsSync(SANDBOX_FEATURES_DIR)) {
-        const sandboxComponents = getSubdirectories(SANDBOX_FEATURES_DIR);
-        expect(sandboxComponents.length).toBeGreaterThanOrEqual(1);
-        for (const comp of sandboxComponents) {
-          verifyColocatedStructure(SANDBOX_FEATURES_DIR, comp);
-        }
       }
     });
 
