@@ -89,9 +89,38 @@ The voice is constant. The tone moves with what the reader is doing.
 | Our error                       | Frustrated         | Own it, say what to do                  | "We could not save that change. Your figures are unchanged. Try again." |
 | Their input needs fixing        | Mid-task           | Specific, no blame                      | "Enter an interest rate between 0 and 100"                              |
 | Deleting something              | Cautious           | Serious, names the thing and the effect | "Delete Barclaycard? Its balance history will be deleted too."          |
-| Success                         | Relieved           | Proportionate, no celebration           | "Budget saved"                                                          |
+| Success                         | Relieved           | Proportionate, no celebration           | "Budget saved", "November is checked in."                               |
 
 We do not celebrate a person's money ("Congratulations, you're debt-free"). Paying off a debt is theirs to feel about. We confirm the fact.
+
+### 2.5 Encouragement
+
+Every encouragement feature must be a net positive for the person's financial wellbeing (feeling secure and in control of their money) and pass all five E35 no-shaming tests (`N1` to `N5`). One fail removes it:
+
+| Test | Rule                                                                                                    |
+| ---- | ------------------------------------------------------------------------------------------------------- |
+| N1   | No points, scores, grades, leagues or ranks for money                                                   |
+| N2   | No comparison with other people, with averages or with "people like you"                                |
+| N3   | No loss-framed or guilt-driven streaks. A missed month is never a failure and nothing is ever "lost"    |
+| N4   | Acknowledge the action, never the amount. No praise that implies a smaller number makes a lesser person |
+| N5   | The same warmth for every starting point, including debt, renting and low or no savings                 |
+
+1. Acknowledge what the person did, never the amount. "November is checked in", not "Great month".
+2. Use the same words for every size. A goal of £50 and a goal of £50,000 get the same sentence.
+3. Never mention a missed month, a passed date or a goal not reached. Nothing is "lost", "broken", "missed", "overdue" or "behind".
+4. No praise adjectives about money: "great", "well done", "impressive", "healthy", "on track".
+5. Whichever way a figure moved, say what changed and by how much. The same links appear either way. Do not say why, and do not say what to do.
+6. Goals are the person's own words and numbers. Flump does not suggest one.
+
+**Set 1 warm confirmations:**
+
+| Moment              | On-screen wording                                                                 | Benefit to the person                                  |
+| ------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Check-in finished   | "November is checked in." then "Net worth changed by +£1,150 since October 2026." | Their records are current, and the task feels finished |
+| Setup step finished | "Budget added." The checklist row ticks                                           | They can see what is left without a tour               |
+| Setup complete      | "Setup is finished. Everything on your dashboard now uses your own figures."      | Trust in the figures                                   |
+| First account added | "Your first account is in."                                                       | A plain sign that it worked                            |
+| Empty states        | A friendly illustration and one plain sentence                                    | Less cold, nothing to decode                           |
 
 ## 3. Plain language
 
@@ -458,7 +487,7 @@ Flump does not model benefits. If a surface mentions them, it signposts only, wi
 
 ## 8. The guard
 
-`bun scripts/check-copy.ts` runs in `bun run check:laws` and in CI. It reads every user-facing string in `apps/web/app`, `apps/marketing/src`, `packages/ui/src`, `packages/mcp/src`, `packages/finance-engine/src` and the locale file, and applies the mechanical rules: exclamation marks, Title Case, block capitals, em dashes, ampersands, the never-use list (6.2), plain words (3.2), hype (2.2), minimisers and judgement words (2.3), vague errors (5.6), "click here" links (5.3), Latin abbreviations and en-US spelling (3.4).
+`bun scripts/check-copy.ts` runs in `bun run check:laws` and in CI. It reads every user-facing string in `apps/web/app`, `apps/marketing/src`, `packages/ui/src`, `packages/mcp/src`, `packages/finance-engine/src` and the locale file, and applies the mechanical rules: exclamation marks, Title Case, block capitals, em dashes, ampersands, the never-use list (6.2), plain words (3.2), hype (2.2), minimisers and judgement words (2.3), no-shaming and gamification words (2.5), vague errors (5.6), "click here" links (5.3), Latin abbreviations and en-US spelling (3.4).
 
 - It is a ratchet. Existing hits sit in `scripts/copy-baseline.json`. A file may never gain hits.
 - When you fix copy, the baseline goes stale and the check fails until you run `bun scripts/check-copy.ts --write-baseline` and commit the file.

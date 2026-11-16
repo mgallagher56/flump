@@ -6,7 +6,11 @@ import {
   checkInChangeText,
   checkInNetWorthChange,
   checkInWholeTotal,
+  formatWarmConfirmation,
 } from "../../snapshotCopy";
+
+export { formatWarmConfirmation };
+
 import {
   changeFigure,
   changeName,

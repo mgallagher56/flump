@@ -8,6 +8,7 @@ import {
   checkInWholeTotal,
   doneText,
   formatSignedChange,
+  formatWarmConfirmation,
   lastFigureText,
   netWorthChangeSentence,
   SAVE_ERROR_TOAST,
@@ -89,5 +90,32 @@ describe("check-in copy", () => {
     ].join(" ");
     expect(all).not.toMatch(/well done|great|good|bad|only|just|congrat|behind|overdue/i);
     expect(all).not.toMatch(/[!—&]/);
+  });
+
+  it("formats E35 Set 1 warm confirmations with identical wording regardless of direction or starting point", () => {
+    expect(formatWarmConfirmation({ kind: "checkInFinished", month: "2026-11" })).toBe(
+      "November is checked in.",
+    );
+    const up = formatWarmConfirmation({
+      kind: "checkInFinished",
+      month: "2026-11",
+      change: 1150,
+      previousMonth: "2026-10",
+    });
+    const down = formatWarmConfirmation({
+      kind: "checkInFinished",
+      month: "2026-11",
+      change: -1150,
+      previousMonth: "2026-10",
+    });
+    expect(up).toBe("November is checked in. Net worth changed by +£1,150 since October 2026.");
+    expect(down.replace("−", "+")).toBe(up);
+    expect(formatWarmConfirmation({ kind: "setupStepFinished", step: "budget" })).toBe(
+      "Budget added.",
+    );
+    expect(formatWarmConfirmation({ kind: "setupComplete" })).toBe(
+      "Setup is finished. Everything on your dashboard now uses your own figures.",
+    );
+    expect(formatWarmConfirmation({ kind: "firstAccountAdded" })).toBe("Your first account is in.");
   });
 });

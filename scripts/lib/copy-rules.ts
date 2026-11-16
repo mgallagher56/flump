@@ -209,6 +209,12 @@ export const COPY_RULES: CopyRule[] = [
     "state the figure or the date without grading it (owner tone rule)",
   ),
   banned(
+    "no-shaming",
+    "2.5",
+    "streaks?|leaderboards?|(?:financial(?: health)?|money|wealth|savings|budget|health) scores?|profile strength|people like you|(?:ahead of|behind|compared (?:to|with)) (?:your )?peers|top \\d+% of (?:savers|users|households)|(?:missed|overdue) check[- ]in",
+    "acknowledge the action or state the user's own figure; no streaks, scores, leaderboards or peer comparisons (E35 N1 to N3)",
+  ),
+  banned(
     "apology-filler",
     "5.6",
     "oops|whoops|uh[- ]oh|yikes|hooray|woo-?hoo|awesome|congrat(?:s|ulations)",

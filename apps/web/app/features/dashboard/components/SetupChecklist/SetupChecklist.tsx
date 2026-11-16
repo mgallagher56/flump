@@ -10,6 +10,10 @@ import {
 import { ChevronDown, ChevronUp, Circle, CircleCheck, X } from "lucide-react";
 import { type FC, useId, useMemo, useState } from "react";
 import { Link } from "react-router";
+import { formatWarmConfirmation } from "../../../snapshot/snapshotCopy";
+
+export { formatWarmConfirmation };
+
 import {
   dismissButton,
   finishBody,
