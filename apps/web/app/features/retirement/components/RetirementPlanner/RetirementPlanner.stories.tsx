@@ -76,7 +76,7 @@ export const Light: Story = {
     await expect(canvas.getByText("Retirement plan")).toBeInTheDocument();
     const higherBtn = canvas.getByRole("button", { name: "Higher case (8%)" });
     await userEvent.click(higherBtn);
-    await expect(canvas.getByText(/Your target:/)).toBeInTheDocument();
+    await expect(canvas.getAllByText(/Your target:/).length).toBeGreaterThanOrEqual(1);
   },
 };
 

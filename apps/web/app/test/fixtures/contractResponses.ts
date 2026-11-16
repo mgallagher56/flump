@@ -216,6 +216,25 @@ export const mcpTokenFixture = {
 
 export const snapshotResponseFixture = { month: "2026-11", values: [], completed: true };
 
+export const retirementPlanFixture = {
+  id: "44444444-4444-4444-8444-444444444444",
+  userId: "user_01JABCDEF",
+  retirementAge: 67,
+  planToAge: 90,
+  target: { kind: "typed" as const, yearlyAmount: 26_000 },
+  housingOverride: null,
+  statePensionAge: 67,
+  statePensionAnnualForecastGbp: null,
+  statePensionQualifyingYears: 35,
+  growthRates: { lower: 0.02, middle: 0.05, higher: 0.08 },
+  inflationRate: 0.02,
+  cashSavingsNominalRate: null,
+  realRentGrowthRate: 0,
+  excludedAccountIds: [],
+  createdAt: "2026-11-16T10:00:00.000Z",
+  updatedAt: "2026-11-16T10:00:00.000Z",
+};
+
 const success = { success: true };
 
 /**
@@ -259,6 +278,7 @@ export function contractBody(method: string, path: string): unknown {
   if (/^\/imports\/[^/]+\/preview$/.test(p)) return importPreviewFixture;
   if (/^\/imports\/[^/]+(\/commit|\/revert)?$/.test(p)) return importBatchFixture;
   if (p === "/mcp-tokens") return [mcpTokenFixture];
+  if (p === "/retirement-plan") return { plan: retirementPlanFixture };
   if (/^\/snapshots\/[^/]+$/.test(p)) return snapshotResponseFixture;
   return success;
 }
