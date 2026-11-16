@@ -100,7 +100,7 @@ and append "..." to indicate truncation.
 
 - [ ] Descriptions under 1024 chars are unchanged
 - [ ] Descriptions over 1024 chars are truncated at the last word boundary
-  before 1024 chars
+      before 1024 chars
 - [ ] Truncated descriptions end with "..."
 - [ ] The total length including "..." does not exceed 1024 chars
 
@@ -143,9 +143,9 @@ checked for matches.
 - [ ] Closing a feature as wontfix creates/updates a file in `.out-of-scope/`
 - [ ] The file includes the decision, reasoning, and link to the closed issue
 - [ ] If a matching `.out-of-scope/` file already exists, the new issue is
-  appended to its "Prior requests" list rather than creating a duplicate
+      appended to its "Prior requests" list rather than creating a duplicate
 - [ ] During triage, existing `.out-of-scope/` files are checked and surfaced
-  when a new issue matches a prior rejection
+      when a new issue matches a prior rejection
 
 **Out of scope:**
 

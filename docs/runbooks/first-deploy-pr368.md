@@ -236,7 +236,7 @@ Railway volume backups only restore onto the live volume, so the drill uses the 
 
    Expect in `drill-after.txt`: bank-connection token counts 0, mock-identity rows 0, owner rows unchanged apart from rows flagged in the preview. **The dry-run migration counts (G3.2) equal `cleanup-preview.txt`** is a go/no-go item.
 4. [ ] **Idempotency:** Ctrl+C the container (exercises shutdown), start it again with the same `drill_guard && docker run ...`. Then
-   `docker exec flump-drill psql -U postgres -d flump_drill -Atc 'SELECT name, count(*) FROM migrations GROUP BY 1 HAVING count(*)>1'` must print nothing.
+       `docker exec flump-drill psql -U postgres -d flump_drill -Atc 'SELECT name, count(*) FROM migrations GROUP BY 1 HAVING count(*)>1'` must print nothing.
 5. [ ] **Rollback rehearsal** (the old image must boot on the migrated schema). The old image (`05585b2`) may not need the banking key, but the rehearsal passes one anyway; it is harmless:
 
    ```bash
