@@ -138,6 +138,7 @@ const Plot: FC<PlotProps> = ({
             labelFormatter={(year, payload) =>
               (payload?.[0]?.payload as ChartRow | undefined)?.month ?? String(year)
             }
+            separator=": "
           />
           <Area
             activeDot={{ r: 6 }}

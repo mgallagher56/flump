@@ -9,6 +9,7 @@ import {
   CollapsibleDrawer,
   CurrencyInput,
   controlProps,
+  DatePicker,
   Dialog,
   FormField,
   Icon,
@@ -221,24 +222,23 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
             error={errors.date}
           >
             {(field) => (
-              <TextInput
+              <DatePicker
                 {...controlProps(field)}
+                clearable={false}
                 max={LATEST_RECORD_DATE}
                 min={EARLIEST_RECORD_DATE}
-                type="date"
                 value={draft.date}
-                onChange={(e) => set("date", e.target.value)}
+                onValueChange={(next) => set("date", next)}
               />
             )}
           </FormField>
           {draft.frequency !== "one-off" ? (
             <FormField label="End date (optional)" hint="Leave empty if it carries on.">
               {(field) => (
-                <TextInput
+                <DatePicker
                   {...controlProps(field)}
-                  type="date"
                   value={draft.endDate}
-                  onChange={(e) => set("endDate", e.target.value)}
+                  onValueChange={(next) => set("endDate", next)}
                 />
               )}
             </FormField>

@@ -29,6 +29,19 @@ export interface NumericTextOptions {
 const TYPED_NUMBER = /^(\s*[£]?\s*-?)([\d,]*)(\.\d*)?(\s*)$/;
 
 /**
+ * Strips redundant leading zeros from the whole-number part ("0840" -> "840", "00" -> "0")
+ * while keeping a single zero before a decimal point ("0.50", "0.") intact.
+ */
+export const stripLeadingZeros = (raw: string): string => {
+  const match = TYPED_NUMBER.exec(raw);
+  if (!match) return raw;
+  const [, lead = "", whole = "", decimals = "", trail = ""] = match;
+  const stripped = whole.replace(/^0+(?=\d)/, "");
+  if (stripped === whole) return raw;
+  return `${lead}${stripped}${decimals}${trail}`;
+};
+
+/**
  * "12345.6" to "12,345.6": regroups the whole-number part of what was typed and leaves the rest
  * (a trailing ".", the pence typed so far) exactly as it is. Text that is not a plain number is
  * returned unchanged.
@@ -145,32 +158,38 @@ export const useNumericText = ({
     }
     // A caret queued by an earlier key never applies to this one.
     pendingCaret.current = null;
-    let next = raw;
+    const stripped = stripLeadingZeros(raw);
+    let next = stripped;
+    const input = event.target;
+    const rawCaret = input.selectionStart ?? raw.length;
+    const strippedCaret = Math.max(0, rawCaret - (raw.length - stripped.length));
+    if (stripped !== raw) {
+      pendingCaret.current = { input, position: strippedCaret };
+      setCaretTick((tick) => tick + 1);
+    }
     if (groupWhileTyping) {
-      const input = event.target;
-      const caret = input.selectionStart ?? raw.length;
-      let source = raw;
-      let sourceCaret = caret;
-      let regroup = shouldRegroup(raw, text);
+      let source = stripped;
+      let sourceCaret = strippedCaret;
+      let regroup = shouldRegroup(stripped, text);
       // Backspace or Delete on a thousands comma removed only the comma, which regrouping would
       // put straight back: remove the digit beside it instead, as the person meant.
       if (
-        raw.length === text.length - 1 &&
-        raw.replace(/,/g, "") === text.replace(/,/g, "") &&
-        text[caret] === ","
+        stripped.length === text.length - 1 &&
+        stripped.replace(/,/g, "") === text.replace(/,/g, "") &&
+        text[strippedCaret] === ","
       ) {
         const backward =
           (event.nativeEvent as InputEvent | undefined)?.inputType !== "deleteContentForward";
-        const at = backward ? caret - 1 : caret;
-        if (at >= 0 && at < raw.length) {
-          source = raw.slice(0, at) + raw.slice(at + 1);
+        const at = backward ? strippedCaret - 1 : strippedCaret;
+        if (at >= 0 && at < stripped.length) {
+          source = stripped.slice(0, at) + stripped.slice(at + 1);
           sourceCaret = at;
           regroup = true;
         }
       }
       if (regroup) {
         next = groupTypedNumber(source);
-        if (next !== raw) {
+        if (next !== stripped || stripped !== raw) {
           const charsBefore = source.slice(0, sourceCaret).replace(/,/g, "").length;
           pendingCaret.current = { input, position: caretAfterGrouping(next, charsBefore) };
           setCaretTick((tick) => tick + 1);

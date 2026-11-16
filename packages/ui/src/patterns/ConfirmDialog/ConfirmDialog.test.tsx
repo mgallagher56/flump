@@ -101,6 +101,25 @@ describe("ConfirmDialog", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
+  it("confirms on Enter even while Cancel has initial focus, without triggering Cancel", () => {
+    const { onConfirm, onOpenChange } = setup({ tone: "danger" });
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    expect(document.activeElement).toBe(cancel);
+    fireEvent.keyDown(cancel, { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("does not confirm on Enter when pending or requireText does not match", () => {
+    const { onConfirm } = setup({ requireText: "DELETE", confirmLabel: "Delete" });
+    const input = screen.getByRole("textbox");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: "delete" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
   it("disables both buttons while pending", () => {
     setup({ pending: true });
     expect((screen.getByRole("button", { name: "Cancel" }) as HTMLButtonElement).disabled).toBe(

@@ -143,12 +143,12 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
       />
     ) : (
       <>
+        {phone ? <CheckInCard checkIn={checkIn} /> : <CheckInList checkIn={checkIn} />}
         {showInstructions ? (
           <div className={checkInScene()}>
             <Illustration id="checkin-start-scene" scene="check-in" size="sm" />
           </div>
         ) : null}
-        {phone ? <CheckInCard checkIn={checkIn} /> : <CheckInList checkIn={checkIn} />}
       </>
     );
 

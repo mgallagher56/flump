@@ -192,6 +192,7 @@ const PayoffChart: FC<PayoffChartProps> = ({ rows, showBaseline, paidOffMonth })
             cursor={chartCursorProps}
             formatter={(value) => formatCurrency(Number(value))}
             labelFormatter={(m) => monthLabel(Number(m))}
+            separator=": "
           />
           {showBaseline ? (
             <Line

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   chartBandProps,
+  chartBarCursorProps,
   chartCursorProps,
   chartGridProps,
   chartLineProps,
@@ -13,6 +14,8 @@ describe("chartProps", () => {
     expect(chartGridProps.stroke).toBe("var(--colors-chart-grid)");
     expect(chartGridProps.vertical).toBe(false);
     expect(chartCursorProps.stroke).toBe("var(--colors-chart-grid)");
+    expect(chartBarCursorProps.fill).toBe("var(--colors-primary-subtle)");
+    expect(chartBarCursorProps.fillOpacity).toBeLessThan(1);
   });
 
   it("mutes axis text and removes tick lines", () => {

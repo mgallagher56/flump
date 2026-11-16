@@ -82,19 +82,33 @@ describe("CheckInSheet", () => {
 
     it("saves quietly as it goes, shows the summary and reloads saved data once on Done", async () => {
       const { onSave, onOpenChange, refresh } = setup();
-      await userEvent.click(screen.getByRole("button", { name: "No change to the rest" }));
+      // Illustration sits at the bottom of the sheet, after the account list.
+      const list = screen.getByTestId("checkin-list");
+      const scene = document.getElementById("checkin-start-scene");
+      expect(scene).not.toBeNull();
+      expect(list.compareDocumentPosition(scene as Node) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+
+      await userEvent.click(screen.getAllByRole("button", { name: "No change" })[0] as HTMLElement);
+      await userEvent.click(screen.getByRole("button", { name: "No change" }));
       await screen.findByRole("heading", { name: "Check-in saved" });
-      expect(onSave).toHaveBeenCalledWith({
+      expect(onSave).toHaveBeenNthCalledWith(1, {
         month: "2026-11",
         payload: {
-          values: [
-            // No change repeats each saved balance (D22), not October's recorded figure.
-            { accountId: CURRENT, value: 1500, source: "confirmed" },
-            { accountId: MORTGAGE, value: 180000, source: "confirmed" },
-          ],
+          values: [{ accountId: CURRENT, value: 1500, source: "confirmed" }],
+        },
+        saved: 1,
+        skipped: 0,
+        quiet: true,
+      });
+      expect(onSave).toHaveBeenNthCalledWith(2, {
+        month: "2026-11",
+        payload: {
+          values: [{ accountId: MORTGAGE, value: 180000, source: "confirmed" }],
           complete: true,
         },
-        saved: 2,
+        saved: 1,
         skipped: 0,
         quiet: true,
       });
@@ -145,7 +159,8 @@ describe("CheckInSheet", () => {
 
     it("keeps the sheet for a check-in finished in this session, and on a phone", async () => {
       setup();
-      await userEvent.click(screen.getByRole("button", { name: "No change to the rest" }));
+      await userEvent.click(screen.getAllByRole("button", { name: "No change" })[0] as HTMLElement);
+      await userEvent.click(screen.getByRole("button", { name: "No change" }));
       await screen.findByRole("heading", { name: "Check-in saved" });
       expect(isSheet(screen.getByRole("dialog", { name: "Monthly check-in" }))).toBe(true);
     });

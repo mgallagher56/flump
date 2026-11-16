@@ -46,6 +46,15 @@ describe("TopBar", () => {
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("closes the flyout when a link inside it is clicked", () => {
+    render(<TopBar items={sampleNavItems} />);
+    const trigger = screen.getByRole("button", { name: "Plan" });
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(screen.getByRole("link", { name: /Pension/ }));
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("shows a menu button only when onMenuClick is supplied", () => {
     const onMenuClick = vi.fn();
     const { rerender } = render(<TopBar items={sampleNavItems} />);

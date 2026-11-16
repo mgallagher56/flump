@@ -20,6 +20,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { chartCursorProps } from "~/features/charts";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { formatEstimate } from "~/utils/roundEstimate";
 import { nearDataAxis } from "~/utils/yAxisTicks";
@@ -192,8 +193,10 @@ export const ForecastChart: FC<ForecastChartProps> = ({
                 ticks={yAxis.ticks}
               />
               <Tooltip
+                cursor={chartCursorProps}
                 formatter={(value) => formatCurrency(Number(value) || 0)}
                 labelFormatter={(label) => String(label)}
+                separator=": "
               />
               {/* A line, not an area: the axis starts near the data, so a fill would overstate growth. */}
               <Line

@@ -72,6 +72,7 @@ interface FlyoutGroupProps {
 const FlyoutGroup: FC<FlyoutGroupProps> = ({ item, active, activeKey, renderLink }) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLLIElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
@@ -80,8 +81,18 @@ const FlyoutGroup: FC<FlyoutGroupProps> = ({ item, active, activeKey, renderLink
     const onPointer = (event: PointerEvent) => {
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
     };
+    const onFlyoutClick = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest("a, button") && panelRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    };
     document.addEventListener("pointerdown", onPointer);
-    return () => document.removeEventListener("pointerdown", onPointer);
+    document.addEventListener("click", onFlyoutClick);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("click", onFlyoutClick);
+    };
   }, [open]);
 
   return (
@@ -117,7 +128,7 @@ const FlyoutGroup: FC<FlyoutGroupProps> = ({ item, active, activeKey, renderLink
         </span>
       </button>
       {open && (
-        <div className={topBarFlyout()} id={panelId}>
+        <div className={topBarFlyout()} id={panelId} ref={panelRef}>
           {(item.children ?? []).map((child: AppNavChild) =>
             renderLink(
               child,

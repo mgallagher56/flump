@@ -262,3 +262,33 @@ describe("a comma used as a decimal point (R2-5)", () => {
     expect(onValueChange).not.toHaveBeenLastCalledWith(15);
   });
 });
+
+describe("leading zero handling", () => {
+  it("strips leading zeros when typing non-zero digits into a 0 field without breaking 0.50", () => {
+    const onValueChange = vi.fn();
+    render(<CurrencyInput aria-label="Balance" onValueChange={onValueChange} value={0} />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    expect(input.value).toBe("0");
+
+    fireEvent.change(input, { target: { value: "08", selectionStart: 2 } });
+    expect(input.value).toBe("8");
+    expect(onValueChange).toHaveBeenLastCalledWith(8);
+
+    fireEvent.change(input, { target: { value: "840", selectionStart: 3 } });
+    expect(input.value).toBe("840");
+    expect(onValueChange).toHaveBeenLastCalledWith(840);
+
+    fireEvent.change(input, { target: { value: "0840", selectionStart: 4 } });
+    expect(input.value).toBe("840");
+
+    fireEvent.change(input, { target: { value: "00", selectionStart: 2 } });
+    expect(input.value).toBe("0");
+    expect(onValueChange).toHaveBeenLastCalledWith(0);
+
+    fireEvent.change(input, { target: { value: "0.", selectionStart: 2 } });
+    expect(input.value).toBe("0.");
+    fireEvent.change(input, { target: { value: "0.50", selectionStart: 4 } });
+    expect(input.value).toBe("0.50");
+    expect(onValueChange).toHaveBeenLastCalledWith(0.5);
+  });
+});
