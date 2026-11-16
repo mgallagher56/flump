@@ -3,9 +3,22 @@
  * `packages/*` (extending the backend knip law in `scripts/backend-laws/check-dead-code.ts`).
  */
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dir, "..");
+
+// Ensure @flump/tokens is built so apps/web/panda.config.ts resolves when check:laws runs before `bun run build`.
+if (!existsSync(resolve(repoRoot, "packages/tokens/dist/index.js"))) {
+  const tokensBuild = spawnSync("bun", ["run", "--cwd", "packages/tokens", "build"], {
+    cwd: repoRoot,
+    stdio: "inherit",
+  });
+  if (tokensBuild.status !== 0) {
+    console.error("check-workspace-deps: failed to build @flump/tokens");
+    process.exit(1);
+  }
+}
 
 const webRun = spawnSync("bunx", ["knip", "--include", "dependencies", "--no-progress"], {
   cwd: resolve(repoRoot, "apps/web"),
