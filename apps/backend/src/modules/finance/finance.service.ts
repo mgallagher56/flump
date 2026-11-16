@@ -425,8 +425,15 @@ export class FinanceService {
     return { success: true, consentRevoked: outcome === "revoked" };
   }
 
+  private cachedBankSync?: BankConnectionSync;
+
   private bankSync(): BankConnectionSync {
-    return new BankConnectionSync(this.bankConnectionRepository.manager.connection);
+    if (!this.cachedBankSync) {
+      this.cachedBankSync = new BankConnectionSync(
+        this.bankConnectionRepository.manager.connection,
+      );
+    }
+    return this.cachedBankSync;
   }
 
   private oauthConfig(

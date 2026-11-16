@@ -1,5 +1,5 @@
 import { createCipheriv, createHash, randomBytes } from "node:crypto";
-import { BankSyncOrchestrator } from "@flump/banking/server";
+import { BankAuthExpiredError, BankSyncOrchestrator } from "@flump/banking/server";
 import type { DataSource } from "typeorm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { BankConnection } from "../../entities/bank-connection.entity";
@@ -245,5 +245,170 @@ describe("BankConnectionSync.activeAccessToken (N7 / S11, S4, database-free)", (
       sync.activeAccessToken(CONN_ID, provider, { clientId: "cid", clientSecret: "csecret" }),
     ).rejects.toBeInstanceOf(ConnectionNeedsReconnectError);
     expect(provider.refreshToken).not.toHaveBeenCalled();
+  });
+
+  it("retries CAS when M11 lazy re-encryption rewrites ciphertext during an in-flight refresh", async () => {
+    const expiredAt = new Date(Date.now() - 60_000);
+    const v1Access = BankSyncOrchestrator.encryptToken("access-old", accessTokenAad(CONN_ID));
+    const v1Refresh = BankSyncOrchestrator.encryptToken("refresh-old", refreshTokenAad(CONN_ID));
+
+    process.env.BANKING_TOKEN_ENCRYPTION_KEYS = `2:${"n".repeat(40)},1:${TEST_KEY}`;
+    const v2Access = BankSyncOrchestrator.encryptToken("access-old", accessTokenAad(CONN_ID));
+    const v2Refresh = BankSyncOrchestrator.encryptToken("refresh-old", refreshTokenAad(CONN_ID));
+
+    let currentRow: Partial<BankConnection> = {
+      id: CONN_ID,
+      accessToken: v1Access,
+      refreshToken: v1Refresh,
+      expiresAt: expiredAt,
+    };
+
+    const findOne = vi.fn(async () => currentRow);
+    const query = vi.fn(async (_sql: string, params: unknown[]) => {
+      const [nextAccess, nextRefresh, nextExpires, _id, expectedAccess, expectedRefresh] = params;
+      if (
+        expectedAccess === currentRow.accessToken &&
+        expectedRefresh === currentRow.refreshToken
+      ) {
+        currentRow = {
+          ...currentRow,
+          accessToken: nextAccess as string,
+          refreshToken: nextRefresh as string | null,
+          expiresAt: nextExpires as Date | null,
+        };
+        return [[{ id: CONN_ID }], 1];
+      }
+      return [[], 0];
+    });
+
+    const ds = {
+      getRepository: () => ({ findOne }),
+      query,
+      transaction: vi.fn(),
+    } as unknown as DataSource;
+
+    const provider = makeProvider(async () => {
+      // Simulate concurrent M11 lazy re-encryption moving v1 -> v2 while HTTP refresh is in flight.
+      currentRow = {
+        ...currentRow,
+        accessToken: v2Access,
+        refreshToken: v2Refresh,
+      };
+      return {
+        accessToken: "access-new",
+        refreshToken: "refresh-new",
+        expiresIn: 3600,
+      };
+    });
+
+    const sync = new BankConnectionSync(ds);
+    const token = await sync.activeAccessToken(CONN_ID, provider, {
+      clientId: "cid",
+      clientSecret: "csecret",
+    });
+
+    expect(token).toBe("access-new");
+    expect(query).toHaveBeenCalledTimes(2);
+    expect(
+      BankSyncOrchestrator.decryptToken(currentRow.accessToken as string, accessTokenAad(CONN_ID)),
+    ).toBe("access-new");
+    expect(
+      BankSyncOrchestrator.decryptToken(
+        currentRow.refreshToken as string,
+        refreshTokenAad(CONN_ID),
+      ),
+    ).toBe("refresh-new");
+  });
+
+  it("coalesces concurrent refreshes across separate BankConnectionSync instances sharing a DataSource", async () => {
+    const oldAccessCipher = BankSyncOrchestrator.encryptToken(
+      "access-old",
+      accessTokenAad(CONN_ID),
+    );
+    const oldRefreshCipher = BankSyncOrchestrator.encryptToken(
+      "refresh-old",
+      refreshTokenAad(CONN_ID),
+    );
+    const ds = {
+      getRepository: () => ({
+        findOne: vi.fn(async () => ({
+          id: CONN_ID,
+          accessToken: oldAccessCipher,
+          refreshToken: oldRefreshCipher,
+          expiresAt: new Date(Date.now() - 60_000),
+        })),
+      }),
+      query: vi.fn(async () => [[{ id: CONN_ID }], 1]),
+      transaction: vi.fn(),
+    } as unknown as DataSource;
+
+    const provider = makeProvider();
+    const syncA = new BankConnectionSync(ds);
+    const syncB = new BankConnectionSync(ds);
+    const creds = { clientId: "cid", clientSecret: "csecret" };
+
+    const [a, b] = await Promise.all([
+      syncA.activeAccessToken(CONN_ID, provider, creds),
+      syncB.activeAccessToken(CONN_ID, provider, creds),
+    ]);
+
+    expect(a).toBe("access-refreshed");
+    expect(b).toBe("access-refreshed");
+    expect(provider.refreshToken).toHaveBeenCalledTimes(1);
+  });
+
+  it("recovers the winner's fresh token when a strict provider rejects a concurrent refresh with AUTH_EXPIRED", async () => {
+    const oldAccessCipher = BankSyncOrchestrator.encryptToken(
+      "access-old",
+      accessTokenAad(CONN_ID),
+    );
+    const oldRefreshCipher = BankSyncOrchestrator.encryptToken(
+      "refresh-old",
+      refreshTokenAad(CONN_ID),
+    );
+    const winnerAccessCipher = BankSyncOrchestrator.encryptToken(
+      "access-winner",
+      accessTokenAad(CONN_ID),
+    );
+    const winnerRefreshCipher = BankSyncOrchestrator.encryptToken(
+      "refresh-winner",
+      refreshTokenAad(CONN_ID),
+    );
+
+    let sharedRow: Partial<BankConnection> = {
+      id: CONN_ID,
+      accessToken: oldAccessCipher,
+      refreshToken: oldRefreshCipher,
+      expiresAt: new Date(Date.now() - 60_000),
+    };
+
+    const ds = {
+      getRepository: () => ({ findOne: vi.fn(async () => sharedRow) }),
+      query: vi.fn(),
+      transaction: vi.fn(),
+    } as unknown as DataSource;
+
+    const provider = makeProvider(async () => {
+      // Simulate another process finishing its refresh and committing before our strict provider call fails.
+      sharedRow = {
+        id: CONN_ID,
+        accessToken: winnerAccessCipher,
+        refreshToken: winnerRefreshCipher,
+        expiresAt: new Date(Date.now() + 3600_000),
+      };
+      throw new BankAuthExpiredError({
+        provider: "monzo",
+        operation: "refresh token",
+        status: 401,
+      });
+    });
+
+    const sync = new BankConnectionSync(ds);
+    const token = await sync.activeAccessToken(CONN_ID, provider, {
+      clientId: "cid",
+      clientSecret: "csecret",
+    });
+
+    expect(token).toBe("access-winner");
   });
 });

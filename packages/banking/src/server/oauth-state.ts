@@ -113,7 +113,8 @@ export function verifyOAuthStateRecord(
   if (!hashesMatch(expectedHash, record.stateHash)) return null;
 
   const now = input.now ?? new Date();
-  if (new Date(record.expiresAt).getTime() <= now.getTime()) return null;
+  const expiresMs = new Date(record.expiresAt).getTime();
+  if (!Number.isFinite(expiresMs) || expiresMs <= now.getTime()) return null;
 
   if (record.institutionId !== input.institutionId.toLowerCase()) return null;
 
