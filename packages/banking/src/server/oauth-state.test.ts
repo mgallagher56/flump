@@ -114,6 +114,19 @@ describe("OAuth state & PKCE (M4, database-free)", () => {
         keyring: RING_A,
       }),
     ).toBeNull();
+
+    // Invalid Date (NaN) -> refused
+    expect(
+      verifyOAuthStateRecord(
+        { ...record, expiresAt: new Date("not-a-date") },
+        {
+          state: issued.state,
+          institutionId: "monzo",
+          now,
+          keyring: RING_A,
+        },
+      ),
+    ).toBeNull();
   });
 
   it("refuses a state presented for a different institution", () => {
