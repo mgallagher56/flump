@@ -39,6 +39,7 @@ describe("read tools v2: registration", () => {
       "get_debt_overview",
       "list_tax_records",
       "get_tax_year_position",
+      "get_retirement_picture",
     ]);
   });
 });

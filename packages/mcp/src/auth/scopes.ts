@@ -72,10 +72,12 @@ export const TOOL_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
   get_debt_overview: READ,
   list_tax_records: READ,
   get_tax_year_position: READ,
+  get_retirement_picture: READ,
   // Simulate tools v2 (E17-N11), frozen by the re-plan. compare_* is deprecated, first to cut.
   compare_mortgage_overpay_vs_invest: SIMULATE,
   simulate_debt_payoff: SIMULATE,
   project_net_worth: SIMULATE,
+  simulate_retirement: SIMULATE,
   // Write tools (re-plan PR D): stage and read back an import batch. Nothing here can commit.
   stage_import: STAGE,
   get_import_status: STAGE,

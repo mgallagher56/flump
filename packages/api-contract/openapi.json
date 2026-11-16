@@ -8611,6 +8611,1136 @@
         "tags": ["accounts"]
       }
     },
+    "/v1/retirement-plan": {
+      "get": {
+        "operationId": "retirementPlan.get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "plan": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "cashSavingsNominalRate": {
+                          "type": ["number", "null"]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "excludedAccountIds": {
+                          "items": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "growthRates": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "higher": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            },
+                            "lower": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            },
+                            "middle": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            }
+                          },
+                          "required": ["lower", "middle", "higher"],
+                          "type": "object"
+                        },
+                        "housingOverride": {
+                          "anyOf": [
+                            {
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "own-outright",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": ["kind"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "mortgage-ends-before-retirement",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": ["kind"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "rent-for-life",
+                                      "type": "string"
+                                    },
+                                    "monthlyRentGbp": {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    },
+                                    "realRentGrowthRate": {
+                                      "maximum": 0.5,
+                                      "minimum": -0.2,
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": ["kind", "monthlyRentGbp"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "custom",
+                                      "type": "string"
+                                    },
+                                    "monthlyAmountGbp": {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": ["kind", "monthlyAmountGbp"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "mortgage-continues",
+                                      "type": "string"
+                                    },
+                                    "monthlyPaymentGbp": {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    },
+                                    "remainingYearsInRetirement": {
+                                      "maximum": 60,
+                                      "minimum": 0,
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "monthlyPaymentGbp",
+                                    "remainingYearsInRetirement"
+                                  ],
+                                  "type": "object"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "id": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        "inflationRate": {
+                          "type": "number"
+                        },
+                        "planToAge": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "realRentGrowthRate": {
+                          "type": "number"
+                        },
+                        "retirementAge": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "statePensionAge": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "statePensionAnnualForecastGbp": {
+                          "anyOf": [
+                            {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "statePensionQualifyingYears": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "target": {
+                          "anyOf": [
+                            {
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "typed",
+                                      "type": "string"
+                                    },
+                                    "yearlyAmount": {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": ["kind", "yearlyAmount"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "budget",
+                                      "type": "string"
+                                    },
+                                    "lineSettings": {
+                                      "items": {
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "budgetEntryId": {
+                                            "format": "uuid",
+                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                            "type": "string"
+                                          },
+                                          "status": {
+                                            "anyOf": [
+                                              {
+                                                "const": "continues",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "stops",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "additionalProperties": false,
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "changes",
+                                                    "type": "string"
+                                                  },
+                                                  "monthlyAmount": {
+                                                    "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                                    "type": "number"
+                                                  }
+                                                },
+                                                "required": ["kind", "monthlyAmount"],
+                                                "type": "object"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": ["budgetEntryId", "status"],
+                                        "type": "object"
+                                      },
+                                      "maxItems": 200,
+                                      "type": "array"
+                                    }
+                                  },
+                                  "required": ["kind", "lineSettings"],
+                                  "type": "object"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "userId": {
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "userId",
+                        "retirementAge",
+                        "planToAge",
+                        "target",
+                        "housingOverride",
+                        "statePensionAge",
+                        "statePensionAnnualForecastGbp",
+                        "statePensionQualifyingYears",
+                        "growthRates",
+                        "inflationRate",
+                        "cashSavingsNominalRate",
+                        "realRentGrowthRate",
+                        "excludedAccountIds",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["plan"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success.",
+            "headers": {
+              "ETag": {
+                "description": "The resource version, `\"<updatedAt>\"`. Send it as If-Match to make an update conditional.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`unauthorized`: missing or invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`forbidden` or `not_invited`: the account may not use this route."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": ["profile"]
+      },
+      "put": {
+        "operationId": "retirementPlan.upsert",
+        "parameters": [
+          {
+            "description": "The ETag last read for this resource. When it no longer matches, nothing is written and the answer is 412 precondition_failed.",
+            "in": "header",
+            "name": "If-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "cashSavingsNominalRate": {
+                    "anyOf": [
+                      {
+                        "maximum": 0.5,
+                        "minimum": -0.2,
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "excludedAccountIds": {
+                    "items": {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    "maxItems": 200,
+                    "type": "array"
+                  },
+                  "growthRates": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "higher": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "lower": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "middle": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      }
+                    },
+                    "required": ["lower", "middle", "higher"],
+                    "type": "object"
+                  },
+                  "housingOverride": {
+                    "anyOf": [
+                      {
+                        "oneOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "const": "own-outright",
+                                "type": "string"
+                              }
+                            },
+                            "required": ["kind"],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "const": "mortgage-ends-before-retirement",
+                                "type": "string"
+                              }
+                            },
+                            "required": ["kind"],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "const": "rent-for-life",
+                                "type": "string"
+                              },
+                              "monthlyRentGbp": {
+                                "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                "type": "number"
+                              },
+                              "realRentGrowthRate": {
+                                "maximum": 0.5,
+                                "minimum": -0.2,
+                                "type": "number"
+                              }
+                            },
+                            "required": ["kind", "monthlyRentGbp"],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "const": "custom",
+                                "type": "string"
+                              },
+                              "monthlyAmountGbp": {
+                                "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                "type": "number"
+                              }
+                            },
+                            "required": ["kind", "monthlyAmountGbp"],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "const": "mortgage-continues",
+                                "type": "string"
+                              },
+                              "monthlyPaymentGbp": {
+                                "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                "type": "number"
+                              },
+                              "remainingYearsInRetirement": {
+                                "maximum": 60,
+                                "minimum": 0,
+                                "type": "number"
+                              }
+                            },
+                            "required": ["kind", "monthlyPaymentGbp", "remainingYearsInRetirement"],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "inflationRate": {
+                    "maximum": 0.5,
+                    "minimum": -0.2,
+                    "type": "number"
+                  },
+                  "planToAge": {
+                    "anyOf": [
+                      {
+                        "maximum": 120,
+                        "minimum": 19,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "realRentGrowthRate": {
+                    "maximum": 0.5,
+                    "minimum": -0.2,
+                    "type": "number"
+                  },
+                  "retirementAge": {
+                    "anyOf": [
+                      {
+                        "maximum": 110,
+                        "minimum": 18,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "statePensionAge": {
+                    "anyOf": [
+                      {
+                        "maximum": 85,
+                        "minimum": 50,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "statePensionAnnualForecastGbp": {
+                    "anyOf": [
+                      {
+                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "statePensionQualifyingYears": {
+                    "anyOf": [
+                      {
+                        "maximum": 50,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "target": {
+                    "anyOf": [
+                      {
+                        "oneOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "const": "typed",
+                                "type": "string"
+                              },
+                              "yearlyAmount": {
+                                "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                "type": "number"
+                              }
+                            },
+                            "required": ["kind", "yearlyAmount"],
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "const": "budget",
+                                "type": "string"
+                              },
+                              "lineSettings": {
+                                "items": {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "budgetEntryId": {
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                      "type": "string"
+                                    },
+                                    "status": {
+                                      "anyOf": [
+                                        {
+                                          "const": "continues",
+                                          "type": "string"
+                                        },
+                                        {
+                                          "const": "stops",
+                                          "type": "string"
+                                        },
+                                        {
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "kind": {
+                                              "const": "changes",
+                                              "type": "string"
+                                            },
+                                            "monthlyAmount": {
+                                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                              "type": "number"
+                                            }
+                                          },
+                                          "required": ["kind", "monthlyAmount"],
+                                          "type": "object"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": ["budgetEntryId", "status"],
+                                  "type": "object"
+                                },
+                                "maxItems": 200,
+                                "type": "array"
+                              }
+                            },
+                            "required": ["kind", "lineSettings"],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "plan": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "cashSavingsNominalRate": {
+                          "type": ["number", "null"]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "excludedAccountIds": {
+                          "items": {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "growthRates": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "higher": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            },
+                            "lower": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            },
+                            "middle": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            }
+                          },
+                          "required": ["lower", "middle", "higher"],
+                          "type": "object"
+                        },
+                        "housingOverride": {
+                          "anyOf": [
+                            {
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "own-outright",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": ["kind"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "mortgage-ends-before-retirement",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": ["kind"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "rent-for-life",
+                                      "type": "string"
+                                    },
+                                    "monthlyRentGbp": {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    },
+                                    "realRentGrowthRate": {
+                                      "maximum": 0.5,
+                                      "minimum": -0.2,
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": ["kind", "monthlyRentGbp"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "custom",
+                                      "type": "string"
+                                    },
+                                    "monthlyAmountGbp": {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": ["kind", "monthlyAmountGbp"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "mortgage-continues",
+                                      "type": "string"
+                                    },
+                                    "monthlyPaymentGbp": {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    },
+                                    "remainingYearsInRetirement": {
+                                      "maximum": 60,
+                                      "minimum": 0,
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "monthlyPaymentGbp",
+                                    "remainingYearsInRetirement"
+                                  ],
+                                  "type": "object"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "id": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        "inflationRate": {
+                          "type": "number"
+                        },
+                        "planToAge": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "realRentGrowthRate": {
+                          "type": "number"
+                        },
+                        "retirementAge": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "statePensionAge": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "statePensionAnnualForecastGbp": {
+                          "anyOf": [
+                            {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "statePensionQualifyingYears": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "target": {
+                          "anyOf": [
+                            {
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "typed",
+                                      "type": "string"
+                                    },
+                                    "yearlyAmount": {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": ["kind", "yearlyAmount"],
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "kind": {
+                                      "const": "budget",
+                                      "type": "string"
+                                    },
+                                    "lineSettings": {
+                                      "items": {
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "budgetEntryId": {
+                                            "format": "uuid",
+                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                            "type": "string"
+                                          },
+                                          "status": {
+                                            "anyOf": [
+                                              {
+                                                "const": "continues",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "stops",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "additionalProperties": false,
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "changes",
+                                                    "type": "string"
+                                                  },
+                                                  "monthlyAmount": {
+                                                    "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                                    "type": "number"
+                                                  }
+                                                },
+                                                "required": ["kind", "monthlyAmount"],
+                                                "type": "object"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": ["budgetEntryId", "status"],
+                                        "type": "object"
+                                      },
+                                      "maxItems": 200,
+                                      "type": "array"
+                                    }
+                                  },
+                                  "required": ["kind", "lineSettings"],
+                                  "type": "object"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "userId": {
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "userId",
+                        "retirementAge",
+                        "planToAge",
+                        "target",
+                        "housingOverride",
+                        "statePensionAge",
+                        "statePensionAnnualForecastGbp",
+                        "statePensionQualifyingYears",
+                        "growthRates",
+                        "inflationRate",
+                        "cashSavingsNominalRate",
+                        "realRentGrowthRate",
+                        "excludedAccountIds",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["plan"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success.",
+            "headers": {
+              "ETag": {
+                "description": "The resource version, `\"<updatedAt>\"`. Send it as If-Match to make an update conditional.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_failed`: the request does not match the contract."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`unauthorized`: missing or invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`forbidden` or `not_invited`: the account may not use this route."
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`precondition_failed`: the resource changed since the If-Match ETag was read."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`payload_too_large`: the request body is over the size limit."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`constraint_violation`: the data breaks a stored rule and was not saved."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": ["profile"]
+      }
+    },
     "/v1/snapshots/{month}": {
       "put": {
         "operationId": "snapshots.upsert",

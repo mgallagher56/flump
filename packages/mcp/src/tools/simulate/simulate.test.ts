@@ -56,6 +56,7 @@ describe("simulate tools v2", () => {
       "compare_mortgage_overpay_vs_invest",
       "simulate_debt_payoff",
       "project_net_worth",
+      "simulate_retirement",
     ]);
   });
 
@@ -75,10 +76,34 @@ describe("simulate tools v2", () => {
       compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 1, expectedReturnPct: 1 },
       simulate_debt_payoff: {},
       project_net_worth: { expectedReturnPct: 1 },
+      simulate_retirement: { retirementAge: 67 },
     };
     for (const t of SIMULATE_TOOLS) {
       expect(await h.callText(t.name, valid[t.name]), t.name).toContain("INSUFFICIENT_SCOPE");
     }
+  });
+
+  describe("simulate_retirement", () => {
+    it("simulates three growth cases in today's prices against the user's target without advice", async () => {
+      h = await connectTestClient(homeowner);
+      const e = await call("simulate_retirement", {
+        retirementAge: 67,
+        planToAge: 90,
+        targetYearlyGbp: 25_000,
+        extraMonthlyContributionGbp: 200,
+        statePensionQualifyingYears: 35,
+      });
+      expect(e.result.retirementAge).toBe(67);
+      expect(e.result.planToAge).toBe(90);
+      expect(e.result.estimatedYearlyIncomeGbp.lower).toBeLessThanOrEqual(
+        e.result.estimatedYearlyIncomeGbp.middle,
+      );
+      expect(e.result.estimatedYearlyIncomeGbp.middle).toBeLessThanOrEqual(
+        e.result.estimatedYearlyIncomeGbp.higher,
+      );
+      expect(e.result.targetYearlyIncomeGbp).toBe(25_000);
+      expect(collectToolOutputViolations(e)).toEqual([]);
+    });
   });
 
   describe("compare_mortgage_overpay_vs_invest", () => {

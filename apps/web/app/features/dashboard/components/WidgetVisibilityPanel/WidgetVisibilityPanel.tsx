@@ -48,6 +48,7 @@ export const SECTION_COPY: Record<DashboardWidgetKey, { label: string; descripti
   debt: { label: "Debt and borrowing", description: "What you owe and when it could be paid off" },
   savings: { label: "Savings", description: "What you have in savings and investments" },
   pension: { label: "Pension", description: "Your pension pots and what is paid in" },
+  retirement: { label: "Retirement plan", description: "Your target and estimated yearly income" },
   mortgage: { label: "Mortgage", description: "What is left to pay on your mortgage" },
   tax: { label: "Self Assessment", description: "An estimate of tax on income outside PAYE" },
 };

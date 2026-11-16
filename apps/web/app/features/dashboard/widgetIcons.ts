@@ -17,6 +17,7 @@ export const WIDGET_ICONS: Record<DashboardWidgetKey, LucideIcon> = {
   debt: CreditCard,
   savings: PiggyBank,
   pension: Briefcase,
+  retirement: Briefcase,
   mortgage: Home,
   tax: Receipt,
 };

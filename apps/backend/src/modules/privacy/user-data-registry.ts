@@ -11,6 +11,7 @@ import { Consent } from "../../entities/consent.entity";
 import { IdempotencyKey } from "../../entities/idempotency-key.entity";
 import { ImportBatch } from "../../entities/import-batch.entity";
 import { McpToken } from "../../entities/mcp-token.entity";
+import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
@@ -405,6 +406,38 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       kind: "financial-clear",
       reason:
         "stored create responses (BE-09 Idempotency-Key) echo the accounts and amounts a reset removes",
+    },
+  }),
+  table({
+    entity: RetirementPlan,
+    key: "retirementPlan",
+    deleteOnErasure: true,
+    export: {
+      shape: "object",
+      columns: [
+        "id",
+        "retirementAge",
+        "planToAge",
+        "target",
+        "housingOverride",
+        "statePensionAge",
+        "statePensionAnnualForecastGbp",
+        "statePensionQualifyingYears",
+        "growthRates",
+        "inflationRate",
+        "cashSavingsNominalRate",
+        "realRentGrowthRate",
+        "excludedAccountIds",
+        "createdAt",
+        "updatedAt",
+      ],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["id"],
+      batchSize: 1,
+    },
+    reset: {
+      kind: "financial-clear",
+      reason: "retirement plan targets and assumptions are financial data",
     },
   }),
   table({

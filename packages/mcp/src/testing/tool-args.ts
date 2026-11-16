@@ -11,9 +11,11 @@ export const MINIMAL_TOOL_ARGS: Readonly<Record<string, Record<string, unknown>>
   get_debt_overview: {},
   list_tax_records: { taxYear: "2025/26" },
   get_tax_year_position: { taxYear: "2025/26" },
+  get_retirement_picture: {},
   compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
   simulate_debt_payoff: {},
   project_net_worth: { expectedReturnPct: 5 },
+  simulate_retirement: { retirementAge: 67 },
   stage_import: {
     idempotencyKey: "minimal-key-0001",
     accounts: [{ ref: "acc1", name: "Everyday account", type: "Current" }],
