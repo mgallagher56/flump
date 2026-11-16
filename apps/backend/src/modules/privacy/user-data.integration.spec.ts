@@ -17,6 +17,7 @@ import { Consent } from "../../entities/consent.entity";
 import { IdempotencyKey } from "../../entities/idempotency-key.entity";
 import { ImportBatch } from "../../entities/import-batch.entity";
 import { McpToken } from "../../entities/mcp-token.entity";
+import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
@@ -160,6 +161,14 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       }),
     );
     await m.save(m.create(SnapshotCheckin, { userId, month: "2026-10" }));
+    await m.save(
+      m.create(RetirementPlan, {
+        userId,
+        retirementAge: 67,
+        planToAge: 90,
+        target: { kind: "typed", yearlyAmount: 26000 },
+      }),
+    );
     await m.save(
       m.create(BudgetEntry, { userId, category: "housing", name: `${label} rent`, amount: 900 }),
     );
@@ -458,8 +467,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(doc.exportedAt).toBe("2026-11-14T09:00:00.000Z");
     expect(doc.userId).toBe(USER_A);
     expect(doc.profile?.firstName).toBe("AFirst");
+    expect(doc.retirementPlan?.retirementAge).toBe(67);
     for (const t of USER_DATA_REGISTRY) {
-      if (t.key === "profile") continue;
+      if (t.key === "profile" || t.key === "retirementPlan") continue;
       // auditEvents also holds the user.exported row written just before this export.
       expect((doc[t.key] as unknown[]).length, t.key).toBe(t.key === "auditEvents" ? 2 : 1);
     }
@@ -623,6 +633,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       consents: 1,
       import_batches: 0,
       mcp_tokens: 0,
+      retirement_plans: 0,
       snapshot_checkins: 0,
       tax_records: 0,
       transactions: 0,

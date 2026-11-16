@@ -249,6 +249,7 @@ describe("UserProfileController", () => {
         taxRecords: 4,
         mcpTokens: 0,
         idempotencyKeys: 0,
+        retirementPlan: 0,
       });
       expect(events[0]).not.toContain("jane@example.com");
       expect(events[0]).not.toContain("80000");
