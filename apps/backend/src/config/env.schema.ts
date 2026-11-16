@@ -104,6 +104,8 @@ const backendEnvSchema = z.looseObject({
 
   // Keys
   BANKING_TOKEN_ENCRYPTION_KEY: optional(z.string().min(32, "must be at least 32 characters")),
+  /** Required in production when encrypting/decrypting tax receipts (SEC-D, finding L4). */
+  RECEIPT_ENCRYPTION_KEY: optional(z.string().min(32, "must be at least 32 characters")),
   /** Required in production, at least 32 characters there (SEC-A). Never rotate it. */
   DELETION_TOMBSTONE_KEY: text(),
   MCP_AUDIT_HMAC_KEY: text(),

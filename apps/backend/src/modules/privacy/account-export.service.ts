@@ -3,6 +3,7 @@ import {
   ACCOUNT_EXPORT_SECTIONS,
   type AccountExportKey,
 } from "@flump/api-contract";
+import { decryptReceiptData, isEncryptedToken } from "@flump/banking/server";
 import { Injectable } from "@nestjs/common";
 import { DataSource, type EntityManager, type FindOptionsOrder } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
@@ -120,7 +121,21 @@ export class AccountExportService {
     const select = Object.fromEntries(columns.map((c) => [c, true]));
     const order = Object.fromEntries(orderBy.map((c) => [c, "ASC"])) as FindOptionsOrder<never>;
     const project = (row: Record<string, unknown>) =>
-      Object.fromEntries(columns.map((c) => [c, row[c] ?? null]));
+      Object.fromEntries(
+        columns.map((c) => {
+          const val = row[c];
+          if (
+            table.key === "taxRecords" &&
+            c === "receiptData" &&
+            typeof val === "string" &&
+            isEncryptedToken(val) &&
+            typeof row.id === "string"
+          ) {
+            return [c, decryptReceiptData(val, row.id)];
+          }
+          return [c, val ?? null];
+        }),
+      );
 
     if (shape === "object") {
       const row = await repo.findOne({ where: { userId }, select, order });

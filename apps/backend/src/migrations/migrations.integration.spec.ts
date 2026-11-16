@@ -1631,9 +1631,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       );
       return rows.map((r) => r.action);
     };
-    /** Undoes the one later migration (SEC-F), so this one is the last applied. */
+    /** Undoes the later migrations (SEC-D, SEC-F), so this one is the last applied. */
     const undoLaterMigrations = async (): Promise<void> => {
       await ds.undoLastMigration();
+      await ds.undoLastMigration();
+      expect(await applied()).not.toContain("EncryptTaxReceipts1795200000000");
       expect(await applied()).not.toContain("AuditEventsDeleteAndTruncateGuards1795100000000");
       expect(await applied()).toContain(NAME);
     };
@@ -1757,6 +1759,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       await insertAction("account.deleted");
       await insertAction("user.exported");
+      await ds.undoLastMigration();
       await ds.undoLastMigration();
       expect(await applied()).not.toContain(NAME);
       expect(await triggers()).toEqual(["TRG_audit_events_append_only"]);

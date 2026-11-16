@@ -4,6 +4,7 @@ import {
   type TaxRecordCap,
   TaxRecordDto,
 } from "@flump/api-contract";
+import { decryptReceiptData, encryptReceiptData } from "@flump/banking/server";
 import {
   BadRequestException,
   NotFoundException,
@@ -488,6 +489,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
   describe("receipts (E20-N15)", () => {
     const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
     const PNG_URL = `data:image/png;base64,${PNG_BYTES.toString("base64")}`;
+    const ENCRYPTED_PNG_R_A = encryptReceiptData(PNG_URL, "r-A");
     const withReceipt = {
       id: "r-A",
       userId: "userA",
@@ -495,7 +497,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
       amount: 100,
       receiptFilename: "rent.png",
       receiptMimeType: "image/png",
-      receiptData: PNG_URL,
+      receiptData: ENCRYPTED_PNG_R_A,
     };
     const userA = { user: { id: "userA" } };
     const userB = { user: { id: "userB" } };
@@ -535,7 +537,9 @@ describe("TaxController receipt validation (E20-N14)", () => {
       const patched = await controller.updateTaxRecord(userA, created.id, { amount: 5 });
       expect(patched.hasReceipt).toBe(true);
       expect(patched).not.toHaveProperty("receiptData");
-      expect(at(repo.rows, 0).receiptData).toBe(PNG_URL);
+      const storedAfterPatch = at(repo.rows, 0).receiptData as string;
+      expect(storedAfterPatch).toMatch(/^v1:/);
+      expect(decryptReceiptData(storedAfterPatch, created.id)).toBe(PNG_URL);
 
       const cleared = await controller.updateTaxRecord(userA, created.id, { receiptData: null });
       expect(cleared.hasReceipt).toBe(false);
@@ -577,7 +581,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
       const repo = createInMemoryRepository([withReceipt]);
       const controller = taxController(withManager(repo), {});
       await controller.updateTaxRecord(userA, "r-A", { name: "Renamed" });
-      expect(repo.rows[0]).toMatchObject({ name: "Renamed", receiptData: PNG_URL });
+      expect(repo.rows[0]).toMatchObject({ name: "Renamed", receiptData: ENCRYPTED_PNG_R_A });
     });
 
     it("GET receipt returns the bytes with the sniffed type to the owner", async () => {
@@ -617,6 +621,54 @@ describe("TaxController receipt validation (E20-N14)", () => {
       await expect(controller.getReceipt(userA, "nope")).rejects.toThrow(NotFoundException);
       await expect(controller.getReceipt(userA, "r-N")).rejects.toThrow(NotFoundException);
       await expect(controller.getReceipt(userA, "r-L")).rejects.toThrow(NotFoundException);
+    });
+
+    it("encrypts receipt_data on create and round-trips through getReceipt, rejecting cross-record AAD swaps (SEC-D)", async () => {
+      const repo = createInMemoryRepository([]);
+      const controller = taxController(withManager(repo), {});
+
+      const created = await controller.createTaxRecord(userA, {
+        name: "Tools",
+        type: "expense",
+        source: "self-employed",
+        category: "equipment",
+        amount: 42,
+        frequency: "one-off",
+        date: "2026-04-10",
+        receiptFilename: "tools.png",
+        receiptData: PNG_URL,
+      } as never);
+
+      const stored = at(repo.rows, 0);
+      expect(typeof stored.receiptData).toBe("string");
+      expect(stored.receiptData as string).toMatch(/^v1:/);
+      expect(stored.receiptData as string).not.toContain(PNG_BYTES.toString("base64"));
+
+      // Round-trip decryption via getReceipt
+      const file = await controller.getReceipt(userA, created.id);
+      expect(await read(file)).toEqual(PNG_BYTES);
+
+      // Cross-record AAD rejection: copying r-A's ciphertext onto r-B must fail decryption.
+      repo.rows.push({
+        id: "r-B",
+        userId: "userA",
+        name: "Swapped",
+        receiptFilename: "tools.png",
+        receiptMimeType: "image/png",
+        receiptData: stored.receiptData,
+      });
+      await expect(controller.getReceipt(userA, "r-B")).rejects.toThrow(NotFoundException);
+
+      // Plaintext (unencrypted) receiptData is also rejected.
+      repo.rows.push({
+        id: "r-plain",
+        userId: "userA",
+        name: "Legacy",
+        receiptFilename: "tools.png",
+        receiptMimeType: "image/png",
+        receiptData: PNG_URL,
+      });
+      await expect(controller.getReceipt(userA, "r-plain")).rejects.toThrow(NotFoundException);
     });
   });
 });

@@ -5,9 +5,12 @@ const IV_LENGTH = 12; // 96 bits for GCM
 const AUTH_TAG_LENGTH = 16; // 128 bits
 
 const DEFAULT_DEV_KEY = "flump_default_dev_banking_encryption_key_32_bytes!";
+const DEFAULT_DEV_RECEIPT_KEY = "flump_default_dev_receipt_encryption_key_32_bytes!";
 
 const KEY_ENV_VAR = "BANKING_TOKEN_ENCRYPTION_KEY";
 const KEYS_ENV_VAR = "BANKING_TOKEN_ENCRYPTION_KEYS";
+const RECEIPT_KEY_ENV_VAR = "RECEIPT_ENCRYPTION_KEY";
+const RECEIPT_KEYS_ENV_VAR = "RECEIPT_ENCRYPTION_KEYS";
 const MIN_KEY_LENGTH = 32;
 
 const DEFAULT_KEY_VERSION = 1;
@@ -24,6 +27,22 @@ function isStrictEnv(env: Record<string, string | undefined>): boolean {
   return (nodeEnv !== "development" && nodeEnv !== "test") || Boolean(env.RAILWAY_ENVIRONMENT);
 }
 
+function resolveSecretKey(
+  env: Record<string, string | undefined>,
+  keyEnvVar: string,
+  defaultDevKey: string,
+): string {
+  const configured = env[keyEnvVar];
+  const strict = isStrictEnv(env);
+
+  if (!strict) return configured || defaultDevKey;
+
+  if (!configured || configured.length < MIN_KEY_LENGTH) {
+    throw new Error(`${keyEnvVar} must be set to at least ${MIN_KEY_LENGTH} characters.`);
+  }
+  return configured;
+}
+
 /**
  * Resolves the banking token encryption secret. Outside `development` and `test`
  * (including when NODE_ENV is unset), and on any Railway service, a key of at least 32
@@ -32,15 +51,15 @@ function isStrictEnv(env: Record<string, string | undefined>): boolean {
  * Error messages never include key material.
  */
 export function resolveBankingKey(env: Record<string, string | undefined>): string {
-  const configured = env[KEY_ENV_VAR];
-  const strict = isStrictEnv(env);
+  return resolveSecretKey(env, KEY_ENV_VAR, DEFAULT_DEV_KEY);
+}
 
-  if (!strict) return configured || DEFAULT_DEV_KEY;
-
-  if (!configured || configured.length < MIN_KEY_LENGTH) {
-    throw new Error(`${KEY_ENV_VAR} must be set to at least ${MIN_KEY_LENGTH} characters.`);
-  }
-  return configured;
+/**
+ * Resolves the receipt encryption secret (SEC-D, finding L4). Same strictness rules as
+ * `resolveBankingKey`: required (>= 32 chars) outside `development`/`test` and on Railway.
+ */
+export function resolveReceiptKey(env: Record<string, string | undefined>): string {
+  return resolveSecretKey(env, RECEIPT_KEY_ENV_VAR, DEFAULT_DEV_RECEIPT_KEY);
 }
 
 /** A set of versioned secrets. `activeVersion` encrypts; every version in `keys` can decrypt. */
@@ -57,15 +76,15 @@ export function keyringFromSecret(secret: string, version = 1): BankingKeyring {
   return { activeVersion: version, keys: new Map([[version, secret]]) };
 }
 
-/**
- * Resolves the banking keyring. `BANKING_TOKEN_ENCRYPTION_KEYS` is an optional comma-separated
- * list of `<version>:<secret>` entries; the first entry is the active (encrypting) key. When it is
- * unset or empty, the keyring holds `resolveBankingKey(env)` as version 1. In strict mode every
- * secret must be at least 32 characters. Error messages never include key material.
- */
-export function resolveBankingKeyring(env: Record<string, string | undefined>): BankingKeyring {
-  const raw = env[KEYS_ENV_VAR]?.trim();
-  if (!raw) return keyringFromSecret(resolveBankingKey(env), DEFAULT_KEY_VERSION);
+function resolveVersionedKeyring(
+  env: Record<string, string | undefined>,
+  keysEnvVar: string,
+  keyEnvVar: string,
+  defaultDevKey: string,
+): BankingKeyring {
+  const raw = env[keysEnvVar]?.trim();
+  if (!raw)
+    return keyringFromSecret(resolveSecretKey(env, keyEnvVar, defaultDevKey), DEFAULT_KEY_VERSION);
 
   const strict = isStrictEnv(env);
   const keys = new Map<number, string>();
@@ -77,28 +96,28 @@ export function resolveBankingKeyring(env: Record<string, string | undefined>): 
     const position = i + 1;
     const sep = entry.indexOf(":");
     if (sep <= 0) {
-      throw new Error(`${KEYS_ENV_VAR} entry ${position} must be in the form <version>:<secret>.`);
+      throw new Error(`${keysEnvVar} entry ${position} must be in the form <version>:<secret>.`);
     }
     const versionText = entry.slice(0, sep).trim();
     const secret = entry.slice(sep + 1).trim();
     if (!/^[1-9][0-9]*$/.test(versionText)) {
       throw new Error(
-        `${KEYS_ENV_VAR} entry ${position} must start with a positive integer version.`,
+        `${keysEnvVar} entry ${position} must start with a positive integer version.`,
       );
     }
     const version = Number(versionText);
     if (!Number.isSafeInteger(version)) {
-      throw new Error(`${KEYS_ENV_VAR} entry ${position} has a version that is too large.`);
+      throw new Error(`${keysEnvVar} entry ${position} has a version that is too large.`);
     }
     if (!secret) {
-      throw new Error(`${KEYS_ENV_VAR} entry ${position} has an empty secret.`);
+      throw new Error(`${keysEnvVar} entry ${position} has an empty secret.`);
     }
     if (keys.has(version)) {
-      throw new Error(`${KEYS_ENV_VAR} lists version ${version} more than once.`);
+      throw new Error(`${keysEnvVar} lists version ${version} more than once.`);
     }
     if (strict && secret.length < MIN_KEY_LENGTH) {
       throw new Error(
-        `${KEYS_ENV_VAR} version ${version} must be at least ${MIN_KEY_LENGTH} characters.`,
+        `${keysEnvVar} version ${version} must be at least ${MIN_KEY_LENGTH} characters.`,
       );
     }
     keys.set(version, secret);
@@ -106,6 +125,29 @@ export function resolveBankingKeyring(env: Record<string, string | undefined>): 
   }
 
   return { activeVersion: activeVersion!, keys };
+}
+
+/**
+ * Resolves the banking keyring. `BANKING_TOKEN_ENCRYPTION_KEYS` is an optional comma-separated
+ * list of `<version>:<secret>` entries; the first entry is the active (encrypting) key. When it is
+ * unset or empty, the keyring holds `resolveBankingKey(env)` as version 1. In strict mode every
+ * secret must be at least 32 characters. Error messages never include key material.
+ */
+export function resolveBankingKeyring(env: Record<string, string | undefined>): BankingKeyring {
+  return resolveVersionedKeyring(env, KEYS_ENV_VAR, KEY_ENV_VAR, DEFAULT_DEV_KEY);
+}
+
+/**
+ * Resolves the receipt encryption keyring (SEC-D, finding L4). Uses `RECEIPT_ENCRYPTION_KEYS`
+ * or falls back to `resolveReceiptKey(env)` as version 1.
+ */
+export function resolveReceiptKeyring(env: Record<string, string | undefined>): BankingKeyring {
+  return resolveVersionedKeyring(
+    env,
+    RECEIPT_KEYS_ENV_VAR,
+    RECEIPT_KEY_ENV_VAR,
+    DEFAULT_DEV_RECEIPT_KEY,
+  );
 }
 
 function deriveKey(secret: string): Buffer {
@@ -236,4 +278,41 @@ export function safeDecryptBankingToken(token: string, options: BankingCryptoOpt
   } catch {
     throw new Error("Failed to decrypt banking token: wrong key or corrupted data.");
   }
+}
+
+/** Associated data binding a receipt ciphertext to its tax record id (SEC-D, finding L4). */
+export function receiptAad(recordId: string): string {
+  if (!recordId) throw new Error("Receipt record id is required for AAD binding.");
+  return `tax-record:${recordId}:receipt`;
+}
+
+/**
+ * Encrypts a tax record's `receipt_data` blob using versioned AES-256-GCM with the record id as
+ * associated data (SEC-D, finding L4).
+ */
+export function encryptReceiptData(
+  plaintext: string,
+  recordId: string,
+  keyring?: BankingKeyring,
+): string {
+  return encryptBankingToken(plaintext, {
+    aad: receiptAad(recordId),
+    keyring: keyring ?? resolveReceiptKeyring(process.env),
+  });
+}
+
+/**
+ * Decrypts a tax record's `receipt_data` blob, verifying the record id AAD (SEC-D, finding L4).
+ * Empty input is returned unchanged. Throws if malformed, tampered, or bound to another record.
+ */
+export function decryptReceiptData(
+  ciphertext: string,
+  recordId: string,
+  keyring?: BankingKeyring,
+): string {
+  if (!ciphertext) return ciphertext;
+  return safeDecryptBankingToken(ciphertext, {
+    aad: receiptAad(recordId),
+    keyring: keyring ?? resolveReceiptKeyring(process.env),
+  });
 }

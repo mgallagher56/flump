@@ -4,11 +4,16 @@ import {
   type BankingKeyring,
   bankingTokenNeedsReencrypt,
   decryptBankingToken,
+  decryptReceiptData,
   encryptBankingToken,
+  encryptReceiptData,
   isEncryptedToken,
   keyringFromSecret,
+  receiptAad,
   resolveBankingKey,
   resolveBankingKeyring,
+  resolveReceiptKey,
+  resolveReceiptKeyring,
   safeDecryptBankingToken,
 } from "./crypto.js";
 
@@ -270,5 +275,43 @@ describe("strict decrypt", () => {
 
   it("returns empty input unchanged", () => {
     expect(safeDecryptBankingToken("")).toBe("");
+  });
+});
+
+describe("receipt encryption (SEC-D, finding L4)", () => {
+  it("round trips receipt_data bound to its record id as AAD", () => {
+    const dataUrl = "data:image/png;base64,iVBORw0KGgo=";
+    const encrypted = encryptReceiptData(dataUrl, "rec-1", RING_A);
+    expect(encrypted).toMatch(/^v1:/);
+    expect(encrypted).not.toContain("iVBORw0KGgo");
+    expect(decryptReceiptData(encrypted, "rec-1", RING_A)).toBe(dataUrl);
+  });
+
+  it("rejects cross-record AAD swaps, tampering, and unencrypted plaintext", () => {
+    const encrypted = encryptReceiptData("data:image/png;base64,AA==", "rec-1", RING_A);
+    expect(() => decryptReceiptData(encrypted, "rec-2", RING_A)).toThrow(/wrong key or corrupted/);
+    const tampered = `${encrypted.slice(0, -2)}${encrypted.endsWith("ff") ? "00" : "ff"}`;
+    expect(() => decryptReceiptData(tampered, "rec-1", RING_A)).toThrow(/wrong key or corrupted/);
+    expect(() => decryptReceiptData("data:image/png;base64,AA==", "rec-1", RING_A)).toThrow(
+      /not in the encrypted format/,
+    );
+    expect(() => receiptAad("")).toThrow(/record id is required/);
+    expect(decryptReceiptData("", "rec-1", RING_A)).toBe("");
+  });
+
+  it("requires RECEIPT_ENCRYPTION_KEY in production and on Railway", () => {
+    expect(() => resolveReceiptKey({ NODE_ENV: "production" })).toThrow(/RECEIPT_ENCRYPTION_KEY/);
+    expect(() => resolveReceiptKey({ NODE_ENV: "test", RAILWAY_ENVIRONMENT: "staging" })).toThrow(
+      /RECEIPT_ENCRYPTION_KEY/,
+    );
+    expect(resolveReceiptKey({ NODE_ENV: "production", RECEIPT_ENCRYPTION_KEY: KEY_A })).toBe(
+      KEY_A,
+    );
+    const ring = resolveReceiptKeyring({
+      NODE_ENV: "production",
+      RECEIPT_ENCRYPTION_KEYS: `2:${KEY_B},1:${KEY_A}`,
+    });
+    expect(ring.activeVersion).toBe(2);
+    expect(ring.keys.get(1)).toBe(KEY_A);
   });
 });
