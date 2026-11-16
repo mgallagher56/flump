@@ -160,7 +160,10 @@ export function projectRealPotBalance(input: RealPotProjectionInput): RealPotPro
   const realAnnualRate = calculateRealRate(nominalAnnualRate, inflationAnnualRate);
 
   const totalMonths = Math.round(years * 12);
-  const monthlyRealRate = (1 + realAnnualRate) ** (1 / 12) - 1;
+  if (1 + realAnnualRate < 0) {
+    throw new RangeError("Nominal rate cannot be less than -100%.");
+  }
+  const monthlyRealRate = 1 + realAnnualRate === 0 ? -1 : (1 + realAnnualRate) ** (1 / 12) - 1;
 
   let balance = initialBalance;
   let contributed = 0;
@@ -268,11 +271,7 @@ export function calculateTargetFromBudgetLines(
       excludedHousingLineCount++;
       continue;
     }
-    if (
-      line.category &&
-      line.category.trim().toLowerCase() === SAVINGS_CATEGORY &&
-      line.status === "stops"
-    ) {
+    if (line.category && line.category.trim().toLowerCase() === SAVINGS_CATEGORY) {
       continue;
     }
 
@@ -892,19 +891,36 @@ export interface RetirementPlanResult {
 }
 
 /**
+ * Calculates the constant real annual withdrawal that depletes `potGbp` evenly over `years`
+ * at `realAnnualRate` (ordinary annuity: `P * r / (1 - (1 + r)^-N)`), falling back to
+ * `potGbp / years` when `|realAnnualRate| < 1e-12` or `1 + realAnnualRate <= 0`.
+ */
+export function calculateEvenRealDrawdown(
+  potGbp: number,
+  realAnnualRate: number,
+  years: number,
+): number {
+  if (!(potGbp > 0) || !(years > 0)) return 0;
+  if (Math.abs(realAnnualRate) < 1e-12 || 1 + realAnnualRate <= 0) {
+    return potGbp / years;
+  }
+  return (potGbp * realAnnualRate) / (1 - (1 + realAnnualRate) ** -years);
+}
+
+/**
  * Projects eligible retirement pots in today's prices to `retirementAge`, then draws them down
  * evenly in real terms from `retirementAge` to `planToAge` alongside State Pension and retirement
  * housing costs.
  */
 export function calculateRetirementPlan(input: RetirementPlanInput): RetirementPlanResult {
-  if (!Number.isFinite(input.currentAge) || input.currentAge < 0) {
-    throw new RangeError("currentAge must be a non-negative number.");
+  if (!Number.isInteger(input.currentAge) || input.currentAge < 0) {
+    throw new RangeError("currentAge must be a non-negative integer.");
   }
-  if (!Number.isFinite(input.retirementAge) || input.retirementAge < input.currentAge) {
-    throw new RangeError("retirementAge must be greater than or equal to currentAge.");
+  if (!Number.isInteger(input.retirementAge) || input.retirementAge < input.currentAge) {
+    throw new RangeError("retirementAge must be an integer greater than or equal to currentAge.");
   }
-  if (!Number.isFinite(input.planToAge) || input.planToAge <= input.retirementAge) {
-    throw new RangeError("planToAge must be greater than retirementAge.");
+  if (!Number.isInteger(input.planToAge) || input.planToAge <= input.retirementAge) {
+    throw new RangeError("planToAge must be an integer greater than retirementAge.");
   }
 
   const currentAge = input.currentAge;
@@ -940,6 +956,7 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
   const pensionsAtRetirement: RetirementGrowthBand<number> = { lower: 0, middle: 0, higher: 0 };
   const investmentsAtRetirement: RetirementGrowthBand<number> = { lower: 0, middle: 0, higher: 0 };
   let savingsAtRetirement = 0;
+  let savingsDrawdownAnnual = 0;
 
   const cases: readonly RetirementGrowthCase[] = ["lower", "middle", "higher"];
 
@@ -956,7 +973,7 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
           ? assumptions.cashSavingsNominalRate
           : typeof account.interestRatePct === "number" && Number.isFinite(account.interestRatePct)
             ? account.interestRatePct / 100
-            : assumptions.inflationRate;
+            : 0;
       const projected = projectRealPotBalance({
         initialBalance: balance,
         monthlyContribution: monthly,
@@ -965,6 +982,11 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
         years: yearsToRetirement,
       });
       savingsAtRetirement += projected.endBalance;
+      savingsDrawdownAnnual += calculateEvenRealDrawdown(
+        projected.endBalance,
+        projected.realAnnualRate,
+        yearsInRetirement,
+      );
     } else if (category === "pensions") {
       for (const c of cases) {
         const projected = projectRealPotBalance({
@@ -1012,7 +1034,7 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     Number(input.additionalMonthlySavingsContributionGbp) || 0,
   );
   if (extraSavingsMonthly > 0) {
-    const cashNominal = assumptions.cashSavingsNominalRate ?? assumptions.inflationRate;
+    const cashNominal = assumptions.cashSavingsNominalRate ?? 0;
     const projected = projectRealPotBalance({
       initialBalance: 0,
       monthlyContribution: extraSavingsMonthly,
@@ -1021,6 +1043,11 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
       years: yearsToRetirement,
     });
     savingsAtRetirement += projected.endBalance;
+    savingsDrawdownAnnual += calculateEvenRealDrawdown(
+      projected.endBalance,
+      projected.realAnnualRate,
+      yearsInRetirement,
+    );
   }
 
   const projectedPotByGroupGbp = {
@@ -1055,11 +1082,29 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     ),
   };
 
-  // Even real-terms drawdown from retirementAge to planToAge
+  // Annuity-style even real-terms drawdown from retirementAge to planToAge per pot group
   const annualPotIncomeGbp: RetirementGrowthBand<number> = {
-    lower: roundPence(projectedPotAtRetirementGbp.lower / yearsInRetirement),
-    middle: roundPence(projectedPotAtRetirementGbp.middle / yearsInRetirement),
-    higher: roundPence(projectedPotAtRetirementGbp.higher / yearsInRetirement),
+    lower: roundPence(
+      calculateEvenRealDrawdown(
+        projectedPotByGroupGbp.pensions.lower + projectedPotByGroupGbp.investments.lower,
+        assumptions.realGrowthRates.lower,
+        yearsInRetirement,
+      ) + savingsDrawdownAnnual,
+    ),
+    middle: roundPence(
+      calculateEvenRealDrawdown(
+        projectedPotByGroupGbp.pensions.middle + projectedPotByGroupGbp.investments.middle,
+        assumptions.realGrowthRates.middle,
+        yearsInRetirement,
+      ) + savingsDrawdownAnnual,
+    ),
+    higher: roundPence(
+      calculateEvenRealDrawdown(
+        projectedPotByGroupGbp.pensions.higher + projectedPotByGroupGbp.investments.higher,
+        assumptions.realGrowthRates.higher,
+        yearsInRetirement,
+      ) + savingsDrawdownAnnual,
+    ),
   };
 
   const yearlySchedule: RetirementYearProjectionPoint[] = [];
@@ -1189,8 +1234,8 @@ export function selectRetirementCountedSeries(
 
   return points.map((pt, idx) => {
     const prev = idx > 0 ? points[idx - 1] : undefined;
-    const totalCountedGbp = roundPence(pt.totalAssets);
-    const prevTotal = prev !== undefined ? roundPence(prev.totalAssets) : null;
+    const totalCountedGbp = roundPence(pt.netWorth);
+    const prevTotal = prev !== undefined ? roundPence(prev.netWorth) : null;
     const accountEntries = pt.accounts.map((a) => ({
       accountId: a.accountId,
       value: a.value,

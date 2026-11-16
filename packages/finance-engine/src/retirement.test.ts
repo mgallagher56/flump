@@ -2,6 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { findAdviceHits } from "./compliance/advice-lexicon.js";
 import {
+  calculateEvenRealDrawdown,
   calculateRealRate,
   calculateRetirementPlan,
   calculateRetirementStatePension,
@@ -439,9 +440,20 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
         plan.projectedPotAtRetirementGbp.higher,
       );
 
-      // Even real drawdown over 20 years + full State Pension (£12,547.60)
+      // Annuity-style even real drawdown over 20 years per pot group + full State Pension (£12,547.60)
+      const expectedMiddleGrowthDrawdown = calculateEvenRealDrawdown(
+        plan.projectedPotByGroupGbp.pensions.middle +
+          plan.projectedPotByGroupGbp.investments.middle,
+        plan.assumptions.realGrowthRates.middle,
+        20,
+      );
+      const expectedSavingsDrawdown = calculateEvenRealDrawdown(
+        plan.projectedPotByGroupGbp.savings,
+        calculateRealRate(0.04, 0.02),
+        20,
+      );
       expect(plan.annualPotIncomeGbp.middle).toBe(
-        roundPence(plan.projectedPotAtRetirementGbp.middle / 20),
+        roundPence(expectedMiddleGrowthDrawdown + expectedSavingsDrawdown),
       );
       expect(plan.estimatedYearlyIncomeGbp.middle).toBe(
         roundPence(plan.annualPotIncomeGbp.middle + 12_547.6),
@@ -510,6 +522,93 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
       expect(plan.targetDetail?.yearlyAmount).toBe(12_000);
       expect(plan.housing.averageAnnualCostGbp).toBe(14_400);
       expect(plan.targetYearlyIncome).toBe(26_400);
+    });
+
+    it("defaults unset cash savings interest rate to 0% nominal (eroding by inflation in real terms)", () => {
+      const plan = calculateRetirementPlan({
+        currentAge: 47,
+        retirementAge: 57,
+        planToAge: 77,
+        accounts: [{ id: "sav-1", type: "Saving", balanceGbp: 10_000 }],
+        assumptions: { inflationRate: 0.02 },
+      });
+      // £10,000 at 0% nominal with 2% inflation over 10 years -> 10000 / 1.02^10 ≈ 8,203.48
+      expect(plan.projectedPotByGroupGbp.savings).toBe(
+        roundPence(10_000 * calculateRealRate(0, 0.02) ** 0 + 10_000 * (1 / 1.02) ** 10 - 10_000),
+      );
+      expect(plan.projectedPotByGroupGbp.savings).toBe(8_203.48);
+    });
+
+    it("excludes all savings-category budget rows regardless of status", () => {
+      const target = calculateTargetFromBudgetLines([
+        { name: "Groceries", category: "food", monthlyAmount: 400, status: "continues" },
+        { name: "ISA transfer", category: "savings", monthlyAmount: 500, status: "continues" },
+        {
+          name: "Pension top-up",
+          category: "savings",
+          monthlyAmount: 300,
+          status: { kind: "changes", monthlyAmount: 200 },
+        },
+        { name: "Emergency fund", category: "savings", monthlyAmount: 100, status: "stops" },
+      ]);
+      expect(target.monthlyAmount).toBe(400);
+      expect(target.yearlyAmount).toBe(4_800);
+      expect(target.includedLineCount).toBe(1);
+    });
+
+    it("enforces integer ages in calculateRetirementPlan and rejects nominal rates < -100%", () => {
+      expect(() =>
+        calculateRetirementPlan({
+          currentAge: 40.5,
+          retirementAge: 67,
+          planToAge: 90,
+          accounts: [],
+        }),
+      ).toThrow(RangeError);
+      expect(() =>
+        calculateRetirementPlan({
+          currentAge: 40,
+          retirementAge: 67.5,
+          planToAge: 90,
+          accounts: [],
+        }),
+      ).toThrow(RangeError);
+      expect(() =>
+        calculateRetirementPlan({
+          currentAge: 40,
+          retirementAge: 67,
+          planToAge: 90.25,
+          accounts: [],
+        }),
+      ).toThrow(RangeError);
+      expect(() =>
+        projectRealPotBalance({
+          initialBalance: 1_000,
+          monthlyContribution: 100,
+          nominalRate: -1.1,
+          inflationRate: 0.02,
+          years: 5,
+        }),
+      ).toThrow(RangeError);
+    });
+
+    it("includes negative balances on opted-in accounts in selectRetirementCountedSeries", () => {
+      const accounts = [
+        { id: "pen-1", type: "Pension", balanceGbp: 10_000 },
+        {
+          id: "cur-1",
+          type: "Current",
+          balanceGbp: -500,
+          countsTowardsRetirement: true,
+        },
+      ];
+      const rows = [
+        { accountId: "pen-1", year: 2026, month: 10, value: 10_000 },
+        { accountId: "cur-1", year: 2026, month: 10, value: -500 },
+      ];
+      const series = selectRetirementCountedSeries(accounts, rows);
+      expect(series).toHaveLength(1);
+      expect(series[0]?.totalCountedGbp).toBe(9_500);
     });
   });
 
@@ -604,6 +703,143 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
                 roundPence(result.estimatedYearlyIncomeGbp.higher - result.targetYearlyIncome),
               );
             }
+          },
+        ),
+      );
+    });
+
+    it("depletes the pot to £0 over `yearsInRetirement` under annuity-style even real drawdown", () => {
+      fc.assert(
+        fc.property(
+          fc.double({ min: 1_000, max: 1_000_000, noNaN: true }),
+          fc.double({ min: -0.05, max: 0.1, noNaN: true }),
+          fc.integer({ min: 1, max: 50 }),
+          (pot, realRate, years) => {
+            const drawdown = calculateEvenRealDrawdown(pot, realRate, years);
+            let remaining = pot;
+            for (let y = 0; y < years; y++) {
+              remaining = remaining * (1 + realRate) - drawdown;
+            }
+            expect(Math.abs(remaining)).toBeLessThan(1e-4);
+          },
+        ),
+      );
+    });
+
+    it("preserves monotonicity of projectRealPotBalance in initialBalance, monthlyContribution, and nominalRate", () => {
+      fc.assert(
+        fc.property(
+          fc.double({ min: 0, max: 200_000, noNaN: true }),
+          fc.double({ min: 0, max: 50_000, noNaN: true }),
+          fc.double({ min: 0, max: 2_000, noNaN: true }),
+          fc.double({ min: 0, max: 1_000, noNaN: true }),
+          fc.double({ min: -0.02, max: 0.08, noNaN: true }),
+          fc.double({ min: 0, max: 0.05, noNaN: true }),
+          fc.integer({ min: 0, max: 40 }),
+          (b0, dB, m0, dM, r0, dR, years) => {
+            const base = projectRealPotBalance({
+              initialBalance: b0,
+              monthlyContribution: m0,
+              nominalRate: r0,
+              inflationRate: 0.02,
+              years,
+            });
+            const moreInitial = projectRealPotBalance({
+              initialBalance: b0 + dB,
+              monthlyContribution: m0,
+              nominalRate: r0,
+              inflationRate: 0.02,
+              years,
+            });
+            const moreMonthly = projectRealPotBalance({
+              initialBalance: b0,
+              monthlyContribution: m0 + dM,
+              nominalRate: r0,
+              inflationRate: 0.02,
+              years,
+            });
+            const higherRate = projectRealPotBalance({
+              initialBalance: b0,
+              monthlyContribution: m0,
+              nominalRate: r0 + dR,
+              inflationRate: 0.02,
+              years,
+            });
+            expect(moreInitial.endBalance).toBeGreaterThanOrEqual(base.endBalance);
+            expect(moreMonthly.endBalance).toBeGreaterThanOrEqual(base.endBalance);
+            expect(higherRate.endBalance).toBeGreaterThanOrEqual(base.endBalance);
+          },
+        ),
+      );
+    });
+
+    it("enforces State Pension <10 / 10..35 / >=35 bands and age-gating bounds", () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: 50 }),
+          fc.integer({ min: 55, max: 75 }),
+          fc.integer({ min: 40, max: 100 }),
+          (qualifyingYears, statePensionAge, queryAge) => {
+            const sp = calculateRetirementStatePension({
+              qualifyingYears,
+              statePensionAge,
+              taxYear: "2026/27",
+            });
+            if (qualifyingYears < 10) {
+              expect(sp.annualAmountGbp).toBe(0);
+              expect(sp.weeklyAmountGbp).toBe(0);
+            } else if (qualifyingYears >= 35) {
+              expect(sp.annualAmountGbp).toBe(12_547.6);
+              expect(sp.qualifyingYearsUsed).toBe(35);
+            } else {
+              expect(sp.annualAmountGbp).toBeGreaterThan(0);
+              expect(sp.annualAmountGbp).toBeLessThan(12_547.6);
+            }
+            const atAge = statePensionAnnualAtAge(queryAge, sp);
+            expect(atAge).toBe(queryAge >= statePensionAge ? sp.annualAmountGbp : 0);
+          },
+        ),
+      );
+    });
+
+    it("keeps budget target invariant when adding `stops` or housing rows", () => {
+      fc.assert(
+        fc.property(
+          fc.double({ min: 0, max: 5_000, noNaN: true }),
+          fc.double({ min: 0, max: 5_000, noNaN: true }),
+          fc.double({ min: 0, max: 5_000, noNaN: true }),
+          (continuingAmt, stoppedAmt, housingAmt) => {
+            const base = calculateTargetFromBudgetLines([
+              {
+                name: "Food",
+                category: "essentials",
+                monthlyAmount: continuingAmt,
+                status: "continues",
+              },
+            ]);
+            const withStoppedAndHousing = calculateTargetFromBudgetLines([
+              {
+                name: "Food",
+                category: "essentials",
+                monthlyAmount: continuingAmt,
+                status: "continues",
+              },
+              {
+                name: "Commute",
+                category: "transport",
+                monthlyAmount: stoppedAmt,
+                status: "stops",
+              },
+              { name: "Rent", category: "housing", monthlyAmount: housingAmt, status: "continues" },
+              {
+                name: "Mortgage",
+                category: "mortgage",
+                monthlyAmount: housingAmt,
+                status: "continues",
+              },
+            ]);
+            expect(withStoppedAndHousing.monthlyAmount).toBe(base.monthlyAmount);
+            expect(withStoppedAndHousing.yearlyAmount).toBe(base.yearlyAmount);
           },
         ),
       );
