@@ -1,0 +1,3 @@
+[install]
+# E36 2(a): 7-day release-age gate (604800 seconds) before taking newly published npm versions.
+minimumReleaseAge = 604800
