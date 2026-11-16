@@ -87,6 +87,10 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "GET /user-profile/export/csv": userProfile,
   "POST /user-profile/terms-acceptance": userProfile,
 
+  // Retirement plan controller (E33).
+  "GET /retirement-plan": userProfile,
+  "PUT /retirement-plan": userProfile,
+
   // Monthly snapshots (E30).
   "PUT /snapshots/:month": snapshots,
 

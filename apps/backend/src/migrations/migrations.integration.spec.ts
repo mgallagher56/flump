@@ -61,6 +61,7 @@ const ENTITY_TABLES = [
   "idempotency_keys",
   "import_batches",
   "mcp_tokens",
+  "retirement_plans",
   "snapshot_checkins",
   "tax_records",
   "transactions",

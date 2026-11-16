@@ -507,4 +507,37 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(resetSentTo).not.toContain(emails[USER_A]);
     ran("POST /user-profile/send-password-reset");
   });
+
+  it("GET /retirement-plan: requires auth and returns only the caller's plan", async () => {
+    const unauth = await h.call("get", "/retirement-plan");
+    expect(unauth.status).toBe(401);
+
+    const aRes = await h.call("get", "/retirement-plan", h.tokens.a);
+    expect(aRes.status).toBe(200);
+    expect(aRes.body.plan.userId).toBe(USER_A);
+
+    const bRes = await h.call("get", "/retirement-plan", h.tokens.b);
+    expect(bRes.status).toBe(200);
+    expect(bRes.body.plan.userId).toBe(USER_B);
+    expect(bRes.body.plan.id).not.toBe(aRes.body.plan.id);
+    ran("GET /retirement-plan");
+  });
+
+  it("PUT /retirement-plan: requires auth and scopes updates to the caller", async () => {
+    const unauth = await h.call("put", "/retirement-plan", undefined, { retirementAge: 67 });
+    expect(unauth.status).toBe(401);
+
+    await h.call("put", "/retirement-plan", h.tokens.a, { retirementAge: 65, planToAge: 90 });
+    const bPut = await h.call("put", "/retirement-plan", h.tokens.b, {
+      retirementAge: 68,
+      planToAge: 92,
+    });
+    expect(bPut.status).toBe(200);
+    expect(bPut.body.plan.userId).toBe(USER_B);
+    expect(bPut.body.plan.retirementAge).toBe(68);
+
+    const aAfter = await h.call("get", "/retirement-plan", h.tokens.a);
+    expect(aAfter.body.plan.retirementAge).toBe(65);
+    ran("PUT /retirement-plan");
+  });
 });
