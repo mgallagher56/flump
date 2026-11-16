@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.36.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.35.0...flump/marketing-v1.36.0) (2026-11-16)
+
+
+### Features ✨
+
+* **marketing:** add pure live preview moments in @repo/ui and marketing (PR A) ([386e4ad](https://github.com/mgallagher56/flump/commit/386e4ad440583cf008dea0a01fc6a738735ff03c))
+* rename Months of cover to Breathing room in web, MCP, marketing and the copy guide; Debt page takes the section header and result card ([9d71e80](https://github.com/mgallagher56/flump/commit/9d71e809d94ffbe76774ff18749d0d4924f002fc))
+* **security:** E36 supply-chain release-age gates, CI laws, and SECURITY.md ([bf91f31](https://github.com/mgallagher56/flump/commit/bf91f3103406dbcc977da0434c71b3ac3b8070d0))
+* **ux:** implement E17 house rules B1-B5, B8-B18 and [#737](https://github.com/mgallagher56/flump/issues/737) follow-ups ([f486f5e](https://github.com/mgallagher56/flump/commit/f486f5e42819a8052fcb42dce1caf22c4da2ed5e))
+
+
+### Bug Fixes 🪲
+
+* **deps:** update all non-major third-party dependencies ([430cdae](https://github.com/mgallagher56/flump/commit/430cdae297a8e3ba055ca5bcb7f0fbe6a58063c4))
+* **docker:** serve .well-known/security.txt from build/client in web image ([b913733](https://github.com/mgallagher56/flump/commit/b9137338cdf58b1d7399d504c43d31172714cc42))
+* **security:** serve static .well-known/security.txt on marketing and web ([f110ff4](https://github.com/mgallagher56/flump/commit/f110ff41763d627ff292ead55bff9f0b43a7b293))
+
 ## [1.35.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.34.2...flump/marketing-v1.35.0) (2026-11-15)
 
 
