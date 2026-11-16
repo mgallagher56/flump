@@ -46,6 +46,34 @@ const result = z.object({
   notes: z.array(z.string()),
 });
 
+export function retirementHousingFromReadModel(m: Awaited<ReturnType<typeof loadReadModel>>) {
+  const mortgage = m.accounts.find((a) => a.category === "mortgages");
+  const housingStatusRaw = m.raw.baseline?.housingStatus?.toLowerCase();
+  const housingStatus: "renting" | "mortgage" | "own_outright" | "living_with_family" | null =
+    housingStatusRaw === "renting"
+      ? "renting"
+      : housingStatusRaw === "mortgage"
+        ? "mortgage"
+        : housingStatusRaw === "own_outright"
+          ? "own_outright"
+          : housingStatusRaw === "living_with_family"
+            ? "living_with_family"
+            : null;
+
+  return {
+    housingStatus,
+    mortgage: mortgage
+      ? {
+          balanceGbp: mortgage.nominalBalance,
+          interestRateApr: mortgage.interestRateKnown ? mortgage.interestRate : 4.5,
+          monthlyPaymentGbp: mortgage.monthlyContributionKnown
+            ? mortgage.monthlyContribution
+            : null,
+        }
+      : null,
+  };
+}
+
 export const getRetirementPicture = defineFlumpTool({
   name: "get_retirement_picture",
   title: "Retirement plan estimate",
@@ -161,18 +189,7 @@ export const getRetirementPicture = defineFlumpTool({
       interestRatePct: a.interestRateKnown ? a.interestRate : null,
     }));
 
-    const mortgage = m.accounts.find((a) => a.category === "mortgages");
-    const housingStatusRaw = m.raw.baseline?.housingStatus?.toLowerCase();
-    const housingStatus =
-      housingStatusRaw === "renting"
-        ? "renting"
-        : housingStatusRaw === "mortgage"
-          ? "mortgage"
-          : housingStatusRaw === "own_outright"
-            ? "own_outright"
-            : housingStatusRaw === "living_with_family"
-              ? "living_with_family"
-              : null;
+    const housing = retirementHousingFromReadModel(m);
 
     const plan = calculateRetirementPlan({
       currentAge,
@@ -181,18 +198,7 @@ export const getRetirementPicture = defineFlumpTool({
       accounts,
       target:
         targetYearlyGbp !== undefined ? { kind: "typed", yearlyAmount: targetYearlyGbp } : null,
-      housing: {
-        housingStatus,
-        mortgage: mortgage
-          ? {
-              balanceGbp: mortgage.nominalBalance,
-              interestRateApr: mortgage.interestRateKnown ? mortgage.interestRate : 4.5,
-              monthlyPaymentGbp: mortgage.monthlyContributionKnown
-                ? mortgage.monthlyContribution
-                : null,
-            }
-          : null,
-      },
+      housing,
       assumptions: {
         growthRates: DEFAULT_RETIREMENT_GROWTH_CASES,
         inflationRate: DEFAULT_RETIREMENT_INFLATION_RATE,

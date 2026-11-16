@@ -6,6 +6,7 @@ import {
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import { loadReadModel, round2 } from "../read/common.js";
+import { retirementHousingFromReadModel } from "../read/getRetirementPicture.js";
 import {
   type Assumption,
   agentSupplied,
@@ -112,6 +113,8 @@ export const simulateRetirement = defineFlumpTool({
       interestRatePct: a.interestRateKnown ? a.interestRate : null,
     }));
 
+    const housing = retirementHousingFromReadModel(m);
+
     const plan = calculateRetirementPlan({
       currentAge,
       retirementAge,
@@ -122,6 +125,7 @@ export const simulateRetirement = defineFlumpTool({
         args.targetYearlyGbp !== undefined
           ? { kind: "typed", yearlyAmount: args.targetYearlyGbp }
           : null,
+      housing,
       statePension: {
         statePensionAge: args.statePensionAge,
         qualifyingYears: args.statePensionQualifyingYears,
