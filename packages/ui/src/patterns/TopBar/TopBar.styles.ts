@@ -82,7 +82,7 @@ export const topBarLink = cva({
     alignItems: "center",
     gap: "2",
     minH: "8",
-    px: { base: "3", _navInline: "1.5", _navWide: "3" },
+    px: { base: "3", _navInline: "1.5", _navWide: "2.5" },
     borderRadius: "full",
     // Text-only links at every width, on both sites: icons pushed the web bar past 1024px and
     // added nothing the words do not say (the drawer and bottom bar keep their icons).
