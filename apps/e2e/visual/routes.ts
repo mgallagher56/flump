@@ -33,7 +33,7 @@ const marketing = (name: string, path: string): VisualRoute => ({
 });
 
 /**
- * Every signed-in screen, the signed-out tools index, one calculator and the sandbox in the
+ * Every signed-in screen, the signed-out tools index and one calculator in the
  * web app, plus the main marketing pages. Each one is shot at 375 and 1280 in light and dark.
  * Add a row here when a new top-level screen lands.
  */
@@ -57,7 +57,6 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   web("take-home", "/app/take-home"),
   web("tools", "/tools", false),
   web("tools-100k-trap", "/tools/uk-100k-tax-trap-calculator", false),
-  web("sandbox", "/sandbox", false),
   marketing("home", "/"),
   marketing("pricing", "/pricing"),
   marketing("tools", "/tools"),
