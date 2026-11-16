@@ -11,6 +11,7 @@ import { Pencil, PiggyBank } from "lucide-react";
 import { type FC, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
+import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddSavingsAccountDialog } from "../AddSavingsAccountDialog";
@@ -35,7 +36,9 @@ export interface SavingsAccountsListProps {
 /** Law 3: a table over eight rows keeps the rest behind a drawer. */
 const VISIBLE_ROWS = 8;
 
-const typeLabel = (acc: Account) => (acc.type === "Investment" ? "Investment" : "Savings");
+const typeLabel = (acc: Account) =>
+  (acc.accountSubtype && ACCOUNT_SUBTYPE_LABEL[acc.accountSubtype]) ||
+  (acc.type === "Investment" ? "Investment" : "Savings");
 
 /**
  * "Your accounts": one figure per row, the balance (plan P1.4; left out with a single account,

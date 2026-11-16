@@ -30,6 +30,7 @@ import {
 import type { FC, ReactNode } from "react";
 import { Link } from "react-router";
 import { AccountTypeEnum, isLiabilityType } from "~/containers/accounts/utils";
+import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import type { AccountRow } from "../../accountRows";
 import { NetWorthBasisLine } from "../NetWorthBasisLine";
 import {
@@ -174,7 +175,8 @@ const byType = (a: AccountRow, b: AccountRow) => {
 
 /** The type under the name, unless the name already says it ("Current account"), plus joint share when joint. */
 const typeLine = (row: AccountRow): string | null => {
-  const label = TYPE_LABEL[row.type] ?? row.type;
+  const subtypeLabel = row.accountSubtype ? ACCOUNT_SUBTYPE_LABEL[row.accountSubtype] : undefined;
+  const label = subtypeLabel ?? TYPE_LABEL[row.type] ?? row.type;
   const baseType = label.trim().toLowerCase() === row.name.trim().toLowerCase() ? null : label;
   const jointLabel = row.ownership === "joint" ? `Joint, ${row.sharePercent ?? 50}%` : null;
   if (baseType && jointLabel) return `${baseType} · ${jointLabel}`;

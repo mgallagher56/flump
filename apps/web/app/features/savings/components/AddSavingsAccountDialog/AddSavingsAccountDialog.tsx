@@ -14,8 +14,13 @@ import { Trash2 } from "lucide-react";
 import { type FC, type FormEvent, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
+import {
+  INVESTMENT_SUBTYPE_OPTIONS,
+  SAVINGS_SUBTYPE_OPTIONS,
+} from "~/features/accounts/accountSubtypes";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { versionField } from "~/services/conflict";
+import { isIsaAccount } from "../SavingsAccountsList/isaAllowance.utils";
 import { accountForm, deleteAction, fieldRow, formActions } from "./AddSavingsAccountDialog.styles";
 
 export interface AddSavingsAccountDialogProps {
@@ -30,6 +35,22 @@ export interface AddSavingsAccountDialogProps {
 }
 
 type SavingsType = "Saving" | "Investment";
+
+const ALL_SUBTYPE_OPTIONS = [
+  ...SAVINGS_SUBTYPE_OPTIONS.map((o) => ({ ...o, type: "Saving" as SavingsType })),
+  ...INVESTMENT_SUBTYPE_OPTIONS.map((o) => ({ ...o, type: "Investment" as SavingsType })),
+];
+
+const inferInitialSubtype = (account?: Account | null): string => {
+  if (account?.accountSubtype) return account.accountSubtype;
+  if (account?.type === "Investment") {
+    return isIsaAccount(account?.name) ? "stocks_and_shares_isa" : "general_investment";
+  }
+  if (account?.type === "Saving") {
+    return isIsaAccount(account?.name) ? "cash_isa" : "easy_access";
+  }
+  return "easy_access";
+};
 
 const toNumberOrNull = (value: unknown): number | null =>
   value !== undefined && value !== null && Number.isFinite(Number(value)) ? Number(value) : null;
@@ -48,9 +69,13 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
   const isEditing = !!accountToEdit;
 
   const [name, setName] = useState(accountToEdit?.name || "");
-  const [type, setType] = useState<SavingsType>(
-    accountToEdit?.type === "Investment" ? "Investment" : "Saving",
+  const [accountSubtype, setAccountSubtype] = useState<string>(() =>
+    inferInitialSubtype(accountToEdit),
   );
+  const type: SavingsType =
+    ALL_SUBTYPE_OPTIONS.find((o) => o.value === accountSubtype)?.type ??
+    (accountToEdit?.type === "Investment" ? "Investment" : "Saving");
+  const isInvestment = type === "Investment";
   const [balance, setBalance] = useState<number | null>(toNumberOrNull(accountToEdit?.balance));
   // No assumed defaults: a new account starts with an empty rate and monthly amount, and empty
   // fields are saved as "not set" rather than 0.
@@ -75,6 +100,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         ...versionField(accountToEdit),
         name: name.trim(),
         type,
+        accountSubtype,
         balance: String(Number(balance) || 0),
         interestRate: interestRate === null ? "" : String(interestRate),
         monthlyContribution: monthlyContribution === null ? "" : String(monthlyContribution),
@@ -100,12 +126,9 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         {(field) => (
           <Select
             {...controlProps(field)}
-            options={[
-              { value: "Saving", label: "Savings account or Cash ISA" },
-              { value: "Investment", label: "Investment or Stocks and Shares ISA" },
-            ]}
-            value={type}
-            onChange={(e) => setType(e.target.value as SavingsType)}
+            options={ALL_SUBTYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+            value={accountSubtype}
+            onChange={(e) => setAccountSubtype(e.target.value)}
           />
         )}
       </FormField>
@@ -116,7 +139,14 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
             <CurrencyInput {...controlProps(field)} value={balance} onValueChange={setBalance} />
           )}
         </FormField>
-        <FormField label="Interest rate (AER)">
+        <FormField
+          hint={
+            isInvestment
+              ? "Used for projections only. Investment returns vary and are not guaranteed."
+              : undefined
+          }
+          label={isInvestment ? "Estimated annual return (%)" : "Interest rate (AER)"}
+        >
           {(field) => (
             <PercentInput
               {...controlProps(field)}

@@ -1,13 +1,89 @@
-import { AccountResponse, UserProfileResponse } from "@flump/api-contract";
+import {
+  AccountResponse,
+  DeleteAccountResponse,
+  UpdateAccountResponse,
+  UserProfileResponse,
+} from "@flump/api-contract";
 import { netWorthBasisFromProfile } from "@flump/finance-engine";
 import type { ReactElement } from "react";
-import type { LoaderFunctionArgs } from "react-router";
-import { data } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { data, redirect } from "react-router";
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
-import { throwRouteError } from "~/services/route-error.server";
-import { getAuthSession } from "~/utils/auth.server";
+import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
+import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
+import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
+import { roundTo2dp } from "~/utils/roundTo2dp";
+
+export const shouldRevalidate = revalidateOnConflict;
+
+export const action = async (args: ActionFunctionArgs) => {
+  const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+  const token = requireAccessToken({ accessToken });
+  const formData = await args.request.formData();
+  const intent = formData.get("intent");
+  const accountId = encodeURIComponent(
+    String(formData.get("accountId") || args.params.account || ""),
+  );
+
+  try {
+    if (intent === "update") {
+      const name = formData.get("name");
+      const type = formData.get("type");
+      const rawBalance = formData.get("balance");
+      const rawPlan = formData.get("studentLoanPlan");
+      const studentLoanPlan = typeof rawPlan === "string" && rawPlan !== "" ? rawPlan : undefined;
+      const rawSubtype = formData.get("accountSubtype");
+      const accountSubtype =
+        rawSubtype === null ? undefined : rawSubtype === "" ? null : String(rawSubtype);
+      const rawCreditLimit = formData.get("creditLimit");
+      const creditLimit =
+        rawCreditLimit === null
+          ? undefined
+          : rawCreditLimit === ""
+            ? null
+            : Number.isFinite(Number(rawCreditLimit))
+              ? roundTo2dp(Number(rawCreditLimit))
+              : undefined;
+      const rawPromoUntil = formData.get("promoZeroPercentUntil");
+      const promoZeroPercentUntil =
+        rawPromoUntil === null ? undefined : rawPromoUntil === "" ? null : String(rawPromoUntil);
+      const balance =
+        rawBalance !== null && rawBalance !== "" && Number.isFinite(Number(rawBalance))
+          ? roundTo2dp(Number(rawBalance))
+          : undefined;
+
+      await backendFetch(`/accounts/${accountId}`, {
+        accessToken: token,
+        method: "PATCH",
+        schema: UpdateAccountResponse,
+        ifMatch: ifMatchFromForm(formData),
+        body: {
+          name,
+          type,
+          ...(accountSubtype !== undefined ? { accountSubtype } : {}),
+          ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
+          ...(balance !== undefined ? { balance } : {}),
+          ...(creditLimit !== undefined ? { creditLimit } : {}),
+          ...(promoZeroPercentUntil !== undefined ? { promoZeroPercentUntil } : {}),
+        },
+      });
+      return data({ success: true });
+    }
+    if (intent === "delete") {
+      await backendFetch(`/accounts/${accountId}`, {
+        accessToken: token,
+        method: "DELETE",
+        schema: DeleteAccountResponse,
+      });
+      return redirect("/app/accounts");
+    }
+    return data({ success: false, error: "Unsupported action." }, { status: 400 });
+  } catch (error) {
+    return actionErrorResponse(error);
+  }
+};
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });

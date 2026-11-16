@@ -25,6 +25,11 @@ import {
   isLiabilityType,
   STUDENT_LOAN_PLAN_OPTIONS,
 } from "~/containers/accounts/utils";
+import {
+  INVESTMENT_SUBTYPE_OPTIONS,
+  MORTGAGE_SUBTYPE_OPTIONS,
+  SAVINGS_SUBTYPE_OPTIONS,
+} from "~/features/accounts/accountSubtypes";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import type { loader } from "~/routes/app.accounts._index";
@@ -89,7 +94,10 @@ export interface AccountOption {
   id?: string;
   name?: string;
   type?: AccountType;
+  accountSubtype?: string | null;
   balance?: number;
+  creditLimit?: number | null;
+  promoZeroPercentUntil?: string | null;
   studentLoanPlan?: string | null;
   ownership?: AccountOwnership;
   sharePercent?: number | null;
@@ -117,6 +125,12 @@ interface AddEditAccountsDialogBtnProp {
   fallbackHref?: string;
   /** Open on first render (the page was reached through `fallbackHref`). */
   defaultOpen?: boolean;
+  /** Pre-selected type when opening in add mode (e.g. "Property" for "Add an estimate"). */
+  initialType?: AccountType;
+  /** Pre-filled name when opening in add mode (e.g. "Home (your estimate)"). */
+  initialName?: string;
+  /** Increment to programmatically open the add dialog (e.g. clicking "Add an estimate" while on /app/accounts). */
+  openRequestKey?: number;
 }
 
 /**
@@ -135,6 +149,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   variant = "outline",
   fallbackHref,
   defaultOpen = false,
+  initialType,
+  initialName,
+  openRequestKey = 0,
 }) => {
   const { accounts = [] }: { accounts?: AccountOption[] } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
@@ -184,19 +201,54 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [formInput, setFormInput] = useState<{
     name: string;
     type: AccountType[];
+    accountSubtype: string;
     /** The figure as shown: the positive amount owed for a liability. */
     balance: string;
     studentLoanPlan: string[];
     ownership: AccountOwnership;
     sharePercent: number | null;
+    creditLimit: string;
+    promoZeroPercentUntil: string;
   }>({
-    name: selectedAccount.name || "",
-    type: [selectedAccount.type || accountTypeArray[0]],
+    name: isEditAccount ? selectedAccount.name || "" : (initialName ?? ""),
+    type: [
+      isEditAccount
+        ? selectedAccount.type || accountTypeArray[0]
+        : (initialType ?? accountTypeArray[0]),
+    ],
+    accountSubtype: isEditAccount ? selectedAccount.accountSubtype || "" : "",
     studentLoanPlan: [selectedAccount.studentLoanPlan || ""],
     balance: toFormBalance(selectedAccount.type, selectedAccount.balance),
+    creditLimit:
+      isEditAccount &&
+      selectedAccount.creditLimit !== undefined &&
+      selectedAccount.creditLimit !== null
+        ? String(selectedAccount.creditLimit)
+        : "",
+    promoZeroPercentUntil: isEditAccount ? selectedAccount.promoZeroPercentUntil || "" : "",
     ownership: selectedAccount.ownership === "joint" ? "joint" : "sole",
     sharePercent: selectedAccount.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT,
   });
+
+  useEffect(() => {
+    if (openRequestKey > 0 && !isEditAccount) {
+      setPlanError(null);
+      dismissSave();
+      dismissDelete();
+      setFormInput({
+        name: initialName ?? "",
+        type: [initialType ?? accountTypeArray[0]],
+        accountSubtype: "",
+        studentLoanPlan: [""],
+        balance: "",
+        creditLimit: "",
+        promoZeroPercentUntil: "",
+        ownership: "sole",
+        sharePercent: DEFAULT_JOINT_SHARE_PERCENT,
+      });
+      setModalOpen(true);
+    }
+  }, [openRequestKey, isEditAccount, initialName, initialType, dismissSave, dismissDelete]);
 
   const handleOpenModal = useCallback(
     (e: { stopPropagation: () => void }) => {
@@ -205,8 +257,13 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       dismissSave();
       dismissDelete();
       setFormInput({
-        name: isEditAccount ? selectedAccount.name || "" : "",
-        type: [isEditAccount ? selectedAccount.type || accountTypeArray[0] : accountTypeArray[0]],
+        name: isEditAccount ? selectedAccount.name || "" : (initialName ?? ""),
+        type: [
+          isEditAccount
+            ? selectedAccount.type || accountTypeArray[0]
+            : (initialType ?? accountTypeArray[0]),
+        ],
+        accountSubtype: isEditAccount ? selectedAccount.accountSubtype || "" : "",
         studentLoanPlan: [(isEditAccount && selectedAccount.studentLoanPlan) || ""],
         balance: isEditAccount ? toFormBalance(selectedAccount.type, selectedAccount.balance) : "",
         ownership: isEditAccount && selectedAccount.ownership === "joint" ? "joint" : "sole",
@@ -214,10 +271,17 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           isEditAccount && selectedAccount.sharePercent != null
             ? selectedAccount.sharePercent
             : DEFAULT_JOINT_SHARE_PERCENT,
+        creditLimit:
+          isEditAccount &&
+          selectedAccount.creditLimit !== undefined &&
+          selectedAccount.creditLimit !== null
+            ? String(selectedAccount.creditLimit)
+            : "",
+        promoZeroPercentUntil: isEditAccount ? selectedAccount.promoZeroPercentUntil || "" : "",
       });
       setModalOpen(true);
     },
-    [isEditAccount, selectedAccount, dismissSave, dismissDelete],
+    [isEditAccount, selectedAccount, initialName, initialType, dismissSave, dismissDelete],
   );
 
   const onChangeNameInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,7 +294,26 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   }, []);
 
   const onChangeTypeInput = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormInput((prevState) => ({ ...prevState, type: [e.target.value] as AccountType[] }));
+    setFormInput((prevState) => ({
+      ...prevState,
+      type: [e.target.value] as AccountType[],
+      accountSubtype: "",
+    }));
+  }, []);
+
+  const onChangeSubtypeInput = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormInput((prevState) => ({ ...prevState, accountSubtype: e.target.value }));
+  }, []);
+
+  const onChangeCreditLimitInput = useCallback((value: number | null) => {
+    setFormInput((prevState) => ({
+      ...prevState,
+      creditLimit: value === null ? "" : String(value),
+    }));
+  }, []);
+
+  const onChangePromoDateInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormInput((prevState) => ({ ...prevState, promoZeroPercentUntil: e.target.value }));
   }, []);
 
   const onChangePlanInput = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -257,12 +340,22 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const jointEligible = canAccountBeJoint({
     name: formInput.name,
     type: formInput.type?.[0],
+    accountSubtype: formInput.accountSubtype || null,
   });
   const effectiveOwnership: AccountOwnership =
     jointEligible && formInput.ownership === "joint" ? "joint" : "sole";
 
   const onSave = useCallback(() => {
-    const { name, type, balance, studentLoanPlan, sharePercent } = formInput;
+    const {
+      name,
+      type,
+      accountSubtype,
+      balance,
+      studentLoanPlan,
+      creditLimit,
+      promoZeroPercentUntil,
+      sharePercent,
+    } = formInput;
     const accountType = type?.[0];
     if (accountType === STUDENT_LOAN && !studentLoanPlan[0]) {
       setPlanError(PLAN_REQUIRED_MESSAGE);
@@ -273,6 +366,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       effectiveOwnership === "joint"
         ? Math.min(100, Math.max(1, Math.round(sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)))
         : null;
+    const supportsSubtype =
+      accountType === SAVING || accountType === INVESTMENT || accountType === MORTGAGE;
+    const supportsCreditFields = accountType === CREDIT_CARD || accountType === OVERDRAFT;
     saveOutcome.begin();
     fetcher.submit(
       {
@@ -287,8 +383,14 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         type: accountType || "",
         ownership: effectiveOwnership,
         ...(resolvedShare !== null ? { sharePercent: String(resolvedShare) } : {}),
+        ...(supportsSubtype ? { accountSubtype } : isEditAccount ? { accountSubtype: "" } : {}),
         ...(accountType === STUDENT_LOAN ? { studentLoanPlan: studentLoanPlan[0] ?? "" } : {}),
         ...(stored !== "" ? { balance: stored } : {}),
+        ...(supportsCreditFields
+          ? { creditLimit, promoZeroPercentUntil }
+          : isEditAccount
+            ? { creditLimit: "", promoZeroPercentUntil: "" }
+            : {}),
       },
       { method: "POST" },
     );
@@ -465,6 +567,34 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 />
               )}
             </FormField>
+            {formInput.type?.[0] === SAVING ||
+            formInput.type?.[0] === INVESTMENT ||
+            formInput.type?.[0] === MORTGAGE ? (
+              <FormField
+                label={formInput.type?.[0] === MORTGAGE ? "Mortgage type" : "Account subtype"}
+              >
+                {(field) => {
+                  const subtypeOptions =
+                    formInput.type?.[0] === MORTGAGE
+                      ? MORTGAGE_SUBTYPE_OPTIONS
+                      : formInput.type?.[0] === INVESTMENT
+                        ? INVESTMENT_SUBTYPE_OPTIONS
+                        : SAVINGS_SUBTYPE_OPTIONS;
+                  return (
+                    <Select
+                      {...controlProps(field)}
+                      name="accountSubtype"
+                      options={[
+                        { value: "", label: "Choose a type (optional)" },
+                        ...subtypeOptions.map((o) => ({ value: o.value, label: o.label })),
+                      ]}
+                      value={formInput.accountSubtype}
+                      onChange={onChangeSubtypeInput}
+                    />
+                  );
+                }}
+              </FormField>
+            ) : null}
             {formInput.type?.[0] === STUDENT_LOAN ? (
               <FormField error={planError ?? undefined} label="Repayment plan">
                 {(field) => (
@@ -532,6 +662,38 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               <p className={jointNotice()} role="note">
                 An ISA or pension is held in one name, so this account will be saved as sole.
               </p>
+            ) : null}
+            {formInput.type?.[0] === CREDIT_CARD || formInput.type?.[0] === OVERDRAFT ? (
+              <>
+                <FormField
+                  hint="Your card or overdraft limit, even if the balance is £0."
+                  label="Credit limit (optional)"
+                >
+                  {(field) => (
+                    <CurrencyInput
+                      {...controlProps(field)}
+                      min={0}
+                      name="creditLimit"
+                      value={formInput.creditLimit === "" ? null : Number(formInput.creditLimit)}
+                      onValueChange={onChangeCreditLimitInput}
+                    />
+                  )}
+                </FormField>
+                <FormField
+                  hint="When any 0% promotional interest period ends."
+                  label="0% interest period ends (optional)"
+                >
+                  {(field) => (
+                    <TextInput
+                      {...controlProps(field)}
+                      name="promoZeroPercentUntil"
+                      type="date"
+                      value={formInput.promoZeroPercentUntil}
+                      onChange={onChangePromoDateInput}
+                    />
+                  )}
+                </FormField>
+              </>
             ) : null}
             {saveOutcome.error ? (
               <p role="alert" className={saveError()}>

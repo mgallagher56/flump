@@ -22,6 +22,11 @@ export interface AccountShareInput {
   type?: string | null;
   rawType?: string | null;
   name?: string | null;
+  /**
+   * The subtype the user chose (`cash_isa`, `easy_access`, ...). When set it decides whether the
+   * account is an ISA, ahead of the type and the free-text name.
+   */
+  accountSubtype?: string | null;
   isIsa?: boolean | null;
   isLiability?: boolean | null;
   ownership?: AccountOwnership | string | null;
@@ -29,6 +34,13 @@ export interface AccountShareInput {
   sharePct?: number | string | null;
   share_pct?: number | string | null;
 }
+
+/** Account subtypes that are ISAs (the contract's `ACCOUNT_SUBTYPES`). */
+export const ISA_ACCOUNT_SUBTYPES: ReadonlySet<string> = new Set([
+  "cash_isa",
+  "lifetime_isa",
+  "stocks_and_shares_isa",
+]);
 
 /** Account types: `ISA`, `JISA`, `LISA`, `CASH_ISA` and the like, in any case. */
 const ISA_PATTERN = /\b(?:j?isa|lisa)\b/i;
@@ -62,13 +74,17 @@ function resolveRawType(input: AccountShareInput): string {
 
 /**
  * True when the account is an Individual Savings Account (ISA, Cash ISA, Stocks & Shares ISA,
- * Lifetime ISA, Junior ISA, `CASH_ISA`, `STOCKS_ISA`, or flagged `isIsa: true`). Checks both the
- * account type and account name because stored Flump accounts use `type: "Saving" | "Investment"`
+ * Lifetime ISA, Junior ISA, `CASH_ISA`, `STOCKS_ISA`, or flagged `isIsa: true`). A chosen
+ * `accountSubtype` decides it; without one it checks both the account type and account name because stored Flump accounts use `type: "Saving" | "Investment"`
  * with ISA in the name. Under UK tax rules an ISA can never be held jointly.
  */
 export function isIsaAccount(input?: AccountShareInput | string | null): boolean {
   const normalized = normalizeInput(input);
   if (normalized.isIsa === true) return true;
+  const subtype =
+    typeof normalized.accountSubtype === "string" ? normalized.accountSubtype.trim() : "";
+  // A chosen subtype is the user's own answer, so it wins over a guess from the type or name.
+  if (subtype) return ISA_ACCOUNT_SUBTYPES.has(subtype);
   const rawType = normalizeTokens(resolveRawType(normalized));
   if (rawType && ISA_PATTERN.test(rawType)) return true;
   const name = normalizeTokens(normalized.name);

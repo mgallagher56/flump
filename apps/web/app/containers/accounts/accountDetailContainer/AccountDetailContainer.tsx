@@ -4,19 +4,21 @@ import {
   DEFAULT_NET_WORTH_BASIS,
   type NetWorthBasis,
 } from "@flump/finance-engine";
-import { Button, HeroFigure, Icon, PageBody, PageHeader } from "@repo/ui";
+import { Button, ConfirmDialog, HeroFigure, Icon, PageBody, PageHeader } from "@repo/ui";
 import { ArrowLeft } from "lucide-react";
-import { type FC, useMemo } from "react";
-import { Link, useLoaderData } from "react-router";
+import { type FC, useMemo, useState } from "react";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { type AccountType, isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { summariseAccountBalance } from "~/features/accounts/accountRows";
+import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import type { loader } from "~/routes/app.accounts.$account";
 import { versionField } from "~/services/conflict";
-import { backLink, notFound, ownerLink } from "./AccountDetailContainer.styles";
+import { backLink, headerActions, notFound, ownerLink } from "./AccountDetailContainer.styles";
 
 const monthName = new Intl.DateTimeFormat("en-GB", { month: "long", timeZone: "UTC" });
 
@@ -104,6 +106,11 @@ const BackLink: FC = () => (
 
 const AccountDetailContainer: FC = () => {
   const { account, accountDetails = [], basis } = useLoaderData<typeof loader>();
+  const deleteFetcher = useFetcher();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const deleteOutcome = useFetcherOutcome(deleteFetcher, {
+    onSuccess: () => setConfirmDeleteOpen(false),
+  });
 
   // The hero shows the saved balance, the same figure as the accounts list and net worth (D22).
   const summary = useMemo(
@@ -161,7 +168,12 @@ const AccountDetailContainer: FC = () => {
   }
 
   const isLiability = isLiabilityType(account.type);
-  const typeLabel = TYPE_LABEL[String(account.type ?? "")] ?? account.type ?? "Account";
+  const subtype = (account as { accountSubtype?: string | null }).accountSubtype;
+  const typeLabel =
+    (subtype && ACCOUNT_SUBTYPE_LABEL[subtype]) ||
+    TYPE_LABEL[String(account.type ?? "")] ||
+    account.type ||
+    "Account";
   const owner = ownerPageFor(account.type);
   // Said quietly in the hero's subline, so no extra line sits between the hero and the chart.
   // Left out when the net worth choices could not be read (basis null): unknown is not "no".
@@ -171,24 +183,46 @@ const AccountDetailContainer: FC = () => {
     <PageBody>
       <BackLink />
 
-      {/* One action, Edit, which holds the account's saved name, type and balance (R2-5). */}
       <PageHeader
         actions={
-          <AddEditAccountsDialogBtn
-            account={{
-              id: String(account.id ?? ""),
-              name: account.name ?? "",
-              type: account.type as AccountType | undefined,
-              balance:
-                account.balance === undefined || account.balance === null
-                  ? undefined
-                  : Number(account.balance),
-              studentLoanPlan: account.studentLoanPlan ?? null,
-              ...versionField(account, "updatedAt"),
-            }}
-            accountId={String(account.id ?? "")}
-            isEditAccount
-          />
+          <div className={headerActions()}>
+            <Button
+              data-testid="account-detail-delete"
+              id="account-detail-delete"
+              type="button"
+              variant="outline"
+              onClick={() => {
+                deleteOutcome.dismiss();
+                setConfirmDeleteOpen(true);
+              }}
+            >
+              Delete
+            </Button>
+            <AddEditAccountsDialogBtn
+              account={{
+                id: String(account.id ?? ""),
+                name: account.name ?? "",
+                type: account.type as AccountType | undefined,
+                accountSubtype: subtype ?? null,
+                balance:
+                  account.balance === undefined || account.balance === null
+                    ? undefined
+                    : Number(account.balance),
+                creditLimit: (account as { creditLimit?: number | null }).creditLimit ?? null,
+                promoZeroPercentUntil:
+                  (account as { promoZeroPercentUntil?: string | null }).promoZeroPercentUntil ??
+                  null,
+                studentLoanPlan: account.studentLoanPlan ?? null,
+                ...versionField(account, "updatedAt"),
+              }}
+              accountId={String(account.id ?? "")}
+              isEditAccount
+              onDeleteRequest={() => {
+                deleteOutcome.dismiss();
+                setConfirmDeleteOpen(true);
+              }}
+            />
+          </div>
         }
         // The type, unless the name already says it ("Residential mortgage").
         description={typeSubtitle(account.name, typeLabel)}
@@ -210,6 +244,29 @@ const AccountDetailContainer: FC = () => {
           </Link>
         </Button>
       ) : null}
+
+      <ConfirmDialog
+        confirmLabel={`Delete ${account.name ?? "account"}`}
+        description="Its balance history will be deleted too. This cannot be undone."
+        error={deleteOutcome.error}
+        open={confirmDeleteOpen}
+        pending={deleteOutcome.pending}
+        title={`Delete ${account.name ?? "this account"}?`}
+        tone="danger"
+        onConfirm={() => {
+          deleteOutcome.begin();
+          deleteFetcher.submit(
+            { intent: "delete", accountId: String(account.id ?? "") },
+            { method: "POST" },
+          );
+        }}
+        onOpenChange={(open) => {
+          if (!open && !deleteOutcome.pending) {
+            setConfirmDeleteOpen(false);
+            deleteOutcome.dismiss();
+          }
+        }}
+      />
     </PageBody>
   );
 };

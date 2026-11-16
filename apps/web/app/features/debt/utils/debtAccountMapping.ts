@@ -11,6 +11,10 @@ export interface DebtAccountPayload {
   interestRate: number | null;
   /** The minimum monthly payment, or null when unknown or estimated. */
   monthlyContribution: number | null;
+  /** Credit card / overdraft limit (usable even at £0 balance), or null when unset. */
+  creditLimit: number | null;
+  /** 0% promotional interest end date (YYYY-MM-DD), or null when unset. */
+  promoZeroPercentUntil: string | null;
 }
 
 export function debtTypeToAccountType(type: DebtItem["type"]): DebtAccountType {
@@ -25,6 +29,17 @@ export function debtItemToAccountPayload(d: Omit<DebtItem, "id">): DebtAccountPa
   const minimum = d.minimumPayment ?? d.minimumPaymentGbp ?? 0;
   const aprUnknown = d.aprKnown === false || apr === undefined || !Number.isFinite(apr);
   const minimumUnknown = d.minimumPaymentEstimated === true || !(minimum > 0);
+  const creditLimit =
+    d.creditLimitGbp !== undefined &&
+    d.creditLimitGbp !== null &&
+    Number.isFinite(Number(d.creditLimitGbp)) &&
+    Number(d.creditLimitGbp) >= 0
+      ? Number(d.creditLimitGbp)
+      : null;
+  const promoZeroPercentUntil =
+    typeof d.promoAprExpiryDate === "string" && d.promoAprExpiryDate !== ""
+      ? d.promoAprExpiryDate
+      : null;
 
   return {
     name: d.name,
@@ -32,5 +47,7 @@ export function debtItemToAccountPayload(d: Omit<DebtItem, "id">): DebtAccountPa
     balance: balance === 0 ? 0 : -balance,
     interestRate: aprUnknown ? null : (apr as number),
     monthlyContribution: minimumUnknown ? null : minimum,
+    creditLimit,
+    promoZeroPercentUntil,
   };
 }

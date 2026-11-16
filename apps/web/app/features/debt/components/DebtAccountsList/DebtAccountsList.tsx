@@ -48,6 +48,17 @@ const TYPE_LABELS: Record<string, string> = {
 const typeLabel = (type: DebtItem["type"] | undefined): string =>
   (type && TYPE_LABELS[type]) || "Other";
 
+const formatPromoDate = (iso: string): string => {
+  const parsed = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(parsed);
+};
+
 /**
  * "Your debts" (E16 PR 6, R2-7): one figure per row, the balance owed (always shown as a positive
  * amount, though liabilities are stored negative). The row detail is the type label, plus "Rate
@@ -84,6 +95,18 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
                 <>
                   {" · "}
                   <span>Rate not added</span>
+                </>
+              ) : null}
+              {debt.creditLimitGbp !== undefined && debt.creditLimitGbp > 0 ? (
+                <>
+                  {" · "}
+                  <span>{`Limit ${formatCurrency(debt.creditLimitGbp, { maximumFractionDigits: 0 })}`}</span>
+                </>
+              ) : null}
+              {debt.promoAprExpiryDate ? (
+                <>
+                  {" · "}
+                  <span>{`0% until ${formatPromoDate(debt.promoAprExpiryDate)}`}</span>
                 </>
               ) : null}
             </span>

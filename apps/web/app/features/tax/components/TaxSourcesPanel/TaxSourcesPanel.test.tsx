@@ -32,8 +32,20 @@ describe("TaxSourcesPanel", () => {
     expect(screen.queryByText("a year, after costs")).toBeNull();
   });
 
-  it("draws nothing when the year has no records", () => {
+  it("draws nothing when the year has no records and no BTL accounts", () => {
     const { container } = render(<TaxSourcesPanel records={[]} taxYear="2026/27" />);
     expect(container.innerHTML).toBe("");
+  });
+
+  it("surfaces BTL mortgage accounts as a rental income source even with no rental records", () => {
+    render(
+      <TaxSourcesPanel
+        btlAccounts={[{ id: "btl-1", name: "Oak Street BTL mortgage" }]}
+        records={[]}
+        taxYear="2026/27"
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Income sources" })).toBeDefined();
+    expect(screen.getByText(/Oak Street BTL mortgage/)).toBeDefined();
   });
 });

@@ -23,6 +23,17 @@ export function isBuyToLetAccountName(name: string): boolean {
 }
 
 /**
+ * True when an account is a buy-to-let property or mortgage, either by its explicit
+ * `accountSubtype === "btl_mortgage"` or by its name (`isBuyToLetAccountName`).
+ */
+export function isBuyToLetAccount(account: {
+  name?: string | null;
+  accountSubtype?: string | null;
+}): boolean {
+  return account.accountSubtype === "btl_mortgage" || isBuyToLetAccountName(account.name ?? "");
+}
+
+/**
  * Residential loan to value, from saved account rows only: residential mortgage balances over
  * residential Property account values (the onboarding home estimate is one of them). Buy-to-let
  * property and mortgages are left out. With `mortgageAccountId`, only that mortgage is measured.

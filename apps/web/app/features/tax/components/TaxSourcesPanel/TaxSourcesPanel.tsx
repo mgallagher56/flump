@@ -1,10 +1,17 @@
 import { isRecordActiveInTaxYear, type TaxRecord } from "@flump/finance-engine";
-import { PageSection } from "@repo/ui";
+import { Button, IconTile, PageSection } from "@repo/ui";
 import { Briefcase, Home, Laptop, Layers, type LucideIcon, PiggyBank } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { SOURCE_OPTIONS } from "../../tax-labels";
 import TaxIncomeSectionCard from "../TaxIncomeSectionCard";
-import { list } from "./TaxSourcesPanel.styles";
+import {
+  btlDetails,
+  btlIdentity,
+  btlMeta,
+  btlName,
+  btlSourceRow,
+  list,
+} from "./TaxSourcesPanel.styles";
 
 const SOURCE_ICON: Record<(typeof SOURCE_OPTIONS)[number]["value"], LucideIcon> = {
   "self-employed": Laptop,
@@ -16,21 +23,39 @@ const SOURCE_ICON: Record<(typeof SOURCE_OPTIONS)[number]["value"], LucideIcon> 
 /** Non-PAYE sources first: they are what the page is for. */
 const ORDER = ["self-employed", "rental", "savings", "paye"] as const;
 
+export interface BtlSourceAccount {
+  id: string;
+  name: string;
+}
+
 export interface TaxSourcesPanelProps {
   records: TaxRecord[];
   taxYear: string;
   /** The page's one "Add income" menu, shown beside the heading. */
   action?: ReactNode;
+  /** Buy-to-let mortgage accounts, surfaced automatically as a rental income source. */
+  btlAccounts?: readonly BtlSourceAccount[];
+  /** Called when the user clicks "Add rental income" on an auto-surfaced BTL source row. */
+  onAddRentalIncome?: () => void;
 }
 
 /**
- * "Income sources": one list, a row per source that has records in the tax year. Sources with
- * no records show nothing; with no records at all the section is not drawn (the hero says what
- * to add instead).
+ * "Income sources": one list, a row per source that has records in the tax year (plus any
+ * buy-to-let mortgage accounts so they surface automatically even before rental records are
+ * added).
  */
-export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({ records, taxYear, action }) => {
+export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({
+  records,
+  taxYear,
+  action,
+  btlAccounts = [],
+  onAddRentalIncome,
+}) => {
   const hasRecords = records.some((r) => isRecordActiveInTaxYear(r, taxYear));
-  if (!hasRecords) return null;
+  const hasRentalRecords = records.some(
+    (r) => r.source === "rental" && isRecordActiveInTaxYear(r, taxYear),
+  );
+  if (!hasRecords && btlAccounts.length === 0) return null;
   const labels = Object.fromEntries(SOURCE_OPTIONS.map((o) => [o.value, o.label]));
   // With one source outside PAYE, its income less costs is the strip's "Income after costs": the
   // row keeps its name and count and leaves the figure to the strip, beside the bill it sets.
@@ -62,6 +87,24 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({ records, taxYear, ac
             title={labels[source] ?? source}
           />
         ))}
+        {!hasRentalRecords && btlAccounts.length > 0 ? (
+          <li className={btlSourceRow()} data-list-row="" data-source="rental">
+            <span className={btlIdentity()}>
+              <IconTile domain="tax" icon={Home} />
+              <span className={btlDetails()}>
+                <span className={btlName()}>{labels.rental ?? "Property & buy-to-let"}</span>
+                <span className={btlMeta()}>
+                  {`From your ${btlAccounts.length === 1 ? "account" : "accounts"}: ${btlAccounts.map((a) => a.name).join(", ")}`}
+                </span>
+              </span>
+            </span>
+            {onAddRentalIncome ? (
+              <Button size="sm" type="button" variant="outline" onClick={onAddRentalIncome}>
+                Add rental income
+              </Button>
+            ) : null}
+          </li>
+        ) : null}
       </ul>
     </PageSection>
   );

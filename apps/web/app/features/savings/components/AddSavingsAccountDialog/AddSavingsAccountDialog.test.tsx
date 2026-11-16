@@ -53,6 +53,7 @@ describe("AddSavingsAccountDialog", () => {
         accountId: "",
         name: "Marcus",
         type: "Saving",
+        accountSubtype: "easy_access",
         balance: "1200",
         interestRate: "",
         monthlyContribution: "",
@@ -64,6 +65,22 @@ describe("AddSavingsAccountDialog", () => {
     answer.data = { success: true };
     rerender(dialog());
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers non-ISA savings options and labels Investment rate as an estimated annual return", () => {
+    render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    const select = screen.getByLabelText("Account type") as HTMLSelectElement;
+    const labels = [...select.options].map((o) => o.text);
+    expect(labels).toContain("Easy access savings");
+    expect(labels).toContain("Notice savings");
+    expect(labels).toContain("Regular saver");
+    expect(labels).toContain("Fixed term savings");
+    expect(labels).toContain("General savings");
+    expect(labels).toContain("Stocks and Shares ISA");
+
+    expect(screen.getByLabelText("Interest rate (AER)")).toBeDefined();
+    fireEvent.change(select, { target: { value: "stocks_and_shares_isa" } });
+    expect(screen.getByLabelText("Estimated annual return (%)")).toBeDefined();
   });
 
   it("sends the saved account's version, and after a 412 stays open with the message and what was typed", () => {

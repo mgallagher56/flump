@@ -1,10 +1,12 @@
 import {
   calculateUKTax,
+  categorizeAccountType,
   getCategoriesForSource,
   getCurrentUKTaxYear,
   getPreviousTaxYear,
   getTaxYearForRecordDate,
   getUkTaxYearContext,
+  isBuyToLetAccount,
   isRecordActiveInTaxYear,
   isSupportedUkTaxYear,
   type TaxCalculationResult,
@@ -192,7 +194,13 @@ const TaxContainer: FC = () => {
     );
   }
 
-  return <SelfAssessmentPage records={loaderData.records ?? []} userProfile={userProfile} />;
+  return (
+    <SelfAssessmentPage
+      accounts={loaderData.accounts ?? []}
+      records={loaderData.records ?? []}
+      userProfile={userProfile}
+    />
+  );
 };
 
 type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>;
@@ -200,7 +208,8 @@ type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>;
 const SelfAssessmentPage: FC<{
   records: TaxRecord[];
   userProfile: LoaderData["userProfile"];
-}> = ({ records: initialRecords, userProfile }) => {
+  accounts?: LoaderData["accounts"];
+}> = ({ records: initialRecords, userProfile, accounts = [] }) => {
   const fetcher = useFetcher();
 
   // Which year's rates apply today, and whether that is a fallback (E22)
@@ -469,7 +478,22 @@ const SelfAssessmentPage: FC<{
         </CollapsibleDrawer>
       ) : null}
 
-      <TaxSourcesPanel action={addIncome} records={initialRecords} taxYear={selectedTaxYear} />
+      <TaxSourcesPanel
+        action={addIncome}
+        btlAccounts={(
+          accounts as Array<{
+            id?: string;
+            name?: string;
+            type?: string;
+            accountSubtype?: string | null;
+          }>
+        )
+          .filter((a) => categorizeAccountType(a.type) === "mortgages" && isBuyToLetAccount(a))
+          .map((a) => ({ id: String(a.id ?? ""), name: String(a.name ?? "Buy-to-let mortgage") }))}
+        records={initialRecords}
+        taxYear={selectedTaxYear}
+        onAddRentalIncome={() => onOpenAddModal("rental", "income")}
+      />
 
       <div className={drawers()}>
         {hasRecordsInYear || otherDateRecords.length > 0 ? (

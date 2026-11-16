@@ -1,13 +1,25 @@
+import { ISA_SUBTYPES } from "~/features/accounts/accountSubtypes";
+
 /** The adult ISA allowance for a tax year. */
 export const ISA_ALLOWANCE = 20_000;
 
 /**
- * An account counts towards the adult allowance when its name says it is an ISA ("Cash ISA",
- * "Stocks and Shares ISA", "Lifetime ISA", "LISA"). Junior ISAs ("Junior ISA", "JISA") have their
- * own allowance and are left out.
+ * An account counts towards the adult allowance when its subtype is an ISA or its name says it is
+ * an ISA ("Cash ISA", "Stocks and Shares ISA", "Lifetime ISA", "LISA"). Junior ISAs ("Junior ISA",
+ * "JISA") have their own allowance and are left out.
  */
-export const isIsaAccount = (name: string | null | undefined): boolean => {
-  const text = name ?? "";
+export const isIsaAccount = (
+  nameOrAccount:
+    | string
+    | { name?: string | null; accountSubtype?: string | null }
+    | null
+    | undefined,
+): boolean => {
+  if (nameOrAccount && typeof nameOrAccount === "object") {
+    if (nameOrAccount.accountSubtype) return ISA_SUBTYPES.has(nameOrAccount.accountSubtype);
+    return isIsaAccount(nameOrAccount.name);
+  }
+  const text = typeof nameOrAccount === "string" ? nameOrAccount : "";
   if (/\bjunior\s+isa\b|\bjisa\b/i.test(text)) return false;
   return /\b(?:l?isa)\b/i.test(text);
 };
@@ -31,11 +43,15 @@ export function monthsIntoTaxYear(today: Date): number {
  * Null when no ISA account stores a monthly amount above 0: nothing is assumed.
  */
 export function estimateIsaUsed(
-  accounts: ReadonlyArray<{ name?: string | null; monthlyContribution?: number | string | null }>,
+  accounts: ReadonlyArray<{
+    name?: string | null;
+    accountSubtype?: string | null;
+    monthlyContribution?: number | string | null;
+  }>,
   today: Date = new Date(),
 ): number | null {
   const monthly = accounts
-    .filter((acc) => isIsaAccount(acc.name))
+    .filter((acc) => isIsaAccount(acc))
     .reduce((sum, acc) => sum + (Number(acc.monthlyContribution) || 0), 0);
   if (!(monthly > 0)) return null;
   return Math.min(ISA_ALLOWANCE, Math.round(monthly * monthsIntoTaxYear(today)));

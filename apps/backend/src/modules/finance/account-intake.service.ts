@@ -1,4 +1,4 @@
-import { ACCOUNT_TYPES } from "@flump/api-contract";
+import { ACCOUNT_SUBTYPES, ACCOUNT_TYPES } from "@flump/api-contract";
 import {
   type AccountOwnership,
   canAccountBeJoint,
@@ -30,6 +30,7 @@ import { londonDate } from "../snapshots/london-date";
 import { resignHistoryForType, storedBalance } from "../snapshots/stored-balance";
 
 type AccountType = (typeof ACCOUNT_TYPES)[number];
+type AccountSubtype = (typeof ACCOUNT_SUBTYPES)[number];
 
 const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
 
@@ -40,11 +41,14 @@ export interface AccountWithDetails extends Account {
 export interface CreateAccountDto {
   name: string;
   type: AccountType | string;
+  accountSubtype?: AccountSubtype | string | null;
   balance: number;
   /** null or "" means "not provided" (create defaults it, update keeps it). */
   currency?: string | null;
   interestRate?: number | null;
   monthlyContribution?: number | null;
+  creditLimit?: number | null;
+  promoZeroPercentUntil?: string | null;
   /** Mortgage term in months (1..600). Meaningful for Mortgage accounts; null otherwise. */
   termMonths?: number | null;
   /** End of the fixed-rate period, ISO date (YYYY-MM-DD). Meaningful for Mortgage accounts. */
@@ -99,7 +103,7 @@ function validateTermMonths(value: unknown): number | null | undefined {
   return value;
 }
 
-function validateFixedRateEndDate(value: unknown): string | null | undefined {
+function validateIsoDate(value: unknown, fieldName: string): string | null | undefined {
   if (value === undefined || value === null) return value;
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const parsed = new Date(`${value}T00:00:00.000Z`);
@@ -107,7 +111,27 @@ function validateFixedRateEndDate(value: unknown): string | null | undefined {
       return value;
     }
   }
-  throw new BadRequestException("fixedRateEndDate must be an ISO date (YYYY-MM-DD) or null");
+  throw new BadRequestException(`${fieldName} must be an ISO date (YYYY-MM-DD) or null`);
+}
+
+function validateAccountSubtype(value: unknown): AccountSubtype | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "string" && (ACCOUNT_SUBTYPES as readonly string[]).includes(value)) {
+    return value as AccountSubtype;
+  }
+  throw new BadRequestException(
+    `accountSubtype must be one of ${ACCOUNT_SUBTYPES.join(", ")}, or null`,
+  );
+}
+
+function validateCreditLimit(value: unknown): number | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value >= 1e10) {
+    throw new BadRequestException(
+      "creditLimit must be a non-negative finite number below 10 billion, or null",
+    );
+  }
+  return value;
 }
 
 /**
@@ -136,9 +160,12 @@ function toAccountResponse(account: Account): Account {
     userId: account.userId,
     name: account.name,
     type: account.type,
+    accountSubtype: account.accountSubtype ?? null,
     balance: Number(account.balance),
     interestRate: nullableNumber(account.interestRate),
     monthlyContribution: nullableNumber(account.monthlyContribution),
+    creditLimit: nullableNumber(account.creditLimit),
+    promoZeroPercentUntil: account.promoZeroPercentUntil ?? null,
     termMonths: account.termMonths ?? null,
     fixedRateEndDate: account.fixedRateEndDate ?? null,
     isCurrent: account.isCurrent !== false,
@@ -332,12 +359,15 @@ export class AccountIntakeService implements IAccountIntake {
     const fields = {
       name: body.name,
       type: validateAccountType(body.type),
+      accountSubtype: validateAccountSubtype(body.accountSubtype),
       balance: validateBalance(body.balance),
       currency: body.currency,
       interestRate: body.interestRate,
       monthlyContribution: body.monthlyContribution,
+      creditLimit: validateCreditLimit(body.creditLimit),
+      promoZeroPercentUntil: validateIsoDate(body.promoZeroPercentUntil, "promoZeroPercentUntil"),
       termMonths: validateTermMonths(body.termMonths),
-      fixedRateEndDate: validateFixedRateEndDate(body.fixedRateEndDate),
+      fixedRateEndDate: validateIsoDate(body.fixedRateEndDate, "fixedRateEndDate"),
       studentLoanPlan,
       ownership,
       sharePercent,

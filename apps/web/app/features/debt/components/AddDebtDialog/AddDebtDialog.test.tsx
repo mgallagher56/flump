@@ -111,10 +111,28 @@ describe("AddDebtDialog", () => {
     submit();
     expect(onAddDebt).not.toHaveBeenCalled();
     expect(screen.getByText("Enter a name for this debt.")).toBeDefined();
-    expect(screen.getByText("Enter the balance you owe, more than £0.")).toBeDefined();
+    expect(screen.getByText("Enter the balance you owe (£0 or more).")).toBeDefined();
     expect(
       (screen.getByLabelText(/^Balance you owe/) as HTMLInputElement).getAttribute("aria-invalid"),
     ).toBe("true");
+  });
+
+  it("allows £0 balance on a credit card with credit limit and 0% promo end date", () => {
+    const { onAddDebt } = open();
+    fill("Name of the debt", "0% Balance Transfer");
+    fill("Balance you owe", "0");
+    fill("Credit limit", "5000");
+    fill("0% interest period ends", "2027-06-30");
+    submit();
+    expect(onAddDebt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "0% Balance Transfer",
+        balance: 0,
+        type: "credit_card",
+        creditLimitGbp: 5000,
+        promoAprExpiryDate: "2027-06-30",
+      }),
+    );
   });
 });
 

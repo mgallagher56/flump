@@ -207,7 +207,7 @@ export const SavingsContainer: FC = () => {
           <SavingsSummaryCards
             accountCount={savingsAccounts.length}
             averageRate={saved.averageRate}
-            hasIsaAccount={savingsAccounts.some((acc) => isIsaAccount(acc.name))}
+            hasIsaAccount={savingsAccounts.some((acc) => isIsaAccount(acc))}
             isaUsed={saved.isaUsed}
             monthlySaving={saved.monthly}
             totalSavingsBalance={saved.total}

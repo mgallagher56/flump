@@ -28,6 +28,7 @@ export const action = async (args: ActionFunctionArgs) => {
     if (intent === "createSavingsAccount") {
       const name = formData.get("name");
       const type = formData.get("type") || "Saving";
+      const accountSubtype = formData.get("accountSubtype");
       const balance = formData.get("balance");
       const interestRate = formData.get("interestRate");
       const monthlyContribution = formData.get("monthlyContribution");
@@ -39,6 +40,9 @@ export const action = async (args: ActionFunctionArgs) => {
         body: {
           name,
           type,
+          ...(typeof accountSubtype === "string" && accountSubtype !== ""
+            ? { accountSubtype }
+            : {}),
           balance: balance ? roundTo2dp(Number(balance)) : 0,
           interestRate:
             interestRate !== null && interestRate !== "" ? roundTo2dp(Number(interestRate)) : null,
@@ -51,6 +55,7 @@ export const action = async (args: ActionFunctionArgs) => {
     } else if (intent === "updateSavingsAccount") {
       const name = formData.get("name");
       const type = formData.get("type");
+      const accountSubtype = formData.get("accountSubtype");
       const balance = formData.get("balance");
       const interestRate = formData.get("interestRate");
       const monthlyContribution = formData.get("monthlyContribution");
@@ -58,6 +63,9 @@ export const action = async (args: ActionFunctionArgs) => {
       const updatePayload: Record<string, any> = {};
       if (name !== null && name !== undefined) updatePayload.name = name;
       if (type !== null && type !== undefined) updatePayload.type = type;
+      if (accountSubtype !== null && accountSubtype !== undefined) {
+        updatePayload.accountSubtype = accountSubtype !== "" ? accountSubtype : null;
+      }
       if (balance !== null && balance !== undefined)
         updatePayload.balance = roundTo2dp(Number(balance));
       if (interestRate !== null && interestRate !== undefined) {

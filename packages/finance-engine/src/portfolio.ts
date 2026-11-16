@@ -36,9 +36,12 @@ export interface RawAccount {
   id?: string;
   name?: string;
   type?: RawAccountType;
+  accountSubtype?: string | null;
   balance?: number | string;
   interestRate?: number | string | null;
   monthlyContribution?: number | string | null;
+  creditLimit?: number | string | null;
+  promoZeroPercentUntil?: string | null;
   termMonths?: number | null;
   fixedRateEndDate?: string | null;
   currency?: string;
@@ -134,14 +137,18 @@ function hasStoredNumber(value: number | string | null | undefined): boolean {
 export class PortfolioSnapshot {
   private readonly resolvedAccounts: ResolvedAccount[];
   private readonly accountsById: Map<string, ResolvedAccount>;
+  private readonly rawById: Map<string, RawAccount>;
 
   constructor(accounts: RawAccount[] = [], accountDetails: RawAccountDetail[] = []) {
     const shareInputByAccount = new Map<string, AccountShareInput>();
+    this.rawById = new Map();
     (accounts || []).forEach((acc, index) => {
       const accId = String(acc.id || `acc_${index}`);
+      this.rawById.set(accId, acc);
       shareInputByAccount.set(accId, {
         name: acc.name,
         type: acc.type,
+        accountSubtype: acc.accountSubtype,
         ownership: acc.ownership,
         sharePercent: acc.sharePercent,
       });
@@ -408,6 +415,15 @@ export class PortfolioSnapshot {
           : a.monthlyContribution;
         // Never invent an APR: an unset rate is 0 with aprKnown false (0% is a known rate).
         const apr = a.interestRateKnown ? a.interestRate : 0;
+        const raw = this.rawById.get(a.id);
+        const creditLimit =
+          raw && hasStoredNumber(raw.creditLimit) && Number(raw.creditLimit) >= 0
+            ? Number(raw.creditLimit)
+            : undefined;
+        const promoAprExpiryDate =
+          raw && typeof raw.promoZeroPercentUntil === "string" && raw.promoZeroPercentUntil !== ""
+            ? raw.promoZeroPercentUntil
+            : undefined;
 
         return {
           id: a.id,
@@ -421,6 +437,8 @@ export class PortfolioSnapshot {
           minimumPaymentGbp: minimumPayment,
           minimumPaymentEstimated,
           type,
+          ...(creditLimit !== undefined ? { creditLimitGbp: creditLimit } : {}),
+          ...(promoAprExpiryDate !== undefined ? { promoAprExpiryDate } : {}),
         };
       });
   }
