@@ -144,6 +144,7 @@ describe("Shared chrome law (marketing and web)", () => {
   describe("footer", () => {
     it("both sites render SiteFooter from @repo/ui", () => {
       for (const file of [
+        "apps/web/app/components/structure/footer/AppFooter/AppFooter.tsx",
         "apps/web/app/features/signed-out/components/SignedOutFooter/SignedOutFooter.tsx",
         "apps/marketing/src/components/Footer/Footer.tsx",
       ]) {
