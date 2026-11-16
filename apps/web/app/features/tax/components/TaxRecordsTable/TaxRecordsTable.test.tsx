@@ -111,4 +111,26 @@ describe("TaxRecordsTable", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add record" }));
     expect(onAdd).toHaveBeenCalled();
   });
+
+  it("sorts columns ascending and descending when headers are clicked", () => {
+    setup();
+    const recordHeader = screen.getByRole("columnheader", { name: "Record" });
+    expect(recordHeader.getAttribute("aria-sort")).toBe("none");
+    fireEvent.click(screen.getByRole("button", { name: "Record" }));
+    expect(recordHeader.getAttribute("aria-sort")).toBe("ascending");
+    const ascRows = within(screen.getByRole("table")).getAllByRole("row");
+    expect(ascRows[1].textContent).toContain("Design retainer");
+
+    fireEvent.click(screen.getByRole("button", { name: "Record" }));
+    expect(recordHeader.getAttribute("aria-sort")).toBe("descending");
+    const descRows = within(screen.getByRole("table")).getAllByRole("row");
+    expect(descRows[1].textContent).toContain("Saver interest");
+  });
+
+  it("filters by search text past eight records", () => {
+    setup([...taxRecordsFixture, ...manyRecords(5)]);
+    fireEvent.change(screen.getByLabelText("Search records"), { target: { value: "mortgage" } });
+    expect(screen.getByText("Showing 1 to 1 of 1 records")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Mortgage interest" })).toBeDefined();
+  });
 });

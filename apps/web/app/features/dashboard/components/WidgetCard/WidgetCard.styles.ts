@@ -2,9 +2,11 @@ import { cva } from "@repo/ui/styled-system/css";
 
 export const widgetCard = cva({
   base: {
+    position: "relative",
     backgroundColor: "surface.card",
     borderRadius: "card",
     borderWidth: "1px",
+    borderTopWidth: "3px",
     borderStyle: "solid",
     borderColor: "border",
     boxShadow: "card",
@@ -14,6 +16,38 @@ export const widgetCard = cva({
     gap: "8px",
     minWidth: 0,
     height: "100%",
+    _motionSafe: {
+      transitionProperty: "border-color, box-shadow",
+      transitionDuration: "fast",
+    },
+  },
+  variants: {
+    tone: {
+      teal: { borderTopColor: "primary" },
+      sage: { borderTopColor: "chart.wealth" },
+      apricot: { borderTopColor: "chart.warning" },
+      neutral: { borderTopColor: "border.strong" },
+    },
+    interactive: {
+      true: {
+        cursor: "pointer",
+        _hover: {
+          borderColor: "border.strong",
+          boxShadow: "raised",
+        },
+        _focusWithin: {
+          outlineWidth: "2px",
+          outlineStyle: "solid",
+          outlineColor: "border.focusRing",
+          outlineOffset: "2px",
+        },
+      },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    tone: "neutral",
+    interactive: false,
   },
 });
 
@@ -62,6 +96,35 @@ export const widgetLine = cva({
 
 export const widgetFooter = cva({
   base: { display: "flex", alignItems: "center", marginTop: "4px", marginLeft: "-8px" },
+});
+
+export const widgetLink = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    paddingX: "8px",
+    minHeight: "32px",
+    borderRadius: "md",
+    textStyle: "label.md",
+    color: "primary",
+    textDecoration: "none",
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      inset: "0",
+    },
+    _hover: {
+      textDecoration: "underline",
+      textUnderlineOffset: "3px",
+    },
+    _focusVisible: {
+      outlineWidth: "2px",
+      outlineStyle: "solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
+  },
 });
 
 export const widgetLock = cva({

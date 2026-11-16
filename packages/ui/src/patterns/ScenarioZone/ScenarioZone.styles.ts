@@ -17,7 +17,9 @@ export const scenarioZone = sva({
     "header",
     "titleRow",
     "titleGroup",
+    "titleActions",
     "basis",
+    "collapsedSummary",
     "body",
     "split",
     "result",
@@ -56,10 +58,22 @@ export const scenarioZone = sva({
     titleGroup: {
       minWidth: "0",
     },
+    titleActions: {
+      display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: "2",
+    },
     basis: {
       margin: "0",
       color: "text.secondary",
       textStyle: "body.sm",
+      fontVariantNumeric: "tabular-nums",
+    },
+    collapsedSummary: {
+      margin: "0",
+      color: "text.primary",
+      textStyle: "body.md",
       fontVariantNumeric: "tabular-nums",
     },
     /** Children sit on the zone surface: no nested card chrome or headings. */

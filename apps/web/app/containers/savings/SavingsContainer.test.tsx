@@ -116,8 +116,20 @@ describe("SavingsContainer", () => {
     expect(screen.getByTestId("scenario-zone-footer").contains(notes[0] as Node)).toBe(true);
   });
 
+  it("starts collapsed with a forecast summary and expands on click", () => {
+    render(<SavingsContainer />);
+    const toggle = screen.getByRole("button", { name: "Open" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByTestId("scenario-zone-summary").textContent).toMatch(/in 5 years/);
+    expect(screen.queryByRole("slider")).toBeNull();
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Hide" }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByRole("slider").length).toBeGreaterThan(0);
+  });
+
   it("has no slider outside the scenario zone", () => {
     render(<SavingsContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
     for (const slider of screen.getAllByRole("slider")) {
       expect(zone().contains(slider)).toBe(true);
     }
@@ -170,6 +182,7 @@ describe("SavingsContainer", () => {
     it("moving the forecast inputs never changes the hero, the KPIs or saved data", () => {
       const setItem = vi.spyOn(Storage.prototype, "setItem");
       render(<SavingsContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Open" }));
       const before = savedFacts();
       const outcomeBefore = screen.getByTestId("savings-forecast-outcome").textContent;
 
@@ -198,6 +211,7 @@ describe("SavingsContainer", () => {
 
     it("shows a handed-over pay rise as a removable input in the zone only", () => {
       const { rerender } = render(<SavingsContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Open" }));
       const before = savedFacts();
       mockLocation.current = { pathname: "/app/savings", hash: "", state: { payRise: 230 } };
       rerender(<SavingsContainer />);
@@ -227,6 +241,7 @@ describe("SavingsContainer", () => {
 
     it("models a target in the second tool, seeded from saved figures, and never saves it", () => {
       render(<SavingsContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Open" }));
       const tab = screen.getByRole("tab", { name: "Time to a target" });
       fireEvent.pointerDown(tab, { button: 0 });
       fireEvent.keyDown(tab, { key: "Enter", code: "Enter" });

@@ -205,4 +205,27 @@ describe("ScenarioZone", () => {
       expect(screen.getByRole("status").textContent).toBe("Illustration: Interest saved £1,000");
     });
   });
+
+  describe("collapsible", () => {
+    it("renders collapsed with summary when collapsible is true, and expands on click", () => {
+      render(
+        <ScenarioZone collapsible summary="About £42,000 in 5 years">
+          <div>Simulator controls</div>
+        </ScenarioZone>,
+      );
+      const toggle = screen.getByRole("button", { name: "Open" });
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      expect(screen.getByTestId("scenario-zone-summary").textContent).toBe(
+        "About £42,000 in 5 years",
+      );
+      expect(screen.queryByText("Simulator controls")).toBeNull();
+
+      fireEvent.click(toggle);
+      expect(screen.getByRole("button", { name: "Hide" }).getAttribute("aria-expanded")).toBe(
+        "true",
+      );
+      expect(screen.getByText("Simulator controls")).toBeTruthy();
+      expect(screen.queryByTestId("scenario-zone-summary")).toBeNull();
+    });
+  });
 });

@@ -23,6 +23,12 @@ export const accountLink = cva({
     textUnderlineOffset: "3px",
     borderRadius: "sm",
     overflowWrap: "anywhere",
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      inset: "0",
+      zIndex: "0",
+    },
     _hover: { color: "primary", textDecoration: "underline" },
     _focusVisible: {
       outline: "2px solid",
@@ -79,7 +85,20 @@ export const groupsGrid = cva({
 export const listInCard = cva({
   base: {
     // One row height whether or not a type line shows under the name.
-    "& > ul > li": { paddingInline: "16px", alignItems: "center", minHeight: "72px" },
+    "& > ul > li": {
+      position: "relative",
+      paddingInline: "16px",
+      alignItems: "center",
+      minHeight: "72px",
+      cursor: "pointer",
+      _hover: { backgroundColor: "surface.subtle" },
+      _focusWithin: {
+        outlineWidth: "2px",
+        outlineStyle: "solid",
+        outlineColor: "border.focusRing",
+        outlineOffset: "-2px",
+      },
+    },
     "& > div": { paddingInline: "16px", paddingBlockEnd: "12px" },
   },
 });
@@ -108,6 +127,8 @@ export const netWorthLinks = cva({
 /** The ISA row's link to its allowance, under the account name at every width. */
 export const isaLink = cva({
   base: {
+    position: "relative",
+    zIndex: "1",
     textStyle: "body.sm",
     color: "primary",
     textDecoration: "underline",

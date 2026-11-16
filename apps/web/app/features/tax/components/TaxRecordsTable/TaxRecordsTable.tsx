@@ -17,6 +17,7 @@ import {
   Money,
   Select,
   Table,
+  TableToolbar,
   TBody,
   Td,
   THead,
@@ -95,6 +96,9 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
 }) => {
   const [source, setSource] = useState<"all" | TaxSource>("all");
   const [type, setType] = useState<"all" | "income" | "expense">("all");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "source" | "date" | "amount">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
 
   const inYear = useMemo(
@@ -105,14 +109,41 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
   const sources = new Set(inYear.map((r) => r.source));
   const showSource = sources.size > 1;
 
-  const filtered = useMemo(
-    () =>
-      inYear
-        .filter((r) => !showFilters || source === "all" || r.source === source)
-        .filter((r) => !showFilters || type === "all" || r.type === type)
-        .sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name)),
-    [inYear, showFilters, source, type],
-  );
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const factor = sortDir === "asc" ? 1 : -1;
+    return inYear
+      .filter((r) => !showFilters || source === "all" || r.source === source)
+      .filter((r) => !showFilters || type === "all" || r.type === type)
+      .filter(
+        (r) =>
+          !showFilters ||
+          !query ||
+          r.name.toLowerCase().includes(query) ||
+          categoryName(r.category, r.source).toLowerCase().includes(query),
+      )
+      .sort((a, b) => {
+        if (sortBy === "name") return a.name.localeCompare(b.name) * factor;
+        if (sortBy === "source")
+          return SOURCE_LABEL[a.source].localeCompare(SOURCE_LABEL[b.source]) * factor;
+        if (sortBy === "amount") {
+          const av = a.type === "income" ? recordAmount(a) : -recordAmount(a);
+          const bv = b.type === "income" ? recordAmount(b) : -recordAmount(b);
+          return (av - bv) * factor;
+        }
+        return a.date.localeCompare(b.date) * factor || a.name.localeCompare(b.name);
+      });
+  }, [inYear, showFilters, source, type, search, sortBy, sortDir]);
+
+  const toggleSort = (col: "name" | "source" | "date" | "amount") => {
+    if (sortBy === col) {
+      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(col);
+      setSortDir(col === "date" || col === "amount" ? "desc" : "asc");
+    }
+    setPage(0);
+  };
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / TAX_RECORDS_PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
@@ -145,7 +176,13 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
   return (
     <div className={root()}>
       {showFilters ? (
-        <div className={filters()}>
+        <TableToolbar
+          className={filters()}
+          searchLabel="Search records"
+          searchPlaceholder="Filter by name or category"
+          searchValue={search}
+          onSearchChange={onFilter(setSearch)}
+        >
           <FormField label="Income source">
             {(field) => (
               <Select
@@ -175,7 +212,7 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
               </Select>
             )}
           </FormField>
-        </div>
+        </TableToolbar>
       ) : null}
 
       {showFilters || pageCount > 1 ? (
@@ -192,14 +229,37 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
         <Table caption={caption ?? `Records for ${taxYear}`}>
           <THead>
             <tr>
-              <Th text>Record</Th>
+              <Th
+                sortDirection={sortBy === "name" ? sortDir : "none"}
+                text
+                onSort={() => toggleSort("name")}
+              >
+                Record
+              </Th>
               {showSource ? (
-                <Th className={wideOnly()} text>
+                <Th
+                  className={wideOnly()}
+                  sortDirection={sortBy === "source" ? sortDir : "none"}
+                  text
+                  onSort={() => toggleSort("source")}
+                >
                   Source
                 </Th>
               ) : null}
-              <Th className={wideOnly()}>Date</Th>
-              <Th numeric>Amount</Th>
+              <Th
+                className={wideOnly()}
+                sortDirection={sortBy === "date" ? sortDir : "none"}
+                onSort={() => toggleSort("date")}
+              >
+                Date
+              </Th>
+              <Th
+                numeric
+                sortDirection={sortBy === "amount" ? sortDir : "none"}
+                onSort={() => toggleSort("amount")}
+              >
+                Amount
+              </Th>
               <Th numeric>
                 <span className={visuallyHidden()}>Actions</span>
               </Th>

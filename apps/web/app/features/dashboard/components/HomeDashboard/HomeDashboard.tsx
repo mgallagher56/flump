@@ -28,12 +28,7 @@ import {
   DEFAULT_ENABLED_PAGES,
 } from "~/utils/pageConfig";
 import { netWorthDelta, type PriorNetWorth } from "../../netWorthDelta";
-import {
-  MAX_SECTION_CARDS,
-  orderSections,
-  SECTION_PRIORITY,
-  selectSectionCards,
-} from "../../sectionOrder";
+import { orderSections, SECTION_PRIORITY, selectSectionCards } from "../../sectionOrder";
 import { AccountsWidget } from "../AccountsWidget";
 import { BudgetWidget } from "../BudgetWidget";
 import { CheckInRow } from "../CheckInRow";
@@ -92,7 +87,7 @@ export const HERO_LABEL_WITH_HOME = "Net worth, including your home estimate";
 /** The dashboard's one control for which sections show. */
 export const SHOW_HIDE_LABEL = "Choose what shows here";
 
-export { MAX_SECTION_CARDS, SECTION_PRIORITY, selectSectionCards };
+export { SECTION_PRIORITY, selectSectionCards };
 
 const finiteOrNull = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -431,7 +426,6 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       <WidgetVisibilityPanel
         error={visibilityError}
-        maxVisible={MAX_SECTION_CARDS}
         open={panelOpen}
         shownKeys={cards}
         visibleKeys={dashboardWidgets}

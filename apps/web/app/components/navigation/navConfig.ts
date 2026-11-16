@@ -35,6 +35,7 @@ export const isSandboxPath = (pathname: string): boolean =>
 /** Home as shown in the signed-out sandbox: the sandbox itself. */
 export const SANDBOX_HOME_NAV_ROUTE: NavRouteItem = {
   key: "home",
+  label: "dashboard",
   route: SANDBOX_ROUTE,
   icon: House,
 };
@@ -42,7 +43,12 @@ export const SANDBOX_HOME_NAV_ROUTE: NavRouteItem = {
 /** Where "Connect AI" lands: the AI tab of the settings page. */
 export const CONNECT_AI_ROUTE = "/app/profile?tab=ai_connections";
 
-export const HOME_NAV_ROUTE: NavRouteItem = { key: "home", route: "/", icon: House };
+export const HOME_NAV_ROUTE: NavRouteItem = {
+  key: "home",
+  label: "dashboard",
+  route: "/",
+  icon: House,
+};
 
 /**
  * Signed-in navigation: the single source for the desktop header and the mobile drawer (IA review

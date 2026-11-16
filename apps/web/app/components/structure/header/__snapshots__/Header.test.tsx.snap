@@ -88,7 +88,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
                   />
                 </svg>
                 <span>
-                  home
+                  dashboard
                 </span>
               </a>
             </li>
@@ -369,7 +369,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
                   />
                 </svg>
                 <span>
-                  home
+                  dashboard
                 </span>
               </a>
             </li>
@@ -906,7 +906,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
                   />
                 </svg>
                 <span>
-                  home
+                  dashboard
                 </span>
               </a>
             </li>

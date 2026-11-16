@@ -212,3 +212,52 @@ export const cellPrimary = cva({
 export const cellSecondary = cva({
   base: { display: "block", marginBlockStart: "2px", color: "text.muted", fontWeight: "normal" },
 });
+
+export const sortButton = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    padding: "0",
+    border: "none",
+    backgroundColor: "transparent",
+    color: "inherit",
+    font: "inherit",
+    letterSpacing: "inherit",
+    cursor: "pointer",
+    borderRadius: "sm",
+    _hover: { color: "text.primary" },
+    _focusVisible: {
+      outlineWidth: "2px",
+      outlineStyle: "solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
+  },
+  variants: {
+    align: {
+      start: { justifyContent: "flex-start" },
+      center: { justifyContent: "center" },
+      end: { justifyContent: "flex-end" },
+    },
+  },
+  defaultVariants: { align: "start" },
+});
+
+export const tableToolbar = cva({
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+    gap: "12px",
+    marginBlockEnd: "12px",
+  },
+});
+
+export const tableSearchField = cva({
+  base: {
+    flex: "1 1 200px",
+    maxWidth: "320px",
+    minWidth: "0",
+  },
+});
