@@ -449,6 +449,50 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
     expect(late.res.destroy).toHaveBeenCalled();
     expect(late.res.end).not.toHaveBeenCalled();
   });
+
+  it("exportCsv streams full CSV and per-section CSV as uncached attachments", async () => {
+    const writeCsvExport = vi.fn(
+      async (_id: string, write: (c: string) => Promise<void>, opts?: { section?: string }) => {
+        await write(opts?.section ? "id,name\r\n" : "section,profile\r\n");
+      },
+    );
+    const full = fakeRes();
+    await make(undefined, { writeCsvExport }).exportCsv({ user: fresh }, full.res as never);
+    expect(writeCsvExport).toHaveBeenCalledWith("user-123", expect.any(Function), {
+      section: undefined,
+    });
+    expect(full.res.statusCode).toBe(200);
+    expect(full.headers["content-type"]).toBe("text/csv; charset=utf-8");
+    expect(full.headers["content-disposition"]).toMatch(
+      /^attachment; filename="flump-export-\d{4}-\d{2}-\d{2}\.csv"$/,
+    );
+    expect(full.headers["cache-control"]).toBe("no-store");
+    expect(full.headers["x-content-type-options"]).toBe("nosniff");
+    expect(full.chunks.join("")).toBe("section,profile\r\n");
+    expect(full.res.end).toHaveBeenCalled();
+
+    const scoped = fakeRes();
+    await make(undefined, { writeCsvExport }).exportCsv(
+      { user: fresh },
+      scoped.res as never,
+      "accounts",
+    );
+    expect(writeCsvExport).toHaveBeenCalledWith("user-123", expect.any(Function), {
+      section: "accounts",
+    });
+    expect(scoped.headers["content-disposition"]).toMatch(
+      /^attachment; filename="flump-export-accounts-\d{4}-\d{2}-\d{2}\.csv"$/,
+    );
+  });
+
+  it("exportCsv rejects an unknown section with 400 before calling the exporter", async () => {
+    const writeCsvExport = vi.fn();
+    const { res } = fakeRes();
+    await expect(
+      make(undefined, { writeCsvExport }).exportCsv({ user: fresh }, res as never, "bogus"),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(writeCsvExport).not.toHaveBeenCalled();
+  });
 });
 
 describe("UserProfileController terms acceptance (BE-15, M-PRIV3)", () => {

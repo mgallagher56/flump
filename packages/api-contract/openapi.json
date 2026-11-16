@@ -12649,6 +12649,72 @@
         "tags": ["profile"]
       }
     },
+    "/v1/user-profile/export/csv": {
+      "get": {
+        "operationId": "profile.exportCsv",
+        "responses": {
+          "200": {
+            "description": "Success. Not a JSON body (see NON_JSON_RESPONSE_ROUTES)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`unauthorized`: missing or invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`forbidden` or `not_invited`: the account may not use this route."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": ["profile"]
+      }
+    },
     "/v1/user-profile/reset-financial-data": {
       "post": {
         "operationId": "profile.resetFinancialData",

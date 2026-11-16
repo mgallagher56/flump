@@ -1,6 +1,7 @@
 import {
   AcceptTermsRequest,
   type AcceptTermsResponse,
+  type AccountExportKey,
   DeleteUserRequest,
   type DeleteUserResponse,
   ResetFinancialDataRequest,
@@ -20,6 +21,7 @@ import {
   Logger,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   ServiceUnavailableException,
@@ -35,7 +37,12 @@ import { TERMS_VERSION_CONFIG } from "../../config/privacy.config";
 import { expectedVersion, setEtag } from "../../contract/etag";
 import { RateLimit } from "../../security/rate-limit.decorator";
 import { AccountDeletionService } from "../privacy/account-deletion.service";
-import { AccountExportService, exportFileName } from "../privacy/account-export.service";
+import {
+  AccountExportService,
+  csvExportFileName,
+  exportFileName,
+  isAccountExportKey,
+} from "../privacy/account-export.service";
 import {
   type ProfileView,
   type ResetFinancialDataResult,
@@ -154,9 +161,50 @@ export class UserProfileController {
   @HttpCode(200)
   async exportData(@Req() req: AuthenticatedRequest, @Res() res: Response): Promise<void> {
     const now = new Date();
+    await this.streamExport(res, "application/json; charset=utf-8", exportFileName(now), (write) =>
+      this.accountExport.writeExport(req.user.id, write, now),
+    );
+  }
+
+  /**
+   * The caller's data export as RFC 4180 CSV with formula-injection protection (E19 portability).
+   * Streams all sections by default, or a single section when `?section=<key>` is provided.
+   * Writes the `user.exported` audit row before the first byte.
+   */
+  @Get("user-profile/export/csv")
+  @RateLimit("dataExport")
+  @HttpCode(200)
+  async exportCsv(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response,
+    @Query("section") section?: string,
+  ): Promise<void> {
+    let validatedSection: AccountExportKey | undefined;
+    if (section !== undefined && section !== "") {
+      if (!isAccountExportKey(section)) {
+        throw new BadRequestException("Unknown export section.");
+      }
+      validatedSection = section;
+    }
+    const now = new Date();
+    await this.streamExport(
+      res,
+      "text/csv; charset=utf-8",
+      csvExportFileName(now, validatedSection),
+      (write) =>
+        this.accountExport.writeCsvExport(req.user.id, write, { section: validatedSection }),
+    );
+  }
+
+  private async streamExport(
+    res: Response,
+    contentType: string,
+    filename: string,
+    run: (write: (chunk: string) => Promise<void>) => Promise<void>,
+  ): Promise<void> {
     res.status(200);
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="${exportFileName(now)}"`);
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Content-Type-Options", "nosniff");
     const write = (chunk: string) =>
@@ -175,7 +223,7 @@ export class UserProfileController {
         res.once("close", onClose);
       });
     try {
-      await this.accountExport.writeExport(req.user.id, write, now);
+      await run(write);
       res.end();
     } catch (err) {
       this.logger.warn(`Export failed: ${safeErrorSummary(err)}`);

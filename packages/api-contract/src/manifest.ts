@@ -653,6 +653,14 @@ export const routes = {
       ownership: "user",
       group: "profile",
     }),
+    exportCsv: defineRoute({
+      id: "profile.exportCsv",
+      method: "GET",
+      path: "user-profile/export/csv",
+      auth: "user",
+      ownership: "user",
+      group: "profile",
+    }),
     updateChecklist: defineRoute({
       id: "profile.updateChecklist",
       method: "PATCH",
@@ -795,6 +803,7 @@ export const routes = {
  * Routes whose 2xx body is not JSON, so they carry no response schema. Shrink-only.
  * - `tax.receipt`: the receipt file bytes.
  * - `mcp.post`, `mcp.get`: JSON-RPC over the MCP streamable transport, written to the raw response.
+ * - `profile.export`, `profile.exportCsv`: streamed JSON/CSV download attachments.
  * - `app.hello`: a plain-text banner.
  */
 export const NON_JSON_RESPONSE_ROUTES = [
@@ -802,6 +811,7 @@ export const NON_JSON_RESPONSE_ROUTES = [
   "mcp.get",
   "mcp.post",
   "profile.export",
+  "profile.exportCsv",
   "tax.receipt",
 ] as const;
 

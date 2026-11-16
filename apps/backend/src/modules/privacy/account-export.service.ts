@@ -7,6 +7,7 @@ import { decryptReceiptData, isEncryptedToken } from "@flump/banking/server";
 import { Injectable } from "@nestjs/common";
 import { DataSource, type EntityManager, type FindOptionsOrder } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
+import { formatCsvRow } from "./csv-export";
 import { USER_DATA_REGISTRY, type UserDataTable } from "./user-data-registry";
 
 /** Plain-English notes written into every export. */
@@ -39,6 +40,17 @@ export function exportFileName(now: Date): string {
   return `flump-export-${now.toISOString().slice(0, 10)}.json`;
 }
 
+/** `YYYY-MM-DD` (UTC) for the CSV download's file name. */
+export function csvExportFileName(now: Date, section?: AccountExportKey): string {
+  const date = now.toISOString().slice(0, 10);
+  return section ? `flump-export-${section}-${date}.csv` : `flump-export-${date}.csv`;
+}
+
+/** Type guard for an export section key from query parameters. */
+export function isAccountExportKey(value: string): value is AccountExportKey {
+  return Object.hasOwn(ACCOUNT_EXPORT_SECTIONS, value);
+}
+
 /**
  * Writes the caller's data export (BE-04, finding H9) as one JSON document, streamed: the envelope
  * first, then each table a page at a time, so no table is ever held in memory whole. Only the
@@ -57,41 +69,9 @@ export class AccountExportService {
     now: Date = new Date(),
     deadlineMs: number = EXPORT_DEADLINE_MS,
   ): Promise<void> {
-    const byKey = new Map<AccountExportKey, UserDataTable>(
-      USER_DATA_REGISTRY.map((t) => [t.key, t]),
-    );
-    // A slow (or stalled) client must not hold a pool connection inside an open transaction: every
-    // write is raced against one overall deadline, and missing it aborts the export, which rolls
-    // the transaction back and frees the connection. The caller then cuts the response.
-    const deadline = Date.now() + deadlineMs;
-    const write: ExportWriter = async (chunk) => {
-      const left = deadline - Date.now();
-      if (left <= 0) throw new ExportDeadlineError();
-      let timer: NodeJS.Timeout | undefined;
-      try {
-        await Promise.race([
-          rawWrite(chunk),
-          new Promise<never>((_, reject) => {
-            timer = setTimeout(() => reject(new ExportDeadlineError()), left);
-          }),
-        ]);
-      } finally {
-        clearTimeout(timer);
-      }
-    };
-    // N3: the audit row is written BEFORE the first byte of the export, on its own connection (the
-    // export transaction below is read only). If the insert fails, this throws before anything has
-    // been written to the response, so the caller answers with the standard error. So an export is
-    // never delivered without a record. The reverse can happen: a record may exist for an export
-    // that then failed mid-stream.
-    await recordAuditEvent(this.dataSource.manager, { userId, action: "user.exported" });
-    await this.dataSource.transaction("REPEATABLE READ", async (manager) => {
-      await manager.query("SET TRANSACTION READ ONLY");
-      // Server-side backstops, scoped to this transaction only.
-      await manager.query(`SET LOCAL statement_timeout = ${EXPORT_STATEMENT_TIMEOUT_MS}`);
-      await manager.query(
-        `SET LOCAL idle_in_transaction_session_timeout = ${EXPORT_IDLE_IN_TRANSACTION_TIMEOUT_MS}`,
-      );
+    const byKey = this.registryByKey();
+    const write = this.withDeadline(rawWrite, deadlineMs);
+    await this.runReadOnlyExport(userId, async (manager) => {
       const head = {
         schemaVersion: ACCOUNT_EXPORT_SCHEMA_VERSION,
         exportedAt: now.toISOString(),
@@ -107,6 +87,89 @@ export class AccountExportService {
         await this.writeSection(manager, table, userId, write);
       }
       await write("}");
+    });
+  }
+
+  /**
+   * Streams the caller's data export as RFC 4180 CSV with formula-injection protection. When
+   * `section` is specified, writes a single table with its header row; when omitted, writes every
+   * section in `ACCOUNT_EXPORT_SECTIONS` order. Writes the `user.exported` audit row before the
+   * first byte.
+   */
+  async writeCsvExport(
+    userId: string,
+    rawWrite: ExportWriter,
+    options: { section?: AccountExportKey; deadlineMs?: number } = {},
+  ): Promise<void> {
+    const byKey = this.registryByKey();
+    const { section, deadlineMs = EXPORT_DEADLINE_MS } = options;
+    if (section && !byKey.has(section)) {
+      throw new Error(`export section ${section} has no registry table`);
+    }
+    const write = this.withDeadline(rawWrite, deadlineMs);
+    await this.runReadOnlyExport(userId, async (manager) => {
+      if (section) {
+        const table = byKey.get(section);
+        if (!table) throw new Error(`export section ${section} has no registry table`);
+        await this.writeCsvSection(manager, table, userId, write);
+        return;
+      }
+      const keys = Object.keys(ACCOUNT_EXPORT_SECTIONS) as AccountExportKey[];
+      for (let i = 0; i < keys.length; i += 1) {
+        const key = keys[i] as AccountExportKey;
+        const table = byKey.get(key);
+        if (!table) throw new Error(`export section ${key} has no registry table`);
+        if (i > 0) await write("\r\n");
+        await write(formatCsvRow(["section", key]));
+        await this.writeCsvSection(manager, table, userId, write);
+      }
+    });
+  }
+
+  private registryByKey(): Map<AccountExportKey, UserDataTable> {
+    return new Map<AccountExportKey, UserDataTable>(USER_DATA_REGISTRY.map((t) => [t.key, t]));
+  }
+
+  private withDeadline(rawWrite: ExportWriter, deadlineMs: number): ExportWriter {
+    // A slow (or stalled) client must not hold a pool connection inside an open transaction: every
+    // write is raced against one overall deadline, and missing it aborts the export, which rolls
+    // the transaction back and frees the connection. The caller then cuts the response.
+    const deadline = Date.now() + deadlineMs;
+    return async (chunk) => {
+      const left = deadline - Date.now();
+      if (left <= 0) throw new ExportDeadlineError();
+      let timer: NodeJS.Timeout | undefined;
+      try {
+        await Promise.race([
+          rawWrite(chunk),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(new ExportDeadlineError()), left);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+  }
+
+  private async runReadOnlyExport(
+    userId: string,
+    fn: (manager: EntityManager) => Promise<void>,
+  ): Promise<void> {
+    // N3: the audit row is written BEFORE the first byte of the export, on its own connection (the
+    // export transaction below is read only). If the insert fails, this throws before anything has
+    // been written to the response, so the caller answers with the standard error. So an export is
+    // never delivered without a record. The reverse can happen: a record may exist for an export
+    // that then failed mid-stream.
+    await recordAuditEvent(this.dataSource.manager, { userId, action: "user.exported" });
+    await this.dataSource.transaction("REPEATABLE READ", async (manager) => {
+      await manager.query("SET TRANSACTION READ ONLY");
+      // Server-side backstops, scoped to this transaction only.
+      await manager.query(`SET LOCAL statement_timeout = ${EXPORT_STATEMENT_TIMEOUT_MS}`);
+      await manager.query(
+        `SET LOCAL idle_in_transaction_session_timeout = ${EXPORT_IDLE_IN_TRANSACTION_TIMEOUT_MS}`,
+      );
+      await fn(manager);
     });
   }
 
@@ -154,5 +217,35 @@ export class AccountExportService {
       if (rows.length < batchSize) break;
     }
     await write("]");
+  }
+
+  private async writeCsvSection(
+    manager: EntityManager,
+    table: UserDataTable,
+    userId: string,
+    write: ExportWriter,
+  ): Promise<void> {
+    const { columns, orderBy, batchSize, shape } = table.export;
+    const repo = manager.getRepository(table.entity);
+    const select = Object.fromEntries(columns.map((c) => [c, true]));
+    const order = Object.fromEntries(orderBy.map((c) => [c, "ASC"])) as FindOptionsOrder<never>;
+
+    await write(formatCsvRow(columns));
+
+    if (shape === "object") {
+      const row = await repo.findOne({ where: { userId }, select, order });
+      if (row) {
+        await write(formatCsvRow(columns.map((c) => (row as Record<string, unknown>)[c] ?? null)));
+      }
+      return;
+    }
+
+    for (let skip = 0; ; skip += batchSize) {
+      const rows = await repo.find({ where: { userId }, select, order, skip, take: batchSize });
+      for (const row of rows) {
+        await write(formatCsvRow(columns.map((c) => (row as Record<string, unknown>)[c] ?? null)));
+      }
+      if (rows.length < batchSize) break;
+    }
   }
 }

@@ -183,6 +183,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         body: { confirmation: "DELETE" },
       },
       { key: "GET /user-profile/export", method: "get", path: "/user-profile/export" },
+      { key: "GET /user-profile/export/csv", method: "get", path: "/user-profile/export/csv" },
       {
         key: "POST /user-profile/terms-acceptance",
         method: "post",
