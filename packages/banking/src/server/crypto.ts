@@ -10,10 +10,8 @@ const KEY_ENV_VAR = "BANKING_TOKEN_ENCRYPTION_KEY";
 const KEYS_ENV_VAR = "BANKING_TOKEN_ENCRYPTION_KEYS";
 const MIN_KEY_LENGTH = 32;
 
-/** Legacy version: unprefixed `iv:tag:ct` tokens are read with this key, without AAD. */
-const LEGACY_KEY_VERSION = 1;
+const DEFAULT_KEY_VERSION = 1;
 
-const LEGACY_TOKEN_PATTERN = /^[0-9a-f]{24}:[0-9a-f]{32}:[0-9a-f]+$/i;
 const VERSIONED_TOKEN_PATTERN = /^v([1-9][0-9]*):([0-9a-f]{24}):([0-9a-f]{32}):([0-9a-f]+)$/i;
 
 /**
@@ -67,7 +65,7 @@ export function keyringFromSecret(secret: string, version = 1): BankingKeyring {
  */
 export function resolveBankingKeyring(env: Record<string, string | undefined>): BankingKeyring {
   const raw = env[KEYS_ENV_VAR]?.trim();
-  if (!raw) return keyringFromSecret(resolveBankingKey(env), LEGACY_KEY_VERSION);
+  if (!raw) return keyringFromSecret(resolveBankingKey(env), DEFAULT_KEY_VERSION);
 
   const strict = isStrictEnv(env);
   const keys = new Map<number, string>();
@@ -132,7 +130,6 @@ export interface BankingCryptoOptions {
 
 interface ParsedToken {
   version: number;
-  legacy: boolean;
   ivHex: string;
   tagHex: string;
   ctHex: string;
@@ -141,20 +138,13 @@ interface ParsedToken {
 function parseToken(token: string): ParsedToken | null {
   if (!token || typeof token !== "string") return null;
   const v = VERSIONED_TOKEN_PATTERN.exec(token);
-  if (v) {
-    return {
-      version: Number(v[1]),
-      legacy: false,
-      ivHex: v[2]!,
-      tagHex: v[3]!,
-      ctHex: v[4]!,
-    };
-  }
-  if (LEGACY_TOKEN_PATTERN.test(token)) {
-    const [ivHex, tagHex, ctHex] = token.split(":") as [string, string, string];
-    return { version: LEGACY_KEY_VERSION, legacy: true, ivHex, tagHex, ctHex };
-  }
-  return null;
+  if (!v) return null;
+  return {
+    version: Number(v[1]),
+    ivHex: v[2]!,
+    tagHex: v[3]!,
+    ctHex: v[4]!,
+  };
 }
 
 /**
@@ -178,8 +168,8 @@ export function encryptBankingToken(plaintext: string, options: BankingCryptoOpt
 }
 
 /**
- * Decrypts a token in the versioned format, or the legacy `iv:tag:ciphertext` format (read with
- * the version-1 key and no AAD). Throws on a malformed token, an unknown key version, a wrong
+ * Decrypts a token in the versioned `v<version>:iv:tag:ciphertext` format (S4: unprefixed legacy
+ * tokens are refused). Throws on a malformed or unprefixed token, an unknown key version, a wrong
  * key, mismatched AAD or tampering.
  */
 export function decryptBankingToken(token: string, options: BankingCryptoOptions = {}): string {
@@ -196,7 +186,7 @@ export function decryptBankingToken(token: string, options: BankingCryptoOptions
   const tag = Buffer.from(parsed.tagHex, "hex");
 
   const decipher = createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
-  if (!parsed.legacy && options.aad !== undefined) {
+  if (options.aad !== undefined) {
     decipher.setAAD(Buffer.from(options.aad, "utf8"));
   }
   decipher.setAuthTag(tag);
@@ -206,19 +196,18 @@ export function decryptBankingToken(token: string, options: BankingCryptoOptions
   return decrypted;
 }
 
-/** Checks whether a string is in the versioned or the legacy encrypted format. */
+/** Checks whether a string is in the versioned `v<version>:iv:tag:ciphertext` encrypted format. */
 export function isEncryptedToken(token: string): boolean {
   return parseToken(token) !== null;
 }
 
 /**
- * True when an encrypted token should be re-encrypted: it is in the legacy format or was written
- * under a key version that is not the active one. Non-encrypted input returns false.
+ * True when a versioned encrypted token was written under a key version that is not the active
+ * one. Non-encrypted or unprefixed input returns false.
  */
 export function bankingTokenNeedsReencrypt(token: string, keyring?: BankingKeyring): boolean {
   const parsed = parseToken(token);
   if (!parsed) return false;
-  if (parsed.legacy) return true;
   const ring = keyring ?? resolveBankingKeyring(process.env);
   return parsed.version !== ring.activeVersion;
 }

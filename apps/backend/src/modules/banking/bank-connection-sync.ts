@@ -14,9 +14,11 @@ import type { BankProvider, ProviderAccount } from "./providers/provider.interfa
 // with its own guarantee:
 //   1. `claim`: one sync per connection at a time, through a lease column (a second one gets 409).
 //      A crashed sync's lease lapses after SYNC_LEASE_MS.
-//   2. `activeAccessToken`: refresh (grant_type=refresh_token) under a row lock, so two code paths
-//      can never spend the same rotating refresh token; old ciphertext is re-encrypted to the
-//      active key version with the connection id as associated data.
+//   2. `activeAccessToken`: refresh (grant_type=refresh_token) outside any database transaction
+//      (BE-18, audit N7 / S11), coalesced in-process and persisted with an optimistic
+//      compare-and-swap on the previous ciphertext so no pooled connection or row lock is held
+//      across the provider HTTP call; old ciphertext is re-encrypted to the active key version
+//      with the connection id as associated data.
 //   3. `writeAccounts`: one transaction; accounts are upserted on the partial unique index
 //      (user_id, connection_id, external_account_id), so a retry or double click cannot insert a
 //      duplicate. An account the provider reported unusably is skipped (savepoint), never
@@ -81,6 +83,7 @@ class ConnectionGoneError extends Error {
 
 export class BankConnectionSync {
   private readonly logger = new Logger("BankConnectionSync");
+  private readonly inFlightRefreshes = new Map<string, Promise<string>>();
 
   constructor(private readonly dataSource: DataSource) {}
 
@@ -115,8 +118,9 @@ export class BankConnectionSync {
   }
 
   /**
-   * A usable plaintext access token. Refreshes it when it is about to expire, holding the
-   * connection row lock from reading the refresh token until the new tokens are saved.
+   * A usable plaintext access token. Reads the stored tokens outside any transaction, calls the
+   * provider's token refresh endpoint without holding a database connection or row lock (N7 / S11),
+   * and persists the new tokens with a conditional compare-and-swap on the previous ciphertext.
    * Throws ConnectionNeedsReconnectError or a BankProviderError (AUTH_EXPIRED when the provider
    * rejects the refresh token).
    */
@@ -125,66 +129,116 @@ export class BankConnectionSync {
     provider: BankProvider,
     credentials: OAuthClientCredentials,
   ): Promise<string> {
-    return this.dataSource.transaction(async (manager) => {
-      const repo = manager.getRepository(BankConnection);
-      const conn = await repo.findOne({
-        where: { id: connectionId },
-        lock: { mode: "pessimistic_write" },
-      });
-      if (!conn?.accessToken) throw new ConnectionNeedsReconnectError("no stored access token");
+    const existing = this.inFlightRefreshes.get(connectionId);
+    if (existing) return existing;
 
-      let access: string;
-      let refresh: string | null = null;
-      try {
-        access = BankSyncOrchestrator.decryptToken(conn.accessToken, accessTokenAad(conn.id));
-        if (conn.refreshToken)
-          refresh = BankSyncOrchestrator.decryptToken(conn.refreshToken, refreshTokenAad(conn.id));
-      } catch (err) {
-        this.logger.error(`Stored bank tokens unusable: ${safeErrorSummary(err)}`);
-        throw new ConnectionNeedsReconnectError("stored tokens cannot be decrypted");
+    const work = this.resolveActiveAccessToken(connectionId, provider, credentials).finally(() => {
+      this.inFlightRefreshes.delete(connectionId);
+    });
+    this.inFlightRefreshes.set(connectionId, work);
+    return work;
+  }
+
+  private async resolveActiveAccessToken(
+    connectionId: string,
+    provider: BankProvider,
+    credentials: OAuthClientCredentials,
+  ): Promise<string> {
+    const repo = this.dataSource.getRepository(BankConnection);
+    const conn = await repo.findOne({ where: { id: connectionId } });
+    if (!conn?.accessToken) throw new ConnectionNeedsReconnectError("no stored access token");
+
+    let access: string;
+    let refresh: string | null = null;
+    try {
+      access = BankSyncOrchestrator.decryptToken(conn.accessToken, accessTokenAad(conn.id));
+      if (conn.refreshToken) {
+        refresh = BankSyncOrchestrator.decryptToken(conn.refreshToken, refreshTokenAad(conn.id));
       }
+    } catch (err) {
+      this.logger.error(`Stored bank tokens unusable: ${safeErrorSummary(err)}`);
+      throw new ConnectionNeedsReconnectError("stored tokens cannot be decrypted");
+    }
 
-      const expiring = BankSyncOrchestrator.isTokenExpiring(
-        conn.expiresAt,
-        TOKEN_REFRESH_MARGIN_MS,
+    const expiring = BankSyncOrchestrator.isTokenExpiring(conn.expiresAt, TOKEN_REFRESH_MARGIN_MS);
+    if (expiring) {
+      if (!refresh) {
+        throw new ConnectionNeedsReconnectError("access token expired, no refresh token");
+      }
+      if (!credentials.clientId || !credentials.clientSecret) {
+        throw new ConnectionNeedsReconnectError("OAuth client credentials are not configured");
+      }
+      // Network I/O runs outside any DB transaction or row lock (N7 / S11).
+      const tokens = await provider.refreshToken(
+        credentials.clientId,
+        credentials.clientSecret,
+        refresh,
       );
-      if (expiring) {
-        if (!refresh)
-          throw new ConnectionNeedsReconnectError("access token expired, no refresh token");
-        if (!credentials.clientId || !credentials.clientSecret) {
-          throw new ConnectionNeedsReconnectError("OAuth client credentials are not configured");
-        }
-        const tokens = await provider.refreshToken(
-          credentials.clientId,
-          credentials.clientSecret,
-          refresh,
-        );
-        access = tokens.accessToken;
-        if (tokens.refreshToken) refresh = tokens.refreshToken;
-        await repo.update(conn.id, {
-          accessToken: BankSyncOrchestrator.encryptToken(access, accessTokenAad(conn.id)),
-          refreshToken: refresh
-            ? BankSyncOrchestrator.encryptToken(refresh, refreshTokenAad(conn.id))
-            : null,
-          expiresAt: BankSyncOrchestrator.calculateExpiryDate(tokens.expiresIn) ?? null,
-        });
-        return access;
-      }
+      access = tokens.accessToken;
+      if (tokens.refreshToken) refresh = tokens.refreshToken;
+      const nextAccessCipher = BankSyncOrchestrator.encryptToken(access, accessTokenAad(conn.id));
+      const nextRefreshCipher = refresh
+        ? BankSyncOrchestrator.encryptToken(refresh, refreshTokenAad(conn.id))
+        : null;
+      const nextExpiresAt = BankSyncOrchestrator.calculateExpiryDate(tokens.expiresIn) ?? null;
 
-      // Lazy re-encryption (M11): old ciphertext moves to the active key and gains the AAD.
-      const stale =
-        BankSyncOrchestrator.tokenNeedsReencrypt(conn.accessToken) ||
-        (conn.refreshToken !== null && BankSyncOrchestrator.tokenNeedsReencrypt(conn.refreshToken));
-      if (stale) {
-        await repo.update(conn.id, {
-          accessToken: BankSyncOrchestrator.encryptToken(access, accessTokenAad(conn.id)),
-          refreshToken: refresh
-            ? BankSyncOrchestrator.encryptToken(refresh, refreshTokenAad(conn.id))
-            : null,
-        });
+      const updated = returnedRows<{ id: string }>(
+        await this.dataSource.query(
+          `UPDATE "bank_connections"
+              SET "access_token" = $1,
+                  "refresh_token" = $2,
+                  "expires_at" = $3,
+                  "updated_at" = now()
+            WHERE "id" = $4
+              AND "access_token" = $5
+              AND "refresh_token" IS NOT DISTINCT FROM $6
+            RETURNING "id"`,
+          [
+            nextAccessCipher,
+            nextRefreshCipher,
+            nextExpiresAt,
+            conn.id,
+            conn.accessToken,
+            conn.refreshToken,
+          ],
+        ),
+      );
+      if (updated.length === 0) {
+        const latest = await repo.findOne({ where: { id: connectionId } });
+        if (!latest?.accessToken) throw new ConnectionNeedsReconnectError("no stored access token");
+        try {
+          return BankSyncOrchestrator.decryptToken(latest.accessToken, accessTokenAad(latest.id));
+        } catch (err) {
+          this.logger.error(`Stored bank tokens unusable: ${safeErrorSummary(err)}`);
+          throw new ConnectionNeedsReconnectError("stored tokens cannot be decrypted");
+        }
       }
       return access;
-    });
+    }
+
+    // Lazy re-encryption (M11): old key-version ciphertext moves to the active key.
+    const stale =
+      BankSyncOrchestrator.tokenNeedsReencrypt(conn.accessToken) ||
+      (conn.refreshToken !== null && BankSyncOrchestrator.tokenNeedsReencrypt(conn.refreshToken));
+    if (stale) {
+      await this.dataSource.query(
+        `UPDATE "bank_connections"
+            SET "access_token" = $1,
+                "refresh_token" = $2,
+                "updated_at" = now()
+          WHERE "id" = $3
+            AND "access_token" = $4
+            AND "refresh_token" IS NOT DISTINCT FROM $5`,
+        [
+          BankSyncOrchestrator.encryptToken(access, accessTokenAad(conn.id)),
+          refresh ? BankSyncOrchestrator.encryptToken(refresh, refreshTokenAad(conn.id)) : null,
+          conn.id,
+          conn.accessToken,
+          conn.refreshToken,
+        ],
+      );
+    }
+    return access;
   }
 
   /** Writes the provider's accounts and this month's snapshots in one transaction. */

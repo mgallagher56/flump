@@ -379,16 +379,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
       expect(provider.refreshToken).not.toHaveBeenCalled();
     });
 
-    it("a legacy token still decrypts and is re-encrypted to v1 with the connection id on the next sync", async () => {
+    it("an unprefixed legacy token (no version or AAD) is refused and needs reconnecting (S4)", async () => {
       const id = await insertConnection({ accessToken: legacyEncrypt("legacy-access", TEST_KEY) });
       const provider = scriptedProvider(() => [account("a", 1)]);
-      await financeWith(provider).syncBankConnection(PERSON, id);
-      expect(provider.fetchAccounts.mock.calls[0]?.[0]).toBe("legacy-access");
-      const row = await connectionRow(id);
-      expect(row.accessToken).toMatch(/^v1:/);
-      expect(BankSyncOrchestrator.decryptToken(row.accessToken as string, accessTokenAad(id))).toBe(
-        "legacy-access",
-      );
+      const result = await financeWith(provider).syncBankConnection(PERSON, id);
+      expect(result).toMatchObject({ success: false, connection: { status: "needs_reconnect" } });
+      expect(provider.fetchAccounts).not.toHaveBeenCalled();
     });
 
     it("rotation: a v1 token moves to v2 on the next sync once the key list names v2 first", async () => {

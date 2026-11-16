@@ -78,14 +78,16 @@ describe("banking server: crypto (AES-256-GCM)", () => {
     expect(() => safeDecryptBankingToken(enc, { keyring: RING_A })).toThrow();
   });
 
-  it("still decrypts legacy unprefixed tokens with the version-1 key, ignoring AAD", () => {
+  it("refuses legacy unprefixed tokens that lack a version prefix (S4)", () => {
     const legacy = legacyEncrypt("legacy-tok", KEY_A);
-    expect(isEncryptedToken(legacy)).toBe(true);
-    expect(decryptBankingToken(legacy, { keyring: RING_A })).toBe("legacy-tok");
-    expect(safeDecryptBankingToken(legacy, { keyring: RING_A, aad: "conn-1:accessToken" })).toBe(
-      "legacy-tok",
+    expect(isEncryptedToken(legacy)).toBe(false);
+    expect(() => decryptBankingToken(legacy, { keyring: RING_A })).toThrow(
+      /Invalid encrypted banking token format/,
     );
-    expect(bankingTokenNeedsReencrypt(legacy, RING_A)).toBe(true);
+    expect(() =>
+      safeDecryptBankingToken(legacy, { keyring: RING_A, aad: "conn-1:accessToken" }),
+    ).toThrow(/not in the encrypted format/);
+    expect(bankingTokenNeedsReencrypt(legacy, RING_A)).toBe(false);
   });
 
   it("rotates: old v1 tokens decrypt under a ring whose active key is v2", () => {
