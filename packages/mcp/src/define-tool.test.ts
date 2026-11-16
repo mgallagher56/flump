@@ -60,7 +60,7 @@ describe("defineFlumpTool envelope", () => {
       schemaVersion: "2.0",
       currency: "GBP",
       result: { items: ["item-0", "item-1"] },
-      provenance: {},
+      provenance: { userText: "untrusted_data" },
       assumptions: [],
       missing: [],
       truncated: false,

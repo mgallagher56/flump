@@ -265,6 +265,16 @@ jobs:
       - name: 🏗️ Build all packages
         run: bun run build
 
+      - name: 📜 Generate workspace CycloneDX SBOM
+        run: bun scripts/generate-sbom.ts --app workspace --root . --out sboms/sbom-workspace.cdx.json
+
+      - name: 📎 Upload workspace CycloneDX SBOM
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-workspace
+          path: sboms/sbom-workspace.cdx.json
+          retention-days: 30
+
   # E8 Storybook a11y gate. Blocking since BE-01 (green on main through the bedding-in period
   # that ended 2026-11-25): both legs are required checks (.github/required-checks.json).
   # Light (plus the build smoke) and dark run as parallel matrix legs, each through turbo so an
@@ -392,6 +402,16 @@ jobs:
 
       - name: 🏗️ Build all packages
         run: bun run build
+
+      - name: 📜 Generate workspace CycloneDX SBOM
+        run: bun scripts/generate-sbom.ts --app workspace --root . --out sboms/sbom-workspace.cdx.json
+
+      - name: 📎 Upload workspace CycloneDX SBOM
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-workspace
+          path: sboms/sbom-workspace.cdx.json
+          retention-days: 30
 
       # Spawns the built apps/web server (server.ts) and checks headers on every response kind,
       # the query-free access log and graceful shutdown. Needs the build above.
@@ -553,6 +573,57 @@ jobs:
           [ -z "$extra" ] || { echo "web image carries files beyond its runtime set:"; echo "$extra"; exit 1; }
           docker run --rm --entrypoint sh flump-web-ci -c 'test -f /app/apps/web/build/server/index.js && test -d /app/apps/web/build/client'
 
+      - name: 📜 Generate per-image CycloneDX SBOMs
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          set -e
+          mkdir -p sboms
+          for app in backend web marketing; do
+            docker run --rm --entrypoint bun "flump-$app-ci" -e '
+              import { existsSync, readdirSync, readFileSync } from "node:fs";
+              import { join } from "node:path";
+              const out = [];
+              const seen = new Set();
+              const walk = (nm) => {
+                if (!existsSync(nm)) return;
+                for (const e of readdirSync(nm, { withFileTypes: true })) {
+                  if (!e.isDirectory() && !e.isSymbolicLink()) continue;
+                  const p = join(nm, e.name);
+                  if (seen.has(p)) continue;
+                  seen.add(p);
+                  if (e.name === ".bun") {
+                    for (const b of readdirSync(p, { withFileTypes: true })) if (b.isDirectory()) walk(join(p, b.name, "node_modules"));
+                    continue;
+                  }
+                  if (e.name.startsWith("@")) {
+                    for (const s of readdirSync(p, { withFileTypes: true })) {
+                      if (!s.isDirectory() && !s.isSymbolicLink()) continue;
+                      const d = join(p, s.name);
+                      try { const j = JSON.parse(readFileSync(join(d, "package.json"), "utf8")); if (j.name && j.version) out.push({ name: j.name, version: j.version, ...(typeof j.license === "string" ? { license: j.license } : {}) }); } catch {}
+                      walk(join(d, "node_modules"));
+                    }
+                    continue;
+                  }
+                  try { const j = JSON.parse(readFileSync(join(p, "package.json"), "utf8")); if (j.name && j.version) out.push({ name: j.name, version: j.version, ...(typeof j.license === "string" ? { license: j.license } : {}) }); } catch {}
+                  walk(join(p, "node_modules"));
+                }
+              };
+              walk("/app/node_modules");
+              walk("/app/apps/'"$app"'/node_modules");
+              console.log(JSON.stringify(out));
+            ' > "sboms/$app-packages.json"
+            bun scripts/generate-sbom.ts --app "$app" --packages-json "sboms/$app-packages.json" --out "sboms/sbom-$app.cdx.json"
+            rm -f "sboms/$app-packages.json"
+          done
+
+      - name: 📎 Upload image CycloneDX SBOMs
+        if: steps.changed.outputs.run == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-cyclonedx
+          path: sboms/sbom-*.cdx.json
+          retention-days: 30
+
       # The Sentry token is a build ARG in the web build stage. The runner stage starts from the
       # base image and copies files out, so the value must not be in the final image: not in its
       # layer history or config, and not in any file.
@@ -703,14 +774,12 @@ jobs:
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
 
-      # Policy: exit 1 (real high/critical advisory) fails pull_request runs only; on
-      # push-to-main and schedule it is reported loudly but does not fail the job, so
-      # Railway "Wait for CI" deploys are never blocked by a new upstream advisory.
+      # Policy: exit 1 (real high/critical advisory with no allow-list entry) fails the job on
+      # every event (PRs, push to main, and weekly schedule) so known high/critical advisories
+      # never fail open.
       # Exit 2 (registry outage / unreadable report, after one retry in the script) is a
       # warning on every event: an outage is not the PR's fault and must not turn main red.
-      - name: 🛡️ Audit dependencies (high and critical block PRs)
-        env:
-          EVENT_NAME: ${{ github.event_name }}
+      - name: 🛡️ Audit dependencies (high and critical block)
         run: |
           set +e
           bun run check:audit 2>&1 | tee audit-output.txt
@@ -728,11 +797,8 @@ jobs:
                 cat audit-output.txt
                 echo '```'
               } >> "$GITHUB_STEP_SUMMARY"
-              if [ "$EVENT_NAME" = "pull_request" ]; then
-                echo "::error title=Dependency audit::High or critical advisories found (see job summary). Fix, upgrade, or add a time-boxed audit-allowlist.json entry."
-                exit 1
-              fi
-              echo "::warning title=Dependency audit ($EVENT_NAME)::High or critical advisories found on ${GITHUB_REF_NAME}. Reported only so deploys are not blocked; triage promptly (see job summary)."
+              echo "::error title=Dependency audit::High or critical advisories found (see job summary). Fix, upgrade, or add a time-boxed audit-allowlist.json entry."
+              exit 1
               ;;
             2)
               {

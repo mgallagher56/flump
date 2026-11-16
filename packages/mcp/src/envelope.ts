@@ -89,7 +89,10 @@ export function buildEnvelope<R>(output: ToolOutput<R>, now: Date = new Date()):
     currency: "GBP",
     ...(output.taxYear === undefined ? {} : { taxYear: output.taxYear }),
     result: output.result,
-    provenance: output.provenance ?? {},
+    provenance: {
+      ...(output.provenance ?? {}),
+      userText: "untrusted_data",
+    },
     assumptions: output.assumptions ?? [],
     missing: output.missing ?? [],
     ...(output.verification === undefined ? {} : { verification: output.verification }),

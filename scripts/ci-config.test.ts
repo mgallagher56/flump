@@ -375,13 +375,27 @@ describe("supply chain (BE-01 L8, M17, E36 2(a))", () => {
 });
 
 describe("backend type safety (BE-01 M21)", () => {
-  test("backend is strict, and check:laws runs the backend laws", () => {
+  test("backend is strict, and check:laws runs the backend laws and workspace dep check", () => {
     const tsconfig = Bun.JSONC.parse(
       readFileSync(resolve(repoRoot, "apps/backend/tsconfig.json"), "utf8"),
     ) as { compilerOptions: Record<string, unknown> };
     expect(tsconfig.compilerOptions.strict).toBe(true);
     const { scripts } = readJson("package.json");
     expect(scripts["check:laws"]).toContain("bun scripts/check-backend-laws.ts");
+    expect(scripts["check:laws"]).toContain("bun scripts/check-workspace-deps.ts");
+  });
+
+  test("CI generates CycloneDX SBOMs and fails audit on high/critical advisories on every event (E36 H2)", () => {
+    const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
+    expect(ci).toContain("bun scripts/generate-sbom.ts --app workspace");
+    expect(ci).toContain('bun scripts/generate-sbom.ts --app "$app"');
+    expect(ci).toContain("name: sbom-cyclonedx");
+    expect(ci).toContain("name: sbom-workspace");
+
+    const auditJob = ci.slice(ci.indexOf("\n  audit:"));
+    expect(auditJob).toContain("bun run check:audit");
+    expect(auditJob).not.toContain('if [ "$EVENT_NAME" = "pull_request" ]');
+    expect(auditJob).toContain("exit 1");
   });
 });
 
