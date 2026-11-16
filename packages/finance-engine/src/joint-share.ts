@@ -1,4 +1,5 @@
 import { categorizeAccountType, isLiabilityCategory } from "./account-category.js";
+import { roundPence } from "./uk-tax-year.js";
 
 /** Ownership mode for an account, debt, mortgage or property item (E34 Slice 1). */
 export type AccountOwnership = "sole" | "joint";
@@ -29,11 +30,11 @@ export interface AccountShareInput {
   share_pct?: number | string | null;
 }
 
-const ISA_TYPE_PATTERN = /\b(isa|lisa)\b/i;
-const PENSION_TYPE_PATTERN = /\b(pensions?|sipp)\b/i;
-const LIABILITY_TYPE_PATTERN =
-  /\b(mortgages?|loans?|loan_personal|credit[_ ]cards?|overdrafts?|car[_ ]finance|bnpl|debts?)\b/i;
-const STUDENT_LOAN_TYPE_PATTERN = /\bstudent[_ ]loans?\b/i;
+const ISA_PATTERN = /\b(?:j?isa|lisa)\b/i;
+const PENSION_PATTERN = /\b(?:pensions?|sipp)\b/i;
+const LIABILITY_PATTERN =
+  /\b(?:mortgages?|loans?|credit cards?|overdrafts?|car finance|bnpl|debts?)\b/i;
+const STUDENT_LOAN_PATTERN = /\bstudent loans?\b/i;
 
 function normalizeInput(input?: AccountShareInput | string | null): AccountShareInput {
   if (!input) return {};
@@ -41,32 +42,42 @@ function normalizeInput(input?: AccountShareInput | string | null): AccountShare
   return input;
 }
 
+function normalizeTokens(text?: string | null): string {
+  return typeof text === "string" ? text.replace(/[_-]+/g, " ").trim() : "";
+}
+
 function resolveRawType(input: AccountShareInput): string {
-  const raw = input.type ?? input.rawType ?? "";
-  return typeof raw === "string" ? raw.trim() : "";
+  const type = typeof input.type === "string" ? input.type.trim() : "";
+  if (type) return type;
+  return typeof input.rawType === "string" ? input.rawType.trim() : "";
 }
 
 /**
  * True when the account is an Individual Savings Account (ISA, Cash ISA, Stocks & Shares ISA,
- * Lifetime ISA, or flagged `isIsa: true`). Under UK tax rules an ISA can never be held jointly.
+ * Lifetime ISA, Junior ISA, `CASH_ISA`, `STOCKS_ISA`, or flagged `isIsa: true`). Checks both the
+ * account type and account name because stored Flump accounts use `type: "Saving" | "Investment"`
+ * with ISA in the name. Under UK tax rules an ISA can never be held jointly.
  */
 export function isIsaAccount(input?: AccountShareInput | string | null): boolean {
   const normalized = normalizeInput(input);
   if (normalized.isIsa === true) return true;
-  const rawType = resolveRawType(normalized);
-  if (!rawType) return false;
-  return ISA_TYPE_PATTERN.test(rawType);
+  const rawType = normalizeTokens(resolveRawType(normalized));
+  if (rawType && ISA_PATTERN.test(rawType)) return true;
+  const name = normalizeTokens(normalized.name);
+  return Boolean(name && ISA_PATTERN.test(name));
 }
 
 /**
- * True when the account is a pension (Pension, SIPP, Workplace Pension). Under UK rules pensions
- * are always individual and can never be held jointly.
+ * True when the account is a pension (Pension, SIPP, Workplace Pension, `PENSION_WORKPLACE`,
+ * `PENSION_SIPP`). Under UK rules pensions are always individual and can never be held jointly.
  */
 export function isPensionAccount(input?: AccountShareInput | string | null): boolean {
   const normalized = normalizeInput(input);
   const rawType = resolveRawType(normalized);
   if (!rawType) return false;
-  return PENSION_TYPE_PATTERN.test(rawType) || categorizeAccountType(rawType) === "pensions";
+  return (
+    PENSION_PATTERN.test(normalizeTokens(rawType)) || categorizeAccountType(rawType) === "pensions"
+  );
 }
 
 /**
@@ -121,13 +132,15 @@ export function resolveAccountSharePercent(input?: AccountShareInput | null): nu
   return parsed;
 }
 
-function roundPence(value: number): number {
-  return Math.round(value * 100) / 100 + 0;
+function roundSignedPence(value: number): number {
+  if (value === 0) return 0;
+  const rounded = value < 0 ? -roundPence(-value) : roundPence(value);
+  return rounded + 0;
 }
 
 /**
  * Scales a balance, monthly payment, or interest figure by the person's effective account share
- * (`resolveAccountSharePercent(input) / 100`), rounded to pence.
+ * (`resolveAccountSharePercent(input) / 100`), rounded symmetrically to pence.
  */
 export function applyAccountShare(amount: number, input?: AccountShareInput | null): number {
   if (!Number.isFinite(amount) || amount === 0) {
@@ -137,7 +150,7 @@ export function applyAccountShare(amount: number, input?: AccountShareInput | nu
   if (sharePercent === 100) {
     return amount;
   }
-  return roundPence(amount * (sharePercent / 100));
+  return roundSignedPence(amount * (sharePercent / 100));
 }
 
 /**
@@ -166,10 +179,11 @@ function isLiabilityAccount(input: AccountShareInput): boolean {
   if (input.isLiability === false) return false;
   const rawType = resolveRawType(input);
   if (!rawType) return false;
-  if (STUDENT_LOAN_TYPE_PATTERN.test(rawType)) return false;
+  const normalized = normalizeTokens(rawType);
+  if (STUDENT_LOAN_PATTERN.test(normalized)) return false;
   const category = categorizeAccountType(rawType);
   if (isLiabilityCategory(category)) return true;
-  return LIABILITY_TYPE_PATTERN.test(rawType);
+  return LIABILITY_PATTERN.test(normalized);
 }
 
 /**
