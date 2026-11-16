@@ -51,4 +51,13 @@ describe("WidgetCard", () => {
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.getByRole("img", { name: "Locked in this example" })).toBeTruthy();
   });
+
+  it("applies domain colour accent and stretched-link interactive styling when not in sandbox", () => {
+    renderCard({ domain: "savings" }, false);
+    const card = screen.getByTestId("widget-card-savings");
+    expect(card.className).toContain("bd-t-c_chart.wealth");
+    expect(card.className).toContain("cursor_pointer");
+    const link = screen.getByTestId("widget-card-savings-link");
+    expect(link.className).toContain("inset_0");
+  });
 });

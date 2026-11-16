@@ -235,4 +235,16 @@ describe("<AccountsGroupList />", () => {
     expect(owe.textContent).not.toContain("-");
     expect(own.textContent).not.toContain("Everyday");
   });
+
+  test("makes the entire account row clickable via stretched link while keeping ISA link above it", () => {
+    const { getByRole } = customRender(
+      <AccountsGroupList {...props} rows={[row({ id: "i1", name: "Cash ISA", type: "Saving" })]} />,
+    );
+    const accountAnchor = getByRole("link", { name: "Cash ISA" });
+    expect(accountAnchor.getAttribute("href")).toBe("/app/accounts/i1");
+    expect(accountAnchor.className).toContain("inset_0");
+    const isaAnchor = getByRole("link", { name: "See your ISA allowance" });
+    expect(isaAnchor.getAttribute("href")).toBe("/app/savings");
+    expect(isaAnchor.className).toContain("z_1");
+  });
 });

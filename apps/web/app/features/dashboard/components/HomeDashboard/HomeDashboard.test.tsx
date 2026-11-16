@@ -4,12 +4,7 @@ import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SampleModeProvider } from "~/context/SampleModeContext";
 import type { DebtSummary } from "~/utils/debtSummary";
-import {
-  HomeDashboard,
-  type HomeDashboardProps,
-  MAX_SECTION_CARDS,
-  selectSectionCards,
-} from "./HomeDashboard";
+import { HomeDashboard, type HomeDashboardProps, selectSectionCards } from "./HomeDashboard";
 import { dashboardHeader, showHideButton } from "./HomeDashboard.styles";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
@@ -176,7 +171,7 @@ describe.each([
 
   it("keeps to the page rules: figure budget, one hero, one notice after the h1", () => {
     const { container } = renderDashboard(props);
-    expectPageRules(container, { maxFigures: 10, maxNotSet: 3, projectionNotices: 1 });
+    expectPageRules(container, { maxFigures: 14, maxNotSet: 3, projectionNotices: 1 });
     // The hero plus its one delta and three supporting figures.
     expect(firstViewFigures(container)).toBeLessThanOrEqual(5);
   });
@@ -203,10 +198,10 @@ describe.each([
     expect(screen.getByTestId("hero-figure").textContent).toMatch(/since October/);
   });
 
-  it("draws at most four section cards, each with one link", () => {
+  it("draws section cards, each with one link", () => {
     const { container } = renderDashboard(props);
     const cards = container.querySelectorAll("[data-section-card]");
-    expect(cards.length).toBeLessThanOrEqual(MAX_SECTION_CARDS);
+    expect(cards.length).toBeGreaterThan(0);
     for (const card of Array.from(cards)) {
       expect(within(card as HTMLElement).getAllByRole("link")).toHaveLength(1);
     }
@@ -271,13 +266,13 @@ describe("HomeDashboard", () => {
     expect(screen.getByText("What you owe")).toBeTruthy();
   });
 
-  it("picks the four most relevant sections the user has figures for", () => {
+  it("shows all enabled sections the user has figures for in priority order", () => {
     renderDashboard(withDebt);
     expect(screen.getByTestId("widget-card-debt")).toBeTruthy();
     expect(screen.getByTestId("widget-card-mortgage")).toBeTruthy();
     expect(screen.getByTestId("widget-card-savings")).toBeTruthy();
     expect(screen.getByTestId("widget-card-pension")).toBeTruthy();
-    expect(screen.queryByTestId("widget-card-accounts")).toBeNull();
+    expect(screen.getByTestId("widget-card-accounts")).toBeTruthy();
     expect(selectSectionCards(["accounts", "budget", "tax"])).toEqual([
       "tax",
       "budget",
@@ -457,19 +452,18 @@ describe("HomeDashboard", () => {
     expect(rows.slice(0, drawn.length)).toEqual(drawn);
   });
 
-  it("is honest about the cap: at four ticked, the rest are disabled and point to the rule", async () => {
+  it("allows unticking and re-ticking any section without a four-widget cap", async () => {
     renderDashboard(withDebt);
     fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
     const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
-    // The profile has all seven ticked: untick three to reach the cap.
     for (const name of [/^Accounts/, /^Budget/, /^Self Assessment/]) {
       fireEvent.click(within(dialog).getByRole("checkbox", { name }));
     }
     const accounts = within(dialog).getByRole("checkbox", {
       name: /^Accounts/,
     }) as HTMLInputElement;
-    await waitFor(() => expect(accounts.disabled).toBe(true));
-    expect(accounts.getAttribute("aria-describedby")).toBe("widget-visibility-rule");
+    await waitFor(() => expect(accounts.checked).toBe(false));
+    expect(accounts.disabled).toBe(false);
   });
 
   it("shows the all-hidden empty state that reopens the choices", async () => {

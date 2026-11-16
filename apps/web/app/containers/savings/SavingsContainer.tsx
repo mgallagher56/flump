@@ -214,9 +214,12 @@ export const SavingsContainer: FC = () => {
           <ScenarioZone
             announcement={announcement}
             basis="Starting from your saved accounts."
+            collapsible
+            defaultOpen={payRiseMonthly > 0}
             id="savings-scenario"
             isModified={isModified}
             notice={<ProjectionNotice />}
+            summary={forecastOutcomeText(forecast.values, saved.total, payRiseMonthly)}
             title="Model a change to your savings"
             tools={
               <Tabs

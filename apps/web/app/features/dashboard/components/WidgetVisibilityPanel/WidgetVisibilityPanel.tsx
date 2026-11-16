@@ -37,9 +37,11 @@ export interface WidgetVisibilityPanelProps {
   shownKeys?: readonly DashboardWidgetKey[];
 }
 
-/** The panel's one rule, said once. Disabled boxes point to it. */
-export const SECTION_RULE = (max: number) =>
-  `Up to ${max} sections show on your dashboard, in this order.`;
+/** The panel's one rule, said once. */
+export const SECTION_RULE = (max?: number) =>
+  max !== undefined
+    ? `Up to ${max} sections show on your dashboard, in this order.`
+    : "Choose which sections show on your dashboard. They appear in this order.";
 
 /** What each section card shows, in plain words (no "AER", "salary sacrifice" or "0% deal"). */
 export const SECTION_COPY: Record<DashboardWidgetKey, { label: string; description: string }> = {
@@ -64,10 +66,12 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
   visibleKeys,
   onToggle,
   error,
-  maxVisible = 4,
+  maxVisible,
   shownKeys,
 }) => {
-  const atCap = widgetKeys.filter((k) => visibleKeys.includes(k)).length >= maxVisible;
+  const atCap =
+    maxVisible !== undefined &&
+    widgetKeys.filter((k) => visibleKeys.includes(k)).length >= maxVisible;
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>

@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import {
   createContext,
   type FC,
@@ -11,12 +12,18 @@ import {
   useState,
 } from "react";
 import { cx } from "../../../styled-system/css";
+import { FormField } from "../FormField";
+import { Icon } from "../Icon";
+import { TextInput } from "../TextInput";
 import { VisuallyHidden } from "../VisuallyHidden";
 import {
   captionRecipe,
   cellPrimary,
   cellSecondary,
+  sortButton,
   tableElement,
+  tableSearchField,
+  tableToolbar,
   tableWrapper,
   tbodyRecipe,
   tdRecipe,
@@ -169,6 +176,8 @@ export const Tr: FC<HTMLAttributes<HTMLTableRowElement>> = ({ children, ...props
   );
 };
 
+export type SortDirection = "asc" | "desc" | "none";
+
 export interface ThProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, "align"> {
   /** Right-aligns the column (shorthand for `align="end"`). */
   numeric?: boolean;
@@ -179,13 +188,25 @@ export interface ThProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, "a
    * also widens the hyphen ("Self - employed"). Never on money, counts, dates or years.
    */
   text?: boolean;
+  /** Current sort direction for this column, when sortable. */
+  sortDirection?: SortDirection;
+  /** Called when the user activates the column sort button. */
+  onSort?: () => void;
 }
+
+const ARIA_SORT: Record<SortDirection, "ascending" | "descending" | "none"> = {
+  asc: "ascending",
+  desc: "descending",
+  none: "none",
+};
 
 export const Th: FC<ThProps> = ({
   children,
   numeric = false,
   align,
   text = false,
+  sortDirection,
+  onSort,
   className,
   scope,
   ...props
@@ -193,17 +214,25 @@ export const Th: FC<ThProps> = ({
   const defaultScope = useContext(ThScopeContext);
   const { stacked, appearance } = useContext(TableContext);
   const resolvedScope = scope ?? defaultScope;
+  const resolvedAlign = align ?? (numeric ? "end" : "start");
+  const sortIcon =
+    sortDirection === "asc" ? ArrowUp : sortDirection === "desc" ? ArrowDown : ArrowUpDown;
   return (
     <th
-      className={cx(
-        thRecipe({ align: align ?? (numeric ? "end" : "start"), appearance, text }),
-        className,
-      )}
+      aria-sort={onSort ? ARIA_SORT[sortDirection ?? "none"] : undefined}
+      className={cx(thRecipe({ align: resolvedAlign, appearance, text }), className)}
       role={stacked ? (resolvedScope === "row" ? "rowheader" : "columnheader") : undefined}
       scope={resolvedScope}
       {...props}
     >
-      {children}
+      {onSort ? (
+        <button className={sortButton({ align: resolvedAlign })} type="button" onClick={onSort}>
+          <span>{children}</span>
+          <Icon icon={sortIcon} size="sm" />
+        </button>
+      ) : (
+        children
+      )}
     </th>
   );
 };
@@ -274,5 +303,43 @@ export const Td: FC<TdProps> = ({
     </td>
   );
 };
+
+export interface TableToolbarProps {
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  searchLabel?: string;
+  searchPlaceholder?: string;
+  children?: ReactNode;
+  className?: string;
+}
+
+/** Optional filter/search bar paired above a `<Table>`. */
+export const TableToolbar: FC<TableToolbarProps> = ({
+  searchValue,
+  onSearchChange,
+  searchLabel = "Search",
+  searchPlaceholder = "Filter rows",
+  children,
+  className,
+}) => (
+  <div className={cx(tableToolbar(), className)}>
+    {onSearchChange ? (
+      <div className={tableSearchField()}>
+        <FormField label={searchLabel}>
+          {(field) => (
+            <TextInput
+              id={field.id}
+              placeholder={searchPlaceholder}
+              type="search"
+              value={searchValue ?? ""}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
+          )}
+        </FormField>
+      </div>
+    ) : null}
+    {children}
+  </div>
+);
 
 export default Table;

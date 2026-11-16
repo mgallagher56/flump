@@ -1,8 +1,5 @@
 import type { DashboardWidgetKey } from "~/utils/pageConfig";
 
-/** At most four section cards render (plan D1, E16 P1.8). */
-export const MAX_SECTION_CARDS = 4;
-
 /**
  * The one dashboard section order, first to last, used by the cards and by "Choose what shows
  * here". Debt, mortgage, savings and pension show figures found nowhere else on the page; budget
@@ -23,10 +20,13 @@ export const orderSections = (keys: readonly DashboardWidgetKey[]): DashboardWid
   SECTION_PRIORITY.filter((k) => keys.includes(k));
 
 /**
- * The cards the dashboard draws: the first `max` of `available` (ticked sections that have
- * something to show) in the section order. The panel's "Showing" reads this same list.
+ * The cards the dashboard draws: all `available` (ticked sections that have something to show)
+ * in the section order, or the first `max` if a limit is supplied.
  */
 export const selectSectionCards = (
   available: readonly DashboardWidgetKey[],
-  max = MAX_SECTION_CARDS,
-): DashboardWidgetKey[] => orderSections(available).slice(0, max);
+  max?: number,
+): DashboardWidgetKey[] => {
+  const ordered = orderSections(available);
+  return max === undefined ? ordered : ordered.slice(0, max);
+};

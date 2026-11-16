@@ -1,4 +1,4 @@
-import { Button, Icon, IconTile, type IconTileDomain } from "@repo/ui";
+import { ICON_TILE_DOMAIN_TONE, Icon, IconTile, type IconTileDomain } from "@repo/ui";
 import { ArrowRight, Lock, type LucideIcon } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { Link } from "react-router";
@@ -10,6 +10,7 @@ import {
   widgetHeader,
   widgetLabel,
   widgetLine,
+  widgetLink,
   widgetLock,
   widgetTitle,
   widgetUnset,
@@ -58,10 +59,12 @@ export const WidgetCard: FC<WidgetCardProps> = ({
   const sample = useSampleMode();
   const cardId = `widget-card-${id}`;
   const titleId = `${cardId}-title`;
+  const rawTone = domain ? ICON_TILE_DOMAIN_TONE[domain] : "neutral";
+  const tone = rawTone === "accent" ? "neutral" : rawTone;
   return (
     <section
       aria-labelledby={titleId}
-      className={widgetCard()}
+      className={widgetCard({ tone, interactive: !sample })}
       data-section-card={id}
       data-testid={cardId}
       id={cardId}
@@ -92,12 +95,15 @@ export const WidgetCard: FC<WidgetCardProps> = ({
             <Icon icon={Lock} size="sm" />
           </span>
         ) : (
-          <Button asChild size="sm" variant="ghost">
-            <Link data-testid={`${cardId}-link`} to={link.to}>
-              {link.label}
-              <Icon icon={ArrowRight} size="sm" />
-            </Link>
-          </Button>
+          <Link
+            className={widgetLink()}
+            data-testid={`${cardId}-link`}
+            id={`${cardId}-link`}
+            to={link.to}
+          >
+            {link.label}
+            <Icon icon={ArrowRight} size="sm" />
+          </Link>
         )}
       </div>
     </section>
