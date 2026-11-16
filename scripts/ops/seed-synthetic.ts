@@ -50,6 +50,7 @@ export const USER_DATA_TABLES = [
   // BE-09 stored create responses for Idempotency-Key retries (they echo the rows they created).
   "idempotency_keys",
   "tax_records",
+  "retirement_plans",
   "user_profiles",
   // BE-04 deletion proofs: cleared too, so a persona id erased during staging testing can be seeded
   // again (a tombstone would otherwise refuse every request for that id).

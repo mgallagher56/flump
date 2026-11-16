@@ -25,7 +25,7 @@ describe("navConfig", () => {
     const group = (key: string) =>
       AUTH_NAV_ROUTES.find((r) => r.key === key)?.children?.map((c) => c.key);
     expect(group("borrowing")).toEqual(["debt", "mortgage"]);
-    expect(group("savingsAndPension")).toEqual(["savings", "pension"]);
+    expect(group("savingsAndPension")).toEqual(["savings", "pension", "retirement"]);
   });
 
   it("has at most six top-level items", () => {

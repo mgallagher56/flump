@@ -61,6 +61,12 @@ export const MCP_TOOLS: readonly McpToolEntry[] = [
       "Your UK tax position for a tax year, from your saved salary and tax records. It shows income by source and the Income Tax bands for your region. It also shows Class 4 National Insurance on self-employed profit and where income sits against the Personal Allowance taper.",
   },
   {
+    name: "get_retirement_picture",
+    kind: "read",
+    description:
+      "Your estimated yearly retirement income in today's prices from counted accounts, State Pension details, and saved housing details, beside your own yearly target.",
+  },
+  {
     name: "compare_mortgage_overpay_vs_invest",
     kind: "calculate",
     description:
@@ -77,6 +83,12 @@ export const MCP_TOOLS: readonly McpToolEntry[] = [
     kind: "calculate",
     description:
       "Estimates net worth year by year from your recorded balances. You can add up to 10 events, each with a one-off or monthly cost you set, and you choose the growth rate.",
+  },
+  {
+    name: "simulate_retirement",
+    kind: "calculate",
+    description:
+      "Simulates estimated yearly retirement income in today's prices with overrides for retirement age, plan-to age, extra monthly contributions, growth rates, State Pension, and your own target. Nothing is saved.",
   },
   {
     name: "stage_import",
