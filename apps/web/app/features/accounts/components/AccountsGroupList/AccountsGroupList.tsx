@@ -172,10 +172,13 @@ const byType = (a: AccountRow, b: AccountRow) => {
   return rank(a) - rank(b);
 };
 
-/** The type under the name, unless the name already says it ("Current account"). */
+/** The type under the name, unless the name already says it ("Current account"), plus joint share when joint. */
 const typeLine = (row: AccountRow): string | null => {
   const label = TYPE_LABEL[row.type] ?? row.type;
-  return label.trim().toLowerCase() === row.name.trim().toLowerCase() ? null : label;
+  const baseType = label.trim().toLowerCase() === row.name.trim().toLowerCase() ? null : label;
+  const jointLabel = row.ownership === "joint" ? `Joint, ${row.sharePercent ?? 50}%` : null;
+  if (baseType && jointLabel) return `${baseType} · ${jointLabel}`;
+  return baseType ?? jointLabel;
 };
 
 const toItem = (row: AccountRow): DataListItem => {

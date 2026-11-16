@@ -55,3 +55,19 @@ export const deleteAction = cva({
 export const deleteConsequence = cva({
   base: { margin: 0, textStyle: "body.md", color: "text.secondary" },
 });
+
+/** Neutral UK joint-debt liability notice shown when a mortgage or debt is marked joint. */
+export const jointNotice = cva({
+  base: {
+    margin: 0,
+    paddingX: "12px",
+    paddingY: "8px",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    backgroundColor: "surface.subtle",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
+    borderRadius: "md",
+  },
+});

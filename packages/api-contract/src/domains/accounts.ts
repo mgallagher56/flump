@@ -31,6 +31,12 @@ export const TermMonths = z.number().int().min(1).max(600);
 export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
 export const StudentLoanPlan = z.enum(STUDENT_LOAN_PLANS);
 
+export const ACCOUNT_OWNERSHIPS = ["sole", "joint"] as const;
+export const AccountOwnership = z.enum(ACCOUNT_OWNERSHIPS);
+export type AccountOwnership = z.infer<typeof AccountOwnership>;
+
+export const SharePercent = z.number().int().min(1).max(100);
+
 /**
  * POST /accounts. Today's backend accepts any string for `type` and any JSON for `balance`;
  * the contract is the stricter shape the web actually sends.
@@ -49,6 +55,8 @@ export const CreateAccountRequest = z.strictObject({
   monthlyContribution: MoneyNonNegative.nullish(),
   /** Student Loan accounts only. */
   studentLoanPlan: StudentLoanPlan.nullish(),
+  ownership: AccountOwnership.optional(),
+  sharePercent: SharePercent.nullish(),
   isCurrent: z.boolean().optional(),
   /** Mortgages and loans: whole months, 1 to 600 (the service enforces the same range). */
   termMonths: TermMonths.nullish(),
@@ -72,6 +80,8 @@ export const UpdateAccountRequest = z.strictObject({
   monthlyContribution: MoneyNonNegative.nullish(),
   /** Student Loan accounts only. */
   studentLoanPlan: StudentLoanPlan.nullish(),
+  ownership: AccountOwnership.optional(),
+  sharePercent: SharePercent.nullish(),
   isCurrent: z.boolean().optional(),
   termMonths: TermMonths.nullish(),
   fixedRateEndDate: IsoDate.nullish(),
@@ -150,6 +160,8 @@ const accountShape = {
   isCurrent: z.boolean(),
   currency: Currency,
   studentLoanPlan: StudentLoanPlan.nullable(),
+  ownership: AccountOwnership.default("sole"),
+  sharePercent: SharePercent.nullable().default(null),
   connectionId: Uuid.nullable(),
   createdAt: IsoDateTime,
   /** The resource version: `If-Match: "<updatedAt>"` makes an update conditional (BE-09). */

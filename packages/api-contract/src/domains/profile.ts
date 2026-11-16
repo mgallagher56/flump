@@ -327,6 +327,8 @@ export const AccountExportAccount = z.strictObject({
   isCurrent: z.boolean(),
   currency: z.string(),
   studentLoanPlan: NullableText,
+  ownership: z.string(),
+  sharePercent: NullableNumber,
   connectionId: Uuid.nullable(),
   externalAccountId: NullableText,
   createdAt: ExportTimestamp,

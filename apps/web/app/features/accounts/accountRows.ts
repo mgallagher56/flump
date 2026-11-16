@@ -1,3 +1,9 @@
+import {
+  type AccountOwnership,
+  applyAccountShare,
+  resolveAccountOwnership,
+  resolveAccountSharePercent,
+} from "@flump/finance-engine";
 import type { AccountDetail } from "~/containers/accounts/types";
 import { isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { isFutureMonth, monthYearSort } from "~/utils/accounts";
@@ -7,12 +13,16 @@ export interface AccountRowSource {
   name?: string;
   type?: string;
   balance?: number | string;
+  ownership?: AccountOwnership | string | null;
+  sharePercent?: number | string | null;
 }
 
 export interface AccountRow {
   id: string;
   name: string;
   type: string;
+  ownership?: AccountOwnership;
+  sharePercent?: number;
   /** Amount held, or amount owed for a liability. Undefined when no balance is known. */
   balance: number | undefined;
   /** Whole-number change against the previous month, or null when there is no earlier month. */
@@ -91,10 +101,19 @@ export const summariseAccountBalance = (
     account.balance !== undefined && account.balance !== null && account.balance !== ""
       ? Number(account.balance)
       : undefined;
-  const raw = stored ?? (latest?.value !== undefined ? Number(latest.value) : undefined);
+  const rawUnscaled = stored ?? (latest?.value !== undefined ? Number(latest.value) : undefined);
+  const shareInput = {
+    name: account.name,
+    type: account.type,
+    ownership: account.ownership,
+    sharePercent: account.sharePercent,
+  };
+  const raw = rawUnscaled !== undefined ? applyAccountShare(rawUnscaled, shareInput) : undefined;
   const balance = toDisplayBalance(type, raw);
   const previousBalance =
-    previous?.value !== undefined ? toDisplayBalance(type, Number(previous.value)) : undefined;
+    previous?.value !== undefined
+      ? toDisplayBalance(type, applyAccountShare(Number(previous.value), shareInput))
+      : undefined;
 
   const changePercent =
     balance !== undefined && previousBalance
@@ -125,10 +144,20 @@ export const buildAccountRows = (
     const id = account.id ?? "";
     const own = accountDetails.filter((detail) => (detail.account_id || detail.accountId) === id);
     const { balance, changePercent, favourable } = summariseAccountBalance(account, own, now);
+    const shareInput = {
+      name: account.name,
+      type: account.type,
+      ownership: account.ownership,
+      sharePercent: account.sharePercent,
+    };
+    const ownership = resolveAccountOwnership(shareInput);
+    const sharePercent = resolveAccountSharePercent(shareInput);
     return {
       id,
       name: account.name ?? "",
       type: account.type ?? "",
+      ownership,
+      sharePercent,
       balance,
       changePercent,
       favourable,

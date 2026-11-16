@@ -3,6 +3,7 @@ import {
   categorizeAccountType,
   isLiabilityCategory,
 } from "./account-category.js";
+import { type AccountOwnership, type AccountShareInput, applyAccountShare } from "./joint-share.js";
 import { countsTowardNetWorth, type NetWorthBasis } from "./net-worth-basis.js";
 import type { DebtItem, DebtType } from "./types.js";
 
@@ -42,6 +43,8 @@ export interface RawAccount {
   fixedRateEndDate?: string | null;
   currency?: string;
   isCurrent?: boolean;
+  ownership?: AccountOwnership | string | null;
+  sharePercent?: number | string | null;
   [key: string]: any;
 }
 
@@ -133,6 +136,17 @@ export class PortfolioSnapshot {
   private readonly accountsById: Map<string, ResolvedAccount>;
 
   constructor(accounts: RawAccount[] = [], accountDetails: RawAccountDetail[] = []) {
+    const shareInputByAccount = new Map<string, AccountShareInput>();
+    (accounts || []).forEach((acc, index) => {
+      const accId = String(acc.id || `acc_${index}`);
+      shareInputByAccount.set(accId, {
+        name: acc.name,
+        type: acc.type,
+        ownership: acc.ownership,
+        sharePercent: acc.sharePercent,
+      });
+    });
+
     // At most one row per (account, year, month): a later row replaces an earlier one, so
     // duplicates are never double counted. Rows without a valid year, month or value are skipped.
     const rowsByAccount = new Map<
@@ -162,9 +176,10 @@ export class PortfolioSnapshot {
       }
       const numMonth = Number(rawMonth);
       const numYear = Number(rawYear);
-      const numVal = Number(rawValue);
+      const rawVal = Number(rawValue);
       if (!isValidHistoryYear(numYear) || !isValidHistoryMonth(numMonth)) continue;
-      if (!Number.isFinite(numVal)) continue;
+      if (!Number.isFinite(rawVal)) continue;
+      const numVal = applyAccountShare(rawVal, shareInputByAccount.get(accId));
 
       const rows =
         rowsByAccount.get(accId) ??
@@ -200,8 +215,11 @@ export class PortfolioSnapshot {
 
       // The current figure is always `account.balance` ("now"). History rows only describe past
       // months, so a PATCHed balance must win even when history exists (D22).
+      const shareInput = shareInputByAccount.get(accId);
       const rawBalance = Number(acc.balance);
-      const currentValue = Number.isFinite(rawBalance) ? rawBalance : 0;
+      const currentValue = Number.isFinite(rawBalance)
+        ? applyAccountShare(rawBalance, shareInput)
+        : 0;
 
       if (history.length > 0) {
         const latest = history[history.length - 1]!;
@@ -216,8 +234,11 @@ export class PortfolioSnapshot {
       const overdrawnAmount = isAsset && currentValue < 0 ? -currentValue : 0;
       const interestRate = Number(acc.interestRate) || 0;
       const interestRateKnown = hasStoredNumber(acc.interestRate);
-      const monthlyContribution = Number(acc.monthlyContribution) || 0;
+      const rawMonthlyContribution = Number(acc.monthlyContribution) || 0;
       const monthlyContributionKnown = hasStoredNumber(acc.monthlyContribution);
+      const monthlyContribution = monthlyContributionKnown
+        ? applyAccountShare(rawMonthlyContribution, shareInput)
+        : 0;
       const currency = acc.currency || "GBP";
 
       return {

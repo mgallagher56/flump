@@ -1,10 +1,17 @@
 import {
+  type AccountOwnership,
+  canAccountBeJoint,
+  DEFAULT_JOINT_SHARE_PERCENT,
+  describeJointLiabilityNotice,
+} from "@flump/finance-engine";
+import {
   Button,
   CurrencyInput,
   controlProps,
   Dialog,
   FormField,
   Icon,
+  PercentInput,
   Select,
   TextInput,
 } from "@repo/ui";
@@ -27,6 +34,7 @@ import {
   deleteConsequence,
   dialogFooterGroup,
   fieldStack,
+  jointNotice,
   saveError,
 } from "./AddEditAccountsDialog.styles";
 
@@ -83,6 +91,8 @@ export interface AccountOption {
   type?: AccountType;
   balance?: number;
   studentLoanPlan?: string | null;
+  ownership?: AccountOwnership;
+  sharePercent?: number | null;
   /** The saved account's version, sent with an edit so a change made elsewhere is not overwritten. */
   updatedAt?: string;
 }
@@ -177,11 +187,15 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     /** The figure as shown: the positive amount owed for a liability. */
     balance: string;
     studentLoanPlan: string[];
+    ownership: AccountOwnership;
+    sharePercent: number | null;
   }>({
     name: selectedAccount.name || "",
     type: [selectedAccount.type || accountTypeArray[0]],
     studentLoanPlan: [selectedAccount.studentLoanPlan || ""],
     balance: toFormBalance(selectedAccount.type, selectedAccount.balance),
+    ownership: selectedAccount.ownership === "joint" ? "joint" : "sole",
+    sharePercent: selectedAccount.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT,
   });
 
   const handleOpenModal = useCallback(
@@ -195,6 +209,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         type: [isEditAccount ? selectedAccount.type || accountTypeArray[0] : accountTypeArray[0]],
         studentLoanPlan: [(isEditAccount && selectedAccount.studentLoanPlan) || ""],
         balance: isEditAccount ? toFormBalance(selectedAccount.type, selectedAccount.balance) : "",
+        ownership: isEditAccount && selectedAccount.ownership === "joint" ? "joint" : "sole",
+        sharePercent:
+          isEditAccount && selectedAccount.sharePercent != null
+            ? selectedAccount.sharePercent
+            : DEFAULT_JOINT_SHARE_PERCENT,
       });
       setModalOpen(true);
     },
@@ -219,14 +238,41 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     setFormInput((prevState) => ({ ...prevState, studentLoanPlan: [e.target.value] }));
   }, []);
 
+  const onChangeOwnershipInput = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextOwnership: AccountOwnership = e.target.value === "joint" ? "joint" : "sole";
+    setFormInput((prevState) => ({
+      ...prevState,
+      ownership: nextOwnership,
+      sharePercent:
+        nextOwnership === "joint"
+          ? (prevState.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)
+          : prevState.sharePercent,
+    }));
+  }, []);
+
+  const onChangeSharePercentInput = useCallback((value: number | null) => {
+    setFormInput((prevState) => ({ ...prevState, sharePercent: value }));
+  }, []);
+
+  const jointEligible = canAccountBeJoint({
+    name: formInput.name,
+    type: formInput.type?.[0],
+  });
+  const effectiveOwnership: AccountOwnership =
+    jointEligible && formInput.ownership === "joint" ? "joint" : "sole";
+
   const onSave = useCallback(() => {
-    const { name, type, balance, studentLoanPlan } = formInput;
+    const { name, type, balance, studentLoanPlan, sharePercent } = formInput;
     const accountType = type?.[0];
     if (accountType === STUDENT_LOAN && !studentLoanPlan[0]) {
       setPlanError(PLAN_REQUIRED_MESSAGE);
       return;
     }
     const stored = toStoredBalance(accountType, balance);
+    const resolvedShare =
+      effectiveOwnership === "joint"
+        ? Math.min(100, Math.max(1, Math.round(sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)))
+        : null;
     saveOutcome.begin();
     fetcher.submit(
       {
@@ -239,12 +285,23 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           : { intent: "create" }),
         name,
         type: accountType || "",
+        ownership: effectiveOwnership,
+        ...(resolvedShare !== null ? { sharePercent: String(resolvedShare) } : {}),
         ...(accountType === STUDENT_LOAN ? { studentLoanPlan: studentLoanPlan[0] ?? "" } : {}),
         ...(stored !== "" ? { balance: stored } : {}),
       },
       { method: "POST" },
     );
-  }, [accountId, account, accounts, isEditAccount, formInput, fetcher, saveOutcome.begin]);
+  }, [
+    accountId,
+    account,
+    accounts,
+    effectiveOwnership,
+    isEditAccount,
+    formInput,
+    fetcher,
+    saveOutcome.begin,
+  ]);
 
   const handleConfirmRemoveAccount = useCallback(() => {
     deleteOutcome.begin();
@@ -267,6 +324,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const deleteName = selectedAccount.name || "this account";
   const confirming = Boolean(isEditAccount && confirmDeleteOpen);
   const isLiability = isLiabilityType(formInput.type?.[0]);
+  const jointLiabilityNotice = describeJointLiabilityNotice({
+    type: formInput.type?.[0],
+    ownership: effectiveOwnership,
+  });
 
   return (
     <>
@@ -429,6 +490,43 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 />
               )}
             </FormField>
+            {jointEligible ? (
+              <>
+                <FormField label="Ownership">
+                  {(field) => (
+                    <Select
+                      {...controlProps(field)}
+                      name="ownership"
+                      options={[
+                        { value: "sole", label: "Sole (yours only)" },
+                        { value: "joint", label: "Joint" },
+                      ]}
+                      value={formInput.ownership}
+                      onChange={onChangeOwnershipInput}
+                    />
+                  )}
+                </FormField>
+                {effectiveOwnership === "joint" ? (
+                  <FormField label="Your share">
+                    {(field) => (
+                      <PercentInput
+                        {...controlProps(field)}
+                        max={100}
+                        min={1}
+                        name="sharePercent"
+                        value={formInput.sharePercent}
+                        onValueChange={onChangeSharePercentInput}
+                      />
+                    )}
+                  </FormField>
+                ) : null}
+                {jointLiabilityNotice ? (
+                  <p className={jointNotice()} role="note">
+                    {jointLiabilityNotice}
+                  </p>
+                ) : null}
+              </>
+            ) : null}
             {saveOutcome.error ? (
               <p role="alert" className={saveError()}>
                 {saveOutcome.error}

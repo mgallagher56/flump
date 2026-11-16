@@ -381,7 +381,12 @@ describe("AccountIntakeService (Deep Module)", () => {
       await service.createAccount("userA", body);
 
       const created = at(mockAccountRepo.create.mock.calls, 0)[0];
-      expect(created).toEqual({ ...valid, userId: "userA" });
+      expect(created).toEqual({
+        ...valid,
+        ownership: "sole",
+        sharePercent: null,
+        userId: "userA",
+      });
       expect(created).not.toHaveProperty("id");
       const saved = at(mockAccountRepo.save.mock.calls, 0)[0];
       expect(saved.userId).toBe("userA");
@@ -414,6 +419,8 @@ describe("AccountIntakeService (Deep Module)", () => {
         termMonths: null,
         fixedRateEndDate: null,
         studentLoanPlan: null,
+        ownership: "sole",
+        sharePercent: null,
         connectionId: null,
         externalAccountId: null,
         isCurrent: true,
@@ -662,6 +669,107 @@ describe("AccountIntakeService (Deep Module)", () => {
       });
       expect(result).toHaveLength(100);
       expect(details.rows).toHaveLength(100);
+    });
+  });
+
+  describe("E34 Slice 2: joint ownership and sharePercent", () => {
+    it("creates a joint mortgage with default 50% share when sharePercent is omitted", async () => {
+      const saved = await service.createAccount("userA", {
+        name: "Joint Mortgage",
+        type: "Mortgage",
+        balance: -280_000,
+        ownership: "joint",
+      });
+      expect(saved.ownership).toBe("joint");
+      expect(saved.sharePercent).toBe(50);
+    });
+
+    it("creates a joint savings account with custom sharePercent", async () => {
+      const saved = await service.createAccount("userA", {
+        name: "House Deposit",
+        type: "Saving",
+        balance: 20_000,
+        ownership: "joint",
+        sharePercent: 60,
+      });
+      expect(saved.ownership).toBe("joint");
+      expect(saved.sharePercent).toBe(60);
+    });
+
+    it.each([
+      { name: "Workplace Pension", type: "Pension" },
+      { name: "Cash ISA", type: "Saving" },
+      { name: "Stocks & Shares ISA", type: "Investment" },
+      { name: "Moneybox LISA", type: "Saving" },
+    ])("rejects ownership='joint' on individual-only account %j", async ({ name, type }) => {
+      await expect(
+        service.createAccount("userA", {
+          name,
+          type,
+          balance: 10_000,
+          ownership: "joint",
+          sharePercent: 50,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockAccountRepo.save).not.toHaveBeenCalled();
+    });
+
+    it.each([0, -5, 101, 50.5, "50"])("rejects invalid sharePercent %j", async (sharePercent) => {
+      await expect(
+        service.createAccount("userA", {
+          name: "Joint Savings",
+          type: "Saving",
+          balance: 5_000,
+          ownership: "joint",
+          sharePercent: sharePercent as never,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it("clears sharePercent when ownership is updated from joint to sole", async () => {
+      const accounts = createInMemoryRepository([
+        {
+          id: "a1",
+          userId: "userA",
+          name: "Joint Saver",
+          type: "Saving",
+          balance: 5_000,
+          ownership: "joint",
+          sharePercent: 60,
+        },
+      ]);
+      const svc = intakeOver(
+        accounts,
+        createInMemoryRepository(),
+        mockUserProfileRepo,
+        mockBankConnectionRepo,
+      );
+      const updated = await svc.updateAccount("userA", "a1", { ownership: "sole" });
+      expect(updated.ownership).toBe("sole");
+      expect(updated.sharePercent).toBeNull();
+    });
+
+    it("resets joint ownership to sole when an existing joint account becomes an ISA or Pension", async () => {
+      const accounts = createInMemoryRepository([
+        {
+          id: "a1",
+          userId: "userA",
+          name: "Saver",
+          type: "Saving",
+          balance: 5_000,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+      ]);
+      const svc = intakeOver(
+        accounts,
+        createInMemoryRepository(),
+        mockUserProfileRepo,
+        mockBankConnectionRepo,
+      );
+      const updated = await svc.updateAccount("userA", "a1", { name: "Cash ISA" });
+      expect(updated.ownership).toBe("sole");
+      expect(updated.sharePercent).toBeNull();
     });
   });
 });
