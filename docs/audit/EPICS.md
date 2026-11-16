@@ -940,7 +940,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** owner approval of the plan and its decisions RD1 to RD11; E29a for projection wording, and E29b before anyone beyond the friends beta; signed tax vectors for the tax slices (S6, S7).
 - **Done when:** a user can save a retirement age and a yearly target of their own (typed, or built from their budget entries); housing cost in retirement follows their saved housing details (a mortgage that ends, a mortgage that continues, or rent for life, each shown with the same weight); the Retirement page shows an estimated yearly income in today's money for three growth cases beside that target, with every assumption visible and editable; the pots that count are tracked month by month from the check-in; an MCP read tool and a simulate tool expose the same figures; no surface says what a user needs or should do.
 - **Notes:** E27 keeps its number and becomes slices S6 and S7 of this epic (withdrawal tax, the tax-free lump sum, UFPLS, inheritance tax on unused pensions from 6 April 2027, the MoneyHelper link, the self-employed view). The plan recommends that the Retirement Living Standards stay off the page, as E16 decision D6 left them. Plan: [E33-retirement-plan.md](plans/E33-retirement-plan.md). Companion research: [E34-shared-finances-research.md](plans/E34-shared-finances-research.md) (couples) and [E35-encouragement-and-wellbeing.md](plans/E35-encouragement-and-wellbeing.md) (encouragement and wellbeing); neither is an epic until the owner decides.
-- **Status (2026-11-15):** plan only; nothing built.
+- **Status (2026-11-16):** `S0`–`S5` merged (`#750`, `#758`: retirement engine, DB persistence, MCP tools, `/app/retirement` UI). `S6`–`S9` (including E27 tax/withdrawal slices, gated by E29a/E29b) have no PR yet.
 - **Labels:** needs-triage
 
 ## E36. Security hardening before real production
@@ -949,7 +949,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** owner approval of the plan and its decisions SD1 to SD8; the open backend re-score items SEC-A, SEC-D, SEC-F and BE-18 for slice H4; the custom domain (E24) for passkeys and the security mailbox; an owner money decision for the external test.
 - **Done when:** Bun and Renovate both wait seven days before taking a new release, with a documented urgent exception; laws keep `trustedDependencies` to an allowlist and every action pinned to a commit; each release has an SBOM and CI fails on a known high advisory; `SECURITY.md` and `security.txt` are published; MFA is required on the owner's and admins' accounts and passkeys are offered to users; the application runs under a database role with no schema rights; names and labels are encrypted at field level; the breach runbook has been exercised once; a crypto inventory exists and the edge's key exchange has been tested; prompt-injection tests cover every MCP read tool and the staged import; an external penetration test has run and its findings are fixed or accepted in writing.
 - **Notes:** the plan starts from an inventory of what is already on main (frozen lockfile with scripts off, SHA-pinned actions, digest-pinned images, gitleaks, Semgrep, ZAP, AES-256-GCM bank tokens, the 72-hour step in the incident runbook) and lists only gaps. Dashboard settings and the test budget are owner-only. Plan: [E36-security-hardening-plan.md](plans/E36-security-hardening-plan.md).
-- **Status (2026-11-15):** plan only; nothing built.
+- **Status (2026-11-16):** `Slice 1` (`#747`: 7-day Bun/Renovate gates, CI laws, `SECURITY.md`, `security.txt`) and `H2 & H5` (`#755`: SBOMs, failing `bun audit`, workspace `knip`, MCP prompt-injection suite) merged; `SEC-D` receipt encryption (`#753`) merged. Remaining hardening items (MFA/passkeys, restricted DB role, remaining field-level encryption, breach drill, external pentest) have no PR yet.
 - **Labels:** needs-triage
 
 ### Addendum to E19: portability
@@ -962,6 +962,58 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** owner approval of the plan and its decisions D1 to D3.
 - **Done when:** a user can set a default hourly rate, log itemised work entries (`date`, `description`, `hoursWorked`, `hourlyRate` pre-filled and overridable, `amount`) linked to a Self Assessment income source, group/filter unbilled entries into numbered draft/issued/paid/void invoices with client details and totals, export invoices via PDF/print and formula-safe CSV, and optionally sync paid invoices into Self Assessment `tax_records` with `If-Match` concurrency, UK GDPR export/deletion coverage, and zero advice strings.
 - **Notes:** four slices (`S0` data model & pure engine calculations -> `S1` CRUD API -> `S2` Work log & Invoice Builder UI -> `S3` SA integration & PDF/CSV export). Plan: [E37-self-employed-invoicing-plan.md](plans/E37-self-employed-invoicing-plan.md).
-- **Status (2026-11-16):** plan only; nothing built.
+- **Status (2026-11-16):** plan only; nothing built (`S0`–`S3` have no PR yet).
 - **Labels:** needs-triage
+
+## E38. User action friction & interaction-efficiency audit
+
+- **Severity:** P2 (UX efficiency).
+- **Blocked by:** none.
+- **Done when:** a repeatable Playwright interaction-cost harness (`S0`) measures clicks, keystrokes, modal hops, and scroll/focus friction at `1280px` and `375px`, and slices `S1`–`S3` ship targeted friction reductions across budget, check-in, accounts, and Self Assessment while preserving WCAG 2.2 AA and advice-boundary rules.
+- **Notes:** Plan merged (`#763`): [E38-interaction-efficiency-audit-plan.md](plans/E38-interaction-efficiency-audit-plan.md).
+- **Status (2026-11-16):** plan only; nothing built (`S0`–`S3` have no PR yet).
+- **Labels:** needs-triage
+
+# Added 2026-11-16: Active & In-Progress Work Without a PR (Handoff Notes)
+
+This section captures work that was scoped, planned, or partially shipped as of **2026-11-16** and does **not** yet have an open PR, so it can be picked up cleanly in the next session.
+
+## 1. Check / finish the open merge-queue PRs first
+
+At handoff, these approved PRs were in the merge queue (do not duplicate them; check `gh pr list --state open` first):
+- `#761` (`fix/ux-batch-a-ui-primitives`) — UX Batch A (`CurrencyInput`, `TopBar`, `ConfirmDialog`, chart hover/tooltip, `DatePicker`, `CheckInSheet`)
+- `#762` (`fix/ux-batch-b-debt-budget-mortgage`) — UX Batch B (Edit Debt modal, Budget UX/sync, Mortgage layout/info tooltips)
+- `#764` (`feat/web-app-footer`) — basic `SiteFooter` in signed-in web app layout
+- `#765` (`fix/ux-batch-c-dashboard-tables`) — UX Batch C (clickable dashboard/account cards, all widgets, collapsible `ScenarioZone`, sortable/filterable tables)
+- `#766` (`feat/ux-batch-d-accounts-debt`) — UX Batch D (account deletion, home estimate, non-ISA savings, S&S return tracking, BTL mortgages, credit limits & 0% promo periods)
+- `#760` (`chore(main): release`) — automated release-please PR (leave managed by bot)
+
+## 2. UX Batch E — Deferred user-requested UX fixes (No PR yet)
+
+Deferred until `#761`–`#766` merge down. Scope:
+1. **Profile DOB + cross-site salary/pension sync:**
+   - Add Date of Birth field to Profile so it can be set for the Pension page.
+   - Sync salary and pension contribution across the site (e.g., auto-populate Budget and `/app/pension` instead of showing `"Add your year of birth and salary to see your estimated income at retirement"` when already set elsewhere).
+2. **Configurable monthly check-in day & email reminders:**
+   - Let the user choose what day of the month the monthly check-in happens and opt into email reminders (connects to `E30` PR3; note `E30` email provider & PECR opinion gate).
+3. **Self Assessment UX & tax-allowance improvements:**
+   - Rename the `"Add income"` button and its label to reflect adding both income and expenses (and rename `"costs"` to `"expenses"`).
+   - Make each income source (self-employed, rental property, etc.) clickable to open a dedicated detail page for managing that source's records; also group/sort records into subrows by associated income source.
+   - Add a comparison card showing whether claiming recorded expenses or using the £1,000 trading/property tax-free allowance is more beneficial based on the user's records (verify exact UK HMRC rules and keep copy guidance-only).
+   - Review whether `payslip` is a necessary category in the `"Add income"` dropdown and remove/refine if redundant.
+
+## 3. Planned epics & follow-up slices with no PR yet
+
+- **E19 (Portability addendum):** JSON export & CSV export (`#754`) merged; **CSV import** and the shutdown run-off statement still have no PR.
+- **E33 (Retirement plan):** `S0`–`S5` merged (`#750`, `#758`); **`S6`–`S9`** (E27 tax/withdrawal slices, IHT, self-employed gap, gated by E29a/E29b) have no PR yet.
+- **E34 (Shared finances for couples):** `Slice 1` (`#748`) and `Slice 2` (`#757`) merged (joint account & mortgage share percentages); **`Slice 3+`** (household creation, partner invitations, `"Me / Household"` switch, partner safety/privacy controls) have no PR yet. Plan: [E34-shared-finances-research.md](plans/E34-shared-finances-research.md).
+- **E35 (Encouragement and wellbeing):** `Set 1` (`#749`, no-shaming copy guardrails & warm confirmations) merged; **`Set 2+`** have no PR yet. Plan: [E35-encouragement-and-wellbeing.md](plans/E35-encouragement-and-wellbeing.md).
+- **E36 (Security hardening):** `Slice 1` (`#747`) and `H2 & H5` (`#755`) merged; **remaining hardening items** have no PR yet.
+- **E37 (Self-employed work tracking & invoice builder):** Plan merged (`#759`). **`S0`–`S3` not started** (no PR yet).
+- **E38 (Interaction-efficiency audit):** Plan merged (`#763`). **`S0`–`S3` not started** (no PR yet).
+
+## 4. Note on stale local `.claude/worktrees/*`
+
+Several older local worktrees under `.claude/worktrees/` (`agent-a158807a...`, `agent-a3fb6972...`, `agent-a8f19686...`, `agent-acfc8a32...`, `agent-adb23f58...`, `e1-auth-fail-closed`, `e2-backend-no-seeding-3ba884`, `e4-tax-engine-48e7e3`, `e5-services-layer-b5840c`, `e8-ui-tokens-6af1eb`, `interesting-cartwright-e11bfe`) are leftover branches/dirty states from earlier epics (`E15`, `E16`, `E18`, `E20`, `E23`, `E24`, `E30`). Check `origin/main` before assuming any of them represent unshipped work.
+
 
