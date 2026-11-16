@@ -62,7 +62,6 @@ RUN mkdir -p /runtime/web/server /runtime/web/app/security /runtime/web/public \
  && cd apps/web \
  && cp -R build /runtime/web/build \
  && cp -R public/locales /runtime/web/public/locales \
- && cp -R public/.well-known /runtime/web/public/.well-known \
  && cp package.json server.ts /runtime/web/ \
  && find server -maxdepth 1 -name '*.ts' ! -name '*.test.ts' ! -name 'sentrySourceMaps.ts' -exec cp {} /runtime/web/server/ \; \
  && find app/security -maxdepth 1 -name '*.server.ts' ! -name '*.test.ts' -exec cp {} /runtime/web/app/security/ \;
