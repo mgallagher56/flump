@@ -63,24 +63,38 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
   const [minimumPayment, setMinimumPayment] = useState<number | null>(
     debt === undefined || debt.minimumPaymentEstimated ? null : toFieldValue(debt.minimumPayment),
   );
-  const [type, setType] = useState<DebtItem["type"]>("credit_card");
+  const [type, setType] = useState<DebtItem["type"]>(debt?.type ?? "credit_card");
+  const [creditLimit, setCreditLimit] = useState<number | null>(toFieldValue(debt?.creditLimitGbp));
+  const [promoZeroPercentUntil, setPromoZeroPercentUntil] = useState<string>(
+    debt?.promoAprExpiryDate ?? "",
+  );
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const activeType = isEdit ? debt?.type : type;
+  const supportsCreditFields = activeType === "credit_card" || activeType === "overdraft";
+
   const nameError = !name.trim() ? "Enter a name for this debt." : undefined;
-  const balanceError =
-    !isEdit && (balance === null || balance <= 0)
-      ? "Enter the balance you owe, more than £0."
-      : undefined;
+  const balanceError = !isEdit
+    ? supportsCreditFields
+      ? balance === null || balance < 0
+        ? "Enter the balance you owe (£0 or more)."
+        : undefined
+      : balance === null || balance <= 0
+        ? "Enter the balance you owe, more than £0."
+        : undefined
+    : undefined;
   const aprError = apr !== null && apr < 0 ? "APR cannot be negative." : undefined;
   const minimumError =
     minimumPayment !== null && minimumPayment < 0 ? "The minimum cannot be negative." : undefined;
+  const creditLimitError =
+    creditLimit !== null && creditLimit < 0 ? "Credit limit cannot be negative." : undefined;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    if (saving || nameError || balanceError || aprError || minimumError) return;
+    if (saving || nameError || balanceError || aprError || minimumError || creditLimitError) return;
 
     if (debt) {
       const updates: Partial<DebtItem> = {};
@@ -98,6 +112,16 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
       ) {
         updates.minimumPayment = minimumPayment ?? 0;
         updates.minimumPaymentEstimated = minimumPayment === null;
+      }
+      if (supportsCreditFields) {
+        const prevLimit = debt.creditLimitGbp ?? null;
+        if (creditLimit !== prevLimit) {
+          updates.creditLimitGbp = creditLimit ?? undefined;
+        }
+        const prevPromo = debt.promoAprExpiryDate ?? "";
+        if (promoZeroPercentUntil !== prevPromo) {
+          updates.promoAprExpiryDate = promoZeroPercentUntil || undefined;
+        }
       }
       if (Object.keys(updates).length > 0) {
         const result = onEditDebt?.(debt.id, updates);
@@ -125,6 +149,10 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
       minimumPayment: minimumPayment ?? 0,
       minimumPaymentEstimated: minimumPayment === null,
       type,
+      ...(supportsCreditFields && creditLimit !== null ? { creditLimitGbp: creditLimit } : {}),
+      ...(supportsCreditFields && promoZeroPercentUntil
+        ? { promoAprExpiryDate: promoZeroPercentUntil }
+        : {}),
     });
     onClose();
   };
@@ -192,6 +220,37 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
           )}
         </FormField>
       </div>
+      {supportsCreditFields ? (
+        <div className={fieldRow()}>
+          <FormField
+            error={creditLimitError}
+            hint="Your card or overdraft limit, even if the balance is £0."
+            label="Credit limit (optional)"
+          >
+            {(field) => (
+              <CurrencyInput
+                {...controlProps(field)}
+                min={0}
+                value={creditLimit}
+                onValueChange={setCreditLimit}
+              />
+            )}
+          </FormField>
+          <FormField
+            hint="When any 0% promotional interest period ends."
+            label="0% interest period ends (optional)"
+          >
+            {(field) => (
+              <TextInput
+                {...controlProps(field)}
+                type="date"
+                value={promoZeroPercentUntil}
+                onChange={(e) => setPromoZeroPercentUntil(e.target.value)}
+              />
+            )}
+          </FormField>
+        </div>
+      ) : null}
       {saveError ? <InlineAlert tone="danger">{saveError}</InlineAlert> : null}
     </form>
   );

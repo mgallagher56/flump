@@ -47,6 +47,21 @@ export const action = async (args: ActionFunctionArgs) => {
           Number.isFinite(Number(rawSharePercent))
         ? Math.min(100, Math.max(1, Math.round(Number(rawSharePercent))))
         : undefined;
+  const rawSubtype = formData.get("accountSubtype");
+  const accountSubtype =
+    rawSubtype === null ? undefined : rawSubtype === "" ? null : String(rawSubtype);
+  const rawCreditLimit = formData.get("creditLimit");
+  const creditLimit =
+    rawCreditLimit === null
+      ? undefined
+      : rawCreditLimit === ""
+        ? null
+        : Number.isFinite(Number(rawCreditLimit))
+          ? roundTo2dp(Number(rawCreditLimit))
+          : undefined;
+  const rawPromoUntil = formData.get("promoZeroPercentUntil");
+  const promoZeroPercentUntil =
+    rawPromoUntil === null ? undefined : rawPromoUntil === "" ? null : String(rawPromoUntil);
   const balance =
     rawBalance !== null && rawBalance !== "" && Number.isFinite(Number(rawBalance))
       ? roundTo2dp(Number(rawBalance))
@@ -65,8 +80,11 @@ export const action = async (args: ActionFunctionArgs) => {
         type,
         ...(ownership !== undefined ? { ownership } : {}),
         ...(sharePercent !== undefined ? { sharePercent } : {}),
+        ...(accountSubtype !== undefined ? { accountSubtype } : {}),
         ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
         ...(balance !== undefined ? { balance } : {}),
+        ...(creditLimit !== undefined ? { creditLimit } : {}),
+        ...(promoZeroPercentUntil !== undefined ? { promoZeroPercentUntil } : {}),
       });
     } else if (intent === "update") {
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
@@ -79,8 +97,11 @@ export const action = async (args: ActionFunctionArgs) => {
           type,
           ...(ownership !== undefined ? { ownership } : {}),
           ...(sharePercent !== undefined ? { sharePercent } : {}),
+          ...(accountSubtype !== undefined ? { accountSubtype } : {}),
           ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
           ...(balance !== undefined ? { balance } : {}),
+          ...(creditLimit !== undefined ? { creditLimit } : {}),
+          ...(promoZeroPercentUntil !== undefined ? { promoZeroPercentUntil } : {}),
         },
       });
     } else if (intent === "delete") {

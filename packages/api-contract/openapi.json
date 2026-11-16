@@ -310,6 +310,29 @@
                   "items": {
                     "additionalProperties": false,
                     "properties": {
+                      "accountSubtype": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "easy_access",
+                              "notice",
+                              "regular_saver",
+                              "fixed_term",
+                              "general_savings",
+                              "cash_isa",
+                              "lifetime_isa",
+                              "stocks_and_shares_isa",
+                              "general_investment",
+                              "residential_mortgage",
+                              "btl_mortgage"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "balance": {
                         "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                         "type": "number"
@@ -328,6 +351,17 @@
                       },
                       "createdAt": {
                         "type": "string"
+                      },
+                      "creditLimit": {
+                        "anyOf": [
+                          {
+                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "currency": {
                         "pattern": "^[A-Z]{3}$",
@@ -444,6 +478,9 @@
                         "default": "sole",
                         "enum": ["sole", "joint"],
                         "type": "string"
+                      },
+                      "promoZeroPercentUntil": {
+                        "type": ["string", "null"]
                       },
                       "sharePercent": {
                         "anyOf": [
@@ -626,6 +663,29 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "accountSubtype": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "easy_access",
+                          "notice",
+                          "regular_saver",
+                          "fixed_term",
+                          "general_savings",
+                          "cash_isa",
+                          "lifetime_isa",
+                          "stocks_and_shares_isa",
+                          "general_investment",
+                          "residential_mortgage",
+                          "btl_mortgage"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "balance": {
                     "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                     "type": "number"
@@ -636,6 +696,17 @@
                         "format": "uuid",
                         "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                         "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "creditLimit": {
+                    "anyOf": [
+                      {
+                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                        "type": "number"
                       },
                       {
                         "type": "null"
@@ -701,6 +772,9 @@
                   "ownership": {
                     "enum": ["sole", "joint"],
                     "type": "string"
+                  },
+                  "promoZeroPercentUntil": {
+                    "type": ["string", "null"]
                   },
                   "sharePercent": {
                     "anyOf": [
@@ -768,6 +842,29 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "accountSubtype": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "easy_access",
+                            "notice",
+                            "regular_saver",
+                            "fixed_term",
+                            "general_savings",
+                            "cash_isa",
+                            "lifetime_isa",
+                            "stocks_and_shares_isa",
+                            "general_investment",
+                            "residential_mortgage",
+                            "btl_mortgage"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "balance": {
                       "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                       "type": "number"
@@ -786,6 +883,17 @@
                     },
                     "createdAt": {
                       "type": "string"
+                    },
+                    "creditLimit": {
+                      "anyOf": [
+                        {
+                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "currency": {
                       "pattern": "^[A-Z]{3}$",
@@ -823,6 +931,9 @@
                       "default": "sole",
                       "enum": ["sole", "joint"],
                       "type": "string"
+                    },
+                    "promoZeroPercentUntil": {
+                      "type": ["string", "null"]
                     },
                     "sharePercent": {
                       "anyOf": [
@@ -1057,6 +1168,29 @@
                   "items": {
                     "additionalProperties": false,
                     "properties": {
+                      "accountSubtype": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "easy_access",
+                              "notice",
+                              "regular_saver",
+                              "fixed_term",
+                              "general_savings",
+                              "cash_isa",
+                              "lifetime_isa",
+                              "stocks_and_shares_isa",
+                              "general_investment",
+                              "residential_mortgage",
+                              "btl_mortgage"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "balance": {
                         "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                         "type": "number"
@@ -1075,6 +1209,17 @@
                       },
                       "createdAt": {
                         "type": "string"
+                      },
+                      "creditLimit": {
+                        "anyOf": [
+                          {
+                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "currency": {
                         "pattern": "^[A-Z]{3}$",
@@ -1112,6 +1257,9 @@
                         "default": "sole",
                         "enum": ["sole", "joint"],
                         "type": "string"
+                      },
+                      "promoZeroPercentUntil": {
+                        "type": ["string", "null"]
                       },
                       "sharePercent": {
                         "anyOf": [
@@ -1417,6 +1565,29 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "accountSubtype": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "easy_access",
+                            "notice",
+                            "regular_saver",
+                            "fixed_term",
+                            "general_savings",
+                            "cash_isa",
+                            "lifetime_isa",
+                            "stocks_and_shares_isa",
+                            "general_investment",
+                            "residential_mortgage",
+                            "btl_mortgage"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "balance": {
                       "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                       "type": "number"
@@ -1435,6 +1606,17 @@
                     },
                     "createdAt": {
                       "type": "string"
+                    },
+                    "creditLimit": {
+                      "anyOf": [
+                        {
+                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "currency": {
                       "pattern": "^[A-Z]{3}$",
@@ -1551,6 +1733,9 @@
                       "default": "sole",
                       "enum": ["sole", "joint"],
                       "type": "string"
+                    },
+                    "promoZeroPercentUntil": {
+                      "type": ["string", "null"]
                     },
                     "sharePercent": {
                       "anyOf": [
@@ -1748,9 +1933,43 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "accountSubtype": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "easy_access",
+                          "notice",
+                          "regular_saver",
+                          "fixed_term",
+                          "general_savings",
+                          "cash_isa",
+                          "lifetime_isa",
+                          "stocks_and_shares_isa",
+                          "general_investment",
+                          "residential_mortgage",
+                          "btl_mortgage"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "balance": {
                     "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                     "type": "number"
+                  },
+                  "creditLimit": {
+                    "anyOf": [
+                      {
+                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "currency": {
                     "anyOf": [
@@ -1811,6 +2030,9 @@
                   "ownership": {
                     "enum": ["sole", "joint"],
                     "type": "string"
+                  },
+                  "promoZeroPercentUntil": {
+                    "type": ["string", "null"]
                   },
                   "sharePercent": {
                     "anyOf": [
@@ -1877,6 +2099,29 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "accountSubtype": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "easy_access",
+                            "notice",
+                            "regular_saver",
+                            "fixed_term",
+                            "general_savings",
+                            "cash_isa",
+                            "lifetime_isa",
+                            "stocks_and_shares_isa",
+                            "general_investment",
+                            "residential_mortgage",
+                            "btl_mortgage"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "balance": {
                       "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                       "type": "number"
@@ -1895,6 +2140,17 @@
                     },
                     "createdAt": {
                       "type": "string"
+                    },
+                    "creditLimit": {
+                      "anyOf": [
+                        {
+                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "currency": {
                       "pattern": "^[A-Z]{3}$",
@@ -1932,6 +2188,9 @@
                       "default": "sole",
                       "enum": ["sole", "joint"],
                       "type": "string"
+                    },
+                    "promoZeroPercentUntil": {
+                      "type": ["string", "null"]
                     },
                     "sharePercent": {
                       "anyOf": [

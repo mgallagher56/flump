@@ -1,5 +1,5 @@
 import { type AccountCategory, categorizeAccountType } from "./account-category.js";
-import { isBuyToLetAccountName } from "./picture/selectors/loan-to-value.js";
+import { isBuyToLetAccount } from "./picture/selectors/loan-to-value.js";
 
 /**
  * The user's two choices about what net worth counts (owner ruling, net worth choices). Every
@@ -113,7 +113,11 @@ export function resolveNetWorthScope(
     present.add(category);
     if (countsTowardNetWorth(category, basis)) counted.add(id);
     if (category === "property" || category === "mortgages") {
-      const group = isBuyToLetAccountName(acc.name ?? "") ? groups.buyToLet : groups.home;
+      const group = isBuyToLetAccount(
+        acc as { name?: string | null; accountSubtype?: string | null },
+      )
+        ? groups.buyToLet
+        : groups.home;
       if (category === "property") group.value += positiveAmount(acc.balance);
       else group.mortgage += positiveAmount(acc.balance);
     }

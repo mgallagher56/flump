@@ -43,7 +43,7 @@ describe("<NetWorthBasisLine />", () => {
       "Your home's value is not counted until you add an estimate. Add an estimate",
     );
     expect(screen.getByRole("link", { name: "Add an estimate" }).getAttribute("href")).toBe(
-      "/app/accounts",
+      "/app/accounts?add=property",
     );
     expect(screen.queryByRole("link", { name: "Change what counts" })).toBeNull();
   });

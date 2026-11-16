@@ -6,7 +6,7 @@ import { basisLine, basisLink } from "./NetWorthBasisLine.styles";
 /** The net worth choices on the Settings Profile tab. */
 export const NET_WORTH_SETTINGS_HREF = "/app/profile?tab=profile#net-worth";
 /** Where a Property account (the home's value) is added. */
-export const ADD_HOME_VALUE_HREF = "/app/accounts";
+export const ADD_HOME_VALUE_HREF = "/app/accounts?add=property";
 
 export const CHANGE_WHAT_COUNTS = "Change what counts";
 export const HOME_VALUE_MISSING_TEXT =

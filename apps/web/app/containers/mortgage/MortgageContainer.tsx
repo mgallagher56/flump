@@ -1,6 +1,6 @@
 import { UpdateAccountResponse } from "@flump/api-contract";
 import {
-  isBuyToLetAccountName,
+  isBuyToLetAccount,
   isFigureKnown,
   PortfolioSnapshot,
   selectLoanToValue,
@@ -418,9 +418,7 @@ const MortgageContainer: FC = () => {
 
   // Residential mortgage accounts: buy-to-let mortgages are left out of the residential view.
   const mortgageAccounts = useMemo(() => {
-    return accounts.filter(
-      (acc: any) => acc.type === "Mortgage" && !isBuyToLetAccountName(String(acc.name ?? "")),
-    );
+    return accounts.filter((acc: any) => acc.type === "Mortgage" && !isBuyToLetAccount(acc));
   }, [accounts]);
 
   // Residential or buy to let tabs show only when the user has both (E16 PR 6).
@@ -429,6 +427,7 @@ const MortgageContainer: FC = () => {
     !!profileFacts.hasMortgage ||
     profileFacts.housingStatus === "mortgage";
   const hasBtl =
+    accounts.some((acc: any) => acc.type === "Mortgage" && isBuyToLetAccount(acc)) ||
     !!profileFacts.hasBuyToLet ||
     (profileFacts.buyToLetMortgageBalance ?? 0) > 0 ||
     (profileFacts.buyToLetPropertyValue ?? 0) > 0 ||

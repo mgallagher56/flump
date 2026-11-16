@@ -54,6 +54,10 @@ export class Account {
     | "Student Loan"
     | "Overdraft";
 
+  /** Optional subtype (e.g. easy_access, cash_isa, stocks_and_shares_isa, residential_mortgage, btl_mortgage). */
+  @Column({ name: "account_subtype", type: "varchar", nullable: true })
+  accountSubtype: string | null;
+
   @Column("decimal", { precision: 12, scale: 2, transformer: numericTransformer })
   balance: number;
 
@@ -74,6 +78,20 @@ export class Account {
     transformer: numericTransformer,
   })
   monthlyContribution: number | null;
+
+  /** Credit Card and Overdraft accounts: optional credit/overdraft limit. */
+  @Column("decimal", {
+    name: "credit_limit",
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
+  creditLimit: number | null;
+
+  /** Credit Card and Overdraft accounts: optional 0% promotional interest end date. */
+  @Column({ name: "promo_zero_percent_until", type: "date", nullable: true })
+  promoZeroPercentUntil: string | null;
 
   @Column({ name: "term_months", type: "integer", nullable: true })
   termMonths: number | null;

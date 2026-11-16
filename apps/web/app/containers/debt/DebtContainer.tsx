@@ -164,6 +164,8 @@ export const DebtContainer: FC = () => {
         interestRate: payload.interestRate === null ? "" : String(payload.interestRate),
         monthlyContribution:
           payload.monthlyContribution === null ? "" : String(payload.monthlyContribution),
+        creditLimit: payload.creditLimit === null ? "" : String(payload.creditLimit),
+        promoZeroPercentUntil: payload.promoZeroPercentUntil ?? "",
       },
       { method: "POST", action: "/app/debt" },
     );
@@ -194,6 +196,12 @@ export const DebtContainer: FC = () => {
     if ("minimumPayment" in updates || "minimumPaymentEstimated" in updates) {
       fields.monthlyContribution =
         payload.monthlyContribution === null ? "" : String(payload.monthlyContribution);
+    }
+    if ("creditLimitGbp" in updates) {
+      fields.creditLimit = payload.creditLimit === null ? "" : String(payload.creditLimit);
+    }
+    if ("promoAprExpiryDate" in updates) {
+      fields.promoZeroPercentUntil = payload.promoZeroPercentUntil ?? "";
     }
     if (Object.keys(fields).length === 2) return;
     // The saved account's version, so a change made elsewhere is not overwritten.

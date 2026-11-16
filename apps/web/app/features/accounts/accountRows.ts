@@ -12,6 +12,7 @@ export interface AccountRowSource {
   id?: string;
   name?: string;
   type?: string;
+  accountSubtype?: string | null;
   balance?: number | string;
   ownership?: AccountOwnership | string | null;
   sharePercent?: number | string | null;
@@ -23,6 +24,7 @@ export interface AccountRow {
   type: string;
   ownership?: AccountOwnership;
   sharePercent?: number;
+  accountSubtype?: string | null;
   /** Amount held, or amount owed for a liability. Undefined when no balance is known. */
   balance: number | undefined;
   /** Whole-number change against the previous month, or null when there is no earlier month. */
@@ -147,6 +149,7 @@ export const buildAccountRows = (
     const shareInput = {
       name: account.name,
       type: account.type,
+      accountSubtype: account.accountSubtype,
       ownership: account.ownership,
       sharePercent: account.sharePercent,
     };
@@ -158,6 +161,7 @@ export const buildAccountRows = (
       type: account.type ?? "",
       ownership,
       sharePercent,
+      accountSubtype: account.accountSubtype ?? null,
       balance,
       changePercent,
       favourable,

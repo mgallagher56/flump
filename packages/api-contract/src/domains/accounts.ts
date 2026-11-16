@@ -26,6 +26,21 @@ export const ACCOUNT_TYPES = [
 ] as const;
 export const AccountType = z.enum(ACCOUNT_TYPES);
 
+export const ACCOUNT_SUBTYPES = [
+  "easy_access",
+  "notice",
+  "regular_saver",
+  "fixed_term",
+  "general_savings",
+  "cash_isa",
+  "lifetime_isa",
+  "stocks_and_shares_isa",
+  "general_investment",
+  "residential_mortgage",
+  "btl_mortgage",
+] as const;
+export const AccountSubtype = z.enum(ACCOUNT_SUBTYPES);
+
 export const TermMonths = z.number().int().min(1).max(600);
 
 export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
@@ -44,6 +59,8 @@ export const SharePercent = z.number().int().min(1).max(100);
 export const CreateAccountRequest = z.strictObject({
   name: Name,
   type: AccountType,
+  /** Optional subtype (e.g. easy_access, cash_isa, stocks_and_shares_isa, residential_mortgage, btl_mortgage). */
+  accountSubtype: AccountSubtype.nullish(),
   /**
    * Either sign is accepted. The backend stores a liability (Mortgage, Credit Card, Loan,
    * Overdraft, Student Loan) as minus its absolute value and keeps any other type's sign (BE-05
@@ -53,6 +70,10 @@ export const CreateAccountRequest = z.strictObject({
   currency: Currency.nullish(),
   interestRate: Percent.nullish(),
   monthlyContribution: MoneyNonNegative.nullish(),
+  /** Credit Card and Overdraft accounts: optional credit/overdraft limit (usable even at £0 balance). */
+  creditLimit: MoneyNonNegative.nullish(),
+  /** Credit Card and Overdraft accounts: optional 0% promotional interest end date (YYYY-MM-DD). */
+  promoZeroPercentUntil: IsoDate.nullish(),
   /** Student Loan accounts only. */
   studentLoanPlan: StudentLoanPlan.nullish(),
   ownership: AccountOwnership.optional(),
@@ -73,11 +94,14 @@ export const CreateAccountRequest = z.strictObject({
 export const UpdateAccountRequest = z.strictObject({
   name: Name.optional(),
   type: AccountType.optional(),
+  accountSubtype: AccountSubtype.nullish(),
   /** Either sign is accepted; stored by the same rule as on create (a type change re-signs it). */
   balance: Money.optional(),
   currency: Currency.nullish(),
   interestRate: Percent.nullish(),
   monthlyContribution: MoneyNonNegative.nullish(),
+  creditLimit: MoneyNonNegative.nullish(),
+  promoZeroPercentUntil: IsoDate.nullish(),
   /** Student Loan accounts only. */
   studentLoanPlan: StudentLoanPlan.nullish(),
   ownership: AccountOwnership.optional(),
@@ -148,6 +172,8 @@ const accountShape = {
   id: Uuid,
   name: z.string(),
   type: AccountType,
+  /** Optional so a response from a backend without the column still parses. */
+  accountSubtype: AccountSubtype.nullish(),
   /**
    * Signed: a liability (Mortgage, Credit Card, Loan, Overdraft, Student Loan) is always negative
    * (BE-05 stored-balance rule, enforced by a database check); other types keep their sign.
@@ -155,6 +181,8 @@ const accountShape = {
   balance: Amount,
   interestRate: Rate.nullable(),
   monthlyContribution: Amount.nullable(),
+  creditLimit: Amount.nullish(),
+  promoZeroPercentUntil: IsoDate.nullish(),
   termMonths: Int.nullable(),
   fixedRateEndDate: IsoDate.nullable(),
   isCurrent: z.boolean(),

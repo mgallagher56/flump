@@ -34,6 +34,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
   try {
     if (intent === "createDebt") {
+      const promoRaw = formData.get("promoZeroPercentUntil");
       await backendFetch("/accounts", {
         schema: CreateAccountResponse,
         accessToken: token,
@@ -44,6 +45,8 @@ export const action = async (args: ActionFunctionArgs) => {
           balance: storedLiabilityBalance(formData.get("balance")),
           interestRate: optionalNumber(formData.get("interestRate")),
           monthlyContribution: optionalNumber(formData.get("monthlyContribution")),
+          creditLimit: optionalNumber(formData.get("creditLimit")),
+          promoZeroPercentUntil: typeof promoRaw === "string" && promoRaw !== "" ? promoRaw : null,
         },
       });
     } else if (intent === "updateDebt") {
@@ -57,6 +60,14 @@ export const action = async (args: ActionFunctionArgs) => {
         body.interestRate = optionalNumber(formData.get("interestRate"));
       if (formData.has("monthlyContribution")) {
         body.monthlyContribution = optionalNumber(formData.get("monthlyContribution"));
+      }
+      if (formData.has("creditLimit")) {
+        body.creditLimit = optionalNumber(formData.get("creditLimit"));
+      }
+      if (formData.has("promoZeroPercentUntil")) {
+        const promoRaw = formData.get("promoZeroPercentUntil");
+        body.promoZeroPercentUntil =
+          typeof promoRaw === "string" && promoRaw !== "" ? promoRaw : null;
       }
       await backendFetch(`/accounts/${accountId}`, {
         schema: UpdateAccountResponse,

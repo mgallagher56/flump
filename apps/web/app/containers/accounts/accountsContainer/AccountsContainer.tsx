@@ -30,9 +30,18 @@ const AccountsContainer: FC = () => {
   // Before hydration the buttons are plain links (#701): "?add=1" and "?checkIn=1" open the add
   // dialog or the check-in on arrival, then the parameter is removed so a reload does not reopen.
   const [params, setParams] = useSearchParams();
-  const arrivedToAdd = params.get("add") === "1";
+  const addParam = params.get("add");
+  const arrivedToAdd = addParam === "1" || addParam === "property";
+  const [addPropertyMode, setAddPropertyMode] = useState(addParam === "property");
+  const [openRequestKey, setOpenRequestKey] = useState(0);
   const [checkInOpen, setCheckInOpen] = useState(params.get("checkIn") === "1");
   useEffect(() => {
+    if (params.get("add") === "property") {
+      setAddPropertyMode(true);
+      setOpenRequestKey((k) => k + 1);
+    } else if (params.get("add") === "1") {
+      setAddPropertyMode(false);
+    }
     if (params.has("add") || params.has("checkIn")) {
       const next = new URLSearchParams(params);
       next.delete("add");
@@ -94,6 +103,9 @@ const AccountsContainer: FC = () => {
               <AddEditAccountsDialogBtn
                 defaultOpen={arrivedToAdd}
                 fallbackHref={ADD_HREF}
+                initialName={addPropertyMode ? "Home (your estimate)" : undefined}
+                initialType={addPropertyMode ? "Property" : undefined}
+                openRequestKey={openRequestKey}
                 variant="primary"
               />
             </div>
@@ -144,6 +156,9 @@ const AccountsContainer: FC = () => {
               <AddEditAccountsDialogBtn
                 defaultOpen={arrivedToAdd}
                 fallbackHref={ADD_HREF}
+                initialName={addPropertyMode ? "Home (your estimate)" : undefined}
+                initialType={addPropertyMode ? "Property" : undefined}
+                openRequestKey={openRequestKey}
                 variant="primary"
               />
             }
