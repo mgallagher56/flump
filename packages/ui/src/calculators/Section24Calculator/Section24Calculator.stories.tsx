@@ -24,10 +24,11 @@ const play: Story["play"] = async ({ canvasElement, args }) => {
   await userEvent.tab();
   await expect(await outcomes.findByText("£9,600")).toBeInTheDocument();
 
-  // Other allowable costs sit under More options.
-  await userEvent.click(
-    canvas.getByRole("button", { name: new RegExp(SECTION24_COPY.moreOptions) }),
-  );
+  // Other allowable costs sit behind a quiet drawer button named for them.
+  const otherCosts = canvas.getByRole("button", { name: SECTION24_COPY.otherCosts });
+  await expect(otherCosts).toHaveAttribute("aria-expanded", "false");
+  await userEvent.click(otherCosts);
+  await expect(otherCosts).toHaveAttribute("aria-expanded", "true");
   await expect(canvas.getByLabelText(SECTION24_COPY.allowableExpenses)).toBeInTheDocument();
 
   await userEvent.click(canvas.getByRole("button", { name: /Continue to sign up/ }));

@@ -1,6 +1,6 @@
 # E34. Shared finances for couples: research and options
 
-> **Status: research and a plan for owner approval. No code.** Written 2026-11-15 against `origin/main` at `8e08f0c8`. Not legal advice. Facts marked **[U]** were not confirmed in a primary source today.
+> **Status: plan approved. The owner accepted decisions CD1 to CD10 as recommended on 2026-11-17.** Slices 1 and 2 are merged (#748, #757). Written 2026-11-15 against `origin/main` at `8e08f0c8`. Not legal advice. Facts marked **[U]** were not confirmed in a primary source today.
 
 **Summary.** The owner wants couples to track finances together across the site, like co-op mode in a game. The safest shape is the one a co-op game uses: each player keeps their own inventory and chooses what goes in the shared stash. Each person keeps their own login and their own data. Nothing is shared until its owner shares it, either person can stop sharing or leave at once without the other's agreement, and nobody can lock the other out or delete their data. Tax is always worked out per person, because UK tax, ISAs and pensions are individual. The recommended first slice needs no second login at all: mark an account as joint with a share, so one person's picture stops counting the whole of a joint mortgage. The household, the invitation and the "Me / Household" switch follow in later slices. The largest risk is that any sharing feature can be used to watch or control a partner, so the safety rules in section 3 are requirements, not options.
 
@@ -132,6 +132,8 @@ During the closed beta the invited person must also be on the allowlist (`apps/b
 Any sharing feature can be coerced, and Flump cannot tell a willing share from a demanded one. It is also the most invasive change the data model has had: one wrong visibility rule shows one user's finances to another, in a public repository, before launch, with one developer. There is no evidence yet that beta users want it. C1 gives most couples correct figures without any of that risk, and stopping there is a defensible outcome.
 
 ## 10. Decisions for the owner
+
+**Accepted 2026-11-17.** The owner accepted the recommendation in every row, CD1 to CD10. For CD10 the help line wording still needs owner approval before it is shown.
 
 | # | Decision | Options | Recommendation |
 | --- | --- | --- | --- |

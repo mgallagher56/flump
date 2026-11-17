@@ -30,7 +30,7 @@ export const section24Intro = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: "0", maxWidth: "70ch" },
 });
 
-/** Left column: three visible inputs, then the "More options" drawer. */
+/** Left column: three visible inputs, then the "Other allowable costs" drawer. */
 export const section24Controls = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", minWidth: "0" },
 });

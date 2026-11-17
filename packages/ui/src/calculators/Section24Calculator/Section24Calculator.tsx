@@ -39,7 +39,7 @@ export const SECTION24_COPY = {
   mortgageInterest: "Mortgage interest a year",
   otherIncome: "Other taxable income a year",
   otherIncomeHelper: "Salary or profits.",
-  moreOptions: "More options",
+  otherCosts: "Other allowable costs",
   allowableExpenses: "Other allowable costs a year (repairs, agent fees)",
   kpiTax: "Estimated tax on rental income",
   kpiTaxSubtext: "After the tax credit for mortgage interest.",
@@ -176,9 +176,9 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         value={otherIncome}
         onChange={(v) => setOtherIncome(clamp(v))}
       />
-      {/* Named by its title; the visible action text is left out. State lives here, so closing
-          the drawer keeps the figure. */}
-      <CollapsibleDrawer closedLabel="" openLabel="" title={SECTION24_COPY.moreOptions}>
+      {/* B14: a quiet drawer button named for what is inside. State lives here, so closing the
+          drawer keeps the figure. */}
+      <CollapsibleDrawer title={SECTION24_COPY.otherCosts} variant="quiet">
         <div className={section24DrawerBody()}>
           <SliderField
             format="currency"

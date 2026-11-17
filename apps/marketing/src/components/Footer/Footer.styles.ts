@@ -25,5 +25,3 @@ export const footerBottomRow = cva({
 export const footerCompanyLine = cva({
   base: { color: "text.secondary" },
 });
-
-export const footerExternalIcon = cva({ base: { display: "inline", marginLeft: "1" } });

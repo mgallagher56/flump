@@ -1,6 +1,6 @@
 # E33. Retirement plan: a target the user sets, tracked each month
 
-> **Status: plan for owner approval. No code.** Written 2026-11-15 against `origin/main` at `8e08f0c8`. Not legal advice. Facts marked **[U]** were not confirmed in a primary source today.
+> **Status: plan approved. The owner accepted decisions RD1 to RD11 as recommended on 2026-11-17.** Slices S0 to S5 are merged (#750, #758). Written 2026-11-15 against `origin/main` at `8e08f0c8`. Not legal advice. Facts marked **[U]** were not confirmed in a primary source today.
 
 **Summary.** The owner asked for a retirement calculator where a user works out how much retirement would cost them and tracks savings, investments and pensions against it, taking account of whether a mortgage ends or rent continues for life. This plan proposes one new page, Retirement, built on one new engine module. The user sets the target themselves, as a typed yearly figure or built from their own budget lines. Housing in retirement follows their saved housing details: a mortgage that ends, a mortgage that continues, or rent for life, each shown with the same weight. The page shows an estimated yearly income from a chosen age, in today's money, beside the user's own target, and never says what anyone "needs". Progress is a monthly series taken from the check-in. E27 stays as the tax and withdrawal slices inside this epic. Ten slices, S0 to S9; S1 to S3 give a working page.
 
@@ -140,6 +140,8 @@ S1 to S3 are useful on their own. S4, S5 and S8 can run in parallel after S3.
 A long-range projection is the output most easily read as advice, and Flump has no solicitor's view yet (E29b). A user who sees "£24,300 a year" may act on it, and the figure rests on growth assumptions nobody can verify, manual balances that may be stale and tax vectors that are unsigned. The honest alternative is to keep the simpler pension forecaster and link out to MoneyHelper. The plan's answer is the three-case band, today's money, the user's own target and waiting for E29a; that reduces the risk but does not remove it.
 
 ## 12. Decisions for the owner
+
+**Accepted 2026-11-17.** The owner accepted the recommendation in every row, RD1 to RD11. For RD11 the MoneyHelper link still needs owner-approved wording before it is shown.
 
 | # | Decision | Options | Recommendation |
 | --- | --- | --- | --- |

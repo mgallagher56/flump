@@ -61,6 +61,15 @@ describe("Footer", () => {
     expect(screen.getByRole("heading", { name: "Product" })).toBeDefined();
   });
 
+  it("links to the interactive preview once and never to /sandbox, which now goes to sign-up", () => {
+    const { container } = renderFooter();
+    const previews = screen.getAllByRole("link", { name: "Interactive preview" });
+    expect(previews).toHaveLength(1);
+    expect(previews[0]?.getAttribute("href")).toBe("/preview");
+    expect(container.querySelector('a[href*="/sandbox"]')).toBeNull();
+    expect(screen.queryByRole("link", { name: /sample data/i })).toBeNull();
+  });
+
   it("links to the AI connection page, which has left the home page (D13)", () => {
     renderFooter();
     expect(screen.getByRole("link", { name: "AI connection" }).getAttribute("href")).toBe("/mcp");

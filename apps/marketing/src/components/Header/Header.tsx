@@ -88,15 +88,14 @@ export const Header: FC = () => {
         wideOnly: true,
       },
       {
-        key: "demo",
+        key: "preview",
         wideOnly: true,
-        label: "Sample data",
-        href: `${appUrl}/sandbox`,
+        label: "Interactive preview",
+        href: "/preview",
         hint: "Try it without signing in",
-        external: true,
       },
     ],
-    [appUrl],
+    [],
   );
 
   useEffect(() => {
