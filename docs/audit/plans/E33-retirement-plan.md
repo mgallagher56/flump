@@ -140,9 +140,9 @@ S1 to S3 are useful on their own. S4, S5 and S8 can run in parallel after S3.
 Done:
 
 - S0 to S5 merged (#750, #758), corrected by #768.
-- RD6, one projection (PR #RETIREMENT_PR): the Pension page's forecaster is gone. Its what-if now runs in the Retirement page's scenario zone on the same engine projection (`projectRealPotBalance` in `packages/finance-engine/src/retirement.ts`) and the saved plan's growth band and inflation. Workplace contributions from salary (`workplace-pension.ts`) now count in the saved plan, its scenario and the MCP tools alike. The Pension page keeps saved facts, the take-home tool and the UK rules, with a link to the Retirement page. The savings forecaster's "today's money" uses the same real-rate conversion and inflation figure.
-- RD9, friends beta (PR #RETIREMENT_PR): the page, `/retirement-plan` and the MCP retirement tools are available while `BETA_OPEN` is true or to users listed in `RETIREMENT_ALLOWED_USER_IDS`; anyone else gets a plain not-found. The nav item stays hidden.
-- RD11, MoneyHelper link (PR #RETIREMENT_PR): the policy's R3 exception now covers one MoneyHelper pension guidance line on the Retirement page, the same for everyone.
+- RD6, one projection (PR #770): the Pension page's forecaster is gone. Its what-if now runs in the Retirement page's scenario zone on the same engine projection (`projectRealPotBalance` in `packages/finance-engine/src/retirement.ts`) and the saved plan's growth band and inflation. Workplace contributions from salary (`workplace-pension.ts`) now count in the saved plan, its scenario and the MCP tools alike. The Pension page keeps saved facts, the take-home tool and the UK rules, with a link to the Retirement page. The savings forecaster's "today's money" uses the same real-rate conversion and inflation figure.
+- RD9, friends beta (PR #770): the page, `/retirement-plan` and the MCP retirement tools are available while `BETA_OPEN` is true or to users listed in `RETIREMENT_ALLOWED_USER_IDS`; anyone else gets a plain not-found. The nav item stays hidden.
+- RD11, MoneyHelper link (PR #770): the policy's R3 exception now covers one MoneyHelper pension guidance line on the Retirement page, the same for everyone.
 
 Remaining:
 
