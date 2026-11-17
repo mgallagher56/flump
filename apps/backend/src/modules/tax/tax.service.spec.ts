@@ -1,4 +1,5 @@
-import { BadRequestException } from "@nestjs/common";
+import { decryptReceiptData, encryptReceiptData, isEncryptedToken } from "@flump/banking/server";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
 import { annualRecordEndDate, TaxService } from "./tax.service";
@@ -102,5 +103,77 @@ describe("TaxService.createBulk (audit M3)", () => {
       }),
     ).rejects.toThrow("insert failed");
     expect(failing.update).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("TaxService.readReceipt (SEC-D, L4 legacy plaintext)", () => {
+  const RECORD_ID = "00000000-0000-4000-8000-0000000000aa";
+  // A minimal PDF: the magic bytes are all the sniffer checks.
+  const pdfDataUrl = `data:application/pdf;base64,${Buffer.from("%PDF-1.4\n").toString("base64")}`;
+
+  const repoWith = (receiptData: string) => {
+    const qb = {
+      update: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      execute: vi.fn().mockResolvedValue({ affected: 1 }),
+    };
+    const repo = {
+      findOne: vi.fn().mockResolvedValue({
+        id: RECORD_ID,
+        receiptFilename: "receipt.pdf",
+        receiptMimeType: "application/pdf",
+        receiptData,
+      }),
+      createQueryBuilder: vi.fn().mockReturnValue(qb),
+    };
+    return { repo, qb };
+  };
+
+  it("serves a legacy plaintext receipt and writes back its encrypted form, not a 404", async () => {
+    const { repo, qb } = repoWith(pdfDataUrl);
+    const service = new TaxService(repo as never);
+
+    const file = await service.readReceipt("u1", RECORD_ID);
+
+    expect(file.type).toBe("application/pdf");
+    expect(file.bytes.toString("latin1").startsWith("%PDF-")).toBe(true);
+    expect(qb.execute).toHaveBeenCalledTimes(1);
+    const written = qb.set.mock.calls[0]?.[0] as { receiptData: string; updatedAt: () => string };
+    expect(isEncryptedToken(written.receiptData)).toBe(true);
+    expect(decryptReceiptData(written.receiptData, RECORD_ID)).toBe(pdfDataUrl);
+    // A read is not an edit: the row's version (ETag) stays as it was.
+    expect(written.updatedAt()).toBe('"updated_at"');
+    // Only the row still holding that plaintext is rewritten (a concurrent upload wins).
+    expect(qb.where.mock.calls[0]?.[1]).toEqual({
+      id: RECORD_ID,
+      userId: "u1",
+      plaintext: pdfDataUrl,
+    });
+  });
+
+  it("still serves the receipt when the write-back fails", async () => {
+    const { repo, qb } = repoWith(pdfDataUrl);
+    qb.execute.mockRejectedValue(new Error("db down"));
+    const service = new TaxService(repo as never);
+    await expect(service.readReceipt("u1", RECORD_ID)).resolves.toMatchObject({
+      type: "application/pdf",
+    });
+  });
+
+  it("does not rewrite a receipt that is already encrypted", async () => {
+    const { repo, qb } = repoWith(encryptReceiptData(pdfDataUrl, RECORD_ID));
+    const service = new TaxService(repo as never);
+    await expect(service.readReceipt("u1", RECORD_ID)).resolves.toMatchObject({
+      type: "application/pdf",
+    });
+    expect(qb.execute).not.toHaveBeenCalled();
+  });
+
+  it("is a 404 for legacy plaintext that fails the receipt rules, and leaves it alone", async () => {
+    const { repo, qb } = repoWith("data:application/pdf;base64,AAAA");
+    const service = new TaxService(repo as never);
+    await expect(service.readReceipt("u1", RECORD_ID)).rejects.toBeInstanceOf(NotFoundException);
+    expect(qb.execute).not.toHaveBeenCalled();
   });
 });

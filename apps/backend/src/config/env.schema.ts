@@ -1,3 +1,4 @@
+import { resolveReceiptKeyring } from "@flump/banking/server";
 import { z } from "zod";
 
 /**
@@ -189,7 +190,9 @@ export type BackendEnv = z.infer<typeof backendEnvSchema>;
  * Present when NODE_ENV=production, or boot fails. `DATABASE_URL` may be replaced by DB_HOST.
  * The last three joined with SEC-A (findings N1, N2, M9): without them account erasure cannot write
  * its tombstone, the signed client address cannot be verified (every web user shares one rate-limit
- * bucket) and an erased account keeps its WorkOS login.
+ * bucket) and an erased account keeps its WorkOS login. RECEIPT_ENCRYPTION_KEY joined by the same
+ * rule (SEC-D, L4): without it the first receipt read or write fails rather than boot;
+ * `RECEIPT_ENCRYPTION_KEYS` (the versioned keyring) may replace it.
  */
 export const PRODUCTION_REQUIRED = [
   "DATABASE_URL",
@@ -197,12 +200,23 @@ export const PRODUCTION_REQUIRED = [
   "MCP_AUDIT_HMAC_KEY",
   "WORKOS_CLIENT_ID",
   "BANKING_TOKEN_ENCRYPTION_KEY",
+  "RECEIPT_ENCRYPTION_KEY",
   "DELETION_TOMBSTONE_KEY",
   "WEB_CLIENT_IP_HMAC_KEY",
   "WORKOS_API_KEY",
 ] as const;
 
+/** A required variable that another one may stand in for. */
+const PRODUCTION_ALTERNATIVES: Partial<Record<(typeof PRODUCTION_REQUIRED)[number], string>> = {
+  DATABASE_URL: "DB_HOST",
+  RECEIPT_ENCRYPTION_KEY: "RECEIPT_ENCRYPTION_KEYS",
+};
+
+/** Required variables whose missing-message also names the alternative an operator may set instead. */
+const NAMED_ALTERNATIVES: ReadonlySet<string> = new Set(["RECEIPT_ENCRYPTION_KEY"]);
+
 const MIN_PRODUCTION_HMAC_KEY = 32;
+const MIN_RECEIPT_KEY = 32;
 /** HMAC keys with a production minimum length. WEB_CLIENT_IP_HMAC_KEY has one in every environment. */
 const PRODUCTION_HMAC_KEYS = ["MCP_AUDIT_HMAC_KEY", "DELETION_TOMBSTONE_KEY"] as const;
 
@@ -221,14 +235,45 @@ export class EnvValidationError extends Error {
 
 export const isProduction = (env: Raw): boolean => env.NODE_ENV?.trim() === "production";
 
+/**
+ * Resolves the receipt keyring the way the encrypt and decrypt paths will (SEC-D, L4), so a malformed
+ * or short key fails boot instead of the first receipt read. Skipped when neither variable is set
+ * (the required check reports that). The problem is a fixed string: no resolver text, no key material.
+ */
+function receiptKeyringIssue(env: Raw, present: (name: string) => boolean): EnvIssue | undefined {
+  const usesKeyring = present("RECEIPT_ENCRYPTION_KEYS");
+  if (!usesKeyring && !present("RECEIPT_ENCRYPTION_KEY")) return undefined;
+  try {
+    resolveReceiptKeyring(env);
+    return undefined;
+  } catch {
+    return usesKeyring
+      ? {
+          variable: "RECEIPT_ENCRYPTION_KEYS",
+          problem: `must be comma-separated <version>:<secret> entries, each secret at least ${MIN_RECEIPT_KEY} characters`,
+        }
+      : {
+          variable: "RECEIPT_ENCRYPTION_KEY",
+          problem: `must be at least ${MIN_RECEIPT_KEY} characters in production`,
+        };
+  }
+}
+
 function productionIssues(env: Raw): EnvIssue[] {
   if (!isProduction(env)) return [];
   const present = (name: string) => (env[name]?.trim() ?? "") !== "";
   const issues: EnvIssue[] = [];
   for (const name of PRODUCTION_REQUIRED) {
-    if (name === "DATABASE_URL" && present("DB_HOST")) continue;
-    if (!present(name)) issues.push({ variable: name, problem: "is required in production" });
+    const alternative = PRODUCTION_ALTERNATIVES[name];
+    if (alternative && present(alternative)) continue;
+    if (present(name)) continue;
+    const problem = NAMED_ALTERNATIVES.has(name)
+      ? `is required in production (or ${alternative})`
+      : "is required in production";
+    issues.push({ variable: name, problem });
   }
+  const receiptIssue = receiptKeyringIssue(env, present);
+  if (receiptIssue) issues.push(receiptIssue);
   for (const name of PRODUCTION_HMAC_KEYS) {
     const key = env[name]?.trim() ?? "";
     if (key !== "" && key.length < MIN_PRODUCTION_HMAC_KEY) {

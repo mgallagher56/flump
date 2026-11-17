@@ -31,10 +31,18 @@ import {
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
+import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { FinanceService } from "../finance/finance.service";
 import { type ProfileView, UserProfileService } from "../profile/user-profile.service";
+import { savedPlanInputFromRow } from "../retirement/retirement.service";
+
+/** The saved birth year as a whole positive number, or null when none is saved. */
+const birthYearOf = (value: unknown): number | null => {
+  const n = typeof value === "number" ? value : Number(value);
+  return value !== null && value !== undefined && Number.isInteger(n) && n > 0 ? n : null;
+};
 
 /** The profile as the engine reads it: the wire shape, dates as ISO strings. */
 const isoOf = (value: unknown): string | undefined =>
@@ -76,6 +84,8 @@ const ACCOUNT_COLUMNS = {
   fixedRateEndDate: true,
   currency: true,
   isCurrent: true,
+  ownership: true,
+  sharePercent: true,
   createdAt: true,
 } as const satisfies FindOptionsSelect<Account>;
 
@@ -159,6 +169,8 @@ export class AgentDataService implements McpUserDataProvider {
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(AccountDetail)
     private readonly accountDetailRepository: Repository<AccountDetail>,
+    @InjectRepository(RetirementPlan)
+    private readonly retirementPlanRepository: Repository<RetirementPlan>,
   ) {}
 
   // --- Ranged reads for the MCP query tools (E17 re-plan PR B) ---------------------------------
@@ -181,6 +193,9 @@ export class AgentDataService implements McpUserDataProvider {
       fixedRateEndDate: a.fixedRateEndDate,
       currency: a.currency,
       isCurrent: a.isCurrent !== false,
+      // E34: a joint account counts at the user's share in every MCP figure.
+      ownership: a.ownership,
+      sharePercent: a.sharePercent,
     }));
   }
 
@@ -332,6 +347,9 @@ export class AgentDataService implements McpUserDataProvider {
       order: { date: "DESC" },
     });
 
+    // Read only: no row means no saved plan (null), never a created default (E33).
+    const planRow = await this.retirementPlanRepository.findOne({ where: { userId } });
+
     return {
       baseline,
       // Saved facts without defaults: safe to spend needs real take-home, not the baseline's.
@@ -354,6 +372,10 @@ export class AgentDataService implements McpUserDataProvider {
         endDate: t.endDate,
         notes: t.notes,
       })),
+      // For the MCP retirement tools only. Figures, ages and account ids, no free text, so the
+      // anonymiser keeps them as it keeps the baseline age (which is derived from the same year).
+      retirementPlan: planRow ? savedPlanInputFromRow(planRow) : null,
+      birthYear: birthYearOf(profile.birthYear),
     };
   }
 

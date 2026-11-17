@@ -19,6 +19,7 @@ const PROD = {
   WORKOS_API_KEY: "w".repeat(32),
   WORKOS_CLIENT_ID: "client_123",
   BANKING_TOKEN_ENCRYPTION_KEY: "b".repeat(64),
+  RECEIPT_ENCRYPTION_KEY: "r".repeat(64),
   BETA_ALLOWED_USER_IDS: "user_01",
 };
 

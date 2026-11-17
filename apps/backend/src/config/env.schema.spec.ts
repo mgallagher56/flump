@@ -8,6 +8,7 @@ const PROD = {
   MCP_AUDIT_HMAC_KEY: "k".repeat(32),
   WORKOS_CLIENT_ID: "client_123",
   BANKING_TOKEN_ENCRYPTION_KEY: "b".repeat(64),
+  RECEIPT_ENCRYPTION_KEY: "r".repeat(64),
   DELETION_TOMBSTONE_KEY: "t".repeat(32),
   WEB_CLIENT_IP_HMAC_KEY: "h".repeat(32),
   WORKOS_API_KEY: "w".repeat(32),
@@ -53,13 +54,61 @@ describe("parseBackendEnv", () => {
 
   it.each(PRODUCTION_REQUIRED)("fails production boot without %s, naming it", (name) => {
     const issues = issuesOf({ ...PROD, [name]: undefined });
-    expect(issues).toEqual([{ variable: name, problem: "is required in production" }]);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.variable).toBe(name);
+    expect(issues[0]?.problem).toMatch(/^is required in production/);
   });
 
   it("accepts DB_HOST in place of DATABASE_URL in production", () => {
     expect(() =>
       parseBackendEnv({ ...PROD, DATABASE_URL: undefined, DB_HOST: "db.internal" }),
     ).not.toThrow();
+  });
+
+  it("requires the receipt encryption key in production, by the SEC-A rule", () => {
+    expect(PRODUCTION_REQUIRED).toContain("RECEIPT_ENCRYPTION_KEY");
+    expect(issuesOf({ ...PROD, RECEIPT_ENCRYPTION_KEY: undefined })).toEqual([
+      {
+        variable: "RECEIPT_ENCRYPTION_KEY",
+        problem: "is required in production (or RECEIPT_ENCRYPTION_KEYS)",
+      },
+    ]);
+    expect(() => parseBackendEnv({ ...PROD, RECEIPT_ENCRYPTION_KEY: undefined })).toThrow(
+      "Invalid environment: RECEIPT_ENCRYPTION_KEY is required in production (or RECEIPT_ENCRYPTION_KEYS)",
+    );
+    expect(() => parseBackendEnv({ NODE_ENV: "development" })).not.toThrow();
+  });
+
+  it("accepts RECEIPT_ENCRYPTION_KEYS in place of RECEIPT_ENCRYPTION_KEY in production", () => {
+    expect(() =>
+      parseBackendEnv({
+        ...PROD,
+        RECEIPT_ENCRYPTION_KEY: undefined,
+        RECEIPT_ENCRYPTION_KEYS: `1:${"r".repeat(48)}`,
+      }),
+    ).not.toThrow();
+  });
+
+  it("validates the receipt keyring at boot in production, never echoing key material", () => {
+    const shortSecret = "s".repeat(20);
+    const malformed = issuesOf({
+      ...PROD,
+      RECEIPT_ENCRYPTION_KEY: undefined,
+      RECEIPT_ENCRYPTION_KEYS: `not-a-keyring-${shortSecret}`,
+    });
+    expect(malformed.map((i) => i.variable)).toEqual(["RECEIPT_ENCRYPTION_KEYS"]);
+    const short = issuesOf({
+      ...PROD,
+      RECEIPT_ENCRYPTION_KEY: undefined,
+      RECEIPT_ENCRYPTION_KEYS: `2:${"r".repeat(48)},1:${shortSecret}`,
+    });
+    expect(short.map((i) => i.variable)).toEqual(["RECEIPT_ENCRYPTION_KEYS"]);
+    for (const issue of [...malformed, ...short]) {
+      expect(issue.problem).not.toContain(shortSecret);
+      expect(issue.problem).not.toContain("r".repeat(48));
+    }
+    // Outside production the keyring is not checked at boot.
+    expect(() => parseBackendEnv({ RECEIPT_ENCRYPTION_KEYS: "nonsense" })).not.toThrow();
   });
 
   it("refuses a short MCP_AUDIT_HMAC_KEY in production only", () => {

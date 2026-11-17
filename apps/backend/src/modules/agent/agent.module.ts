@@ -5,6 +5,7 @@ import { AccountDetail } from "../../entities/account-detail.entity";
 import { AgentAuditEvent } from "../../entities/agent-audit-event.entity";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { McpToken } from "../../entities/mcp-token.entity";
+import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { SecurityModule } from "../../security/security.module";
@@ -28,6 +29,7 @@ import { McpTokenService } from "./mcp-token.service";
       AgentAuditEvent,
       BudgetEntry,
       McpToken,
+      RetirementPlan,
       TaxRecord,
       Transaction,
     ]),

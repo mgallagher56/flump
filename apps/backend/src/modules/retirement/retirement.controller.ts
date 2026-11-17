@@ -18,7 +18,8 @@ export class RetirementController {
     @Res({ passthrough: true }) res?: Response,
   ): Promise<RetirementPlanResponse> {
     const view = await this.retirementService.getPlan(req.user.id);
-    setEtag(res, view.updatedAt);
+    // No saved row, no version: the first PUT is sent without If-Match.
+    if (view.updatedAt) setEtag(res, view.updatedAt);
     return { plan: view.plan };
   }
 
@@ -35,7 +36,7 @@ export class RetirementController {
       body,
       expectedVersion(ifMatch),
     );
-    setEtag(res, view.updatedAt);
+    if (view.updatedAt) setEtag(res, view.updatedAt);
     return { plan: view.plan };
   }
 }

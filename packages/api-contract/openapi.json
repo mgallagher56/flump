@@ -7804,6 +7804,13 @@
                               "name": {
                                 "type": "string"
                               },
+                              "ownership": {
+                                "enum": ["sole", "joint"],
+                                "type": "string"
+                              },
+                              "sharePercent": {
+                                "type": ["number", "null"]
+                              },
                               "termMonths": {
                                 "anyOf": [
                                   {
@@ -7968,6 +7975,11 @@
                             "enabledModules"
                           ],
                           "type": "object"
+                        },
+                        "birthYear": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
                         },
                         "budgetEntries": {
                           "items": {
@@ -8135,6 +8147,303 @@
                             "propertyOwnershipShare"
                           ],
                           "type": "object"
+                        },
+                        "retirementPlan": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "cashSavingsNominalRate": {
+                                  "type": ["number", "null"]
+                                },
+                                "excludedAccountIds": {
+                                  "items": {
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                },
+                                "growthRates": {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "higher": {
+                                      "maximum": 1,
+                                      "minimum": 0,
+                                      "type": "number"
+                                    },
+                                    "lower": {
+                                      "maximum": 1,
+                                      "minimum": 0,
+                                      "type": "number"
+                                    },
+                                    "middle": {
+                                      "maximum": 1,
+                                      "minimum": 0,
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": ["lower", "middle", "higher"],
+                                  "type": "object"
+                                },
+                                "housingOverride": {
+                                  "anyOf": [
+                                    {
+                                      "oneOf": [
+                                        {
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "kind": {
+                                              "const": "own-outright",
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": ["kind"],
+                                          "type": "object"
+                                        },
+                                        {
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "kind": {
+                                              "const": "mortgage-ends-before-retirement",
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": ["kind"],
+                                          "type": "object"
+                                        },
+                                        {
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "kind": {
+                                              "const": "rent-for-life",
+                                              "type": "string"
+                                            },
+                                            "monthlyRentGbp": {
+                                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                              "type": "number"
+                                            },
+                                            "realRentGrowthRate": {
+                                              "maximum": 0.5,
+                                              "minimum": -0.2,
+                                              "type": "number"
+                                            }
+                                          },
+                                          "required": ["kind", "monthlyRentGbp"],
+                                          "type": "object"
+                                        },
+                                        {
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "kind": {
+                                              "const": "custom",
+                                              "type": "string"
+                                            },
+                                            "monthlyAmountGbp": {
+                                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                              "type": "number"
+                                            }
+                                          },
+                                          "required": ["kind", "monthlyAmountGbp"],
+                                          "type": "object"
+                                        },
+                                        {
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "kind": {
+                                              "const": "mortgage-continues",
+                                              "type": "string"
+                                            },
+                                            "monthlyPaymentGbp": {
+                                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                              "type": "number"
+                                            },
+                                            "remainingYearsInRetirement": {
+                                              "maximum": 60,
+                                              "minimum": 0,
+                                              "type": "number"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "monthlyPaymentGbp",
+                                            "remainingYearsInRetirement"
+                                          ],
+                                          "type": "object"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "inflationRate": {
+                                  "type": "number"
+                                },
+                                "planToAge": {
+                                  "anyOf": [
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "realRentGrowthRate": {
+                                  "type": "number"
+                                },
+                                "retirementAge": {
+                                  "anyOf": [
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "statePensionAge": {
+                                  "anyOf": [
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "statePensionAnnualForecastGbp": {
+                                  "anyOf": [
+                                    {
+                                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "statePensionQualifyingYears": {
+                                  "anyOf": [
+                                    {
+                                      "maximum": 9007199254740991,
+                                      "minimum": -9007199254740991,
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "target": {
+                                  "anyOf": [
+                                    {
+                                      "oneOf": [
+                                        {
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "kind": {
+                                              "const": "typed",
+                                              "type": "string"
+                                            },
+                                            "yearlyAmount": {
+                                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                              "type": "number"
+                                            }
+                                          },
+                                          "required": ["kind", "yearlyAmount"],
+                                          "type": "object"
+                                        },
+                                        {
+                                          "additionalProperties": false,
+                                          "properties": {
+                                            "kind": {
+                                              "const": "budget",
+                                              "type": "string"
+                                            },
+                                            "lineSettings": {
+                                              "items": {
+                                                "additionalProperties": false,
+                                                "properties": {
+                                                  "budgetEntryId": {
+                                                    "format": "uuid",
+                                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                                    "type": "string"
+                                                  },
+                                                  "status": {
+                                                    "anyOf": [
+                                                      {
+                                                        "const": "continues",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "const": "stops",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "additionalProperties": false,
+                                                        "properties": {
+                                                          "kind": {
+                                                            "const": "changes",
+                                                            "type": "string"
+                                                          },
+                                                          "monthlyAmount": {
+                                                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                                            "type": "number"
+                                                          }
+                                                        },
+                                                        "required": ["kind", "monthlyAmount"],
+                                                        "type": "object"
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                "required": ["budgetEntryId", "status"],
+                                                "type": "object"
+                                              },
+                                              "maxItems": 200,
+                                              "type": "array"
+                                            }
+                                          },
+                                          "required": ["kind", "lineSettings"],
+                                          "type": "object"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "retirementAge",
+                                "planToAge",
+                                "target",
+                                "housingOverride",
+                                "statePensionAge",
+                                "statePensionAnnualForecastGbp",
+                                "statePensionQualifyingYears",
+                                "growthRates",
+                                "inflationRate",
+                                "cashSavingsNominalRate",
+                                "realRentGrowthRate",
+                                "excludedAccountIds"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "taxRecords": {
                           "items": {
@@ -8628,7 +8937,7 @@
                           "type": ["number", "null"]
                         },
                         "createdAt": {
-                          "type": "string"
+                          "type": ["string", "null"]
                         },
                         "excludedAccountIds": {
                           "items": {
@@ -8753,9 +9062,16 @@
                           ]
                         },
                         "id": {
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "type": "string"
+                          "anyOf": [
+                            {
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "inflationRate": {
                           "type": "number"
@@ -8903,7 +9219,7 @@
                           ]
                         },
                         "updatedAt": {
-                          "type": "string"
+                          "type": ["string", "null"]
                         },
                         "userId": {
                           "minLength": 1,
@@ -9324,7 +9640,7 @@
                           "type": ["number", "null"]
                         },
                         "createdAt": {
-                          "type": "string"
+                          "type": ["string", "null"]
                         },
                         "excludedAccountIds": {
                           "items": {
@@ -9449,9 +9765,16 @@
                           ]
                         },
                         "id": {
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "type": "string"
+                          "anyOf": [
+                            {
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "inflationRate": {
                           "type": "number"
@@ -9599,7 +9922,7 @@
                           ]
                         },
                         "updatedAt": {
-                          "type": "string"
+                          "type": ["string", "null"]
                         },
                         "userId": {
                           "minLength": 1,

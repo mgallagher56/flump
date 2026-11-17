@@ -65,6 +65,7 @@ function productionBase(): Record<string, string> {
     MCP_AUDIT_HMAC_KEY: "m".repeat(32),
     WORKOS_CLIENT_ID: "client_test",
     BANKING_TOKEN_ENCRYPTION_KEY: "b".repeat(32),
+    RECEIPT_ENCRYPTION_KEY: "r".repeat(32),
     DELETION_TOMBSTONE_KEY: "t".repeat(32),
     WEB_CLIENT_IP_HMAC_KEY: "h".repeat(32),
     WORKOS_API_KEY: "w".repeat(32),

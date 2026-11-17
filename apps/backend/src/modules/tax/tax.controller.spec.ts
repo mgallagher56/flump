@@ -659,7 +659,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
       });
       await expect(controller.getReceipt(userA, "r-B")).rejects.toThrow(NotFoundException);
 
-      // Plaintext (unencrypted) receiptData is also rejected.
+      // Legacy plaintext receiptData is served (and encrypted in place, see tax.service.spec).
       repo.rows.push({
         id: "r-plain",
         userId: "userA",
@@ -668,7 +668,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
         receiptMimeType: "image/png",
         receiptData: PNG_URL,
       });
-      await expect(controller.getReceipt(userA, "r-plain")).rejects.toThrow(NotFoundException);
+      expect(await read(await controller.getReceipt(userA, "r-plain"))).toEqual(PNG_BYTES);
     });
   });
 });
