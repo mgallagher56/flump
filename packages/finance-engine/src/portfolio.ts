@@ -277,6 +277,12 @@ export class PortfolioSnapshot {
     return [...this.resolvedAccounts];
   }
 
+  /** The subtype the user chose for an account (`btl_mortgage`, `cash_isa`, ...), or null. */
+  getAccountSubtype(id: string): string | null {
+    const subtype = this.rawById.get(id)?.accountSubtype;
+    return typeof subtype === "string" && subtype !== "" ? subtype : null;
+  }
+
   getAccount(id: string): ResolvedAccount | undefined {
     return this.accountsById.get(id);
   }

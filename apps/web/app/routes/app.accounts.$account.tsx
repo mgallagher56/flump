@@ -9,12 +9,12 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
+import { accountFieldsFromForm } from "~/features/accounts/accountFormBody";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
-import { roundTo2dp } from "~/utils/roundTo2dp";
 
 export const shouldRevalidate = revalidateOnConflict;
 
@@ -31,29 +31,6 @@ export const action = async (args: ActionFunctionArgs) => {
     if (intent === "update") {
       const name = formData.get("name");
       const type = formData.get("type");
-      const rawBalance = formData.get("balance");
-      const rawPlan = formData.get("studentLoanPlan");
-      const studentLoanPlan = typeof rawPlan === "string" && rawPlan !== "" ? rawPlan : undefined;
-      const rawSubtype = formData.get("accountSubtype");
-      const accountSubtype =
-        rawSubtype === null ? undefined : rawSubtype === "" ? null : String(rawSubtype);
-      const rawCreditLimit = formData.get("creditLimit");
-      const creditLimit =
-        rawCreditLimit === null
-          ? undefined
-          : rawCreditLimit === ""
-            ? null
-            : Number.isFinite(Number(rawCreditLimit))
-              ? roundTo2dp(Number(rawCreditLimit))
-              : undefined;
-      const rawPromoUntil = formData.get("promoZeroPercentUntil");
-      const promoZeroPercentUntil =
-        rawPromoUntil === null ? undefined : rawPromoUntil === "" ? null : String(rawPromoUntil);
-      const balance =
-        rawBalance !== null && rawBalance !== "" && Number.isFinite(Number(rawBalance))
-          ? roundTo2dp(Number(rawBalance))
-          : undefined;
-
       await backendFetch(`/accounts/${accountId}`, {
         accessToken: token,
         method: "PATCH",
@@ -62,11 +39,7 @@ export const action = async (args: ActionFunctionArgs) => {
         body: {
           name,
           type,
-          ...(accountSubtype !== undefined ? { accountSubtype } : {}),
-          ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
-          ...(balance !== undefined ? { balance } : {}),
-          ...(creditLimit !== undefined ? { creditLimit } : {}),
-          ...(promoZeroPercentUntil !== undefined ? { promoZeroPercentUntil } : {}),
+          ...accountFieldsFromForm(formData),
         },
       });
       return data({ success: true });

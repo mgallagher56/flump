@@ -92,7 +92,7 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({
             <span className={btlIdentity()}>
               <IconTile domain="tax" icon={Home} />
               <span className={btlDetails()}>
-                <span className={btlName()}>{labels.rental ?? "Property & buy-to-let"}</span>
+                <span className={btlName()}>{labels.rental ?? "Property and buy-to-let"}</span>
                 <span className={btlMeta()}>
                   {`From your ${btlAccounts.length === 1 ? "account" : "accounts"}: ${btlAccounts.map((a) => a.name).join(", ")}`}
                 </span>

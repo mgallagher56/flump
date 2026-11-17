@@ -24,4 +24,5 @@ export const ACCOUNT_SUBTYPE_LABEL: Record<string, string> = Object.fromEntries(
   ),
 );
 
-export const ISA_SUBTYPES = new Set(["cash_isa", "lifetime_isa", "stocks_and_shares_isa"]);
+/** The subtypes that are ISAs: one list, shared with the engine's joint-ownership rule. */
+export { ISA_ACCOUNT_SUBTYPES as ISA_SUBTYPES } from "@flump/finance-engine";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PortfolioSnapshot, type RawAccount } from "../../portfolio.js";
-import { isBuyToLetAccountName, selectLoanToValue } from "./loan-to-value.js";
+import { isBuyToLetAccount, isBuyToLetAccountName, selectLoanToValue } from "./loan-to-value.js";
 
 const mortgage: RawAccount = { id: "m", name: "Mortgage", type: "Mortgage", balance: 186000 };
 const home: RawAccount = {
@@ -61,6 +61,31 @@ describe("selectLoanToValue (residential only)", () => {
     expect(selectLoanToValue(snap(mortgage, home), { mortgageAccountId: "h" })).toEqual(unknown);
   });
 
+  it("goes by the chosen mortgage subtype ahead of the name", () => {
+    // "Oak Street" is a BTL by subtype only: left out, so 186,000 / 310,000 = 60%.
+    const subtypeBtl: RawAccount = {
+      id: "s",
+      name: "Oak Street",
+      type: "Mortgage",
+      balance: 90000,
+      accountSubtype: "btl_mortgage",
+    };
+    // "Btl Bank home loan" is residential by subtype: counted, so (186,000 + 31,000) / 310,000 = 70%.
+    const subtypeHome: RawAccount = {
+      id: "r",
+      name: "Btl Bank home loan",
+      type: "Mortgage",
+      balance: 31000,
+      accountSubtype: "residential_mortgage",
+    };
+    const fig = selectLoanToValue(snap(mortgage, home, subtypeBtl, subtypeHome));
+    expect(fig.status === "known" && fig.value).toEqual({
+      percent: 70,
+      homeValue: 310000,
+      mortgageBalance: 217000,
+    });
+  });
+
   it("rounds to one decimal place", () => {
     const fig = selectLoanToValue(
       snap({ ...mortgage, balance: 100000 }, { ...home, balance: 300000 }),
@@ -97,5 +122,17 @@ describe("isBuyToLetAccountName", () => {
     for (const name of ["Home (your estimate)", "Residential Mortgage", "Subtle", "Bottle fund"]) {
       expect(isBuyToLetAccountName(name), name).toBe(false);
     }
+  });
+});
+
+describe("isBuyToLetAccount", () => {
+  it("puts a chosen mortgage subtype first and falls back to the name", () => {
+    expect(isBuyToLetAccount({ name: "Oak Street", accountSubtype: "btl_mortgage" })).toBe(true);
+    expect(isBuyToLetAccount({ name: "BTL loan", accountSubtype: "residential_mortgage" })).toBe(
+      false,
+    );
+    expect(isBuyToLetAccount({ name: "BTL loan", accountSubtype: null })).toBe(true);
+    expect(isBuyToLetAccount({ name: "Buy-to-let flat" })).toBe(true);
+    expect(isBuyToLetAccount({ name: "Home" })).toBe(false);
   });
 });

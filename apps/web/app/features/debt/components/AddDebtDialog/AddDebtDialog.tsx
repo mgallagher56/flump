@@ -79,7 +79,7 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
   const balanceError = !isEdit
     ? supportsCreditFields
       ? balance === null || balance < 0
-        ? "Enter the balance you owe (£0 or more)."
+        ? "Enter the balance you owe, £0 or more."
         : undefined
       : balance === null || balance <= 0
         ? "Enter the balance you owe, more than £0."

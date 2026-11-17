@@ -12,6 +12,7 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsContainer";
+import { accountFieldsFromForm } from "~/features/accounts/accountFormBody";
 import {
   backendFetch,
   type HttpMethod,
@@ -21,7 +22,6 @@ import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
-import { roundTo2dp } from "~/utils/roundTo2dp";
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -32,40 +32,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const connectionId = formData.get("connectionId");
   const name = formData.get("name");
   const type = formData.get("type");
-  const rawBalance = formData.get("balance");
-  const rawPlan = formData.get("studentLoanPlan");
-  const studentLoanPlan = typeof rawPlan === "string" && rawPlan !== "" ? rawPlan : undefined;
-  const rawOwnership = formData.get("ownership");
-  const ownership =
-    rawOwnership === "joint" ? "joint" : rawOwnership === "sole" ? "sole" : undefined;
-  const rawSharePercent = formData.get("sharePercent");
-  const sharePercent =
-    ownership === "sole"
-      ? null
-      : rawSharePercent !== null &&
-          rawSharePercent !== "" &&
-          Number.isFinite(Number(rawSharePercent))
-        ? Math.min(100, Math.max(1, Math.round(Number(rawSharePercent))))
-        : undefined;
-  const rawSubtype = formData.get("accountSubtype");
-  const accountSubtype =
-    rawSubtype === null ? undefined : rawSubtype === "" ? null : String(rawSubtype);
-  const rawCreditLimit = formData.get("creditLimit");
-  const creditLimit =
-    rawCreditLimit === null
-      ? undefined
-      : rawCreditLimit === ""
-        ? null
-        : Number.isFinite(Number(rawCreditLimit))
-          ? roundTo2dp(Number(rawCreditLimit))
-          : undefined;
-  const rawPromoUntil = formData.get("promoZeroPercentUntil");
-  const promoZeroPercentUntil =
-    rawPromoUntil === null ? undefined : rawPromoUntil === "" ? null : String(rawPromoUntil);
-  const balance =
-    rawBalance !== null && rawBalance !== "" && Number.isFinite(Number(rawBalance))
-      ? roundTo2dp(Number(rawBalance))
-      : undefined;
+  const fields = accountFieldsFromForm(formData);
 
   // Literal methods, so the conditional-writes law can see every write this action makes.
   const post = <T,>(endpoint: string, schema: ContractSchema<T>, body?: unknown) =>
@@ -78,13 +45,7 @@ export const action = async (args: ActionFunctionArgs) => {
       await post("/accounts", CreateAccountResponse, {
         name,
         type,
-        ...(ownership !== undefined ? { ownership } : {}),
-        ...(sharePercent !== undefined ? { sharePercent } : {}),
-        ...(accountSubtype !== undefined ? { accountSubtype } : {}),
-        ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
-        ...(balance !== undefined ? { balance } : {}),
-        ...(creditLimit !== undefined ? { creditLimit } : {}),
-        ...(promoZeroPercentUntil !== undefined ? { promoZeroPercentUntil } : {}),
+        ...fields,
       });
     } else if (intent === "update") {
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
@@ -95,13 +56,7 @@ export const action = async (args: ActionFunctionArgs) => {
         body: {
           name,
           type,
-          ...(ownership !== undefined ? { ownership } : {}),
-          ...(sharePercent !== undefined ? { sharePercent } : {}),
-          ...(accountSubtype !== undefined ? { accountSubtype } : {}),
-          ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
-          ...(balance !== undefined ? { balance } : {}),
-          ...(creditLimit !== undefined ? { creditLimit } : {}),
-          ...(promoZeroPercentUntil !== undefined ? { promoZeroPercentUntil } : {}),
+          ...fields,
         },
       });
     } else if (intent === "delete") {

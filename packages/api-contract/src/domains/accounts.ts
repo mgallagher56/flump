@@ -41,6 +41,29 @@ export const ACCOUNT_SUBTYPES = [
 ] as const;
 export const AccountSubtype = z.enum(ACCOUNT_SUBTYPES);
 
+/** The subtypes each account type takes. A subtype on any other type is refused. */
+export const ACCOUNT_SUBTYPES_BY_TYPE: Readonly<
+  Partial<Record<(typeof ACCOUNT_TYPES)[number], readonly (typeof ACCOUNT_SUBTYPES)[number][]>>
+> = {
+  Saving: [
+    "easy_access",
+    "notice",
+    "regular_saver",
+    "fixed_term",
+    "general_savings",
+    "cash_isa",
+    "lifetime_isa",
+  ],
+  Investment: ["stocks_and_shares_isa", "general_investment"],
+  Mortgage: ["residential_mortgage", "btl_mortgage"],
+};
+
+/** The account types that take a credit limit and a 0% interest end date. */
+export const CREDIT_FIELD_ACCOUNT_TYPES: readonly (typeof ACCOUNT_TYPES)[number][] = [
+  "Credit Card",
+  "Overdraft",
+];
+
 export const TermMonths = z.number().int().min(1).max(600);
 
 export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;

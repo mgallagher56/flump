@@ -30,11 +30,3 @@ export const notFound = cva({
 export const ownerLink = cva({
   base: { alignSelf: "flex-start" },
 });
-
-export const headerActions = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    gap: "2",
-  },
-});

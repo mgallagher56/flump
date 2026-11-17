@@ -20,7 +20,6 @@ import {
 } from "~/features/accounts/accountSubtypes";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { versionField } from "~/services/conflict";
-import { isIsaAccount } from "../SavingsAccountsList/isaAllowance.utils";
 import { accountForm, deleteAction, fieldRow, formActions } from "./AddSavingsAccountDialog.styles";
 
 export interface AddSavingsAccountDialogProps {
@@ -36,21 +35,14 @@ export interface AddSavingsAccountDialogProps {
 
 type SavingsType = "Saving" | "Investment";
 
-const ALL_SUBTYPE_OPTIONS = [
-  ...SAVINGS_SUBTYPE_OPTIONS.map((o) => ({ ...o, type: "Saving" as SavingsType })),
-  ...INVESTMENT_SUBTYPE_OPTIONS.map((o) => ({ ...o, type: "Investment" as SavingsType })),
-];
-
-const inferInitialSubtype = (account?: Account | null): string => {
-  if (account?.accountSubtype) return account.accountSubtype;
-  if (account?.type === "Investment") {
-    return isIsaAccount(account?.name) ? "stocks_and_shares_isa" : "general_investment";
-  }
-  if (account?.type === "Saving") {
-    return isIsaAccount(account?.name) ? "cash_isa" : "easy_access";
-  }
-  return "easy_access";
+const SUBTYPE_OPTIONS: Record<SavingsType, ReadonlyArray<{ value: string; label: string }>> = {
+  Saving: SAVINGS_SUBTYPE_OPTIONS,
+  Investment: INVESTMENT_SUBTYPE_OPTIONS,
 };
+
+/** The saved subtype when it belongs to the type, else none: a subtype is never guessed. */
+const subtypeFor = (type: SavingsType, subtype: string | null | undefined): string =>
+  subtype && SUBTYPE_OPTIONS[type].some((o) => o.value === subtype) ? subtype : "";
 
 const toNumberOrNull = (value: unknown): number | null =>
   value !== undefined && value !== null && Number.isFinite(Number(value)) ? Number(value) : null;
@@ -69,12 +61,14 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
   const isEditing = !!accountToEdit;
 
   const [name, setName] = useState(accountToEdit?.name || "");
-  const [accountSubtype, setAccountSubtype] = useState<string>(() =>
-    inferInitialSubtype(accountToEdit),
+  const [type, setType] = useState<SavingsType>(
+    accountToEdit?.type === "Investment" ? "Investment" : "Saving",
   );
-  const type: SavingsType =
-    ALL_SUBTYPE_OPTIONS.find((o) => o.value === accountSubtype)?.type ??
-    (accountToEdit?.type === "Investment" ? "Investment" : "Saving");
+  // Starts from the saved subtype only. An account without one stays without one until the user
+  // picks it, so nothing is saved that they did not choose.
+  const [accountSubtype, setAccountSubtype] = useState<string>(() =>
+    subtypeFor(type, accountToEdit?.accountSubtype),
+  );
   const isInvestment = type === "Investment";
   const [balance, setBalance] = useState<number | null>(toNumberOrNull(accountToEdit?.balance));
   // No assumed defaults: a new account starts with an empty rate and monthly amount, and empty
@@ -126,7 +120,28 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         {(field) => (
           <Select
             {...controlProps(field)}
-            options={ALL_SUBTYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+            options={[
+              { value: "Saving", label: "Savings account or Cash ISA" },
+              { value: "Investment", label: "Investment or Stocks and Shares ISA" },
+            ]}
+            value={type}
+            onChange={(e) => {
+              const next = e.target.value as SavingsType;
+              setType(next);
+              setAccountSubtype((current) => subtypeFor(next, current));
+            }}
+          />
+        )}
+      </FormField>
+
+      <FormField label="Kind of account (optional)">
+        {(field) => (
+          <Select
+            {...controlProps(field)}
+            options={[
+              { value: "", label: "Not set" },
+              ...SUBTYPE_OPTIONS[type].map((o) => ({ value: o.value, label: o.label })),
+            ]}
             value={accountSubtype}
             onChange={(e) => setAccountSubtype(e.target.value)}
           />
@@ -142,7 +157,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         <FormField
           hint={
             isInvestment
-              ? "Used for projections only. Investment returns vary and are not guaranteed."
+              ? "An estimate used for projections. Investment returns can go down as well as up."
               : undefined
           }
           label={isInvestment ? "Estimated annual return (%)" : "Interest rate (AER)"}
