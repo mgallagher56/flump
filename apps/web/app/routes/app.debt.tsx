@@ -69,7 +69,6 @@ export const action = async (args: ActionFunctionArgs) => {
         body.creditLimit = optionalNumber(formData.get("creditLimit"));
       }
       if (formData.has("promoZeroPercentUntil")) {
-        const creditLimit = optionalNumber(formData.get("creditLimit"));
         const promoRaw = formData.get("promoZeroPercentUntil");
         body.promoZeroPercentUntil =
           typeof promoRaw === "string" && promoRaw !== "" ? promoRaw : null;

@@ -492,7 +492,6 @@ const SelfAssessmentPage: FC<{
           .map((a) => ({ id: String(a.id ?? ""), name: String(a.name ?? "Buy-to-let mortgage") }))}
         records={initialRecords}
         taxYear={selectedTaxYear}
-        onAddRentalIncome={() => onOpenAddModal("rental", "income")}
       />
 
       <div className={drawers()}>

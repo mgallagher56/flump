@@ -230,14 +230,25 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     sharePercent: selectedAccount.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT,
   });
 
+  // The latest prefill, read when a new open request arrives. The effect is keyed on the request
+  // alone, so a parent re-render with new props never reopens or resets the dialog.
+  const reopenWith = useRef({
+    isEditAccount,
+    initialName,
+    initialType,
+    dismissSave,
+    dismissDelete,
+  });
+  reopenWith.current = { isEditAccount, initialName, initialType, dismissSave, dismissDelete };
   useEffect(() => {
-    if (openRequestKey > 0 && !isEditAccount) {
+    const latest = reopenWith.current;
+    if (openRequestKey > 0 && !latest.isEditAccount) {
       setPlanError(null);
-      dismissSave();
-      dismissDelete();
+      latest.dismissSave();
+      latest.dismissDelete();
       setFormInput({
-        name: initialName ?? "",
-        type: [initialType ?? accountTypeArray[0]],
+        name: latest.initialName ?? "",
+        type: [latest.initialType ?? accountTypeArray[0]],
         accountSubtype: "",
         studentLoanPlan: [""],
         balance: "",
@@ -248,7 +259,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       });
       setModalOpen(true);
     }
-  }, [openRequestKey, isEditAccount, initialName, initialType, dismissSave, dismissDelete]);
+  }, [openRequestKey]);
 
   const handleOpenModal = useCallback(
     (e: { stopPropagation: () => void }) => {
@@ -571,7 +582,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             formInput.type?.[0] === INVESTMENT ||
             formInput.type?.[0] === MORTGAGE ? (
               <FormField
-                label={formInput.type?.[0] === MORTGAGE ? "Mortgage type" : "Account subtype"}
+                label={
+                  formInput.type?.[0] === MORTGAGE
+                    ? "Kind of mortgage (optional)"
+                    : "Kind of account (optional)"
+                }
               >
                 {(field) => {
                   const subtypeOptions =
@@ -585,7 +600,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                       {...controlProps(field)}
                       name="accountSubtype"
                       options={[
-                        { value: "", label: "Choose a type (optional)" },
+                        { value: "", label: "Not set" },
                         ...subtypeOptions.map((o) => ({ value: o.value, label: o.label })),
                       ]}
                       value={formInput.accountSubtype}

@@ -657,8 +657,12 @@ export class AccountIntakeService implements IAccountIntake {
       const picked = this.pickAccountFields(body);
       const nextType = picked.type ?? account.type;
       assertTypeScopedFields(nextType, picked);
-      const nextSubtype =
+      const requestedSubtype =
         picked.accountSubtype !== undefined ? picked.accountSubtype : account.accountSubtype;
+      // The subtype the account keeps after this change: a saved one the new type does not take
+      // is cleared below, so the joint check must not lean on it (the engine never would).
+      const nextSubtype =
+        requestedSubtype && subtypeAppliesTo(nextType, requestedSubtype) ? requestedSubtype : null;
       // Omitted ownership and share stay as saved. A rename or type change that makes a joint
       // account an ISA or pension is refused unless the same request says sole (E34), so joint
       // ownership is never dropped without the caller asking. Checked before any field changes.

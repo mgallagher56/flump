@@ -1,5 +1,5 @@
 import { isRecordActiveInTaxYear, type TaxRecord } from "@flump/finance-engine";
-import { Button, IconTile, PageSection } from "@repo/ui";
+import { IconTile, PageSection } from "@repo/ui";
 import { Briefcase, Home, Laptop, Layers, type LucideIcon, PiggyBank } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { SOURCE_OPTIONS } from "../../tax-labels";
@@ -35,21 +35,18 @@ export interface TaxSourcesPanelProps {
   action?: ReactNode;
   /** Buy-to-let mortgage accounts, surfaced automatically as a rental income source. */
   btlAccounts?: readonly BtlSourceAccount[];
-  /** Called when the user clicks "Add rental income" on an auto-surfaced BTL source row. */
-  onAddRentalIncome?: () => void;
 }
 
 /**
  * "Income sources": one list, a row per source that has records in the tax year (plus any
  * buy-to-let mortgage accounts so they surface automatically even before rental records are
- * added).
+ * added). Rental income is added from the heading's one "Add income" menu, never from the row.
  */
 export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({
   records,
   taxYear,
   action,
   btlAccounts = [],
-  onAddRentalIncome,
 }) => {
   const hasRecords = records.some((r) => isRecordActiveInTaxYear(r, taxYear));
   const hasRentalRecords = records.some(
@@ -98,11 +95,6 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({
                 </span>
               </span>
             </span>
-            {onAddRentalIncome ? (
-              <Button size="sm" type="button" variant="outline" onClick={onAddRentalIncome}>
-                Add rental income
-              </Button>
-            ) : null}
           </li>
         ) : null}
       </ul>
