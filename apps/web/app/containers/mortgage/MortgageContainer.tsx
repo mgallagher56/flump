@@ -33,6 +33,7 @@ import { MortgageTracker } from "~/features/mortgage/components/MortgageTracker"
 import { OverpaymentSimulator } from "~/features/mortgage/components/OverpaymentSimulator";
 import { OverpayVsSaveCompare } from "~/features/mortgage/components/OverpayVsSaveCompare";
 import { RemortgageShockSim } from "~/features/mortgage/components/RemortgageShockSim";
+import { isJointAccount, withWholeBalances } from "~/features/mortgage/jointMortgage";
 import {
   formatIsoMonthYear,
   formatYearsLeft,
@@ -382,10 +383,11 @@ const MortgageContainer: FC = () => {
   // Property value is only ever what the user entered; it is never derived from the loan.
   // Residential loan to value (E16 PR 3): the selected residential mortgage over residential
   // Property accounts (the seeded home estimate is one), buy to let left out. Built from the
-  // same rows as the picture, so a saved balance (accountPatches) is never stale.
+  // same rows as the picture, so a saved balance (accountPatches) is never stale. Whole loan over
+  // whole property value (E34): a share of either side would misstate it.
   const residentialLtvFigure = useMemo(
     () =>
-      selectLoanToValue(new PortfolioSnapshot(pictureAccounts, accountDetails), {
+      selectLoanToValue(new PortfolioSnapshot(withWholeBalances(pictureAccounts), accountDetails), {
         mortgageAccountId: selectedAccountId,
       }),
     [pictureAccounts, accountDetails, selectedAccountId],
@@ -433,10 +435,14 @@ const MortgageContainer: FC = () => {
     (profileFacts.buyToLetMonthlyRental ?? 0) > 0;
   const showCategoryTabs = hasResidential && hasBtl;
 
-  // Read the stored figures for one residential account. Unset values stay empty (0).
+  // Read the stored figures for one residential account. Unset values stay empty (0). The balance
+  // is the whole loan (E34), so the payment, the simulator and a save all work on what is owed.
   const accountFigures = (id: string) => {
     const account = accounts.find((a: any) => a.id === id);
-    const balance = new PortfolioSnapshot(accounts, accountDetails).getLatestBalance(id);
+    const balance = new PortfolioSnapshot(
+      withWholeBalances(accounts),
+      accountDetails,
+    ).getLatestBalance(id);
     const rate = Number(account?.interestRate);
     const termMonths = Number(account?.termMonths);
     return {
@@ -456,7 +462,7 @@ const MortgageContainer: FC = () => {
   // Handle account selection
   useEffect(() => {
     if (selectedAccountId && propertyCategory === "residential") {
-      const snapshot = new PortfolioSnapshot(accounts, accountDetails);
+      const snapshot = new PortfolioSnapshot(withWholeBalances(accounts), accountDetails);
       const bal = snapshot.getLatestBalance(selectedAccountId);
       if (bal > 0) {
         setLoanAmount(bal);
@@ -610,6 +616,9 @@ const MortgageContainer: FC = () => {
   const selectedAccount = selectedAccountId
     ? mortgageAccounts.find((acc: any) => acc.id === selectedAccountId)
     : null;
+  // The page shows the whole loan; net worth elsewhere counts the user's share (E34).
+  const jointBalanceNote =
+    !isBtl && isJointAccount(selectedAccount) ? "Whole loan, held jointly" : undefined;
 
   const editDialog = (
     <MortgageEditDialog
@@ -825,7 +834,7 @@ const MortgageContainer: FC = () => {
             emptyPrompt="Add your remaining balance to see it here."
             id="mortgage-hero"
             label="Remaining balance"
-            subline={heroSubline}
+            subline={jointBalanceNote ? `${heroSubline}. ${jointBalanceNote}` : heroSubline}
             value={loanAmount > 0 ? loanAmount : null}
           />
         )}
@@ -833,6 +842,7 @@ const MortgageContainer: FC = () => {
           {heroIsPayment ? (
             <KpiCard
               label="Remaining balance"
+              subtext={jointBalanceNote}
               value={loanAmount > 0 ? loanAmount : null}
               valueFormat={{ fractionDigits: 0 }}
             />

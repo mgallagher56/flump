@@ -959,6 +959,55 @@ describe("<MortgageContainer />", () => {
       expect(screen.queryByRole("button", { name: "Show loan to value bands" })).toBeNull();
     });
 
+    // E34: the page works on the whole loan and whole property, whatever share the user counts.
+    const jointMortgage = {
+      ...homeownerAccounts[2],
+      balance: -200000,
+      ownership: "joint",
+      sharePercent: 50,
+    };
+    const jointHome = { ...home, balance: 400000, ownership: "joint", sharePercent: 50 };
+    const soleHome = { ...home, balance: 400000 };
+
+    test("a joint mortgage on a joint property: whole loan, whole value, and the simulator starts from the whole loan", () => {
+      loaderData = {
+        accounts: [homeownerAccounts[0], jointMortgage, jointHome],
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage" },
+      };
+      const { container, getByRole, getByLabelText } = customRender(<MortgageContainer />);
+      const strip = ltvStrip(container);
+      expect(strip).toContain("50%");
+      expect(strip).toContain("£200,000");
+      expect(strip).toContain("Whole loan, held jointly");
+      fireEvent.click(getByRole("button", { name: "Starting figures" }));
+      // An overpayment pays the whole loan, so it is never applied to a share of it.
+      expect((getByLabelText("Balance to try") as HTMLInputElement).value).toBe("200000");
+    });
+
+    test("a joint mortgage on a sole property: whole loan over whole value, never the share over it", () => {
+      loaderData = {
+        accounts: [homeownerAccounts[0], jointMortgage, soleHome],
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage" },
+      };
+      const { container } = customRender(<MortgageContainer />);
+      const strip = ltvStrip(container);
+      expect(strip).toContain("50%");
+      // The 50% share (100,000) over the whole value would read 25%.
+      expect(strip).not.toContain("25%");
+    });
+
+    test("a sole mortgage carries no joint label", () => {
+      loaderData = {
+        accounts: [...homeownerAccounts, home],
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage" },
+      };
+      const { container } = customRender(<MortgageContainer />);
+      expect(ltvStrip(container)).not.toContain("held jointly");
+    });
+
     test("stays not set, never 0%, without a home value", () => {
       loaderData = {
         accounts: homeownerAccounts,
