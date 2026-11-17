@@ -325,6 +325,7 @@ describe("McpService.getContextPack for a brand-new user", () => {
     const tax = memoryRepo();
     const transactions = memoryRepo();
     const connections = memoryRepo();
+    const retirementPlans = memoryRepo();
 
     const config = { get: vi.fn().mockReturnValue(undefined) };
     const finance = financeServiceWithIntake(
@@ -354,6 +355,7 @@ describe("McpService.getContextPack for a brand-new user", () => {
       profileService,
       accounts as never,
       details as never,
+      retirementPlans as never,
     );
     const service = new McpService(
       new McpTokenService(mcpTokens as never),
@@ -368,7 +370,16 @@ describe("McpService.getContextPack for a brand-new user", () => {
 
     expect(pack.portfolio.accounts).toHaveLength(0);
     expect(typeof markdown).toBe("string");
-    for (const repo of [accounts, details, budget, tax, transactions, connections, mcpTokens]) {
+    for (const repo of [
+      accounts,
+      details,
+      budget,
+      tax,
+      transactions,
+      connections,
+      mcpTokens,
+      retirementPlans,
+    ]) {
       for (const fn of Object.values(repo.writes)) expect(fn).not.toHaveBeenCalled();
       expect(repo.rows).toHaveLength(0);
     }

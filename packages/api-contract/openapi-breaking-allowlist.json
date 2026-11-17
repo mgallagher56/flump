@@ -18,5 +18,35 @@
     "kind": "removed-request-field",
     "where": "GET /v1/mcp-tokens/{id}/activity query parameter before",
     "reason": "BE-16 (audit N10): replaced by the standard cursor query parameter, as on every other list. No client called the route yet."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/retirement-plan 200 response.plan.createdAt",
+    "reason": "Review fix (17 Nov 2026): GET /retirement-plan no longer creates a row, so a user with no saved plan gets the defaults with a null id, createdAt and updatedAt. The route shipped on 15 Nov, the page is friends beta only (E33 RD9) and the web app is the only client; it is updated in the same change."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/retirement-plan 200 response.plan.id",
+    "reason": "Review fix (17 Nov 2026): GET /retirement-plan no longer creates a row, so a user with no saved plan gets the defaults with a null id, createdAt and updatedAt. The route shipped on 15 Nov, the page is friends beta only (E33 RD9) and the web app is the only client; it is updated in the same change."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/retirement-plan 200 response.plan.updatedAt",
+    "reason": "Review fix (17 Nov 2026): GET /retirement-plan no longer creates a row, so a user with no saved plan gets the defaults with a null id, createdAt and updatedAt. The route shipped on 15 Nov, the page is friends beta only (E33 RD9) and the web app is the only client; it is updated in the same change."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PUT /v1/retirement-plan 200 response.plan.createdAt",
+    "reason": "Review fix (17 Nov 2026): GET /retirement-plan no longer creates a row, so a user with no saved plan gets the defaults with a null id, createdAt and updatedAt. The route shipped on 15 Nov, the page is friends beta only (E33 RD9) and the web app is the only client; it is updated in the same change."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PUT /v1/retirement-plan 200 response.plan.id",
+    "reason": "Review fix (17 Nov 2026): GET /retirement-plan no longer creates a row, so a user with no saved plan gets the defaults with a null id, createdAt and updatedAt. The route shipped on 15 Nov, the page is friends beta only (E33 RD9) and the web app is the only client; it is updated in the same change."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PUT /v1/retirement-plan 200 response.plan.updatedAt",
+    "reason": "Review fix (17 Nov 2026): GET /retirement-plan no longer creates a row, so a user with no saved plan gets the defaults with a null id, createdAt and updatedAt. The route shipped on 15 Nov, the page is friends beta only (E33 RD9) and the web app is the only client; it is updated in the same change."
   }
 ]

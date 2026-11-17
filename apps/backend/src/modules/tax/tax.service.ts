@@ -5,9 +5,9 @@ import {
   type TaxRecordCap,
   type UpdateTaxRecordRequest,
 } from "@flump/api-contract";
-import { decryptReceiptData, encryptReceiptData } from "@flump/banking/server";
+import { decryptReceiptData, encryptReceiptData, isEncryptedToken } from "@flump/banking/server";
 import { getAnnualRecordEndDate } from "@flump/finance-engine";
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { withVersionClaim } from "../../contract/etag";
@@ -149,6 +149,8 @@ export interface BulkTaxRecordsBody {
 
 @Injectable()
 export class TaxService {
+  private readonly logger = new Logger(TaxService.name);
+
   constructor(
     @InjectRepository(TaxRecord)
     private readonly taxRecordRepository: Repository<TaxRecord>,
@@ -233,7 +235,9 @@ export class TaxService {
 
   /**
    * The receipt bytes, scoped by `{ id, userId }`. Re-validates the stored data, so a legacy row
-   * that fails the N14 rules is a 404 rather than served content.
+   * that fails the N14 rules is a 404 rather than served content. A valid legacy plaintext receipt
+   * (one `EncryptTaxReceipts1795200000000` did not reach) is encrypted in place on this first read
+   * and then served.
    */
   async readReceipt(userId: string, id: string): Promise<ReceiptFile> {
     const record = await this.taxRecordRepository.findOne({
@@ -242,10 +246,13 @@ export class TaxService {
     });
     const notFound = new NotFoundException("Receipt not found");
     if (!record?.receiptData) throw notFound;
+    const legacyPlaintext = !isEncryptedToken(record.receiptData);
     let plaintextReceipt: string;
     let mime: ReturnType<typeof validateReceipt>;
     try {
-      plaintextReceipt = decryptReceiptData(record.receiptData, record.id);
+      plaintextReceipt = legacyPlaintext
+        ? record.receiptData
+        : decryptReceiptData(record.receiptData, record.id);
       mime = validateReceipt({
         receiptFilename: record.receiptFilename,
         receiptMimeType: record.receiptMimeType,
@@ -257,7 +264,36 @@ export class TaxService {
     const bytes = Buffer.from(plaintextReceipt.slice(plaintextReceipt.indexOf(",") + 1), "base64");
     const type = mime ?? sniffReceiptMime(bytes);
     if (!type) throw notFound;
+    if (legacyPlaintext) await this.encryptLegacyReceipt(userId, record.id, plaintextReceipt);
     return { bytes, type, filename: record.receiptFilename ?? null };
+  }
+
+  /**
+   * Writes back the encrypted form of a legacy plaintext receipt. Only a row still holding that
+   * exact plaintext is rewritten (a concurrent upload wins), and `updated_at` is kept so a read
+   * does not change the record's ETag. A failure is logged and the read still succeeds: the next
+   * read tries again.
+   */
+  private async encryptLegacyReceipt(userId: string, id: string, plaintext: string): Promise<void> {
+    try {
+      await this.taxRecordRepository
+        .createQueryBuilder()
+        .update()
+        .set({
+          receiptData: encryptReceiptData(plaintext, id),
+          updatedAt: () => '"updated_at"',
+        } as never)
+        .where(`"id" = :id AND "user_id" = :userId AND "receipt_data" = :plaintext`, {
+          id,
+          userId,
+          plaintext,
+        })
+        .execute();
+    } catch (err) {
+      this.logger.warn(
+        `Could not encrypt a legacy plaintext receipt on read: ${err instanceof Error ? err.name : "unknown error"}`,
+      );
+    }
   }
 
   async createRecord(userId: string, body: CreateTaxRecordRequest): Promise<TaxRecordResponse> {

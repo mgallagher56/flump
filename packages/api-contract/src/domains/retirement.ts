@@ -85,8 +85,12 @@ export const UpsertRetirementPlanRequest = z
   );
 export type UpsertRetirementPlanRequest = z.infer<typeof UpsertRetirementPlanRequest>;
 
+/**
+ * A saved plan, or the default plan when none has been saved yet: GET never creates a row, so
+ * `id`, `createdAt` and `updatedAt` are null (and no ETag is sent) until the first PUT.
+ */
 export const RetirementPlanDto = z.strictObject({
-  id: Uuid,
+  id: Uuid.nullable(),
   userId: z.string().min(1),
   retirementAge: z.number().int().nullable(),
   planToAge: z.number().int().nullable(),
@@ -100,8 +104,8 @@ export const RetirementPlanDto = z.strictObject({
   cashSavingsNominalRate: z.number().finite().nullable(),
   realRentGrowthRate: z.number().finite(),
   excludedAccountIds: z.array(Uuid),
-  createdAt: IsoDateTime,
-  updatedAt: IsoDateTime,
+  createdAt: IsoDateTime.nullable(),
+  updatedAt: IsoDateTime.nullable(),
 });
 export type RetirementPlanDto = z.infer<typeof RetirementPlanDto>;
 

@@ -4,6 +4,9 @@ import { takeMigrationLock } from "../config/migration-lock";
 /**
  * E33 Slice S2: persistent user retirement plan table (one row per user, versioned by updated_at).
  */
+const RETIREMENT_DOWN_REFUSAL =
+  "retirement_plans contains saved plans; export or remove them before reverting";
+
 export class AddRetirementPlan1795260000000 implements MigrationInterface {
   name = "AddRetirementPlan1795260000000";
 
@@ -38,6 +41,23 @@ export class AddRetirementPlan1795260000000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await takeMigrationLock(queryRunner);
+    // Dropping the table would delete every saved retirement plan. While any row exists the revert
+    // is refused unchanged. The table check comes first so a table already gone is not an error.
+    // The ACCESS EXCLUSIVE lock is taken before the row check, so no plan can be saved between
+    // the check and the drop; lock_timeout makes it fail fast rather than queue behind a writer.
+    const table: Array<{ found: boolean }> = await queryRunner.query(
+      `SELECT to_regclass('"retirement_plans"') IS NOT NULL AS "found"`,
+    );
+    if (table[0]?.found) {
+      await queryRunner.query("SET LOCAL lock_timeout = '10s'");
+      await queryRunner.query(`LOCK TABLE "retirement_plans" IN ACCESS EXCLUSIVE MODE`);
+      const rows: Array<{ found: boolean }> = await queryRunner.query(
+        `SELECT EXISTS (SELECT 1 FROM "retirement_plans") AS "found"`,
+      );
+      if (rows[0]?.found) {
+        throw new Error(RETIREMENT_DOWN_REFUSAL);
+      }
+    }
     await queryRunner.query(`DROP INDEX IF EXISTS "UQ_retirement_plans_user_id"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "retirement_plans"`);
   }

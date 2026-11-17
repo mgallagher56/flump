@@ -568,12 +568,29 @@ export class AccountIntakeService implements IAccountIntake {
 
       const previousType = account.type;
       const picked = this.pickAccountFields(body);
+      // Omitted ownership and share stay as saved. A rename or type change that makes a joint
+      // account an ISA or pension is refused unless the same request says sole (E34), so joint
+      // ownership is never dropped without the caller asking. Checked before any field changes.
+      // Only a PATCH that renames, retypes or asks for joint can trip it: an unrelated edit (a
+      // balance, say) to a stored legacy joint ISA goes through and is stored as sole, which is
+      // how the engine already counts it.
+      const eligible = canAccountBeJoint({
+        name: picked.name ?? account.name,
+        type: picked.type ?? account.type,
+      });
+      const nextOwnership = picked.ownership ?? account.ownership;
+      const touchesJointRule =
+        (picked.name !== undefined && picked.name !== account.name) ||
+        (picked.type !== undefined && picked.type !== account.type) ||
+        picked.ownership === "joint";
+      if (!eligible && nextOwnership === "joint" && touchesJointRule) {
+        throw new BadRequestException(
+          "ISAs and pensions cannot be held jointly. Send ownership as sole with this change.",
+        );
+      }
       Object.assign(account, picked);
       const effectiveOwnership: AccountOwnership = account.ownership === "joint" ? "joint" : "sole";
-      if (!canAccountBeJoint({ name: account.name, type: account.type })) {
-        if (picked.ownership === "joint") {
-          throw new BadRequestException("ISAs and pensions cannot be held jointly");
-        }
+      if (!eligible) {
         account.ownership = "sole";
         account.sharePercent = null;
       } else if (effectiveOwnership === "joint") {

@@ -35,6 +35,7 @@ const PRODUCTION_ENV: Record<string, string | undefined> = {
   RAILWAY_SERVICE_ID: ["svc", "prod", "test"].join("-"),
   MCP_AUDIT_HMAC_KEY: runtimeValue("m"),
   BANKING_TOKEN_ENCRYPTION_KEY: runtimeValue("b"),
+  RECEIPT_ENCRYPTION_KEY: runtimeValue("r"),
   CORS_ALLOWED_ORIGINS: "https://example.invalid",
   BETA_OPEN: "true",
   // Production closes AI connections to an allow-list (MCP_OPEN_ACCESS defaults to false there).

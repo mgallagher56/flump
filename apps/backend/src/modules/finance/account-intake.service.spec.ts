@@ -749,12 +749,62 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(updated.sharePercent).toBeNull();
     });
 
-    it("resets joint ownership to sole when an existing joint account becomes an ISA or Pension", async () => {
+    const jointSaver = () => {
       const accounts = createInMemoryRepository([
         {
           id: "a1",
           userId: "userA",
           name: "Saver",
+          type: "Saving",
+          balance: 5_000,
+          ownership: "joint",
+          sharePercent: 60,
+        },
+      ]);
+      const svc = intakeOver(
+        accounts,
+        createInMemoryRepository(),
+        mockUserProfileRepo,
+        mockBankConnectionRepo,
+      );
+      return { accounts, svc };
+    };
+
+    it.each([
+      { name: "Renamed saver" },
+      { balance: 6_000 },
+      { type: "Current" },
+      { name: "Lisa joint saver" },
+      { interestRate: 4.1 },
+    ])("a PATCH that omits ownership keeps it and the share as saved: %j", async (body) => {
+      const { svc } = jointSaver();
+      const updated = await svc.updateAccount("userA", "a1", body);
+      expect(updated.ownership).toBe("joint");
+      expect(updated.sharePercent).toBe(60);
+    });
+
+    it.each([
+      { name: "Cash ISA" },
+      { type: "Pension" },
+      { name: "Moneybox LISA", sharePercent: 50 },
+    ])(
+      "refuses, with a 400 and no write, a change that makes a joint account an ISA or pension without saying sole: %j",
+      async (body) => {
+        const { accounts, svc } = jointSaver();
+        await expect(svc.updateAccount("userA", "a1", body)).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
+        const stored = await accounts.findOne({ where: { id: "a1", userId: "userA" } });
+        expect(stored).toMatchObject({ name: "Saver", type: "Saving", ownership: "joint" });
+      },
+    );
+
+    const legacyJointIsa = () => {
+      const accounts = createInMemoryRepository([
+        {
+          id: "a1",
+          userId: "userA",
+          name: "Cash ISA",
           type: "Saving",
           balance: 5_000,
           ownership: "joint",
@@ -767,7 +817,38 @@ describe("AccountIntakeService (Deep Module)", () => {
         mockUserProfileRepo,
         mockBankConnectionRepo,
       );
-      const updated = await svc.updateAccount("userA", "a1", { name: "Cash ISA" });
+      return { accounts, svc };
+    };
+
+    it.each([{ balance: 6_000 }, { interestRate: 4.1 }, { name: "Cash ISA" }])(
+      "accepts an unrelated edit to a stored legacy joint ISA: %j",
+      async (body) => {
+        const { svc } = legacyJointIsa();
+        const updated = await svc.updateAccount("userA", "a1", body);
+        // Stored as the engine already counts it: an ISA is the holder's alone.
+        expect(updated.ownership).toBe("sole");
+        expect(updated.sharePercent).toBeNull();
+      },
+    );
+
+    it.each([{ name: "Lifetime ISA" }, { type: "Investment" }, { ownership: "joint" as const }])(
+      "refuses a rename, type change or joint ownership on a stored legacy joint ISA: %j",
+      async (body) => {
+        const { accounts, svc } = legacyJointIsa();
+        await expect(svc.updateAccount("userA", "a1", body)).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
+        const stored = await accounts.findOne({ where: { id: "a1", userId: "userA" } });
+        expect(stored).toMatchObject({ name: "Cash ISA", type: "Saving", ownership: "joint" });
+      },
+    );
+
+    it("makes a joint account an ISA when the PATCH also says sole", async () => {
+      const { svc } = jointSaver();
+      const updated = await svc.updateAccount("userA", "a1", {
+        name: "Cash ISA",
+        ownership: "sole",
+      });
       expect(updated.ownership).toBe("sole");
       expect(updated.sharePercent).toBeNull();
     });

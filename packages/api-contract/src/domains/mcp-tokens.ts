@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { IsoDateTime, ResponseMoney, Uuid } from "../primitives.js";
 import { NetWorthLeftOut, ResolvedAccountDto } from "./accounts.js";
+import { RetirementPlanDto } from "./retirement.js";
 
 /** Expiry choices (E17 D5-A). `null` ("never expires") is rejected. */
 export const PAT_EXPIRY_DAYS = [7, 30, 90, 365] as const;
@@ -251,6 +252,21 @@ const McpInputAccount = z.strictObject({
   fixedRateEndDate: z.string().nullable(),
   currency: z.string(),
   isCurrent: z.boolean(),
+  /** "joint" counts the account at the user's share (finance-engine `joint-share.ts`). */
+  ownership: z.enum(["sole", "joint"]).optional(),
+  /** The user's share of a joint account, 0 to 100; null where none is saved. */
+  sharePercent: z.number().nullable().optional(),
+});
+
+/**
+ * The saved retirement plan as the engine reads it (`savedPlanInputFromRow`): the plan response
+ * without its row id, user id or timestamps. Figures, ids and fixed kinds only, no free text.
+ */
+const McpInputRetirementPlan = RetirementPlanDto.omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 /** One stored month-end value. */
@@ -296,6 +312,10 @@ export const McpInputResponse = z.strictObject({
     accountDetails: z.array(McpInputAccountDetail),
     budgetEntries: z.array(ContextPackBudgetEntry),
     taxRecords: z.array(McpInputTaxRecord),
+    /** The saved retirement plan, or null when none is saved. */
+    retirementPlan: McpInputRetirementPlan.nullable().optional(),
+    /** The saved birth year; left out when none is saved. */
+    birthYear: z.number().int().optional(),
   }),
 });
 export type McpInputResponse = z.infer<typeof McpInputResponse>;

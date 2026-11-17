@@ -1,4 +1,5 @@
 import { ACCOUNT_EXPORT_SECTIONS } from "@flump/api-contract";
+import { encryptReceiptData } from "@flump/banking/server";
 import { describe, expect, it, vi } from "vitest";
 import { AuditEvent } from "../../entities/audit-event.entity";
 import {
@@ -142,5 +143,48 @@ describe("AccountExportService CSV export (E19 portability)", () => {
         deadlineMs: 10,
       }),
     ).rejects.toBeInstanceOf(ExportDeadlineError);
+  });
+});
+
+describe("AccountExportService receipts (SEC-D, L4)", () => {
+  const RECORD_ID = "00000000-0000-4000-8000-0000000000ab";
+  const plaintext = `data:application/pdf;base64,${Buffer.from("%PDF-1.4\n").toString("base64")}`;
+  const ciphertext = encryptReceiptData(plaintext, RECORD_ID);
+  const taxRow = () => ({
+    id: RECORD_ID,
+    name: "Receipt",
+    receiptFilename: "r.pdf",
+    receiptMimeType: "application/pdf",
+    receiptData: ciphertext,
+  });
+
+  it("writes the decrypted receipt into the CSV, never the ciphertext envelope", async () => {
+    const { dataSource } = createMockDataSource({ rowsByEntity: { TaxRecord: [taxRow()] } });
+    const service = new AccountExportService(dataSource as never);
+    const chunks: string[] = [];
+
+    await service.writeCsvExport(
+      "user-1",
+      async (chunk) => {
+        chunks.push(chunk);
+      },
+      { section: "taxRecords" },
+    );
+
+    const csv = chunks.join("");
+    expect(csv).toContain(plaintext);
+    expect(csv).not.toContain(ciphertext);
+    expect(csv).not.toMatch(/v\d+:[0-9a-f]{24}:/);
+  });
+
+  it("shapes JSON and CSV rows the same way", async () => {
+    const { dataSource } = createMockDataSource({ rowsByEntity: { TaxRecord: [taxRow()] } });
+    const service = new AccountExportService(dataSource as never);
+    const json: string[] = [];
+    await service.writeExport("user-1", async (chunk) => {
+      json.push(chunk);
+    });
+    const doc = JSON.parse(json.join("")) as { taxRecords: Array<Record<string, unknown>> };
+    expect(doc.taxRecords[0]?.receiptData).toBe(plaintext);
   });
 });

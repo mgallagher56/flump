@@ -29,6 +29,7 @@ describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16,
       { getProfile: async () => ({}) } as never,
       {} as never,
       {} as never,
+      { findOne: async () => null } as never,
     );
     return { service, taxFind };
   }
@@ -66,6 +67,7 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
       { getProfile: async () => profile } as never,
       {} as never,
       {} as never,
+      { findOne: async () => null } as never,
     );
   }
 
@@ -119,6 +121,76 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
   });
 });
 
+describe("AgentDataService.getUserFinancialData retirement plan and birth year (E33)", () => {
+  const savedRow = {
+    id: "plan-1",
+    userId: "u1",
+    retirementAge: 66,
+    planToAge: 95,
+    target: { kind: "typed", yearlyAmount: 24000 },
+    housingOverride: null,
+    statePensionAge: 67,
+    // numericTransformer turns decimal columns into numbers; the shared formatter also
+    // converts the rate columns itself, so a string that slipped through still arrives as a number.
+    statePensionAnnualForecastGbp: 11502.4,
+    statePensionQualifyingYears: 30,
+    growthRates: { lower: 0.02, middle: 0.05, higher: 0.08 },
+    inflationRate: "0.0250",
+    cashSavingsNominalRate: null,
+    realRentGrowthRate: "0.0100",
+    excludedAccountIds: ["acc-2"],
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-02-01T00:00:00Z"),
+  };
+
+  function serviceWith(profile: Record<string, unknown>, row: Record<string, unknown> | null) {
+    const writes = { save: vi.fn(), insert: vi.fn(), upsert: vi.fn(), update: vi.fn() };
+    const findOne = vi.fn(async () => row);
+    const service = new AgentDataService(
+      { find: vi.fn(async () => []) } as never,
+      { find: vi.fn(async () => []) } as never,
+      {} as never,
+      { getAccounts: async () => [], getAccountDetails: async () => [] } as never,
+      { getProfile: async () => profile } as never,
+      {} as never,
+      {} as never,
+      { findOne, ...writes } as never,
+    );
+    return { service, findOne, writes };
+  }
+
+  it("carries the saved plan with numeric figures and the saved birth year, scoped by user", async () => {
+    const { service, findOne } = serviceWith({ birthYear: 1970 }, savedRow);
+    const data = await service.getUserFinancialData("u1");
+    expect(findOne).toHaveBeenCalledWith({ where: { userId: "u1" } });
+    expect(data.birthYear).toBe(1970);
+    expect(data.retirementPlan).toEqual({
+      retirementAge: 66,
+      planToAge: 95,
+      target: { kind: "typed", yearlyAmount: 24000 },
+      housingOverride: null,
+      statePensionAge: 67,
+      statePensionAnnualForecastGbp: 11502.4,
+      statePensionQualifyingYears: 30,
+      growthRates: { lower: 0.02, middle: 0.05, higher: 0.08 },
+      inflationRate: 0.025,
+      cashSavingsNominalRate: null,
+      realRentGrowthRate: 0.01,
+      excludedAccountIds: ["acc-2"],
+    });
+    // No row id, user id or timestamps go to the tools.
+    expect(JSON.stringify(data.retirementPlan)).not.toContain("u1");
+  });
+
+  it("leaves the plan null and writes nothing when none is saved", async () => {
+    const { service, writes } = serviceWith({}, null);
+    const data = await service.getUserFinancialData("u1");
+    expect(data.retirementPlan).toBeNull();
+    expect(data.birthYear).toBeNull();
+    for (const fn of Object.values(writes)) expect(fn).not.toHaveBeenCalled();
+  });
+});
+
 describe("AgentDataService ranged MCP reads (E17 re-plan PR B, unit)", () => {
   function build(query = vi.fn(async (): Promise<unknown[]> => [])) {
     const qb = {
@@ -150,6 +222,7 @@ describe("AgentDataService ranged MCP reads (E17 re-plan PR B, unit)", () => {
       { getProfile: async () => ({}) } as never,
       { find: accountFind } as never,
       { query } as never,
+      {} as never,
     );
     return { service, query, qb, accountFind };
   }
@@ -226,5 +299,42 @@ describe("AgentDataService ranged MCP reads (E17 re-plan PR B, unit)", () => {
     expect((accountFind.mock.calls[0] as unknown as [{ where: unknown }])[0].where).toEqual({
       userId: "u1",
     });
+  });
+});
+
+describe("AgentDataService.getAccounts carries joint ownership (E34)", () => {
+  it("selects and returns ownership and sharePercent, so MCP reads count the user's share", async () => {
+    const accountFind = vi.fn(async () => [
+      {
+        id: "a1",
+        name: "Joint saver",
+        type: "Saving",
+        balance: "10000",
+        interestRate: null,
+        monthlyContribution: null,
+        termMonths: null,
+        fixedRateEndDate: null,
+        currency: "GBP",
+        isCurrent: true,
+        ownership: "joint",
+        sharePercent: 40,
+      },
+    ]);
+    const service = new AgentDataService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { getProfile: async () => ({}) } as never,
+      { find: accountFind } as never,
+      {} as never,
+      {} as never,
+    );
+    const [a] = await service.getAccounts("u1");
+    expect(a).toMatchObject({ ownership: "joint", sharePercent: 40 });
+    const select = (
+      accountFind.mock.calls[0] as unknown as [{ select: Record<string, boolean> }]
+    )[0].select;
+    expect(select).toMatchObject({ ownership: true, sharePercent: true });
   });
 });

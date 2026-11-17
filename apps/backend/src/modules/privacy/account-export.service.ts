@@ -173,49 +173,57 @@ export class AccountExportService {
     });
   }
 
+  /**
+   * Reads the caller's rows of one table, a page at a time, and hands each one to `onRow` already
+   * shaped by `exportRow` (the single place JSON and CSV get their values from). An `object` table
+   * yields at most one row.
+   */
+  private async forEachExportRow(
+    manager: EntityManager,
+    table: UserDataTable,
+    userId: string,
+    onRow: (row: Record<string, unknown>) => Promise<void>,
+  ): Promise<void> {
+    const { columns, orderBy, batchSize, shape } = table.export;
+    const repo = manager.getRepository(table.entity);
+    const select = Object.fromEntries(columns.map((c) => [c, true]));
+    const order = Object.fromEntries(orderBy.map((c) => [c, "ASC"])) as FindOptionsOrder<never>;
+
+    if (shape === "object") {
+      const row = await repo.findOne({ where: { userId }, select, order });
+      if (row) await onRow(exportRow(table, row as Record<string, unknown>));
+      return;
+    }
+
+    for (let skip = 0; ; skip += batchSize) {
+      const rows = await repo.find({ where: { userId }, select, order, skip, take: batchSize });
+      for (const row of rows) await onRow(exportRow(table, row as Record<string, unknown>));
+      if (rows.length < batchSize) break;
+    }
+  }
+
   private async writeSection(
     manager: EntityManager,
     table: UserDataTable,
     userId: string,
     write: ExportWriter,
   ): Promise<void> {
-    const { columns, orderBy, batchSize, shape } = table.export;
-    const repo = manager.getRepository(table.entity);
-    const select = Object.fromEntries(columns.map((c) => [c, true]));
-    const order = Object.fromEntries(orderBy.map((c) => [c, "ASC"])) as FindOptionsOrder<never>;
-    const project = (row: Record<string, unknown>) =>
-      Object.fromEntries(
-        columns.map((c) => {
-          const val = row[c];
-          if (
-            table.key === "taxRecords" &&
-            c === "receiptData" &&
-            typeof val === "string" &&
-            isEncryptedToken(val) &&
-            typeof row.id === "string"
-          ) {
-            return [c, decryptReceiptData(val, row.id)];
-          }
-          return [c, val ?? null];
-        }),
-      );
-
-    if (shape === "object") {
-      const row = await repo.findOne({ where: { userId }, select, order });
-      await write(row ? JSON.stringify(project(row)) : "null");
+    if (table.export.shape === "object") {
+      let found = false;
+      await this.forEachExportRow(manager, table, userId, async (row) => {
+        found = true;
+        await write(JSON.stringify(row));
+      });
+      if (!found) await write("null");
       return;
     }
 
     await write("[");
     let first = true;
-    for (let skip = 0; ; skip += batchSize) {
-      const rows = await repo.find({ where: { userId }, select, order, skip, take: batchSize });
-      for (const row of rows) {
-        await write(`${first ? "" : ","}${JSON.stringify(project(row))}`);
-        first = false;
-      }
-      if (rows.length < batchSize) break;
-    }
+    await this.forEachExportRow(manager, table, userId, async (row) => {
+      await write(`${first ? "" : ","}${JSON.stringify(row)}`);
+      first = false;
+    });
     await write("]");
   }
 
@@ -225,27 +233,33 @@ export class AccountExportService {
     userId: string,
     write: ExportWriter,
   ): Promise<void> {
-    const { columns, orderBy, batchSize, shape } = table.export;
-    const repo = manager.getRepository(table.entity);
-    const select = Object.fromEntries(columns.map((c) => [c, true]));
-    const order = Object.fromEntries(orderBy.map((c) => [c, "ASC"])) as FindOptionsOrder<never>;
-
+    const { columns } = table.export;
     await write(formatCsvRow(columns));
-
-    if (shape === "object") {
-      const row = await repo.findOne({ where: { userId }, select, order });
-      if (row) {
-        await write(formatCsvRow(columns.map((c) => (row as Record<string, unknown>)[c] ?? null)));
-      }
-      return;
-    }
-
-    for (let skip = 0; ; skip += batchSize) {
-      const rows = await repo.find({ where: { userId }, select, order, skip, take: batchSize });
-      for (const row of rows) {
-        await write(formatCsvRow(columns.map((c) => (row as Record<string, unknown>)[c] ?? null)));
-      }
-      if (rows.length < batchSize) break;
-    }
+    await this.forEachExportRow(manager, table, userId, async (row) => {
+      await write(formatCsvRow(columns.map((c) => row[c])));
+    });
   }
+}
+
+/**
+ * One export row: the table's allow-listed columns in order, missing values as null, and a tax
+ * record's encrypted receipt decrypted (SEC-D, L4) so neither the JSON nor the CSV ever carries
+ * the ciphertext envelope.
+ */
+function exportRow(table: UserDataTable, row: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    table.export.columns.map((c) => {
+      const val = row[c];
+      if (
+        table.key === "taxRecords" &&
+        c === "receiptData" &&
+        typeof val === "string" &&
+        isEncryptedToken(val) &&
+        typeof row.id === "string"
+      ) {
+        return [c, decryptReceiptData(val, row.id)];
+      }
+      return [c, val ?? null];
+    }),
+  );
 }

@@ -1,8 +1,15 @@
 import type { McpInputResponse } from "@flump/api-contract";
-import { anonymiseContextPackInput, type BuildContextPackInput } from "@flump/finance-engine";
+import {
+  anonymiseContextPackInput,
+  type BuildContextPackInput,
+  DEFAULT_RETIREMENT_GROWTH_CASES,
+  DEFAULT_RETIREMENT_INFLATION_RATE,
+  type RetirementSavedPlanInput,
+} from "@flump/finance-engine";
 import { effectiveAnonymize, type VerifiedToken } from "@flump/mcp";
 
 type WireInput = McpInputResponse["input"];
+type WirePlan = NonNullable<WireInput["retirementPlan"]>;
 
 const num = (value: unknown): number => {
   const n = typeof value === "number" ? value : Number(value);
@@ -75,18 +82,23 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
       countProperty: input.netWorthBasis.countProperty,
       countStudentLoan: input.netWorthBasis.countStudentLoan,
     },
-    accounts: (input.accounts ?? []).map((a) => ({
-      id: String(a.id ?? ""),
-      name: String(a.name ?? ""),
-      type: String(a.type ?? ""),
-      balance: num(a.balance),
-      interestRate: numOrNull(a.interestRate),
-      monthlyContribution: numOrNull(a.monthlyContribution),
-      termMonths: numOrNull(a.termMonths),
-      fixedRateEndDate: textOrNull(a.fixedRateEndDate),
-      currency: String(a.currency ?? "GBP"),
-      isCurrent: a.isCurrent !== false,
-    })),
+    accounts: (input.accounts ?? []).map((a) =>
+      defined({
+        id: String(a.id ?? ""),
+        name: String(a.name ?? ""),
+        type: String(a.type ?? ""),
+        balance: num(a.balance),
+        interestRate: numOrNull(a.interestRate),
+        monthlyContribution: numOrNull(a.monthlyContribution),
+        termMonths: numOrNull(a.termMonths),
+        fixedRateEndDate: textOrNull(a.fixedRateEndDate),
+        currency: String(a.currency ?? "GBP"),
+        isCurrent: a.isCurrent !== false,
+        // A joint account counts at the user's share, as the remote tools count it.
+        ownership: ownershipOf(a.ownership),
+        sharePercent: a.sharePercent === undefined ? undefined : numOrNull(a.sharePercent),
+      }),
+    ),
     accountDetails: (input.accountDetails ?? [])
       .map((d) => ({
         accountId: String(d.accountId ?? d.account_id ?? ""),
@@ -123,6 +135,38 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
       endDate: t.endDate ?? null,
       notes: t.notes ?? null,
     })),
+    // Left out when the caller did not read the plan; null when none is saved.
+    ...(input.retirementPlan === undefined
+      ? {}
+      : { retirementPlan: toWirePlan(input.retirementPlan) }),
+    ...(typeof input.birthYear === "number" && Number.isInteger(input.birthYear)
+      ? { birthYear: input.birthYear }
+      : {}),
+  };
+}
+
+const ownershipOf = (value: unknown): "sole" | "joint" | undefined =>
+  value === "joint" || value === "sole" ? value : undefined;
+
+/**
+ * The saved plan as `savedPlanInputFromRow` gives it, every field named. A field the row lacks
+ * gets the value the engine falls back to, so the local figures match the remote ones.
+ */
+function toWirePlan(plan: RetirementSavedPlanInput | null): WirePlan | null {
+  if (plan === null) return null;
+  return {
+    retirementAge: plan.retirementAge ?? null,
+    planToAge: plan.planToAge ?? null,
+    target: (plan.target ?? null) as WirePlan["target"],
+    housingOverride: (plan.housingOverride ?? null) as WirePlan["housingOverride"],
+    statePensionAge: plan.statePensionAge ?? null,
+    statePensionAnnualForecastGbp: numOrNull(plan.statePensionAnnualForecastGbp),
+    statePensionQualifyingYears: plan.statePensionQualifyingYears ?? null,
+    growthRates: { ...(plan.growthRates ?? DEFAULT_RETIREMENT_GROWTH_CASES) },
+    inflationRate: plan.inflationRate ?? DEFAULT_RETIREMENT_INFLATION_RATE,
+    cashSavingsNominalRate: numOrNull(plan.cashSavingsNominalRate),
+    realRentGrowthRate: plan.realRentGrowthRate ?? 0,
+    excludedAccountIds: [...(plan.excludedAccountIds ?? [])],
   };
 }
 
