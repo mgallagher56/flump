@@ -30,11 +30,25 @@ export const resultsStack = cva({
   },
 });
 
-export const caseRow = cva({
+export const fieldGrid = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+    gridTemplateColumns: { base: "1fr", md: "repeat(2, minmax(0, 1fr))" },
     gap: "4",
+  },
+});
+
+export const promptLink = cva({
+  base: {
+    color: "primary",
+    textDecoration: "underline",
+    fontWeight: "medium",
+    fontSize: "sm",
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   },
 });
 

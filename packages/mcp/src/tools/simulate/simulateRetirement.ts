@@ -1,38 +1,17 @@
-import {
-  calculateRetirementPlan,
-  DEFAULT_RETIREMENT_GROWTH_CASES,
-  DEFAULT_RETIREMENT_INFLATION_RATE,
-} from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
-import { loadReadModel, round2 } from "../read/common.js";
-import { retirementHousingFromReadModel } from "../read/getRetirementPicture.js";
+import { retirementFiguresSchema, runRetirementPlan } from "../read/getRetirementPicture.js";
 import {
   type Assumption,
   agentSupplied,
-  defaulted,
   gbpInput,
   pctInput,
   SIMULATE_ANNOTATIONS,
   SIMULATION_NOTICE,
 } from "./common.js";
 
-const bandSchema = z.object({
-  lower: z.number(),
-  middle: z.number(),
-  higher: z.number(),
-});
-
 const result = z.object({
-  retirementAge: z.number(),
-  planToAge: z.number(),
-  currentCountedPotGbp: z.number(),
-  projectedPotAtRetirementGbp: bandSchema,
-  estimatedYearlyIncomeGbp: bandSchema,
-  targetYearlyIncomeGbp: z.number().nullable(),
-  differenceYearlyGbp: bandSchema.nullable(),
-  statePensionAnnualGbp: z.number(),
-  housingAverageAnnualGbp: z.number(),
+  ...retirementFiguresSchema,
   notes: z.array(z.string()),
 });
 
@@ -40,17 +19,23 @@ export const simulateRetirement = defineFlumpTool({
   name: "simulate_retirement",
   title: "Simulate retirement plan",
   description:
-    "Simulates estimated yearly retirement income in today's prices from counted accounts with optional overrides for retirement age, plan-to age, extra monthly contribution, growth rates, inflation, State Pension, and the user's own target. Saves nothing.",
+    "Simulates estimated yearly retirement income in today's prices, before tax, starting from the user's saved retirement plan. Each input given replaces the saved value for this answer only: retirement age, plan-to age, extra monthly contribution, growth rates, inflation, State Pension details and the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never fills in an age or a State Pension amount: while details are missing, figures are null and missing lists what to ask. Saves nothing.",
   annotations: SIMULATE_ANNOTATIONS,
   input: {
-    retirementAge: z.number().int().min(18).max(100).describe("Retirement age to simulate."),
+    retirementAge: z
+      .number()
+      .int()
+      .min(18)
+      .max(100)
+      .optional()
+      .describe("Retirement age to simulate instead of the saved one."),
     planToAge: z
       .number()
       .int()
       .min(19)
       .max(120)
-      .default(90)
-      .describe("Age to plan income to. Defaults to 90."),
+      .optional()
+      .describe("Age to plan income to, instead of the saved one."),
     targetYearlyGbp: gbpInput(
       "The user's own yearly retirement target in today's prices, if supplied.",
       1_000_000,
@@ -58,12 +43,18 @@ export const simulateRetirement = defineFlumpTool({
     extraMonthlyContributionGbp: gbpInput(
       "Extra monthly pension contribution in today's prices.",
       50_000,
-    ).default(0),
-    lowerGrowthPct: pctInput("Lower nominal annual growth percentage (default 2).").optional(),
-    middleGrowthPct: pctInput("Middle nominal annual growth percentage (default 5).").optional(),
-    higherGrowthPct: pctInput("Higher nominal annual growth percentage (default 8).").optional(),
-    inflationPct: pctInput("Annual inflation percentage (default 2).").optional(),
-    statePensionAge: z.number().int().min(50).max(85).optional(),
+    ).optional(),
+    lowerGrowthPct: pctInput("Lower nominal annual growth percentage.").optional(),
+    middleGrowthPct: pctInput("Middle nominal annual growth percentage.").optional(),
+    higherGrowthPct: pctInput("Higher nominal annual growth percentage.").optional(),
+    inflationPct: pctInput("Annual inflation percentage.").optional(),
+    statePensionAge: z
+      .number()
+      .int()
+      .min(50)
+      .max(85)
+      .optional()
+      .describe("The user's State Pension age, as they stated it."),
     statePensionQualifyingYears: z.number().int().min(0).max(50).optional(),
     statePensionAnnualForecastGbp: gbpInput(
       "User-supplied annual State Pension forecast in GBP.",
@@ -71,102 +62,45 @@ export const simulateRetirement = defineFlumpTool({
     ).optional(),
   },
   result,
-  maxTokens: 1200,
+  maxTokens: 1800,
   async handler(args, ctx) {
-    const m = await loadReadModel(ctx);
-    const assumptions: Assumption[] = [];
+    const supplied: Assumption[] = [];
+    const echo = (field: string, value: number | undefined) => {
+      if (value !== undefined)
+        supplied.push(agentSupplied(field, value, "Supplied for simulation."));
+    };
+    echo("retirementAge", args.retirementAge);
+    echo("planToAge", args.planToAge);
+    echo("extraMonthlyContributionGbp", args.extraMonthlyContributionGbp);
+    echo("statePensionAge", args.statePensionAge);
 
-    const currentAge =
-      typeof m.raw.baseline?.age === "number" && Number.isInteger(m.raw.baseline.age)
-        ? m.raw.baseline.age
-        : 35;
-    if (typeof m.raw.baseline?.age !== "number") {
-      assumptions.push(defaulted("currentAge", currentAge, "No saved age; defaulted to 35."));
-    }
-
-    const retirementAge = Math.max(currentAge, args.retirementAge);
-    const planToAge = Math.max(retirementAge + 1, args.planToAge);
-    assumptions.push(agentSupplied("retirementAge", retirementAge, "Supplied for simulation."));
-    assumptions.push(agentSupplied("planToAge", planToAge, "Supplied for simulation."));
-
-    const lower =
-      args.lowerGrowthPct !== undefined
-        ? args.lowerGrowthPct / 100
-        : DEFAULT_RETIREMENT_GROWTH_CASES.lower;
-    const middle =
-      args.middleGrowthPct !== undefined
-        ? args.middleGrowthPct / 100
-        : DEFAULT_RETIREMENT_GROWTH_CASES.middle;
-    const higher =
-      args.higherGrowthPct !== undefined
-        ? args.higherGrowthPct / 100
-        : DEFAULT_RETIREMENT_GROWTH_CASES.higher;
-    const inflationRate =
-      args.inflationPct !== undefined ? args.inflationPct / 100 : DEFAULT_RETIREMENT_INFLATION_RATE;
-
-    const accounts = m.accounts.map((a) => ({
-      id: a.id,
-      name: a.name,
-      type: a.rawType,
-      balanceGbp: a.nominalBalance,
-      monthlyContributionGbp: a.monthlyContribution,
-      interestRatePct: a.interestRateKnown ? a.interestRate : null,
-    }));
-
-    const housing = retirementHousingFromReadModel(m);
-
-    const plan = calculateRetirementPlan({
-      currentAge,
-      retirementAge,
-      planToAge,
-      accounts,
+    const toRate = (p: number | undefined) => (p === undefined ? undefined : p / 100);
+    const run = await runRetirementPlan(ctx, {
+      retirementAge: args.retirementAge,
+      planToAge: args.planToAge,
+      targetYearlyGbp: args.targetYearlyGbp,
       additionalMonthlyPensionContributionGbp: args.extraMonthlyContributionGbp,
-      target:
-        args.targetYearlyGbp !== undefined
-          ? { kind: "typed", yearlyAmount: args.targetYearlyGbp }
-          : null,
-      housing,
-      statePension: {
-        statePensionAge: args.statePensionAge,
-        qualifyingYears: args.statePensionQualifyingYears,
-        annualForecastGbp: args.statePensionAnnualForecastGbp,
+      statePensionAge: args.statePensionAge,
+      statePensionQualifyingYears: args.statePensionQualifyingYears,
+      statePensionAnnualForecastGbp: args.statePensionAnnualForecastGbp,
+      growthRates: {
+        lower: toRate(args.lowerGrowthPct),
+        middle: toRate(args.middleGrowthPct),
+        higher: toRate(args.higherGrowthPct),
       },
-      assumptions: {
-        growthRates: { lower, middle, higher },
-        inflationRate,
-      },
+      inflationRate: toRate(args.inflationPct),
     });
 
     return {
       result: {
-        retirementAge: plan.retirementAge,
-        planToAge: plan.planToAge,
-        currentCountedPotGbp: round2(plan.currentCountedPotGbp),
-        projectedPotAtRetirementGbp: {
-          lower: round2(plan.projectedPotAtRetirementGbp.lower),
-          middle: round2(plan.projectedPotAtRetirementGbp.middle),
-          higher: round2(plan.projectedPotAtRetirementGbp.higher),
-        },
-        estimatedYearlyIncomeGbp: {
-          lower: round2(plan.estimatedYearlyIncomeGbp.lower),
-          middle: round2(plan.estimatedYearlyIncomeGbp.middle),
-          higher: round2(plan.estimatedYearlyIncomeGbp.higher),
-        },
-        targetYearlyIncomeGbp:
-          plan.targetYearlyIncome === null ? null : round2(plan.targetYearlyIncome),
-        differenceYearlyGbp: plan.differenceYearly
-          ? {
-              lower: round2(plan.differenceYearly.lower),
-              middle: round2(plan.differenceYearly.middle),
-              higher: round2(plan.differenceYearly.higher),
-            }
-          : null,
-        statePensionAnnualGbp: round2(plan.statePension.annualAmountGbp),
-        housingAverageAnnualGbp: round2(plan.housing.averageAnnualCostGbp),
-        notes: [SIMULATION_NOTICE, "Figures are in today's prices before tax. Nothing was saved."],
+        ...run.figures,
+        notes: [
+          SIMULATION_NOTICE,
+          "Figures are estimates in today's prices, before tax. Nothing was saved.",
+        ],
       },
-      missing: [],
-      assumptions,
+      missing: run.missing,
+      assumptions: [...supplied, ...run.assumptions],
       notice: SIMULATION_NOTICE,
     };
   },

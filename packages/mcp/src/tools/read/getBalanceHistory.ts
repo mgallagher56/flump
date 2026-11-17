@@ -3,6 +3,8 @@ import {
   getUkCalendarDate,
   MCP_NOTICE,
   type NetWorthBasis,
+  PortfolioSnapshot,
+  type RawAccount,
   type ResolvedAccount,
   resolveNetWorthScope,
   selectNetWorthSeries,
@@ -14,7 +16,7 @@ import { monthIndex, monthLabel, parseMonth } from "../../provider/in-memory.js"
 import type { AccountSnapshotRow } from "../../types.js";
 import {
   ACCOUNT_CATEGORIES,
-  loadAccountIndex,
+  indexAccounts,
   type Missing,
   NET_WORTH_LEFT_OUT_VALUES,
   round2,
@@ -146,22 +148,37 @@ interface Cell {
  * month index -> account id -> value, from the E30 selector (carry-forward, liabilities as owed).
  * When `to` is the current Europe/London month, an account with no row that month shows its saved
  * balance, as on the web history page, so the range ends on the figures every other page shows.
+ * A joint account (E34) counts at the user's share in every month, as `nominalBalance` does.
  */
 function buildGrid(
   accounts: readonly ResolvedAccount[],
+  saved: ReadonlyMap<string, RawAccount>,
   rows: readonly AccountSnapshotRow[],
   to: number,
   basis: NetWorthBasis,
 ): Map<number, Map<string, Cell>> {
   const currentMonth = parseMonth(getUkCalendarDate(new Date()).slice(0, 7));
+  // The whole saved balance: the selector applies the share, so `nominalBalance` (already shared)
+  // would count it twice. With no usable saved balance the whole balance is 0, as in
+  // PortfolioSnapshot, never a shared figure.
+  const wholeBalance = (id: string): number => {
+    const value = Number(saved.get(id)?.balance);
+    return Number.isFinite(value) ? value : 0;
+  };
   const currentBalances =
-    to === currentMonth ? new Map(accounts.map((a) => [a.id, a.nominalBalance])) : undefined;
+    to === currentMonth ? new Map(accounts.map((a) => [a.id, wholeBalance(a.id)])) : undefined;
   const sourceAt = new Map<string, string>();
   for (const r of rows) {
     sourceAt.set(`${r.accountId}|${monthIndex(r.year, r.month)}`, safeSnapshotSource(r.source));
   }
   const series = selectNetWorthSeries(
-    accounts.map((a) => ({ id: a.id, type: a.rawType })),
+    accounts.map((a) => ({
+      id: a.id,
+      type: a.rawType,
+      name: a.name,
+      ownership: saved.get(a.id)?.ownership,
+      sharePercent: saved.get(a.id)?.sharePercent,
+    })),
     rows,
     basis,
     { through: monthLabel(to), currentBalances },
@@ -269,10 +286,12 @@ export const getBalanceHistory = defineFlumpTool({
     }
     const grid = periods(from, to, input.interval);
 
-    const [index, basis] = await Promise.all([
-      loadAccountIndex(ctx),
+    const [rawAccounts, basis] = await Promise.all([
+      ctx.dataProvider.getAccounts(ctx.token.userId),
       ctx.dataProvider.getNetWorthBasis(ctx.token.userId),
     ]);
+    const index = indexAccounts(ctx, new PortfolioSnapshot(rawAccounts, []).getResolvedAccounts());
+    const saved = new Map(rawAccounts.map((a, i) => [String(a.id || `acc_${i}`), a]));
     // Per account and per category, property and mortgages are always available; the net-worth
     // total follows the user's basis. Student loans follow the basis everywhere.
     const listBasis: NetWorthBasis = {
@@ -313,7 +332,7 @@ export const getBalanceHistory = defineFlumpTool({
             to: input.to,
             accountIds: selected.map((a) => a.id),
           });
-    const cells = buildGrid(selected, rows, to, listBasis);
+    const cells = buildGrid(selected, saved, rows, to, listBasis);
     const recorded = new Set(rows.map((r) => r.accountId));
     const withRecorded = selected.filter((a) => recorded.has(a.id));
     // An account with no recorded month still joins the current month at its saved balance

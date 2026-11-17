@@ -1,3 +1,4 @@
+import type { BuildRetirementPlanInputArgs } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "storybook/test";
 import { RetirementPlanner } from "./RetirementPlanner";
@@ -13,27 +14,39 @@ const meta: Meta<typeof RetirementPlanner> = {
 export default meta;
 type Story = StoryObj<typeof RetirementPlanner>;
 
-const baseArgs = {
-  currentAge: 42,
+const planArgs: BuildRetirementPlanInputArgs = {
+  plan: {
+    retirementAge: 62,
+    planToAge: 90,
+    target: { kind: "typed", yearlyAmount: 26_000 },
+    housingOverride: null,
+    statePensionAge: 67,
+    statePensionAnnualForecastGbp: null,
+    statePensionQualifyingYears: 35,
+    growthRates: { lower: 0.02, middle: 0.05, higher: 0.08 },
+    inflationRate: 0.02,
+    cashSavingsNominalRate: null,
+    realRentGrowthRate: 0,
+    excludedAccountIds: [],
+  },
+  birthYear: 1984,
+  now: new Date("2026-11-17T12:00:00Z"),
+  housingStatus: "own_outright",
   accounts: [
     {
       id: "11111111-1111-4111-8111-111111111111",
       name: "Workplace Pension",
       type: "Pension",
-      balanceGbp: 95_000,
-      monthlyContributionGbp: 450,
+      balance: 95_000,
+      monthlyContribution: 450,
     },
     {
       id: "22222222-2222-4222-8222-222222222222",
       name: "Stocks ISA",
       type: "ISA",
-      balanceGbp: 30_000,
-      monthlyContributionGbp: 200,
+      balance: 30_000,
+      monthlyContribution: 200,
     },
-  ],
-  accountDetails: [
-    { accountId: "11111111-1111-4111-8111-111111111111", year: 2026, month: 10, value: 94_000 },
-    { accountId: "11111111-1111-4111-8111-111111111111", year: 2026, month: 11, value: 95_000 },
   ],
   budgetEntries: [
     {
@@ -46,27 +59,15 @@ const baseArgs = {
       isEssential: true,
     },
   ],
-  housing: {
-    housingStatus: "own_outright" as const,
-  },
-  savedPlan: {
-    id: "44444444-4444-4444-8444-444444444444",
-    userId: "user_1",
-    retirementAge: 67,
-    planToAge: 90,
-    target: { kind: "typed" as const, yearlyAmount: 26_000 },
-    housingOverride: null,
-    statePensionAge: 67,
-    statePensionAnnualForecastGbp: null,
-    statePensionQualifyingYears: 35,
-    growthRates: { lower: 0.02, middle: 0.05, higher: 0.08 },
-    inflationRate: 0.02,
-    cashSavingsNominalRate: null,
-    realRentGrowthRate: 0,
-    excludedAccountIds: [],
-    createdAt: "2026-11-16T10:00:00.000Z",
-    updatedAt: "2026-11-16T10:00:00.000Z",
-  },
+};
+
+const baseArgs = {
+  planArgs,
+  accountDetails: [
+    { accountId: "11111111-1111-4111-8111-111111111111", year: 2026, month: 10, value: 94_000 },
+    { accountId: "11111111-1111-4111-8111-111111111111", year: 2026, month: 11, value: 95_000 },
+  ],
+  etag: '"2026-11-16T10:00:00.000Z"',
 };
 
 export const Light: Story = {
@@ -74,9 +75,11 @@ export const Light: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Retirement plan")).toBeInTheDocument();
-    const higherBtn = canvas.getByRole("button", { name: "Higher case (8%)" });
-    await userEvent.click(higherBtn);
-    await expect(canvas.getAllByText(/Your target:/).length).toBeGreaterThanOrEqual(1);
+    await expect(canvas.getByText("From State Pension age (67)")).toBeInTheDocument();
+    await userEvent.click(canvas.getByRole("button", { name: "Higher case (8%)" }));
+    await expect(
+      canvas.getByRole("button", { name: "Reset to saved figures" }),
+    ).toBeInTheDocument();
   },
 };
 
@@ -84,5 +87,21 @@ export const Dark: Story = {
   args: baseArgs,
   parameters: {
     themes: { themeOverride: "dark" },
+  },
+};
+
+export const MissingDetails: Story = {
+  args: {
+    ...baseArgs,
+    planArgs: {
+      ...planArgs,
+      plan: { ...planArgs.plan, retirementAge: null, planToAge: null, statePensionAge: null },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      canvas.getByText("To see an estimate, add your retirement age and the age to plan to."),
+    ).toBeInTheDocument();
   },
 };

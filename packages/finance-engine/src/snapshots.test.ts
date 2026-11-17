@@ -250,3 +250,71 @@ describe("selectNetWorthSeries currentBalances (the current month equals the pic
     expect(s.map((p) => p.netWorth)).toEqual([900 - 181000 + 290000]);
   });
 });
+
+describe("selectNetWorthSeries counts only the user's share of a joint account (E34)", () => {
+  // A 50% joint savings account, a joint home and joint mortgage at 50%, and a sole current account.
+  const saved: RawAccount[] = [
+    { id: "cash", name: "Current", type: "Current", balance: 2000 },
+    {
+      id: "joint",
+      name: "Joint saver",
+      type: "Saving",
+      balance: 10000,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    { id: "home", name: "Home", type: "Property", balance: 300000, ownership: "joint" },
+    {
+      id: "mort",
+      name: "Mortgage",
+      type: "Mortgage",
+      balance: 200000,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+  ];
+  const earlier = [
+    row("cash", 2026, 9, 1800),
+    row("joint", 2026, 9, 9000),
+    row("home", 2026, 9, 290000),
+    row("mort", 2026, 9, -201000),
+  ];
+  const balances = new Map(saved.map((a) => [String(a.id), Number(a.balance)]));
+  const asOf = { asOf: new Date("2026-11-14T00:00:00Z") };
+  const dashboard = (b: NetWorthBasis) =>
+    buildFinancialPicture(
+      {
+        profile: profileFactsFromProfile(null),
+        netWorthBasis: b,
+        accounts: saved,
+        details: [],
+        budget: [],
+      },
+      asOf,
+    ).netWorth.netWorth;
+
+  it("scales recorded months by the share", () => {
+    const s = seriesOf(saved, earlier);
+    expect(s[0]?.netWorth).toBe(1800 + 4500 + 145000 - 100500);
+    expect(s[0]?.accounts.find((a) => a.accountId === "joint")?.value).toBe(4500);
+    expect(s[0]?.accounts.find((a) => a.accountId === "mort")?.value).toBe(100500);
+  });
+
+  it.each([
+    { countProperty: true, countStudentLoan: false },
+    { countProperty: false, countStudentLoan: false },
+  ])("the last History point equals the dashboard net worth (%o)", (b) => {
+    const s = selectNetWorthSeries(saved, earlier, b, {
+      through: "2026-11",
+      currentBalances: balances,
+    });
+    const last = s[s.length - 1]!;
+    expect(last.netWorth).toBe(dashboard(b));
+    expect(last.netWorth).toBe(new PortfolioSnapshot(saved, []).getTotalNetWorth(b));
+  });
+
+  it("leaves accounts without ownership fields at their full value", () => {
+    const plain = saved.map(({ id, type }) => ({ id, type }));
+    expect(seriesOf(plain, earlier)[0]?.netWorth).toBe(1800 + 9000 + 290000 - 201000);
+  });
+});

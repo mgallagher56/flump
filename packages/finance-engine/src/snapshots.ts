@@ -1,4 +1,5 @@
 import { categorizeAccountType, isLiabilityCategory } from "./account-category.js";
+import { type AccountShareInput, applyAccountShare } from "./joint-share.js";
 import { countsTowardNetWorth, type NetWorthBasis } from "./net-worth-basis.js";
 import type { RawAccount } from "./portfolio.js";
 
@@ -21,7 +22,13 @@ export interface SnapshotRow {
   value: number | string;
 }
 
-export type SnapshotAccount = Pick<RawAccount, "id" | "type">;
+/**
+ * An account in the series. `name`, `ownership` and `sharePercent` are optional: when an account
+ * is marked joint (E34) every recorded value and saved balance counts at the user's share, as
+ * `PortfolioSnapshot` does, so the series matches the net worth on every other page.
+ */
+export type SnapshotAccount = Pick<RawAccount, "id" | "type"> &
+  Partial<Pick<RawAccount, "name" | "ownership" | "sharePercent">>;
 
 export interface SnapshotAccountValue {
   accountId: string;
@@ -91,7 +98,8 @@ export interface SelectNetWorthSeriesOptions {
   /** "YYYY-MM": extend the series to this month (usually the current month). */
   through?: string;
   /**
-   * Saved current balances (`account.balance`) by account id. In the `through` month, every
+   * Saved current balances (`account.balance`, the whole balance before any joint share) by
+   * account id. In the `through` month, every
    * counted account without a row that month shows its saved balance instead of a carried value,
    * including accounts with no history, so the last point equals the picture's net worth. The
    * month's `allCarried` still says whether any row was recorded. Ignored when `through` is not
@@ -118,10 +126,18 @@ export function selectNetWorthSeries(
   options: SelectNetWorthSeriesOptions = {},
 ): NetWorthPoint[] {
   const types = new Map<string, string>();
+  const shares = new Map<string, AccountShareInput>();
   for (const a of accounts) {
     if (!a.id) continue;
     const type = String(a.type ?? "other");
-    if (countsTowardNetWorth(categorizeAccountType(type), basis)) types.set(String(a.id), type);
+    if (!countsTowardNetWorth(categorizeAccountType(type), basis)) continue;
+    types.set(String(a.id), type);
+    shares.set(String(a.id), {
+      type,
+      name: a.name,
+      ownership: a.ownership,
+      sharePercent: a.sharePercent,
+    });
   }
 
   // account -> month index -> value
@@ -141,7 +157,7 @@ export function selectNetWorthSeries(
     }
     const idx = key(year, month);
     const m = byAccount.get(id) ?? new Map<number, number>();
-    m.set(idx, value);
+    m.set(idx, applyAccountShare(value, shares.get(id)));
     byAccount.set(id, m);
     if (idx < first) first = idx;
     if (idx > last) last = idx;
@@ -158,7 +174,7 @@ export function selectNetWorthSeries(
     for (const [rawId, balance] of options.currentBalances) {
       const id = String(rawId);
       if (!types.has(id) || !Number.isFinite(balance)) continue;
-      current.set(id, balance);
+      current.set(id, applyAccountShare(balance, shares.get(id)));
       idSet.add(id);
     }
   }

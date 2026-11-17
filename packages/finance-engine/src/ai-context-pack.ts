@@ -27,6 +27,7 @@ import {
   type RawAccountDetail,
   type ResolvedAccount,
 } from "./portfolio.js";
+import type { RetirementSavedPlanInput } from "./retirement-input.js";
 import {
   calculateUKTax,
   type TaxCalculationResult,
@@ -72,6 +73,13 @@ export interface BuildContextPackInput {
   profileFacts?: ProfileFacts;
   /** What net worth counts: the user's choices (netWorthBasisFromProfile). */
   netWorthBasis: NetWorthBasis;
+  /**
+   * The saved retirement plan (E33), or null when none is saved. Read by the MCP retirement
+   * tools only; never part of the context pack text.
+   */
+  retirementPlan?: RetirementSavedPlanInput | null;
+  /** The saved birth year from the profile, or null. The baseline `age` has a default, so it is not used. */
+  birthYear?: number | null;
 }
 
 /** The user id an anonymised pack or input carries in place of the real one. */

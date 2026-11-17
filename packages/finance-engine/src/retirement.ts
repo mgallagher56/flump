@@ -4,16 +4,12 @@ import {
   isLiabilityCategory,
 } from "./account-category.js";
 import type { BudgetEntryItem } from "./ai-context-pack.js";
+import type { AccountShareInput } from "./joint-share.js";
 import { amortiseOneMonth, calculateMonthlyMortgagePayment } from "./mortgage.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { budgetRowMonthly, SAVINGS_CATEGORY } from "./picture/selectors/budget-totals.js";
 import { type SnapshotRow, selectNetWorthSeries } from "./snapshots.js";
-import {
-  getUkStatePensionRules,
-  resolveUkTaxYear,
-  roundPence,
-  UK_STATE_PENSION_AGE,
-} from "./uk-tax-year.js";
+import { getUkStatePensionRules, resolveUkTaxYear, roundPence } from "./uk-tax-year.js";
 
 /**
  * Retirement plan model in today's prices (E33 Slices S0-S1).
@@ -379,6 +375,11 @@ export interface RetirementHousingInput {
   mortgage?: RetirementMortgageDetailsInput | null;
   /** Real annual rent growth rate (defaults to 0, meaning rent grows at inflation). */
   realRentGrowthRate?: number;
+  /**
+   * Annual inflation rate as a decimal (defaults to `DEFAULT_RETIREMENT_INFLATION_RATE`). A
+   * mortgage payment is a fixed number of pounds, so it falls in today's prices at this rate.
+   */
+  inflationRate?: number;
   /** Optional explicit user override of the housing case in retirement. */
   override?: RetirementHousingOverride | null;
 }
@@ -468,6 +469,12 @@ export function resolveRetirementHousing(input: RetirementHousingInput): Retirem
   const yearsUntilRetirement = Math.max(0, retirementAge - currentAge);
   const monthsUntilRetirement = Math.round(yearsUntilRetirement * 12);
   const defaultRealRentGrowth = input.realRentGrowthRate ?? DEFAULT_REAL_RENT_GROWTH_RATE;
+  const inflationRate =
+    typeof input.inflationRate === "number" &&
+    Number.isFinite(input.inflationRate) &&
+    input.inflationRate > -1
+      ? input.inflationRate
+      : DEFAULT_RETIREMENT_INFLATION_RATE;
 
   const buildZeroResult = (
     kind: "own-outright" | "mortgage-ends-before-retirement" | "custom",
@@ -557,13 +564,19 @@ export function resolveRetirementHousing(input: RetirementHousingInput): Retirem
     mortgageEndAge: number,
     overridden: boolean,
   ): RetirementHousingResult => {
-    const monthly = roundPence(Math.max(0, monthlyPayment));
+    // The payment is a fixed number of pounds, so in today's prices it falls with inflation:
+    // retirement year i (0-based) costs payment × activeMonths ÷ (1 + inflation)^(yearsAway + i).
+    const nominalMonthly = roundPence(Math.max(0, monthlyPayment));
+    const deflator = (yearsAway: number) => (1 + inflationRate) ** yearsAway;
+    const monthly = roundPence(nominalMonthly / deflator(yearsUntilRetirement));
     const yearlySchedule: RetirementHousingYearPoint[] = [];
     let totalCost = 0;
 
     for (let i = 0; i < retirementYears; i++) {
       const activeMonths = Math.max(0, Math.min(12, monthsInRetirement - i * 12));
-      const annualCost = roundPence(monthly * activeMonths);
+      const annualCost = roundPence(
+        (nominalMonthly * activeMonths) / deflator(yearsUntilRetirement + i),
+      );
       yearlySchedule.push({
         age: retirementAge + i,
         yearOfRetirement: i + 1,
@@ -670,8 +683,11 @@ export function resolveRetirementHousing(input: RetirementHousingInput): Retirem
 // ---------------------------------------------------------------------------
 
 export interface RetirementStatePensionInput {
-  /** Age at which the user expects their State Pension to start (for example 67). */
-  statePensionAge?: number;
+  /**
+   * The State Pension age the user typed (decision RD10). There is no default: without it the
+   * State Pension is left out of the plan.
+   */
+  statePensionAge?: number | null;
   /** User-entered annual State Pension forecast in pounds (from gov.uk). Takes precedence when set. */
   annualForecastGbp?: number | null;
   /** National Insurance qualifying years (0 to 35+). Used when `annualForecastGbp` is not set. */
@@ -683,7 +699,8 @@ export interface RetirementStatePensionInput {
 export interface RetirementStatePensionResult {
   source: "forecast" | "qualifying-years" | "none";
   taxYear: string;
-  statePensionAge: number;
+  /** The age the user typed, or `null` when none was given. */
+  statePensionAge: number | null;
   weeklyAmountGbp: number;
   annualAmountGbp: number;
   qualifyingYearsUsed: number | null;
@@ -704,7 +721,7 @@ export function calculateRetirementStatePension(
     Number.isFinite(input.statePensionAge) &&
     input.statePensionAge > 0
       ? input.statePensionAge
-      : UK_STATE_PENSION_AGE;
+      : null;
 
   if (
     typeof input.annualForecastGbp === "number" &&
@@ -768,7 +785,18 @@ export function statePensionAnnualAtAge(
   age: number,
   statePension: Pick<RetirementStatePensionResult, "statePensionAge" | "annualAmountGbp">,
 ): number {
+  if (statePension.statePensionAge === null) return 0;
   return age >= statePension.statePensionAge ? statePension.annualAmountGbp : 0;
+}
+
+/**
+ * True when the State Pension can go into a plan: the user typed both an age and an amount
+ * source (a forecast or qualifying years). Until then the estimate leaves it out.
+ */
+export function isStatePensionIncluded(
+  statePension: Pick<RetirementStatePensionResult, "statePensionAge" | "source">,
+): boolean {
+  return statePension.statePensionAge !== null && statePension.source !== "none";
 }
 
 // ---------------------------------------------------------------------------
@@ -789,6 +817,9 @@ export interface RetirementPotAccountInput {
    * current accounts, property, and debts do not.
    */
   countsTowardsRetirement?: boolean | null;
+  /** Joint ownership fields (E34), passed through to the monthly series so it can apply the share. */
+  ownership?: AccountShareInput["ownership"];
+  sharePercent?: AccountShareInput["sharePercent"];
 }
 
 /**
@@ -804,8 +835,10 @@ export function defaultCountsTowardsRetirement(rawType?: string | null): boolean
 export function doesAccountCountTowardsRetirement(
   account: Pick<RetirementPotAccountInput, "type" | "countsTowardsRetirement">,
 ): boolean {
+  const category = categorizeAccountType(account.type);
+  // Property never counts (decision RD8): selling or downsizing a home is a what-if only.
+  if (category === "property") return false;
   if (typeof account.countsTowardsRetirement === "boolean") {
-    const category = categorizeAccountType(account.type);
     if (isLiabilityCategory(category) || category === "studentLoans") return false;
     return account.countsTowardsRetirement;
   }
@@ -822,8 +855,15 @@ export interface RetirementPlanInput {
   /** Extra monthly savings/investment contribution not already attached to an account row. */
   additionalMonthlySavingsContributionGbp?: number;
   target?: RetirementTargetInput | number | null;
-  housing?: Omit<RetirementHousingInput, "currentAge" | "retirementAge" | "planToAge">;
-  statePension?: RetirementStatePensionInput;
+  housing?: Omit<
+    RetirementHousingInput,
+    "currentAge" | "retirementAge" | "planToAge" | "inflationRate"
+  >;
+  /**
+   * The user's State Pension details. Left out of the plan unless both an age and an amount
+   * source (forecast or qualifying years) are given.
+   */
+  statePension?: RetirementStatePensionInput | null;
   assumptions?: RetirementAssumptionsInput;
 }
 
@@ -856,18 +896,29 @@ export interface RetirementPlanResult {
   };
   /** Annual income from drawing down the pots evenly in real terms from `retirementAge` to `planToAge`. */
   annualPotIncomeGbp: RetirementGrowthBand<number>;
-  /** State Pension details and annual amount from `statePensionAge`. */
-  statePension: RetirementStatePensionResult;
+  /**
+   * State Pension details and annual amount from `statePensionAge`, or `null` when it is left out
+   * (no age or no amount source given).
+   */
+  statePension: RetirementStatePensionResult | null;
   /** Housing cost in retirement derived from saved details or override. */
   housing: RetirementHousingResult;
   /**
-   * Estimated yearly retirement income in today's prices for each growth case (`lower`, `middle`, `higher`).
-   * Includes even real-terms pot drawdown plus State Pension (pro-rated across retirement years when
-   * `statePensionAge > retirementAge`, or full when `retirementAge >= statePensionAge`).
+   * Estimated yearly income from `retirementAge` in today's prices for each growth case: the
+   * income in the first year of retirement (pots, plus State Pension only when it has started by
+   * then). Never an average across years.
    */
   estimatedYearlyIncomeGbp: RetirementGrowthBand<number>;
-  /** Estimated yearly income at `statePensionAge` onwards (pot drawdown + full State Pension). */
-  estimatedYearlyIncomeFromStatePensionAgeGbp: RetirementGrowthBand<number>;
+  /**
+   * Yearly income from `retirementAge` until State Pension age (pots only), or `null` when the
+   * State Pension is left out or retirement starts at or after State Pension age.
+   */
+  estimatedYearlyIncomeBeforeStatePensionAgeGbp: RetirementGrowthBand<number> | null;
+  /**
+   * Yearly income from State Pension age onwards (pots plus the full State Pension), or `null`
+   * when the State Pension is left out.
+   */
+  estimatedYearlyIncomeFromStatePensionAgeGbp: RetirementGrowthBand<number> | null;
   /**
    * The user's own yearly target (including retirement housing costs when built from non-housing
    * budget lines, or the direct typed figure when typed). `null` when no target has been set.
@@ -880,6 +931,10 @@ export interface RetirementPlanResult {
    * growth case, or `null` when no target has been set.
    */
   differenceYearly: RetirementGrowthBand<number> | null;
+  /** `estimatedYearlyIncomeBeforeStatePensionAgeGbp - target`, or `null` when either is unset. */
+  differenceBeforeStatePensionAgeYearly: RetirementGrowthBand<number> | null;
+  /** `estimatedYearlyIncomeFromStatePensionAgeGbp - target`, or `null` when either is unset. */
+  differenceFromStatePensionAgeYearly: RetirementGrowthBand<number> | null;
   /** Year-by-year retirement schedule from `retirementAge` to `planToAge - 1`. */
   yearlySchedule: RetirementYearProjectionPoint[];
   /** Neutral factual summary lines (R1 compliant: identical phrasing whether difference is positive or negative). */
@@ -904,7 +959,8 @@ export function calculateEvenRealDrawdown(
   if (Math.abs(realAnnualRate) < 1e-12 || 1 + realAnnualRate <= 0) {
     return potGbp / years;
   }
-  return (potGbp * realAnnualRate) / (1 - (1 + realAnnualRate) ** -years);
+  // 1 - (1 + r)^-N written with expm1 and log1p, so a rate very close to 0 keeps its precision.
+  return (potGbp * realAnnualRate) / -Math.expm1(-years * Math.log1p(realAnnualRate));
 }
 
 /**
@@ -930,7 +986,11 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
   const yearsInRetirement = Math.max(1, planToAge - retirementAge);
 
   const assumptions = resolveRetirementAssumptions(input.assumptions);
-  const statePension = calculateRetirementStatePension(input.statePension);
+  const statePensionDetail = input.statePension
+    ? calculateRetirementStatePension(input.statePension)
+    : null;
+  const statePension =
+    statePensionDetail && isStatePensionIncluded(statePensionDetail) ? statePensionDetail : null;
   const housing = resolveRetirementHousing({
     currentAge,
     retirementAge,
@@ -939,6 +999,7 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     monthlyHousingCostGbp: input.housing?.monthlyHousingCostGbp,
     mortgage: input.housing?.mortgage,
     realRentGrowthRate: input.housing?.realRentGrowthRate ?? assumptions.realRentGrowthRate,
+    inflationRate: assumptions.inflationRate,
     override: input.housing?.override,
   });
 
@@ -1108,12 +1169,10 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
   };
 
   const yearlySchedule: RetirementYearProjectionPoint[] = [];
-  let totalStatePensionInRetirement = 0;
 
   for (let i = 0; i < yearsInRetirement; i++) {
     const age = retirementAge + i;
-    const spYearly = statePensionAnnualAtAge(age, statePension);
-    totalStatePensionInRetirement += spYearly;
+    const spYearly = statePension ? statePensionAnnualAtAge(age, statePension) : 0;
     const housingYearly = housing.yearlySchedule[i]?.annualCostGbp ?? 0;
 
     const grossYearlyIncome: RetirementGrowthBand<number> = {
@@ -1139,28 +1198,37 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     });
   }
 
-  const averageStatePensionYearly = roundPence(totalStatePensionInRetirement / yearsInRetirement);
+  const addToBand = (band: RetirementGrowthBand<number>, amount: number) => ({
+    lower: roundPence(band.lower + amount),
+    middle: roundPence(band.middle + amount),
+    higher: roundPence(band.higher + amount),
+  });
 
-  const estimatedYearlyIncomeGbp: RetirementGrowthBand<number> = {
-    lower: roundPence(annualPotIncomeGbp.lower + averageStatePensionYearly),
-    middle: roundPence(annualPotIncomeGbp.middle + averageStatePensionYearly),
-    higher: roundPence(annualPotIncomeGbp.higher + averageStatePensionYearly),
-  };
+  const estimatedYearlyIncomeFromStatePensionAgeGbp = statePension
+    ? addToBand(annualPotIncomeGbp, statePension.annualAmountGbp)
+    : null;
+  const statePensionStartsLater =
+    statePension !== null &&
+    statePension.statePensionAge !== null &&
+    retirementAge < statePension.statePensionAge;
+  const estimatedYearlyIncomeBeforeStatePensionAgeGbp = statePensionStartsLater
+    ? addToBand(annualPotIncomeGbp, 0)
+    : null;
+  // The income in the first year of retirement, never an average across years.
+  const estimatedYearlyIncomeGbp =
+    estimatedYearlyIncomeBeforeStatePensionAgeGbp ??
+    estimatedYearlyIncomeFromStatePensionAgeGbp ??
+    addToBand(annualPotIncomeGbp, 0);
 
-  const estimatedYearlyIncomeFromStatePensionAgeGbp: RetirementGrowthBand<number> = {
-    lower: roundPence(annualPotIncomeGbp.lower + statePension.annualAmountGbp),
-    middle: roundPence(annualPotIncomeGbp.middle + statePension.annualAmountGbp),
-    higher: roundPence(annualPotIncomeGbp.higher + statePension.annualAmountGbp),
-  };
-
-  const differenceYearly: RetirementGrowthBand<number> | null =
-    targetYearlyIncome === null
-      ? null
-      : {
-          lower: roundPence(estimatedYearlyIncomeGbp.lower - targetYearlyIncome),
-          middle: roundPence(estimatedYearlyIncomeGbp.middle - targetYearlyIncome),
-          higher: roundPence(estimatedYearlyIncomeGbp.higher - targetYearlyIncome),
-        };
+  const differenceFrom = (band: RetirementGrowthBand<number> | null) =>
+    band === null || targetYearlyIncome === null ? null : addToBand(band, -targetYearlyIncome);
+  const differenceYearly = differenceFrom(estimatedYearlyIncomeGbp);
+  const differenceBeforeStatePensionAgeYearly = differenceFrom(
+    estimatedYearlyIncomeBeforeStatePensionAgeGbp,
+  );
+  const differenceFromStatePensionAgeYearly = differenceFrom(
+    estimatedYearlyIncomeFromStatePensionAgeGbp,
+  );
 
   return {
     currentAge,
@@ -1176,10 +1244,13 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     statePension,
     housing,
     estimatedYearlyIncomeGbp,
+    estimatedYearlyIncomeBeforeStatePensionAgeGbp,
     estimatedYearlyIncomeFromStatePensionAgeGbp,
     targetYearlyIncome,
     targetDetail,
     differenceYearly,
+    differenceBeforeStatePensionAgeYearly,
+    differenceFromStatePensionAgeYearly,
     yearlySchedule,
     summary: {
       estimatedMiddleYearlyGbp: estimatedYearlyIncomeGbp.middle,
@@ -1226,6 +1297,10 @@ export function selectRetirementCountedSeries(
     .map((a) => ({
       id: String(a.id),
       type: String(a.type ?? "Pension"),
+      // The name too, so the share resolves as it does for the balance (an ISA cannot be joint).
+      ...(a.name !== undefined ? { name: a.name } : {}),
+      ...(a.ownership !== undefined ? { ownership: a.ownership } : {}),
+      ...(a.sharePercent !== undefined ? { sharePercent: a.sharePercent } : {}),
     }));
 
   if (countedAccounts.length === 0) return [];

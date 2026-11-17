@@ -85,7 +85,10 @@ describe("simulate tools v2", () => {
 
   describe("simulate_retirement", () => {
     it("simulates three growth cases in today's prices against the user's target without advice", async () => {
-      h = await connectTestClient(homeowner);
+      h = await connectTestClient({
+        ...homeowner,
+        birthYear: new Date().getUTCFullYear() - 45,
+      });
       const e = await call("simulate_retirement", {
         retirementAge: 67,
         planToAge: 90,

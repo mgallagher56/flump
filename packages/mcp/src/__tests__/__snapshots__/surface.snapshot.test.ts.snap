@@ -2589,7 +2589,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Estimates yearly retirement income in today's prices from counted accounts, saved housing details, and State Pension against the user's own target. Never proposes a target. Includes the monthly counted-pots history series with carried-forward flags.",
+    "description": "Reads the user's saved retirement plan and estimates yearly retirement income in today's prices, before tax, from counted accounts, saved housing details and the State Pension details the user gave, beside the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never proposes a target or fills in an age: while the birth year, retirement age or plan-to age is missing, figures are null and missing lists what to ask. Inputs replace saved values for this answer only. Includes the monthly counted-pots history.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -2597,7 +2597,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
         "planToAge": {
-          "description": "Age to plan income to. Defaults to 90 when omitted and reported in assumptions.",
+          "description": "Plan-to age to use instead of the saved one, if the user stated it.",
           "maximum": 120,
           "minimum": 19,
           "type": "integer",
@@ -2612,7 +2612,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "string",
         },
         "retirementAge": {
-          "description": "Target retirement age. Defaults to 67 when omitted and reported in assumptions.",
+          "description": "Retirement age to use instead of the saved one, if the user stated it.",
           "maximum": 100,
           "minimum": 18,
           "type": "integer",
@@ -2744,22 +2744,75 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "inflationRate": {
                   "type": "number",
                 },
-                "realRentGrowthRate": {
-                  "type": "number",
-                },
               },
               "required": [
                 "growthRates",
                 "inflationRate",
-                "realRentGrowthRate",
               ],
               "type": "object",
             },
             "currentAge": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
             },
             "currentCountedPotGbp": {
               "type": "number",
+            },
+            "differenceBeforeStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "differenceFromStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
             },
             "differenceYearlyGbp": {
               "anyOf": [
@@ -2789,30 +2842,97 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               ],
             },
             "estimatedYearlyIncomeGbp": {
-              "additionalProperties": false,
-              "properties": {
-                "higher": {
-                  "type": "number",
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
                 },
-                "lower": {
-                  "type": "number",
+                {
+                  "type": "null",
                 },
-                "middle": {
-                  "type": "number",
-                },
-              },
-              "required": [
-                "lower",
-                "middle",
-                "higher",
               ],
-              "type": "object",
             },
             "housingAverageAnnualGbp": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
             },
             "housingKind": {
-              "type": "string",
+              "type": [
+                "string",
+                "null",
+              ],
+            },
+            "incomeBeforeStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "incomeFromStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
             },
             "monthlySeries": {
               "items": {
@@ -2851,36 +2971,58 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               "type": "array",
             },
             "planToAge": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
             },
             "projectedPotAtRetirementGbp": {
-              "additionalProperties": false,
-              "properties": {
-                "higher": {
-                  "type": "number",
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
                 },
-                "lower": {
-                  "type": "number",
+                {
+                  "type": "null",
                 },
-                "middle": {
-                  "type": "number",
-                },
-              },
-              "required": [
-                "lower",
-                "middle",
-                "higher",
               ],
-              "type": "object",
             },
             "retirementAge": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
             },
             "statePensionAge": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
             },
             "statePensionAnnualGbp": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "statePensionIncluded": {
+              "type": "boolean",
             },
             "targetYearlyIncomeGbp": {
               "type": [
@@ -2894,10 +3036,15 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "retirementAge",
             "planToAge",
             "currentCountedPotGbp",
-            "projectedPotAtRetirementGbp",
             "estimatedYearlyIncomeGbp",
+            "incomeBeforeStatePensionAgeGbp",
+            "incomeFromStatePensionAgeGbp",
+            "projectedPotAtRetirementGbp",
             "targetYearlyIncomeGbp",
             "differenceYearlyGbp",
+            "differenceBeforeStatePensionAgeGbp",
+            "differenceFromStatePensionAgeGbp",
+            "statePensionIncluded",
             "statePensionAnnualGbp",
             "statePensionAge",
             "housingKind",
@@ -3964,7 +4111,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Simulates estimated yearly retirement income in today's prices from counted accounts with optional overrides for retirement age, plan-to age, extra monthly contribution, growth rates, inflation, State Pension, and the user's own target. Saves nothing.",
+    "description": "Simulates estimated yearly retirement income in today's prices, before tax, starting from the user's saved retirement plan. Each input given replaces the saved value for this answer only: retirement age, plan-to age, extra monthly contribution, growth rates, inflation, State Pension details and the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never fills in an age or a State Pension amount: while details are missing, figures are null and missing lists what to ask. Saves nothing.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -3972,39 +4119,37 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
         "extraMonthlyContributionGbp": {
-          "default": 0,
           "description": "Extra monthly pension contribution in today's prices.",
           "maximum": 50000,
           "minimum": 0,
           "type": "number",
         },
         "higherGrowthPct": {
-          "description": "Higher nominal annual growth percentage (default 8).",
+          "description": "Higher nominal annual growth percentage.",
           "maximum": 30,
           "minimum": 0,
           "type": "number",
         },
         "inflationPct": {
-          "description": "Annual inflation percentage (default 2).",
+          "description": "Annual inflation percentage.",
           "maximum": 30,
           "minimum": 0,
           "type": "number",
         },
         "lowerGrowthPct": {
-          "description": "Lower nominal annual growth percentage (default 2).",
+          "description": "Lower nominal annual growth percentage.",
           "maximum": 30,
           "minimum": 0,
           "type": "number",
         },
         "middleGrowthPct": {
-          "description": "Middle nominal annual growth percentage (default 5).",
+          "description": "Middle nominal annual growth percentage.",
           "maximum": 30,
           "minimum": 0,
           "type": "number",
         },
         "planToAge": {
-          "default": 90,
-          "description": "Age to plan income to. Defaults to 90.",
+          "description": "Age to plan income to, instead of the saved one.",
           "maximum": 120,
           "minimum": 19,
           "type": "integer",
@@ -4019,12 +4164,13 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "string",
         },
         "retirementAge": {
-          "description": "Retirement age to simulate.",
+          "description": "Retirement age to simulate instead of the saved one.",
           "maximum": 100,
           "minimum": 18,
           "type": "integer",
         },
         "statePensionAge": {
+          "description": "The user's State Pension age, as they stated it.",
           "maximum": 85,
           "minimum": 50,
           "type": "integer",
@@ -4047,9 +4193,6 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "number",
         },
       },
-      "required": [
-        "retirementAge",
-      ],
       "type": "object",
     },
     "name": "simulate_retirement",
@@ -4144,8 +4287,101 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
         "result": {
           "additionalProperties": false,
           "properties": {
+            "assumptions": {
+              "additionalProperties": false,
+              "properties": {
+                "growthRates": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                "inflationRate": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "growthRates",
+                "inflationRate",
+              ],
+              "type": "object",
+            },
+            "currentAge": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
             "currentCountedPotGbp": {
               "type": "number",
+            },
+            "differenceBeforeStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "differenceFromStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
             },
             "differenceYearlyGbp": {
               "anyOf": [
@@ -4175,27 +4411,97 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               ],
             },
             "estimatedYearlyIncomeGbp": {
-              "additionalProperties": false,
-              "properties": {
-                "higher": {
-                  "type": "number",
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
                 },
-                "lower": {
-                  "type": "number",
+                {
+                  "type": "null",
                 },
-                "middle": {
-                  "type": "number",
-                },
-              },
-              "required": [
-                "lower",
-                "middle",
-                "higher",
               ],
-              "type": "object",
             },
             "housingAverageAnnualGbp": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "housingKind": {
+              "type": [
+                "string",
+                "null",
+              ],
+            },
+            "incomeBeforeStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "incomeFromStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
             },
             "notes": {
               "items": {
@@ -4204,33 +4510,58 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               "type": "array",
             },
             "planToAge": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
             },
             "projectedPotAtRetirementGbp": {
-              "additionalProperties": false,
-              "properties": {
-                "higher": {
-                  "type": "number",
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
                 },
-                "lower": {
-                  "type": "number",
+                {
+                  "type": "null",
                 },
-                "middle": {
-                  "type": "number",
-                },
-              },
-              "required": [
-                "lower",
-                "middle",
-                "higher",
               ],
-              "type": "object",
             },
             "retirementAge": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "statePensionAge": {
+              "type": [
+                "number",
+                "null",
+              ],
             },
             "statePensionAnnualGbp": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "statePensionIncluded": {
+              "type": "boolean",
             },
             "targetYearlyIncomeGbp": {
               "type": [
@@ -4240,15 +4571,24 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             },
           },
           "required": [
+            "currentAge",
             "retirementAge",
             "planToAge",
             "currentCountedPotGbp",
-            "projectedPotAtRetirementGbp",
             "estimatedYearlyIncomeGbp",
+            "incomeBeforeStatePensionAgeGbp",
+            "incomeFromStatePensionAgeGbp",
+            "projectedPotAtRetirementGbp",
             "targetYearlyIncomeGbp",
             "differenceYearlyGbp",
+            "differenceBeforeStatePensionAgeGbp",
+            "differenceFromStatePensionAgeGbp",
+            "statePensionIncluded",
             "statePensionAnnualGbp",
+            "statePensionAge",
+            "housingKind",
             "housingAverageAnnualGbp",
+            "assumptions",
             "notes",
           ],
           "type": "object",
@@ -5032,7 +5372,7 @@ exports[`per-tool output size (E17-N1) > calls every registered tool and pins th
   "list_tax_records": 1000,
   "project_net_worth": 2000,
   "simulate_debt_payoff": 1000,
-  "simulate_retirement": 1000,
+  "simulate_retirement": 2000,
   "stage_import": 1500,
 }
 `;
