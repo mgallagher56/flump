@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.38.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.37.0...flump/backend-v1.38.0) (2026-11-17)
+
+
+### Features ✨
+
+* **accounts,debt,tax:** account deletion, home estimate, non-ISA savings, S&S return tracking, BTL mortgages, credit limits & 0% periods ([e612fc5](https://github.com/mgallagher56/flump/commit/e612fc52dbf931a1a84f32d660c059552f3d8ffb))
+* **retirement:** one pension projection, friends-beta gate and MoneyHelper link ([4865d36](https://github.com/mgallagher56/flump/commit/4865d3631ebffb3e6fc098a6083e2ae28d419f99))
+
+
+### Bug Fixes 🪲
+
+* **accounts:** address independent review of the accounts rework ([8a7a2db](https://github.com/mgallagher56/flump/commit/8a7a2db7e30ef16eabbe2013184deaa9878601f6))
+* **accounts:** bound credit limits to the column and refuse year 0 dates ([6e05f3f](https://github.com/mgallagher56/flump/commit/6e05f3f2b33ccc9653f9b7cef8ab66385115bbf2))
+* **accounts:** rework accounts, debt and tax after review ([79a42ab](https://github.com/mgallagher56/flump/commit/79a42ab6af6496904dbbec1cab195f17d804aa54))
+* **accounts:** validate ISO dates without a regex on user input ([ada37f6](https://github.com/mgallagher56/flump/commit/ada37f62ca820a74bc40ffde53058328f23ecd00))
+* authz test for GET without a saved plan; shorter header label so the nav fits at 1024px ([24a66f7](https://github.com/mgallagher56/flump/commit/24a66f723b465451ea152e018f57733fa1653051))
+* **backend:** retirement GET/PUT, export decrypt, receipt key at boot, safe migration down() (A10, C15, C16, D17) ([d05af08](https://github.com/mgallagher56/flump/commit/d05af08dd277457f168bed563b95995830abd832))
+* **retirement:** address independent and UI reviews, browser check ([1fa1c8e](https://github.com/mgallagher56/flump/commit/1fa1c8e85338d394aaf4644a50a1d197f89dc984))
+
+
+### Tests 🧪
+
+* **retirement:** build the allow-list sample user ids at runtime instead of suppressing Semgrep ([5f7c96e](https://github.com/mgallagher56/flump/commit/5f7c96ecd5970babc74a1cce33c66d354f5348a3))
+* **retirement:** mark the allow-list test user ids for Semgrep ([dae6adf](https://github.com/mgallagher56/flump/commit/dae6adfbbf015c52340e9aefa16599056d93695e))
+
 ## [1.37.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.36.0...flump/backend-v1.37.0) (2026-11-16)
 
 
