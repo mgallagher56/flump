@@ -8,7 +8,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { filterKnownScopes, type McpScope, WRITE_STAGE_SCOPE } from "../auth/scopes.js";
 import { type McpLogger, stderrLogger } from "../logger.js";
 import { inMemoryQueries } from "../provider/in-memory.js";
-import { createFlumpMcpServer } from "../server.js";
+import { createFlumpMcpServer, RETIREMENT_TOOL_NAMES } from "../server.js";
 import type { McpUserDataProvider } from "../types.js";
 
 export const PAT_REJECTED_MESSAGE =
@@ -139,6 +139,10 @@ export async function runStdio(
     },
     dataProvider,
     logger,
+    // RD9: the retirement tools only when the API says this token's owner may use them. Absent
+    // (an older API) means not available. Fixed at start, like the scopes.
+    isToolAvailable: (name) =>
+      !RETIREMENT_TOOL_NAMES.has(name) || initial.retirementAvailable === true,
   });
   await connect(server);
 }

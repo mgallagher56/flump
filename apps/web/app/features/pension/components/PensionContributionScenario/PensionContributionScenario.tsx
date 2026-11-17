@@ -8,6 +8,10 @@ import {
 } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { Link } from "react-router";
+import {
+  CONTRIBUTION_EDITED_TEXT,
+  MAX_CONTRIBUTION_PERCENT,
+} from "~/features/pension/contribution";
 import type { ScenarioState } from "~/hooks/useScenarioState";
 import {
   computePensionTakeHomeEffect,
@@ -18,8 +22,7 @@ import { noSalaryLink, noSalaryNote } from "./PensionContributionScenario.styles
 
 export const PENSION_SCENARIO_ZONE_ID = "pension-scenario-zone";
 export const PENSION_ZONE_TITLE = "Model a change to your contribution";
-/** Highest contribution the what-if slider offers, as a percentage of salary. */
-export const MAX_CONTRIBUTION_PERCENT = 40;
+export { MAX_CONTRIBUTION_PERCENT };
 
 /** The zone's one what-if input, in memory only (`useScenarioState`), seeded from saved data. */
 export type PensionContributionScenarioValues = {
@@ -102,7 +105,9 @@ export const PensionContributionScenario: FC<PensionContributionScenarioProps> =
           <SliderField
             format="percent"
             fractionDigits={percentDigits(values.contributionPercent)}
-            helperText={scenario.isEdited("contributionPercent") ? "Edited. Not saved." : undefined}
+            helperText={
+              scenario.isEdited("contributionPercent") ? CONTRIBUTION_EDITED_TEXT : undefined
+            }
             label="Your contribution"
             max={Math.max(MAX_CONTRIBUTION_PERCENT, savedEmployeePercent)}
             min={0}

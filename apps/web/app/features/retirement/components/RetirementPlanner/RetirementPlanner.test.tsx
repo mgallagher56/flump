@@ -4,6 +4,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { MAX_CONTRIBUTION_PERCENT } from "~/features/pension/contribution";
 import { retirementPlanUnsavedFixture } from "~/test/fixtures/contractResponses";
 import { retirementArgsFromLoader } from "../../retirementInput";
 import { MONEYHELPER_PENSIONS_URL } from "../MoneyHelperGuidance";
@@ -71,6 +72,17 @@ const renderPlanner = (props: Partial<RetirementPlannerProps> = {}) =>
 const hero = () => screen.getByTestId("hero-figure");
 
 describe("RetirementPlanner", () => {
+  it("shows no housing cost as an exact £0, not an estimate, and the tracked month in words", () => {
+    renderPlanner({
+      accountDetails: [{ accountId: "pen", year: 2026, month: 10, value: 100_000 }],
+    });
+    const housingCard = screen.getByText("Housing in retirement").closest("div")?.parentElement;
+    expect(housingCard?.textContent).toMatch(/£0/);
+    expect(housingCard?.textContent).not.toMatch(/~£0/);
+    expect(screen.getByText(/October 2026: £100,000/)).toBeTruthy();
+    expect(screen.queryByText(/2026-10/)).toBeNull();
+  });
+
   it("shows the estimated income from the retirement age, rounded, with the target as the one subline figure", () => {
     const { container } = renderPlanner();
     // Pot £100,000 ÷ 20 years = £5,000 a year from 60.
@@ -259,6 +271,23 @@ describe("RetirementPlanner", () => {
       expect(screen.getByLabelText("Only pay that counts for your pension")).toBeTruthy();
       expect(screen.getByText(/£6,240 and £50,270 a year/)).toBeTruthy();
       expect(screen.queryByLabelText("Extra monthly contribution")).toBeNull();
+      expect(slider.max).toBe(String(MAX_CONTRIBUTION_PERCENT));
+      expect(MAX_CONTRIBUTION_PERCENT).toBe(40);
+    });
+
+    it("says an edited contribution is not saved", () => {
+      renderPlanner({ planArgs: workplaceArgs });
+      expect(screen.queryByText("Edited. Not saved.")).toBeNull();
+      fireEvent.change(screen.getByLabelText("Your contribution"), { target: { value: "8" } });
+      expect(screen.getByText("Edited. Not saved.")).toBeTruthy();
+    });
+
+    it("shows a lower estimate with a minus sign, not a hyphen", () => {
+      renderPlanner({ planArgs: workplaceArgs });
+      fireEvent.change(screen.getByLabelText("Your contribution"), { target: { value: "0" } });
+      const text = screen.getByTestId("retirement-scenario-outcome").textContent ?? "";
+      expect(text).toMatch(/Change from your saved plan: \u2212~£[\d,]+ a year\./);
+      expect(text).not.toContain("-~");
     });
 
     it("moving your contribution shows the change from the saved plan and never saves", () => {
@@ -294,9 +323,31 @@ describe("RetirementPlanner", () => {
         ),
       ).toBeTruthy();
       expect(screen.getByText(/adds the National Insurance it saves/)).toBeTruthy();
+      expect(screen.queryByText(/auto-enrolment minimums/)).toBeNull();
       expect(
         screen.getByRole("link", { name: "Change them on the Pension page" }).getAttribute("href"),
       ).toBe("/app/pension#pension-details");
+    });
+
+    it("says when the rates are the auto-enrolment minimums stored by default", async () => {
+      const user = userEvent.setup();
+      renderPlanner({
+        planArgs: {
+          ...workplaceArgs,
+          workplacePension: {
+            annualSalary: 40_000,
+            employeePercent: 5,
+            employerPercent: 3,
+            ratesAssumed: true,
+          },
+        },
+      });
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(
+        screen.getByText(
+          /Workplace pension: 5% from you and 3% from your employer, the auto-enrolment minimums, which are used until you set your own in your pension details\. They apply to your saved salary of £40,000\./,
+        ),
+      ).toBeTruthy();
     });
 
     it("shows a neutral annual allowance line when more than the allowance is paid in", () => {
@@ -310,7 +361,7 @@ describe("RetirementPlanner", () => {
           },
         },
       });
-      expect(screen.getByText("Above the annual allowance")).toBeTruthy();
+      expect(screen.queryByText("Above the annual allowance")).toBeNull();
       expect(
         screen.getByText(/In this illustration £70,000 a year is paid into pensions\./),
       ).toBeTruthy();
@@ -319,7 +370,7 @@ describe("RetirementPlanner", () => {
 
     it("has no allowance line at ordinary contributions", () => {
       renderPlanner({ planArgs: workplaceArgs });
-      expect(screen.queryByText("Above the annual allowance")).toBeNull();
+      expect(screen.queryByText(/The standard annual allowance/)).toBeNull();
     });
   });
 

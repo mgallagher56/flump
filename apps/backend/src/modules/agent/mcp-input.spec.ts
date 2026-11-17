@@ -327,6 +327,7 @@ describe("toMcpInputWire: joint shares and the saved retirement plan", () => {
       employerPercent: 3,
       isSalarySacrifice: true,
       passEmployerNi: false,
+      ratesAssumed: true,
     };
     for (const anonymise of [true, false]) {
       const wire = toMcpInputWire({ ...saved, workplacePension }, anonymise);

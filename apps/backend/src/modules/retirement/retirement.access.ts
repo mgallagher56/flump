@@ -25,10 +25,7 @@ export function isRetirementAllowed(
 }
 
 /** The MCP tools that read or simulate the retirement plan, hidden with the feature. */
-export const RETIREMENT_TOOL_NAMES: ReadonlySet<string> = new Set([
-  "get_retirement_picture",
-  "simulate_retirement",
-]);
+export { RETIREMENT_TOOL_NAMES } from "@flump/mcp";
 
 /**
  * Runs after AuthGuard (it needs the user). A refused caller gets the same NotFoundException Nest

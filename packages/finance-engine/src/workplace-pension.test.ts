@@ -73,6 +73,7 @@ describe("workplacePensionFromProfile", () => {
       employerPercent: 4,
       isSalarySacrifice: true,
       passEmployerNi: true,
+      ratesAssumed: false,
     });
     // The untouched creation defaults (5% and 3%) never make a stored `true` a choice.
     expect(
@@ -83,6 +84,30 @@ describe("workplacePensionFromProfile", () => {
         isSalarySacrifice: true,
         isSalarySacrificeEmployerNi: true,
       }),
-    ).toMatchObject({ isSalarySacrifice: false, passEmployerNi: false });
+    ).toMatchObject({ isSalarySacrifice: false, passEmployerNi: false, ratesAssumed: true });
+  });
+
+  it("is null for a self-employed or other employment type, kept for employed or unanswered", () => {
+    const saved = { annualSalary: 40_000, pensionPercent: 6, pensionEmployerPercent: 4 };
+    expect(workplacePensionFromProfile({ ...saved, employmentType: "self-employed" })).toBeNull();
+    expect(workplacePensionFromProfile({ ...saved, employmentType: "other" })).toBeNull();
+    expect(workplacePensionFromProfile({ ...saved, employmentType: "employed" })).not.toBeNull();
+    expect(workplacePensionFromProfile({ ...saved, employmentType: null })).not.toBeNull();
+    expect(workplacePensionFromProfile(saved)).not.toBeNull();
+  });
+
+  it("marks the rates as assumed only when they are the untouched 5% and 3% defaults", () => {
+    const at = (pensionPercent: number, pensionEmployerPercent: number) =>
+      workplacePensionFromProfile({ annualSalary: 40_000, pensionPercent, pensionEmployerPercent })
+        ?.ratesAssumed;
+    expect(at(5, 3)).toBe(true);
+    expect(at(5, 4)).toBe(false);
+    expect(at(6, 3)).toBe(false);
+  });
+
+  it("gives the same contributions whether or not the rates are assumed", () => {
+    expect(calculateWorkplacePensionContributions({ ...base, ratesAssumed: true })).toEqual(
+      calculateWorkplacePensionContributions(base),
+    );
   });
 });

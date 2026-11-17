@@ -279,6 +279,23 @@ describe("runStdio", () => {
     expect(textOf(retried)).toContain("4000");
   });
 
+  it("hides the retirement tools unless the API says retirement is available", async () => {
+    const names = async (body: unknown) => {
+      const { client } = await connectClient(body);
+      return (await client.listTools()).tools.map((tool) => tool.name);
+    };
+    const absent = await names(okInput);
+    expect(absent).toContain("list_accounts");
+    expect(absent).not.toContain("get_retirement_picture");
+    expect(absent).not.toContain("simulate_retirement");
+    const refused = await names({ ...okInput, retirementAvailable: false });
+    expect(refused).not.toContain("get_retirement_picture");
+    expect(refused).not.toContain("simulate_retirement");
+    const allowed = await names({ ...okInput, retirementAvailable: true });
+    expect(allowed).toContain("get_retirement_picture");
+    expect(allowed).toContain("simulate_retirement");
+  });
+
   it("applies the token's own scopes: a token without a read scope reads nothing", async () => {
     const { client } = await connectClient({
       ...okInput,
@@ -341,7 +358,11 @@ describe("runStdio", () => {
       },
       birthYear,
     };
-    const body = { token: { ...token, anonymizeInstitutions: false }, input: wireInput };
+    const body = {
+      token: { ...token, anonymizeInstitutions: false },
+      retirementAvailable: true,
+      input: wireInput,
+    };
     const parsed = McpInputResponse.parse(body);
     expect(parsed.input.accounts[1]).toMatchObject({ ownership: "joint", sharePercent: 50 });
 

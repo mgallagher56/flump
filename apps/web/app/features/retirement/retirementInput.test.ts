@@ -174,4 +174,19 @@ describe("retirement input parity: web page and MCP tools", () => {
     );
     expect(args.workplacePension).toBeNull();
   });
+
+  it("has no workplace pension for a saved self-employed or other employment type", () => {
+    for (const employmentType of ["self-employed", "other"] as const) {
+      const args = retirementArgsFromLoader(
+        {
+          userProfile: { birthYear: 1981, annualSalary: 50_000, pensionPercent: 6, employmentType },
+          accounts,
+          budgetEntries,
+          retirementPlan: plan,
+        },
+        NOW,
+      );
+      expect(args.workplacePension, employmentType).toBeNull();
+    }
+  });
 });
