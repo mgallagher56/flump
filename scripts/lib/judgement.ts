@@ -43,10 +43,6 @@ export const JUDGEMENT_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string 
       "the account deletion section marks a permanent delete and its errors (UX-GUIDELINES D1)",
   },
   {
-    path: "apps/web/app/features/debt/components/AddDebtDialog/",
-    reason: 'styles the destructive "Delete debt" action and inline save error',
-  },
-  {
     path: "packages/ui/src/patterns/ConfirmDialog/",
     reason: "confirms a permanent delete (UX-GUIDELINES D1)",
   },

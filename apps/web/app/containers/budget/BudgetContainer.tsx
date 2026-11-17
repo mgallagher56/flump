@@ -32,10 +32,7 @@ import { BudgetEditor } from "~/features/budget/components/BudgetEditor";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
 import { DuplicateDebtNotice } from "~/features/budget/components/DuplicateDebtNotice";
-import {
-  RunwayCalculator,
-  RunwayIncludePanel,
-} from "~/features/budget/components/RunwayCalculator";
+import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
 import {
   type DraftBudgetEntry,
   entryFromDraft,
@@ -55,7 +52,6 @@ import { CONFLICT_MESSAGE, isConflict, versionEtag } from "~/services/conflict";
 import { type BudgetEntry, getCategoryLabel, toMonthly } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage";
-import { breathingRoomGrid } from "./BudgetContainer.styles";
 
 /**
  * The page shows the budget, the budget with its entries editable in place (E16 round 3), or the
@@ -240,29 +236,6 @@ const BudgetContainer: FC = () => {
     };
     await updateProfile(update);
     setSavedHousing(update);
-
-    // Sync the saved housing cost into the Budget Housing line item.
-    const housingEntries = entries.filter((e) => e.category === "housing" && !e.isIncome);
-    const primaryHousing =
-      housingEntries.find((e) => /^(rent|mortgage|housing|board)$/i.test(e.name.trim())) ??
-      housingEntries[0];
-    if (primaryHousing) {
-      if (Math.round(toMonthly(primaryHousing)) !== Math.round(monthly)) {
-        await updateEntry(primaryHousing.id, { amount: monthly, frequency: "monthly" });
-      }
-    } else if (monthly > 0) {
-      await addEntry({
-        category: "housing",
-        name: housingStatus === "living_with_family" ? "Board" : "Rent",
-        amount: monthly,
-        frequency: "monthly",
-        isIncome: false,
-        isPrimaryIncome: false,
-        isEssential: true,
-        notes: null,
-        isDefault: false,
-      });
-    }
   };
 
   const isBudgetEmpty = useMemo(() => {
@@ -522,12 +495,18 @@ const BudgetContainer: FC = () => {
       <DataList
         items={entries
           .filter((e) => e.category === category && !e.isIncome)
-          .map((e) => ({
-            id: e.id,
-            label: e.name,
-            value: Math.abs(toMonthly(e)),
-            valueProps: { fractionDigits: 0, size: "sm" as const },
-          }))}
+          .map((e, _i, rows) =>
+            // One line per entry. A single entry is the row's own total, so it shows its name
+            // only: its figure would repeat the row's (P6).
+            rows.length > 1
+              ? {
+                  id: e.id,
+                  label: e.name,
+                  value: Math.abs(toMonthly(e)),
+                  valueProps: { fractionDigits: 0, size: "sm" as const },
+                }
+              : { id: e.id, label: e.name },
+          )}
         label={`${getCategoryLabel(category)} entries`}
         noun={{ one: "entry", other: "entries" }}
       />
@@ -598,9 +577,6 @@ const BudgetContainer: FC = () => {
                 onAddCategory={() => setIsAddCategoryOpen(true)}
                 onDelete={deleteEntry}
                 onDeleteCategory={handleDeleteCategory}
-                onFinishEditing={
-                  drafts.length === 0 || !isBudgetEmpty ? () => setView("budget") : undefined
-                }
                 onUpdate={updateEntry}
                 removableCategories={customCategories}
                 drafts={drafts}
@@ -644,24 +620,12 @@ const BudgetContainer: FC = () => {
               noticeFor={renderDuplicateNotices}
               openCategory={openCategory}
               renderEntries={renderEntries}
-              onEditBudget={() => setView("editing")}
               onToggleCategory={(cat) => setOpenCategory((prev) => (prev === cat ? null : cat))}
             />
           )}
 
-          {/* The saved figure beside the synced "Accounts and spending to include" panel. */}
-          {view === "budget" && !isBudgetEmpty && (
-            <div className={breathingRoomGrid()}>
-              <BreathingRoom figure={picture.monthsOfCover} />
-              <RunwayIncludePanel
-                accountDetails={normalizedAccountDetails}
-                accounts={accountsWithBalances}
-                entries={entries}
-                scenario={runwayScenario}
-                onScenarioChange={handleScenarioChange}
-              />
-            </div>
-          )}
+          {/* The saved figure, in a section of its own; the zone below only illustrates changes. */}
+          {view === "budget" && !isBudgetEmpty && <BreathingRoom figure={picture.monthsOfCover} />}
 
           {view === "budget" && !isBudgetEmpty && (
             <RunwayCalculator
@@ -670,7 +634,6 @@ const BudgetContainer: FC = () => {
               baseline={picture.monthsOfCover}
               collapsible
               entries={entries}
-              hideIncludePanel
               scenario={runwayScenario}
               onScenarioChange={handleScenarioChange}
             />

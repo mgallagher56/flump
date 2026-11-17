@@ -145,6 +145,25 @@ describe("BudgetEditor", () => {
     expect(screen.getByTestId("budget-editor-open-add-expenses")).toBeDefined();
   });
 
+  it("adds a new entry at the frequency picked in its add row", async () => {
+    const { onAdd } = setup();
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
+    fireEvent.change(screen.getByTestId("budget-editor-new-name-bills"), {
+      target: { value: "Car insurance" },
+    });
+    const frequency = screen.getByLabelText(
+      "How often for new entry in Bills",
+    ) as HTMLSelectElement;
+    expect(frequency.value).toBe("monthly");
+    fireEvent.change(frequency, { target: { value: "annual" } });
+    fireEvent.click(screen.getByTestId("budget-editor-add-bills"));
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith(
+        expect.objectContaining({ category: "bills", name: "Car insurance", frequency: "annual" }),
+      ),
+    );
+  });
+
   it("adds income as income, and other spending as essential", async () => {
     const { onAdd } = setup();
     fireEvent.click(screen.getByTestId("budget-editor-open-add-income"));
@@ -363,9 +382,9 @@ describe("BudgetEditor", () => {
       expect(group().textContent).toContain(
         "These common entries are not saved yet. Fill in the amounts that apply to you, then save. Entries left blank stay here until you remove them or leave the page.",
       );
-      // Income rows have no essential switch; savings and spending rows do (savings defaults off).
+      // Income and savings rows have no essential switch; spending rows do.
       expect(screen.queryByLabelText("Essential: Take-home pay")).toBeNull();
-      expect((screen.getByLabelText("Essential: Savings") as HTMLInputElement).checked).toBe(false);
+      expect(screen.queryByLabelText("Essential: Savings")).toBeNull();
       expect(screen.getByLabelText("Essential: Travel")).toBeDefined();
       expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).value).toBe("");
     });

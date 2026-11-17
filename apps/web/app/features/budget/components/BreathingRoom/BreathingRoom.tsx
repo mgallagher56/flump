@@ -2,7 +2,6 @@ import { type Figure, isFigureKnown, type MonthsOfCover } from "@flump/finance-e
 import { InfoTip, Money, PageSection, ResultBlock } from "@repo/ui";
 import { LifeBuoy } from "lucide-react";
 import type { FC } from "react";
-import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import {
   BREATHING_ROOM_DESCRIPTION,
   BREATHING_ROOM_DETAIL,
@@ -10,12 +9,7 @@ import {
   describeBreathingRoom,
   MONEY_TO_DRAW_ON_LABEL,
 } from "~/utils/breathingRoom";
-import {
-  breathingRoomFigure,
-  breathingRoomLink,
-  breathingRoomNote,
-  breathingRoomResult,
-} from "./BreathingRoom.styles";
+import { breathingRoomFigure, breathingRoomResult } from "./BreathingRoom.styles";
 
 export interface BreathingRoomProps {
   /** The engine's months of cover from the page's financial picture. Never worked out here. */
@@ -68,12 +62,6 @@ export const BreathingRoom: FC<BreathingRoomProps> = ({ figure }) => {
             : undefined
         }
       />
-      <p className={breathingRoomNote()}>
-        Based on your cash and savings divided by your essential monthly spending.{" "}
-        <SampleAwareLink className={breathingRoomLink()} to="/app/savings">
-          Review your savings
-        </SampleAwareLink>
-      </p>
     </PageSection>
   );
 };

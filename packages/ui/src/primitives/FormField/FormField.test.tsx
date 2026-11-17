@@ -25,6 +25,14 @@ describe("FormField", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("renders a label addon beside the label without changing the control's name", () => {
+    renderField({ labelAddon: <button type="button">About overpayments</button> });
+    expect(screen.getByLabelText("Monthly overpayment").tagName).toBe("INPUT");
+    const addon = screen.getByRole("button", { name: "About overpayments" });
+    expect(addon.closest("[data-field-label-row]")).not.toBeNull();
+    expect(addon.closest("label")).toBeNull();
+  });
+
   it("describes the control with the hint", () => {
     renderField({ hint: "Whole pounds, per month" });
     const input = screen.getByLabelText("Monthly overpayment");

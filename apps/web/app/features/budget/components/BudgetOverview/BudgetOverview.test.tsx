@@ -66,6 +66,13 @@ describe("<BudgetOverview />", () => {
     expect(screen.queryByText("Each month")).toBeNull();
   });
 
+  it("spells out how the hero is worked out, with no figures in the line", () => {
+    customRender(<BudgetOverview entries={entries} />);
+    const equation = screen.getByTestId("budget-equation");
+    expect(equation.textContent).toBe("Money in−Going out=Left over");
+    expect(equation.textContent).not.toMatch(/\d/);
+  });
+
   it("shows 4 figures: the hero, the monthly figure after essentials, money in and going out", () => {
     const picture = buildWorkspacePicture({
       userProfile: profile,
