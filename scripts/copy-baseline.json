@@ -1,6 +1,5 @@
 {
   "apps/web/app/features/pension/components/AddPensionAccountDialog/AddPensionAccountDialog.tsx": 1,
-  "apps/web/app/features/pension/components/ForecasterControls/ForecasterControls.tsx": 1,
   "apps/web/app/features/savings/components/AnnualAllowancePill/AnnualAllowancePill.tsx": 2,
   "apps/web/app/services/onboarding-seed.ts": 1,
   "packages/finance-engine/src/tax-rules.ts": 4,

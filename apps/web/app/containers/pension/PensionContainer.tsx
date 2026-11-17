@@ -6,7 +6,6 @@ import {
   PortfolioSnapshot,
   profileFactsFromProfile,
   salarySacrificeFromProfile,
-  UK_STATE_PENSION_AGE,
 } from "@flump/finance-engine";
 import { Button, EmptyState, Icon, Illustration, PageBody, PageHeader } from "@repo/ui";
 import { Plus } from "lucide-react";
@@ -14,23 +13,20 @@ import { type FC, useEffect, useMemo, useState } from "react";
 import { Link, useLoaderData, useLocation } from "react-router";
 import type { Account } from "~/containers/accounts/types";
 import { AddPensionAccountDialog } from "~/features/pension/components/AddPensionAccountDialog";
-import { ForecastAssumptions } from "~/features/pension/components/ForecastAssumptions";
-import { MAX_CONTRIBUTION_PERCENT } from "~/features/pension/components/ForecasterControls";
 import { PensionAccountsList } from "~/features/pension/components/PensionAccountsList";
+import {
+  MAX_CONTRIBUTION_PERCENT,
+  PENSION_SCENARIO_ZONE_ID,
+  PensionContributionScenario,
+} from "~/features/pension/components/PensionContributionScenario";
 import {
   PensionDetails,
   type PensionDetailsSaveValues,
 } from "~/features/pension/components/PensionDetails";
-import {
-  buildForecastInput,
-  PENSION_SCENARIO_ZONE_ID,
-  PensionForecast,
-  type PensionTool,
-} from "~/features/pension/components/PensionForecast";
+import { PensionRules } from "~/features/pension/components/PensionRules";
 import { PensionSummary } from "~/features/pension/components/PensionSummary";
-import { projectPension } from "~/features/pension/forecast";
-import { DEFAULT_HORIZON_YEARS, usePensionScenario } from "~/features/pension/usePensionScenario";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
 import { useFinancialBaseline } from "~/state/baseline.store";
@@ -41,21 +37,28 @@ import {
   REGION_SETTINGS_PATH,
   regionLinkStyle,
 } from "~/utils/taxTrapCopy";
-import { mutedNote, trapLine, trapText } from "./PensionContainer.styles";
+import {
+  mutedNote,
+  retirementLine,
+  retirementLink,
+  trapLine,
+  trapText,
+} from "./PensionContainer.styles";
 
-/** Growth the illustration starts from when no pot has a rate. Never shown as a saved figure. */
-const ASSUMED_GROWTH_RATE = 5;
+export const RETIREMENT_PATH = "/app/retirement";
 
 /**
- * The pension page (E16 PR 7): saved facts first (hero "Total in your pots", a strip of three,
- * "Your details" with the pots), then one ScenarioZone that ends the page, with the quiet
- * "Assumptions and UK rules" drawer in its footer. Headline figures read saved loader data only (ruling D2: no hero holds an estimate).
+ * The pension page (E16 PR 7, decision RD6): saved facts first (hero "Total in your pots", what
+ * goes in each month, "Your details" with the pots and the quiet "UK pension rules" drawer), then
+ * one ScenarioZone for the effect of a contribution change on take-home pay. Pension projections
+ * live on the Retirement page. Headline figures read saved loader data only (ruling D2).
  */
 export const PensionContainer: FC = () => {
   const loaderData = useLoaderData<typeof loader>();
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];
   const userProfile = loaderData?.userProfile;
+  const retirementAvailable = loaderData?.retirementAvailable === true;
 
   const { formatCurrency } = useFormatCurrency();
   const { profile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
@@ -68,7 +71,6 @@ export const PensionContainer: FC = () => {
   }, [userProfile, setProfile]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [tool, setTool] = useState<PensionTool>("retirement");
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   // Bumped by "Model this contribution" so the page scrolls to the scenario zone.
   const [scrollToZone, setScrollToZone] = useState(0);
@@ -108,31 +110,6 @@ export const PensionContainer: FC = () => {
     return pensionAccounts
       .filter((acc) => acc.isCurrent !== false)
       .reduce((sum, acc) => sum + (Number(acc.monthlyContribution) || 0), 0);
-  }, [pensionAccounts]);
-
-  // Portfolio balance-weighted average return rate over pots that actually have a rate.
-  // A stored 0% is a real rate; only an unset rate is excluded.
-  const { weightedReturnRate, growthRateIsPlaceholder } = useMemo(() => {
-    const rated = pensionAccounts.filter((acc) => acc.interestRate !== null);
-    if (rated.length === 0) {
-      return { weightedReturnRate: ASSUMED_GROWTH_RATE, growthRateIsPlaceholder: true };
-    }
-    const ratedTotal = rated.reduce((sum, acc) => sum + (acc.balance || 0), 0);
-    if (ratedTotal <= 0) {
-      const sumRates = rated.reduce((sum, acc) => sum + (acc.interestRate ?? 0), 0);
-      return {
-        weightedReturnRate: Number((sumRates / rated.length).toFixed(1)),
-        growthRateIsPlaceholder: false,
-      };
-    }
-    const weightedSum = rated.reduce(
-      (sum, acc) => sum + (acc.balance || 0) * (acc.interestRate ?? 0),
-      0,
-    );
-    return {
-      weightedReturnRate: Number((weightedSum / ratedTotal).toFixed(1)),
-      growthRateIsPlaceholder: false,
-    };
   }, [pensionAccounts]);
 
   const isReset = Boolean(profile.hasResetFinancialData ?? userProfile?.hasResetFinancialData);
@@ -207,48 +184,9 @@ export const PensionContainer: FC = () => {
     [savedFacts, ratesAssumed, methodSet, storedSalarySacrifice, profile, userProfile],
   );
 
-  // Saved age: the year of birth wins over a legacy stored age. Never assumed.
-  const birthYear = profile.birthYear ?? userProfile?.birthYear ?? null;
-  const legacyAge = profile.age ?? userProfile?.age ?? null;
-  const rawAge = birthYear ? new Date().getFullYear() - Number(birthYear) : legacyAge;
-  const currentAge =
-    rawAge !== null && rawAge !== undefined && rawAge > 0 && rawAge < 120 ? Number(rawAge) : null;
-  // The estimate runs to the State Pension age (a rule, not a choice the user made).
-  const retirementAge = currentAge !== null ? Math.max(UK_STATE_PENSION_AGE, currentAge + 1) : null;
-
-  // Scenario inputs live in memory only: no storage, no URL, no network. Seeded from saved data.
-  const scenario = usePensionScenario({
-    contributionPercent: employeePercent,
-    horizonYears:
-      retirementAge !== null && currentAge !== null
-        ? retirementAge - currentAge
-        : DEFAULT_HORIZON_YEARS,
-    growthRate: Number(weightedReturnRate.toFixed(1)),
-  });
-
-  const forecastBase = useMemo(
-    () => ({
-      salary: annualSalary,
-      employerPercent,
-      isSalarySacrifice,
-      passEmployerNi: isSalarySacrificeEmployerNi,
-      currentPotTotal: totalValue,
-      directMonthlyContrib,
-    }),
-    [
-      annualSalary,
-      employerPercent,
-      isSalarySacrifice,
-      isSalarySacrificeEmployerNi,
-      totalValue,
-      directMonthlyContrib,
-    ],
-  );
-  // The projection at the saved figures only: the estimate KPI and the zone's comparison.
-  const savedResult = useMemo(
-    () => projectPension(buildForecastInput(forecastBase, scenario.saved)),
-    [forecastBase, scenario.saved],
-  );
+  // Scenario input lives in memory only: no storage, no URL, no network. Seeded from saved data.
+  const scenarioSeed = useMemo(() => ({ contributionPercent: employeePercent }), [employeePercent]);
+  const scenario = useScenarioState(scenarioSeed);
 
   const hasPots = pensionAccounts.length > 0;
   const monthlyTotal = hasSalary
@@ -256,16 +194,6 @@ export const PensionContainer: FC = () => {
     : directMonthlyContrib > 0
       ? directMonthlyContrib
       : null;
-  // The estimate needs a saved age, a growth rate from a pot, and something to grow.
-  const estimateKnown =
-    currentAge !== null && hasPots && !growthRateIsPlaceholder && (hasSalary || totalValue > 0);
-  const estimateMissing =
-    currentAge === null
-      ? { label: "Add your year of birth", to: "/app/profile" }
-      : hasPots && growthRateIsPlaceholder
-        ? { label: "Add a growth rate to a pot", to: "#pension-pots" }
-        : undefined;
-
   // Mark setup checklist step as completed if accounts exist
   useEffect(() => {
     if (pensionAccounts.length > 0) {
@@ -329,7 +257,6 @@ export const PensionContainer: FC = () => {
     // Rounded up to the slider's half-percent step, so the illustration reaches £100,000.
     const percent = Math.min(MAX_CONTRIBUTION_PERCENT, Math.ceil(needed * 2) / 2);
     scenario.set("contributionPercent", percent);
-    setTool("retirement");
     setScrollToZone((n) => n + 1);
   };
 
@@ -352,7 +279,7 @@ export const PensionContainer: FC = () => {
         <PageHeader title="Your pension" />
         <EmptyState
           action={addPotButton("md")}
-          description="Add a pension pot to see its value and an estimate of your income at retirement."
+          description="Add a pension pot to see its value and what goes in each month."
           headingLevel="h2"
           illustration={<Illustration scene="empty-pension" />}
           title="No pension pots yet"
@@ -366,21 +293,31 @@ export const PensionContainer: FC = () => {
     <PageBody>
       <PageHeader
         actions={addPotButton("sm")}
-        subtitle="Your pots, what goes in each month and what it could pay at retirement."
+        subtitle="Your pots and what goes in each month."
         title="Your pension"
       />
 
       <PensionSummary
-        estimatedMonthlyIncome={estimateKnown ? savedResult.monthlyRetirementIncome : null}
-        estimateMissing={estimateMissing}
         includesPotPayments={hasSalary && directMonthlyContrib > 0}
         monthlyTotal={monthlyTotal}
         potsCount={pensionAccounts.length}
         ratesAssumed={ratesAssumed}
-        retirementAge={retirementAge}
         totalValue={totalValue}
         onAddPot={openAddPot}
       />
+
+      {retirementAvailable && (
+        <p
+          className={retirementLine}
+          data-testid="pension-retirement-link"
+          id="pension-retirement-link"
+        >
+          Your retirement plan shows what your pots could give you each year.{" "}
+          <Link className={retirementLink} to={RETIREMENT_PATH}>
+            Open your retirement plan
+          </Link>
+        </p>
+      )}
 
       <PensionDetails
         annualSalary={annualSalary}
@@ -399,32 +336,20 @@ export const PensionContainer: FC = () => {
         <PensionAccountsList accounts={pensionAccounts} />
       </PensionDetails>
 
-      <PensionForecast
-        {...forecastBase}
-        currentAge={currentAge}
+      <PensionRules
+        annualPaidIn={monthlyTotal === null ? null : monthlyTotal * 12}
+        isSalarySacrifice={isSalarySacrifice}
+        methodSet={methodSet}
+        passEmployerNi={isSalarySacrificeEmployerNi}
+      />
+
+      <PensionContributionScenario
         hasSalary={hasSalary}
+        salary={annualSalary}
         savedEmployeePercent={employeePercent}
-        savedResult={savedResult}
         scenario={scenario}
         showsOtherTaxFigure={showTrapNote}
         takeHomeFacts={takeHomeFacts}
-        tool={tool}
-        onToolChange={setTool}
-        assumptions={
-          <ForecastAssumptions
-            annualPaidIn={savedResult.totalAnnualInflow}
-            employerAndGrowth={
-              estimateKnown ? savedResult.totalEmployerContribs + savedResult.totalGrowth : null
-            }
-            growthRateIsPlaceholder={growthRateIsPlaceholder}
-            isSalarySacrifice={isSalarySacrifice}
-            methodSet={methodSet}
-            passEmployerNi={isSalarySacrificeEmployerNi}
-            placeholderGrowthRate={ASSUMED_GROWTH_RATE}
-            statePensionAnnual={savedResult.statePensionAnnual}
-            totalGrowth={estimateKnown ? savedResult.totalGrowth : null}
-          />
-        }
       />
 
       {/* Personal Allowance taper (E31, ruling 6): one factual line after the main content, and

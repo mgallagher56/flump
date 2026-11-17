@@ -43,6 +43,7 @@ import type {
   UkTaxCalculationResult,
 } from "./types.js";
 import { calculateUkTax as computeUkTax, getCurrentUKTaxYear } from "./uk-tax.js";
+import type { WorkplacePensionInput } from "./workplace-pension.js";
 
 export interface AnonymizationOptions {
   /** If true, bank and provider names ("Monzo", "Barclays", etc.) are mapped to generic labels */
@@ -78,6 +79,11 @@ export interface BuildContextPackInput {
    * tools only; never part of the context pack text.
    */
   retirementPlan?: RetirementSavedPlanInput | null;
+  /**
+   * The saved workplace pension (`workplacePensionFromProfile`), or null without a salary. Read by
+   * the MCP retirement tools only.
+   */
+  workplacePension?: WorkplacePensionInput | null;
   /** The saved birth year from the profile, or null. The baseline `age` has a default, so it is not used. */
   birthYear?: number | null;
 }

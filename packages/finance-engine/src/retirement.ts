@@ -10,6 +10,11 @@ import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { budgetRowMonthly, SAVINGS_CATEGORY } from "./picture/selectors/budget-totals.js";
 import { type SnapshotRow, selectNetWorthSeries } from "./snapshots.js";
 import { getUkStatePensionRules, resolveUkTaxYear, roundPence } from "./uk-tax-year.js";
+import {
+  calculateWorkplacePensionContributions,
+  type WorkplacePensionContributions,
+  type WorkplacePensionInput,
+} from "./workplace-pension.js";
 
 /**
  * Retirement plan model in today's prices (E33 Slices S0-S1).
@@ -134,6 +139,10 @@ export interface RealPotProjectionResult {
   endBalance: number;
   endBalanceRounded: number;
   realGrowth: number;
+  /** Balance at the end of each whole year (index 0 is the end of year 1), in today's prices. */
+  yearEndBalances: number[];
+  /** Contributions paid in by the end of each whole year (same indexing). */
+  yearEndContributions: number[];
 }
 
 /**
@@ -163,13 +172,23 @@ export function projectRealPotBalance(input: RealPotProjectionInput): RealPotPro
 
   let balance = initialBalance;
   let contributed = 0;
+  const yearEndBalances: number[] = [];
+  const yearEndContributions: number[] = [];
 
   if (monthlyContribution === 0 && Number.isInteger(years)) {
+    for (let y = 1; y <= years; y++) {
+      yearEndBalances.push(roundPence(initialBalance * (1 + realAnnualRate) ** y));
+      yearEndContributions.push(0);
+    }
     balance = initialBalance * (1 + realAnnualRate) ** years;
   } else {
     for (let m = 0; m < totalMonths; m++) {
       balance = balance * (1 + monthlyRealRate) + monthlyContribution;
       contributed += monthlyContribution;
+      if ((m + 1) % 12 === 0) {
+        yearEndBalances.push(roundPence(balance));
+        yearEndContributions.push(roundPence(contributed));
+      }
     }
   }
 
@@ -189,6 +208,8 @@ export function projectRealPotBalance(input: RealPotProjectionInput): RealPotPro
     endBalance,
     endBalanceRounded,
     realGrowth,
+    yearEndBalances,
+    yearEndContributions,
   };
 }
 
@@ -854,6 +875,11 @@ export interface RetirementPlanInput {
   additionalMonthlyPensionContributionGbp?: number;
   /** Extra monthly savings/investment contribution not already attached to an account row. */
   additionalMonthlySavingsContributionGbp?: number;
+  /**
+   * Workplace pension paid from salary (your and your employer's percentages), on top of any
+   * monthly amounts saved on pension accounts. Null or absent when no salary is saved.
+   */
+  workplacePension?: WorkplacePensionInput | null;
   target?: RetirementTargetInput | number | null;
   housing?: Omit<
     RetirementHousingInput,
@@ -875,6 +901,17 @@ export interface RetirementYearProjectionPoint {
   housingCostYearlyGbp: number;
   grossYearlyIncome: RetirementGrowthBand<number>;
   yearlyIncomeAfterHousing: RetirementGrowthBand<number>;
+}
+
+/** One year on the way to retirement, in today's prices. */
+export interface RetirementAccumulationPoint {
+  age: number;
+  /** Whole years from now (0 is today). */
+  yearIndex: number;
+  /** Total of the counted pots for each growth case. */
+  potGbp: RetirementGrowthBand<number>;
+  /** Today's counted balances plus everything paid in so far (the same in every case). */
+  paidInGbp: number;
 }
 
 export interface RetirementPlanResult {
@@ -937,6 +974,15 @@ export interface RetirementPlanResult {
   differenceFromStatePensionAgeYearly: RetirementGrowthBand<number> | null;
   /** Year-by-year retirement schedule from `retirementAge` to `planToAge - 1`. */
   yearlySchedule: RetirementYearProjectionPoint[];
+  /** Year-by-year counted pots from `currentAge` (index 0, today) to `retirementAge`. */
+  accumulation: RetirementAccumulationPoint[];
+  /** Workplace contributions taken from salary, or null when none are saved. */
+  workplacePension: WorkplacePensionContributions | null;
+  /**
+   * Paid into pensions each year: workplace contributions, monthly amounts on counted pension
+   * accounts and any extra pension contribution. For the annual allowance line.
+   */
+  pensionPaidInYearlyGbp: number;
   /** Neutral factual summary lines (R1 compliant: identical phrasing whether difference is positive or negative). */
   summary: {
     estimatedMiddleYearlyGbp: number;
@@ -1021,6 +1067,48 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
 
   const cases: readonly RetirementGrowthCase[] = ["lower", "middle", "higher"];
 
+  // Year-by-year path to retirement, summed from the same per-pot projections.
+  const pathPot: RetirementGrowthBand<number[]> = {
+    lower: new Array(yearsToRetirement + 1).fill(0),
+    middle: new Array(yearsToRetirement + 1).fill(0),
+    higher: new Array(yearsToRetirement + 1).fill(0),
+  };
+  const pathPaidIn: number[] = new Array(yearsToRetirement + 1).fill(0);
+  const addToPath = (
+    projected: RealPotProjectionResult,
+    forCases: readonly RetirementGrowthCase[],
+    countPaidIn: boolean,
+  ) => {
+    for (let y = 0; y <= yearsToRetirement; y++) {
+      const value = y === 0 ? projected.initialBalance : (projected.yearEndBalances[y - 1] ?? 0);
+      for (const c of forCases) pathPot[c][y] = (pathPot[c][y] ?? 0) + value;
+      if (countPaidIn) {
+        const paid =
+          projected.initialBalance + (y === 0 ? 0 : (projected.yearEndContributions[y - 1] ?? 0));
+        pathPaidIn[y] = (pathPaidIn[y] ?? 0) + paid;
+      }
+    }
+  };
+  /** Projects one pension or investment pot in each growth case and adds it to `target`. */
+  const projectGrowthCases = (
+    initialBalance: number,
+    monthlyContribution: number,
+    target: RetirementGrowthBand<number>,
+  ) => {
+    for (const c of cases) {
+      const projected = projectRealPotBalance({
+        initialBalance,
+        monthlyContribution,
+        nominalRate: assumptions.growthRates[c],
+        inflationRate: assumptions.inflationRate,
+        years: yearsToRetirement,
+      });
+      target[c] += projected.endBalance;
+      addToPath(projected, [c], c === "middle");
+    }
+  };
+  let pensionMonthlyFromAccounts = 0;
+
   for (const account of input.accounts) {
     if (!doesAccountCountTowardsRetirement(account)) continue;
     const balance = Math.max(0, Number(account.balanceGbp) || 0);
@@ -1028,6 +1116,7 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     currentCountedPotGbp += balance;
 
     const category = categorizeAccountType(account.type);
+    if (category === "pensions") pensionMonthlyFromAccounts += monthly;
     if (category === "savings" || category === "cash") {
       const savedNominalRate =
         assumptions.cashSavingsNominalRate !== null
@@ -1048,47 +1137,25 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
         projected.realAnnualRate,
         yearsInRetirement,
       );
-    } else if (category === "pensions") {
-      for (const c of cases) {
-        const projected = projectRealPotBalance({
-          initialBalance: balance,
-          monthlyContribution: monthly,
-          nominalRate: assumptions.growthRates[c],
-          inflationRate: assumptions.inflationRate,
-          years: yearsToRetirement,
-        });
-        pensionsAtRetirement[c] += projected.endBalance;
-      }
+      addToPath(projected, cases, true);
     } else {
-      for (const c of cases) {
-        const projected = projectRealPotBalance({
-          initialBalance: balance,
-          monthlyContribution: monthly,
-          nominalRate: assumptions.growthRates[c],
-          inflationRate: assumptions.inflationRate,
-          years: yearsToRetirement,
-        });
-        investmentsAtRetirement[c] += projected.endBalance;
-      }
+      const target = category === "pensions" ? pensionsAtRetirement : investmentsAtRetirement;
+      projectGrowthCases(balance, monthly, target);
     }
   }
 
-  const extraPensionMonthly = Math.max(
-    0,
-    Number(input.additionalMonthlyPensionContributionGbp) || 0,
-  );
+  const workplacePension = input.workplacePension
+    ? calculateWorkplacePensionContributions(input.workplacePension)
+    : null;
+  const extraPensionMonthly =
+    Math.max(0, Number(input.additionalMonthlyPensionContributionGbp) || 0) +
+    (workplacePension?.monthlyTotal ?? 0);
   if (extraPensionMonthly > 0) {
-    for (const c of cases) {
-      const projected = projectRealPotBalance({
-        initialBalance: 0,
-        monthlyContribution: extraPensionMonthly,
-        nominalRate: assumptions.growthRates[c],
-        inflationRate: assumptions.inflationRate,
-        years: yearsToRetirement,
-      });
-      pensionsAtRetirement[c] += projected.endBalance;
-    }
+    projectGrowthCases(0, extraPensionMonthly, pensionsAtRetirement);
   }
+  const pensionPaidInYearlyGbp = roundPence(
+    (pensionMonthlyFromAccounts + extraPensionMonthly) * 12,
+  );
 
   const extraSavingsMonthly = Math.max(
     0,
@@ -1109,7 +1176,19 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
       projected.realAnnualRate,
       yearsInRetirement,
     );
+    addToPath(projected, cases, true);
   }
+
+  const accumulation: RetirementAccumulationPoint[] = pathPaidIn.map((paid, y) => ({
+    age: currentAge + y,
+    yearIndex: y,
+    potGbp: {
+      lower: roundPence(pathPot.lower[y] ?? 0),
+      middle: roundPence(pathPot.middle[y] ?? 0),
+      higher: roundPence(pathPot.higher[y] ?? 0),
+    },
+    paidInGbp: roundPence(paid),
+  }));
 
   const projectedPotByGroupGbp = {
     pensions: {
@@ -1252,6 +1331,9 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     differenceBeforeStatePensionAgeYearly,
     differenceFromStatePensionAgeYearly,
     yearlySchedule,
+    accumulation,
+    workplacePension,
+    pensionPaidInYearlyGbp,
     summary: {
       estimatedMiddleYearlyGbp: estimatedYearlyIncomeGbp.middle,
       targetYearlyGbp: targetYearlyIncome,

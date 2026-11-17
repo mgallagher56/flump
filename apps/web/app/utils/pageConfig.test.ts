@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  ALL_DASHBOARD_WIDGET_KEYS,
   ALL_PAGE_KEYS,
+  APP_PAGES,
   DEFAULT_DASHBOARD_WIDGETS,
   DEFAULT_ENABLED_PAGES,
+  HIDDEN_PAGE_KEYS,
   isPageEnabled,
   OPT_IN_PAGE_KEYS,
   stripRetiredKeys,
@@ -37,5 +40,24 @@ describe("retired module keys", () => {
       accounts: "wide",
     });
     expect(stripRetiredRecordKeys(null)).toBeUndefined();
+  });
+});
+
+describe("hidden modules (RD9 friends beta)", () => {
+  it("never lists Retirement where a user can see or pick it", () => {
+    expect(HIDDEN_PAGE_KEYS).toEqual(["retirement"]);
+    for (const list of [
+      ALL_PAGE_KEYS,
+      ALL_DASHBOARD_WIDGET_KEYS,
+      DEFAULT_ENABLED_PAGES,
+      DEFAULT_DASHBOARD_WIDGETS,
+    ]) {
+      expect(list).not.toContain("retirement");
+    }
+    expect(isPageEnabled([], "retirement")).toBe(false);
+  });
+
+  it("keeps the key and its page config, so stored profiles still parse", () => {
+    expect(APP_PAGES.retirement.route).toBe("/app/retirement");
   });
 });

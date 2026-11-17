@@ -320,6 +320,26 @@ describe("toMcpInputWire: joint shares and the saved retirement plan", () => {
     }
   });
 
+  it("sends the saved workplace pension so the local tools count it too, or null without a salary", () => {
+    const workplacePension = {
+      annualSalary: 40_000,
+      employeePercent: 5,
+      employerPercent: 3,
+      isSalarySacrifice: true,
+      passEmployerNi: false,
+    };
+    for (const anonymise of [true, false]) {
+      const wire = toMcpInputWire({ ...saved, workplacePension }, anonymise);
+      expect(wire.workplacePension).toEqual(workplacePension);
+      const parsed = parse(wire);
+      expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+    }
+    const none = toMcpInputWire({ ...saved, workplacePension: null }, false);
+    expect(none.workplacePension).toBeNull();
+    expect(parse(none).success).toBe(true);
+    expect(toMcpInputWire(raw, false)).not.toHaveProperty("workplacePension");
+  });
+
   it("leaves them out, or sends a null plan, when nothing is saved", () => {
     const wire = toMcpInputWire({ ...raw, retirementPlan: null, birthYear: null }, false);
     expect(wire.accounts[0]).not.toHaveProperty("ownership");

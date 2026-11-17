@@ -45,6 +45,12 @@ export interface CreateMcpServerOptions {
   fingerprintArgs?: (args: unknown) => string | null;
   /** Where tool failures are logged (L6). Default: stderr, never stdout. */
   logger?: McpLogger;
+  /**
+   * Per-caller tool availability, decided by the host (for example a friends-beta feature). A
+   * tool it rejects is not registered, so it is missing from tools/list and the schema resource,
+   * and a call to it is answered as for any unknown tool. Absent: every tool is available.
+   */
+  isToolAvailable?: (toolName: string) => boolean;
 }
 
 /** Creates a Flump McpServer with its one resource, its tools and the two import prompts. */
@@ -70,12 +76,13 @@ export function createFlumpMcpServer(options: CreateMcpServerOptions): McpServer
   const scoped = withScopeEnforcement(withPrimitiveAudit(server, context), options.token.scopes);
 
   // Resource: the data dictionary, behind the scope facade.
-  registerSchemaResource(scoped);
+  registerSchemaResource(scoped, options.isToolAvailable);
   // Prompts (re-plan PR D), behind the scope facade like the resource.
   registerImportPrompts(scoped);
 
   // Defined tools do their own scope check, so they take the raw server, not `scoped`.
-  for (const tool of FLUMP_TOOLS) tool.register(server, getContext);
+  const available = options.isToolAvailable ?? (() => true);
+  for (const tool of FLUMP_TOOLS) if (available(tool.name)) tool.register(server, getContext);
 
   return server;
 }

@@ -70,6 +70,12 @@ export interface HttpTransportOptions extends TokenVerifierOptions {
    * `Logger`. Default: stderr.
    */
   logger?: McpLogger;
+  /**
+   * Per-request tool availability for the verified caller (for example a friends-beta feature).
+   * Rejected tools are not registered on that request's server, so the caller cannot tell they
+   * exist. Default: every tool.
+   */
+  isToolAvailable?: (toolName: string, verified: VerifiedToken) => boolean;
 }
 
 /** Normalises an origin for comparison: trimmed, lower-cased, no trailing slash. */
@@ -172,7 +178,7 @@ export class HttpMcpHandler {
 
   /** One server per request, carrying this request's caller into the audit sink. */
   private serverFor(verified: VerifiedToken, userAgent: unknown) {
-    const { audit, imports, fingerprintArgs } = this.options;
+    const { audit, imports, fingerprintArgs, isToolAvailable } = this.options;
     const caller: McpAuditCaller = {
       token: verified,
       ...(typeof userAgent === "string" ? { clientName: userAgent } : {}),
@@ -183,6 +189,9 @@ export class HttpMcpHandler {
       ...(imports ? { imports } : {}),
       ...(audit ? { audit: (event: McpAuditEvent) => audit(caller, event) } : {}),
       ...(fingerprintArgs ? { fingerprintArgs } : {}),
+      ...(isToolAvailable
+        ? { isToolAvailable: (toolName: string) => isToolAvailable(toolName, verified) }
+        : {}),
       logger: this.logger,
     });
   }

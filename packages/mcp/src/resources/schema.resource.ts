@@ -82,7 +82,25 @@ export const SCHEMA_DOCUMENT = {
   },
 } as const;
 
-export function registerSchemaResource(server: McpServer) {
+/**
+ * The dictionary as one caller sees it: tools the host hides from this caller are left out of
+ * `tools`, so the resource never names a tool that tools/list does not offer.
+ */
+export function schemaDocumentFor(isToolAvailable?: (toolName: string) => boolean) {
+  if (!isToolAvailable) return SCHEMA_DOCUMENT;
+  return {
+    ...SCHEMA_DOCUMENT,
+    tools: Object.fromEntries(
+      Object.entries(SCHEMA_DOCUMENT.tools).filter(([name]) => isToolAvailable(name)),
+    ),
+  };
+}
+
+export function registerSchemaResource(
+  server: McpServer,
+  isToolAvailable?: (toolName: string) => boolean,
+) {
+  const text = JSON.stringify(schemaDocumentFor(isToolAvailable));
   server.registerResource(
     "schema",
     SCHEMA_RESOURCE_URI,
@@ -93,9 +111,7 @@ export function registerSchemaResource(server: McpServer) {
       mimeType: "application/json",
     },
     async (uri) => ({
-      contents: [
-        { uri: uri.href, mimeType: "application/json", text: JSON.stringify(SCHEMA_DOCUMENT) },
-      ],
+      contents: [{ uri: uri.href, mimeType: "application/json", text }],
     }),
   );
 }

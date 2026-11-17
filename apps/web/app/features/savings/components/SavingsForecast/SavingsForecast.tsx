@@ -210,7 +210,7 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
           <Checkbox
             checked={values.todaysMoney}
             data-testid="forecast-todays-money"
-            hint={`Takes ${TODAYS_MONEY_INFLATION}% a year off the rate for inflation.`}
+            hint={`Allows for ${TODAYS_MONEY_INFLATION}% a year inflation, as the retirement plan does.`}
             id="forecast-todays-money"
             label="Show in today's money"
             onChange={(e) => onChange("todaysMoney", e.target.checked)}

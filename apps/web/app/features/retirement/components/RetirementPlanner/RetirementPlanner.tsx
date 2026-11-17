@@ -11,18 +11,23 @@ import {
   DEFAULT_RETIREMENT_GROWTH_CASES,
   DEFAULT_RETIREMENT_INFLATION_RATE,
   doesAccountCountTowardsRetirement,
+  getUkTaxYearRules,
   isHousingBudgetLine,
   type RetirementGrowthCase,
   type RetirementInputBuildResult,
   type RetirementInputOverrides,
   type RetirementPlanResult,
+  resolveUkTaxYear,
   selectRetirementCountedSeries,
   toSnapshotRows,
+  UK_QUALIFYING_EARNINGS_LOWER,
+  UK_QUALIFYING_EARNINGS_UPPER,
 } from "@flump/finance-engine";
 import {
   Button,
   Checkbox,
   CollapsibleDrawer,
+  formatMoney,
   HeroFigure,
   KpiCard,
   KpiStrip,
@@ -35,13 +40,17 @@ import {
   ScenarioZone,
   SimulatorSplitLayout,
   SliderField,
+  StatusBadge,
 } from "@repo/ui";
 import { Calendar, ClipboardList } from "lucide-react";
 import { type FC, type ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useScenarioState } from "~/hooks/useScenarioState";
-import { formatEstimate } from "~/utils/roundEstimate";
+import { formatEstimate, roundEstimate } from "~/utils/roundEstimate";
+import { MoneyHelperGuidance } from "../MoneyHelperGuidance";
+import { RetirementPotChart } from "../RetirementPotChart";
 import {
+  allowanceBadge,
   budgetLineAmount,
   budgetLineItem,
   budgetLineName,
@@ -72,6 +81,9 @@ export interface RetirementPlannerProps {
 
 export const PROFILE_PATH = "/app/profile";
 export const STATE_PENSION_AGE_CHECKER_URL = "https://www.gov.uk/state-pension-age";
+export const PENSION_DETAILS_PATH = "/app/pension#pension-details";
+/** Highest contribution the what-if slider offers, as a percentage of pay. */
+export const MAX_CONTRIBUTION_PERCENT = 30;
 
 const gbpFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -88,6 +100,18 @@ function formatWholeGbp(amount: number): string {
 }
 
 const pct = (rate: number) => `${pctFormatter.format(rate * 100)}%`;
+/** A percentage already in percent (6 means 6%). */
+const pctPoints = (points: number) => `${pctFormatter.format(points)}%`;
+
+/** A signed long-range change: "+~£1,200" or "-~£800", rounded to three significant figures. */
+function formatSignedEstimate(amount: number): string {
+  const rounded = roundEstimate(amount);
+  if (rounded === 0) return formatEstimate(0);
+  return `${rounded > 0 ? "+" : "-"}${formatEstimate(Math.abs(rounded))}`;
+}
+
+/** Whole percentages read "5%", others keep one decimal place: "5.5%". */
+const percentDigits = (value: number): number => (Number.isInteger(value) ? 0 : 1);
 
 const CASE_NAMES: Record<RetirementGrowthCase, string> = {
   lower: "Lower case",
@@ -170,14 +194,23 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
   const caseLabel = (c: RetirementGrowthCase) => `${CASE_NAMES[c]} (${pct(growthRates[c])})`;
 
   // ---- Scenario (what-if): never written to saved data ----
+  const workplace = planArgs.workplacePension ?? null;
+  const savedEmployeePercent = workplace?.employeePercent ?? 0;
   const scenarioSeed = useMemo(
     () => ({
       retirementAge: savedResult?.retirementAge ?? 0,
       planToAge: savedResult?.planToAge ?? 0,
       extraMonthly: 0,
+      employeePercent: savedEmployeePercent,
+      useQualifyingEarnings: workplace?.useQualifyingEarnings === true,
       growthCase: "middle" as RetirementGrowthCase,
     }),
-    [savedResult?.retirementAge, savedResult?.planToAge],
+    [
+      savedResult?.retirementAge,
+      savedResult?.planToAge,
+      savedEmployeePercent,
+      workplace?.useQualifyingEarnings,
+    ],
   );
   const scenario = useScenarioState(scenarioSeed);
   const selectedCase = scenario.values.growthCase as RetirementGrowthCase;
@@ -186,10 +219,16 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
     const overrides: RetirementInputOverrides = {
       retirementAge: scenario.values.retirementAge,
       planToAge: Math.max(scenario.values.retirementAge + 1, scenario.values.planToAge),
-      additionalMonthlyPensionContributionGbp: scenario.values.extraMonthly,
+      // With a saved salary the contribution is a percentage of pay; without one, a £ amount.
+      ...(workplace
+        ? {
+            employeePercent: scenario.values.employeePercent,
+            useQualifyingEarnings: scenario.values.useQualifyingEarnings,
+          }
+        : { additionalMonthlyPensionContributionGbp: scenario.values.extraMonthly }),
     };
     return compute({ ...planArgs, overrides });
-  }, [planArgs, savedResult, scenario.values]);
+  }, [planArgs, savedResult, scenario.values, workplace]);
   const scenarioResult = scenarioComputed?.plan ?? null;
 
   // ---- Saved plan details form ----
@@ -386,6 +425,39 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
     ? scenarioResult.estimatedYearlyIncomeFromStatePensionAgeGbp
     : null;
   const spaForRow = scenarioResult?.statePension?.statePensionAge ?? null;
+  // Against the saved plan in the same growth case, so only the moved inputs count; hidden while
+  // nothing but the case has changed.
+  const rawChange =
+    scenario.isModified && scenarioIncome !== null && savedResult
+      ? scenarioIncome - savedResult.estimatedYearlyIncomeGbp[selectedCase]
+      : null;
+  const changeFromSaved = rawChange !== null && Math.round(rawChange) !== 0 ? rawChange : null;
+  const annualAllowance = getUkTaxYearRules(resolveUkTaxYear()).pensionAnnualAllowance;
+  const paidInYearly = scenarioResult?.pensionPaidInYearlyGbp ?? 0;
+  const aboveAllowance = scenarioResult !== null && paidInYearly > annualAllowance;
+  const wholeMoney = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
+  const targetSentence =
+    scenarioDifference !== null && scenarioResult?.targetYearlyIncome != null
+      ? `Your target: ${formatWholeGbp(scenarioResult.targetYearlyIncome)} a year. Difference: ${formatEstimate(scenarioDifference)} a year.`
+      : "Add your own yearly target in your plan details to compare.";
+  const scenarioNote = (
+    <>
+      {targetSentence}
+      {changeFromSaved !== null
+        ? ` Change from your saved plan: ${formatSignedEstimate(changeFromSaved)} a year.`
+        : null}
+      {aboveAllowance ? (
+        <>
+          {" "}
+          <StatusBadge className={allowanceBadge()} size="sm" variant="neutral">
+            Above the annual allowance
+          </StatusBadge>{" "}
+          In this illustration {wholeMoney(paidInYearly)} a year is paid into pensions. The standard
+          annual allowance is {wholeMoney(annualAllowance)}.
+        </>
+      ) : null}
+    </>
+  );
 
   const currentAge = saved.built.currentAge ?? 0;
   const savedRetirementAge = savedResult?.retirementAge ?? currentAge;
@@ -440,15 +512,36 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                     onChange={(v) => scenario.set("planToAge", v)}
                     formatValue={(v) => `Age ${v}`}
                   />
-                  <SliderField
-                    label="Extra monthly contribution"
-                    value={scenario.values.extraMonthly}
-                    min={0}
-                    max={2000}
-                    step={50}
-                    onChange={(v) => scenario.set("extraMonthly", v)}
-                    formatValue={(v) => formatWholeGbp(v)}
-                  />
+                  {workplace ? (
+                    <div className={fieldGroup()}>
+                      <SliderField
+                        label="Your contribution"
+                        format="percent"
+                        fractionDigits={percentDigits(scenario.values.employeePercent)}
+                        value={scenario.values.employeePercent}
+                        min={0}
+                        max={Math.max(MAX_CONTRIBUTION_PERCENT, savedEmployeePercent)}
+                        step={0.5}
+                        onChange={(v) => scenario.set("employeePercent", v)}
+                      />
+                      <Checkbox
+                        label="Only pay that counts for your pension"
+                        hint={`Counts only pay between ${formatWholeGbp(UK_QUALIFYING_EARNINGS_LOWER)} and ${formatWholeGbp(UK_QUALIFYING_EARNINGS_UPPER)} a year.`}
+                        checked={scenario.values.useQualifyingEarnings}
+                        onChange={(e) => scenario.set("useQualifyingEarnings", e.target.checked)}
+                      />
+                    </div>
+                  ) : (
+                    <SliderField
+                      label="Extra monthly contribution"
+                      value={scenario.values.extraMonthly}
+                      min={0}
+                      max={2000}
+                      step={50}
+                      onChange={(v) => scenario.set("extraMonthly", v)}
+                      formatValue={(v) => formatWholeGbp(v)}
+                    />
+                  )}
                   <div className={fieldGroup()}>
                     <span className={fieldLabel()}>Growth case</span>
                     <div className={toggleRow()}>
@@ -471,14 +564,11 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
               content={
                 <div className={resultsStack()}>
                   <ResultBlock
+                    id="retirement-scenario-outcome"
                     label={`Estimated yearly income from age ${scenarioResult?.retirementAge ?? scenarioRetirementAge}`}
                     figure={scenarioIncome === null ? undefined : formatEstimate(scenarioIncome)}
                     emptyPrompt="The estimate cannot be worked out for these figures."
-                    note={
-                      scenarioDifference !== null && scenarioResult?.targetYearlyIncome != null
-                        ? `Your target: ${formatWholeGbp(scenarioResult.targetYearlyIncome)} a year. Difference: ${formatEstimate(scenarioDifference)} a year.`
-                        : "Add your own yearly target in your plan details to compare."
-                    }
+                    note={scenarioNote}
                     row={
                       scenarioFromSpa && spaForRow !== null
                         ? {
@@ -488,6 +578,14 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                         : undefined
                     }
                   />
+
+                  {/* Drawn from three years to retirement: fewer points make no useful chart. */}
+                  {scenarioResult && scenarioResult.accumulation.length >= 3 && (
+                    <RetirementPotChart
+                      points={scenarioResult.accumulation}
+                      growthCase={selectedCase}
+                    />
+                  )}
 
                   {latestCounted && (
                     <PageSection
@@ -522,6 +620,20 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                             ? `State Pension: ${formatWholeGbp(scenarioResult.statePension.annualAmountGbp)} a year from age ${scenarioResult.statePension.statePensionAge}, at ${scenarioResult.statePension.taxYear} rates.`
                             : "State Pension is not included yet. Add your State Pension age and a forecast or qualifying years to include it."}
                         </p>
+                        {workplace && (
+                          <p className={mutedNote()}>
+                            Workplace pension: {pctPoints(workplace.employeePercent)} from you and{" "}
+                            {pctPoints(workplace.employerPercent)} from your employer, of your saved
+                            salary of {formatWholeGbp(workplace.annualSalary)}, from your pension
+                            details.
+                            {workplace.isSalarySacrifice && workplace.passEmployerNi
+                              ? " Through salary sacrifice, your employer also adds the National Insurance it saves."
+                              : ""}{" "}
+                            <Link className={promptLink()} to={PENSION_DETAILS_PATH}>
+                              Change them on the Pension page
+                            </Link>
+                          </p>
+                        )}
                         <table className={scheduleTable()}>
                           <thead>
                             <tr>
@@ -582,6 +694,9 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
             />
           </ScenarioZone>
         )}
+
+        {/* Owner decision RD11: the same quiet line for every user, with or without a plan. */}
+        <MoneyHelperGuidance />
 
         <PageSection
           id="retirement-plan-details"

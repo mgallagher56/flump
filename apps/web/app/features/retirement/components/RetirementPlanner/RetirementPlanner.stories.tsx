@@ -105,3 +105,38 @@ export const MissingDetails: Story = {
     ).toBeInTheDocument();
   },
 };
+
+const workplaceArgs = {
+  ...baseArgs,
+  planArgs: {
+    ...planArgs,
+    workplacePension: {
+      annualSalary: 48_000,
+      employeePercent: 6,
+      employerPercent: 4,
+      isSalarySacrifice: true,
+      passEmployerNi: true,
+    },
+  },
+};
+
+export const WorkplacePension: Story = {
+  args: workplaceArgs,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByDisplayValue("6%")).toBeInTheDocument();
+    await expect(canvas.getByRole("figure", { name: "Pot each year" })).toBeInTheDocument();
+    await userEvent.click(canvas.getByLabelText("Only pay that counts for your pension"));
+    await expect(canvas.getByText(/Change from your saved plan/)).toBeInTheDocument();
+    await expect(
+      canvas.getByRole("link", { name: /Pension guidance from MoneyHelper/ }),
+    ).toBeInTheDocument();
+  },
+};
+
+export const WorkplacePensionDark: Story = {
+  args: workplaceArgs,
+  parameters: {
+    themes: { themeOverride: "dark" },
+  },
+};

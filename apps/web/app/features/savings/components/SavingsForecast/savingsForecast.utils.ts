@@ -1,7 +1,15 @@
-import { calculateMonthsToSavingsGoal, projectCompoundSavings } from "@flump/finance-engine";
+import {
+  calculateMonthsToSavingsGoal,
+  calculateRealRate,
+  DEFAULT_RETIREMENT_INFLATION_RATE,
+  projectCompoundSavings,
+} from "@flump/finance-engine";
 
-/** Inflation taken off the rate when the estimate is shown in today's money. */
-export const TODAYS_MONEY_INFLATION = 2.5;
+/**
+ * Inflation allowed for when the estimate is shown in today's money, in percent. The same figure
+ * and the same real-rate conversion as the retirement projection (E33 RD6).
+ */
+export const TODAYS_MONEY_INFLATION = DEFAULT_RETIREMENT_INFLATION_RATE * 100;
 
 /** Longest goal search, in months (50 years). */
 export const GOAL_SEARCH_MONTHS = 600;
@@ -14,7 +22,7 @@ export interface SavingsProjectionInput {
   /** AER, in percent. */
   rate: number;
   years: number;
-  /** Takes `TODAYS_MONEY_INFLATION` off the rate. */
+  /** Allows for `TODAYS_MONEY_INFLATION` with the real rate (Fisher relation). */
   todaysMoney: boolean;
 }
 
@@ -40,7 +48,9 @@ export interface SavingsProjection {
 const safe = (n: number): number => (Number.isFinite(n) && n > 0 ? n : 0);
 
 export const effectiveRateOf = (rate: number, todaysMoney: boolean): number =>
-  Math.max(0, safe(rate) - (todaysMoney ? TODAYS_MONEY_INFLATION : 0));
+  todaysMoney
+    ? Math.max(0, calculateRealRate(safe(rate) / 100, DEFAULT_RETIREMENT_INFLATION_RATE) * 100)
+    : safe(rate);
 
 /** Monthly compounding at the AER over whole years, with the monthly amount added each month. */
 export function projectSavings(input: SavingsProjectionInput): SavingsProjection {

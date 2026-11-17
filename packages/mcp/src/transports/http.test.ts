@@ -1,7 +1,7 @@
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { describe, expect, it, vi } from "vitest";
 import { FailedAuthLimiter } from "../auth/failed-auth-limiter.js";
-import { AuthenticationError, hashPatToken } from "../auth/token-verifier.js";
+import { AuthenticationError, hashPatToken, type VerifiedToken } from "../auth/token-verifier.js";
 import { createFakeImports, SEEDED_BATCH_ID } from "../testing/fake-imports.js";
 import type { McpUserDataProvider } from "../types.js";
 import { countToolCalls, HttpMcpHandler, MAX_BATCH_COUNTED, MAX_BODY_BYTES } from "./http.js";
@@ -756,5 +756,72 @@ describe("authenticateExpress (the checks every PAT route shares)", () => {
       ok: false,
       status: 429,
     });
+  });
+});
+
+describe("isToolAvailable per verified caller", () => {
+  const record = (userId: string) => ({
+    id: `tok-${userId}`,
+    userId,
+    tokenHash: hashPatToken(PAT),
+    scopes: ["mcp:read:full", "mcp:simulate"],
+    anonymizeInstitutions: true,
+    expiresAt: new Date(Date.now() + 86_400_000),
+    revokedAt: null,
+  });
+  const handlerFor = (
+    userId: string,
+    isToolAvailable?: (name: string, v: VerifiedToken) => boolean,
+  ) =>
+    new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      tokenStore: { findTokenByHash: async () => record(userId), recordRequest: async () => {} },
+      ...(isToolAvailable ? { isToolAvailable } : {}),
+    });
+  const post = (body: unknown) =>
+    new Request("http://localhost/mcp", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${PAT}`,
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify(body),
+    });
+  const initialize = {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "initialize",
+    params: {
+      protocolVersion: "2025-03-26",
+      capabilities: {},
+      clientInfo: { name: "t", version: "1" },
+    },
+  };
+  const listTools = async (handler: HttpMcpHandler) => {
+    await handler.handleWebRequest(post(initialize));
+    const res = await handler.handleWebRequest(
+      post({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} }),
+    );
+    return res.text();
+  };
+  const onlyFriends = (name: string, v: { userId: string }) =>
+    name !== "simulate_retirement" || v.userId === "friend";
+
+  it("lists every tool when the option is absent", async () => {
+    expect(await listTools(handlerFor("stranger"))).toContain('"simulate_retirement"');
+  });
+
+  it("asks per tool with the verified caller, and leaves rejected tools out", async () => {
+    const seen: string[] = [];
+    const handler = handlerFor("stranger", (name, v) => {
+      seen.push(v.userId);
+      return onlyFriends(name, v);
+    });
+    const text = await listTools(handler);
+    expect(text).toContain('"list_accounts"');
+    expect(text).not.toContain("simulate_retirement");
+    expect(new Set(seen)).toEqual(new Set(["stranger"]));
+    expect(await listTools(handlerFor("friend", onlyFriends))).toContain('"simulate_retirement"');
   });
 });

@@ -7,6 +7,7 @@ import {
   profileFactsFromProfile,
   type RawAccount,
   userProfileToFinancialBaseline,
+  workplacePensionFromProfile,
 } from "@flump/finance-engine";
 import {
   type AccountCoverage,
@@ -36,6 +37,7 @@ import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { FinanceService } from "../finance/finance.service";
 import { type ProfileView, UserProfileService } from "../profile/user-profile.service";
+import { isRetirementAllowed } from "../retirement/retirement.access";
 import { savedPlanInputFromRow } from "../retirement/retirement.service";
 
 /** The saved birth year as a whole positive number, or null when none is saved. */
@@ -347,8 +349,12 @@ export class AgentDataService implements McpUserDataProvider {
       order: { date: "DESC" },
     });
 
-    // Read only: no row means no saved plan (null), never a created default (E33).
-    const planRow = await this.retirementPlanRepository.findOne({ where: { userId } });
+    // Read only: no row means no saved plan (null), never a created default (E33). RD9: outside
+    // the friends beta the plan is not read and the key is left out.
+    const retirementAllowed = isRetirementAllowed(process.env, userId);
+    const planRow = retirementAllowed
+      ? await this.retirementPlanRepository.findOne({ where: { userId } })
+      : null;
 
     return {
       baseline,
@@ -374,8 +380,13 @@ export class AgentDataService implements McpUserDataProvider {
       })),
       // For the MCP retirement tools only. Figures, ages and account ids, no free text, so the
       // anonymiser keeps them as it keeps the baseline age (which is derived from the same year).
-      retirementPlan: planRow ? savedPlanInputFromRow(planRow) : null,
+      ...(retirementAllowed
+        ? { retirementPlan: planRow ? savedPlanInputFromRow(planRow) : null }
+        : {}),
       birthYear: birthYearOf(profile.birthYear),
+      // The saved salary and pension rates, for the MCP retirement tools (E33 RD6): the same
+      // workplace contributions the web Retirement page counts.
+      workplacePension: workplacePensionFromProfile(profile),
     };
   }
 

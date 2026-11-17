@@ -397,3 +397,19 @@ The Semgrep image is pinned by digest, but the rule packs (`p/owasp-top-ten`, `p
 
 - [ ] The first scheduled `🏋️ Load smoke` run is green, and its summary shows p95 figures near the baseline in `scripts/load/budget.json`. Date: ____
 - [ ] After the next deploy, the web app loads and signs in as before (the web image now holds the build output only). Date: ____
+
+## RD9: Retirement friends beta (optional)
+
+Retirement (the page, its API and the two MCP retirement tools) is open to everyone while `BETA_OPEN=true`. Otherwise only the accounts you list can see it. Everyone else gets a plain "not found" answer, with nothing that says the feature exists.
+
+### 1. Backend service variable (Railway), only when `BETA_OPEN` is not `true`
+
+| Variable | Value |
+|---|---|
+| `RETIREMENT_ALLOWED_USER_IDS` | Optional. WorkOS user ids, comma separated, for example `user_01ABC,user_01DEF`. Unset means nobody outside open testing |
+
+- [ ] Set `RETIREMENT_ALLOWED_USER_IDS` for your friends-beta accounts, or leave it unset while `BETA_OPEN=true`. Date: ____
+
+### How to know it worked
+
+- [ ] Signed in as a listed account, `/app/retirement` loads. Signed in as an unlisted account (with `BETA_OPEN` not `true`), it shows the normal "We cannot find that page". Date: ____

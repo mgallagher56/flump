@@ -129,9 +129,8 @@ const restore = () => {
 
 const openDetails = () =>
   fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
-const zone = () => screen.getByRole("region", { name: "Model a change to your pension" });
-const slider = (label: string) =>
-  within(screen.getByRole("tabpanel")).getByLabelText(label) as HTMLInputElement;
+const zone = () => screen.getByRole("region", { name: "Model a change to your contribution" });
+const slider = (label: string) => within(zone()).getByLabelText(label) as HTMLInputElement;
 const savedText = () =>
   [
     document.querySelector("[data-tone='hero']")?.textContent,
@@ -155,17 +154,18 @@ describe("PensionContainer", () => {
       expect(screen.queryByRole("button", { name: /^\d+%$/ })).toBeNull();
     });
 
-    it("filled: the first view is the hero plus a strip of three, the estimate first", () => {
+    it("filled: the first view is the hero plus what goes in each month, with no projection", () => {
       useFixture(FILLED);
       const { container } = render(<PensionContainer />);
       const headings = screen.getAllByRole("heading").map((h) => h.tagName);
       expect(headings[0]).toBe("H1");
       const strip = container.querySelector("[data-density='compact']") as HTMLElement;
       const cards = Array.from(strip.children).map((c) => c.textContent ?? "");
-      expect(cards).toHaveLength(3);
-      expect(cards[0]).toMatch(/^Income at retirement ?Estimate£[\d,]+A month, in today's money$/);
-      expect(cards[1]).toBe("Going in each month£532You and your employer");
-      expect(cards[2]).toMatch(/^Retirement age ?67Assumed: your State Pension age$/);
+      expect(cards).toEqual(["Going in each month£532You and your employer"]);
+      // Projections moved to the Retirement page (decision RD6).
+      expect(container.textContent).not.toMatch(
+        /Income at retirement|Retirement age|Estimated pot|in today's money|4% of the pot/,
+      );
       const firstView = document.createElement("div");
       firstView.append(
         (container.querySelector("[data-tone='hero']") as HTMLElement).cloneNode(true),
@@ -210,6 +210,41 @@ describe("PensionContainer", () => {
       expect(screen.queryByRole("region", { name: /Model a change/ })).toBeNull();
       expect(container.querySelector("[data-density='compact']")).toBeNull();
     });
+  });
+
+  describe("the link to the retirement plan", () => {
+    it("shows one plain link when the Retirement page is available", () => {
+      useFixture({ ...FILLED, retirementAvailable: true });
+      render(<PensionContainer />);
+      const line = screen.getByTestId("pension-retirement-link");
+      expect(line.textContent).toBe(
+        "Your retirement plan shows what your pots could give you each year. Open your retirement plan",
+      );
+      const link = within(line).getByRole("link", { name: "Open your retirement plan" });
+      expect(link.getAttribute("href")).toBe("/app/retirement");
+      expect(within(line).queryByRole("button")).toBeNull();
+    });
+
+    it("is hidden when the Retirement page is not available", () => {
+      useFixture({ ...FILLED, retirementAvailable: false });
+      const { unmount } = render(<PensionContainer />);
+      expect(screen.queryByTestId("pension-retirement-link")).toBeNull();
+      unmount();
+      useFixture(FILLED);
+      render(<PensionContainer />);
+      expect(screen.queryByRole("link", { name: "Open your retirement plan" })).toBeNull();
+    });
+  });
+
+  it("keeps the UK pension rules as saved facts in one quiet drawer", () => {
+    useFixture(FILLED);
+    render(<PensionContainer />);
+    expect(screen.queryByRole("button", { name: "Assumptions and UK rules" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "UK pension rules" }));
+    const rules = screen.getByTestId("pension-rules");
+    // 11% of £58,000 at the saved figures.
+    expect(rules.textContent).toContain("At your saved figures, £6,380 a year is paid in.");
+    expect(rules.textContent).not.toMatch(/growth|inflation|4%/i);
   });
 
   it("scrolls to the details section and focuses its heading for the #pension-details deep link", async () => {
@@ -311,32 +346,6 @@ describe("PensionContainer", () => {
     expect(rows[1]?.textContent).toContain("Past pot");
   });
 
-  it("without a saved age the estimate and retirement age give one prompt, never a guess", () => {
-    render(<PensionContainer />);
-    expect(screen.getByText(/Add your year of birth and salary/)).toBeDefined();
-    expect(screen.queryByText("Retirement age")).toBeNull();
-    // The zone falls back to years until retirement for the illustration only.
-    expect(slider("Years until you retire")).toBeDefined();
-  });
-
-  it("a pot with no growth rate leaves the estimate Not set; a 0% rate is kept", () => {
-    useFixture({
-      ...FILLED,
-      accounts: [{ id: "p", name: "Pot", type: "Pension", balance: 1000, interestRate: null }],
-    });
-    const { unmount } = render(<PensionContainer />);
-    expect(screen.getByRole("link", { name: "Add a growth rate to a pot" })).toBeDefined();
-    fireEvent.click(screen.getByRole("button", { name: "Assumptions and UK rules" }));
-    expect(screen.getByText(/No growth rate is set on your pots/)).toBeDefined();
-    unmount();
-    useFixture({
-      ...FILLED,
-      accounts: [{ id: "p", name: "Pot", type: "Pension", balance: 1000, interestRate: 0 }],
-    });
-    render(<PensionContainer />);
-    expect(screen.queryByRole("link", { name: "Add a growth rate to a pot" })).toBeNull();
-  });
-
   it("keeps a saved 0% contribution rate as 0%", () => {
     useFixture({
       ...FILLED,
@@ -350,13 +359,13 @@ describe("PensionContainer", () => {
     );
   });
 
-  it("with pots but no salary, the zone asks for the salary instead of projecting", () => {
+  it("with pots but no salary, the zone asks for the salary instead of showing a figure", () => {
     useFixture({
       ...FILLED,
       userProfile: { ...FILLED.userProfile, annualSalary: null },
     });
     const { container } = render(<PensionContainer />);
-    expect(screen.getByText(/to see a pension estimate/)).toBeDefined();
+    expect(screen.getByText(/to see the effect of a change on your take-home pay/)).toBeDefined();
     expect(container.querySelector("input[type='range']")).toBeNull();
   });
 
@@ -435,18 +444,13 @@ describe("PensionContainer", () => {
       mockUpdateProfile.mockClear();
       mockSubmit.mockClear();
       render(<PensionContainer />);
-      fireEvent.mouseDown(screen.getByRole("tab", { name: "Take-home pay" }), {
-        button: 0,
-      });
       const scrolled: (string | undefined)[] = [];
       Element.prototype.scrollIntoView = function (this: Element) {
         scrolled.push(this.id);
       };
       fireEvent.click(screen.getByRole("button", { name: "Model this contribution" }));
       expect(scrolled).toContain("pension-scenario-zone");
-      expect(screen.getByRole("tab", { name: "At retirement" }).getAttribute("aria-selected")).toBe(
-        "true",
-      );
+      expect(screen.queryByRole("tab")).toBeNull();
       expect(Number(slider("Your contribution").value)).toBeGreaterThan(5);
       expect(mockUpdateProfile).not.toHaveBeenCalled();
       expect(mockSubmit).not.toHaveBeenCalled();
@@ -505,15 +509,6 @@ describe("PensionContainer", () => {
       render(<PensionContainer />);
       const before = savedText();
       fireEvent.change(slider("Your contribution"), { target: { value: "12" } });
-      fireEvent.change(slider("Retirement age"), { target: { value: "60" } });
-      fireEvent.change(slider("Growth a year"), { target: { value: "9" } });
-      fireEvent.click(screen.getByRole("button", { name: "Inflation and State Pension options" }));
-      fireEvent.click(screen.getByLabelText(/Only pay that counts/));
-      fireEvent.click(screen.getByLabelText(/today's money/));
-      fireEvent.click(screen.getByLabelText(/full new State Pension/));
-      fireEvent.mouseDown(screen.getByRole("tab", { name: "Take-home pay" }), {
-        button: 0,
-      });
       expect(savedText()).toBe(before);
       expect(
         (screen.getByRole("button", { name: "Reset to saved figures" }) as HTMLButtonElement)
@@ -525,31 +520,15 @@ describe("PensionContainer", () => {
       vi.unstubAllGlobals();
     });
 
-    it("Reset to saved figures returns every input to the saved value", () => {
+    it("is one take-home tool with one input, seeded from the saved contribution, and resets", () => {
       render(<PensionContainer />);
-      const labels = ["Your contribution", "Retirement age", "Growth a year"];
-      const before = labels.map((l) => slider(l).value);
-      expect(before).toEqual(["8", "67", "5"]);
+      expect(screen.queryByRole("tab")).toBeNull();
+      expect(within(zone()).getAllByRole("slider")).toHaveLength(1);
+      expect(slider("Your contribution").value).toBe("8");
       fireEvent.change(slider("Your contribution"), { target: { value: "12" } });
-      fireEvent.change(slider("Retirement age"), { target: { value: "60" } });
-      fireEvent.change(slider("Growth a year"), { target: { value: "9" } });
+      expect(within(zone()).getByText("Change in take-home pay")).toBeDefined();
       fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
-      expect(labels.map((l) => slider(l).value)).toEqual(before);
-      // At the saved figures the change line is hidden, not "No change".
-      expect(screen.queryByText("Change in monthly income")).toBeNull();
-    });
-
-    it("keeps the scenario when switching tools and back", () => {
-      render(<PensionContainer />);
-      fireEvent.change(slider("Your contribution"), { target: { value: "10" } });
-      fireEvent.mouseDown(screen.getByRole("tab", { name: "Take-home pay" }), {
-        button: 0,
-      });
-      expect(slider("Your contribution").value).toBe("10");
-      fireEvent.mouseDown(screen.getByRole("tab", { name: "At retirement" }), {
-        button: 0,
-      });
-      expect(slider("Your contribution").value).toBe("10");
+      expect(slider("Your contribution").value).toBe("8");
     });
 
     it("puts the saved details before the scenario zone, and the zone holds no hero", () => {

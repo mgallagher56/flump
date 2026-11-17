@@ -13,10 +13,15 @@ const workplacePot = {
   isCurrent: true,
 };
 
-const loaderData = (acc: unknown[], userProfile: Record<string, unknown>) => ({
+const loaderData = (
+  acc: unknown[],
+  userProfile: Record<string, unknown>,
+  retirementAvailable = false,
+) => ({
   accounts: acc,
   accountDetails: [],
   userProfile: { setupChecklistCompletedSteps: ["pension"], ...userProfile },
+  retirementAvailable,
 });
 
 /** The onboarded user from the E16 audit: £58,000, 8% and 3%, one £96,000 pot. */
@@ -67,9 +72,18 @@ export const Empty: Story = {
   },
 };
 
-export const AgeNotSaved: Story = {
+export const NoSalary: Story = {
   parameters: {
-    router: { loaderData: loaderData([workplacePot], { ...onboarded, birthYear: null }) },
+    router: { loaderData: loaderData([workplacePot], { ...onboarded, annualSalary: null }) },
+  },
+};
+
+export const WithRetirementPlan: Story = {
+  parameters: { router: { loaderData: loaderData([workplacePot], onboarded, true) } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const links = await canvas.findAllByRole("link", { name: "Open your retirement plan" });
+    await expect(links[0]?.getAttribute("href")).toBe("/app/retirement");
   },
 };
 
@@ -95,7 +109,7 @@ export const ScenarioZone: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const zone = (
-      await canvas.findAllByRole("region", { name: "Model a change to your pension" })
+      await canvas.findAllByRole("region", { name: "Model a change to your contribution" })
     )[0] as HTMLElement;
     await expect(within(zone).getByText("Illustration, not saved")).toBeDefined();
     const heroBefore = canvasElement.querySelector("[data-tone='hero']")?.textContent;

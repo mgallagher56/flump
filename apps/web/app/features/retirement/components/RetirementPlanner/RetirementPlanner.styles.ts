@@ -181,3 +181,6 @@ export const mutedNote = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
+
+/** Keeps the neutral allowance badge on the note's line, beside its sentence. */
+export const allowanceBadge = cva({ base: { verticalAlign: "middle" } });

@@ -20,3 +20,17 @@ export const mutedNote = css({
   textStyle: "body.sm",
   color: "text.secondary",
 });
+
+/** One plain sentence pointing to the Retirement page: not a banner or a button. */
+export const retirementLine = css({
+  margin: 0,
+  textStyle: "body.md",
+  color: "text.secondary",
+  maxWidth: "70ch",
+});
+
+export const retirementLink = css({
+  color: "primary",
+  fontWeight: "medium",
+  textDecoration: "underline",
+});

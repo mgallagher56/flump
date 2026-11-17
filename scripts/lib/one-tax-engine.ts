@@ -58,11 +58,6 @@ export const ALLOWED_READERS: Readonly<Record<string, { max: number; reason: str
     reason:
       "Labels whether other income reaches the higher rate. The tax comes from the rule functions.",
   },
-  "apps/web/app/features/pension/forecast.ts": {
-    max: 1,
-    reason:
-      "50,270 here is the upper limit of qualifying earnings for workplace pension contributions, a pension rule, not an Income Tax band.",
-  },
   "packages/finance-engine/src/uk-take-home.ts": {
     max: 1,
     reason: "Relief at source gross-up at the basic rate.",

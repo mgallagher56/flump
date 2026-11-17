@@ -9,9 +9,7 @@ const meta: Meta<typeof PensionSummary> = {
   args: {
     totalValue: 96000,
     potsCount: 1,
-    estimatedMonthlyIncome: 1240,
     monthlyTotal: 532,
-    retirementAge: 67,
     onAddPot: fn(),
   },
 };
@@ -24,12 +22,13 @@ type Story = StoryObj<typeof PensionSummary>;
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBeGreaterThan(0);
-    await expect(within(canvasElement).getAllByText("Estimate")[0]).toBeDefined();
+    await expect(within(canvasElement).getAllByText("Going in each month")[0]).toBeDefined();
+    await expect(within(canvasElement).queryAllByText("Income at retirement")).toHaveLength(0);
   },
 };
 
 export const NoPots: Story = {
-  args: { potsCount: 0, totalValue: 0, estimatedMonthlyIncome: null },
+  args: { potsCount: 0, totalValue: 0 },
   play: async ({ canvasElement, args }) => {
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
     within(canvasElement).getAllByRole("button", { name: "Add pension pot" })[0]?.click();
@@ -37,6 +36,11 @@ export const NoPots: Story = {
   },
 };
 
-export const MostlyUnknown: Story = {
-  args: { estimatedMonthlyIncome: null, retirementAge: null },
+export const NoSalary: Story = {
+  args: { monthlyTotal: null },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getAllByText("Add your salary to see what goes in each month")[0],
+    ).toBeDefined();
+  },
 };

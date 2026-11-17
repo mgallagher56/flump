@@ -573,6 +573,19 @@ export function calculateIncomeTaxOnTaxable(
   };
 }
 
+/**
+ * Auto-enrolment qualifying earnings band, a year (DWP's annual review has kept it at these
+ * figures). Not the National Insurance limits, which can differ.
+ */
+export const UK_PENSION_QUALIFYING_EARNINGS = { lower: 6_240, upper: 50_270 } as const;
+
+/** Pay inside the qualifying earnings band: what a qualifying-earnings scheme takes a percentage of. */
+export function calculatePensionQualifyingEarnings(annualPay: number): number {
+  const pay = Number.isFinite(annualPay) && annualPay > 0 ? annualPay : 0;
+  const { lower, upper } = UK_PENSION_QUALIFYING_EARNINGS;
+  return pay <= lower ? 0 : Math.min(pay, upper) - lower;
+}
+
 /** Class 1 employee NI on annual pay (annual method, category A). */
 export function calculateEmployeeNi(pay: number, rules: UkTaxYearRules): number {
   const { primaryThreshold, upperEarningsLimit, mainRate, upperRate } = rules.ni.class1;

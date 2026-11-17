@@ -40,6 +40,8 @@ export async function connectTestClient(
     imports?: FakeImports;
     /** Leave the server without a staging provider (as on stdio). */
     noImports?: boolean;
+    /** Passed to the server: tools it rejects are not registered. */
+    isToolAvailable?: (toolName: string) => boolean;
   } = {},
 ): Promise<TestHarness> {
   const provider = createFakeProvider(data, options);
@@ -50,6 +52,7 @@ export async function connectTestClient(
     dataProvider: provider,
     ...(options.noImports ? {} : { imports }),
     audit: (e) => void auditEvents.push(e),
+    ...(options.isToolAvailable ? { isToolAvailable: options.isToolAvailable } : {}),
   });
   const client = new Client({ name: "flump-test-client", version: "0.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

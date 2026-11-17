@@ -8759,6 +8759,38 @@
                             "type": "object"
                           },
                           "type": "array"
+                        },
+                        "workplacePension": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "annualSalary": {
+                                  "minimum": 0,
+                                  "type": "number"
+                                },
+                                "employeePercent": {
+                                  "minimum": 0,
+                                  "type": "number"
+                                },
+                                "employerPercent": {
+                                  "minimum": 0,
+                                  "type": "number"
+                                },
+                                "isSalarySacrifice": {
+                                  "type": "boolean"
+                                },
+                                "passEmployerNi": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": ["annualSalary", "employeePercent", "employerPercent"],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
