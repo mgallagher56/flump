@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronUp, CircleDashed, RotateCcw } from "lucide-react";
-import { type FC, type ReactNode, useId, useState } from "react";
+import { CircleDashed, RotateCcw } from "lucide-react";
+import { type FC, type ReactNode, useId } from "react";
 import { cx } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
 import { Heading } from "../../primitives/Heading/Heading";
@@ -63,16 +63,6 @@ export interface ScenarioZoneProps {
    * its one notice elsewhere, so it appears once per page.
    */
   showNotice?: boolean;
-  /** When true, the simulator body can be collapsed behind a toggle button. */
-  collapsible?: boolean;
-  /** Initial expanded state when `collapsible` is true (uncontrolled). Defaults to false. */
-  defaultOpen?: boolean;
-  /** Controlled expanded state when `collapsible` is true. */
-  open?: boolean;
-  /** Called when the user toggles a collapsible zone. */
-  onOpenChange?: (open: boolean) => void;
-  /** Summary line shown when `collapsible` is true and the zone is collapsed. */
-  summary?: ReactNode;
   className?: string;
 }
 
@@ -94,26 +84,13 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   announcement,
   id,
   showNotice = true,
-  collapsible = false,
-  defaultOpen = false,
-  open: controlledOpen,
-  onOpenChange,
-  summary,
   className,
 }) => {
   const headingId = useId();
-  const contentId = useId();
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
-  const isOpen = !collapsible || (controlledOpen ?? uncontrolledOpen);
-  const toggleOpen = () => {
-    const next = !isOpen;
-    if (controlledOpen === undefined) setUncontrolledOpen(next);
-    onOpenChange?.(next);
-  };
   const slots = scenarioZone();
   const resolvedNotice = showNotice ? (notice ?? <ProjectionNotice />) : null;
-  const showReset = isOpen && Boolean(onReset) && isModified;
-  const hasActions = showReset || (isOpen && Boolean(footer));
+  const showReset = Boolean(onReset) && isModified;
+  const hasActions = showReset || Boolean(footer);
   const handleReset = () => {
     onReset?.();
     document.getElementById(headingId)?.focus();
@@ -130,52 +107,24 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
           <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md" tabIndex={-1}>
             {title}
           </Heading>
-          <div className={slots.titleActions}>
-            <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
-              {SCENARIO_BADGE_TEXT}
-            </StatusBadge>
-            {collapsible ? (
-              <Button
-                aria-controls={contentId}
-                aria-expanded={isOpen}
-                size="sm"
-                type="button"
-                variant="outline"
-                onClick={toggleOpen}
-              >
-                {isOpen ? "Hide" : "Open"}
-                <Icon icon={isOpen ? ChevronUp : ChevronDown} size="sm" />
-              </Button>
-            ) : null}
-          </div>
+          <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
+            {SCENARIO_BADGE_TEXT}
+          </StatusBadge>
         </div>
         {basis ? <p className={slots.basis}>{basis}</p> : null}
       </div>
-      {!isOpen && summary ? (
-        <p
-          className={slots.collapsedSummary}
-          data-testid="scenario-zone-summary"
-          id="scenario-zone-summary"
-        >
-          {summary}
-        </p>
-      ) : null}
-      {isOpen ? (
-        <div id={contentId}>
-          {tools}
-          {result ? (
-            <div className={slots.split} data-testid="scenario-zone-split">
-              <div className={slots.body}>{children}</div>
-              <div className={slots.result} data-testid="scenario-zone-result">
-                {result}
-              </div>
-            </div>
-          ) : (
-            <div className={slots.body}>{children}</div>
-          )}
-          {extra}
+      {tools}
+      {result ? (
+        <div className={slots.split} data-testid="scenario-zone-split">
+          <div className={slots.body}>{children}</div>
+          <div className={slots.result} data-testid="scenario-zone-result">
+            {result}
+          </div>
         </div>
-      ) : null}
+      ) : (
+        <div className={slots.body}>{children}</div>
+      )}
+      {extra}
       {hasActions || resolvedNotice ? (
         // id and data-testid pair (component guidelines); a page has one scenario zone.
         <div className={slots.footer} data-testid="scenario-zone-footer" id="scenario-zone-footer">

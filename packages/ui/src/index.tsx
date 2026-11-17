@@ -79,6 +79,7 @@ export * from "./primitives/StatusBadge";
 export * from "./primitives/Stepper";
 export * from "./primitives/Switch";
 export * from "./primitives/Table";
+export * from "./primitives/TableToolbar";
 export * from "./primitives/Tabs";
 export * from "./primitives/Text";
 export * from "./primitives/TextInput";

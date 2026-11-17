@@ -171,7 +171,7 @@ describe.each([
 
   it("keeps to the page rules: figure budget, one hero, one notice after the h1", () => {
     const { container } = renderDashboard(props);
-    expectPageRules(container, { maxFigures: 14, maxNotSet: 3, projectionNotices: 1 });
+    expectPageRules(container, { maxFigures: 12, maxNotSet: 3, projectionNotices: 1 });
     // The hero plus its one delta and three supporting figures.
     expect(firstViewFigures(container)).toBeLessThanOrEqual(5);
   });

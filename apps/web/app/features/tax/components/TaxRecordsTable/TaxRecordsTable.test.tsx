@@ -115,7 +115,7 @@ describe("TaxRecordsTable", () => {
   it("sorts columns ascending and descending when headers are clicked", () => {
     setup();
     const recordHeader = screen.getByRole("columnheader", { name: "Record" });
-    expect(recordHeader.getAttribute("aria-sort")).toBe("none");
+    expect(recordHeader.hasAttribute("aria-sort")).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Record" }));
     expect(recordHeader.getAttribute("aria-sort")).toBe("ascending");
     const ascRows = within(screen.getByRole("table")).getAllByRole("row");

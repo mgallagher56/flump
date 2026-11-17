@@ -1,6 +1,7 @@
 import { getUkTaxYearContext, PortfolioSnapshot } from "@flump/finance-engine";
 import {
   Button,
+  CollapsibleDrawer,
   EmptyState,
   Icon,
   Illustration,
@@ -54,6 +55,9 @@ const isStored = (value: unknown): boolean =>
   value !== undefined && value !== null && value !== "" && Number.isFinite(Number(value));
 
 type Tool = "forecast" | "deposit";
+
+/** The drawer and the zone share one name, so the drawer's button is named for what it opens. */
+export const SCENARIO_TITLE = "Model a change to your savings";
 
 export const SavingsContainer: FC = () => {
   const loaderData = useLoaderData<any>();
@@ -211,56 +215,63 @@ export const SavingsContainer: FC = () => {
 
           <SavingsAccountsList accounts={savingsAccounts} />
 
-          <ScenarioZone
-            announcement={announcement}
-            basis="Starting from your saved accounts."
-            collapsible
+          {/* Below saved figures, the model starts closed (one pattern for hiding a simulator:
+              CollapsibleDrawer). A pay rise handed over from Take-home pay opens it. */}
+          <CollapsibleDrawer
+            closedLabel="Show the model"
             defaultOpen={payRiseMonthly > 0}
-            id="savings-scenario"
-            isModified={isModified}
-            notice={<ProjectionNotice />}
-            summary={forecastOutcomeText(forecast.values, saved.total, payRiseMonthly)}
-            title="Model a change to your savings"
-            tools={
-              <Tabs
-                aria-label="Ways to model your savings"
-                items={[
-                  { value: "forecast", label: "How it could grow" },
-                  { value: "deposit", label: "Time to a target" },
-                ]}
-                panelClassName={toolPanel()}
-                panels={{
-                  forecast: (
-                    <SavingsForecast
-                      payRise={
-                        payRiseMonthly > 0 ? (
-                          <PayRiseScenario
-                            monthlyIncrease={payRiseMonthly}
-                            onRemove={removePayRise}
-                          />
-                        ) : undefined
-                      }
-                      payRiseMonthly={payRiseMonthly}
-                      startingBalance={saved.total}
-                      values={forecast.values}
-                      onChange={(key, value) => forecast.set(key, value)}
-                    />
-                  ),
-                  deposit: (
-                    <DepositTimeline
-                      saved={savedDeposit}
-                      values={deposit.values}
-                      onChange={(key, value) => deposit.set(key, value)}
-                    />
-                  ),
-                }}
-                size="sm"
-                value={tool}
-                onValueChange={(value) => setTool(value as Tool)}
-              />
-            }
-            onReset={resetScenario}
-          />
+            openLabel="Hide the model"
+            subtitle="See how your savings could grow, or how long a target could take."
+            title={SCENARIO_TITLE}
+          >
+            <ScenarioZone
+              announcement={announcement}
+              basis="Starting from your saved accounts."
+              id="savings-scenario"
+              isModified={isModified}
+              notice={<ProjectionNotice />}
+              title={SCENARIO_TITLE}
+              tools={
+                <Tabs
+                  aria-label="Ways to model your savings"
+                  items={[
+                    { value: "forecast", label: "How it could grow" },
+                    { value: "deposit", label: "Time to a target" },
+                  ]}
+                  panelClassName={toolPanel()}
+                  panels={{
+                    forecast: (
+                      <SavingsForecast
+                        payRise={
+                          payRiseMonthly > 0 ? (
+                            <PayRiseScenario
+                              monthlyIncrease={payRiseMonthly}
+                              onRemove={removePayRise}
+                            />
+                          ) : undefined
+                        }
+                        payRiseMonthly={payRiseMonthly}
+                        startingBalance={saved.total}
+                        values={forecast.values}
+                        onChange={(key, value) => forecast.set(key, value)}
+                      />
+                    ),
+                    deposit: (
+                      <DepositTimeline
+                        saved={savedDeposit}
+                        values={deposit.values}
+                        onChange={(key, value) => deposit.set(key, value)}
+                      />
+                    ),
+                  }}
+                  size="sm"
+                  value={tool}
+                  onValueChange={(value) => setTool(value as Tool)}
+                />
+              }
+              onReset={resetScenario}
+            />
+          </CollapsibleDrawer>
         </>
       ) : (
         <div className={emptyWrap()}>
