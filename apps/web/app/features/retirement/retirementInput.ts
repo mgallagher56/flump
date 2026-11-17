@@ -13,6 +13,8 @@ export interface RetirementLoaderData {
     birthYear?: number | null;
     housingStatus?: string | null;
     monthlyHousingCost?: number | null;
+    /** Saved employment type: self-employed or other has no workplace pension. */
+    employmentType?: string | null;
     /** Saved workplace pension facts, from the Pension page's details. */
     annualSalary?: number | null;
     pensionPercent?: number | null;
@@ -25,12 +27,19 @@ export interface RetirementLoaderData {
   retirementPlan: RetirementSavedPlanInput | null;
 }
 
-/** The saved workplace pension from the profile's pension fields, or null without a salary. */
+const EMPLOYMENT_TYPES = ["employed", "self-employed", "other"] as const;
+
+/**
+ * The saved workplace pension from the profile's pension fields, or null without a salary or for
+ * a self-employed or other employment type.
+ */
 export function workplacePensionFromLoader(
   profile: RetirementLoaderData["userProfile"],
 ): WorkplacePensionInput | null {
   if (!profile) return null;
+  const employmentType = EMPLOYMENT_TYPES.find((type) => type === profile.employmentType) ?? null;
   return workplacePensionFromProfile({
+    employmentType,
     annualSalary: profile.annualSalary ?? null,
     pensionPercent: profile.pensionPercent ?? undefined,
     pensionEmployerPercent: profile.pensionEmployerPercent ?? undefined,

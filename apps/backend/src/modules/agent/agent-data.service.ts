@@ -380,13 +380,15 @@ export class AgentDataService implements McpUserDataProvider {
       })),
       // For the MCP retirement tools only. Figures, ages and account ids, no free text, so the
       // anonymiser keeps them as it keeps the baseline age (which is derived from the same year).
+      // The saved salary and pension rates go with the plan (E33 RD6): they are for the
+      // retirement tools only, the same workplace contributions the web Retirement page counts.
       ...(retirementAllowed
-        ? { retirementPlan: planRow ? savedPlanInputFromRow(planRow) : null }
+        ? {
+            retirementPlan: planRow ? savedPlanInputFromRow(planRow) : null,
+            workplacePension: workplacePensionFromProfile(profile),
+          }
         : {}),
       birthYear: birthYearOf(profile.birthYear),
-      // The saved salary and pension rates, for the MCP retirement tools (E33 RD6): the same
-      // workplace contributions the web Retirement page counts.
-      workplacePension: workplacePensionFromProfile(profile),
     };
   }
 

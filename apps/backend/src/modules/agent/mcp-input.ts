@@ -152,6 +152,7 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
                   employerPercent: num(input.workplacePension.employerPercent),
                   isSalarySacrifice: input.workplacePension.isSalarySacrifice,
                   passEmployerNi: input.workplacePension.passEmployerNi,
+                  ratesAssumed: input.workplacePension.ratesAssumed,
                 }),
         }),
     ...(typeof input.birthYear === "number" && Number.isInteger(input.birthYear)

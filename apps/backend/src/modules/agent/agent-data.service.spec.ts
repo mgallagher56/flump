@@ -209,6 +209,24 @@ describe("AgentDataService.getUserFinancialData retirement plan and birth year (
     expect(data.birthYear).toBe(1970);
   });
 
+  it("passes the workplace pension only with the plan, for the friends beta", async () => {
+    const profile = {
+      annualSalary: "40000",
+      employmentType: "employed",
+      pensionPercent: 6,
+      pensionEmployerPercent: 4,
+    };
+    const allowed = await serviceWith(profile, null).service.getUserFinancialData("u1");
+    expect(allowed.workplacePension).toMatchObject({
+      annualSalary: 40000,
+      employeePercent: 6,
+      employerPercent: 4,
+    });
+    const refused = await serviceWith(profile, null).service.getUserFinancialData("u2");
+    expect(refused.workplacePension).toBeUndefined();
+    expect("workplacePension" in refused).toBe(false);
+  });
+
   it("reads the plan for anyone in open testing (BETA_OPEN)", async () => {
     process.env = { ...process.env, BETA_OPEN: "true", RETIREMENT_ALLOWED_USER_IDS: "" };
     const { service } = serviceWith({}, savedRow);

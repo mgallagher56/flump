@@ -304,6 +304,12 @@ export const McpInputResponse = z.strictObject({
     scopes: z.array(z.string()),
     anonymizeInstitutions: z.boolean(),
   }),
+  /**
+   * Whether the token's owner may use the retirement tools (friends beta, RD9), so a local MCP
+   * server hides them as the remote one does. Kept beside `input`, not in it, because it is not
+   * engine input. Absent means not available.
+   */
+  retirementAvailable: z.boolean().optional(),
   input: z.strictObject({
     baseline: McpInputBaseline,
     profileFacts: McpInputProfileFacts,
@@ -322,6 +328,8 @@ export const McpInputResponse = z.strictObject({
         employerPercent: z.number().nonnegative(),
         isSalarySacrifice: z.boolean().optional(),
         passEmployerNi: z.boolean().optional(),
+        /** True when the rates are the untouched 5% and 3% creation defaults, not ones the user set. */
+        ratesAssumed: z.boolean().optional(),
       })
       .nullable()
       .optional(),

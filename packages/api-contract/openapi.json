@@ -8782,6 +8782,9 @@
                                 },
                                 "passEmployerNi": {
                                   "type": "boolean"
+                                },
+                                "ratesAssumed": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": ["annualSalary", "employeePercent", "employerPercent"],
@@ -8803,6 +8806,9 @@
                         "taxRecords"
                       ],
                       "type": "object"
+                    },
+                    "retirementAvailable": {
+                      "type": "boolean"
                     },
                     "token": {
                       "additionalProperties": false,

@@ -300,6 +300,22 @@ describe("McpService.getInput (GET /mcp/input) anonymises as the remote tools do
       type: "Jane's ISA 4471",
     });
   });
+
+  it("says whether the retirement tools are available, with the friends-beta rule", async () => {
+    const original = process.env;
+    try {
+      const { BETA_OPEN: _open, ...rest } = original;
+      process.env = { ...rest, RETIREMENT_ALLOWED_USER_IDS: "someone_else" };
+      const { service } = make();
+      const refused = await service.getInput(caller(false, ["mcp:read:full"]) as never);
+      expect(refused.retirementAvailable).toBe(false);
+      process.env = { ...rest, RETIREMENT_ALLOWED_USER_IDS: "user_real" };
+      const allowed = await service.getInput(caller(false, ["mcp:read:full"]) as never);
+      expect(allowed.retirementAvailable).toBe(true);
+    } finally {
+      process.env = original;
+    }
+  });
 });
 
 /** In-memory repository stand-in that records every write attempt. */

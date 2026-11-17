@@ -40,17 +40,19 @@ import {
   ScenarioZone,
   SimulatorSplitLayout,
   SliderField,
-  StatusBadge,
 } from "@repo/ui";
 import { Calendar, ClipboardList } from "lucide-react";
 import { type FC, type ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router";
+import {
+  CONTRIBUTION_EDITED_TEXT,
+  MAX_CONTRIBUTION_PERCENT,
+} from "~/features/pension/contribution";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { formatEstimate, roundEstimate } from "~/utils/roundEstimate";
 import { MoneyHelperGuidance } from "../MoneyHelperGuidance";
 import { RetirementPotChart } from "../RetirementPotChart";
 import {
-  allowanceBadge,
   budgetLineAmount,
   budgetLineItem,
   budgetLineName,
@@ -82,8 +84,6 @@ export interface RetirementPlannerProps {
 export const PROFILE_PATH = "/app/profile";
 export const STATE_PENSION_AGE_CHECKER_URL = "https://www.gov.uk/state-pension-age";
 export const PENSION_DETAILS_PATH = "/app/pension#pension-details";
-/** Highest contribution the what-if slider offers, as a percentage of pay. */
-export const MAX_CONTRIBUTION_PERCENT = 30;
 
 const gbpFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -100,14 +100,33 @@ function formatWholeGbp(amount: number): string {
 }
 
 const pct = (rate: number) => `${pctFormatter.format(rate * 100)}%`;
+
+/** An exact nothing is a fact, not an estimate: "£0", never "~£0". */
+const formatEstimateOrNil = (amount: number): string =>
+  Math.round(amount) === 0 ? formatWholeGbp(0) : formatEstimate(amount);
+
+const monthFormatter = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+/** "2026-10" becomes "October 2026". */
+function formatMonthKey(key: string): string {
+  const [year, month] = key.split("-").map(Number);
+  if (!year || !month) return key;
+  return monthFormatter.format(new Date(Date.UTC(year, month - 1, 1)));
+}
 /** A percentage already in percent (6 means 6%). */
 const pctPoints = (points: number) => `${pctFormatter.format(points)}%`;
 
-/** A signed long-range change: "+~£1,200" or "-~£800", rounded to three significant figures. */
+/**
+ * A signed long-range change: "+~£1,200" or "−~£800" (U+2212, a minus sign, not a hyphen),
+ * rounded to three significant figures.
+ */
 function formatSignedEstimate(amount: number): string {
   const rounded = roundEstimate(amount);
   if (rounded === 0) return formatEstimate(0);
-  return `${rounded > 0 ? "+" : "-"}${formatEstimate(Math.abs(rounded))}`;
+  return `${rounded > 0 ? "+" : "\u2212"}${formatEstimate(Math.abs(rounded))}`;
 }
 
 /** Whole percentages read "5%", others keep one decimal place: "5.5%". */
@@ -406,7 +425,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
       <KpiCard
         key="housing"
         label="Housing in retirement"
-        value={formatEstimate(housing.annualCostAtRetirementGbp)}
+        value={formatEstimateOrNil(housing.annualCostAtRetirementGbp)}
         subtext={
           housing.kind === "mortgage-continues" && housing.mortgageEndAge !== null
             ? `A year, until age ${Math.ceil(housing.mortgageEndAge)}`
@@ -449,9 +468,6 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
       {aboveAllowance ? (
         <>
           {" "}
-          <StatusBadge className={allowanceBadge()} size="sm" variant="neutral">
-            Above the annual allowance
-          </StatusBadge>{" "}
           In this illustration {wholeMoney(paidInYearly)} a year is paid into pensions. The standard
           annual allowance is {wholeMoney(annualAllowance)}.
         </>
@@ -522,6 +538,11 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                         min={0}
                         max={Math.max(MAX_CONTRIBUTION_PERCENT, savedEmployeePercent)}
                         step={0.5}
+                        helperText={
+                          scenario.isEdited("employeePercent")
+                            ? CONTRIBUTION_EDITED_TEXT
+                            : undefined
+                        }
                         onChange={(v) => scenario.set("employeePercent", v)}
                       />
                       <Checkbox
@@ -594,7 +615,8 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                       icon={Calendar}
                     >
                       <p className={mutedNote()}>
-                        {latestCounted.month}: {formatWholeGbp(latestCounted.totalCountedGbp)}
+                        {formatMonthKey(latestCounted.month)}:{" "}
+                        {formatWholeGbp(latestCounted.totalCountedGbp)}
                         {latestCounted.hasCarriedForward
                           ? " (includes balances carried forward)"
                           : ""}
@@ -622,10 +644,9 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                         </p>
                         {workplace && (
                           <p className={mutedNote()}>
-                            Workplace pension: {pctPoints(workplace.employeePercent)} from you and{" "}
-                            {pctPoints(workplace.employerPercent)} from your employer, of your saved
-                            salary of {formatWholeGbp(workplace.annualSalary)}, from your pension
-                            details.
+                            {workplace.ratesAssumed
+                              ? `Workplace pension: ${pctPoints(workplace.employeePercent)} from you and ${pctPoints(workplace.employerPercent)} from your employer, the auto-enrolment minimums, which are used until you set your own in your pension details. They apply to your saved salary of ${formatWholeGbp(workplace.annualSalary)}.`
+                              : `Workplace pension: ${pctPoints(workplace.employeePercent)} from you and ${pctPoints(workplace.employerPercent)} from your employer, of your saved salary of ${formatWholeGbp(workplace.annualSalary)}, from your pension details.`}
                             {workplace.isSalarySacrifice && workplace.passEmployerNi
                               ? " Through salary sacrifice, your employer also adds the National Insurance it saves."
                               : ""}{" "}
@@ -677,7 +698,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                                   {formatWholeGbp(row.statePensionYearlyGbp)}
                                 </td>
                                 <td className={scheduleCell()}>
-                                  {formatEstimate(row.housingCostYearlyGbp)}
+                                  {formatEstimateOrNil(row.housingCostYearlyGbp)}
                                 </td>
                                 <td className={scheduleCell()}>
                                   {formatEstimate(row.yearlyIncomeAfterHousing[selectedCase])}

@@ -141,6 +141,8 @@ export class McpService {
       const raw = await this.agentData.getUserFinancialData(token.userId);
       const body = {
         token: toMcpInputToken(token),
+        // RD9: the local server hides the retirement tools unless this says they are available.
+        retirementAvailable: isRetirementAllowed(process.env, token.userId),
         // The same rule the remote tools use: only a token with the full-read scope and the
         // flag off gets real names (a legacy row with the flag off but only the anonymised scope does not).
         input: toMcpInputWire(raw, effectiveAnonymize(token.anonymizeInstitutions, token.scopes)),

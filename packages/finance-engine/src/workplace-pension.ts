@@ -1,4 +1,4 @@
-import { salarySacrificeFromProfile } from "./picture/input.js";
+import { hasDefaultPensionRates, salarySacrificeFromProfile } from "./picture/input.js";
 import type { UserProfileData } from "./profile.js";
 import { calculateEmployerNISavings } from "./uk-tax.js";
 import {
@@ -29,6 +29,11 @@ export interface WorkplacePensionInput {
   /** Count only pay inside the qualifying earnings band instead of the whole salary. */
   useQualifyingEarnings?: boolean;
   taxYear?: string;
+  /**
+   * True when the rates are the untouched 5% and 3% creation defaults rather than ones the user
+   * set, so a screen can say so. Default false. It never changes the calculation.
+   */
+  ratesAssumed?: boolean;
 }
 
 export interface WorkplacePensionContributions {
@@ -76,15 +81,19 @@ export function calculateWorkplacePensionContributions(
 }
 
 /**
- * The saved workplace pension from a stored profile, or null when no salary is saved. The rates
- * are the stored ones; a legacy salary sacrifice `true` the user never chose is read as not set
- * (`salarySacrificeFromProfile`).
+ * The saved workplace pension from a stored profile, or null when no salary is saved or the
+ * saved employment type is self-employed or other (no workplace scheme). The rates are the stored
+ * ones, marked `ratesAssumed` when they are the untouched creation defaults; a legacy salary
+ * sacrifice `true` the user never chose is read as not set (`salarySacrificeFromProfile`).
  */
 export function workplacePensionFromProfile(
   profile: Partial<UserProfileData> | null | undefined,
 ): WorkplacePensionInput | null {
   const salary = nonNegative(profile?.annualSalary);
   if (salary <= 0) return null;
+  if (profile?.employmentType === "self-employed" || profile?.employmentType === "other") {
+    return null;
+  }
   const isSalarySacrifice = salarySacrificeFromProfile(profile) === true;
   return {
     annualSalary: salary,
@@ -92,5 +101,6 @@ export function workplacePensionFromProfile(
     employerPercent: nonNegative(profile?.pensionEmployerPercent),
     isSalarySacrifice,
     passEmployerNi: isSalarySacrifice && profile?.isSalarySacrificeEmployerNi === true,
+    ratesAssumed: hasDefaultPensionRates(profile),
   };
 }

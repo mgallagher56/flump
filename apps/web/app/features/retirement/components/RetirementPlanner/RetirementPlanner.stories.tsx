@@ -140,3 +140,28 @@ export const WorkplacePensionDark: Story = {
     themes: { themeOverride: "dark" },
   },
 };
+
+/** The untouched 5% and 3% creation defaults: the drawer says they are the minimums. */
+export const WorkplacePensionDefaultRates: Story = {
+  args: {
+    ...baseArgs,
+    planArgs: {
+      ...planArgs,
+      workplacePension: {
+        annualSalary: 48_000,
+        employeePercent: 5,
+        employerPercent: 3,
+        ratesAssumed: true,
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(
+      canvas.getByRole("button", { name: /Assumptions, pots and year by year/ }),
+    );
+    await expect(canvas.getByText(/the auto-enrolment minimums/)).toBeInTheDocument();
+    await userEvent.click(canvas.getByLabelText("Only pay that counts for your pension"));
+    await expect(canvas.queryByText("Edited. Not saved.")).toBeNull();
+  },
+};
