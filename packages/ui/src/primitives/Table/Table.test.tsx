@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { Table, TableToolbar, TBody, Td, THead, Th, Tr } from "./Table";
+import { Table, TBody, Td, THead, Th, Tr } from "./Table";
 
 describe("Table Primitive", () => {
   it("renders financial table with headers and tabular rows", () => {
@@ -318,6 +318,22 @@ describe("Table Primitive", () => {
     expect(screen.getByText("£1,234").className).toContain("tabular-nums");
   });
 
+  it("leaves aria-sort off headers that cannot sort", () => {
+    render(
+      <Table>
+        <THead>
+          <tr>
+            <Th sortDirection="asc">Record</Th>
+          </tr>
+        </THead>
+      </Table>,
+    );
+    expect(screen.getByRole("columnheader", { name: "Record" }).hasAttribute("aria-sort")).toBe(
+      false,
+    );
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it("supports sortable column headers with aria-sort and click handler", () => {
     const onSort = vi.fn();
     render(
@@ -339,26 +355,12 @@ describe("Table Primitive", () => {
     fireEvent.click(screen.getByRole("button", { name: "Record" }));
     expect(onSort).toHaveBeenCalledTimes(1);
 
+    // Only the sorted column carries aria-sort; the sort control is a native button, so Enter and
+    // Space work from the keyboard.
     const amountHeader = screen.getByRole("columnheader", { name: /Amount/ });
-    expect(amountHeader.getAttribute("aria-sort")).toBe("none");
-  });
-
-  it("renders TableToolbar with search input and extra controls", () => {
-    const onSearchChange = vi.fn();
-    render(
-      <TableToolbar
-        searchLabel="Find record"
-        searchPlaceholder="Type to filter"
-        searchValue="rent"
-        onSearchChange={onSearchChange}
-      >
-        <button type="button">Clear</button>
-      </TableToolbar>,
-    );
-    const input = screen.getByLabelText("Find record") as HTMLInputElement;
-    expect(input.value).toBe("rent");
-    fireEvent.change(input, { target: { value: "laptop" } });
-    expect(onSearchChange).toHaveBeenCalledWith("laptop");
-    expect(screen.getByRole("button", { name: "Clear" })).toBeDefined();
+    expect(amountHeader.hasAttribute("aria-sort")).toBe(false);
+    const amountButton = screen.getByRole("button", { name: "Amount" });
+    expect(amountButton.tagName).toBe("BUTTON");
+    expect(amountButton.getAttribute("type")).toBe("button");
   });
 });

@@ -74,6 +74,10 @@ import SavingsContainer, { parsePayRise } from "./SavingsContainer";
 
 const zone = () => screen.getByRole("region", { name: "Model a change to your savings" });
 
+/** The drawer's button, named by its title: the model sits closed below saved figures. */
+const modelToggle = () => screen.getByRole("button", { name: /^Model a change to your savings/ });
+const openModel = () => fireEvent.click(modelToggle());
+
 /** The saved facts: hero plus KPI strip. */
 const savedFacts = () =>
   [
@@ -103,6 +107,9 @@ describe("SavingsContainer", () => {
     expect(screen.queryByText("Weighted by balance (AER)")).toBeNull();
     expect(screen.queryByText("Where you stand")).toBeNull();
     expect(screen.queryByText("Milestones")).toBeNull();
+    // Closed, nothing is projected, so no notice is needed yet.
+    expectPageRules(container, { maxFigures: 12, maxNotSet: 0, projectionNotices: 0 });
+    openModel();
     expect(screen.getAllByRole("region", { name: "Model a change to your savings" })).toHaveLength(
       1,
     );
@@ -111,25 +118,36 @@ describe("SavingsContainer", () => {
 
   it("puts the one notice in the zone footer, below the h1", () => {
     render(<SavingsContainer />);
+    openModel();
     const notes = screen.getAllByRole("note", { name: "Guidance, not advice" });
     expect(notes).toHaveLength(1);
     expect(screen.getByTestId("scenario-zone-footer").contains(notes[0] as Node)).toBe(true);
   });
 
-  it("starts collapsed with a forecast summary and expands on click", () => {
+  it("starts the model closed below saved figures, and opens it from a named toggle", () => {
     render(<SavingsContainer />);
-    const toggle = screen.getByRole("button", { name: "Open" });
+    const toggle = modelToggle();
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.getByTestId("scenario-zone-summary").textContent).toMatch(/in 5 years/);
+    expect(toggle.hasAttribute("aria-controls")).toBe(false);
     expect(screen.queryByRole("slider")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Model a change to your savings" })).toBeNull();
     fireEvent.click(toggle);
-    expect(screen.getByRole("button", { name: "Hide" }).getAttribute("aria-expanded")).toBe("true");
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    const controlled = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
+    expect(controlled?.contains(zone())).toBe(true);
     expect(screen.getAllByRole("slider").length).toBeGreaterThan(0);
+  });
+
+  it("opens the model straight away when a pay rise is handed over", () => {
+    mockLocation.current = { pathname: "/app/savings", hash: "", state: { payRise: 230 } };
+    render(<SavingsContainer />);
+    expect(modelToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(zone()).toBeDefined();
   });
 
   it("has no slider outside the scenario zone", () => {
     render(<SavingsContainer />);
-    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    openModel();
     for (const slider of screen.getAllByRole("slider")) {
       expect(zone().contains(slider)).toBe(true);
     }
@@ -138,6 +156,7 @@ describe("SavingsContainer", () => {
   it("never shows a £0 or 0.00% KPI when monthly amounts and rates are not set", () => {
     loader.accounts = [{ id: "a", name: "Saver", type: "Saving", balance: 5000 }];
     const { container } = render(<SavingsContainer />);
+    openModel();
     expect(screen.getByText(/Add what you save each month and your interest rates/)).toBeDefined();
     expect(screen.queryByText("Saved each month")).toBeNull();
     expect(container.textContent).not.toContain("0.00%");
@@ -182,7 +201,7 @@ describe("SavingsContainer", () => {
     it("moving the forecast inputs never changes the hero, the KPIs or saved data", () => {
       const setItem = vi.spyOn(Storage.prototype, "setItem");
       render(<SavingsContainer />);
-      fireEvent.click(screen.getByRole("button", { name: "Open" }));
+      openModel();
       const before = savedFacts();
       const outcomeBefore = screen.getByTestId("savings-forecast-outcome").textContent;
 
@@ -211,7 +230,7 @@ describe("SavingsContainer", () => {
 
     it("shows a handed-over pay rise as a removable input in the zone only", () => {
       const { rerender } = render(<SavingsContainer />);
-      fireEvent.click(screen.getByRole("button", { name: "Open" }));
+      openModel();
       const before = savedFacts();
       mockLocation.current = { pathname: "/app/savings", hash: "", state: { payRise: 230 } };
       rerender(<SavingsContainer />);
@@ -241,7 +260,7 @@ describe("SavingsContainer", () => {
 
     it("models a target in the second tool, seeded from saved figures, and never saves it", () => {
       render(<SavingsContainer />);
-      fireEvent.click(screen.getByRole("button", { name: "Open" }));
+      openModel();
       const tab = screen.getByRole("tab", { name: "Time to a target" });
       fireEvent.pointerDown(tab, { button: 0 });
       fireEvent.keyDown(tab, { key: "Enter", code: "Enter" });

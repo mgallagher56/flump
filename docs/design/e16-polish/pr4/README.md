@@ -4,7 +4,7 @@ Before: the CI visual baselines on `main` before this PR. After: the baselines r
 
 What changed:
 
-- Dashboard: h1 "Your money" with nothing above it. Net worth appears once, in the hero. The KPI strip has 3 cards, or a single prompt when they are unset. Setup and the monthly check-in are grouped rows. At most 4 section cards, each with one figure, one line and one link.
+- Dashboard: h1 "Your money" with nothing above it. Net worth appears once, in the hero. The KPI strip has 3 cards, or a single prompt when they are unset. Setup and the monthly check-in are grouped rows. A section card for each ticked section with something to show (owner decision, 17 Nov 2026: the four-card cap per dashboard section is removed), each with one figure, one line and one link.
 - Sandbox: the same layout. Exactly 2 notices and 2 "Sign up" buttons. Locked cards show a lock icon only.
 - The 320 px horizontal overflow is fixed.
 - Forced-colours contrast findings fell from 6 to 2 on each page.

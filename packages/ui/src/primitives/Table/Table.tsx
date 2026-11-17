@@ -12,9 +12,7 @@ import {
   useState,
 } from "react";
 import { cx } from "../../../styled-system/css";
-import { FormField } from "../FormField";
 import { Icon } from "../Icon";
-import { TextInput } from "../TextInput";
 import { VisuallyHidden } from "../VisuallyHidden";
 import {
   captionRecipe,
@@ -22,8 +20,6 @@ import {
   cellSecondary,
   sortButton,
   tableElement,
-  tableSearchField,
-  tableToolbar,
   tableWrapper,
   tbodyRecipe,
   tdRecipe,
@@ -194,10 +190,9 @@ export interface ThProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, "a
   onSort?: () => void;
 }
 
-const ARIA_SORT: Record<SortDirection, "ascending" | "descending" | "none"> = {
+const ARIA_SORT: Record<Exclude<SortDirection, "none">, "ascending" | "descending"> = {
   asc: "ascending",
   desc: "descending",
-  none: "none",
 };
 
 export const Th: FC<ThProps> = ({
@@ -219,7 +214,10 @@ export const Th: FC<ThProps> = ({
     sortDirection === "asc" ? ArrowUp : sortDirection === "desc" ? ArrowDown : ArrowUpDown;
   return (
     <th
-      aria-sort={onSort ? ARIA_SORT[sortDirection ?? "none"] : undefined}
+      // Only the column the table is sorted by carries aria-sort (WAI-ARIA: one header at a time).
+      aria-sort={
+        onSort && sortDirection && sortDirection !== "none" ? ARIA_SORT[sortDirection] : undefined
+      }
       className={cx(thRecipe({ align: resolvedAlign, appearance, text }), className)}
       role={stacked ? (resolvedScope === "row" ? "rowheader" : "columnheader") : undefined}
       scope={resolvedScope}
@@ -303,43 +301,5 @@ export const Td: FC<TdProps> = ({
     </td>
   );
 };
-
-export interface TableToolbarProps {
-  searchValue?: string;
-  onSearchChange?: (value: string) => void;
-  searchLabel?: string;
-  searchPlaceholder?: string;
-  children?: ReactNode;
-  className?: string;
-}
-
-/** Optional filter/search bar paired above a `<Table>`. */
-export const TableToolbar: FC<TableToolbarProps> = ({
-  searchValue,
-  onSearchChange,
-  searchLabel = "Search",
-  searchPlaceholder = "Filter rows",
-  children,
-  className,
-}) => (
-  <div className={cx(tableToolbar(), className)}>
-    {onSearchChange ? (
-      <div className={tableSearchField()}>
-        <FormField label={searchLabel}>
-          {(field) => (
-            <TextInput
-              id={field.id}
-              placeholder={searchPlaceholder}
-              type="search"
-              value={searchValue ?? ""}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          )}
-        </FormField>
-      </div>
-    ) : null}
-    {children}
-  </div>
-);
 
 export default Table;

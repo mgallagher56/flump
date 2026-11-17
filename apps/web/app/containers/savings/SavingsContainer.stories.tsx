@@ -42,13 +42,21 @@ export const Filled: Story = {
     await expect(canvas.getAllByRole("heading", { name: "Your savings" })[0]).toBeDefined();
     await expect(canvas.getAllByText("Total savings")[0]).toBeDefined();
     await expect(canvas.getAllByText("Your accounts")[0]).toBeDefined();
-    await expect(canvas.getAllByText("Model a change to your savings")[0]).toBeDefined();
+    // The model sits closed below the saved figures; its toggle is named for what it opens.
+    const toggle = canvas.getAllByRole("button", { name: /^Model a change to your savings/ })[0];
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(toggle);
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.getAllByRole("slider").length).toBeGreaterThan(0);
   },
 };
 
 export const TimeToATarget: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    await userEvent.click(
+      canvas.getAllByRole("button", { name: /^Model a change to your savings/ })[0],
+    );
     await userEvent.click(canvas.getAllByRole("tab", { name: "Time to a target" })[0]);
     await expect(canvas.getAllByLabelText("Target amount")[0]).toBeDefined();
   },

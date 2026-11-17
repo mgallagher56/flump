@@ -111,8 +111,9 @@ const heroValue = (netWorth: number) => {
 
 /**
  * The dashboard (E16 PR 4, R2-4): h1, the net worth hero with at most one delta, a strip of two
- * supporting figures (number budget N1 4), the setup and check-in rows when they apply, then up to four section cards
- * with one notice at their foot when a card shows an estimate. Every figure is a saved fact or
+ * supporting figures (number budget N1 4), the setup and check-in rows when they apply, then a card
+ * for each ticked section with something to show (no four-card cap since the owner decision of
+ * 17 Nov 2026), with one notice at their foot when a card shows an estimate. Every figure is a saved fact or
  * labelled as an estimate, and none repeats.
  */
 export const HomeDashboard: FC<HomeDashboardProps> = ({

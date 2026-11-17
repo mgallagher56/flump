@@ -243,21 +243,3 @@ export const sortButton = cva({
   },
   defaultVariants: { align: "start" },
 });
-
-export const tableToolbar = cva({
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "flex-end",
-    gap: "12px",
-    marginBlockEnd: "12px",
-  },
-});
-
-export const tableSearchField = cva({
-  base: {
-    flex: "1 1 200px",
-    maxWidth: "320px",
-    minWidth: "0",
-  },
-});

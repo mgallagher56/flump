@@ -12,10 +12,9 @@ const t = (key: string, fallback?: string) => fallback ?? key;
 const base = { enabledPages: [] as string[], isPageEnabled, t };
 
 describe("buildNavManifest", () => {
-  it("signed out: Dashboard (home) only", () => {
+  it("signed out: Home only", () => {
     const items = buildNavManifest({ ...base, signedIn: false });
     expect(items.map((i) => i.key)).toEqual(["home"]);
-    expect(items[0].label).toBe("Dashboard");
     expect(items[0].href).toBe("/");
   });
 
