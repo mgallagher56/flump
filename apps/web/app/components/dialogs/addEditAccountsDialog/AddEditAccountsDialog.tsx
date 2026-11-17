@@ -328,6 +328,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     type: formInput.type?.[0],
     ownership: effectiveOwnership,
   });
+  // A saved joint account edited into an ISA or pension is saved as sole: say so (E34).
+  const becomesSole = isEditAccount && selectedAccount.ownership === "joint" && !jointEligible;
 
   return (
     <>
@@ -526,6 +528,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                   </p>
                 ) : null}
               </>
+            ) : becomesSole ? (
+              <p className={jointNotice()} role="note">
+                An ISA or pension is held in one name, so this account will be saved as sole.
+              </p>
             ) : null}
             {saveOutcome.error ? (
               <p role="alert" className={saveError()}>

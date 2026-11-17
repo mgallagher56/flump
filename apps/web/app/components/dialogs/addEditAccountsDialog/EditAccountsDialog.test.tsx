@@ -247,4 +247,62 @@ describe("<EditAccountDialogBtn", () => {
     expect(text).not.toMatch(/transactions/i);
     expect(text).not.toMatch(/bank connections/i);
   });
+
+  test("renaming a joint account to an ISA says it will be saved as sole (E34)", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [
+        {
+          id: "j1",
+          name: "Joint saver",
+          type: "Saving",
+          balance: 10,
+          ownership: "joint",
+          sharePercent: 60,
+        },
+      ],
+    });
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByText, getByLabelText, queryByText, user } = customRender(
+      <AddEditAccountsDialogBtn isEditAccount accountId="j1" />,
+    );
+    await user.click(getByText("edit"));
+    expect(queryByText(/held in one name/)).toBeNull();
+    const name = getByLabelText("Name") as HTMLInputElement;
+    await user.clear(name);
+    await user.type(name, "Cash ISA");
+    expect(
+      getByText("An ISA or pension is held in one name, so this account will be saved as sole."),
+    ).toBeDefined();
+    await user.click(getByText("save"));
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Cash ISA", ownership: "sole" }),
+      expect.anything(),
+    );
+  });
+
+  test("a joint account named after a person called Lisa stays joint (E34)", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [
+        {
+          id: "j2",
+          name: "Lisa joint saver",
+          type: "Saving",
+          balance: 10,
+          ownership: "joint",
+          sharePercent: 60,
+        },
+      ],
+    });
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByText, queryByText, user } = customRender(
+      <AddEditAccountsDialogBtn isEditAccount accountId="j2" />,
+    );
+    await user.click(getByText("edit"));
+    expect(queryByText(/held in one name/)).toBeNull();
+    await user.click(getByText("save"));
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ ownership: "joint", sharePercent: "60" }),
+      expect.anything(),
+    );
+  });
 });
