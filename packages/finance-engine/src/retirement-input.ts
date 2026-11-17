@@ -132,6 +132,7 @@ function shareInput(a: RawAccount) {
   return {
     type: a.type ?? null,
     name: a.name ?? null,
+    accountSubtype: a.accountSubtype ?? null,
     ownership: a.ownership ?? null,
     sharePercent: a.sharePercent ?? null,
   };

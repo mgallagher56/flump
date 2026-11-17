@@ -1,4 +1,9 @@
-import { ACCOUNT_SUBTYPES, ACCOUNT_TYPES } from "@flump/api-contract";
+import {
+  ACCOUNT_SUBTYPES,
+  ACCOUNT_SUBTYPES_BY_TYPE,
+  ACCOUNT_TYPES,
+  CREDIT_FIELD_ACCOUNT_TYPES,
+} from "@flump/api-contract";
 import {
   type AccountOwnership,
   canAccountBeJoint,
@@ -122,6 +127,40 @@ function validateAccountSubtype(value: unknown): AccountSubtype | null | undefin
   throw new BadRequestException(
     `accountSubtype must be one of ${ACCOUNT_SUBTYPES.join(", ")}, or null`,
   );
+}
+
+/** True when `type` takes the subtype (`ACCOUNT_SUBTYPES_BY_TYPE`). */
+function subtypeAppliesTo(type: string | undefined, subtype: string): boolean {
+  const allowed = type ? ACCOUNT_SUBTYPES_BY_TYPE[type as AccountType] : undefined;
+  return Boolean(allowed && (allowed as readonly string[]).includes(subtype));
+}
+
+function takesCreditFields(type: string | undefined): boolean {
+  return Boolean(type && (CREDIT_FIELD_ACCOUNT_TYPES as readonly string[]).includes(type));
+}
+
+/**
+ * A subtype, credit limit or 0% end date is only accepted on the account types it applies to:
+ * a value sent for any other type is refused with 400 rather than stored and ignored. Null (not
+ * set) is accepted on every type.
+ */
+function assertTypeScopedFields(type: string | undefined, fields: Partial<Account>): void {
+  const subtype = fields.accountSubtype;
+  if (typeof subtype === "string" && !subtypeAppliesTo(type, subtype)) {
+    throw new BadRequestException(`accountSubtype ${subtype} does not apply to a ${type} account`);
+  }
+  if (!takesCreditFields(type)) {
+    if (fields.creditLimit !== undefined && fields.creditLimit !== null) {
+      throw new BadRequestException(
+        "creditLimit applies to Credit Card and Overdraft accounts only",
+      );
+    }
+    if (fields.promoZeroPercentUntil !== undefined && fields.promoZeroPercentUntil !== null) {
+      throw new BadRequestException(
+        "promoZeroPercentUntil applies to Credit Card and Overdraft accounts only",
+      );
+    }
+  }
 }
 
 function validateCreditLimit(value: unknown): number | null | undefined {
@@ -505,6 +544,7 @@ export class AccountIntakeService implements IAccountIntake {
 
   async createAccount(userId: string, body: CreateAccountDto): Promise<Account> {
     const fields = this.pickAccountFields(body, true);
+    assertTypeScopedFields(fields.type, fields);
     if (body.connectionId) {
       const connection = await this.bankConnectionRepository.findOne({
         where: { id: body.connectionId, userId },
@@ -521,7 +561,11 @@ export class AccountIntakeService implements IAccountIntake {
     const effectiveOwnership: AccountOwnership = fields.ownership ?? "sole";
     if (
       effectiveOwnership === "joint" &&
-      !canAccountBeJoint({ name: fields.name, type: fields.type })
+      !canAccountBeJoint({
+        name: fields.name,
+        type: fields.type,
+        accountSubtype: fields.accountSubtype,
+      })
     ) {
       throw new BadRequestException("ISAs and pensions cannot be held jointly");
     }
@@ -598,6 +642,10 @@ export class AccountIntakeService implements IAccountIntake {
 
       const previousType = account.type;
       const picked = this.pickAccountFields(body);
+      const nextType = picked.type ?? account.type;
+      assertTypeScopedFields(nextType, picked);
+      const nextSubtype =
+        picked.accountSubtype !== undefined ? picked.accountSubtype : account.accountSubtype;
       // Omitted ownership and share stay as saved. A rename or type change that makes a joint
       // account an ISA or pension is refused unless the same request says sole (E34), so joint
       // ownership is never dropped without the caller asking. Checked before any field changes.
@@ -606,12 +654,14 @@ export class AccountIntakeService implements IAccountIntake {
       // how the engine already counts it.
       const eligible = canAccountBeJoint({
         name: picked.name ?? account.name,
-        type: picked.type ?? account.type,
+        type: nextType,
+        accountSubtype: nextSubtype,
       });
       const nextOwnership = picked.ownership ?? account.ownership;
       const touchesJointRule =
         (picked.name !== undefined && picked.name !== account.name) ||
         (picked.type !== undefined && picked.type !== account.type) ||
+        (picked.accountSubtype !== undefined && picked.accountSubtype !== account.accountSubtype) ||
         picked.ownership === "joint";
       if (!eligible && nextOwnership === "joint" && touchesJointRule) {
         throw new BadRequestException(
@@ -619,6 +669,15 @@ export class AccountIntakeService implements IAccountIntake {
         );
       }
       Object.assign(account, picked);
+      // A saved subtype, limit or 0% date the new type does not take is cleared with the type
+      // change, so a stale value never steers the figures (a BTL subtype on a Property, say).
+      if (account.accountSubtype && !subtypeAppliesTo(account.type, account.accountSubtype)) {
+        account.accountSubtype = null;
+      }
+      if (!takesCreditFields(account.type)) {
+        account.creditLimit = null;
+        account.promoZeroPercentUntil = null;
+      }
       const effectiveOwnership: AccountOwnership = account.ownership === "joint" ? "joint" : "sole";
       if (!eligible) {
         account.ownership = "sole";

@@ -133,6 +133,32 @@ describe("accounts responses", () => {
     bad(AccountResponse, { ...account, details: [detail], accessToken: "x" });
   });
 
+  it("parses an account without subtype, credit limit or 0% date (older backend responses)", () => {
+    const {
+      accountSubtype: _subtype,
+      creditLimit: _limit,
+      promoZeroPercentUntil: _promo,
+      ...withoutNewFields
+    } = account;
+    ok(AccountResponse, { ...withoutNewFields, details: [] });
+    ok(AccountListResponse, [{ ...withoutNewFields, details: [] }]);
+    ok(CreateAccountResponse, withoutNewFields);
+    ok(UpdateAccountResponse, withoutNewFields);
+  });
+
+  it("carries a chosen subtype, credit limit and 0% date, and rejects an unknown subtype", () => {
+    ok(AccountResponse, {
+      ...account,
+      type: "Credit Card",
+      balance: -250,
+      creditLimit: 3000,
+      promoZeroPercentUntil: "2027-06-30",
+      details: [],
+    });
+    ok(AccountResponse, { ...mortgage, accountSubtype: "btl_mortgage", details: [] });
+    bad(AccountResponse, { ...mortgage, accountSubtype: "holiday_home", details: [] });
+  });
+
   it("never carries the owner id or the provider's account id (BE-09, audit L3)", () => {
     bad(AccountResponse, { ...account, details: [], userId: USER_ID });
     bad(AccountResponse, { ...account, details: [], externalAccountId: "ext-123" });

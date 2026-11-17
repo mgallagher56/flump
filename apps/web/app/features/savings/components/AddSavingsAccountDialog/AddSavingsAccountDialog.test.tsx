@@ -53,7 +53,7 @@ describe("AddSavingsAccountDialog", () => {
         accountId: "",
         name: "Marcus",
         type: "Saving",
-        accountSubtype: "easy_access",
+        accountSubtype: "",
         balance: "1200",
         interestRate: "",
         monthlyContribution: "",
@@ -67,20 +67,43 @@ describe("AddSavingsAccountDialog", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("offers non-ISA savings options and labels Investment rate as an estimated annual return", () => {
+  it("offers non-ISA kinds of savings, never guesses one, and labels an Investment rate as an estimate", () => {
     render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
-    const select = screen.getByLabelText("Account type") as HTMLSelectElement;
-    const labels = [...select.options].map((o) => o.text);
-    expect(labels).toContain("Easy access savings");
-    expect(labels).toContain("Notice savings");
-    expect(labels).toContain("Regular saver");
-    expect(labels).toContain("Fixed term savings");
-    expect(labels).toContain("General savings");
-    expect(labels).toContain("Stocks and Shares ISA");
+    const subtype = screen.getByLabelText("Kind of account (optional)") as HTMLSelectElement;
+    expect(subtype.value).toBe("");
+    const labels = [...subtype.options].map((o) => o.text);
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        "Easy access savings",
+        "Notice savings",
+        "Regular saver",
+        "Fixed term savings",
+        "General savings",
+        "Cash ISA",
+      ]),
+    );
+    expect(labels).not.toContain("Stocks and Shares ISA");
 
     expect(screen.getByLabelText("Interest rate (AER)")).toBeDefined();
-    fireEvent.change(select, { target: { value: "stocks_and_shares_isa" } });
+    fireEvent.change(screen.getByLabelText("Account type"), { target: { value: "Investment" } });
     expect(screen.getByLabelText("Estimated annual return (%)")).toBeDefined();
+    const investmentLabels = [
+      ...(screen.getByLabelText("Kind of account (optional)") as HTMLSelectElement).options,
+    ].map((o) => o.text);
+    expect(investmentLabels).toContain("Stocks and Shares ISA");
+  });
+
+  it("keeps an edited account without a subtype unset, even when its name says ISA", () => {
+    render(
+      <AddSavingsAccountDialog
+        accountToEdit={{ id: "a1", name: "Cash ISA", type: "Saving", balance: 100 } as never}
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    expect((screen.getByLabelText("Kind of account (optional)") as HTMLSelectElement).value).toBe(
+      "",
+    );
   });
 
   it("sends the saved account's version, and after a 412 stays open with the message and what was typed", () => {

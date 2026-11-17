@@ -111,7 +111,7 @@ describe("AddDebtDialog", () => {
     submit();
     expect(onAddDebt).not.toHaveBeenCalled();
     expect(screen.getByText("Enter a name for this debt.")).toBeDefined();
-    expect(screen.getByText("Enter the balance you owe (£0 or more).")).toBeDefined();
+    expect(screen.getByText("Enter the balance you owe, £0 or more.")).toBeDefined();
     expect(
       (screen.getByLabelText(/^Balance you owe/) as HTMLInputElement).getAttribute("aria-invalid"),
     ).toBe("true");

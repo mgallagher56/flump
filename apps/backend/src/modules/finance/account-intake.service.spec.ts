@@ -853,4 +853,147 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(updated.sharePercent).toBeNull();
     });
   });
+
+  describe("subtype, credit limit and 0% date (UX Batch D)", () => {
+    const overOne = (row: Record<string, unknown>) =>
+      intakeOver(
+        createInMemoryRepository([{ id: "a1", userId: "userA", balance: 0, ...row }]),
+        createInMemoryRepository(),
+        mockUserProfileRepo,
+        mockBankConnectionRepo,
+      );
+
+    it("saves a subtype on the type it belongs to, and saves none when none is sent", async () => {
+      const chosen = await service.createAccount("userA", {
+        name: "Oak Street",
+        type: "Mortgage",
+        balance: -150_000,
+        accountSubtype: "btl_mortgage",
+      });
+      expect(chosen.accountSubtype).toBe("btl_mortgage");
+      // Never inferred: "Cash ISA" in the name does not become a cash_isa subtype.
+      const unset = await service.createAccount("userA", {
+        name: "Cash ISA",
+        type: "Saving",
+        balance: 1_000,
+      });
+      expect(unset.accountSubtype).toBeNull();
+    });
+
+    it.each([
+      { type: "Current", accountSubtype: "easy_access" },
+      { type: "Saving", accountSubtype: "btl_mortgage" },
+      { type: "Investment", accountSubtype: "cash_isa" },
+      { type: "Mortgage", accountSubtype: "stocks_and_shares_isa" },
+      { type: "Credit Card", accountSubtype: "residential_mortgage" },
+    ])("refuses subtype $accountSubtype on a $type account with 400", async (body) => {
+      await expect(
+        service.createAccount("userA", { name: "X", balance: 0, ...body }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockAccountRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("refuses an unknown subtype with 400", async () => {
+      await expect(
+        service.createAccount("userA", {
+          name: "X",
+          type: "Saving",
+          balance: 0,
+          accountSubtype: "holiday_pot",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it.each(["Credit Card", "Overdraft"])(
+      "saves a credit limit and 0%% date on a %s, even at a £0 balance",
+      async (type) => {
+        const saved = await service.createAccount("userA", {
+          name: "Card",
+          type,
+          balance: 0,
+          creditLimit: 5_000,
+          promoZeroPercentUntil: "2027-06-30",
+        });
+        expect(saved.creditLimit).toBe(5_000);
+        expect(saved.promoZeroPercentUntil).toBe("2027-06-30");
+      },
+    );
+
+    it.each([
+      { type: "Loan", creditLimit: 5_000 },
+      { type: "Saving", promoZeroPercentUntil: "2027-06-30" },
+      { type: "Mortgage", creditLimit: 0 },
+    ])("refuses a credit field on a $type account with 400", async (body) => {
+      await expect(
+        service.createAccount("userA", { name: "X", balance: 0, ...body }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockAccountRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("accepts null (not set) for every new field on any type", async () => {
+      const saved = await service.createAccount("userA", {
+        name: "Loan",
+        type: "Loan",
+        balance: -2_000,
+        accountSubtype: null,
+        creditLimit: null,
+        promoZeroPercentUntil: null,
+      });
+      expect(saved.accountSubtype).toBeNull();
+      expect(saved.creditLimit).toBeNull();
+      expect(saved.promoZeroPercentUntil).toBeNull();
+    });
+
+    it("checks an update against the saved type when the type is not sent", async () => {
+      const svc = overOne({ name: "Loan", type: "Loan", balance: -2_000 });
+      await expect(svc.updateAccount("userA", "a1", { creditLimit: 1_000 })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      const card = overOne({ name: "Card", type: "Credit Card", balance: -100 });
+      const updated = await card.updateAccount("userA", "a1", { creditLimit: 1_000 });
+      expect(updated.creditLimit).toBe(1_000);
+    });
+
+    it("clears a saved subtype, limit and 0% date the new type does not take", async () => {
+      const svc = overOne({
+        name: "Card",
+        type: "Credit Card",
+        balance: -100,
+        creditLimit: 3_000,
+        promoZeroPercentUntil: "2027-01-31",
+      });
+      const loan = await svc.updateAccount("userA", "a1", { type: "Loan" });
+      expect(loan.creditLimit).toBeNull();
+      expect(loan.promoZeroPercentUntil).toBeNull();
+
+      const btl = overOne({
+        name: "Oak Street",
+        type: "Mortgage",
+        balance: -150_000,
+        accountSubtype: "btl_mortgage",
+      });
+      const property = await btl.updateAccount("userA", "a1", { type: "Loan" });
+      expect(property.accountSubtype).toBeNull();
+    });
+
+    it("refuses joint on an ISA subtype, whatever the name says", async () => {
+      await expect(
+        service.createAccount("userA", {
+          name: "Rainy day pot",
+          type: "Saving",
+          balance: 1_000,
+          accountSubtype: "cash_isa",
+          ownership: "joint",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      const joint = await service.createAccount("userA", {
+        name: "Old ISA transfer pot",
+        type: "Saving",
+        balance: 1_000,
+        accountSubtype: "easy_access",
+        ownership: "joint",
+      });
+      expect(joint.ownership).toBe("joint");
+    });
+  });
 });

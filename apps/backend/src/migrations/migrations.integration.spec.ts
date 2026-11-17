@@ -9,6 +9,10 @@ import { at } from "../testing/must";
 import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserMonthIndex1794357300000";
 import { AddAccountDeletionTombstones1794622492000 } from "./AddAccountDeletionTombstones1794622492000";
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
+import {
+  AddAccountSubtypeCreditLimitAndPromo1795300000000,
+  DOWN_REFUSAL as SUBTYPE_DOWN_REFUSAL,
+} from "./AddAccountSubtypeCreditLimitAndPromo1795300000000";
 import { AddLivingWithFamilyHousingStatus1794700000000 } from "./AddLivingWithFamilyHousingStatus1794700000000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddNetWorthChoices1794800000000 } from "./AddNetWorthChoices1794800000000";
@@ -1777,6 +1781,72 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await triggers()).toHaveLength(3);
       expect(await guardFunctions()).toHaveLength(2);
       expect(await auditCount()).toBe(2);
+    });
+  });
+
+  describe("AddAccountSubtypeCreditLimitAndPromo1795300000000 (UX Batch D)", () => {
+    const NAME = "AddAccountSubtypeCreditLimitAndPromo1795300000000";
+    const newColumns = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT column_name, data_type, is_nullable FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'accounts'
+            AND column_name IN ('account_subtype', 'credit_limit', 'promo_zero_percent_until')
+          ORDER BY column_name`,
+      );
+    const insertAccount = (): Promise<unknown> =>
+      ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency)
+         VALUES ('u1', 'Card', 'Credit Card', -250, 'GBP')`,
+      );
+
+    it("adds three nullable columns and leaves existing rows unset", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await insertAccount();
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      expect(await newColumns()).toEqual([
+        { column_name: "account_subtype", data_type: "character varying", is_nullable: "YES" },
+        { column_name: "credit_limit", data_type: "numeric", is_nullable: "YES" },
+        { column_name: "promo_zero_percent_until", data_type: "date", is_nullable: "YES" },
+      ]);
+      expect(
+        await ds.query(
+          "SELECT account_subtype, credit_limit, promo_zero_percent_until FROM accounts",
+        ),
+      ).toEqual([{ account_subtype: null, credit_limit: null, promo_zero_percent_until: null }]);
+    });
+
+    it("is idempotent when the columns already exist", async () => {
+      await ds.runMigrations();
+      await expect(
+        runUpInTransaction(new AddAccountSubtypeCreditLimitAndPromo1795300000000()),
+      ).resolves.toBe(undefined);
+      expect(await newColumns()).toHaveLength(3);
+    });
+
+    it("down drops the columns while no account holds a value, and up runs again", async () => {
+      await ds.runMigrations();
+      await insertAccount();
+      await undoThrough(NAME);
+      expect(await newColumns()).toEqual([]);
+      expect(await ds.query("SELECT count(*)::int AS n FROM accounts")).toEqual([{ n: 1 }]);
+      await ds.runMigrations();
+      expect(await newColumns()).toHaveLength(3);
+    });
+
+    it("down is refused while a saved value exists, and changes nothing", async () => {
+      await ds.runMigrations();
+      await insertAccount();
+      await ds.query("UPDATE accounts SET credit_limit = 3000");
+      // The newest migration, so undoing the last one is this one (TypeORM rolls it back).
+      expect((await applied()).at(-1)).toBe(NAME);
+      await expect(ds.undoLastMigration()).rejects.toThrow(SUBTYPE_DOWN_REFUSAL);
+      expect(await applied()).toContain(NAME);
+      expect(await newColumns()).toHaveLength(3);
+      expect(await ds.query("SELECT credit_limit FROM accounts")).toEqual([
+        { credit_limit: "3000.00" },
+      ]);
     });
   });
 });

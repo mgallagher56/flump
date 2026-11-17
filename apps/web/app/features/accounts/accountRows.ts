@@ -107,6 +107,7 @@ export const summariseAccountBalance = (
   const shareInput = {
     name: account.name,
     type: account.type,
+    accountSubtype: account.accountSubtype,
     ownership: account.ownership,
     sharePercent: account.sharePercent,
   };

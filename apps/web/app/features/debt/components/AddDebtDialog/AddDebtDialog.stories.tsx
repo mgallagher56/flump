@@ -40,7 +40,8 @@ export const ValidationErrors: Story = {
     const body = within(document.body);
     await userEvent.click(await body.findByRole("button", { name: "Add debt" }));
     await expect(body.getByText("Enter a name for this debt.")).toBeInTheDocument();
-    await expect(body.getByText("Enter the balance you owe, more than £0.")).toBeInTheDocument();
+    // A credit card (the default type) can be at £0, so its balance only has to be £0 or more.
+    await expect(body.getByText("Enter the balance you owe, £0 or more.")).toBeInTheDocument();
   },
 };
 

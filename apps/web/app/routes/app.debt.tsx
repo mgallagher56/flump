@@ -34,6 +34,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
   try {
     if (intent === "createDebt") {
+      const creditLimit = optionalNumber(formData.get("creditLimit"));
       const promoRaw = formData.get("promoZeroPercentUntil");
       await backendFetch("/accounts", {
         schema: CreateAccountResponse,
@@ -45,8 +46,11 @@ export const action = async (args: ActionFunctionArgs) => {
           balance: storedLiabilityBalance(formData.get("balance")),
           interestRate: optionalNumber(formData.get("interestRate")),
           monthlyContribution: optionalNumber(formData.get("monthlyContribution")),
-          creditLimit: optionalNumber(formData.get("creditLimit")),
-          promoZeroPercentUntil: typeof promoRaw === "string" && promoRaw !== "" ? promoRaw : null,
+          // Only a card or overdraft has these, and only when the user gave them.
+          ...(creditLimit !== null ? { creditLimit } : {}),
+          ...(typeof promoRaw === "string" && promoRaw !== ""
+            ? { promoZeroPercentUntil: promoRaw }
+            : {}),
         },
       });
     } else if (intent === "updateDebt") {
@@ -65,6 +69,7 @@ export const action = async (args: ActionFunctionArgs) => {
         body.creditLimit = optionalNumber(formData.get("creditLimit"));
       }
       if (formData.has("promoZeroPercentUntil")) {
+        const creditLimit = optionalNumber(formData.get("creditLimit"));
         const promoRaw = formData.get("promoZeroPercentUntil");
         body.promoZeroPercentUntil =
           typeof promoRaw === "string" && promoRaw !== "" ? promoRaw : null;

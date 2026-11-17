@@ -28,7 +28,7 @@ export interface SnapshotRow {
  * `PortfolioSnapshot` does, so the series matches the net worth on every other page.
  */
 export type SnapshotAccount = Pick<RawAccount, "id" | "type"> &
-  Partial<Pick<RawAccount, "name" | "ownership" | "sharePercent">>;
+  Partial<Pick<RawAccount, "name" | "accountSubtype" | "ownership" | "sharePercent">>;
 
 export interface SnapshotAccountValue {
   accountId: string;
@@ -135,6 +135,7 @@ export function selectNetWorthSeries(
     shares.set(String(a.id), {
       type,
       name: a.name,
+      accountSubtype: a.accountSubtype,
       ownership: a.ownership,
       sharePercent: a.sharePercent,
     });

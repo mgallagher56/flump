@@ -97,6 +97,7 @@ Mobile follows the ruling. When the web PR merges, the row moves to table 1 with
 | 2026-11-15 | "Interest this year" in the debt modelling result | #737 | Show it in the pay-extra result, hidden when an APR is missing or a minimum is estimated | Debt | Not started |
 | 2026-11-15 | Anonymised tokens label every typed budget and tax name | #737 | None on screen; mobile token flows inherit it from the engine and backend | AI connections | Not applicable |
 | 2026-11-15 | E17 House rules B1–B5, B8–B18: consistent drawer buttons, (optional) field markers, ~ for long estimates, cards and loans naming, check-in button copy, and hero panel full width | E17-house-rules | Apply the corresponding house rules across mobile forms, drawers, date formats, and check-in buttons | All | Not started |
+| 2026-11-17 | Accounts take an optional kind (savings, ISA, investment, residential or buy-to-let mortgage), cards and overdrafts take an optional credit limit and 0% end date, and deleting an account sits inside its Edit dialog | #766 | Offer the same optional fields when adding or editing an account, show the limit and 0% date as plain facts, and keep delete inside edit | Accounts | Not started |
 
 ## 3. Row template
 

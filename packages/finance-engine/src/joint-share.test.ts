@@ -421,3 +421,33 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
     });
   });
 });
+
+describe("ISA rule by the chosen subtype", () => {
+  it("treats an ISA subtype as individual-only, whatever the name says", () => {
+    const cashIsa = { type: "Saving", name: "Rainy day pot", accountSubtype: "cash_isa" };
+    expect(isIsaAccount(cashIsa)).toBe(true);
+    expect(canAccountBeJoint(cashIsa)).toBe(false);
+    expect(resolveAccountOwnership({ ...cashIsa, ownership: "joint" })).toBe("sole");
+    // 1,000 held in a Cash ISA marked joint at 50% still counts in full: 1,000.
+    expect(applyAccountShare(1000, { ...cashIsa, ownership: "joint", sharePercent: 50 })).toBe(
+      1000,
+    );
+    expect(isIsaAccount({ type: "Investment", accountSubtype: "stocks_and_shares_isa" })).toBe(
+      true,
+    );
+    expect(isIsaAccount({ type: "Saving", accountSubtype: "lifetime_isa" })).toBe(true);
+  });
+
+  it("lets a non-ISA subtype be joint even when the name mentions an ISA", () => {
+    const savings = { type: "Saving", name: "Old ISA transfer pot", accountSubtype: "easy_access" };
+    expect(isIsaAccount(savings)).toBe(false);
+    expect(canAccountBeJoint(savings)).toBe(true);
+    // 1,000 joint at 50%: 1,000 x 50 / 100 = 500.
+    expect(applyAccountShare(1000, { ...savings, ownership: "joint", sharePercent: 50 })).toBe(500);
+  });
+
+  it("falls back to the name when no subtype was chosen", () => {
+    expect(isIsaAccount({ type: "Saving", name: "Cash ISA", accountSubtype: null })).toBe(true);
+    expect(isIsaAccount({ type: "Saving", name: "Joint saver", accountSubtype: "" })).toBe(false);
+  });
+});
