@@ -47,5 +47,7 @@ describe("TaxSourcesPanel", () => {
     );
     expect(screen.getByRole("heading", { name: "Income sources" })).toBeDefined();
     expect(screen.getByText(/Oak Street BTL mortgage/)).toBeDefined();
+    // One add action per place: rental income is added from the heading's "Add income" menu.
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

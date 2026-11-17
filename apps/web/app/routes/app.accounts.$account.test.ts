@@ -6,9 +6,11 @@ vi.mock("~/services/backend-client.server", () => ({
 }));
 vi.mock("~/utils/auth.server", () => ({
   getAuthSession: async () => ({ user: { id: "u1" }, accessToken: "token" }),
+  requireAccessToken: ({ accessToken }: { accessToken: string }) => accessToken,
 }));
 
-const { loader } = await import("./app.accounts.$account");
+const { action, loader } = await import("./app.accounts.$account");
+const { BackendError } = await import("~/services/backend-error");
 
 const args = {
   request: new Request("http://app.test/app/accounts/a1"),
@@ -44,5 +46,92 @@ describe("app.accounts.$account loader", () => {
     const data = await run();
     expect(data.basis).toBeNull();
     expect(data.account).toBe(account);
+  });
+});
+
+const post = (fields: Record<string, string>) => {
+  // URL-encoded, as useFetcher().submit sends a plain object.
+  const body = new URLSearchParams(fields);
+  return action({
+    request: new Request("http://app.test/app/accounts/a1", { method: "POST", body }),
+    params: { account: "a1" },
+  } as never);
+};
+
+describe("app.accounts.$account action", () => {
+  beforeEach(() => {
+    backendFetch.mockReset();
+    backendFetch.mockResolvedValue({});
+  });
+
+  it("updates the account with its joint share, kind, limit and 0% date", async () => {
+    const res = (await post({
+      intent: "update",
+      accountId: "a1",
+      name: "Card",
+      type: "Credit Card",
+      balance: "-250",
+      ownership: "joint",
+      sharePercent: "40",
+      creditLimit: "3000",
+      promoZeroPercentUntil: "2027-06-30",
+      accountSubtype: "",
+    })) as unknown as { data: unknown };
+    expect(res.data).toEqual({ success: true });
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/accounts/a1",
+      expect.objectContaining({
+        method: "PATCH",
+        accessToken: "token",
+        body: {
+          name: "Card",
+          type: "Credit Card",
+          balance: -250,
+          ownership: "joint",
+          sharePercent: 40,
+          accountSubtype: null,
+          creditLimit: 3000,
+          promoZeroPercentUntil: "2027-06-30",
+        },
+      }),
+    );
+  });
+
+  it("falls back to the route's account id", async () => {
+    await post({ intent: "update", name: "Pot", type: "Saving" });
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/accounts/a1",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+  });
+
+  it("deletes the account, then sends the user back to the accounts list", async () => {
+    const res = (await post({ intent: "delete", accountId: "a1" })) as Response;
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/accounts/a1",
+      expect.objectContaining({ method: "DELETE", accessToken: "token" }),
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/app/accounts");
+  });
+
+  it("refuses an unknown intent with 400 and calls nothing", async () => {
+    const res = (await post({ intent: "archive" })) as unknown as {
+      data: unknown;
+      init: { status: number };
+    };
+    expect(res.init.status).toBe(400);
+    expect(backendFetch).not.toHaveBeenCalled();
+  });
+
+  it("stays on the page with the error when the delete fails", async () => {
+    backendFetch.mockRejectedValue(new BackendError("server", "/accounts/a1", 500));
+    const res = (await post({ intent: "delete", accountId: "a1" })) as unknown as {
+      data: { success: boolean };
+      init: { status: number };
+    };
+    expect(res).not.toBeInstanceOf(Response);
+    expect(res.data.success).toBe(false);
+    expect(res.init.status).toBe(500);
   });
 });

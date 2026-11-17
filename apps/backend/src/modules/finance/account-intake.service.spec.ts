@@ -998,6 +998,28 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(property.accountSubtype).toBeNull();
     });
 
+    it("judges joint on the subtype left after a type change clears a stale one", async () => {
+      const svc = overOne({
+        name: "Family pot",
+        type: "Saving",
+        balance: 5_000,
+        accountSubtype: "easy_access",
+        ownership: "joint",
+        sharePercent: 50,
+      });
+      // easy_access does not apply to Investment, so it is cleared and the name decides: an ISA.
+      await expect(
+        svc.updateAccount("userA", "a1", { type: "Investment", name: "Family ISA" }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      const sole = await svc.updateAccount("userA", "a1", {
+        type: "Investment",
+        name: "Family ISA",
+        ownership: "sole",
+      });
+      expect(sole.accountSubtype).toBeNull();
+      expect(sole.ownership).toBe("sole");
+    });
+
     it("refuses joint on an ISA subtype, whatever the name says", async () => {
       await expect(
         service.createAccount("userA", {
