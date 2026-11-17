@@ -175,6 +175,17 @@ describe("merge gate (BE-01)", () => {
     }
   });
 
+  test("no required check sits behind a pull_request paths filter (it would never report)", () => {
+    for (const check of required.checks) {
+      const pr = readWorkflow(check.workflow).on.pull_request as
+        | { paths?: unknown; "paths-ignore"?: unknown }
+        | null
+        | undefined;
+      expect(pr?.paths).toBeUndefined();
+      expect(pr?.["paths-ignore"]).toBeUndefined();
+    }
+  });
+
   test("the list covers the gates the audit named", () => {
     const names = required.checks.map((c) => c.name);
     for (const gate of [

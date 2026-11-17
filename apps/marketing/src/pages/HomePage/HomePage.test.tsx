@@ -25,8 +25,11 @@ describe("Marketing HomePage (E16 PR 12)", () => {
     expect(screen.getByText(/^Enter a few rough numbers/)).toBeDefined();
     const preview = screen.getByTestId("baseline-snapshot-preview");
     expect(within(preview).getByText("Example")).toBeDefined();
-    const sample = within(main()).getByRole("link", { name: /Try sample data/ });
-    expect(sample.getAttribute("href")).toContain("/sandbox");
+    // /sandbox now redirects to sign-up, so the second hero button opens the interactive preview.
+    const tryIt = within(main()).getByRole("link", { name: "Interactive preview" });
+    expect(tryIt.getAttribute("href")).toBe("/preview");
+    expect(tryIt.getAttribute("target")).toBeNull();
+    expect(document.querySelector('a[href*="/sandbox"]')).toBeNull();
   });
 
   it("keeps the hero inside the first-view number budget with one primary button", () => {

@@ -3,14 +3,15 @@ import { join } from "node:path";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DELTA_PANEL_COPY } from "../../patterns/TakeHomeDeltaPanel/copy";
+import { drawerQuietButton } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer.styles";
 import { SECTION24_COPY, Section24Calculator } from "./Section24Calculator";
 
 const slider = (label: string) => screen.getByLabelText(label);
 const pill = (label: string) => screen.getByLabelText(`${label} input`);
 const outcomes = () => within(screen.getByTestId("section-24-outcomes"));
 const toolText = () => screen.getByTestId("section-24-tool").textContent ?? "";
-const openMoreOptions = () =>
-  fireEvent.click(screen.getByRole("button", { name: new RegExp(SECTION24_COPY.moreOptions) }));
+const otherCostsButton = () => screen.getByRole("button", { name: SECTION24_COPY.otherCosts });
+const openOtherCosts = () => fireEvent.click(otherCostsButton());
 
 describe("Section24Calculator", () => {
   it("shows the engine's tax, cash left and rate for the default example", () => {
@@ -64,10 +65,18 @@ describe("Section24Calculator", () => {
     expect(outcomes().getByText("£9,600")).toBeDefined();
   });
 
-  it("keeps other allowable costs under More options, and they change the figures", () => {
+  it("keeps other allowable costs behind a drawer named for them, and they change the figures", () => {
     render(<Section24Calculator />);
     expect(screen.getAllByRole("slider")).toHaveLength(3);
-    openMoreOptions();
+    // B14: the drawer button names what is inside (never "More options") and is the quiet,
+    // small outline button with a chevron; the name stays the same when open.
+    expect(SECTION24_COPY.otherCosts).toBe("Other allowable costs");
+    expect(screen.queryByRole("button", { name: /more options/i })).toBeNull();
+    expect(otherCostsButton().getAttribute("aria-expanded")).toBe("false");
+    expect(otherCostsButton().className).toBe(drawerQuietButton());
+    expect(otherCostsButton().querySelector("svg")).not.toBeNull();
+    openOtherCosts();
+    expect(otherCostsButton().getAttribute("aria-expanded")).toBe("true");
     fireEvent.change(slider(SECTION24_COPY.allowableExpenses), { target: { value: "4000" } });
     // £14,000 taxable: £5,600 less £1,600 credit.
     expect(outcomes().getByText("£4,000")).toBeDefined();

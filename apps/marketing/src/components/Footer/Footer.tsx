@@ -1,16 +1,10 @@
 import { BUSINESS_DETAILS, companyLine } from "@flump/business-details";
 import { SiteFooter, type SiteFooterRenderLink, siteFooterLink } from "@repo/ui";
-import { ExternalLink } from "lucide-react";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
 import { mailto, signupCta, TAGLINE } from "../../utils/site";
 import { getAppUrl } from "../../utils/url";
-import {
-  footerBottomRow,
-  footerCompanyLine,
-  footerExternalIcon,
-  footerSpacing,
-} from "./Footer.styles";
+import { footerBottomRow, footerCompanyLine, footerSpacing } from "./Footer.styles";
 
 const renderLink: SiteFooterRenderLink = (link, className, children) => (
   <Link className={className} to={link.href}>
@@ -47,17 +41,6 @@ export const Footer: FC = () => {
           links: [
             { key: "preview", label: "Interactive preview", href: "/preview" },
             { key: "tools", label: "All calculators", href: "/tools" },
-            {
-              key: "demo",
-              label: (
-                <>
-                  Try sample data
-                  <ExternalLink aria-hidden="true" className={footerExternalIcon()} size={11} />
-                </>
-              ),
-              href: `${appUrl}/sandbox`,
-              newTab: true,
-            },
             { key: "mcp", label: "AI connection", href: "/mcp" },
             { key: "pricing", label: "Pricing", href: "/pricing" },
             {

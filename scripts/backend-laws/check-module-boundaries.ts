@@ -32,7 +32,7 @@ export const MODULE_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = 
   privacy: ["banking"],
   profile: ["banking", "privacy", "snapshots"],
   retirement: ["privacy"],
-  agent: ["finance", "imports", "profile"],
+  agent: ["finance", "imports", "profile", "retirement"],
 };
 
 const COMPOSITION_ROOT = new Set(["main.ts", "app.module.ts"]);

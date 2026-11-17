@@ -1,4 +1,4 @@
-import { Button, VisuallyHidden } from "@repo/ui";
+import { Button } from "@repo/ui";
 import type { FC } from "react";
 import { BaselineSnapshotPreview } from "../../components/BaselineSnapshotPreview";
 import { Footer } from "../../components/Footer";
@@ -10,7 +10,6 @@ import { PageMeta } from "../../components/PageMeta";
 import { PayRiseTeaser } from "../../components/PayRiseTeaser";
 import { SecurityPrivacySection } from "../../components/SecurityPrivacySection";
 import { SITE_TAGLINE, signupCta } from "../../utils/site";
-import { getAppUrl } from "../../utils/url";
 import {
   ctaRow,
   finalCta,
@@ -33,7 +32,6 @@ import {
  * FAQ answer (D13).
  */
 export const HomePage: FC = () => {
-  const appUrl = getAppUrl();
   const cta = signupCta();
 
   return (
@@ -61,10 +59,7 @@ export const HomePage: FC = () => {
                   <a href={cta.href}>{cta.label}</a>
                 </Button>
                 <Button asChild size="lg" variant="outline">
-                  <a href={`${appUrl}/sandbox`} rel="noreferrer" target="_blank">
-                    Try sample data
-                    <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
-                  </a>
+                  <a href="/preview">Interactive preview</a>
                 </Button>
               </div>
             </div>

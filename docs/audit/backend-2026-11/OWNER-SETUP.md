@@ -343,6 +343,22 @@ Three things must be settled before using it, which is why it is not done here:
 - Account deletion deletes the person's audit rows as the API's role. It would need its own narrow path (for example a `SECURITY DEFINER` function owned by the table owner), or the decision below.
 - The retention cron keeps the owner role, or a role with DELETE on the tables it purges.
 
+### 4. Receipt encryption key (review fix, 17 Nov 2026): done 17 Nov 2026
+
+**Done 17 Nov 2026:** the owner set `RECEIPT_ENCRYPTION_KEY` on the backend service in Railway. The checks below still apply around the next release.
+
+From the release after 17 Nov 2026, the backend also refuses to start in production without `RECEIPT_ENCRYPTION_KEY`. It encrypts the tax receipts people upload. The boot error names the variable, never its value. A versioned keyring in `RECEIPT_ENCRYPTION_KEYS` (`<version>:<secret>` entries) may replace it.
+
+| Service | Variable | Rule |
+|---|---|---|
+| backend | `RECEIPT_ENCRYPTION_KEY` | Set, at least 32 characters. Never rotate it by replacing the value: rotate by moving to `RECEIPT_ENCRYPTION_KEYS` with the old key kept as an earlier version |
+
+If the backend already has the variable (receipts were encrypted by `EncryptTaxReceipts1795200000000`), nothing is needed. If not:
+
+- [x] Generate the key on your own machine with `openssl rand -base64 48` and paste the output straight into the backend service's variables in Railway. Never paste it into a chat, an issue, a commit or any file in this repository. Date: 17 Nov 2026
+- [ ] Before the release: `GET /health/ready` on the current backend still shows `"configWarnings": 1`. Date: ____
+- [ ] After the release: the backend runs the new deployment, and a receipt uploaded before the release still opens. Date: ____
+
 ### Follow-ups the owner decides
 
 - **N12: keep a pseudonymised audit copy on erasure?** Today erasure deletes the person's `audit_events` rows (the `user.deleted` row has no user id). Keeping a copy keyed by the tombstone hash would preserve the security trail; it also keeps more data after an erasure. Not decided, so the behaviour is unchanged.

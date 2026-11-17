@@ -42,7 +42,11 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: /calculators/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /pricing/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /security/i })).toBeDefined();
-    expect(screen.getByRole("link", { name: /^Sample data/ })).toBeDefined();
+    // /sandbox now redirects to sign-up, so the try-it link goes to the interactive preview.
+    const preview = screen.getByRole("link", { name: "Interactive preview" });
+    expect(preview.getAttribute("href")).toBe("/preview");
+    expect(preview.getAttribute("target")).toBeNull();
+    expect(document.querySelector('a[href*="/sandbox"]')).toBeNull();
     expect(screen.getByRole("link", { name: "AI connection" })).toBeDefined();
 
     expect(screen.getAllByText("Sign in").length).toBeGreaterThan(0);
@@ -208,7 +212,7 @@ describe("Header", () => {
     );
     const primary = screen.getByRole("navigation", { name: "Primary" });
     // Inline only from navWide (1024px); below that they are in the drawer.
-    for (const name of [/AI connection/, /Sample data/]) {
+    for (const name of [/AI connection/, /Interactive preview/]) {
       expect(within(primary).getByRole("link", { name }).closest("li")?.className).toContain(
         "navWide:d_list-item",
       );
