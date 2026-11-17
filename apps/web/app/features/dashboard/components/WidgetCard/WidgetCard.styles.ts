@@ -25,7 +25,7 @@ export const widgetCard = cva({
     tone: {
       teal: { borderTopColor: "primary" },
       sage: { borderTopColor: "chart.wealth" },
-      apricot: { borderTopColor: "chart.warning" },
+      apricot: { borderTopColor: "surface.tint.apricot" },
       neutral: { borderTopColor: "border.strong" },
     },
     interactive: {
@@ -35,7 +35,8 @@ export const widgetCard = cva({
           borderColor: "border.strong",
           boxShadow: "raised",
         },
-        _focusWithin: {
+        // One ring, on the card, and only for keyboard focus on its stretched link.
+        "&:has(a:focus-visible)": {
           outlineWidth: "2px",
           outlineStyle: "solid",
           outlineColor: "border.focusRing",
@@ -118,12 +119,8 @@ export const widgetLink = cva({
       textDecoration: "underline",
       textUnderlineOffset: "3px",
     },
-    _focusVisible: {
-      outlineWidth: "2px",
-      outlineStyle: "solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-    },
+    // The card draws the focus ring (see widgetCard), so the link draws none of its own.
+    _focusVisible: { outline: "none" },
   },
 });
 
