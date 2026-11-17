@@ -68,6 +68,8 @@ describe("RetirementAccessGuard", () => {
 
   it("lets a listed user through", () => {
     delete process.env.BETA_OPEN;
+    // A test user id, not a credential.
+    // nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
     process.env.RETIREMENT_ALLOWED_USER_IDS = "friend";
     expect(new RetirementAccessGuard().canActivate(ctx("friend"))).toBe(true);
   });
@@ -80,6 +82,8 @@ describe("RetirementAccessGuard", () => {
 
   it("answers exactly as Nest does for an unknown route, with the real method and path", () => {
     delete process.env.BETA_OPEN;
+    // A test user id, not a credential.
+    // nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
     process.env.RETIREMENT_ALLOWED_USER_IDS = "friend";
     const guard = new RetirementAccessGuard();
 
