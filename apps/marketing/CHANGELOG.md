@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.36.2](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.1...flump/marketing-v1.36.2) (2026-11-17)
+
+
+### Bug Fixes 🪲
+
+* authz test for GET without a saved plan; shorter header label so the nav fits at 1024px ([24a66f7](https://github.com/mgallagher56/flump/commit/24a66f723b465451ea152e018f57733fa1653051))
+* Section 24 disclosure label, marketing preview links, CI receipt key, plan decisions recorded (C16, F19, F20) ([6c43cdb](https://github.com/mgallagher56/flump/commit/6c43cdb2f9d902b3819f092dc6f0efae85441f42))
+
 ## [1.36.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.0...flump/marketing-v1.36.1) (2026-11-16)
 
 

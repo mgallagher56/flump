@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.44.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.43.0...flump/web-v1.44.0) (2026-11-17)
+
+
+### Features ✨
+
+* **accounts,debt,tax:** account deletion, home estimate, non-ISA savings, S&S return tracking, BTL mortgages, credit limits & 0% periods ([e612fc5](https://github.com/mgallagher56/flump/commit/e612fc52dbf931a1a84f32d660c059552f3d8ffb))
+* **retirement:** one pension projection, friends-beta gate and MoneyHelper link ([4865d36](https://github.com/mgallagher56/flump/commit/4865d3631ebffb3e6fc098a6083e2ae28d419f99))
+* **web:** add basic SiteFooter to signed-in web app layout ([7793349](https://github.com/mgallagher56/flump/commit/779334981d37a55dfc51157c93dc0bbdfcb3805f))
+
+
+### Bug Fixes 🪲
+
+* **accounts:** address independent review of the accounts rework ([8a7a2db](https://github.com/mgallagher56/flump/commit/8a7a2db7e30ef16eabbe2013184deaa9878601f6))
+* **accounts:** rework accounts, debt and tax after review ([79a42ab](https://github.com/mgallagher56/flump/commit/79a42ab6af6496904dbbec1cab195f17d804aa54))
+* **retirement,joint:** one retirement input for web and MCP, joint share in history ([27e7811](https://github.com/mgallagher56/flump/commit/27e781144611e070eb73692ca4802948b14cf6e5))
+* **retirement:** address independent and UI reviews, browser check ([1fa1c8e](https://github.com/mgallagher56/flump/commit/1fa1c8e85338d394aaf4644a50a1d197f89dc984))
+* **ui,web:** clickable dashboard/account cards, all widgets, collapsible simulators, and sortable/filterable tables ([4fb0910](https://github.com/mgallagher56/flump/commit/4fb09103f4651a29713ba14d89e26a102aad16fe))
+* **ui,web:** rework cards, simulators and tables after review ([431643d](https://github.com/mgallagher56/flump/commit/431643d8f0d935d358176d13e9aabb76ca911a94))
+* **web:** mortgage simulator and LTV on the whole loan, ISA/pension ownership note (B13, B14b) ([09b6756](https://github.com/mgallagher56/flump/commit/09b675658cd3ddd26158a1059aa2e4b1ebe21f93))
+* **web:** name the budget and savings what-if toggles ([0805771](https://github.com/mgallagher56/flump/commit/0805771a49f049fd5c53100375425e8041cba1f2))
+* **web:** one focus ring on dashboard cards and a domain tint, not a warning colour, on debt ([82bcfdf](https://github.com/mgallagher56/flump/commit/82bcfdf366cb4e1b69f0ccae49dc0fd8ac8a82d3))
+* **web:** polish Edit Debt, Budget UX/sync, and Mortgage simulator layout ([6c55a8d](https://github.com/mgallagher56/flump/commit/6c55a8d3b296eeda84c923221ea8d3c313778cd6))
+* **web:** read the budget equation line out with minus and equals ([1c5e4c4](https://github.com/mgallagher56/flump/commit/1c5e4c44226881d98e12f53b28b86c29748f85f3))
+* **web:** rework budget, debt and mortgage polish after review ([986fd62](https://github.com/mgallagher56/flump/commit/986fd6286ee9302b582715a1bde8636289cb7eba))
+
 ## [1.43.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.42.0...flump/web-v1.43.0) (2026-11-16)
 
 
