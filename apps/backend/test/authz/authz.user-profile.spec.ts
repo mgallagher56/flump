@@ -513,14 +513,26 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(unauth.status).toBe(401);
     ran("GET /retirement-plan", "authn");
 
+    // With nothing saved, GET answers with the defaults and writes no row (null id, no ETag).
+    const before = await h.call("get", "/retirement-plan", h.tokens.b);
+    expect(before.status).toBe(200);
+    expect(before.body.plan.userId).toBe(USER_B);
+    expect(before.body.plan.id).toBeNull();
+
+    // A saved plan is returned only to its owner; the other user still gets their own defaults.
+    const saved = await h.call("put", "/retirement-plan", h.tokens.a, { retirementAge: 63 });
+    expect(saved.status).toBe(200);
     const aRes = await h.call("get", "/retirement-plan", h.tokens.a);
     expect(aRes.status).toBe(200);
     expect(aRes.body.plan.userId).toBe(USER_A);
+    expect(aRes.body.plan.id).not.toBeNull();
+    expect(aRes.body.plan.retirementAge).toBe(63);
 
     const bRes = await h.call("get", "/retirement-plan", h.tokens.b);
     expect(bRes.status).toBe(200);
     expect(bRes.body.plan.userId).toBe(USER_B);
     expect(bRes.body.plan.id).not.toBe(aRes.body.plan.id);
+    expect(bRes.body.plan.retirementAge).not.toBe(63);
     ran("GET /retirement-plan", "idor");
   });
 

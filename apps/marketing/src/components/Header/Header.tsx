@@ -90,7 +90,7 @@ export const Header: FC = () => {
       {
         key: "preview",
         wideOnly: true,
-        label: "Interactive preview",
+        label: "Preview",
         href: "/preview",
         hint: "Try it without signing in",
       },
