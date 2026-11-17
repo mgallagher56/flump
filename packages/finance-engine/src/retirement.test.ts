@@ -96,20 +96,46 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
       expect(housing.kind).toBe("mortgage-continues");
       expect(housing.mortgageEndAge).toBe(70);
       expect(housing.mortgageYearsInRetirement).toBe(5);
-      expect(housing.monthlyCostAtRetirementGbp).toBe(1_055.67);
-      expect(housing.annualCostAtRetirementGbp).toBe(roundPence(1_055.67 * 12));
 
-      // First 5 years of retirement have full payments; years 6..25 are £0
-      for (let i = 0; i < 5; i++) {
-        expect(housing.yearlySchedule[i]?.annualCostGbp).toBe(roundPence(1_055.67 * 12));
-      }
+      // A fixed £1,055.67 a month falls in today's prices at 2% inflation. Retirement year i
+      // (0-based) is 20 + i years away, so its cost is 1,055.67 × 12 ÷ 1.02^(20 + i):
+      //   i = 0: 12,668.04 ÷ 1.485947 = 8,525.23
+      //   i = 1: 12,668.04 ÷ 1.515666 = 8,358.07
+      //   i = 2: 12,668.04 ÷ 1.545980 = 8,194.18
+      //   i = 3: 12,668.04 ÷ 1.576899 = 8,033.51
+      //   i = 4: 12,668.04 ÷ 1.608437 = 7,875.99
+      // Monthly at the start of retirement: 1,055.67 ÷ 1.485947 = 710.44.
+      // Total 40,986.98; average over 25 years 40,986.98 ÷ 25 = 1,639.48.
+      expect(housing.monthlyCostAtRetirementGbp).toBe(710.44);
+      expect(housing.annualCostAtRetirementGbp).toBe(8_525.23);
+      expect(housing.yearlySchedule.slice(0, 5).map((p) => p.annualCostGbp)).toEqual([
+        8_525.23, 8_358.07, 8_194.18, 8_033.51, 7_875.99,
+      ]);
       for (let i = 5; i < 25; i++) {
         expect(housing.yearlySchedule[i]?.annualCostGbp).toBe(0);
       }
-      expect(housing.totalRetirementHousingCostGbp).toBe(roundPence(1_055.67 * 12 * 5));
-      expect(housing.averageAnnualCostGbp).toBe(
-        roundPence(housing.totalRetirementHousingCostGbp / 25),
-      );
+      expect(housing.totalRetirementHousingCostGbp).toBe(40_986.98);
+      expect(housing.averageAnnualCostGbp).toBe(1_639.48);
+    });
+
+    it("RV5 override: a typed continuing mortgage payment also falls in today's prices", () => {
+      // Override: £1,000 a month for 2 years of retirement, retiring in 10 years at 2% inflation.
+      //   year 0: 12,000 ÷ 1.02^10 = 12,000 ÷ 1.218994 = 9,844.18
+      //   year 1: 12,000 ÷ 1.02^11 = 12,000 ÷ 1.243374 = 9,651.16
+      const housing = resolveRetirementHousing({
+        currentAge: 50,
+        retirementAge: 60,
+        planToAge: 70,
+        inflationRate: 0.02,
+        override: {
+          kind: "mortgage-continues",
+          monthlyPaymentGbp: 1_000,
+          remainingYearsInRetirement: 2,
+        },
+      });
+      expect(housing.yearlySchedule.slice(0, 3).map((p) => p.annualCostGbp)).toEqual([
+        9_844.18, 9_651.16, 0,
+      ]);
     });
 
     it("RV6: Renting with rent growth equal to inflation stays constant in today's money for every retirement year", () => {
@@ -294,6 +320,13 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
         doesAccountCountTowardsRetirement({ type: "Student Loan", countsTowardsRetirement: true }),
       ).toBe(false);
     });
+
+    it("never counts property, even with an explicit true (decision RD8)", () => {
+      expect(
+        doesAccountCountTowardsRetirement({ type: "Property", countsTowardsRetirement: true }),
+      ).toBe(false);
+      expect(doesAccountCountTowardsRetirement({ type: "Property" })).toBe(false);
+    });
   });
 
   describe("State Pension edge cases", () => {
@@ -376,12 +409,151 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
       });
       expect(housing.kind).toBe("mortgage-continues");
       expect(housing.mortgageYearsInRetirement).toBeGreaterThan(5);
-      expect(housing.annualCostAtRetirementGbp).toBe(11_400);
+      // £950 × 12 = 11,400 in pounds of the day; 10 years away at 2%: 11,400 ÷ 1.218994 = 9,351.97.
+      expect(housing.annualCostAtRetirementGbp).toBe(9_351.97);
+    });
+  });
+
+  describe("Hand-computed plan cases", () => {
+    // 2% growth with 2% inflation is a real rate of exactly 0, so pots and drawdown are plain sums.
+    const flatGrowth = {
+      growthRates: { lower: 0.02, middle: 0.02, higher: 0.02 },
+      inflationRate: 0.02,
+      cashSavingsNominalRate: 0.02,
+    };
+
+    it("retiring before State Pension age: pots only until then, State Pension added from it", () => {
+      // Pot £100,000 at 60, plan to 80: 100,000 ÷ 20 = £5,000 a year from pots.
+      // State Pension forecast £11,000 a year from 67: 5,000 + 11,000 = £16,000 from 67.
+      // Target £20,000: difference 5,000 − 20,000 = −15,000 before 67; 16,000 − 20,000 = −4,000 from 67.
+      const plan = calculateRetirementPlan({
+        currentAge: 60,
+        retirementAge: 60,
+        planToAge: 80,
+        accounts: [{ id: "p1", type: "Pension", balanceGbp: 100_000 }],
+        target: 20_000,
+        statePension: { statePensionAge: 67, annualForecastGbp: 11_000 },
+        assumptions: flatGrowth,
+      });
+      expect(plan.estimatedYearlyIncomeBeforeStatePensionAgeGbp).toEqual({
+        lower: 5_000,
+        middle: 5_000,
+        higher: 5_000,
+      });
+      expect(plan.estimatedYearlyIncomeFromStatePensionAgeGbp).toEqual({
+        lower: 16_000,
+        middle: 16_000,
+        higher: 16_000,
+      });
+      // The headline is the income from the retirement age, never an average across years.
+      expect(plan.estimatedYearlyIncomeGbp.middle).toBe(5_000);
+      expect(plan.differenceBeforeStatePensionAgeYearly?.middle).toBe(-15_000);
+      expect(plan.differenceFromStatePensionAgeYearly?.middle).toBe(-4_000);
+      expect(plan.differenceYearly?.middle).toBe(-15_000);
+      expect(plan.yearlySchedule[6]?.statePensionYearlyGbp).toBe(0); // age 66
+      expect(plan.yearlySchedule[7]?.statePensionYearlyGbp).toBe(11_000); // age 67
+    });
+
+    it("retiring at or after State Pension age has no separate before figure", () => {
+      const plan = calculateRetirementPlan({
+        currentAge: 67,
+        retirementAge: 67,
+        planToAge: 87,
+        accounts: [{ id: "p1", type: "Pension", balanceGbp: 100_000 }],
+        statePension: { statePensionAge: 67, annualForecastGbp: 11_000 },
+        assumptions: flatGrowth,
+      });
+      // 100,000 ÷ 20 = 5,000; plus 11,000 = 16,000.
+      expect(plan.estimatedYearlyIncomeBeforeStatePensionAgeGbp).toBeNull();
+      expect(plan.estimatedYearlyIncomeGbp.middle).toBe(16_000);
+    });
+
+    it("leaves State Pension out when no age or no amount source is given", () => {
+      const noAge = calculateRetirementPlan({
+        currentAge: 60,
+        retirementAge: 60,
+        planToAge: 80,
+        accounts: [{ id: "p1", type: "Pension", balanceGbp: 100_000 }],
+        statePension: { annualForecastGbp: 11_000 },
+        assumptions: flatGrowth,
+      });
+      expect(noAge.statePension).toBeNull();
+      expect(noAge.estimatedYearlyIncomeFromStatePensionAgeGbp).toBeNull();
+      expect(noAge.estimatedYearlyIncomeGbp.middle).toBe(5_000);
+
+      const noAmount = calculateRetirementPlan({
+        currentAge: 60,
+        retirementAge: 60,
+        planToAge: 80,
+        accounts: [{ id: "p1", type: "Pension", balanceGbp: 100_000 }],
+        statePension: { statePensionAge: 67 },
+        assumptions: flatGrowth,
+      });
+      expect(noAmount.statePension).toBeNull();
+      expect(noAmount.estimatedYearlyIncomeGbp.middle).toBe(5_000);
+    });
+
+    it("renter for life: rent stays at £12,000 a year in today's prices and comes off income", () => {
+      // Pot £50,000 at real 0% for 25 years stays £50,000; 50,000 ÷ 20 = £2,500 a year.
+      // Rent £1,000 a month = £12,000 a year every year; after housing 2,500 − 12,000 = −9,500.
+      const plan = calculateRetirementPlan({
+        currentAge: 40,
+        retirementAge: 65,
+        planToAge: 85,
+        accounts: [{ id: "p1", type: "Pension", balanceGbp: 50_000 }],
+        housing: { housingStatus: "renting", monthlyHousingCostGbp: 1_000 },
+        assumptions: flatGrowth,
+      });
+      expect(plan.housing.kind).toBe("rent-for-life");
+      expect(plan.projectedPotAtRetirementGbp.middle).toBe(50_000);
+      expect(plan.estimatedYearlyIncomeGbp.middle).toBe(2_500);
+      expect(plan.yearlySchedule).toHaveLength(20);
+      for (const row of plan.yearlySchedule) {
+        expect(row.housingCostYearlyGbp).toBe(12_000);
+        expect(row.yearlyIncomeAfterHousing.middle).toBe(-9_500);
+      }
+    });
+
+    it("zero contributions: a pot grows at the real rate only", () => {
+      // £50,000 for 10 years at 5% nominal and 2% inflation: real rate 1.05 ÷ 1.02 − 1 = 0.0294118.
+      // 1.0294118^10 = 1.336261, so 50,000 × 1.336261 = £66,813.05 (all three cases set to 5%).
+      const plan = calculateRetirementPlan({
+        currentAge: 55,
+        retirementAge: 65,
+        planToAge: 85,
+        accounts: [{ id: "i1", type: "Investment", balanceGbp: 50_000, monthlyContributionGbp: 0 }],
+        assumptions: { growthRates: { lower: 0.05, middle: 0.05, higher: 0.05 } },
+      });
+      expect(plan.projectedPotAtRetirementGbp.middle).toBe(66_813.05);
+    });
+
+    it("mortgage ending mid-retirement: payments in today's prices for the years left, then £0", () => {
+      // Override: £600 a month for 1.5 years of retirement, retiring now (0 years away).
+      //   year 0: 600 × 12 ÷ 1.02^0 = 7,200
+      //   year 1: 600 × 6 ÷ 1.02^1 = 3,600 ÷ 1.02 = 3,529.41
+      //   year 2 onwards: 0
+      const plan = calculateRetirementPlan({
+        currentAge: 66,
+        retirementAge: 66,
+        planToAge: 70,
+        accounts: [],
+        housing: {
+          override: {
+            kind: "mortgage-continues",
+            monthlyPaymentGbp: 600,
+            remainingYearsInRetirement: 1.5,
+          },
+        },
+        assumptions: flatGrowth,
+      });
+      expect(plan.yearlySchedule.map((r) => r.housingCostYearlyGbp)).toEqual([
+        7_200, 3_529.41, 0, 0,
+      ]);
     });
   });
 
   describe("Full retirement plan projection & drawdown (calculateRetirementPlan)", () => {
-    it("accumulates pensions, ISAs, and cash savings at their respective real rates and draws down evenly", () => {
+    it("accumulates pensions, ISAs, and cash savings and draws down evenly (hand-computed at real 0%)", () => {
       const plan = calculateRetirementPlan({
         currentAge: 47,
         retirementAge: 67,
@@ -425,6 +597,10 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
         housing: {
           housingStatus: "own_outright",
         },
+        assumptions: {
+          growthRates: { lower: 0.02, middle: 0.02, higher: 0.02 },
+          inflationRate: 0.02,
+        },
       });
 
       // Current account excluded; counted pots = 100k + 40k + 20k = 160k
@@ -432,45 +608,24 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
       expect(plan.yearsToRetirement).toBe(20);
       expect(plan.yearsInRetirement).toBe(20);
 
-      // Lower < Middle < Higher
-      expect(plan.projectedPotAtRetirementGbp.lower).toBeLessThan(
-        plan.projectedPotAtRetirementGbp.middle,
-      );
-      expect(plan.projectedPotAtRetirementGbp.middle).toBeLessThan(
-        plan.projectedPotAtRetirementGbp.higher,
-      );
+      // Pensions and ISA at real 0%: 100,000 + 500 × 240 = 220,000; 40,000 + 250 × 240 = 100,000.
+      expect(plan.projectedPotByGroupGbp.pensions.middle).toBe(220_000);
+      expect(plan.projectedPotByGroupGbp.investments.middle).toBe(100_000);
+      // Savings at 4% nominal, 2% inflation: real 1.04 ÷ 1.02 − 1 = 0.0196078, monthly
+      // 1.0196078^(1/12) − 1 = 0.00161948. Over 240 months:
+      //   20,000 × 1.00161948^240 = 20,000 × 1.474563 = 29,491.26
+      //   100 × (1.474563 − 1) ÷ 0.00161948 = 29,303.35
+      //   total 58,794.62 (rounding the two parts separately gives 58,794.61); drawdown over
+      //   20 years at 0.0196078: 58,794.62 × 0.0196078 ÷ (1 − 1.0196078^−20) = 3,582.09
+      // Pots at real 0%: 320,000 ÷ 20 = 16,000. Pot income 16,000 + 3,582.09 = 19,582.09.
+      expect(plan.projectedPotByGroupGbp.savings).toBe(58_794.62);
+      expect(plan.annualPotIncomeGbp.middle).toBe(19_582.09);
+      // State Pension starts at 67 = retirement age: 19,582.09 + 12,547.60 = 32,129.69.
+      expect(plan.estimatedYearlyIncomeGbp.middle).toBe(32_129.69);
 
-      // Annuity-style even real drawdown over 20 years per pot group + full State Pension (£12,547.60)
-      const expectedMiddleGrowthDrawdown = calculateEvenRealDrawdown(
-        plan.projectedPotByGroupGbp.pensions.middle +
-          plan.projectedPotByGroupGbp.investments.middle,
-        plan.assumptions.realGrowthRates.middle,
-        20,
-      );
-      const expectedSavingsDrawdown = calculateEvenRealDrawdown(
-        plan.projectedPotByGroupGbp.savings,
-        calculateRealRate(0.04, 0.02),
-        20,
-      );
-      expect(plan.annualPotIncomeGbp.middle).toBe(
-        roundPence(expectedMiddleGrowthDrawdown + expectedSavingsDrawdown),
-      );
-      expect(plan.estimatedYearlyIncomeGbp.middle).toBe(
-        roundPence(plan.annualPotIncomeGbp.middle + 12_547.6),
-      );
-
-      // Target and signed difference (estimated - target)
+      // Target and signed difference (estimated − target): 32,129.69 − 26,000 = 6,129.69.
       expect(plan.targetYearlyIncome).toBe(26_000);
-      expect(plan.differenceYearly).not.toBeNull();
-      expect(plan.differenceYearly?.lower).toBe(
-        roundPence(plan.estimatedYearlyIncomeGbp.lower - 26_000),
-      );
-      expect(plan.differenceYearly?.middle).toBe(
-        roundPence(plan.estimatedYearlyIncomeGbp.middle - 26_000),
-      );
-      expect(plan.differenceYearly?.higher).toBe(
-        roundPence(plan.estimatedYearlyIncomeGbp.higher - 26_000),
-      );
+      expect(plan.differenceYearly?.middle).toBe(6_129.69);
 
       // Neutral factual summary contains no advice or judgement words
       const serialized = JSON.stringify(plan);
@@ -609,6 +764,37 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
       const series = selectRetirementCountedSeries(accounts, rows);
       expect(series).toHaveLength(1);
       expect(series[0]?.totalCountedGbp).toBe(9_500);
+    });
+
+    it("resolves the share from the name too, as the balance does (an ISA cannot be joint)", () => {
+      const accounts = [
+        {
+          id: "isa-1",
+          name: "Cash ISA",
+          type: "Saving",
+          balanceGbp: 10_000,
+          ownership: "joint" as const,
+          sharePercent: 50,
+        },
+        {
+          id: "sav-1",
+          name: "House fund",
+          type: "Saving",
+          balanceGbp: 4_000,
+          ownership: "joint" as const,
+          sharePercent: 50,
+        },
+      ];
+      const rows = [
+        { accountId: "isa-1", year: 2026, month: 10, value: 10_000 },
+        { accountId: "sav-1", year: 2026, month: 10, value: 4_000 },
+      ];
+      const series = selectRetirementCountedSeries(accounts, rows);
+      expect(series[0]?.accounts).toEqual([
+        { accountId: "isa-1", value: 10_000, carried: false },
+        { accountId: "sav-1", value: 2_000, carried: false },
+      ]);
+      expect(series[0]?.totalCountedGbp).toBe(12_000);
     });
   });
 

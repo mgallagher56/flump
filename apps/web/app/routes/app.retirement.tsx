@@ -9,6 +9,7 @@ import {
   useLoaderData,
 } from "react-router";
 import { RetirementPlanner } from "~/features/retirement/components/RetirementPlanner";
+import { retirementArgsFromLoader } from "~/features/retirement/retirementInput";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
@@ -71,69 +72,21 @@ export default function RetirementRoute(): ReactElement {
   const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof action>();
 
-  const currentAge = useMemo(() => {
-    const birthYear = loaderData.userProfile?.birthYear;
-    if (typeof birthYear === "number" && Number.isInteger(birthYear)) {
-      return Math.max(18, new Date().getUTCFullYear() - birthYear);
-    }
-    return 35;
-  }, [loaderData.userProfile?.birthYear]);
-
-  const accounts = useMemo(
+  const planArgs = useMemo(
     () =>
-      (loaderData.accounts ?? []).map((a) => ({
-        id: a.id,
-        name: a.name,
-        type: a.type,
-        balanceGbp: Number(a.balance ?? 0),
-        monthlyContributionGbp:
-          a.monthlyContribution !== null && a.monthlyContribution !== undefined
-            ? Number(a.monthlyContribution)
-            : null,
-        interestRatePct:
-          a.interestRate !== null && a.interestRate !== undefined ? Number(a.interestRate) : null,
-      })),
-    [loaderData.accounts],
+      retirementArgsFromLoader(
+        {
+          userProfile: loaderData.userProfile,
+          accounts: loaderData.accounts ?? [],
+          budgetEntries: (loaderData.budgetEntries ?? []).map((row, idx) =>
+            budgetEntryFromRow(row, idx),
+          ),
+          retirementPlan: loaderData.retirementPlan,
+        },
+        new Date(),
+      ),
+    [loaderData],
   );
-
-  const budgetEntries = useMemo(
-    () => (loaderData.budgetEntries ?? []).map((row, idx) => budgetEntryFromRow(row, idx)),
-    [loaderData.budgetEntries],
-  );
-
-  const mortgage = useMemo(
-    () => (loaderData.accounts ?? []).find((a) => a.type === "Mortgage"),
-    [loaderData.accounts],
-  );
-
-  const housing = useMemo(() => {
-    const statusRaw = loaderData.userProfile?.housingStatus;
-    const housingStatus =
-      statusRaw === "renting" ||
-      statusRaw === "mortgage" ||
-      statusRaw === "own_outright" ||
-      statusRaw === "living_with_family"
-        ? statusRaw
-        : null;
-    return {
-      housingStatus,
-      monthlyHousingCostGbp: loaderData.userProfile?.monthlyHousingCost ?? null,
-      mortgage: mortgage
-        ? {
-            balanceGbp: Math.abs(Number(mortgage.balance ?? 0)),
-            interestRateApr:
-              mortgage.interestRate !== null && mortgage.interestRate !== undefined
-                ? Number(mortgage.interestRate)
-                : 4.5,
-            remainingTermMonths: mortgage.termMonths ?? null,
-            monthlyPaymentGbp:
-              mortgage.monthlyContribution !== null && mortgage.monthlyContribution !== undefined
-                ? Number(mortgage.monthlyContribution)
-                : null,
-          }
-        : null,
-    };
-  }, [loaderData.userProfile, mortgage]);
 
   const handleSavePlan = (payload: UpsertRetirementPlanRequest, etag: string | null) => {
     const fd = new FormData();
@@ -144,12 +97,10 @@ export default function RetirementRoute(): ReactElement {
 
   return (
     <RetirementPlanner
-      currentAge={currentAge}
-      accounts={accounts}
+      // Remount with the new saved values after a save.
+      key={loaderData.etag ?? "unsaved"}
+      planArgs={planArgs}
       accountDetails={loaderData.accountDetails ?? []}
-      budgetEntries={budgetEntries}
-      housing={housing}
-      savedPlan={loaderData.retirementPlan}
       etag={loaderData.etag}
       isSaving={fetcher.state !== "idle"}
       onSavePlan={handleSavePlan}

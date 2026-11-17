@@ -210,6 +210,89 @@ describe("query reads (re-plan PR B)", () => {
       }
     });
 
+    it("counts a joint account at the user's share, matching get_financial_snapshot (E34)", async () => {
+      const now = getUkCalendarDate(new Date()).slice(0, 7);
+      const [year, month] = now.split("-").map(Number) as [number, number];
+      const prev = month === 1 ? { y: year - 1, m: 12 } : { y: year, m: month - 1 };
+      const prevLabel = `${prev.y}-${String(prev.m).padStart(2, "0")}`;
+      const p = await connectTestClient({
+        ...emptyUser,
+        accounts: [
+          { id: "c1", name: "c", type: "Current", balance: 2000 },
+          {
+            id: "s1",
+            name: "s",
+            type: "Saving",
+            balance: 10000,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+          {
+            id: "m1",
+            name: "m",
+            type: "Mortgage",
+            balance: 150000,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+        ],
+        accountDetails: [
+          { accountId: "c1", year: prev.y, month: prev.m, value: 1000 },
+          { accountId: "s1", year: prev.y, month: prev.m, value: 8000 },
+          { accountId: "m1", year: prev.y, month: prev.m, value: 152000 },
+        ],
+      });
+      try {
+        const h = (await p.callJson("get_balance_history", { from: prevLabel, to: now })) as Env;
+        const points = h.result.series[0].points.map((x: { value: number }) => x.value);
+        expect(points).toEqual([1000 + 4000 - 76000, 2000 + 5000 - 75000]);
+        const today = (await p.callJson("get_financial_snapshot", {})) as Env;
+        expect(today.result.netWorthGbp).toBe(points[1]);
+        const before = (await p.callJson("get_financial_snapshot", {
+          asOfMonth: prevLabel,
+        })) as Env;
+        expect(before.result.netWorthGbp).toBe(points[0]);
+      } finally {
+        await p.close();
+      }
+    });
+
+    it("shares a joint account with no saved balance once, from its whole balance (E34)", async () => {
+      const now = getUkCalendarDate(new Date()).slice(0, 7);
+      const [year, month] = now.split("-").map(Number) as [number, number];
+      const prev = month === 1 ? { y: year - 1, m: 12 } : { y: year, m: month - 1 };
+      const prevLabel = `${prev.y}-${String(prev.m).padStart(2, "0")}`;
+      const p = await connectTestClient({
+        ...emptyUser,
+        accounts: [
+          { id: "c1", name: "c", type: "Current", balance: 2000 },
+          { id: "s1", name: "s", type: "Saving", ownership: "joint", sharePercent: 50 },
+        ],
+        accountDetails: [
+          { accountId: "c1", year: prev.y, month: prev.m, value: 1000 },
+          { accountId: "s1", year: prev.y, month: prev.m, value: 8000 },
+        ],
+      });
+      try {
+        const h = (await p.callJson("get_balance_history", {
+          from: prevLabel,
+          to: now,
+          groupBy: "account",
+        })) as Env;
+        const joint = h.result.series.find((s: { points: unknown[]; label: string }) =>
+          s.label.startsWith("Saving"),
+        );
+        // The previous month is shared once (8,000 at 50%); the current month has no saved
+        // balance, so it is the whole balance (0) shared once, never a shared figure shared again.
+        expect(joint.points.map((x: { value: number }) => x.value)).toEqual([4000, 0]);
+        const total = (await p.callJson("get_balance_history", { from: now, to: now })) as Env;
+        const today = (await p.callJson("get_financial_snapshot", {})) as Env;
+        expect(today.result.netWorthGbp).toBe(total.result.series[0].points[0].value);
+      } finally {
+        await p.close();
+      }
+    });
+
     it("total and category groupings, delta and pctDelta, current minus previous", async () => {
       const total = await call("get_balance_history", {
         from: "2025-06",

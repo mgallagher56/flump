@@ -235,6 +235,29 @@ export const retirementPlanFixture = {
   updatedAt: "2026-11-16T10:00:00.000Z",
 };
 
+/**
+ * GET /retirement-plan before anything is saved: the default plan, with no row id, no timestamps
+ * and no ages, target or State Pension details (the backend's `defaultPlan`).
+ */
+export const retirementPlanUnsavedFixture = {
+  id: null,
+  userId: "user_01JABCDEF",
+  retirementAge: null,
+  planToAge: null,
+  target: null,
+  housingOverride: null,
+  statePensionAge: null,
+  statePensionAnnualForecastGbp: null,
+  statePensionQualifyingYears: null,
+  growthRates: { lower: 0.02, middle: 0.05, higher: 0.08 },
+  inflationRate: 0.02,
+  cashSavingsNominalRate: null,
+  realRentGrowthRate: 0,
+  excludedAccountIds: [],
+  createdAt: null,
+  updatedAt: null,
+};
+
 const success = { success: true };
 
 /**

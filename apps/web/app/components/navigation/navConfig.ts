@@ -90,12 +90,8 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
         description: "navPensionDesc",
         icon: Coins,
       },
-      {
-        key: "retirement",
-        route: "/app/retirement",
-        description: "navRetirementDesc",
-        icon: Coins,
-      },
+      // Retirement (/app/retirement) is reachable by URL only: decision RD9 keeps it to the
+      // friends beta, out of the main navigation.
     ],
   },
   {

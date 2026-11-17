@@ -1,8 +1,9 @@
 import { McpInputResponse } from "@flump/api-contract";
-import { buildFlumpAiContextPack } from "@flump/finance-engine";
+import { type BuildContextPackInput, buildFlumpAiContextPack } from "@flump/finance-engine";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, it, vi } from "vitest";
+import { connectTestClient, TEST_TOKEN } from "../testing/client.js";
 import {
   INPUT_REUSE_MS,
   localScopes,
@@ -302,5 +303,77 @@ describe("runStdio", () => {
       expect(err).toBeInstanceOf(Error);
       expect(String(err.message)).not.toContain(PAT);
     }
+  });
+
+  it("gives the same net worth and retirement figures through the wire as directly", async () => {
+    const PENSION_ID = "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c21";
+    const JOINT_ID = "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c22";
+    const token = { id: TOKEN_ID, scopes: ["mcp:read:full", "mcp:simulate"] };
+    // Age 60 this year, whatever year the test runs in.
+    const birthYear = new Date().getUTCFullYear() - 60;
+    const wireInput = {
+      ...okInput.input,
+      accounts: [
+        { ...okInput.input.accounts[0], id: PENSION_ID, type: "Pension", balance: 100_000 },
+        {
+          ...okInput.input.accounts[0],
+          id: JOINT_ID,
+          type: "Saving",
+          balance: 40_000,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+      ],
+      accountDetails: [],
+      retirementPlan: {
+        retirementAge: 60,
+        planToAge: 80,
+        target: { kind: "typed", yearlyAmount: 20_000 },
+        housingOverride: null,
+        statePensionAge: 67,
+        statePensionAnnualForecastGbp: 11_000,
+        statePensionQualifyingYears: null,
+        growthRates: { lower: 0.02, middle: 0.02, higher: 0.02 },
+        inflationRate: 0.02,
+        cashSavingsNominalRate: 0.02,
+        realRentGrowthRate: 0,
+        excludedAccountIds: [],
+      },
+      birthYear,
+    };
+    const body = { token: { ...token, anonymizeInstitutions: false }, input: wireInput };
+    const parsed = McpInputResponse.parse(body);
+    expect(parsed.input.accounts[1]).toMatchObject({ ownership: "joint", sharePercent: 50 });
+
+    const local = await connectClient(body);
+    const direct = await connectTestClient(wireInput as BuildContextPackInput, {
+      token: { ...TEST_TOKEN, scopes: token.scopes as never, anonymizeInstitutions: false },
+    });
+    const figures = async (call: (name: string) => Promise<unknown>) => {
+      const snapshot = (await call("get_financial_snapshot")) as {
+        result: { netWorthGbp: number };
+      };
+      const picture = (await call("get_retirement_picture")) as {
+        result: Record<string, unknown>;
+        missing: unknown[];
+      };
+      return {
+        netWorth: snapshot.result.netWorthGbp,
+        retirement: picture.result,
+        missing: picture.missing,
+      };
+    };
+    const viaWire = await figures(async (name) =>
+      JSON.parse(textOf(await local.client.callTool({ name, arguments: {} }))),
+    );
+    const viaDirect = await figures((name) => direct.callJson(name, {}));
+    await direct.close();
+
+    // Pension £100,000 plus half of the £40,000 joint saver.
+    expect(viaWire.netWorth).toBe(120_000);
+    expect(viaWire.retirement.currentCountedPotGbp).toBe(120_000);
+    expect(viaWire.retirement.retirementAge).toBe(60);
+    expect(viaWire.missing).toEqual([]);
+    expect(viaWire).toEqual(viaDirect);
   });
 });

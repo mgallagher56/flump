@@ -18,12 +18,14 @@ import {
   isCheckInMonth,
   restAnswer,
   resumeIndex,
+  selectSavedNetWorthSeries,
   statementPromptFor,
   stepFigure,
   toSnapshotRows,
   withoutSource,
 } from "./check-in.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
+import { PortfolioSnapshot } from "./portfolio.js";
 
 const MONTH = "2026-11";
 
@@ -707,5 +709,53 @@ describe("the list form (any month)", () => {
       expect(payload.values.find((v) => v.accountId === CURRENT)?.value).toBe(10.01);
       expect(payload.values.find((v) => v.accountId === MORTGAGE)?.value).toBe(2);
     });
+  });
+});
+
+describe("joint accounts count at the user's share (E34)", () => {
+  const joint: CheckInAccountInput[] = [
+    { id: "C", name: "Current account", type: "Current", balance: 3400 },
+    {
+      id: "J",
+      name: "Joint saver",
+      type: "Saving",
+      balance: 10000,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    {
+      id: "M",
+      name: "Joint mortgage",
+      type: "Mortgage",
+      balance: -200000,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+  ];
+  const history = [row("C", 10, 3000), row("J", 10, 9000), row("M", 10, -201000)];
+
+  it("the saved series ends on the dashboard net worth", () => {
+    const series = selectSavedNetWorthSeries(joint, history, MONTH, DEFAULT_NET_WORTH_BASIS);
+    const dashboard = new PortfolioSnapshot(
+      joint.map((a) => ({ ...a, id: String(a.id).toLowerCase(), balance: Number(a.balance) })),
+      [],
+    ).getTotalNetWorth(DEFAULT_NET_WORTH_BASIS);
+    expect(series.at(-1)?.netWorth).toBe(dashboard);
+    expect(series.at(-1)?.netWorth).toBe(3400 + 5000 - 100000);
+    expect(series[0]?.netWorth).toBe(3000 + 4500 - 100500);
+  });
+
+  it("the check-in summary counts the share of a typed joint balance", () => {
+    const steps = buildCheckInSteps(joint, history, MONTH);
+    const summary = buildCheckInSummary(
+      steps,
+      { j: { accountId: "j", value: 12000, source: "manual" } },
+      joint,
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(summary.netWorth).toBe(3400 + 6000 - 100000);
+    expect(summary.change).toBe(3400 + 6000 - 100000 - (3000 + 4500 - 100500));
   });
 });

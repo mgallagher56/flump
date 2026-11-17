@@ -30,7 +30,15 @@ export interface AccountShareInput {
   share_pct?: number | string | null;
 }
 
+/** Account types: `ISA`, `JISA`, `LISA`, `CASH_ISA` and the like, in any case. */
 const ISA_PATTERN = /\b(?:j?isa|lisa)\b/i;
+/**
+ * Account names are free text, so "Lisa" is more often a person than a Lifetime ISA: a name reads
+ * as an ISA on "ISA" or "JISA" in any case ("Cash ISA", "Lifetime ISA", "Junior ISA"), and on
+ * "LISA" only in capitals.
+ */
+const ISA_NAME_PATTERN = /\bj?isa\b/i;
+const LISA_NAME_PATTERN = /\bLISA\b/;
 const PENSION_PATTERN = /\b(?:pensions?|sipp)\b/i;
 const LIABILITY_PATTERN =
   /\b(?:mortgages?|loans?|credit cards?|overdrafts?|car finance|bnpl|debts?)\b/i;
@@ -64,7 +72,7 @@ export function isIsaAccount(input?: AccountShareInput | string | null): boolean
   const rawType = normalizeTokens(resolveRawType(normalized));
   if (rawType && ISA_PATTERN.test(rawType)) return true;
   const name = normalizeTokens(normalized.name);
-  return Boolean(name && ISA_PATTERN.test(name));
+  return Boolean(name && (ISA_NAME_PATTERN.test(name) || LISA_NAME_PATTERN.test(name)));
 }
 
 /**

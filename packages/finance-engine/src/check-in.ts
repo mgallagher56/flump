@@ -1,4 +1,5 @@
 import { categorizeAccountType, isLiabilityCategory } from "./account-category.js";
+import type { AccountOwnership } from "./joint-share.js";
 import { projectAmortisedBalance } from "./mortgage.js";
 import { countsTowardNetWorth, type NetWorthBasis } from "./net-worth-basis.js";
 import { type NetWorthPoint, type SnapshotRow, selectNetWorthSeries } from "./snapshots.js";
@@ -132,6 +133,9 @@ export interface SnapshotAccountInput {
   /** The saved current balance (D22). Debts may be stored negative. */
   balance?: number | string | null;
   connectionId?: string | null;
+  /** E34: a joint account counts at `sharePercent` in net worth, as on the dashboard. */
+  ownership?: AccountOwnership | string | null;
+  sharePercent?: number | string | null;
 }
 
 /** A history row as the backend returns it (`GET /account-details`). */
@@ -201,7 +205,13 @@ export function selectSavedNetWorthSeries(
 ): NetWorthPoint[] {
   const engineAccounts = (accounts ?? [])
     .filter((a) => a.id)
-    .map((a) => ({ id: String(a.id).toLowerCase(), type: String(a.type ?? "other") }));
+    .map((a) => ({
+      id: String(a.id).toLowerCase(),
+      type: String(a.type ?? "other"),
+      name: a.name ?? undefined,
+      ownership: a.ownership,
+      sharePercent: a.sharePercent,
+    }));
   const currentBalances = new Map<string, number>();
   for (const a of accounts ?? []) {
     const balance = toNumber(a.balance);

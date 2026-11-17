@@ -54,6 +54,27 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       expect(canAccountBeJoint({ name: "Lisbon Holiday Pot", type: "Saving" })).toBe(true);
     });
 
+    it.each([
+      ["Cash ISA", true],
+      ["LISA", true],
+      ["Stocks and shares ISA", true],
+      ["Junior ISA", true],
+      ["Lifetime ISA", true],
+      ["Moneybox LISA", true],
+      ["Lisa joint saver", false],
+      ["Joint saver for Lisa", false],
+      ["lisa savings", false],
+    ])("reads an ISA from the name %s: %s", (name, isa) => {
+      expect(isIsaAccount({ name, type: "Saving" })).toBe(isa);
+      expect(canAccountBeJoint({ name, type: "Saving", ownership: "joint" })).toBe(!isa);
+    });
+
+    it("a joint account named after a person called Lisa counts at its share", () => {
+      const account = { name: "Lisa joint saver", type: "Saving", ownership: "joint" };
+      expect(resolveAccountOwnership(account)).toBe("joint");
+      expect(resolveAccountSharePercent(account)).toBe(50);
+    });
+
     it("forbids any account flagged with isIsa: true from being joint", () => {
       expect(isIsaAccount({ type: "Saving", isIsa: true })).toBe(true);
       expect(canAccountBeJoint({ type: "Saving", isIsa: true })).toBe(false);

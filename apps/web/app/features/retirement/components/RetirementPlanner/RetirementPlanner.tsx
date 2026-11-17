@@ -1,51 +1,59 @@
 import type {
   RetirementBudgetLineStatusDto,
-  RetirementPlanDto,
   UpsertRetirementPlanRequest,
 } from "@flump/api-contract";
 import {
   type AccountDetailInput,
-  type BudgetEntryItem,
+  type BuildRetirementPlanInputArgs,
+  buildRetirementPlanInput,
+  calculateEvenRealDrawdown,
   calculateRetirementPlan,
   DEFAULT_RETIREMENT_GROWTH_CASES,
   DEFAULT_RETIREMENT_INFLATION_RATE,
+  doesAccountCountTowardsRetirement,
   isHousingBudgetLine,
-  type RetirementBudgetTargetLine,
   type RetirementGrowthCase,
-  type RetirementHousingInput,
-  type RetirementPotAccountInput,
+  type RetirementInputBuildResult,
+  type RetirementInputOverrides,
+  type RetirementPlanResult,
   selectRetirementCountedSeries,
   toSnapshotRows,
-  UK_STATE_PENSION_AGE,
 } from "@flump/finance-engine";
 import {
   Button,
+  Checkbox,
   CollapsibleDrawer,
   HeroFigure,
   KpiCard,
   KpiStrip,
+  type KpiStripItems,
   PageBody,
   PageHeader,
   PageSection,
   ProjectionNotice,
   ResultBlock,
+  ScenarioZone,
   SimulatorSplitLayout,
   SliderField,
 } from "@repo/ui";
-import { Calendar, Compass } from "lucide-react";
-import { type FC, useMemo, useState } from "react";
+import { Calendar, ClipboardList } from "lucide-react";
+import { type FC, type ReactNode, useMemo, useState } from "react";
+import { Link } from "react-router";
+import { useScenarioState } from "~/hooks/useScenarioState";
+import { formatEstimate } from "~/utils/roundEstimate";
 import {
   budgetLineAmount,
   budgetLineItem,
   budgetLineName,
   budgetLinesList,
-  caseRow,
   controlsCard,
+  fieldGrid,
   fieldGroup,
   fieldLabel,
   inputControl,
   mutedNote,
   plannerStack,
+  promptLink,
   resultsStack,
   scheduleCell,
   scheduleHeaderCell,
@@ -54,66 +62,152 @@ import {
 } from "./RetirementPlanner.styles";
 
 export interface RetirementPlannerProps {
-  currentAge: number;
-  accounts: readonly RetirementPotAccountInput[];
+  /** The saved data for the shared engine builder (no what-if overrides). */
+  planArgs: BuildRetirementPlanInputArgs;
   accountDetails: readonly AccountDetailInput[];
-  budgetEntries: readonly BudgetEntryItem[];
-  housing: Omit<RetirementHousingInput, "currentAge" | "retirementAge" | "planToAge">;
-  savedPlan: RetirementPlanDto | null;
   etag?: string | null;
   isSaving?: boolean;
   onSavePlan?: (payload: UpsertRetirementPlanRequest, etag: string | null) => void;
 }
+
+export const PROFILE_PATH = "/app/profile";
+export const STATE_PENSION_AGE_CHECKER_URL = "https://www.gov.uk/state-pension-age";
 
 const gbpFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "GBP",
   maximumFractionDigits: 0,
 });
+const pctFormatter = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
 
+/** A saved, present-day figure: exact whole pounds. */
 function formatWholeGbp(amount: number): string {
   const rounded = Math.round(amount);
   if (rounded < 0) return `-${gbpFormatter.format(Math.abs(rounded))}`;
   return gbpFormatter.format(rounded);
 }
 
-const CASE_LABELS: Record<RetirementGrowthCase, string> = {
-  lower: "Lower case (2%)",
-  middle: "Middle case (5%)",
-  higher: "Higher case (8%)",
+const pct = (rate: number) => `${pctFormatter.format(rate * 100)}%`;
+
+const CASE_NAMES: Record<RetirementGrowthCase, string> = {
+  lower: "Lower case",
+  middle: "Middle case",
+  higher: "Higher case",
 };
 
 const HOUSING_LABELS: Record<string, string> = {
   "mortgage-ends-before-retirement": "Mortgage ends before retirement",
-  "mortgage-continues": "Mortgage continues in retirement",
-  "rent-for-life": "Renting for life",
-  "own-outright": "Own outright",
-  custom: "Custom housing figure",
+  "mortgage-continues": "Mortgage payments continue",
+  "rent-for-life": "Rent for life",
+  "own-outright": "No housing payments",
+  custom: "Your own housing figure",
 };
 
+const MISSING_LABELS: Record<string, string> = {
+  birthYear: "your year of birth",
+  retirementAge: "your retirement age",
+  planToAge: "the age to plan to",
+};
+
+function joinList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+function parseWhole(text: string): number | null {
+  const trimmed = text.trim();
+  if (trimmed === "") return null;
+  const n = Number(trimmed);
+  return Number.isInteger(n) ? n : Number.NaN;
+}
+
+function parseAmount(text: string): number | null {
+  const trimmed = text.trim().replace(/[£,]/g, "");
+  if (trimmed === "") return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) && n >= 0 ? n : Number.NaN;
+}
+
+const asText = (n: number | null | undefined) => (n === null || n === undefined ? "" : String(n));
+const rateText = (rate: number) => pctFormatter.format(rate * 100);
+
+interface Computed {
+  built: RetirementInputBuildResult;
+  plan: RetirementPlanResult | null;
+  failed: boolean;
+}
+
+/** Runs the shared builder and the engine; never throws during render (fails soft). */
+function compute(args: BuildRetirementPlanInputArgs): Computed {
+  const built = buildRetirementPlanInput(args);
+  if (!built.ok) return { built, plan: null, failed: false };
+  try {
+    return { built, plan: calculateRetirementPlan(built.input), failed: false };
+  } catch {
+    return { built, plan: null, failed: true };
+  }
+}
+
 export const RetirementPlanner: FC<RetirementPlannerProps> = ({
-  currentAge,
-  accounts,
+  planArgs,
   accountDetails,
-  budgetEntries,
-  housing,
-  savedPlan,
   etag = null,
   isSaving = false,
   onSavePlan,
 }) => {
-  const [retirementAge, setRetirementAge] = useState<number>(
-    savedPlan?.retirementAge ?? Math.max(currentAge + 1, 67),
-  );
-  const [planToAge, setPlanToAge] = useState<number>(
-    savedPlan?.planToAge ?? Math.max((savedPlan?.retirementAge ?? 67) + 1, 90),
-  );
-  const [selectedCase, setSelectedCase] = useState<RetirementGrowthCase>("middle");
-  const [extraMonthly, setExtraMonthly] = useState<number>(0);
+  const savedPlan = planArgs.plan;
+  const budgetEntries = planArgs.budgetEntries ?? [];
 
-  const initialTargetMode = savedPlan?.target?.kind ?? "typed";
-  const [targetMode, setTargetMode] = useState<"typed" | "budget">(initialTargetMode);
-  const [typedTargetInput, setTypedTargetInput] = useState<string>(
+  // ---- Saved figures (hero, KpiStrip): saved data only ----
+  const saved = useMemo(() => compute(planArgs), [planArgs]);
+  const savedResult = saved.plan;
+  const growthRates = savedResult?.assumptions.growthRates ??
+    savedPlan?.growthRates ?? { ...DEFAULT_RETIREMENT_GROWTH_CASES };
+  const inflationRate =
+    savedResult?.assumptions.inflationRate ??
+    savedPlan?.inflationRate ??
+    DEFAULT_RETIREMENT_INFLATION_RATE;
+  const caseLabel = (c: RetirementGrowthCase) => `${CASE_NAMES[c]} (${pct(growthRates[c])})`;
+
+  // ---- Scenario (what-if): never written to saved data ----
+  const scenarioSeed = useMemo(
+    () => ({
+      retirementAge: savedResult?.retirementAge ?? 0,
+      planToAge: savedResult?.planToAge ?? 0,
+      extraMonthly: 0,
+      growthCase: "middle" as RetirementGrowthCase,
+    }),
+    [savedResult?.retirementAge, savedResult?.planToAge],
+  );
+  const scenario = useScenarioState(scenarioSeed);
+  const selectedCase = scenario.values.growthCase as RetirementGrowthCase;
+  const scenarioComputed = useMemo(() => {
+    if (!savedResult) return null;
+    const overrides: RetirementInputOverrides = {
+      retirementAge: scenario.values.retirementAge,
+      planToAge: Math.max(scenario.values.retirementAge + 1, scenario.values.planToAge),
+      additionalMonthlyPensionContributionGbp: scenario.values.extraMonthly,
+    };
+    return compute({ ...planArgs, overrides });
+  }, [planArgs, savedResult, scenario.values]);
+  const scenarioResult = scenarioComputed?.plan ?? null;
+
+  // ---- Saved plan details form ----
+  const [retirementAgeInput, setRetirementAgeInput] = useState(asText(savedPlan?.retirementAge));
+  const [planToAgeInput, setPlanToAgeInput] = useState(asText(savedPlan?.planToAge));
+  const [statePensionAgeInput, setStatePensionAgeInput] = useState(
+    asText(savedPlan?.statePensionAge),
+  );
+  const [qualifyingYearsInput, setQualifyingYearsInput] = useState(
+    asText(savedPlan?.statePensionQualifyingYears),
+  );
+  const [forecastInput, setForecastInput] = useState(
+    asText(savedPlan?.statePensionAnnualForecastGbp),
+  );
+  const [targetMode, setTargetMode] = useState<"typed" | "budget">(
+    savedPlan?.target?.kind ?? "typed",
+  );
+  const [typedTargetInput, setTypedTargetInput] = useState(
     savedPlan?.target?.kind === "typed" ? String(savedPlan.target.yearlyAmount) : "",
   );
   const [lineStatuses, setLineStatuses] = useState<Record<string, RetirementBudgetLineStatusDto>>(
@@ -121,25 +215,23 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
       const map: Record<string, RetirementBudgetLineStatusDto> = {};
       if (savedPlan?.target?.kind === "budget") {
         for (const item of savedPlan.target.lineSettings) {
-          map[item.budgetEntryId] = item.status;
+          map[item.budgetEntryId] = item.status ?? "continues";
         }
       }
       return map;
     },
   );
-
-  const [statePensionAge, setStatePensionAge] = useState<number>(
-    savedPlan?.statePensionAge ?? UK_STATE_PENSION_AGE,
+  const savedRates = savedPlan?.growthRates ?? DEFAULT_RETIREMENT_GROWTH_CASES;
+  const [lowerInput, setLowerInput] = useState(rateText(savedRates.lower));
+  const [middleInput, setMiddleInput] = useState(rateText(savedRates.middle));
+  const [higherInput, setHigherInput] = useState(rateText(savedRates.higher));
+  const [inflationInput, setInflationInput] = useState(
+    rateText(savedPlan?.inflationRate ?? DEFAULT_RETIREMENT_INFLATION_RATE),
   );
-  const [qualifyingYears, setQualifyingYears] = useState<number>(
-    savedPlan?.statePensionQualifyingYears ?? 35,
+  const [excluded, setExcluded] = useState<Set<string>>(
+    () => new Set(savedPlan?.excludedAccountIds ?? []),
   );
-  const [forecastInput, setForecastInput] = useState<string>(
-    savedPlan?.statePensionAnnualForecastGbp !== null &&
-      savedPlan?.statePensionAnnualForecastGbp !== undefined
-      ? String(savedPlan.statePensionAnnualForecastGbp)
-      : "",
-  );
+  const [formError, setFormError] = useState<string | null>(null);
 
   const nonHousingBudgetLines = useMemo(
     () =>
@@ -152,145 +244,55 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
     [budgetEntries],
   );
 
-  const effectiveTarget = useMemo(() => {
-    if (targetMode === "typed") {
-      const trimmed = typedTargetInput.trim();
-      if (trimmed === "") return null;
-      const num = Number(trimmed);
-      if (!Number.isFinite(num) || num < 0) return null;
-      return { kind: "typed" as const, yearlyAmount: num };
-    }
-    if (nonHousingBudgetLines.length === 0) return null;
-    const lines: RetirementBudgetTargetLine[] = nonHousingBudgetLines.map((entry) => ({
-      id: entry.id,
-      name: entry.name,
-      category: entry.category,
-      amount: entry.amount,
-      frequency: entry.frequency,
-      isIncome: entry.isIncome,
-      status: lineStatuses[entry.id] ?? "continues",
-    }));
-    return { kind: "budget" as const, lines };
-  }, [targetMode, typedTargetInput, nonHousingBudgetLines, lineStatuses]);
-
-  const savedForecastNum = useMemo(() => {
-    const trimmed = forecastInput.trim();
-    if (trimmed === "") return null;
-    const n = Number(trimmed);
-    return Number.isFinite(n) && n >= 0 ? n : null;
-  }, [forecastInput]);
-
-  const growthRates = savedPlan?.growthRates ?? DEFAULT_RETIREMENT_GROWTH_CASES;
-  const inflationRate = savedPlan?.inflationRate ?? DEFAULT_RETIREMENT_INFLATION_RATE;
-
-  const safePlanToAge = Math.max(retirementAge + 1, planToAge);
-  const safeRetirementAge = Math.max(currentAge, retirementAge);
-
-  const savedResult = useMemo(
-    () =>
-      calculateRetirementPlan({
-        currentAge,
-        retirementAge: savedPlan?.retirementAge ?? safeRetirementAge,
-        planToAge: Math.max(
-          (savedPlan?.retirementAge ?? safeRetirementAge) + 1,
-          savedPlan?.planToAge ?? safePlanToAge,
-        ),
-        accounts,
-        target: effectiveTarget,
-        housing: {
-          ...housing,
-          override: savedPlan?.housingOverride ?? housing.override,
-        },
-        statePension: {
-          statePensionAge,
-          annualForecastGbp: savedForecastNum,
-          qualifyingYears,
-        },
-        assumptions: {
-          growthRates,
-          inflationRate,
-          cashSavingsNominalRate: savedPlan?.cashSavingsNominalRate ?? undefined,
-          realRentGrowthRate: savedPlan?.realRentGrowthRate ?? undefined,
-        },
-      }),
-    [
-      currentAge,
-      savedPlan,
-      safeRetirementAge,
-      safePlanToAge,
-      accounts,
-      effectiveTarget,
-      housing,
-      statePensionAge,
-      savedForecastNum,
-      qualifyingYears,
-      growthRates,
-      inflationRate,
-    ],
-  );
-
-  const scenarioResult = useMemo(
-    () =>
-      calculateRetirementPlan({
-        currentAge,
-        retirementAge: safeRetirementAge,
-        planToAge: safePlanToAge,
-        accounts,
-        additionalMonthlyPensionContributionGbp: extraMonthly,
-        target: effectiveTarget,
-        housing: {
-          ...housing,
-          override: savedPlan?.housingOverride ?? housing.override,
-        },
-        statePension: {
-          statePensionAge,
-          annualForecastGbp: savedForecastNum,
-          qualifyingYears,
-        },
-        assumptions: {
-          growthRates,
-          inflationRate,
-          cashSavingsNominalRate: savedPlan?.cashSavingsNominalRate ?? undefined,
-          realRentGrowthRate: savedPlan?.realRentGrowthRate ?? undefined,
-        },
-      }),
-    [
-      currentAge,
-      safeRetirementAge,
-      safePlanToAge,
-      accounts,
-      extraMonthly,
-      effectiveTarget,
-      housing,
-      savedPlan,
-      statePensionAge,
-      savedForecastNum,
-      qualifyingYears,
-      growthRates,
-      inflationRate,
-    ],
-  );
-
   const countedSeries = useMemo(() => {
-    const withId = accounts
-      .filter((a): a is RetirementPotAccountInput & { id: string } => Boolean(a.id))
-      .map((a) => ({ ...a, id: String(a.id) }));
-    return selectRetirementCountedSeries(withId, toSnapshotRows(accountDetails));
-  }, [accounts, accountDetails]);
+    const counted = saved.built.accounts.filter((a) => doesAccountCountTowardsRetirement(a));
+    return selectRetirementCountedSeries(counted, toSnapshotRows(accountDetails));
+  }, [saved.built.accounts, accountDetails]);
 
   const handleSave = () => {
     if (!onSavePlan) return;
+    const retirementAge = parseWhole(retirementAgeInput);
+    const planToAge = parseWhole(planToAgeInput);
+    const statePensionAge = parseWhole(statePensionAgeInput);
+    const qualifyingYears = parseWhole(qualifyingYearsInput);
+    const forecast = parseAmount(forecastInput);
+    const typedTarget = parseAmount(typedTargetInput);
+    const rates = [lowerInput, middleInput, higherInput].map((t) => Number(t.trim()));
+    const inflation = Number(inflationInput.trim());
+
+    const wholeOk = [retirementAge, planToAge, statePensionAge, qualifyingYears].every(
+      (n) => n === null || Number.isFinite(n),
+    );
+    if (!wholeOk) return setFormError("Ages and qualifying years need to be whole numbers.");
+    if (Number.isNaN(forecast) || Number.isNaN(typedTarget)) {
+      return setFormError("Amounts need to be numbers in pounds.");
+    }
+    if (retirementAge !== null && planToAge !== null && planToAge <= retirementAge) {
+      return setFormError("The age to plan to needs to be later than the retirement age.");
+    }
+    if (rates.some((r) => !(r >= 0 && r <= 100)) || !(inflation >= -20 && inflation <= 50)) {
+      return setFormError("Growth rates go from 0% to 100% and inflation from -20% to 50%.");
+    }
+    setFormError(null);
+
     const payload: UpsertRetirementPlanRequest = {
-      retirementAge: safeRetirementAge,
-      planToAge: safePlanToAge,
+      retirementAge,
+      planToAge,
       statePensionAge,
-      statePensionAnnualForecastGbp: savedForecastNum,
+      statePensionAnnualForecastGbp: forecast,
       statePensionQualifyingYears: qualifyingYears,
+      growthRates: {
+        lower: (rates[0] ?? 0) / 100,
+        middle: (rates[1] ?? 0) / 100,
+        higher: (rates[2] ?? 0) / 100,
+      },
+      inflationRate: inflation / 100,
+      excludedAccountIds: [...excluded],
       target:
         targetMode === "typed"
-          ? effectiveTarget?.kind === "typed"
-            ? effectiveTarget
-            : null
+          ? typedTarget === null
+            ? null
+            : { kind: "typed", yearlyAmount: typedTarget }
           : {
               kind: "budget",
               lineSettings: nonHousingBudgetLines.map((entry) => ({
@@ -302,358 +304,530 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
     onSavePlan(payload, etag);
   };
 
+  // ---- Hero ----
+  const missing = saved.built.ok === false ? saved.built.missing : [];
+  const heroLabel = savedResult
+    ? `Estimated yearly income from age ${savedResult.retirementAge}`
+    : "Estimated yearly income in retirement";
+  let emptyPrompt: ReactNode;
+  let emptyAction: ReactNode;
+  if (missing.length > 0) {
+    emptyPrompt = `To see an estimate, add ${joinList(missing.map((m) => MISSING_LABELS[m] ?? m))}.`;
+    emptyAction = missing.includes("birthYear") ? (
+      <Link className={promptLink()} to={PROFILE_PATH}>
+        Add your year of birth
+      </Link>
+    ) : (
+      <a className={promptLink()} href="#retirement-plan-details">
+        Add your plan details
+      </a>
+    );
+  } else if (saved.failed) {
+    emptyPrompt =
+      "The estimate cannot be worked out from your saved details. Check your plan details below.";
+  }
+  const targetYearly = savedResult?.targetYearlyIncome ?? null;
   const heroSubline =
-    savedResult.targetYearlyIncome !== null && savedResult.differenceYearly !== null
-      ? `Your target: ${formatWholeGbp(savedResult.targetYearlyIncome)} a year. Difference: ${formatWholeGbp(savedResult.differenceYearly.middle)} a year.`
-      : "No yearly target set yet. Enter your own target below to compare.";
+    targetYearly !== null
+      ? `Your target: ${formatWholeGbp(targetYearly)} a year.`
+      : "No target set yet.";
 
-  const selectedEstimatedIncome = scenarioResult.estimatedYearlyIncomeGbp[selectedCase];
-  const selectedDifference = scenarioResult.differenceYearly
-    ? scenarioResult.differenceYearly[selectedCase]
+  // ---- KpiStrip: yearly income figures (decision RD3), saved data only ----
+  let kpis: KpiStripItems | null = null;
+  if (savedResult) {
+    const fromPensions = calculateEvenRealDrawdown(
+      savedResult.projectedPotByGroupGbp.pensions.middle,
+      savedResult.assumptions.realGrowthRates.middle,
+      savedResult.yearsInRetirement,
+    );
+    const fromIsasAndSavings = Math.max(0, savedResult.annualPotIncomeGbp.middle - fromPensions);
+    const housing = savedResult.housing;
+    const sp = savedResult.statePension;
+    kpis = [
+      <KpiCard
+        key="sp"
+        label="State Pension"
+        value={sp ? formatWholeGbp(sp.annualAmountGbp) : "Not included yet"}
+        subtext={
+          sp ? `A year from age ${sp.statePensionAge}` : "Add your State Pension details below"
+        }
+      />,
+      <KpiCard
+        key="pensions"
+        label="From pensions"
+        value={formatEstimate(fromPensions)}
+        subtext={`A year, ${caseLabel("middle").toLowerCase()}`}
+      />,
+      <KpiCard
+        key="isa-savings"
+        label="From ISAs and savings"
+        value={formatEstimate(fromIsasAndSavings)}
+        subtext={`A year, ${caseLabel("middle").toLowerCase()}`}
+      />,
+      <KpiCard
+        key="housing"
+        label="Housing in retirement"
+        value={formatEstimate(housing.annualCostAtRetirementGbp)}
+        subtext={
+          housing.kind === "mortgage-continues" && housing.mortgageEndAge !== null
+            ? `A year, until age ${Math.ceil(housing.mortgageEndAge)}`
+            : housing.kind === "rent-for-life"
+              ? "A year, for life"
+              : (HOUSING_LABELS[housing.kind] ?? housing.kind)
+        }
+      />,
+    ];
+  }
+
+  // ---- Scenario outcome ----
+  const scenarioIncome = scenarioResult?.estimatedYearlyIncomeGbp[selectedCase] ?? null;
+  const scenarioDifference = scenarioResult?.differenceYearly?.[selectedCase] ?? null;
+  const scenarioFromSpa = scenarioResult?.estimatedYearlyIncomeBeforeStatePensionAgeGbp
+    ? scenarioResult.estimatedYearlyIncomeFromStatePensionAgeGbp
     : null;
+  const spaForRow = scenarioResult?.statePension?.statePensionAge ?? null;
+
+  const currentAge = saved.built.currentAge ?? 0;
+  const savedRetirementAge = savedResult?.retirementAge ?? currentAge;
+  const savedPlanToAge = savedResult?.planToAge ?? savedRetirementAge + 1;
+  const scenarioRetirementAge = scenario.values.retirementAge;
+  const scenarioPlanToAge = Math.max(scenarioRetirementAge + 1, scenario.values.planToAge);
+
+  const latestCounted = countedSeries[countedSeries.length - 1];
 
   return (
     <PageBody>
       <div className={plannerStack()}>
-        <PageHeader title="Retirement plan" subtitle="All figures in today's prices, before tax." />
+        <PageHeader title="Retirement plan" subtitle="Estimates in today's prices, before tax." />
 
         <HeroFigure
-          label={`Estimated income from age ${savedResult.retirementAge}`}
-          value={savedResult.estimatedYearlyIncomeGbp.middle}
+          label={heroLabel}
+          value={savedResult ? formatEstimate(savedResult.estimatedYearlyIncomeGbp.middle) : null}
           estimateLabel="Unverified estimate"
           subline={heroSubline}
-          explain="Built from accounts that count towards retirement, your State Pension details, and your housing in retirement in today's prices."
+          emptyPrompt={emptyPrompt}
+          emptyAction={emptyAction}
+          explain="Built from the accounts that count towards retirement, your State Pension details and your housing in retirement, in today's prices, middle growth case."
         />
 
-        <KpiStrip
-          items={[
-            <KpiCard
-              key="sp"
-              label="State Pension"
-              value={formatWholeGbp(savedResult.statePension.annualAmountGbp)}
-              subtext={`From age ${savedResult.statePension.statePensionAge}`}
-            />,
-            <KpiCard
-              key="pensions"
-              label="Pensions at retirement"
-              value={formatWholeGbp(savedResult.projectedPotByGroupGbp.pensions.middle)}
-              subtext="Middle case (5% nominal)"
-            />,
-            <KpiCard
-              key="isa-savings"
-              label="ISAs and savings"
-              value={formatWholeGbp(
-                savedResult.projectedPotByGroupGbp.investments.middle +
-                  savedResult.projectedPotByGroupGbp.savings,
-              )}
-              subtext="At retirement age"
-            />,
-            <KpiCard
-              key="housing"
-              label="Housing in retirement"
-              value={formatWholeGbp(savedResult.housing.averageAnnualCostGbp)}
-              subtext={HOUSING_LABELS[savedResult.housing.kind] ?? savedResult.housing.kind}
-            />,
-          ]}
-        />
+        {kpis && <KpiStrip items={kpis} />}
 
-        <PageSection
-          title="Your target and scenario"
-          description="Explore changes in today's prices. Changes here are not saved until you select Save plan."
-          icon={Compass}
-        >
-          <SimulatorSplitLayout
-            controls={
-              <div className={controlsCard()}>
-                <SliderField
-                  label="Retirement age"
-                  value={safeRetirementAge}
-                  min={Math.max(50, currentAge)}
-                  max={80}
-                  step={1}
-                  onChange={setRetirementAge}
-                  formatValue={(v) => `Age ${v}`}
-                />
-
-                <SliderField
-                  label="Plan to age"
-                  value={safePlanToAge}
-                  min={Math.max(safeRetirementAge + 1, 70)}
-                  max={105}
-                  step={1}
-                  onChange={setPlanToAge}
-                  formatValue={(v) => `Age ${v}`}
-                />
-
-                <SliderField
-                  label="Extra monthly contribution"
-                  value={extraMonthly}
-                  min={0}
-                  max={2000}
-                  step={50}
-                  onChange={setExtraMonthly}
-                  formatValue={(v) => formatWholeGbp(v)}
-                />
-
-                <div className={fieldGroup()}>
-                  <span className={fieldLabel()}>Growth case</span>
-                  <div className={toggleRow()}>
-                    {(["lower", "middle", "higher"] as const).map((c) => (
-                      <Button
-                        key={c}
-                        type="button"
-                        variant={selectedCase === c ? "primary" : "secondary"}
-                        size="sm"
-                        onClick={() => setSelectedCase(c)}
-                      >
-                        {CASE_LABELS[c]}
-                      </Button>
-                    ))}
+        {savedResult && (
+          <ScenarioZone
+            basis={`Starting from your saved plan: retiring at ${savedRetirementAge}, planning to age ${savedPlanToAge}.`}
+            isModified={scenario.isModified}
+            onReset={scenario.reset}
+            notice={<ProjectionNotice lead="Unverified estimate." />}
+          >
+            <SimulatorSplitLayout
+              controls={
+                <div className={controlsCard()}>
+                  <SliderField
+                    label="Retirement age"
+                    value={scenarioRetirementAge}
+                    min={currentAge}
+                    max={Math.max(80, savedRetirementAge)}
+                    step={1}
+                    onChange={(v) => scenario.set("retirementAge", v)}
+                    formatValue={(v) => `Age ${v}`}
+                  />
+                  <SliderField
+                    label="Plan to age"
+                    value={scenarioPlanToAge}
+                    min={scenarioRetirementAge + 1}
+                    max={Math.max(105, savedPlanToAge)}
+                    step={1}
+                    onChange={(v) => scenario.set("planToAge", v)}
+                    formatValue={(v) => `Age ${v}`}
+                  />
+                  <SliderField
+                    label="Extra monthly contribution"
+                    value={scenario.values.extraMonthly}
+                    min={0}
+                    max={2000}
+                    step={50}
+                    onChange={(v) => scenario.set("extraMonthly", v)}
+                    formatValue={(v) => formatWholeGbp(v)}
+                  />
+                  <div className={fieldGroup()}>
+                    <span className={fieldLabel()}>Growth case</span>
+                    <div className={toggleRow()}>
+                      {(["lower", "middle", "higher"] as const).map((c) => (
+                        <Button
+                          key={c}
+                          type="button"
+                          variant={selectedCase === c ? "primary" : "secondary"}
+                          size="sm"
+                          aria-pressed={selectedCase === c}
+                          onClick={() => scenario.set("growthCase", c)}
+                        >
+                          {caseLabel(c)}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              }
+              content={
+                <div className={resultsStack()}>
+                  <ResultBlock
+                    label={`Estimated yearly income from age ${scenarioResult?.retirementAge ?? scenarioRetirementAge}`}
+                    figure={scenarioIncome === null ? undefined : formatEstimate(scenarioIncome)}
+                    emptyPrompt="The estimate cannot be worked out for these figures."
+                    note={
+                      scenarioDifference !== null && scenarioResult?.targetYearlyIncome != null
+                        ? `Your target: ${formatWholeGbp(scenarioResult.targetYearlyIncome)} a year. Difference: ${formatEstimate(scenarioDifference)} a year.`
+                        : "Add your own yearly target in your plan details to compare."
+                    }
+                    row={
+                      scenarioFromSpa && spaForRow !== null
+                        ? {
+                            label: `From State Pension age (${spaForRow})`,
+                            value: `${formatEstimate(scenarioFromSpa[selectedCase])} a year`,
+                          }
+                        : undefined
+                    }
+                  />
 
-                <div className={fieldGroup()}>
-                  <span className={fieldLabel()}>Your yearly target (today's prices)</span>
-                  <div className={toggleRow()}>
-                    <Button
-                      type="button"
-                      variant={targetMode === "typed" ? "primary" : "secondary"}
-                      size="sm"
-                      onClick={() => setTargetMode("typed")}
+                  {latestCounted && (
+                    <PageSection
+                      title="Counted towards retirement"
+                      description="The accounts that count towards retirement, from your monthly check-ins."
+                      icon={Calendar}
                     >
-                      Typed figure
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={targetMode === "budget" ? "primary" : "secondary"}
-                      size="sm"
-                      onClick={() => setTargetMode("budget")}
-                    >
-                      From budget lines
-                    </Button>
-                  </div>
+                      <p className={mutedNote()}>
+                        {latestCounted.month}: {formatWholeGbp(latestCounted.totalCountedGbp)}
+                        {latestCounted.hasCarriedForward
+                          ? " (includes balances carried forward)"
+                          : ""}
+                      </p>
+                    </PageSection>
+                  )}
 
-                  {targetMode === "typed" ? (
+                  {scenarioResult && (
+                    <CollapsibleDrawer
+                      title="Assumptions, pots and year by year"
+                      itemCount={scenarioResult.yearlySchedule.length}
+                      itemNoun={{ one: "year", other: "years" }}
+                    >
+                      <div className={resultsStack()}>
+                        <p className={mutedNote()}>
+                          Growth band: {pct(growthRates.lower)}, {pct(growthRates.middle)} and{" "}
+                          {pct(growthRates.higher)} a year before inflation, with{" "}
+                          {pct(inflationRate)} inflation. These are a reference for three cases, not
+                          a prediction. Figures are in today&apos;s prices, before tax.
+                        </p>
+                        <p className={mutedNote()}>
+                          {scenarioResult.statePension
+                            ? `State Pension: ${formatWholeGbp(scenarioResult.statePension.annualAmountGbp)} a year from age ${scenarioResult.statePension.statePensionAge}, at ${scenarioResult.statePension.taxYear} rates.`
+                            : "State Pension is not included yet. Add your State Pension age and a forecast or qualifying years to include it."}
+                        </p>
+                        <table className={scheduleTable()}>
+                          <thead>
+                            <tr>
+                              <th className={scheduleHeaderCell()}>Case</th>
+                              <th className={scheduleHeaderCell()}>Yearly income</th>
+                              <th className={scheduleHeaderCell()}>Pots at retirement</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(["lower", "middle", "higher"] as const).map((c) => (
+                              <tr key={c}>
+                                <td className={scheduleCell()}>{caseLabel(c)}</td>
+                                <td className={scheduleCell()}>
+                                  {formatEstimate(scenarioResult.estimatedYearlyIncomeGbp[c])}
+                                </td>
+                                <td className={scheduleCell()}>
+                                  {formatEstimate(scenarioResult.projectedPotAtRetirementGbp[c])}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <table className={scheduleTable()}>
+                          <thead>
+                            <tr>
+                              <th className={scheduleHeaderCell()}>Age</th>
+                              <th className={scheduleHeaderCell()}>From pots</th>
+                              <th className={scheduleHeaderCell()}>State Pension</th>
+                              <th className={scheduleHeaderCell()}>Housing</th>
+                              <th className={scheduleHeaderCell()}>After housing</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {scenarioResult.yearlySchedule.map((row) => (
+                              <tr key={row.age}>
+                                <td className={scheduleCell()}>{row.age}</td>
+                                <td className={scheduleCell()}>
+                                  {formatEstimate(row.potDrawdownYearly[selectedCase])}
+                                </td>
+                                <td className={scheduleCell()}>
+                                  {formatWholeGbp(row.statePensionYearlyGbp)}
+                                </td>
+                                <td className={scheduleCell()}>
+                                  {formatEstimate(row.housingCostYearlyGbp)}
+                                </td>
+                                <td className={scheduleCell()}>
+                                  {formatEstimate(row.yearlyIncomeAfterHousing[selectedCase])}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CollapsibleDrawer>
+                  )}
+                </div>
+              }
+            />
+          </ScenarioZone>
+        )}
+
+        <PageSection
+          id="retirement-plan-details"
+          title="Your plan details"
+          description="These saved details make the estimate. Nothing changes until you select Save plan."
+          icon={ClipboardList}
+        >
+          <div className={controlsCard()}>
+            <div className={fieldGrid()}>
+              <div className={fieldGroup()}>
+                <label className={fieldLabel()} htmlFor="ret-age-input">
+                  Retirement age
+                </label>
+                <input
+                  id="ret-age-input"
+                  className={inputControl()}
+                  type="text"
+                  inputMode="numeric"
+                  value={retirementAgeInput}
+                  onChange={(e) => setRetirementAgeInput(e.target.value)}
+                />
+              </div>
+              <div className={fieldGroup()}>
+                <label className={fieldLabel()} htmlFor="plan-to-age-input">
+                  Plan to age
+                </label>
+                <input
+                  id="plan-to-age-input"
+                  className={inputControl()}
+                  type="text"
+                  inputMode="numeric"
+                  value={planToAgeInput}
+                  onChange={(e) => setPlanToAgeInput(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className={fieldGroup()}>
+              <span className={fieldLabel()}>Your yearly target (today&apos;s prices)</span>
+              <div className={toggleRow()}>
+                <Button
+                  type="button"
+                  variant={targetMode === "typed" ? "primary" : "secondary"}
+                  size="sm"
+                  aria-pressed={targetMode === "typed"}
+                  onClick={() => setTargetMode("typed")}
+                >
+                  Typed figure
+                </Button>
+                <Button
+                  type="button"
+                  variant={targetMode === "budget" ? "primary" : "secondary"}
+                  size="sm"
+                  aria-pressed={targetMode === "budget"}
+                  onClick={() => setTargetMode("budget")}
+                >
+                  From budget lines
+                </Button>
+              </div>
+              {targetMode === "typed" ? (
+                <input
+                  aria-label="Yearly target in pounds"
+                  className={inputControl()}
+                  type="text"
+                  inputMode="decimal"
+                  value={typedTargetInput}
+                  onChange={(e) => setTypedTargetInput(e.target.value)}
+                />
+              ) : (
+                <div className={budgetLinesList()}>
+                  {nonHousingBudgetLines.length === 0 ? (
+                    <p className={mutedNote()}>No spending lines other than housing saved yet.</p>
+                  ) : (
+                    nonHousingBudgetLines.map((entry) => {
+                      const currentStatus = lineStatuses[entry.id] ?? "continues";
+                      return (
+                        <div key={entry.id} className={budgetLineItem()}>
+                          <div>
+                            <div className={budgetLineName()}>{entry.name}</div>
+                            <div className={budgetLineAmount()}>
+                              {formatWholeGbp(entry.amount)} / {entry.frequency}
+                            </div>
+                          </div>
+                          <div className={toggleRow()}>
+                            {(["continues", "stops"] as const).map((status) => (
+                              <Button
+                                key={status}
+                                type="button"
+                                size="sm"
+                                variant={currentStatus === status ? "primary" : "secondary"}
+                                aria-pressed={currentStatus === status}
+                                onClick={() =>
+                                  setLineStatuses((prev) => ({ ...prev, [entry.id]: status }))
+                                }
+                              >
+                                {status === "continues" ? "Continues" : "Stops"}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className={fieldGrid()}>
+              <div className={fieldGroup()}>
+                <label className={fieldLabel()} htmlFor="sp-age-input">
+                  State Pension age
+                </label>
+                <input
+                  id="sp-age-input"
+                  className={inputControl()}
+                  type="text"
+                  inputMode="numeric"
+                  value={statePensionAgeInput}
+                  onChange={(e) => setStatePensionAgeInput(e.target.value)}
+                />
+                <a
+                  className={promptLink()}
+                  href={STATE_PENSION_AGE_CHECKER_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Check your State Pension age on GOV.UK
+                </a>
+              </div>
+              <div className={fieldGroup()}>
+                <label className={fieldLabel()} htmlFor="sp-forecast-input">
+                  State Pension forecast (pounds a year)
+                </label>
+                <input
+                  id="sp-forecast-input"
+                  className={inputControl()}
+                  type="text"
+                  inputMode="decimal"
+                  value={forecastInput}
+                  onChange={(e) => setForecastInput(e.target.value)}
+                />
+              </div>
+              <div className={fieldGroup()}>
+                <label className={fieldLabel()} htmlFor="sp-years-input">
+                  Or National Insurance qualifying years
+                </label>
+                <input
+                  id="sp-years-input"
+                  className={inputControl()}
+                  type="text"
+                  inputMode="numeric"
+                  value={qualifyingYearsInput}
+                  onChange={(e) => setQualifyingYearsInput(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className={fieldGroup()}>
+              <span className={fieldLabel()}>
+                Growth band and inflation (a reference, not a prediction)
+              </span>
+              <div className={fieldGrid()}>
+                {(
+                  [
+                    [
+                      "growth-lower-input",
+                      "Lower case growth (% a year)",
+                      lowerInput,
+                      setLowerInput,
+                    ],
+                    [
+                      "growth-middle-input",
+                      "Middle case growth (% a year)",
+                      middleInput,
+                      setMiddleInput,
+                    ],
+                    [
+                      "growth-higher-input",
+                      "Higher case growth (% a year)",
+                      higherInput,
+                      setHigherInput,
+                    ],
+                    ["inflation-input", "Inflation (% a year)", inflationInput, setInflationInput],
+                  ] as const
+                ).map(([id, label, value, setValue]) => (
+                  <div key={id} className={fieldGroup()}>
+                    <label className={fieldLabel()} htmlFor={id}>
+                      {label}
+                    </label>
                     <input
-                      aria-label="Yearly target in GBP"
+                      id={id}
                       className={inputControl()}
                       type="text"
                       inputMode="decimal"
-                      placeholder="For example 26000"
-                      value={typedTargetInput}
-                      onChange={(e) => setTypedTargetInput(e.target.value)}
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
                     />
-                  ) : (
-                    <div className={budgetLinesList()}>
-                      {nonHousingBudgetLines.length === 0 ? (
-                        <p className={mutedNote()}>
-                          No non-housing spending lines saved in your budget yet.
-                        </p>
-                      ) : (
-                        nonHousingBudgetLines.map((entry) => {
-                          const currentStatus = lineStatuses[entry.id] ?? "continues";
-                          return (
-                            <div key={entry.id} className={budgetLineItem()}>
-                              <div>
-                                <div className={budgetLineName()}>{entry.name}</div>
-                                <div className={budgetLineAmount()}>
-                                  {formatWholeGbp(entry.amount)} / {entry.frequency}
-                                </div>
-                              </div>
-                              <div className={toggleRow()}>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant={currentStatus === "continues" ? "primary" : "secondary"}
-                                  onClick={() =>
-                                    setLineStatuses((prev) => ({
-                                      ...prev,
-                                      [entry.id]: "continues",
-                                    }))
-                                  }
-                                >
-                                  Continues
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant={currentStatus === "stops" ? "primary" : "secondary"}
-                                  onClick={() =>
-                                    setLineStatuses((prev) => ({ ...prev, [entry.id]: "stops" }))
-                                  }
-                                >
-                                  Stops
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className={fieldGroup()}>
-                  <label className={fieldLabel()} htmlFor="sp-age-input">
-                    State Pension age
-                  </label>
-                  <input
-                    id="sp-age-input"
-                    className={inputControl()}
-                    type="text"
-                    inputMode="numeric"
-                    value={String(statePensionAge)}
-                    onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (Number.isInteger(n) && n >= 50 && n <= 85) setStatePensionAge(n);
-                    }}
-                  />
-                </div>
-
-                <div className={fieldGroup()}>
-                  <label className={fieldLabel()} htmlFor="sp-years-input">
-                    National Insurance qualifying years (0 to 35)
-                  </label>
-                  <input
-                    id="sp-years-input"
-                    className={inputControl()}
-                    type="text"
-                    inputMode="numeric"
-                    value={String(qualifyingYears)}
-                    onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (Number.isInteger(n) && n >= 0 && n <= 50) setQualifyingYears(n);
-                    }}
-                  />
-                </div>
-
-                <div className={fieldGroup()}>
-                  <label className={fieldLabel()} htmlFor="sp-forecast-input">
-                    State Pension forecast (optional, GBP a year)
-                  </label>
-                  <input
-                    id="sp-forecast-input"
-                    className={inputControl()}
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="From gov.uk forecast"
-                    value={forecastInput}
-                    onChange={(e) => setForecastInput(e.target.value)}
-                  />
-                </div>
-
-                {onSavePlan && (
-                  <Button type="button" variant="primary" disabled={isSaving} onClick={handleSave}>
-                    {isSaving ? "Saving..." : "Save plan"}
-                  </Button>
-                )}
-              </div>
-            }
-            content={
-              <div className={resultsStack()}>
-                <ResultBlock
-                  label={`Estimated income from age ${scenarioResult.retirementAge}`}
-                  figure={formatWholeGbp(selectedEstimatedIncome)}
-                  note={
-                    selectedDifference !== null && scenarioResult.targetYearlyIncome !== null
-                      ? `Your target: ${formatWholeGbp(scenarioResult.targetYearlyIncome)} a year. Difference: ${formatWholeGbp(selectedDifference)} a year.`
-                      : "Enter your own yearly target to compare."
-                  }
-                  row={{
-                    label: "Projected pot at retirement",
-                    value: formatWholeGbp(scenarioResult.projectedPotAtRetirementGbp[selectedCase]),
-                  }}
-                />
-
-                <div className={caseRow()}>
-                  <ResultBlock
-                    label="Lower case (2%)"
-                    figure={formatWholeGbp(scenarioResult.estimatedYearlyIncomeGbp.lower)}
-                    row={{
-                      label: "Pot at retirement",
-                      value: formatWholeGbp(scenarioResult.projectedPotAtRetirementGbp.lower),
-                    }}
-                  />
-                  <ResultBlock
-                    label="Middle case (5%)"
-                    figure={formatWholeGbp(scenarioResult.estimatedYearlyIncomeGbp.middle)}
-                    row={{
-                      label: "Pot at retirement",
-                      value: formatWholeGbp(scenarioResult.projectedPotAtRetirementGbp.middle),
-                    }}
-                  />
-                  <ResultBlock
-                    label="Higher case (8%)"
-                    figure={formatWholeGbp(scenarioResult.estimatedYearlyIncomeGbp.higher)}
-                    row={{
-                      label: "Pot at retirement",
-                      value: formatWholeGbp(scenarioResult.projectedPotAtRetirementGbp.higher),
-                    }}
-                  />
-                </div>
-
-                {countedSeries.length > 0 && (
-                  <PageSection
-                    title="Monthly counted pots"
-                    description="Sum of accounts counted towards retirement from your monthly check-ins."
-                    icon={Calendar}
-                  >
-                    <p className={mutedNote()}>
-                      Latest recorded month ({countedSeries[countedSeries.length - 1]?.month}):{" "}
-                      {formatWholeGbp(
-                        countedSeries[countedSeries.length - 1]?.totalCountedGbp ?? 0,
-                      )}
-                      {countedSeries[countedSeries.length - 1]?.hasCarriedForward
-                        ? " (includes carried-forward balances)"
-                        : ""}
-                    </p>
-                  </PageSection>
-                )}
-
-                <CollapsibleDrawer title="Assumptions, UK rules and year-by-year schedule">
-                  <div className={resultsStack()}>
-                    <p className={mutedNote()}>
-                      Reference growth band: 2%, 5%, and 8% nominal with{" "}
-                      {(inflationRate * 100).toFixed(1)}% inflation, converted to today&apos;s
-                      prices. State Pension uses 2026/27 rates and starts at age {statePensionAge}.
-                    </p>
-                    <table className={scheduleTable()}>
-                      <thead>
-                        <tr>
-                          <th className={scheduleHeaderCell()}>Age</th>
-                          <th className={scheduleHeaderCell()}>Pot drawdown</th>
-                          <th className={scheduleHeaderCell()}>State Pension</th>
-                          <th className={scheduleHeaderCell()}>Housing cost</th>
-                          <th className={scheduleHeaderCell()}>Income after housing</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {scenarioResult.yearlySchedule.map((row) => (
-                          <tr key={row.age}>
-                            <td className={scheduleCell()}>{row.age}</td>
-                            <td className={scheduleCell()}>
-                              {formatWholeGbp(row.potDrawdownYearly[selectedCase])}
-                            </td>
-                            <td className={scheduleCell()}>
-                              {formatWholeGbp(row.statePensionYearlyGbp)}
-                            </td>
-                            <td className={scheduleCell()}>
-                              {formatWholeGbp(row.housingCostYearlyGbp)}
-                            </td>
-                            <td className={scheduleCell()}>
-                              {formatWholeGbp(row.yearlyIncomeAfterHousing[selectedCase])}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
                   </div>
-                </CollapsibleDrawer>
-
-                <ProjectionNotice lead="Unverified estimate." />
+                ))}
               </div>
-            }
-          />
+            </div>
+
+            <CollapsibleDrawer
+              title="Accounts that count towards retirement"
+              itemCount={saved.built.countableAccounts.length}
+              itemNoun={{ one: "account", other: "accounts" }}
+              openLabel="Hide accounts"
+              closedLabel="Show accounts"
+            >
+              {saved.built.countableAccounts.length === 0 ? (
+                <p className={mutedNote()}>No pensions, investments or savings saved yet.</p>
+              ) : (
+                <div className={budgetLinesList()}>
+                  {saved.built.countableAccounts.map((account) => (
+                    <Checkbox
+                      key={account.id}
+                      label={account.name || account.type}
+                      hint={`${account.type}, ${formatWholeGbp(account.balanceGbp)}`}
+                      checked={!excluded.has(account.id)}
+                      onChange={(e) => {
+                        const counts = e.target.checked;
+                        setExcluded((prev) => {
+                          const next = new Set(prev);
+                          if (counts) next.delete(account.id);
+                          else next.add(account.id);
+                          return next;
+                        });
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </CollapsibleDrawer>
+
+            {formError && (
+              <p className={mutedNote()} role="alert">
+                {formError}
+              </p>
+            )}
+
+            {onSavePlan && (
+              <Button type="button" variant="primary" disabled={isSaving} onClick={handleSave}>
+                {isSaving ? "Saving..." : "Save plan"}
+              </Button>
+            )}
+          </div>
         </PageSection>
       </div>
     </PageBody>
