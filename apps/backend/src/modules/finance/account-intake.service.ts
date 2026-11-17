@@ -110,7 +110,9 @@ function validateTermMonths(value: unknown): number | null | undefined {
 
 function validateIsoDate(value: unknown, fieldName: string): string | null | undefined {
   if (value === undefined || value === null) return value;
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  // No regex on user input: a 10-character string that survives the UTC round trip unchanged is
+  // exactly a real YYYY-MM-DD date (toISOString always writes that form for years 0000-9999).
+  if (typeof value === "string" && value.length === 10) {
     const parsed = new Date(`${value}T00:00:00.000Z`);
     if (!Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value) {
       return value;
