@@ -29,9 +29,9 @@ const EXAMPLE_ROWS: ReadonlyArray<{ category: string; name: string }> = [
   { category: "savings", name: "Savings" },
 ];
 
-/** The editor's add-row defaults: spending is essential except everyday expenses and savings. */
+/** The editor's add-row defaults: spending is essential except everyday expenses. */
 const essentialFor = (category: string) =>
-  category === INCOME_CATEGORY ? true : category !== "expenses" && category !== "savings";
+  category === INCOME_CATEGORY ? true : category !== "expenses";
 
 /**
  * Fresh common-entry rows, each monthly with no amount, for only the common entries the budget

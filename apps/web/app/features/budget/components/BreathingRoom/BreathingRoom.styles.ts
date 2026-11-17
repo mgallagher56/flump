@@ -8,27 +8,3 @@ export const breathingRoomResult = cva({
 export const breathingRoomFigure = cva({
   base: { fontVariantNumeric: "tabular-nums" },
 });
-
-export const breathingRoomNote = cva({
-  base: {
-    margin: 0,
-    mt: "3",
-    textStyle: "body.sm",
-    color: "text.secondary",
-  },
-});
-
-export const breathingRoomLink = cva({
-  base: {
-    color: "primary",
-    textDecoration: "underline",
-    textUnderlineOffset: "3px",
-    fontWeight: "medium",
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "2px",
-      borderRadius: "sm",
-    },
-  },
-});

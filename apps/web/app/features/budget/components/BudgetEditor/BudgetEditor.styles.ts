@@ -12,10 +12,6 @@ export const budgetEditor = sva({
     sections: { display: "flex", flexDirection: "column", gap: "6" },
     foot: {
       display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      flexWrap: "wrap",
-      gap: "3",
       mt: "6",
       pt: "4",
       borderTopWidth: "1px",

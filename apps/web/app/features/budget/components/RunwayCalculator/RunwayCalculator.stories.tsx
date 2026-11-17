@@ -51,3 +51,19 @@ export const Default: Story = {
     await expect(toggle.checked).toBe(false);
   },
 };
+
+/** As on the Budget page: the zone sits in a closed drawer under the saved Breathing room figure. */
+export const Collapsible: Story = {
+  args: { collapsible: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const drawer = canvas.getAllByRole("button", { name: /^Model a change to your budget/ })[0];
+    if (!drawer) throw new Error("Drawer toggle missing");
+    await expect(drawer.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(drawer);
+    await expect(drawer.getAttribute("aria-expanded")).toBe("true");
+    await expect(
+      canvas.getAllByRole("region", { name: "Model a change to your budget" }).length,
+    ).toBeGreaterThan(0);
+  },
+};

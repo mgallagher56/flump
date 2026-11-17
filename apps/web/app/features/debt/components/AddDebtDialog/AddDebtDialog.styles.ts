@@ -26,19 +26,11 @@ export const fieldRow = cva({
 });
 
 /**
- * Edit mode's "Delete debt": a quiet outline button with subtle danger tokens, set apart from
- * Save. The dialog footer stacks its buttons below `sm` (this one last) and puts it on the left
- * from `sm`.
+ * Edit mode's "Delete debt": a quiet outline button set apart from Save. The dialog footer stacks
+ * its buttons below `sm` (this one last) and puts it on the left from `sm`. It stays neutral (the
+ * judgement guard keeps danger colours for the confirmation step, which is danger-toned).
  */
-export const deleteAction = css({
-  sm: { marginInlineEnd: "auto" },
-  color: "status.danger.text",
-  borderColor: "status.danger.border",
-  _hover: {
-    bg: "status.danger.bg",
-    borderColor: "status.danger.border",
-  },
-});
+export const deleteAction = css({ sm: { marginInlineEnd: "auto" } });
 
 /** Footer buttons keep their label on one line; the footer stacks them below `sm` instead. */
 export const footerButton = css({ whiteSpace: "nowrap", flexShrink: 0 });

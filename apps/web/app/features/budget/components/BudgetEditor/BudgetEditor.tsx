@@ -69,8 +69,6 @@ export interface BudgetEditorProps {
   onSaveDrafts?: () => Promise<void>;
   /** Removes every common entry not yet saved. */
   onRemoveDrafts?: () => void;
-  /** Exits edit mode. Shown as a "Finished editing" button at the foot of the editor. */
-  onFinishEditing?: () => void;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -186,9 +184,9 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
             }
           />
         </div>
-        {/* Only income rows have no Essential switch; savings and spending rows both offer it. */}
+        {/* Savings count as savings whatever the flag, so only spending rows offer it. */}
         <div className={essentialField()}>
-          {isIncomeEntry(entry) ? null : (
+          {isIncomeEntry(entry) || entry.category === "savings" ? null : (
             <Switch
               aria-label={`Essential: ${entry.name}`}
               checked={entry.isEssential}
@@ -228,7 +226,7 @@ interface DraftRowProps {
 const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove, disabled = false }) => {
   const id = draft.id;
   const label = draft.name.trim() || "common entry";
-  const showEssential = draft.category !== INCOME;
+  const showEssential = draft.category !== INCOME && draft.category !== "savings";
   return (
     <li className={entryRow()} data-testid={`budget-editor-draft-${id}`}>
       <div className={draftName()}>
@@ -450,7 +448,6 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   onDraftRemove,
   onSaveDrafts,
   onRemoveDrafts,
-  onFinishEditing,
 }) => {
   const toastApi = useOptionalToast();
   const [savingDrafts, setSavingDrafts] = useState(false);
@@ -535,8 +532,8 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
           frequency,
           isIncome,
           isPrimaryIncome: false,
-          // Spending is essential by default except everyday expenses and savings.
-          isEssential: isIncome ? true : category !== "expenses" && category !== "savings",
+          // The wizard's defaults: spending is essential except everyday expenses.
+          isEssential: isIncome ? true : category !== "expenses",
           notes: null,
           isDefault: false,
         });
@@ -702,29 +699,18 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         })}
       </div>
 
-      {onAddCategory || onFinishEditing ? (
+      {onAddCategory ? (
         <div className={editor.foot}>
-          {onAddCategory ? (
-            <Button
-              data-testid="budget-editor-add-category-btn"
-              id="budget-editor-add-category-btn"
-              size="sm"
-              variant="outline"
-              onClick={onAddCategory}
-            >
-              <Icon icon={Plus} size="sm" />
-              Add category
-            </Button>
-          ) : null}
-          {onFinishEditing ? (
-            <Button
-              data-testid="budget-editor-finish-editing-btn"
-              id="budget-editor-finish-editing-btn"
-              onClick={onFinishEditing}
-            >
-              Finished editing
-            </Button>
-          ) : null}
+          <Button
+            data-testid="budget-editor-add-category-btn"
+            id="budget-editor-add-category-btn"
+            size="sm"
+            variant="outline"
+            onClick={onAddCategory}
+          >
+            <Icon icon={Plus} size="sm" />
+            Add category
+          </Button>
         </div>
       ) : null}
 
