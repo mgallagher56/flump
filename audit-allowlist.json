@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": "GHSA-fc5q-39xc-vjpf",
+    "package": "picomatch",
+    "severity": "high",
+    "reason": "ReDoS on crafted extglob patterns; no patched release exists (every version up to 4.0.7 is affected). Reached only through build and dev tooling (vite, rollup, lint-staged, knip, expo cli) matching our own glob patterns, never user input. Remove once picomatch ships a fix and the lockfile picks it up.",
+    "expires": "2026-12-01"
+  }
+]
