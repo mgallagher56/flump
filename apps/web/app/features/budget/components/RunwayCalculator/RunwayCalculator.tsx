@@ -462,8 +462,8 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   // The trigger names the zone and what it tries; it repeats no figure (the saved one is above).
   return (
     <CollapsibleDrawer
-      closedLabel="Show"
-      openLabel="Hide"
+      closedLabel="Show budget what-ifs"
+      openLabel="Hide budget what-ifs"
       subtitle="Try redundancy pay, a spending cut or which accounts to draw on."
       title="Model a change to your budget"
     >

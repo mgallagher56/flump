@@ -218,9 +218,9 @@ export const SavingsContainer: FC = () => {
           {/* Below saved figures, the model starts closed (one pattern for hiding a simulator:
               CollapsibleDrawer). A pay rise handed over from Take-home pay opens it. */}
           <CollapsibleDrawer
-            closedLabel="Show the model"
+            closedLabel="Show savings what-ifs"
             defaultOpen={payRiseMonthly > 0}
-            openLabel="Hide the model"
+            openLabel="Hide savings what-ifs"
             subtitle="See how your savings could grow, or how long a target could take."
             title={SCENARIO_TITLE}
           >
