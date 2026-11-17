@@ -114,7 +114,11 @@ function validateIsoDate(value: unknown, fieldName: string): string | null | und
   // exactly a real YYYY-MM-DD date (toISOString always writes that form for years 0000-9999).
   if (typeof value === "string" && value.length === 10) {
     const parsed = new Date(`${value}T00:00:00.000Z`);
-    if (!Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value) {
+    if (
+      !Number.isNaN(parsed.getTime()) &&
+      parsed.toISOString().slice(0, 10) === value &&
+      parsed.getUTCFullYear() >= 1
+    ) {
       return value;
     }
   }
@@ -167,12 +171,19 @@ function assertTypeScopedFields(type: string | undefined, fields: Partial<Accoun
 
 function validateCreditLimit(value: unknown): number | null | undefined {
   if (value === undefined || value === null) return value;
-  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value >= 1e10) {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 0 ||
+    value > 9_999_999_999.99
+  ) {
     throw new BadRequestException(
       "creditLimit must be a non-negative finite number below 10 billion, or null",
     );
   }
-  return value;
+  // The column is numeric(12,2): rounding here keeps a value just under the bound from rounding
+  // up past it in Postgres.
+  return Math.round(value * 100) / 100;
 }
 
 /**

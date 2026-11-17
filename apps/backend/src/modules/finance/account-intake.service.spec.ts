@@ -930,6 +930,28 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(mockAccountRepo.save).not.toHaveBeenCalled();
     });
 
+    it.each([
+      { creditLimit: 9_999_999_999.999 },
+      { creditLimit: -1 },
+      { promoZeroPercentUntil: "0000-01-01" },
+      { promoZeroPercentUntil: "2027-02-30" },
+    ])("refuses an out-of-range credit field %o with 400", async (body) => {
+      await expect(
+        service.createAccount("userA", { name: "Card", type: "Credit Card", balance: 0, ...body }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockAccountRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("rounds a credit limit to pence", async () => {
+      const saved = await service.createAccount("userA", {
+        name: "Card",
+        type: "Credit Card",
+        balance: 0,
+        creditLimit: 1_234.567,
+      });
+      expect(saved.creditLimit).toBe(1_234.57);
+    });
+
     it("accepts null (not set) for every new field on any type", async () => {
       const saved = await service.createAccount("userA", {
         name: "Loan",
