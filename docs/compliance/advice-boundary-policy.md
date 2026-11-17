@@ -81,6 +81,15 @@ Replace the instruction with a statement of fact about the user's figures, in th
 - Every user sees the same line in the same place, with or without debts. It is never triggered, moved, reworded or emphasised by balances, arrears, missed payments, APRs or any other signal (R4). The component takes no props so it cannot be.
 - The wording is a factual signpost, not a recommendation (R2) and not a judgement (copy guide 2.3, `docs/copy/COPY-GUIDE.md`).
 
+**Exception: MoneyHelper pension guidance (owner decision RD11, 2026-11-17).** The Retirement page (`/app/retirement`) shows one quiet note, "MoneyHelper offers free, impartial guidance on pensions, backed by the government.", followed by the link "Pension guidance from MoneyHelper" to MoneyHelper's pensions and retirement page, opening in a new tab (`apps/web/app/features/retirement/components/MoneyHelperGuidance`). Conditions:
+
+- MoneyHelper is the only named service on the Retirement page. No pension provider, adviser, platform or other guidance service is named.
+- Every user sees the same note in the same place, whatever their pots, contributions or projection. It is never conditional, and never triggered, moved, reworded or emphasised by any figure or signal (R4). The component takes no props so it cannot be.
+- It is a muted note with an ordinary text link: not a button, card or banner, and not styled as a call to action.
+- It never says or implies that the person should seek guidance because of their numbers. It is a factual signpost, not a recommendation (R2) and not a judgement (copy guide 2.3).
+
+These two MoneyHelper lines are the only named-service exceptions to R3.
+
 **Universal Credit and other benefits (owner decision, 2026-11-13, E31).** Flump does not model benefits. If a surface mentions them, it signposts only, with no eligibility or amount estimate.
 
 ## R4. No segment-based nudges

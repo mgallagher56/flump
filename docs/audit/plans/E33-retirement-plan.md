@@ -135,13 +135,31 @@ New file `packages/finance-engine/src/test-vectors/uk-retirement.vectors.ts`, un
 
 S1 to S3 are useful on their own. S4, S5 and S8 can run in parallel after S3.
 
+### Progress (2026-11-17)
+
+Done:
+
+- S0 to S5 merged (#750, #758), corrected by #768.
+- RD6, one projection (PR #RETIREMENT_PR): the Pension page's forecaster is gone. Its what-if now runs in the Retirement page's scenario zone on the same engine projection (`projectRealPotBalance` in `packages/finance-engine/src/retirement.ts`) and the saved plan's growth band and inflation. Workplace contributions from salary (`workplace-pension.ts`) now count in the saved plan, its scenario and the MCP tools alike. The Pension page keeps saved facts, the take-home tool and the UK rules, with a link to the Retirement page. The savings forecaster's "today's money" uses the same real-rate conversion and inflation figure.
+- RD9, friends beta (PR #RETIREMENT_PR): the page, `/retirement-plan` and the MCP retirement tools are available while `BETA_OPEN` is true or to users listed in `RETIREMENT_ALLOWED_USER_IDS`; anyone else gets a plain not-found. The nav item stays hidden.
+- RD11, MoneyHelper link (PR #RETIREMENT_PR): the policy's R3 exception now covers one MoneyHelper pension guidance line on the Retirement page, the same for everyone.
+
+Remaining:
+
+- S4 finish: a budget-built target where a line's amount changes in retirement. The engine supports a changed amount; the page offers only "Continues" and "Stops".
+- S6: tax on withdrawals, the tax-free lump sum (dropped from the old forecaster until this slice), UFPLS, RV10. Needs signed tax vectors.
+- S7: inheritance tax on unused pensions from 6 April 2027 and the self-employed view. Needs E29b wording.
+- S8: MCP evals for the retirement tools.
+- S9: mobile parity (E12) and the two-person view (E34).
+- Opening beyond the friends beta waits for E29b.
+
 ## 11. Strongest argument against
 
 A long-range projection is the output most easily read as advice, and Flump has no solicitor's view yet (E29b). A user who sees "£24,300 a year" may act on it, and the figure rests on growth assumptions nobody can verify, manual balances that may be stale and tax vectors that are unsigned. The honest alternative is to keep the simpler pension forecaster and link out to MoneyHelper. The plan's answer is the three-case band, today's money, the user's own target and waiting for E29a; that reduces the risk but does not remove it.
 
 ## 12. Decisions for the owner
 
-**Accepted 2026-11-17.** The owner accepted the recommendation in every row, RD1 to RD11. For RD11 the MoneyHelper link still needs owner-approved wording before it is shown.
+**Accepted 2026-11-17.** The owner accepted the recommendation in every row, RD1 to RD11. For RD11 the owner delegated the wording; the coordinator set it on 2026-11-17 and it is now fixed wording in the copy guide.
 
 | # | Decision | Options | Recommendation |
 | --- | --- | --- | --- |

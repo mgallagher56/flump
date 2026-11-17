@@ -252,7 +252,7 @@ One sentence under the h1 at most, and only if the heading alone does not say wh
 - The label says what happens on this page in this state: "Edit budget" when one exists, not "Create budget" (P7.4). One primary button per page.
 - Never "OK", "Submit", "Yes", "No", "Click here", "Learn more", "Read more". A link names where it goes: "How the estimate is worked out".
 - "Select" or "choose", not "click" or "tap".
-- An external link says so: "HMRC guidance on Self Assessment (opens in a new tab)". The MoneyHelper line keeps its own fixed wording (7.3).
+- An external link says so: "HMRC guidance on Self Assessment (opens in a new tab)". The MoneyHelper lines keep their own fixed wording (7.3).
 - A button prompted by a computed result may say "Model this …". It never says "Apply" (R5). A pre-fill button says "Use" (rulings log).
 - A pending state repeats the verb: "Saving…". Use the ellipsis character only for pending states and truncation.
 
@@ -423,7 +423,7 @@ Flump shows people their own figures and lets them model changes. It does not gi
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | R1   | State the figure and its assumptions. Options side by side, same fields, same weight. The copy would read the same if the result were reversed.                                                        |
 | R2   | No instruction or recommendation about money. Replace it with a fact about the person's figures, in the third person or passive.                                                                       |
-| R3   | No quality word on a product type. No provider, fund or platform named as a suggestion. MoneyHelper is the one named service, in its one fixed line.                                                   |
+| R3   | No quality word on a product type. No provider, fund or platform named as a suggestion. MoneyHelper is the one named service, in its two fixed lines (debt, retirement).                               |
 | R4   | A computed segment only chooses which sections show. It never chooses a headline, a call to action or an order of things to do. Checklists are app housekeeping.                                       |
 | R5   | A result may offer to "Model this". It never offers to "Apply". Pre-fill buttons say "Use". Saving is a separate step in the normal edit form.                                                         |
 | R6   | Each surface carries its one notice from the canonical source. Tax outputs say "Unverified estimate".                                                                                                  |
@@ -449,15 +449,16 @@ The £100,000 threshold never leads a page: no banner, no headline, no heading o
 
 These strings are fixed. A copy change to any of them needs the owner, and for the notices the solicitor view. The audit never proposes replacements for them.
 
-| String                                                                                      | Where                                                                                                                        | Owner                            |
-| ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `PROJECTION_NOTICE_TEXT`                                                                    | `packages/ui/src/patterns/ProjectionNotice`                                                                                  | Owner and solicitor              |
-| `MCP_NOTICE`, `BETA_NOTICE`                                                                 | the canonical disclaimers source (E29-T7)                                                                                    | Owner and solicitor              |
-| "Unverified estimate" on tax outputs                                                        | tax surfaces, UI and MCP                                                                                                     | Owner (E25 sign-off)             |
-| "Free, impartial debt help is available from MoneyHelper"                                   | `DebtHelpLink`: same line, same place, for every user                                                                        | Owner (R3 exception)             |
-| Any sentence about FCA status, authorisation, regulation, security certification or pricing | marketing and legal pages                                                                                                    | Owner (E7)                       |
-| Privacy policy, terms and cookie text                                                       | legal pages                                                                                                                  | Owner and solicitor              |
-| The tagline, "Flump: finance without the fog" (section 2.1)                                 | `TAGLINE` and `SITE_TAGLINE` in `apps/marketing/src/utils/site.ts`; later the mobile sign-in screen and store subtitle (E12) | Owner (ruling, 14 November 2026) |
+| String                                                                                                                                | Where                                                                                                                        | Owner                            |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `PROJECTION_NOTICE_TEXT`                                                                                                              | `packages/ui/src/patterns/ProjectionNotice`                                                                                  | Owner and solicitor              |
+| `MCP_NOTICE`, `BETA_NOTICE`                                                                                                           | the canonical disclaimers source (E29-T7)                                                                                    | Owner and solicitor              |
+| "Unverified estimate" on tax outputs                                                                                                  | tax surfaces, UI and MCP                                                                                                     | Owner (E25 sign-off)             |
+| "Free, impartial debt help is available from MoneyHelper"                                                                             | `DebtHelpLink`: same line, same place, for every user                                                                        | Owner (R3 exception)             |
+| "MoneyHelper offers free, impartial guidance on pensions, backed by the government." and the link "Pension guidance from MoneyHelper" | `MoneyHelperGuidance` on the Retirement page: same note, same place, for every user                                          | Owner (R3 exception, RD11)       |
+| Any sentence about FCA status, authorisation, regulation, security certification or pricing                                           | marketing and legal pages                                                                                                    | Owner (E7)                       |
+| Privacy policy, terms and cookie text                                                                                                 | legal pages                                                                                                                  | Owner and solicitor              |
+| The tagline, "Flump: finance without the fog" (section 2.1)                                                                           | `TAGLINE` and `SITE_TAGLINE` in `apps/marketing/src/utils/site.ts`; later the mobile sign-in screen and store subtitle (E12) | Owner (ruling, 14 November 2026) |
 
 ### 7.4 Claims (E7)
 

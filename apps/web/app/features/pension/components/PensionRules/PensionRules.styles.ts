@@ -1,6 +1,6 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const assumptionsList = cva({
+export const rulesList = cva({
   base: {
     margin: 0,
     pl: "5",

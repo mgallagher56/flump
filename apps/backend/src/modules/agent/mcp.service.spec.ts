@@ -223,6 +223,29 @@ describe("McpService dev token wiring", () => {
     expect(at(handlerOptions, 0).allowedOrigins).toEqual([]);
   });
 
+  it("offers the retirement tools only to the RD9 friends beta, per caller", () => {
+    const original = process.env;
+    const token = (userId: string) =>
+      ({ userId, scopes: [], anonymizeInstitutions: true, type: "pat" }) as never;
+    try {
+      const { BETA_OPEN: _open, ...rest } = original;
+      process.env = { ...rest, RETIREMENT_ALLOWED_USER_IDS: "friend" };
+      build("workos");
+      const available = at(handlerOptions, 0).isToolAvailable;
+      if (!available) throw new Error("isToolAvailable not wired");
+      for (const name of ["get_retirement_picture", "simulate_retirement"]) {
+        expect(available(name, token("friend")), name).toBe(true);
+        expect(available(name, token("stranger")), name).toBe(false);
+      }
+      expect(available("list_accounts", token("stranger"))).toBe(true);
+      // Open testing: everyone. Read per request, so a change needs no restart.
+      process.env = { ...rest, BETA_OPEN: "true" };
+      expect(available("simulate_retirement", token("stranger"))).toBe(true);
+    } finally {
+      process.env = original;
+    }
+  });
+
   it("passes no dev options in workos mode", () => {
     build("workos");
     expect(at(handlerOptions, 0).devToken).toBeUndefined();

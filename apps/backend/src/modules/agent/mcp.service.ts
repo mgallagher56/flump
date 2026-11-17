@@ -21,6 +21,7 @@ import {
 import type { SharedRateLimitStore } from "../../security/rate-limit.store";
 import { SHARED_RATE_LIMIT_STORE } from "../../security/shared-rate-limit";
 import { webOriginBootWarning } from "../imports/review-url";
+import { isRetirementAllowed, RETIREMENT_TOOL_NAMES } from "../retirement/retirement.access";
 import { AgentAuditService } from "./agent-audit.service";
 import { AgentDataService } from "./agent-data.service";
 import { McpImportsAdapter } from "./mcp-imports.adapter";
@@ -68,6 +69,9 @@ export class McpService {
       // E20-N18: the kill switch is read per request; origins are read once at boot.
       isEnabled: () => readMcpAccessConfig(process.env).enabled,
       allowedOrigins: readMcpAccessConfig(process.env).allowedOrigins,
+      // RD9: the retirement tools exist only for the friends beta (or open testing), per caller.
+      isToolAvailable: (toolName, verified) =>
+        !RETIREMENT_TOOL_NAMES.has(toolName) || isRetirementAllowed(process.env, verified.userId),
       ...(this.limitStore ? { limitStore: this.limitStore } : {}),
       tokenStore: this.tokenService,
       // Defence in depth: the dev bypass token is never emitted in a production-like process,

@@ -5,8 +5,7 @@
     "apps/web/app/features/charts/utils/legacyTooltipStyles.ts": 3,
     "apps/web/app/features/mortgage/components/OverpayVsSaveCompare/OverpayVsSaveCompare.styles.ts": 3,
     "apps/web/app/features/mortgage/components/OverpayVsSaveCompare/OverpayVsSaveCompare.tsx": 2,
-    "apps/web/app/features/mortgage/components/OverpaymentSimulator/OverpaymentSimulator.tsx": 2,
-    "apps/web/app/features/pension/components/ForecastChart/ForecastChart.tsx": 2
+    "apps/web/app/features/mortgage/components/OverpaymentSimulator/OverpaymentSimulator.tsx": 2
   },
   "fontWeight": {},
   "duration": {

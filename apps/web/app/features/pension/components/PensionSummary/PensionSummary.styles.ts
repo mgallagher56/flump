@@ -1,7 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
 
-export const figureText = css({ fontVariantNumeric: "tabular-nums" });
-
 /** The single "Not set" action under a card or the hero: a plain text link. */
 export const promptLink = css({
   appearance: "none",

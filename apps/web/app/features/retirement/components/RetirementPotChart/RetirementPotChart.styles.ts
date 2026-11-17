@@ -29,13 +29,3 @@ export const chartWrap = cva({
     "& .recharts-tooltip-label": { color: "text.muted!" },
   },
 });
-
-/** The tax-free lump sum line above the year table, behind "Show data". */
-export const dataNote = cva({
-  base: {
-    textStyle: "body.sm",
-    color: "text.secondary",
-    fontVariantNumeric: "tabular-nums",
-    mb: "3",
-  },
-});

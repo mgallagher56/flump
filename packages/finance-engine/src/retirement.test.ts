@@ -1032,3 +1032,94 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
     });
   });
 });
+
+describe("E33 one pension projection (RD6)", () => {
+  const pensionAccount = {
+    id: "pen",
+    type: "Pension",
+    balanceGbp: 50_000,
+    monthlyContributionGbp: 100,
+  };
+  const workplacePension = {
+    annualSalary: 40_000,
+    employeePercent: 5,
+    employerPercent: 3,
+  };
+  const basePlan = {
+    currentAge: 40,
+    retirementAge: 50,
+    planToAge: 80,
+    accounts: [pensionAccount],
+    workplacePension,
+  };
+
+  it("projectRealPotBalance reports the balance at the end of each whole year", () => {
+    const withMonthly = projectRealPotBalance({
+      initialBalance: 1_000,
+      monthlyContribution: 50,
+      nominalRate: 0.05,
+      years: 3,
+    });
+    expect(withMonthly.yearEndBalances).toHaveLength(3);
+    expect(withMonthly.yearEndBalances[2]).toBe(withMonthly.endBalance);
+    expect(withMonthly.yearEndContributions).toEqual([600, 1_200, 1_800]);
+
+    const closedForm = projectRealPotBalance({
+      initialBalance: 1_000,
+      nominalRate: 0.05,
+      years: 2,
+    });
+    const real = calculateRealRate(0.05, DEFAULT_RETIREMENT_INFLATION_RATE);
+    expect(closedForm.yearEndBalances).toEqual([
+      roundPence(1_000 * (1 + real)),
+      roundPence(1_000 * (1 + real) ** 2),
+    ]);
+  });
+
+  it("adds saved workplace contributions to the pension pots", () => {
+    const without = calculateRetirementPlan({ ...basePlan, workplacePension: null });
+    const withWorkplace = calculateRetirementPlan(basePlan);
+    expect(withWorkplace.workplacePension?.monthlyTotal).toBeCloseTo(
+      (40_000 * 0.05) / 12 + (40_000 * 0.03) / 12,
+      6,
+    );
+    const extra = projectRealPotBalance({
+      initialBalance: 0,
+      monthlyContribution: withWorkplace.workplacePension?.monthlyTotal ?? 0,
+      nominalRate: DEFAULT_RETIREMENT_GROWTH_CASES.middle,
+      years: 10,
+    }).endBalance;
+    expect(withWorkplace.projectedPotAtRetirementGbp.middle).toBeCloseTo(
+      without.projectedPotAtRetirementGbp.middle + extra,
+      1,
+    );
+    expect(without.workplacePension).toBeNull();
+  });
+
+  it("states what goes into pensions each year, for the annual allowance line", () => {
+    const plan = calculateRetirementPlan({
+      ...basePlan,
+      additionalMonthlyPensionContributionGbp: 200,
+    });
+    expect(plan.pensionPaidInYearlyGbp).toBeCloseTo((100 + 200 + (40_000 * 0.08) / 12) * 12, 2);
+  });
+
+  it("gives a year-by-year path whose last point is the pot at retirement", () => {
+    const plan = calculateRetirementPlan(basePlan);
+    expect(plan.accumulation).toHaveLength(11);
+    expect(plan.accumulation[0]).toMatchObject({ age: 40, yearIndex: 0, paidInGbp: 50_000 });
+    expect(plan.accumulation[0]?.potGbp.middle).toBe(50_000);
+    const last = plan.accumulation[10];
+    expect(last?.age).toBe(50);
+    for (const c of ["lower", "middle", "higher"] as const) {
+      expect(last?.potGbp[c]).toBeCloseTo(plan.projectedPotAtRetirementGbp[c], 1);
+    }
+    const monthly = 100 + (plan.workplacePension?.monthlyTotal ?? 0);
+    expect(last?.paidInGbp).toBeCloseTo(50_000 + monthly * 120, 1);
+  });
+
+  it("has a single point when retiring now", () => {
+    const plan = calculateRetirementPlan({ ...basePlan, retirementAge: 40 });
+    expect(plan.accumulation).toHaveLength(1);
+  });
+});

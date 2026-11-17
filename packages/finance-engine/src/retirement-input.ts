@@ -18,6 +18,7 @@ import {
   type RetirementStatePensionInput,
   type RetirementTargetInput,
 } from "./retirement.js";
+import type { WorkplacePensionInput } from "./workplace-pension.js";
 
 /**
  * The one place a saved retirement plan and the user's saved figures become a
@@ -58,6 +59,10 @@ export interface RetirementInputOverrides {
   growthRates?: Partial<RetirementGrowthBand<number>>;
   inflationRate?: number;
   additionalMonthlyPensionContributionGbp?: number;
+  /** Your workplace contribution as a percentage of pay. Applies only when a salary is saved. */
+  employeePercent?: number;
+  /** Count only pay inside the qualifying earnings band. Applies only when a salary is saved. */
+  useQualifyingEarnings?: boolean;
 }
 
 export interface BuildRetirementPlanInputArgs {
@@ -74,6 +79,8 @@ export interface BuildRetirementPlanInputArgs {
   accounts: readonly RawAccount[];
   /** Saved budget entries, needed when the saved target is built from budget lines. */
   budgetEntries?: readonly BudgetEntryItem[];
+  /** The saved workplace pension (`workplacePensionFromProfile`), or null without a salary. */
+  workplacePension?: WorkplacePensionInput | null;
   overrides?: RetirementInputOverrides;
 }
 
@@ -299,6 +306,17 @@ export function buildRetirementPlanInput(
     planToAge,
     accounts,
     additionalMonthlyPensionContributionGbp: overrides.additionalMonthlyPensionContributionGbp,
+    workplacePension: args.workplacePension
+      ? {
+          ...args.workplacePension,
+          ...(overrides.employeePercent !== undefined
+            ? { employeePercent: overrides.employeePercent }
+            : {}),
+          ...(overrides.useQualifyingEarnings !== undefined
+            ? { useQualifyingEarnings: overrides.useQualifyingEarnings }
+            : {}),
+        }
+      : null,
     target,
     housing: {
       housingStatus: normaliseHousingStatus(args.housingStatus),
@@ -343,6 +361,7 @@ export function retirementArgsFromContextInput(
     monthlyHousingCostGbp: data.profileFacts?.monthlyHousingCost ?? null,
     accounts: data.accounts ?? [],
     budgetEntries: data.budgetEntries ?? [],
+    workplacePension: data.workplacePension ?? null,
     overrides,
   };
 }

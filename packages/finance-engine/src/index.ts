@@ -34,3 +34,4 @@ export * from "./uk-tax.js";
 export * from "./uk-tax-thresholds.js";
 export * from "./uk-tax-year.js";
 export * from "./uk-what-if.js";
+export * from "./workplace-pension.js";

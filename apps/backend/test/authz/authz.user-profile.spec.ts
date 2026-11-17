@@ -554,4 +554,30 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(aAfter.body.plan.retirementAge).toBe(65);
     ran("PUT /retirement-plan", "idor");
   });
+
+  it("/retirement-plan: an account outside the RD9 friends beta gets the unknown-route 404", async () => {
+    const saved = process.env.RETIREMENT_ALLOWED_USER_IDS;
+    process.env.RETIREMENT_ALLOWED_USER_IDS = USER_A;
+    try {
+      const strip = (body: Record<string, unknown>) => ({ ...body, requestId: undefined });
+      const unknownGet = await h.call("get", "/no-such-route", h.tokens.b);
+      const unknownPut = await h.call("put", "/no-such-route", h.tokens.b, {});
+      expect(unknownGet.status).toBe(404);
+
+      const get = await h.call("get", "/retirement-plan", h.tokens.b);
+      expect(get.status).toBe(404);
+      expect(strip(get.body)).toEqual(strip(unknownGet.body));
+
+      const put = await h.call("put", "/retirement-plan", h.tokens.b, { retirementAge: 60 });
+      expect(put.status).toBe(404);
+      expect(strip(put.body)).toEqual(strip(unknownPut.body));
+      expect(JSON.stringify([get.body, put.body])).not.toMatch(/retire|feature|disabled/i);
+
+      // The listed account is unaffected.
+      expect((await h.call("get", "/retirement-plan", h.tokens.a)).status).toBe(200);
+    } finally {
+      if (saved === undefined) delete process.env.RETIREMENT_ALLOWED_USER_IDS;
+      else process.env.RETIREMENT_ALLOWED_USER_IDS = saved;
+    }
+  });
 });

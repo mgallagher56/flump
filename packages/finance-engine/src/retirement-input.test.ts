@@ -170,4 +170,66 @@ describe("buildRetirementPlanInput", () => {
       monthlyPaymentGbp: 500,
     });
   });
+
+  it("passes the saved workplace pension through, and the scenario can change your rate", () => {
+    const workplacePension = { annualSalary: 40_000, employeePercent: 5, employerPercent: 3 };
+    const built = buildRetirementPlanInput({
+      plan: savedPlan,
+      birthYear: 1981,
+      now: NOW,
+      accounts,
+      workplacePension,
+      overrides: { employeePercent: 8, useQualifyingEarnings: true },
+    });
+    expect(built.ok && built.input.workplacePension).toEqual({
+      ...workplacePension,
+      employeePercent: 8,
+      useQualifyingEarnings: true,
+    });
+    const none = buildRetirementPlanInput({
+      plan: savedPlan,
+      birthYear: 1981,
+      now: NOW,
+      accounts,
+      overrides: { employeePercent: 8 },
+    });
+    expect(none.ok && none.input.workplacePension).toBeNull();
+  });
+});
+
+describe("one projection: the Retirement scenario at the saved values is the saved plan (RD6)", () => {
+  it("gives identical figures for identical inputs", () => {
+    const workplacePension = {
+      annualSalary: 52_000,
+      employeePercent: 6,
+      employerPercent: 4,
+      isSalarySacrifice: true,
+      passEmployerNi: true,
+    };
+    const args = {
+      plan: savedPlan,
+      birthYear: 1981,
+      now: NOW,
+      accounts,
+      workplacePension,
+      housingStatus: "renting",
+      monthlyHousingCostGbp: 900,
+    };
+    const saved = buildRetirementPlanInput(args);
+    const scenario = buildRetirementPlanInput({
+      ...args,
+      overrides: {
+        retirementAge: savedPlan.retirementAge ?? undefined,
+        planToAge: savedPlan.planToAge ?? undefined,
+        employeePercent: workplacePension.employeePercent,
+        useQualifyingEarnings: false,
+        additionalMonthlyPensionContributionGbp: 0,
+        growthRates: savedPlan.growthRates ?? undefined,
+        inflationRate: savedPlan.inflationRate ?? undefined,
+      },
+    });
+    expect(saved.ok && scenario.ok).toBe(true);
+    if (!saved.ok || !scenario.ok) return;
+    expect(calculateRetirementPlan(scenario.input)).toEqual(calculateRetirementPlan(saved.input));
+  });
 });

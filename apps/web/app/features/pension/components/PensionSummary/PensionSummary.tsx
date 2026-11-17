@@ -1,24 +1,18 @@
-import { HeroFigure, KpiCard, KpiStrip, StatusBadge } from "@repo/ui";
+import { HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import { Link } from "react-router";
-import { figureText, promptLink } from "./PensionSummary.styles";
+import { promptLink } from "./PensionSummary.styles";
 
 export interface PensionSummaryProps {
   /** Saved total across every pot. */
   totalValue: number;
   potsCount: number;
-  /** Saved estimate of monthly income at retirement, in today's money. `null` when unknown. */
-  estimatedMonthlyIncome: number | null;
-  /** What to add before the estimate can be worked out, for example "Add your year of birth". */
-  estimateMissing?: { label: string; to: string };
   /** You plus your employer (and any fixed pot payments) each month. `null` when unknown. */
   monthlyTotal: number | null;
   /** True when fixed payments into pots are part of `monthlyTotal`. */
   includesPotPayments?: boolean;
   /** True when the contribution rates are the backend defaults, which the user may not have chosen. */
   ratesAssumed?: boolean;
-  /** The age the estimate runs to (the State Pension age). `null` when the user's age is unknown. */
-  retirementAge: number | null;
   /** Opens the add-pot dialog, shown in the hero when there are no pots. */
   onAddPot: () => void;
 }
@@ -33,18 +27,16 @@ const promptTo = (label: string, to: string): ReactNode => (
 );
 
 /**
- * Saved figures only (E16 PR 7, ruling D2): the hero is the saved "Total in your pots", never an
- * estimate. The estimated income is the first KPI, tagged "Estimate". Captions carry no figures.
+ * Saved figures only (E16 PR 7, ruling D2): the hero is the saved "Total in your pots" and the one
+ * KPI is what goes in each month. Projections (income at retirement) are on the Retirement page
+ * (decision RD6). Captions carry no figures.
  */
 export const PensionSummary: FC<PensionSummaryProps> = ({
   totalValue,
   potsCount,
-  estimatedMonthlyIncome,
-  estimateMissing,
   monthlyTotal,
   includesPotPayments = false,
   ratesAssumed = false,
-  retirementAge,
   onAddPot,
 }) => {
   const hasPots = potsCount > 0;
@@ -64,32 +56,10 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
       />
       <KpiStrip
         emptyPrompt={{
-          title: "Add your year of birth and salary to see your estimated income at retirement",
+          title: "Add your salary to see what goes in each month",
           action: promptTo("Update your details", PROFILE_PATH),
         }}
         items={[
-          <KpiCard
-            action={
-              <StatusBadge size="sm" variant="neutral">
-                Estimate
-              </StatusBadge>
-            }
-            emptyAction={
-              estimateMissing ? promptTo(estimateMissing.label, estimateMissing.to) : undefined
-            }
-            explain="Worked out from your pots, what goes in each month and each pot's growth rate, up to your State Pension age. Shown in today's money, taking 4% of the pot a year, without the State Pension."
-            key="estimate"
-            label="Income at retirement"
-            subtext={
-              estimatedMonthlyIncome === null
-                ? undefined
-                : ratesAssumed
-                  ? "A month, in today's money, on assumed rates"
-                  : "A month, in today's money"
-            }
-            value={estimatedMonthlyIncome}
-            valueFormat={{ fractionDigits: 0 }}
-          />,
           <KpiCard
             emptyAction={promptTo("Add your salary", PROFILE_PATH)}
             key="monthly"
@@ -105,19 +75,6 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
             }
             value={monthlyTotal}
             valueFormat={{ fractionDigits: 0 }}
-          />,
-          <KpiCard
-            emptyAction={promptTo("Add your year of birth", PROFILE_PATH)}
-            explain={
-              "Flump does not store a retirement age, so estimates assume you retire at your State Pension age. You can try a different age in \u201cModel a change to your pension\u201d below."
-            }
-            key="age"
-            label="Retirement age"
-            subtext={retirementAge === null ? undefined : "Assumed: your State Pension age"}
-            unset={retirementAge === null}
-            value={
-              retirementAge === null ? null : <span className={figureText}>{retirementAge}</span>
-            }
           />,
         ]}
       />

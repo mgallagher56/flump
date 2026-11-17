@@ -160,6 +160,8 @@ const backendEnvSchema = z.looseObject({
   BETA_OPEN: bool(),
   BANK_CONNECTIONS_ENABLED: bool(),
   BANK_CONNECTIONS_ALLOWED_USER_IDS: text(),
+  /** RD9: comma-separated WorkOS user ids who see Retirement. Not needed while BETA_OPEN=true. */
+  RETIREMENT_ALLOWED_USER_IDS: text(),
   STARLING_USE_SANDBOX: bool(),
 
   // API contract

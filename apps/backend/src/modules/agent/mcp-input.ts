@@ -139,6 +139,21 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
     ...(input.retirementPlan === undefined
       ? {}
       : { retirementPlan: toWirePlan(input.retirementPlan) }),
+    // Left out when the caller did not read it; null when no salary is saved.
+    ...(input.workplacePension === undefined
+      ? {}
+      : {
+          workplacePension:
+            input.workplacePension === null
+              ? null
+              : defined({
+                  annualSalary: num(input.workplacePension.annualSalary),
+                  employeePercent: num(input.workplacePension.employeePercent),
+                  employerPercent: num(input.workplacePension.employerPercent),
+                  isSalarySacrifice: input.workplacePension.isSalarySacrifice,
+                  passEmployerNi: input.workplacePension.passEmployerNi,
+                }),
+        }),
     ...(typeof input.birthYear === "number" && Number.isInteger(input.birthYear)
       ? { birthYear: input.birthYear }
       : {}),

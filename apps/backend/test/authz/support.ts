@@ -101,6 +101,10 @@ export async function bootAuthzHarness(options: HarnessOptions = {}): Promise<Au
   // The closed-beta allowlist would 403 both users.
   delete process.env.BETA_ALLOWED_EMAILS;
   delete process.env.BETA_ALLOWED_USER_IDS;
+  // Retirement is friends-beta only (RD9): both test users are on the list, so the matrix reaches
+  // /retirement-plan. close() restores the caller's environment.
+  delete process.env.BETA_OPEN;
+  process.env.RETIREMENT_ALLOWED_USER_IDS = `${USER_A},${USER_B}`;
   process.env.DATABASE_URL = databaseUrl;
   process.env.DB_SSL = "false";
   process.env.DB_SYNCHRONIZE = "false";

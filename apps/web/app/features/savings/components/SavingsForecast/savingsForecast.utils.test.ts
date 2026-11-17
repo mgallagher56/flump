@@ -1,3 +1,4 @@
+import { calculateRealRate, DEFAULT_RETIREMENT_INFLATION_RATE } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import {
   formatDuration,
@@ -41,11 +42,13 @@ describe("projectSavings", () => {
     ).toBe(true);
   });
 
-  it("takes inflation off the rate in today's money, never below 0", () => {
+  it("allows for inflation with the engine's real rate in today's money, never below 0", () => {
+    // The same conversion as the retirement projection: (1 + rate) / (1 + inflation) - 1.
+    expect(TODAYS_MONEY_INFLATION).toBe(DEFAULT_RETIREMENT_INFLATION_RATE * 100);
     expect(
       projectSavings({ starting: 1000, monthly: 0, rate: 4, years: 1, todaysMoney: true })
         .effectiveRate,
-    ).toBeCloseTo(4 - TODAYS_MONEY_INFLATION);
+    ).toBeCloseTo(calculateRealRate(0.04, DEFAULT_RETIREMENT_INFLATION_RATE) * 100, 10);
     expect(
       projectSavings({ starting: 1000, monthly: 0, rate: 1, years: 1, todaysMoney: true })
         .effectiveRate,

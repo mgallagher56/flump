@@ -1,12 +1,24 @@
 import { RetirementPlanResponse } from "@flump/api-contract";
 import type { BuildRetirementPlanInputArgs, RetirementSavedPlanInput } from "@flump/finance-engine";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { retirementPlanUnsavedFixture } from "~/test/fixtures/contractResponses";
 import { retirementArgsFromLoader } from "../../retirementInput";
+import { MONEYHELPER_PENSIONS_URL } from "../MoneyHelperGuidance";
 import { RetirementPlanner, type RetirementPlannerProps } from "./RetirementPlanner";
+
+// Router links as plain anchors, so their targets can be checked.
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
+  return {
+    ...actual,
+    Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+      <a href={to}>{children}</a>
+    ),
+  };
+});
 
 const NOW = new Date("2026-11-17T12:00:00Z");
 
@@ -217,5 +229,108 @@ describe("RetirementPlanner", () => {
     await user.click(screen.getByRole("button", { name: "Higher case (2%)" }));
     expect(onSavePlan).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Reset to saved figures" })).toBeTruthy();
+  });
+
+  it("shows the MoneyHelper line at page level, also when there is no estimate yet", () => {
+    renderPlanner({ planArgs: { ...planArgs, birthYear: null } });
+    const link = screen.getByRole("link", { name: /Pension guidance from MoneyHelper/ });
+    expect(link.getAttribute("href")).toBe(MONEYHELPER_PENSIONS_URL);
+  });
+
+  describe("with a saved workplace pension", () => {
+    // Age 40 in 2026, so there are 20 years to retirement at 60.
+    const workplaceArgs: BuildRetirementPlanInputArgs = {
+      ...planArgs,
+      birthYear: 1986,
+      workplacePension: {
+        annualSalary: 40_000,
+        employeePercent: 6,
+        employerPercent: 4,
+        isSalarySacrifice: true,
+        passEmployerNi: true,
+      },
+    };
+
+    it("offers your contribution as a percentage of pay, seeded from the saved percent, instead of an extra amount", () => {
+      renderPlanner({ planArgs: workplaceArgs });
+      const slider = screen.getByLabelText("Your contribution") as HTMLInputElement;
+      expect(slider.value).toBe("6");
+      expect(screen.getByDisplayValue("6%")).toBeTruthy();
+      expect(screen.getByLabelText("Only pay that counts for your pension")).toBeTruthy();
+      expect(screen.getByText(/£6,240 and £50,270 a year/)).toBeTruthy();
+      expect(screen.queryByLabelText("Extra monthly contribution")).toBeNull();
+    });
+
+    it("moving your contribution shows the change from the saved plan and never saves", () => {
+      const onSavePlan = vi.fn();
+      renderPlanner({ planArgs: workplaceArgs, onSavePlan });
+      const outcome = () => screen.getByTestId("retirement-scenario-outcome");
+      expect(outcome().textContent).not.toMatch(/Change from your saved plan/);
+      // Another growth case alone is not a change from the saved plan: it compares like with like.
+      fireEvent.click(screen.getByRole("button", { name: /Higher case/ }));
+      expect(outcome().textContent).not.toMatch(/Change from your saved plan/);
+      const heroBefore = hero().textContent;
+      fireEvent.change(screen.getByLabelText("Your contribution"), { target: { value: "10" } });
+      expect(outcome().textContent).toMatch(/Change from your saved plan: \+~£[\d,]+ a year\./);
+      fireEvent.click(screen.getByLabelText("Only pay that counts for your pension"));
+      expect(outcome().textContent).toMatch(/Change from your saved plan: [+-]~£[\d,]+ a year\./);
+      expect(hero().textContent).toBe(heroBefore);
+      expect(onSavePlan).not.toHaveBeenCalled();
+    });
+
+    it("draws the pot each year in the scenario, with no tax-free lump sum figure", () => {
+      renderPlanner({ planArgs: workplaceArgs });
+      expect(screen.getByRole("figure", { name: "Pot each year" })).toBeTruthy();
+      expect(screen.queryByText(/lump sum/i)).toBeNull();
+    });
+
+    it("names the saved workplace pension in the assumptions drawer, with a link to change it", async () => {
+      const user = userEvent.setup();
+      renderPlanner({ planArgs: workplaceArgs });
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(
+        screen.getByText(
+          /Workplace pension: 6% from you and 4% from your employer, of your saved salary of £40,000, from your pension details\./,
+        ),
+      ).toBeTruthy();
+      expect(screen.getByText(/adds the National Insurance it saves/)).toBeTruthy();
+      expect(
+        screen.getByRole("link", { name: "Change them on the Pension page" }).getAttribute("href"),
+      ).toBe("/app/pension#pension-details");
+    });
+
+    it("shows a neutral annual allowance line when more than the allowance is paid in", () => {
+      renderPlanner({
+        planArgs: {
+          ...workplaceArgs,
+          workplacePension: {
+            annualSalary: 200_000,
+            employeePercent: 25,
+            employerPercent: 10,
+          },
+        },
+      });
+      expect(screen.getByText("Above the annual allowance")).toBeTruthy();
+      expect(
+        screen.getByText(/In this illustration £70,000 a year is paid into pensions\./),
+      ).toBeTruthy();
+      expect(screen.getByText(/The standard annual allowance is £60,000\./)).toBeTruthy();
+    });
+
+    it("has no allowance line at ordinary contributions", () => {
+      renderPlanner({ planArgs: workplaceArgs });
+      expect(screen.queryByText("Above the annual allowance")).toBeNull();
+    });
+  });
+
+  it("keeps the extra monthly contribution when no salary is saved, and shows the change once moved", () => {
+    renderPlanner({ planArgs: { ...planArgs, birthYear: 1986 } });
+    expect(screen.queryByLabelText("Your contribution")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Extra monthly contribution"), {
+      target: { value: "200" },
+    });
+    expect(screen.getByTestId("retirement-scenario-outcome").textContent).toMatch(
+      /Change from your saved plan: \+~£[\d,]+ a year\./,
+    );
   });
 });

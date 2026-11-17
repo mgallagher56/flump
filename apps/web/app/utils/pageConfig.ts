@@ -27,16 +27,26 @@ export interface DashboardWidgetMeta {
   badgeColor: string;
 }
 
-export const ALL_PAGE_KEYS: AppPageKey[] = [
-  "accounts",
-  "budget",
-  "debt",
-  "savings",
-  "pension",
-  "retirement",
-  "mortgage",
-  "tax",
-];
+/**
+ * Modules that exist but are never offered in a list a user sees (the dashboard's "Choose what
+ * shows here" panel, Profile toggles, onboarding defaults). Retirement is a friends-beta feature
+ * (decision RD9), reachable by URL only for the accounts it is open to, so it is never named here.
+ * The key stays in `AppPageKey` and `APP_PAGES` so stored profiles still parse.
+ */
+export const HIDDEN_PAGE_KEYS: readonly AppPageKey[] = ["retirement"];
+
+export const ALL_PAGE_KEYS: AppPageKey[] = (
+  [
+    "accounts",
+    "budget",
+    "debt",
+    "savings",
+    "pension",
+    "retirement",
+    "mortgage",
+    "tax",
+  ] as AppPageKey[]
+).filter((k) => !HIDDEN_PAGE_KEYS.includes(k));
 
 export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   accounts: {

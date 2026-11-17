@@ -314,6 +314,17 @@ export const McpInputResponse = z.strictObject({
     taxRecords: z.array(McpInputTaxRecord),
     /** The saved retirement plan, or null when none is saved. */
     retirementPlan: McpInputRetirementPlan.nullable().optional(),
+    /** The saved workplace pension from salary, or null when no salary is saved (E33 RD6). */
+    workplacePension: z
+      .strictObject({
+        annualSalary: z.number().nonnegative(),
+        employeePercent: z.number().nonnegative(),
+        employerPercent: z.number().nonnegative(),
+        isSalarySacrifice: z.boolean().optional(),
+        passEmployerNi: z.boolean().optional(),
+      })
+      .nullable()
+      .optional(),
     /** The saved birth year; left out when none is saved. */
     birthYear: z.number().int().optional(),
   }),

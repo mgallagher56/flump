@@ -5,6 +5,7 @@ import {
   DEFAULT_FINANCIAL_BASELINE,
   type RetirementSavedPlanInput,
   retirementArgsFromContextInput,
+  workplacePensionFromProfile,
 } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import { retirementArgsFromLoader } from "./retirementInput";
@@ -112,5 +113,65 @@ describe("retirement input parity: web page and MCP tools", () => {
     if (!web.ok || !mcp.ok) return;
     expect(web.input).toEqual(mcp.input);
     expect(calculateRetirementPlan(web.input)).toEqual(calculateRetirementPlan(mcp.input));
+  });
+
+  it("passes the saved workplace pension from the profile, the same as the MCP context", () => {
+    const pension = {
+      annualSalary: 50_000,
+      pensionPercent: 6,
+      pensionEmployerPercent: 4,
+      isSalarySacrifice: true,
+      isSalarySacrificeEmployerNi: true,
+    };
+    const userProfile = {
+      birthYear: 1981,
+      housingStatus: "renting",
+      monthlyHousingCost: 900,
+      ...pension,
+    };
+    const webArgs = retirementArgsFromLoader(
+      { userProfile, accounts, budgetEntries, retirementPlan: plan },
+      NOW,
+    );
+    expect(webArgs.workplacePension).toEqual(workplacePensionFromProfile(pension));
+    expect(webArgs.workplacePension?.employeePercent).toBe(6);
+
+    const web = buildRetirementPlanInput(webArgs);
+    const mcp = buildRetirementPlanInput(
+      retirementArgsFromContextInput(
+        {
+          baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "u1", housingStatus: "RENTING" },
+          accounts,
+          budgetEntries,
+          netWorthBasis: { countProperty: true, countStudentLoan: false },
+          profileFacts: {
+            annualSalary: 50_000,
+            employmentType: null,
+            taxRegion: null,
+            studentLoanPlans: null,
+            pensionPercent: 6,
+            isSalarySacrifice: true,
+            housingStatus: "renting",
+            monthlyHousingCost: 900,
+          },
+          retirementPlan: plan,
+          birthYear: 1981,
+          workplacePension: workplacePensionFromProfile(pension),
+        },
+        NOW,
+      ),
+    );
+    expect(web.ok && mcp.ok).toBe(true);
+    if (!web.ok || !mcp.ok) return;
+    expect(web.input).toEqual(mcp.input);
+    expect(calculateRetirementPlan(web.input).workplacePension).not.toBeNull();
+  });
+
+  it("has no workplace pension without a saved salary", () => {
+    const args = retirementArgsFromLoader(
+      { userProfile: { birthYear: 1981 }, accounts, budgetEntries, retirementPlan: plan },
+      NOW,
+    );
+    expect(args.workplacePension).toBeNull();
   });
 });

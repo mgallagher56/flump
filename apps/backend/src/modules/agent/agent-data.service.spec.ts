@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AgentDataService } from "./agent-data.service";
 
 describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16, E17-N7)", () => {
@@ -122,6 +122,16 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
 });
 
 describe("AgentDataService.getUserFinancialData retirement plan and birth year (E33)", () => {
+  // RD9: the plan is read only for the friends beta; u1 is on the list here.
+  const originalEnv = process.env;
+  beforeEach(() => {
+    const { BETA_OPEN: _open, ...rest } = originalEnv;
+    process.env = { ...rest, RETIREMENT_ALLOWED_USER_IDS: "u1" };
+  });
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
   const savedRow = {
     id: "plan-1",
     userId: "u1",
@@ -188,6 +198,22 @@ describe("AgentDataService.getUserFinancialData retirement plan and birth year (
     expect(data.retirementPlan).toBeNull();
     expect(data.birthYear).toBeNull();
     for (const fn of Object.values(writes)) expect(fn).not.toHaveBeenCalled();
+  });
+
+  it("neither reads nor passes the plan for an account outside the friends beta (RD9)", async () => {
+    const { service, findOne } = serviceWith({ birthYear: 1970 }, savedRow);
+    const data = await service.getUserFinancialData("u2");
+    expect(findOne).not.toHaveBeenCalled();
+    expect(data.retirementPlan).toBeUndefined();
+    expect("retirementPlan" in data).toBe(false);
+    expect(data.birthYear).toBe(1970);
+  });
+
+  it("reads the plan for anyone in open testing (BETA_OPEN)", async () => {
+    process.env = { ...process.env, BETA_OPEN: "true", RETIREMENT_ALLOWED_USER_IDS: "" };
+    const { service } = serviceWith({}, savedRow);
+    const data = await service.getUserFinancialData("u2");
+    expect(data.retirementPlan?.retirementAge).toBe(66);
   });
 });
 

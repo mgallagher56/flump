@@ -12,7 +12,7 @@ import type { AuthenticatedUser } from "./token-verifier";
  * forgotten variable can no longer open the API to every WorkOS sign-up. Set means closed, and an
  * unlisted or email-less caller is refused.
  */
-function parseList(value: string | undefined, lower: boolean): string[] {
+export function parseList(value: string | undefined, lower: boolean): string[] {
   return (value ?? "")
     .split(",")
     .map((item) => (lower ? item.trim().toLowerCase() : item.trim()))

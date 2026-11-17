@@ -1,6 +1,7 @@
 import {
   CreateAccountResponse,
   DeleteAccountResponse,
+  RetirementPlanResponse,
   UpdateAccountResponse,
   UpdateChecklistResponse,
   UpdateProfileResponse,
@@ -189,9 +190,31 @@ export const action = async (args: ActionFunctionArgs) => {
 // A save refused with 412 reloads the saved data, so the form shows and sends the latest version.
 export const shouldRevalidate = revalidateOnConflict;
 
+/**
+ * RD9: whether this account can see Retirement (friends beta or open testing). The backend answers
+ * /retirement-plan with its unknown-route 404 otherwise. Any failure counts as not available and
+ * never fails the pension page.
+ */
+async function isRetirementAvailable(args: LoaderFunctionArgs): Promise<boolean> {
+  try {
+    const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+    await backendFetch("/retirement-plan", {
+      schema: RetirementPlanResponse,
+      accessToken: requireAccessToken({ accessToken }),
+      method: "GET",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, userProfile, user } = await loadWorkspaceSnapshot(args);
-  return data({ accounts, accountDetails, userProfile, user });
+  const [{ accounts, accountDetails, userProfile, user }, retirementAvailable] = await Promise.all([
+    loadWorkspaceSnapshot(args),
+    isRetirementAvailable(args),
+  ]);
+  return data({ accounts, accountDetails, userProfile, user, retirementAvailable });
 };
 
 const PensionRoute = (): ReactElement => {
