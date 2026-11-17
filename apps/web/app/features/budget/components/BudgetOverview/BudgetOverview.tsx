@@ -1,5 +1,5 @@
 import { type FinancialPicture, isFigureKnown } from "@flump/finance-engine";
-import { HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
+import { HeroFigure, KpiCard, KpiStrip, VisuallyHidden } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -122,10 +122,12 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
           <span aria-hidden="true" className={equationOp()}>
             −
           </span>
+          <VisuallyHidden> minus </VisuallyHidden>
           <span className={equationTerm()}>Going out</span>
           <span aria-hidden="true" className={equationOp()}>
             =
           </span>
+          <VisuallyHidden> equals </VisuallyHidden>
           <span className={equationResult()}>{isShort ? "Short" : "Left over"}</span>
         </p>
       ) : null}
