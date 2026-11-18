@@ -242,11 +242,11 @@ can differ a little on macOS because fonts differ, so treat a local run as a pre
 `docs/audit/plans/E38-interaction-efficiency-audit-plan.md`). It does the seven core flows of the
 plan, each three ways:
 
-| Run                | Viewport | How it acts                                                                                                |
-| ------------------ | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `desktop-pointer`  | 1280x800 | Mouse clicks; to replace a field's text, click it, Ctrl/Cmd+A, type                                        |
-| `phone-touch`      | 375x812  | The same with taps (touch and mobile emulation)                                                            |
-| `desktop-keyboard` | 1280x800 | Tab forward to each control, then Enter (Space for a switch or checkbox); arrows in menus and radio groups |
+| Run                | Viewport | How it acts                                                                                                                               |
+| ------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `desktop-pointer`  | 1280x800 | Mouse clicks; to replace a field's text, click it, Ctrl/Cmd+A, type                                                                       |
+| `phone-touch`      | 375x812  | The same with taps (touch and mobile emulation)                                                                                           |
+| `desktop-keyboard` | 1280x800 | Tab to each control (Shift+Tab when it is above the focus), then Enter (Space for a switch or checkbox); arrows in menus and radio groups |
 
 The flows are budget editing, the monthly check-in, an account's whole life (add, rename, update
 the balance, delete), adding and editing a debt and modelling extra payments, Self Assessment
@@ -261,7 +261,7 @@ not what the spec intended. Per flow and run:
 - clicks or taps; picking an option in a native select is counted as one click without being sent
   (Playwright sets it, the browser draws the list) and shown as "select picks";
 - keystrokes, every character typed included;
-- Tab hops (Tab presses, forward only);
+- Tab hops (Tab presses; backward with Shift held, one extra keystroke, when the control is above the focus);
 - transitions: path changes plus opens of anything with `role="dialog"` or `"alertdialog"`
   (dialogs, sheets, the phone's More pages drawer, and popovers built on them). Query or hash
   changes, menus (`role="menu"`) and scrolling are not counted.
