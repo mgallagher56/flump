@@ -24,7 +24,8 @@ import {
 
 /**
  * Merges this run's flow costs into a baseline and compares them with the committed one.
- * Warn-only (owner decision ED1 option (a), until E38 S1 and S2 land): a cost increase is printed
+ * Warn-only (ED1 option (a), coordinator ruling under the owner's delegation of low-stakes
+ * decisions, until E38 S1 and S2 land): a cost increase is printed
  * and written to the job summary, and never fails the run. Nor does a problem in the comparison
  * itself (an unreadable baseline, a failed write): it is printed as a warning.
  */

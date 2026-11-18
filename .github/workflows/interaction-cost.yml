@@ -5,7 +5,8 @@ name: 👆 Interaction cost
 # transitions, and compares them with docs/audit/interaction-cost/baseline.json. See
 # apps/e2e/README.md "Interaction cost".
 #
-# Warn-only (owner decision ED1 option (a), until E38 S1 and S2 land): a cost increase is written
+# Warn-only (ED1 option (a), coordinator ruling under the owner's delegation of low-stakes
+# decisions, until E38 S1 and S2 land): a cost increase is written
 # to the job summary and as a warning, and never fails the job. continue-on-error and not a
 # required check, so a flow that breaks while a page is redesigned never blocks a pull request
 # either. Its own workflow, pull requests and manual runs only, so it cannot hold up deploys.
@@ -36,7 +37,7 @@ jobs:
     name: 👆 Interaction cost
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Warn-only until E38 S1 and S2 set the target baselines (ED1).
+    # Warn-only until E38 S1 and S2 set the target baselines (ED1 option (a), coordinator ruling).
     continue-on-error: true
 
     # Same image as the visual and accessibility suites. Keep the tag equal to @playwright/test
