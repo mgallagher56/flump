@@ -186,7 +186,9 @@ const SelfAssessmentPage: FC<{
   const profileSalary = salaryProfileFirst(userProfile, baseline.annualGrossSalary);
   const profileShare = propertyShareProfileFirst(userProfile, baseline.propertyOwnershipSharePct);
 
-  const [payeSalary, setPayeSalary] = useState<number>(profileSalary);
+  // Null while the salary is not known: the panels show the "add your salary" prompt, and the
+  // calculation counts it as none.
+  const [payeSalary, setPayeSalary] = useState<number | null>(profileSalary);
   const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number>(profileShare);
   // A saved figure that changes (a save here or elsewhere, then revalidation) replaces the field,
   // unless the user has an unsaved edit in it.
@@ -225,7 +227,7 @@ const SelfAssessmentPage: FC<{
     for (const year of availableYears) {
       // calculateUKTax is strict and throws for unsupported years (E22).
       if (!isSupportedUkTaxYear(year)) continue;
-      results[year] = calculateUKTax(year, initialRecords, payeSalary, propertyOwnershipShare);
+      results[year] = calculateUKTax(year, initialRecords, payeSalary ?? 0, propertyOwnershipShare);
     }
     return results;
   }, [availableYears, initialRecords, payeSalary, propertyOwnershipShare]);
@@ -239,7 +241,8 @@ const SelfAssessmentPage: FC<{
     fetcher.submit(
       {
         intent: "update-profile",
-        annualSalary: payeSalary.toString(),
+        // Empty saves no salary (null); a typed 0 saves 0.
+        annualSalary: payeSalary === null ? "" : payeSalary.toString(),
         propertyOwnershipShare: propertyOwnershipShare.toString(),
         ...versionField(userProfile, PROFILE_VERSION_FIELD),
       },
@@ -365,7 +368,7 @@ const SelfAssessmentPage: FC<{
           <TaxReservePanel
             taxYear={selectedTaxYear}
             result={activeYearData}
-            totalIncome={activeYearData.totalGrossIncome || payeSalary}
+            totalIncome={activeYearData.totalGrossIncome || (payeSalary ?? 0)}
             payeSalary={payeSalary}
             onPayeSalaryChange={setPayeSalary}
             ownershipSharePct={propertyOwnershipShare}
@@ -461,6 +464,7 @@ const SelfAssessmentPage: FC<{
               years={availableYears}
               selectedYear={selectedTaxYear}
               results={calculatedTaxYearsData}
+              salaryKnown={payeSalary !== null}
             />
           </CollapsibleDrawer>
         ) : null}

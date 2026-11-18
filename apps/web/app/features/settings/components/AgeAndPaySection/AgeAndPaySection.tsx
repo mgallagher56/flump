@@ -12,15 +12,8 @@ import {
   useOptionalToast,
 } from "@repo/ui";
 import { CalendarDays } from "lucide-react";
-import {
-  type FC,
-  type FocusEvent,
-  type KeyboardEvent,
-  type MouseEvent,
-  useRef,
-  useState,
-} from "react";
-import { useNavigate } from "react-router";
+import { type FC, type FocusEvent, type KeyboardEvent, useRef, useState } from "react";
+import { Link, useInRouterContext } from "react-router";
 import { pensionRatesAssumed } from "~/features/pension/contribution";
 import { fieldGrid, sectionCard, statusText } from "~/features/settings/settings.styles";
 import { type UserProfile, type UserProfileUpdate, useUserProfile } from "~/hooks/useUserProfile";
@@ -96,15 +89,8 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
   const save = onSave ?? updateProfile;
   const toast = useOptionalToast()?.toast;
 
-  let navigate: (to: string) => void;
-  try {
-    // biome-ignore lint/correctness/useHookAtTopLevel: fallback when rendered outside Router in unit tests
-    navigate = useNavigate();
-  } catch {
-    navigate = (to: string) => {
-      if (typeof window !== "undefined") window.location.href = to;
-    };
-  }
+  // Outside a router (unit tests, stories) the link is a plain anchor.
+  const inRouter = useInRouterContext();
 
   const currentYear = ukCalendarYear(now);
   const initial = valuesFromProfile(profile);
@@ -188,21 +174,25 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
    * Both rates save together once either is entered, so saving makes them a choice (as on the
    * Pension page). While the rates are still the assumed creation defaults, an empty rate beside
    * an entered one keeps its saved value (the assumed rate), so typing only your own rate does not
-   * drop the employer's. Once the rates are a choice, an emptied rate saves as 0%.
+   * drop the employer's. The rates are always stored (the columns cannot be empty), so once they
+   * are a choice an emptied rate is not saved: it shows its saved value again. Typing 0 saves 0%.
    */
   const commitPension = () => {
-    const { employee: own, employer: theirs } = draft.current;
+    const assumed =
+      saved.current.pensionPercent === null && saved.current.pensionEmployerPercent === null;
+    let { employee: own, employer: theirs } = draft.current;
+    if (!assumed && (own === null || theirs === null)) {
+      own = own ?? saved.current.pensionPercent;
+      theirs = theirs ?? saved.current.pensionEmployerPercent;
+      setField({ pensionPercent: own, pensionEmployerPercent: theirs });
+    }
     if (own === saved.current.pensionPercent && theirs === saved.current.pensionEmployerPercent) {
       return;
     }
-    const assumed =
-      saved.current.pensionPercent === null && saved.current.pensionEmployerPercent === null;
-    if (own === null && theirs === null && assumed) return;
-    const fallbackOwn = assumed ? (profile.pensionPercent ?? 0) : 0;
-    const fallbackTheirs = assumed ? (profile.pensionEmployerPercent ?? 0) : 0;
+    if (own === null && theirs === null) return;
     void saveFields({
-      pensionPercent: own ?? fallbackOwn,
-      pensionEmployerPercent: theirs ?? fallbackTheirs,
+      pensionPercent: own ?? profile.pensionPercent ?? 0,
+      pensionEmployerPercent: theirs ?? profile.pensionEmployerPercent ?? 0,
     });
   };
 
@@ -337,20 +327,27 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
         </div>
         <p className={pensionLinkRow()}>
           Contribution method and pots:
-          <ButtonLink
-            data-testid="age-and-pay-pension-link"
-            href={PENSION_HREF}
-            id="age-and-pay-pension-link"
-            size="sm"
-            variant="link"
-            onClick={(e: MouseEvent<HTMLAnchorElement>) => {
-              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-              e.preventDefault();
-              navigate(PENSION_HREF);
-            }}
-          >
-            Your pension
-          </ButtonLink>
+          {inRouter ? (
+            <ButtonLink
+              asChild
+              data-testid="age-and-pay-pension-link"
+              id="age-and-pay-pension-link"
+              size="sm"
+              variant="link"
+            >
+              <Link to={PENSION_HREF}>Your pension</Link>
+            </ButtonLink>
+          ) : (
+            <ButtonLink
+              data-testid="age-and-pay-pension-link"
+              href={PENSION_HREF}
+              id="age-and-pay-pension-link"
+              size="sm"
+              variant="link"
+            >
+              Your pension
+            </ButtonLink>
+          )}
         </p>
         {saveError ? (
           <p

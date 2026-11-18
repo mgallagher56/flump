@@ -16,9 +16,9 @@ describe("salaryProfileFirst", () => {
     expect(salaryProfileFirst(saved({ annualSalary: 0 }), 30000)).toBe(0);
   });
 
-  it("reads a cleared salary on a saved profile as no salary, never the baseline", () => {
-    expect(salaryProfileFirst(saved({ annualSalary: null }), 30000)).toBe(0);
-    expect(salaryProfileFirst(saved({}), 30000)).toBe(0);
+  it("reads a cleared salary on a saved profile as not known (null), never the baseline or 0", () => {
+    expect(salaryProfileFirst(saved({ annualSalary: null }), 30000)).toBeNull();
+    expect(salaryProfileFirst(saved({}), 30000)).toBeNull();
   });
 
   it("falls back to the baseline only when there is no profile row", () => {
@@ -26,8 +26,9 @@ describe("salaryProfileFirst", () => {
     expect(salaryProfileFirst(undefined, 30000)).toBe(30000);
     // The client atom before seeding: an empty id is no profile row.
     expect(salaryProfileFirst({ id: "", annualSalary: null }, 30000)).toBe(30000);
-    expect(salaryProfileFirst(null, 0)).toBe(0);
-    expect(salaryProfileFirst(null)).toBe(0);
+    // No profile and no baseline: not known.
+    expect(salaryProfileFirst(null, 0)).toBeNull();
+    expect(salaryProfileFirst(null)).toBeNull();
   });
 });
 

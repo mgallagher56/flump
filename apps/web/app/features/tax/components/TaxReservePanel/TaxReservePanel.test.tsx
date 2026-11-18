@@ -1,10 +1,15 @@
+import { calculateUKTax } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { taxResultFixture } from "../../__fixtures__/taxRecords";
 import { TaxReservePanel } from "./TaxReservePanel";
 
-const setup = (totalIncome = 60_000) => {
+const setup = (
+  totalIncome = 60_000,
+  payeSalary: number | null = 52000,
+  records = taxResultFixture,
+) => {
   const props = {
     onPayeSalaryChange: vi.fn(),
     onOwnershipShareChange: vi.fn(),
@@ -14,9 +19,9 @@ const setup = (totalIncome = 60_000) => {
     <MemoryRouter>
       <TaxReservePanel
         taxYear="2026/27"
-        result={taxResultFixture}
+        result={records}
         totalIncome={totalIncome}
-        payeSalary={52000}
+        payeSalary={payeSalary}
         ownershipSharePct={50}
         saving={false}
         {...props}
@@ -57,5 +62,25 @@ describe("TaxReservePanel", () => {
   it("says nothing about the taper well below it", () => {
     setup(40_000);
     expect(screen.queryByText(/Personal Allowance reduces/)).toBeNull();
+  });
+
+  it("shows the add salary prompt, not £0, when the salary is not known", () => {
+    // No records and no salary: the calculation counts the salary as 0, but the page shows the
+    // prompt and an empty salary field.
+    setup(0, null, calculateUKTax("2026/27", [], 0, 100));
+    expect(screen.getByText("Add salary")).toBeDefined();
+    expect((screen.getByLabelText(/Yearly salary before tax/) as HTMLInputElement).value).toBe("");
+  });
+
+  it("shows a saved salary of 0 as £0, not the prompt", () => {
+    setup(0, 0, calculateUKTax("2026/27", [], 0, 100));
+    expect(screen.queryByText("Add salary")).toBeNull();
+    expect((screen.getByLabelText(/Yearly salary before tax/) as HTMLInputElement).value).toBe("0");
+  });
+
+  it("passes an emptied salary on as not known (null)", () => {
+    const { onPayeSalaryChange } = setup();
+    fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), { target: { value: "" } });
+    expect(onPayeSalaryChange).toHaveBeenLastCalledWith(null);
   });
 });

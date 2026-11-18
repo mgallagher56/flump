@@ -28,4 +28,27 @@ describe("TaxYearComparison", () => {
     expect(within(table).getByRole("rowheader", { name: "Rental income" })).toBeDefined();
     expect(within(table).getByText("Self-employed")).toBeDefined();
   });
+
+  it("shows the add salary prompt only when the salary is not known", () => {
+    const results = { "2026/27": calculateUKTax("2026/27", [], 0, 100) };
+    const { unmount } = render(
+      <MemoryRouter>
+        <TaxYearComparison
+          years={["2026/27"]}
+          selectedYear="2026/27"
+          results={results}
+          salaryKnown={false}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Add salary")).toBeDefined();
+    unmount();
+    // A saved salary of 0 is a real figure: £0, no prompt.
+    render(
+      <MemoryRouter>
+        <TaxYearComparison years={["2026/27"]} selectedYear="2026/27" results={results} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText("Add salary")).toBeNull();
+  });
 });

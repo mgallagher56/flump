@@ -19,13 +19,12 @@ export class AddProfileCheckInDay1795400000000 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "user_profiles" DROP CONSTRAINT IF EXISTS "${CHECK_IN_DAY_CONSTRAINT}"`,
     );
-    // NOT VALID takes only a brief lock and skips the scan; VALIDATE then checks existing rows
-    // under a lock that still lets reads and writes through.
+    // A plain CHECK is fine here. The migration runs in one transaction, so the ACCESS EXCLUSIVE
+    // lock from ADD COLUMN is held to commit anyway and a NOT VALID then VALIDATE split would save
+    // nothing. The column is new, nullable and null on every row, and user_profiles is small, so
+    // the check's scan is quick and the lock is held only briefly.
     await queryRunner.query(
-      `ALTER TABLE "user_profiles" ADD CONSTRAINT "${CHECK_IN_DAY_CONSTRAINT}" CHECK ("check_in_day" BETWEEN 1 AND 31) NOT VALID`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "user_profiles" VALIDATE CONSTRAINT "${CHECK_IN_DAY_CONSTRAINT}"`,
+      `ALTER TABLE "user_profiles" ADD CONSTRAINT "${CHECK_IN_DAY_CONSTRAINT}" CHECK ("check_in_day" BETWEEN 1 AND 31)`,
     );
   }
 

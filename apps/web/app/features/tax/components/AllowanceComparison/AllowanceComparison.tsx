@@ -49,6 +49,11 @@ export interface AllowanceComparisonProps {
   allowanceUsedInEstimate: number;
   /** Rental: the person's share of the property, 0 to 100. */
   ownershipSharePct?: number;
+  /**
+   * Rental: the calculation's `propertyRoutesTie`. When both routes give the same total tax the
+   * estimate keeps the recorded expenses, and the words say the total is the same either way.
+   */
+  routesTie?: boolean;
 }
 
 /**
@@ -61,6 +66,7 @@ export const AllowanceComparison: FC<AllowanceComparisonProps> = ({
   comparison,
   allowanceUsedInEstimate,
   ownershipSharePct,
+  routesTie = false,
 }) => {
   const rental = comparison.source === "rental";
   const allowanceName = rental ? "property allowance" : "trading allowance";
@@ -81,7 +87,9 @@ export const AllowanceComparison: FC<AllowanceComparisonProps> = ({
     ? comparison.larger === "allowance"
     : comparison.larger === "expenses";
   const estimateLine = rental
-    ? `Your Self Assessment estimate compares the total tax each way and uses the ${used}, which gives the lower total.`
+    ? routesTie && !usesAllowance
+      ? "The total tax is the same either way. Your Self Assessment estimate uses the expenses you have recorded."
+      : `Your Self Assessment estimate compares the total tax each way and uses the ${used}, which gives the lower total.`
     : `Your Self Assessment estimate compares the two deductions and uses the ${used}${
         usedIsLarger ? ", which is larger" : ""
       }.`;
@@ -126,7 +134,8 @@ export const AllowanceComparison: FC<AllowanceComparisonProps> = ({
             {largerLine} {estimateLine}
           </p>
           <p className={line()}>The allowance replaces your expenses. It is not added to them.</p>
-          {comparison.withinFullRelief ? (
+          {/* Only when it is true of the estimate: the allowance was used, not the expenses. */}
+          {comparison.withinFullRelief && usesAllowance ? (
             <p className={line()}>
               {`Income of ${poundsFormat.format(comparison.allowance)} or less is covered in full by the allowance. You usually do not need to report it. HMRC still asks you to keep records.`}
             </p>

@@ -107,3 +107,23 @@ describe("nextCheckInDate", () => {
     ).toBe("2027-02-28");
   });
 });
+
+describe("across December and January", () => {
+  it("is not due on 5 January when December is recorded and the 28th is ahead", () => {
+    // Today 2027-01-05, day 28, latest recorded month 2026-12. January is not recorded, but this
+    // month's date (28 January) is not reached, and the month before (December) is recorded, so
+    // it is not due. The next date is this month's: 2027-01-28.
+    const input = { today: "2027-01-05", checkInDay: 28, lastRecordedMonth: "2026-12" };
+    expect(isCheckInDue(input)).toBe(false);
+    expect(nextCheckInDate(input)).toBe("2027-01-28");
+  });
+
+  it("is due on 29 December when December is not recorded, and next falls on 28 January", () => {
+    // Today 2026-12-29, day 28, latest recorded month 2026-11. December is not recorded and
+    // 29 is on or after 28, so it is due. This month's date (28 December) has passed, so the
+    // next date is next month's: 2027-01-28, across the year end.
+    const input = { today: "2026-12-29", checkInDay: 28, lastRecordedMonth: "2026-11" };
+    expect(isCheckInDue(input)).toBe(true);
+    expect(nextCheckInDate(input)).toBe("2027-01-28");
+  });
+});

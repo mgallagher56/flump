@@ -375,6 +375,12 @@ export interface TaxCalculationResult {
   tradingAllowanceUsed: number;
   /** Property allowance deducted in place of the recorded costs and finance cost relief. */
   propertyAllowanceUsed: number;
+  /**
+   * True when the recorded costs and the property allowance give the same total tax, including
+   * when there is no rent for the allowance to cover. On a tie the estimate keeps the recorded
+   * costs, so `propertyAllowanceUsed` is 0.
+   */
+  propertyRoutesTie: boolean;
 
   // Savings & Dividends totals
   savingsInterestGross: number;
@@ -585,12 +591,16 @@ export function calculateUKTax(
     propertyAllowanceUsed: 0,
   });
   const allowanceRoute = calculatePropertyProfit(rentalIncomeGrossShare, 0, yearRules);
-  if (allowanceRoute.allowanceUsed === 0) return withCosts;
+  if (allowanceRoute.allowanceUsed === 0) return { ...withCosts, propertyRoutesTie: true };
   const withAllowance = assess({
     rentalProfitBeforeInterestShare: allowanceRoute.profit,
     creditableFinanceCosts: 0,
     propertyAllowanceUsed: allowanceRoute.allowanceUsed,
   });
+  // On a tie the recorded costs are kept.
+  if (withAllowance.totalTaxDue === withCosts.totalTaxDue) {
+    return { ...withCosts, propertyRoutesTie: true };
+  }
   return withAllowance.totalTaxDue < withCosts.totalTaxDue ? withAllowance : withCosts;
 
   function assess(property: {
@@ -748,6 +758,7 @@ export function calculateUKTax(
       seProfit,
       tradingAllowanceUsed: trading.allowanceUsed,
       propertyAllowanceUsed: property.propertyAllowanceUsed,
+      propertyRoutesTie: false,
 
       savingsInterestGross,
       isaInterestGross,

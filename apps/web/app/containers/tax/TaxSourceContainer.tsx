@@ -84,7 +84,8 @@ const TaxSourceContainer: FC = () => {
   const editor = useTaxRecordEditor({ records, taxYear });
 
   // The estimate uses the saved profile salary and share, as the list page does.
-  const payeSalary = salaryProfileFirst(userProfile, baseline.annualGrossSalary);
+  // An unknown salary (null) counts as none in the calculation; this page shows no salary.
+  const payeSalary = salaryProfileFirst(userProfile, baseline.annualGrossSalary) ?? 0;
   const ownershipShare = propertyShareProfileFirst(userProfile, baseline.propertyOwnershipSharePct);
   const result = useMemo(
     () => calculateUKTax(taxYear, records, payeSalary, ownershipShare),
@@ -187,6 +188,7 @@ const TaxSourceContainer: FC = () => {
           allowanceUsedInEstimate={comparison.used}
           comparison={comparison.value}
           ownershipSharePct={source === "rental" ? ownershipShare : undefined}
+          routesTie={source === "rental" ? result.propertyRoutesTie : undefined}
         />
       ) : null}
 
