@@ -6,23 +6,33 @@ import type {
 } from "./types.js";
 
 /**
- * Standard UK mortgage monthly payment formula:
- * M = P * [r(1+r)^n] / [(1+r)^n - 1]
+ * The one repayment formula, unrounded: M = P * [r(1+r)^n] / [(1+r)^n - 1], where r is a twelfth
+ * of the yearly rate. At 0% the principal is repaid in equal parts (P / n). Returns 0 for a
+ * missing or non-positive principal or term, or a negative rate, so callers never get NaN or
+ * Infinity. Both `calculateMonthlyMortgagePayment` and `calculateMortgagePayment` use it.
+ */
+function repaymentPerMonth(
+  principalGbp: number,
+  annualRatePct: number,
+  termMonths: number,
+): number {
+  if (!(principalGbp > 0) || !(termMonths > 0) || !(annualRatePct >= 0)) return 0;
+  if (annualRatePct === 0) return principalGbp / termMonths;
+  const r = annualRatePct / 100 / 12;
+  const payment = (principalGbp * (r * (1 + r) ** termMonths)) / ((1 + r) ** termMonths - 1);
+  return Number.isFinite(payment) ? payment : 0;
+}
+
+/**
+ * Standard UK repayment mortgage monthly payment, rounded to the penny, over a term in months.
+ * At 0% the principal is repaid in equal parts.
  */
 export function calculateMonthlyMortgagePayment(
   principalGbp: number,
   annualInterestRatePct: number,
   termMonths: number,
 ): number {
-  if (principalGbp <= 0 || termMonths <= 0) return 0;
-  if (annualInterestRatePct <= 0) return Math.round((principalGbp / termMonths) * 100) / 100;
-
-  const monthlyRate = annualInterestRatePct / 100 / 12;
-  const payment =
-    (principalGbp * (monthlyRate * (1 + monthlyRate) ** termMonths)) /
-    ((1 + monthlyRate) ** termMonths - 1);
-
-  return Math.round(payment * 100) / 100;
+  return Math.round(repaymentPerMonth(principalGbp, annualInterestRatePct, termMonths) * 100) / 100;
 }
 
 /**
@@ -273,8 +283,10 @@ export function calculateMortgageVsIsa(
 export type MortgageType = "repayment" | "interest-only";
 
 /**
- * Unrounded monthly mortgage payment supporting both repayment and interest-only mortgages.
- * Returns 0 when the balance, rate, or (for repayment) term is missing, so callers never render
+ * Unrounded monthly mortgage payment for repayment and interest-only mortgages, over a term in
+ * years. Repayment uses the same formula as `calculateMonthlyMortgagePayment`, so the two agree
+ * to the penny, including at 0% (equal parts). Interest-only at 0% is 0. Returns 0 when the
+ * balance or (for repayment) term is missing, or the rate is negative, so callers never render
  * NaN or Infinity.
  */
 export function calculateMortgagePayment(
@@ -283,13 +295,10 @@ export function calculateMortgagePayment(
   termYears: number,
   type: MortgageType = "repayment",
 ): number {
-  if (!(loanAmount > 0) || !(annualRatePct > 0)) return 0;
-  const i = annualRatePct / 100 / 12;
-  if (type === "interest-only") return loanAmount * i;
-  if (!(termYears > 0)) return 0;
-  const n = termYears * 12;
-  const payment = (loanAmount * i * (1 + i) ** n) / ((1 + i) ** n - 1);
-  return Number.isFinite(payment) ? payment : 0;
+  if (type === "interest-only") {
+    return loanAmount > 0 && annualRatePct > 0 ? (loanAmount * annualRatePct) / 100 / 12 : 0;
+  }
+  return repaymentPerMonth(loanAmount, annualRatePct, termYears * 12);
 }
 
 export interface MortgageCostSummary {

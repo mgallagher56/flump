@@ -137,9 +137,11 @@ function parseRawSharePercent(input: AccountShareInput): number | null {
 }
 
 /**
- * Effective percentage share (`0 < share <= 100`) to count for this person's financial picture:
+ * Effective percentage share (`0 <= share <= 100`) to count for this person's financial picture:
  * - `100` for `"sole"` accounts or accounts that cannot be joint (ISAs and pensions).
- * - `50` by default when an eligible account is marked `"joint"` without a valid positive share.
+ * - The given share for a `"joint"` account, including `0`.
+ * - `50` by default when an eligible account is marked `"joint"` without a share, or with a
+ *   negative or non-numeric one.
  * - Clamped to `100` when a joint share above `100` is supplied.
  */
 export function resolveAccountSharePercent(input?: AccountShareInput | null): number {
@@ -147,7 +149,9 @@ export function resolveAccountSharePercent(input?: AccountShareInput | null): nu
     return DEFAULT_SOLE_SHARE_PERCENT;
   }
   const parsed = parseRawSharePercent(input);
-  if (parsed === null || parsed <= 0) {
+  // 0% is a real choice (the other person counts all of it), so only a missing or negative
+  // share falls back to the 50/50 default.
+  if (parsed === null || parsed < 0) {
     return DEFAULT_JOINT_SHARE_PERCENT;
   }
   if (parsed > 100) {
