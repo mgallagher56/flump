@@ -85,7 +85,15 @@ describe("mortgage module", () => {
     it("returns 0 for missing or non-positive inputs rather than NaN or Infinity", () => {
       expect(calculateMortgagePayment(0, 4, 25)).toBe(0);
       expect(calculateMortgagePayment(200000, 4, 0)).toBe(0);
-      expect(calculateMortgagePayment(200000, -1, 25)).toBe(0);
+      expect(calculateMortgagePayment(200000, Number.NaN, 25)).toBe(0);
+    });
+
+    it("treats a negative rate as 0%, in both functions", () => {
+      // 120,000 over 10 years = 120 months: 120,000 / 120 = 1,000 a month, as at 0%.
+      expect(calculateMonthlyMortgagePayment(120000, -1, 120)).toBe(1000);
+      expect(calculateMortgagePayment(120000, -1, 10)).toBe(1000);
+      // Interest-only at a negative rate has no interest to pay.
+      expect(calculateMortgagePayment(120000, -1, 10, "interest-only")).toBe(0);
     });
 
     it("repays a 0% mortgage in equal parts, the same as calculateMonthlyMortgagePayment", () => {

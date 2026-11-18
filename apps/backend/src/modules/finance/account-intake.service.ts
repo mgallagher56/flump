@@ -702,6 +702,8 @@ export class AccountIntakeService implements IAccountIntake {
       }
 
       const previousType = account.type;
+      const previousOwnership = account.ownership;
+      const previousSharePercent = account.sharePercent;
       const picked = this.pickAccountFields(body);
       const nextType = picked.type ?? account.type;
       assertTypeScopedFields(nextType, picked);
@@ -770,7 +772,12 @@ export class AccountIntakeService implements IAccountIntake {
       if (body.balance !== undefined && body.balance !== null) {
         await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
       }
-      if (picked.ownership !== undefined || picked.sharePercent !== undefined) {
+      // Only a real change moves the home: the web edit form re-posts ownership and share on
+      // every save, so an edit to the balance or name must not reset a share set on the home.
+      if (
+        saved.ownership !== previousOwnership ||
+        (saved.sharePercent ?? null) !== (previousSharePercent ?? null)
+      ) {
         await propertyFollowsMortgage(accounts, userId, saved);
       }
       // Re-read so the response carries the version the database now holds (the ETag).

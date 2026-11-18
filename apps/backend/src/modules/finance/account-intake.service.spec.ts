@@ -1121,6 +1121,29 @@ describe("E34 C1: a property follows its mortgage's share", () => {
     expect(property.sharePercent).toBe(50);
   });
 
+  it("leaves the home alone when the edit form re-posts the mortgage's unchanged ownership", async () => {
+    // The web edit form always sends ownership and share. Only the balance changes here, so the
+    // share the user set on the home (30%) must stay.
+    const { svc, row } = setup([
+      home({ ownership: "joint", sharePercent: 30 }),
+      mortgage({ ownership: "joint", sharePercent: 50 }),
+    ]);
+    await svc.updateAccount("userA", "mort", {
+      name: "Mortgage",
+      type: "Mortgage",
+      balance: 270_000,
+      ownership: "joint",
+      sharePercent: 50,
+    });
+    expect((await row("home")).sharePercent).toBe(30);
+
+    const sole = setup([home({ ownership: "joint", sharePercent: 30 }), mortgage()]);
+    await sole.svc.updateAccount("userA", "mort", { balance: 260_000, ownership: "sole" });
+    const property = await sole.row("home");
+    expect(property.ownership).toBe("joint");
+    expect(property.sharePercent).toBe(30);
+  });
+
   it("leaves the property alone on an edit that does not touch ownership or share", async () => {
     const { svc, row } = setup([home({ ownership: "joint", sharePercent: 30 }), mortgage()]);
     await svc.updateAccount("userA", "mort", { balance: 270_000 });

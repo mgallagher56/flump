@@ -99,11 +99,11 @@ describe("selectHousingCost: mortgage", () => {
       mortgage({ ownership: "joint", sharePercent: 40 }),
     ]);
     if (!isFigureKnown(fig)) throw new Error("expected known");
-    const whole = calculateMonthlyMortgagePayment(200000, 4.5, 300);
-    expect(fig.value.monthly).toBeCloseTo(whole * 0.4, 1);
-    expect(fig.value.monthly).toBe(
-      Math.round(calculateMonthlyMortgagePayment(80000, 4.5, 300) * 100) / 100,
-    );
+    // Worked by hand: r = 0.045 / 12 = 0.00375, n = 300, (1.00375)^300 = 3.073742528.
+    // Payment per pound borrowed = 0.00375 x 3.073742528 / 2.073742528 = 0.00555832478.
+    // My share: 80,000 x 0.00555832478 = 444.6659824, which rounds to 444.67
+    // (the whole loan, 200,000 x 0.00555832478 = 1,111.66; 40% of that is 444.66 before rounding).
+    expect(fig.value.monthly).toBe(444.67);
   });
 
   it("sums every complete mortgage account and ignores other account types", () => {

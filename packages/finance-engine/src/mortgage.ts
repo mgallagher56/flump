@@ -7,17 +7,19 @@ import type {
 
 /**
  * The one repayment formula, unrounded: M = P * [r(1+r)^n] / [(1+r)^n - 1], where r is a twelfth
- * of the yearly rate. At 0% the principal is repaid in equal parts (P / n). Returns 0 for a
- * missing or non-positive principal or term, or a negative rate, so callers never get NaN or
- * Infinity. Both `calculateMonthlyMortgagePayment` and `calculateMortgagePayment` use it.
+ * of the yearly rate. At 0% the principal is repaid in equal parts (P / n). A negative rate is
+ * treated as 0%, as `projectAmortisedBalance` does (no UK mortgage charges a negative rate, so it
+ * is bad input, and equal parts is the payment that still clears the loan). Returns 0 for a
+ * missing or non-positive principal or term, or a rate that is not a number, so callers never get
+ * NaN or Infinity. Both `calculateMonthlyMortgagePayment` and `calculateMortgagePayment` use it.
  */
 function repaymentPerMonth(
   principalGbp: number,
   annualRatePct: number,
   termMonths: number,
 ): number {
-  if (!(principalGbp > 0) || !(termMonths > 0) || !(annualRatePct >= 0)) return 0;
-  if (annualRatePct === 0) return principalGbp / termMonths;
+  if (!(principalGbp > 0) || !(termMonths > 0) || !Number.isFinite(annualRatePct)) return 0;
+  if (annualRatePct <= 0) return principalGbp / termMonths;
   const r = annualRatePct / 100 / 12;
   const payment = (principalGbp * (r * (1 + r) ** termMonths)) / ((1 + r) ** termMonths - 1);
   return Number.isFinite(payment) ? payment : 0;
@@ -311,7 +313,9 @@ export interface MortgageCostSummary {
 
 /**
  * Computes total interest, total to pay, and interest share over the remaining mortgage term.
- * Returns null when any required input is missing or non-positive.
+ * Returns null when any required input is missing or non-positive. A rate of 0 is null on
+ * purpose: the mortgage page stores a rate it does not know as 0, and a summary saying "no
+ * interest" for an unknown rate would be wrong. The payment formula itself handles 0%.
  */
 export function calculateMortgageCostSummary(
   loanAmount: number,
@@ -359,7 +363,9 @@ export interface MortgageOverpaymentScheduleResult {
 
 /**
  * Simulates standard vs overpayment mortgage amortisation month-by-month for repayment and
- * interest-only mortgages. Returns null when required inputs are missing or non-positive.
+ * interest-only mortgages. Returns null when required inputs are missing or non-positive. As
+ * with `calculateMortgageCostSummary`, a rate of 0 is null on purpose: on the mortgage page it
+ * means the rate is not known, and there is no interest to save at a true 0% anyway.
  */
 export function simulateMortgageOverpayment(
   input: MortgageOverpaymentScheduleInput,
