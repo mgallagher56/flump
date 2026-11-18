@@ -15,9 +15,10 @@ import { type FC, type FormEvent, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
 import {
-  INVESTMENT_SUBTYPE_OPTIONS,
-  SAVINGS_SUBTYPE_OPTIONS,
-} from "~/features/accounts/accountSubtypes";
+  SAVINGS_KIND_GROUPS,
+  savingsKindFromValue,
+  savingsKindValueFor,
+} from "~/features/accounts/savingsKinds";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { versionField } from "~/services/conflict";
 import { accountForm, deleteAction, fieldRow, formActions } from "./AddSavingsAccountDialog.styles";
@@ -32,17 +33,6 @@ export interface AddSavingsAccountDialogProps {
    */
   onDeleteRequest?: () => void;
 }
-
-type SavingsType = "Saving" | "Investment";
-
-const SUBTYPE_OPTIONS: Record<SavingsType, ReadonlyArray<{ value: string; label: string }>> = {
-  Saving: SAVINGS_SUBTYPE_OPTIONS,
-  Investment: INVESTMENT_SUBTYPE_OPTIONS,
-};
-
-/** The saved subtype when it belongs to the type, else none: a subtype is never guessed. */
-const subtypeFor = (type: SavingsType, subtype: string | null | undefined): string =>
-  subtype && SUBTYPE_OPTIONS[type].some((o) => o.value === subtype) ? subtype : "";
 
 const toNumberOrNull = (value: unknown): number | null =>
   value !== undefined && value !== null && Number.isFinite(Number(value)) ? Number(value) : null;
@@ -61,15 +51,14 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
   const isEditing = !!accountToEdit;
 
   const [name, setName] = useState(accountToEdit?.name || "");
-  const [type, setType] = useState<SavingsType>(
-    accountToEdit?.type === "Investment" ? "Investment" : "Saving",
+  // One choice names the kind, and with it the stored type and subtype. A new account starts with
+  // none chosen; an edited one starts from what is saved, and one saved without a subtype shows
+  // its type's "Other" kind, so nothing is saved that the user did not choose.
+  const [kindValue, setKindValue] = useState<string>(() =>
+    accountToEdit ? savingsKindValueFor(accountToEdit.type, accountToEdit.accountSubtype) : "",
   );
-  // Starts from the saved subtype only. An account without one stays without one until the user
-  // picks it, so nothing is saved that they did not choose.
-  const [accountSubtype, setAccountSubtype] = useState<string>(() =>
-    subtypeFor(type, accountToEdit?.accountSubtype),
-  );
-  const isInvestment = type === "Investment";
+  const kind = savingsKindFromValue(kindValue);
+  const isInvestment = kind?.type === "Investment";
   const [balance, setBalance] = useState<number | null>(toNumberOrNull(accountToEdit?.balance));
   // No assumed defaults: a new account starts with an empty rate and monthly amount, and empty
   // fields are saved as "not set" rather than 0.
@@ -80,11 +69,11 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
     toNumberOrNull(accountToEdit?.monthlyContribution),
   );
 
-  const canSave = name.trim().length > 0;
+  const canSave = name.trim().length > 0 && kind !== null;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!canSave || saveOutcome.pending) return;
+    if (!canSave || !kind || saveOutcome.pending) return;
 
     saveOutcome.begin();
     fetcher.submit(
@@ -93,8 +82,8 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         accountId: accountToEdit?.id || "",
         ...versionField(accountToEdit),
         name: name.trim(),
-        type,
-        accountSubtype,
+        type: kind.type,
+        accountSubtype: kind.subtype,
         balance: String(Number(balance) || 0),
         interestRate: interestRate === null ? "" : String(interestRate),
         monthlyContribution: monthlyContribution === null ? "" : String(monthlyContribution),
@@ -116,35 +105,24 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         )}
       </FormField>
 
-      <FormField label="Account type">
+      <FormField label="Kind of account" required>
         {(field) => (
           <Select
             {...controlProps(field)}
-            options={[
-              { value: "Saving", label: "Savings account or Cash ISA" },
-              { value: "Investment", label: "Investment or Stocks and Shares ISA" },
-            ]}
-            value={type}
-            onChange={(e) => {
-              const next = e.target.value as SavingsType;
-              setType(next);
-              setAccountSubtype((current) => subtypeFor(next, current));
-            }}
-          />
-        )}
-      </FormField>
-
-      <FormField label="Kind of account (optional)">
-        {(field) => (
-          <Select
-            {...controlProps(field)}
-            options={[
-              { value: "", label: "Not set" },
-              ...SUBTYPE_OPTIONS[type].map((o) => ({ value: o.value, label: o.label })),
-            ]}
-            value={accountSubtype}
-            onChange={(e) => setAccountSubtype(e.target.value)}
-          />
+            placeholder="Choose the kind of account"
+            value={kindValue}
+            onChange={(e) => setKindValue(e.target.value)}
+          >
+            {SAVINGS_KIND_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.kinds.map((k) => (
+                  <option key={k.value} value={k.value}>
+                    {k.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </Select>
         )}
       </FormField>
 
