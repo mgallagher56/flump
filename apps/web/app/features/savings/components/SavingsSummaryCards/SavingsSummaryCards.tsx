@@ -10,7 +10,7 @@ export interface SavingsSummaryCardsProps {
   monthlySaving: number | null;
   /**
    * Interest over the next 12 months on cash savings with a rate, before tax, split into ISA and
-   * outside an ISA. Null or a total of 0 hides the card.
+   * outside an ISA. Null or a total that rounds to £0 hides the card.
    */
   interest: SavingsInterestEstimate | null;
   /** ISA allowance used this tax year. Null or 0 reads "None this tax year". */
@@ -35,24 +35,35 @@ const pounds = (value: number) =>
     maximumFractionDigits: 0,
   }).format(Math.round(value));
 
+/**
+ * The ISA and other parts as shown, in whole pounds: rounded so the two add up to the pounds on
+ * the card (ISA rounded, other = rounded total less the ISA part). A part that rounds to £0 is
+ * treated as absent, so the card never says "£0 is from ISAs".
+ */
+const shownParts = (interest: SavingsInterestEstimate) => {
+  const total = Math.round(interest.total);
+  const isa = Math.min(Math.max(0, Math.round(interest.isa)), total);
+  return { total, isa, other: total - isa };
+};
+
 /** Says what the figure is before tax and which part is tax-free (an ISA), never a judgement. */
 export const interestSubtext = (interest: SavingsInterestEstimate): string => {
-  if (interest.isa > 0 && interest.outsideIsa > 0) {
+  const shown = shownParts(interest);
+  if (shown.isa > 0 && shown.other > 0) {
     return "An estimate, before tax. ISA interest is tax-free.";
   }
-  if (interest.isa > 0) return "An estimate. ISA interest is tax-free.";
+  if (shown.isa > 0) return "An estimate. ISA interest is tax-free.";
   return "An estimate, before tax.";
 };
 
 export const interestExplain = (interest: SavingsInterestEstimate): string => {
   const parts = [
     "An estimate from each savings account's balance, interest rate and monthly saving, if the rate stays the same.",
+    "It assumes each month's saving goes in at the end of the month.",
   ];
-  if (interest.isa > 0 && interest.outsideIsa > 0) {
-    // Round the split so the two parts add up to the pounds shown on the card.
-    const isaShown = Math.round(interest.isa);
-    const otherShown = Math.round(interest.total) - isaShown;
-    parts.push(`${pounds(isaShown)} is from ISAs and ${pounds(otherShown)} from other savings.`);
+  const shown = shownParts(interest);
+  if (shown.isa > 0 && shown.other > 0) {
+    parts.push(`${pounds(shown.isa)} is from ISAs and ${pounds(shown.other)} from other savings.`);
   }
   parts.push(
     "Interest in an ISA is tax-free. Whether you pay tax on other interest depends on your other income.",
@@ -94,7 +105,8 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
   }
   // Interest in pounds, not a blended rate: ISA interest is tax-free and other interest may not
   // be, so one percentage across both would read as the same return (owner testing, 18 Nov 2026).
-  if (interest && isReal(interest.total)) {
+  // Hidden when the total rounds to £0, so the card never reads £0.
+  if (interest && isReal(interest.total) && Math.round(interest.total) > 0) {
     cards.push(
       <KpiCard
         explain={interestExplain(interest)}

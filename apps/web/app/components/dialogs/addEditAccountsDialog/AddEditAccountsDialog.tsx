@@ -4,6 +4,7 @@ import {
   DEFAULT_JOINT_SHARE_PERCENT,
   describeJointLiabilityNotice,
   isBuyToLetAccount,
+  isResidentialHomeAccount,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -15,6 +16,7 @@ import {
   PercentInput,
   Select,
   TextInput,
+  useOptionalToast,
 } from "@repo/ui";
 import { Pencil } from "lucide-react";
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -92,6 +94,12 @@ const toStoredBalance = (type: AccountType | undefined, shown: string): string =
   return owed === 0 ? "0" : String(-owed);
 };
 
+/** A fresh id for one opening of the dialog. */
+const newRequestId = (): string =>
+  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 export interface AccountOption {
   id?: string;
   name?: string;
@@ -163,6 +171,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [planError, setPlanError] = useState<string | null>(null);
   // Add a mortgage only: the home's value, sent as `homeValue` so the action adds the home too.
   const [homeValue, setHomeValue] = useState<number | null>(null);
+  // A new id each time the dialog opens, sent with an add. The action keys its saves from it, so
+  // pressing Save again after a timeout that did save replays the save instead of adding twice.
+  const [requestId, setRequestId] = useState(newRequestId);
+  const toastApi = useOptionalToast();
   const accountName = (account ?? accounts.find((option) => option.id === accountId))?.name;
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
   const cancelDeleteRef = useRef<HTMLButtonElement>(null);
@@ -185,8 +197,16 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     setConfirmDeleteOpen(false);
   }, []);
 
+  // A save that went through but left something out (the home value after a mortgage, say)
+  // answers with a `notice`: the dialog closes, since what saved is kept, and the notice shows.
+  const handleSaved = useCallback(() => {
+    const notice = (fetcher.data as { notice?: unknown } | undefined)?.notice;
+    if (typeof notice === "string" && notice !== "") toastApi?.toast({ title: notice });
+    handleCloseModal();
+  }, [fetcher.data, toastApi, handleCloseModal]);
+
   // Create, edit and delete keep the modal open until the action answers; only a success closes it.
-  const saveOutcome = useFetcherOutcome(fetcher, { onSuccess: handleCloseModal });
+  const saveOutcome = useFetcherOutcome(fetcher, { onSuccess: handleSaved });
   const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: handleCloseModal });
   const { dismiss: dismissSave } = saveOutcome;
   const { dismiss: dismissDelete } = deleteOutcome;
@@ -249,6 +269,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     if (openRequestKey > 0 && !latest.isEditAccount) {
       setPlanError(null);
       setHomeValue(null);
+      setRequestId(newRequestId());
       latest.dismissSave();
       latest.dismissDelete();
       setFormInput({
@@ -271,6 +292,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       e.stopPropagation();
       setPlanError(null);
       setHomeValue(null);
+      setRequestId(newRequestId());
       dismissSave();
       dismissDelete();
       setFormInput({
@@ -376,7 +398,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     name: formInput.name,
     accountSubtype: formInput.accountSubtype || null,
   });
-  const hasHome = accounts.some((option) => option.type === PROPERTY && !isBuyToLetAccount(option));
+  // The same check the action makes before it adds the home (one rule, in the engine).
+  const hasHome = accounts.some(isResidentialHomeAccount);
   const showHomeValue = addingMortgage && !mortgageIsBtl && !hasHome;
   // The typed balance for the equity line; empty, not a number or below 0 counts as none.
   const typedOwed = formInput.balance === "" ? null : Number(formInput.balance);
@@ -411,7 +434,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               accountId: accountId || "",
               ...versionField(account ?? accounts.find((option) => option.id === accountId)),
             }
-          : { intent: "create" }),
+          : { intent: "create", requestId }),
         name,
         type: accountType || "",
         ownership: effectiveOwnership,
@@ -441,6 +464,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     isEditAccount,
     formInput,
     fetcher,
+    requestId,
     saveOutcome.begin,
   ]);
 

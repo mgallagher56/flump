@@ -10,9 +10,9 @@ import {
   UpdateAccountResponse,
 } from "@flump/api-contract";
 import {
-  categorizeAccountType,
   HOME_ESTIMATE_LABEL,
   isBuyToLetAccount,
+  isResidentialHomeAccount,
 } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
@@ -26,10 +26,81 @@ import {
   loadWorkspaceSnapshot,
 } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
-import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
+import { ifMatchFromForm, revalidateOnConflict, versionEtag } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
+
+/** Shown when the mortgage saved but the home value did not. */
+export const HOME_NOT_SAVED_NOTICE =
+  "We saved your mortgage but could not save your home value. Add it on the mortgage page.";
+
+/** Shown when the mortgage saved and a home was already on Accounts, so the typed value was not added. */
+export const HOME_ALREADY_THERE_NOTICE =
+  "We saved your mortgage. Your home value was not added because you already have a home on Accounts. Update it on the mortgage page.";
+
+/**
+ * Adds the home for a mortgage that has just been saved: a Property account labelled
+ * HOME_ESTIMATE_LABEL with the mortgage's ownership and share. Returns a notice for the user when
+ * the value was not added (a home was already there, or the save failed), or null when it was.
+ * The mortgage is never taken away again: it saved, so it stays.
+ */
+async function addHomeForMortgage(opts: {
+  token: string;
+  signal: AbortSignal;
+  homeValue: number;
+  mortgage: Pick<CreateAccountResponse, "ownership" | "sharePercent">;
+  idempotencyKey: string | undefined;
+}): Promise<string | null> {
+  const { token, signal, homeValue, mortgage, idempotencyKey } = opts;
+  const ownership = mortgage.ownership === "joint" ? "joint" : "sole";
+  const sharePercent = ownership === "joint" ? (mortgage.sharePercent ?? null) : null;
+  try {
+    const existing = await backendFetchAll("/accounts", {
+      accessToken: token,
+      signal,
+      schema: AccountListResponse,
+    });
+    const homes = existing.filter(isResidentialHomeAccount);
+    if (homes.length > 0) {
+      // A retry after a timeout that did save: the one home is the one this add saved before
+      // (our label and the same value). It takes the mortgage's ownership and share.
+      const earlier =
+        homes.length === 1 &&
+        homes[0]?.name === HOME_ESTIMATE_LABEL &&
+        Number(homes[0]?.balance) === homeValue
+          ? homes[0]
+          : null;
+      if (!earlier) return HOME_ALREADY_THERE_NOTICE;
+      if (earlier.ownership !== ownership || (earlier.sharePercent ?? null) !== sharePercent) {
+        await backendFetch(`/accounts/${encodeURIComponent(earlier.id)}`, {
+          accessToken: token,
+          method: "PATCH",
+          schema: UpdateAccountResponse,
+          ifMatch: versionEtag(earlier.updatedAt),
+          body: { ownership, sharePercent },
+        });
+      }
+      return null;
+    }
+    await backendFetch("/accounts", {
+      accessToken: token,
+      method: "POST",
+      schema: CreateAccountResponse,
+      body: {
+        name: HOME_ESTIMATE_LABEL,
+        type: "Property",
+        balance: homeValue,
+        ownership,
+        sharePercent,
+      },
+      idempotencyKey,
+    });
+    return null;
+  } catch {
+    return HOME_NOT_SAVED_NOTICE;
+  }
+}
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -50,51 +121,36 @@ export const action = async (args: ActionFunctionArgs) => {
 
   try {
     if (intent === "create") {
-      // Adding a residential mortgage with the home's value adds the home first, as a Property
-      // account with the mortgage's ownership and share, unless a home is already there. A
-      // buy-to-let value is never stored here: the mortgage page keeps it on the profile.
+      // One id per opening of the add dialog. Each POST is keyed from it, so a retry after a
+      // timeout that did save replays the first answer instead of adding a second copy.
+      const requestId = formData.get("requestId");
+      const keyFor = (part: string): string | undefined =>
+        typeof requestId === "string" && requestId !== "" ? `${requestId}:${part}` : undefined;
+      const createBody = { name, type, ...fields };
+      const mortgage = await backendFetch("/accounts", {
+        accessToken: token,
+        method: "POST",
+        schema: CreateAccountResponse,
+        body: createBody,
+        idempotencyKey: keyFor(type === "Mortgage" ? "mortgage" : "account"),
+      });
+      // A residential mortgage added with the home's value adds the home after it, as a Property
+      // account with the mortgage's ownership and share. A buy-to-let value is never stored here:
+      // the mortgage page keeps it on the profile.
       const homeValue = Number(formData.get("homeValue"));
       const btl = isBuyToLetAccount({
         name: typeof name === "string" ? name : "",
         accountSubtype: fields.accountSubtype ?? null,
       });
-      let createdHomeId: string | null = null;
       if (type === "Mortgage" && !btl && Number.isFinite(homeValue) && homeValue > 0) {
-        const existing = await backendFetchAll("/accounts", {
-          accessToken: token,
+        const notice = await addHomeForMortgage({
+          token,
           signal: args.request.signal,
-          schema: AccountListResponse,
+          homeValue: roundTo2dp(homeValue),
+          mortgage,
+          idempotencyKey: keyFor("home"),
         });
-        const hasHome = existing.some(
-          (account) =>
-            categorizeAccountType(account.type) === "property" && !isBuyToLetAccount(account),
-        );
-        if (!hasHome) {
-          const home = await post("/accounts", CreateAccountResponse, {
-            name: HOME_ESTIMATE_LABEL,
-            type: "Property",
-            balance: roundTo2dp(homeValue),
-            ...(fields.ownership ? { ownership: fields.ownership } : {}),
-            ...(fields.sharePercent !== undefined ? { sharePercent: fields.sharePercent } : {}),
-          });
-          createdHomeId = home.id;
-        }
-      }
-      try {
-        await post("/accounts", CreateAccountResponse, {
-          name,
-          type,
-          ...fields,
-        });
-      } catch (err) {
-        // The home was added for this mortgage: take it away again so a failed add leaves
-        // nothing half-saved. Best effort; the original error is what the user sees.
-        if (createdHomeId) {
-          await remove(`/accounts/${encodeURIComponent(createdHomeId)}`, DeleteAccountResponse)
-            .then(() => undefined)
-            .catch(() => undefined);
-        }
-        throw err;
+        if (notice) return data({ success: true, notice });
       }
     } else if (intent === "update") {
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {

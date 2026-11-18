@@ -1,3 +1,4 @@
+import { ToastProvider } from "@repo/ui";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
@@ -77,6 +78,45 @@ describe("AddEditAccountsDialog action outcomes", () => {
     mocks.fetcher.data = { success: true };
     rerender(ui());
     expect(queryByRole("dialog")).toBeNull();
+  });
+
+  test("a create sends one request id per opening: the same on a retry, a new one when reopened", async () => {
+    const ui = () => <AddEditAccountsDialogBtn />;
+    const { getByText, getAllByText, getByRole, rerender, user } = customRender(ui());
+    const sentId = (call: number) =>
+      (mocks.mockFetcherSubmit.mock.calls[call]?.[0] as Record<string, string> | undefined)
+        ?.requestId;
+    await user.click(getByText("addAccount"));
+    await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+    mocks.fetcher.data = { success: false, error: SERVER_DOWN };
+    rerender(ui());
+    expect(getByRole("alert").textContent).toBe(SERVER_DOWN);
+    await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+    expect(sentId(0)).toMatch(/\S/);
+    expect(sentId(1)).toBe(sentId(0));
+
+    mocks.fetcher.data = { success: true };
+    rerender(ui());
+    await user.click(getByText("addAccount"));
+    await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+    expect(sentId(2)).not.toBe(sentId(0));
+  });
+
+  test("a save that answers with a notice closes the dialog and shows the notice", async () => {
+    const NOTICE =
+      "We saved your mortgage but could not save your home value. Add it on the mortgage page.";
+    const ui = () => (
+      <ToastProvider>
+        <AddEditAccountsDialogBtn />
+      </ToastProvider>
+    );
+    const { getByText, getAllByText, queryByRole, findByText, rerender, user } = customRender(ui());
+    await user.click(getByText("addAccount"));
+    await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+    mocks.fetcher.data = { success: true, notice: NOTICE };
+    rerender(ui());
+    expect(queryByRole("dialog")).toBeNull();
+    expect(await findByText(NOTICE)).toBeDefined();
   });
 
   test("a failed create shows the error and keeps the modal open", async () => {

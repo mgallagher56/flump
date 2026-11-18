@@ -24,6 +24,19 @@ describe("projectSavings", () => {
     expect(result.flat).toBe(false);
   });
 
+  it("grows at the AER, the same basis as the interest headline", () => {
+    // £10,000 at 5% AER, nothing added, 1 year: 10,000 × 1.05 = £10,500, interest £500.
+    const result = projectSavings({
+      starting: 10000,
+      monthly: 0,
+      rate: 5,
+      years: 1,
+      todaysMoney: false,
+    });
+    expect(result.final).toBeCloseTo(10500, 6);
+    expect(result.interest).toBeCloseTo(500, 6);
+  });
+
   it("is flat with nothing paid in and no rate", () => {
     const result = projectSavings({
       starting: 21000,

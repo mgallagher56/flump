@@ -212,6 +212,34 @@ describe("forecast module", () => {
       expect(growing.interest).toBeGreaterThan(0);
       expect(growing.final).toBeGreaterThan(17200);
     });
+
+    it("grows by exactly the AER in a year with nothing added", () => {
+      // £10,000 at 5% AER for 2 years: 10,000 × 1.05 = £10,500, then × 1.05 = £11,025.
+      // (Nominal 5% / 12 a month would give 10,000 × (1 + 0.05/12)^24 ≈ £11,049.41 instead.)
+      const res = projectCompoundSavings({
+        starting: 10000,
+        monthly: 0,
+        annualRatePct: 5,
+        years: 2,
+      });
+      expect(res.points.map((p) => p.balance)).toEqual([10000, 10500, 11025]);
+      expect(res.final).toBeCloseTo(11025, 6);
+    });
+
+    it("adds each month's saving at the end of the month, compounded at the AER's monthly rate", () => {
+      // £0 start, £100 a month at 12% AER for 1 year.
+      //   r = 1.12^(1/12) − 1 = 0.0094888, and (1 + r)^12 = 1.12 exactly.
+      //   End = 100 × ((1 + r)^12 − 1) / r = 100 × 0.12 / 0.0094888 = £1,264.65.
+      //   Interest = 1,264.65 − 1,200 = £64.65.
+      const res = projectCompoundSavings({
+        starting: 0,
+        monthly: 100,
+        annualRatePct: 12,
+        years: 1,
+      });
+      expect(res.final).toBeCloseTo(1264.65, 1);
+      expect(res.interest).toBeCloseTo(64.65, 1);
+    });
   });
 
   describe("calculateMonthsToSavingsGoal", () => {
@@ -234,6 +262,21 @@ describe("forecast module", () => {
         goal: 3000,
       });
       expect(res).toEqual({ status: "months", months: 4 });
+    });
+
+    it("compounds at the AER's monthly rate, not the nominal rate / 12", () => {
+      // £10,000 at 12% AER, nothing added, goal £11,120.
+      //   AER basis: month 11 = 10,000 × 1.12^(11/12) = 10,000 × e^(0.1133287 × 11/12)
+      //   = 10,000 × 1.109473 ≈ £11,094.73 (short); month 12 = 10,000 × 1.12 = £11,200 (reached).
+      //   Nominal 1% a month would reach it at month 11 (10,000 × 1.01^11 ≈ £11,156.82).
+      expect(
+        calculateMonthsToSavingsGoal({
+          starting: 10000,
+          monthly: 0,
+          annualRatePct: 12,
+          goal: 11120,
+        }),
+      ).toEqual({ status: "months", months: 12 });
     });
   });
 });

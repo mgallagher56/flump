@@ -93,7 +93,7 @@ describe("SavingsSummaryCards", () => {
 
   it("explains the split, the tax position and what is left out", () => {
     expect(interestExplain(interest(126.83, 123.36, 1))).toBe(
-      "An estimate from each savings account's balance, interest rate and monthly saving, if the rate stays the same. £127 is from ISAs and £123 from other savings. Interest in an ISA is tax-free. Whether you pay tax on other interest depends on your other income. Accounts without an interest rate are not counted.",
+      "An estimate from each savings account's balance, interest rate and monthly saving, if the rate stays the same. It assumes each month's saving goes in at the end of the month. £127 is from ISAs and £123 from other savings. Interest in an ISA is tax-free. Whether you pay tax on other interest depends on your other income. Accounts without an interest rate are not counted.",
     );
   });
 
@@ -103,6 +103,32 @@ describe("SavingsSummaryCards", () => {
     expect(interestExplain(interest(100.5, 100.5))).toContain(
       "£101 is from ISAs and £100 from other savings.",
     );
+  });
+
+  it("leaves out a part of the split that rounds to £0", () => {
+    // ISA £0.40 rounds to £0; total 0.40 + 143.70 = 144.10, shown as £144. With the ISA part at
+    // £0 the split sentence is left out, rather than "£0 is from ISAs and £144 from other savings".
+    const text = interestExplain(interest(0.4, 143.7));
+    expect(text).not.toContain("is from ISAs");
+    expect(text).not.toMatch(/£0(?![\d,])/);
+    // Other savings £0.30 rounds to £0: total 80.00 + 0.30 = 80.30, shown as £80, all from ISAs.
+    expect(interestExplain(interest(80, 0.3))).not.toContain("from other savings");
+  });
+
+  it("hides the interest card when the total rounds to £0", () => {
+    // 0.20 + 0.19 = 0.39, which rounds to £0: no card rather than a £0 figure.
+    const { container } = render(
+      <SavingsSummaryCards
+        accountCount={2}
+        interest={interest(0.2, 0.19)}
+        hasIsaAccount={false}
+        isaUsed={null}
+        monthlySaving={100}
+        totalSavingsBalance={50}
+      />,
+    );
+    expect(screen.queryByText(INTEREST_LABEL)).toBeNull();
+    expect(container.textContent).not.toMatch(/£0(?![\d,])/);
   });
 
   it("says an ISA-only estimate is tax-free without saying before tax", () => {

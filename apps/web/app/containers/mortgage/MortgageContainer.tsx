@@ -200,6 +200,9 @@ const MortgageContainer: FC = () => {
   // Account fields saved on this page, laid over the loader rows until the next load, so the
   // picture below reads what was just stored.
   const [accountPatches, setAccountPatches] = useState<Record<string, Record<string, unknown>>>({});
+  // True while the edit dialog's save is being sent.
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   // Synced account state
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
@@ -314,6 +317,20 @@ const MortgageContainer: FC = () => {
   };
 
   const handleSaveMortgageDetails = async () => {
+    // One save at a time: a second click while one is being sent does nothing (the ref catches a
+    // click before the disabled Save button has rendered).
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await saveMortgageDetails();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  const saveMortgageDetails = async () => {
     const rate = Math.max(0, Number(editInterestRate));
     // Term is stored in whole months (1..600), so clamp once and show what is stored.
     const termMonths = typedTermMonths(editTermYears, editTermMonths);
@@ -483,6 +500,11 @@ const MortgageContainer: FC = () => {
           });
         }
         revalidator.revalidate();
+        // What did save shows at once, so the figures never read as before the save.
+        setMortgageType(editMortgageType);
+        setLoanAmount(next.loanAmount);
+        setInterestRate(next.interestRate);
+        setRemainingTerm(next.remainingTerm);
         setSaveError(HOME_VALUE_NOT_SAVED);
         return;
       }
@@ -812,6 +834,7 @@ const MortgageContainer: FC = () => {
       onOpenChange={setIsEditing}
       onSave={handleSaveMortgageDetails}
       onSelectAccount={selectAccount}
+      saving={saving}
     />
   );
 

@@ -66,6 +66,9 @@ export const action = async (args: ActionFunctionArgs) => {
       if (accountSubtype !== null && accountSubtype !== undefined) {
         updatePayload.accountSubtype = accountSubtype !== "" ? accountSubtype : null;
       }
+      // Sent only when a saved joint account is saved as an ISA, which is held in one name. The
+      // backend clears the share of a sole account, so no share is sent.
+      if (formData.get("ownership") === "sole") updatePayload.ownership = "sole";
       if (balance !== null && balance !== undefined)
         updatePayload.balance = roundTo2dp(Number(balance));
       if (interestRate !== null && interestRate !== undefined) {

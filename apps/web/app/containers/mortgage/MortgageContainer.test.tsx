@@ -1119,6 +1119,67 @@ describe("<MortgageContainer />", () => {
       expect(screen.queryByText(/Nothing has changed/)).toBeNull();
     });
 
+    test("a failed home value save still shows the mortgage figures that did save", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      const ok = contractFetch();
+      vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+        if (String(input).endsWith("/accounts/home")) {
+          return new Response(JSON.stringify({ message: "Server error" }), { status: 500 });
+        }
+        return ok(input, init);
+      });
+      const { container, findByText } = customRender(<MortgageContainer />);
+      expect(savedText(container)).toContain("£135,400");
+      openEdit();
+      fireEvent.change(field(/^Remaining balance/), { target: { value: "140000" } });
+      fireEvent.change(field(/^What your home is worth/), { target: { value: "360000" } });
+      save();
+      expect(await findByText(HOME_VALUE_NOT_SAVED)).toBeDefined();
+      // The balance PATCH went through, so the page reads £140,000, not the £135,400 from before.
+      expect(savedText(container)).toContain("£140,000");
+      expect(savedText(container)).not.toContain("£135,400");
+    });
+
+    test("two quick clicks on Save add one home, and Save is disabled while it saves", async () => {
+      setApiEnv();
+      loaderData = noHome();
+      const ok = contractFetch();
+      let releaseList: () => void = () => {};
+      const listHeld = new Promise<void>((resolve) => {
+        releaseList = resolve;
+      });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+        const url = new URL(String(input), "http://web.test");
+        if (url.pathname === "/api/accounts" && (init?.method ?? "GET") === "GET") {
+          // Held, so the second click lands while the first save is still running.
+          await listHeld;
+          return new Response(JSON.stringify([]), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        return ok(input, init);
+      });
+      const { findByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^What your home is worth/), { target: { value: "300000" } });
+      save();
+      save();
+      await act(async () => {});
+      expect(
+        (
+          within(screen.getByRole("dialog")).getByRole("button", {
+            name: /^Save$/,
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+      releaseList();
+      await findByText(/home value/);
+      const homePosts = posts(fetchSpy).filter(([url]) => String(url) === "/api/accounts");
+      expect(homePosts).toHaveLength(1);
+    });
+
     test("a refused home value write after the mortgage saved still says the mortgage was kept", async () => {
       setApiEnv();
       loaderData = loaded();

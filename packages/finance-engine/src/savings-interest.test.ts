@@ -3,6 +3,7 @@ import {
   balanceWeightedRate,
   estimateSavingsInterestNext12Months,
   interestOverNext12MonthsAtAer,
+  totalMonthlySavingAtShare,
 } from "./savings-interest.js";
 
 describe("interestOverNext12MonthsAtAer", () => {
@@ -84,6 +85,66 @@ describe("estimateSavingsInterestNext12Months", () => {
       estimateSavingsInterestNext12Months([{ type: "Saving", name: "x", balance: 100 }]),
     ).toBeNull();
     expect(estimateSavingsInterestNext12Months([])).toBeNull();
+  });
+
+  it("counts a joint account's monthly saving at the user's share, the same as its balance", () => {
+    // 50% joint account: whole balance £10,000, so £5,000 at the share (passed in already at
+    // share). 5% AER, whole monthly saving £200, so £100 a month at the share.
+    //   Balance part: 5,000 × 0.05 = £250.
+    //   Saving part: r = 1.05^(1/12) − 1 ≈ 0.0040741; end value of £100 a month for 12 months
+    //   = 100 × ((1.05 − 1) / r) = 100 × 12.2725 ≈ £1,227.26, less 1,200 paid in ≈ £27.26.
+    //   Total ≈ 250 + 27.26 = £277.26.
+    const estimate = estimateSavingsInterestNext12Months([
+      {
+        type: "Saving",
+        name: "Joint saver",
+        accountSubtype: "easy_access",
+        balance: 5000,
+        interestRate: 5,
+        monthlyContribution: 200,
+        ownership: "joint",
+        sharePercent: 50,
+      },
+    ]);
+    expect(estimate?.total).toBeCloseTo(277.26, 1);
+    expect(estimate?.outsideIsa).toBeCloseTo(277.26, 1);
+  });
+});
+
+describe("totalMonthlySavingAtShare", () => {
+  it("adds sole savings in full and joint savings at the user's share", () => {
+    // Sole: £150 a month counts in full = £150.
+    // Joint at 50%: whole £200 a month, the user's part = 200 × 0.5 = £100.
+    // Joint at 25%: whole £80 a month, the user's part = 80 × 0.25 = £20.
+    // Total = 150 + 100 + 20 = £270.
+    expect(
+      totalMonthlySavingAtShare([
+        { type: "Saving", balance: 0, monthlyContribution: 150 },
+        {
+          type: "Saving",
+          balance: 0,
+          monthlyContribution: 200,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+        {
+          type: "Saving",
+          balance: 0,
+          monthlyContribution: "80",
+          ownership: "joint",
+          sharePercent: 25,
+        },
+      ]),
+    ).toBe(270);
+  });
+
+  it("is null when no account stores a monthly saving, and counts a stored 0", () => {
+    expect(totalMonthlySavingAtShare([{ type: "Saving", balance: 100 }])).toBeNull();
+    expect(totalMonthlySavingAtShare([])).toBeNull();
+    // A stored £0 is a known figure: total = 0.
+    expect(
+      totalMonthlySavingAtShare([{ type: "Saving", balance: 0, monthlyContribution: 0 }]),
+    ).toBe(0);
   });
 });
 

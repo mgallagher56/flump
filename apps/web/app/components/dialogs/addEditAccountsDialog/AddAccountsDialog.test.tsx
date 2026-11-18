@@ -148,6 +148,13 @@ describe("adding a mortgage with the home's value", () => {
     expect(queryByText(/separate property account/)).toBeNull();
   });
 
+  test("is still offered when the only saved property is buy to let, as the action decides", async () => {
+    const { getByLabelText } = await openAsMortgage([
+      { id: "b1", name: "Buy to let flat", type: "Property", balance: 200000 },
+    ]);
+    expect(getByLabelText(/^What your home is worth/)).toBeDefined();
+  });
+
   test("is not offered for a buy-to-let mortgage, by kind or by name", async () => {
     const { getByLabelText, queryByLabelText, user } = await openAsMortgage();
     expect(getByLabelText(/^What your home is worth/)).toBeDefined();

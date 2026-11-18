@@ -3,6 +3,7 @@ import {
   estimateSavingsInterestNext12Months,
   getUkTaxYearContext,
   PortfolioSnapshot,
+  totalMonthlySavingAtShare,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -54,9 +55,6 @@ export const parsePayRise = (state: unknown): number => {
 };
 
 const isSavingsType = (acc: Account) => acc.type === "Saving" || acc.type === "Investment";
-
-const isStored = (value: unknown): boolean =>
-  value !== undefined && value !== null && value !== "" && Number.isFinite(Number(value));
 
 type Tool = "forecast" | "deposit";
 
@@ -118,11 +116,9 @@ export const SavingsContainer: FC = () => {
 
   const saved = useMemo(() => {
     const total = savingsAccounts.reduce((sum, acc) => sum + (Number(acc.balance) || 0), 0);
-    const withMonthly = savingsAccounts.filter((acc) => isStored(acc.monthlyContribution));
-    const monthly =
-      withMonthly.length > 0
-        ? withMonthly.reduce((sum, acc) => sum + Number(acc.monthlyContribution), 0)
-        : null;
+    // `balance` is at the user's share (PortfolioSnapshot), while `monthlyContribution` is the
+    // whole stored saving: the engine scales it by the share so both are on one basis.
+    const monthly = totalMonthlySavingAtShare(savingsAccounts);
     return {
       total,
       monthly,

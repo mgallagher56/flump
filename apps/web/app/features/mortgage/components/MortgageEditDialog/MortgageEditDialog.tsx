@@ -64,6 +64,8 @@ export interface MortgageEditDialogProps {
   saveError: string | null;
   onAddAccount: () => void;
   onSave: () => void;
+  /** True while a save is being sent: Save is disabled so a second click cannot send it twice. */
+  saving?: boolean;
   onEditLoanAmountChange: (value: number) => void;
   onEditInterestRateChange: (value: string) => void;
   onEditTermYearsChange: (value: string) => void;
@@ -116,6 +118,7 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
   saveError: errorText,
   onAddAccount,
   onSave,
+  saving = false,
   onEditLoanAmountChange,
   onEditInterestRateChange,
   onEditTermYearsChange,
@@ -141,7 +144,9 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onSave}>Save</Button>
+          <Button disabled={saving} onClick={onSave}>
+            Save
+          </Button>
         </>
       }
       id="mortgage-edit-dialog"

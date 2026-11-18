@@ -3,6 +3,9 @@
  * own estimate of the home's value and the mortgage balance; this works out the rest, so the web
  * holds no formula of its own.
  */
+import { categorizeAccountType } from "./account-category.js";
+import { isBuyToLetAccount } from "./picture/selectors/loan-to-value.js";
+
 export interface HomeEquityInput {
   /** The user's own estimate of what the whole home is worth. */
   homeValue: number | null | undefined;
@@ -47,4 +50,17 @@ export function estimateHomeEquity(input: HomeEquityInput): HomeEquity | null {
     whole: toPennies(homeValue - owed),
     yours: toPennies((homeValue * homeShare) / 100 - (owed * mortgageShare) / 100),
   };
+}
+
+/**
+ * True when an account is a residential home: a Property account that is not buy to let
+ * (`isBuyToLetAccount`, the same rule loan to value uses). One check for every place that asks
+ * "is there a home on Accounts already?", so the add-a-mortgage dialog and its action agree.
+ */
+export function isResidentialHomeAccount(account: {
+  type?: string | null;
+  name?: string | null;
+  accountSubtype?: string | null;
+}): boolean {
+  return categorizeAccountType(account.type) === "property" && !isBuyToLetAccount(account);
 }
