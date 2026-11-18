@@ -33,7 +33,12 @@ describe("<PensionRules />", () => {
     expect(list.textContent).toContain(
       `The standard annual allowance is ${gbp(rules.pensionAnnualAllowance)} a year.`,
     );
-    expect(list.textContent).toContain("The tax-free lump sum allowance is £268,275.");
+    // The figure comes from the engine's tax-year rules, not a web constant.
+    expect(rules.pensionLumpSumAllowance).toBe(268_275);
+    expect(list.textContent).toContain(
+      `The tax-free lump sum allowance is ${gbp(rules.pensionLumpSumAllowance ?? 0)}.`,
+    );
+    expect(list.textContent).not.toContain("not updated each tax year");
     expect(list.textContent).toContain(
       `The full new State Pension is ${gbp(rules.statePension.fullNewAnnual)} a year.`,
     );

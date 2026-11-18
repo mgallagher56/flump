@@ -563,3 +563,12 @@ describe("calculateUKTax dividend rates come from the per-year table", () => {
     expect(r23.dividendAllowance).toBe(1000);
   });
 });
+
+describe("pension lump sum allowance", () => {
+  it("is 268,275 from 2024/25, when it replaced the lifetime allowance, and absent before", () => {
+    for (const year of SUPPORTED_UK_TAX_YEARS) {
+      const expected = year >= "2024/25" ? 268_275 : null;
+      expect(getUkTaxYearRules(year).pensionLumpSumAllowance, year).toBe(expected);
+    }
+  });
+});

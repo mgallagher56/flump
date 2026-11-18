@@ -310,6 +310,20 @@ const PENSION_ANNUAL_ALLOWANCE: Record<UkTaxYear, number> = {
   "2026/27": 60000,
 };
 
+// Pension lump sum allowance: the most that can be taken tax-free across all pensions, 268,275,
+// from 6 April 2024, when it replaced the lifetime allowance
+// (https://www.gov.uk/tax-on-your-private-pension/lump-sum-allowance). Years before 2024/25
+// had the lifetime allowance instead, so they have no lump sum allowance (null).
+const PENSION_LUMP_SUM_ALLOWANCE: Record<UkTaxYear, number | null> = {
+  "2020/21": null,
+  "2021/22": null,
+  "2022/23": null,
+  "2023/24": null,
+  "2024/25": 268275,
+  "2025/26": 268275,
+  "2026/27": 268275,
+};
+
 /**
  * Self Assessment figures that are the same in every supported year.
  * - Trading and property allowances, 1,000 each, from 2017 to 2018:
@@ -423,6 +437,11 @@ export interface UkTaxYearRules {
   ruleSources: UkRuleSources;
   /** Annual allowance for pensions (gross contributions, before tapering). */
   pensionAnnualAllowance: number;
+  /**
+   * Tax-free cash across all pensions (the lump sum allowance), or `null` before 2024/25, when
+   * the lifetime allowance applied instead.
+   */
+  pensionLumpSumAllowance: number | null;
   /** ISA subscription allowance across all ISAs. */
   isaAllowance: number;
   /** State Pension rates for this tax year. */
@@ -469,6 +488,7 @@ export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
     sources: ruleSourceUrls(year),
     ruleSources: UK_RULE_SOURCES[year],
     pensionAnnualAllowance: PENSION_ANNUAL_ALLOWANCE[year],
+    pensionLumpSumAllowance: PENSION_LUMP_SUM_ALLOWANCE[year],
     isaAllowance: ISA_ALLOWANCE,
     statePension: getUkStatePensionRules(year),
     taperEnd: ewni.personalAllowanceTaperStart + 2 * ewni.personalAllowance,
