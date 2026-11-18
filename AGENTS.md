@@ -21,13 +21,14 @@ Direction of travel (E15 phase 3 target, not yet enforced): web pages move from 
 
 ## 2. DESIGN TOKEN & STYLING LAWS
 
-- **Zero Raw Hex/RGB or Primitive Token Leaks:** Components may NEVER use hardcoded hex values (`#141A26`) or raw primitive scale tokens (`indigo.600`, `slate.800`, `success.500`, `purple.500`, `cyan.400`). Always use the 6 canonical semantic namespaces:
+- **Zero Raw Hex/RGB or Primitive Token Leaks:** Components may NEVER use hardcoded hex values (`#141A26`) or raw primitive scale tokens (`indigo.600`, `slate.800`, `success.500`, `purple.500`, `cyan.400`). Always use the 7 canonical semantic namespaces:
   - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`, `scrim`, `hero`; `scrim` is a modal backdrop, never a text surface; `hero` is the single deep-teal headline block per page, added by DECISIONS round 5, text on it uses `text.onContrast`; `tint.{teal|apricot|sage}` are E16 domain tints for icon tiles and at most one tinted section per page, never around a `KpiStrip`, a `ScenarioZone` or a chart, and never on a KPI card)
   - `text.*` (`primary`, `secondary`, `muted`, `onContrast`)
   - `border.*` (`DEFAULT`, `subtle`, `strong`, `input`, `focusRing`; reference a `DEFAULT` by its group name, `"border"` or `"primary"`: a literal `"border.DEFAULT"` resolves to no CSS variable and renders `currentColor`, and `check-design-tokens` counts it)
   - `primary.*` (`DEFAULT`, `solid`, `hover`, `subtle`, `border`, `foreground`; `solid`/`hover` are fills behind `primary.foreground` only, graphic-only fills use `primary` or `chart.primary`)
   - `status.{positive|warning|danger|info|neutral}.{text|bg|border|solid}`
   - `chart.*` (`primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series8`, `projection`, `band`, `baseline`)
+  - `accent.*` (`DEFAULT`, `subtle`, `border`, `onHero`; decoration and wayfinding only: never a figure, button, link or notice, and never a signal of good or bad)
 - **Tabular Numbers on All Financial Data:** Every currency value, percentage, date, table cell, and slider badge MUST apply `fontVariantNumeric: 'tabular-nums'` (`tabular-nums`) and format numbers via standard UK formatting (`Intl.NumberFormat('en-GB')` / `useFormatCurrency()`).
 
 ## 3. PROGRESSIVE DISCLOSURE & LAYOUT LAWS
