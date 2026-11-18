@@ -992,6 +992,15 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Status (2026-11-16):** plan only; nothing built (`S0`–`S3` have no PR yet).
 - **Labels:** needs-triage
 
+## E39. Mortgage affordability: estimates from your own figures
+
+- **Severity:** P2 (owner request, 2026-11-18).
+- **Blocked by:** owner decisions MA1 to MA12; E29a for the wording and the standing line; E29b before anyone beyond the friends beta.
+- **Done when:** a user sees, from saved details and without retyping, what is left each month before housing; an estimated loan from a monthly payment and from an income multiple, each with every assumption visible and editable; payments at a rate and at plus or minus a chosen number of points, for a new loan, a saved mortgage and a fix that ends; all formulas live in `packages/finance-engine` with hand-worked tests; nothing is stored; no surface names a lender, says what a user can borrow, or judges their situation.
+- **Notes:** slices S1 engine, S2 web (new page, one rate tool replacing `RemortgageShockSim`), S3 optional MCP. Stamp duty, shared ownership and new interest-only loans are out of version one. Plan: [E39-mortgage-affordability-plan.md](plans/E39-mortgage-affordability-plan.md).
+- **Status (2026-11-18):** plan only; nothing built.
+- **Labels:** needs-triage
+
 # Added 2026-11-16: Active & In-Progress Work Without a PR (Handoff Notes)
 
 This section captures work that was scoped, planned, or partially shipped as of **2026-11-16** and does **not** yet have an open PR, so it can be picked up cleanly in the next session.
