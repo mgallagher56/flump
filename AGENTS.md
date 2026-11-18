@@ -181,4 +181,4 @@ Every plan document carries a status line near the top: `Decisions: open` or `De
 
 ## 15. GUARD CHANGES LAW
 
-Changing an allow-list, a numeric limit in a test or law, a scanner suppression, a required check or a security exception needs sign-off before the change is made: from the owner for security exceptions and scanner suppressions, from the coordinator or owner for the rest. The PR description lists every such change under a heading "Guard changes", or says "None". Sample tokens and ids in tests are built at runtime, never suppressed.
+Changing an allow-list, a numeric limit in a test or law, a scanner suppression, a required check or a security exception needs sign-off before the change is made: from the owner for security exceptions and scanner suppressions, from the coordinator or owner for the rest. The PR description lists every such change under a heading "Guard changes", or says "None". Sample tokens and ids in tests are built at runtime, never suppressed. Lowering a ratchet baseline after removing violations (section 5) needs no sign-off; raising one does.
