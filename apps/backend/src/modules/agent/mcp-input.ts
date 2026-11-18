@@ -116,6 +116,11 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
       frequency: e.frequency,
       isIncome: e.isIncome,
       isEssential: e.isEssential,
+      // A joint entry counts at the user's share, as the remote tools count it (E34 C1).
+      ...defined({
+        ownership: ownershipOf(e.ownership),
+        sharePercent: e.sharePercent === undefined ? undefined : numOrNull(e.sharePercent),
+      }),
       // Present only for a token that may read names; the anonymised input has none.
       ...(e.notes === undefined ? {} : { notes: e.notes }),
     })),

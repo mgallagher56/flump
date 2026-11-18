@@ -17,6 +17,7 @@ import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
 import { type DraftBudgetEntry, isDraftReady } from "../../exampleDrafts";
 import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
 import { rankCategories } from "../BudgetCategoryList";
+import { EntryOwnershipField } from "../EntryOwnershipField";
 import {
   addActions,
   addAmount,
@@ -30,6 +31,7 @@ import {
   essentialField,
   figure,
   frequencyField,
+  ownershipCell,
   removeCell,
   rowControls,
 } from "./BudgetEditor.styles";
@@ -210,6 +212,16 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
       >
         <Icon icon={Trash2} size="sm" />
       </Button>
+      {/* E34 C1: sole or joint, and the share a joint entry counts at in the figures. */}
+      <div className={ownershipCell()}>
+        <EntryOwnershipField
+          entryName={entry.name}
+          idPrefix={`budget-editor-${entry.id}`}
+          ownership={entry.ownership === "joint" ? "joint" : "sole"}
+          sharePercent={entry.sharePercent ?? null}
+          onChange={(ownership, sharePercent) => void onSave(entry.id, { ownership, sharePercent })}
+        />
+      </div>
     </li>
   );
 };

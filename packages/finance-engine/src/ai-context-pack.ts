@@ -59,6 +59,9 @@ export interface BudgetEntryItem {
   isIncome: boolean;
   isEssential: boolean;
   notes?: string | null;
+  /** E34 C1: "joint" counts the entry at `sharePercent` (50 when unset); absent means sole. */
+  ownership?: "sole" | "joint" | string | null;
+  sharePercent?: number | null;
 }
 
 export interface BuildContextPackInput {

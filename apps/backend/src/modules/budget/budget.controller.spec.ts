@@ -197,6 +197,129 @@ describe("BudgetController", () => {
     expect(delRes.success).toBe(true);
   });
 
+  describe("joint marker and share (E34 C1)", () => {
+    const req = { user: { id: "u1" } };
+    const entryController = (rows: Record<string, unknown>[] = []) => {
+      const budgetRepo = createInMemoryRepository(rows);
+      return { budgetRepo, controller: budgetController(budgetRepo, createInMemoryRepository()) };
+    };
+
+    it("creates a sole entry with no share by default", async () => {
+      const { controller } = entryController();
+      const created = await controller.createBudgetEntry(req, {
+        category: "housing",
+        name: "Rent",
+        amount: 1200,
+      });
+      expect(created).toMatchObject({ ownership: "sole", sharePercent: null });
+    });
+
+    it("stores 50 for a joint entry without a share, and keeps a given share", async () => {
+      const { controller } = entryController();
+      const half = await controller.createBudgetEntry(req, {
+        category: "housing",
+        name: "Rent",
+        amount: 1200,
+        ownership: "joint",
+      });
+      expect(half).toMatchObject({ ownership: "joint", sharePercent: 50 });
+      const forty = await controller.createBudgetEntry(req, {
+        category: "bills",
+        name: "Energy",
+        amount: 150,
+        ownership: "joint",
+        sharePercent: 40,
+      });
+      expect(forty).toMatchObject({ ownership: "joint", sharePercent: 40 });
+    });
+
+    it("drops a share sent with a sole entry", async () => {
+      const { controller } = entryController();
+      const created = await controller.createBudgetEntry(req, {
+        category: "bills",
+        name: "Energy",
+        amount: 150,
+        ownership: "sole",
+        sharePercent: 40,
+      });
+      expect(created).toMatchObject({ ownership: "sole", sharePercent: null });
+    });
+
+    it("refuses an unknown ownership or a share outside 1 to 100, in the accounts wording", async () => {
+      const { controller, budgetRepo } = entryController();
+      const base = { category: "bills", name: "Energy", amount: 150 };
+      await expect(
+        controller.createBudgetEntry(req, { ...base, ownership: "shared" as never }),
+      ).rejects.toThrow("ownership must be one of sole, joint");
+      for (const sharePercent of [0, 101, 33.5]) {
+        await expect(
+          controller.createBudgetEntry(req, { ...base, ownership: "joint", sharePercent }),
+        ).rejects.toThrow("sharePercent must be an integer between 1 and 100, or null");
+      }
+      expect(budgetRepo.rows).toEqual([]);
+    });
+
+    it("keeps ownership and share when an update leaves them out", async () => {
+      const { controller } = entryController([
+        {
+          id: "e1",
+          userId: "u1",
+          name: "Rent",
+          amount: 1200,
+          ownership: "joint",
+          sharePercent: 30,
+        },
+      ]);
+      const updated = await controller.updateBudgetEntry(req, "e1", { amount: 1300 });
+      expect(updated).toMatchObject({ amount: 1300, ownership: "joint", sharePercent: 30 });
+    });
+
+    it("updates to joint (50 when no share), changes the share, and back to sole", async () => {
+      const { controller } = entryController([
+        {
+          id: "e1",
+          userId: "u1",
+          name: "Rent",
+          amount: 1200,
+          ownership: "sole",
+          sharePercent: null,
+        },
+      ]);
+      expect(await controller.updateBudgetEntry(req, "e1", { ownership: "joint" })).toMatchObject({
+        ownership: "joint",
+        sharePercent: 50,
+      });
+      expect(await controller.updateBudgetEntry(req, "e1", { sharePercent: 25 })).toMatchObject({
+        ownership: "joint",
+        sharePercent: 25,
+      });
+      expect(await controller.updateBudgetEntry(req, "e1", { sharePercent: null })).toMatchObject({
+        ownership: "joint",
+        sharePercent: 50,
+      });
+      expect(await controller.updateBudgetEntry(req, "e1", { ownership: "sole" })).toMatchObject({
+        ownership: "sole",
+        sharePercent: null,
+      });
+    });
+
+    it("refuses a bad share on update and leaves the row as saved", async () => {
+      const row = {
+        id: "e1",
+        userId: "u1",
+        name: "Rent",
+        amount: 1200,
+        ownership: "joint",
+        sharePercent: 30,
+      };
+      const { controller, budgetRepo } = entryController([row]);
+      await expect(controller.updateBudgetEntry(req, "e1", { sharePercent: 0 })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(budgetRepo.rows).toEqual([row]);
+    });
+  });
+
   it("has no reset route that re-seeds", () => {
     expect(
       (BudgetController.prototype as unknown as Record<string, unknown>).resetBudgetEntries,

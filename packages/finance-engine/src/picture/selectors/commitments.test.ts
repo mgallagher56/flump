@@ -27,6 +27,22 @@ const card = (monthlyContribution?: number) =>
   ]);
 
 describe("essentialCommitments", () => {
+  it("counts joint essential and debt rows at the user's share (E34 C1)", () => {
+    // Joint council tax £180 at 50% = £90; joint loan row £300 at 50% = £150, above the card's
+    // £100 minimum, so the debt commitment is £150. Total 90 + 150 = £240.
+    const c = essentialCommitments(
+      [
+        row({ amount: 180, ownership: "joint" }),
+        row({ category: "debt", amount: 300, ownership: "joint" }),
+      ],
+      card(100),
+    );
+    expect(c.essentialsExcludingDebt).toBe(90);
+    expect(c.budgetDebtPayments).toBe(150);
+    expect(c.debtCommitment).toBe(150);
+    expect(c.total).toBe(240);
+  });
+
   it("counts a debt payment saved in both places once", () => {
     const c = essentialCommitments(
       [row({ amount: 800 }), row({ category: "debt", amount: 150 })],

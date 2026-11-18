@@ -112,6 +112,10 @@ const ContextPackBudgetEntry = z.strictObject({
   isIncome: z.boolean(),
   isEssential: z.boolean(),
   notes: z.string().nullable().optional(),
+  /** E34 C1: "joint" counts the entry at the user's share (finance-engine `budget-entry-share.ts`). */
+  ownership: z.enum(["sole", "joint"]).optional(),
+  /** The user's share of a joint entry, 1 to 100; null where none is saved. */
+  sharePercent: z.number().nullable().optional(),
 });
 
 /** `FlumpAiContextPack` from `@flump/finance-engine`, after JSON serialisation. */

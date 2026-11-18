@@ -404,6 +404,9 @@ export const AccountExportBudgetEntry = z.strictObject({
   isEssential: z.boolean(),
   notes: NullableText,
   isDefault: z.boolean(),
+  /** E34 C1. Optional so an export from a backend without these columns still parses. */
+  ownership: z.string().optional(),
+  sharePercent: NullableNumber.optional(),
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
 });

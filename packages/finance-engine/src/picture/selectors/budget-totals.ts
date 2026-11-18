@@ -1,4 +1,5 @@
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
+import { applyBudgetEntryShare } from "../../budget-entry-share.js";
 import { type Figure, figureKnown, figureUnknown } from "../figure.js";
 
 /** Monthly budget totals from saved budget rows. All amounts are pounds a month. */
@@ -30,13 +31,19 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/** A budget row as pounds a month. Weekly is 52/12 weeks a month; an unreadable amount is 0. */
-export function budgetRowMonthly(entry: Pick<BudgetEntryItem, "amount" | "frequency">): number {
+/**
+ * A budget row as the user's pounds a month. Weekly is 52/12 weeks a month; an unreadable amount
+ * is 0. A joint row counts at the user's share (E34 C1, 50% when none is saved), income included.
+ */
+export function budgetRowMonthly(
+  entry: Pick<BudgetEntryItem, "amount" | "frequency" | "ownership" | "sharePercent">,
+): number {
   const amount = Number(entry.amount);
   const safe = Number.isFinite(amount) ? amount : 0;
-  if (entry.frequency === "weekly") return (safe * 52) / 12;
-  if (entry.frequency === "annual") return safe / 12;
-  return safe;
+  let monthly = safe;
+  if (entry.frequency === "weekly") monthly = (safe * 52) / 12;
+  else if (entry.frequency === "annual") monthly = safe / 12;
+  return entry.ownership === "joint" ? applyBudgetEntryShare(monthly, entry) : monthly;
 }
 
 /** The one budget-totals selector. No rows means unknown, never £0. */

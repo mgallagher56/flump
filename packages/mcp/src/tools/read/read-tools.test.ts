@@ -336,6 +336,44 @@ describe("read tools v2: oversized fixtures", () => {
     }
   });
 
+  it("get_budget_summary counts a joint entry at the user's share (E34 C1)", async () => {
+    const base = { frequency: "monthly", isIncome: false, isEssential: true };
+    const budgetEntries = [
+      // Joint rent £1,500 with no share saved: 50%, so £750.
+      { ...base, id: "b0", name: "Rent", category: "housing", amount: 1500, ownership: "joint" },
+      // Joint energy £200 at 30%: £60.
+      {
+        ...base,
+        id: "b1",
+        name: "Energy",
+        category: "bills",
+        amount: 200,
+        ownership: "joint",
+        sharePercent: 30,
+      },
+      // Sole phone £25 in full.
+      { ...base, id: "b2", name: "Phone", category: "bills", amount: 25 },
+    ];
+    const client = await connectTestClient({ ...emptyUser, budgetEntries });
+    try {
+      const e = await call(client, "get_budget_summary", { responseFormat: "detailed" });
+      // 750 + 60 + 25 = £835.
+      expect(e.result.essentialMonthlyGbp).toBe(835);
+      expect(
+        e.result.entries.map((x: { monthlyGbp: number; sharePercent: number }) => [
+          x.monthlyGbp,
+          x.sharePercent,
+        ]),
+      ).toEqual([
+        [750, 50],
+        [60, 30],
+        [25, 100],
+      ]);
+    } finally {
+      await client.close();
+    }
+  });
+
   it("truncates get_budget_summary and merges categories that scrub to the same name", async () => {
     const budgetEntries = Array.from({ length: 400 }, (_, i) => ({
       id: `b${i}`,

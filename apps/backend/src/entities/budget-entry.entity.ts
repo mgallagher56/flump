@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   CreateDateColumn,
   Entity,
@@ -9,6 +10,13 @@ import {
 
 // A user's budget entries in creation order. (AddUserIdIndexes1794358100000)
 @Index("IDX_budget_entries_user_created", ["userId", "createdAt"])
+// E34 C1 (migration AddBudgetEntryJointShare1795350000000). Declared here too so a
+// synchronize-built dev database keeps them.
+@Check("CHK_budget_entries_ownership", `"ownership" IN ('sole', 'joint')`)
+@Check(
+  "CHK_budget_entries_share_percent",
+  `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 100)`,
+)
 @Entity("budget_entries")
 export class BudgetEntry {
   @PrimaryGeneratedColumn("uuid")
@@ -48,6 +56,14 @@ export class BudgetEntry {
 
   @Column({ type: "varchar", nullable: true })
   notes: string | null;
+
+  /** E34 C1: "sole" (default) or "joint", as on accounts. */
+  @Column({ type: "varchar", default: "sole" })
+  ownership: "sole" | "joint";
+
+  /** E34 C1: the user's percentage share (1-100) when joint; null when sole. */
+  @Column({ name: "share_percent", type: "smallint", nullable: true })
+  sharePercent: number | null;
 
   @Column({ name: "is_default", default: false })
   isDefault: boolean;
