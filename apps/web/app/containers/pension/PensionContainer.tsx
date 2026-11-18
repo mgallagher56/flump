@@ -298,6 +298,8 @@ export const PensionContainer: FC = () => {
     <PageBody>
       <PageHeader
         actions={addPotButton("sm")}
+        // The empty state above has its own; this one is for a page with pots.
+        illustration="empty-pension"
         subtitle="Your pots and what goes in each month."
         title="Your pension"
       />

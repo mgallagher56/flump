@@ -191,6 +191,8 @@ export const SavingsContainer: FC = () => {
           ) : undefined
         }
         description="Your balances, what you save each month and where it could get to."
+        // With no accounts the empty state shows it: one illustration in view.
+        illustration={hasAccounts ? "empty-savings" : undefined}
         title="Your savings"
       />
 

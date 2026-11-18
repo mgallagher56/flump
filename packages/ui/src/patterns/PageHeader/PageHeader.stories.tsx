@@ -64,6 +64,35 @@ export const PrimaryAndSecondaryDark: Story = {
   play: primaryAndSecondaryPlay,
 };
 
+const withIllustrationArgs = {
+  title: "Your savings",
+  description: "Your balances, what you save each month and where it could get to.",
+  illustration: "empty-savings" as const,
+  actions: <Button size="sm">Add account</Button>,
+};
+
+const withIllustrationPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const art = canvas.getByTestId("page-header-illustration");
+  // Decorative: hidden from assistive technology, and still (no settle animation).
+  await expect(art.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  await expect(art.querySelector("[data-scene-settle]")).toBeNull();
+};
+
+/** A page with content shows its illustration beside the title, from lg only. */
+export const WithIllustration: Story = {
+  args: withIllustrationArgs,
+  parameters: { viewport: { defaultViewport: "desktop" } },
+  play: withIllustrationPlay,
+};
+
+export const WithIllustrationDark: Story = {
+  args: withIllustrationArgs,
+  globals: { theme: "dark" },
+  parameters: { viewport: { defaultViewport: "desktop" } },
+  play: withIllustrationPlay,
+};
+
 export const SampleDataBadge: Story = {
   args: {
     title: "Home",
