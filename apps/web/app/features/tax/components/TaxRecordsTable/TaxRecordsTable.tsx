@@ -11,7 +11,6 @@ import {
   formatDate,
   Icon,
   IconButton,
-  Illustration,
   Menu,
   type MenuEntry,
   Money,
@@ -161,7 +160,6 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
     return (
       <EmptyState
         headingLevel="h3"
-        illustration={<Illustration scene="empty-accounts" size="sm" />}
         title={`No records for ${taxYear}`}
         description="Add income or an expense and it will appear here."
         action={
