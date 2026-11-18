@@ -98,8 +98,10 @@ describe("SavingsContainer", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Your savings" })).toBeDefined();
     expect(screen.getByTestId("hero-figure").textContent).toContain("£21,000");
     expect(screen.getByText("Saved each month")).toBeDefined();
-    expect(screen.getByText("Average rate")).toBeDefined();
-    expect(screen.getByText("4%")).toBeDefined();
+    // Interest in pounds, split by ISA status, replaces a blended rate.
+    expect(screen.getByText("Interest over the next 12 months")).toBeDefined();
+    expect(screen.getByText("Before tax. ISA interest is tax-free")).toBeDefined();
+    expect(screen.queryByText("Average rate")).toBeNull();
     expect(screen.getByText("Paid into ISAs this tax year")).toBeDefined();
     // The allowance is shown once, as the KPI: no second ISA bar in the accounts card.
     expect(screen.queryByTestId("isa-allowance")).toBeNull();
