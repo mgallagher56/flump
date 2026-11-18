@@ -21,6 +21,17 @@ describe("budgetRowMonthly", () => {
     expect(budgetRowMonthly({ amount: 40, frequency: "monthly" })).toBe(40);
   });
 
+  it("counts a joint row at the user's share (E34 C1)", () => {
+    // £1,200 a month, joint with no share saved: 50%, so £600.
+    expect(budgetRowMonthly({ amount: 1200, frequency: "monthly", ownership: "joint" })).toBe(600);
+    // £120 a week at 25%: 120 x 52 / 12 = £520 a month, a quarter is £130.
+    expect(
+      budgetRowMonthly({ amount: 120, frequency: "weekly", ownership: "joint", sharePercent: 25 }),
+    ).toBe(130);
+    // A sole row keeps every penny, whatever share is stored.
+    expect(budgetRowMonthly({ amount: 40, frequency: "monthly", ownership: "sole" })).toBe(40);
+  });
+
   it("treats an unreadable amount as 0", () => {
     expect(budgetRowMonthly({ amount: Number.NaN, frequency: "monthly" })).toBe(0);
   });
@@ -32,6 +43,36 @@ describe("selectBudgetTotals", () => {
       status: "unknown",
       missing: ["budget"],
       reason: "not-set",
+    });
+  });
+
+  it("totals joint rows at the user's share, income included (E34 C1)", () => {
+    const fig = selectBudgetTotals([
+      // Joint rental income £1,000 at 50%: £500 is mine.
+      row({ id: "i", category: "income", amount: 1000, isIncome: true, ownership: "joint" }),
+      // Joint rent £1,400 at 40%: £560 is mine.
+      row({
+        id: "r",
+        category: "housing",
+        amount: 1400,
+        isEssential: true,
+        ownership: "joint",
+        sharePercent: 40,
+      }),
+      // Sole gym £30 in full.
+      row({ id: "g", category: "expenses", amount: 30 }),
+      // Joint savings £200 at 50%: £100.
+      row({ id: "s", category: "savings", amount: 200, ownership: "joint" }),
+    ]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value).toMatchObject({
+      income: 500,
+      essentials: 560,
+      discretionary: 30,
+      savings: 100,
+      outgoings: 590,
+      // 500 - 560 - 30 - 100 = -190
+      surplus: -190,
     });
   });
 

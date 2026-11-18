@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { IsoDateTime, Money, Notes, ResponseMoney, Uuid } from "../primitives.js";
+import { AccountOwnership, SharePercent } from "./accounts.js";
 
 export const BUDGET_FREQUENCIES = ["monthly", "annual", "weekly"] as const;
 export const BudgetFrequency = z.enum(BUDGET_FREQUENCIES);
@@ -17,6 +18,9 @@ export const CreateBudgetEntryRequest = z.strictObject({
   isIncome: z.boolean().optional(),
   isEssential: z.boolean().optional(),
   notes: Notes.nullish(),
+  /** E34 C1: as on accounts. Joint without a share stores 50; sole stores no share. */
+  ownership: AccountOwnership.optional(),
+  sharePercent: SharePercent.nullish(),
 });
 export type CreateBudgetEntryRequest = z.infer<typeof CreateBudgetEntryRequest>;
 
@@ -29,6 +33,9 @@ export const UpdateBudgetEntryRequest = z.strictObject({
   isIncome: z.boolean().optional(),
   isEssential: z.boolean().optional(),
   notes: Notes.nullish(),
+  /** Omitted ownership and share stay as saved. */
+  ownership: AccountOwnership.optional(),
+  sharePercent: SharePercent.nullish(),
 });
 export type UpdateBudgetEntryRequest = z.infer<typeof UpdateBudgetEntryRequest>;
 
@@ -61,6 +68,10 @@ export const BudgetEntryDto = z.strictObject({
   isEssential: z.boolean(),
   notes: z.string().nullable(),
   isDefault: z.boolean(),
+  /** E34 C1: "sole" or "joint"; rows from before the columns existed read as sole. */
+  ownership: AccountOwnership.default("sole"),
+  /** The user's share (1-100) of a joint entry; null when sole. */
+  sharePercent: SharePercent.nullable().default(null),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });

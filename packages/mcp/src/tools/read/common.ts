@@ -3,6 +3,7 @@ import {
   anonymiseDescription,
   type BudgetEntryItem,
   type BuildContextPackInput,
+  budgetRowMonthly,
   createBudgetCategoryAnonymiser,
   DEFAULT_NET_WORTH_BASIS,
   genericAccountLabel,
@@ -219,12 +220,6 @@ export interface MonthlyBudget {
   byCategory: Array<{ category: string; monthly: number; essential: boolean }>;
 }
 
-export function toMonthly(amount: number, frequency: string): number {
-  if (frequency === "weekly") return (amount * 52) / 12;
-  if (frequency === "annual") return amount / 12;
-  return amount;
-}
-
 /** Budget totals from entries only. Income is null when no income entry exists (no salary-based guess). */
 export function summariseBudget(entries: readonly BudgetEntryItem[]): MonthlyBudget {
   let income = 0;
@@ -233,7 +228,8 @@ export function summariseBudget(entries: readonly BudgetEntryItem[]): MonthlyBud
   let discretionary = 0;
   const cats = new Map<string, { monthly: number; essential: boolean }>();
   for (const e of entries) {
-    const m = toMonthly(e.amount, e.frequency);
+    // A joint entry counts at the user's share (E34 C1), as the financial picture counts it.
+    const m = budgetRowMonthly(e);
     if (e.isIncome) {
       hasIncome = true;
       income += m;

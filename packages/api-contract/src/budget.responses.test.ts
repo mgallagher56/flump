@@ -33,6 +33,20 @@ describe("budget response schemas", () => {
     expect(checkAgainst(BudgetEntryListResponse, [])).toEqual({ ok: true });
   });
 
+  it("reads a row without the joint columns as sole with no share (E34 C1)", () => {
+    expect(BudgetEntryResponse.parse(entry)).toMatchObject({
+      ownership: "sole",
+      sharePercent: null,
+    });
+  });
+
+  it("accepts a joint entry with a share and rejects a share outside 1 to 100", () => {
+    const joint = { ...entry, ownership: "joint", sharePercent: 40 };
+    expect(checkAgainst(BudgetEntryResponse, joint)).toEqual({ ok: true });
+    expect(checkAgainst(BudgetEntryResponse, { ...joint, sharePercent: 0 }).ok).toBe(false);
+    expect(checkAgainst(BudgetEntryResponse, { ...joint, ownership: "shared" }).ok).toBe(false);
+  });
+
   it("rejects a decimal amount sent as a string (B-05)", () => {
     expect(checkAgainst(BudgetEntryResponse, { ...entry, amount: "1200.00" }).ok).toBe(false);
   });

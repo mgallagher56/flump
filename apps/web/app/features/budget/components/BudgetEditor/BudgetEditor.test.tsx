@@ -110,6 +110,20 @@ describe("BudgetEditor", () => {
     expect(onUpdate).toHaveBeenCalledWith("b-1", { frequency: "annual" });
   });
 
+  it("saves an entry as joint at 50%, and shows a joint entry's share (E34 C1)", () => {
+    const { onUpdate } = setup({
+      entries: [
+        row({}),
+        row({ id: "b-4", name: "Energy", category: "bills", ownership: "joint", sharePercent: 40 }),
+      ],
+    });
+    fireEvent.change(screen.getByTestId("budget-editor-b-1-ownership"), {
+      target: { value: "joint" },
+    });
+    expect(onUpdate).toHaveBeenCalledWith("b-1", { ownership: "joint", sharePercent: 50 });
+    expect(screen.getByText("Joint, 40%")).toBeTruthy();
+  });
+
   it("saves the essential switch", () => {
     const { onUpdate } = setup();
     fireEvent.click(screen.getByTestId("budget-editor-essential-b-3"));

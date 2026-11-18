@@ -92,6 +92,20 @@ describe("selectHousingCost: mortgage", () => {
     expect(fig.assumptions).toEqual([MORTGAGE_ESTIMATE_NOTE]);
   });
 
+  it("counts a joint mortgage's payment at the user's share (E34 C1)", () => {
+    // Joint £200,000 mortgage at 40%: the snapshot counts a £80,000 balance, and the repayment
+    // formula is linear in the balance, so the payment is 40% of the whole payment.
+    const fig = run(facts({ housingStatus: "mortgage" }), takeHome(3000), [
+      mortgage({ ownership: "joint", sharePercent: 40 }),
+    ]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    const whole = calculateMonthlyMortgagePayment(200000, 4.5, 300);
+    expect(fig.value.monthly).toBeCloseTo(whole * 0.4, 1);
+    expect(fig.value.monthly).toBe(
+      Math.round(calculateMonthlyMortgagePayment(80000, 4.5, 300) * 100) / 100,
+    );
+  });
+
   it("sums every complete mortgage account and ignores other account types", () => {
     const accounts = [
       mortgage(),

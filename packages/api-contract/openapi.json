@@ -3558,6 +3558,24 @@
                       "notes": {
                         "type": ["string", "null"]
                       },
+                      "ownership": {
+                        "default": "sole",
+                        "enum": ["sole", "joint"],
+                        "type": "string"
+                      },
+                      "sharePercent": {
+                        "anyOf": [
+                          {
+                            "maximum": 100,
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "default": null
+                      },
                       "updatedAt": {
                         "type": "string"
                       },
@@ -3577,6 +3595,8 @@
                       "isEssential",
                       "notes",
                       "isDefault",
+                      "ownership",
+                      "sharePercent",
                       "createdAt",
                       "updatedAt"
                     ],
@@ -3721,6 +3741,22 @@
                       }
                     ]
                   },
+                  "ownership": {
+                    "enum": ["sole", "joint"],
+                    "type": "string"
+                  },
+                  "sharePercent": {
+                    "anyOf": [
+                      {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "title": {
                     "maxLength": 120,
                     "minLength": 1,
@@ -3778,6 +3814,24 @@
                     "notes": {
                       "type": ["string", "null"]
                     },
+                    "ownership": {
+                      "default": "sole",
+                      "enum": ["sole", "joint"],
+                      "type": "string"
+                    },
+                    "sharePercent": {
+                      "anyOf": [
+                        {
+                          "maximum": 100,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null
+                    },
                     "updatedAt": {
                       "type": "string"
                     },
@@ -3797,6 +3851,8 @@
                     "isEssential",
                     "notes",
                     "isDefault",
+                    "ownership",
+                    "sharePercent",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -4129,6 +4185,24 @@
                       "notes": {
                         "type": ["string", "null"]
                       },
+                      "ownership": {
+                        "default": "sole",
+                        "enum": ["sole", "joint"],
+                        "type": "string"
+                      },
+                      "sharePercent": {
+                        "anyOf": [
+                          {
+                            "maximum": 100,
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "default": null
+                      },
                       "updatedAt": {
                         "type": "string"
                       },
@@ -4148,6 +4222,8 @@
                       "isEssential",
                       "notes",
                       "isDefault",
+                      "ownership",
+                      "sharePercent",
                       "createdAt",
                       "updatedAt"
                     ],
@@ -4394,6 +4470,22 @@
                       }
                     ]
                   },
+                  "ownership": {
+                    "enum": ["sole", "joint"],
+                    "type": "string"
+                  },
+                  "sharePercent": {
+                    "anyOf": [
+                      {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "title": {
                     "maxLength": 120,
                     "minLength": 1,
@@ -4450,6 +4542,24 @@
                     "notes": {
                       "type": ["string", "null"]
                     },
+                    "ownership": {
+                      "default": "sole",
+                      "enum": ["sole", "joint"],
+                      "type": "string"
+                    },
+                    "sharePercent": {
+                      "anyOf": [
+                        {
+                          "maximum": 100,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null
+                    },
                     "updatedAt": {
                       "type": "string"
                     },
@@ -4469,6 +4579,8 @@
                     "isEssential",
                     "notes",
                     "isDefault",
+                    "ownership",
+                    "sharePercent",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -7204,6 +7316,13 @@
                                   },
                                   "notes": {
                                     "type": ["string", "null"]
+                                  },
+                                  "ownership": {
+                                    "enum": ["sole", "joint"],
+                                    "type": "string"
+                                  },
+                                  "sharePercent": {
+                                    "type": ["number", "null"]
                                   }
                                 },
                                 "required": [
@@ -8268,6 +8387,13 @@
                               },
                               "notes": {
                                 "type": ["string", "null"]
+                              },
+                              "ownership": {
+                                "enum": ["sole", "joint"],
+                                "type": "string"
+                              },
+                              "sharePercent": {
+                                "type": ["number", "null"]
                               }
                             },
                             "required": [

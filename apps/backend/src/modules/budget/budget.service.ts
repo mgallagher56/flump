@@ -1,4 +1,6 @@
 import {
+  ACCOUNT_OWNERSHIPS,
+  type AccountOwnership,
   type AddBudgetCategoryRequest,
   type CreateBudgetEntryRequest,
   MAX_BUDGET_CATEGORY_NAME_LENGTH,
@@ -196,6 +198,38 @@ function resolveEntryName(body: { name?: unknown; title?: unknown }): string | u
   return undefined;
 }
 
+/** Default share of a joint entry saved without one, as on accounts (E34). */
+const DEFAULT_JOINT_SHARE_PERCENT = 50;
+
+function validateOwnership(value: unknown): AccountOwnership | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "string" && (ACCOUNT_OWNERSHIPS as readonly string[]).includes(value)) {
+    return value as AccountOwnership;
+  }
+  throw new BadRequestException(`ownership must be one of ${ACCOUNT_OWNERSHIPS.join(", ")}`);
+}
+
+function validateSharePercent(value: unknown): number | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100) {
+    return value;
+  }
+  throw new BadRequestException("sharePercent must be an integer between 1 and 100, or null");
+}
+
+/**
+ * The stored pair for an entry (E34 C1, the accounts rule): joint keeps its share, or 50 when
+ * none is given; sole never keeps a share.
+ */
+function storedShare(
+  ownership: AccountOwnership,
+  sharePercent: number | null | undefined,
+): { ownership: AccountOwnership; sharePercent: number | null } {
+  return ownership === "joint"
+    ? { ownership, sharePercent: sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT }
+    : { ownership: "sole", sharePercent: null };
+}
+
 /** Budget entries and custom categories (BE-13, audit M19): the logic the controller used to hold. */
 @Injectable()
 export class BudgetService {
@@ -276,6 +310,10 @@ export class BudgetService {
     if (name === undefined) {
       throw new BadRequestException("Budget entry name is required");
     }
+    const share = storedShare(
+      validateOwnership(body.ownership) ?? "sole",
+      validateSharePercent(body.sharePercent),
+    );
     const entry = this.budgetEntryRepository.create({
       userId,
       category: body.category,
@@ -287,6 +325,7 @@ export class BudgetService {
       isEssential: body.isEssential ?? true,
       notes: body.notes ?? null,
       isDefault: false,
+      ...share,
     });
     return this.budgetEntryRepository.save(entry);
   }
@@ -313,6 +352,9 @@ export class BudgetService {
     id: string,
     body: UpdateBudgetEntryRequest,
   ): Promise<BudgetEntry> {
+    // Checked before the lookup so a bad value never reaches the row.
+    const ownership = validateOwnership(body.ownership);
+    const sharePercent = validateSharePercent(body.sharePercent);
     const entry = await repository.findOne({ where: { id, userId } });
 
     if (!entry) {
@@ -330,6 +372,11 @@ export class BudgetService {
     if (body.isIncome !== undefined) entry.isIncome = body.isIncome;
     if (body.isEssential !== undefined) entry.isEssential = body.isEssential;
     if (body.notes !== undefined) entry.notes = body.notes ?? null;
+    // Omitted ownership and share stay as saved; an explicit null share on a joint entry is 50.
+    const nextOwnership: AccountOwnership =
+      (ownership ?? entry.ownership) === "joint" ? "joint" : "sole";
+    const nextShare = sharePercent !== undefined ? sharePercent : entry.sharePercent;
+    Object.assign(entry, storedShare(nextOwnership, nextShare));
 
     return repository.save(entry);
   }

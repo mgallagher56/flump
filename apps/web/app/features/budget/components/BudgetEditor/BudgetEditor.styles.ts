@@ -118,6 +118,15 @@ export const removeCell = cva({
   },
 });
 
+/** Ownership and share (E34 C1): a line of its own under the row, on a phone and from md. */
+export const ownershipCell = cva({
+  base: {
+    order: { base: 6, md: 0 },
+    flex: { base: "1 1 100%", md: "none" },
+    gridColumn: { md: "1 / -1" },
+  },
+});
+
 /** The add row closing each section: matches entryRow columns on md so inputs align. */
 export const addRow = cva({
   base: {

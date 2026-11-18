@@ -1,3 +1,4 @@
+import { applyBudgetEntryShare } from "@flump/finance-engine";
 import { seriesColor } from "@repo/ui";
 
 export type BudgetCategory = "housing" | "bills" | "expenses" | "savings" | "income" | string;
@@ -14,6 +15,9 @@ export interface BudgetEntry {
   isEssential: boolean;
   notes?: string | null;
   isDefault: boolean;
+  /** E34 C1: "joint" counts the entry at `sharePercent` (50 when unset); absent means sole. */
+  ownership?: "sole" | "joint";
+  sharePercent?: number | null;
   contractEndDate?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -48,18 +52,18 @@ export function getDaysUntilContractEnd(contractEndDate?: string | null): number
   return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
 }
 
-/** Normalise any entry to a monthly amount */
+/** Normalise any entry to the user's monthly amount (a joint entry at their share) */
 export function toMonthly(entry: BudgetEntry): number {
   const amount = Number(entry.amount);
   const safeAmount = Number.isFinite(amount) ? amount : 0;
-  switch (entry.frequency) {
-    case "annual":
-      return safeAmount / 12;
-    case "weekly":
-      return safeAmount * (52 / 12);
-    default:
-      return safeAmount;
-  }
+  const monthly =
+    entry.frequency === "annual"
+      ? safeAmount / 12
+      : entry.frequency === "weekly"
+        ? safeAmount * (52 / 12)
+        : safeAmount;
+  // E34 C1: a joint entry counts at the user's share, as the engine's budget totals count it.
+  return entry.ownership === "joint" ? applyBudgetEntryShare(monthly, entry) : monthly;
 }
 
 export const BASE_CATEGORY_LABELS: Record<string, string> = {

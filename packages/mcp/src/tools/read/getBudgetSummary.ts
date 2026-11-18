@@ -1,4 +1,9 @@
-import { anonymousBudgetEntryLabels, MCP_NOTICE } from "@flump/finance-engine";
+import {
+  anonymousBudgetEntryLabels,
+  budgetRowMonthly,
+  MCP_NOTICE,
+  resolveBudgetEntrySharePercent,
+} from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import {
@@ -9,7 +14,6 @@ import {
   round2,
   sanitiseText,
   summariseBudget,
-  toMonthly,
 } from "./common.js";
 
 const result = z.object({
@@ -31,6 +35,8 @@ const result = z.object({
         monthlyGbp: z.number(),
         isIncome: z.boolean(),
         isEssential: z.boolean(),
+        /** The percentage of the entry counted: 100 when sole, the user's share when joint. */
+        sharePercent: z.number(),
       }),
     )
     .optional(),
@@ -54,7 +60,7 @@ export const getBudgetSummary = defineFlumpTool({
   name: "get_budget_summary",
   title: "Budget summary",
   description:
-    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly. Income and the left-over amount are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
+    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. Income and the left-over amount are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
   input: {},
   result,
   maxTokens: 1500,
@@ -90,9 +96,10 @@ export const getBudgetSummary = defineFlumpTool({
         ? entries.map((e, i) => ({
             name: generic ? (generic[i] ?? "Entry") : sanitiseText(e.name),
             category: categories[i] ?? categoryLabel(e.category),
-            monthlyGbp: round2(toMonthly(e.amount, e.frequency)),
+            monthlyGbp: round2(budgetRowMonthly(e)),
             isIncome: e.isIncome,
             isEssential: e.isEssential,
+            sharePercent: resolveBudgetEntrySharePercent(e),
           }))
         : undefined;
 

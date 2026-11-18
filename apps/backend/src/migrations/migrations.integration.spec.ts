@@ -13,6 +13,10 @@ import {
   AddAccountSubtypeCreditLimitAndPromo1795300000000,
   DOWN_REFUSAL as SUBTYPE_DOWN_REFUSAL,
 } from "./AddAccountSubtypeCreditLimitAndPromo1795300000000";
+import {
+  AddBudgetEntryJointShare1795350000000,
+  BUDGET_JOINT_DOWN_REFUSAL,
+} from "./AddBudgetEntryJointShare1795350000000";
 import { AddLivingWithFamilyHousingStatus1794700000000 } from "./AddLivingWithFamilyHousingStatus1794700000000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddNetWorthChoices1794800000000 } from "./AddNetWorthChoices1794800000000";
@@ -1839,13 +1843,96 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       await insertAccount();
       await ds.query("UPDATE accounts SET credit_limit = 3000");
-      // The newest migration, so undoing the last one is this one (TypeORM rolls it back).
-      expect((await applied()).at(-1)).toBe(NAME);
+      // Undo the newer migrations first, so undoing the last one is this one.
+      while ((await applied()).at(-1) !== NAME) await ds.undoLastMigration();
       await expect(ds.undoLastMigration()).rejects.toThrow(SUBTYPE_DOWN_REFUSAL);
       expect(await applied()).toContain(NAME);
       expect(await newColumns()).toHaveLength(3);
       expect(await ds.query("SELECT credit_limit FROM accounts")).toEqual([
         { credit_limit: "3000.00" },
+      ]);
+    });
+  });
+  describe("AddBudgetEntryJointShare1795350000000 (E34 C1)", () => {
+    const NAME = "AddBudgetEntryJointShare1795350000000";
+    const jointColumns = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'budget_entries'
+            AND column_name IN ('ownership', 'share_percent')
+          ORDER BY column_name`,
+      );
+    const insertEntry = (): Promise<unknown> =>
+      ds.query(
+        `INSERT INTO budget_entries (user_id, category, name, amount)
+         VALUES ('u1', 'housing', 'Rent', 1200)`,
+      );
+
+    it("adds ownership (sole) and a nullable share, and existing rows stay sole", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await insertEntry();
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      expect(await jointColumns()).toEqual([
+        {
+          column_name: "ownership",
+          data_type: "character varying",
+          is_nullable: "NO",
+          column_default: "'sole'::character varying",
+        },
+        {
+          column_name: "share_percent",
+          data_type: "smallint",
+          is_nullable: "YES",
+          column_default: null,
+        },
+      ]);
+      expect(await ds.query("SELECT ownership, share_percent, amount FROM budget_entries")).toEqual(
+        [{ ownership: "sole", share_percent: null, amount: "1200.00" }],
+      );
+    });
+
+    it("refuses an unknown ownership and a share outside 1 to 100", async () => {
+      await ds.runMigrations();
+      await insertEntry();
+      await expect(ds.query("UPDATE budget_entries SET ownership = 'shared'")).rejects.toThrow(
+        /CHK_budget_entries_ownership/,
+      );
+      await expect(ds.query("UPDATE budget_entries SET share_percent = 0")).rejects.toThrow(
+        /CHK_budget_entries_share_percent/,
+      );
+      await expect(ds.query("UPDATE budget_entries SET share_percent = 101")).rejects.toThrow(
+        /CHK_budget_entries_share_percent/,
+      );
+    });
+
+    it("is idempotent when the columns already exist", async () => {
+      await ds.runMigrations();
+      await expect(runUpInTransaction(new AddBudgetEntryJointShare1795350000000())).resolves.toBe(
+        undefined,
+      );
+      expect(await jointColumns()).toHaveLength(2);
+    });
+
+    it("down drops the columns while every entry is sole, and up runs again", async () => {
+      await ds.runMigrations();
+      await insertEntry();
+      await undoThrough(NAME);
+      expect(await jointColumns()).toEqual([]);
+      await ds.runMigrations();
+      expect(await jointColumns()).toHaveLength(2);
+    });
+
+    it("down is refused while an entry is joint, and changes nothing", async () => {
+      await ds.runMigrations();
+      await insertEntry();
+      await ds.query("UPDATE budget_entries SET ownership = 'joint', share_percent = 50");
+      while ((await applied()).at(-1) !== NAME) await ds.undoLastMigration();
+      await expect(ds.undoLastMigration()).rejects.toThrow(BUDGET_JOINT_DOWN_REFUSAL);
+      expect(await applied()).toContain(NAME);
+      expect(await ds.query("SELECT ownership, share_percent FROM budget_entries")).toEqual([
+        { ownership: "joint", share_percent: 50 },
       ]);
     });
   });

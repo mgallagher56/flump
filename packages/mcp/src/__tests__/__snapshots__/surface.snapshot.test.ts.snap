@@ -1305,7 +1305,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly. Income and the left-over amount are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
+    "description": "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. Income and the left-over amount are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -1461,6 +1461,9 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                   "name": {
                     "type": "string",
                   },
+                  "sharePercent": {
+                    "type": "number",
+                  },
                 },
                 "required": [
                   "name",
@@ -1468,6 +1471,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                   "monthlyGbp",
                   "isIncome",
                   "isEssential",
+                  "sharePercent",
                 ],
                 "type": "object",
               },

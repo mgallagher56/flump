@@ -85,6 +85,8 @@ export interface BudgetRowLike {
   frequency?: unknown;
   isIncome?: unknown;
   isEssential?: unknown;
+  ownership?: unknown;
+  sharePercent?: unknown;
 }
 
 export interface FinancialPictureRows {
@@ -93,6 +95,12 @@ export interface FinancialPictureRows {
   accountDetails?: readonly RawAccountDetail[] | null;
   budgetEntries?: readonly BudgetRowLike[] | null;
   taxRecords?: readonly TaxRecord[] | null;
+}
+
+/** A stored share (1-100), or null when missing or unreadable. */
+function shareFromRow(value: unknown): number | null {
+  const n = typeof value === "string" && value !== "" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) ? n : null;
 }
 
 /** Maps one budget row. Unreadable amounts become 0; a missing frequency means monthly. */
@@ -107,6 +115,8 @@ export function budgetEntryFromRow(row: BudgetRowLike, index = 0): BudgetEntryIt
       typeof row.frequency === "string" && row.frequency !== "" ? row.frequency : "monthly",
     isIncome: row.isIncome === true,
     isEssential: row.isEssential === true,
+    ownership: row.ownership === "joint" ? "joint" : "sole",
+    sharePercent: shareFromRow(row.sharePercent),
   };
 }
 

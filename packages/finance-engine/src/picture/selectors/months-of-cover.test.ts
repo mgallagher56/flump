@@ -30,6 +30,19 @@ describe("selectMonthsOfCover", () => {
     expect(fig.value).toMatchObject({ months: 3.7, liquidCash: 3700, monthlyEssentials: 1000 });
   });
 
+  it("counts a joint rent row and a joint savings account at the user's share (E34 C1)", () => {
+    // Joint rent £1,600 at 50% = £800 a month. Joint saver £6,000 at 50% = £3,000 of cash.
+    // 3,000 / 800 = 3.75, shown as 3.8 months.
+    const fig = selectMonthsOfCover(
+      [row({ category: "housing", amount: 1600, ownership: "joint" })],
+      new PortfolioSnapshot([
+        { id: "sav", name: "Saver", type: "Saving", balance: 6000, ownership: "joint" },
+      ]),
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value).toMatchObject({ months: 3.8, liquidCash: 3000, monthlyEssentials: 800 });
+  });
+
   it("rounds to one decimal (never truncates) and leaves non-essential rows out", () => {
     // £4,000 cash over £950 essential rent; the £800 non-essential row is not divided by.
     const fig = selectMonthsOfCover(
