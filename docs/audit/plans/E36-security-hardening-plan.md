@@ -21,7 +21,7 @@
 | Web hardening | Headers and CSP (report-only for the full policy), logging policy, threat model | `docs/security/` |
 | MCP | Allowlist, scopes, output policy tests, audit events with hashed arguments | `apps/backend/src/auth/mcp-access.ts`, `packages/mcp/src/policy/`, `agent-audit.service.ts` |
 
-**Open items already ticketed in the backend re-score** (`docs/audit/backend-2026-11/RESCORE.md`), which E36 depends on and does not repeat: SEC-A production environment checks, SEC-D receipt encryption, SEC-F audit-trail integrity, BE-18 bank launch readiness. SEC-B (MCP token tightening) merged with BE-15 in #725. No commit on main names SEC-A, SEC-D or SEC-F, so they are treated as open (**[U]**, not re-checked in code).
+**Backend re-score items E36 depended on** (`docs/audit/backend-2026-11/RESCORE.md`), all now merged and not repeated here: SEC-A production environment checks and SEC-F audit-trail integrity (#738, 15 November 2026), BE-18 bank launch readiness (#752), SEC-D receipt encryption (#753), and SEC-B MCP token tightening, merged with BE-15 in #725. (Updated 18 November 2026; this paragraph first listed SEC-A, SEC-D, SEC-F and BE-18 as open.)
 
 ## 2. Gaps and what to do
 

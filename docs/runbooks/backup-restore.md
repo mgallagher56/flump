@@ -191,6 +191,18 @@ Once staging holds synthetic personas (`seed-synthetic.ts`) it is no longer a re
 - PITR drill: quarterly once PITR is on.
 - Always against the newest backup.
 
+## 7. Migrations with no rollback
+
+Some migrations change data in a way their `down()` does not undo. Reverting the code past one of them, or running `migration:revert` on it, leaves the data in its new form. The only way back is a restore from a backup taken before it ran (section 4).
+
+### `EncryptTaxReceipts1795200000000` (SEC-D)
+
+- **What it did.** It rewrote every plaintext `tax_records.receipt_data` value as a `v<n>:iv:tag:ct` AES-256-GCM ciphertext, keyed by the first entry in `RECEIPT_ENCRYPTION_KEYS` (or `RECEIPT_ENCRYPTION_KEY`) and bound to the row id.
+- **Its `down()` is a no-op on purpose.** Reverting must never write receipts back as plaintext.
+- **Hazard 1: rolling the backend back to an image from before SEC-D.** That code reads `receipt_data` as a plaintext data URL, so every encrypted receipt fails to download. Roll forward instead. If the old image must run, accept that receipts are unreadable until you deploy a SEC-D image again; the data is not lost.
+- **Hazard 2: losing or rotating away the receipt key.** A ciphertext can only be read with the key version that wrote it. Never remove a version from `RECEIPT_ENCRYPTION_KEYS` while rows still use it, and keep the keys in the password manager next to the database backups: a restored backup is unreadable without the key that was live when it was taken.
+- **Known limit: it loads every matching row in one query.** It has already run on the Railway environment, so it is not edited (a changed applied migration would not run again, and the migrations table records only its name). On a new, empty database it finds no rows. A database restored from a backup taken after it ran is already encrypted. The one case it would strain is a large database of plaintext receipts that has never run it; that cannot arise from our own environments, so no batched follow-up is added. Any plaintext row it missed is encrypted on its first download (`TaxService.readReceipt`).
+
 ## Automated restore test (CI)
 
 `.github/workflows/backup.yml` runs on every pull request, on main and weekly: it seeds Postgres 18 with every migration, the synthetic personas and a table of awkward types, runs `backup-run.ts` (encrypted, to a local directory), restores with `backup-restore.ts` into an empty database, and requires `RESULT|PASS`, `verify-restore.sql` PASS, identical `restore-fingerprint.sql` output, and that a changed or deleted row is caught (`scripts/ops/backup-roundtrip.test.ts`). It also builds the cron image and checks it refuses to run unconfigured. It never touches a real database. It proves the scripts work; only section 3 proves the real backups do.

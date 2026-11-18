@@ -1,6 +1,8 @@
 # Bank token key rotation
 
-Bank access and refresh tokens in `bank_connections` are encrypted with AES-256-GCM by `@flump/banking` (`packages/banking/src/server/crypto.ts`). Each stored value carries the version of the key that wrote it, in the form `v<version>:<iv>:<tag>:<ciphertext>`. Values written before versioning have no prefix (`<iv>:<tag>:<ciphertext>`); these legacy values are always read with the version 1 key.
+Bank access and refresh tokens in `bank_connections` are encrypted with AES-256-GCM by `@flump/banking` (`packages/banking/src/server/crypto.ts`). Each stored value carries the version of the key that wrote it, in the form `v<version>:<iv>:<tag>:<ciphertext>`, and is bound to its connection and field by associated data (`<connectionId>:access` or `<connectionId>:refresh`), so a value copied to another row or field does not decrypt.
+
+There are no unprefixed legacy values any more. The `ClearBankTokens1794355300000` migration nulled every token written before versioning, and the code refuses an unprefixed value (S4, BE-18): reading one fails, and the connection is marked as needing the user to reconnect. Nothing in this runbook needs to allow for them.
 
 ## How keys are configured
 
@@ -26,11 +28,11 @@ Bank access and refresh tokens in `bank_connections` are encrypted with AES-256-
    Use the next unused version number each time (3, then 4, and so on). Never reuse a version number for a different secret.
 
 3. Deploy the backend. New values are written with version 2 straight away.
-4. Existing values re-encrypt lazily. Each time a connection syncs, the backend decrypts its tokens with whichever key wrote them and, if that was not the active key (or the value is legacy), writes them back under the active key.
+4. Existing values re-encrypt lazily. Each time a connection syncs, the backend decrypts its tokens with whichever key wrote them and, if that was not the active key, writes them back under the active key.
 
 ## Check progress
 
-Count the rows that still hold a value under an older key or in the legacy format:
+Count the rows that still hold a value under an older key:
 
 ```sql
 SELECT count(*)
@@ -47,7 +49,7 @@ It is safe to remove the old entry from `BANKING_TOKEN_ENCRYPTION_KEYS` only whe
 
 If a few rows remain and will not sync, either leave the old key in place for longer or clear those tokens and mark the connections for reconnection, then drop the key.
 
-Once only one key is left you can keep the list (`"2:<new-secret>"`) or move the new secret into `BANKING_TOKEN_ENCRYPTION_KEY`. Do not move it there while any legacy unprefixed values remain, because legacy values are read with version 1 only.
+Once only one key is left, keep the list (`"2:<new-secret>"`). Do not move a secret of version 2 or later into `BANKING_TOKEN_ENCRYPTION_KEY` alone: without the list, that variable is always read as version 1, so every `v2:` value would stop decrypting.
 
 ## If a key leaks
 
@@ -56,5 +58,3 @@ Treat every token encrypted with that key as exposed.
 1. Rotate straight away as above, with the leaked key as the old entry, so new writes stop using it.
 2. Do not wait for lazy re-encryption. Re-encrypting does not help, because anyone holding the leaked key may already have decrypted the old values. For every row still on the leaked version, clear the tokens and force the user to reconnect, and revoke access at the provider where that is supported.
 3. Drop the leaked key as soon as no row needs it, then record the incident.
-
-Legacy unprefixed values are version 1, so a leak of the version 1 key covers them too.
