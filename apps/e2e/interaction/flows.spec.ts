@@ -33,7 +33,7 @@ for (const mode of RUN_MODES) {
         await settle(page);
 
         const actor = new Actor(page, mode, counter);
-        counter.start();
+        await counter.start();
         await flow.run(actor);
         const cost = await counter.stop();
         writeFragment({ flow: flow.id, title: flow.title, mode, cost });

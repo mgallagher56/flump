@@ -11,8 +11,13 @@ import type { Actor } from "./actor";
  * The flows share the single dev user and run in this order in each mode. Deletes and resets
  * share a limit of 10 an hour per user, so the flows do not clean up after themselves: the first
  * flow of each mode re-seeds the homeowner (one reset), the account flow deletes the account it
- * added (one delete, part of the task), and onboarding clears the user (one reset). That is at
- * most 8 of the 10 in a run from an empty database (the first mode needs no reset).
+ * added (one delete, part of the task), and onboarding clears the user (one reset). From an empty
+ * database that is 8 of the 10: 2 in the first mode (global setup has just seeded it), 3 in each
+ * of the others. Against a database that already holds data, global setup's own reset makes 9,
+ * so a second run within the hour is refused (README "Interaction cost").
+ *
+ * Modes after the first start from a reset of an onboarded user, which keeps the profile's
+ * non-financial fields (name, tax region); the seeded persona sets the ones the flows read.
  */
 export interface Flow {
   id: string;

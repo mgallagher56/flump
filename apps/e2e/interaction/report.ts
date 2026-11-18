@@ -86,6 +86,8 @@ export interface Comparison {
   improvements: CostChange[];
   /** Flow runs with no baseline entry yet. */
   unbaselined: string[];
+  /** Baseline flow runs this run did not record: the flow failed or was not run. */
+  missing: string[];
 }
 
 /** Any compared metric above its baseline is a regression; below it, an improvement. */
@@ -93,7 +95,17 @@ export function compareResults(
   baseline: InteractionBaseline,
   results: readonly FlowResult[],
 ): Comparison {
-  const comparison: Comparison = { regressions: [], improvements: [], unbaselined: [] };
+  const comparison: Comparison = {
+    regressions: [],
+    improvements: [],
+    unbaselined: [],
+    missing: [],
+  };
+  const recorded = new Set(results.map(({ flow, mode }) => `${flow} [${mode}]`));
+  for (const [flow, { runs }] of sortedFlows(baseline))
+    for (const mode of RUN_MODES)
+      if (runs[mode] && !recorded.has(`${flow} [${mode}]`))
+        comparison.missing.push(`${flow} [${mode}]`);
   for (const { flow, mode, cost } of results) {
     const expected = baseline.flows[flow]?.runs[mode];
     if (!expected) {
@@ -151,7 +163,8 @@ export function comparisonSummary(
   if (recorded) {
     parts.push("Recorded a new baseline from this run; nothing was compared.", "");
   } else if (comparison.regressions.length === 0) {
-    parts.push("No flow costs more than the committed baseline.", "");
+    const scope = comparison.missing.length ? " among the flows that finished" : "";
+    parts.push(`No flow costs more than the committed baseline${scope}.`, "");
   } else {
     parts.push(
       `**${comparison.regressions.length} cost increase(s) against the baseline.** Warn-only: this does not fail the job (ED1 option (a)).`,
@@ -165,6 +178,12 @@ export function comparisonSummary(
       `${comparison.improvements.length} improvement(s): regenerate the baseline to lock them in.`,
       "",
       ...comparison.improvements.map((c) => `- ${describeChange(c)}`),
+      "",
+    );
+  }
+  if (!recorded && comparison.missing.length > 0) {
+    parts.push(
+      `**Not measured (the flow failed or did not run):** ${comparison.missing.join(", ")}. A page change may have broken its steps in apps/e2e/interaction/flows.ts.`,
       "",
     );
   }

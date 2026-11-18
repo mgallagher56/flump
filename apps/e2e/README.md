@@ -262,8 +262,12 @@ not what the spec intended. Per flow and run:
   (Playwright sets it, the browser draws the list) and shown as "select picks";
 - keystrokes, every character typed included;
 - Tab hops (Tab presses, forward only);
-- transitions: path changes plus dialog or sheet opens. Query or hash changes and menus are not
-  counted, nor is scrolling.
+- transitions: path changes plus opens of anything with `role="dialog"` or `"alertdialog"`
+  (dialogs, sheets, the phone's More pages drawer, and popovers built on them). Query or hash
+  changes, menus (`role="menu"`) and scrolling are not counted.
+
+The touch run replaces a field's text with Ctrl/Cmd+A like the mouse run; a person on a phone
+would select it another way, so its keystrokes are a close stand-in rather than exact.
 
 `interaction/counter.spec.ts` (the `counter` project, which runs first) checks the counting on a
 small page of its own, with every expected number worked out by hand in a comment.
@@ -272,9 +276,9 @@ small page of its own, with every expected number worked out by hand in a commen
 first flow re-seeds when needed, then waits a minute so the backend's 120 writes a minute limit
 never refuses a save inside a counted flow); onboarding starts from a cleared user. In CI the
 servers and the browser run on the frozen clock of `support/clock.ts`. The flows do not clean up:
-resets and deletes share the backend's limit of 10 an hour per user, and a run spends at most 8
-of them from an empty database (one re-seed per mode after the first, one account delete per
-mode, one clear per mode). Against a database you keep, a second run within the hour gets 429
+resets and deletes share the backend's limit of 10 an hour per user, and a run spends 8 of them
+from an empty database (one re-seed per mode after the first, one account delete per mode, one
+clear per mode), 9 when global setup must reset a database that already holds data. Against a database you keep, a second run within the hour gets 429
 errors: recreate the database or wait.
 
 **Baseline.** `docs/audit/interaction-cost/baseline.json` holds the counts per flow and run, and
@@ -282,7 +286,9 @@ errors: recreate the database or wait.
 `test-results-interaction-cost/summary.md` (and the GitHub job summary): any flow whose clicks,
 keystrokes, Tab hops or transitions rise is listed, and each one is printed as a warning.
 **It never fails the run** (owner decision ED1, option (a): warn-only until E38 S1 and S2 set the
-target baselines). A run that finds lower costs lists them as improvements.
+target baselines). A run that finds lower costs lists them as improvements. A flow that fails
+(most often because a page changed under it) is listed as "Not measured" and warned about, so it
+never passes as "no change".
 
 **Regenerating the baseline.** After a change that alters a flow (a redesigned page, or a fix that
 saves steps):

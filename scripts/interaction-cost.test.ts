@@ -38,7 +38,7 @@ describe("interaction cost comparison (E38 S0)", () => {
       compareResults(baseline, [
         { flow: "1-budget", title: "1. Budget", mode: "desktop-pointer", cost: cost() },
       ]),
-    ).toEqual({ regressions: [], improvements: [], unbaselined: [] });
+    ).toEqual({ regressions: [], improvements: [], unbaselined: [], missing: [] });
   });
 
   test("a rise in any compared metric is a regression, a fall an improvement", () => {
@@ -68,6 +68,20 @@ describe("interaction cost comparison (E38 S0)", () => {
     ]);
     expect(result.unbaselined).toEqual(["1-budget [phone-touch]", "9-new [desktop-pointer]"]);
     expect(result.regressions).toEqual([]);
+  });
+
+  test("a baseline run this run did not record is missing, and the summary says so", () => {
+    // The baseline has 1-budget [desktop-pointer]; this run only recorded phone-touch (no
+    // baseline yet), so the pointer run failed or did not run.
+    const comparison = compareResults(baseline, [
+      { flow: "1-budget", title: "1. Budget", mode: "phone-touch", cost: cost() },
+    ]);
+    expect(comparison.missing).toEqual(["1-budget [desktop-pointer]"]);
+    const summary = comparisonSummary(comparison, baseline, { recorded: false });
+    expect(summary).toContain("among the flows that finished");
+    expect(summary).toContain(
+      "Not measured (the flow failed or did not run):** 1-budget [desktop-pointer]",
+    );
   });
 
   test("merging keeps runs that did not take part and replaces those that did", () => {

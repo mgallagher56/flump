@@ -38,9 +38,6 @@ jobs:
     timeout-minutes: 30
     # Warn-only until E38 S1 and S2 set the target baselines (ED1).
     continue-on-error: true
-    permissions:
-      actions: write
-      contents: read
 
     # Same image as the visual and accessibility suites. Keep the tag equal to @playwright/test
     # in apps/e2e/package.json.
