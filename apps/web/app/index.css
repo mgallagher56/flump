@@ -238,3 +238,9 @@ html {
     scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* <main> takes focus by script after a page change (and from the skip link), so keyboard and
+   screen-reader users start on the new page. The whole page needs no focus ring. */
+main[tabindex="-1"]:focus {
+  outline: none;
+}

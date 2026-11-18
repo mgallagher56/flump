@@ -23,7 +23,7 @@ export const Open: Story = {
     const trigger = canvas.getByRole("button", { name: /account menu/i });
     await userEvent.click(trigger);
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
-    await expect(canvas.getAllByRole("menuitem")).toHaveLength(4);
+    await expect(canvas.getAllByRole("menuitem")).toHaveLength(5);
     await userEvent.keyboard("{Escape}");
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
   },

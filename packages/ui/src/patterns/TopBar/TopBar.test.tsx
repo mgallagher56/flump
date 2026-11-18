@@ -107,6 +107,21 @@ describe("TopBar", () => {
     expect(screen.getByRole("button", { name: "Account" })).toBeDefined();
   });
 
+  it("puts the menu button last, on the right after the actions, on the side its drawer opens", () => {
+    render(
+      <TopBar
+        actions={<button type="button">Account</button>}
+        items={sampleNavItems}
+        logo={<a href="/">Logo</a>}
+        onMenuClick={() => {}}
+      />,
+    );
+    const header = screen.getByRole("banner");
+    const controls = Array.from(header.querySelectorAll("a, button"));
+    expect(controls.at(-1)).toBe(screen.getByRole("button", { name: "Open menu" }));
+    expect(controls[0]?.textContent).toBe("Logo");
+  });
+
   it("reports the menu state on the menu button", () => {
     render(
       <TopBar items={sampleNavItems} menuControls="drawer" menuExpanded onMenuClick={() => {}} />,

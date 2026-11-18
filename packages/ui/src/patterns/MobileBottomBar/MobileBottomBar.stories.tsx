@@ -85,3 +85,44 @@ export const LockedAt375: Story = {
 };
 
 export const LockedAt375Dark: Story = { ...LockedAt375, globals: { theme: "dark" } };
+
+/**
+ * The web app renders its last item, "More", as a button that opens the drawer. It must take the
+ * same box as the links: same width, height and label style (owner report 2026-11-18).
+ */
+export const ButtonItem: Story = {
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  args: {
+    renderLink: (item, className, children, ariaCurrent) =>
+      item.key === sampleNavItems[4]?.key ? (
+        <button className={className} type="button">
+          {children}
+        </button>
+      ) : (
+        <a aria-current={ariaCurrent} className={className} href={item.href}>
+          {children}
+        </a>
+      ),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const items = Array.from(canvasElement.querySelectorAll("nav li > *")) as HTMLElement[];
+    await expect(items.at(-1)).toBe(canvas.getByRole("button", { name: sampleNavItems[4]?.label }));
+    const boxes = items.map((el) => el.getBoundingClientRect());
+    const widths = new Set(boxes.map((box) => Math.round(box.width)));
+    const heights = new Set(boxes.map((box) => Math.round(box.height)));
+    await expect(widths.size).toBe(1);
+    await expect(heights.size).toBe(1);
+    await expect(Math.min(...boxes.map((box) => box.height))).toBeGreaterThanOrEqual(44);
+    const fonts = new Set(
+      Array.from(canvasElement.querySelectorAll("[data-nav-label]")).map((el) => {
+        const style = getComputedStyle(el);
+        return `${style.fontFamily} ${style.fontSize} ${style.fontWeight}`;
+      }),
+    );
+    await expect(fonts.size).toBe(1);
+  },
+};
+
+export const ButtonItemDark: Story = { ...ButtonItem, globals: { theme: "dark" } };

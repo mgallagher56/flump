@@ -49,4 +49,15 @@ describe("SiteFooter", () => {
     expect(demo.getAttribute("target")).toBe("_blank");
     expect(demo.getAttribute("rel")).toBe("noreferrer");
   });
+
+  it("compact: one row with the logo and the bottom text, no brand heading or columns", () => {
+    const { container } = render(
+      <SiteFooter bottom="© 2026 Example Ltd" logo={<a href="/">Logo</a>} variant="compact" />,
+    );
+    expect(screen.getByRole("contentinfo")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Logo" })).toBeTruthy();
+    expect(screen.getByText("© 2026 Example Ltd")).toBeTruthy();
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(container.querySelectorAll("nav")).toHaveLength(0);
+  });
 });

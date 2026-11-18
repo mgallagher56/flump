@@ -155,4 +155,61 @@ test.describe("the Debt and borrowing nav label fits", () => {
       expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(320);
     });
   });
+
+  // Every bottom-bar item, the "More" button included, takes the same box: width, height, icon
+  // and label (owner report 2026-11-18: More was 30px wide beside 73px links).
+  for (const width of [320, 375, 390, 430]) {
+    test.describe(`bottom bar at ${width} wide`, () => {
+      test.use({ viewport: { width, height: 800 }, hasTouch: true, isMobile: true });
+
+      test("every item, More included, has the same box, icon, label and a 44px target", async ({
+        page,
+      }) => {
+        await page.goto("/app/accounts");
+        await waitForHydration(page);
+        const items = await page
+          .locator('nav[aria-label="Main navigation"] li > :is(a, button)')
+          .evaluateAll((els) =>
+            els.map((el) => {
+              const box = el.getBoundingClientRect();
+              const icon = el.querySelector("svg")?.getBoundingClientRect();
+              const label = el.querySelector("[data-nav-label]");
+              const labelStyle = label ? getComputedStyle(label) : null;
+              const style = getComputedStyle(el);
+              return {
+                tag: el.tagName,
+                left: box.left,
+                right: box.right,
+                width: box.width,
+                height: box.height,
+                icon: icon ? `${Math.round(icon.width)}x${Math.round(icon.height)}` : "none",
+                label: labelStyle
+                  ? `${labelStyle.fontFamily}|${labelStyle.fontSize}|${labelStyle.fontWeight}`
+                  : "none",
+                gap: style.rowGap,
+              };
+            }),
+          );
+        expect(items).toHaveLength(5);
+        expect(items.at(-1)?.tag, "More is the last item").toBe("BUTTON");
+        const widths = items.map((item) => item.width);
+        expect(Math.max(...widths) - Math.min(...widths), "item widths").toBeLessThanOrEqual(1);
+        for (const item of items) {
+          expect(item.height, "touch target height").toBeGreaterThanOrEqual(44);
+          expect(item.width, "touch target width").toBeGreaterThanOrEqual(44);
+        }
+        expect(new Set(items.map((item) => item.icon)).size, "icon sizes").toBe(1);
+        expect(new Set(items.map((item) => item.label)).size, "label styles").toBe(1);
+        expect(new Set(items.map((item) => item.gap)).size, "icon to label gap").toBe(1);
+        // Evenly spaced: each item starts where the one before it ends.
+        for (let i = 1; i < items.length; i += 1) {
+          expect(
+            Math.abs((items[i]?.left ?? 0) - (items[i - 1]?.right ?? 0)),
+            `space before item ${i}`,
+          ).toBeLessThanOrEqual(1);
+        }
+        await expectNoPageOverflow(page);
+      });
+    });
+  }
 });

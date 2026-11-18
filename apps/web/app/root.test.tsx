@@ -231,9 +231,8 @@ describe("root App landmarks", () => {
     ]);
     render(<SignedInStub initialEntries={["/"]} />, { container: document });
     const footer = await screen.findByRole("contentinfo");
-    expect(within(footer).getByRole("link", { name: "Settings" }).getAttribute("href")).toBe(
-      "/app/profile",
-    );
+    // One line: the logo linked home and the company name.
+    expect(within(footer).getByRole("link", { name: "Flump home" }).getAttribute("href")).toBe("/");
   });
 
   it("omits AppFooter when signed out", async () => {

@@ -39,15 +39,19 @@ const ReturnHarness = ({ removable = false }: { removable?: boolean }) => {
 };
 
 describe("Dialog primitive ARIA and footer", () => {
-  it("caps its height in dynamic viewport units and sits above the bottom bar (R2-8)", () => {
+  it("caps its height in dynamic viewport units and to the space above the keyboard, above the bottom bar (R2-8)", () => {
     render(
       <Dialog open onOpenChange={() => {}} title="Add a record">
         x
       </Dialog>,
     );
     const dialog = screen.getByRole("dialog");
-    expect(dialog.className).toContain("max-h_94dvh");
+    expect(dialog.className).toContain(
+      "max-h_min(94dvh,_calc(var(--visual-viewport-height,_100dvh)_*_0.94))",
+    );
     expect(dialog.className).not.toMatch(/max-h_\d+vh/);
+    // The overlay ends at the top of the on-screen keyboard.
+    expect(dialog.parentElement?.className).toContain("bottom_var(--keyboard-inset,_0px)");
     // MobileBottomBar uses zIndex "header" (20); the overlay sits far above it.
     expect(dialog.parentElement?.className).toContain("z_200");
   });

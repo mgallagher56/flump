@@ -3,7 +3,12 @@ import { cva } from "../../../styled-system/css";
 export const dialogOverlayRecipe = cva({
   base: {
     position: "fixed",
-    inset: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    // Ends at the top of the on-screen keyboard (useVisualViewportInset), so the bottom-anchored
+    // dialog sits above it and the page behind never has to pan to show a field.
+    bottom: "var(--keyboard-inset, 0px)",
     backgroundColor: "surface.scrim",
     // Above MobileBottomBar (80), the nav drawer (90/100) and every token layer, so a dialog is never covered.
     zIndex: 200,
@@ -30,7 +35,11 @@ export const dialogContentRecipe = cva({
     width: "100%",
     // Dynamic viewport units: on a phone `vh` counts the area under the browser's toolbars, so a
     // tall dialog's last field and actions sat behind the toolbar and the bottom bar (R2-8).
-    maxHeight: { base: "94dvh", md: "85dvh" },
+    // With the keyboard open, no taller than what can be seen above it.
+    maxHeight: {
+      base: "min(94dvh, calc(var(--visual-viewport-height, 100dvh) * 0.94))",
+      md: "min(85dvh, calc(var(--visual-viewport-height, 100dvh) * 0.85))",
+    },
     overflowY: "auto",
     padding: { base: "5", md: "7" },
     // Phone: clear of the home indicator, like a bottom sheet.

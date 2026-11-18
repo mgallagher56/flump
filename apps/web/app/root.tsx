@@ -23,6 +23,7 @@ import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
 import { useIsFocusedShell } from "./features/onboarding/focusedShell";
+import { useRouteFocus } from "./hooks/useRouteFocus";
 import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
 import i18n from "./i18n";
@@ -137,6 +138,8 @@ function AppShell({ user, focused = false, children }: AppShellProps) {
   useEffect(() => {
     document.documentElement.dataset.hydrated = "true";
   }, []);
+  // A new page starts with focus on <main>; <ScrollRestoration> below puts it at the top.
+  useRouteFocus();
   return (
     <>
       <VisuallyHidden as="a" focusable href="#main-content">
