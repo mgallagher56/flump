@@ -109,4 +109,18 @@ describe("Marketing HomePage (E16 PR 12)", () => {
     expect(text).not.toMatch(/bank feed|bank connection|coming soon|Open Banking/i);
     expect(text).not.toMatch(/AISP|PISP|FCA-regulated/);
   });
+
+  it("adds illustrations only where no figure follows, and none in the hero", () => {
+    const { container } = renderHome();
+    const scenes = [...container.querySelectorAll("svg[data-scene]")];
+    expect(scenes.map((svg) => svg.getAttribute("data-scene"))).toEqual([
+      "empty-savings",
+      "onboarding",
+    ]);
+    expect(screen.getByTestId("home-hero").querySelector("svg[data-scene]")).toBeNull();
+    for (const svg of scenes) expect(svg.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      within(screen.getByTestId("home-final-cta")).getByTestId("home-final-cta-illustration"),
+    ).toBeDefined();
+  });
 });

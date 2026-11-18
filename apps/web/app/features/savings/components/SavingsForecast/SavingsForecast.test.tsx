@@ -69,7 +69,7 @@ describe("SavingsForecast", () => {
     );
   });
 
-  it("shows the time to a goal from More options", () => {
+  it("shows the time to a goal from Goal and inflation options", () => {
     render(<Harness initial={{ ...filled, goal: 30000 }} />);
     expect(screen.getByTestId("savings-forecast-goal").textContent).toMatch(
       /^Estimated time to reach your goal: /,

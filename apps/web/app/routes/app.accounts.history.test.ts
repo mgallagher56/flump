@@ -29,7 +29,7 @@ describe("app.accounts.history loader", () => {
     expect(data.currentMonth).toMatch(/^\d{4}-(0[1-9]|1[0-2])$/);
     expect(data.accounts).toBe(accounts);
     expect(data.accountDetails).toEqual([{ accountId: "a1", year: 2026, month: 10, value: 3000 }]);
-    // Months of cover belongs to Budget now (E16 PR 5).
+    // Breathing room belongs to Budget now (E16 PR 5).
     expect(data).not.toHaveProperty("monthsOfCover");
     expect(data).not.toHaveProperty("monthlySurplus");
   });

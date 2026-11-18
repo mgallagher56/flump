@@ -19,7 +19,7 @@ export const meta: MetaFunction = () => [{ title: "Net worth history | Flump" }]
  * the browser through the same-origin `/api` proxy (`PUT /snapshots/:month`), then revalidates.
  */
 export const loader = async (args: LoaderFunctionArgs) => {
-  // Recorded balances only (E16 PR 5): months of cover moved to Budget and the single-month
+  // Recorded balances only (E16 PR 5): breathing room moved to Budget and the single-month
   // projection went with the chart rule (P10.6), so the budget is no longer loaded here.
   const { accounts, accountDetails, userProfile } = await loadWorkspaceSnapshot(args);
   // Every month is computed under the user's net worth choices, as on every other page.

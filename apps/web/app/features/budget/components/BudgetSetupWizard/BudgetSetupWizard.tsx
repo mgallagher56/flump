@@ -167,7 +167,7 @@ const defaultItem = (
 });
 
 // Common entries are names only: the amount starts at 0 for the person to fill in, so no
-// invented figure reaches budget totals, safe to spend or months of cover (E23). The button says
+// invented figure reaches budget totals, safe to spend or breathing room (E23). The button says
 // "Add common entries", not "example figures", because it adds no figures.
 const DEFAULT_ITEMS: NewEntry[] = [
   defaultItem("Rent / Mortgage", 0, "housing", true),

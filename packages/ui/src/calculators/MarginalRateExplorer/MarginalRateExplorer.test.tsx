@@ -45,7 +45,7 @@ describe("MarginalRateExplorer inside a ScenarioZone", () => {
     expect(screen.getByTestId("marginal-rate-your-pay")).toBeDefined();
     expect(screen.queryByText("Pay before tax")).toBeNull();
     expect(screen.getByRole("heading", { name: "Share deducted, by pay" })).toBeDefined();
-    // The pay starts at the saved figure, so its slider waits under "More options".
+    // The pay starts at the saved figure, so its slider waits under "Salary and deduction options".
     expect(screen.queryByLabelText("Pay before tax a year")).toBeNull();
     expect(screen.getByLabelText("Bonus a year")).toBeDefined();
     // The tax year and the caption wait in the one disclosure, so the first view is the outcome.
@@ -226,7 +226,7 @@ describe("MarginalRateExplorer", () => {
 
   it("pre-fills the extra pension at £1,000 and previews it", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
-    // Inside More options, not a second full button beside it.
+    // Inside Salary and deduction options, not a second full button beside it.
     expect(screen.queryByRole("button", { name: "Model a pension contribution" })).toBeNull();
     modelPension();
     const pill = screen.getByLabelText("Extra pension contribution input") as HTMLInputElement;
@@ -240,7 +240,7 @@ describe("MarginalRateExplorer", () => {
     ).toBeDefined();
   });
 
-  it("offers the year's student loan plans under More options, closed by default", () => {
+  it("offers the year's student loan plans under Salary and deduction options, closed by default", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     expect(screen.queryByRole("group", { name: "Student loan plans" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Salary and deduction options" }));
@@ -291,7 +291,7 @@ describe("MarginalRateExplorer", () => {
         onChange={onChange}
       />,
     );
-    // More options opens itself when an extra pension is already set.
+    // Salary and deduction options opens itself when an extra pension is already set.
     expect(screen.getByLabelText("Extra pension contribution")).toBeDefined();
     rerender(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
     expect(screen.getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
@@ -326,7 +326,7 @@ describe("MarginalRateExplorer", () => {
     expect(screen.getByText(/Each dashed line marks a threshold/)).toBeDefined();
   });
 
-  it("shows two inputs, with region, pension type and the extra pension under More options", () => {
+  it("shows two inputs, with region, pension type and the extra pension under Salary and deduction options", () => {
     render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2026/27" }} />);
     // Gross pay and bonus.
     expect(screen.getAllByRole("slider")).toHaveLength(2);

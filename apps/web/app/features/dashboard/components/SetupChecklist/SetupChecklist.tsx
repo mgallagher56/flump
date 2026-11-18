@@ -12,8 +12,6 @@ import { type FC, useId, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { formatWarmConfirmation } from "../../../snapshot/snapshotCopy";
 
-export { formatWarmConfirmation };
-
 import {
   dismissButton,
   finishBody,
@@ -204,7 +202,6 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
           <svg
             aria-hidden="true"
             className={finishIllustration()}
-            data-scene-settle=""
             focusable="false"
             role="presentation"
             viewBox="143 18 48 46"
@@ -215,7 +212,7 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
             <h2 className={finishHeading()} id={`${panelId}-finished-title`}>
               Setup finished
             </h2>
-            <p className={finishBody()}>Flump has what it needs for the pages you use.</p>
+            <p className={finishBody()}>{formatWarmConfirmation({ kind: "setupComplete" })}</p>
           </div>
           <button
             aria-label="Hide setup checklist"

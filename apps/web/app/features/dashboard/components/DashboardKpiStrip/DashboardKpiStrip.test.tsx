@@ -28,7 +28,7 @@ describe("DashboardKpiStrip", () => {
     const { container } = renderStrip();
     expect(screen.getByText("Left over each month")).toBeTruthy();
     expect(screen.getByText("£1,500")).toBeTruthy();
-    // Months of cover belongs to Budget (P6), so the strip keeps to two cards.
+    // Breathing room belongs to Budget (P6), so the strip keeps to two cards.
     expect(screen.queryByText(/months of cover/i)).toBeNull();
     expect(container.querySelectorAll('[data-figure="budget.surplus"]')).toHaveLength(1);
     expect(screen.getByText("Pension pots")).toBeTruthy();

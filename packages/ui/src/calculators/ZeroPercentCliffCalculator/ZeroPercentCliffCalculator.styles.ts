@@ -29,7 +29,7 @@ export const zeroIntro = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: "0", maxWidth: "70ch" },
 });
 
-/** Left column: at most three visible inputs (a calculator with more adds a "More options" drawer). */
+/** Left column: at most three visible inputs (a calculator with more adds a drawer named for what is inside it, B14). */
 export const zeroControls = cva({
   base: { display: "flex", flexDirection: "column", gap: "4" },
 });

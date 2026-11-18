@@ -8,8 +8,7 @@ import {
   checkInWholeTotal,
   formatWarmConfirmation,
 } from "../../snapshotCopy";
-
-export { formatWarmConfirmation };
+import type { MonthKey } from "../../snapshotModel";
 
 import {
   changeFigure,
@@ -32,19 +31,27 @@ export const SUMMARY_VISIBLE = 8;
 
 export interface CheckInSummaryProps {
   summary: CheckInSummaryModel;
+  /** The month just checked in, for the heading ("November is checked in."). */
+  month: MonthKey;
   onDone: () => void;
   /** Back to the accounts to correct one. */
   onChangeBalance: () => void;
 }
 
 /**
- * The end of the check-in: saved, what the user changed (each from its old figure to the new one),
- * and net worth, the summary's largest figure, against last month. The month is in the sheet
- * subtitle, so the heading does not repeat it. With nothing changed the list and its heading are
+ * The end of the check-in: the warm confirmation ("November is checked in.", copy guide 2.5), what
+ * the user changed (each from its old figure to the new one), and net worth, the summary's largest
+ * figure, against last month. The heading celebrates the action, never the amount: the change is
+ * stated once, in the net worth block. With nothing changed the list and its heading are
  * left out, and net worth stands alone. Facts only: no verdict, no praise, and the same sentence
  * whichever way net worth moved. Whole pounds throughout: read, not reconciled (copy guide).
  */
-export const CheckInSummary: FC<CheckInSummaryProps> = ({ summary, onDone, onChangeBalance }) => {
+export const CheckInSummary: FC<CheckInSummaryProps> = ({
+  summary,
+  month,
+  onDone,
+  onChangeBalance,
+}) => {
   const [showAll, setShowAll] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -55,10 +62,10 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({ summary, onDone, onCha
   return (
     <div className={summaryRoot()} data-testid="checkin-summary" id="checkin-summary">
       <div className={summaryScene()}>
-        <Illustration id="checkin-summary-scene" scene="check-in-done" size="sm" />
+        <Illustration id="checkin-summary-scene" scene="check-in-done" settle={false} size="sm" />
       </div>
       <h3 className={summaryHeading()} ref={heading} tabIndex={-1}>
-        {CHECK_IN_COPY.saved}
+        {formatWarmConfirmation({ kind: "checkInFinished", month })}
       </h3>
 
       {summary.changed.length > 0 ? (

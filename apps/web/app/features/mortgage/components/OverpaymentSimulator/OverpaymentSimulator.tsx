@@ -18,6 +18,7 @@ import { chartCursorProps } from "~/features/charts/utils/chartProps";
 import { evenYearTicks, maxYearTicks } from "~/features/mortgage/chartAxis";
 import { formatDuration, formatRate } from "~/features/mortgage/mortgageFormat";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { formatEstimate } from "~/utils/roundEstimate";
 import {
   chartWrap,
   controlsBody,
@@ -327,7 +328,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         label={showBulletReduced ? "Less to repay at the end of the term" : "Paid off sooner by"}
         note={
           hasOverpayment
-            ? `Less interest in total (estimate): ${formatCurrency(interestSaved ?? 0)}.`
+            ? `Less interest in total (estimate): ${formatEstimate(interestSaved ?? 0)}.`
             : undefined
         }
         row={
@@ -389,7 +390,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         seriesCount={hasOverpayment ? 2 : 1}
         summary={
           hasOverpayment && interestSaved !== null && interestSaved > 0
-            ? `Illustration: overpaying ${formatCurrency(overpayment)} a month means ${formatCurrency(interestSaved)} less interest in total${
+            ? `Illustration: overpaying ${formatCurrency(overpayment)} a month means ${formatEstimate(interestSaved)} less interest in total${
                 monthsSaved !== null && monthsSaved > 0
                   ? ` and the mortgage paid off ${formatDuration(monthsSaved)} sooner`
                   : ""

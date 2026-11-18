@@ -46,7 +46,7 @@ export const CheckInList: FC<CheckInListProps> = ({ checkIn }) => {
     if (event.key === "Enter") {
       event.preventDefault();
       // An empty field saves nothing: Enter only moves to the next open row. No change is
-      // recorded by its own button (or "No change to the rest"), never by an empty Enter.
+      // recorded by its own button, never by an empty Enter.
       if (draft === null) moveOn(step);
       else answer(step, { kind: "update", value: draft });
       return;

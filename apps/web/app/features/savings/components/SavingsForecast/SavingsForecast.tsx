@@ -122,7 +122,7 @@ export function forecastOutcomeText(
 
 /**
  * How savings could grow (E16 PR 7): monthly amount, rate and years ahead, with today's money and
- * an optional goal behind "More options". One outcome figure and one chart (what you pay in and
+ * an optional goal behind "Goal and inflation options". One outcome figure and one chart (what you pay in and
  * the interest sit behind "Show data"); no
  * chart when the line would be flat (P10.6). Lives inside the page's ScenarioZone: nothing here
  * is saved.

@@ -4,7 +4,6 @@ import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildSteps,
-  formatWarmConfirmation,
   SETUP_CHECKLIST_DISMISSED_KEY,
   SetupChecklist,
   type SetupChecklistProps,
@@ -86,7 +85,11 @@ describe("SetupChecklist", () => {
     );
     expect(screen.getByTestId("setup-checklist-finished")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Setup finished" })).toBeTruthy();
-    expect(screen.getByText("Flump has what it needs for the pages you use.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Setup is finished. Everything on your dashboard now uses your own figures.",
+      ),
+    ).toBeTruthy();
     expect(document.querySelector("[data-setup-finished]")).not.toBeNull();
     expect(document.querySelector('[data-scene-part="sprout"]')).not.toBeNull();
   });
@@ -121,15 +124,5 @@ describe("SetupChecklist", () => {
     fireEvent.click(screen.getByRole("button", { name: "Hide setup checklist" }));
     expect(window.localStorage.getItem(SETUP_CHECKLIST_DISMISSED_KEY)).toBe("true");
     expect(screen.queryByTestId("setup-checklist")).toBeNull();
-  });
-
-  it("formats E35 Set 1 setup warm confirmations for each step and overall completion", () => {
-    expect(formatWarmConfirmation({ kind: "setupStepFinished", step: "budget" })).toBe(
-      "Budget added.",
-    );
-    expect(formatWarmConfirmation({ kind: "setupComplete" })).toBe(
-      "Setup is finished. Everything on your dashboard now uses your own figures.",
-    );
-    expect(formatWarmConfirmation({ kind: "firstAccountAdded" })).toBe("Your first account is in.");
   });
 });

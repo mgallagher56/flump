@@ -20,7 +20,7 @@ const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[
 
 /**
  * The one way a web loader gets derived figures (E23 section 2): net worth, debt, budget totals,
- * safe to spend and months of cover all come from the engine's financial picture. Pages never
+ * safe to spend and breathing room all come from the engine's financial picture. Pages never
  * recompute them from rows.
  */
 export function buildWorkspacePicture(

@@ -36,7 +36,7 @@ export const datePickerTriggerRecipe = sva({
         outlineWidth: "2px",
         outlineStyle: "solid",
         outlineColor: "border.focusRing",
-        outlineOffset: "1px",
+        outlineOffset: "2px",
       },
       "&[data-invalid=true]": {
         borderColor: "status.danger.solid",
@@ -113,7 +113,7 @@ export const datePickerNavButtonRecipe = cva({
       outlineWidth: "2px",
       outlineStyle: "solid",
       outlineColor: "border.focusRing",
-      outlineOffset: "1px",
+      outlineOffset: "2px",
     },
   },
 });
@@ -145,10 +145,24 @@ export const datePickerWeekdayRecipe = cva({
 
 export const datePickerDaysGridRecipe = cva({
   base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5",
+  },
+});
+
+/** One week (role="row") of the date grid. */
+export const datePickerWeekRowRecipe = cva({
+  base: {
     display: "grid",
     gridTemplateColumns: "repeat(7, 1fr)",
     gap: "0.5",
   },
+});
+
+/** Visually hidden live region that announces the visible month or year range. */
+export const datePickerLiveRegionRecipe = cva({
+  base: { srOnly: true },
 });
 
 export const datePickerDayRecipe = cva({
@@ -156,6 +170,7 @@ export const datePickerDayRecipe = cva({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
+    width: "full",
     height: "9",
     borderRadius: "control",
     borderWidth: "1px",
@@ -171,7 +186,7 @@ export const datePickerDayRecipe = cva({
       outlineWidth: "2px",
       outlineStyle: "solid",
       outlineColor: "border.focusRing",
-      outlineOffset: "1px",
+      outlineOffset: "2px",
     },
     _disabled: {
       color: "text.muted",
@@ -236,7 +251,7 @@ export const datePickerPeriodCellRecipe = cva({
       outlineWidth: "2px",
       outlineStyle: "solid",
       outlineColor: "border.focusRing",
-      outlineOffset: "1px",
+      outlineOffset: "2px",
     },
   },
   variants: {

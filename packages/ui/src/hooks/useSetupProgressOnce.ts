@@ -1,5 +1,6 @@
 import { durations } from "@flump/tokens/native";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 
 const STORAGE_KEY = "flump.setup-step-count";
@@ -54,52 +55,40 @@ export function useSetupProgressOnce(doneCount: number): UseSetupProgressOnceRes
   const [currentValue, setCurrentValue] = useState(doneCount);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const isInitialMount = useRef(true);
-
-  useEffect(() => {
+  // A layout effect, so the ring moves back to the stored count before the first paint (no full
+  // ring, then a replay from the old length).
+  useIsomorphicLayoutEffect(() => {
     const stored = getStoredStepCount();
 
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-
-      if (stored !== null && doneCount > stored && !reducedMotion) {
-        // Step was completed! Animate from previous count to new count
-        setCurrentValue(stored);
-        storeStepCount(doneCount);
-        setIsAnimating(true);
-
-        const frame = requestAnimationFrame(() => {
-          setCurrentValue(doneCount);
-        });
-
-        const timer = setTimeout(() => {
-          setIsAnimating(false);
-        }, durations.slow);
-
-        return () => {
-          cancelAnimationFrame(frame);
-          clearTimeout(timer);
-        };
-      }
-
-      // First visit, no change, or reduced motion: immediate length
+    if (stored === null || doneCount <= stored || reducedMotion) {
+      // First visit, no new step, or reduced motion: drawn at its new length at once.
       storeStepCount(doneCount);
       setCurrentValue(doneCount);
       setIsAnimating(false);
       return;
     }
 
-    if (stored !== null && doneCount !== stored) {
-      storeStepCount(doneCount);
+    // A step was done since the last view: fill from the stored count to the new one.
+    setCurrentValue(stored);
+    setIsAnimating(true);
+
+    const frame = requestAnimationFrame(() => {
       setCurrentValue(doneCount);
-      if (!reducedMotion) {
-        setIsAnimating(true);
-        const timer = setTimeout(() => {
-          setIsAnimating(false);
-        }, durations.slow);
-        return () => clearTimeout(timer);
-      }
-    }
+    });
+
+    // The count is saved only once the fill has played, so a re-run of this effect (StrictMode, or
+    // reduced motion resolving after hydration) still sees the old count and never strands the ring.
+    const timer = setTimeout(() => {
+      storeStepCount(doneCount);
+      setIsAnimating(false);
+    }, durations.slow);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+      setCurrentValue(doneCount);
+      setIsAnimating(false);
+    };
   }, [doneCount, reducedMotion]);
 
   return { currentValue, isAnimating };

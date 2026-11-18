@@ -8,7 +8,6 @@ import {
   type CheckInStep,
   type CheckInValue,
   checkInPayload,
-  restAnswer,
   type StepFigure,
   stepFigure,
 } from "./checkInModel";
@@ -48,10 +47,6 @@ export interface CheckInController {
   retry: (step: CheckInStep) => Promise<boolean>;
   /** The first open step after `from` (wrapping to the start), or -1 when every step is done. */
   nextOpen: (from: number, skip?: string) => number;
-  /** "No change to the rest": every open step at once, in one PUT. */
-  rest: () => Promise<boolean>;
-  restSaving: boolean;
-  restError: boolean;
   /** Every step is saved and the summary shows. */
   finished: boolean;
   /**
@@ -97,8 +92,6 @@ export function useCheckIn({
   const [index, setIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [openedFinished, setOpenedFinished] = useState(false);
-  const [restSaving, setRestSaving] = useState(false);
-  const [restError, setRestError] = useState(false);
 
   const answersRef = useRef(answers);
   const stepsRef = useRef(steps);
@@ -127,7 +120,6 @@ export function useCheckIn({
     const firstOpen = steps.findIndex((s) => !hasFigure(s));
     setEditing({});
     setFailed({});
-    setRestError(false);
     setIndex(firstOpen === -1 ? 0 : firstOpen);
     setFinished(steps.length > 0 && firstOpen === -1);
     setOpenedFinished(steps.length > 0 && firstOpen === -1);
@@ -208,46 +200,6 @@ export function useCheckIn({
     [failed, confirm],
   );
 
-  const rest = useCallback(async () => {
-    // A step whose save failed keeps its typed answer and its retry: never overwrite it here.
-    // A typed but unsaved figure is never thrown away: it is saved as Update (manual) in the
-    // same request, including on a reopened step. Only steps with no figure and no draft get
-    // the rest answer.
-    const values = steps
-      .filter((s) => !failed[s.accountId])
-      .map((s) => {
-        const draft = drafts[s.accountId];
-        const open = !hasFigure(s) || Boolean(editing[s.accountId]);
-        if (open && typeof draft === "number" && Number.isFinite(draft)) {
-          return answerValue(s, { kind: "update", value: draft });
-        }
-        return hasFigure(s) ? null : answerValue(s, restAnswer(s));
-      })
-      .filter((v): v is CheckInValue => v !== null);
-    // The summary waits until every failed save has been retried.
-    const anyFailed = Object.keys(failed).length > 0;
-    setEditing({});
-    if (values.length === 0) {
-      if (!anyFailed) setFinished(true);
-      return true;
-    }
-    setRestSaving(true);
-    setRestError(false);
-    const ok = await save(values);
-    setRestSaving(false);
-    if (ok) {
-      setDrafts((d) => {
-        let next = d;
-        for (const v of values) next = omit(next, v.accountId);
-        return next;
-      });
-      if (!anyFailed) setFinished(true);
-    } else {
-      setRestError(true);
-    }
-    return ok;
-  }, [steps, hasFigure, failed, drafts, editing, save]);
-
   const figure = useCallback(
     (accountId: string) => {
       const step = steps.find((s) => s.accountId === accountId);
@@ -298,9 +250,6 @@ export function useCheckIn({
     confirm,
     retry,
     nextOpen,
-    rest,
-    restSaving,
-    restError,
     finished,
     openedFinished,
     reopen: () => {

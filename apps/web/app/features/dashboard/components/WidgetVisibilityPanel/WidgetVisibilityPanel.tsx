@@ -47,7 +47,7 @@ export const SECTION_RULE = (max?: number) =>
 export const SECTION_COPY: Record<DashboardWidgetKey, { label: string; description: string }> = {
   accounts: { label: "Accounts", description: "How many accounts you have added" },
   budget: { label: "Budget", description: "What you spend each month" },
-  debt: { label: "Debt and borrowing", description: "What you owe and when it could be paid off" },
+  debt: { label: "Cards and loans", description: "What you owe and when it could be paid off" },
   savings: { label: "Savings", description: "What you have in savings and investments" },
   pension: { label: "Pension", description: "Your pension pots and what is paid in" },
   retirement: { label: "Retirement plan", description: "Your target and estimated yearly income" },

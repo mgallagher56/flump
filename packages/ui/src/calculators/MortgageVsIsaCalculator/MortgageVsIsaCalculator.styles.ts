@@ -29,7 +29,7 @@ export const mortgageIsaIntro = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: "0", maxWidth: "70ch" },
 });
 
-/** Left column: three visible inputs, then the "More options" drawer. */
+/** Left column: three visible inputs, then the "Mortgage term and ISA growth" drawer. */
 export const mortgageIsaControls = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", minWidth: "0" },
 });

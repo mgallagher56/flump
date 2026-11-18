@@ -7,6 +7,7 @@ const meta: Meta<typeof CheckInSummary> = {
   component: CheckInSummary,
   parameters: { layout: "padded" },
   args: {
+    month: "2026-11",
     onDone: fn(),
     onChangeBalance: fn(),
     summary: {

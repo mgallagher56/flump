@@ -1,65 +1,106 @@
+import { SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { CheckInPreview } from "./CheckInPreview";
+import {
+  CHECK_IN_EMPTY_BALANCE_ERROR,
+  CheckInPreview,
+  checkInAccountLabel,
+  checkInAccountsFor,
+  checkInTypeLabel,
+} from "./CheckInPreview";
+
+const gbp = (value: number) =>
+  new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(value);
+
+describe("check-in account labels", () => {
+  it("uses sentence case type labels", () => {
+    expect(checkInTypeLabel("Current")).toBe("Current account");
+    expect(checkInTypeLabel("Saving")).toBe("Savings");
+    expect(checkInTypeLabel("Student Loan")).toBe("Student loan");
+    expect(checkInTypeLabel("Mortgage")).toBe("Mortgage");
+  });
+
+  it("sentence-cases names, keeps acronyms and replaces bank brands with a neutral name", () => {
+    expect(checkInAccountLabel("Residential Mortgage", "Mortgage")).toBe("Residential mortgage");
+    expect(checkInAccountLabel("Cash ISA", "Saving")).toBe("Cash ISA");
+    expect(checkInAccountLabel("Monzo current", "Current")).toBe("Current account");
+  });
+
+  it("takes every account and balance from the sample household fixture", () => {
+    for (const household of ["renter", "homeowner"] as const) {
+      const fixture = SAMPLE_HOUSEHOLDS[household].fixture.accounts;
+      const accounts = checkInAccountsFor(household);
+      expect(accounts.map((a) => a.savedBalance)).toEqual(fixture.map((a) => Number(a.balance)));
+      expect(accounts.map((a) => a.id)).toEqual(fixture.map((a) => a.id));
+    }
+  });
+});
 
 describe("CheckInPreview", () => {
-  it("renders first account and advances with No change", () => {
+  const renter = checkInAccountsFor("renter");
+  const [first, second] = renter;
+  if (!first || !second) throw new Error("renter fixture needs two accounts");
+
+  it("renders the first account and steps with No change and Back", () => {
     render(<CheckInPreview household="renter" id="test-checkin" />);
 
-    expect(screen.getByText("1 of 3")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Monzo current" })).toBeDefined();
-    expect(screen.getByText("Current account")).toBeDefined();
-    expect(screen.getByText("Saved balance: £1,850")).toBeDefined();
+    expect(screen.getByText(`1 of ${renter.length}`)).toBeDefined();
+    expect(screen.getByRole("heading", { name: first.name })).toBeDefined();
+    // The neutral name already says the type, so no badge repeats it.
+    expect(screen.getAllByText(first.type)).toHaveLength(1);
+    expect(screen.getByText(`Saved balance: ${gbp(first.savedBalance)}`)).toBeDefined();
+    expect(screen.queryByText(/monzo/i)).toBeNull();
 
-    // Click No change to advance to step 2
-    const noChangeBtn = screen.getByTestId("test-checkin-no-change");
-    fireEvent.click(noChangeBtn);
+    fireEvent.click(screen.getByTestId("test-checkin-no-change"));
+    expect(screen.getByText(`2 of ${renter.length}`)).toBeDefined();
+    expect(screen.getByRole("heading", { name: second.name })).toBeDefined();
 
-    expect(screen.getByText("2 of 3")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Cash ISA" })).toBeDefined();
-
-    // Back button is now visible
-    const backBtn = screen.getByTestId("test-checkin-back");
-    fireEvent.click(backBtn);
-
-    expect(screen.getByText("1 of 3")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Monzo current" })).toBeDefined();
+    fireEvent.click(screen.getByTestId("test-checkin-back"));
+    expect(screen.getByRole("heading", { name: first.name })).toBeDefined();
   });
 
-  it("advances with Update button and completes check-in", () => {
+  it("does not save an empty balance as £0", () => {
     render(<CheckInPreview household="renter" id="test-checkin" />);
 
-    // Update step 1
+    fireEvent.change(screen.getByLabelText("New balance"), { target: { value: "" } });
     fireEvent.click(screen.getByTestId("test-checkin-update"));
-    expect(screen.getByText("2 of 3")).toBeDefined();
 
-    // No change to rest completes all remaining steps
-    const noChangeRestBtn = screen.getByTestId("test-checkin-no-change-rest");
-    fireEvent.click(noChangeRestBtn);
+    expect(screen.getByText(CHECK_IN_EMPTY_BALANCE_ERROR)).toBeDefined();
+    expect(screen.getByText(`1 of ${renter.length}`)).toBeDefined();
+
+    fireEvent.click(screen.getByTestId("test-checkin-no-change-rest"));
+    expect(screen.queryByText(/£0\b/)).toBeNull();
+    expect(screen.getByText(`${gbp(first.savedBalance)} (confirmed)`)).toBeDefined();
+  });
+
+  it("completes the check-in and steps through again", () => {
+    render(<CheckInPreview household="renter" id="test-checkin" />);
+
+    fireEvent.click(screen.getByTestId("test-checkin-update"));
+    fireEvent.click(screen.getByTestId("test-checkin-no-change-rest"));
 
     expect(screen.getByText("Check-in complete for this month")).toBeDefined();
-    expect(screen.getByText("Step through again")).toBeDefined();
+    expect(screen.getByText(`${gbp(first.savedBalance)} (updated)`)).toBeDefined();
 
-    // Reset works
     fireEvent.click(screen.getByTestId("test-checkin-reset"));
-    expect(screen.getByText("1 of 3")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Monzo current" })).toBeDefined();
+    expect(screen.getByText(`1 of ${renter.length}`)).toBeDefined();
   });
 
-  it("renders calculable account for homeowner with Keep this figure", () => {
+  it("shows the homeowner mortgage in sentence case with its saved balance", () => {
+    const owner = checkInAccountsFor("homeowner");
+    const mortgage = owner.find((a) => a.type === "Mortgage");
+    if (!mortgage) throw new Error("homeowner fixture needs a mortgage");
     render(<CheckInPreview household="homeowner" id="test-checkin-owner" />);
 
-    // Fast-forward to mortgage (step 3)
-    fireEvent.click(screen.getByTestId("test-checkin-owner-no-change"));
-    fireEvent.click(screen.getByTestId("test-checkin-owner-no-change"));
+    for (let i = 0; i < owner.indexOf(mortgage); i++) {
+      fireEvent.click(screen.getByTestId("test-checkin-owner-no-change"));
+    }
 
-    expect(screen.getByText("3 of 3")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Residential Mortgage" })).toBeDefined();
-    expect(screen.getByText("Calculated for this month: £185,420")).toBeDefined();
-    expect(screen.getByTestId("test-checkin-owner-keep")).toBeDefined();
-
-    // Click Keep this figure
-    fireEvent.click(screen.getByTestId("test-checkin-owner-keep"));
-    expect(screen.getByText("Check-in complete for this month")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Residential mortgage" })).toBeDefined();
+    expect(screen.getByText(`Saved balance: ${gbp(mortgage.savedBalance)}`)).toBeDefined();
   });
 });

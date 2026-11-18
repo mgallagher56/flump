@@ -14,7 +14,7 @@ describe("RemortgageShockSim", () => {
 
     expect(screen.getByText(/left on your 2.5% fixed rate/i)).toBeDefined();
     expect(screen.getByText("Change in monthly payment (estimate)")).toBeDefined();
-    // Loan to value bands live in the page's own drawer, so the zone has one "More options".
+    // Loan to value bands live in the page's own drawer, so the zone has no "More options" of its own.
     expect(screen.queryByRole("button", { name: "More options" })).toBeNull();
     expect(document.body.textContent).not.toMatch(/LTV/);
     // No alarm wording or danger colour on an ordinary rate change.

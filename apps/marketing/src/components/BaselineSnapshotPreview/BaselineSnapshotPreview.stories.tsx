@@ -15,6 +15,8 @@ const assertPreview: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByText("Example")).toBeVisible();
   await expect(canvas.getByText("Breathing room")).toBeVisible();
+  await expect(canvas.getByText(/^About \d+(\.\d)? months?$/)).toBeVisible();
+  await expect(canvas.getByText("How long your savings would cover the essentials.")).toBeVisible();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertPreview };

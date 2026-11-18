@@ -50,7 +50,9 @@ export const CompleteCheckIn: Story = {
     for (const button of buttons) {
       await userEvent.click(button);
     }
-    await expect(await body.findByRole("heading", { name: "Check-in saved" })).toBeDefined();
+    await expect(
+      await body.findByRole("heading", { name: "November is checked in." }),
+    ).toBeDefined();
     await expect(args.onSave).toHaveBeenCalledTimes(buttons.length);
   },
 };
@@ -72,7 +74,9 @@ export const AlreadyRecorded: Story = {
   },
   play: async () => {
     const body = within(document.body);
-    await expect(await body.findByRole("heading", { name: "Check-in saved" })).toBeDefined();
+    await expect(
+      await body.findByRole("heading", { name: "November is checked in." }),
+    ).toBeDefined();
   },
 };
 

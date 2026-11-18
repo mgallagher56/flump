@@ -1,6 +1,6 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** Sits on the scenario zone surface inside "More options": no card chrome (E16 PR 6). */
+/** Sits on the scenario zone surface inside "Starting figures": no card chrome (E16 PR 6). */
 export const inputsBody = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });

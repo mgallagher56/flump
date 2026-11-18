@@ -229,7 +229,7 @@ export const DebtContainer: FC = () => {
           ? "What you owe, and an estimate of when it would be paid off at minimum payments."
           : undefined
       }
-      title="Debt and borrowing"
+      title="Cards and loans"
     />
   );
 

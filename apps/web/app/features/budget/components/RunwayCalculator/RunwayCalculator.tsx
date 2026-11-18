@@ -56,7 +56,7 @@ export interface RunwayCalculatorProps {
   accounts: Account[];
   accountDetails: AccountDetail[];
   /**
-   * Months of cover from saved data, from the engine's financial picture (E23). The illustration
+   * Breathing room from saved data (`monthsOfCover`), from the engine's financial picture (E23). The illustration
    * starts from it. The saved figure itself is shown by `BreathingRoom`, in its own section: this
    * zone never shows a saved figure (STYLE-GUIDE 12.5). Built from the props when not given.
    */
@@ -87,7 +87,7 @@ interface OptionItem {
   onToggle: () => void;
 }
 
-/** One group of switches inside "More options": a plain label, no heading, no nested card. */
+/** One group of switches inside "Accounts and spending to include": a plain label, no heading, no nested card. */
 const OptionGroup: FC<{ label: string; items: OptionItem[] }> = ({ label, items }) =>
   items.length === 0 ? null : (
     <fieldset className={optionGroup()}>

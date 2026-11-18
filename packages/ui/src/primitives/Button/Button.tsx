@@ -1,6 +1,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import type { ComponentProps, MouseEvent } from "react";
 import { cx, type RecipeVariantProps } from "../../../styled-system/css";
+import { LiveRegion } from "../LiveRegion";
 import {
   buttonContentRecipe,
   buttonRecipe,
@@ -25,8 +26,10 @@ export type ButtonProps = ComponentProps<"button"> &
      */
     pending?: boolean;
     /**
-     * E17 Demo 5: Shows save confirmation feedback ("Saved" with a tick drawing in).
-     * Disables clicks while active.
+     * E17 Demo 5: Shows save confirmation feedback ("Saved" with a tick drawing in) without
+     * changing the button width, and announces the label politely. Ignores clicks while true.
+     * Pass it (true or false) from the first render on a button that confirms saves, so its live
+     * region is in place before the first "Saved".
      */
     saved?: boolean;
     /** Label shown during save confirmation. Defaults to "Saved". */
@@ -43,16 +46,17 @@ export const Button = ({
   variant,
   size,
   pending = false,
-  saved = false,
+  saved,
   savedLabel = "Saved",
   children,
   onClick,
   ...props
 }: ButtonProps) => {
+  const isSaved = saved === true;
   const classes = cx(buttonRecipe({ variant, size }), className);
   const busy = pending ? ({ "aria-busy": true, "aria-disabled": true } as const) : {};
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    if (pending || saved) {
+    if (pending || isSaved) {
       event.preventDefault();
       return;
     }
@@ -63,7 +67,7 @@ export const Button = ({
     return (
       <Slot
         className={classes}
-        data-saved={saved ? "true" : undefined}
+        data-saved={isSaved ? "true" : undefined}
         data-variant={variant ?? "primary"}
         {...busy}
         onClick={handleClick}
@@ -73,31 +77,35 @@ export const Button = ({
       </Slot>
     );
   }
-  return (
+  const button = (
     <button
       className={classes}
-      data-saved={saved ? "true" : undefined}
+      data-saved={isSaved ? "true" : undefined}
       data-variant={variant ?? "primary"}
       {...busy}
       onClick={handleClick}
       {...props}
     >
-      {saved ? (
+      {isSaved ? (
         <>
-          <span aria-hidden="true" className={buttonTickIconRecipe()}>
-            <svg
-              aria-hidden="true"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="3"
-              viewBox="0 0 24 24"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+          {/* The label stays (transparent) so the width and accessible name hold, as in pending. */}
+          <span className={buttonContentRecipe({ pending: true })}>{children}</span>
+          <span aria-hidden="true" className={buttonSavedContentRecipe()}>
+            <span className={buttonTickIconRecipe()}>
+              <svg
+                aria-hidden="true"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="3"
+                viewBox="0 0 24 24"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </span>
+            {savedLabel}
           </span>
-          <span className={buttonSavedContentRecipe()}>{savedLabel}</span>
         </>
       ) : pending ? (
         <>
@@ -108,6 +116,22 @@ export const Button = ({
         children
       )}
     </button>
+  );
+
+  // A save-confirming button (one given `saved` at all) carries a polite live region beside it, so
+  // "Saved" is spoken: the visible swap is hidden from assistive technology, and a live region
+  // inside a button is not reliably read.
+  if (saved === undefined) return button;
+  return (
+    <>
+      {button}
+      <LiveRegion
+        announceInitial
+        debounceMs={0}
+        message={isSaved ? savedLabel : ""}
+        visuallyHidden
+      />
+    </>
   );
 };
 

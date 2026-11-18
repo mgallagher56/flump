@@ -99,14 +99,11 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
           onCloseAutoFocus={focusReturn.onCloseAutoFocus}
           onKeyDown={(event) => {
             if (event.key !== "Enter" || event.defaultPrevented) return;
-            const targetButton = (event.target as HTMLElement | null)?.closest("button");
-            if (
-              targetButton &&
-              targetButton !== cancelRef.current &&
-              targetButton.id !== `${id}-confirm`
-            ) {
-              return;
-            }
+            // Enter on any button (Cancel included) does only that button's own click, so the
+            // default focus on Cancel can never confirm (UX D1). Enter submits only from the
+            // type-to-confirm field.
+            const target = event.target as HTMLElement | null;
+            if (target?.tagName !== "INPUT") return;
             event.preventDefault();
             if (pending || !textMatches) return;
             void onConfirm();

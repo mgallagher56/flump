@@ -15,6 +15,10 @@ describe("breathing room wording", () => {
 
   it("formats months and long stretches in plain words", () => {
     expect(formatMonthsOfCover(1)).toBe("1 month");
+    // Rounds to "1" before choosing the plural: never "1 months".
+    expect(formatMonthsOfCover(1.04)).toBe("1 month");
+    expect(formatMonthsOfCover(0.96)).toBe("1 month");
+    expect(breathingRoomPhrase(1.04)).toBe("about 1 month");
     expect(formatMonthsOfCover(4.74)).toBe("4.7 months");
     expect(formatMonthsOfCover(130)).toBe("10+ years");
     expect(formatMonthsOfCover(-2)).toBe("0 months");

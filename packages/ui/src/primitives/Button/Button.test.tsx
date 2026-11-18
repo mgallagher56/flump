@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Button, ButtonLink, IconButton } from "./Button";
 
@@ -130,11 +130,48 @@ describe("Button Primitive", () => {
           Save balance
         </Button>,
       );
-      const btn = screen.getByRole("button", { name: "Saved" });
+      const btn = screen.getByRole("button", { name: "Save balance" });
       expect(btn.getAttribute("data-saved")).toBe("true");
       expect(btn.querySelector("svg polyline")).not.toBeNull();
       fireEvent.click(btn);
       expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it("keeps the label in place (transparent) under the saved overlay so the width holds", () => {
+      render(<Button saved>Save balance</Button>);
+      const btn = screen.getByRole("button", { name: "Save balance" });
+      const label = within(btn).getByText("Save balance");
+      expect(label.closest("[aria-hidden='true']")).toBeNull();
+      const overlay = within(btn).getByText("Saved");
+      expect(overlay.closest("[aria-hidden='true']")).not.toBeNull();
+    });
+
+    it("announces the saved label politely when the save lands", () => {
+      vi.useFakeTimers();
+      try {
+        const { rerender } = render(<Button saved={false}>Save balance</Button>);
+        const status = screen.getByRole("status");
+        expect(status.textContent).toBe("");
+
+        rerender(<Button saved>Save balance</Button>);
+        act(() => {
+          vi.runOnlyPendingTimers();
+        });
+        expect(status.textContent).toBe("Saved");
+
+        rerender(<Button saved={false}>Save balance</Button>);
+        act(() => {
+          vi.runOnlyPendingTimers();
+        });
+        expect(status.textContent).toBe("");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("adds no live region to a button that never confirms saves", () => {
+      render(<Button>Save balance</Button>);
+      expect(screen.queryByRole("status")).toBeNull();
     });
   });
 });

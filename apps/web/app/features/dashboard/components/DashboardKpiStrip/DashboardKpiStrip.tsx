@@ -43,7 +43,7 @@ const addLink = (to: string, text: string) => (
 /**
  * The dashboard's two supporting figures (E16 P1.5, R2-4 number budget N1 4: the hero, its delta
  * and these two): what is left over each month, and the total owed if there is any debt, otherwise
- * the pension pots. Months of cover belongs to Budget (P6) and net worth is the hero, so neither
+ * the pension pots. Breathing room belongs to Budget (P6) and net worth is the hero, so neither
  * repeats here. Captions carry no figures. Negative amounts keep the usual colour.
  *
  * With no budget the strip is one prompt. With a budget but no pension or debt, the strip holds the

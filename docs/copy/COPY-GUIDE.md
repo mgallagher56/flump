@@ -114,13 +114,13 @@ Every encouragement feature must be a net positive for the person's financial we
 
 **Set 1 warm confirmations:**
 
-| Moment              | On-screen wording                                                                 | Benefit to the person                                  |
-| ------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Check-in finished   | "November is checked in." then "Net worth changed by +£1,150 since October 2026." | Their records are current, and the task feels finished |
-| Setup step finished | "Budget added." The checklist row ticks                                           | They can see what is left without a tour               |
-| Setup complete      | "Setup is finished. Everything on your dashboard now uses your own figures."      | Trust in the figures                                   |
-| First account added | "Your first account is in."                                                       | A plain sign that it worked                            |
-| Empty states        | A friendly illustration and one plain sentence                                    | Less cold, nothing to decode                           |
+| Moment              | On-screen wording                                                                                                                                             | Benefit to the person                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Check-in finished   | "November is checked in." Nothing more: the summary's net worth block already states the change, and the confirmation celebrates the action, never the amount | Their records are current, and the task feels finished |
+| Setup step finished | "Budget added." The checklist row ticks                                                                                                                       | They can see what is left without a tour               |
+| Setup complete      | "Setup is finished. Everything on your dashboard now uses your own figures."                                                                                  | Trust in the figures                                   |
+| First account added | "Your first account is in."                                                                                                                                   | A plain sign that it worked                            |
+| Empty states        | A friendly illustration and one plain sentence                                                                                                                | Less cold, nothing to decode                           |
 
 ## 3. Plain language
 

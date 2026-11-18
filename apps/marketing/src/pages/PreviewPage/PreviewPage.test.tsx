@@ -42,4 +42,36 @@ describe("PreviewPage", () => {
       screen.getAllByRole("link", { name: "Request an invite" }).length,
     ).toBeGreaterThanOrEqual(1);
   });
+
+  it("gives each section one visible h2, and the frames add no second heading", () => {
+    renderPage();
+    const sections = [
+      ["preview-moment-dashboard", "Dashboard picture"],
+      ["preview-moment-checkin", "Monthly check-in"],
+      ["preview-moment-breathing-room", "What a change would do"],
+    ] as const;
+    for (const [testId, heading] of sections) {
+      const section = screen.getByTestId(testId);
+      const h2 = screen.getByRole("heading", { level: 2, name: heading });
+      expect(section.contains(h2)).toBe(true);
+      expect(h2.className).not.toMatch(/sr-only/);
+      expect(h2.className).toMatch(/textStyle_heading\.md/);
+      // Heading, then description, then the frame.
+      const frame = section.querySelector("figure");
+      expect(frame).not.toBeNull();
+      expect(
+        h2.compareDocumentPosition(frame as Node) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+    expect(screen.queryByRole("heading", { name: "Dashboard" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Check-in" })).toBeNull();
+  });
+
+  it("shows illustrations, with only the call to action's visible on a phone", () => {
+    const { container } = renderPage();
+    const scenes = container.querySelectorAll("svg[data-scene]");
+    expect(scenes).toHaveLength(2);
+    expect(screen.getByTestId("preview-illustration-checkin").className).toMatch(/d_none/);
+    expect(screen.getByTestId("preview-illustration-cta").className).not.toMatch(/d_none/);
+  });
 });

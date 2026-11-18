@@ -83,3 +83,48 @@ export const ctaText = cva({
     maxWidth: "md",
   },
 });
+
+/** The heading and description above a preview frame: heading, description, then the frame. */
+export const sectionIntro = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2",
+    minWidth: "0",
+  },
+});
+
+export const sectionHeading = cva({
+  base: {
+    textStyle: "heading.md",
+    color: "text.primary",
+    margin: 0,
+  },
+});
+
+/** Intro beside an illustration on large screens; the illustration is hidden below `lg`. */
+export const sectionHeader = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "6",
+  },
+});
+
+export const sectionIllustration = cva({
+  base: {
+    display: { base: "none", lg: "block" },
+    flexShrink: 0,
+    width: "36",
+  },
+});
+
+/** The page's one phone-width illustration: above the closing call to action, with no figures. */
+export const ctaIllustration = cva({
+  base: {
+    display: "flex",
+    justifyContent: "center",
+    width: "full",
+  },
+});

@@ -34,6 +34,28 @@ describe("BreathingRoom", () => {
     expect(screen.getByRole("definition").textContent).toBe("£4,200");
   });
 
+  it("fills the spare half row with one still scene on large screens only (B10)", () => {
+    const { container } = render(<BreathingRoom figure={known(1.5, 4200)} />);
+    const scene = container.querySelector("[data-scene]");
+    expect(scene?.getAttribute("data-scene")).toBe("empty-savings");
+    // Not an empty state: no settle animation, and hidden from assistive technology.
+    expect(scene?.hasAttribute("data-scene-settle")).toBe(false);
+    expect(scene?.getAttribute("aria-hidden")).toBe("true");
+    const wrapper = screen.getByTestId("breathing-room-scene");
+    // Hidden on phones and tablets; beside the result card from lg, so it never pushes it down.
+    expect(wrapper.className).toMatch(/(^|\s)d_none(\s|$)/);
+    expect(wrapper.className).toMatch(/lg:d_flex/);
+    const result = screen.getByRole("group", { name: "Breathing room" });
+    expect(result.compareDocumentPosition(wrapper) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("shows no scene while the figure is not known", () => {
+    const { container } = render(
+      <BreathingRoom figure={figureUnknown(["budgetEssentials"], "not-set")} />,
+    );
+    expect(container.querySelector("[data-scene]")).toBeNull();
+  });
+
   it("says more than ten years rather than a large month count", () => {
     render(<BreathingRoom figure={known(130, 364000)} />);
     expect(screen.getByRole("group").textContent).toContain("More than 10 years");

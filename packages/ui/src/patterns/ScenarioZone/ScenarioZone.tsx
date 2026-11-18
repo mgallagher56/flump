@@ -16,6 +16,8 @@ export const SCENARIO_ANNOUNCEMENT_PREFIX = "Illustration:";
 export interface ScenarioZoneProps {
   /** The zone heading. Defaults to "Model a change". */
   title?: string;
+  /** The heading level. Default "h2"; pass "h3" when the zone sits under its own section heading. */
+  headingAs?: "h2" | "h3" | "h4";
   /** "Starting from your figures: £X at Y%, Z years left". Built from SAVED values only. */
   basis?: ReactNode;
   /** True once any scenario input differs from the saved figures. Shows the reset button. */
@@ -72,6 +74,7 @@ export interface ScenarioZoneProps {
  */
 export const ScenarioZone: FC<ScenarioZoneProps> = ({
   title = "Model a change",
+  headingAs = "h2",
   basis,
   isModified = false,
   onReset,
@@ -104,7 +107,13 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
     >
       <div className={slots.header}>
         <div className={slots.titleRow}>
-          <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md" tabIndex={-1}>
+          <Heading
+            as={headingAs}
+            data-testid="scenario-zone-title"
+            id={headingId}
+            size="md"
+            tabIndex={-1}
+          >
             {title}
           </Heading>
           <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>

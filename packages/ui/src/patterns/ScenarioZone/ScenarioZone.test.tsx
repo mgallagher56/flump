@@ -25,6 +25,11 @@ describe("ScenarioZone", () => {
     expect(screen.getByTestId("projection-notice")).toBeTruthy();
   });
 
+  it("renders its heading at the level it is given", () => {
+    render(<ScenarioZone headingAs="h3">content</ScenarioZone>);
+    expect(screen.getByRole("heading", { level: 3, name: "Model a change" })).toBeTruthy();
+  });
+
   it("leaves the notice out when the page already shows it", () => {
     render(<ScenarioZone showNotice={false}>content</ScenarioZone>);
     expect(screen.queryByTestId("projection-notice")).toBeNull();
@@ -70,6 +75,27 @@ describe("ScenarioZone", () => {
     );
     const actions = screen.getByRole("button", { name: "Update" }).parentElement as HTMLElement;
     expect(actions.className).toContain("[&_>_[data-variant='ghost']:first-child]:ms_-4");
+  });
+
+  it("styles the footer's details link as a teal standalone link (B5), never black bold text", () => {
+    render(
+      <ScenarioZone
+        footer={
+          <button data-variant="ghost" type="button">
+            Update your details
+          </button>
+        }
+        onReset={() => {}}
+      >
+        x
+      </ScenarioZone>,
+    );
+    const actions = screen.getByRole("button", { name: "Update your details" })
+      .parentElement as HTMLElement;
+    // B5 standalone link: primary (teal), weight 600, no underline.
+    expect(actions.className).toMatch(/\]:c_primary\b/);
+    expect(actions.className).toMatch(/\]:fw_semibold\b/);
+    expect(actions.className).toMatch(/\]:td_none\b|\]:text-decor_none\b/);
   });
 
   it("leaves Reset out when there is nothing to reset", () => {

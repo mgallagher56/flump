@@ -149,7 +149,7 @@ describe("DebtContainer", () => {
     withEmpty(() => {
       const { container } = render(<DebtContainer />);
       expectPageRules(container, { maxFigures: 0, maxNotSet: 0, projectionNotices: 0 });
-      expect(screen.getByRole("heading", { level: 1, name: "Debt and borrowing" })).toBeDefined();
+      expect(screen.getByRole("heading", { level: 1, name: "Cards and loans" })).toBeDefined();
       expect(screen.getByRole("heading", { level: 2, name: "No debts added" })).toBeDefined();
       expect(
         screen.getByText(

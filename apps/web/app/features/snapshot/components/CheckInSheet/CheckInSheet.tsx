@@ -58,7 +58,7 @@ export interface CheckInSheetProps {
   /** The user's net worth choices: rows they leave out say "Not counted in net worth". */
   basis: NetWorthBasis;
   /**
-   * The page's "Update balances" control, where focus returns on close when the check-in opened
+   * The page's "Start monthly check-in" control, where focus returns on close when the check-in opened
    * with nothing focused (from `?checkIn=1`).
    */
   returnFocusTo?: () => HTMLElement | null;
@@ -67,7 +67,7 @@ export interface CheckInSheetProps {
 const CHECK_IN_TITLE = "Monthly check-in";
 
 /**
- * The first of these elements that is shown (a page can hold one "Update balances" for phones and
+ * The first of these elements that is shown (a page can hold one "Start monthly check-in" for phones and
  * one from md, with CSS hiding the other), for `returnFocusTo`.
  */
 export const firstShownElement = (ids: readonly string[]) => (): HTMLElement | null => {
@@ -137,6 +137,7 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
       <p className={checkInIntro()}>{CHECK_IN_COPY.empty}</p>
     ) : summary ? (
       <CheckInSummary
+        month={currentMonth}
         onChangeBalance={checkIn.reopen}
         onDone={() => handleOpenChange(false)}
         summary={summary}
@@ -146,7 +147,7 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
         {phone ? <CheckInCard checkIn={checkIn} /> : <CheckInList checkIn={checkIn} />}
         {showInstructions ? (
           <div className={checkInScene()}>
-            <Illustration id="checkin-start-scene" scene="check-in" size="sm" />
+            <Illustration id="checkin-start-scene" scene="check-in" settle={false} size="sm" />
           </div>
         ) : null}
       </>

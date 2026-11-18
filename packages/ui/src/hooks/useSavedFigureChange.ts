@@ -42,6 +42,11 @@ export function useSavedFigureChange<T>(
 
   const isInitialMount = useRef(true);
   const previousValue = useRef<T>(value);
+  // The wash timer is started inside the fade timer, so the effect cleanup cannot reach it. Kept
+  // here so a later save restarts it and an unmount clears it.
+  const washTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(washTimer.current), []);
 
   useEffect(() => {
     // Never play on initial mount or when value hasn't changed
@@ -56,6 +61,8 @@ export function useSavedFigureChange<T>(
     }
 
     previousValue.current = value;
+
+    clearTimeout(washTimer.current);
 
     if (reducedMotion) {
       setDisplayedValue(value);
@@ -73,11 +80,10 @@ export function useSavedFigureChange<T>(
       setIsOut(false);
       setIsWashed(true);
 
-      const washTimer = setTimeout(() => {
+      washTimer.current = setTimeout(() => {
+        washTimer.current = undefined;
         setIsWashed(false);
       }, washMs);
-
-      return () => clearTimeout(washTimer);
     }, fadeMs);
 
     return () => clearTimeout(fadeTimer);

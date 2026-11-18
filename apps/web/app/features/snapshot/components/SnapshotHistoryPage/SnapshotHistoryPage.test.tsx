@@ -189,7 +189,7 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
     // November is not recorded yet, so no next check-in date beside "not recorded yet".
     expect(screen.queryByText(/Next check-in/)).toBeNull();
-    // Months of cover moved to Budget; no projection, so no notice.
+    // Breathing room moved to Budget; no projection, so no notice.
     expect(screen.queryByText(/Months of cover/)).toBeNull();
     expect(screen.queryByText(/Projection|Estimate/)).toBeNull();
     expectPageRules(container, { maxFigures: 4, maxNotSet: 0, projectionNotices: 0 });

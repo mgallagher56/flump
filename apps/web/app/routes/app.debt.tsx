@@ -102,7 +102,7 @@ export const action = async (args: ActionFunctionArgs) => {
   }
 };
 
-export const meta: MetaFunction = () => [{ title: "Debt and borrowing | Flump" }];
+export const meta: MetaFunction = () => [{ title: "Cards and loans | Flump" }];
 
 // A save refused with 412 reloads the saved data, so the form shows and sends the latest version.
 export const shouldRevalidate = revalidateOnConflict;

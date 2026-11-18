@@ -39,7 +39,7 @@ import { CHECK_IN_ROUTE } from "../MonthlyCheckInCard";
 import { MIN_CHART_MONTHS, NetWorthHistoryChart } from "../NetWorthHistoryChart";
 import { changesBody, flushLink, heroPromptLink, sectionStack } from "./SnapshotHistoryPage.styles";
 
-/** Opened from "?checkIn=1", the check-in returns focus to the page's "Update balances". */
+/** Opened from "?checkIn=1", the check-in returns focus to the page's "Start monthly check-in". */
 const RETURN_FOCUS_TO = firstShownElement(["snapshot-open-check-in"]);
 
 export interface SnapshotHistoryPageProps {
@@ -161,7 +161,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   // month is not recorded yet, and a December date beside it would contradict it.
   const thisMonthRecorded = currentMonthRecorded;
   // A real link before hydration (#701: "?checkIn=1" opens the check-in on arrival); once
-  // hydrated it opens the sheet in place, as "Update balances" does.
+  // hydrated it opens the sheet in place, as "Start monthly check-in" does.
   const openCheckIn = (e: MouseEvent) => {
     // A modified click (new tab or window) follows the link as usual.
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;

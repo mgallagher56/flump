@@ -1,4 +1,4 @@
-import { Card, IconTile, type IconTileDomain } from "@repo/ui";
+import { Card, IconTile, type IconTileDomain, Illustration } from "@repo/ui";
 import { CalendarCheck, House, type LucideIcon, Wallet } from "lucide-react";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
@@ -7,7 +7,9 @@ import {
   pictureBody,
   pictureCard,
   pictureFooter,
+  pictureFooterRow,
   pictureGrid,
+  pictureIllustration,
   pictureLink,
   pictureTitle,
 } from "./MonthlyPictureSection.styles";
@@ -72,12 +74,18 @@ export const MonthlyPictureSection: FC = () => (
         </Card>
       ))}
     </ul>
-    <p className={pictureFooter()}>
-      Want to try one first, without signing in?{" "}
-      <Link className={pictureLink()} to="/tools">
-        Browse the calculators
-      </Link>
-    </p>
+    {/* No figures in this band, so the scene pushes nothing down on a phone (B10). */}
+    <div className={pictureFooterRow()}>
+      <div className={pictureIllustration()} data-testid="what-you-can-see-illustration">
+        <Illustration scene="empty-savings" size="sm" />
+      </div>
+      <p className={pictureFooter()}>
+        Want to try one first, without signing in?{" "}
+        <Link className={pictureLink()} to="/tools">
+          Browse the calculators
+        </Link>
+      </p>
+    </div>
   </MarketingSection>
 );
 

@@ -68,7 +68,7 @@ export const FormField: FC<FormFieldProps> = ({
     >
       {labelAddon ? (
         <div className={classes.labelRow} data-field-label-row="">
-          <label className={classes.label} htmlFor={controlId}>
+          <label className={classes.label} htmlFor={controlId} id={`${controlId}-label`}>
             {label}
             {optional ? (
               <span aria-hidden="true" className={classes.optional}>
@@ -79,7 +79,12 @@ export const FormField: FC<FormFieldProps> = ({
           {labelAddon}
         </div>
       ) : (
-        <label className={classes.label} data-field-label-row="" htmlFor={controlId}>
+        <label
+          className={classes.label}
+          data-field-label-row=""
+          htmlFor={controlId}
+          id={`${controlId}-label`}
+        >
           {label}
           {optional ? (
             <span aria-hidden="true" className={classes.optional}>

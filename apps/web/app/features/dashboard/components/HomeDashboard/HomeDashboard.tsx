@@ -146,7 +146,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const [skippedChecklistSteps, setSkippedChecklistSteps] = useState<string[]>([]);
   const [checklistError, setChecklistError] = useState<string | null>(null);
 
-  // An empty budget means what is left over and months of cover are unknown, not zero. The
+  // An empty budget means what is left over and breathing room are unknown, not zero. The
   // loader's picture decides; sample data (no budgetKnown field) falls back to its own totals.
   const budgetKnown =
     typeof budgetData?.budgetKnown === "boolean"

@@ -60,7 +60,7 @@ describe("RunwayCalculator", () => {
     },
   ];
 
-  it("shows two inputs and one outcome figure before More options is opened", () => {
+  it("shows two inputs and one outcome figure before Accounts and spending to include is opened", () => {
     render(<RunwayCalculator accountDetails={[]} accounts={mockAccounts} entries={mockEntries} />);
     expect(screen.getAllByRole("textbox").length).toBeLessThanOrEqual(2);
     expect(screen.getByLabelText("Redundancy pay or lump sum")).toBeDefined();
@@ -71,7 +71,7 @@ describe("RunwayCalculator", () => {
     ).toHaveLength(1);
     // The saved figure is not in the zone: it has its own section (BreathingRoom).
     expect(document.querySelector('[data-figure="monthsOfCover"]')).toBeNull();
-    // The line-by-line switches wait behind "More options".
+    // The line-by-line switches wait behind "Accounts and spending to include".
     expect(screen.queryAllByRole("switch")).toHaveLength(0);
     const more = screen.getByRole("button", { name: "Accounts and spending to include" });
     expect(more.getAttribute("aria-expanded")).toBe("false");

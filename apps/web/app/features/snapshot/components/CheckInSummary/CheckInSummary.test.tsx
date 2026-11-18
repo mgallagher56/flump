@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { CheckInSummary as Summary } from "../../checkInModel";
-import { CheckInSummary, formatWarmConfirmation } from "./CheckInSummary";
+import { CheckInSummary } from "./CheckInSummary";
 
 const changes = (n: number): Summary["changed"] =>
   Array.from({ length: n }, (_, i) => ({
@@ -18,6 +18,7 @@ const setup = (summary: Partial<Summary> = {}) => {
   const onChangeBalance = vi.fn();
   render(
     <CheckInSummary
+      month="2026-11"
       onChangeBalance={onChangeBalance}
       onDone={onDone}
       summary={{
@@ -38,7 +39,7 @@ describe("CheckInSummary", () => {
     expect(screen.getByTestId("checkin-summary-scene").getAttribute("data-scene")).toBe(
       "check-in-done",
     );
-    expect(screen.getByRole("heading", { name: "Check-in saved" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "November is checked in." })).toBeDefined();
     expect(screen.getByRole("heading", { name: "What changed" })).toBeDefined();
     expect(screen.getByText("Account 1")).toBeDefined();
     expect(screen.getByText("Calculated")).toBeDefined();
@@ -94,14 +95,12 @@ describe("CheckInSummary", () => {
     expect(onChangeBalance).toHaveBeenCalled();
   });
 
-  it("formats the E35 Set 1 check-in finished warm confirmation without praise or shaming", () => {
-    expect(
-      formatWarmConfirmation({
-        kind: "checkInFinished",
-        month: "2026-11",
-        change: 1150,
-        previousMonth: "2026-10",
-      }),
-    ).toBe("November is checked in. Net worth changed by +£1,150 since October 2026.");
+  it("celebrates the check-in, never the amount: the heading names the month only", () => {
+    setup();
+    const heading = screen.getByRole("heading", { level: 3 });
+    expect(heading.textContent).toBe("November is checked in.");
+    expect(heading.textContent).not.toMatch(/£|net worth/i);
+    // The change is stated once, in the net worth block.
+    expect(screen.getAllByText(/£1,250/)).toHaveLength(1);
   });
 });

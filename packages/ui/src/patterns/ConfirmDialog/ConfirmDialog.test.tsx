@@ -101,13 +101,24 @@ describe("ConfirmDialog", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
-  it("confirms on Enter even while Cancel has initial focus, without triggering Cancel", () => {
-    const { onConfirm, onOpenChange } = setup({ tone: "danger" });
+  it("never confirms on Enter while Cancel has the default focus", () => {
+    const { onConfirm } = setup({ tone: "danger" });
     const cancel = screen.getByRole("button", { name: "Cancel" });
     expect(document.activeElement).toBe(cancel);
     fireEvent.keyDown(cancel, { key: "Enter" });
-    expect(onConfirm).toHaveBeenCalledTimes(1);
-    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("leaves Enter on Cancel to the button's own click, which cancels", () => {
+    const { onConfirm, onOpenChange } = setup({ tone: "danger" });
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    // fireEvent returns false when the handler called preventDefault (which would block the
+    // browser's native click on Enter).
+    expect(fireEvent.keyDown(cancel, { key: "Enter" })).toBe(true);
+    // The browser then fires the button's click.
+    fireEvent.click(cancel);
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it("does not confirm on Enter when pending or requireText does not match", () => {

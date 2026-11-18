@@ -23,7 +23,7 @@ export const formatMonthsOfCover = (months: number): string => {
   if (months > 120) return `${Math.floor(months / 12)}+ years`;
   const value = Math.max(0, months);
   const text = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }).format(value);
-  return `${text} ${value === 1 ? "month" : "months"}`;
+  return `${text} ${text === "1" ? "month" : "months"}`;
 };
 
 /** The lead-in and the figure, for a result block: "About" and "1.5 months". */

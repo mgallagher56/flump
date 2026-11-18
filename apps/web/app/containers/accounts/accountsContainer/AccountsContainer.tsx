@@ -15,7 +15,7 @@ import { emptyWrap, headerActions, phoneOnly, wideOnly } from "./AccountsContain
 
 const ADD_HREF = "/app/accounts?add=1";
 const CHECK_IN_HREF = "/app/accounts?checkIn=1";
-// Opened from "?checkIn=1", the check-in returns focus to whichever "Update balances" is shown.
+// Opened from "?checkIn=1", the check-in returns focus to whichever "Start monthly check-in" is shown.
 const RETURN_FOCUS_TO = firstShownElement([
   "accounts-open-check-in",
   "accounts-open-check-in-phone",

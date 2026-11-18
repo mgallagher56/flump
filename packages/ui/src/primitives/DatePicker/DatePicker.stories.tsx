@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 import { controlProps, FormField } from "../FormField";
 import { DatePicker } from "./DatePicker";
 
@@ -39,6 +39,35 @@ export const Default: Story = {
 
 export const DefaultDark: Story = {
   ...Default,
+  globals: { theme: "dark" },
+};
+
+/** Keyboard: focus starts on the selected day, arrows move by day and week, PageDown by month. */
+export const Keyboard: Story = {
+  render: () => <DatePickerDemo />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /Contract end date/ }));
+    const body = within(document.body);
+    await waitFor(() =>
+      expect(document.activeElement).toBe(body.getByRole("button", { name: "16 Nov 2026" })),
+    );
+    await userEvent.keyboard("{ArrowRight}");
+    await expect(document.activeElement).toBe(body.getByRole("button", { name: "17 Nov 2026" }));
+    await userEvent.keyboard("{ArrowDown}");
+    await expect(document.activeElement).toBe(body.getByRole("button", { name: "24 Nov 2026" }));
+    await userEvent.keyboard("{PageDown}");
+    await expect(document.activeElement).toBe(body.getByRole("button", { name: "24 Dec 2026" }));
+    await expect(body.getByRole("grid")).toHaveAccessibleName("December 2026");
+    await userEvent.keyboard("{Enter}");
+    await expect(
+      canvas.getByRole("button", { name: "Contract end date 24 Dec 2026" }),
+    ).toBeInTheDocument();
+  },
+};
+
+export const KeyboardDark: Story = {
+  ...Keyboard,
   globals: { theme: "dark" },
 };
 
