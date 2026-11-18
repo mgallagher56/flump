@@ -126,6 +126,25 @@ describe("property allowance", () => {
       // What was recorded is still reported as recorded.
       expect(r.rentalMortgageInterestShare).toBe(200);
       expect(r.rentalExpensesExclInterest).toBe(100);
+      expect(r.propertyRoutesTie).toBe(false);
+    });
+
+    it("keeps the recorded costs on a tie and says so: no salary, half of 6,000 rent, 200 costs", () => {
+      const r = calculateUKTax(Y, [rent(6000), rentCost(200)], 0, 50);
+      // Own share: rent 6,000 x 50% = 3,000, costs 200 x 50% = 100.
+      // Costs route: 3,000 - 100 = 2,900 profit. Allowance route: 3,000 - 1,000 = 2,000 profit.
+      // Both are under the personal allowance of 12,570, so the tax is 0 either way: a tie.
+      // On a tie the recorded costs are kept.
+      expect(r.totalTaxDue).toBe(0);
+      expect(r.propertyRoutesTie).toBe(true);
+      expect(r.propertyAllowanceUsed).toBe(0);
+      expect(r.rentalProfitBeforeInterestShare).toBe(2900);
+    });
+
+    it("is not a tie when one route gives a lower total", () => {
+      const r = calculateUKTax(Y, [rent(6000), rentCost(200), interest(3000)], 30000, 100);
+      // Costs route 560 against allowance route 1,000 (worked above).
+      expect(r.propertyRoutesTie).toBe(false);
     });
   });
 });

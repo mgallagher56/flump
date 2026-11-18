@@ -30,8 +30,9 @@ export interface TaxReservePanelProps {
   result: TaxCalculationResult;
   /** Total income in this estimate, before pension contributions and Gift Aid. */
   totalIncome: number;
-  payeSalary: number;
-  onPayeSalaryChange: (value: number) => void;
+  /** Yearly salary, 0 when that is the saved figure, null when it is not known. */
+  payeSalary: number | null;
+  onPayeSalaryChange: (value: number | null) => void;
   ownershipSharePct: number;
   onOwnershipShareChange: (value: number) => void;
   onSave: () => void;
@@ -103,8 +104,8 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
               {(field) => (
                 <CurrencyInput
                   {...controlProps(field)}
-                  value={payeSalary > 0 ? payeSalary : null}
-                  onValueChange={(v) => onPayeSalaryChange(v ?? 0)}
+                  value={payeSalary}
+                  onValueChange={onPayeSalaryChange}
                 />
               )}
             </FormField>
@@ -147,7 +148,7 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
               <Line
                 label="Salary through PAYE"
                 value={
-                  result.effectivePayeSalary > 0 ? (
+                  result.effectivePayeSalary > 0 || payeSalary !== null ? (
                     gbp(result.effectivePayeSalary)
                   ) : (
                     <NotSet href="/app/profile#settings-age-and-pay" subject="salary" />

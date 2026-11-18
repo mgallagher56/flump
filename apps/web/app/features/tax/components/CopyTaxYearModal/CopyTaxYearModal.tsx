@@ -12,6 +12,7 @@ import { Button, CurrencyInput, Dialog, FormField, Icon, StatusBadge, TextInput 
 import { ArrowRight, Copy, Filter } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
+import { PAYE_SALARY_CATEGORY } from "~/features/tax/tax-labels";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { nativeSelect } from "../../select.styles";
 import { FREQUENCY_LABEL, SOURCE_LABEL } from "../../tax-labels";
@@ -74,14 +75,20 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
     }
   }, [open, initialTargetYear, initialSourceYear, initialSourceSection]);
 
-  // Candidate records from source year
-  const candidateRecords = useMemo(() => {
-    return records.filter((r) => {
+  // Records from the source year that match the choices. Salary records are never copied: the
+  // salary comes from the profile, so they are counted only to say they were left out.
+  const { candidateRecords, skippedSalaryCount } = useMemo(() => {
+    const matching = records.filter((r) => {
       if (!isRecordActiveInTaxYear(r, sourceYear)) return false;
       if (sectionFilter !== "all" && r.source !== sectionFilter) return false;
       if (recurringOnly && r.frequency === "one-off") return false;
       return true;
     });
+    const candidates = matching.filter((r) => r.category !== PAYE_SALARY_CATEGORY);
+    return {
+      candidateRecords: candidates,
+      skippedSalaryCount: matching.length - candidates.length,
+    };
   }, [records, sourceYear, sectionFilter, recurringOnly]);
 
   // Editable row state map: recordId -> RowItemState
@@ -416,6 +423,12 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
             </table>
           )}
         </section>
+
+        {skippedSalaryCount > 0 ? (
+          <p className={s.mutedText()} data-testid="copy-salary-skipped">
+            Salary records are not copied. Your salary comes from your profile.
+          </p>
+        ) : null}
 
         <div className={s.footer()}>
           <p className={s.mutedText()}>

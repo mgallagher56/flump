@@ -21,18 +21,18 @@ describe("AddProfileCheckInDay1795400000000", () => {
     expect(sql).toContain(
       'ALTER TABLE "user_profiles" ADD COLUMN IF NOT EXISTS "check_in_day" smallint',
     );
-    const add = sql.findIndex(
-      (s) =>
-        s.includes(`ADD CONSTRAINT "${CHECK_IN_DAY_CONSTRAINT}"`) &&
-        s.includes("BETWEEN 1 AND 31") &&
-        s.endsWith("NOT VALID"),
+    const drop = sql.indexOf(
+      `ALTER TABLE "user_profiles" DROP CONSTRAINT IF EXISTS "${CHECK_IN_DAY_CONSTRAINT}"`,
     );
-    const validate = sql.indexOf(
-      `ALTER TABLE "user_profiles" VALIDATE CONSTRAINT "${CHECK_IN_DAY_CONSTRAINT}"`,
+    const add = sql.indexOf(
+      `ALTER TABLE "user_profiles" ADD CONSTRAINT "${CHECK_IN_DAY_CONSTRAINT}" CHECK ("check_in_day" BETWEEN 1 AND 31)`,
     );
-    expect(add).toBeGreaterThan(0);
-    // Validated as a separate statement, after the constraint is added.
-    expect(validate).toBeGreaterThan(add);
+    // Dropped first so a re-run does not fail on an existing constraint, then added validated.
+    expect(drop).toBeGreaterThan(0);
+    expect(add).toBeGreaterThan(drop);
+    expect(sql.some((s) => s.includes("NOT VALID") || s.includes("VALIDATE CONSTRAINT"))).toBe(
+      false,
+    );
   });
 
   it("down drops the constraint before the column", async () => {

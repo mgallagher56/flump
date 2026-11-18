@@ -125,7 +125,8 @@ const mockRecords: TaxRecord[] = [
 ];
 
 let mockLoaderRecords: TaxRecord[] = mockRecords;
-const mockProfileSalary: number | null = 60000;
+let mockProfileSalary: number | null = 60000;
+let mockProfileId: string | undefined;
 let mockEnabledPages: string[] | null = ["accounts", "budget", "tax"];
 let mockDashboardWidgets: string[] | null = ["accounts"];
 let mockDashboardWidgetOrder: string[] | null = ["accounts"];
@@ -146,6 +147,7 @@ vi.mock("react-router", () => ({
   useLoaderData: () => ({
     records: mockLoaderRecords,
     userProfile: {
+      id: mockProfileId,
       annualSalary: mockProfileSalary,
       propertyOwnershipShare: 100,
       country: "GB",
@@ -275,6 +277,30 @@ describe("TaxContainer, opted in", () => {
       { intent: "update-profile", annualSalary: "60000", propertyOwnershipShare: "50" },
       { method: "POST" },
     );
+  });
+
+  it("shows the add salary prompt, not £0, when a saved profile has no salary", () => {
+    // A profile row (it has an id) with no salary saved: the salary is not known, so the
+    // workings show the prompt and the salary field is empty. Saving sends no salary.
+    mockSubmit.mockClear();
+    mockProfileSalary = null;
+    mockProfileId = "profile-1";
+    try {
+      render(<TaxContainer />);
+      openDrawer(/How the estimate is worked out/);
+      expect(screen.getAllByText("Add salary").length).toBeGreaterThan(0);
+      expect((screen.getByLabelText(/Yearly salary before tax/) as HTMLInputElement).value).toBe(
+        "",
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+      expect(mockSubmit).toHaveBeenCalledWith(
+        { intent: "update-profile", annualSalary: "", propertyOwnershipShare: "100" },
+        { method: "POST" },
+      );
+    } finally {
+      mockProfileSalary = 60000;
+      mockProfileId = undefined;
+    }
   });
 
   it("adds a record from the Add income menu", async () => {

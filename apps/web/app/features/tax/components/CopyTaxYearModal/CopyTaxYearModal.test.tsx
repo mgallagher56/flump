@@ -136,4 +136,30 @@ describe("<CopyTaxYearModal />", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
+
+  test("leaves salary records out of the copy and says so once", () => {
+    mockSubmit.mockClear();
+    const salary: TaxRecord = {
+      ...mockRecords[0],
+      id: "rec-salary",
+      name: "Salary",
+      source: "paye",
+      category: "paye_salary",
+      amount: 4000,
+    };
+    customRender(<CopyTaxYearModal {...defaultProps} records={[...mockRecords, salary]} />);
+    expect(screen.queryByDisplayValue("Salary")).toBeNull();
+    expect(screen.getByDisplayValue("Property Flat A Rent")).toBeDefined();
+    expect(
+      screen.getAllByText("Salary records are not copied. Your salary comes from your profile."),
+    ).toHaveLength(1);
+    fireEvent.click(screen.getByText("Copy records"));
+    const copied = JSON.parse(String(mockSubmit.mock.calls[0][0].records)) as TaxRecord[];
+    expect(copied.map((r) => r.category)).toEqual(["rental"]);
+  });
+
+  test("says nothing about salary records when there are none", () => {
+    customRender(<CopyTaxYearModal {...defaultProps} />);
+    expect(screen.queryByTestId("copy-salary-skipped")).toBeNull();
+  });
 });

@@ -17,7 +17,7 @@ type Key = keyof TaxCalculationResult;
 
 interface Line {
   label: string;
-  value: (r: TaxCalculationResult | undefined) => ReactNode;
+  value: (r: TaxCalculationResult | undefined, salaryKnown: boolean) => ReactNode;
   total?: boolean;
 }
 
@@ -59,8 +59,9 @@ const GROUPS: Array<{ heading: string; lines: Line[] }> = [
     lines: [
       {
         label: "Salary through PAYE",
-        value: (r) =>
-          r?.effectivePayeSalary && r.effectivePayeSalary > 0 ? (
+        // The prompt only when the salary is not known; a saved salary of 0 shows £0.
+        value: (r, salaryKnown) =>
+          r && (r.effectivePayeSalary > 0 || salaryKnown) ? (
             gbp(r.effectivePayeSalary)
           ) : (
             <NotSet href="/app/profile#settings-age-and-pay" subject="salary" />
@@ -85,10 +86,17 @@ export interface TaxYearComparisonProps {
   years: string[];
   selectedYear: string;
   results: Record<string, TaxCalculationResult>;
+  /** False when no salary is saved, so the salary line shows the "add your salary" prompt. */
+  salaryKnown?: boolean;
 }
 
 /** "Year by year" tab: the main lines of the calculation side by side for every tax year. */
-export const TaxYearComparison: FC<TaxYearComparisonProps> = ({ years, selectedYear, results }) => {
+export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
+  years,
+  selectedYear,
+  results,
+  salaryKnown = true,
+}) => {
   const col = (year: string) => (year === selectedYear ? selectedCol() : undefined);
   return (
     <Card padding="lg">
@@ -126,7 +134,7 @@ export const TaxYearComparison: FC<TaxYearComparisonProps> = ({ years, selectedY
                     </Th>
                     {years.map((year) => (
                       <Td key={year} numeric className={cx(col(year))}>
-                        {line.value(results[year])}
+                        {line.value(results[year], salaryKnown)}
                       </Td>
                     ))}
                   </tr>

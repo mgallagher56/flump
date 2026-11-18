@@ -1,4 +1,8 @@
-import { compareExpensesWithAllowance } from "@flump/finance-engine";
+import {
+  calculateUKTax,
+  compareExpensesWithAllowance,
+  type TaxRecordFields,
+} from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { AllowanceComparison } from "./AllowanceComparison";
@@ -10,6 +14,23 @@ const selfEmployed = (grossIncome: number, recordedExpenses: number) =>
     grossIncome,
     recordedExpenses,
   });
+
+const rentalRecord = (
+  category: string,
+  type: TaxRecordFields["type"],
+  amount: number,
+): TaxRecordFields => ({
+  id: `${category}-${amount}`,
+  type,
+  source: "rental",
+  category,
+  name: category,
+  amount,
+  frequency: "annual",
+  date: "2026-04-06",
+  endDate: "2027-04-05",
+  notes: null,
+});
 
 describe("<AllowanceComparison />", () => {
   it("shows the recorded expenses and the trading allowance side by side", () => {
@@ -77,6 +98,59 @@ describe("<AllowanceComparison />", () => {
     fireEvent.click(screen.getByRole("button", { name: /Who cannot use the property allowance/ }));
     expect(screen.getByText(/Rent a Room Scheme/)).toBeDefined();
     expect(screen.getByText(/tax reduction for finance costs/)).toBeDefined();
+  });
+
+  it("for rental, says plainly when the total tax is the same either way", () => {
+    // No salary, a 50% share of 6,000 rent and 200 expenses. Own share: rent 3,000, expenses 100.
+    // With expenses the profit is 2,900; with the allowance it is 2,000. Both are under the
+    // personal allowance of 12,570, so the tax is 0 either way. The engine keeps the expenses
+    // on a tie (propertyRoutesTie true, propertyAllowanceUsed 0).
+    const result = calculateUKTax(
+      "2026/27",
+      [
+        rentalRecord("rental_income", "income", 6000),
+        rentalRecord("repairs_maintenance", "expense", 200),
+      ],
+      0,
+      50,
+    );
+    expect(result.propertyRoutesTie).toBe(true);
+    expect(result.propertyAllowanceUsed).toBe(0);
+    const comparison = compareExpensesWithAllowance({
+      source: "rental",
+      taxYear: "2026/27",
+      grossIncome: result.rentalIncomeGross,
+      recordedExpenses: result.rentalExpensesExclInterest,
+      financeCosts: result.rentalMortgageInterest,
+      ownershipSharePct: 50,
+    });
+    const { container } = render(
+      <AllowanceComparison
+        allowanceUsedInEstimate={result.propertyAllowanceUsed}
+        comparison={comparison}
+        ownershipSharePct={50}
+        routesTie={result.propertyRoutesTie}
+      />,
+    );
+    expect(container.textContent).toContain(
+      "The total tax is the same either way. Your Self Assessment estimate uses the expenses you have recorded.",
+    );
+    expect(container.textContent).not.toContain("lower total");
+  });
+
+  it("leaves out the full-relief line when the estimate deducts the expenses", () => {
+    // Income 800, expenses 900. The usable allowance is capped at the income: 800. Expenses of
+    // 900 are larger, so the estimate deducts them (tradingAllowanceUsed 0). The income is under
+    // 1,000, but it is not covered by the allowance in this estimate.
+    const comparison = selfEmployed(800, 900);
+    expect(comparison.withinFullRelief).toBe(true);
+    const { container } = render(
+      <AllowanceComparison allowanceUsedInEstimate={0} comparison={comparison} />,
+    );
+    expect(container.textContent).not.toContain("covered in full");
+    expect(container.textContent).toContain(
+      "The expenses you have recorded are larger than the trading allowance. Your Self Assessment estimate compares the two deductions and uses the expenses you have recorded, which is larger.",
+    );
   });
 
   it("lists who cannot use the trading allowance and links to GOV.UK in a new tab", () => {

@@ -157,4 +157,16 @@ describe("<TakeHomeContainer /> without a saved salary", () => {
     expect(screen.queryByRole("tab")).toBeNull();
     expect(container.textContent).not.toContain("£0");
   });
+
+  it("shows the setup prompt, never £0 or the stale baseline, when a saved profile has no salary", () => {
+    // A profile row exists (it has an id) but no salary is saved. The browser baseline (30,000,
+    // which would be £2,500 a month) is not used once the profile exists, and an unknown salary
+    // is not shown as £0.
+    profileState.profile = { ...SAVED_PROFILE, id: "profile-1", annualSalary: null };
+    baselineState.annualGrossSalary = 30000;
+    const { container } = render(<TakeHomeContainer />);
+    expect(screen.getByText(/Add your salary before tax/)).toBeDefined();
+    expect(container.textContent).not.toContain("£2,500");
+    expect(container.textContent).not.toContain("£0");
+  });
 });

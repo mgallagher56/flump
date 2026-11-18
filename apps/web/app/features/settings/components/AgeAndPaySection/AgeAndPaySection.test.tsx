@@ -1,5 +1,7 @@
 import { ToastProvider } from "@repo/ui";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_PROFILE, type UserProfile } from "~/hooks/useUserProfile";
 import {
@@ -8,6 +10,19 @@ import {
   AgeAndPaySection,
   parseBirthYear,
 } from "./AgeAndPaySection";
+
+// The shared setup renders Link as bare children; here it is an anchor so the router path shows.
+vi.mock("react-router", async () => {
+  const actual: typeof import("react-router") = await vi.importActual("react-router");
+  return {
+    ...actual,
+    Link: ({ to, children, ...rest }: { to: string; children: ReactNode }) => (
+      <a data-router-link="true" href={to} {...rest}>
+        {children}
+      </a>
+    ),
+  };
+});
 
 vi.mock("~/hooks/useUserProfile", async () => {
   const actual: typeof import("~/hooks/useUserProfile") =
@@ -51,6 +66,18 @@ describe("<AgeAndPaySection />", () => {
     expect(screen.getByRole("link", { name: "Your pension" }).getAttribute("href")).toBe(
       "/app/pension",
     );
+  });
+
+  it("links to the pension page through the router when inside one", () => {
+    render(
+      <MemoryRouter>
+        <AgeAndPaySection now={NOW} profile={SAVED} onSave={vi.fn()} />
+      </MemoryRouter>,
+    );
+    const link = screen.getByRole("link", { name: "Your pension" });
+    expect(link.getAttribute("href")).toBe("/app/pension");
+    expect(link.getAttribute("data-testid")).toBe("age-and-pay-pension-link");
+    expect(link.getAttribute("data-router-link")).toBe("true");
   });
 
   it("shows the 5% and 3% creation defaults as empty fields marked Not set", () => {
@@ -136,9 +163,19 @@ describe("<AgeAndPaySection />", () => {
     expect(own.value).toBe("5");
   });
 
-  it("saves an emptied rate as 0% once the rates are a choice", async () => {
+  it("does not save an emptied rate once the rates are a choice, and shows the saved rate again", () => {
+    // Saved 6% and 4%. The rate columns cannot be empty, so emptying the employer field and
+    // leaving it saves nothing and puts 4 back.
     const { employer, onSave } = setup();
     fireEvent.change(employer, { target: { value: "" } });
+    fireEvent.blur(employer);
+    expect(onSave).not.toHaveBeenCalled();
+    expect(employer.value).toBe("4");
+  });
+
+  it("saves a typed 0 as 0%", async () => {
+    const { employer, onSave } = setup();
+    fireEvent.change(employer, { target: { value: "0" } });
     fireEvent.blur(employer);
     await waitFor(() =>
       expect(onSave).toHaveBeenCalledWith({ pensionPercent: 6, pensionEmployerPercent: 0 }),
