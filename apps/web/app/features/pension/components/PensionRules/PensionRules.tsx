@@ -3,9 +3,6 @@ import { CollapsibleDrawer, formatMoney } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { rulesList } from "./PensionRules.styles";
 
-/** The lump sum allowance (tax-free cash across all pensions). Not in the tax-year registry yet. */
-export const UK_LUMP_SUM_ALLOWANCE = 268_275;
-
 export interface PensionRulesProps {
   /** Paid in each year at the saved figures (you, your employer and payments into pots). `null` when unknown. */
   annualPaidIn: number | null;
@@ -36,8 +33,9 @@ export const PensionRules: FC<PensionRulesProps> = ({
           <li>At your saved figures, {money(Math.round(annualPaidIn))} a year is paid in.</li>
         )}
         <li>The standard annual allowance is {money(rules.pensionAnnualAllowance)} a year.</li>
-        <li>The tax-free lump sum allowance is {money(UK_LUMP_SUM_ALLOWANCE)}.</li>
-        <li>The lump sum allowance is fixed here and not updated each tax year.</li>
+        {rules.pensionLumpSumAllowance !== null && (
+          <li>The tax-free lump sum allowance is {money(rules.pensionLumpSumAllowance)}.</li>
+        )}
         <li>The full new State Pension is {money(rules.statePension.fullNewAnnual)} a year.</li>
         <li>
           The auto-enrolment minimum is 8% of the pay that counts for your pension. At least 3% of
