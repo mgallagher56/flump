@@ -55,7 +55,10 @@ export const Negative: Story = {
   play: async ({ canvasElement }) => {
     const value = within(canvasElement).getByText("-£15,000");
     await expect(value).toBeTruthy();
-    await expect(value.className).toContain("c_text.primary");
+    // Money nests the figure in its own span, so read the colour class from the nearest element
+    // that carries one: the normal text colour, never a status (warning or danger) tone.
+    await expect(value.closest('[class~="c_text.primary"]')).not.toBeNull();
+    await expect(value.closest('[class*="c_status."]')).toBeNull();
   },
 };
 
