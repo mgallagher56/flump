@@ -16,6 +16,15 @@ describe("TaxRatesStatusBanner", () => {
     expect(screen.getByRole("status").textContent).toContain("2027/28 rates are not in Flump yet");
   });
 
+  it("fires when the rates in use are not the calendar year's, even without the fallback flag", () => {
+    // A figure worked out at an earlier year's rates (a stale loader value, an explicit year)
+    // is out of date in 2026/27 whatever the flag says.
+    render(<TaxRatesStatusBanner calendarYear="2026/27" ratesYear="2025/26" isFallback={false} />);
+    const text = screen.getByRole("status").textContent ?? "";
+    expect(text).toContain("Using 2025/26 rates, not 2026/27 rates");
+    expect(text).not.toContain("not in Flump yet");
+  });
+
   it("shows the provisional wording", () => {
     render(
       <TaxRatesStatusBanner
