@@ -27,7 +27,7 @@ Who it serves, with equal weight:
 | Cost summary, overpayment | `mortgage.ts:320`, `:370`, `:488` | Existing loans only. |
 | Mortgage page | `apps/web/app/routes/app.mortgage.tsx`, `apps/web/app/containers/mortgage/MortgageContainer.tsx:670` | Title "Your mortgage". A user with no mortgage sees an empty state (`:738`). |
 | Rate what-if | `apps/web/app/features/mortgage/components/RemortgageShockSim/RemortgageShockSim.tsx` | One new rate after the fix ends. See gaps. |
-| Scenario zone | `packages/ui/src/patterns/ScenarioZone/ScenarioZone.tsx:12-14`, `apps/web/app/hooks/useScenarioState.ts` | Mortgage zone already holds three tools, the zone's limit (`MortgageContainer.tsx:932-990`). |
+| Scenario zone | `packages/ui/src/patterns/ScenarioZone/ScenarioZone.tsx:30` (UX rule S6), `apps/web/app/hooks/useScenarioState.ts` | Mortgage zone already holds three tools, the zone's limit (`MortgageContainer.tsx:932-990`). |
 | Housing details (E32) | `packages/finance-engine/src/picture/selectors/housing-cost.ts:57`, `:130`, `:155`; `apps/web/app/features/housing/components/HousingDetails` | Saved status, monthly cost, fix-end date. |
 | Deposit timeline (E32) | `packages/finance-engine/src/deposit-timeline.ts:19`; `apps/web/app/features/savings/components/DepositTimeline` | Scenario only. The target is not stored (`SavingsContainer.tsx:157-160`). |
 | Take-home, budget | `picture/selectors/take-home.ts:28`, `budget-totals.ts:50`, `commitments.ts:32`, `safe-to-spend.ts:33`, `months-of-cover.ts:31` | "Left over each month" (`BudgetOverview.tsx:81`) and Breathing room. |
@@ -101,6 +101,8 @@ Recommendation: a new page, `/app/mortgage-estimates`, linked from the mortgage 
 
 Page order follows UX rule H14 (`docs/ux/UX-GUIDELINES.md:52`): `PageHeader`, `HeroFigure`, `KpiStrip` (three items), "Your details", one `ScenarioZone` with three tools, each a `SimulatorSplitLayout` with `SliderField` inputs and one `ResultBlock`. The hero is 4b, built from saved details (rule S10). The breakdown table has under 8 rows; a year-by-year table, if added, goes in a `CollapsibleDrawer`.
 
+Rule S6 allows at most three inputs in view per tool. Each loan tool shows its three main inputs. Deposit and other buying costs sit behind a small outline button with a chevron, labelled "Deposit and buying costs".
+
 Nothing typed twice: salary, take-home, budget, debts, housing cost, mortgage balance, rate, term and fix-end date all prefill from saved details. The rate tool for a saved mortgage also replaces the middle tab on the mortgage page, so there is one rate tool.
 
 ## 6. Proposed wording
@@ -149,7 +151,7 @@ Hand-worked test cases:
 3. **Payment to loan at 4.5% over 25 years.** r = 0.00375, n = 300. 1.00375^300 = 3.07374. £1,000 x 2.07374 / (0.00375 x 3.07374) = £179,910.32.
 4. **Rate rise, £200,000 over 25 years.** At 4%: 1.0033333^300 = 2.71377; payment = 200,000 x 0.0033333 x 2.71377 / 1.71377 = £1,055.67. At 6%: 1.005^300 = 4.46497; payment = 200,000 x 0.005 x 4.46497 / 3.46497 = £1,288.60. Rise: £232.93. At 2%: 1.0016667^300 = 1.64804; payment = £847.71.
 5. **Rate fall floored at 0%.** £120,000 over 240 months at 1.5% less 2 points is 0%: £120,000 / 240 = £500.00.
-6. **Fix ends in two months.** £100,000 at 3%, paying £500. Month 1: interest £250.00, balance £99,750.00. Month 2: interest £249.38, balance £99,499.38. At 5% over 238 months: 1.0041667^238 = 2.69018; payment = £659.87.
+6. **Fix ends in two months.** £100,000 at 3% with 240 months left, paying £500. Month 1: interest £250.00, balance £99,750.00. Month 2: interest £249.38, balance £99,499.38. At 5% over 238 months: 1.0041667^238 = 2.69018; payment = £659.87.
 7. **Room before housing.** £2,600 - £950 - £150 = £1,500. With savings £200: £1,300. With other spending £400: £900.
 
 **S2. Web (effort L).** New `apps/web/app/routes/app.mortgage-estimates.tsx` and container. New colocated components under `apps/web/app/features/mortgage/components/` (`HousingRoomSummary`, `LoanFromPaymentTool`, `IncomeMultipleTool`, `RateChangeTool`), each with styles, stories, test and index. Replace `RemortgageShockSim` with `RateChangeTool` on the mortgage page. Links from `MortgageContainer.tsx`, `DepositTimeline` and navigation. Laws: AGENTS.md sections 1, 2 (semantic tokens, tabular numbers), 3, 4, 10, 11. Tests: component tests, stories in light and dark, an E2E case in `apps/e2e/tests/mortgage.spec.ts`, new visual baselines. One row in `docs/audit/plans/E12-mobile-parity-log.md` for the changed mortgage rate tool.
@@ -193,6 +195,7 @@ Lender decisions depend on credit files, criteria and stress rates Flump cannot 
 - LBTT and LTT rates: not read. The gov.uk SDLT page was read only to confirm it has bands and a first-time buyer relief.
 - Whether a generic calculator is outside Article 53A, or is a financial promotion: solicitor question.
 - How an owner's mortgage payment is classed in budget entries (housing or debt category) in real data.
+- Whether debt commitments overlap essential budget entries, which would count a payment twice in "left each month before housing".
 - Line numbers inside `RemortgageShockSim.tsx` are approximate.
 - Whether the architecture laws on main need five files or four for `features/mortgage` components.
 - The current tax-vector sign-off state behind take-home.
