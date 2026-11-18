@@ -15,7 +15,6 @@ import {
   DataList,
   EmptyState,
   Icon,
-  Illustration,
   InlineAlert,
   PageBody,
   PageHeader,
@@ -587,6 +586,8 @@ const BudgetContainer: FC = () => {
             </>
           ) : undefined
         }
+        // The page icon, empty or filled in; the empty state has none, so one is in view.
+        illustration="onboarding"
         subtitle="Your income, spending and how long your money lasts."
         title="Your budget"
       />
@@ -645,7 +646,6 @@ const BudgetContainer: FC = () => {
                 </Button>
               }
               description="Add your income and what you spend each month to see what is left over and how long your money lasts."
-              illustration={<Illustration scene="onboarding" />}
               title="No budget yet"
             />
           ) : (
