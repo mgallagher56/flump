@@ -285,7 +285,8 @@ errors: recreate the database or wait.
 `baseline.md` beside it the same as a table. A run compares itself with the baseline and writes
 `test-results-interaction-cost/summary.md` (and the GitHub job summary): any flow whose clicks,
 keystrokes, Tab hops or transitions rise is listed, and each one is printed as a warning.
-**It never fails the run** (owner decision ED1, option (a): warn-only until E38 S1 and S2 set the
+**It never fails the run** (ED1 option (a), a coordinator ruling under the owner's delegation of
+low-stakes decisions: warn-only until E38 S1 and S2 set the
 target baselines). A run that finds lower costs lists them as improvements. A flow that fails
 (most often because a page changed under it) is listed as "Not measured" and warned about, so it
 never passes as "no change".
