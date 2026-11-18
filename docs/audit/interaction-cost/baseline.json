@@ -27,8 +27,8 @@
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 364,
-          "tabHops": 336,
+          "keystrokes": 151,
+          "tabHops": 120,
           "routeChanges": 0,
           "dialogOpens": 0,
           "dialogCloses": 0,
@@ -132,7 +132,7 @@
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 69,
+          "keystrokes": 67,
           "tabHops": 45,
           "routeChanges": 0,
           "dialogOpens": 2,
@@ -202,8 +202,8 @@
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 83,
-          "tabHops": 62,
+          "keystrokes": 76,
+          "tabHops": 56,
           "routeChanges": 2,
           "dialogOpens": 0,
           "dialogCloses": 0,

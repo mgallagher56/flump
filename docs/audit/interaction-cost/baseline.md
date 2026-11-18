@@ -9,7 +9,7 @@ Every count is what the browser received while the harness did the task as a per
 - **Clicks or taps**: pointer presses. Picking an option in a native select is counted as one
   click without being sent (the browser draws that list), shown as "select picks".
 - **Keystrokes**: key presses, one per key, so Ctrl+A is two and typing "400" is three.
-- **Tab hops**: Tab presses in the keyboard-only run, Tab forward only.
+- **Tab hops**: Tab presses in the keyboard-only run, forward, or backward with Shift held when the control is above the focus.
 - **Transitions**: path changes plus dialog or sheet opens (an open and close cycle counts once).
 
 Scrolling is not counted, and neither are menus (such as Self Assessment's Add income).
@@ -19,7 +19,7 @@ Self Assessment has no record filter yet, so flow 5 adds and edits records but d
 | --- | --- | ---: | ---: | ---: | ---: |
 | 1. Create and edit a budget | 1280 mouse | 12 | 23 | 0 | 0 (0 + 0) |
 | 1. Create and edit a budget | 375 touch | 12 | 23 | 0 | 0 (0 + 0) |
-| 1. Create and edit a budget | 1280 keyboard | 0 | 364 | 336 | 0 (0 + 0) |
+| 1. Create and edit a budget | 1280 keyboard | 0 | 151 | 120 | 0 (0 + 0) |
 | 2. Complete a monthly check-in | 1280 mouse | 10 | 5 | 0 | 2 (1 + 1) |
 | 2. Complete a monthly check-in | 375 touch | 10 | 5 | 0 | 2 (1 + 1) |
 | 2. Complete a monthly check-in | 1280 keyboard | 0 | 38 | 24 | 2 (1 + 1) |
@@ -28,13 +28,13 @@ Self Assessment has no record filter yet, so flow 5 adds and edits records but d
 | 3. Add, edit, update the balance of and remove an account | 1280 keyboard | 0 | 99 | 54 | 6 (2 + 4) |
 | 4. Add and edit a debt and model paying it off | 1280 mouse | 8 | 20 | 0 | 2 (0 + 2) |
 | 4. Add and edit a debt and model paying it off | 375 touch | 8 | 20 | 0 | 2 (0 + 2) |
-| 4. Add and edit a debt and model paying it off | 1280 keyboard | 0 | 69 | 45 | 2 (0 + 2) |
+| 4. Add and edit a debt and model paying it off | 1280 keyboard | 0 | 67 | 45 | 2 (0 + 2) |
 | 5. Add and edit Self Assessment income and cost records | 1280 mouse | 14 | 29 | 0 | 3 (0 + 3) |
 | 5. Add and edit Self Assessment income and cost records | 375 touch | 14 | 29 | 0 | 3 (0 + 3) |
 | 5. Add and edit Self Assessment income and cost records | 1280 keyboard | 0 | 106 | 66 | 3 (0 + 3) |
 | 6. Update salary and pension, then model pension and mortgage changes | 1280 mouse | 10 | 21 | 0 | 2 (2 + 0) |
 | 6. Update salary and pension, then model pension and mortgage changes | 375 touch | 10 | 21 | 0 | 3 (2 + 1) |
-| 6. Update salary and pension, then model pension and mortgage changes | 1280 keyboard | 0 | 83 | 62 | 2 (2 + 0) |
+| 6. Update salary and pension, then model pension and mortgage changes | 1280 keyboard | 0 | 76 | 56 | 2 (2 + 0) |
 | 7. New-user setup to the first dashboard figure | 1280 mouse | 9 (1 select picks) | 7 | 0 | 1 (1 + 0) |
 | 7. New-user setup to the first dashboard figure | 375 touch | 9 (1 select picks) | 7 | 0 | 1 (1 + 0) |
 | 7. New-user setup to the first dashboard figure | 1280 keyboard | 0 | 45 | 33 | 1 (1 + 0) |

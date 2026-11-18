@@ -11,7 +11,7 @@ export const MAX_TAB_HOPS = 120;
  *
  * - `desktop-pointer`: mouse clicks; to replace a field's text, click it, Ctrl/Cmd+A, type.
  * - `phone-touch`: the same with taps.
- * - `desktop-keyboard`: Tab forward until the control has focus, then Enter (Space for a checkbox,
+ * - `desktop-keyboard`: Tab (or Shift+Tab) until the control has focus, then Enter (Space for a checkbox,
  *   switch or radio). Tabbing into a text field selects its text, so typing replaces it. Within a
  *   radio group or an open menu the arrow keys move, as they do for a person.
  *
@@ -89,12 +89,27 @@ export class Actor {
     await this.page.keyboard.press(key);
   }
 
-  /** Presses Tab until `target` has focus. Throws after MAX_TAB_HOPS. */
+  /**
+   * Presses Tab until `target` has focus, as a person would: forward when the control comes later
+   * in the page than the focus, and backward (Shift held down once, then Tab) when it comes
+   * earlier. Each Tab is a hop; holding Shift adds one keystroke. Throws after MAX_TAB_HOPS.
+   */
   async tabTo(target: Locator): Promise<void> {
     await target.waitFor({ state: "visible" });
-    for (let hops = 0; hops <= MAX_TAB_HOPS; hops++) {
-      if (await hasFocus(target)) return;
-      await this.page.keyboard.press("Tab");
+    if (await hasFocus(target)) return;
+    const backward = await target.evaluate((el) => {
+      const focused = document.activeElement;
+      if (!focused || focused === document.body) return false;
+      return Boolean(focused.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING);
+    });
+    if (backward) await this.page.keyboard.down("Shift");
+    try {
+      for (let hops = 0; hops < MAX_TAB_HOPS; hops++) {
+        await this.page.keyboard.press("Tab");
+        if (await hasFocus(target)) return;
+      }
+    } finally {
+      if (backward) await this.page.keyboard.up("Shift");
     }
     throw new Error(`Not reachable with Tab within ${MAX_TAB_HOPS} presses: ${target}`);
   }

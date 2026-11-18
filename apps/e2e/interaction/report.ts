@@ -208,7 +208,7 @@ export function baselineMarkdown(baseline: InteractionBaseline): string {
     "- **Clicks or taps**: pointer presses. Picking an option in a native select is counted as one",
     '  click without being sent (the browser draws that list), shown as "select picks".',
     '- **Keystrokes**: key presses, one per key, so Ctrl+A is two and typing "400" is three.',
-    "- **Tab hops**: Tab presses in the keyboard-only run, Tab forward only.",
+    "- **Tab hops**: Tab presses in the keyboard-only run, forward, or backward with Shift held when the control is above the focus.",
     "- **Transitions**: path changes plus dialog or sheet opens (an open and close cycle counts once).",
     "",
     "Scrolling is not counted, and neither are menus (such as Self Assessment's Add income).",
