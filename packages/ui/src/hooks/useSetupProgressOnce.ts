@@ -1,5 +1,6 @@
 import { durations } from "@flump/tokens/native";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useHydratingRender } from "./useHydratingRender";
 import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 
@@ -49,19 +50,27 @@ export interface UseSetupProgressOnceResult {
  * Tokens: `slow` (320ms), `standard`.
  * Plays once, the first time the dashboard is seen after a step is done. Never on later visits.
  * Reduced motion: The ring/bar is drawn at its new length immediately.
+ * Server-rendered pages: the server HTML already shows the new length, so the first view after
+ * hydration keeps it and records it as seen; the fill plays only on a client mount.
  */
 export function useSetupProgressOnce(doneCount: number): UseSetupProgressOnceResult {
   const reducedMotion = usePrefersReducedMotion();
   const [currentValue, setCurrentValue] = useState(doneCount);
   const [isAnimating, setIsAnimating] = useState(false);
+  // Read once: a hydrating first render keeps the server-painted length instead of replaying.
+  const hydrating = useHydratingRender();
+  const hydratedFromServer = useRef(hydrating);
 
   // A layout effect, so the ring moves back to the stored count before the first paint (no full
   // ring, then a replay from the old length).
   useIsomorphicLayoutEffect(() => {
     const stored = getStoredStepCount();
+    const fromServer = hydratedFromServer.current;
+    hydratedFromServer.current = false;
 
-    if (stored === null || doneCount <= stored || reducedMotion) {
-      // First visit, no new step, or reduced motion: drawn at its new length at once.
+    if (fromServer || stored === null || doneCount <= stored || reducedMotion) {
+      // Hydrating server HTML, first visit, no new step, or reduced motion: drawn at its new
+      // length at once.
       storeStepCount(doneCount);
       setCurrentValue(doneCount);
       setIsAnimating(false);

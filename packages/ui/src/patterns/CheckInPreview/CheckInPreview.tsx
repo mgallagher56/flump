@@ -138,20 +138,6 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
     advance("Confirmed");
   };
 
-  const handleNoChangeToRest = () => {
-    const nextRecorded = { ...recorded };
-    for (let i = currentIndex; i < accounts.length; i++) {
-      const acc = accounts[i];
-      if (acc && !nextRecorded[acc.id]) {
-        nextRecorded[acc.id] = { kind: "no-change", value: acc.savedBalance };
-      }
-    }
-    setRecorded(nextRecorded);
-    setCurrentIndex(accounts.length);
-    setShowEmptyError(false);
-    setAnnouncement("All remaining accounts confirmed with no change.");
-  };
-
   const handleReset = () => {
     setCurrentIndex(0);
     setDrafts({});
@@ -252,18 +238,6 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
               </Button>
             ) : (
               <div />
-            )}
-
-            {accounts.length - currentIndex > 1 && (
-              <Button
-                data-testid={`${id}-no-change-rest`}
-                id={`${id}-no-change-rest`}
-                onClick={handleNoChangeToRest}
-                size="sm"
-                variant="ghost"
-              >
-                No change to the rest
-              </Button>
             )}
           </footer>
         </>

@@ -86,11 +86,14 @@ describe("DatePicker", () => {
     const { grid } = openPicker();
     expect(grid.getAttribute("aria-labelledby")).toBeTruthy();
     expect(screen.getAllByRole("row")).toHaveLength(7);
-    expect(screen.getAllByRole("columnheader")[0]?.getAttribute("aria-label")).toBe("Monday");
+    // The short name shows; the full name is visually hidden text, so the header is named by it.
+    expect(screen.getByRole("columnheader", { name: "Monday" })).toBeTruthy();
     expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026");
     const stops = grid.querySelectorAll("button[tabindex='0']");
     expect(stops).toHaveLength(1);
     expect(screen.getByRole("gridcell", { selected: true }).textContent).toBe("16");
+    // The selection is stated once, on the gridcell; the day buttons are not toggle buttons.
+    expect(grid.querySelectorAll("button[aria-pressed]")).toHaveLength(0);
   });
 
   it("focuses today when there is no value", () => {

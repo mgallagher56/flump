@@ -39,7 +39,7 @@ export const NotFoundPage: FC = () => (
     <main className={mainContent()} id="main" tabIndex={-1}>
       <section aria-labelledby="not-found-title" className={notFoundCard()}>
         <div className={notFoundIllustration()}>
-          <Illustration scene="not-found" size="sm" />
+          <Illustration scene="not-found" size="sm" settle={false} />
         </div>
         <h1 className={notFoundHeading()} id="not-found-title">
           {NOT_FOUND_COPY.heading}

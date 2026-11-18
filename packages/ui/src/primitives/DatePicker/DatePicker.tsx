@@ -15,6 +15,7 @@ import {
   datePickerPeriodGridRecipe,
   datePickerTitleGroupRecipe,
   datePickerTriggerRecipe,
+  datePickerVisuallyHiddenRecipe,
   datePickerWeekdayRecipe,
   datePickerWeekdaysRecipe,
   datePickerWeekRowRecipe,
@@ -483,12 +484,12 @@ export const DatePicker: FC<DatePickerProps> = ({
                     // biome-ignore lint/a11y/useSemanticElements: column header of the date grid
                     // biome-ignore lint/a11y/useFocusableInteractive: headers are not focus stops in a date grid
                     <div
-                      aria-label={weekday.long}
                       className={datePickerWeekdayRecipe()}
                       key={weekday.long}
                       role="columnheader"
                     >
                       <span aria-hidden="true">{weekday.short}</span>
+                      <span className={datePickerVisuallyHiddenRecipe()}>{weekday.long}</span>
                     </div>
                   ))}
                 </div>
@@ -508,7 +509,6 @@ export const DatePicker: FC<DatePickerProps> = ({
                           <button
                             aria-current={isToday ? "date" : undefined}
                             aria-label={formatDisplayDate(cell.iso)}
-                            aria-pressed={isSelected}
                             className={datePickerDayRecipe({
                               outside: cell.outside,
                               today: isToday,

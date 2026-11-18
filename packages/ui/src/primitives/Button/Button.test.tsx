@@ -169,6 +169,37 @@ describe("Button Primitive", () => {
       }
     });
 
+    it("announces the saved label beside an asChild link and guards its clicks", () => {
+      vi.useFakeTimers();
+      try {
+        const onClick = vi.fn();
+        const { rerender } = render(
+          <Button asChild onClick={onClick} saved={false}>
+            <a href="/accounts">Save balance</a>
+          </Button>,
+        );
+        const status = screen.getByRole("status");
+        expect(status.textContent).toBe("");
+
+        rerender(
+          <Button asChild onClick={onClick} saved>
+            <a href="/accounts">Save balance</a>
+          </Button>,
+        );
+        act(() => {
+          vi.runOnlyPendingTimers();
+        });
+        expect(status.textContent).toBe("Saved");
+        const link = screen.getByRole("link", { name: "Save balance" });
+        expect(link.getAttribute("data-saved")).toBe("true");
+        expect(link.contains(status)).toBe(false);
+        fireEvent.click(link);
+        expect(onClick).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it("adds no live region to a button that never confirms saves", () => {
       render(<Button>Save balance</Button>);
       expect(screen.queryByRole("status")).toBeNull();

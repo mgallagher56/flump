@@ -85,7 +85,7 @@ export const HomePage: FC = () => {
           <HomeFAQ />
           <div className={finalCta()} data-testid="home-final-cta" id="get-started">
             <div className={finalCtaIllustration()} data-testid="home-final-cta-illustration">
-              <Illustration scene="onboarding" size="sm" />
+              <Illustration scene="onboarding" size="sm" settle={false} />
             </div>
             <h3 className={finalCtaTitle()} id="home-cta-title">
               Ready to see where you stand?

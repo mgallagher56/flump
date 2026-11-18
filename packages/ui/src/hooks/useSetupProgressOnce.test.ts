@@ -76,6 +76,43 @@ describe("useSetupProgressOnce", () => {
     expect(result.current.isAnimating).toBe(false);
   });
 
+  it("keeps the server-painted length on a server-rendered page and records it as seen", () => {
+    mockMatchMedia(false);
+    storeStepCount(2);
+    const container = document.body.appendChild(document.createElement("div"));
+
+    const { result } = renderHook(() => useSetupProgressOnce(3), {
+      container,
+      hydrate: true,
+      wrapper: StrictMode,
+    });
+    expect(result.current.currentValue).toBe(3);
+    expect(result.current.isAnimating).toBe(false);
+    expect(getStoredStepCount()).toBe(3);
+
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(result.current.currentValue).toBe(3);
+    expect(result.current.isAnimating).toBe(false);
+  });
+
+  it("fills when the ring mounts on the client after hydration", () => {
+    mockMatchMedia(false);
+    const container = document.body.appendChild(document.createElement("div"));
+    renderHook(() => useSetupProgressOnce(2), { container, hydrate: true });
+    expect(getStoredStepCount()).toBe(2);
+
+    // A client navigation back to the dashboard after another step was done.
+    const { result } = renderHook(() => useSetupProgressOnce(3));
+    expect(result.current.currentValue).toBe(2);
+    expect(result.current.isAnimating).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(16);
+    });
+    expect(result.current.currentValue).toBe(3);
+  });
+
   it("still fills to the new count and finishes under StrictMode's double effect run", () => {
     mockMatchMedia(false);
     storeStepCount(2);

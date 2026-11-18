@@ -1,4 +1,3 @@
-import { buildFinancialPicture, SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { BreathingRoomPreview } from "./BreathingRoomPreview";
@@ -8,18 +7,15 @@ import {
   breathingRoomValue,
 } from "./BreathingRoomPreview.wording";
 
-const gbp = (value: number) =>
-  new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    maximumFractionDigits: 0,
-  }).format(value);
-
-const coverOf = (household: "renter" | "homeowner") => {
-  const cover = buildFinancialPicture(SAMPLE_HOUSEHOLDS[household].fixture).monthsOfCover;
-  if (cover.status !== "known") throw new Error("sample household cover must be known");
-  return cover.value;
-};
+// Worked by hand from the persona fixtures (packages/finance-engine/src/picture/__fixtures__/personas):
+// renter (sam.ts): liquid cash 1,850 current + 4,200 cash ISA = 6,050; essentials 850 rent
+//   + 120 bills + 220 groceries + 90 travel = 1,280 a month; 6,050 / 1,280 = 4.73, so 4.7 months.
+// homeowner (homeowner.ts): liquid cash 21,000; essentials 1,050 mortgage + 330 council tax and
+//   energy + 400 groceries = 1,780 a month; 21,000 / 1,780 = 11.80, so 11.8 months.
+const EXPECTED = {
+  renter: { value: "About 4.7 months", essentials: "£1,280 a month", savings: "£6,050" },
+  homeowner: { value: "About 11.8 months", essentials: "£1,780 a month", savings: "£21,000" },
+} as const;
 
 describe("breathing room wording", () => {
   it("always says About, one decimal and the right plural", () => {
@@ -30,42 +26,46 @@ describe("breathing room wording", () => {
     expect(breathingRoomValue(130)).toBe("More than 10 years");
     expect(breathingRoomPhrase(4.7)).toBe("about 4.7 months");
   });
+
+  it("words a figure that rounds to 1 as one month", () => {
+    expect(breathingRoomValue(1.04)).toBe("About 1 month");
+    expect(breathingRoomValue(0.96)).toBe("About 1 month");
+    expect(breathingRoomValue(1.06)).toBe("About 1.1 months");
+  });
 });
 
 describe("BreathingRoomPreview", () => {
   it.each(["renter", "homeowner"] as const)(
     "shows the %s household's saved breathing room from the engine",
     (household) => {
-      const cover = coverOf(household);
+      const expected = EXPECTED[household];
       render(<BreathingRoomPreview household={household} id="test-br" />);
 
       expect(screen.getByRole("heading", { name: "Model a change" })).toBeDefined();
       expect(screen.getByText("Breathing room")).toBeDefined();
-      expect(screen.getByText(breathingRoomValue(cover.months))).toBeDefined();
+      expect(screen.getByText(expected.value)).toBeDefined();
       expect(screen.getByText(BREATHING_ROOM_DESCRIPTION)).toBeDefined();
-      expect(screen.getByTestId("test-br-essentials").textContent).toBe(
-        `${gbp(cover.monthlyEssentials)} a month`,
-      );
-      expect(screen.getByTestId("test-br-savings").textContent).toBe(gbp(cover.liquidCash));
+      expect(screen.getByTestId("test-br-essentials").textContent).toBe(expected.essentials);
+      expect(screen.getByTestId("test-br-savings").textContent).toBe(expected.savings);
       expect(screen.queryByTestId("test-br-delta")).toBeNull();
     },
   );
 
   it("models a change to savings and resets to the saved figures", () => {
-    const cover = coverOf("renter");
     render(<BreathingRoomPreview household="renter" id="test-br" />);
 
     fireEvent.change(screen.getByLabelText("Change in emergency savings"), {
       target: { value: "1000" },
     });
 
-    expect(screen.getByTestId("test-br-savings").textContent).toBe(gbp(cover.liquidCash + 1000));
-    expect(screen.getByTestId("test-br-delta").textContent).toMatch(
-      /^\+\d+(\.\d)? months? compared to saved figures$/,
+    // 6,050 + 1,000 = 7,050; 7,050 / 1,280 = 5.51, so 5.5 months: 0.8 more than the saved 4.7.
+    expect(screen.getByTestId("test-br-savings").textContent).toBe("£7,050");
+    expect(screen.getByTestId("test-br-delta").textContent).toBe(
+      "+0.8 months compared to saved figures",
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
-    expect(screen.getByText(breathingRoomValue(cover.months))).toBeDefined();
+    expect(screen.getByText(EXPECTED.renter.value)).toBeDefined();
     expect(screen.queryByTestId("test-br-delta")).toBeNull();
   });
 });

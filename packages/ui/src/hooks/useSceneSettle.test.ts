@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSceneSettled, useSceneSettle } from "./useSceneSettle";
+import { clearSceneSettled, isSceneSettled, useSceneSettle } from "./useSceneSettle";
 
 function mockMatchMedia(initial: boolean) {
   let matches = initial;
@@ -50,6 +50,37 @@ describe("useSceneSettle", () => {
 
     const second = renderHook(() => useSceneSettle("empty-accounts"));
     expect(second.result.current).toBe(false);
+  });
+
+  it("stays still on a server-rendered page and records the scene as seen", () => {
+    mockMatchMedia(false);
+    const container = document.body.appendChild(document.createElement("div"));
+    const { result } = renderHook(() => useSceneSettle("empty-accounts"), {
+      container,
+      hydrate: true,
+    });
+    expect(result.current).toBe(false);
+    expect(isSceneSettled("empty-accounts")).toBe(true);
+  });
+
+  it("stays still when hydrating under StrictMode's double effect run", () => {
+    mockMatchMedia(false);
+    const container = document.body.appendChild(document.createElement("div"));
+    const { result } = renderHook(() => useSceneSettle("empty-goals"), {
+      container,
+      hydrate: true,
+      wrapper: StrictMode,
+    });
+    expect(result.current).toBe(false);
+  });
+
+  it("settles when a scene first mounts on the client after hydration", () => {
+    mockMatchMedia(false);
+    const container = document.body.appendChild(document.createElement("div"));
+    renderHook(() => useSceneSettle("empty-accounts"), { container, hydrate: true });
+    // A client navigation to a page with another scene.
+    const { result } = renderHook(() => useSceneSettle("empty-goals"));
+    expect(result.current).toBe(true);
   });
 
   it("still settles on the first view under StrictMode's double effect run", () => {

@@ -13,7 +13,7 @@ import {
   breathingRoomPhrase,
 } from "../BreathingRoomPreview/BreathingRoomPreview.wording";
 import { HeroFigure } from "../HeroFigure/HeroFigure";
-import { KpiStrip, type KpiStripItems } from "../KpiStrip/KpiStrip";
+import { KpiStrip } from "../KpiStrip/KpiStrip";
 import {
   dashboardPreviewRoot,
   dashboardSectionGrid,
@@ -153,7 +153,7 @@ export const DashboardPreview: FC<DashboardPreviewProps> = ({
 
       {kpis.length > 0 && (
         <div data-testid={`${id}-kpis`}>
-          <KpiStrip items={kpis.slice(0, 4) as unknown as KpiStripItems} />
+          <KpiStrip columns={kpis.length as 1 | 2 | 3}>{kpis}</KpiStrip>
         </div>
       )}
 
