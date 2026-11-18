@@ -10,7 +10,6 @@ import {
   formatSignedChange,
   formatWarmConfirmation,
   lastFigureText,
-  netWorthChangeSentence,
   SAVE_ERROR_TOAST,
   savedToast,
   spokenChange,
@@ -25,10 +24,6 @@ describe("snapshot copy", () => {
   });
 
   it("words a change the same whether it went up or down (advice policy R1)", () => {
-    const up = netWorthChangeSentence(500, "2026-10");
-    const down = netWorthChangeSentence(-500, "2026-10");
-    expect(up).toBe("Net worth changed by +£500 since October 2026.");
-    expect(down.replace("−", "+")).toBe(up);
     expect(spokenChange(500)).toBe("up £500");
     expect(spokenChange(-500)).toBe("down £500");
     expect(spokenChange(0)).toBe("no change");

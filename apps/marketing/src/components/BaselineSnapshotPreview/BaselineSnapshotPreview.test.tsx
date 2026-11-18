@@ -1,4 +1,3 @@
-import { buildFinancialPicture, SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
 import { expectPageRules } from "@repo/ui/testing";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
@@ -8,23 +7,17 @@ import {
   PREVIEW_EXAMPLE,
 } from "./BaselineSnapshotPreview";
 
-const gbp = (value: number) =>
-  new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    maximumFractionDigits: 0,
-  }).format(value);
-
 describe("BaselineSnapshotPreview", () => {
   it("takes its figures from the sample household the preview page opens on", () => {
-    const picture = buildFinancialPicture(SAMPLE_HOUSEHOLDS[HOME_PREVIEW_HOUSEHOLD].fixture);
-    expect(PREVIEW_EXAMPLE.netWorthGbp).toBe(picture.netWorth.netWorth);
-    expect(PREVIEW_EXAMPLE.leftOverMonthlyGbp).toBe(
-      picture.budget.status === "known" ? picture.budget.value.surplus : null,
-    );
-    expect(PREVIEW_EXAMPLE.monthsOfCover).toBe(
-      picture.monthsOfCover.status === "known" ? picture.monthsOfCover.value.months : null,
-    );
+    // Worked by hand from the renter persona (finance-engine picture/__fixtures__/personas/sam.ts):
+    // net worth: 1,850 current + 4,200 cash ISA = 6,050 (the student loan is not counted).
+    // left over: 2,382 pay - 850 rent - 120 bills - 220 groceries - 90 travel - 150 ISA saving
+    //   - 200 going out = 752.
+    // breathing room: 6,050 liquid cash / 1,280 essentials = 4.73, so 4.7 months.
+    expect(HOME_PREVIEW_HOUSEHOLD).toBe("renter");
+    expect(PREVIEW_EXAMPLE.netWorthGbp).toBe(6050);
+    expect(PREVIEW_EXAMPLE.leftOverMonthlyGbp).toBe(752);
+    expect(PREVIEW_EXAMPLE.monthsOfCover).toBe(4.7);
   });
 
   it("shows three example figures and labels them as an example", () => {
@@ -33,10 +26,10 @@ describe("BaselineSnapshotPreview", () => {
     expect(screen.getByText("Example")).toBeDefined();
     expect(screen.getByText("Example household. These are sample figures.")).toBeDefined();
     expect(screen.getByText("Net worth")).toBeDefined();
-    expect(screen.getByText(gbp(PREVIEW_EXAMPLE.netWorthGbp))).toBeDefined();
+    expect(screen.getByText("£6,050")).toBeDefined();
     expect(screen.getByText("Left over each month")).toBeDefined();
     expect(screen.getByText("Breathing room")).toBeDefined();
-    expect(screen.getByText(/^About \d+(\.\d)? months?$/)).toBeDefined();
+    expect(screen.getByText("About 4.7 months")).toBeDefined();
     expect(screen.getByText("How long your savings would cover the essentials.")).toBeDefined();
     expectPageRules(container, { maxFigures: 3, projectionNotices: 0 });
   });

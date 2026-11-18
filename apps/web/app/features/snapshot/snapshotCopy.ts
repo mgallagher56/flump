@@ -22,11 +22,6 @@ export function formatSignedChange(change: number): string {
   return rounded > 0 ? `+${body}` : `−${body}`;
 }
 
-/** "Net worth changed by +£1,200 since October 2026." The same sentence in both directions. */
-export function netWorthChangeSentence(change: number, since: MonthKey): string {
-  return `Net worth changed by ${formatSignedChange(change)} since ${formatMonth(since)}.`;
-}
-
 /** Screen-reader text for a change: "up £1,200", "down £300", "no change". */
 export function spokenChange(change: number): string {
   const rounded = Math.round(change);

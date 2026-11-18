@@ -26,7 +26,6 @@ export {
   type DoneKind,
   doneKind,
   hasSource,
-  restAnswer,
   resumeIndex,
   type StatementPrompt,
   type StepFigure,

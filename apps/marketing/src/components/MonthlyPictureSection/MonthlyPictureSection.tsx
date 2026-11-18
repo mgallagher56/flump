@@ -77,7 +77,7 @@ export const MonthlyPictureSection: FC = () => (
     {/* No figures in this band, so the scene pushes nothing down on a phone (B10). */}
     <div className={pictureFooterRow()}>
       <div className={pictureIllustration()} data-testid="what-you-can-see-illustration">
-        <Illustration scene="empty-savings" size="sm" />
+        <Illustration scene="empty-savings" size="sm" settle={false} />
       </div>
       <p className={pictureFooter()}>
         Want to try one first, without signing in?{" "}

@@ -280,3 +280,6 @@ export const datePickerFooterRecipe = cva({
     borderTopColor: "border.subtle",
   },
 });
+
+/** Full weekday name for screen readers; the short name is what shows. */
+export const datePickerVisuallyHiddenRecipe = cva({ base: { srOnly: true } });

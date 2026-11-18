@@ -80,6 +80,28 @@ export const Default: Story = {
 
 export const DefaultDark: Story = { ...Default, globals: { theme: "dark" } };
 
+/** Under a page section's own h2, the zone's heading steps down a level. */
+export const HeadingLevelThree: Story = {
+  args: { footer: <UpdateLink />, headingAs: "h3" },
+  render: (args) => (
+    <section aria-labelledby="scenario-section-heading">
+      <h2 id="scenario-section-heading">Your mortgage</h2>
+      <ScenarioZone {...args}>
+        <OverpaymentTool onChange={() => {}} value={null} />
+      </ScenarioZone>
+    </section>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      canvas.getByRole("heading", { level: 3, name: "Model a change" }),
+    ).toBeInTheDocument();
+    await expect(canvas.getByRole("region", { name: "Model a change" })).toBeInTheDocument();
+  },
+};
+
+export const HeadingLevelThreeDark: Story = { ...HeadingLevelThree, globals: { theme: "dark" } };
+
 const Interactive = () => {
   const [extra, setExtra] = useState<number | null>(null);
   const [announcement, setAnnouncement] = useState("");

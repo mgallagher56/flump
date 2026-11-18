@@ -30,6 +30,8 @@ export type ButtonProps = ComponentProps<"button"> &
      * changing the button width, and announces the label politely. Ignores clicks while true.
      * Pass it (true or false) from the first render on a button that confirms saves, so its live
      * region is in place before the first "Saved".
+     * With `asChild` there is no visual swap (the child owns its content); the announcement,
+     * `data-saved` and the click guard still apply.
      */
     saved?: boolean;
     /** Label shown during save confirmation. Defaults to "Saved". */
@@ -63,21 +65,18 @@ export const Button = ({
     onClick?.(event);
   };
 
-  if (asChild) {
-    return (
-      <Slot
-        className={classes}
-        data-saved={isSaved ? "true" : undefined}
-        data-variant={variant ?? "primary"}
-        {...busy}
-        onClick={handleClick}
-        {...props}
-      >
-        {children}
-      </Slot>
-    );
-  }
-  const button = (
+  const control = asChild ? (
+    <Slot
+      className={classes}
+      data-saved={isSaved ? "true" : undefined}
+      data-variant={variant ?? "primary"}
+      {...busy}
+      onClick={handleClick}
+      {...props}
+    >
+      {children}
+    </Slot>
+  ) : (
     <button
       className={classes}
       data-saved={isSaved ? "true" : undefined}
@@ -121,10 +120,10 @@ export const Button = ({
   // A save-confirming button (one given `saved` at all) carries a polite live region beside it, so
   // "Saved" is spoken: the visible swap is hidden from assistive technology, and a live region
   // inside a button is not reliably read.
-  if (saved === undefined) return button;
+  if (saved === undefined) return control;
   return (
     <>
-      {button}
+      {control}
       <LiveRegion
         announceInitial
         debounceMs={0}

@@ -21,7 +21,7 @@
     },
     "apps/backend": {
       "name": "backend",
-      "version": "1.38.0",
+      "version": "1.36.0",
       "dependencies": {
         "@flump/api-contract": "workspace:*",
         "@flump/banking": "workspace:*",
@@ -67,7 +67,7 @@
     },
     "apps/marketing": {
       "name": "marketing",
-      "version": "1.36.2",
+      "version": "1.36.0",
       "dependencies": {
         "@flump/business-details": "workspace:*",
         "@flump/finance-engine": "workspace:*",
@@ -127,7 +127,7 @@
     },
     "apps/web": {
       "name": "@flump/web",
-      "version": "1.44.0",
+      "version": "1.42.0",
       "dependencies": {
         "@flump/api-client": "workspace:*",
         "@flump/api-contract": "workspace:*",

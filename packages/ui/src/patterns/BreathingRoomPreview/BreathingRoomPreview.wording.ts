@@ -12,8 +12,9 @@ const monthsFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }
 /** "4.7 months", "1 month", "10+ years". Plain wording: no target is implied. */
 export const formatBreathingRoomMonths = (months: number): string => {
   if (months > 120) return `${Math.floor(months / 12)}+ years`;
-  const value = Math.max(0, months);
-  return `${monthsFormat.format(value)} ${value === 1 ? "month" : "months"}`;
+  // The plural follows the figure as shown, so 1.04 reads "1 month", not "1 months".
+  const shown = monthsFormat.format(Math.max(0, months));
+  return `${shown} ${shown === "1" ? "month" : "months"}`;
 };
 
 /** The figure as a value: "About 1.5 months", "About 1 month", "More than 10 years". */

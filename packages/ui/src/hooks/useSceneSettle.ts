@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useHydratingRender } from "./useHydratingRender";
 import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 
@@ -50,6 +51,8 @@ export function clearSceneSettled(): void {
  * E17 Demo 7: Scene settling once on first view.
  * Returns true only the first time a scene is viewed during a visit/session.
  * Under `prefers-reduced-motion` or on subsequent views, returns false so the scene stays still.
+ * On a server-rendered page the still scene is already painted, so the first view after hydration
+ * stays still and is recorded as seen; the settle plays only when the scene mounts on the client.
  */
 export function useSceneSettle(sceneKey: string = "default"): boolean {
   const reducedMotion = usePrefersReducedMotion();
@@ -57,9 +60,19 @@ export function useSceneSettle(sceneKey: string = "default"): boolean {
   // The scene this instance claimed the settle for. A ref survives StrictMode's second effect run,
   // so the instance that marked the scene settled keeps playing it instead of seeing its own mark.
   const claimed = useRef<string | null>(null);
+  // Read once: a hydrating first render keeps the server-painted still scene instead of replaying.
+  const hydrating = useHydratingRender();
+  const hydratedFromServer = useRef(hydrating);
 
   // A layout effect, so the settle starts before the first paint (no still frame, then a replay).
   useIsomorphicLayoutEffect(() => {
+    if (hydratedFromServer.current) {
+      hydratedFromServer.current = false;
+      markSceneSettled(sceneKey);
+      setShouldSettle(false);
+      return;
+    }
+
     if (reducedMotion) {
       setShouldSettle(false);
       return;

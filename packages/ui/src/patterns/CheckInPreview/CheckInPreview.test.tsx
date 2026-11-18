@@ -72,7 +72,9 @@ describe("CheckInPreview", () => {
     expect(screen.getByText(CHECK_IN_EMPTY_BALANCE_ERROR)).toBeDefined();
     expect(screen.getByText(`1 of ${renter.length}`)).toBeDefined();
 
-    fireEvent.click(screen.getByTestId("test-checkin-no-change-rest"));
+    for (let i = 0; i < renter.length; i++) {
+      fireEvent.click(screen.getByTestId("test-checkin-no-change"));
+    }
     expect(screen.queryByText(/£0\b/)).toBeNull();
     expect(screen.getByText(`${gbp(first.savedBalance)} (confirmed)`)).toBeDefined();
   });
@@ -80,8 +82,11 @@ describe("CheckInPreview", () => {
   it("completes the check-in and steps through again", () => {
     render(<CheckInPreview household="renter" id="test-checkin" />);
 
+    expect(screen.queryByText(/to the rest/i)).toBeNull();
     fireEvent.click(screen.getByTestId("test-checkin-update"));
-    fireEvent.click(screen.getByTestId("test-checkin-no-change-rest"));
+    for (let i = 1; i < renter.length; i++) {
+      fireEvent.click(screen.getByTestId("test-checkin-no-change"));
+    }
 
     expect(screen.getByText("Check-in complete for this month")).toBeDefined();
     expect(screen.getByText(`${gbp(first.savedBalance)} (updated)`)).toBeDefined();
