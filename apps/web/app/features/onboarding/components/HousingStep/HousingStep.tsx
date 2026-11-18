@@ -1,5 +1,6 @@
 import { CurrencyInput, controlProps, FormField, RadioCardGroup } from "@repo/ui";
 import type { FC, ReactNode } from "react";
+import { HomeEquityLine } from "~/features/mortgage/components/HomeEquityLine";
 import { type HousingStatus, type OnboardingValues, ownsHome, STEP_LABELS } from "../../types";
 import { StepFrame } from "../StepFrame";
 import { housingStepRecipe } from "./HousingStep.styles";
@@ -108,6 +109,14 @@ export const HousingStep: FC<HousingStepProps> = ({
             </FormField>
           ) : null}
         </div>
+      ) : null}
+
+      {/* Onboarding asks no share, so the equity is the whole home's. */}
+      {ownsHome(status) ? (
+        <HomeEquityLine
+          homeValue={values.propertyValue}
+          mortgageBalance={status === "mortgage" ? values.mortgageBalance : null}
+        />
       ) : null}
 
       <FormField

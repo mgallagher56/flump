@@ -1,5 +1,6 @@
 import type { ContractSchema } from "@flump/api-client";
 import {
+  AccountListResponse,
   BankConnectionCapabilityResponse,
   ConnectBankResponse,
   CreateAccountResponse,
@@ -8,6 +9,11 @@ import {
   SyncBankConnectionResponse,
   UpdateAccountResponse,
 } from "@flump/api-contract";
+import {
+  categorizeAccountType,
+  HOME_ESTIMATE_LABEL,
+  isBuyToLetAccount,
+} from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -15,6 +21,7 @@ import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsC
 import { accountFieldsFromForm } from "~/features/accounts/accountFormBody";
 import {
   backendFetch,
+  backendFetchAll,
   type HttpMethod,
   loadWorkspaceSnapshot,
 } from "~/services/backend-client.server";
@@ -22,6 +29,10 @@ import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
+import { roundTo2dp } from "~/utils/roundTo2dp";
+
+/** The name a buy-to-let property added with its mortgage is saved under (`isBuyToLetAccount` reads it). */
+const BTL_ESTIMATE_LABEL = "Buy-to-let property (your estimate)";
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -42,6 +53,34 @@ export const action = async (args: ActionFunctionArgs) => {
 
   try {
     if (intent === "create") {
+      // Adding a mortgage with the home's value adds the home first, as a Property account with
+      // the mortgage's ownership and share, unless one of that kind is already there.
+      const homeValue = Number(formData.get("homeValue"));
+      if (type === "Mortgage" && Number.isFinite(homeValue) && homeValue > 0) {
+        const btl = isBuyToLetAccount({
+          name: typeof name === "string" ? name : "",
+          accountSubtype: fields.accountSubtype ?? null,
+        });
+        const existing = await backendFetchAll("/accounts", {
+          accessToken: token,
+          signal: args.request.signal,
+          schema: AccountListResponse,
+        });
+        const hasProperty = existing.some(
+          (account) =>
+            categorizeAccountType(account.type) === "property" &&
+            isBuyToLetAccount(account) === btl,
+        );
+        if (!hasProperty) {
+          await post("/accounts", CreateAccountResponse, {
+            name: btl ? BTL_ESTIMATE_LABEL : HOME_ESTIMATE_LABEL,
+            type: "Property",
+            balance: roundTo2dp(homeValue),
+            ...(fields.ownership ? { ownership: fields.ownership } : {}),
+            ...(fields.sharePercent !== undefined ? { sharePercent: fields.sharePercent } : {}),
+          });
+        }
+      }
       await post("/accounts", CreateAccountResponse, {
         name,
         type,

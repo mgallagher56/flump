@@ -66,3 +66,12 @@ export const detailValue = cva({
     overflowWrap: "anywhere",
   },
 });
+
+export const detailSubline = cva({
+  base: {
+    display: "block",
+    textStyle: "label.sm",
+    color: "text.muted",
+    fontVariantNumeric: "tabular-nums",
+  },
+});

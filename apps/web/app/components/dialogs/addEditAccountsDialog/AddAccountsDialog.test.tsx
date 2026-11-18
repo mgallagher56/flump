@@ -1,3 +1,4 @@
+import { fireEvent } from "@testing-library/react";
 import mockUser from "__mocks__/user";
 import type { ReactNode } from "react";
 import { vi } from "vitest";
@@ -106,5 +107,63 @@ describe("before hydration (#701)", () => {
       <AddEditAccountsDialogBtn defaultOpen fallbackHref="/app/accounts?add=1" variant="primary" />,
     );
     expect(getByRole("dialog")).toBeDefined();
+  });
+});
+
+describe("adding a mortgage with the home's value", () => {
+  const openAsMortgage = async (accounts: unknown[] = []) => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, accounts });
+    const utils = customRender(<AddEditAccountsDialogBtn />);
+    await utils.user.click(utils.getByText("addAccount"));
+    await utils.user.selectOptions(utils.getByLabelText("Account type"), "Mortgage");
+    return utils;
+  };
+
+  test("offers the home value for a new mortgage when no property is saved, and sends it", async () => {
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByLabelText, getByText, getByTestId, getAllByText, user } = await openAsMortgage();
+    expect(
+      getByText(
+        "Your own estimate. We add it as your home, so you do not need a separate property account.",
+      ),
+    ).toBeDefined();
+    fireEvent.change(getByLabelText("Amount owed"), { target: { value: "200000" } });
+    fireEvent.change(getByLabelText(/^What your home is worth \(optional\)/), {
+      target: { value: "300000" },
+    });
+    // 300,000 - 200,000 = 100,000.
+    expect(getByTestId("home-equity-line").textContent).toContain("£100,000");
+    await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ intent: "create", type: "Mortgage", homeValue: "300000" }),
+      { method: "POST" },
+    );
+  });
+
+  test("is not offered when a residential property is already saved", async () => {
+    const { queryByLabelText, queryByText } = await openAsMortgage([
+      { id: "h1", name: "Home (your estimate)", type: "Property", balance: 300000 },
+    ]);
+    expect(queryByLabelText(/What your home is worth/)).toBeNull();
+    expect(queryByText(/separate property account/)).toBeNull();
+  });
+
+  test("is not offered for other account types", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, accounts: [] });
+    const { getByText, queryByLabelText, user } = customRender(<AddEditAccountsDialogBtn />);
+    await user.click(getByText("addAccount"));
+    expect(queryByLabelText(/What your home is worth/)).toBeNull();
+  });
+
+  test("is not offered when editing a mortgage", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      user: mockUser,
+      accounts: [{ id: "m1", name: "Mortgage", type: "Mortgage", balance: -200000 }],
+    });
+    const { getByRole, queryByLabelText, user } = customRender(
+      <AddEditAccountsDialogBtn accountId="m1" isEditAccount isIconButton />,
+    );
+    await user.click(getByRole("button"));
+    expect(queryByLabelText(/What your home is worth/)).toBeNull();
   });
 });
