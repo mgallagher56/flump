@@ -6,6 +6,8 @@ import { VisuallyHidden } from "../../primitives/VisuallyHidden/VisuallyHidden";
 import {
   siteFooterBlurb,
   siteFooterBottom,
+  siteFooterCompactRow,
+  siteFooterCompactText,
   siteFooterGrid,
   siteFooterInner,
   siteFooterLink,
@@ -37,11 +39,19 @@ export type SiteFooterRenderLink = (
 ) => ReactNode;
 
 export interface SiteFooterProps {
-  /** Short description under the brand name. */
-  blurb: ReactNode;
-  columns: SiteFooterColumn[];
-  /** Bottom row: company line, contact. */
+  /**
+   * `full` (default): brand and blurb, link columns, then the bottom row. `compact`: one line that
+   * marks the end of the page, with `logo` and `bottom` only (the signed-in web app).
+   */
+  variant?: "full" | "compact";
+  /** Short description under the brand name. Full footer only. */
+  blurb?: ReactNode;
+  /** Link columns. Full footer only. */
+  columns?: SiteFooterColumn[];
+  /** Bottom row: company line, contact. In the compact footer, the text beside the logo. */
   bottom: ReactNode;
+  /** The logo at the start of the compact footer, usually `<HomeLogo />`. */
+  logo?: ReactNode;
   /** Router link slot for in-site links, so the ui package needs no router. */
   renderLink?: SiteFooterRenderLink;
   className?: string;
@@ -54,59 +64,72 @@ const defaultRenderLink: SiteFooterRenderLink = (link, className, children) => (
 );
 
 /**
- * The footer shared by the web app's public pages and the marketing site: brand and blurb, then
- * one column of links per entry in `columns`, then a bottom row. Each site supplies its own links.
+ * The footer shared by the web app and the marketing site. The full footer has brand and blurb,
+ * then one column of links per entry in `columns`, then a bottom row; each site supplies its own
+ * links. The compact footer is a single line, logo then `bottom`, at every width.
  */
 export const SiteFooter: FC<SiteFooterProps> = ({
+  variant = "full",
   blurb,
-  columns,
+  columns = [],
   bottom,
+  logo,
   renderLink = defaultRenderLink,
   className,
-}) => (
-  <footer className={cx(siteFooterRoot(), className)}>
-    <div className={siteFooterInner()}>
-      <div className={siteFooterGrid()}>
-        <div>
-          <Heading as="h2" size="md">
-            Flump
-          </Heading>
-          <Text className={siteFooterBlurb()} color="secondary" textStyle="body.sm">
-            {blurb}
-          </Text>
+}) =>
+  variant === "compact" ? (
+    <footer className={cx(siteFooterRoot({ variant }), className)}>
+      <div className={siteFooterCompactRow()}>
+        {logo}
+        <Text as="p" className={siteFooterCompactText()} color="muted" textStyle="body.sm">
+          {bottom}
+        </Text>
+      </div>
+    </footer>
+  ) : (
+    <footer className={cx(siteFooterRoot(), className)}>
+      <div className={siteFooterInner()}>
+        <div className={siteFooterGrid()}>
+          <div>
+            <Heading as="h2" size="md">
+              Flump
+            </Heading>
+            <Text className={siteFooterBlurb()} color="secondary" textStyle="body.sm">
+              {blurb}
+            </Text>
+          </div>
+
+          {columns.map((column) => (
+            <nav aria-label={column.label ?? column.heading} key={column.heading}>
+              <Heading as="h3" size="sm">
+                {column.heading}
+              </Heading>
+              <ul className={siteFooterList()}>
+                {column.links.map((link) => (
+                  <li key={link.key}>
+                    {link.external || link.newTab ? (
+                      <a
+                        className={siteFooterLink()}
+                        href={link.href}
+                        rel={link.newTab ? "noreferrer" : undefined}
+                        target={link.newTab ? "_blank" : undefined}
+                      >
+                        {link.label}
+                        {link.newTab && <VisuallyHidden> (opens in a new tab)</VisuallyHidden>}
+                      </a>
+                    ) : (
+                      renderLink(link, siteFooterLink(), link.label)
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
 
-        {columns.map((column) => (
-          <nav aria-label={column.label ?? column.heading} key={column.heading}>
-            <Heading as="h3" size="sm">
-              {column.heading}
-            </Heading>
-            <ul className={siteFooterList()}>
-              {column.links.map((link) => (
-                <li key={link.key}>
-                  {link.external || link.newTab ? (
-                    <a
-                      className={siteFooterLink()}
-                      href={link.href}
-                      rel={link.newTab ? "noreferrer" : undefined}
-                      target={link.newTab ? "_blank" : undefined}
-                    >
-                      {link.label}
-                      {link.newTab && <VisuallyHidden> (opens in a new tab)</VisuallyHidden>}
-                    </a>
-                  ) : (
-                    renderLink(link, siteFooterLink(), link.label)
-                  )}
-                </li>
-              ))}
-            </ul>
-          </nav>
-        ))}
+        <div className={siteFooterBottom()}>{bottom}</div>
       </div>
-
-      <div className={siteFooterBottom()}>{bottom}</div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
 
 export default SiteFooter;

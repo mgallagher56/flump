@@ -1,6 +1,7 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
+import { SUPPORT_EMAIL } from "~/utils/support";
 import AvatarMenu from "./AvatarMenu";
 
 vi.mock("react-router", () => ({
@@ -30,15 +31,17 @@ describe("<AvatarMenu />", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
-  it("lists Settings, Connect AI, Free calculators and Sign out", () => {
+  it("lists Settings, Connect AI, Free calculators, Send feedback and Sign out", () => {
     customRender(<AvatarMenu user={{ id: "1" }} />);
     open();
     const links = screen.getAllByRole("menuitem").filter((el) => el.tagName === "A");
-    expect(links.map((l) => l.getAttribute("href"))).toEqual([
+    expect(links.map((l) => l.getAttribute("href")?.split("?")[0])).toEqual([
       "/app/profile",
-      "/app/profile?tab=ai_connections",
+      "/app/profile",
       "/tools",
+      `mailto:${SUPPORT_EMAIL}`,
     ]);
+    expect(links[1]?.getAttribute("href")).toBe("/app/profile?tab=ai_connections");
     const logout = screen.getAllByRole("menuitem").find((el) => el.tagName === "BUTTON");
     expect(logout?.closest("form")?.getAttribute("action")).toBe("/logout");
     expect(screen.getByTestId("avatar-menu-trigger").getAttribute("aria-expanded")).toBe("true");

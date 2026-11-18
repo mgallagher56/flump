@@ -31,7 +31,8 @@ export const sheetContentRecipe = cva({
     // Phone: a bottom sheet with a safe-area inset below the last row.
     left: "0",
     right: "0",
-    bottom: "0",
+    // On top of the on-screen keyboard (useVisualViewportInset), not under it.
+    bottom: "var(--keyboard-inset, 0px)",
     maxHeight: "90vh",
     borderTopLeftRadius: "tray",
     borderTopRightRadius: "tray",
@@ -39,7 +40,9 @@ export const sheetContentRecipe = cva({
     paddingTop: "3",
     paddingX: "5",
     paddingBottom: "calc({spacing.5} + env(safe-area-inset-bottom, 0px))",
-    "@supports (height: 1dvh)": { maxHeight: "90dvh" },
+    "@supports (height: 1dvh)": {
+      maxHeight: "min(90dvh, calc(var(--visual-viewport-height, 100dvh) * 0.9))",
+    },
     _motionSafe: {
       animationName: "slideUp",
       animationDuration: "base",

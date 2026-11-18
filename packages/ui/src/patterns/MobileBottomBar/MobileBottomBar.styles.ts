@@ -42,8 +42,17 @@ export const mobileBottomBarLink = cva({
     justifyContent: "center",
     gap: "0.5",
     minH: "12",
-    // The whole slot is the label's width: about 62px at 320, 73px at 375.
+    // Every item fills its slot, the "More" button too: a <button> shrinks to its content where a
+    // link fills the cell, so More was 30px wide beside 73px links. About 62px at 320, 73px at 375.
+    width: "100%",
+    boxSizing: "border-box",
     px: "0",
+    // Button defaults off, so a button item draws exactly like a link item.
+    margin: "0",
+    borderWidth: "0",
+    backgroundColor: "transparent",
+    fontFamily: "inherit",
+    cursor: "pointer",
     borderRadius: "full",
     color: "text.secondary",
     textStyle: "label.sm",

@@ -14,6 +14,7 @@ import {
   dialogTitleRecipe,
 } from "./Dialog.styles";
 import { useDialogFocusReturn } from "./useDialogFocusReturn";
+import { useVisualViewportInset } from "./useVisualViewportInset";
 
 export interface DialogProps {
   open: boolean;
@@ -63,6 +64,8 @@ export const Dialog: FC<DialogProps> = ({
 }) => {
   // Controlled dialogs have no Radix Trigger, so remember what had focus and restore it on close.
   const focusReturn = useDialogFocusReturn(returnFocusTo);
+  // Sit on top of the on-screen keyboard instead of under it (see the hook).
+  useVisualViewportInset(open);
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>

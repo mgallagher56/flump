@@ -9,6 +9,30 @@ export const siteFooterRoot = cva({
     paddingBlock: "40px",
     paddingInline: { base: "16px", md: "24px" },
   },
+  variants: {
+    variant: {
+      full: {},
+      // One line that marks the end of the page: a 44px row (the logo link's touch target).
+      compact: { paddingBlock: "3" },
+    },
+  },
+  defaultVariants: { variant: "full" },
+});
+
+/** The compact footer's single row: logo at the start, the company line at the end. */
+export const siteFooterCompactRow = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "4",
+    minHeight: "touch",
+  },
+});
+
+/** Never wraps: the line stays one line from 320px up, so keep `bottom` short. */
+export const siteFooterCompactText = cva({
+  base: { margin: 0, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
 });
 
 export const siteFooterInner = cva({

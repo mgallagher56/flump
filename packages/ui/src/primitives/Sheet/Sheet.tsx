@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import { useDialogFocusReturn } from "../Dialog/useDialogFocusReturn";
+import { useVisualViewportInset } from "../Dialog/useVisualViewportInset";
 import { Icon } from "../Icon";
 import { visuallyHiddenRecipe } from "../VisuallyHidden/VisuallyHidden.styles";
 import {
@@ -67,6 +68,8 @@ export const Sheet: FC<SheetProps> = ({
   returnFocusTo,
 }) => {
   const focusReturn = useDialogFocusReturn(returnFocusTo);
+  // Sit on top of the on-screen keyboard instead of under it (see the hook).
+  useVisualViewportInset(open);
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>

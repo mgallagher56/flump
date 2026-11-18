@@ -40,3 +40,25 @@ const play: Story["play"] = async ({ canvasElement }) => {
 export const Light: Story = { globals: { theme: "light" }, play };
 
 export const Dark: Story = { globals: { theme: "dark" }, play };
+
+const compactPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getByRole("link", { name: "Home" })).toBeInTheDocument();
+  await expect(canvas.queryAllByRole("navigation")).toHaveLength(0);
+};
+
+/** The signed-in web app's footer: one line with the logo, at every width. */
+export const CompactLight: Story = {
+  args: {
+    variant: "compact",
+    logo: <a href="#home">Home</a>,
+    bottom: "© 2026 Flump Finance Ltd",
+  },
+  globals: { theme: "light" },
+  play: compactPlay,
+};
+
+export const CompactDark: Story = {
+  ...CompactLight,
+  globals: { theme: "dark" },
+};

@@ -1,9 +1,10 @@
 import { Icon } from "@repo/ui";
-import { Bot, Calculator, ChevronDown, LogOut, Settings } from "lucide-react";
+import { Bot, Calculator, ChevronDown, LogOut, MessageSquare, Settings } from "lucide-react";
 import { type FC, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link } from "react-router";
 import { useHydrated } from "~/hooks/useHydrated";
+import { APP_VERSION, feedbackMailto } from "~/utils/support";
 import { CONNECT_AI_ROUTE } from "../navConfig";
 import UserAvatar from "../UserAvatar";
 import { container, divider, item, panel, srOnly, trigger } from "./AvatarMenu.styles";
@@ -13,8 +14,9 @@ export interface AvatarMenuProps {
 }
 
 /**
- * Account menu (IA review T-IA-6): Settings, Connect AI, Free calculators, Sign out. It replaces the
- * bare avatar link so these destinations share one home.
+ * Account menu (IA review T-IA-6): Settings, Connect AI, Free calculators, Send feedback, Sign out.
+ * It replaces the bare avatar link so these destinations share one home, and it is where help and
+ * contact live in the app (UX-GUIDELINES N8), since the app footer is a single line.
  */
 const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
   const { t } = useTranslation();
@@ -102,6 +104,15 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
             <Icon icon={Calculator} size="sm" />
             {t("freeCalculators", "Free calculators")}
           </Link>
+          <a
+            className={item()}
+            href={feedbackMailto("app", APP_VERSION)}
+            role="menuitem"
+            onClick={() => close(false)}
+          >
+            <Icon icon={MessageSquare} size="sm" />
+            {t("sendFeedback", "Send feedback")}
+          </a>
           <div aria-hidden="true" className={divider()} />
           <Form action="/logout" method="post">
             <button className={item()} role="menuitem" type="submit">

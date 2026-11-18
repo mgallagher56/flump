@@ -1,48 +1,26 @@
-import { companyLine } from "@flump/business-details";
-import { SiteFooter, type SiteFooterRenderLink } from "@repo/ui";
+import { BUSINESS_DETAILS } from "@flump/business-details";
+import { HomeLogo, SiteFooter } from "@repo/ui";
 import type { FC } from "react";
-import { Link as RouterLink } from "react-router";
-import { APP_VERSION, feedbackMailto } from "~/utils/support";
+import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import { appFooterSpacing } from "./AppFooter.styles";
 
-const renderLink: SiteFooterRenderLink = (link, className, children) => (
-  <RouterLink className={className} to={link.href}>
-    {children}
-  </RouterLink>
-);
+/** "© 2026 Flump Finance Ltd": short enough to stay on one line at 320px beside the logo. */
+export function appFooterLine(year: number): string {
+  return `© ${year} ${BUSINESS_DETAILS.legalName.value}`;
+}
 
 /**
- * Signed-in web app footer: built on `@repo/ui`'s `SiteFooter` with compact account, support, and
- * guidance essentials, and bottom-bar clearance below the nav breakpoint.
+ * Signed-in web app footer: one line that marks the bottom of the page, the logo and the company
+ * name, at every width. Settings, security, export and the calculators are in the account menu and
+ * the drawer; "Send feedback" is in the account menu; the full company line (number and registered
+ * office) is in the marketing site's footer and the signed-out pages' footer.
  */
 export const AppFooter: FC = () => (
   <SiteFooter
-    blurb="Your UK personal finance planner. Figures are for planning and general guidance, not regulated financial advice."
-    bottom={companyLine(new Date().getFullYear())}
+    bottom={appFooterLine(new Date().getFullYear())}
     className={appFooterSpacing()}
-    columns={[
-      {
-        heading: "Account",
-        links: [
-          { key: "settings", label: "Settings", href: "/app/profile" },
-          { key: "security", label: "Security", href: "/app/profile?tab=security" },
-          { key: "data", label: "Data and export", href: "/app/profile?tab=data" },
-        ],
-      },
-      {
-        heading: "Resources",
-        links: [
-          { key: "tools", label: "All calculators", href: "/tools" },
-          {
-            key: "feedback",
-            label: "Send feedback",
-            href: feedbackMailto("app", APP_VERSION),
-            external: true,
-          },
-        ],
-      },
-    ]}
-    renderLink={renderLink}
+    logo={<HomeLogo renderLink={renderHomeLogoLink} />}
+    variant="compact"
   />
 );
 

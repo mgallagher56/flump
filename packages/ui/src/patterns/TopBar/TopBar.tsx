@@ -168,20 +168,6 @@ export const TopBar: FC<TopBarProps> = ({
 }) => (
   <header className={cx(topBarRoot(), className)}>
     <div className={topBarInner()}>
-      {onMenuClick && (
-        <Button
-          aria-controls={menuExpanded ? menuControls : undefined}
-          aria-expanded={menuExpanded}
-          aria-label={menuLabel}
-          className={topBarMenuButton({ below: menuBelow })}
-          onClick={onMenuClick}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <Icon icon={Menu} />
-        </Button>
-      )}
       {logo && <div className={topBarLogo()}>{logo}</div>}
       <nav aria-label={navLabel} className={topBarNav()}>
         <ul className={topBarList()}>
@@ -217,10 +203,26 @@ export const TopBar: FC<TopBarProps> = ({
           })}
         </ul>
       </nav>
-      {(actions || inlineActions) && (
+      {(actions || inlineActions || onMenuClick) && (
         <div className={topBarActions()}>
           {inlineActions && <div className={topBarInlineActions()}>{inlineActions}</div>}
           {actions}
+          {/* Last on the right: the drawer it opens slides in from the right edge, and the right
+              is the side a thumb reaches on a phone held in one hand, like the bar's "More". */}
+          {onMenuClick && (
+            <Button
+              aria-controls={menuExpanded ? menuControls : undefined}
+              aria-expanded={menuExpanded}
+              aria-label={menuLabel}
+              className={topBarMenuButton({ below: menuBelow })}
+              onClick={onMenuClick}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <Icon icon={Menu} />
+            </Button>
+          )}
         </div>
       )}
     </div>
