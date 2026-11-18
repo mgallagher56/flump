@@ -7,7 +7,9 @@ import {
 import {
   type AccountOwnership,
   canAccountBeJoint,
+  categorizeAccountType,
   DEFAULT_JOINT_SHARE_PERCENT,
+  isBuyToLetAccount,
   type MonthlyPortfolioHistoryPoint,
   type NetWorthLeftOut,
   netWorthBasisFromProfile,
@@ -285,6 +287,42 @@ function validateSharePercent(value: unknown): number | null | undefined {
     return value;
   }
   throw new BadRequestException("sharePercent must be an integer between 1 and 100, or null");
+}
+
+/**
+ * E34 C1: a property follows its mortgage's share. When the caller sets a mortgage's ownership or
+ * share, the one property that mortgage is on takes the same ownership and share, so net worth
+ * never counts half a mortgage against a whole home. A residential mortgage pairs with a
+ * residential property and a buy-to-let mortgage with a buy-to-let property
+ * (`isBuyToLetAccount`, as loan to value does). Only an unambiguous pair moves: exactly one
+ * mortgage and one property of that kind. With two homes or two mortgages there is no way to tell
+ * which goes with which, so nothing changes and the user sets the property's share themselves.
+ * Only the caller's own rows are read or written, in the caller's transaction. A property edited
+ * afterwards keeps its own share until the mortgage's share is set again.
+ */
+async function propertyFollowsMortgage(
+  accounts: Repository<Account>,
+  userId: string,
+  mortgage: Account,
+): Promise<void> {
+  if (categorizeAccountType(mortgage.type) !== "mortgages") return;
+  const btl = isBuyToLetAccount(mortgage);
+  const mine = await accounts.find({ where: { userId } });
+  const sameKind = (a: Account) => isBuyToLetAccount(a) === btl;
+  const mortgages = mine.filter(
+    (a) => categorizeAccountType(a.type) === "mortgages" && sameKind(a),
+  );
+  const properties = mine.filter(
+    (a) => categorizeAccountType(a.type) === "property" && sameKind(a),
+  );
+  if (mortgages.length !== 1 || properties.length !== 1) return;
+  const property = properties[0] as Account;
+  const ownership: AccountOwnership = mortgage.ownership === "joint" ? "joint" : "sole";
+  const sharePercent = ownership === "joint" ? mortgage.sharePercent : null;
+  if (property.ownership === ownership && property.sharePercent === sharePercent) return;
+  property.ownership = ownership;
+  property.sharePercent = sharePercent;
+  await accounts.save(property);
 }
 
 const MAX_BALANCE_BATCH = 100;
@@ -592,7 +630,11 @@ export class AccountIntakeService implements IAccountIntake {
       currency: fields.currency || DEFAULT_ACCOUNT_CURRENCY,
       userId,
     });
-    return toAccountResponse(await this.accountRepository.save(account));
+    const saved = await this.accountRepository.save(account);
+    if (fields.ownership !== undefined || fields.sharePercent !== undefined) {
+      await propertyFollowsMortgage(this.accountRepository, userId, saved);
+    }
+    return toAccountResponse(saved);
   }
 
   /**
@@ -721,6 +763,9 @@ export class AccountIntakeService implements IAccountIntake {
       const saved = await accounts.save(account);
       if (body.balance !== undefined && body.balance !== null) {
         await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
+      }
+      if (picked.ownership !== undefined || picked.sharePercent !== undefined) {
+        await propertyFollowsMortgage(accounts, userId, saved);
       }
       // Re-read so the response carries the version the database now holds (the ETag).
       const fresh = await accounts.findOne({ where: { id, userId } });

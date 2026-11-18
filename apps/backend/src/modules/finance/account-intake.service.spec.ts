@@ -33,7 +33,7 @@ const createMocks = () => {
     save: vi.fn((data) => Promise.resolve(data)),
   };
   const accountRepo = {
-    find: vi.fn(),
+    find: vi.fn().mockResolvedValue([]),
     findOne: vi.fn(),
     create: vi.fn((data) => ({ id: "acc-new", ...data })),
     save: vi.fn((data) => Promise.resolve(data)),
@@ -1039,5 +1039,111 @@ describe("AccountIntakeService (Deep Module)", () => {
       });
       expect(joint.ownership).toBe("joint");
     });
+  });
+});
+
+describe("E34 C1: a property follows its mortgage's share", () => {
+  const profiles = {
+    findOne: vi.fn().mockResolvedValue({ userId: "userA", hasResetFinancialData: false }),
+  };
+  const connections = { findOne: vi.fn().mockResolvedValue(null) };
+  const home = (extra: Record<string, unknown> = {}) => ({
+    id: "home",
+    userId: "userA",
+    name: "Home",
+    type: "Property",
+    balance: 400_000,
+    ownership: "sole",
+    sharePercent: null,
+    ...extra,
+  });
+  const mortgage = (extra: Record<string, unknown> = {}) => ({
+    id: "mort",
+    userId: "userA",
+    name: "Mortgage",
+    type: "Mortgage",
+    accountSubtype: "residential_mortgage",
+    balance: -280_000,
+    ownership: "sole",
+    sharePercent: null,
+    ...extra,
+  });
+  const setup = (rows: Record<string, unknown>[]) => {
+    const accounts = createInMemoryRepository(rows);
+    const svc = intakeOver(accounts, createInMemoryRepository(), profiles, connections);
+    const row = async (id: string) =>
+      (await accounts.findOne({ where: { id } })) as unknown as Account;
+    return { svc, row };
+  };
+
+  it("gives the one home the mortgage's ownership and share when the mortgage is marked joint", async () => {
+    const { svc, row } = setup([home(), mortgage()]);
+    await svc.updateAccount("userA", "mort", { ownership: "joint", sharePercent: 60 });
+    const property = await row("home");
+    expect(property.ownership).toBe("joint");
+    expect(property.sharePercent).toBe(60);
+  });
+
+  it("follows a change back to sole", async () => {
+    const { svc, row } = setup([
+      home({ ownership: "joint", sharePercent: 50 }),
+      mortgage({ ownership: "joint", sharePercent: 50 }),
+    ]);
+    await svc.updateAccount("userA", "mort", { ownership: "sole" });
+    const property = await row("home");
+    expect(property.ownership).toBe("sole");
+    expect(property.sharePercent).toBeNull();
+  });
+
+  it("follows a new joint mortgage", async () => {
+    const { svc, row } = setup([home()]);
+    await svc.createAccount("userA", {
+      name: "Mortgage",
+      type: "Mortgage",
+      accountSubtype: "residential_mortgage",
+      balance: -200_000,
+      ownership: "joint",
+    });
+    expect((await row("home")).sharePercent).toBe(50);
+  });
+
+  it("leaves the property alone on an edit that does not touch ownership or share", async () => {
+    const { svc, row } = setup([home({ ownership: "joint", sharePercent: 30 }), mortgage()]);
+    await svc.updateAccount("userA", "mort", { balance: 270_000 });
+    expect((await row("home")).sharePercent).toBe(30);
+  });
+
+  it("pairs a residential mortgage with the residential home, not a buy-to-let property", async () => {
+    const { svc, row } = setup([
+      home(),
+      home({ id: "btl", name: "Buy to let flat", balance: 200_000 }),
+      mortgage(),
+    ]);
+    await svc.updateAccount("userA", "mort", { ownership: "joint", sharePercent: 40 });
+    expect((await row("home")).sharePercent).toBe(40);
+    expect((await row("btl")).ownership).toBe("sole");
+  });
+
+  it("changes nothing when it cannot tell which property the mortgage is on", async () => {
+    const { svc, row } = setup([home(), home({ id: "home2", name: "Second home" }), mortgage()]);
+    await svc.updateAccount("userA", "mort", { ownership: "joint" });
+    expect((await row("home")).ownership).toBe("sole");
+    expect((await row("home2")).ownership).toBe("sole");
+  });
+
+  it("changes nothing when two mortgages of the same kind could be on the home", async () => {
+    const { svc, row } = setup([
+      home(),
+      mortgage(),
+      mortgage({ id: "mort2", name: "Further advance" }),
+    ]);
+    await svc.updateAccount("userA", "mort", { ownership: "joint" });
+    expect((await row("home")).ownership).toBe("sole");
+  });
+
+  it("never touches another user's property", async () => {
+    const { svc, row } = setup([home({ userId: "userB" }), mortgage()]);
+    await svc.updateAccount("userA", "mort", { ownership: "joint" });
+    expect((await row("home")).ownership).toBe("sole");
   });
 });
