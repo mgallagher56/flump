@@ -18,10 +18,6 @@ export const pageHeaderContainer = cva({
     width: "100%",
     mb: { base: "5", md: "6" },
   },
-  variants: {
-    // The page icon takes the first column below md, so it sits beside the h1, never above it.
-    withIcon: { true: { gridTemplateColumns: { base: "auto minmax(min-content, 1fr) auto" } } },
-  },
 });
 
 export const pageHeaderText = cva({
@@ -39,7 +35,6 @@ export const pageHeaderTitle = cva({
     // Wraps between words beside the actions; never narrower than its longest word.
     overflowWrap: "break-word",
   },
-  variants: { withIcon: { true: { gridColumn: { base: "2", md: "auto" } } } },
 });
 
 export const pageHeaderDescription = cva({
@@ -51,6 +46,12 @@ export const pageHeaderDescription = cva({
     maxWidth: "720px",
     gridColumn: { base: "1 / -1", md: "auto" },
     gridRow: { base: "2", md: "auto" },
+  },
+  variants: {
+    // Below md the page icon shares the description's row, in the space this padding leaves.
+    withIcon: {
+      true: { paddingInlineStart: { base: "calc(token(spacing.10) + token(spacing.3))", md: "0" } },
+    },
   },
 });
 
@@ -64,21 +65,22 @@ export const pageHeaderAside = cva({
     justifyContent: "flex-end",
     gap: "3",
   },
-  variants: { withIcon: { true: { gridColumn: { base: "3", md: "auto" } } } },
 });
 
 /**
- * The page icon: the page's own illustration, the same size and place on every page, beside the
- * h1 at every width. 48px wide below md (36px tall, no taller than the h1 row, so the first
- * figure stays where it was) and 64px from md.
+ * The page icon: the page's own illustration, the same size and place on every page. From md it
+ * sits before the h1 (64px wide). Below md it starts the description's row (40px wide, 30px tall,
+ * no taller than two lines of description), so the h1 keeps its width beside the actions and the
+ * first figure is not pushed down.
  */
 export const pageHeaderIcon = cva({
   base: {
     flex: "0 0 auto",
-    width: { base: "12", md: "16" },
+    width: { base: "10", md: "16" },
     gridColumn: { base: "1", md: "auto" },
-    gridRow: { base: "1", md: "auto" },
-    alignSelf: { base: "center", md: "flex-start" },
+    gridRow: { base: "2", md: "auto" },
+    justifySelf: "start",
+    alignSelf: { base: "start", md: "flex-start" },
   },
 });
 
