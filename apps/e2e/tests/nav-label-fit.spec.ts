@@ -7,6 +7,8 @@ import { waitForHydration } from "../support/page";
  * wrapping: the desktop top bar at 768 and 1024 wide, and the phone drawer at 320 wide.
  */
 const LABEL = "Debt and borrowing";
+/** The page inside the group is "Cards and loans" (owner wording, 18 November 2026). */
+const PAGE_TITLE = "Cards and loans";
 
 interface Fit {
   /** The text is on one line: its box is no taller than one and a half line heights. */
@@ -111,7 +113,7 @@ test.describe("the Debt and borrowing nav label fits", () => {
         });
       expect(spill, "nav list spills past the nav").toBeLessThanOrEqual(0.5);
       await expectNoPageOverflow(page);
-      await expect(page.getByRole("heading", { level: 1, name: LABEL })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: PAGE_TITLE })).toBeVisible();
     });
   }
 
@@ -147,7 +149,7 @@ test.describe("the Debt and borrowing nav label fits", () => {
       await expectNoPageOverflow(page);
       // The page title fits too.
       await page.keyboard.press("Escape");
-      const h1 = page.getByRole("heading", { level: 1, name: LABEL });
+      const h1 = page.getByRole("heading", { level: 1, name: PAGE_TITLE });
       await expect(h1).toBeVisible();
       const box = await h1.boundingBox();
       expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(320);
