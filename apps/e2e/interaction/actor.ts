@@ -46,7 +46,10 @@ export class Actor {
   async type(field: Locator, text: string): Promise<void> {
     if (this.keyboardOnly) {
       await this.tabTo(field);
-      // Tab selects a text field's contents; a field that kept its caret needs them selected.
+      // Tab selects a text field's contents, but a field may reformat itself on focus (the value
+      // pills turn "£0" into "0") and lose the selection. Let that settle, then look.
+      await nextFrames(this.page);
+      // A field that kept only a caret needs its text selected first.
       if (!(await fullySelected(field))) await this.page.keyboard.press("ControlOrMeta+a");
     } else {
       await (this.mode === "phone-touch" ? field.tap() : field.click());
@@ -118,27 +121,47 @@ export class Actor {
     throw new Error(`Could not reach the menu item with the arrow keys: ${target}`);
   }
 
-  /** Tab lands on a radio group's checked (or first) radio; arrows move within the group. */
+  /**
+   * Tab lands on a radio group's checked radio, or its first when none is checked; Space picks
+   * the focused one and the arrow keys move (and pick) within the group. Native radios only.
+   */
   private async chooseRadio(target: Locator): Promise<void> {
-    const name = await target.evaluate((el) => (el as HTMLInputElement).name);
-    for (let hops = 0; hops <= MAX_TAB_HOPS; hops++) {
-      const inGroup = await this.page.evaluate((group) => {
-        const el = document.activeElement as HTMLInputElement | null;
-        return el?.type === "radio" && el.name === group;
+    const name = await target.evaluate((el) =>
+      el instanceof HTMLInputElement && el.type === "radio" ? el.name : "",
+    );
+    if (!name) throw new Error(`Only native radio inputs with a name are supported: ${target}`);
+    const inGroup = () =>
+      this.page.evaluate((group) => {
+        const el = document.activeElement;
+        return el instanceof HTMLInputElement && el.type === "radio" && el.name === group;
       }, name);
-      if (inGroup) break;
+    for (let hops = 0; !(await inGroup()); hops++) {
+      if (hops >= MAX_TAB_HOPS)
+        throw new Error(
+          `Radio group not reachable with Tab within ${MAX_TAB_HOPS} presses: ${target}`,
+        );
       await this.page.keyboard.press("Tab");
     }
+    if (await target.isChecked()) return;
+    if (await hasFocus(target)) return this.page.keyboard.press(" ");
     for (let moves = 0; moves < 12; moves++) {
-      if (await target.isChecked()) return;
       await this.page.keyboard.press("ArrowDown");
+      if (await target.isChecked()) return;
     }
     throw new Error(`Could not reach the radio with the arrow keys: ${target}`);
   }
 }
 
+/** Strict: a locator that matches several elements throws rather than reading as "not focused". */
 async function hasFocus(target: Locator): Promise<boolean> {
-  return target.evaluate((el) => el === document.activeElement).catch(() => false);
+  return target.evaluate((el) => el === document.activeElement);
+}
+
+/** Two animation frames: effects that run on focus have rendered. */
+async function nextFrames(page: Page): Promise<void> {
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
 }
 
 function focusedText(page: Page): Promise<string | null> {

@@ -50,7 +50,7 @@ async function runScript(browser: Browser, mode: RunMode): Promise<FlowCost> {
     const actor = new Actor(page, mode, counter);
     const box = page.getByRole("dialog", { name: "Box" });
 
-    counter.start();
+    await counter.start();
     await actor.press(page.getByRole("button", { name: "Open" }));
     await expect(box).toBeVisible();
     await actor.press(box.getByRole("button", { name: "Close" }));
@@ -144,7 +144,7 @@ test.describe("interaction counter", () => {
       // One click and one dialog open before counting starts.
       await page.getByRole("button", { name: "Open" }).click();
       await expect(page.getByRole("dialog", { name: "Box" })).toBeVisible();
-      counter.start();
+      await counter.start();
       // Counted: the Close click (1) and the dialog closing (1). The open happened before start.
       await page.getByRole("button", { name: "Close" }).click();
       await expect(page.getByRole("dialog", { name: "Box" })).toBeHidden();

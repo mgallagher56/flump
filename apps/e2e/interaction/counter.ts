@@ -90,7 +90,10 @@ export class InteractionCounter {
   /** Installs the listener on every future document of `page`. Call before the first `goto`. */
   static async attach(page: Page): Promise<InteractionCounter> {
     const counter = new InteractionCounter(page);
-    await page.exposeBinding(BINDING, (_source, event: CounterEvent) => counter.record(event));
+    // Only the main frame's reports: an iframe would reset the dialog count with its own hello.
+    await page.exposeBinding(BINDING, (source, event: CounterEvent) => {
+      if (source.frame === page.mainFrame()) counter.record(event);
+    });
     await page.addInitScript(installListener, { binding: BINDING, selector: DIALOG_SELECTOR });
     page.on("framenavigated", (frame) => {
       if (frame !== page.mainFrame()) return;
@@ -102,8 +105,12 @@ export class InteractionCounter {
     return counter;
   }
 
-  /** Starts counting from zero, from the page as it is now. */
-  start(): void {
+  /**
+   * Starts counting from zero, from the page as it is now. The round trip first lets reports
+   * sent during setup arrive, so none is counted.
+   */
+  async start(): Promise<void> {
+    await this.flush();
     this.cost = emptyCost();
     this.path = new URL(this.page.url()).pathname;
     this.counting = true;
@@ -114,9 +121,13 @@ export class InteractionCounter {
    * the page sent before it arrive (the protocol keeps messages in order).
    */
   async stop(): Promise<FlowCost> {
-    await this.page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    await this.flush();
     this.counting = false;
     return this.snapshot();
+  }
+
+  private async flush(): Promise<void> {
+    await this.page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
   }
 
   snapshot(): FlowCost {
