@@ -13,7 +13,19 @@ export interface CommonEntryKey {
  * budget already has under another name (old seed rows included).
  */
 const SYNONYM_GROUPS: ReadonlyArray<{ category: string; names: ReadonlyArray<string> }> = [
-  { category: "housing", names: ["rent or mortgage", "rent", "mortgage"] },
+  // The onboarding seed names its housing row "Rent Payment", "Mortgage Payment" or "Household
+  // contribution" (services/onboarding-seed.ts): each is the person's monthly housing cost.
+  {
+    category: "housing",
+    names: [
+      "rent or mortgage",
+      "rent",
+      "mortgage",
+      "rent payment",
+      "mortgage payment",
+      "household contribution",
+    ],
+  },
   { category: "bills", names: ["gas and electricity", "gas", "electricity", "energy"] },
   { category: "bills", names: ["broadband", "phone and broadband", "internet"] },
   { category: "expenses", names: ["groceries", "food shop", "food"] },
@@ -22,7 +34,7 @@ const SYNONYM_GROUPS: ReadonlyArray<{ category: string; names: ReadonlyArray<str
   { category: "savings", names: ["savings", "emergency fund", "isa or investments"] },
   {
     category: INCOME_CATEGORY,
-    names: ["take-home pay", "salary", "salary after tax", "wages"],
+    names: ["take-home pay", "salary", "salary after tax", "wages", "monthly take-home income"],
   },
 ];
 

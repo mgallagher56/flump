@@ -45,3 +45,25 @@ export const Empty: Story = {
     ).toBeDefined();
   },
 };
+
+/** Just after onboarding: the seed rows only, so the page offers the common items beside Edit. */
+export const AfterOnboarding: Story = {
+  parameters: {
+    router: {
+      loaderData: {
+        ...loaderData,
+        budgetEntries: sampleBudgetEntries().filter(
+          (entry) => entry.isIncome || entry.category === "housing",
+        ),
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getAllByRole("button", { name: "Add common budget items" })[0],
+    ).toBeDefined();
+    await expect(
+      within(canvasElement).getAllByRole("button", { name: "Edit budget" })[0],
+    ).toBeDefined();
+  },
+};

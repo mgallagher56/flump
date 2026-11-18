@@ -34,6 +34,11 @@ describe("isSameCommonEntry", () => {
     ["income", "Salary", "Take-home pay"],
     ["income", "Salary after tax", "Take-home pay"],
     ["income", "Wages", "Take-home pay"],
+    // The onboarding seed's names (services/onboarding-seed.ts).
+    ["housing", "Rent Payment", "Rent or mortgage"],
+    ["housing", "Mortgage Payment", "Rent / Mortgage"],
+    ["housing", "Household contribution", "Rent or mortgage"],
+    ["income", "Monthly Take-Home Income", "Take-home pay"],
   ])("in %s, %s is the same entry as %s", (category, a, b) => {
     expect(same(category, a, b)).toBe(true);
   });

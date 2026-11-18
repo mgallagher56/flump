@@ -26,6 +26,16 @@ export const PARTIAL_FINISH_ERROR =
 export const SAVED_MESSAGE = "Details saved";
 
 /**
+ * Where Finish goes once everything is saved: the dashboard, or the budget page with the wizard
+ * open to add common budget items (`?setup=common`, no money in the URL).
+ */
+export type FinishDestination = "dashboard" | "budget";
+export const FINISH_PATHS: Record<FinishDestination, string> = {
+  dashboard: "/",
+  budget: "/app/budget?setup=common",
+};
+
+/**
  * What the account holds after the last Finish attempt: `idle` before any failed attempt,
  * `partial` once the profile is known to be saved but the rest is not, `unconfirmed` when an
  * attempt failed before anything was confirmed.
@@ -55,7 +65,7 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
     setError(profileSavedRef.current ? PARTIAL_FINISH_ERROR : FINISH_ERROR);
   };
 
-  const finish = async () => {
+  const finish = async (destination: FinishDestination = "dashboard") => {
     if (!summary.canFinish || submittingRef.current) return;
     submittingRef.current = true;
     setIsSubmitting(true);
@@ -162,7 +172,8 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
 
       clearOnboardingSeed();
       notify(SAVED_MESSAGE);
-      navigate("/");
+      // Anything but a known destination (a click event passed by mistake, say) goes home.
+      navigate(FINISH_PATHS[destination] ?? FINISH_PATHS.dashboard);
     } catch (err) {
       console.error("Error saving onboarding settings:", err);
       fail();

@@ -357,6 +357,96 @@ describe("BudgetSetupWizard", () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(onAddEntry).toHaveBeenCalledTimes(6);
   });
+
+  describe('"add" mode (a budget that already has entries, such as the onboarding seed rows)', () => {
+    /** What onboarding saved for a renter: take-home, rent and a lump of other spending. */
+    const seeded = () => [
+      { ...savedEntry("Monthly Take-Home Income", "income"), amount: 2500, isIncome: true },
+      { ...savedEntry("Rent Payment", "housing"), amount: 900 },
+      { ...savedEntry("General living and outgoings", "living"), amount: 400 },
+    ];
+    const renderAdd = (entries: BudgetEntry[]) => {
+      const handlers = {
+        onAddEntry: vi.fn().mockResolvedValue(undefined),
+        onUpdateEntry: vi.fn().mockResolvedValue(undefined),
+        onDeleteEntry: vi.fn().mockResolvedValue(undefined),
+        onCancel: vi.fn(),
+        onComplete: vi.fn(),
+      };
+      render(
+        <BudgetSetupWizard entries={entries} mode="add" monthlyTakeHome={2500} {...handlers} />,
+      );
+      return handlers;
+    };
+
+    it("starts at the common items, with no welcome and no Start blank", () => {
+      const { onCancel } = renderAdd(seeded());
+      expect(screen.getByRole("heading", { name: "Add common budget items" })).toBeDefined();
+      expect(screen.getByText(/Your saved entries stay as they are/)).toBeDefined();
+      expect(screen.queryByText("Set up your budget")).toBeNull();
+      expect(screen.queryByRole("button", { name: /start blank/i })).toBeNull();
+      // Seven steps: the six sections and the summary, without the welcome.
+      expect(screen.getByText("Step 1 of 7")).toBeDefined();
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      expect(onCancel).toHaveBeenCalled();
+    });
+
+    it("shows the seeded rent as already in the budget and adds only the other five", async () => {
+      const handlers = renderAdd(seeded());
+      const list = screen.getByRole("list", { name: "Common budget items" });
+      expect(list.textContent).toContain("Rent or mortgage: already in your budget");
+      expect(list.textContent).not.toContain("Council tax: already");
+      fireEvent.click(screen.getByRole("button", { name: "Add these items" }));
+      await waitFor(() => expect(handlers.onAddEntry).toHaveBeenCalledTimes(5));
+      expect(handlers.onAddEntry.mock.calls.map(([e]) => e.name)).toEqual([
+        "Council Tax",
+        "Gas & Electricity",
+        "Water",
+        "Broadband",
+        "Groceries",
+      ]);
+      // Saved entries are kept as they are: nothing is changed or deleted.
+      expect(handlers.onUpdateEntry).not.toHaveBeenCalled();
+      expect(handlers.onDeleteEntry).not.toHaveBeenCalled();
+      // On to Income, where the seeded take-home row is shown as saved.
+      expect(await screen.findByText("Monthly Take-Home Income")).toBeDefined();
+    });
+
+    it("Next goes on without adding anything or changing a saved entry", async () => {
+      const handlers = renderAdd(seeded());
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+      expect(await screen.findByText("Monthly Take-Home Income")).toBeDefined();
+      expect(handlers.onAddEntry).not.toHaveBeenCalled();
+      expect(handlers.onUpdateEntry).not.toHaveBeenCalled();
+    });
+
+    it("with every common item saved, says so and offers nothing to add", () => {
+      const handlers = renderAdd([
+        savedEntry("Rent", "housing"),
+        savedEntry("Council tax", "bills"),
+        savedEntry("Energy", "bills"),
+        savedEntry("Water", "bills"),
+        savedEntry("Broadband", "bills"),
+        savedEntry("Food shop", "expenses"),
+      ]);
+      expect(screen.getByText("Your budget already has all of these.")).toBeDefined();
+      expect(screen.queryByRole("button", { name: /add (these|this) item/i })).toBeNull();
+      expect(handlers.onAddEntry).not.toHaveBeenCalled();
+    });
+
+    it("says this item for one missing common item and finishes as editing", async () => {
+      const handlers = renderAdd([
+        savedEntry("Rent", "housing"),
+        savedEntry("Council tax", "bills"),
+        savedEntry("Energy", "bills"),
+        savedEntry("Water", "bills"),
+        savedEntry("Broadband", "bills"),
+      ]);
+      fireEvent.click(screen.getByRole("button", { name: "Add this item" }));
+      await waitFor(() => expect(handlers.onAddEntry).toHaveBeenCalledTimes(1));
+      expect(handlers.onAddEntry.mock.calls[0]?.[0].name).toBe("Groceries");
+    });
+  });
 });
 
 afterEach(() => {

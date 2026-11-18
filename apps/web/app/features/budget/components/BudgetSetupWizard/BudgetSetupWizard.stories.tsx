@@ -47,3 +47,27 @@ export const EditMode: Story = {
     await expect(canvas.queryByText("Set up your budget")).toBeNull();
   },
 };
+
+/**
+ * "Add common budget items" on a budget that already has entries (the onboarding seed rows): the
+ * saved rent shows as already in the budget, and only the missing items are added.
+ */
+export const AddMode: Story = {
+  args: {
+    mode: "add",
+    entries: sampleBudgetEntries().filter((entry) => entry.category !== "bills"),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      canvas.getAllByRole("heading", { name: "Add common budget items" })[0],
+    ).toBeDefined();
+    await expect(canvas.getAllByText("Step 1 of 7")[0]).toBeDefined();
+    await expect(canvas.queryByRole("button", { name: "Start blank" })).toBeNull();
+    const add = canvas.getAllByRole("button", { name: /Add (these|this) item/ })[0];
+    if (!add) throw new Error("Add button missing");
+    await userEvent.click(add);
+    await expect(args.onAddEntry).toHaveBeenCalled();
+    await expect(args.onUpdateEntry).not.toHaveBeenCalled();
+  },
+};

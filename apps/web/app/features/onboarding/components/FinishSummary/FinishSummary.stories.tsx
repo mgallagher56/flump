@@ -37,6 +37,24 @@ export const Complete: Story = {
   },
 };
 
+/** The secondary Finish saves the same way, then opens the budget page's wizard. */
+export const FinishToBudget: Story = {
+  args: make({
+    grossSalary: 45000,
+    taxRegion: "ENGLAND",
+    housingStatus: "renting",
+    monthlyHousingCost: 900,
+  }),
+  play: async ({ canvasElement, args }) => {
+    await userEvent.click(
+      within(canvasElement).getAllByRole("button", {
+        name: "Finish and add common budget items",
+      })[0] as HTMLElement,
+    );
+    await expect(args.onFinish).toHaveBeenCalledWith("budget");
+  },
+};
+
 export const MissingIncome: Story = {
   args: make({}),
   play: async ({ canvasElement, args }) => {

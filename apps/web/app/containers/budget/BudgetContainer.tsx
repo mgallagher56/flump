@@ -22,9 +22,9 @@ import {
   TaxRatesStatusBanner,
   useOptionalToast,
 } from "@repo/ui";
-import { ListChecks, Pencil } from "lucide-react";
+import { ListChecks, ListPlus, Pencil } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useSearchParams } from "react-router";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
 import { BreathingRoom } from "~/features/budget/components/BreathingRoom";
 import { BudgetCategoryList } from "~/features/budget/components/BudgetCategoryList";
@@ -39,6 +39,7 @@ import {
   exampleBudgetDrafts,
   isDraftReady,
 } from "~/features/budget/exampleDrafts";
+import { missingWizardCommonItems } from "~/features/budget/wizardCommonItems";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import {
   HousingDetails,
@@ -55,9 +56,17 @@ import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage"
 
 /**
  * The page shows the budget, the budget with its entries editable in place (E16 round 3), or the
- * first-time setup wizard in its place.
+ * wizard in its place: first-time setup on an empty budget, or adding common items to one that has
+ * entries (the onboarding seed rows, say).
  */
 type BudgetView = "budget" | "editing" | "wizard";
+
+/**
+ * `?setup=common` opens the wizard once on load (the onboarding finish step links here). It
+ * carries no money: on an empty budget it opens first-time setup, otherwise "add common items".
+ */
+export const SETUP_PARAM = "setup";
+export const SETUP_COMMON = "common";
 
 const STANDARD_CATEGORIES: string[] = ["housing", "bills", "expenses", "savings", "income"];
 
@@ -116,6 +125,9 @@ const BudgetContainer: FC = () => {
   }, [userProfile, setProfile]);
 
   const [view, setView] = useState<BudgetView>("budget");
+  // Fixed when the wizard opens, so saving amounts part way through never switches its mode.
+  const [wizardMode, setWizardMode] = useState<"setup" | "add">("setup");
+  const [searchParams] = useSearchParams();
   // The one category whose entries are open in the list (E16 PR 5: rows open their entries).
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
@@ -243,6 +255,26 @@ const BudgetContainer: FC = () => {
     const total = entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
     return total === 0;
   }, [entries]);
+
+  const openWizard = () => {
+    setWizardMode(isBudgetEmpty ? "setup" : "add");
+    setView("wizard");
+  };
+
+  // Common items the wizard can still add: none, and the "add" entry point is not offered.
+  const hasMissingCommonItems = useMemo(
+    () => missingWizardCommonItems(entries).length > 0,
+    [entries],
+  );
+
+  // ?setup=common opens the wizard once per visit, like the mortgage page's ?tool=.
+  const setupParam = searchParams.get(SETUP_PARAM);
+  const handledSetupParam = useRef(false);
+  useEffect(() => {
+    if (setupParam !== SETUP_COMMON || handledSetupParam.current) return;
+    handledSetupParam.current = true;
+    openWizard();
+  }, [setupParam]);
 
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -529,16 +561,30 @@ const BudgetContainer: FC = () => {
               Finish editing
             </Button>
           ) : view === "budget" ? (
-            // The wizard is for first-time setup only; a saved budget is edited in place.
-            <Button
-              data-testid="setup-wizard-btn"
-              id="setup-wizard-btn"
-              variant={isBudgetEmpty ? "primary" : "outline"}
-              onClick={() => setView(isBudgetEmpty ? "wizard" : "editing")}
-            >
-              <Icon icon={isBudgetEmpty ? ListChecks : Pencil} size="sm" />
-              {isBudgetEmpty ? "Set up your budget" : "Edit budget"}
-            </Button>
+            // An empty budget opens first-time setup; a saved budget is edited in place, and the
+            // wizard adds the common items it does not have yet (never touching saved entries).
+            <>
+              {!isBudgetEmpty && hasMissingCommonItems && (
+                <Button
+                  data-testid="add-common-items-btn"
+                  id="add-common-items-btn"
+                  variant="outline"
+                  onClick={openWizard}
+                >
+                  <Icon icon={ListPlus} size="sm" />
+                  Add common budget items
+                </Button>
+              )}
+              <Button
+                data-testid="setup-wizard-btn"
+                id="setup-wizard-btn"
+                variant={isBudgetEmpty ? "primary" : "outline"}
+                onClick={isBudgetEmpty ? openWizard : () => setView("editing")}
+              >
+                <Icon icon={isBudgetEmpty ? ListChecks : Pencil} size="sm" />
+                {isBudgetEmpty ? "Set up your budget" : "Edit budget"}
+              </Button>
+            </>
           ) : undefined
         }
         subtitle="Your income, spending and how long your money lasts."
@@ -552,7 +598,7 @@ const BudgetContainer: FC = () => {
       {view === "wizard" ? (
         <BudgetSetupWizard
           entries={entries}
-          mode="setup"
+          mode={wizardMode}
           monthlyTakeHome={
             picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
           }

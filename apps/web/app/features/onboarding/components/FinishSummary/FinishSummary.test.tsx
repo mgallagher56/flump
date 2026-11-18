@@ -73,8 +73,40 @@ describe("<FinishSummary />", () => {
     }) as HTMLButtonElement;
     expect(finish.disabled).toBe(false);
     fireEvent.click(finish);
-    expect(onFinish).toHaveBeenCalled();
+    expect(onFinish).toHaveBeenCalledWith("dashboard");
     expect(screen.queryByTestId("finish-income-hint")).toBeNull();
+  });
+
+  it("offers the same save then the budget wizard, as a secondary button", () => {
+    const { onFinish } = setup({ grossSalary: 45000, taxRegion: "ENGLAND" });
+    const toBudget = screen.getByRole("button", {
+      name: "Finish and add common budget items",
+    }) as HTMLButtonElement;
+    expect(toBudget.disabled).toBe(false);
+    fireEvent.click(toBudget);
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    expect(onFinish).toHaveBeenCalledWith("budget");
+  });
+
+  it("disables the budget wizard button while saving", () => {
+    setup({ grossSalary: 45000, taxRegion: "ENGLAND" }, { isSubmitting: true });
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Finish and add common budget items",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  });
+
+  it("disables the budget wizard button when income is missing", () => {
+    const { onFinish } = setup({});
+    const toBudget = screen.getByRole("button", {
+      name: "Finish and add common budget items",
+    }) as HTMLButtonElement;
+    expect(toBudget.disabled).toBe(true);
+    fireEvent.click(toBudget);
+    expect(onFinish).not.toHaveBeenCalled();
   });
 
   it("names what is missing, links back and disables Finish", () => {
