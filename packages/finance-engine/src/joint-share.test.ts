@@ -206,7 +206,7 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
     it("validates out-of-range or non-finite sharePercent values", () => {
       expect(
         resolveAccountSharePercent({ type: "Mortgage", ownership: "joint", sharePercent: 0 }),
-      ).toBe(50);
+      ).toBe(0);
       expect(
         resolveAccountSharePercent({ type: "Mortgage", ownership: "joint", sharePercent: -20 }),
       ).toBe(50);
@@ -220,6 +220,16 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       expect(
         resolveAccountSharePercent({ type: "Mortgage", ownership: "joint", sharePercent: 140 }),
       ).toBe(100);
+    });
+  });
+
+  describe("a 0% joint share", () => {
+    it("counts none of the balance, payment or interest rather than half", () => {
+      const joint0 = { type: "Saving", ownership: "joint", sharePercent: 0 } as const;
+      expect(applyAccountShare(280_000, { ...joint0, type: "Mortgage" })).toBe(0);
+      expect(applyAccountShare(-1_200, { ...joint0, type: "Current" })).toBe(0);
+      expect(splitJointSavingsInterest(400, joint0)).toBe(0);
+      expect(resolveAccountSharePercent({ ...joint0, sharePercent: "0" })).toBe(0);
     });
   });
 

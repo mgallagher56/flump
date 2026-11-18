@@ -84,8 +84,29 @@ describe("mortgage module", () => {
   describe("calculateMortgagePayment", () => {
     it("returns 0 for missing or non-positive inputs rather than NaN or Infinity", () => {
       expect(calculateMortgagePayment(0, 4, 25)).toBe(0);
-      expect(calculateMortgagePayment(200000, 0, 25)).toBe(0);
       expect(calculateMortgagePayment(200000, 4, 0)).toBe(0);
+      expect(calculateMortgagePayment(200000, -1, 25)).toBe(0);
+    });
+
+    it("repays a 0% mortgage in equal parts, the same as calculateMonthlyMortgagePayment", () => {
+      // £120,000 over 10 years at 0%: 120,000 / 120 months = £1,000 a month.
+      expect(calculateMortgagePayment(120000, 0, 10, "repayment")).toBe(1000);
+      expect(calculateMonthlyMortgagePayment(120000, 0, 120)).toBe(1000);
+      // Interest-only at 0% has no interest to pay.
+      expect(calculateMortgagePayment(120000, 0, 10, "interest-only")).toBe(0);
+    });
+
+    it("agrees with calculateMonthlyMortgagePayment to the penny at any rate", () => {
+      for (const [principal, rate, years] of [
+        [250000, 4.5, 25],
+        [186000, 0, 18],
+        [50000, 7.25, 7],
+        [300000, 0.01, 30],
+      ] as const) {
+        expect(Math.round(calculateMortgagePayment(principal, rate, years) * 100) / 100).toBe(
+          calculateMonthlyMortgagePayment(principal, rate, years * 12),
+        );
+      }
     });
 
     it("computes repayment and interest-only monthly payments", () => {
