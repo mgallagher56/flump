@@ -15,11 +15,16 @@ vi.mock("~/utils/auth.server", () => ({
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { apiConfig } from "~/config.server";
 import {
+  accountFixture,
   accountWithDetailsFixture,
   contractFetch,
   jsonResponse,
 } from "~/test/fixtures/contractResponses";
-import { action as accountsAction } from "./app.accounts._index";
+import {
+  action as accountsAction,
+  HOME_ALREADY_THERE_NOTICE,
+  HOME_NOT_SAVED_NOTICE,
+} from "./app.accounts._index";
 import { action as debtAction } from "./app.debt";
 import { action as onboardingAction } from "./app.onboarding";
 import { action as pensionAction } from "./app.pension";
@@ -235,6 +240,23 @@ const cases: Case[] = [
     method: "PATCH",
     path: "/accounts/s1",
     body: { name: "Rainy day", interestRate: 2 },
+  },
+  {
+    // A saved joint account saved as an ISA: the dialog sends sole, and no share (the backend
+    // clears the share of a sole account).
+    route: "savings",
+    action: savingsAction,
+    intent: "updateSavingsAccount",
+    fields: {
+      accountId: "s1",
+      name: "Joint saver",
+      type: "Saving",
+      accountSubtype: "cash_isa",
+      ownership: "sole",
+    },
+    method: "PATCH",
+    path: "/accounts/s1",
+    body: { name: "Joint saver", type: "Saving", accountSubtype: "cash_isa", ownership: "sole" },
   },
   {
     route: "savings",
@@ -512,9 +534,11 @@ describe("accounts action, connectBank", () => {
 });
 
 describe("accounts action, a mortgage added with the home's value", () => {
+  const REQUEST_ID = "4c1f6a2e-0d3b-4e8a-9b7c-2f5e1d0a9c33";
   const createMortgage = (fields: Record<string, string>) => {
     const form = new FormData();
     form.set("intent", "create");
+    form.set("requestId", REQUEST_ID);
     form.set("name", "Nationwide mortgage");
     form.set("type", "Mortgage");
     form.set("balance", "-200000");
@@ -525,48 +549,101 @@ describe("accounts action, a mortgage added with the home's value", () => {
       context: {},
     } as any);
   };
-  /** Answers GET /accounts with `existing`, everything else with a contract-valid body. */
-  const withAccounts = (existing: unknown[]) =>
-    vi.fn().mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const method = init?.method ?? "GET";
-      if (method === "GET" && new URL(String(input)).pathname.endsWith("/accounts")) {
-        return jsonResponse(
-          existing.map((row) => ({ ...accountWithDetailsFixture, ...(row as object) })),
-          200,
-        );
-      }
-      return contractFetch()(input, init);
-    });
-  const writes = (fetchMock: ReturnType<typeof vi.fn>) =>
-    fetchMock.mock.calls
-      .filter(([, init]) => (init as RequestInit).method === "POST")
-      .map(([, init]) => JSON.parse(String((init as RequestInit).body)));
 
-  it("adds the home first, with the mortgage's ownership and share, then the mortgage", async () => {
-    const fetchMock = withAccounts([]);
+  /**
+   * A small in-memory backend: GET /accounts lists what is saved, POST /accounts saves a row and
+   * answers with it, PATCH /accounts/:id updates one. A POST whose Idempotency-Key was seen
+   * before replays the first answer and saves nothing, as the real backend does. `fail` can turn
+   * a request into an error, after or instead of saving.
+   */
+  const fakeBackend = (
+    saved: Array<Record<string, unknown>> = [],
+    fail?: (req: { method: string; body: any }) => "before" | "after" | undefined,
+  ) => {
+    const replays = new Map<string, unknown>();
+    let next = 1;
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const method = init?.method ?? "GET";
+        const path = new URL(String(input)).pathname;
+        const body = init?.body ? JSON.parse(String(init.body)) : null;
+        const failure = fail?.({ method, body });
+        if (failure === "before") return jsonResponse({ message: "Unavailable" }, 503);
+        if (method === "GET" && path.endsWith("/accounts")) {
+          return jsonResponse(
+            saved.map((row) => ({ ...accountWithDetailsFixture, ...row })),
+            200,
+          );
+        }
+        if (method === "POST" && path.endsWith("/accounts")) {
+          const key = (init?.headers as Record<string, string> | undefined)?.["Idempotency-Key"];
+          if (key && replays.has(key)) return jsonResponse(replays.get(key), 201);
+          const row = {
+            ...accountFixture,
+            ...body,
+            id: `00000000-0000-4000-8000-00000000000${next++}`,
+            ownership: body.ownership ?? "sole",
+            sharePercent: body.sharePercent ?? null,
+          };
+          saved.push(row);
+          if (key) replays.set(key, row);
+          if (failure === "after") return jsonResponse({ message: "Gateway timeout" }, 504);
+          return jsonResponse(row, 201);
+        }
+        if (method === "PATCH") {
+          const id = path.split("/").pop();
+          const row = saved.find((r) => r.id === id);
+          Object.assign(row ?? {}, body);
+          return jsonResponse({ ...accountFixture, ...row }, 200);
+        }
+        return contractFetch()(input, init);
+      });
+    return { fetchMock, saved };
+  };
+  const calls = (fetchMock: ReturnType<typeof vi.fn>, method: string) =>
+    fetchMock.mock.calls.filter(([, init]) => ((init as RequestInit)?.method ?? "GET") === method);
+  const postedBodies = (fetchMock: ReturnType<typeof vi.fn>) =>
+    calls(fetchMock, "POST").map(([, init]) => JSON.parse(String((init as RequestInit).body)));
+  const postedKeys = (fetchMock: ReturnType<typeof vi.fn>) =>
+    calls(fetchMock, "POST").map(
+      ([, init]) => ((init as RequestInit).headers as Record<string, string>)["Idempotency-Key"],
+    );
+
+  it("adds the mortgage first, then the home with the mortgage's ownership and share", async () => {
+    const { fetchMock } = fakeBackend();
     globalThis.fetch = fetchMock;
     const res: any = await createMortgage({
       homeValue: "325000",
       ownership: "joint",
       sharePercent: "40",
     });
-    expect(res.data).toMatchObject({ success: true });
-    const posted = writes(fetchMock);
+    expect(res.data).toEqual({ success: true });
+    const posted = postedBodies(fetchMock);
     expect(posted).toHaveLength(2);
-    expect(posted[0]).toEqual({
+    expect(posted[0]).toMatchObject({ name: "Nationwide mortgage", type: "Mortgage" });
+    // The contract is a strict object: the extra form fields never reach /accounts.
+    expect(posted[0]).not.toHaveProperty("homeValue");
+    expect(posted[0]).not.toHaveProperty("requestId");
+    expect(posted[1]).toEqual({
       name: "Home (your estimate)",
       type: "Property",
       balance: 325000,
       ownership: "joint",
       sharePercent: 40,
     });
-    expect(posted[1]).toMatchObject({ name: "Nationwide mortgage", type: "Mortgage" });
-    // The contract is a strict object: the extra form field never reaches /accounts.
-    expect(posted[1]).not.toHaveProperty("homeValue");
+    expect(postedKeys(fetchMock)).toEqual([`${REQUEST_ID}:mortgage`, `${REQUEST_ID}:home`]);
+  });
+
+  it("sends a sole home with no share", async () => {
+    const { fetchMock } = fakeBackend();
+    globalThis.fetch = fetchMock;
+    await createMortgage({ homeValue: "325000", ownership: "sole" });
+    expect(postedBodies(fetchMock)[1]).toMatchObject({ ownership: "sole", sharePercent: null });
   });
 
   it("never stores a buy-to-let value as a property here", async () => {
-    const fetchMock = withAccounts([]);
+    const { fetchMock } = fakeBackend();
     globalThis.fetch = fetchMock;
     const res: any = await createMortgage({
       homeValue: "250000",
@@ -576,69 +653,114 @@ describe("accounts action, a mortgage added with the home's value", () => {
     expect(res.data).toMatchObject({ success: true });
     // Only the mortgage is written; the buy-to-let value lives on the profile (mortgage page).
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const posted = writes(fetchMock);
-    expect(posted).toHaveLength(1);
-    expect(posted[0]).toMatchObject({ type: "Mortgage" });
+    expect(postedBodies(fetchMock)).toHaveLength(1);
   });
 
-  it("takes the home away again when the mortgage then fails, and returns that error", async () => {
-    const ok = withAccounts([]);
-    const fetchMock = vi
-      .fn()
-      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
-        const body = init?.body ? JSON.parse(String(init.body)) : null;
-        if (init?.method === "POST" && body?.type === "Mortgage") {
-          return jsonResponse({ message: "Server error" }, 500);
-        }
-        return ok(input, init);
-      });
-    globalThis.fetch = fetchMock;
-    const res: any = await createMortgage({ homeValue: "325000" });
-    expect(res.data.success).toBe(false);
-    expect(res.init.status).toBe(500);
-    const deletes = fetchMock.mock.calls.filter(
-      ([, init]) => (init as RequestInit | undefined)?.method === "DELETE",
+  it("creates no home when the mortgage save fails, and returns that error", async () => {
+    const { fetchMock, saved } = fakeBackend([], ({ method, body }) =>
+      method === "POST" && body?.type === "Mortgage" ? "before" : undefined,
     );
-    expect(deletes).toHaveLength(1);
-    // The id comes from the home's create response.
-    expect(String(deletes[0][0])).toMatch(new RegExp(`/accounts/${accountWithDetailsFixture.id}$`));
-  });
-
-  it("still returns the mortgage's error when taking the home away fails too", async () => {
-    const ok = withAccounts([]);
-    const fetchMock = vi
-      .fn()
-      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
-        const body = init?.body ? JSON.parse(String(init.body)) : null;
-        if (init?.method === "POST" && body?.type === "Mortgage") {
-          return jsonResponse({ message: "Server error" }, 500);
-        }
-        if (init?.method === "DELETE") return jsonResponse({ message: "Unavailable" }, 503);
-        return ok(input, init);
-      });
     globalThis.fetch = fetchMock;
     const res: any = await createMortgage({ homeValue: "325000" });
     expect(res.data.success).toBe(false);
-    expect(res.init.status).toBe(500);
+    expect(res.init.status).toBe(503);
+    expect(saved).toHaveLength(0);
+    expect(postedBodies(fetchMock)).toHaveLength(1);
+    expect(calls(fetchMock, "GET")).toHaveLength(0);
   });
 
-  it("adds no second home when a home is already there", async () => {
-    const fetchMock = withAccounts([{ name: "Home (your estimate)", type: "Property" }]);
+  it("keeps the mortgage and says so when the home save fails, with nothing deleted", async () => {
+    const { fetchMock, saved } = fakeBackend([], ({ method, body }) =>
+      method === "POST" && body?.type === "Property" ? "before" : undefined,
+    );
     globalThis.fetch = fetchMock;
     const res: any = await createMortgage({ homeValue: "325000" });
-    expect(res.data).toMatchObject({ success: true });
-    const posted = writes(fetchMock);
+    expect(res.data).toEqual({ success: true, notice: HOME_NOT_SAVED_NOTICE });
+    expect(HOME_NOT_SAVED_NOTICE).toBe(
+      "We saved your mortgage but could not save your home value. Add it on the mortgage page.",
+    );
+    expect(saved.map((row) => row.type)).toEqual(["Mortgage"]);
+    expect(calls(fetchMock, "DELETE")).toHaveLength(0);
+  });
+
+  it("saves the mortgage and says why the value was not added when a home is already there", async () => {
+    const { fetchMock } = fakeBackend([{ name: "Our flat", type: "Property", balance: 280000 }]);
+    globalThis.fetch = fetchMock;
+    const res: any = await createMortgage({ homeValue: "325000" });
+    expect(res.data).toEqual({ success: true, notice: HOME_ALREADY_THERE_NOTICE });
+    expect(HOME_ALREADY_THERE_NOTICE).toBe(
+      "We saved your mortgage. Your home value was not added because you already have a home on Accounts. Update it on the mortgage page.",
+    );
+    const posted = postedBodies(fetchMock);
     expect(posted).toHaveLength(1);
     expect(posted[0]).toMatchObject({ type: "Mortgage" });
-    expect(posted[0]).not.toHaveProperty("homeValue");
+  });
+
+  it("does not count a buy-to-let property as a home already there", async () => {
+    const { fetchMock } = fakeBackend([{ name: "Buy to let flat", type: "Property" }]);
+    globalThis.fetch = fetchMock;
+    const res: any = await createMortgage({ homeValue: "325000" });
+    expect(res.data).toEqual({ success: true });
+    expect(postedBodies(fetchMock).map((b) => b.type)).toEqual(["Mortgage", "Property"]);
+  });
+
+  it("replays on a retry after a timeout that did save, so nothing is added twice", async () => {
+    // First try: the mortgage saves but its answer times out, so the action reports an error.
+    let first = true;
+    const { fetchMock, saved } = fakeBackend([], ({ method, body }) => {
+      if (first && method === "POST" && body?.type === "Mortgage") {
+        first = false;
+        return "after";
+      }
+      return undefined;
+    });
+    globalThis.fetch = fetchMock;
+    const failed: any = await createMortgage({ homeValue: "325000" });
+    expect(failed.data.success).toBe(false);
+    expect(saved.map((row) => row.type)).toEqual(["Mortgage"]);
+
+    // Save again from the same opening of the dialog: the same keys, so the mortgage replays.
+    const retried: any = await createMortgage({ homeValue: "325000" });
+    expect(retried.data).toEqual({ success: true });
+    expect(saved.map((row) => row.type)).toEqual(["Mortgage", "Property"]);
+    expect(postedKeys(fetchMock)).toEqual([
+      `${REQUEST_ID}:mortgage`,
+      `${REQUEST_ID}:mortgage`,
+      `${REQUEST_ID}:home`,
+    ]);
+  });
+
+  it("adds no second home on a retry after both saved, and lines its share up with the mortgage", async () => {
+    // An earlier try saved both, but the home with a different share (sole) from the mortgage.
+    const { fetchMock, saved } = fakeBackend();
+    globalThis.fetch = fetchMock;
+    await createMortgage({ homeValue: "325000", ownership: "joint", sharePercent: "50" });
+    const home = saved.find((row) => row.type === "Property") as Record<string, unknown>;
+    Object.assign(home, { ownership: "sole", sharePercent: null });
+
+    const retried: any = await createMortgage({
+      homeValue: "325000",
+      ownership: "joint",
+      sharePercent: "50",
+    });
+    expect(retried.data).toEqual({ success: true });
+    expect(saved.map((row) => row.type)).toEqual(["Mortgage", "Property"]);
+    const patches = calls(fetchMock, "PATCH");
+    expect(patches).toHaveLength(1);
+    expect(String(patches[0]?.[0])).toMatch(new RegExp(`/accounts/${home.id}$`));
+    expect(JSON.parse(String((patches[0]?.[1] as RequestInit | undefined)?.body))).toEqual({
+      ownership: "joint",
+      sharePercent: 50,
+    });
+    expect(home).toMatchObject({ ownership: "joint", sharePercent: 50 });
   });
 
   it("reads nothing extra and adds no home without a value", async () => {
-    const fetchMock = withAccounts([]);
+    const { fetchMock } = fakeBackend();
     globalThis.fetch = fetchMock;
     await createMortgage({});
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(writes(fetchMock)).toHaveLength(1);
+    expect(postedBodies(fetchMock)).toHaveLength(1);
   });
 });
 

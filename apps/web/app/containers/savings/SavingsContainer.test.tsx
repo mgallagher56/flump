@@ -70,6 +70,7 @@ vi.mock("recharts", async () => {
   };
 });
 
+import { INTEREST_LABEL } from "~/features/savings/components/SavingsSummaryCards/SavingsSummaryCards";
 import SavingsContainer, { parsePayRise } from "./SavingsContainer";
 
 const zone = () => screen.getByRole("region", { name: "Model a change to your savings" });
@@ -173,6 +174,35 @@ describe("SavingsContainer", () => {
       ).length,
     ).toBeGreaterThan(0);
     expectPageRules(container, { maxFigures: 12, projectionNotices: 1 });
+  });
+
+  it("counts a joint account's balance, monthly saving and interest all at the user's share", () => {
+    // 50% joint: whole balance £10,000 and whole saving £200 a month, at 5% AER.
+    //   Balance at share: 10,000 × 0.5 = £5,000. Saved each month at share: 200 × 0.5 = £100.
+    //   Interest: 5,000 × 0.05 = £250, plus £100 a month for 12 months at
+    //   r = 1.05^(1/12) − 1 ≈ 0.0040741: 100 × (0.05 / r) − 1,200 ≈ 1,227.26 − 1,200 = £27.26.
+    //   Total ≈ £277.26, shown as £277.
+    loader.accounts = [
+      {
+        id: "joint",
+        name: "Joint saver",
+        type: "Saving",
+        accountSubtype: "easy_access",
+        balance: 10000,
+        interestRate: 5,
+        monthlyContribution: 200,
+        ownership: "joint",
+        sharePercent: 50,
+      },
+    ];
+    render(<SavingsContainer />);
+    expect(screen.getByTestId("hero-figure").textContent).toContain("£5,000");
+    expect(screen.getByText("Saved each month").closest("[data-density]")?.textContent).toContain(
+      "£100",
+    );
+    expect(screen.getByText(INTEREST_LABEL).closest("[data-density]")?.textContent).toContain(
+      "£277",
+    );
   });
 
   it("shows only the header and one empty state with no accounts", () => {

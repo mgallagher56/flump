@@ -26,11 +26,22 @@ const SYNONYM_GROUPS: ReadonlyArray<{ category: string; names: ReadonlyArray<str
       "household contribution",
     ],
   },
-  { category: "bills", names: ["gas and electricity", "gas", "electricity", "energy"] },
-  { category: "bills", names: ["broadband", "phone and broadband", "internet"] },
-  { category: "expenses", names: ["groceries", "food shop", "food"] },
-  { category: "bills", names: ["council tax"] },
-  { category: "bills", names: ["water"] },
+  // Everyday names for the same bill. Matching stays exact on the normalised name, so "Rent for
+  // parking" or "Water softener" is never read as one of these.
+  {
+    category: "bills",
+    names: ["gas and electricity", "gas", "electricity", "energy", "energy bill"],
+  },
+  {
+    category: "bills",
+    names: ["broadband", "phone and broadband", "broadband and phone", "internet", "wi-fi", "wifi"],
+  },
+  {
+    category: "expenses",
+    names: ["groceries", "food shop", "food", "food shopping", "supermarket"],
+  },
+  { category: "bills", names: ["council tax", "council tax bill"] },
+  { category: "bills", names: ["water", "water bill", "water rates"] },
   { category: "savings", names: ["savings", "emergency fund", "isa or investments"] },
   {
     category: INCOME_CATEGORY,

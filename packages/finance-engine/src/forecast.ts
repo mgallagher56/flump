@@ -1,3 +1,4 @@
+import { monthlyRateFromAer } from "./savings-interest.js";
 import type {
   CompoundTrajectoryPoint,
   CompoundTrajectoryResult,
@@ -287,7 +288,10 @@ export interface SavingsCompoundProjection {
 }
 
 /**
- * Projects a savings balance over whole years with monthly compounding and monthly additions.
+ * Projects a savings balance over whole years with monthly compounding and monthly additions
+ * (each added at the end of its month). `annualRatePct` is an AER, so each month grows by the
+ * monthly equivalent (1 + AER/100)^(1/12) − 1, the same basis as the savings interest headline:
+ * a year with no additions grows by exactly the AER.
  */
 export function projectCompoundSavings(
   input: SavingsCompoundProjectionInput,
@@ -297,7 +301,7 @@ export function projectCompoundSavings(
   const years = Math.max(0, Math.round(input.years));
   const rate =
     Number.isFinite(input.annualRatePct) && input.annualRatePct > 0 ? input.annualRatePct : 0;
-  const monthlyRate = rate / 100 / 12;
+  const monthlyRate = monthlyRateFromAer(rate);
 
   const points: { year: number; balance: number }[] = [{ year: 0, balance: Math.round(starting) }];
   let balance = starting;
@@ -323,7 +327,8 @@ export type SavingsGoalMonthsResult =
 
 /**
  * Months until a monthly-compounding savings balance first reaches `goal`, searching up to
- * `maxMonths` (default 600 = 50 years).
+ * `maxMonths` (default 600 = 50 years). `annualRatePct` is an AER, compounded monthly at its
+ * monthly equivalent, the same as `projectCompoundSavings`.
  */
 export function calculateMonthsToSavingsGoal(input: {
   starting: number;
@@ -337,7 +342,7 @@ export function calculateMonthsToSavingsGoal(input: {
   const monthly = Number.isFinite(input.monthly) && input.monthly > 0 ? input.monthly : 0;
   const rate =
     Number.isFinite(input.annualRatePct) && input.annualRatePct > 0 ? input.annualRatePct : 0;
-  const monthlyRate = rate / 100 / 12;
+  const monthlyRate = monthlyRateFromAer(rate);
   const maxMonths = input.maxMonths ?? 600;
   let balance = starting;
   for (let months = 1; months <= maxMonths; months += 1) {

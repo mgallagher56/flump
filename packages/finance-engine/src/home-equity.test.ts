@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimateHomeEquity } from "./home-equity.js";
+import { estimateHomeEquity, isResidentialHomeAccount } from "./home-equity.js";
 
 describe("estimateHomeEquity", () => {
   it("is value less mortgage for a home held solely", () => {
@@ -87,5 +87,20 @@ describe("estimateHomeEquity", () => {
     expect(estimateHomeEquity({ homeValue: null, mortgageBalance: 100_000 })).toBeNull();
     expect(estimateHomeEquity({ homeValue: 0, mortgageBalance: 100_000 })).toBeNull();
     expect(estimateHomeEquity({ homeValue: undefined })).toBeNull();
+  });
+});
+
+describe("isResidentialHomeAccount", () => {
+  it("counts a Property account that is not buy to let as a home", () => {
+    expect(isResidentialHomeAccount({ type: "Property", name: "Home (your estimate)" })).toBe(true);
+    expect(isResidentialHomeAccount({ type: "property", name: "Flat" })).toBe(true);
+  });
+
+  it("leaves out buy to let property and every other type", () => {
+    expect(isResidentialHomeAccount({ type: "Property", name: "Buy to let flat" })).toBe(false);
+    expect(isResidentialHomeAccount({ type: "Property", name: "BTL house" })).toBe(false);
+    expect(isResidentialHomeAccount({ type: "Mortgage", name: "Home" })).toBe(false);
+    expect(isResidentialHomeAccount({ type: "Saving", name: "House deposit" })).toBe(false);
+    expect(isResidentialHomeAccount({ type: null, name: "Home" })).toBe(false);
   });
 });

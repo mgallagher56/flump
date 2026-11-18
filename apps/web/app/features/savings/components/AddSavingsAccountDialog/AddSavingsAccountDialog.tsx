@@ -1,3 +1,4 @@
+import { isIsaAccount } from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
@@ -34,6 +35,9 @@ export interface AddSavingsAccountDialogProps {
   onDeleteRequest?: () => void;
 }
 
+export const ISA_BECOMES_SOLE_NOTICE =
+  "An ISA cannot be held jointly. Saving this makes the account yours only.";
+
 const toNumberOrNull = (value: unknown): number | null =>
   value !== undefined && value !== null && Number.isFinite(Number(value)) ? Number(value) : null;
 
@@ -54,10 +58,21 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
   // One choice names the kind, and with it the stored type and subtype. A new account starts with
   // none chosen; an edited one starts from what is saved, and one saved without a subtype shows
   // its type's "Other" kind, so nothing is saved that the user did not choose.
-  const [kindValue, setKindValue] = useState<string>(() =>
+  const [initialKindValue] = useState<string>(() =>
     accountToEdit ? savingsKindValueFor(accountToEdit.type, accountToEdit.accountSubtype) : "",
   );
+  const [kindValue, setKindValue] = useState<string>(initialKindValue);
   const kind = savingsKindFromValue(kindValue);
+  // Editing without touching the select keeps the stored type and subtype exactly as saved: the
+  // select can only show the nearest kind (a subtype that does not belong to its type shows as
+  // "Other"), so its value is sent only when the user changes it.
+  const kindChanged = !isEditing || kindValue !== initialKindValue;
+  const subtypeToSave = kindChanged ? (kind?.subtype ?? "") : (accountToEdit?.accountSubtype ?? "");
+  // An ISA is held in one name (E34): a saved joint account saved as an ISA becomes sole.
+  const becomesSole =
+    isEditing &&
+    accountToEdit?.ownership === "joint" &&
+    isIsaAccount({ accountSubtype: subtypeToSave });
   const isInvestment = kind?.type === "Investment";
   const [balance, setBalance] = useState<number | null>(toNumberOrNull(accountToEdit?.balance));
   // No assumed defaults: a new account starts with an empty rate and monthly amount, and empty
@@ -82,8 +97,8 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         accountId: accountToEdit?.id || "",
         ...versionField(accountToEdit),
         name: name.trim(),
-        type: kind.type,
-        accountSubtype: kind.subtype,
+        ...(kindChanged ? { type: kind.type, accountSubtype: kind.subtype } : {}),
+        ...(becomesSole ? { ownership: "sole" } : {}),
         balance: String(Number(balance) || 0),
         interestRate: interestRate === null ? "" : String(interestRate),
         monthlyContribution: monthlyContribution === null ? "" : String(monthlyContribution),
@@ -162,7 +177,11 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         )}
       </FormField>
 
-      {saveOutcome.error ? <InlineAlert tone="danger">{saveOutcome.error}</InlineAlert> : null}
+      {saveOutcome.error ? (
+        <InlineAlert tone="danger">{saveOutcome.error}</InlineAlert>
+      ) : becomesSole ? (
+        <InlineAlert>{ISA_BECOMES_SOLE_NOTICE}</InlineAlert>
+      ) : null}
 
       <div className={formActions()}>
         {isEditing && onDeleteRequest ? (

@@ -9,7 +9,7 @@ vi.mock("react-router", () => ({
   useFetcher: () => ({ submit: mockSubmit, state: "idle", data: answer.data }),
 }));
 
-import { AddSavingsAccountDialog } from "./AddSavingsAccountDialog";
+import { AddSavingsAccountDialog, ISA_BECOMES_SOLE_NOTICE } from "./AddSavingsAccountDialog";
 
 const CONFLICT =
   "We did not save this because it was changed somewhere else. The latest version is now loaded. Check it and save again.";
@@ -126,7 +126,136 @@ describe("AddSavingsAccountDialog", () => {
     );
     expect((screen.getByLabelText(/Kind of account/) as HTMLSelectElement).value).toBe("Saving:");
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
-    expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({ type: "Saving", accountSubtype: "" });
+    // Unchanged, so the stored type and subtype are left as saved: neither is sent.
+    const sent = mockSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(sent).not.toHaveProperty("type");
+    expect(sent).not.toHaveProperty("accountSubtype");
+  });
+
+  it.each([
+    ["Saving", "easy_access"],
+    ["Saving", "cash_isa"],
+    ["Saving", null],
+    ["Investment", "stocks_and_shares_isa"],
+    ["Investment", null],
+    // A subtype that does not belong to its type shows as the type's Other kind.
+    ["Saving", "general_investment"],
+    ["Investment", "cash_isa"],
+    // A subtype the select has no kind for.
+    ["Saving", "junior_isa"],
+  ])(
+    "never changes a saved %s / %s account's type or subtype unless the kind is changed",
+    (type, subtype) => {
+      render(
+        <AddSavingsAccountDialog
+          accountToEdit={
+            { id: "k1", name: "Pot", type, accountSubtype: subtype, balance: 10 } as never
+          }
+          isOpen={true}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.change(screen.getByLabelText(/Account name/), { target: { value: "Renamed" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      const sent = mockSubmit.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(sent).not.toHaveProperty("type");
+      expect(sent).not.toHaveProperty("accountSubtype");
+      expect(sent.name).toBe("Renamed");
+    },
+  );
+
+  it("sends the new type and subtype when the kind is changed", () => {
+    render(
+      <AddSavingsAccountDialog
+        accountToEdit={
+          {
+            id: "k2",
+            name: "Pot",
+            type: "Saving",
+            accountSubtype: "general_investment",
+            balance: 10,
+          } as never
+        }
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/Kind of account/), {
+      target: { value: "Investment:general_investment" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({
+      type: "Investment",
+      accountSubtype: "general_investment",
+    });
+  });
+
+  const JOINT_SAVER = {
+    id: "j1",
+    name: "Joint saver",
+    type: "Saving",
+    accountSubtype: "easy_access",
+    balance: 4000,
+    ownership: "joint",
+    sharePercent: 50,
+  };
+
+  it("leaves a joint account's ownership alone when it stays a non-ISA kind", () => {
+    render(
+      <AddSavingsAccountDialog
+        accountToEdit={JOINT_SAVER as never}
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(ISA_BECOMES_SOLE_NOTICE)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(mockSubmit.mock.calls[0]?.[0]).not.toHaveProperty("ownership");
+  });
+
+  it("says a joint account saved as an ISA becomes yours only, and sends sole", () => {
+    render(
+      <AddSavingsAccountDialog
+        accountToEdit={JOINT_SAVER as never}
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/Kind of account/), {
+      target: { value: "Saving:cash_isa" },
+    });
+    expect(screen.getAllByText(ISA_BECOMES_SOLE_NOTICE)).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({
+      type: "Saving",
+      accountSubtype: "cash_isa",
+      ownership: "sole",
+    });
+  });
+
+  it("shows no sole notice for a sole account saved as an ISA", () => {
+    render(
+      <AddSavingsAccountDialog
+        accountToEdit={
+          {
+            id: "s1",
+            name: "Saver",
+            type: "Saving",
+            accountSubtype: "easy_access",
+            balance: 1,
+            ownership: "sole",
+          } as never
+        }
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/Kind of account/), {
+      target: { value: "Saving:cash_isa" },
+    });
+    expect(screen.queryByText(ISA_BECOMES_SOLE_NOTICE)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(mockSubmit.mock.calls[0]?.[0]).not.toHaveProperty("ownership");
   });
 
   it("starts an edited Cash ISA from its saved kind", () => {
@@ -210,7 +339,6 @@ describe("AddSavingsAccountDialog", () => {
       expect.objectContaining({
         intent: "updateSavingsAccount",
         accountId: "acc-1",
-        type: "Investment",
         balance: "15000",
         interestRate: "7",
         monthlyContribution: "300",

@@ -52,6 +52,15 @@ describe("<MortgageEditDialog />", () => {
     expect(props.onEditTermMonthsChange).toHaveBeenCalledWith("2");
   });
 
+  it("disables Save while a save is being sent", () => {
+    const props = { ...baseProps(), saving: true };
+    customRender(<MortgageEditDialog {...props} />);
+    const saveButton = screen.getByRole("button", { name: "Save" }) as HTMLButtonElement;
+    expect(saveButton.disabled).toBe(true);
+    fireEvent.click(saveButton);
+    expect(props.onSave).not.toHaveBeenCalled();
+  });
+
   it("chooses the repayment type with radio cards and saves or cancels", () => {
     const props = baseProps();
     customRender(<MortgageEditDialog {...props} />);
