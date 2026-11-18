@@ -226,15 +226,15 @@ export const FLOWS: Flow[] = [
 
       const sources = page.getByRole("region", { name: "Income sources" });
       await actor.press(sources.getByRole("button", { name: "Add income" }));
-      await actor.press(page.getByRole("menuitem", { name: "Cost", exact: true }));
+      await actor.press(page.getByRole("menuitem", { name: "Expense", exact: true }));
       await actor.type(record.getByRole("textbox", { name: "Name" }), "Software");
       await actor.type(record.getByRole("textbox", { name: "Amount" }), "30");
       await actor.press(record.getByRole("button", { name: "Add record" }));
       await expect(record).toBeHidden();
 
-      // The records table is behind a disclosure; there is no record filter to use yet.
+      // The records table is behind a disclosure, grouped by income source (UX Batch E).
       await actor.press(page.getByRole("button", { name: "Records", exact: true }));
-      const table = page.getByRole("table", { name: /^Records for / });
+      const table = page.getByRole("table", { name: /^Self-employed records for / });
       await actor.press(table.getByRole("button", { name: "Design work", exact: true }));
       const edit = page.getByRole("dialog", { name: "Edit record" });
       await actor.type(edit.getByRole("textbox", { name: "Amount" }), "900");
