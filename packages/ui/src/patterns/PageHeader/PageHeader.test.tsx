@@ -52,6 +52,20 @@ describe("PageHeader Pattern", () => {
     expect(h1).toContain("ov-wrap_break-word");
   });
 
+  it("shows a still, decorative illustration from lg only, and none unless asked", () => {
+    const { rerender } = render(<PageHeader illustration="empty-savings" title="Your savings" />);
+    const art = screen.getByTestId("page-header-illustration");
+    // Hidden below lg so a phone keeps its figures where they are.
+    expect(art.className).toContain("d_none");
+    expect(art.className).toContain("lg:d_block");
+    const svg = art.querySelector("svg");
+    expect(svg?.getAttribute("aria-hidden")).toBe("true");
+    expect(svg?.getAttribute("data-scene")).toBe("empty-savings");
+    expect(svg?.hasAttribute("data-scene-settle")).toBe(false);
+    rerender(<PageHeader title="Your savings" />);
+    expect(screen.queryByTestId("page-header-illustration")).toBeNull();
+  });
+
   it("omits the aside when there is no badge or action", () => {
     const { container } = render(<PageHeader title="Home" />);
     expect(container.querySelector("header")?.children.length).toBe(1);

@@ -112,6 +112,8 @@ const AccountsContainer: FC = () => {
           ) : undefined
         }
         description="Everything you own and owe, in one place."
+        // With no accounts the empty state shows it: one illustration in view.
+        illustration={hasAccounts ? "empty-accounts" : undefined}
         title="Your accounts"
       />
 

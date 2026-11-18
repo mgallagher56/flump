@@ -229,6 +229,8 @@ export const DebtContainer: FC = () => {
           ? "What you owe, and an estimate of when it would be paid off at minimum payments."
           : undefined
       }
+      // With no debts the empty state shows it: one illustration in view.
+      illustration={hasDebts ? "empty-debt" : undefined}
       title="Cards and loans"
     />
   );

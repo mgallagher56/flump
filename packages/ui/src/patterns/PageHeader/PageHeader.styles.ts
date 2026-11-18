@@ -61,6 +61,19 @@ export const pageHeaderAside = cva({
   },
 });
 
+/**
+ * The page's illustration on a page with content: hidden below lg, so a phone or tablet keeps its
+ * figures where they are, and beside the title in the header's spare room from lg.
+ */
+export const pageHeaderIllustration = cva({
+  base: {
+    display: { base: "none", lg: "block" },
+    flex: "0 0 auto",
+    width: "28",
+    alignSelf: "center",
+  },
+});
+
 /** Quiet outlined pill, for example "Sample data". */
 export const pageHeaderBadge = cva({
   base: {

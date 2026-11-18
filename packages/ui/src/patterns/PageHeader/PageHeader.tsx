@@ -1,10 +1,13 @@
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
+import { Illustration } from "../../primitives/Illustration/Illustration";
+import type { IllustrationScene } from "../../primitives/Illustration/Illustration.scenes";
 import {
   pageHeaderAside,
   pageHeaderBadge,
   pageHeaderContainer,
   pageHeaderDescription,
+  pageHeaderIllustration,
   pageHeaderText,
   pageHeaderTitle,
 } from "./PageHeader.styles";
@@ -26,6 +29,12 @@ export interface PageHeaderProps {
    * standard outlined pill; pass a node to supply your own.
    */
   badge?: ReactNode;
+  /**
+   * The page's illustration, for a page that has content (an empty page shows it in its
+   * `EmptyState` instead, so at most one is in view). Shown from `lg` only, in the spare room
+   * beside the title, so on a phone it never pushes figures down. It never moves.
+   */
+  illustration?: IllustrationScene;
   className?: string;
 }
 
@@ -40,6 +49,7 @@ export const PageHeader: FC<PageHeaderProps> = ({
   subtitle,
   actions,
   badge,
+  illustration,
   className,
 }) => {
   const text = description ?? subtitle;
@@ -49,6 +59,11 @@ export const PageHeader: FC<PageHeaderProps> = ({
         <h1 className={pageHeaderTitle()}>{title}</h1>
         {text && <p className={pageHeaderDescription()}>{text}</p>}
       </div>
+      {illustration ? (
+        <div className={pageHeaderIllustration()} data-testid="page-header-illustration">
+          <Illustration scene={illustration} settle={false} size="sm" />
+        </div>
+      ) : null}
       {(badge || actions) && (
         <div className={pageHeaderAside()}>
           {typeof badge === "string" ? <span className={pageHeaderBadge()}>{badge}</span> : badge}
