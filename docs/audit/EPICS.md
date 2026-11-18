@@ -886,7 +886,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 
 ## E28. MTD for Income Tax discovery spike
 
-- **Status (2026-11-14):** not started. There is no decision and no user evidence yet (E30 plan, owner question O3), and the decision is due before April 2027. No "MTD-compliant" claim appears in the copy.
+- **Status (2026-11-18):** desk research done in [E28-mtd-discovery.md](plans/E28-mtd-discovery.md) (Decisions: open). There is no decision and no user evidence yet (E30 plan, owner question O3), and the decision is due before April 2027. No "MTD-compliant" claim appears in the copy.
 - **Severity:** P3 (spike with a dated decision).
 - **Blocked by:** none for discovery; a submission build needs HMRC recognition work.
 - **Done when:** a written decision before April 2027 on one of three paths: (a) record and quarterly estimate with export to bridging software only, (b) HMRC-recognised submission, (c) do nothing; evidence from at least five beta self-employed or landlord users; the ledger's labels never claim "MTD-compliant" unless the digital-links and fraud-prevention requirements are met.
