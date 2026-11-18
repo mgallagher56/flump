@@ -25,18 +25,61 @@ describe("AddSavingsAccountDialog", () => {
 
     expect(screen.getByText("Add a savings account")).toBeDefined();
     expect(screen.getByLabelText(/Account name/)).toBeDefined();
-    expect(screen.getByLabelText("Account type")).toBeDefined();
+    expect(screen.getByLabelText(/Kind of account/)).toBeDefined();
+    expect(screen.queryByLabelText("Account type")).toBeNull();
     expect(screen.getByLabelText("Current balance")).toBeDefined();
     expect(screen.getByLabelText("Interest rate (AER)")).toBeDefined();
     expect(screen.getByLabelText("Saved each month")).toBeDefined();
   });
 
-  it("keeps Add account disabled until the account has a name", () => {
+  it("keeps Add account disabled until the account has a name and a kind", () => {
     render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
     const add = screen.getByRole("button", { name: "Add account" }) as HTMLButtonElement;
     expect(add.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(/Account name/), { target: { value: "Marcus" } });
+    expect(add.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(/Kind of account/), {
+      target: { value: "Saving:easy_access" },
+    });
     expect(add.disabled).toBe(false);
+  });
+
+  it("names each kind once, grouped as savings, ISAs and investments", () => {
+    render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    const select = screen.getByLabelText(/Kind of account/) as HTMLSelectElement;
+    const groups = [...select.querySelectorAll("optgroup")].map((g) => ({
+      label: g.label,
+      kinds: [...g.querySelectorAll("option")].map((o) => o.text),
+    }));
+    expect(groups).toEqual([
+      {
+        label: "Savings",
+        kinds: [
+          "Easy access savings",
+          "Notice savings",
+          "Regular saver",
+          "Fixed term savings",
+          "General savings",
+          "Other savings account",
+        ],
+      },
+      { label: "ISAs", kinds: ["Cash ISA", "Lifetime ISA (LISA)", "Stocks and Shares ISA"] },
+      { label: "Investments", kinds: ["General investment account", "Other investment"] },
+    ]);
+  });
+
+  it("stores a Stocks and Shares ISA as an Investment and labels its rate as an estimate", () => {
+    render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/Account name/), { target: { value: "Vanguard" } });
+    fireEvent.change(screen.getByLabelText(/Kind of account/), {
+      target: { value: "Investment:stocks_and_shares_isa" },
+    });
+    expect(screen.getByLabelText("Estimated annual return (%)")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Add account" }));
+    expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({
+      type: "Investment",
+      accountSubtype: "stocks_and_shares_isa",
+    });
   });
 
   it("submits the create intent, leaving an empty rate and monthly amount unset, and closes once it is saved", () => {
@@ -44,6 +87,7 @@ describe("AddSavingsAccountDialog", () => {
     const dialog = () => <AddSavingsAccountDialog isOpen={true} onClose={onClose} />;
     const { rerender } = render(dialog());
     fireEvent.change(screen.getByLabelText(/Account name/), { target: { value: " Marcus " } });
+    fireEvent.change(screen.getByLabelText(/Kind of account/), { target: { value: "Saving:" } });
     fireEvent.change(screen.getByLabelText("Current balance"), { target: { value: "1200" } });
     fireEvent.click(screen.getByRole("button", { name: "Add account" }));
 
@@ -67,33 +111,12 @@ describe("AddSavingsAccountDialog", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("offers non-ISA kinds of savings, never guesses one, and labels an Investment rate as an estimate", () => {
+  it("never guesses a kind for a new account", () => {
     render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
-    const subtype = screen.getByLabelText("Kind of account (optional)") as HTMLSelectElement;
-    expect(subtype.value).toBe("");
-    const labels = [...subtype.options].map((o) => o.text);
-    expect(labels).toEqual(
-      expect.arrayContaining([
-        "Easy access savings",
-        "Notice savings",
-        "Regular saver",
-        "Fixed term savings",
-        "General savings",
-        "Cash ISA",
-      ]),
-    );
-    expect(labels).not.toContain("Stocks and Shares ISA");
-
-    expect(screen.getByLabelText("Interest rate (AER)")).toBeDefined();
-    fireEvent.change(screen.getByLabelText("Account type"), { target: { value: "Investment" } });
-    expect(screen.getByLabelText("Estimated annual return (%)")).toBeDefined();
-    const investmentLabels = [
-      ...(screen.getByLabelText("Kind of account (optional)") as HTMLSelectElement).options,
-    ].map((o) => o.text);
-    expect(investmentLabels).toContain("Stocks and Shares ISA");
+    expect((screen.getByLabelText(/Kind of account/) as HTMLSelectElement).value).toBe("");
   });
 
-  it("keeps an edited account without a subtype unset, even when its name says ISA", () => {
+  it("keeps an edited account without a subtype as its type's Other kind, even when its name says ISA", () => {
     render(
       <AddSavingsAccountDialog
         accountToEdit={{ id: "a1", name: "Cash ISA", type: "Saving", balance: 100 } as never}
@@ -101,8 +124,23 @@ describe("AddSavingsAccountDialog", () => {
         onClose={vi.fn()}
       />,
     );
-    expect((screen.getByLabelText("Kind of account (optional)") as HTMLSelectElement).value).toBe(
-      "",
+    expect((screen.getByLabelText(/Kind of account/) as HTMLSelectElement).value).toBe("Saving:");
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({ type: "Saving", accountSubtype: "" });
+  });
+
+  it("starts an edited Cash ISA from its saved kind", () => {
+    render(
+      <AddSavingsAccountDialog
+        accountToEdit={
+          { id: "a2", name: "ISA", type: "Saving", accountSubtype: "cash_isa", balance: 1 } as never
+        }
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    expect((screen.getByLabelText(/Kind of account/) as HTMLSelectElement).value).toBe(
+      "Saving:cash_isa",
     );
   });
 
