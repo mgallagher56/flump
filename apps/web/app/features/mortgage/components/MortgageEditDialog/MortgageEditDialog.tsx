@@ -80,8 +80,10 @@ export interface MortgageEditDialogProps {
   /** The home value being edited (or, with "fromAccounts", the saved total); `null` when empty. */
   editHomeValue?: number | null;
   onEditHomeValueChange?: (value: number | null) => void;
+  /** The user's share of a joint home, for the equity line; `null` when held solely. */
+  homeSharePercent?: number | null;
   /** The user's share of a joint mortgage, for the equity line; `null` when held solely. */
-  equitySharePercent?: number | null;
+  mortgageSharePercent?: number | null;
 }
 
 const TYPE_OPTIONS = [
@@ -124,7 +126,8 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
   homeValueMode = "hidden",
   editHomeValue = null,
   onEditHomeValueChange,
-  equitySharePercent = null,
+  homeSharePercent = null,
+  mortgageSharePercent = null,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const rateValue = editInterestRate.trim() === "" ? null : Number(editInterestRate);
@@ -278,11 +281,13 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
           ) : null}
         </div>
 
-        {homeValueMode !== "hidden" ? (
+        {/* Only with one home: one mortgage set against several homes would misstate the equity. */}
+        {homeValueMode === "input" ? (
           <HomeEquityLine
+            homeSharePercent={homeSharePercent}
             homeValue={editHomeValue}
             mortgageBalance={editLoanAmount}
-            sharePercent={equitySharePercent}
+            mortgageSharePercent={mortgageSharePercent}
           />
         ) : null}
 

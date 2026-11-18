@@ -148,6 +148,28 @@ describe("adding a mortgage with the home's value", () => {
     expect(queryByText(/separate property account/)).toBeNull();
   });
 
+  test("is not offered for a buy-to-let mortgage, by kind or by name", async () => {
+    const { getByLabelText, queryByLabelText, user } = await openAsMortgage();
+    expect(getByLabelText(/^What your home is worth/)).toBeDefined();
+    await user.selectOptions(getByLabelText("Kind of mortgage (optional)"), "btl_mortgage");
+    expect(queryByLabelText(/What your home is worth|What the property is worth/)).toBeNull();
+    await user.selectOptions(getByLabelText("Kind of mortgage (optional)"), "");
+    fireEvent.change(getByLabelText("Name"), { target: { value: "Buy to let flat" } });
+    expect(queryByLabelText(/What your home is worth|What the property is worth/)).toBeNull();
+  });
+
+  test("treats a negative typed balance as no mortgage balance in the equity line", async () => {
+    const { getByLabelText, getByTestId } = await openAsMortgage();
+    fireEvent.change(getByLabelText("Amount owed"), { target: { value: "-5000" } });
+    fireEvent.change(getByLabelText(/^What your home is worth \(optional\)/), {
+      target: { value: "300000" },
+    });
+    // A balance below 0 counts as none: 300,000 - 0 = 300,000, never 300,000 + 5,000.
+    const line = getByTestId("home-equity-line");
+    expect(line.textContent).toContain("£300,000");
+    expect(line.textContent).not.toContain("£305,000");
+  });
+
   test("is not offered for other account types", async () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, accounts: [] });
     const { getByText, queryByLabelText, user } = customRender(<AddEditAccountsDialogBtn />);

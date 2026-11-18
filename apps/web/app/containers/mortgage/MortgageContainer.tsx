@@ -1,4 +1,8 @@
-import { CreateAccountResponse, UpdateAccountResponse } from "@flump/api-contract";
+import {
+  AccountListResponse,
+  CreateAccountResponse,
+  UpdateAccountResponse,
+} from "@flump/api-contract";
 import {
   categorizeAccountType,
   HOME_ESTIMATE_LABEL,
@@ -45,11 +49,12 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
-import { apiFetch } from "~/services/api-client";
+import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
 import { CONFLICT_MESSAGE, isConflict, versionEtag } from "~/services/conflict";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 import {
   pageRoot,
   partialStack,
@@ -261,6 +266,18 @@ const MortgageContainer: FC = () => {
     propertyCategory === "residential" && isJointAccount(selectedMortgageRow)
       ? resolveAccountSharePercent(selectedMortgageRow)
       : null;
+  // The user's share of the one home, for equity: its own share when it is joint. With no home
+  // yet, a typed value is saved at the mortgage's share, so the equity line uses that. Buy to let
+  // reads the profile, which holds no share.
+  const homeRow = residentialProperties.length === 1 ? residentialProperties[0] : null;
+  const homeSharePercent =
+    propertyCategory !== "residential"
+      ? null
+      : homeRow
+        ? isJointAccount(homeRow)
+          ? resolveAccountSharePercent(homeRow)
+          : null
+        : mortgageSharePercent;
 
   // What can be stored: a linked residential account holds balance, rate and term. Buy to let
   // keeps balance and rate on the profile. Anything else would only be held in memory, so the
@@ -306,10 +323,28 @@ const MortgageContainer: FC = () => {
     // What this save stores, applied to the saved figures only once the request has succeeded.
     const next = { loanAmount, interestRate, remainingTerm };
     // A typed home value above 0; an emptied field never clears or deletes a stored value.
-    const typedHome = editHomeValue !== null && editHomeValue > 0 ? editHomeValue : null;
+    // Rounded to pence, as the API takes money to 2 decimal places.
+    const typedHome =
+      editHomeValue !== null && editHomeValue > 0 ? roundTo2dp(editHomeValue) : null;
     let propertySaved = false;
     // Set once the mortgage figures are stored, so a failed home value save says what was kept.
     let mortgageStored = false;
+    // The home Property account this save wrote to, so a refused write drops its stale copy.
+    let propertyIdTouched: string | null = null;
+    const patchProperty = async (property: PropertyRow & { id: string }, balance: number) => {
+      const propertyId = property.id;
+      propertyIdTouched = propertyId;
+      const updated = await apiFetch(`/accounts/${propertyId}`, {
+        method: "PATCH",
+        body: { balance },
+        schema: UpdateAccountResponse,
+        ifMatch: versionEtag(property.updatedAt),
+      });
+      setAccountPatches((prev) => ({
+        ...prev,
+        [propertyId]: { ...prev[propertyId], balance, updatedAt: updated.updatedAt },
+      }));
+    };
     try {
       if (propertyCategory === "btl") {
         // Buy to let property value lives on the profile, beside the buy to let mortgage.
@@ -390,36 +425,35 @@ const MortgageContainer: FC = () => {
         ) {
           const property = residentialProperties[0];
           if (property?.id) {
-            const propertyId = property.id;
-            const updated = await apiFetch(`/accounts/${propertyId}`, {
-              method: "PATCH",
-              body: { balance: typedHome },
-              schema: UpdateAccountResponse,
-              ifMatch: versionEtag(property.updatedAt),
-            });
-            setAccountPatches((prev) => ({
-              ...prev,
-              [propertyId]: {
-                ...prev[propertyId],
-                balance: typedHome,
-                updatedAt: updated.updatedAt,
-              },
-            }));
+            await patchProperty({ ...property, id: property.id }, typedHome);
           } else {
-            // A new home estimate takes the selected mortgage's ownership and share, so net worth
-            // never counts a whole home against half a mortgage.
-            const joint = mortgageSharePercent !== null;
-            await apiFetch("/accounts", {
-              method: "POST",
-              body: {
-                name: HOME_ESTIMATE_LABEL,
-                type: "Property",
-                balance: typedHome,
-                ownership: joint ? "joint" : "sole",
-                ...(joint ? { sharePercent: mortgageSharePercent } : {}),
-              },
-              schema: CreateAccountResponse,
-            });
+            // Ask the backend first: a home added since this page loaded (another tab, or this
+            // dialog reopened before the reload) is updated rather than added a second time.
+            const current = (await apiFetchAll("/accounts", {
+              schema: AccountListResponse,
+            })) as PropertyRow[];
+            const existing = current.find(
+              (a) =>
+                !!a.id && categorizeAccountType(a.type) === "property" && !isBuyToLetAccount(a),
+            );
+            if (existing?.id) {
+              await patchProperty({ ...existing, id: existing.id }, typedHome);
+            } else {
+              // A new home estimate takes the selected mortgage's ownership and share, so net
+              // worth never counts a whole home against half a mortgage.
+              const joint = mortgageSharePercent !== null;
+              await apiFetch("/accounts", {
+                method: "POST",
+                body: {
+                  name: HOME_ESTIMATE_LABEL,
+                  type: "Property",
+                  balance: typedHome,
+                  ownership: joint ? "joint" : "sole",
+                  ...(joint ? { sharePercent: mortgageSharePercent } : {}),
+                },
+                schema: CreateAccountResponse,
+              });
+            }
           }
           propertySaved = true;
           saved.push("home value");
@@ -438,27 +472,34 @@ const MortgageContainer: FC = () => {
     } catch (err) {
       console.error("Failed to save mortgage details:", err);
       setSaveMessage(null);
+      if (mortgageStored) {
+        // The mortgage figures were stored before the home value failed: reload them, keep the
+        // form. A refused home write (changed somewhere else) also drops this page's stale copy.
+        const homeId = propertyIdTouched as string | null;
+        if (isConflict(err) && homeId) {
+          setAccountPatches((prev) => {
+            const { [homeId]: _dropped, ...rest } = prev;
+            return rest;
+          });
+        }
+        revalidator.revalidate();
+        setSaveError(HOME_VALUE_NOT_SAVED);
+        return;
+      }
       if (isConflict(err)) {
         // Changed somewhere else: drop this page's copy of the account and reload the saved one.
         // The edit dialog stays open with what was typed.
-        const stale = [selectedAccountId, residentialProperties[0]?.id].filter(
-          (id): id is string => !!id,
-        );
-        if (stale.length > 0) {
-          setAccountPatches((prev) =>
-            Object.fromEntries(Object.entries(prev).filter(([id]) => !stale.includes(id))),
-          );
+        if (selectedAccountId) {
+          const accountId = selectedAccountId;
+          setAccountPatches((prev) => {
+            const { [accountId]: _dropped, ...rest } = prev;
+            return rest;
+          });
         }
         revalidator.revalidate();
         // A refused profile save has already said so in a toast (useUserProfile): once is enough.
         const fromProfile = err instanceof BackendError && err.endpoint === "/user-profile";
         setSaveError(fromProfile ? null : CONFLICT_MESSAGE);
-        return;
-      }
-      if (mortgageStored) {
-        // The mortgage figures were stored before the home value failed: reload them, keep the form.
-        revalidator.revalidate();
-        setSaveError(HOME_VALUE_NOT_SAVED);
         return;
       }
       setSaveError("We could not save your mortgage details. Nothing has changed. Try again.");
@@ -759,7 +800,8 @@ const MortgageContainer: FC = () => {
       onEditInterestRateChange={setEditInterestRate}
       editMonthlyPayment={editMonthlyPayment}
       editHomeValue={homeFromAccounts ? residentialHomeValue : editHomeValue}
-      equitySharePercent={mortgageSharePercent}
+      homeSharePercent={homeSharePercent}
+      mortgageSharePercent={mortgageSharePercent}
       homeValueMode={homeFromAccounts ? "fromAccounts" : "input"}
       onEditHomeValueChange={setEditHomeValue}
       onEditLoanAmountChange={setEditLoanAmount}
@@ -1043,11 +1085,13 @@ const MortgageContainer: FC = () => {
       <MortgageSummary
         accountName={selectedAccount ? String(selectedAccount.name ?? "Mortgage") : null}
         homeEquity={
-          savedHomeValue > 0
+          // Not with two or more homes: one mortgage set against several would misstate it.
+          savedHomeValue > 0 && !homeFromAccounts
             ? {
                 homeValue: savedHomeValue,
+                homeSharePercent,
                 mortgageBalance: loanAmount,
-                sharePercent: mortgageSharePercent,
+                mortgageSharePercent,
               }
             : null
         }

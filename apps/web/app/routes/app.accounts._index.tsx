@@ -31,9 +31,6 @@ import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
 
-/** The name a buy-to-let property added with its mortgage is saved under (`isBuyToLetAccount` reads it). */
-const BTL_ESTIMATE_LABEL = "Buy-to-let property (your estimate)";
-
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const token = requireAccessToken({ accessToken });
@@ -53,39 +50,52 @@ export const action = async (args: ActionFunctionArgs) => {
 
   try {
     if (intent === "create") {
-      // Adding a mortgage with the home's value adds the home first, as a Property account with
-      // the mortgage's ownership and share, unless one of that kind is already there.
+      // Adding a residential mortgage with the home's value adds the home first, as a Property
+      // account with the mortgage's ownership and share, unless a home is already there. A
+      // buy-to-let value is never stored here: the mortgage page keeps it on the profile.
       const homeValue = Number(formData.get("homeValue"));
-      if (type === "Mortgage" && Number.isFinite(homeValue) && homeValue > 0) {
-        const btl = isBuyToLetAccount({
-          name: typeof name === "string" ? name : "",
-          accountSubtype: fields.accountSubtype ?? null,
-        });
+      const btl = isBuyToLetAccount({
+        name: typeof name === "string" ? name : "",
+        accountSubtype: fields.accountSubtype ?? null,
+      });
+      let createdHomeId: string | null = null;
+      if (type === "Mortgage" && !btl && Number.isFinite(homeValue) && homeValue > 0) {
         const existing = await backendFetchAll("/accounts", {
           accessToken: token,
           signal: args.request.signal,
           schema: AccountListResponse,
         });
-        const hasProperty = existing.some(
+        const hasHome = existing.some(
           (account) =>
-            categorizeAccountType(account.type) === "property" &&
-            isBuyToLetAccount(account) === btl,
+            categorizeAccountType(account.type) === "property" && !isBuyToLetAccount(account),
         );
-        if (!hasProperty) {
-          await post("/accounts", CreateAccountResponse, {
-            name: btl ? BTL_ESTIMATE_LABEL : HOME_ESTIMATE_LABEL,
+        if (!hasHome) {
+          const home = await post("/accounts", CreateAccountResponse, {
+            name: HOME_ESTIMATE_LABEL,
             type: "Property",
             balance: roundTo2dp(homeValue),
             ...(fields.ownership ? { ownership: fields.ownership } : {}),
             ...(fields.sharePercent !== undefined ? { sharePercent: fields.sharePercent } : {}),
           });
+          createdHomeId = home.id;
         }
       }
-      await post("/accounts", CreateAccountResponse, {
-        name,
-        type,
-        ...fields,
-      });
+      try {
+        await post("/accounts", CreateAccountResponse, {
+          name,
+          type,
+          ...fields,
+        });
+      } catch (err) {
+        // The home was added for this mortgage: take it away again so a failed add leaves
+        // nothing half-saved. Best effort; the original error is what the user sees.
+        if (createdHomeId) {
+          await remove(`/accounts/${encodeURIComponent(createdHomeId)}`, DeleteAccountResponse)
+            .then(() => undefined)
+            .catch(() => undefined);
+        }
+        throw err;
+      }
     } else if (intent === "update") {
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
         accessToken: token,

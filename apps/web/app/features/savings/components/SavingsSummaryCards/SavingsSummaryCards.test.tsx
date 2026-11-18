@@ -34,7 +34,7 @@ describe("SavingsSummaryCards", () => {
     expect(screen.getByText(INTEREST_LABEL)).toBeDefined();
     // 126.83 + 123.36 = 250.19, shown to the pound.
     expect(screen.getByText("£250")).toBeDefined();
-    expect(screen.getByText("Before tax. ISA interest is tax-free")).toBeDefined();
+    expect(screen.getByText("An estimate, before tax. ISA interest is tax-free.")).toBeDefined();
     expect(screen.getByText("Paid into ISAs this tax year")).toBeDefined();
     // A fact from saved figures, so no Estimate chip.
     expect(screen.queryByText("Estimate")).toBeNull();
@@ -72,7 +72,7 @@ describe("SavingsSummaryCards", () => {
     );
     expect(screen.queryByText("Paid into ISAs this tax year")).toBeNull();
     expect(screen.getByText("£144")).toBeDefined();
-    expect(screen.getByText("Before tax")).toBeDefined();
+    expect(screen.getByText("An estimate, before tax.")).toBeDefined();
     expect(screen.queryByText(/%/)).toBeNull();
   });
 
@@ -95,5 +95,27 @@ describe("SavingsSummaryCards", () => {
     expect(interestExplain(interest(126.83, 123.36, 1))).toBe(
       "An estimate from each savings account's balance, interest rate and monthly saving, if the rate stays the same. £127 is from ISAs and £123 from other savings. Interest in an ISA is tax-free. Whether you pay tax on other interest depends on your other income. Accounts without an interest rate are not counted.",
     );
+  });
+
+  it("rounds the split so the two parts add up to the card", () => {
+    // 100.50 + 100.50 = 201.00, so the card reads £201. Rounding each part alone would give
+    // £101 + £101 = £202. Instead ISA = round(100.50) = £101 and other = 201 − 101 = £100.
+    expect(interestExplain(interest(100.5, 100.5))).toContain(
+      "£101 is from ISAs and £100 from other savings.",
+    );
+  });
+
+  it("says an ISA-only estimate is tax-free without saying before tax", () => {
+    render(
+      <SavingsSummaryCards
+        accountCount={1}
+        interest={interest(80, 0)}
+        hasIsaAccount
+        isaUsed={1200}
+        monthlySaving={100}
+        totalSavingsBalance={4000}
+      />,
+    );
+    expect(screen.getByText("An estimate. ISA interest is tax-free.")).toBeDefined();
   });
 });

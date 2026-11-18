@@ -4,11 +4,11 @@ import { sva } from "@repo/ui/styled-system/css";
 export const homeEquityLineRecipe = sva({
   slots: ["root", "row", "label", "value", "subline"],
   base: {
-    root: { display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 },
+    root: { display: "flex", flexDirection: "column", gap: "0.5", minWidth: 0 },
     row: {
       display: "flex",
       alignItems: "baseline",
-      gap: "8px",
+      gap: "2",
       flexWrap: "wrap",
     },
     label: { textStyle: "body.sm", color: "text.secondary" },

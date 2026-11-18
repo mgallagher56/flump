@@ -1,7 +1,7 @@
 import { countFigures, countNotSet, expectPageRules } from "@repo/ui/testing";
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
-import { contractFetch } from "~/test/fixtures/contractResponses";
+import { accountWithDetailsFixture, contractFetch } from "~/test/fixtures/contractResponses";
 import customRender from "~/testUtils/customRender";
 import MortgageContainer, { HOME_VALUE_NOT_SAVED } from "./MortgageContainer";
 
@@ -1042,11 +1042,25 @@ describe("<MortgageContainer />", () => {
       expect(row.textContent).not.toMatch(/share/);
     });
 
-    test("a joint mortgage shows the equity at the user's share", () => {
+    test("a joint mortgage on a sole home takes each at its own share", () => {
       loaderData = loaded({ ownership: "joint", sharePercent: 40 });
       const { container } = customRender(<MortgageContainer />);
       const row = container.querySelector("[data-testid='mortgage-equity']") as HTMLElement;
-      // (350,000 - 135,400) x 40 / 100 = 214,600 x 0.4 = 85,840.
+      // Home held solely, mortgage at 40%: 350,000 - 135,400 x 40 / 100 = 350,000 - 54,160
+      // = 295,840.
+      expect(row.textContent).toContain("£295,840");
+      expect(row.textContent).toContain("At your share of the home and of the mortgage");
+    });
+
+    test("a joint home and mortgage at the same share show that share", () => {
+      const base = loaded({ ownership: "joint", sharePercent: 40 });
+      loaderData = {
+        ...base,
+        accounts: [base.accounts[0], { ...base.accounts[1], ownership: "joint", sharePercent: 40 }],
+      };
+      const { container } = customRender(<MortgageContainer />);
+      const row = container.querySelector("[data-testid='mortgage-equity']") as HTMLElement;
+      // 350,000 x 40 / 100 - 135,400 x 40 / 100 = 140,000 - 54,160 = 85,840.
       expect(row.textContent).toContain("£85,840");
       expect(row.textContent).toContain("At your 40% share");
     });
@@ -1103,6 +1117,78 @@ describe("<MortgageContainer />", () => {
       save();
       expect(await findByText(HOME_VALUE_NOT_SAVED)).toBeDefined();
       expect(screen.queryByText(/Nothing has changed/)).toBeNull();
+    });
+
+    test("a refused home value write after the mortgage saved still says the mortgage was kept", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      mockRevalidate.mockClear();
+      const ok = contractFetch();
+      vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+        if (String(input).endsWith("/accounts/home")) {
+          return new Response(JSON.stringify({ kind: "client" }), { status: 412 });
+        }
+        return ok(input, init);
+      });
+      const { findByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
+      fireEvent.change(field(/^What your home is worth/), { target: { value: "360000" } });
+      save();
+      expect(await findByText(HOME_VALUE_NOT_SAVED)).toBeDefined();
+      expect(screen.queryByText(/changed somewhere else/i)).toBeNull();
+      expect(mockRevalidate).toHaveBeenCalled();
+    });
+
+    test("a typed value is rounded to pence before it is sent", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      const fetchSpy = okFetch();
+      const { findByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^What your home is worth/), { target: { value: "360000.456" } });
+      save();
+      await findByText(/home value/);
+      const call = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/home"));
+      if (!call) throw new Error("expected a PATCH of the home account");
+      // 360,000.456 to 2 decimal places: the third decimal is 6, so .45 rounds up to 360,000.46.
+      expect(bodyOf(call)).toEqual({ balance: 360000.46 });
+    });
+
+    test("a home added since the page loaded is updated, not added a second time", async () => {
+      const OTHER_HOME_ID = "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
+      setApiEnv();
+      loaderData = noHome();
+      const ok = contractFetch();
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+        const url = new URL(String(input), "http://web.test");
+        if (url.pathname === "/api/accounts" && (init?.method ?? "GET") === "GET") {
+          return new Response(
+            JSON.stringify([
+              {
+                ...accountWithDetailsFixture,
+                id: OTHER_HOME_ID,
+                name: "Home (your estimate)",
+                type: "Property",
+                balance: 290000,
+              },
+            ]),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+        return ok(input, init);
+      });
+      const { findByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^What your home is worth/), { target: { value: "300000" } });
+      save();
+      await findByText(/home value/);
+      const call = patches(fetchSpy).find(([url]) =>
+        String(url).endsWith(`/accounts/${OTHER_HOME_ID}`),
+      );
+      if (!call) throw new Error("expected a PATCH of the home added elsewhere");
+      expect(bodyOf(call)).toEqual({ balance: 300000 });
+      expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
     });
 
     test("an unchanged value is not sent", async () => {
@@ -1166,9 +1252,12 @@ describe("<MortgageContainer />", () => {
         ],
       };
       const fetchSpy = okFetch();
-      const { findAllByText } = customRender(<MortgageContainer />);
+      const { container, findAllByText } = customRender(<MortgageContainer />);
+      // One mortgage against several homes would misstate the equity: no row, no line.
+      expect(container.querySelector("[data-testid='mortgage-equity']")).toBeNull();
       openEdit();
       const dialog = within(screen.getByRole("dialog"));
+      expect(dialog.queryByTestId("home-equity-line")).toBeNull();
       expect(dialog.queryByLabelText(/^What your home is worth/)).toBeNull();
       expect(
         dialog.getByText("Your home value comes from your properties on Accounts."),

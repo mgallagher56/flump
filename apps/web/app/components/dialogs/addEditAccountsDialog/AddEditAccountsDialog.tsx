@@ -369,17 +369,19 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         )
       : null;
 
-  // Adding a mortgage asks for the home's value too, unless a property of the same kind
-  // (residential or buy to let, as loan to value pairs them) is already on Accounts.
+  // Adding a residential mortgage asks for the home's value too, unless a home is already on
+  // Accounts. Not for buy to let: the mortgage page keeps that value on the profile.
   const addingMortgage = !isEditAccount && formInput.type?.[0] === MORTGAGE;
   const mortgageIsBtl = isBuyToLetAccount({
     name: formInput.name,
     accountSubtype: formInput.accountSubtype || null,
   });
-  const hasPropertyOfKind = accounts.some(
-    (option) => option.type === PROPERTY && isBuyToLetAccount(option) === mortgageIsBtl,
-  );
-  const showHomeValue = addingMortgage && !hasPropertyOfKind;
+  const hasHome = accounts.some((option) => option.type === PROPERTY && !isBuyToLetAccount(option));
+  const showHomeValue = addingMortgage && !mortgageIsBtl && !hasHome;
+  // The typed balance for the equity line; empty, not a number or below 0 counts as none.
+  const typedOwed = formInput.balance === "" ? null : Number(formInput.balance);
+  const equityOwed =
+    typedOwed !== null && Number.isFinite(typedOwed) && typedOwed >= 0 ? typedOwed : null;
 
   const onSave = useCallback(() => {
     const {
@@ -707,16 +709,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             {showHomeValue ? (
               <>
                 <FormField
-                  hint={
-                    mortgageIsBtl
-                      ? "Your own estimate. We add it as the property, so you do not need a separate property account."
-                      : "Your own estimate. We add it as your home, so you do not need a separate property account."
-                  }
-                  label={
-                    mortgageIsBtl
-                      ? "What the property is worth (optional)"
-                      : "What your home is worth (optional)"
-                  }
+                  hint="Your own estimate. We add it as your home, so you do not need a separate property account."
+                  label="What your home is worth (optional)"
                 >
                   {(field) => (
                     <CurrencyInput
@@ -728,10 +722,12 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                     />
                   )}
                 </FormField>
+                {/* The home is added at the mortgage's share, so both sides use it. */}
                 <HomeEquityLine
+                  homeSharePercent={resolvedShare}
                   homeValue={homeValue}
-                  mortgageBalance={formInput.balance === "" ? null : Number(formInput.balance)}
-                  sharePercent={resolvedShare}
+                  mortgageBalance={equityOwed}
+                  mortgageSharePercent={resolvedShare}
                 />
               </>
             ) : null}

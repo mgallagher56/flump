@@ -150,12 +150,13 @@ describe("<MortgageEditDialog />", () => {
         <MortgageEditDialog
           {...baseProps()}
           editHomeValue={300000}
-          equitySharePercent={50}
+          homeSharePercent={50}
           homeValueMode="input"
+          mortgageSharePercent={50}
           onEditHomeValueChange={vi.fn()}
         />,
       );
-      // (300,000 - 135,400) x 50 / 100 = 164,600 / 2 = 82,300.
+      // 300,000 x 50 / 100 - 135,400 x 50 / 100 = 150,000 - 67,700 = 82,300.
       const line = screen.getByTestId("home-equity-line");
       expect(line.textContent).toContain("£82,300");
       expect(line.textContent).toContain("At your 50% share");
@@ -169,8 +170,8 @@ describe("<MortgageEditDialog />", () => {
       expect(
         screen.getByText("Your home value comes from your properties on Accounts."),
       ).toBeDefined();
-      // 450,000 - 135,400 = 314,600.
-      expect(screen.getByTestId("home-equity-line").textContent).toContain("£314,600");
+      // One mortgage against several homes would misstate the equity, so no line shows.
+      expect(screen.queryByTestId("home-equity-line")).toBeNull();
     });
 
     it("asks what the property is worth for buy to let", () => {

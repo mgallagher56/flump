@@ -6,8 +6,32 @@
  * depends on the person's other income (Personal Savings Allowance and the starting rate for
  * savings). Tax on savings interest is not estimated here, so every figure is before tax.
  */
-import { calculateCompoundInterestEarned } from "./forecast.js";
 import { isIsaAccount } from "./joint-share.js";
+
+/**
+ * Interest on one account over the next 12 months at its AER, before tax.
+ *
+ * The stored rate is an AER (annual equivalent rate), which already includes compounding, so the
+ * monthly rate is r = (1 + AER/100)^(1/12) − 1: twelve months at r give exactly the AER. The
+ * regular monthly saving is added at the end of each month. Interest is the end balance less
+ * the starting balance and the 12 payments. A negative balance or saving counts as 0, and a rate
+ * that is 0 or less, or not a number, gives 0.
+ */
+export function interestOverNext12MonthsAtAer(
+  balance: number,
+  aerPct: number,
+  monthly: number,
+): number {
+  if (!Number.isFinite(aerPct) || aerPct <= 0) return 0;
+  const start = Number.isFinite(balance) && balance > 0 ? balance : 0;
+  const saving = Number.isFinite(monthly) && monthly > 0 ? monthly : 0;
+  const r = (1 + aerPct / 100) ** (1 / 12) - 1;
+  let end = start;
+  for (let month = 0; month < 12; month++) {
+    end = end * (1 + r) + saving;
+  }
+  return Math.max(0, end - start - 12 * saving);
+}
 
 export interface SavingsInterestAccount {
   type?: string | null;
@@ -43,7 +67,7 @@ const isCashSavings = (account: SavingsInterestAccount): boolean => account.type
 
 /**
  * Interest over the next 12 months across the cash savings accounts that store a rate,
- * compounding monthly with each account's regular monthly saving (the same basis as each
+ * at each account's AER with its regular monthly saving (the same basis as each
  * account's own "interest over 12 months"). Null when no cash savings account has a rate.
  */
 export function estimateSavingsInterestNext12Months(
@@ -60,11 +84,10 @@ export function estimateSavingsInterestNext12Months(
       accountsWithoutRate += 1;
       continue;
     }
-    const interest = calculateCompoundInterestEarned(
-      Math.max(0, toNumber(account.balance) ?? 0),
+    const interest = interestOverNext12MonthsAtAer(
+      toNumber(account.balance) ?? 0,
       rate,
-      Math.max(0, toNumber(account.monthlyContribution) ?? 0),
-      12,
+      toNumber(account.monthlyContribution) ?? 0,
     );
     accountsCounted += 1;
     if (isIsaAccount(account)) isa += interest;
