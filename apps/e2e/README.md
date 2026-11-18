@@ -234,3 +234,75 @@ requests and by hand. It is **advisory**: `continue-on-error: true` and not a re
 Make it required the same way as the visual suite once the baseline has stayed stable for about
 20 pull requests. The committed baseline is generated in the CI container (Linux): contrast and reflow counts
 can differ a little on macOS because fonts differ, so treat a local run as a preview; pick free `E2E_*_PORT` values and a database whose name contains `e2e`.
+
+## Interaction cost
+
+`interaction/flows.spec.ts` (config `playwright.interaction.config.ts`, root script
+`bun run test:interaction`) measures how much effort each core task takes (E38 S0, plan
+`docs/audit/plans/E38-interaction-efficiency-audit-plan.md`). It does the seven core flows of the
+plan, each three ways:
+
+| Run                | Viewport | How it acts                                                                                                |
+| ------------------ | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `desktop-pointer`  | 1280x800 | Mouse clicks; to replace a field's text, click it, Ctrl/Cmd+A, type                                        |
+| `phone-touch`      | 375x812  | The same with taps (touch and mobile emulation)                                                            |
+| `desktop-keyboard` | 1280x800 | Tab forward to each control, then Enter (Space for a switch or checkbox); arrows in menus and radio groups |
+
+The flows are budget editing, the monthly check-in, an account's whole life (add, rename, update
+the balance, delete), adding and editing a debt and modelling extra payments, Self Assessment
+records, salary and pension then the pension and mortgage what-ifs, and setup for a new user.
+They are in `interaction/flows.ts`, written once against the `Actor` in `interaction/actor.ts`.
+
+**What is counted.** An init script on every page reports each trusted `pointerdown` (a click or
+tap) and `keydown` (one per key, so Ctrl+A is two), and how many dialogs are showing, to the test
+through an exposed binding (`interaction/counter.ts`). So the counts are what the browser received,
+not what the spec intended. Per flow and run:
+
+- clicks or taps; picking an option in a native select is counted as one click without being sent
+  (Playwright sets it, the browser draws the list) and shown as "select picks";
+- keystrokes, every character typed included;
+- Tab hops (Tab presses, forward only);
+- transitions: path changes plus dialog or sheet opens. Query or hash changes and menus are not
+  counted, nor is scrolling.
+
+`interaction/counter.spec.ts` (the `counter` project, which runs first) checks the counting on a
+small page of its own, with every expected number worked out by hand in a comment.
+
+**Deterministic.** One worker, in file order. Each mode starts from the seeded homeowner (the
+first flow re-seeds when needed, then waits a minute so the backend's 120 writes a minute limit
+never refuses a save inside a counted flow); onboarding starts from a cleared user. In CI the
+servers and the browser run on the frozen clock of `support/clock.ts`. The flows do not clean up:
+resets and deletes share the backend's limit of 10 an hour per user, and a run spends at most 8
+of them from an empty database (one re-seed per mode after the first, one account delete per
+mode, one clear per mode). Against a database you keep, a second run within the hour gets 429
+errors: recreate the database or wait.
+
+**Baseline.** `docs/audit/interaction-cost/baseline.json` holds the counts per flow and run, and
+`baseline.md` beside it the same as a table. A run compares itself with the baseline and writes
+`test-results-interaction-cost/summary.md` (and the GitHub job summary): any flow whose clicks,
+keystrokes, Tab hops or transitions rise is listed, and each one is printed as a warning.
+**It never fails the run** (owner decision ED1, option (a): warn-only until E38 S1 and S2 set the
+target baselines). A run that finds lower costs lists them as improvements.
+
+**Regenerating the baseline.** After a change that alters a flow (a redesigned page, or a fix that
+saves steps):
+
+- In CI (preferred, the counts it compares against come from the same container): run the
+  workflow on your branch with `gh workflow run interaction-cost.yml --ref <branch> -f update=true`
+  (the manual trigger works once the workflow is on `main`), or take the artifact from the pull
+  request run, which always holds this run's baseline:
+
+  ```sh
+  gh run download <run-id> -n interaction-cost-baseline -D apps/e2e/test-results-interaction-cost
+  cp apps/e2e/test-results-interaction-cost/baseline.{json,md} docs/audit/interaction-cost/
+  ```
+
+- Locally, after `bun run build`: `INTERACTION_UPDATE_BASELINE=1 bun run test:interaction`. It
+  takes about five minutes. Off Linux the clock is not frozen and the file says so; the counts do
+  not depend on the date within a month, but prefer the CI artifact for the committed file.
+
+Look at the changed numbers in the diff before committing; that review is the point. When a flow
+fails because a page changed, update its steps in `interaction/flows.ts` in the same pull request.
+
+It runs in its own workflow, `.github/workflows/interaction-cost.yml` ("Interaction cost"), on pull
+requests and by hand, with `continue-on-error: true` and not as a required check.

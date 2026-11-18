@@ -1,0 +1,251 @@
+{
+  "generated": true,
+  "frozenNow": "",
+  "flows": {
+    "1-budget": {
+      "title": "1. Create and edit a budget",
+      "runs": {
+        "desktop-pointer": {
+          "clicks": 12,
+          "keystrokes": 23,
+          "tabHops": 0,
+          "routeChanges": 0,
+          "dialogOpens": 0,
+          "dialogCloses": 0,
+          "transitions": 0,
+          "syntheticClicks": 0
+        },
+        "phone-touch": {
+          "clicks": 12,
+          "keystrokes": 23,
+          "tabHops": 0,
+          "routeChanges": 0,
+          "dialogOpens": 0,
+          "dialogCloses": 0,
+          "transitions": 0,
+          "syntheticClicks": 0
+        },
+        "desktop-keyboard": {
+          "clicks": 0,
+          "keystrokes": 364,
+          "tabHops": 336,
+          "routeChanges": 0,
+          "dialogOpens": 0,
+          "dialogCloses": 0,
+          "transitions": 0,
+          "syntheticClicks": 0
+        }
+      }
+    },
+    "2-check-in": {
+      "title": "2. Complete a monthly check-in",
+      "runs": {
+        "desktop-pointer": {
+          "clicks": 10,
+          "keystrokes": 5,
+          "tabHops": 0,
+          "routeChanges": 1,
+          "dialogOpens": 1,
+          "dialogCloses": 1,
+          "transitions": 2,
+          "syntheticClicks": 0
+        },
+        "phone-touch": {
+          "clicks": 10,
+          "keystrokes": 5,
+          "tabHops": 0,
+          "routeChanges": 1,
+          "dialogOpens": 1,
+          "dialogCloses": 1,
+          "transitions": 2,
+          "syntheticClicks": 0
+        },
+        "desktop-keyboard": {
+          "clicks": 0,
+          "keystrokes": 38,
+          "tabHops": 24,
+          "routeChanges": 1,
+          "dialogOpens": 1,
+          "dialogCloses": 1,
+          "transitions": 2,
+          "syntheticClicks": 0
+        }
+      }
+    },
+    "3-accounts": {
+      "title": "3. Add, edit, update the balance of and remove an account",
+      "runs": {
+        "desktop-pointer": {
+          "clicks": 16,
+          "keystrokes": 37,
+          "tabHops": 0,
+          "routeChanges": 2,
+          "dialogOpens": 4,
+          "dialogCloses": 4,
+          "transitions": 6,
+          "syntheticClicks": 1
+        },
+        "phone-touch": {
+          "clicks": 16,
+          "keystrokes": 37,
+          "tabHops": 0,
+          "routeChanges": 2,
+          "dialogOpens": 4,
+          "dialogCloses": 4,
+          "transitions": 6,
+          "syntheticClicks": 1
+        },
+        "desktop-keyboard": {
+          "clicks": 0,
+          "keystrokes": 99,
+          "tabHops": 54,
+          "routeChanges": 2,
+          "dialogOpens": 4,
+          "dialogCloses": 4,
+          "transitions": 6,
+          "syntheticClicks": 0
+        }
+      }
+    },
+    "4-debt": {
+      "title": "4. Add and edit a debt and model paying it off",
+      "runs": {
+        "desktop-pointer": {
+          "clicks": 8,
+          "keystrokes": 20,
+          "tabHops": 0,
+          "routeChanges": 0,
+          "dialogOpens": 2,
+          "dialogCloses": 2,
+          "transitions": 2,
+          "syntheticClicks": 0
+        },
+        "phone-touch": {
+          "clicks": 8,
+          "keystrokes": 20,
+          "tabHops": 0,
+          "routeChanges": 0,
+          "dialogOpens": 2,
+          "dialogCloses": 2,
+          "transitions": 2,
+          "syntheticClicks": 0
+        },
+        "desktop-keyboard": {
+          "clicks": 0,
+          "keystrokes": 69,
+          "tabHops": 45,
+          "routeChanges": 0,
+          "dialogOpens": 2,
+          "dialogCloses": 2,
+          "transitions": 2,
+          "syntheticClicks": 0
+        }
+      }
+    },
+    "5-self-assessment": {
+      "title": "5. Add and edit Self Assessment income and cost records",
+      "runs": {
+        "desktop-pointer": {
+          "clicks": 14,
+          "keystrokes": 29,
+          "tabHops": 0,
+          "routeChanges": 0,
+          "dialogOpens": 3,
+          "dialogCloses": 3,
+          "transitions": 3,
+          "syntheticClicks": 0
+        },
+        "phone-touch": {
+          "clicks": 14,
+          "keystrokes": 29,
+          "tabHops": 0,
+          "routeChanges": 0,
+          "dialogOpens": 3,
+          "dialogCloses": 3,
+          "transitions": 3,
+          "syntheticClicks": 0
+        },
+        "desktop-keyboard": {
+          "clicks": 0,
+          "keystrokes": 106,
+          "tabHops": 66,
+          "routeChanges": 0,
+          "dialogOpens": 3,
+          "dialogCloses": 3,
+          "transitions": 3,
+          "syntheticClicks": 0
+        }
+      }
+    },
+    "6-profile-scenarios": {
+      "title": "6. Update salary and pension, then model pension and mortgage changes",
+      "runs": {
+        "desktop-pointer": {
+          "clicks": 10,
+          "keystrokes": 21,
+          "tabHops": 0,
+          "routeChanges": 2,
+          "dialogOpens": 0,
+          "dialogCloses": 0,
+          "transitions": 2,
+          "syntheticClicks": 0
+        },
+        "phone-touch": {
+          "clicks": 10,
+          "keystrokes": 21,
+          "tabHops": 0,
+          "routeChanges": 2,
+          "dialogOpens": 1,
+          "dialogCloses": 1,
+          "transitions": 3,
+          "syntheticClicks": 0
+        },
+        "desktop-keyboard": {
+          "clicks": 0,
+          "keystrokes": 83,
+          "tabHops": 62,
+          "routeChanges": 2,
+          "dialogOpens": 0,
+          "dialogCloses": 0,
+          "transitions": 2,
+          "syntheticClicks": 0
+        }
+      }
+    },
+    "7-onboarding": {
+      "title": "7. New-user setup to the first dashboard figure",
+      "runs": {
+        "desktop-pointer": {
+          "clicks": 9,
+          "keystrokes": 7,
+          "tabHops": 0,
+          "routeChanges": 1,
+          "dialogOpens": 0,
+          "dialogCloses": 0,
+          "transitions": 1,
+          "syntheticClicks": 1
+        },
+        "phone-touch": {
+          "clicks": 9,
+          "keystrokes": 7,
+          "tabHops": 0,
+          "routeChanges": 1,
+          "dialogOpens": 0,
+          "dialogCloses": 0,
+          "transitions": 1,
+          "syntheticClicks": 1
+        },
+        "desktop-keyboard": {
+          "clicks": 0,
+          "keystrokes": 45,
+          "tabHops": 33,
+          "routeChanges": 1,
+          "dialogOpens": 0,
+          "dialogCloses": 0,
+          "transitions": 1,
+          "syntheticClicks": 0
+        }
+      }
+    }
+  }
+}

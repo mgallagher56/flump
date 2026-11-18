@@ -1,0 +1,131 @@
+name: 👆 Interaction cost
+
+# E38 S0. Drives the seven core flows in apps/e2e/interaction as a mouse user at 1280, a touch
+# user at 375 and a keyboard-only user at 1280, counting clicks or taps, keystrokes, Tab hops and
+# transitions, and compares them with docs/audit/interaction-cost/baseline.json. See
+# apps/e2e/README.md "Interaction cost".
+#
+# Warn-only (owner decision ED1 option (a), until E38 S1 and S2 land): a cost increase is written
+# to the job summary and as a warning, and never fails the job. continue-on-error and not a
+# required check, so a flow that breaks while a page is redesigned never blocks a pull request
+# either. Its own workflow, pull requests and manual runs only, so it cannot hold up deploys.
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      update:
+        description: "Regenerate docs/audit/interaction-cost from this run and upload it as an artifact"
+        type: boolean
+        default: true
+
+# The Turbo token is scoped to the step that uses it, not the whole workflow.
+env:
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  interaction:
+    name: 👆 Interaction cost
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Warn-only until E38 S1 and S2 set the target baselines (ED1).
+    continue-on-error: true
+    permissions:
+      actions: write
+      contents: read
+
+    # Same image as the visual and accessibility suites. Keep the tag equal to @playwright/test
+    # in apps/e2e/package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe
+
+    # Throwaway Postgres; the password is a literal for this disposable container, not a secret.
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flump_e2e
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flump_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      CI: "true"
+      E2E_DATABASE_URL: postgres://postgres:postgres@postgres:5432/flump_e2e
+      E2E_FREEZE_CLOCK: "1"
+
+    steps:
+      - name: ⬇️ Checkout repo
+        # actions/checkout v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      # setup-bun extracts a zip and the Playwright image ships without unzip. faketime freezes
+      # the servers' clock (apps/e2e/support/clock.ts) so the check-in month is the same every run.
+      - name: 📦 Install unzip and faketime
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: apt-get update -qq && apt-get install -y -qq unzip faketime > /dev/null
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ secrets.TURBO_TOKEN }}
+
+      - name: 🏗️ Build all packages
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+        run: bun run build
+
+      # Writes the comparison to the job summary. A cost increase never fails this step.
+      - name: 👆 Compare with the baseline
+        if: github.event_name != 'workflow_dispatch' || !inputs.update
+        run: bun run test:interaction
+
+      - name: 🔄 Regenerate the baseline
+        if: github.event_name == 'workflow_dispatch' && inputs.update
+        env:
+          INTERACTION_UPDATE_BASELINE: "1"
+        run: bun run test:interaction
+
+      # Always written by the run, whatever the mode: download it over
+      # docs/audit/interaction-cost to accept this run's costs.
+      - name: 📎 Upload generated baseline
+        if: always()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: interaction-cost-baseline
+          path: |
+            apps/e2e/test-results-interaction-cost/baseline.json
+            apps/e2e/test-results-interaction-cost/baseline.md
+            apps/e2e/test-results-interaction-cost/summary.md
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: 📎 Upload report
+        if: always()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: interaction-cost-report
+          path: |
+            apps/e2e/playwright-report-interaction
+            apps/e2e/test-results-interaction
+          retention-days: 7
+          if-no-files-found: ignore
