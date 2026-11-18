@@ -4,7 +4,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertLaunchReady } from "@flump/business-details";
 import express from "express";
-import { createServer as createViteServer, type ViteDevServer } from "vite";
+// Type only: vite is a devDependency, loaded lazily in development so the production image
+// (a production-only install) never needs it.
+import type { ViteDevServer } from "vite";
 import { analyticsMiddleware } from "./server/analytics";
 import { applyServerHardening } from "./server/hardening";
 import { buildHeadMeta, splitHoistables } from "./server/headMeta";
@@ -58,6 +60,7 @@ async function createServer() {
 
   let vite: ViteDevServer | undefined;
   if (!isProd) {
+    const { createServer: createViteServer } = await import("vite");
     vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "custom",

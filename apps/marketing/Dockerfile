@@ -1,8 +1,6 @@
 # Official Bun image, pinned by digest (M17) so a re-pushed tag cannot change the build.
 # To bump: docker buildx imagetools inspect oven/bun:<version>-slim and copy the index digest.
 FROM oven/bun:1.4.4-slim@sha256:1846adf22496bd711036aae8be147e57bdebbaea2e5264e3e0b5af1db187d9a4 AS base
-# No production-only install here yet: server.ts imports vite at the top level for dev mode, and
-# vite is a devDependency. Follow-up: move the dev server behind a dynamic import, then prune.
 WORKDIR /app
 
 # Stage 1a: workspace manifests only. Every workspace's package.json is needed so
@@ -30,7 +28,12 @@ ENV NODE_ENV=production
 # Launch guard (E24-T1): Railway passes the FLUMP_LAUNCH service variable only if declared here.
 ARG FLUMP_LAUNCH
 ARG ALLOW_INDEXING
-RUN bun run --cwd packages/ui generate && bun run --cwd apps/marketing generate && bun turbo run build --filter=marketing...
+# Build, then swap node_modules for a production-only install (as the backend image does): the
+# runtime image carries no devDependencies. server.ts loads vite only in development, through a
+# dynamic import. The reinstall reuses the bun cache from the deps stage.
+RUN bun run --cwd packages/ui generate && bun run --cwd apps/marketing generate && bun turbo run build --filter=marketing... \
+ && find . -name node_modules -type d -prune -exec rm -rf {} + \
+ && bun install --frozen-lockfile --ignore-scripts --production --filter './' --filter 'marketing' --filter './packages/*'
 
 # Stage 3: Create final production image
 FROM base AS runner
