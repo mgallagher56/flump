@@ -156,7 +156,9 @@ describe("DebtContainer", () => {
           "Add a credit card, loan or overdraft to see when it would be paid off at your minimum payments.",
         ),
       ).toBeDefined();
-      expect(screen.getByTestId("debt-empty-illustration")).toBeDefined();
+      // One illustration in view: the page icon in the header, none in the empty state.
+      expect(container.querySelectorAll("svg[data-scene]")).toHaveLength(1);
+      expect(container.querySelector("header [data-scene=empty-debt]")).not.toBeNull();
       expect(screen.getAllByRole("button", { name: "Add a debt" })).toHaveLength(1);
       expect(screen.queryAllByRole("tab")).toHaveLength(0);
       expect(screen.queryByText("Total you owe")).toBeNull();

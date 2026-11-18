@@ -317,6 +317,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           </Button>
         }
         className={dashboardHeader()}
+        // The page icon, empty or filled in; the empty state has none, so one is in view.
+        illustration="empty-goals"
         title={isSample ? "Example figures" : "Your money"}
       />
 

@@ -102,7 +102,7 @@ describe("SavingsContainer", () => {
     expect(screen.getByText("Interest over the next 12 months")).toBeDefined();
     expect(screen.getByText("Before tax. ISA interest is tax-free")).toBeDefined();
     expect(screen.queryByText("Average rate")).toBeNull();
-    // A page with accounts still shows its illustration, in the header (from lg only).
+    // A page with accounts still shows its page icon in the header.
     expect(container.querySelectorAll("svg[data-scene]")).toHaveLength(1);
     expect(container.querySelector("[data-testid=page-header-illustration]")).not.toBeNull();
     expect(screen.getByText("Paid into ISAs this tax year")).toBeDefined();
@@ -179,9 +179,9 @@ describe("SavingsContainer", () => {
     loader.accounts = [];
     const { container } = render(<SavingsContainer />);
     expect(screen.getByText("No savings accounts yet")).toBeDefined();
-    // One illustration in view: the empty state's, not a second in the header.
+    // One illustration in view: the page icon in the header, none in the empty state.
     expect(container.querySelectorAll("svg[data-scene]")).toHaveLength(1);
-    expect(container.querySelector("[data-testid=page-header-illustration]")).toBeNull();
+    expect(container.querySelector("[data-testid=page-header-illustration]")).not.toBeNull();
     expect(screen.queryByRole("region", { name: "Model a change to your savings" })).toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();
     expect(screen.queryByTestId("hero-figure")).toBeNull();

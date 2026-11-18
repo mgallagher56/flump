@@ -1,4 +1,4 @@
-import { Button, EmptyState, Illustration } from "@repo/ui";
+import { Button, EmptyState } from "@repo/ui";
 import type { FC } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { emptyStateSlot } from "./DashboardEmptyState.styles";
@@ -10,7 +10,10 @@ export interface DashboardEmptyStateProps {
   onChooseWidgets?: () => void;
 }
 
-/** Shown when the section grid would be empty. One button, always a next action. */
+/**
+ * Shown when the section grid would be empty. One button, always a next action. No illustration:
+ * the page icon in the header is the one in view.
+ */
 export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onChooseWidgets }) => (
   <div className={emptyStateSlot()}>
     {reason === "hidden" ? (
@@ -22,7 +25,6 @@ export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onCh
         }
         description="Every section is hidden. Choose which ones to show."
         id="dashboard-empty-state"
-        illustration={<Illustration scene="empty-goals" size="md" />}
         title="Nothing to show yet"
       />
     ) : (
@@ -34,7 +36,6 @@ export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onCh
         }
         description="Add an account or your budget. Each section appears here once it has your figures."
         id="dashboard-empty-state"
-        illustration={<Illustration scene="empty-accounts" size="md" />}
         title="Nothing to show yet"
       />
     )}

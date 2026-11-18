@@ -79,17 +79,22 @@ const withIllustrationPlay: Story["play"] = async ({ canvasElement }) => {
   await expect(art.querySelector("[data-scene-settle]")).toBeNull();
 };
 
-/** A page with content shows its illustration beside the title, from lg only. */
+/** The page icon: the page's own illustration beside the h1, empty or filled in. */
 export const WithIllustration: Story = {
   args: withIllustrationArgs,
-  parameters: { viewport: { defaultViewport: "desktop" } },
   play: withIllustrationPlay,
 };
 
 export const WithIllustrationDark: Story = {
   args: withIllustrationArgs,
   globals: { theme: "dark" },
-  parameters: { viewport: { defaultViewport: "desktop" } },
+  play: withIllustrationPlay,
+};
+
+/** At 375 the icon, h1 and action share one row, so the first figure is not pushed down. */
+export const WithIllustrationPhone: Story = {
+  args: withIllustrationArgs,
+  parameters: { viewport: { defaultViewport: "mobile1" } },
   play: withIllustrationPlay,
 };
 

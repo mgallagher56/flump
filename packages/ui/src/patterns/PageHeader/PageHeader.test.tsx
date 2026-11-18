@@ -52,12 +52,25 @@ describe("PageHeader Pattern", () => {
     expect(h1).toContain("ov-wrap_break-word");
   });
 
-  it("shows a still, decorative illustration from lg only, and none unless asked", () => {
-    const { rerender } = render(<PageHeader illustration="empty-savings" title="Your savings" />);
+  it("shows the page icon beside the h1, still and decorative, and none unless asked", () => {
+    const { rerender } = render(
+      <PageHeader
+        actions={<button type="button">Add</button>}
+        illustration="empty-savings"
+        title="Your savings"
+      />,
+    );
     const art = screen.getByTestId("page-header-illustration");
-    // Hidden below lg so a phone keeps its figures where they are.
-    expect(art.className).toContain("d_none");
-    expect(art.className).toContain("lg:d_block");
+    // Below md: icon, h1 and actions share the first row, so the icon adds no height.
+    expect(art.className).toContain("grid-c_1");
+    expect(art.className).toContain("grid-r_1");
+    expect(screen.getByRole("heading", { level: 1 }).className).toContain("grid-c_2");
+    expect(screen.getByRole("button", { name: "Add" }).parentElement?.className).toContain(
+      "grid-c_3",
+    );
+    // The same size on every page: 48px below md, 64px from md.
+    expect(art.className).toContain("w_12");
+    expect(art.className).toContain("md:w_16");
     const svg = art.querySelector("svg");
     expect(svg?.getAttribute("aria-hidden")).toBe("true");
     expect(svg?.getAttribute("data-scene")).toBe("empty-savings");

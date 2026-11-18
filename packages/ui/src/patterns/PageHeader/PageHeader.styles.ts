@@ -18,6 +18,10 @@ export const pageHeaderContainer = cva({
     width: "100%",
     mb: { base: "5", md: "6" },
   },
+  variants: {
+    // The page icon takes the first column below md, so it sits beside the h1, never above it.
+    withIcon: { true: { gridTemplateColumns: { base: "auto minmax(min-content, 1fr) auto" } } },
+  },
 });
 
 export const pageHeaderText = cva({
@@ -35,6 +39,7 @@ export const pageHeaderTitle = cva({
     // Wraps between words beside the actions; never narrower than its longest word.
     overflowWrap: "break-word",
   },
+  variants: { withIcon: { true: { gridColumn: { base: "2", md: "auto" } } } },
 });
 
 export const pageHeaderDescription = cva({
@@ -59,18 +64,21 @@ export const pageHeaderAside = cva({
     justifyContent: "flex-end",
     gap: "3",
   },
+  variants: { withIcon: { true: { gridColumn: { base: "3", md: "auto" } } } },
 });
 
 /**
- * The page's illustration on a page with content: hidden below lg, so a phone or tablet keeps its
- * figures where they are, and beside the title in the header's spare room from lg.
+ * The page icon: the page's own illustration, the same size and place on every page, beside the
+ * h1 at every width. 48px wide below md (36px tall, no taller than the h1 row, so the first
+ * figure stays where it was) and 64px from md.
  */
-export const pageHeaderIllustration = cva({
+export const pageHeaderIcon = cva({
   base: {
-    display: { base: "none", lg: "block" },
     flex: "0 0 auto",
-    width: "28",
-    alignSelf: "center",
+    width: { base: "12", md: "16" },
+    gridColumn: { base: "1", md: "auto" },
+    gridRow: { base: "1", md: "auto" },
+    alignSelf: { base: "center", md: "flex-start" },
   },
 });
 

@@ -7,7 +7,7 @@ import {
   pageHeaderBadge,
   pageHeaderContainer,
   pageHeaderDescription,
-  pageHeaderIllustration,
+  pageHeaderIcon,
   pageHeaderText,
   pageHeaderTitle,
 } from "./PageHeader.styles";
@@ -30,9 +30,10 @@ export interface PageHeaderProps {
    */
   badge?: ReactNode;
   /**
-   * The page's illustration, for a page that has content (an empty page shows it in its
-   * `EmptyState` instead, so at most one is in view). Shown from `lg` only, in the spare room
-   * beside the title, so on a phone it never pushes figures down. It never moves.
+   * The page icon: the page's own illustration beside the h1, so the page is recognisable at a
+   * glance, whether it is empty or filled in. Decorative (the h1 names the page), still, and the
+   * same size and place on every page. A page that passes it shows no illustration in its
+   * `EmptyState`, so one is in view.
    */
   illustration?: IllustrationScene;
   className?: string;
@@ -53,19 +54,20 @@ export const PageHeader: FC<PageHeaderProps> = ({
   className,
 }) => {
   const text = description ?? subtitle;
+  const withIcon = Boolean(illustration);
   return (
-    <header className={cx(pageHeaderContainer(), className)}>
-      <div className={pageHeaderText()}>
-        <h1 className={pageHeaderTitle()}>{title}</h1>
-        {text && <p className={pageHeaderDescription()}>{text}</p>}
-      </div>
+    <header className={cx(pageHeaderContainer({ withIcon }), className)}>
       {illustration ? (
-        <div className={pageHeaderIllustration()} data-testid="page-header-illustration">
+        <div className={pageHeaderIcon()} data-testid="page-header-illustration">
           <Illustration scene={illustration} settle={false} size="sm" />
         </div>
       ) : null}
+      <div className={pageHeaderText()}>
+        <h1 className={pageHeaderTitle({ withIcon })}>{title}</h1>
+        {text && <p className={pageHeaderDescription()}>{text}</p>}
+      </div>
       {(badge || actions) && (
-        <div className={pageHeaderAside()}>
+        <div className={pageHeaderAside({ withIcon })}>
           {typeof badge === "string" ? <span className={pageHeaderBadge()}>{badge}</span> : badge}
           {actions}
         </div>
