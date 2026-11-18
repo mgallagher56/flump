@@ -179,6 +179,114 @@ describe("DatePicker", () => {
     expect((screen.getByRole("button", { name: "Mar" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
+  const tabStops = () => screen.getByRole("table").querySelectorAll("button[tabindex='0']");
+  const headingText = () => {
+    const grid = screen.getByRole("table");
+    return document.getElementById(grid.getAttribute("aria-labelledby") as string)?.textContent;
+  };
+
+  it("clamps to min when a year is picked whose month is before min", () => {
+    // Viewing January 2026 with min 10 Mar 2025. Picking 2025 would keep January, giving
+    // 16 Jan 2025, which is before min, so it clamps to min: 10 Mar 2025, shown in March 2025.
+    openPicker({ value: "2026-01-16", min: "2025-03-10" });
+    fireEvent.click(screen.getByRole("button", { name: /^Choose year/ }));
+    fireEvent.click(screen.getByRole("button", { name: "2025" }));
+    expect(headingText()).toBe("March 2025");
+    expect(focused().getAttribute("aria-label")).toBe("10 Mar 2025");
+    expect((focused() as HTMLButtonElement).disabled).toBe(false);
+    expect(tabStops()).toHaveLength(1);
+    expect(tabStops()[0]).toBe(focused());
+  });
+
+  it("clamps to max when a year is picked whose month is after max", () => {
+    // Viewing November 2026 with max 1 Jun 2027. Picking 2027 would keep November, giving
+    // 16 Nov 2027, which is after max, so it clamps to max: 1 Jun 2027, shown in June 2027.
+    openPicker({ value: "2026-11-16", max: "2027-06-01" });
+    fireEvent.click(screen.getByRole("button", { name: /^Choose year/ }));
+    fireEvent.click(screen.getByRole("button", { name: "2027" }));
+    expect(headingText()).toBe("June 2027");
+    expect(focused().getAttribute("aria-label")).toBe("1 Jun 2027");
+    expect((focused() as HTMLButtonElement).disabled).toBe(false);
+    expect(tabStops()).toHaveLength(1);
+    expect(tabStops()[0]).toBe(focused());
+  });
+
+  // Weekdays worked out by hand from the anchor 1 Jan 2024 = Monday:
+  // 2024 is a leap year (366 days, 366 mod 7 = 2), so 1 Jan 2025 = Wednesday.
+  // 365 mod 7 = 1 each year after: 1 Jan 2026 = Thursday, 1 Jan 2027 = Friday, 1 Jan 2028 = Saturday.
+  // January has 31 days (31 mod 7 = 3), so 1 Feb 2028 = Saturday + 3 = Tuesday.
+  // 2028 is divisible by 4 and not a century, so it is a leap year and 29 Feb 2028 exists;
+  // 29 Feb = 1 Feb + 28 days, so it is also a Tuesday.
+  it("handles a leap day and a Monday-first grid", () => {
+    openPicker({ value: "2028-02-29" });
+    expect(screen.getByRole("button", { name: /^Date/ }).textContent).toContain("29 Feb 2028");
+    expect(focused().getAttribute("aria-label")).toBe("29 Feb 2028, selected");
+    expect(headingText()).toBe("February 2028");
+    // 1 Feb 2028 is a Tuesday, so the Monday-first grid opens on Monday 31 Jan 2028.
+    const firstDay = screen.getByRole("table").querySelector("tbody button");
+    expect(firstDay?.getAttribute("aria-label")).toBe("31 Jan 2028");
+    expect(screen.getAllByRole("columnheader")[0]?.textContent).toContain("Monday");
+
+    // Home: Tuesday 29 Feb back one day to Monday 28 Feb.
+    fireEvent.keyDown(focused(), { key: "Home" });
+    expect(focused().getAttribute("aria-label")).toBe("28 Feb 2028");
+    // End: Monday 28 Feb forward six days. Feb 2028 has 29 days, so 29 Feb (Tue), 1 Mar (Wed),
+    // 2 Mar (Thu), 3 Mar (Fri), 4 Mar (Sat), 5 Mar (Sun).
+    fireEvent.keyDown(focused(), { key: "End" });
+    expect(focused().getAttribute("aria-label")).toBe("5 Mar 2028");
+  });
+
+  it("keeps the day of the month across month and year pages from a leap day", () => {
+    openPicker({ value: "2028-02-29" });
+    // March has 31 days, so 29 Feb plus one month is 29 Mar 2028.
+    fireEvent.keyDown(focused(), { key: "PageDown" });
+    expect(focused().getAttribute("aria-label")).toBe("29 Mar 2028");
+    expect(headingText()).toBe("March 2028");
+    // Back to 29 Feb (February 2028 has 29 days).
+    fireEvent.keyDown(focused(), { key: "PageUp" });
+    expect(focused().getAttribute("aria-label")).toBe("29 Feb 2028, selected");
+    // 2029 is not divisible by 4, so February 2029 has 28 days: 29 Feb clamps to 28 Feb 2029.
+    fireEvent.keyDown(focused(), { key: "PageDown", shiftKey: true });
+    expect(focused().getAttribute("aria-label")).toBe("28 Feb 2029");
+    expect(headingText()).toBe("February 2029");
+  });
+
+  it("crosses a year boundary with the arrow keys", () => {
+    openPicker({ value: "2026-12-31" });
+    expect(headingText()).toBe("December 2026");
+    // 31 Dec is the last day of the year, so the next day is 1 Jan 2027.
+    fireEvent.keyDown(focused(), { key: "ArrowRight" });
+    expect(focused().getAttribute("aria-label")).toBe("1 Jan 2027");
+    expect(headingText()).toBe("January 2027");
+    expect(tabStops()).toHaveLength(1);
+  });
+
+  it("disables the previous month and clamps to min when today is just after min", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 18));
+    try {
+      openPicker({ value: "", min: "2026-11-15" });
+      // No value, so focus starts on today, 18 Nov 2026.
+      expect(focused().getAttribute("aria-label")).toBe("18 Nov 2026");
+      // The day before 1 Nov is 31 Oct, which is before min 15 Nov, so the previous month is off.
+      expect(
+        (screen.getByRole("button", { name: "Previous month" }) as HTMLButtonElement).disabled,
+      ).toBe(true);
+      // ArrowUp is 18 - 7 = 11 Nov, before min, so it clamps to 15 Nov.
+      fireEvent.keyDown(focused(), { key: "ArrowUp" });
+      expect(focused().getAttribute("aria-label")).toBe("15 Nov 2026");
+      for (let day = 1; day <= 14; day += 1) {
+        const button = screen.getByRole("button", { name: `${day} Nov 2026` }) as HTMLButtonElement;
+        expect(button.disabled).toBe(true);
+      }
+      expect(
+        (screen.getByRole("button", { name: "15 Nov 2026" }) as HTMLButtonElement).disabled,
+      ).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("forwards required and describedby, and names the trigger by its label and date", () => {
     render(
       <FormField hint="When the deal ends." label="Contract end date" required>
