@@ -330,6 +330,32 @@ describe("PensionContainer", () => {
     expect(screen.getAllByText(/Assumed: the auto-enrolment minimum/)).toHaveLength(1);
   });
 
+  it("shows the saved loader rates on the first render, before the profile atom is seeded", async () => {
+    const { DEFAULT_PROFILE } =
+      await vi.importActual<typeof import("~/hooks/useUserProfile")>("~/hooks/useUserProfile");
+    testLoaderData = {
+      accounts: [],
+      accountDetails: [],
+      userProfile: {
+        id: "profile-1",
+        annualSalary: 42000,
+        pensionPercent: 6,
+        pensionEmployerPercent: 4,
+        isSalarySacrifice: false,
+        isSalarySacrificeEmployerNi: false,
+        employmentType: "employed",
+      },
+    };
+    // The atom still holds DEFAULT_PROFILE: empty id and the 5% and 3% creation rates.
+    testProfileData = DEFAULT_PROFILE;
+    const { container } = render(<PensionContainer />);
+    const strip = container.querySelector("[data-density='compact']") as HTMLElement;
+    // 42,000 x (6% + 4%) = 4,200 a year; 4,200 / 12 = £350 a month going in.
+    expect(strip.textContent).toContain("Going in each month£350");
+    expect(strip.textContent).toContain("You and your employer");
+    expect(strip.textContent).not.toContain("Assumed rates");
+  });
+
   it("totals what goes in each month, counting direct payments only from current pots", () => {
     useFixture({
       ...defaultLoaderData,

@@ -306,6 +306,37 @@ describe("UserProfileService (Deep Module)", () => {
     });
   });
 
+  describe("check-in day", () => {
+    it("saves a chosen day and formats it, and null clears it", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+
+      const saved = await service.updateProfile("user-123", { checkInDay: 28 });
+      expect(at(mockUserProfileRepo.save.mock.calls, -1)[0]).toMatchObject({ checkInDay: 28 });
+      expect(saved.checkInDay).toBe(28);
+
+      const cleared = await service.updateProfile("user-123", { checkInDay: null });
+      expect(cleared.checkInDay).toBeNull();
+    });
+
+    it("reads a profile that never chose a day as null", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+
+      const result = await service.getProfile("user-123");
+
+      expect(result.checkInDay).toBeNull();
+    });
+
+    it("rejects a day outside 1 to 31 with a 400", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+
+      for (const checkInDay of [0, 32, 2.5]) {
+        await expect(service.updateProfile("user-123", { checkInDay })).rejects.toThrow(
+          /checkInDay must be a whole day/,
+        );
+      }
+    });
+  });
+
   describe("lazy profile creation", () => {
     const uniqueViolation = () => Object.assign(new Error("duplicate key"), { code: "23505" });
     const wrappedViolation = () => {

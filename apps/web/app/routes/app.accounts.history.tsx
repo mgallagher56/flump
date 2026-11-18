@@ -8,7 +8,7 @@ import {
   useSearchParams,
 } from "react-router";
 import { SnapshotHistoryPage } from "~/features/snapshot/components/SnapshotHistoryPage";
-import { londonMonth } from "~/features/snapshot/snapshotModel";
+import { londonDate, londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 
@@ -24,11 +24,21 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, userProfile } = await loadWorkspaceSnapshot(args);
   // Every month is computed under the user's net worth choices, as on every other page.
   const basis = netWorthBasisFromProfile(userProfile);
-  return data({ accounts, accountDetails, basis, currentMonth: londonMonth() });
+  // The saved check-in day sets the "Next check-in" date (UX Batch E). A day, not a figure.
+  const checkInDay = userProfile?.checkInDay ?? null;
+  return data({
+    accounts,
+    accountDetails,
+    basis,
+    checkInDay,
+    currentMonth: londonMonth(),
+    today: londonDate(),
+  });
 };
 
 const AccountsHistory = (): ReactElement => {
-  const { accounts, accountDetails, basis, currentMonth } = useLoaderData<typeof loader>();
+  const { accounts, accountDetails, basis, checkInDay, currentMonth, today } =
+    useLoaderData<typeof loader>();
   const [params] = useSearchParams();
   const onSave = useSaveSnapshot(accountDetails);
   return (
@@ -36,9 +46,11 @@ const AccountsHistory = (): ReactElement => {
       accountDetails={accountDetails}
       accounts={accounts}
       basis={basis}
+      checkInDay={checkInDay}
       currentMonth={currentMonth}
       initialSheet={params.get("checkIn") === "1" ? "checkIn" : null}
       onSave={onSave}
+      today={today}
     />
   );
 };

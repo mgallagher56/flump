@@ -64,7 +64,9 @@ describe("<PensionTakeHomeEffect />", () => {
 
   it("points to Profile when a needed fact is missing, with no figure", () => {
     renderEffect({ ...FACTS, employmentType: null }, 2400);
-    expect(screen.getByRole("link", { name: "Profile" }).getAttribute("href")).toBe("/app/profile");
+    expect(screen.getByRole("link", { name: "Profile" }).getAttribute("href")).toBe(
+      "/app/profile#settings-age-and-pay",
+    );
     expect(document.querySelector('[data-figure="takeHome.delta"]')).toBeNull();
   });
 

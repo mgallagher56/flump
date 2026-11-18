@@ -81,7 +81,8 @@ export interface RetirementPlannerProps {
   onSavePlan?: (payload: UpsertRetirementPlanRequest, etag: string | null) => void;
 }
 
-export const PROFILE_PATH = "/app/profile";
+/** Year of birth lives in the age and pay section of the Profile tab. */
+export const PROFILE_PATH = "/app/profile#settings-age-and-pay";
 export const STATE_PENSION_AGE_CHECKER_URL = "https://www.gov.uk/state-pension-age";
 export const PENSION_DETAILS_PATH = "/app/pension#pension-details";
 

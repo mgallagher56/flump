@@ -1,9 +1,4 @@
-import {
-  getCategoriesForSource,
-  SUPPORTED_UK_TAX_YEARS,
-  type TaxRecord,
-  type TaxSource,
-} from "@flump/finance-engine";
+import { SUPPORTED_UK_TAX_YEARS, type TaxRecord, type TaxSource } from "@flump/finance-engine";
 import {
   Button,
   CollapsibleDrawer,
@@ -19,7 +14,12 @@ import {
 import { Camera, FileText, Image as ImageIcon, Upload } from "lucide-react";
 import { type ChangeEvent, type FC, type FormEvent, useState } from "react";
 import { isAcceptableReceiptFile, RECEIPT_ACCEPT } from "~/containers/tax/receipt-file";
-import { categoryShortLabel, FREQUENCY_OPTIONS, SOURCE_OPTIONS } from "../../tax-labels";
+import {
+  categoryShortLabel,
+  FREQUENCY_OPTIONS,
+  SOURCE_OPTIONS,
+  selectableCategories,
+} from "../../tax-labels";
 import {
   fieldRow,
   footer,
@@ -109,15 +109,17 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
   const set = <K extends keyof TaxRecordDraft>(key: K, value: TaxRecordDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
 
+  // A record saved as PAYE salary keeps that category on offer; a new record never has it.
+  const keptCategory = mode === "edit" ? initial.category : undefined;
   const changeSourceOrType = (source: TaxSource, type: "income" | "expense") =>
     setDraft((d) => ({
       ...d,
       source,
       type,
-      category: getCategoriesForSource(source, type)[0]?.id ?? "",
+      category: selectableCategories(source, type, keptCategory)[0]?.id ?? "",
     }));
 
-  const categories = getCategoriesForSource(draft.source, draft.type);
+  const categories = selectableCategories(draft.source, draft.type, keptCategory);
 
   const onFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,7 +160,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
   };
 
   const isPdf = draft.receiptMimeType?.includes("pdf");
-  // Open "More details" when editing a record that already has notes, so they are never hidden.
+  // Open "Category and notes" when editing a record that already has notes, so they are never hidden.
   const hasDetails = initial.notes.trim() !== "";
 
   return (
@@ -167,11 +169,11 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
       onOpenChange={onOpenChange}
       size="md"
       title={mode === "edit" ? "Edit record" : "Add a record"}
-      description="Income or a cost for one of your income sources. Regular records repeat until their end date."
+      description="Income or an expense for one of your income sources. Regular records repeat until their end date."
       id="tax-record-dialog"
     >
       <form className={form()} noValidate onSubmit={submit}>
-        {/* Amount comes straight after the name; category and notes wait under "More details". */}
+        {/* Amount comes straight after the name; category and notes wait under a toggle named for them. */}
         <FormField label="Name" required error={errors.name}>
           {(field) => (
             <TextInput
@@ -272,7 +274,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
                 }
               >
                 <option value="income">Income</option>
-                <option value="expense">Cost</option>
+                <option value="expense">Expense</option>
               </Select>
             )}
           </FormField>
@@ -328,7 +330,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
             {saveError}
           </p>
         ) : null}
-        <CollapsibleDrawer title="More details" variant="quiet" defaultOpen={hasDetails}>
+        <CollapsibleDrawer title="Category and notes" variant="quiet" defaultOpen={hasDetails}>
           <div className={moreDetails()}>
             <FormField label="Category">
               {(field) => (

@@ -37,6 +37,29 @@ describe("MonthlyCheckInCard", () => {
     expect(isCheckInDue({ currentMonth: "2026-11", lastRecordedMonth: "2026-11" })).toBe(false);
   });
 
+  it("waits for the chosen check-in day when last month was recorded", () => {
+    const base = { currentMonth: "2026-11", lastRecordedMonth: "2026-10", checkInDay: 28 };
+    expect(isCheckInDue({ ...base, today: "2026-11-27" })).toBe(false);
+    expect(isCheckInDue({ ...base, today: "2026-11-28" })).toBe(true);
+    const { container } = render(
+      <MemoryRouter>
+        <MonthlyCheckInCard {...base} today="2026-11-05" />
+      </MemoryRouter>,
+    );
+    expect(container.innerHTML).toBe("");
+  });
+
+  it("shows straight away when last month was not recorded either", () => {
+    expect(
+      isCheckInDue({
+        currentMonth: "2026-11",
+        lastRecordedMonth: "2026-09",
+        checkInDay: 28,
+        today: "2026-11-05",
+      }),
+    ).toBe(true);
+  });
+
   it("keeps money out of the link", () => {
     expect(CHECK_IN_ROUTE).toBe("/app/accounts/history?checkIn=1");
   });

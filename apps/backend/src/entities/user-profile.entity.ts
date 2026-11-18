@@ -305,6 +305,13 @@ export class UserProfile {
   monthlyOtherOutgoings: number | null;
 
   /**
+   * UX Batch E: the day of the month (1 to 31) the monthly check-in falls on. Null = not chosen,
+   * which behaves as the 1st. Days past a month's end fall on its last day (finance-engine).
+   */
+  @Column({ name: "check_in_day", type: "smallint", nullable: true })
+  checkInDay: number | null;
+
+  /**
    * Last authenticated request, at day precision (BE-06, ruling D4: accounts inactive for 24 months
    * are due for erasure). Written by LastActiveInterceptor; new rows start at now().
    */

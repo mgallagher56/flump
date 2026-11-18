@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const navigate = vi.fn();
 const profileState: { profile: Record<string, unknown> } = { profile: {} };
+const baselineState = { annualGrossSalary: 0 };
 
 const SAVED_PROFILE = {
   annualSalary: 45000,
@@ -23,7 +24,7 @@ vi.mock("~/hooks/useUserProfile", () => ({
   useUserProfile: () => ({ profile: profileState.profile, setProfile: vi.fn() }),
 }));
 vi.mock("~/state/baseline.store", () => ({
-  useFinancialBaseline: () => ({ baseline: { annualGrossSalary: 0 } }),
+  useFinancialBaseline: () => ({ baseline: baselineState }),
 }));
 
 import TakeHomeContainer from "./TakeHomeContainer";
@@ -34,6 +35,15 @@ describe("<TakeHomeContainer /> with saved figures", () => {
   beforeEach(() => {
     navigate.mockClear();
     profileState.profile = { ...SAVED_PROFILE };
+    baselineState.annualGrossSalary = 0;
+  });
+
+  it("uses the saved salary, not a stale onboarding baseline salary", () => {
+    baselineState.annualGrossSalary = 30000;
+    const { container } = render(<TakeHomeContainer />);
+    // £45,000 saved is £3,750 a month before tax; the stale £30,000 would be £2,500.
+    expect(container.textContent).toContain("£3,750");
+    expect(container.textContent).not.toContain("£2,500");
   });
 
   it("meets the page rules: figure budget, one hero, one notice, at most one primary button", () => {
@@ -127,6 +137,13 @@ describe("<TakeHomeContainer /> with saved figures", () => {
 describe("<TakeHomeContainer /> without a saved salary", () => {
   beforeEach(() => {
     profileState.profile = { ...SAVED_PROFILE, annualSalary: null };
+    baselineState.annualGrossSalary = 0;
+  });
+
+  it("falls back to the onboarding baseline salary only when none is saved", () => {
+    baselineState.annualGrossSalary = 30000;
+    const { container } = render(<TakeHomeContainer />);
+    expect(container.textContent).toContain("£2,500");
   });
 
   it("shows one setup prompt with one button, and no £0 figures, tabs or zone", () => {
@@ -134,7 +151,7 @@ describe("<TakeHomeContainer /> without a saved salary", () => {
     expectPageRules(container, { maxFigures: 0, projectionNotices: 0 });
     expect(screen.getByText(/Add your salary before tax/)).toBeDefined();
     expect(screen.getByRole("link", { name: "Add salary" }).getAttribute("href")).toBe(
-      "/app/profile",
+      "/app/profile#settings-age-and-pay",
     );
     expect(screen.queryByTestId("scenario-zone")).toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();

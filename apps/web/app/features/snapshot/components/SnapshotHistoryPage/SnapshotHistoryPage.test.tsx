@@ -198,6 +198,15 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByRole("dialog", { name: "Monthly check-in" })).toBeDefined();
   });
 
+  it("shows the next check-in date on the saved check-in day", () => {
+    renderPage({
+      accountDetails: [row(CURRENT, 2026, 10, 2000), row(CURRENT, 2026, 11, 2100)],
+      checkInDay: 31,
+      today: "2026-11-18",
+    });
+    expect(screen.getByText("Next check-in: 31 December 2026")).toBeDefined();
+  });
+
   it("shows the next check-in date once this month is recorded", () => {
     renderPage({
       accountDetails: [row(CURRENT, 2026, 10, 2000), row(CURRENT, 2026, 11, 2100)],

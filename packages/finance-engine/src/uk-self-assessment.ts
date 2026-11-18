@@ -133,3 +133,117 @@ export function calculateSelfAssessmentPayments(
     july: due ? { date: `${endYear + 1}-07-31`, amount: paymentOnAccount } : null,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Recorded expenses compared with the trading or property allowance
+// ---------------------------------------------------------------------------
+
+/** GOV.UK guidance on the trading and property allowances (read 2026-11-18). */
+export const TRADING_PROPERTY_ALLOWANCE_SOURCE_URL =
+  "https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income";
+
+/**
+ * When the trading allowance cannot be used: partnership income, and a year with trading or
+ * property income from your employer, your spouse's or civil partner's employer, or a company or
+ * partnership you or a connected person owns, controls or is a partner in.
+ */
+export const TRADING_ALLOWANCE_EXCLUSIONS = ["partnership", "employer-or-connected"] as const;
+export type TradingAllowanceExclusion = (typeof TRADING_ALLOWANCE_EXCLUSIONS)[number];
+
+/**
+ * When the property allowance cannot be used: with Rent a Room Scheme income from your own home,
+ * or when the tax reduction for finance costs on residential property is claimed.
+ */
+export const PROPERTY_ALLOWANCE_EXCLUSIONS = ["rent-a-room", "finance-cost-relief"] as const;
+export type PropertyAllowanceExclusion = (typeof PROPERTY_ALLOWANCE_EXCLUSIONS)[number];
+
+export type AllowanceSource = "self-employed" | "rental";
+
+export interface AllowanceComparisonInput {
+  source: AllowanceSource;
+  /** "YYYY/YY"; omitted means the year whose rates apply today. */
+  taxYear?: string;
+  /** Gross income for the year, before any expenses. For rental, the whole property's rent. */
+  grossIncome: number;
+  /** Expenses recorded for the year. For rental, excluding finance costs such as mortgage interest. */
+  recordedExpenses: number;
+  /** Rental only: finance costs (mortgage interest) recorded for the year, whole property. */
+  financeCosts?: number;
+  /** Rental only: the person's share of the property, 0 to 100. Default 100. */
+  ownershipSharePct?: number;
+}
+
+export interface AllowanceComparison {
+  source: AllowanceSource;
+  taxYear: UkTaxYear;
+  /** The allowance for the year (1,000 for every supported year). */
+  allowance: number;
+  /** The allowance that can be deducted: never more than the gross income. */
+  usableAllowance: number;
+  /** Gross income used for the comparison (the person's share for rental). */
+  grossIncome: number;
+  /** Recorded expenses used for the comparison (the person's share for rental, no finance costs). */
+  recordedExpenses: number;
+  /** Rental: the person's share of finance costs. Always 0 for self-employed. */
+  financeCosts: number;
+  /** The deduction when expenses are claimed: the recorded expenses. */
+  expensesDeduction: number;
+  /** The deduction when the allowance is claimed instead: the usable allowance. */
+  allowanceDeduction: number;
+  /** Which deduction is larger. */
+  larger: "expenses" | "allowance" | "equal";
+  /** Gross income above 0 and no more than the allowance: the allowance covers all of it. */
+  withinFullRelief: boolean;
+  /**
+   * Rental: finance costs are left out of the expenses compared here. They earn a separate tax
+   * reduction, which cannot be combined with the property allowance.
+   */
+  financeCostsExcluded: boolean;
+  /** Who cannot use the allowance, as ids the caller turns into words. */
+  exclusions: readonly (TradingAllowanceExclusion | PropertyAllowanceExclusion)[];
+  sourceUrl: string;
+}
+
+/**
+ * Sets the recorded expenses beside the trading or property allowance for one source and year.
+ * The allowance is claimed instead of expenses, never on top of them; it is no more than the
+ * gross income, so it cannot create a loss. This reports both deductions; it does not choose one.
+ * For rental the estimate compares total tax instead (finance cost relief), so the larger
+ * deduction here is not always the route the estimate uses.
+ */
+export function compareExpensesWithAllowance(input: AllowanceComparisonInput): AllowanceComparison {
+  const taxYear = resolveUkTaxYear(input.taxYear);
+  const { tradingAllowance, propertyAllowance } = getUkTaxYearRules(taxYear).selfAssessment;
+  const rental = input.source === "rental";
+  const share = rental ? Math.min(100, nonNeg(input.ownershipSharePct ?? 100)) / 100 : 1;
+
+  const grossIncome = roundPence(nonNeg(input.grossIncome) * share);
+  const recordedExpenses = roundPence(nonNeg(input.recordedExpenses) * share);
+  const financeCosts = rental ? roundPence(nonNeg(input.financeCosts ?? 0) * share) : 0;
+  const allowance = rental ? propertyAllowance : tradingAllowance;
+  const usableAllowance = Math.min(allowance, grossIncome);
+
+  const larger =
+    usableAllowance > recordedExpenses
+      ? "allowance"
+      : usableAllowance < recordedExpenses
+        ? "expenses"
+        : "equal";
+
+  return {
+    source: input.source,
+    taxYear,
+    allowance,
+    usableAllowance,
+    grossIncome,
+    recordedExpenses,
+    financeCosts,
+    expensesDeduction: recordedExpenses,
+    allowanceDeduction: usableAllowance,
+    larger,
+    withinFullRelief: grossIncome > 0 && grossIncome <= allowance,
+    financeCostsExcluded: financeCosts > 0,
+    exclusions: rental ? PROPERTY_ALLOWANCE_EXCLUSIONS : TRADING_ALLOWANCE_EXCLUSIONS,
+    sourceUrl: TRADING_PROPERTY_ALLOWANCE_SOURCE_URL,
+  };
+}

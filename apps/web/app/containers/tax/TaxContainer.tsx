@@ -1,7 +1,6 @@
 import {
   calculateUKTax,
   categorizeAccountType,
-  getCategoriesForSource,
   getCurrentUKTaxYear,
   getPreviousTaxYear,
   getTaxYearForRecordDate,
@@ -29,25 +28,27 @@ import {
 } from "@repo/ui";
 import { MoreHorizontal } from "lucide-react";
 import { type FC, useCallback, useMemo, useState } from "react";
-import { useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddIncomeMenu } from "~/features/tax/components/AddIncomeMenu";
 import { CopyTaxYearModal } from "~/features/tax/components/CopyTaxYearModal";
 import { nonPayeIncome, TaxHeadline } from "~/features/tax/components/TaxHeadline";
-import { TaxReceiptDialog } from "~/features/tax/components/TaxReceiptDialog";
-import { TaxRecordDialog, type TaxRecordDraft } from "~/features/tax/components/TaxRecordDialog";
 import { TaxRecordsTable } from "~/features/tax/components/TaxRecordsTable";
 import { TaxReservePanel } from "~/features/tax/components/TaxReservePanel";
 import { TaxSourcesPanel } from "~/features/tax/components/TaxSourcesPanel";
 import { TaxYearBar } from "~/features/tax/components/TaxYearBar";
 import { TaxYearComparison } from "~/features/tax/components/TaxYearComparison";
-import { recordAmount } from "~/features/tax/tax-labels";
+import { availableTaxYears, resolveSelectedTaxYear } from "~/features/tax/hooks/taxYears";
+import { useTaxRecordEditor } from "~/features/tax/hooks/useTaxRecordEditor";
+import { SOURCE_PAGE_ORDER, taxYearFromParam } from "~/features/tax/source-pages";
+import { SOURCE_LABEL } from "~/features/tax/tax-labels";
 import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.self-assessment";
 import { PROFILE_VERSION_FIELD, versionField } from "~/services/conflict";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { isPageEnabled } from "~/utils/pageConfig";
+import { propertyShareProfileFirst, salaryProfileFirst } from "~/utils/profileFirst";
 import {
   drawers,
   errorText,
@@ -56,6 +57,8 @@ import {
   numeric,
   otherDatesHeading,
   pageRoot,
+  recordGroup,
+  recordGroupHeading,
   wideOnly,
 } from "./TaxContainer.styles";
 
@@ -63,44 +66,6 @@ import {
 export const TAX_UNVERIFIED_LEAD = DELTA_PANEL_COPY.unverifiedBanner;
 
 const PAGE_TITLE = "Self Assessment";
-
-const emptyDraft = (source: TaxSource, type: "income" | "expense", date: string) =>
-  ({
-    name: "",
-    source,
-    type,
-    category: getCategoriesForSource(source, type)[0]?.id ?? "",
-    amount: null,
-    date,
-    frequency: "monthly",
-    endDate: "",
-    notes: "",
-    receiptFilename: null,
-    receiptMimeType: null,
-    receiptData: null,
-    receiptCleared: false,
-  }) satisfies TaxRecordDraft;
-
-const draftFromRecord = (record: TaxRecord): TaxRecordDraft => ({
-  name: record.name,
-  source: record.source,
-  type: record.type,
-  category: record.category,
-  amount: recordAmount(record),
-  date: record.date,
-  frequency: record.frequency,
-  endDate: record.endDate || "",
-  notes: record.notes || "",
-  receiptFilename: record.receiptFilename,
-  receiptMimeType: record.receiptMimeType,
-  receiptData: null,
-  receiptCleared: false,
-});
-
-const toNumber = (value: unknown): number | null => {
-  const n = typeof value === "string" ? Number.parseFloat(value) : Number(value);
-  return Number.isFinite(n) ? n : null;
-};
 
 /**
  * Adds "tax" to a stored list exactly as the settings toggle does (ProfileTab): the list is kept
@@ -147,7 +112,7 @@ const SelfAssessmentOff: FC<{
   return (
     <PageBody className={pageRoot()} data-testid="tax-page">
       <PageHeader
-        description="Income outside PAYE, its costs and an estimated tax bill for each tax year."
+        description="Income outside PAYE, its expenses and an estimated tax bill for each tax year."
         title={PAGE_TITLE}
       />
       <EmptyState
@@ -210,82 +175,50 @@ const SelfAssessmentPage: FC<{
   userProfile: LoaderData["userProfile"];
   accounts?: LoaderData["accounts"];
 }> = ({ records: initialRecords, userProfile, accounts = [] }) => {
-  const fetcher = useFetcher();
+  const [searchParams] = useSearchParams();
 
   // Which year's rates apply today, and whether that is a fallback (E22)
   const ratesContext = useMemo(() => getUkTaxYearContext(), []);
   const currentTaxYear = getCurrentUKTaxYear();
   const { baseline } = useFinancialBaseline();
 
-  // Salary and property share default to the baseline, then the profile.
-  const profileSalary =
-    baseline.annualGrossSalary > 0
-      ? baseline.annualGrossSalary
-      : (toNumber(userProfile?.annualSalary) ?? 0);
-  const profileShare =
-    baseline.propertyOwnershipSharePct !== undefined
-      ? baseline.propertyOwnershipSharePct
-      : (toNumber(userProfile?.propertyOwnershipShare) ?? 100);
+  // The saved profile wins; the onboarding baseline is only a fallback with no profile row.
+  const profileSalary = salaryProfileFirst(userProfile, baseline.annualGrossSalary);
+  const profileShare = propertyShareProfileFirst(userProfile, baseline.propertyOwnershipSharePct);
 
   const [payeSalary, setPayeSalary] = useState<number>(profileSalary);
   const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number>(profileShare);
+  // A saved figure that changes (a save here or elsewhere, then revalidation) replaces the field,
+  // unless the user has an unsaved edit in it.
+  const [seeded, setSeeded] = useState({ salary: profileSalary, share: profileShare });
+  if (seeded.salary !== profileSalary || seeded.share !== profileShare) {
+    setSeeded({ salary: profileSalary, share: profileShare });
+    if (payeSalary === seeded.salary) setPayeSalary(profileSalary);
+    if (propertyOwnershipShare === seeded.share) setPropertyOwnershipShare(profileShare);
+  }
   const [isProfileSaving, setIsProfileSaving] = useState<boolean>(false);
 
   // Current tax year plus any year with records, limited to years the engine supports (E22).
-  const availableYears = useMemo(() => {
-    const fromRecords = initialRecords.map((r) => getTaxYearForRecordDate(r.date));
-    const set = new Set<string>([currentTaxYear, ...fromRecords].filter(isSupportedUkTaxYear));
-    return Array.from(set).sort();
-  }, [currentTaxYear, initialRecords]);
+  const availableYears = useMemo(
+    () => availableTaxYears(initialRecords, currentTaxYear),
+    [currentTaxYear, initialRecords],
+  );
 
-  const [chosenYear, setChosenYear] = useState<string>(currentTaxYear);
-  const selectedTaxYear = availableYears.includes(chosenYear)
-    ? chosenYear
-    : availableYears.includes(currentTaxYear)
-      ? currentTaxYear
-      : (availableYears[availableYears.length - 1] ?? currentTaxYear);
+  // A source page's back link carries its year (`?year=2026-27`), so the list opens on it.
+  const [chosenYear, setChosenYear] = useState<string>(
+    () => taxYearFromParam(searchParams.get("year")) ?? currentTaxYear,
+  );
+  const selectedTaxYear = resolveSelectedTaxYear(chosenYear, availableYears, currentTaxYear);
 
   const [isCopyModalOpen, setIsCopyModalOpen] = useState<boolean>(false);
 
-  // Add / edit dialog
-  const [isRecordDialogOpen, setIsRecordDialogOpen] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<TaxRecord | null>(null);
-  const [draft, setDraft] = useState<TaxRecordDraft>(() =>
-    emptyDraft("self-employed", "income", `${currentTaxYear.split("/")[0]}-04-06`),
-  );
+  const editor = useTaxRecordEditor({ records: initialRecords, taxYear: selectedTaxYear });
+  const { fetcher, saveOutcome } = editor;
 
-  const [transactionToDelete, setTransactionToDelete] = useState<TaxRecord | null>(null);
   const [taxYearToDelete, setTaxYearToDelete] = useState<string | null>(null);
-  const deleteTransactionOutcome = useFetcherOutcome(fetcher, {
-    onSuccess: () => setTransactionToDelete(null),
-  });
-  // A failed add or edit is said on the page, never dropped silently.
-  // The dialog closes only once the save lands, so a failed save keeps what the user entered.
-  const saveOutcome = useFetcherOutcome(fetcher, {
-    onSuccess: () => setIsRecordDialogOpen(false),
-  });
   const deleteTaxYearOutcome = useFetcherOutcome(fetcher, {
     onSuccess: () => setTaxYearToDelete(null),
   });
-
-  const [activeReceiptRecord, setActiveReceiptRecord] = useState<TaxRecord | null>(null);
-
-  const onOpenAddModal = (source: TaxSource, type: "income" | "expense") => {
-    // New records start on 6 April, the first day of the selected tax year.
-    const startYr = selectedTaxYear.split("/")[0] || new Date().getFullYear().toString();
-    setEditingRecord(null);
-    setDraft(emptyDraft(source, type, `${startYr}-04-06`));
-    // A new dialog never opens with the alert from an earlier failed save.
-    saveOutcome.dismiss();
-    setIsRecordDialogOpen(true);
-  };
-
-  const onOpenEditModal = (record: TaxRecord) => {
-    setEditingRecord(record);
-    setDraft(draftFromRecord(record));
-    saveOutcome.dismiss();
-    setIsRecordDialogOpen(true);
-  };
 
   const calculatedTaxYearsData = useMemo(() => {
     const results: Record<string, TaxCalculationResult> = {};
@@ -315,50 +248,15 @@ const SelfAssessmentPage: FC<{
     setTimeout(() => setIsProfileSaving(false), 800);
   }, [payeSalary, propertyOwnershipShare, fetcher, userProfile, saveOutcome.begin]);
 
-  const handleSaveTransaction = (values: TaxRecordDraft) => {
-    const payload = {
-      intent: editingRecord ? "update-transaction" : "create-transaction",
-      id: editingRecord?.id || "",
-      // The saved record's version, so a change made elsewhere is not overwritten.
-      ...versionField(initialRecords.find((r) => r.id === editingRecord?.id) ?? editingRecord),
-      name: values.name,
-      source: values.source,
-      type: values.type,
-      category: values.category,
-      amount: values.amount === null ? "" : values.amount.toString(),
-      date: values.date,
-      frequency: values.frequency,
-      endDate: values.endDate || undefined,
-      notes: values.notes || undefined,
-      receiptFilename: values.receiptFilename || undefined,
-      receiptMimeType: values.receiptMimeType || undefined,
-      receiptData: values.receiptData || undefined,
-      // An omitted receipt keeps the stored one; clearing must be said explicitly.
-      receiptClear: values.receiptCleared && !values.receiptData ? "1" : undefined,
-    };
-    // fetcher.submit turns an undefined value into the text "undefined", which the backend
-    // rejects (an end date of "undefined"), so absent fields are left out of the form data.
-    const formData = Object.fromEntries(
-      Object.entries(payload).filter((entry): entry is [string, string] => entry[1] !== undefined),
-    );
-    saveOutcome.begin();
-    fetcher.submit(formData, { method: "POST" });
-  };
-
-  const confirmDeleteTransaction = () => {
-    if (!transactionToDelete) return;
-    deleteTransactionOutcome.begin();
-    fetcher.submit(
-      { intent: "delete-transaction", id: transactionToDelete.id },
-      { method: "POST" },
-    );
-  };
-
   const recordsInSelectedTaxYear = useMemo(
     () => initialRecords.filter((r) => getTaxYearForRecordDate(r.date) === selectedTaxYear),
     [initialRecords, selectedTaxYear],
   );
   const hasRecordsInYear = initialRecords.some((r) => isRecordActiveInTaxYear(r, selectedTaxYear));
+  // The records drawer groups the year's records by income source.
+  const sourceGroups = SOURCE_PAGE_ORDER.filter((source) =>
+    initialRecords.some((r) => r.source === source && isRecordActiveInTaxYear(r, selectedTaxYear)),
+  );
   // Records that count towards none of the years on offer (dated outside the supported years,
   // saved before the dialog checked). They stay listed under every year, so each can still be
   // opened, changed or deleted.
@@ -388,8 +286,8 @@ const SelfAssessmentPage: FC<{
     );
   };
 
-  // "Add a cost" starts on the source of the year's first income outside PAYE (rent, say).
-  const costSource: TaxSource =
+  // "Add an expense" starts on the source of the year's first income outside PAYE (rent, say).
+  const expenseSource: TaxSource =
     initialRecords.find(
       (r) =>
         r.source !== "paye" && r.type === "income" && isRecordActiveInTaxYear(r, selectedTaxYear),
@@ -398,10 +296,10 @@ const SelfAssessmentPage: FC<{
   const countFormat = new Intl.NumberFormat("en-GB");
 
   const addIncome = (
-    <AddIncomeMenu onAdd={onOpenAddModal} onCopyFromLastYear={() => setIsCopyModalOpen(true)} />
+    <AddIncomeMenu onAdd={editor.openAdd} onCopyFromLastYear={() => setIsCopyModalOpen(true)} />
   );
   // The one "Unverified estimate" notice goes only where an estimate is shown: a year with
-  // income outside PAYE. A year with costs only has no estimate, so no notice.
+  // income outside PAYE. A year with expenses only has no estimate, so no notice.
   const showEstimate =
     activeYearData !== undefined && nonPayeIncome(initialRecords, selectedTaxYear) > 0;
 
@@ -409,7 +307,7 @@ const SelfAssessmentPage: FC<{
     <PageBody className={pageRoot()} data-testid="tax-page">
       <PageHeader
         title={PAGE_TITLE}
-        subtitle="Income outside PAYE, its costs and an estimated tax bill for each tax year."
+        subtitle="Income outside PAYE, its expenses and an estimated tax bill for each tax year."
         actions={
           <div className={headerActions()}>
             <TaxYearBar
@@ -447,7 +345,7 @@ const SelfAssessmentPage: FC<{
 
       <TaxRatesStatusBanner {...ratesContext} />
 
-      {saveOutcome.error && !isRecordDialogOpen ? (
+      {saveOutcome.error && !editor.isRecordDialogOpen ? (
         <p className={errorText()} role="alert">
           {saveOutcome.error}
         </p>
@@ -455,7 +353,7 @@ const SelfAssessmentPage: FC<{
 
       <TaxHeadline
         emptyAction={hasRecordsInYear ? undefined : addIncome}
-        onAddCost={() => onOpenAddModal(costSource, "expense")}
+        onAddExpense={() => editor.openAdd(expenseSource, "expense")}
         records={initialRecords}
         result={activeYearData}
         taxYear={selectedTaxYear}
@@ -497,16 +395,35 @@ const SelfAssessmentPage: FC<{
       <div className={drawers()}>
         {hasRecordsInYear || otherDateRecords.length > 0 ? (
           <CollapsibleDrawer title="Records" variant="quiet">
-            <TaxRecordsTable
-              records={initialRecords}
-              taxYear={selectedTaxYear}
-              onEdit={onOpenEditModal}
-              onDelete={(id) =>
-                setTransactionToDelete(initialRecords.find((r) => r.id === id) ?? null)
-              }
-              onViewReceipt={setActiveReceiptRecord}
-              onAdd={() => onOpenAddModal("self-employed", "income")}
-            />
+            {/* One table per income source, in the page's source order. */}
+            {sourceGroups.length > 0 ? (
+              sourceGroups.map((source) => (
+                <div key={source} className={recordGroup()} data-testid={`tax-records-${source}`}>
+                  <h3 className={recordGroupHeading()}>{SOURCE_LABEL[source]}</h3>
+                  <TaxRecordsTable
+                    caption={`${SOURCE_LABEL[source]} records for ${selectedTaxYear}`}
+                    include={(r) =>
+                      r.source === source && isRecordActiveInTaxYear(r, selectedTaxYear)
+                    }
+                    records={initialRecords}
+                    taxYear={selectedTaxYear}
+                    onEdit={editor.openEdit}
+                    onDelete={editor.requestDelete}
+                    onViewReceipt={editor.viewReceipt}
+                    onAdd={() => editor.openAdd(source, "income")}
+                  />
+                </div>
+              ))
+            ) : (
+              <TaxRecordsTable
+                records={initialRecords}
+                taxYear={selectedTaxYear}
+                onEdit={editor.openEdit}
+                onDelete={editor.requestDelete}
+                onViewReceipt={editor.viewReceipt}
+                onAdd={() => editor.openAdd("self-employed", "income")}
+              />
+            )}
             {otherDateRecords.length > 0 ? (
               <>
                 <h3 className={otherDatesHeading()}>
@@ -517,12 +434,10 @@ const SelfAssessmentPage: FC<{
                   include={isOtherDate}
                   records={initialRecords}
                   taxYear={selectedTaxYear}
-                  onEdit={onOpenEditModal}
-                  onDelete={(id) =>
-                    setTransactionToDelete(initialRecords.find((r) => r.id === id) ?? null)
-                  }
-                  onViewReceipt={setActiveReceiptRecord}
-                  onAdd={() => onOpenAddModal("self-employed", "income")}
+                  onEdit={editor.openEdit}
+                  onDelete={editor.requestDelete}
+                  onViewReceipt={editor.viewReceipt}
+                  onAdd={() => editor.openAdd("self-employed", "income")}
                 />
               </>
             ) : null}
@@ -554,19 +469,7 @@ const SelfAssessmentPage: FC<{
       {/* The page's one notice, at its foot, under everything it covers. */}
       {showEstimate ? <ProjectionNotice lead={TAX_UNVERIFIED_LEAD} /> : null}
 
-      <TaxRecordDialog
-        open={isRecordDialogOpen}
-        onOpenChange={(open) => {
-          setIsRecordDialogOpen(open);
-          if (!open) saveOutcome.dismiss();
-        }}
-        mode={editingRecord ? "edit" : "add"}
-        initial={draft}
-        onSave={handleSaveTransaction}
-        saveError={saveOutcome.error}
-      />
-
-      <TaxReceiptDialog record={activeReceiptRecord} onClose={() => setActiveReceiptRecord(null)} />
+      {editor.dialogs}
 
       <CopyTaxYearModal
         open={isCopyModalOpen}
@@ -576,23 +479,6 @@ const SelfAssessmentPage: FC<{
         initialSourceYear={previousTaxYear}
         initialTargetYear={selectedTaxYear}
         availableYears={availableYears}
-      />
-
-      <ConfirmDialog
-        open={transactionToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setTransactionToDelete(null);
-            deleteTransactionOutcome.dismiss();
-          }
-        }}
-        pending={deleteTransactionOutcome.pending}
-        error={deleteTransactionOutcome.error}
-        title={`Delete ${transactionToDelete?.name ?? "this record"}?`}
-        description="It will no longer count towards your estimate. This cannot be undone."
-        confirmLabel="Delete record"
-        tone="danger"
-        onConfirm={confirmDeleteTransaction}
       />
 
       <ConfirmDialog

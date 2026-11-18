@@ -15,6 +15,7 @@ import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import {
   buildSnapshotHistory,
   latestRecordedMonth,
+  londonDate,
   londonMonth,
 } from "~/features/snapshot/snapshotModel";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
@@ -186,6 +187,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     checkIn: {
       currentMonth,
       lastRecordedMonth: latestRecordedMonth(details),
+      // UX Batch E: the row shows from the saved check-in day (a day, not a figure).
+      checkInDay: userProfile?.checkInDay ?? null,
+      today: londonDate(),
     },
     hasAccounts: Array.isArray(accounts) && accounts.length > 0,
     hasBudget:

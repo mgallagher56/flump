@@ -12875,6 +12875,18 @@
                         }
                       ]
                     },
+                    "checkInDay": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "country": {
                       "type": "string"
                     },
@@ -13164,6 +13176,7 @@
                     "onboardingCompleted",
                     "taxRegion",
                     "birthYear",
+                    "checkInDay",
                     "studentLoanPlans",
                     "housingStatus",
                     "monthlyHousingCost",
@@ -13346,6 +13359,18 @@
                       {
                         "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                         "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "checkInDay": {
+                    "anyOf": [
+                      {
+                        "maximum": 31,
+                        "minimum": 1,
+                        "type": "integer"
                       },
                       {
                         "type": "null"
@@ -13702,6 +13727,18 @@
                         }
                       ]
                     },
+                    "checkInDay": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "country": {
                       "type": "string"
                     },
@@ -13991,6 +14028,7 @@
                     "onboardingCompleted",
                     "taxRegion",
                     "birthYear",
+                    "checkInDay",
                     "studentLoanPlans",
                     "housingStatus",
                     "monthlyHousingCost",
@@ -14216,6 +14254,18 @@
                         }
                       ]
                     },
+                    "checkInDay": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "country": {
                       "type": "string"
                     },
@@ -14505,6 +14555,7 @@
                     "onboardingCompleted",
                     "taxRegion",
                     "birthYear",
+                    "checkInDay",
                     "studentLoanPlans",
                     "housingStatus",
                     "monthlyHousingCost",
@@ -14846,6 +14897,18 @@
                             }
                           ]
                         },
+                        "checkInDay": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
                         "country": {
                           "type": "string"
                         },
@@ -15135,6 +15198,7 @@
                         "onboardingCompleted",
                         "taxRegion",
                         "birthYear",
+                        "checkInDay",
                         "studentLoanPlans",
                         "housingStatus",
                         "monthlyHousingCost",

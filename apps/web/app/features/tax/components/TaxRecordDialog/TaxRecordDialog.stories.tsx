@@ -51,8 +51,8 @@ const play: Story["play"] = async () => {
   await expect(box.bottom).toBeLessThanOrEqual(window.innerHeight);
   const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
   await expect(save.contains(top)).toBe(true);
-  // Category and notes wait under "More details".
-  await userEvent.click(scope.getByRole("button", { name: "More details" }));
+  // Category and notes wait under a toggle named for them.
+  await userEvent.click(scope.getByRole("button", { name: "Category and notes" }));
   // The drawer body fades in, so wait for it.
   await waitFor(() => expect(scope.getByLabelText("Category")).toBeVisible());
 };

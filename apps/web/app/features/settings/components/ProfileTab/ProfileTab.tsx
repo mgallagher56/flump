@@ -16,6 +16,8 @@ import { Camera, Landmark, LayoutGrid, Trash2, UserRound } from "lucide-react";
 import { type ChangeEvent, type FC, type MouseEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import UserAvatar from "~/components/navigation/UserAvatar";
+import { AgeAndPaySection } from "~/features/settings/components/AgeAndPaySection";
+import { CheckInDaySetting } from "~/features/settings/components/CheckInDaySetting";
 import { NetWorthChoices } from "~/features/settings/components/NetWorthChoices";
 import { fieldGrid, sectionCard, statusText, tabGrid } from "~/features/settings/settings.styles";
 import {
@@ -53,16 +55,18 @@ const STUDENT_LOAN_OPTIONS = [
   { value: "POSTGRAD", label: "Postgraduate loan" },
 ] as const;
 
-/** Where the rest of the profile is edited: text links, not buttons (E16 PR 9). */
+/**
+ * Where the rest of the profile is edited: text links, not buttons (E16 PR 9). The pension page
+ * link sits in the age and pay section, beside the rates.
+ */
 const ELSEWHERE_LINKS = [
   { href: "/app/self-assessment", label: "Tax and take-home pay", id: "settings-link-tax" },
-  { href: "/app/pension", label: "Your pension", id: "settings-link-pension" },
   { href: "/app/mortgage", label: "Your mortgage", id: "settings-link-mortgage" },
 ] as const;
 const formatPlan = (plan: string) =>
   plan === "POSTGRAD" ? "Postgraduate loan" : plan.replace("PLAN_", "Plan ");
 
-/** The fields the details and tax cards edit. Everything else on the profile has its own page. */
+/** The fields the details and tax cards edit. Age and pay save in their own section. */
 interface ProfileFormState {
   firstName: string | null;
   lastName: string | null;
@@ -360,8 +364,11 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
         </Card>
       </PageSection>
 
+      {/* Keyed on the profile id, so the form seeds again once the saved profile arrives. */}
+      <AgeAndPaySection key={profile.id} profile={profile} />
+
       <PageSection
-        description="Where you pay tax and your student loan plan change your take-home pay. Your salary and pension each have their own page."
+        description="Where you pay tax and your student loan plan change your take-home pay. Your salary and pension are in Your age and pay, above."
         headingId="tax-basis-heading"
         icon={Landmark}
         id="settings-tax-basis"
@@ -456,6 +463,11 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
         onSave={(update) => updateProfile(update)}
       />
 
+      <CheckInDaySetting
+        checkInDay={profile.checkInDay ?? null}
+        onSave={(update) => updateProfile(update)}
+      />
+
       <PageSection
         description="Turn on extra sections for your menu and dashboard."
         headingId="modules-heading"
@@ -469,7 +481,7 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
             checked={selfAssessmentOn}
             data-testid="self-assessment-module-toggle"
             disabled={moduleSaving}
-            hint="Income and cost records by tax year, for self-employed or rental income. Adds a tax page to your menu and dashboard."
+            hint="Income and expense records by tax year, for self-employed or rental income. Adds a tax page to your menu and dashboard."
             id="self-assessment-module-toggle"
             label="Self Assessment"
             onChange={(e) => handleToggleSelfAssessment(e.target.checked)}

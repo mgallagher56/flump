@@ -25,11 +25,13 @@ import {
 } from "~/features/pension/components/PensionDetails";
 import { PensionRules } from "~/features/pension/components/PensionRules";
 import { PensionSummary } from "~/features/pension/components/PensionSummary";
+import { pensionRatesAssumed } from "~/features/pension/contribution";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
 import { useFinancialBaseline } from "~/state/baseline.store";
+import { seededProfile } from "~/utils/profileFirst";
 import { roundTo2dp } from "~/utils/roundTo2dp";
 import {
   getKnownTrapRegion,
@@ -61,7 +63,9 @@ export const PensionContainer: FC = () => {
   const retirementAvailable = loaderData?.retirementAvailable === true;
 
   const { formatCurrency } = useFormatCurrency();
-  const { profile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
+  const { profile: atomProfile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
+  // Saved loader figures until the atom holds this user's profile (no 5% and 3% first paint).
+  const profile = seededProfile(atomProfile, userProfile as typeof atomProfile | undefined);
   const { baseline } = useFinancialBaseline();
 
   useEffect(() => {
@@ -119,9 +123,10 @@ export const PensionContainer: FC = () => {
   const annualSalary = storedSalary ?? 0;
   // The backend creates the profile row with the auto-enrolment minimums (5% and 3%), so
   // that exact pair is flagged as a default the user may never have chosen.
-  const ratesAssumed =
-    (profile.pensionPercent ?? userProfile?.pensionPercent) === 5 &&
-    (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent) === 3;
+  const ratesAssumed = pensionRatesAssumed({
+    pensionPercent: profile.pensionPercent ?? userProfile?.pensionPercent,
+    pensionEmployerPercent: profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent,
+  });
   const employeePercent = isReset
     ? (profile.pensionPercent ?? userProfile?.pensionPercent ?? 0)
     : (profile.pensionPercent ?? userProfile?.pensionPercent ?? 5.0);

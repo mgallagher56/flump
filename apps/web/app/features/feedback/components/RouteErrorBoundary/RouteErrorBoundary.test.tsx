@@ -251,6 +251,10 @@ describe("routeKeyFor covers every dynamic route", () => {
       ["/app/accounts/savings", "/app/accounts/:id"],
     ],
     "app.imports.$id": [["/app/imports/b0000000-0000-4000-8000-000000000001", "/app/imports/:id"]],
+    "app.self-assessment_.$source": [
+      ["/app/self-assessment/self-employed", "/app/self-assessment/self-employed"],
+      ["/app/self-assessment/rental", "/app/self-assessment/rental"],
+    ],
     "app.tax.receipts.$id": [
       ["/app/tax/receipts/rcpt-42", "/app/tax/receipts/:id"],
       ["/app/tax/receipts/plain", "/app/tax/receipts/:id"],

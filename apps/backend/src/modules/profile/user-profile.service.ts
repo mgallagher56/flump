@@ -29,6 +29,7 @@ import { writeOnboardingSnapshot } from "../snapshots/first-snapshot";
 
 import {
   birthYearOrNull,
+  checkInDayOrNull,
   clearFinancialProfileFields,
   FinancialDataResetCounts,
   FormattedProfile,
@@ -320,6 +321,7 @@ export class UserProfileService implements ProfileLifecycle {
       profile.taxRegion = oneOfOrNull(body.taxRegion, TAX_REGIONS, "taxRegion");
     }
     if (body.birthYear !== undefined) profile.birthYear = birthYearOrNull(body.birthYear);
+    if (body.checkInDay !== undefined) profile.checkInDay = checkInDayOrNull(body.checkInDay);
     if (body.studentLoanPlans !== undefined) {
       profile.studentLoanPlans = studentLoanPlansOrNull(body.studentLoanPlans);
     }

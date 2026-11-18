@@ -22,14 +22,14 @@ describe("TaxSourcesPanel", () => {
 
   it("shows each row's income less costs when there are several sources outside PAYE", () => {
     render(<TaxSourcesPanel records={taxRecordsFixture} taxYear="2026/27" />);
-    expect(screen.getAllByText("a year, after costs").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("a year, after expenses").length).toBeGreaterThan(1);
   });
 
   it("leaves the figure to the strip when there is one source outside PAYE", () => {
     const one = taxRecordsFixture.filter((r) => r.source === "self-employed");
     render(<TaxSourcesPanel records={one} taxYear="2026/27" />);
     expect(screen.getByTestId("tax-source-self-employed")).toBeDefined();
-    expect(screen.queryByText("a year, after costs")).toBeNull();
+    expect(screen.queryByText("a year, after expenses")).toBeNull();
   });
 
   it("draws nothing when the year has no records and no BTL accounts", () => {

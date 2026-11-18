@@ -81,7 +81,7 @@ export const PensionContributionScenario: FC<PensionContributionScenarioProps> =
       <ScenarioZone id={PENSION_SCENARIO_ZONE_ID} notice={notice} title={PENSION_ZONE_TITLE}>
         <p className={noSalaryNote()}>
           Add your salary in{" "}
-          <Link className={noSalaryLink()} to="/app/profile">
+          <Link className={noSalaryLink()} to="/app/profile#settings-age-and-pay">
             Profile
           </Link>{" "}
           to see the effect of a change on your take-home pay.

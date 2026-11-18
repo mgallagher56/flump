@@ -18,7 +18,7 @@ export const Closed: Story = {};
 export const Open: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: "Add income" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Add income or expense" }));
     const body = within(canvasElement.ownerDocument.body);
     await userEvent.click(await body.findByRole("menuitem", { name: "Self-employed income" }));
     await expect(args.onAdd).toHaveBeenCalledWith("self-employed", "income");

@@ -134,9 +134,9 @@ describe("TaxRecordDialog", () => {
     expect(fields.indexOf(amount)).toBe(1);
   });
 
-  it("keeps category and notes under More details and still saves the category", () => {
+  it("keeps category and notes under a toggle named for them and still saves the category", () => {
     const { dialog, onSave } = setup({ ...draft, name: "Rent", amount: 900 });
-    const toggle = within(dialog).getByRole("button", { name: "More details" });
+    const toggle = within(dialog).getByRole("button", { name: "Category and notes" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(toggle);
     const category = within(dialog).getByLabelText("Category") as HTMLSelectElement;
@@ -155,10 +155,12 @@ describe("TaxRecordDialog", () => {
     );
   });
 
-  it("opens More details when an edited record already has notes", () => {
+  it("opens Category and notes when an edited record already has notes", () => {
     const { dialog } = setup({ ...draft, name: "Rent", amount: 900, notes: "Flat 2" }, "edit");
     expect(
-      within(dialog).getByRole("button", { name: "More details" }).getAttribute("aria-expanded"),
+      within(dialog)
+        .getByRole("button", { name: "Category and notes" })
+        .getAttribute("aria-expanded"),
     ).toBe("true");
     expect((within(dialog).getByLabelText(/^Notes/) as HTMLInputElement).value).toBe("Flat 2");
   });
@@ -167,5 +169,30 @@ describe("TaxRecordDialog", () => {
     const { dialog } = setup();
     const footer = within(dialog).getByRole("button", { name: "Add record" }).parentElement;
     expect(footer?.className).toContain("pos_sticky");
+  });
+
+  it("offers no salary category on a new PAYE record, and calls the type Expense", () => {
+    const { dialog } = setup({ ...draft, source: "paye", category: "paye_bonus" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Category and notes" }));
+    const options = within(within(dialog).getByLabelText("Category")).getAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual([
+      "Bonus and overtime",
+      "Taxable benefits (P11D)",
+    ]);
+    expect(within(dialog).getByRole("option", { name: "Expense" })).toBeDefined();
+    expect(within(dialog).queryByRole("option", { name: "Cost" })).toBeNull();
+  });
+
+  it("keeps the salary category on a saved salary record, so it can still be edited", () => {
+    const { dialog, onSave } = setup(
+      { ...draft, name: "Payslip", amount: 3000, source: "paye", category: "paye_salary" },
+      "edit",
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Category and notes" }));
+    const category = within(dialog).getByLabelText("Category") as HTMLSelectElement;
+    expect(category.value).toBe("paye_salary");
+    expect(within(category).getByRole("option", { name: "Salary" })).toBeDefined();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ category: "paye_salary" }));
   });
 });

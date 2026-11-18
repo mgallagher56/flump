@@ -72,3 +72,18 @@ export const otherDatesHeading = cva({
     marginTop: "4",
   },
 });
+
+/** One income source's heading in the records drawer. */
+export const recordGroupHeading = cva({
+  base: {
+    textStyle: "label.md",
+    color: "text.primary",
+    margin: 0,
+    marginBottom: "2",
+  },
+});
+
+/** One income source's records; groups after the first sit a step apart. */
+export const recordGroup = cva({
+  base: { minWidth: 0, "& + &": { marginTop: "6" } },
+});

@@ -1,4 +1,4 @@
-import type { TaxRecord, TaxSource } from "@flump/finance-engine";
+import { getCategoriesForSource, type TaxRecord, type TaxSource } from "@flump/finance-engine";
 
 /** User-facing names for each income source, in the order the page lists them. */
 export const SOURCE_OPTIONS: ReadonlyArray<{ value: TaxSource; label: string }> = [
@@ -45,11 +45,11 @@ export const CATEGORY_SHORT_LABEL: Readonly<Record<string, string>> = {
   travel_costs: "Vehicle and travel",
   clothing_costs: "Uniforms and workwear",
   staff_costs: "Staff and subcontractors",
-  premises_costs: "Premises costs",
+  premises_costs: "Premises expenses",
   legal_finance_fees: "Accountant, legal and bank fees",
   advertising_marketing: "Advertising and website",
   stock_raw_materials: "Stock and materials",
-  other_expenses: "Other business costs",
+  other_expenses: "Other business expenses",
   paye_salary: "Salary",
   paye_bonus: "Bonus and overtime",
   paye_benefit: "Taxable benefits (P11D)",
@@ -63,3 +63,21 @@ export const CATEGORY_SHORT_LABEL: Readonly<Record<string, string>> = {
 /** The dialog's name for a category, falling back to the engine's name for an unknown id. */
 export const categoryShortLabel = (category: { id: string; name: string }): string =>
   CATEGORY_SHORT_LABEL[category.id] ?? category.name;
+
+/** The PAYE salary category. New records cannot choose it: see `selectableCategories`. */
+export const PAYE_SALARY_CATEGORY = "paye_salary";
+
+/**
+ * The categories a record can choose. The saved profile salary is the one salary figure, so a new
+ * PAYE record cannot be salary; it is a bonus, benefit or pension contribution on top. A record
+ * already saved as salary keeps its category (`currentCategory`), so it can still be changed or
+ * deleted and no saved data is dropped.
+ */
+export const selectableCategories = (
+  source: TaxSource,
+  type: "income" | "expense",
+  currentCategory?: string,
+) =>
+  getCategoriesForSource(source, type).filter(
+    (c) => c.id !== PAYE_SALARY_CATEGORY || c.id === currentCategory,
+  );

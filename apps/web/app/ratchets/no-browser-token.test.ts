@@ -150,6 +150,7 @@ async function runLoader(loader: Loader, url: string): Promise<Outcome> {
       id: "b0000000-0000-4000-8000-000000000001",
       slug: "uk-100k-tax-trap-calculator",
       feature: "accounts",
+      source: "self-employed",
       "*": "accounts",
     },
     context: {},

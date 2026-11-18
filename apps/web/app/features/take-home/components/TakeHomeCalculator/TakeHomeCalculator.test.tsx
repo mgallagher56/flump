@@ -141,7 +141,9 @@ describe("<TakeHomeCalculator /> empty states", () => {
       <TakeHomeCalculator initialSalary={salary} onApplyIncrease={vi.fn()} />,
       withProfile(),
     );
-    expect(getByRole("link", { name: "Add salary" }).getAttribute("href")).toBe("/app/profile");
+    expect(getByRole("link", { name: "Add salary" }).getAttribute("href")).toBe(
+      "/app/profile#settings-age-and-pay",
+    );
     expect(hero(container)).toBeNull();
     expect(queryByRole("tab")).toBeNull();
     expect(findFigures(container)).toHaveLength(0);

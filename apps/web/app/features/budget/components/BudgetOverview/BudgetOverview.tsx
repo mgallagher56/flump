@@ -64,7 +64,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
     </>
   ) : salaryMissing ? (
     <>
-      <SampleAwareLink className={inlineLink()} to="/app/profile">
+      <SampleAwareLink className={inlineLink()} to="/app/profile#settings-age-and-pay">
         Add your salary
       </SampleAwareLink>{" "}
       to see what you have each month after essential spending.
