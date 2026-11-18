@@ -28,6 +28,11 @@ describe("check-in account labels", () => {
     expect(checkInAccountLabel("Residential Mortgage", "Mortgage")).toBe("Residential mortgage");
     expect(checkInAccountLabel("Cash ISA", "Saving")).toBe("Cash ISA");
     expect(checkInAccountLabel("Monzo current", "Current")).toBe("Current account");
+    expect(checkInAccountLabel("First Direct savings", "Saving")).toBe("Savings");
+    // A brand inside another word is not a brand name.
+    expect(checkInAccountLabel("Chaser Fund", "Saving")).toBe("Chaser fund");
+    expect(checkInAccountLabel("Cash ISA", "Saving")).toBe("Cash ISA");
+    expect(checkInAccountLabel("Monzo current", "Current")).toBe("Current account");
   });
 
   it("takes every account and balance from the sample household fixture", () => {

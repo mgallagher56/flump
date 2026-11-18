@@ -48,19 +48,47 @@ const TYPE_LABELS: Record<string, string> = {
  * Bank and provider names a sample account must not show: a preview never implies an
  * endorsement, so such an account takes the neutral name of its type instead.
  */
-const BRAND_NAMES =
-  /\b(monzo|starling|revolut|barclays|hsbc|lloyds|natwest|santander|nationwide|halifax|chase|metro|tsb|first direct|virgin)\b/i;
+const BRAND_NAMES: readonly string[] = [
+  "monzo",
+  "starling",
+  "revolut",
+  "barclays",
+  "hsbc",
+  "lloyds",
+  "natwest",
+  "santander",
+  "nationwide",
+  "halifax",
+  "chase",
+  "metro",
+  "tsb",
+  "first direct",
+  "virgin",
+];
+
+/** True when the name holds a brand as whole words ("Monzo current", not "Chaser"). */
+const hasBrandName = (name: string): boolean => {
+  const padded = ` ${name.toLowerCase().split(" ").filter(Boolean).join(" ")} `;
+  return BRAND_NAMES.some((brand) => padded.includes(` ${brand} `));
+};
+
+/** A capitalised ordinary word ("Loan"), not an acronym ("ISA") or a mixed word ("eBay"). */
+const isCapitalisedWord = (word: string): boolean =>
+  word.length > 1 &&
+  word[0] !== word[0]?.toLowerCase() &&
+  word.slice(1) === word.slice(1).toLowerCase() &&
+  word.toLowerCase() !== word.toUpperCase();
 
 const sentenceCase = (text: string): string =>
   text
     .split(" ")
-    .map((word, index) => (index > 0 && /^[A-Z][a-z]+$/.test(word) ? word.toLowerCase() : word))
+    .map((word, index) => (index > 0 && isCapitalisedWord(word) ? word.toLowerCase() : word))
     .join(" ");
 
 export const checkInTypeLabel = (type: string): string => TYPE_LABELS[type] ?? sentenceCase(type);
 
 export const checkInAccountLabel = (name: string, type: string): string =>
-  BRAND_NAMES.test(name) ? checkInTypeLabel(type) : sentenceCase(name);
+  hasBrandName(name) ? checkInTypeLabel(type) : sentenceCase(name);
 
 /** The sample household's accounts, in the fixture's order, with their saved balances. */
 export const checkInAccountsFor = (household: SampleHouseholdKey): CheckInPreviewAccount[] =>
