@@ -1,6 +1,6 @@
+import type { SavingsInterestEstimate } from "@flump/finance-engine";
 import { HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
 import type { FC, ReactElement } from "react";
-import { formatRate } from "../SavingsForecast/savingsForecast.utils";
 import { kpiFigure } from "./SavingsSummaryCards.styles";
 
 export interface SavingsSummaryCardsProps {
@@ -8,8 +8,11 @@ export interface SavingsSummaryCardsProps {
   accountCount: number;
   /** Total saved each month across the accounts. Null or 0 hides the card. */
   monthlySaving: number | null;
-  /** Average AER across the accounts that store a rate. Null or 0 hides the card. */
-  averageRate: number | null;
+  /**
+   * Interest over the next 12 months on cash savings with a rate, before tax, split into ISA and
+   * outside an ISA. Null or a total of 0 hides the card.
+   */
+  interest: SavingsInterestEstimate | null;
   /** ISA allowance used this tax year. Null or 0 reads "None this tax year". */
   isaUsed: number | null;
   /** True when an account has ISA in its name. False hides the ISA card. */
@@ -23,6 +26,40 @@ export const ISA_NONE = "None";
 export const ISA_EXPLAIN =
   "Your saved monthly amount into accounts with ISA in their name, for each month since 6 April. The ISA allowance is £20,000 a year.";
 
+export const INTEREST_LABEL = "Interest over the next 12 months";
+
+const pounds = (value: number) =>
+  new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(Math.round(value));
+
+/** Says what the figure is before tax and which part is tax-free (an ISA), never a judgement. */
+export const interestSubtext = (interest: SavingsInterestEstimate): string => {
+  if (interest.isa > 0 && interest.outsideIsa > 0) return "Before tax. ISA interest is tax-free";
+  if (interest.isa > 0) return "Tax-free, in your ISAs";
+  return "Before tax";
+};
+
+export const interestExplain = (interest: SavingsInterestEstimate): string => {
+  const parts = [
+    "An estimate from each savings account's balance, interest rate and monthly saving, if the rate stays the same.",
+  ];
+  if (interest.isa > 0 && interest.outsideIsa > 0) {
+    parts.push(
+      `${pounds(interest.isa)} is from ISAs and ${pounds(interest.outsideIsa)} from other savings.`,
+    );
+  }
+  parts.push(
+    "Interest in an ISA is tax-free. Whether you pay tax on other interest depends on your other income.",
+  );
+  if (interest.accountsWithoutRate > 0) {
+    parts.push("Accounts without an interest rate are not counted.");
+  }
+  return parts.join(" ");
+};
+
 export const KPI_PROMPT_TITLE =
   "Add what you save each month and your interest rates to see more here";
 
@@ -35,7 +72,7 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
   totalSavingsBalance,
   accountCount,
   monthlySaving,
-  averageRate,
+  interest,
   isaUsed,
   hasIsaAccount,
 }) => {
@@ -52,13 +89,17 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
       />,
     );
   }
-  if (isReal(averageRate)) {
+  // Interest in pounds, not a blended rate: ISA interest is tax-free and other interest may not
+  // be, so one percentage across both would read as the same return (owner testing, 18 Nov 2026).
+  if (interest && isReal(interest.total)) {
     cards.push(
       <KpiCard
-        key="rate"
-        label={single ? "Rate" : "Average rate"}
-        subtext={single ? "AER on your account" : "AER across your accounts"}
-        value={<span className={kpiFigure()}>{formatRate(averageRate)}</span>}
+        explain={interestExplain(interest)}
+        key="interest"
+        label={INTEREST_LABEL}
+        subtext={interestSubtext(interest)}
+        value={Math.round(interest.total)}
+        valueFormat={{ fractionDigits: 0 }}
       />,
     );
   }
@@ -96,7 +137,7 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
           }}
         >
           <KpiCard label="Saved each month" value={null} />
-          <KpiCard label="Average rate" value={null} />
+          <KpiCard label={INTEREST_LABEL} value={null} />
         </KpiStrip>
       )}
     </>

@@ -1,4 +1,9 @@
-import { getUkTaxYearContext, PortfolioSnapshot } from "@flump/finance-engine";
+import {
+  balanceWeightedRate,
+  estimateSavingsInterestNext12Months,
+  getUkTaxYearContext,
+  PortfolioSnapshot,
+} from "@flump/finance-engine";
 import {
   Button,
   CollapsibleDrawer,
@@ -119,24 +124,13 @@ export const SavingsContainer: FC = () => {
       withMonthly.length > 0
         ? withMonthly.reduce((sum, acc) => sum + Number(acc.monthlyContribution), 0)
         : null;
-    // Average AER over the accounts that store a rate, weighted by balance (simple mean when
-    // those balances are all 0). Accounts without a rate are left out, never counted as 0%.
-    const rated = savingsAccounts.filter((acc) => isStored(acc.interestRate));
-    let averageRate: number | null = null;
-    if (rated.length > 0) {
-      const ratedBalance = rated.reduce((sum, acc) => sum + Math.max(0, Number(acc.balance)), 0);
-      averageRate =
-        ratedBalance > 0
-          ? rated.reduce(
-              (sum, acc) => sum + Math.max(0, Number(acc.balance)) * Number(acc.interestRate),
-              0,
-            ) / ratedBalance
-          : rated.reduce((sum, acc) => sum + Number(acc.interestRate), 0) / rated.length;
-    }
     return {
       total,
       monthly,
-      averageRate,
+      // Seeds the what-if forecast only. The headline shows interest in pounds instead: one
+      // blended rate across ISA and non-ISA savings hides that ISA interest is tax-free.
+      averageRate: balanceWeightedRate(savingsAccounts),
+      interest: estimateSavingsInterestNext12Months(savingsAccounts),
       isaUsed: estimateIsaUsed(savingsAccounts),
     };
   }, [savingsAccounts]);
@@ -206,7 +200,7 @@ export const SavingsContainer: FC = () => {
         <>
           <SavingsSummaryCards
             accountCount={savingsAccounts.length}
-            averageRate={saved.averageRate}
+            interest={saved.interest}
             hasIsaAccount={savingsAccounts.some((acc) => isIsaAccount(acc))}
             isaUsed={saved.isaUsed}
             monthlySaving={saved.monthly}
