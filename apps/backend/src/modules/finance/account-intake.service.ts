@@ -630,11 +630,17 @@ export class AccountIntakeService implements IAccountIntake {
       currency: fields.currency || DEFAULT_ACCOUNT_CURRENCY,
       userId,
     });
-    const saved = await this.accountRepository.save(account);
-    if (fields.ownership !== undefined || fields.sharePercent !== undefined) {
-      await propertyFollowsMortgage(this.accountRepository, userId, saved);
+    // A new mortgage moves its property only when it is joint: a default "sole" on a new mortgage
+    // must not undo a share the user already set on their home. The two writes share one
+    // transaction, so a failed property write leaves no half-made mortgage behind.
+    if (effectiveOwnership !== "joint") {
+      return toAccountResponse(await this.accountRepository.save(account));
     }
-    return toAccountResponse(saved);
+    return this.runInTransaction(async (accounts) => {
+      const saved = await accounts.save(account);
+      await propertyFollowsMortgage(accounts, userId, saved);
+      return toAccountResponse(saved);
+    });
   }
 
   /**

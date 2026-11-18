@@ -7322,7 +7322,16 @@
                                     "type": "string"
                                   },
                                   "sharePercent": {
-                                    "type": ["number", "null"]
+                                    "anyOf": [
+                                      {
+                                        "maximum": 100,
+                                        "minimum": 1,
+                                        "type": "integer"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
                                   }
                                 },
                                 "required": [
@@ -8393,7 +8402,16 @@
                                 "type": "string"
                               },
                               "sharePercent": {
-                                "type": ["number", "null"]
+                                "anyOf": [
+                                  {
+                                    "maximum": 100,
+                                    "minimum": 1,
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               }
                             },
                             "required": [

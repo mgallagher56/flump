@@ -1,5 +1,7 @@
 # E35. Encouragement and financial wellbeing: options
 
+Decisions: open
+
 > **Status: options for owner approval. No code.** Written 2026-11-15 against `origin/main`, revised the same day after the owner clarified the aim. Facts marked **[U]** were not confirmed in a primary source today.
 
 **Summary.** The owner used "gamification" as a catch-all for making people feel better about their money in a way that improves their financial health. The aim is a net positive for the person; app engagement is never a goal and never a measure of success. The owner also restated the rule that outranks everything here: never shame anyone about their finances. So this document starts with that rule as five pass or fail tests, applies them to every option, and offers three sets of options that pass: warm confirmations of things the user did, goals that are the user's own at any size, and a calmer month with shared goals for couples. A further section sets out how Flump stays a healthy and inclusive place beyond these features, with exact wording proposed for the copy guide and the UX guidelines. The recommended first step is the lightest set, judged by whether people say they feel more in control and whether anyone feels worse.
