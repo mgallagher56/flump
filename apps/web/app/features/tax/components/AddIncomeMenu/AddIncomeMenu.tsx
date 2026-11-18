@@ -5,7 +5,7 @@ import type { FC } from "react";
 import { trigger } from "./AddIncomeMenu.styles";
 
 export interface AddIncomeMenuProps {
-  /** Opens the record dialog for a source, as income or a cost. */
+  /** Opens the record dialog for a source, as income or an expense. */
   onAdd: (source: TaxSource, type: "income" | "expense") => void;
   /** Opens the copy dialog with last year's records. */
   onCopyFromLastYear: () => void;
@@ -14,8 +14,10 @@ export interface AddIncomeMenuProps {
 }
 
 /**
- * The page's one "Add income" control (E16 PR 8). It replaces the per-source add, quick add and
- * copy buttons: every way to add a record, including copying last year's, is an item here.
+ * The page's one "Add income or expense" control (E16 PR 8). It replaces the per-source add, quick
+ * add and copy buttons: every way to add a record, including copying last year's, is an item here.
+ * There is no payslip item: the saved profile salary is the one salary figure (UX batch E), so the
+ * PAYE item adds a bonus or taxable benefit on top of it.
  */
 export const AddIncomeMenu: FC<AddIncomeMenuProps> = ({
   onAdd,
@@ -34,22 +36,26 @@ export const AddIncomeMenu: FC<AddIncomeMenuProps> = ({
       label: "Savings interest or dividends",
       onSelect: () => onAdd("savings", "income"),
     },
-    { id: "add-payslip", label: "Payslip", onSelect: () => onAdd("paye", "income") },
-    { id: "add-cost", label: "Cost", onSelect: () => onAdd("self-employed", "expense") },
+    {
+      id: "add-paye-extra",
+      label: "Bonus or taxable benefit (PAYE)",
+      onSelect: () => onAdd("paye", "income"),
+    },
+    { id: "add-expense", label: "Expense", onSelect: () => onAdd("self-employed", "expense") },
     { type: "separator" },
     { id: "copy-last-year", label: "Copy from last year", onSelect: onCopyFromLastYear },
   ];
 
   return (
     <Menu
-      aria-label="Add income"
+      aria-label="Add income or expense"
       align="end"
       id="add-income-menu"
       items={items}
       trigger={
         <Button className={trigger()} data-testid="add-income" type="button" variant={variant}>
           <Icon icon={Plus} size="sm" />
-          Add income
+          Add income or expense
           <Icon icon={ChevronDown} size="sm" />
         </Button>
       }

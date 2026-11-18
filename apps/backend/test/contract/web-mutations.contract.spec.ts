@@ -259,6 +259,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         expect(fresh).toMatchObject({
           taxRegion: null,
           birthYear: null,
+          checkInDay: null,
           studentLoanPlans: null,
           housingStatus: null,
           monthlyHousingCost: null,
@@ -290,6 +291,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           (await send("patch", "/user-profile", { studentLoanPlans: ["PLAN_9"] })).status,
         ).toBe(400);
         expect((await send("patch", "/user-profile", { birthYear: 1850 })).status).toBe(400);
+        expect((await send("patch", "/user-profile", { checkInDay: 0 })).status).toBe(400);
+        expect((await send("patch", "/user-profile", { checkInDay: 32 })).status).toBe(400);
       });
     });
 

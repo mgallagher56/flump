@@ -31,6 +31,8 @@ export interface UserProfile {
   country: string;
   age?: number | null;
   birthYear?: number | null;
+  /** Day of the month (1 to 31) the monthly check-in falls on; null = the 1st. */
+  checkInDay?: number | null;
   taxRegion?: TaxRegion | null;
   /** [] means "no student loan"; null means not answered. */
   studentLoanPlans?: string[] | null;
@@ -152,6 +154,7 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   age: p.age !== undefined && p.age !== null ? Number(p.age) : null,
   studentLoanPlan: p.studentLoanPlan !== undefined ? p.studentLoanPlan : null,
   birthYear: p.birthYear !== undefined && p.birthYear !== null ? Number(p.birthYear) : null,
+  checkInDay: p.checkInDay !== undefined && p.checkInDay !== null ? Number(p.checkInDay) : null,
   taxRegion: p.taxRegion ?? null,
   studentLoanPlans: Array.isArray(p.studentLoanPlans) ? p.studentLoanPlans : null,
   housingStatus: p.housingStatus !== undefined ? p.housingStatus : null,

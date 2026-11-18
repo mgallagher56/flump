@@ -12,7 +12,7 @@ export const form = cva({
 });
 
 /**
- * Category and notes, under the quiet "More details" toggle. The drawer body sets tabular-nums
+ * Category and notes, under the quiet "Category and notes" toggle. The drawer body sets tabular-nums
  * for schedules; these are words, so reset it and keep hyphens narrow (R2-8).
  */
 export const moreDetails = cva({

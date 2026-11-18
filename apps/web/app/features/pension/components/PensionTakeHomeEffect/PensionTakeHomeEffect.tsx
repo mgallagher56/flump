@@ -103,7 +103,7 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
         id="pension-take-home-effect"
       >
         {PENSION_TAKE_HOME_COPY.missing}{" "}
-        <Link className={effectLink()} to="/app/profile">
+        <Link className={effectLink()} to="/app/profile#settings-age-and-pay">
           {PENSION_TAKE_HOME_COPY.missingLink}
         </Link>{" "}
         {PENSION_TAKE_HOME_COPY.missingTail}

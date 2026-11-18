@@ -495,6 +495,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "onboardingCompleted",
         "taxRegion",
         "birthYear",
+        "checkInDay",
         "studentLoanPlans",
         "housingStatus",
         "monthlyHousingCost",

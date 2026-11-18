@@ -86,6 +86,7 @@ describe("<ProfileTab />", () => {
     render(<ProfileTab profile={{ ...DEFAULT_PROFILE, housingStatus: "mortgage" }} />);
     const links = [
       ["Tax and take-home pay", "/app/self-assessment"],
+      // Once, in the age and pay section.
       ["Your pension", "/app/pension"],
       ["Your mortgage", "/app/mortgage"],
     ] as const;
@@ -100,7 +101,8 @@ describe("<ProfileTab />", () => {
   it("renders the selects with the @repo/ui Select, never a bare native select", () => {
     const { container } = render(<ProfileTab profile={DEFAULT_PROFILE} />);
     const selects = Array.from(container.querySelectorAll("select"));
-    expect(selects).toHaveLength(2);
+    // Employment type, tax region, student loan plan and check-in day.
+    expect(selects).toHaveLength(4);
     for (const select of selects) {
       // The @repo/ui Select wraps its <select> with a chevron icon; a bare one has neither.
       expect(select.parentElement?.querySelector("svg")).not.toBeNull();
@@ -260,6 +262,23 @@ describe("<ProfileTab />", () => {
     resolve();
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
   });
+  it("has an age and pay section after your details that saves through the profile", async () => {
+    render(<ProfileTab profile={{ ...DEFAULT_PROFILE, annualSalary: null }} />);
+    const headings = screen.getAllByRole("heading").map((h) => h.textContent);
+    expect(headings.indexOf("Your age and pay")).toBe(headings.indexOf("Your details") + 1);
+    expect(document.getElementById("settings-age-and-pay")).not.toBeNull();
+    const salary = screen.getByLabelText("Yearly salary before tax");
+    fireEvent.change(salary, { target: { value: "48000" } });
+    fireEvent.blur(salary);
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledWith({ annualSalary: 48000 }));
+  });
+
+  it("describes Self Assessment as income and expense records", () => {
+    render(<ProfileTab profile={DEFAULT_PROFILE} />);
+    expect(screen.getByText(/Income and expense records by tax year/)).toBeDefined();
+    expect(screen.queryByText(/cost records/)).toBeNull();
+  });
+
   it("does not send a renter to the mortgage page", () => {
     render(<ProfileTab profile={{ ...DEFAULT_PROFILE, housingStatus: "renting" }} />);
     expect(screen.queryByRole("link", { name: "Your mortgage" })).toBeNull();

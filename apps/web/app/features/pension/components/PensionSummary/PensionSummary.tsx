@@ -17,7 +17,7 @@ export interface PensionSummaryProps {
   onAddPot: () => void;
 }
 
-const PROFILE_PATH = "/app/profile";
+const PROFILE_PATH = "/app/profile#settings-age-and-pay";
 const ASSUMED_RATES_CAPTION = "Assumed rates. Edit to match your payslip.";
 
 const promptTo = (label: string, to: string): ReactNode => (

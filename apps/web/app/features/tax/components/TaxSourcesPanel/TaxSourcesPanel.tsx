@@ -54,7 +54,7 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({
   );
   if (!hasRecords && btlAccounts.length === 0) return null;
   const labels = Object.fromEntries(SOURCE_OPTIONS.map((o) => [o.value, o.label]));
-  // With one source outside PAYE, its income less costs is the strip's "Income after costs": the
+  // With one source outside PAYE, its income less expenses is the strip's "Income after expenses": the
   // row keeps its name and count and leaves the figure to the strip, beside the bill it sets.
   const nonPayeSources = new Set(
     records

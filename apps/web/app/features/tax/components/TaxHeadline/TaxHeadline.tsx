@@ -23,8 +23,8 @@ export interface TaxHeadlineProps {
   result: TaxCalculationResult | undefined;
   /** The page's "Add income" control, offered when the year has no income outside PAYE. */
   emptyAction?: ReactNode;
-  /** Opens the add dialog for a cost; offered on the after-costs card when none are recorded. */
-  onAddCost?: () => void;
+  /** Opens the add dialog for an expense; offered on the after-expenses card when none are recorded. */
+  onAddExpense?: () => void;
 }
 
 /** The bill for tax year "2026/27" is due on 31 January after it ends: 31 Jan 2028. */
@@ -61,13 +61,13 @@ export const allowanceLine = (
   const trading = (result?.tradingAllowanceUsed ?? 0) > 0;
   const property = (result?.propertyAllowanceUsed ?? 0) > 0;
   if (trading && property) {
-    return "The estimate uses the trading and property allowances, which are more than the costs you recorded.";
+    return "The estimate uses the trading and property allowances, which are more than the expenses you recorded.";
   }
   if (trading) {
-    return "The estimate uses the trading allowance, which is more than the costs you recorded.";
+    return "The estimate uses the trading allowance, which is more than the expenses you recorded.";
   }
   if (property) {
-    return "The estimate uses the property allowance, which is more than the costs you recorded.";
+    return "The estimate uses the property allowance, which is more than the expenses you recorded.";
   }
   return null;
 };
@@ -87,7 +87,7 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
   records,
   result,
   emptyAction,
-  onAddCost,
+  onAddExpense,
 }) => {
   const income = nonPayeIncome(records, taxYear);
   const hasIncome = income > 0 && result !== undefined;
@@ -101,7 +101,7 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
         emptyAction={emptyAction}
         emptyPrompt="Add income outside PAYE, such as self-employment or rent, to see an estimated tax bill."
         estimateLabel={DELTA_PANEL_COPY.unverifiedBadge}
-        explain={`Income Tax and National Insurance on your income outside PAYE, after costs, on top of your salary, at ${taxYear} rates.`}
+        explain={`Income Tax and National Insurance on your income outside PAYE, after expenses, on top of your salary, at ${taxYear} rates.`}
         label="Estimated bill"
         // The allowance changes this figure, so the line about it sits here.
         subline={
@@ -114,22 +114,22 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
         <KpiStrip columns={3}>
           <KpiCard
             label="Income outside PAYE"
-            subtext="Before costs, this tax year"
+            subtext="Before expenses, this tax year"
             value={income}
             valueFormat={{ fractionDigits: 0 }}
           />
           <KpiCard
             emptyAction={
-              onAddCost ? (
-                <Button size="sm" type="button" variant="link" onClick={onAddCost}>
-                  Add a cost
+              onAddExpense ? (
+                <Button size="sm" type="button" variant="link" onClick={onAddExpense}>
+                  Add an expense
                 </Button>
               ) : undefined
             }
-            label="Income after costs"
-            // With no costs recorded the figure would repeat the first card, so the card says so instead.
-            notSetLabel="No costs recorded"
-            subtext={costs > 0 ? "Your income less the costs you recorded" : undefined}
+            label="Income after expenses"
+            // With no expenses recorded the figure would repeat the first card, so the card says so instead.
+            notSetLabel="No expenses recorded"
+            subtext={costs > 0 ? "Your income less the expenses you recorded" : undefined}
             value={costs === 0 ? null : Math.round(income - costs)}
             valueFormat={{ fractionDigits: 0 }}
           />

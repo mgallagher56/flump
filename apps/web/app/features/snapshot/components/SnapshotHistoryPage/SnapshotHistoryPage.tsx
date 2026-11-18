@@ -27,6 +27,7 @@ import {
   buildSnapshotHistory,
   changeSinceSentence,
   formatMonth,
+  londonDateIn,
   type MonthKey,
   nextCheckInDate,
   type SnapshotAccountInput,
@@ -52,6 +53,10 @@ export interface SnapshotHistoryPageProps {
   basis: NetWorthBasis;
   /** Opens the check-in on arrival (the dashboard's "Monthly check-in" link). */
   initialSheet?: CheckInMode | null;
+  /** The saved check-in day (1 to 31), or null when none is chosen (the 1st). */
+  checkInDay?: number | null;
+  /** Today in Europe/London, "YYYY-MM-DD"; defaults to the clock within `currentMonth`. */
+  today?: string;
 }
 
 const MONTH_WORDS = ["no months", "one month", "two months"] as const;
@@ -133,6 +138,8 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   onSave,
   basis,
   initialSheet = null,
+  checkInDay = null,
+  today,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const [sheet, setSheet] = useState<CheckInMode | null>(initialSheet);
@@ -309,7 +316,13 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
                 </>
               }
               dataNote={
-                thisMonthRecorded ? `Next check-in: ${nextCheckInDate(currentMonth)}` : undefined
+                thisMonthRecorded
+                  ? `Next check-in: ${nextCheckInDate({
+                      today: today ?? londonDateIn(currentMonth),
+                      checkInDay,
+                      lastRecordedMonth: currentMonth,
+                    })}`
+                  : undefined
               }
               notEnoughDataText={fewMonthsPrompt(recordedMonths)}
               points={toChartPoints(series)}

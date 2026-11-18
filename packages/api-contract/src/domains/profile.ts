@@ -70,6 +70,8 @@ export const UpdateProfileRequest = z.strictObject({
   // E23 D06/D07 profile facts (null clears a fact back to "not set").
   taxRegion: z.enum(["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]).nullish(),
   birthYear: z.number().int().min(1900).max(2100).nullish(),
+  /** UX Batch E: day of the month the check-in falls on (null = the 1st). */
+  checkInDay: z.number().int().min(1).max(31).nullish(),
   studentLoanPlans: z
     .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
     .max(5)
@@ -145,6 +147,7 @@ export const UserProfileDto = z.strictObject({
   onboardingCompleted: z.boolean(),
   taxRegion: z.enum(["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]).nullable(),
   birthYear: z.number().int().nullable(),
+  checkInDay: z.number().int().nullable(),
   studentLoanPlans: z
     .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
     .nullable(),
@@ -307,6 +310,7 @@ export const AccountExportProfile = z.strictObject({
   onboardingCompleted: z.boolean(),
   taxRegion: NullableText,
   birthYear: z.number().int().nullable(),
+  checkInDay: z.number().int().nullable(),
   studentLoanPlans: TextList,
   housingStatus: NullableText,
   monthlyHousingCost: NullableNumber,

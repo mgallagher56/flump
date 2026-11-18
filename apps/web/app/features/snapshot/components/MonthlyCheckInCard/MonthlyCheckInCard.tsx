@@ -1,8 +1,9 @@
+import { isCheckInDue as isCheckInDueOn } from "@flump/finance-engine";
 import { Button, Icon } from "@repo/ui";
 import { CalendarCheck } from "lucide-react";
 import { type FC, useId } from "react";
 import { Link } from "react-router";
-import { formatMonth, type MonthKey } from "../../snapshotModel";
+import { formatMonth, londonDateIn, type MonthKey } from "../../snapshotModel";
 import { row, rowIcon, rowText, rowTitle } from "./MonthlyCheckInCard.styles";
 
 export const HISTORY_ROUTE = "/app/accounts/history";
@@ -16,11 +17,24 @@ export interface MonthlyCheckInCardProps {
   lastRecordedMonth: MonthKey | null;
   /** Whether a check-in is in progress (Rule B17). */
   partDone?: boolean;
+  /** Today in Europe/London, "YYYY-MM-DD". Defaults to the clock (or the 1st of `currentMonth`). */
+  today?: string;
+  /** The saved check-in day (1 to 31), or null when none is chosen (the 1st). */
+  checkInDay?: number | null;
 }
 
-/** A check-in is due when this month has no recorded balances yet. */
-export const isCheckInDue = ({ currentMonth, lastRecordedMonth }: MonthlyCheckInCardProps) =>
-  lastRecordedMonth !== currentMonth;
+/**
+ * Whether the check-in is shown: never once this month is recorded, always before anything is
+ * recorded, otherwise from the user's check-in day (or at once if last month was missed too).
+ * The rule lives in `@flump/finance-engine`.
+ */
+export const isCheckInDue = ({
+  currentMonth,
+  lastRecordedMonth,
+  today,
+  checkInDay = null,
+}: MonthlyCheckInCardProps): boolean =>
+  isCheckInDueOn({ today: today ?? londonDateIn(currentMonth), checkInDay, lastRecordedMonth });
 
 /**
  * The dashboard's way into the monthly check-in (E30), as one row shown only when a check-in is

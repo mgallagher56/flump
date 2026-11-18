@@ -26,7 +26,7 @@ describe("TaxHeadline", () => {
     expect(container.querySelectorAll("[data-estimate-label]")).toHaveLength(1);
     expect(screen.getByText("Income outside PAYE")).toBeDefined();
     expect(screen.getByText("Bill due")).toBeDefined();
-    expect(screen.getByText("Income after costs")).toBeDefined();
+    expect(screen.getByText("Income after expenses")).toBeDefined();
     expect(container.querySelectorAll("[data-kpi-value]").length).toBe(3);
     expect(screen.getByText("31 Jan 2028")).toBeDefined();
     expect(container.textContent).not.toMatch(/£[\d,]+\.\d{2}/);
@@ -55,24 +55,24 @@ describe("TaxHeadline", () => {
     const after =
       nonPayeIncome(taxRecordsFixture, "2026/27") - nonPayeCosts(taxRecordsFixture, "2026/27");
     expect(before).toBe(nonPayeIncome(taxRecordsFixture, "2026/27"));
-    expect(screen.getByText("Your income less the costs you recorded")).toBeDefined();
+    expect(screen.getByText("Your income less the expenses you recorded")).toBeDefined();
     expect(container.textContent).toContain(`£${Math.round(after).toLocaleString("en-GB")}`);
   });
 
   it("says when no costs are recorded and offers to add one", () => {
     const incomeOnly = taxRecordsFixture.filter((r) => r.type === "income");
-    const onAddCost = vi.fn();
+    const onAddExpense = vi.fn();
     render(
       <TaxHeadline
-        onAddCost={onAddCost}
+        onAddExpense={onAddExpense}
         records={incomeOnly}
         result={taxResultFixture}
         taxYear="2026/27"
       />,
     );
-    expect(screen.getByText("No costs recorded")).toBeDefined();
-    fireEvent.click(screen.getByRole("button", { name: "Add a cost" }));
-    expect(onAddCost).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("No expenses recorded")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Add an expense" }));
+    expect(onAddExpense).toHaveBeenCalledTimes(1);
   });
 
   it("says when the January payment includes a first payment on account", () => {
@@ -101,7 +101,7 @@ describe("TaxHeadline", () => {
     expect(allowanceLine({ tradingAllowanceUsed: 0, propertyAllowanceUsed: 0 })).toBeNull();
     expect(allowanceLine(undefined)).toBeNull();
     expect(allowanceLine({ tradingAllowanceUsed: 1000, propertyAllowanceUsed: 0 })).toBe(
-      "The estimate uses the trading allowance, which is more than the costs you recorded.",
+      "The estimate uses the trading allowance, which is more than the expenses you recorded.",
     );
     expect(allowanceLine({ tradingAllowanceUsed: 0, propertyAllowanceUsed: 1000 })).toContain(
       "uses the property allowance",
@@ -120,12 +120,12 @@ describe("TaxHeadline", () => {
     const billHero = screen.getByRole("group", { name: "Estimated bill" });
     expect(billHero.textContent).toContain("uses the trading allowance");
     const afterCard = screen
-      .getByText("Income after costs")
+      .getByText("Income after expenses")
       .closest("[data-kpi-eyebrow]")?.parentElement;
     expect(afterCard?.textContent).not.toContain("allowance");
     expect(screen.queryByText("Income Tax and National Insurance on this income")).toBeNull();
     // The after-costs card keeps its own subtext.
-    expect(screen.getByText("Your income less the costs you recorded")).toBeDefined();
+    expect(screen.getByText("Your income less the expenses you recorded")).toBeDefined();
   });
 
   it("keeps the bill's default sub-line when no allowance was used", () => {

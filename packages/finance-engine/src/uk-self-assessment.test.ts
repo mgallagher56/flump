@@ -3,6 +3,7 @@ import {
   calculatePropertyProfit,
   calculateSelfAssessmentPayments,
   calculateTradingProfit,
+  compareExpensesWithAllowance,
 } from "./uk-self-assessment.js";
 import { getUkTaxYearRules, UnsupportedUkTaxYearError } from "./uk-tax-year.js";
 
@@ -99,5 +100,195 @@ describe("calculateTradingProfit and calculatePropertyProfit", () => {
   it("return no profit and no allowance for no income", () => {
     expect(calculateTradingProfit(0, 0, rules)).toEqual({ profit: 0, allowanceUsed: 0 });
     expect(calculateTradingProfit(Number.NaN, -5, rules)).toEqual({ profit: 0, allowanceUsed: 0 });
+  });
+});
+
+describe("compareExpensesWithAllowance", () => {
+  // https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income (read 2026-11-18)
+  // Every expected value below is worked by hand; none comes from the engine.
+
+  it("gives full relief when income is 1,000 or less", () => {
+    // income 800, expenses 100, allowance 1,000
+    // usable allowance = min(1,000, 800) = 800 (never more than the income)
+    // with allowance 800; with expenses 100; larger = allowance
+    // 0 < income 800 <= 1,000, so within full relief
+    const c = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2026/27",
+      grossIncome: 800,
+      recordedExpenses: 100,
+    });
+    expect(c.allowance).toBe(1000);
+    expect(c.usableAllowance).toBe(800);
+    expect(c.allowanceDeduction).toBe(800);
+    expect(c.expensesDeduction).toBe(100);
+    expect(c.withinFullRelief).toBe(true);
+    expect(c.larger).toBe("allowance");
+    expect(c.exclusions).toEqual(["partnership", "employer-or-connected"]);
+    expect(c.sourceUrl).toBe(
+      "https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income",
+    );
+  });
+
+  it("reports expenses as larger when they are above the allowance", () => {
+    // income 20,000, expenses 3,500, allowance 1,000 (2025/26)
+    // with allowance = min(1,000, 20,000) = 1,000; with expenses 3,500
+    // 3,500 > 1,000, so larger = expenses; income 20,000 > 1,000, so no full relief
+    const c = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2025/26",
+      grossIncome: 20000,
+      recordedExpenses: 3500,
+    });
+    expect(c.larger).toBe("expenses");
+    expect(c.expensesDeduction).toBe(3500);
+    expect(c.allowanceDeduction).toBe(1000);
+    expect(c.withinFullRelief).toBe(false);
+  });
+
+  it("reports the allowance as larger when expenses are below it", () => {
+    // income 1,800, expenses 400, allowance 1,000
+    // with allowance = min(1,000, 1,800) = 1,000; with expenses 400; larger = allowance
+    const c = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2026/27",
+      grossIncome: 1800,
+      recordedExpenses: 400,
+    });
+    expect(c.usableAllowance).toBe(1000);
+    expect(c.allowanceDeduction).toBe(1000);
+    expect(c.expensesDeduction).toBe(400);
+    expect(c.larger).toBe("allowance");
+    expect(c.withinFullRelief).toBe(false);
+  });
+
+  it("reports equal when the two deductions match", () => {
+    // income 5,000, expenses 1,000, allowance 1,000
+    // with allowance = min(1,000, 5,000) = 1,000; with expenses 1,000; 1,000 = 1,000, so equal
+    const c = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2026/27",
+      grossIncome: 5000,
+      recordedExpenses: 1000,
+    });
+    expect(c.allowanceDeduction).toBe(1000);
+    expect(c.expensesDeduction).toBe(1000);
+    expect(c.larger).toBe("equal");
+  });
+
+  it("allows nothing with no income, so the allowance cannot create a loss", () => {
+    // income 0, expenses 0: usable allowance = min(1,000, 0) = 0; 0 = 0, so equal
+    // income 0 is not above 0, so not within full relief
+    const none = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2026/27",
+      grossIncome: 0,
+      recordedExpenses: 0,
+    });
+    expect(none.usableAllowance).toBe(0);
+    expect(none.larger).toBe("equal");
+    expect(none.withinFullRelief).toBe(false);
+    // income 0, expenses 400: with allowance min(1,000, 0) = 0; with expenses 400; larger = expenses
+    const costsOnly = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2026/27",
+      grossIncome: 0,
+      recordedExpenses: 400,
+    });
+    expect(costsOnly.allowanceDeduction).toBe(0);
+    expect(costsOnly.expensesDeduction).toBe(400);
+    expect(costsOnly.larger).toBe("expenses");
+  });
+
+  it("uses the owner's share of rent and expenses for rental", () => {
+    // whole-property rent 12,000, expenses 1,600, owner's share 50%
+    // share of rent = 12,000 x 0.5 = 6,000; share of expenses = 1,600 x 0.5 = 800
+    // with allowance = min(1,000, 6,000) = 1,000; with expenses 800; larger = allowance
+    const c = compareExpensesWithAllowance({
+      source: "rental",
+      taxYear: "2026/27",
+      grossIncome: 12000,
+      recordedExpenses: 1600,
+      ownershipSharePct: 50,
+    });
+    expect(c.grossIncome).toBe(6000);
+    expect(c.recordedExpenses).toBe(800);
+    expect(c.allowanceDeduction).toBe(1000);
+    expect(c.expensesDeduction).toBe(800);
+    expect(c.larger).toBe("allowance");
+    expect(c.exclusions).toEqual(["rent-a-room", "finance-cost-relief"]);
+  });
+
+  it("gives a joint owner full relief on a share of 1,000 or less", () => {
+    // whole-property rent 1,500, expenses 0, share 50%: share of rent = 1,500 x 0.5 = 750
+    // usable allowance = min(1,000, 750) = 750; 0 < 750 <= 1,000, so within full relief
+    const c = compareExpensesWithAllowance({
+      source: "rental",
+      taxYear: "2026/27",
+      grossIncome: 1500,
+      recordedExpenses: 0,
+      ownershipSharePct: 50,
+    });
+    expect(c.grossIncome).toBe(750);
+    expect(c.usableAllowance).toBe(750);
+    expect(c.withinFullRelief).toBe(true);
+  });
+
+  it("leaves finance costs out of rental expenses and says so", () => {
+    // rent 9,000, expenses 600, finance costs 4,000, share 100%
+    // finance costs are not expenses here: with expenses 600 (not 4,600)
+    // with allowance = min(1,000, 9,000) = 1,000; 1,000 > 600, so larger = allowance
+    const c = compareExpensesWithAllowance({
+      source: "rental",
+      taxYear: "2026/27",
+      grossIncome: 9000,
+      recordedExpenses: 600,
+      financeCosts: 4000,
+    });
+    expect(c.recordedExpenses).toBe(600);
+    expect(c.expensesDeduction).toBe(600);
+    expect(c.financeCosts).toBe(4000);
+    expect(c.financeCostsExcluded).toBe(true);
+    expect(c.larger).toBe("allowance");
+  });
+
+  it("applies the owner's share to finance costs too", () => {
+    // finance costs 4,000 x share 25% = 1,000
+    const c = compareExpensesWithAllowance({
+      source: "rental",
+      taxYear: "2026/27",
+      grossIncome: 9000,
+      recordedExpenses: 600,
+      financeCosts: 4000,
+      ownershipSharePct: 25,
+    });
+    expect(c.financeCosts).toBe(1000);
+    // expenses 600 x 25% = 150; rent 9,000 x 25% = 2,250
+    expect(c.recordedExpenses).toBe(150);
+    expect(c.grossIncome).toBe(2250);
+  });
+
+  it("ignores finance costs for self-employed income", () => {
+    // finance costs are a rental rule only: self-employed finance costs read as 0
+    const c = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2026/27",
+      grossIncome: 9000,
+      recordedExpenses: 600,
+      financeCosts: 4000,
+    });
+    expect(c.financeCosts).toBe(0);
+    expect(c.financeCostsExcluded).toBe(false);
+  });
+
+  it("throws for an unsupported year", () => {
+    expect(() =>
+      compareExpensesWithAllowance({
+        source: "rental",
+        taxYear: "2030/31",
+        grossIncome: 1,
+        recordedExpenses: 0,
+      }),
+    ).toThrow(UnsupportedUkTaxYearError);
   });
 });

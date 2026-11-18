@@ -204,7 +204,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
         if (!val) onClose();
       }}
       title="Copy records from another tax year"
-      description="Copy regular income and costs from an earlier tax year. You can change each amount before you save."
+      description="Copy regular income and expenses from an earlier tax year. You can change each amount before you save."
       size="lg"
       id="copy-tax-year-dialog"
     >

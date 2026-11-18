@@ -34,7 +34,7 @@ const GROUPS: Array<{ heading: string; lines: Line[] }> = [
     heading: "Rental property (whole property)",
     lines: [
       { label: "Rental income", value: field("rentalIncomeGross") },
-      { label: "Costs, excluding interest", value: field("rentalExpensesExclInterest") },
+      { label: "Expenses, excluding interest", value: field("rentalExpensesExclInterest") },
       { label: "Mortgage interest", value: field("rentalMortgageInterest") },
       { label: "Profit after interest", value: field("rentalProfitPostInterest"), total: true },
     ],
@@ -43,7 +43,7 @@ const GROUPS: Array<{ heading: string; lines: Line[] }> = [
     heading: "Self-employed",
     lines: [
       { label: "Turnover", value: field("seIncomeGross") },
-      { label: "Allowable costs", value: field("seExpenses") },
+      { label: "Allowable expenses", value: field("seExpenses") },
       { label: "Profit", value: field("seProfit"), total: true },
     ],
   },
@@ -63,7 +63,7 @@ const GROUPS: Array<{ heading: string; lines: Line[] }> = [
           r?.effectivePayeSalary && r.effectivePayeSalary > 0 ? (
             gbp(r.effectivePayeSalary)
           ) : (
-            <NotSet href="/app/profile" subject="salary" />
+            <NotSet href="/app/profile#settings-age-and-pay" subject="salary" />
           ),
       },
       { label: "Total income", value: field("totalGrossIncome") },

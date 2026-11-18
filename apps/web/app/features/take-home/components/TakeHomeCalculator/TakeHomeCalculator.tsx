@@ -44,6 +44,8 @@ const TOOLS = [
   { value: "next-pound", label: EXPLORER_COPY.tabNextThousand },
 ];
 const PROFILE_HREF = "/app/profile";
+/** Salary lives in the age and pay section of the Profile tab. */
+const SALARY_HREF = "/app/profile#settings-age-and-pay";
 
 /** Plain names for the facts take-home needs, for the one setup prompt. */
 const MISSING_LABELS: Partial<Record<MissingKey, string>> = {
@@ -132,21 +134,21 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
     setSalaryIncrease(DEFAULT_RAISE);
   };
 
-  const profileLink = (label: string, variant: "primary" | "link") =>
+  const profileLink = (label: string, variant: "primary" | "link", href = PROFILE_HREF) =>
     variant === "primary" ? (
       inRouter ? (
         <ButtonLink asChild>
-          <Link to={PROFILE_HREF}>{label}</Link>
+          <Link to={href}>{label}</Link>
         </ButtonLink>
       ) : (
-        <ButtonLink href={PROFILE_HREF}>{label}</ButtonLink>
+        <ButtonLink href={href}>{label}</ButtonLink>
       )
     ) : inRouter ? (
-      <Link className={zoneLink()} to={PROFILE_HREF}>
+      <Link className={zoneLink()} to={href}>
         {label}
       </Link>
     ) : (
-      <a className={zoneLink()} href={PROFILE_HREF}>
+      <a className={zoneLink()} href={href}>
         {label}
       </a>
     );
@@ -170,7 +172,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
       return (
         <div className={calculatorRoot()}>
           <HeroFigure
-            emptyAction={profileLink("Add salary", "primary")}
+            emptyAction={profileLink("Add salary", "primary", SALARY_HREF)}
             emptyPrompt="Add your salary before tax to see an estimate of your take-home pay."
             label={heroLabel}
             value={undefined}

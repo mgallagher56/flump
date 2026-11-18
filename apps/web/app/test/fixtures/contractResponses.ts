@@ -88,6 +88,7 @@ export const profileFixture = {
   onboardingCompleted: true,
   taxRegion: "SCOTLAND",
   birthYear: 1990,
+  checkInDay: null,
   studentLoanPlans: [],
   housingStatus: "mortgage",
   monthlyHousingCost: 812.5,

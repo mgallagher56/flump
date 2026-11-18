@@ -193,7 +193,7 @@ export const OptedInWithData: Story = {
     await expect((await canvas.findAllByText(/^Income outside PAYE$/)).length).toBeGreaterThan(0);
     await expect((await canvas.findAllByText("Estimated bill")).length).toBeGreaterThan(0);
     await expect(
-      (await canvas.findAllByRole("button", { name: "Add income" })).length,
+      (await canvas.findAllByRole("button", { name: "Add income or expense" })).length,
     ).toBeGreaterThan(0);
   },
 };

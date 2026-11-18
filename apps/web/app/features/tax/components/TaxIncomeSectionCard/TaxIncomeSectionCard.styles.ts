@@ -2,17 +2,33 @@ import { cva } from "@repo/ui/styled-system/css";
 
 export const row = cva({
   base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "4",
-    py: "3",
     minWidth: 0,
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
     borderBottomColor: "border.subtle",
     _last: { borderBottomWidth: 0 },
   },
+});
+
+/** The whole row is one link to the source's page. */
+export const rowLink = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "4",
+    py: "3",
+    minWidth: 0,
+    color: "inherit",
+    textDecoration: "none",
+    borderRadius: "md",
+    _hover: { backgroundColor: "surface.subtle" },
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  },
+});
+
+export const chevron = cva({
+  base: { display: "inline-flex", flexShrink: 0, color: "text.muted" },
 });
 
 /** The name column takes priority: it grows and shrinks, the total keeps its width. */

@@ -65,6 +65,8 @@ describe("<PensionContributionScenario />", () => {
     render(<Harness hasSalary={false} />);
     expect(screen.queryByRole("slider")).toBeNull();
     expect(zone().textContent).toContain("to see the effect of a change on your take-home pay.");
-    expect(screen.getByRole("link", { name: "Profile" }).getAttribute("href")).toBe("/app/profile");
+    expect(screen.getByRole("link", { name: "Profile" }).getAttribute("href")).toBe(
+      "/app/profile#settings-age-and-pay",
+    );
   });
 });

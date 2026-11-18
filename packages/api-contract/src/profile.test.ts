@@ -34,6 +34,16 @@ describe("UpdateProfileRequest", () => {
     expect(UpdateProfileRequest.safeParse({ pensionPercent: 101 }).success).toBe(false);
   });
 
+  it("accepts a check-in day from 1 to 31 or null, and rejects 0, 32 and fractions", () => {
+    const parse = (checkInDay: unknown) => UpdateProfileRequest.safeParse({ checkInDay }).success;
+    expect(parse(1)).toBe(true);
+    expect(parse(31)).toBe(true);
+    expect(parse(null)).toBe(true);
+    expect(parse(0)).toBe(false);
+    expect(parse(32)).toBe(false);
+    expect(parse(15.5)).toBe(false);
+  });
+
   it("accepts the net worth choices as booleans only, never null", () => {
     const parse = (body: Record<string, unknown>) => UpdateProfileRequest.safeParse(body).success;
     expect(parse({ netWorthCountsProperty: false, netWorthCountsStudentLoan: true })).toBe(true);

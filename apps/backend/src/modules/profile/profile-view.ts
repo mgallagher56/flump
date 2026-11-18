@@ -59,6 +59,14 @@ export function birthYearOrNull(value: unknown): number | null {
   throw new BadRequestException(`birthYear must be a whole year from 1900 to ${thisYear} or null`);
 }
 
+export function checkInDayOrNull(value: unknown): number | null {
+  if (value === null) return null;
+  if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 31) {
+    return value;
+  }
+  throw new BadRequestException("checkInDay must be a whole day from 1 to 31 or null");
+}
+
 export function studentLoanPlansOrNull(value: unknown): StudentLoanPlan[] | null {
   if (value === null) return null;
   if (!Array.isArray(value)) {
@@ -91,6 +99,7 @@ export function formatProfileRow(profile: UserProfile) {
     lastName: profile.lastName ?? null,
     taxRegion: profile.taxRegion ?? null,
     birthYear: profile.birthYear ?? null,
+    checkInDay: profile.checkInDay ?? null,
     studentLoanPlans: profile.studentLoanPlans ?? null,
     housingStatus: profile.housingStatus ?? null,
     monthlyHousingCost: profile.monthlyHousingCost ?? null,

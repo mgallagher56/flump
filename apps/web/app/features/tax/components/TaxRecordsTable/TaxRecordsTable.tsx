@@ -163,7 +163,7 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
         headingLevel="h3"
         illustration={<Illustration scene="empty-accounts" size="sm" />}
         title={`No records for ${taxYear}`}
-        description="Add income or a cost and it will appear here."
+        description="Add income or an expense and it will appear here."
         action={
           <Button type="button" onClick={onAdd}>
             Add record
@@ -206,9 +206,9 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                 value={type}
                 onChange={(e) => onFilter(setType)(e.target.value as "all" | "income" | "expense")}
               >
-                <option value="all">Income and costs</option>
+                <option value="all">Income and expenses</option>
                 <option value="income">Income</option>
-                <option value="expense">Costs</option>
+                <option value="expense">Expenses</option>
               </Select>
             )}
           </FormField>

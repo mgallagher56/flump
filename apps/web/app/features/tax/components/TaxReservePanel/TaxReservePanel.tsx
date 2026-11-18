@@ -150,7 +150,7 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
                   result.effectivePayeSalary > 0 ? (
                     gbp(result.effectivePayeSalary)
                   ) : (
-                    <NotSet href="/app/profile" subject="salary" />
+                    <NotSet href="/app/profile#settings-age-and-pay" subject="salary" />
                   )
                 }
               />

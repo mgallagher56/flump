@@ -141,6 +141,7 @@ vi.mock("react-router", () => ({
     </a>
   ),
   useInRouterContext: () => false,
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
   useRevalidator: () => ({ revalidate: mockRevalidate, state: "idle" }),
   useLoaderData: () => ({
     records: mockLoaderRecords,
@@ -200,10 +201,10 @@ describe("TaxContainer, opted in", () => {
     // The hero is the answer the page exists to give, named as an estimate inside the hero.
     expect(hero.textContent).toContain("Estimated bill");
     expect(hero.querySelector("[data-estimate-label]")?.textContent).toBe("Unverified estimate");
-    const kpis = screen.getAllByText(/^(Income outside PAYE|Income after costs|Bill due)\s*$/);
+    const kpis = screen.getAllByText(/^(Income outside PAYE|Income after expenses|Bill due)\s*$/);
     expect(kpis.map((k) => k.textContent?.trim())).toEqual([
       "Income outside PAYE",
-      "Income after costs",
+      "Income after expenses",
       "Bill due",
     ]);
   });
@@ -219,7 +220,7 @@ describe("TaxContainer, opted in", () => {
   it("has at most 6 buttons in the first view, with one Add income menu", () => {
     render(<TaxContainer />);
     expect(firstViewButtons().length).toBeLessThanOrEqual(6);
-    expect(screen.getAllByRole("button", { name: "Add income" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Add income or expense" })).toHaveLength(1);
     expect(screen.queryByText("Quick add")).toBeNull();
     expect(screen.queryByText(/^Copy from \d{4}/)).toBeNull();
   });
@@ -280,7 +281,7 @@ describe("TaxContainer, opted in", () => {
     const user = userEvent.setup();
     mockSubmit.mockClear();
     render(<TaxContainer />);
-    await user.click(screen.getByRole("button", { name: "Add income" }));
+    await user.click(screen.getByRole("button", { name: "Add income or expense" }));
     await user.click(await screen.findByRole("menuitem", { name: "Rental income" }));
 
     const dialog = screen.getByRole("dialog", { name: "Add a record" });
@@ -301,10 +302,38 @@ describe("TaxContainer, opted in", () => {
     );
   });
 
+  it("groups the records drawer by income source, in the page's source order", () => {
+    const { container } = render(<TaxContainer />);
+    openRecords();
+    const groups = [...container.querySelectorAll("[data-testid^='tax-records-']")].map((g) =>
+      g.getAttribute("data-testid"),
+    );
+    expect(groups).toEqual([
+      "tax-records-self-employed",
+      "tax-records-rental",
+      "tax-records-savings",
+    ]);
+    const rental = container.querySelector("[data-testid='tax-records-rental']") as HTMLElement;
+    expect(
+      within(rental).getByRole("heading", { level: 3, name: "Rental property" }),
+    ).toBeDefined();
+    expect(within(rental).getByText("Flat rent (2024/25)")).toBeDefined();
+    expect(within(rental).queryByText("Software Consulting Retainer")).toBeNull();
+  });
+
+  it("links each income source row to its own page on the selected year", () => {
+    render(<TaxContainer />);
+    fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2024/25" } });
+    const row = screen.getByTestId("tax-source-rental");
+    expect(within(row).getByRole("link").getAttribute("href")).toBe(
+      "/app/self-assessment/rental?year=2024-25",
+    );
+  });
+
   it("copies last year from the same menu", async () => {
     const user = userEvent.setup();
     render(<TaxContainer />);
-    await user.click(screen.getByRole("button", { name: "Add income" }));
+    await user.click(screen.getByRole("button", { name: "Add income or expense" }));
     await user.click(await screen.findByRole("menuitem", { name: "Copy from last year" }));
     expect(
       screen.getByRole("dialog", { name: "Copy records from another tax year" }),
@@ -317,7 +346,7 @@ describe("TaxContainer, opted in", () => {
     expect(container.textContent).not.toContain("£0");
     expect(container.querySelector('[data-tone="hero"]')).toBeNull();
     expect(screen.queryByRole("note")).toBeNull();
-    expect(screen.getAllByRole("button", { name: "Add income" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Add income or expense" })).toHaveLength(1);
     expectPageRules(container, { projectionNotices: 0, maxNotSet: 1 });
     // Only the current tax year is offered.
     const options = Array.from((screen.getByLabelText("Tax year") as HTMLSelectElement).options);
@@ -532,7 +561,7 @@ describe("TaxContainer, opted in", () => {
       expect(within(edit).getByText("We could not save that.")).toBeDefined();
       fireEvent.click(within(edit).getByRole("button", { name: "Cancel" }));
       expect(screen.queryByText("We could not save that.")).toBeNull();
-      await user.click(screen.getByRole("button", { name: "Add income" }));
+      await user.click(screen.getByRole("button", { name: "Add income or expense" }));
       await user.click(await screen.findByRole("menuitem", { name: "Rental income" }));
       const add = screen.getByRole("dialog", { name: "Add a record" });
       expect(within(add).queryByRole("alert")).toBeNull();

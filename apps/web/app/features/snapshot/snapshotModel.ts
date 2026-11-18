@@ -1,10 +1,12 @@
 import {
   type AccountDetailInput,
   addCheckInMonths,
+  type CheckInScheduleInput,
   compareCheckInMonths,
   isCheckInMonth,
   type NetWorthBasis,
   type NetWorthPoint,
+  nextCheckInDate as nextCheckInDay,
   type SnapshotAccountInput,
   selectAccountDeltas,
   selectSavedNetWorthSeries,
@@ -70,20 +72,39 @@ export function formatMonthShort(month: MonthKey): string {
   return formatMonthTick(month, "2-digit");
 }
 
+/** Today's Europe/London calendar date, "YYYY-MM-DD" (the check-in day rules compare it). */
+export function londonDate(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const part = (type: string, fallback: string) =>
+    parts.find((p) => p.type === type)?.value ?? fallback;
+  return `${part("year", "1970")}-${part("month", "01")}-${part("day", "01")}`;
+}
+
+/** Today's London date when it falls in `month`, otherwise that month's 1st (a stable default). */
+export function londonDateIn(month: MonthKey, now: Date = new Date()): string {
+  const today = londonDate(now);
+  return today.startsWith(`${month}-`) ? today : `${month}-01`;
+}
+
 /**
- * The next check-in date: the 1st of the month after `current`. Reminder days arrive with PR3; until
- * then the next check-in is simply the start of next month.
+ * The next check-in date on the user's chosen check-in day (UX Batch E), as "28 November 2026".
+ * The rule (this month's date while it is ahead and unrecorded, otherwise next month's, with days
+ * past a month's end on its last day) lives in `@flump/finance-engine`.
  */
-export function nextCheckInDate(current: MonthKey): string {
-  const next = addMonths(current, 1);
-  const m = MONTH_RE.exec(next);
-  if (!m) return next;
+export function nextCheckInDate(input: CheckInScheduleInput): string {
+  const date = nextCheckInDay(input);
+  const [year, month, day] = date.split("-").map(Number);
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
     timeZone: "UTC",
-  }).format(new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1)));
+  }).format(new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1)));
 }
 
 /** History length decides what the page can show (E30 PR2 empty states). */

@@ -8,6 +8,7 @@ import {
   buildSnapshotHistory as historyFor,
   historySourceLabel,
   latestRecordedMonth,
+  londonDate,
   londonMonth,
   nextCheckInDate,
   projectFromSnapshot,
@@ -58,7 +59,14 @@ describe("month helpers", () => {
     expect(addMonths("2026-12", 1)).toBe("2027-01");
     expect(addMonths("2026-01", -1)).toBe("2025-12");
     expect(formatMonth("2026-11")).toBe("November 2026");
-    expect(nextCheckInDate("2026-11")).toBe("1 December 2026");
+    expect(
+      nextCheckInDate({ today: "2026-11-18", checkInDay: null, lastRecordedMonth: "2026-11" }),
+    ).toBe("1 December 2026");
+    expect(
+      nextCheckInDate({ today: "2026-11-05", checkInDay: 28, lastRecordedMonth: "2026-10" }),
+    ).toBe("28 November 2026");
+    expect(londonDate(new Date("2026-11-30T23:30:00Z"))).toBe("2026-11-30");
+    expect(londonDate(new Date("2026-06-30T23:30:00Z"))).toBe("2026-07-01");
   });
 
   it("counts history neutrally", () => {

@@ -35,6 +35,32 @@ describe("CheckInRow", () => {
     expect(screen.getByRole("link", { name: "Start monthly check-in" })).toBeTruthy();
   });
 
+  it("waits for the saved check-in day, and shows at once if last month was missed", () => {
+    const before = renderRow({
+      currentMonth: "2026-11",
+      lastRecordedMonth: "2026-10",
+      checkInDay: 28,
+      today: "2026-11-05",
+    });
+    expect(before.container.innerHTML).toBe("");
+    before.unmount();
+    const onDay = renderRow({
+      currentMonth: "2026-11",
+      lastRecordedMonth: "2026-10",
+      checkInDay: 28,
+      today: "2026-11-28",
+    });
+    expect(screen.getByText("November balances not recorded yet")).toBeTruthy();
+    onDay.unmount();
+    renderRow({
+      currentMonth: "2026-11",
+      lastRecordedMonth: "2026-09",
+      checkInDay: 28,
+      today: "2026-11-05",
+    });
+    expect(screen.getByText("November balances not recorded yet")).toBeTruthy();
+  });
+
   it("draws nothing once this month is recorded", () => {
     const { container } = renderRow({ currentMonth: "2026-11", lastRecordedMonth: "2026-11" });
     expect(container.innerHTML).toBe("");
