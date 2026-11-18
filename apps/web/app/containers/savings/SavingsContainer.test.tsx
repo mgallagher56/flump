@@ -100,7 +100,7 @@ describe("SavingsContainer", () => {
     expect(screen.getByText("Saved each month")).toBeDefined();
     // Interest in pounds, split by ISA status, replaces a blended rate.
     expect(screen.getByText("Interest over the next 12 months")).toBeDefined();
-    expect(screen.getByText("Before tax. ISA interest is tax-free")).toBeDefined();
+    expect(screen.getByText("An estimate, before tax. ISA interest is tax-free.")).toBeDefined();
     expect(screen.queryByText("Average rate")).toBeNull();
     // A page with accounts still shows its page icon in the header.
     expect(container.querySelectorAll("svg[data-scene]")).toHaveLength(1);

@@ -2,6 +2,7 @@ import { estimateHomeEquity } from "@flump/finance-engine";
 import { Button, Icon, Money, PageSection } from "@repo/ui";
 import { Check, ClipboardList } from "lucide-react";
 import type { FC } from "react";
+import { equityShareSubline } from "~/features/mortgage/components/HomeEquityLine";
 import { formatYearsLeft } from "~/features/mortgage/mortgageFormat";
 import {
   detailLabel,
@@ -31,13 +32,15 @@ export interface MortgageSummaryProps {
   /** Opens the edit dialog. */
   onEdit: () => void;
   /**
-   * The saved home value, the whole mortgage balance and the user's share when joint (`null` when
-   * held solely), for the "Your equity" row. `null` when no home value is saved: no row shows.
+   * The saved home value and the whole mortgage balance, each with the user's own share (`null`
+   * when held solely), for the "Your equity" row. `null` when no home value is saved, or when
+   * there are two or more homes: no row shows.
    */
   homeEquity?: {
     homeValue: number;
+    homeSharePercent: number | null;
     mortgageBalance: number;
-    sharePercent: number | null;
+    mortgageSharePercent: number | null;
   } | null;
 }
 
@@ -59,7 +62,13 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
   const isBtl = propertyCategory === "btl";
   // Worked out by the finance engine: never a formula here.
   const equity = homeEquity ? estimateHomeEquity(homeEquity) : null;
-  const equityShare = homeEquity?.sharePercent ?? null;
+  const equityShare = homeEquity
+    ? equityShareSubline(
+        homeEquity.homeSharePercent,
+        homeEquity.mortgageSharePercent,
+        homeEquity.mortgageBalance !== 0,
+      )
+    : null;
   return (
     <PageSection
       action={
@@ -115,11 +124,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
               <dt className={detailLabel()}>Your equity</dt>
               <dd className={detailValue()}>
                 <Money size="md" value={equity.yours} />
-                {equityShare !== null ? (
-                  <span className={detailSubline()}>
-                    {`At your ${new Intl.NumberFormat("en-GB").format(equityShare)}% share`}
-                  </span>
-                ) : null}
+                {equityShare ? <span className={detailSubline()}>{equityShare}</span> : null}
               </dd>
             </div>
           ) : null}

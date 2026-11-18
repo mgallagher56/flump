@@ -37,9 +37,11 @@ const pounds = (value: number) =>
 
 /** Says what the figure is before tax and which part is tax-free (an ISA), never a judgement. */
 export const interestSubtext = (interest: SavingsInterestEstimate): string => {
-  if (interest.isa > 0 && interest.outsideIsa > 0) return "Before tax. ISA interest is tax-free";
-  if (interest.isa > 0) return "Tax-free, in your ISAs";
-  return "Before tax";
+  if (interest.isa > 0 && interest.outsideIsa > 0) {
+    return "An estimate, before tax. ISA interest is tax-free.";
+  }
+  if (interest.isa > 0) return "An estimate. ISA interest is tax-free.";
+  return "An estimate, before tax.";
 };
 
 export const interestExplain = (interest: SavingsInterestEstimate): string => {
@@ -47,9 +49,10 @@ export const interestExplain = (interest: SavingsInterestEstimate): string => {
     "An estimate from each savings account's balance, interest rate and monthly saving, if the rate stays the same.",
   ];
   if (interest.isa > 0 && interest.outsideIsa > 0) {
-    parts.push(
-      `${pounds(interest.isa)} is from ISAs and ${pounds(interest.outsideIsa)} from other savings.`,
-    );
+    // Round the split so the two parts add up to the pounds shown on the card.
+    const isaShown = Math.round(interest.isa);
+    const otherShown = Math.round(interest.total) - isaShown;
+    parts.push(`${pounds(isaShown)} is from ISAs and ${pounds(otherShown)} from other savings.`);
   }
   parts.push(
     "Interest in an ISA is tax-free. Whether you pay tax on other interest depends on your other income.",

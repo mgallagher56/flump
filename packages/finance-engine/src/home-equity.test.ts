@@ -3,32 +3,62 @@ import { estimateHomeEquity } from "./home-equity.js";
 
 describe("estimateHomeEquity", () => {
   it("is value less mortgage for a home held solely", () => {
-    // 300,000 - 200,000 = 100,000; sole share is 100%, so yours = 100,000.
+    // 300,000 - 200,000 = 100,000; both held solely (100%), so yours = 100,000.
     expect(estimateHomeEquity({ homeValue: 300_000, mortgageBalance: 200_000 })).toEqual({
       whole: 100_000,
       yours: 100_000,
     });
   });
 
-  it("treats a null share as sole", () => {
-    // 250,000 - 150,000 = 100,000; null share means 100%, so yours = 100,000.
+  it("treats null shares as sole", () => {
+    // 250,000 - 150,000 = 100,000; null shares mean 100%, so yours = 100,000.
     expect(
-      estimateHomeEquity({ homeValue: 250_000, mortgageBalance: 150_000, sharePercent: null }),
+      estimateHomeEquity({
+        homeValue: 250_000,
+        homeSharePercent: null,
+        mortgageBalance: 150_000,
+        mortgageSharePercent: null,
+      }),
     ).toEqual({ whole: 100_000, yours: 100_000 });
   });
 
-  it("gives half the equity at a 50% joint share", () => {
-    // 400,000 - 240,000 = 160,000 whole; 160,000 x 50 / 100 = 80,000 yours.
+  it("gives half the equity when the home and the mortgage are both 50% joint", () => {
+    // Whole: 400,000 - 240,000 = 160,000.
+    // Yours: 400,000 x 50 / 100 - 240,000 x 50 / 100 = 200,000 - 120,000 = 80,000.
     expect(
-      estimateHomeEquity({ homeValue: 400_000, mortgageBalance: 240_000, sharePercent: 50 }),
+      estimateHomeEquity({
+        homeValue: 400_000,
+        homeSharePercent: 50,
+        mortgageBalance: 240_000,
+        mortgageSharePercent: 50,
+      }),
     ).toEqual({ whole: 160_000, yours: 80_000 });
   });
 
   it("gives the equity at a share other than half", () => {
-    // 350,000 - 125,000 = 225,000 whole; 225,000 x 40 / 100 = 90,000 yours.
+    // Whole: 350,000 - 125,000 = 225,000.
+    // Yours: 350,000 x 40 / 100 - 125,000 x 40 / 100 = 140,000 - 50,000 = 90,000.
     expect(
-      estimateHomeEquity({ homeValue: 350_000, mortgageBalance: 125_000, sharePercent: 40 }),
+      estimateHomeEquity({
+        homeValue: 350_000,
+        homeSharePercent: 40,
+        mortgageBalance: 125_000,
+        mortgageSharePercent: 40,
+      }),
     ).toEqual({ whole: 225_000, yours: 90_000 });
+  });
+
+  it("takes each side at its own share when the shares differ", () => {
+    // Sole home, 50% joint mortgage. Whole: 300,000 - 200,000 = 100,000.
+    // Yours: 300,000 x 100 / 100 - 200,000 x 50 / 100 = 300,000 - 100,000 = 200,000.
+    expect(
+      estimateHomeEquity({
+        homeValue: 300_000,
+        homeSharePercent: null,
+        mortgageBalance: 200_000,
+        mortgageSharePercent: 50,
+      }),
+    ).toEqual({ whole: 100_000, yours: 200_000 });
   });
 
   it("is the whole value when there is no mortgage", () => {
@@ -40,9 +70,15 @@ describe("estimateHomeEquity", () => {
   });
 
   it("returns negative equity as a negative number", () => {
-    // 180,000 - 195,000 = -15,000 whole; at a 50% share, -15,000 x 50 / 100 = -7,500 yours.
+    // Whole: 180,000 - 195,000 = -15,000.
+    // Yours at 50% of each: 90,000 - 97,500 = -7,500.
     expect(
-      estimateHomeEquity({ homeValue: 180_000, mortgageBalance: 195_000, sharePercent: 50 }),
+      estimateHomeEquity({
+        homeValue: 180_000,
+        homeSharePercent: 50,
+        mortgageBalance: 195_000,
+        mortgageSharePercent: 50,
+      }),
     ).toEqual({ whole: -15_000, yours: -7_500 });
   });
 

@@ -623,7 +623,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             ) : isLast ? (
               <>
                 <Icon icon={CheckCircle2} size="sm" />
-                {isEdit || isAdd ? "Finish editing" : "Finish setup"}
+                {isAdd ? "Done" : isEdit ? "Finish editing" : "Finish setup"}
               </>
             ) : (
               <>

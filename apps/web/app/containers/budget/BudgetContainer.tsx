@@ -126,7 +126,7 @@ const BudgetContainer: FC = () => {
   const [view, setView] = useState<BudgetView>("budget");
   // Fixed when the wizard opens, so saving amounts part way through never switches its mode.
   const [wizardMode, setWizardMode] = useState<"setup" | "add">("setup");
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // The one category whose entries are open in the list (E16 PR 5: rows open their entries).
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
@@ -266,14 +266,26 @@ const BudgetContainer: FC = () => {
     [entries],
   );
 
-  // ?setup=common opens the wizard once per visit, like the mortgage page's ?tool=.
+  // ?setup=common opens the wizard once per visit, like the mortgage page's ?tool=, then is taken
+  // out of the address (other params kept) so a reload does not open it again.
   const setupParam = searchParams.get(SETUP_PARAM);
   const handledSetupParam = useRef(false);
+  // The latest openWizard, so the effect below runs on the param alone.
+  const openWizardRef = useRef(openWizard);
+  openWizardRef.current = openWizard;
   useEffect(() => {
     if (setupParam !== SETUP_COMMON || handledSetupParam.current) return;
     handledSetupParam.current = true;
-    openWizard();
-  }, [setupParam]);
+    openWizardRef.current();
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete(SETUP_PARAM);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setupParam, setSearchParams]);
 
   const [actionError, setActionError] = useState<string | null>(null);
 

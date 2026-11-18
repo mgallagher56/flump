@@ -434,7 +434,7 @@ describe("BudgetSetupWizard", () => {
       expect(handlers.onAddEntry).not.toHaveBeenCalled();
     });
 
-    it("says this item for one missing common item and finishes as editing", async () => {
+    it("says this item for one missing common item", async () => {
       const handlers = renderAdd([
         savedEntry("Rent", "housing"),
         savedEntry("Council tax", "bills"),
@@ -445,6 +445,17 @@ describe("BudgetSetupWizard", () => {
       fireEvent.click(screen.getByRole("button", { name: "Add this item" }));
       await waitFor(() => expect(handlers.onAddEntry).toHaveBeenCalledTimes(1));
       expect(handlers.onAddEntry.mock.calls[0]?.[0].name).toBe("Groceries");
+    });
+
+    it("ends with Done on the last step", async () => {
+      const handlers = renderAdd(seeded());
+      for (let i = 0; i < 6; i++) {
+        fireEvent.click(screen.getByRole("button", { name: /next/i }));
+        await screen.findByText(`Step ${i + 2} of 7`);
+      }
+      expect(screen.queryByRole("button", { name: "Finish editing" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Done" }));
+      expect(handlers.onComplete).toHaveBeenCalledTimes(1);
     });
   });
 });

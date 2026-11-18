@@ -565,25 +565,64 @@ describe("accounts action, a mortgage added with the home's value", () => {
     expect(posted[1]).not.toHaveProperty("homeValue");
   });
 
-  it("names a buy-to-let home so it pairs with a buy-to-let mortgage", async () => {
+  it("never stores a buy-to-let value as a property here", async () => {
     const fetchMock = withAccounts([]);
     globalThis.fetch = fetchMock;
-    await createMortgage({
+    const res: any = await createMortgage({
       homeValue: "250000",
       accountSubtype: "btl_mortgage",
       ownership: "sole",
     });
+    expect(res.data).toMatchObject({ success: true });
+    // Only the mortgage is written; the buy-to-let value lives on the profile (mortgage page).
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     const posted = writes(fetchMock);
-    expect(posted[0]).toMatchObject({
-      name: "Buy-to-let property (your estimate)",
-      type: "Property",
-      balance: 250000,
-      ownership: "sole",
-    });
-    expect(posted[0].sharePercent ?? null).toBeNull();
+    expect(posted).toHaveLength(1);
+    expect(posted[0]).toMatchObject({ type: "Mortgage" });
   });
 
-  it("adds no second home when one of that kind is already there", async () => {
+  it("takes the home away again when the mortgage then fails, and returns that error", async () => {
+    const ok = withAccounts([]);
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const body = init?.body ? JSON.parse(String(init.body)) : null;
+        if (init?.method === "POST" && body?.type === "Mortgage") {
+          return jsonResponse({ message: "Server error" }, 500);
+        }
+        return ok(input, init);
+      });
+    globalThis.fetch = fetchMock;
+    const res: any = await createMortgage({ homeValue: "325000" });
+    expect(res.data.success).toBe(false);
+    expect(res.init.status).toBe(500);
+    const deletes = fetchMock.mock.calls.filter(
+      ([, init]) => (init as RequestInit | undefined)?.method === "DELETE",
+    );
+    expect(deletes).toHaveLength(1);
+    // The id comes from the home's create response.
+    expect(String(deletes[0][0])).toMatch(new RegExp(`/accounts/${accountWithDetailsFixture.id}$`));
+  });
+
+  it("still returns the mortgage's error when taking the home away fails too", async () => {
+    const ok = withAccounts([]);
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const body = init?.body ? JSON.parse(String(init.body)) : null;
+        if (init?.method === "POST" && body?.type === "Mortgage") {
+          return jsonResponse({ message: "Server error" }, 500);
+        }
+        if (init?.method === "DELETE") return jsonResponse({ message: "Unavailable" }, 503);
+        return ok(input, init);
+      });
+    globalThis.fetch = fetchMock;
+    const res: any = await createMortgage({ homeValue: "325000" });
+    expect(res.data.success).toBe(false);
+    expect(res.init.status).toBe(500);
+  });
+
+  it("adds no second home when a home is already there", async () => {
     const fetchMock = withAccounts([{ name: "Home (your estimate)", type: "Property" }]);
     globalThis.fetch = fetchMock;
     const res: any = await createMortgage({ homeValue: "325000" });

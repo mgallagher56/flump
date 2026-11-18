@@ -8,6 +8,7 @@ const mockSetProfile = vi.fn();
 const mockMarkChecklistStep = vi.fn().mockResolvedValue({});
 
 let mockSearchParams = new URLSearchParams();
+const mockSetSearchParams = vi.fn();
 
 let mockLoaderData: any = {
   accounts: [
@@ -36,7 +37,7 @@ vi.mock("react-router", () => ({
   ),
   useLoaderData: () => mockLoaderData,
   useNavigate: () => vi.fn(),
-  useSearchParams: () => [mockSearchParams, vi.fn()],
+  useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
@@ -628,11 +629,28 @@ describe("BudgetContainer", () => {
       expect(screen.getByRole("button", { name: "Edit budget" })).toBeDefined();
     });
 
+    it("?setup=common is cleared after it opens the wizard, keeping other params", () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: seeded };
+      mockSearchParams = new URLSearchParams("setup=common&month=6");
+      mockSetSearchParams.mockClear();
+      render(<BudgetContainer />);
+      expect(mockSetSearchParams).toHaveBeenCalledTimes(1);
+      const [update, options] = mockSetSearchParams.mock.calls[0] as [
+        (prev: URLSearchParams) => URLSearchParams,
+        { replace?: boolean },
+      ];
+      expect(options).toMatchObject({ replace: true });
+      // A reload then has no ?setup=common, so the wizard does not open again.
+      expect(update(new URLSearchParams("setup=common&month=6")).toString()).toBe("month=6");
+    });
+
     it("ignores any other ?setup= value", () => {
       mockLoaderData = { ...baseLoaderData, budgetEntries: seeded };
       mockSearchParams = new URLSearchParams("setup=other");
+      mockSetSearchParams.mockClear();
       render(<BudgetContainer />);
       expect(screen.queryByText(/Step 1 of/)).toBeNull();
+      expect(mockSetSearchParams).not.toHaveBeenCalled();
     });
   });
 
