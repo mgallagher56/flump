@@ -1,5 +1,5 @@
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
-import { Button, EmptyState, Illustration, PageBody, PageHeader } from "@repo/ui";
+import { Button, EmptyState, PageBody, PageHeader } from "@repo/ui";
 import { type FC, type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useLoaderData, useSearchParams } from "react-router";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
@@ -112,8 +112,8 @@ const AccountsContainer: FC = () => {
           ) : undefined
         }
         description="Everything you own and owe, in one place."
-        // With no accounts the empty state shows it: one illustration in view.
-        illustration={hasAccounts ? "empty-accounts" : undefined}
+        // The page icon, empty or filled in; the empty state below has none, so one is in view.
+        illustration="empty-accounts"
         title="Your accounts"
       />
 
@@ -166,7 +166,6 @@ const AccountsContainer: FC = () => {
             }
             description="Add a current account, savings or pension and your totals will appear here."
             headingLevel="h2"
-            illustration={<Illustration scene="empty-accounts" />}
             title="No accounts yet"
           />
         </div>

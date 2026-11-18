@@ -7,7 +7,6 @@ import {
   Button,
   CollapsibleDrawer,
   EmptyState,
-  Illustration,
   PageBody,
   PageHeader,
   ProjectionNotice,
@@ -229,8 +228,8 @@ export const DebtContainer: FC = () => {
           ? "What you owe, and an estimate of when it would be paid off at minimum payments."
           : undefined
       }
-      // With no debts the empty state shows it: one illustration in view.
-      illustration={hasDebts ? "empty-debt" : undefined}
+      // The page icon, empty or filled in; the empty state below has none, so one is in view.
+      illustration="empty-debt"
       title="Cards and loans"
     />
   );
@@ -345,7 +344,6 @@ export const DebtContainer: FC = () => {
               }
               description="Add a credit card, loan or overdraft to see when it would be paid off at your minimum payments."
               id="debt-empty"
-              illustration={<Illustration scene="empty-debt" />}
               title="No debts added"
             />
           </div>

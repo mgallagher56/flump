@@ -9,7 +9,6 @@ import {
   CollapsibleDrawer,
   EmptyState,
   Icon,
-  Illustration,
   PageBody,
   PageHeader,
   ProjectionNotice,
@@ -191,8 +190,8 @@ export const SavingsContainer: FC = () => {
           ) : undefined
         }
         description="Your balances, what you save each month and where it could get to."
-        // With no accounts the empty state shows it: one illustration in view.
-        illustration={hasAccounts ? "empty-savings" : undefined}
+        // The page icon, empty or filled in; the empty state below has none, so one is in view.
+        illustration="empty-savings"
         title="Your savings"
       />
 
@@ -281,7 +280,6 @@ export const SavingsContainer: FC = () => {
             description="Add a savings account or investment to see your total, what you save each month and where it could get to."
             headingLevel="h2"
             id="savings-empty"
-            illustration={<Illustration scene="empty-savings" />}
             title="No savings accounts yet"
           />
         </div>

@@ -7,7 +7,7 @@ import {
   profileFactsFromProfile,
   salarySacrificeFromProfile,
 } from "@flump/finance-engine";
-import { Button, EmptyState, Icon, Illustration, PageBody, PageHeader } from "@repo/ui";
+import { Button, EmptyState, Icon, PageBody, PageHeader } from "@repo/ui";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Link, useLoaderData, useLocation } from "react-router";
@@ -281,12 +281,11 @@ export const PensionContainer: FC = () => {
   if (!hasPots && !hasSalary) {
     return (
       <PageBody>
-        <PageHeader title="Your pension" />
+        <PageHeader illustration="empty-pension" title="Your pension" />
         <EmptyState
           action={addPotButton("md")}
           description="Add a pension pot to see its value and what goes in each month."
           headingLevel="h2"
-          illustration={<Illustration scene="empty-pension" />}
           title="No pension pots yet"
         />
         {dialog}
@@ -298,7 +297,7 @@ export const PensionContainer: FC = () => {
     <PageBody>
       <PageHeader
         actions={addPotButton("sm")}
-        // The empty state above has its own; this one is for a page with pots.
+        // The page icon, empty or filled in; the empty state has none, so one is in view.
         illustration="empty-pension"
         subtitle="Your pots and what goes in each month."
         title="Your pension"
