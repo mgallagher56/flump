@@ -61,6 +61,31 @@ describe("<HousingStep />", () => {
     expect(screen.getByLabelText(/what your home is worth/i)).toBeDefined();
   });
 
+  it("shows the equity once a home value is typed, whole home (no share asked)", () => {
+    setup();
+    fireEvent.click(screen.getByRole("radio", { name: /paying a mortgage/i }));
+    expect(screen.queryByTestId("home-equity-line")).toBeNull();
+    fireEvent.change(screen.getByLabelText(/what your home is worth/i), {
+      target: { value: "300000" },
+    });
+    fireEvent.change(screen.getByLabelText(/mortgage left to pay/i), {
+      target: { value: "200000" },
+    });
+    // 300,000 - 200,000 = 100,000.
+    const line = screen.getByTestId("home-equity-line");
+    expect(line.textContent).toContain("£100,000");
+    expect(line.textContent).not.toMatch(/share/);
+  });
+
+  it("owning with no mortgage shows the whole value as equity", () => {
+    setup();
+    fireEvent.click(screen.getByRole("radio", { name: /own with no mortgage/i }));
+    fireEvent.change(screen.getByLabelText(/what your home is worth/i), {
+      target: { value: "275000" },
+    });
+    expect(screen.getByTestId("home-equity-line").textContent).toContain("£275,000");
+  });
+
   it("living with family or friends asks only an optional amount, with no rent, mortgage or property fields", () => {
     setup();
     fireEvent.click(screen.getByRole("radio", { name: /living with family or friends/i }));

@@ -118,4 +118,73 @@ describe("<MortgageEditDialog />", () => {
     customRender(<MortgageEditDialog {...baseProps()} saveError="We could not save." />);
     expect(screen.getByRole("alert").textContent).toContain("We could not save.");
   });
+
+  describe("home value", () => {
+    it("is not offered unless the page asks for it", () => {
+      customRender(<MortgageEditDialog {...baseProps()} />);
+      expect(screen.queryByLabelText(/What your home is worth/)).toBeNull();
+      expect(screen.queryByTestId("home-equity-line")).toBeNull();
+    });
+
+    it("offers the home value with its hint and reports changes", () => {
+      const onEditHomeValueChange = vi.fn();
+      customRender(
+        <MortgageEditDialog
+          {...baseProps()}
+          editHomeValue={null}
+          homeValueMode="input"
+          onEditHomeValueChange={onEditHomeValueChange}
+        />,
+      );
+      expect(screen.getByText("Your own estimate. Saved as your home on Accounts.")).toBeDefined();
+      // No value typed: no equity line yet.
+      expect(screen.queryByTestId("home-equity-line")).toBeNull();
+      fireEvent.change(screen.getByLabelText(/^What your home is worth/), {
+        target: { value: "300000" },
+      });
+      expect(onEditHomeValueChange).toHaveBeenCalledWith(300000);
+    });
+
+    it("shows the equity at the user's share for a joint mortgage", () => {
+      customRender(
+        <MortgageEditDialog
+          {...baseProps()}
+          editHomeValue={300000}
+          equitySharePercent={50}
+          homeValueMode="input"
+          onEditHomeValueChange={vi.fn()}
+        />,
+      );
+      // (300,000 - 135,400) x 50 / 100 = 164,600 / 2 = 82,300.
+      const line = screen.getByTestId("home-equity-line");
+      expect(line.textContent).toContain("£82,300");
+      expect(line.textContent).toContain("At your 50% share");
+    });
+
+    it("with two or more homes shows where the value comes from instead of the field", () => {
+      customRender(
+        <MortgageEditDialog {...baseProps()} editHomeValue={450000} homeValueMode="fromAccounts" />,
+      );
+      expect(screen.queryByLabelText(/What your home is worth/)).toBeNull();
+      expect(
+        screen.getByText("Your home value comes from your properties on Accounts."),
+      ).toBeDefined();
+      // 450,000 - 135,400 = 314,600.
+      expect(screen.getByTestId("home-equity-line").textContent).toContain("£314,600");
+    });
+
+    it("asks what the property is worth for buy to let", () => {
+      customRender(
+        <MortgageEditDialog
+          {...baseProps()}
+          editHomeValue={null}
+          homeValueMode="input"
+          propertyCategory="btl"
+          onEditHomeValueChange={vi.fn()}
+        />,
+      );
+      expect(screen.getByLabelText(/^What the property is worth/)).toBeDefined();
+      expect(screen.queryByText(/Saved as your home on Accounts/)).toBeNull();
+    });
+  });
 });

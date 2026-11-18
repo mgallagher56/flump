@@ -49,3 +49,12 @@ export const unsavedNote = cva({
     "& p": { margin: 0 },
   },
 });
+
+export const homeValueNote = cva({
+  base: {
+    gridColumn: "1 / -1",
+    margin: 0,
+    textStyle: "body.sm",
+    color: "text.secondary",
+  },
+});

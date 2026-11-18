@@ -13,11 +13,13 @@ import {
   TextInput,
 } from "@repo/ui";
 import type { FC } from "react";
+import { HomeEquityLine } from "~/features/mortgage/components/HomeEquityLine";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
   dialogBody,
   editGrid,
   estimateRow,
+  homeValueNote,
   termPair,
   unsavedNote,
 } from "./MortgageEditDialog.styles";
@@ -69,6 +71,17 @@ export interface MortgageEditDialogProps {
   onEditMortgageTypeChange: (value: MortgageKind) => void;
   onEditFixEndDateChange?: (value: string) => void;
   onEditMonthlyPaymentChange?: (value: number | null) => void;
+  /**
+   * How the home value is offered: "input" shows the field (one or no residential property, or
+   * buy to let), "fromAccounts" shows one line instead (two or more residential properties), and
+   * "hidden" (the default) shows neither.
+   */
+  homeValueMode?: "input" | "fromAccounts" | "hidden";
+  /** The home value being edited (or, with "fromAccounts", the saved total); `null` when empty. */
+  editHomeValue?: number | null;
+  onEditHomeValueChange?: (value: number | null) => void;
+  /** The user's share of a joint mortgage, for the equity line; `null` when held solely. */
+  equitySharePercent?: number | null;
 }
 
 const TYPE_OPTIONS = [
@@ -108,10 +121,15 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
   onEditMortgageTypeChange,
   onEditFixEndDateChange,
   onEditMonthlyPaymentChange,
+  homeValueMode = "hidden",
+  editHomeValue = null,
+  onEditHomeValueChange,
+  equitySharePercent = null,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const rateValue = editInterestRate.trim() === "" ? null : Number(editInterestRate);
   const hasEnteredPayment = editMonthlyPayment !== null && editMonthlyPayment > 0;
+  const isBtl = propertyCategory === "btl";
 
   return (
     <Dialog
@@ -236,7 +254,37 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
               )}
             </FormField>
           ) : null}
+          {homeValueMode === "input" && onEditHomeValueChange ? (
+            <FormField
+              hint={
+                isBtl ? "Your own estimate." : "Your own estimate. Saved as your home on Accounts."
+              }
+              label={isBtl ? "What the property is worth" : "What your home is worth"}
+            >
+              {(field) => (
+                <CurrencyInput
+                  {...controlProps(field)}
+                  min={0}
+                  value={editHomeValue}
+                  onValueChange={(v) => onEditHomeValueChange(v)}
+                />
+              )}
+            </FormField>
+          ) : null}
+          {homeValueMode === "fromAccounts" ? (
+            <p className={homeValueNote()}>
+              Your home value comes from your properties on Accounts.
+            </p>
+          ) : null}
         </div>
+
+        {homeValueMode !== "hidden" ? (
+          <HomeEquityLine
+            homeValue={editHomeValue}
+            mortgageBalance={editLoanAmount}
+            sharePercent={equitySharePercent}
+          />
+        ) : null}
 
         <RadioCardGroup
           legend="Repayment type"

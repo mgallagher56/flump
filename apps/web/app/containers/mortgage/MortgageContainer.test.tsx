@@ -3,7 +3,7 @@ import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { contractFetch } from "~/test/fixtures/contractResponses";
 import customRender from "~/testUtils/customRender";
-import MortgageContainer from "./MortgageContainer";
+import MortgageContainer, { HOME_VALUE_NOT_SAVED } from "./MortgageContainer";
 
 // Mock sub-components to keep container unit test focused
 vi.mock("~/features/mortgage/components/MortgageTracker", () => ({
@@ -142,7 +142,9 @@ describe("<MortgageContainer />", () => {
       const { getByRole, getByText, queryByText, container } = customRender(<MortgageContainer />);
       const empty = container.querySelector("#mortgage-empty") as HTMLElement;
       expect(empty).not.toBeNull();
-      expect(container.querySelector("#mortgage-empty-illustration")).not.toBeNull();
+      // One illustration in view: the page icon in the header, none in the empty state.
+      expect(container.querySelector("#mortgage-empty-illustration")).toBeNull();
+      expect(container.querySelectorAll("svg[data-scene]")).toHaveLength(1);
       expect(getByRole("heading", { name: "No mortgage added" })).toBeDefined();
       expect(
         getByText("If you have a mortgage, add it to see your payment and when the term ends."),
@@ -1017,6 +1019,201 @@ describe("<MortgageContainer />", () => {
       const { container, getByRole } = customRender(<MortgageContainer />);
       expect(ltvStrip(container)).not.toMatch(/\b0(\.0)?%/);
       expect(getByRole("button", { name: "Add your home's value" })).toBeDefined();
+    });
+  });
+
+  describe("home value and equity", () => {
+    const posts = (fetchSpy: ReturnType<typeof vi.spyOn>) =>
+      fetchSpy.mock.calls.filter(([, init]) => (init as RequestInit)?.method === "POST");
+    const bodyOf = (call: unknown[]) => JSON.parse(String((call[1] as RequestInit).body));
+    const noHome = (overrides: Record<string, unknown> = {}) => ({
+      accounts: [account({ interestRate: 4.5, termMonths: 240, ...overrides })],
+      accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
+      userProfile: {},
+    });
+
+    test("Your details shows the equity from the saved home and mortgage", () => {
+      loaderData = loaded();
+      const { container } = customRender(<MortgageContainer />);
+      const row = container.querySelector("[data-testid='mortgage-equity']") as HTMLElement;
+      // 350,000 - 135,400 = 214,600.
+      expect(row.textContent).toContain("Your equity");
+      expect(row.textContent).toContain("£214,600");
+      expect(row.textContent).not.toMatch(/share/);
+    });
+
+    test("a joint mortgage shows the equity at the user's share", () => {
+      loaderData = loaded({ ownership: "joint", sharePercent: 40 });
+      const { container } = customRender(<MortgageContainer />);
+      const row = container.querySelector("[data-testid='mortgage-equity']") as HTMLElement;
+      // (350,000 - 135,400) x 40 / 100 = 214,600 x 0.4 = 85,840.
+      expect(row.textContent).toContain("£85,840");
+      expect(row.textContent).toContain("At your 40% share");
+    });
+
+    test("no equity row without a home value", () => {
+      loaderData = noHome();
+      const { container } = customRender(<MortgageContainer />);
+      expect(container.querySelector("[data-testid='mortgage-equity']")).toBeNull();
+    });
+
+    test("a changed value updates the one home Property account with its version", async () => {
+      setApiEnv();
+      loaderData = {
+        ...loaded(),
+        accounts: [
+          loaded().accounts[0],
+          { ...loaded().accounts[1], updatedAt: "2026-06-01T10:00:00.000Z" },
+        ],
+      };
+      const fetchSpy = okFetch();
+      const { findByText } = customRender(<MortgageContainer />);
+      openEdit();
+      const input = field(/^What your home is worth/);
+      expect(input.value).toContain("350,000");
+      expect(screen.getByText("Your own estimate. Saved as your home on Accounts.")).toBeDefined();
+      fireEvent.change(input, { target: { value: "360000" } });
+      // 360,000 - 135,400 = 224,600, shown before saving.
+      expect(
+        within(screen.getByRole("dialog")).getByTestId("home-equity-line").textContent,
+      ).toContain("£224,600");
+      save();
+      await findByText(/home value/);
+      const call = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/home"));
+      if (!call) throw new Error("expected a PATCH of the home account");
+      expect(bodyOf(call)).toEqual({ balance: 360000 });
+      expect(new Headers((call[1] as RequestInit).headers).get("If-Match")).toBeTruthy();
+      expect(posts(fetchSpy).some(([url]) => String(url).endsWith("/accounts"))).toBe(false);
+    });
+
+    test("a failed home value save after the mortgage saved says what was kept", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      const ok = contractFetch();
+      vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+        if (String(input).endsWith("/accounts/home")) {
+          return new Response(JSON.stringify({ message: "Server error" }), { status: 500 });
+        }
+        return ok(input, init);
+      });
+      const { findByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
+      fireEvent.change(field(/^What your home is worth/), { target: { value: "360000" } });
+      save();
+      expect(await findByText(HOME_VALUE_NOT_SAVED)).toBeDefined();
+      expect(screen.queryByText(/Nothing has changed/)).toBeNull();
+    });
+
+    test("an unchanged value is not sent", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      const fetchSpy = okFetch();
+      const { findAllByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
+      save();
+      const messages = await findAllByText(/Saved repayment type/);
+      expect(messages.some((m) => /home value/.test(m.textContent ?? ""))).toBe(false);
+      expect(patches(fetchSpy).some(([url]) => String(url).endsWith("/accounts/home"))).toBe(false);
+    });
+
+    test("with no home yet, a typed value adds one with the mortgage's share", async () => {
+      setApiEnv();
+      loaderData = noHome({ ownership: "joint", sharePercent: 40 });
+      const fetchSpy = okFetch();
+      const { findByText } = customRender(<MortgageContainer />);
+      openEdit();
+      expect(within(screen.getByRole("dialog")).queryByTestId("home-equity-line")).toBeNull();
+      fireEvent.change(field(/^What your home is worth/), { target: { value: "300000" } });
+      // (300,000 - 135,400) x 40 / 100 = 164,600 x 0.4 = 65,840.
+      const line = within(screen.getByRole("dialog")).getByTestId("home-equity-line");
+      expect(line.textContent).toContain("£65,840");
+      expect(line.textContent).toContain("At your 40% share");
+      save();
+      await findByText(/home value/);
+      const call = posts(fetchSpy).find(([url]) => String(url) === "/api/accounts");
+      if (!call) throw new Error("expected a POST of the home account");
+      expect(bodyOf(call)).toEqual({
+        name: "Home (your estimate)",
+        type: "Property",
+        balance: 300000,
+        ownership: "joint",
+        sharePercent: 40,
+      });
+      expect(mockRevalidate).toHaveBeenCalled();
+    });
+
+    test("with no value entered, nothing is added and no equity shows", async () => {
+      setApiEnv();
+      loaderData = noHome();
+      const fetchSpy = okFetch();
+      const { findAllByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
+      save();
+      await findAllByText(/Saved repayment type/);
+      expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
+    });
+
+    test("with two homes the value comes from Accounts and is not offered", async () => {
+      setApiEnv();
+      loaderData = {
+        ...loaded(),
+        accounts: [
+          ...loaded().accounts,
+          { id: "home2", name: "Holiday cottage", type: "Property", balance: 150000 },
+        ],
+      };
+      const fetchSpy = okFetch();
+      const { findAllByText } = customRender(<MortgageContainer />);
+      openEdit();
+      const dialog = within(screen.getByRole("dialog"));
+      expect(dialog.queryByLabelText(/^What your home is worth/)).toBeNull();
+      expect(
+        dialog.getByText("Your home value comes from your properties on Accounts."),
+      ).toBeDefined();
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
+      save();
+      await findAllByText(/Saved repayment type/);
+      expect(patches(fetchSpy).some(([url]) => /\/accounts\/home2?$/.test(String(url)))).toBe(
+        false,
+      );
+      expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
+    });
+
+    test("buy to let saves the property value on the profile", async () => {
+      setApiEnv();
+      loaderData = {
+        accounts: [],
+        accountDetails: [],
+        userProfile: {
+          hasBuyToLet: true,
+          buyToLetMortgageBalance: 200000,
+          buyToLetMortgageRate: 5,
+          buyToLetMortgageType: "interest-only",
+          buyToLetPropertyValue: 300000,
+        },
+      };
+      const fetchSpy = okFetch();
+      const { container, findByText } = customRender(<MortgageContainer />);
+      // 300,000 - 200,000 = 100,000, sole (the profile holds no share).
+      const row = container.querySelector("[data-testid='mortgage-equity']") as HTMLElement;
+      expect(row.textContent).toContain("£100,000");
+      fireEvent.click(
+        within(container.querySelector("#mortgage-summary") as HTMLElement).getByRole("button", {
+          name: /^Edit$/,
+        }),
+      );
+      const input = field(/^What the property is worth/);
+      expect(input.value).toContain("300,000");
+      fireEvent.change(input, { target: { value: "320000" } });
+      save();
+      await findByText(/property value/);
+      const profilePatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/user-profile"));
+      if (!profilePatch) throw new Error("expected a profile PATCH");
+      expect(bodyOf(profilePatch)).toMatchObject({ buyToLetPropertyValue: 320000 });
+      expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
     });
   });
 });

@@ -14,7 +14,11 @@ vi.mock("~/utils/auth.server", () => ({
 
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { apiConfig } from "~/config.server";
-import { contractFetch, jsonResponse } from "~/test/fixtures/contractResponses";
+import {
+  accountWithDetailsFixture,
+  contractFetch,
+  jsonResponse,
+} from "~/test/fixtures/contractResponses";
 import { action as accountsAction } from "./app.accounts._index";
 import { action as debtAction } from "./app.debt";
 import { action as onboardingAction } from "./app.onboarding";
@@ -504,6 +508,98 @@ describe("accounts action, connectBank", () => {
       oauth: true,
       redirectUrl: "https://bank.example/auth",
     });
+  });
+});
+
+describe("accounts action, a mortgage added with the home's value", () => {
+  const createMortgage = (fields: Record<string, string>) => {
+    const form = new FormData();
+    form.set("intent", "create");
+    form.set("name", "Nationwide mortgage");
+    form.set("type", "Mortgage");
+    form.set("balance", "-200000");
+    for (const [k, v] of Object.entries(fields)) form.set(k, v);
+    return accountsAction({
+      request: new Request("http://localhost/app", { method: "POST", body: form }),
+      params: {},
+      context: {},
+    } as any);
+  };
+  /** Answers GET /accounts with `existing`, everything else with a contract-valid body. */
+  const withAccounts = (existing: unknown[]) =>
+    vi.fn().mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? "GET";
+      if (method === "GET" && new URL(String(input)).pathname.endsWith("/accounts")) {
+        return jsonResponse(
+          existing.map((row) => ({ ...accountWithDetailsFixture, ...(row as object) })),
+          200,
+        );
+      }
+      return contractFetch()(input, init);
+    });
+  const writes = (fetchMock: ReturnType<typeof vi.fn>) =>
+    fetchMock.mock.calls
+      .filter(([, init]) => (init as RequestInit).method === "POST")
+      .map(([, init]) => JSON.parse(String((init as RequestInit).body)));
+
+  it("adds the home first, with the mortgage's ownership and share, then the mortgage", async () => {
+    const fetchMock = withAccounts([]);
+    globalThis.fetch = fetchMock;
+    const res: any = await createMortgage({
+      homeValue: "325000",
+      ownership: "joint",
+      sharePercent: "40",
+    });
+    expect(res.data).toMatchObject({ success: true });
+    const posted = writes(fetchMock);
+    expect(posted).toHaveLength(2);
+    expect(posted[0]).toEqual({
+      name: "Home (your estimate)",
+      type: "Property",
+      balance: 325000,
+      ownership: "joint",
+      sharePercent: 40,
+    });
+    expect(posted[1]).toMatchObject({ name: "Nationwide mortgage", type: "Mortgage" });
+    // The contract is a strict object: the extra form field never reaches /accounts.
+    expect(posted[1]).not.toHaveProperty("homeValue");
+  });
+
+  it("names a buy-to-let home so it pairs with a buy-to-let mortgage", async () => {
+    const fetchMock = withAccounts([]);
+    globalThis.fetch = fetchMock;
+    await createMortgage({
+      homeValue: "250000",
+      accountSubtype: "btl_mortgage",
+      ownership: "sole",
+    });
+    const posted = writes(fetchMock);
+    expect(posted[0]).toMatchObject({
+      name: "Buy-to-let property (your estimate)",
+      type: "Property",
+      balance: 250000,
+      ownership: "sole",
+    });
+    expect(posted[0].sharePercent ?? null).toBeNull();
+  });
+
+  it("adds no second home when one of that kind is already there", async () => {
+    const fetchMock = withAccounts([{ name: "Home (your estimate)", type: "Property" }]);
+    globalThis.fetch = fetchMock;
+    const res: any = await createMortgage({ homeValue: "325000" });
+    expect(res.data).toMatchObject({ success: true });
+    const posted = writes(fetchMock);
+    expect(posted).toHaveLength(1);
+    expect(posted[0]).toMatchObject({ type: "Mortgage" });
+    expect(posted[0]).not.toHaveProperty("homeValue");
+  });
+
+  it("reads nothing extra and adds no home without a value", async () => {
+    const fetchMock = withAccounts([]);
+    globalThis.fetch = fetchMock;
+    await createMortgage({});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(writes(fetchMock)).toHaveLength(1);
   });
 });
 

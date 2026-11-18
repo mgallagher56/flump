@@ -3,6 +3,7 @@ import {
   canAccountBeJoint,
   DEFAULT_JOINT_SHARE_PERCENT,
   describeJointLiabilityNotice,
+  isBuyToLetAccount,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -32,6 +33,7 @@ import {
 } from "~/features/accounts/accountSubtypes";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
+import { HomeEquityLine } from "~/features/mortgage/components/HomeEquityLine";
 import type { loader } from "~/routes/app.accounts._index";
 import { versionField } from "~/services/conflict";
 import {
@@ -159,6 +161,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [modalOpen, setModalOpen] = useState(defaultOpen);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
+  // Add a mortgage only: the home's value, sent as `homeValue` so the action adds the home too.
+  const [homeValue, setHomeValue] = useState<number | null>(null);
   const accountName = (account ?? accounts.find((option) => option.id === accountId))?.name;
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
   const cancelDeleteRef = useRef<HTMLButtonElement>(null);
@@ -244,6 +248,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     const latest = reopenWith.current;
     if (openRequestKey > 0 && !latest.isEditAccount) {
       setPlanError(null);
+      setHomeValue(null);
       latest.dismissSave();
       latest.dismissDelete();
       setFormInput({
@@ -265,6 +270,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     (e: { stopPropagation: () => void }) => {
       e.stopPropagation();
       setPlanError(null);
+      setHomeValue(null);
       dismissSave();
       dismissDelete();
       setFormInput({
@@ -355,6 +361,25 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   });
   const effectiveOwnership: AccountOwnership =
     jointEligible && formInput.ownership === "joint" ? "joint" : "sole";
+  const resolvedShare =
+    effectiveOwnership === "joint"
+      ? Math.min(
+          100,
+          Math.max(1, Math.round(formInput.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)),
+        )
+      : null;
+
+  // Adding a mortgage asks for the home's value too, unless a property of the same kind
+  // (residential or buy to let, as loan to value pairs them) is already on Accounts.
+  const addingMortgage = !isEditAccount && formInput.type?.[0] === MORTGAGE;
+  const mortgageIsBtl = isBuyToLetAccount({
+    name: formInput.name,
+    accountSubtype: formInput.accountSubtype || null,
+  });
+  const hasPropertyOfKind = accounts.some(
+    (option) => option.type === PROPERTY && isBuyToLetAccount(option) === mortgageIsBtl,
+  );
+  const showHomeValue = addingMortgage && !hasPropertyOfKind;
 
   const onSave = useCallback(() => {
     const {
@@ -365,7 +390,6 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       studentLoanPlan,
       creditLimit,
       promoZeroPercentUntil,
-      sharePercent,
     } = formInput;
     const accountType = type?.[0];
     if (accountType === STUDENT_LOAN && !studentLoanPlan[0]) {
@@ -373,10 +397,6 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       return;
     }
     const stored = toStoredBalance(accountType, balance);
-    const resolvedShare =
-      effectiveOwnership === "joint"
-        ? Math.min(100, Math.max(1, Math.round(sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)))
-        : null;
     const supportsSubtype =
       accountType === SAVING || accountType === INVESTMENT || accountType === MORTGAGE;
     const supportsCreditFields = accountType === CREDIT_CARD || accountType === OVERDRAFT;
@@ -402,6 +422,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           : isEditAccount
             ? { creditLimit: "", promoZeroPercentUntil: "" }
             : {}),
+        ...(showHomeValue && homeValue !== null && homeValue > 0
+          ? { homeValue: String(homeValue) }
+          : {}),
       },
       { method: "POST" },
     );
@@ -410,6 +433,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     account,
     accounts,
     effectiveOwnership,
+    resolvedShare,
+    showHomeValue,
+    homeValue,
     isEditAccount,
     formInput,
     fetcher,
@@ -677,6 +703,37 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               <p className={jointNotice()} role="note">
                 An ISA or pension is held in one name, so this account will be saved as sole.
               </p>
+            ) : null}
+            {showHomeValue ? (
+              <>
+                <FormField
+                  hint={
+                    mortgageIsBtl
+                      ? "Your own estimate. We add it as the property, so you do not need a separate property account."
+                      : "Your own estimate. We add it as your home, so you do not need a separate property account."
+                  }
+                  label={
+                    mortgageIsBtl
+                      ? "What the property is worth (optional)"
+                      : "What your home is worth (optional)"
+                  }
+                >
+                  {(field) => (
+                    <CurrencyInput
+                      {...controlProps(field)}
+                      min={0}
+                      name="homeValue"
+                      value={homeValue}
+                      onValueChange={setHomeValue}
+                    />
+                  )}
+                </FormField>
+                <HomeEquityLine
+                  homeValue={homeValue}
+                  mortgageBalance={formInput.balance === "" ? null : Number(formInput.balance)}
+                  sharePercent={resolvedShare}
+                />
+              </>
             ) : null}
             {formInput.type?.[0] === CREDIT_CARD || formInput.type?.[0] === OVERDRAFT ? (
               <>
