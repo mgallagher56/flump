@@ -80,6 +80,8 @@ When spawning any subagent (Agent/Task tool, workflows, parallel agents, or sess
 
 Never use `fable` for anything outside the jobs above. When in doubt between `haiku` and `sonnet`, use `sonnet`: a wrong trivial answer costs more than the saving. Between any other two tiers, use the cheaper one.
 
+**Sessions count too.** Any session an agent starts (a lane session, a fork, a cloud session) is given an explicit model, chosen by the same tiers. A session started without one inherits the starter's model, which is usually the most expensive.
+
 Enforcement lives in `.claude/`:
 
 - `.claude/agents/explorer.md` (`model: sonnet`, read-only tools): simple search and investigation.
@@ -120,10 +122,11 @@ Every token an agent reads is paid for again on each later turn of that session,
 - **Do not poll.** Wait for the notification from a background command, subagent or session instead of re-checking it. Run long commands in the background.
 - **Pick the cheapest model that fits** (section 6), and give mechanical work to `sonnet`.
 - **Keep command output short.** Use `rtk` (section 7), `--json` with a `-q` filter on `gh`, and `| tail` or `| head` on anything long.
+- **Coordinating lane sessions.** A session that coordinates others follows [`docs/agents/coordinator.md`](./docs/agents/coordinator.md).
 
 ## 9. DEPENDENCY VERSIONS
 
-- A dependency declared in two or more workspace `package.json` files (root, `apps/*`, `packages/*`) must use the same version string everywhere. `bun scripts/check-dependency-versions.ts` enforces this in `check:laws` (and so in CI); peerDependencies ranges are not compared. Deliberate exceptions go in `ALLOWED_MISMATCHES` in `scripts/lib/dependency-versions.ts`, each with a reason.
+- A dependency declared in two or more workspace `package.json` files (root, `apps/*`, `packages/*`) must use the same version string everywhere. `bun scripts/check-dependency-versions.ts` enforces this in `check:laws` (and so in CI); peerDependencies ranges are not compared. Deliberate exceptions go in `ALLOWED_MISMATCHES` in `scripts/lib/dependency-versions.ts`, each with a reason and with sign-off first (section 15).
 - Renovate groups non-major updates into one PR and raises major updates one PR per package; each covers every workspace that declares the package. When bumping by hand, bump every workspace together.
 - Bun catalogs (`workspaces.catalog` and `"catalog:"` references) are deferred: Renovate's bun manager does not extract catalog entries ([`lib/modules/manager/bun/extract.ts`](https://github.com/renovatebot/renovate/blob/main/lib/modules/manager/bun/extract.ts) only reads `workspaces.packages`), so catalog versions would never get upgrade PRs. Revisit when Renovate adds support.
 
@@ -160,4 +163,22 @@ Three documents in `docs/ux/` are the standing rules for how Flump behaves and l
 - **Plain, factual, even-handed.** Everyday words, sentences of 25 words at most, sentence case, en-GB, no exclamation marks, em dashes or ampersands. One approved word per concept (guide section 6): "debts" not "liabilities", "what you own" not "assets", "left over each month" not "surplus", "estimate" for anything computed about the future or tax.
 - **Never judge anyone's finances** (owner rule, guide 2.3): no "only" or "just" about money, no ranking renting below owning, no deprivation statistics at the reader, no red or warnings for ordinary situations.
 - **Facts, not recommendations.** The advice boundary policy (`docs/compliance/advice-boundary-policy.md`, R1 to R8) and the claims rule (E7) outrank everything; the guide restates them in section 7. Fixed wording (notices, the MoneyHelper line, regulatory statements; guide 7.3) is never reworded without the owner.
-- **Guard.** `bun scripts/check-copy.ts` (part of `check:laws`) is a ratchet over `scripts/copy-baseline.json`. `--list <path>` prints the hits under a path. After fixing copy, run `--write-baseline` and commit it. A false positive goes in `ALLOWED_PHRASES` with a reason.
+- **Guard.** `bun scripts/check-copy.ts` (part of `check:laws`) is a ratchet over `scripts/copy-baseline.json`. `--list <path>` prints the hits under a path. After fixing copy, run `--write-baseline` and commit it. A false positive goes in `ALLOWED_PHRASES` with a reason and with sign-off first (section 15).
+
+## 12. INDEPENDENT REVIEW LAW
+
+No pull request merges without a review by a different agent from the one that wrote it: a separate session or a fresh review subagent that wrote none of the change. This applies to every agent working in the repo, including non-Claude agents. The PR description names who reviewed it and what they could not verify. Release PRs (`chore(main): release`) are merged by the owner and are exempt.
+
+## 13. OPEN DECISIONS LAW
+
+Every plan document carries a status line near the top: `Decisions: open` or `Decisions: accepted on <date>`. A plan with unanswered owner decisions is implemented only in the parts those decisions do not touch. Code must not invent a default for an undecided question.
+
+## 14. HONEST TESTS LAW
+
+- Every new or changed financial calculation has at least one test per behaviour whose expected value is worked out by hand, with the working in a comment.
+- A test may not derive its expected value from the function under test.
+- A PR report states which tests were skipped locally (for example, those needing a database). "Passes locally" is never claimed for tests that did not run.
+
+## 15. GUARD CHANGES LAW
+
+Changing an allow-list, a numeric limit in a test or law, a scanner suppression, a required check or a security exception needs sign-off before the change is made: from the owner for security exceptions and scanner suppressions, from the coordinator or owner for the rest. The PR description lists every such change under a heading "Guard changes", or says "None". Sample tokens and ids in tests are built at runtime, never suppressed.
