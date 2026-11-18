@@ -943,13 +943,31 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Status (2026-11-17):** `S0`–`S5` merged (`#750`, `#758`, corrected by `#768`). `#770` delivers RD6 (one projection: the forecaster's what-if moved from Pension to the Retirement scenario on the engine projection, workplace contributions counted), RD9 (friends-beta gate: `BETA_OPEN` or `RETIREMENT_ALLOWED_USER_IDS`) and RD11 (MoneyHelper pension guidance line). Remaining: the budget-built target's "changes" amount per line (S4), `S6`–`S9` (tax and withdrawal slices, inheritance tax, self-employed view, MCP evals, mobile and two-person views, gated by E29a/E29b).
 - **Labels:** needs-triage
 
+## E34. Shared finances for couples
+
+- **Severity:** P2 (owner request, 2026-11-15). Slice C1 now; C3 onward after launch and the solicitor's view (CD9).
+- **Blocked by:** none for C1. C2 needs C1. C3 needs C2 and a specialist charity's safety review (CD7). C3 to C5 need the owner's approval of the help line wording (CD10). C6 needs E33; C7 needs E17 and E12.
+- **Done when:** each person keeps their own login and their own data; nothing is shared until its owner shares it (private by default, CD1); members are equal, with no administrator (CD4); a household has two people (CD5); either person can stop sharing or leave at once, without the other's agreement and without any message to the other person (CD6); nobody can lock the other out or delete their data; tax is always worked out per person; joint items count at the person's share in their own figures; a shared item reaches a partner's AI connection only if its owner opts in (CD8).
+- **Notes:** the owner accepted CD1 to CD10 as recommended on 2026-11-17. The safety rules G1 to G10 in the plan are requirements. Slices: C1 joint marker and share on accounts, budget entries and housing for one user; C2 combine two person pictures in the engine; C3 household, invitation (Flump's own link, CD3), leave and the help line; C4 per-item sharing and the "Me / Household" switch; C5 shared budget, Breathing room and check-in; C6 retirement for two; C7 MCP `household` scope and mobile. Plan: [E34-shared-finances-research.md](plans/E34-shared-finances-research.md).
+- **Status (2026-11-18):** `Slice 1` (`#748`, engine joint-share helpers) and `Slice 2` (`#757`, joint marking and share on accounts) merged. The rest of C1 (joint marking on budget entries and housing, and a property following its mortgage's share) is in the backend, engine and docs review PR. C2 to C7 have no PR yet.
+- **Labels:** needs-triage
+
+## E35. Encouragement and financial wellbeing
+
+- **Severity:** P3 (owner request, 2026-11-15).
+- **Blocked by:** owner decisions W1 to W9 in the plan. Set 3's shared goals need E34 (C3 onward).
+- **Done when:** every feature is a net positive for the person's financial wellbeing and never aims at engagement (test W); every feature passes the five no-shaming tests N1 to N5 (no scores or ranks, no comparison with others, no loss-framed streaks, the action acknowledged and never the amount, the same warmth for every starting point including debt and renting); each feature has its own switch and honours reduced motion; benefit is measured only as the plan's section 7 sets out, and a feature is paused or removed under its stop rules.
+- **Notes:** three option sets: Set 1 warm confirmations of finished actions; Set 2 goals that are the user's own at any size; Set 3 a calmer month, reminders the user asks for, and shared goals for couples. The plan recommends Set 1 first, with the section 4 guide additions either way. UX guidelines O7 and M5 (no celebratory animation on a financial event) still apply. Plan: [E35-encouragement-and-wellbeing.md](plans/E35-encouragement-and-wellbeing.md).
+- **Status (2026-11-18):** `Set 1` (`#749`, no-shaming copy guardrails and warm confirmations) merged. Sets 2 and 3 have no PR yet.
+- **Labels:** needs-triage
+
 ## E36. Security hardening before real production
 
 - **Severity:** P1 before public launch (owner request, 2026-11-15); P2 for the friends beta.
-- **Blocked by:** owner approval of the plan and its decisions SD1 to SD8; the open backend re-score items SEC-A, SEC-D, SEC-F and BE-18 for slice H4; the custom domain (E24) for passkeys and the security mailbox; an owner money decision for the external test.
+- **Blocked by:** owner approval of the plan and its decisions SD1 to SD8; the custom domain (E24) for passkeys and the security mailbox; an owner money decision for the external test.
 - **Done when:** Bun and Renovate both wait seven days before taking a new release, with a documented urgent exception; laws keep `trustedDependencies` to an allowlist and every action pinned to a commit; each release has an SBOM and CI fails on a known high advisory; `SECURITY.md` and `security.txt` are published; MFA is required on the owner's and admins' accounts and passkeys are offered to users; the application runs under a database role with no schema rights; names and labels are encrypted at field level; the breach runbook has been exercised once; a crypto inventory exists and the edge's key exchange has been tested; prompt-injection tests cover every MCP read tool and the staged import; an external penetration test has run and its findings are fixed or accepted in writing.
 - **Notes:** the plan starts from an inventory of what is already on main (frozen lockfile with scripts off, SHA-pinned actions, digest-pinned images, gitleaks, Semgrep, ZAP, AES-256-GCM bank tokens, the 72-hour step in the incident runbook) and lists only gaps. Dashboard settings and the test budget are owner-only. Plan: [E36-security-hardening-plan.md](plans/E36-security-hardening-plan.md).
-- **Status (2026-11-16):** `Slice 1` (`#747`: 7-day Bun/Renovate gates, CI laws, `SECURITY.md`, `security.txt`) and `H2 & H5` (`#755`: SBOMs, failing `bun audit`, workspace `knip`, MCP prompt-injection suite) merged; `SEC-D` receipt encryption (`#753`) merged. Remaining hardening items (MFA/passkeys, restricted DB role, remaining field-level encryption, breach drill, external pentest) have no PR yet.
+- **Status (2026-11-18):** `Slice 1` (`#747`: 7-day Bun/Renovate gates, CI laws, `SECURITY.md`, `security.txt`) and `H2 & H5` (`#755`: SBOMs, failing `bun audit`, workspace `knip`, MCP prompt-injection suite) merged. The backend items slice H4 waited on are merged: `SEC-A` and `SEC-F` (`#738`), `BE-18` (`#752`) and `SEC-D` receipt encryption (`#753`). Remaining hardening items (MFA/passkeys, restricted DB role, remaining field-level encryption, breach drill, external pentest) have no PR yet.
 - **Labels:** needs-triage
 
 ### Addendum to E19: portability
