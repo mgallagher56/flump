@@ -272,13 +272,14 @@ export const DatePicker: FC<DatePickerProps> = ({
     setFocusedIso(iso);
   };
 
-  /** Shows a month (from the month or year view) keeping the focused day of the month. */
+  /**
+   * Shows a month (from the month or year view) keeping the focused day of the month. The day is
+   * clamped to min and max, and the clamped day's month is shown, so a year picked from the year
+   * view never lands on a month where every day is disabled and the grid has no tab stop.
+   */
   const showMonth = (year: number, month: number) => {
     const day = Math.min(parseIsoDate(focusedIso)?.day ?? 1, daysInMonth(year, month));
-    // The tab stop falls back to the first enabled day when this one is out of range.
-    setViewYear(year);
-    setViewMonth(month);
-    setFocusedIso(toIsoDate(year, month, day));
+    showDate(clampIso(toIsoDate(year, month, day)));
   };
 
   const switchView = (next: CalendarView) => {
