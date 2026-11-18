@@ -156,6 +156,7 @@ const TaxSourceContainer: FC = () => {
       <PageHeader
         actions={<TaxYearBar years={years} selectedYear={taxYear} onSelectYear={selectYear} />}
         description={DESCRIPTION[source]}
+        illustration="empty-accounts"
         title={label}
       />
 

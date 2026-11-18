@@ -19,7 +19,6 @@ import {
   EmptyState,
   Icon,
   IconButton,
-  Illustration,
   Menu,
   PageBody,
   PageHeader,
@@ -113,6 +112,8 @@ const SelfAssessmentOff: FC<{
     <PageBody className={pageRoot()} data-testid="tax-page">
       <PageHeader
         description="Income outside PAYE, its expenses and an estimated tax bill for each tax year."
+        // The page icon; the empty state below has none, so one illustration is in view.
+        illustration="empty-accounts"
         title={PAGE_TITLE}
       />
       <EmptyState
@@ -124,7 +125,6 @@ const SelfAssessmentOff: FC<{
         }
         id="self-assessment-off"
         size="sm"
-        illustration={<Illustration scene="empty-accounts" size="sm" />}
         tone="card"
         title="Self Assessment is for income outside PAYE, such as self-employment or rent"
       />
@@ -309,6 +309,7 @@ const SelfAssessmentPage: FC<{
   return (
     <PageBody className={pageRoot()} data-testid="tax-page">
       <PageHeader
+        illustration="empty-accounts"
         title={PAGE_TITLE}
         subtitle="Income outside PAYE, its expenses and an estimated tax bill for each tax year."
         actions={
