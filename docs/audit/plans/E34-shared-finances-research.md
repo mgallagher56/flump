@@ -1,5 +1,7 @@
 # E34. Shared finances for couples: research and options
 
+Decisions: accepted on 17 November 2026
+
 > **Status: plan approved. The owner accepted decisions CD1 to CD10 as recommended on 2026-11-17.** Slices 1 and 2 are merged (#748, #757). Written 2026-11-15 against `origin/main` at `8e08f0c8`. Not legal advice. Facts marked **[U]** were not confirmed in a primary source today.
 
 **Summary.** The owner wants couples to track finances together across the site, like co-op mode in a game. The safest shape is the one a co-op game uses: each player keeps their own inventory and chooses what goes in the shared stash. Each person keeps their own login and their own data. Nothing is shared until its owner shares it, either person can stop sharing or leave at once without the other's agreement, and nobody can lock the other out or delete their data. Tax is always worked out per person, because UK tax, ISAs and pensions are individual. The recommended first slice needs no second login at all: mark an account as joint with a share, so one person's picture stops counting the whole of a joint mortgage. The household, the invitation and the "Me / Household" switch follow in later slices. The largest risk is that any sharing feature can be used to watch or control a partner, so the safety rules in section 3 are requirements, not options.

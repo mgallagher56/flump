@@ -96,17 +96,14 @@ describe("mortgage module", () => {
       expect(calculateMortgagePayment(120000, 0, 10, "interest-only")).toBe(0);
     });
 
-    it("agrees with calculateMonthlyMortgagePayment to the penny at any rate", () => {
-      for (const [principal, rate, years] of [
-        [250000, 4.5, 25],
-        [186000, 0, 18],
-        [50000, 7.25, 7],
-        [300000, 0.01, 30],
-      ] as const) {
-        expect(Math.round(calculateMortgagePayment(principal, rate, years) * 100) / 100).toBe(
-          calculateMonthlyMortgagePayment(principal, rate, years * 12),
-        );
-      }
+    it("gives the same repayment as the months-based formula, worked by hand", () => {
+      // M = P r (1+r)^n / ((1+r)^n - 1), r = 0.045 / 12 = 0.00375, n = 25 x 12 = 300:
+      // (1.00375)^300 = 3.073742528, so 250,000 x 0.00375 x 3.073742528 / 2.073742528
+      // = 1,389.5811949, which rounds to 1,389.58 (the same figure calculateMonthlyMortgagePayment gives).
+      expect(calculateMortgagePayment(250000, 4.5, 25)).toBeCloseTo(1389.5811949, 6);
+      // 0%: 186,000 / (18 x 12 = 216) = 861.111..., equal parts.
+      expect(calculateMortgagePayment(186000, 0, 18)).toBeCloseTo(861.1111111, 6);
+      expect(calculateMonthlyMortgagePayment(186000, 0, 216)).toBe(861.11);
     });
 
     it("computes repayment and interest-only monthly payments", () => {

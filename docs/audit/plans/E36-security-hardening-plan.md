@@ -1,5 +1,7 @@
 # E36. Security hardening before real production
 
+Decisions: open
+
 > **Status: plan for owner approval. No code.** Written 2026-11-15 against `origin/main` at `b3e0e578`. The repository is public, so this plan names no secrets, hosts or real figures. Facts marked **[U]** were not confirmed in a primary source today.
 
 **Summary.** The owner asked for a security hardening plan covering the package supply chain, accounts, limiting the damage of a breach, post-quantum readiness, AI-assisted attacks and an external penetration test. A lot is already in place: installs use a frozen lockfile with scripts off, every action and base image is pinned, and secret, static and passive dynamic scans run in CI. So this plan starts with an inventory and lists only the real gaps. The largest are: no release-age delay in Bun itself, no SBOM, no published way to report a vulnerability, MFA and passkeys not switched on, sensitive columns other than bank tokens stored unencrypted, one database role for everything, and no independent test. Seven slices, most of them small. Several steps are dashboard settings or money decisions that only the owner can take, and they are marked.

@@ -1107,6 +1107,20 @@ describe("E34 C1: a property follows its mortgage's share", () => {
     expect((await row("home")).sharePercent).toBe(50);
   });
 
+  it("leaves a home the user made joint alone when a new mortgage is added as sole", async () => {
+    const { svc, row } = setup([home({ ownership: "joint", sharePercent: 50 })]);
+    await svc.createAccount("userA", {
+      name: "Mortgage",
+      type: "Mortgage",
+      accountSubtype: "residential_mortgage",
+      balance: -200_000,
+      ownership: "sole",
+    });
+    const property = await row("home");
+    expect(property.ownership).toBe("joint");
+    expect(property.sharePercent).toBe(50);
+  });
+
   it("leaves the property alone on an edit that does not touch ownership or share", async () => {
     const { svc, row } = setup([home({ ownership: "joint", sharePercent: 30 }), mortgage()]);
     await svc.updateAccount("userA", "mort", { balance: 270_000 });
