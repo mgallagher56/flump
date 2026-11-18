@@ -438,6 +438,7 @@ describe("CI hardening (SEC-E)", () => {
       "a11y-gate.yml",
       "backup.yml",
       "ci-pipeline.yml",
+      "interaction-cost.yml",
       "load-smoke.yml",
       "release-please.yml",
       "security-scan.yml",
