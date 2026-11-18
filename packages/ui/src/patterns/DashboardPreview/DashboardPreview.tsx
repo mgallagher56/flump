@@ -153,7 +153,7 @@ export const DashboardPreview: FC<DashboardPreviewProps> = ({
 
       {kpis.length > 0 && (
         <div data-testid={`${id}-kpis`}>
-          <KpiStrip columns={kpis.length as 1 | 2 | 3}>{kpis}</KpiStrip>
+          <KpiStrip columns={Math.min(kpis.length, 3) as 1 | 2 | 3}>{kpis}</KpiStrip>
         </div>
       )}
 

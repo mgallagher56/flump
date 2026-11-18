@@ -50,7 +50,9 @@ export const Keyboard: Story = {
     await userEvent.click(canvas.getByRole("button", { name: /Contract end date/ }));
     const body = within(document.body);
     await waitFor(() =>
-      expect(document.activeElement).toBe(body.getByRole("button", { name: "16 Nov 2026" })),
+      expect(document.activeElement).toBe(
+        body.getByRole("button", { name: "16 Nov 2026, selected" }),
+      ),
     );
     await userEvent.keyboard("{ArrowRight}");
     await expect(document.activeElement).toBe(body.getByRole("button", { name: "17 Nov 2026" }));

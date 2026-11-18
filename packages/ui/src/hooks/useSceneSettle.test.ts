@@ -43,6 +43,15 @@ describe("useSceneSettle", () => {
     expect(result.current).toBe(true);
   });
 
+  it("never claims the scene when disabled, so a later empty state still settles", () => {
+    mockMatchMedia(false);
+    const off = renderHook(() => useSceneSettle("empty-savings", false));
+    expect(off.result.current).toBe(false);
+    expect(isSceneSettled("empty-savings")).toBe(false);
+    const on = renderHook(() => useSceneSettle("empty-savings"));
+    expect(on.result.current).toBe(true);
+  });
+
   it("returns false on subsequent views or re-renders in the same session", () => {
     mockMatchMedia(false);
     const first = renderHook(() => useSceneSettle("empty-accounts"));

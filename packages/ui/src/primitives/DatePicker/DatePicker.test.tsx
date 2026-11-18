@@ -88,7 +88,7 @@ describe("DatePicker", () => {
     expect(screen.getAllByRole("row")).toHaveLength(7);
     // The short name shows; the full name is visually hidden text, so the header is named by it.
     expect(screen.getByRole("columnheader", { name: "Monday" })).toBeTruthy();
-    expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026");
+    expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026, selected");
     const stops = grid.querySelectorAll("button[tabindex='0']");
     expect(stops).toHaveLength(1);
     expect(screen.getByRole("gridcell", { selected: true }).textContent).toBe("16");
@@ -119,12 +119,12 @@ describe("DatePicker", () => {
     fireEvent.keyDown(focused(), { key: "ArrowDown" });
     expect(focused().getAttribute("aria-label")).toBe("23 Nov 2026");
     fireEvent.keyDown(focused(), { key: "ArrowUp" });
-    expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026");
+    expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026, selected");
     // 16 Nov 2026 is a Monday.
     fireEvent.keyDown(focused(), { key: "End" });
     expect(focused().getAttribute("aria-label")).toBe("22 Nov 2026");
     fireEvent.keyDown(focused(), { key: "Home" });
-    expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026");
+    expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026, selected");
     fireEvent.keyDown(focused(), { key: "PageDown" });
     expect(focused().getAttribute("aria-label")).toBe("16 Dec 2026");
     expect(heading?.textContent).toBe("December 2026");
