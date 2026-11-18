@@ -94,11 +94,16 @@ const toStoredBalance = (type: AccountType | undefined, shown: string): string =
   return owed === 0 ? "0" : String(-owed);
 };
 
-/** A fresh id for one opening of the dialog. */
-const newRequestId = (): string =>
-  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+/**
+ * A fresh id for one opening of the dialog (the idempotency key's prefix). Always from the Web
+ * Crypto random source: `randomUUID` where the page is a secure context, else 16 bytes from
+ * `getRandomValues`, which works in any context.
+ */
+const newRequestId = (): string => {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+};
 
 export interface AccountOption {
   id?: string;
