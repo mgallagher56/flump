@@ -60,7 +60,7 @@ export const Keyboard: Story = {
     await expect(document.activeElement).toBe(body.getByRole("button", { name: "24 Nov 2026" }));
     await userEvent.keyboard("{PageDown}");
     await expect(document.activeElement).toBe(body.getByRole("button", { name: "24 Dec 2026" }));
-    await expect(body.getByRole("grid")).toHaveAccessibleName("December 2026");
+    await expect(body.getByRole("table")).toHaveAccessibleName("December 2026");
     await userEvent.keyboard("{Enter}");
     await expect(
       canvas.getByRole("button", { name: "Contract end date 24 Dec 2026" }),
