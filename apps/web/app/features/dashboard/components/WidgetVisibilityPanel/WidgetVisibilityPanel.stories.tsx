@@ -37,8 +37,8 @@ type Story = StoryObj<typeof WidgetVisibilityPanel>;
 export const ToggleVisibility: Story = {
   play: async () => {
     const body = within(document.body);
-    const [debt] = await body.findAllByRole("checkbox", { name: /^Debt/ });
-    if (!debt) throw new Error("Debt checkbox missing");
+    const [debt] = await body.findAllByRole("checkbox", { name: /^Cards and loans/ });
+    if (!debt) throw new Error("Cards and loans checkbox missing");
     await expect((debt as HTMLInputElement).checked).toBe(false);
     await userEvent.click(debt);
     await expect((debt as HTMLInputElement).checked).toBe(true);

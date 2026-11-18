@@ -71,14 +71,6 @@ export const motionKeyframes = {
     from: { opacity: "0", transform: "translateX(-24px)" },
     to: { opacity: "1", transform: "translateX(0)" },
   },
-  slideOutLeft: {
-    from: { opacity: "1", transform: "translateX(0)" },
-    to: { opacity: "0", transform: "translateX(-24px)" },
-  },
-  slideOutRight: {
-    from: { opacity: "1", transform: "translateX(0)" },
-    to: { opacity: "0", transform: "translateX(24px)" },
-  },
   // E17: Demo 5 - save confirmation tick draws over durations.base
   tick: {
     from: { strokeDashoffset: "24" },

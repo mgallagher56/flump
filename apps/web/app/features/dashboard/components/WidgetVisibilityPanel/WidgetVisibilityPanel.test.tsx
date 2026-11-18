@@ -21,7 +21,7 @@ describe("<WidgetVisibilityPanel />", () => {
     render(<WidgetVisibilityPanel {...base()} />);
     expect(screen.getByRole("dialog", { name: "Choose what shows here" })).toBeDefined();
     const accounts = screen.getByRole("checkbox", { name: /^Accounts/ });
-    const debt = screen.getByRole("checkbox", { name: /^Debt/ });
+    const debt = screen.getByRole("checkbox", { name: /^Cards and loans/ });
     expect((accounts as HTMLInputElement).checked).toBe(true);
     expect((debt as HTMLInputElement).checked).toBe(false);
   });
@@ -29,7 +29,7 @@ describe("<WidgetVisibilityPanel />", () => {
   it("reports the toggled key", () => {
     const onToggle = vi.fn();
     render(<WidgetVisibilityPanel {...base({ onToggle })} />);
-    fireEvent.click(screen.getByRole("checkbox", { name: /^Debt/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /^Cards and loans/ }));
     expect(onToggle).toHaveBeenCalledWith("debt");
   });
 
@@ -72,16 +72,16 @@ describe("<WidgetVisibilityPanel />", () => {
     );
     const pension = screen.getByRole("checkbox", { name: /^Pension/ }) as HTMLInputElement;
     expect(pension.disabled).toBe(false);
-    expect((screen.getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).disabled).toBe(
-      false,
-    );
+    expect(
+      (screen.getByRole("checkbox", { name: /^Cards and loans/ }) as HTMLInputElement).disabled,
+    ).toBe(false);
   });
 
   it("disables nothing below the cap", () => {
     render(<WidgetVisibilityPanel {...base()} />);
-    expect((screen.getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).disabled).toBe(
-      false,
-    );
+    expect(
+      (screen.getByRole("checkbox", { name: /^Cards and loans/ }) as HTMLInputElement).disabled,
+    ).toBe(false);
   });
 
   it("shows a save error inline", () => {

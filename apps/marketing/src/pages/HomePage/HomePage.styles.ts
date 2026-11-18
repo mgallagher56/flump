@@ -80,3 +80,8 @@ export const finalCtaTitle = cva({
 export const finalCtaBody = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
+
+/** The closing scene: no figures follow it, so it never pushes one down on a phone (B10). */
+export const finalCtaIllustration = cva({
+  base: { width: { base: "28", md: "36" } },
+});

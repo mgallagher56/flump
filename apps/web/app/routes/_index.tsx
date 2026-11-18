@@ -72,7 +72,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   const completedSteps = (userProfile?.setupChecklistCompletedSteps as string[]) ?? [];
 
-  // Every derived figure (net worth, debt, budget totals, safe to spend, months of cover) comes
+  // Every derived figure (net worth, debt, budget totals, safe to spend, breathing room) comes
   // from the one financial picture, built once from saved rows (E23 section 2).
   const portfolioSnapshot = new PortfolioSnapshot(accounts, accountDetails);
   const picture = buildWorkspacePicture(

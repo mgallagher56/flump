@@ -128,3 +128,30 @@ export const QuietOpenDark: Story = {
   args: { variant: "quiet", title: "Show details", subtitle: undefined, defaultOpen: true },
   globals: { theme: "dark" },
 };
+
+/**
+ * Card with its own trigger labels (as on the Budget page): the trailing action is the same small
+ * outline pill with a chevron as the quiet variant (STYLE-GUIDE B14), inside the card header.
+ */
+export const CardPillTrigger: Story = {
+  args: {
+    title: "Budget what-ifs",
+    subtitle: undefined,
+    itemCount: undefined,
+    closedLabel: "Show budget what-ifs",
+    openLabel: "Hide budget what-ifs",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole("button", { name: "Budget what-ifs" });
+    await expect(canvas.getByText("Show budget what-ifs")).toBeVisible();
+    await userEvent.click(trigger);
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.getByText("Hide budget what-ifs")).toBeVisible();
+  },
+};
+
+export const CardPillTriggerDark: Story = {
+  ...CardPillTrigger,
+  globals: { theme: "dark" },
+};

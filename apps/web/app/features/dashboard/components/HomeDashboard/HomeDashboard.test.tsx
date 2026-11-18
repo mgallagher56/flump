@@ -394,7 +394,7 @@ describe("HomeDashboard", () => {
     renderDashboard(withDebt);
     fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
     const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Debt/ }));
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Cards and loans/ }));
     await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
     const payload = mockUpdateProfile.mock.calls[0]?.[0];
     expect(Object.keys(payload)).toEqual(["dashboardWidgets"]);
@@ -409,7 +409,7 @@ describe("HomeDashboard", () => {
       renderDashboard(withDebt);
       fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
       const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
-      fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Debt/ }));
+      fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Cards and loans/ }));
       await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
       const payload = mockUpdateProfile.mock.calls[0]?.[0];
       expect(payload.dashboardWidgets).not.toContain("debt");
@@ -425,12 +425,13 @@ describe("HomeDashboard", () => {
     renderDashboard(withDebt);
     fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
     const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Debt/ }));
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Cards and loans/ }));
     expect((await screen.findByRole("alert")).textContent).toMatch(
       /We could not save that change\. Your dashboard is unchanged\. Try again\./,
     );
     expect(
-      (within(dialog).getByRole("checkbox", { name: /^Debt/ }) as HTMLInputElement).checked,
+      (within(dialog).getByRole("checkbox", { name: /^Cards and loans/ }) as HTMLInputElement)
+        .checked,
     ).toBe(true);
   });
 

@@ -93,6 +93,51 @@ describe("useSavedFigureChange", () => {
     expect(result.current.isWashed).toBe(false);
   });
 
+  it("keeps the wash for its full length when a second save lands during the first wash", () => {
+    mockMatchMedia(false);
+    const { result, rerender } = renderHook(({ val }) => useSavedFigureChange(val), {
+      initialProps: { val: 100 },
+    });
+
+    rerender({ val: 200 });
+    act(() => {
+      vi.advanceTimersByTime(120);
+    });
+    expect(result.current.isWashed).toBe(true);
+
+    // Second save 120ms into the first wash: its wash runs from 240ms to 1140ms.
+    rerender({ val: 300 });
+    act(() => {
+      vi.advanceTimersByTime(120);
+    });
+    expect(result.current.displayedValue).toBe(300);
+
+    // Past the first wash's end (1020ms): the second wash must still be showing.
+    act(() => {
+      vi.advanceTimersByTime(860);
+    });
+    expect(result.current.isWashed).toBe(true);
+
+    act(() => {
+      vi.advanceTimersByTime(40);
+    });
+    expect(result.current.isWashed).toBe(false);
+  });
+
+  it("clears the wash timer on unmount", () => {
+    mockMatchMedia(false);
+    const { rerender, unmount } = renderHook(({ val }) => useSavedFigureChange(val), {
+      initialProps: { val: 100 },
+    });
+
+    rerender({ val: 200 });
+    act(() => {
+      vi.advanceTimersByTime(120);
+    });
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("shows immediate end state with no animation under prefers-reduced-motion", () => {
     mockMatchMedia(true);
     const { result, rerender } = renderHook(({ val }) => useSavedFigureChange(val), {

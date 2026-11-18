@@ -1,4 +1,12 @@
-import { HeroFigure, KpiCard, StatusBadge } from "@repo/ui";
+import { buildFinancialPicture, SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
+import {
+  BREATHING_ROOM_DESCRIPTION,
+  BREATHING_ROOM_LABEL,
+  breathingRoomValue,
+  HeroFigure,
+  KpiCard,
+  StatusBadge,
+} from "@repo/ui";
 import type { FC } from "react";
 import {
   previewBody,
@@ -12,16 +20,20 @@ import {
 } from "./BaselineSnapshotPreview.styles";
 
 /**
- * Example figures for the hero preview. They tell one story: the same household appears in the
- * FAQ wording, and no figure here is repeated with a different value elsewhere on the page.
+ * The sample household the home preview shows: the same `SAMPLE_HOUSEHOLDS` fixture the
+ * interactive preview opens on, run through the engine, so marketing shows one set of figures.
  */
-export const PREVIEW_EXAMPLE = {
-  netWorthGbp: 68_400,
-  leftOverMonthlyGbp: 672,
-  monthsOfCover: 6.4,
-} as const;
+export const HOME_PREVIEW_HOUSEHOLD = "renter" as const;
 
-const months = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+const picture = buildFinancialPicture(SAMPLE_HOUSEHOLDS[HOME_PREVIEW_HOUSEHOLD].fixture);
+
+/** The preview's figures. A figure the engine does not know is `null`, and its card is left out. */
+export const PREVIEW_EXAMPLE = {
+  netWorthGbp: picture.netWorth.netWorth,
+  leftOverMonthlyGbp: picture.budget.status === "known" ? picture.budget.value.surplus : null,
+  monthsOfCover:
+    picture.monthsOfCover.status === "known" ? picture.monthsOfCover.value.months : null,
+} as const;
 
 /**
  * The home hero's product preview (E16 PR 12): the dashboard's own `HeroFigure` for the one
@@ -51,21 +63,26 @@ export const BaselineSnapshotPreview: FC = () => (
         valueFormat={{ fractionDigits: 0 }}
       />
       <div className={previewSupporting()}>
-        <KpiCard
-          key="left-over"
-          label="Left over each month"
-          value={PREVIEW_EXAMPLE.leftOverMonthlyGbp}
-          valueFormat={{ fractionDigits: 0 }}
-        />
-        <KpiCard
-          key="cover"
-          label="Breathing room"
-          value={
-            <span className={previewFigure()}>
-              {months.format(PREVIEW_EXAMPLE.monthsOfCover)} months
-            </span>
-          }
-        />
+        {PREVIEW_EXAMPLE.leftOverMonthlyGbp !== null && (
+          <KpiCard
+            key="left-over"
+            label="Left over each month"
+            value={PREVIEW_EXAMPLE.leftOverMonthlyGbp}
+            valueFormat={{ fractionDigits: 0 }}
+          />
+        )}
+        {PREVIEW_EXAMPLE.monthsOfCover !== null && (
+          <KpiCard
+            key="cover"
+            label={BREATHING_ROOM_LABEL}
+            subtext={BREATHING_ROOM_DESCRIPTION}
+            value={
+              <span className={previewFigure()}>
+                {breathingRoomValue(PREVIEW_EXAMPLE.monthsOfCover)}
+              </span>
+            }
+          />
+        )}
       </div>
     </div>
     <figcaption className={previewCaption()}>

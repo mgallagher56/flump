@@ -310,7 +310,7 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
     if (fixture.budget.length > 0) {
       loaderState.data = workspace(fixture);
       const budget = render(<BudgetContainer />);
-      // Months of cover now sits inline in the page's scenario zone, so one pass reads it.
+      // Breathing room now sits inline in the page's scenario zone, so one pass reads it.
       readings.push(...collect(budget.container, "budget overview"));
       budget.unmount();
     }

@@ -18,7 +18,7 @@ export interface RemortgageShockSimProps {
   /** ISO date the current fixed rate ends (profile renewal date), when known. */
   fixEndDate?: string | null;
   /**
-   * The scenario's remaining term in years (More options), used unrounded so the payment matches
+   * The scenario's remaining term in years ("Starting figures"), used unrounded so the payment matches
    * the KPI. The tool has no term control of its own; 25 years is used only when none is known.
    */
   remainingTermYears?: number;

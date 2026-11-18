@@ -537,7 +537,7 @@ describe("BudgetContainer", () => {
     expect(screen.getByText(/Step 1 of/)).toBeDefined();
   });
 
-  it("keeps months of cover inputs for the visit only: not saved, not requested, not in the hero", async () => {
+  it("keeps breathing room inputs for the visit only: not saved, not requested, not in the hero", async () => {
     mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
     localStorage.clear();
     const { unmount } = render(<BudgetContainer />);

@@ -1,5 +1,5 @@
 /**
- * Months of cover ("runway" in code) keeps nothing in the browser any more (E23). The saved
+ * Breathing room ("runway" and `monthsOfCover` in code) keeps nothing in the browser any more (E23). The saved
  * figure comes from the engine's financial picture; every calculator input, including which
  * accounts to count, is a session-only scenario input held in container memory.
  */

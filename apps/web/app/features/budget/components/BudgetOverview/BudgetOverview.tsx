@@ -28,7 +28,7 @@ export interface BudgetOverviewProps {
 /**
  * The budget page's first view (E16 R2-6): one headline, "Left over each month", with weekly safe
  * to spend as its sub-line, then 2 supporting figures that explain it: money in (income is not a
- * spending category, so it shows here and nowhere else) and going out. Months of cover is the
+ * spending category, so it shows here and nowhere else) and going out. Breathing room is the
  * scenario zone's outcome, so it shows once. 4 figures in all (N1 4). Facts only, in the usual colours: a budget
  * that is short each month says so plainly, with no alarm styling and no list of services.
  */

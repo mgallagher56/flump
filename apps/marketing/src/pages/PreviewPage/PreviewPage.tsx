@@ -3,6 +3,7 @@ import {
   Button,
   CheckInPreview,
   DashboardPreview,
+  Illustration,
   PageHeader,
   PreviewFrame,
   type SampleHouseholdKey,
@@ -15,12 +16,17 @@ import { signupCta } from "../../utils/site";
 import {
   container,
   ctaBlock,
+  ctaIllustration,
   ctaText,
   ctaTitle,
   mainContent,
   pageShell,
   previewSection,
   sectionDescription,
+  sectionHeader,
+  sectionHeading,
+  sectionIllustration,
+  sectionIntro,
 } from "./PreviewPage.styles";
 
 export const PREVIEW_PAGE_TITLE = "Interactive preview";
@@ -52,18 +58,21 @@ export const PreviewPage: FC = () => {
             className={previewSection()}
             data-testid="preview-moment-dashboard"
           >
-            <h2 id="preview-section-dashboard-title" className="sr-only">
-              Dashboard picture
-            </h2>
-            <p className={sectionDescription()}>
-              See your net worth, what is left over each month, and your key accounts at a glance.
-              Switch between renting and paying a mortgage to see how the figures change.
-            </p>
+            <div className={sectionIntro()}>
+              <h2 className={sectionHeading()} id="preview-section-dashboard-title">
+                Dashboard picture
+              </h2>
+              <p className={sectionDescription()}>
+                See your net worth, what is left over each month, and your key accounts at a glance.
+                Switch between renting and paying a mortgage to see how the figures change.
+              </p>
+            </div>
             <PreviewFrame
               household={household}
               id="preview-frame-dashboard"
               onHouseholdChange={setHousehold}
-              title="Dashboard picture"
+              title="Dashboard"
+              titleAs="p"
             >
               <DashboardPreview household={household} id="marketing-dashboard-preview" />
             </PreviewFrame>
@@ -75,18 +84,27 @@ export const PreviewPage: FC = () => {
             className={previewSection()}
             data-testid="preview-moment-checkin"
           >
-            <h2 id="preview-section-checkin-title" className="sr-only">
-              Monthly check-in
-            </h2>
-            <p className={sectionDescription()}>
-              Spend a couple of minutes once a month updating or confirming your balances. Click
-              Update or No change to step through each sample account.
-            </p>
+            <div className={sectionHeader()}>
+              <div className={sectionIntro()}>
+                <h2 className={sectionHeading()} id="preview-section-checkin-title">
+                  Monthly check-in
+                </h2>
+                <p className={sectionDescription()}>
+                  Spend a couple of minutes once a month updating or confirming your balances.
+                  Choose Update or No change to step through each sample account.
+                </p>
+              </div>
+              {/* Large screens only: on a phone it would push the figures below it down (B10). */}
+              <div className={sectionIllustration()} data-testid="preview-illustration-checkin">
+                <Illustration scene="check-in" size="sm" />
+              </div>
+            </div>
             <PreviewFrame
               household={household}
               id="preview-frame-checkin"
               onHouseholdChange={setHousehold}
-              title="Monthly check-in"
+              title="Check-in"
+              titleAs="p"
             >
               <CheckInPreview household={household} id="marketing-checkin-preview" />
             </PreviewFrame>
@@ -98,18 +116,21 @@ export const PreviewPage: FC = () => {
             className={previewSection()}
             data-testid="preview-moment-breathing-room"
           >
-            <h2 id="preview-section-breathing-room-title" className="sr-only">
-              Model a change to your savings
-            </h2>
-            <p className={sectionDescription()}>
-              See how long your savings would cover essential spending if your income stopped. Move
-              the sliders to see what a spending cut or extra savings would do.
-            </p>
+            <div className={sectionIntro()}>
+              <h2 className={sectionHeading()} id="preview-section-breathing-room-title">
+                What a change would do
+              </h2>
+              <p className={sectionDescription()}>
+                See how long your savings would cover the essentials. Move the sliders to see what a
+                change in spending or savings would do.
+              </p>
+            </div>
             <PreviewFrame
               household={household}
               id="preview-frame-breathing-room"
               onHouseholdChange={setHousehold}
-              title="Model a change"
+              title="Breathing room"
+              titleAs="p"
             >
               <BreathingRoomPreview household={household} id="marketing-breathing-room-preview" />
             </PreviewFrame>
@@ -117,6 +138,9 @@ export const PreviewPage: FC = () => {
 
           {/* Call to action */}
           <div className={ctaBlock()} data-testid="preview-cta">
+            <div className={ctaIllustration()} data-testid="preview-illustration-cta">
+              <Illustration scene="onboarding" size="sm" />
+            </div>
             <h2 className={ctaTitle()}>Ready to see your own figures?</h2>
             <p className={ctaText()}>
               Flump is free during the beta. Enter a few rough numbers to see where you stand.

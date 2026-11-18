@@ -48,4 +48,15 @@ describe("PreviewFrame", () => {
 
     expect(screen.getByText("Custom caption text.")).toBeDefined();
   });
+
+  it("renders the title as a plain label when the section has its own heading", () => {
+    render(
+      <PreviewFrame id="test-preview" title="Monthly picture" titleAs="p">
+        <div>Content</div>
+      </PreviewFrame>,
+    );
+
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(screen.getByRole("figure", { name: "Monthly picture Example" })).toBeDefined();
+  });
 });

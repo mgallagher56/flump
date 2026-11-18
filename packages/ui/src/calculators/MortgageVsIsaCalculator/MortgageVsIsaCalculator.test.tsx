@@ -108,7 +108,7 @@ describe("MortgageVsIsaCalculator", () => {
     expect(drawer.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("uses the years left the user sets under More options (default 20)", () => {
+  it("uses the years left the user sets under Mortgage term and ISA growth (default 20)", () => {
     render(<MortgageVsIsaCalculator />);
     openMoreOptions();
     expect((slider(MORTGAGE_ISA_COPY.term) as HTMLInputElement).value).toBe("20");
@@ -117,7 +117,7 @@ describe("MortgageVsIsaCalculator", () => {
     expect(outcomes().getByText(pounds(res.isaGrowth))).toBeDefined();
   });
 
-  it("uses the assumed ISA growth set under More options", () => {
+  it("uses the assumed ISA growth set under Mortgage term and ISA growth", () => {
     render(<MortgageVsIsaCalculator />);
     openMoreOptions();
     fireEvent.change(slider(MORTGAGE_ISA_COPY.isaGrowth), { target: { value: "0" } });
@@ -152,7 +152,7 @@ describe("MortgageVsIsaCalculator", () => {
     expect((slider(MORTGAGE_ISA_COPY.term) as HTMLInputElement).value).toBe("1");
   });
 
-  it("has three visible inputs at most, the rest under More options, and exactly one notice", () => {
+  it("has three visible inputs at most, the rest under Mortgage term and ISA growth, and exactly one notice", () => {
     render(<MortgageVsIsaCalculator />);
     expect(screen.getAllByRole("slider")).toHaveLength(3);
     openMoreOptions();

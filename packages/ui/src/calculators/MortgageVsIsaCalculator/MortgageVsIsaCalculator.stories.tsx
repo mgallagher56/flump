@@ -24,7 +24,7 @@ const play: Story["play"] = async ({ canvasElement, args }) => {
   await userEvent.tab();
   await expect(await outcomes.findByText("£95,955")).toBeInTheDocument();
 
-  // The years left and the assumed ISA growth sit under More options.
+  // The years left and the assumed ISA growth sit under "Mortgage term and ISA growth".
   await userEvent.click(canvas.getByRole("button", { name: MORTGAGE_ISA_COPY.moreOptions }));
   await expect(canvas.getByLabelText(`${MORTGAGE_ISA_COPY.term} input`)).toBeInTheDocument();
 

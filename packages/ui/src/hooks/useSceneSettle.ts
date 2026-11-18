@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
+import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 
 const STORAGE_PREFIX = "flump.scene-settled.";
@@ -53,15 +54,25 @@ export function clearSceneSettled(): void {
 export function useSceneSettle(sceneKey: string = "default"): boolean {
   const reducedMotion = usePrefersReducedMotion();
   const [shouldSettle, setShouldSettle] = useState(false);
+  // The scene this instance claimed the settle for. A ref survives StrictMode's second effect run,
+  // so the instance that marked the scene settled keeps playing it instead of seeing its own mark.
+  const claimed = useRef<string | null>(null);
 
-  useEffect(() => {
+  // A layout effect, so the settle starts before the first paint (no still frame, then a replay).
+  useIsomorphicLayoutEffect(() => {
     if (reducedMotion) {
       setShouldSettle(false);
       return;
     }
 
+    if (claimed.current === sceneKey) {
+      setShouldSettle(true);
+      return;
+    }
+
     if (!isSceneSettled(sceneKey)) {
       markSceneSettled(sceneKey);
+      claimed.current = sceneKey;
       setShouldSettle(true);
     } else {
       setShouldSettle(false);

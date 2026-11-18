@@ -82,7 +82,6 @@ export const CHECK_IN_COPY = {
   noChange: "No change",
   keep: "Keep this figure",
   calculated: "Calculated",
-  rest: "No change to the rest",
   change: "Change",
   back: "Back",
   next: "Next",
@@ -90,10 +89,7 @@ export const CHECK_IN_COPY = {
   newBalance: "New balance",
   owedNow: "Amount owed now",
   stepError: "We could not save this balance. Nothing has changed. Try again.",
-  restError: "We could not save these balances. Nothing has changed. Try again.",
   tryAgain: "Try again",
-  /** The summary heading; the month is already in the sheet subtitle. */
-  saved: "Check-in saved",
   whatChanged: "What changed",
   netWorth: "Net worth",
   showAll: "Show all",
@@ -164,12 +160,7 @@ export function checkInNetWorthChange(change: number | null, since: MonthKey): s
 export type WarmSetupStepKey = "budget" | "accounts" | "savings" | "pension" | "mortgage" | "tax";
 
 export type WarmConfirmationInput =
-  | {
-      kind: "checkInFinished";
-      month: MonthKey;
-      change?: number | null;
-      previousMonth?: MonthKey | null;
-    }
+  | { kind: "checkInFinished"; month: MonthKey }
   | { kind: "setupStepFinished"; step: WarmSetupStepKey }
   | { kind: "setupComplete" }
   | { kind: "firstAccountAdded" };
@@ -195,13 +186,9 @@ function monthNameOnly(month: MonthKey): string {
  */
 export function formatWarmConfirmation(input: WarmConfirmationInput): string {
   switch (input.kind) {
-    case "checkInFinished": {
-      const headline = `${monthNameOnly(input.month)} is checked in.`;
-      if (typeof input.change === "number" && input.previousMonth) {
-        return `${headline} ${netWorthChangeSentence(input.change, input.previousMonth)}`;
-      }
-      return headline;
-    }
+    case "checkInFinished":
+      // Celebrate the action, never the amount: the summary states the change in its own block.
+      return `${monthNameOnly(input.month)} is checked in.`;
     case "setupStepFinished":
       return WARM_SETUP_STEP_CONFIRMATIONS[input.step];
     case "setupComplete":

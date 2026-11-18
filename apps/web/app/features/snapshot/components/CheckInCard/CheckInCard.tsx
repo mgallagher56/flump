@@ -19,7 +19,7 @@ export interface CheckInCardProps {
 
 /**
  * The phone check-in (below md): one account at a time with "3 of 8", then one row of quiet
- * buttons: Back (and Next on a done account) and "No change to the rest". The balance field has
+ * buttons: Back, and Next on a done account. The balance field has
  * the focus as each account opens, so typing starts at once and Enter saves it as Update. A
  * confirmed answer is saved before the next account shows, so a failed save stays on its own card
  * with the error.

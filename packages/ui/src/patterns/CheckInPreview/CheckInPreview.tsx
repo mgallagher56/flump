@@ -1,7 +1,8 @@
-import type { SampleHouseholdKey } from "@flump/finance-engine";
+import { SAMPLE_HOUSEHOLDS, type SampleHouseholdKey } from "@flump/finance-engine";
 import { type FC, useMemo, useState } from "react";
 import { Button } from "../../primitives/Button/Button";
 import { CurrencyInput } from "../../primitives/CurrencyInput/CurrencyInput";
+import { controlProps, FormField } from "../../primitives/FormField/FormField";
 import { LiveRegion } from "../../primitives/LiveRegion/LiveRegion";
 import { formatMoney } from "../../primitives/Money/Money";
 import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
@@ -26,7 +27,6 @@ export interface CheckInPreviewAccount {
   name: string;
   type: string;
   savedBalance: number;
-  calculatedBalance?: number;
 }
 
 export interface CheckInPreviewProps {
@@ -35,25 +35,50 @@ export interface CheckInPreviewProps {
   className?: string;
 }
 
-const RENTER_ACCOUNTS: CheckInPreviewAccount[] = [
-  { id: "current", name: "Monzo current", type: "Current account", savedBalance: 1850 },
-  { id: "isa", name: "Cash ISA", type: "Cash ISA", savedBalance: 4200 },
-  { id: "loan", name: "Student loan", type: "Student loan", savedBalance: 41500 },
-];
+export const CHECK_IN_EMPTY_BALANCE_ERROR = "Enter a balance, or choose No change.";
 
-const HOMEOWNER_ACCOUNTS: CheckInPreviewAccount[] = [
-  { id: "cash", name: "Cash and emergency savings", type: "Savings", savedBalance: 21000 },
-  { id: "pension", name: "Workplace and personal pension", type: "Pension", savedBalance: 96000 },
-  {
-    id: "mortgage",
-    name: "Residential Mortgage",
-    type: "Mortgage",
-    savedBalance: 186000,
-    calculatedBalance: 185420,
-  },
-];
+/** Sentence-case labels for the engine's account types ("Student Loan" reads "Student loan"). */
+const TYPE_LABELS: Record<string, string> = {
+  Current: "Current account",
+  Saving: "Savings",
+  Savings: "Savings",
+};
 
-type RecordKind = "update" | "no-change" | "calculated";
+/**
+ * Bank and provider names a sample account must not show: a preview never implies an
+ * endorsement, so such an account takes the neutral name of its type instead.
+ */
+const BRAND_NAMES =
+  /\b(monzo|starling|revolut|barclays|hsbc|lloyds|natwest|santander|nationwide|halifax|chase|metro|tsb|first direct|virgin)\b/i;
+
+const sentenceCase = (text: string): string =>
+  text
+    .split(" ")
+    .map((word, index) => (index > 0 && /^[A-Z][a-z]+$/.test(word) ? word.toLowerCase() : word))
+    .join(" ");
+
+export const checkInTypeLabel = (type: string): string => TYPE_LABELS[type] ?? sentenceCase(type);
+
+export const checkInAccountLabel = (name: string, type: string): string =>
+  BRAND_NAMES.test(name) ? checkInTypeLabel(type) : sentenceCase(name);
+
+/** The sample household's accounts, in the fixture's order, with their saved balances. */
+export const checkInAccountsFor = (household: SampleHouseholdKey): CheckInPreviewAccount[] =>
+  SAMPLE_HOUSEHOLDS[household].fixture.accounts.flatMap((account) => {
+    const balance = Number(account.balance);
+    // An account without a name, type or readable balance is left out, never shown as £0.
+    if (!account.id || !account.name || !account.type || !Number.isFinite(balance)) return [];
+    return [
+      {
+        id: account.id,
+        name: checkInAccountLabel(account.name, account.type),
+        type: checkInTypeLabel(account.type),
+        savedBalance: balance,
+      },
+    ];
+  });
+
+type RecordKind = "update" | "no-change";
 
 interface RecordedStep {
   kind: RecordKind;
@@ -65,69 +90,52 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
   household = "renter",
   className,
 }) => {
-  const accounts = useMemo(
-    () => (household === "homeowner" ? HOMEOWNER_ACCOUNTS : RENTER_ACCOUNTS),
-    [household],
-  );
+  const accounts = useMemo(() => checkInAccountsFor(household), [household]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [drafts, setDrafts] = useState<Record<string, number>>({});
+  // `null` is an empty field: it stays null and is never saved as £0.
+  const [drafts, setDrafts] = useState<Record<string, number | null>>({});
   const [recorded, setRecorded] = useState<Record<string, RecordedStep>>({});
   const [announcement, setAnnouncement] = useState("");
+  const [showEmptyError, setShowEmptyError] = useState(false);
 
   const isDone = currentIndex >= accounts.length;
   const currentAccount = accounts[Math.min(currentIndex, accounts.length - 1)];
 
-  const currentDraft = currentAccount
-    ? (drafts[currentAccount.id] ?? currentAccount.savedBalance)
-    : 0;
+  const currentDraft: number | null = currentAccount
+    ? currentAccount.id in drafts
+      ? (drafts[currentAccount.id] ?? null)
+      : currentAccount.savedBalance
+    : null;
+
+  const advance = (verb: string) => {
+    if (!currentAccount) return;
+    const nextIdx = currentIndex + 1;
+    setCurrentIndex(nextIdx);
+    setShowEmptyError(false);
+    setAnnouncement(
+      nextIdx < accounts.length
+        ? `${verb} ${currentAccount.name}. Showing ${accounts[nextIdx]?.name}.`
+        : "All accounts checked in.",
+    );
+  };
 
   const handleUpdate = () => {
     if (!currentAccount) return;
+    if (currentDraft === null) {
+      setShowEmptyError(true);
+      return;
+    }
     const value = currentDraft;
-    setRecorded((prev) => ({
-      ...prev,
-      [currentAccount.id]: { kind: "update", value },
-    }));
-    const nextIdx = currentIndex + 1;
-    setCurrentIndex(nextIdx);
-    setAnnouncement(
-      nextIdx < accounts.length
-        ? `Updated ${currentAccount.name}. Showing ${accounts[nextIdx]?.name}.`
-        : "All accounts checked in.",
-    );
+    setRecorded((prev) => ({ ...prev, [currentAccount.id]: { kind: "update", value } }));
+    advance("Updated");
   };
 
   const handleNoChange = () => {
     if (!currentAccount) return;
     const value = currentAccount.savedBalance;
-    setRecorded((prev) => ({
-      ...prev,
-      [currentAccount.id]: { kind: "no-change", value },
-    }));
-    const nextIdx = currentIndex + 1;
-    setCurrentIndex(nextIdx);
-    setAnnouncement(
-      nextIdx < accounts.length
-        ? `Confirmed ${currentAccount.name}. Showing ${accounts[nextIdx]?.name}.`
-        : "All accounts checked in.",
-    );
-  };
-
-  const handleKeepCalculated = () => {
-    if (!currentAccount || currentAccount.calculatedBalance === undefined) return;
-    const value = currentAccount.calculatedBalance;
-    setRecorded((prev) => ({
-      ...prev,
-      [currentAccount.id]: { kind: "calculated", value },
-    }));
-    const nextIdx = currentIndex + 1;
-    setCurrentIndex(nextIdx);
-    setAnnouncement(
-      nextIdx < accounts.length
-        ? `Kept calculated balance for ${currentAccount.name}. Showing ${accounts[nextIdx]?.name}.`
-        : "All accounts checked in.",
-    );
+    setRecorded((prev) => ({ ...prev, [currentAccount.id]: { kind: "no-change", value } }));
+    advance("Confirmed");
   };
 
   const handleNoChangeToRest = () => {
@@ -140,6 +148,7 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
     }
     setRecorded(nextRecorded);
     setCurrentIndex(accounts.length);
+    setShowEmptyError(false);
     setAnnouncement("All remaining accounts confirmed with no change.");
   };
 
@@ -147,6 +156,7 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
     setCurrentIndex(0);
     setDrafts({});
     setRecorded({});
+    setShowEmptyError(false);
     setAnnouncement("Check-in reset. Showing first account.");
   };
 
@@ -171,30 +181,37 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
               <h3 className={checkInAccountName()} id={`${id}-account-name`}>
                 {currentAccount.name}
               </h3>
-              <StatusBadge id={`${id}-account-type`} size="sm" variant="neutral">
-                {currentAccount.type}
-              </StatusBadge>
+              {currentAccount.type !== currentAccount.name && (
+                <StatusBadge id={`${id}-account-type`} size="sm" variant="neutral">
+                  {currentAccount.type}
+                </StatusBadge>
+              )}
             </div>
 
             <p className={checkInBalanceLine()} id={`${id}-saved-balance`}>
-              {currentAccount.calculatedBalance !== undefined
-                ? `Calculated for this month: ${gbp(currentAccount.calculatedBalance)}`
-                : `Saved balance: ${gbp(currentAccount.savedBalance)}`}
+              Saved balance: {gbp(currentAccount.savedBalance)}
             </p>
 
             <div className={checkInInputRow()}>
-              <CurrencyInput
-                aria-label="New balance"
-                data-testid={`${id}-input`}
+              <FormField
+                error={
+                  showEmptyError && currentDraft === null ? CHECK_IN_EMPTY_BALANCE_ERROR : undefined
+                }
                 id={`${id}-input`}
-                onValueChange={(val: number | null) => {
-                  setDrafts((prev) => ({
-                    ...prev,
-                    [currentAccount.id]: typeof val === "number" ? val : 0,
-                  }));
-                }}
-                value={currentDraft}
-              />
+                label="New balance"
+              >
+                {(field) => (
+                  <CurrencyInput
+                    {...controlProps(field)}
+                    data-testid={`${id}-input`}
+                    onValueChange={(val: number | null) => {
+                      setDrafts((prev) => ({ ...prev, [currentAccount.id]: val }));
+                      if (val !== null) setShowEmptyError(false);
+                    }}
+                    value={currentDraft}
+                  />
+                )}
+              </FormField>
             </div>
 
             <div className={checkInActions()}>
@@ -207,27 +224,15 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
               >
                 Update
               </Button>
-              {currentAccount.calculatedBalance !== undefined ? (
-                <Button
-                  data-testid={`${id}-keep`}
-                  id={`${id}-keep`}
-                  onClick={handleKeepCalculated}
-                  size="md"
-                  variant="outline"
-                >
-                  Keep this figure
-                </Button>
-              ) : (
-                <Button
-                  data-testid={`${id}-no-change`}
-                  id={`${id}-no-change`}
-                  onClick={handleNoChange}
-                  size="md"
-                  variant="outline"
-                >
-                  No change
-                </Button>
-              )}
+              <Button
+                data-testid={`${id}-no-change`}
+                id={`${id}-no-change`}
+                onClick={handleNoChange}
+                size="md"
+                variant="outline"
+              >
+                No change
+              </Button>
             </div>
           </section>
 
@@ -236,7 +241,10 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
               <Button
                 data-testid={`${id}-back`}
                 id={`${id}-back`}
-                onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                onClick={() => {
+                  setShowEmptyError(false);
+                  setCurrentIndex((prev) => Math.max(0, prev - 1));
+                }}
                 size="sm"
                 variant="ghost"
               >
@@ -280,7 +288,7 @@ export const CheckInPreview: FC<CheckInPreviewProps> = ({
                 <li className={checkInSummaryItem()} key={acc.id}>
                   <span className={summaryItemName()}>{acc.name}</span>
                   <span className={summaryItemFigure()}>
-                    {gbp(val)} {rec?.kind === "update" ? "(Updated)" : "(Confirmed)"}
+                    {gbp(val)} {rec?.kind === "update" ? "(updated)" : "(confirmed)"}
                   </span>
                 </li>
               );

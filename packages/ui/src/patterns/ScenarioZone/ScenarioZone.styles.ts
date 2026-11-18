@@ -94,6 +94,13 @@ export const scenarioZone = sva({
       // A ghost button that leads the footer (Reset hidden) keeps its text at the zone's leading
       // edge: its own side padding (Button sm, px 4) would otherwise indent it.
       "& > [data-variant='ghost']:first-child": { marginInlineStart: "-4" },
+      // "Update your details" is a standalone link (B5): teal, weight 600, no underline, whether
+      // the page passes an anchor or a ghost button.
+      "& > :is(a, [data-variant='ghost'])": {
+        color: "primary",
+        fontWeight: "semibold",
+        textDecoration: "none",
+      },
     },
     reset: {
       flexShrink: "0",

@@ -36,3 +36,18 @@ export const pictureLink = cva({
     _hover: { color: "primary.hover" },
   },
 });
+
+export const pictureFooterRow = cva({
+  base: {
+    display: "flex",
+    flexDirection: { base: "column", md: "row" },
+    alignItems: "center",
+    justifyContent: "center",
+    gap: { base: "3", md: "6" },
+    textAlign: { base: "center", md: "left" },
+  },
+});
+
+export const pictureIllustration = cva({
+  base: { width: { base: "28", md: "36" }, flexShrink: 0 },
+});

@@ -78,22 +78,6 @@ describe("useCheckIn", () => {
     expect(result.current.figure(everyday)).toMatchObject({ value: 3360, source: "confirmed" });
   });
 
-  it("No change to the rest never overwrites a step whose save failed, and keeps its retry", async () => {
-    const { result, onSave } = setup({ ok: [false, true] });
-    const step = result.current.steps[0];
-    if (!step) throw new Error("no step");
-    await act(async () => {
-      await result.current.confirm(step, { kind: "update", value: 1234 });
-    });
-    expect(result.current.hasError(everyday)).toBe(true);
-    await act(async () => {
-      await result.current.rest();
-    });
-    const restPayload = onSave.mock.calls[1]?.[0].payload;
-    expect(restPayload?.values.some((v) => v.accountId === everyday)).toBe(false);
-    expect(result.current.hasError(everyday)).toBe(true);
-  });
-
   it("resumes at the first account with nothing recorded this month", () => {
     const { result } = setup({
       details: [
@@ -105,53 +89,6 @@ describe("useCheckIn", () => {
     expect(result.current.index).toBe(2);
     expect(result.current.isDone(everyday)).toBe(true);
     expect(result.current.nextOpen(0)).toBe(2);
-  });
-
-  it("records every remaining step in one PUT for No change to the rest, then finishes", async () => {
-    const { result, onSave } = setup();
-    const first = result.current.steps[0];
-    if (!first) throw new Error("no step");
-    await act(async () => {
-      await result.current.confirm(first, { kind: "update", value: 3500 });
-    });
-    await act(async () => {
-      await result.current.rest();
-    });
-    expect(onSave).toHaveBeenCalledTimes(2);
-    const payload = onSave.mock.calls[1]?.[0].payload;
-    // The mortgage keeps its calculated figure; the others repeat last month.
-    expect(payload).toEqual({
-      values: [
-        { accountId: card, value: 640, source: "confirmed" },
-        { accountId: isa, value: 14200, source: "confirmed" },
-        { accountId: mortgage, value: 185999.56, source: "calculated" },
-      ],
-      complete: true,
-    });
-    expect(result.current.finished).toBe(true);
-  });
-
-  it("No change to the rest saves a typed but unsaved figure as Update in the same PUT", async () => {
-    const { result, onSave } = setup();
-    act(() => {
-      result.current.setDraft(card, 712.4);
-      result.current.setDraft(mortgage, 185900);
-    });
-    await act(async () => {
-      await result.current.rest();
-    });
-    expect(onSave).toHaveBeenCalledTimes(1);
-    expect(onSave.mock.calls[0]?.[0].payload).toEqual({
-      values: [
-        { accountId: everyday, value: 3360, source: "confirmed" },
-        { accountId: card, value: 712.4, source: "manual" },
-        { accountId: isa, value: 14200, source: "confirmed" },
-        { accountId: mortgage, value: 185900, source: "manual" },
-      ],
-      complete: true,
-    });
-    expect(result.current.draft(card)).toBeNull();
-    expect(result.current.finished).toBe(true);
   });
 
   it("shows the summary once the last open step is saved", async () => {

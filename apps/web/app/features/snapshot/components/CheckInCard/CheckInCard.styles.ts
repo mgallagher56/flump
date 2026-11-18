@@ -15,7 +15,7 @@ export const progress = cva({
 });
 
 /**
- * The whole step body: the account and its row of Back / "No change to the rest" buttons. One
+ * The whole step body: the account and its row of Back / Next buttons. One
  * height for every account, open or done, so the sheet does not jump between steps at 375. The
  * buttons sit straight under the account, so any spare height falls below them, never between the
  * account and its buttons. Taller steps (a calculated figure with a statement prompt) still grow.
@@ -24,24 +24,16 @@ export const cardBody = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", minHeight: "19rem", minWidth: 0 },
 });
 
-/** The account on the sheet's own surface: no bordered card nested inside the sheet. */
+/**
+ * The account on the sheet's own surface: no bordered card nested inside the sheet. The step
+ * arrives (`useStepTransition`); there is no leave phase, because the next step renders at once so
+ * input and focus are never delayed. Reduced motion swaps the travel for a short fade.
+ */
 export const cardSurface = cva({
   base: { minWidth: 0, position: "relative" },
   variants: {
     motion: {
       idle: {},
-      leaveNext: {
-        _motionSafe: {
-          animationName: "slideOutLeft",
-          animationDuration: "fast",
-          animationTimingFunction: "exit",
-          animationFillMode: "forwards",
-        },
-        _motionReduce: {
-          animation: "none",
-          opacity: 0,
-        },
-      },
       enterNext: {
         _motionSafe: {
           animationName: "slideInRight",
@@ -54,18 +46,6 @@ export const cardSurface = cva({
           animationDuration: "fast",
           animationTimingFunction: "standard",
           animationFillMode: "both",
-        },
-      },
-      leaveBack: {
-        _motionSafe: {
-          animationName: "slideOutRight",
-          animationDuration: "fast",
-          animationTimingFunction: "exit",
-          animationFillMode: "forwards",
-        },
-        _motionReduce: {
-          animation: "none",
-          opacity: 0,
         },
       },
       enterBack: {
@@ -88,7 +68,7 @@ export const cardSurface = cva({
 });
 
 /**
- * Back (and Next) at the start, "No change to the rest" at the end: one row of quiet buttons. Holds
+ * Back (and Next) at the start: one row of quiet buttons. Holds
  * a button's height when none shows, so the sheet keeps its height.
  */
 export const cardNav = cva({

@@ -35,6 +35,13 @@ describe("DebtWidget", () => {
     expect(debtCardShowsEstimate(summary)).toBe(true);
   });
 
+  it("names the page Cards and loans and links to it by that name", () => {
+    renderWidget(summary);
+    expect(screen.getByText("Cards and loans")).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Open cards and loans/ })).toBeTruthy();
+    expect(screen.queryByText("Debt and borrowing")).toBeNull();
+  });
+
   it("asks for the APR instead of modelling an unknown rate", () => {
     const data = {
       ...summary,

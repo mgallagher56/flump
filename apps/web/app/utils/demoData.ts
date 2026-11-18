@@ -13,7 +13,7 @@ interface DemoAccount extends RawAccount {
 /**
  * Derived figures for a sample persona, built the way the dashboard loader builds them: from the
  * persona's own rows through the engine's financial picture (E23 section 2). Only the rows are
- * hand-written; net worth, budget totals, safe to spend and months of cover are never typed in.
+ * hand-written; net worth, budget totals, safe to spend and breathing room are never typed in.
  */
 function demoFigures(
   accounts: readonly DemoAccount[],

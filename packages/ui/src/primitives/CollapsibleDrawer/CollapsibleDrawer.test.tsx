@@ -60,7 +60,36 @@ describe("CollapsibleDrawer Primitive", () => {
     expect(body.className).toContain("motionSafe:");
   });
 
+  it("draws the card trigger as the B14 outline pill with a chevron inside the header", () => {
+    render(
+      <CollapsibleDrawer closedLabel="Show budget what-ifs" title="Budget what-ifs">
+        <div>Body</div>
+      </CollapsibleDrawer>,
+    );
+    const trigger = screen.getByRole("button", { name: "Budget what-ifs" });
+    const pill = screen.getByText("Show budget what-ifs");
+    expect(trigger.contains(pill)).toBe(true);
+    expect(pill.className).toMatch(/bd-c_border\.strong/);
+    expect(pill.className).toMatch(/bdr_lg/);
+    expect(pill.className).toMatch(/h_control\.sm/);
+    expect(pill.querySelector("svg")).not.toBeNull();
+    // Same look as the quiet trigger: no teal link text.
+    expect(pill.className).toMatch(/c_text\.primary/);
+  });
+
   describe("quiet variant", () => {
+    it("keeps the 32px pill but gives coarse pointers a 44px hit area", () => {
+      render(
+        <CollapsibleDrawer title="Show data" variant="quiet">
+          <div>Body</div>
+        </CollapsibleDrawer>,
+      );
+      const trigger = screen.getByRole("button", { name: "Show data" });
+      expect(trigger.className).toMatch(/h_control\.sm/);
+      expect(trigger.className).toMatch(/coarse.*before:h_touch/);
+      expect(trigger.className).toMatch(/bd-c_border\.strong/);
+    });
+
     it("is a text button named by the title, without the card trailing text", () => {
       render(
         <CollapsibleDrawer

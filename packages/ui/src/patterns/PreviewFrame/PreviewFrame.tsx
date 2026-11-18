@@ -18,8 +18,13 @@ export type SampleHouseholdKey = "renter" | "homeowner";
 export interface PreviewFrameProps {
   /** Identifier for HTML ids and data-testid hooks. */
   id: string;
-  /** Heading displayed in the preview frame header. */
+  /** Title displayed in the preview frame header. It also names the figure. */
   title: string;
+  /**
+   * Element for the title. Defaults to `h2`. Pass `p` when the surrounding section already has
+   * its own visible heading, so one section never carries two headings at the same level.
+   */
+  titleAs?: "h2" | "h3" | "h4" | "p";
   /** Badge text, defaults to "Example". */
   badge?: string;
   /** Active sample household when a switcher is provided. */
@@ -40,6 +45,7 @@ export interface PreviewFrameProps {
 export const PreviewFrame: FC<PreviewFrameProps> = ({
   id,
   title,
+  titleAs: TitleElement = "h2",
   badge = "Example",
   household = "renter",
   onHouseholdChange,
@@ -60,9 +66,9 @@ export const PreviewFrame: FC<PreviewFrameProps> = ({
     >
       <header className={previewHeader()}>
         <div className={previewTitleGroup()}>
-          <h2 className={previewTitle()} id={titleId}>
+          <TitleElement className={previewTitle()} id={titleId}>
             {title}
-          </h2>
+          </TitleElement>
           <StatusBadge id={badgeId} size="sm" variant="neutral">
             {badge}
           </StatusBadge>

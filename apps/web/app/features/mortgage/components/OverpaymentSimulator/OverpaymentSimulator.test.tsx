@@ -19,7 +19,10 @@ describe("<OverpaymentSimulator />", () => {
     // E17 5A: one result card, labelled by the outcome, with one row; the interest saved is its note.
     expect(getAllByRole("group", { name: "Paid off sooner by" })).toHaveLength(1);
     expect(getByText("Monthly payment with the extra")).toBeDefined();
-    expect(getByText(/^Less interest in total \(estimate\): £[\d,]+\.$/)).toBeDefined();
+    // A lifetime projection: "~" and three significant figures (B9), never to the pound.
+    const note = getByText(/^Less interest in total \(estimate\): ~£[\d,]+\.$/).textContent ?? "";
+    const digits = note.replace(/\D/g, "");
+    expect(digits.length <= 3 || /^\d{3}0+$/.test(digits)).toBe(true);
     expect(container.querySelectorAll("#overpayment-outcome dt")).toHaveLength(1);
     // The payment summary under the slider is gone: it repeated the figure beside the outcome.
     expect(container.textContent).not.toMatch(/Total each month|Usual monthly payment/);
@@ -135,7 +138,7 @@ describe("<OverpaymentSimulator />", () => {
     const { getByRole } = customRender(<OverpaymentSimulator {...props} />);
     const figure = getByRole("figure", { name: "Mortgage balance by year" });
     expect(figure.textContent).toMatch(
-      /Illustration: overpaying £200 a month means £[\d,]+ less interest in total/,
+      /Illustration: overpaying £200 a month means ~£[\d,]+ less interest in total/,
     );
     expect(figure.textContent).toMatch(/Assumes the rate stays at 4% for the whole term\./);
     expect(figure.textContent).not.toMatch(/Projection, not a forecast/);

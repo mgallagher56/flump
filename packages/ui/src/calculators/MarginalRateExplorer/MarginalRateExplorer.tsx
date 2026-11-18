@@ -339,7 +339,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   );
 
   // In a ScenarioZone the pay starts at the saved salary, which the page's hero already shows, so
-  // its slider waits under "More options" and the bonus is the one input in view.
+  // its slider waits under "Salary and deduction options" and the bonus is the one input in view.
   const controls = (
     <div className={explorerControls()}>
       {inScenarioZone ? null : grossPaySlider}
@@ -352,7 +352,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         value={bonus}
         onChange={(v) => set("bonus", v)}
       />
-      {/* Named by its title, "More options"; the visible action text is left out. Holds every
+      {/* Named by its title, "Salary and deduction options"; the visible action text is left out. Holds every
           input past the first two (gross pay and bonus), including the extra pension, with the
           state in the parent. */}
       <CollapsibleDrawer

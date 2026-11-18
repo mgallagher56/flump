@@ -25,8 +25,10 @@ export interface UseStepTransitionResult<T> {
  * E17 Demo 3: Check-in moving between accounts.
  * - Next: arrives over `base` (200ms) `enter` with 24px travel (`slideInRight`).
  * - Back: arrives over `base` (200ms) `enter` with -24px travel (`slideInLeft`).
- * - Reduced motion: arrives with short fade over `fast`, no travel.
- * - Renders the next step immediately so input is never delayed and focus moves correctly.
+ * - Reduced motion: the same enter states, which the consumer's recipe draws as a short fade over
+ *   `fast` with no travel.
+ * - Renders the next step immediately so input is never delayed and focus moves correctly. For
+ *   that reason there is no leave phase: the old step is never held on screen while it exits.
  */
 export function useStepTransition<T>(
   step: T,
@@ -60,17 +62,17 @@ export function useStepTransition<T>(
     prevIndex.current = stepIndex;
     setDisplayedStep(step);
 
-    if (reducedMotion) {
-      setAnimationState("idle");
-      return;
-    }
-
+    // Reduced motion keeps the enter state: the recipe swaps the travel for a short fade over
+    // `fast`, so the state lasts that long instead of the full arrival.
     const enterState: StepAnimationState = direction === "next" ? "enterNext" : "enterBack";
     setAnimationState(enterState);
 
-    const timer = setTimeout(() => {
-      setAnimationState("idle");
-    }, enterMs);
+    const timer = setTimeout(
+      () => {
+        setAnimationState("idle");
+      },
+      reducedMotion ? Math.min(enterMs, durations.fast) : enterMs,
+    );
 
     return () => clearTimeout(timer);
   }, [step, stepIndex, explicitDirection, enterMs, reducedMotion]);

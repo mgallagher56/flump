@@ -68,7 +68,6 @@ describe("check-in copy", () => {
   });
 
   it("states net worth against last month the same way in both directions", () => {
-    expect(CHECK_IN_COPY.saved).toBe("Check-in saved");
     expect(checkInWholeTotal(231400.4)).toBe("£231,400");
     expect(checkInWholeTotal(-4200)).toBe("−£4,200");
     expect(checkInNetWorthChange(1250, "2026-10")).toBe("Up £1,250 on October 2026.");
@@ -96,20 +95,6 @@ describe("check-in copy", () => {
     expect(formatWarmConfirmation({ kind: "checkInFinished", month: "2026-11" })).toBe(
       "November is checked in.",
     );
-    const up = formatWarmConfirmation({
-      kind: "checkInFinished",
-      month: "2026-11",
-      change: 1150,
-      previousMonth: "2026-10",
-    });
-    const down = formatWarmConfirmation({
-      kind: "checkInFinished",
-      month: "2026-11",
-      change: -1150,
-      previousMonth: "2026-10",
-    });
-    expect(up).toBe("November is checked in. Net worth changed by +£1,150 since October 2026.");
-    expect(down.replace("−", "+")).toBe(up);
     expect(formatWarmConfirmation({ kind: "setupStepFinished", step: "budget" })).toBe(
       "Budget added.",
     );

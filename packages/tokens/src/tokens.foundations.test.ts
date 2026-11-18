@@ -268,8 +268,6 @@ describe("E15 motion", () => {
       "shimmer",
       "slideInLeft",
       "slideInRight",
-      "slideOutLeft",
-      "slideOutRight",
       "slideUp",
       "tick",
       "wash",

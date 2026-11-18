@@ -59,15 +59,30 @@ export const drawerCount = cva({
   base: { textStyle: "body.sm", color: "text.secondary", fontVariantNumeric: "tabular-nums" },
 });
 
+// B14: a drawer trigger is a small outline pill with a chevron (32px high, border.strong, radius
+// lg). The card variant's trailing action and the quiet variant's button share this look.
+const pillLook = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "1.5",
+  height: "control.sm",
+  px: "3",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border.strong",
+  borderRadius: "lg",
+  textStyle: "label.sm",
+  fontWeight: "semibold",
+  color: "text.primary",
+  whiteSpace: "nowrap",
+} as const;
+
 export const drawerAction = cva({
   base: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "1",
+    ...pillLook,
     flexShrink: 0,
-    textStyle: "label.sm",
-    fontWeight: "semibold",
-    color: "primary",
+    // The whole header row is the button (its 44px target and hover); the pill is its visual cue.
+    backgroundColor: "surface.card",
   },
 });
 
@@ -106,22 +121,22 @@ export const drawerQuietContainer = cva({
 
 export const drawerQuietButton = cva({
   base: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "1.5",
-    height: "32px",
-    minHeight: "32px",
-    px: "3",
+    ...pillLook,
+    position: "relative",
     backgroundColor: "transparent",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.strong",
-    borderRadius: "lg",
     cursor: "pointer",
-    textStyle: "label.sm",
-    fontWeight: "semibold",
-    color: "text.primary",
     textDecoration: "none",
+    // Keeps the 32px look but gives coarse pointers a 44px target with an invisible hit area.
+    "@media (pointer: coarse)": {
+      _before: {
+        content: '""',
+        position: "absolute",
+        insetInline: "0",
+        top: "50%",
+        transform: "translateY(-50%)",
+        height: "touch",
+      },
+    },
     _hover: { backgroundColor: "surface.subtle" },
     _focusVisible: {
       outline: "2px solid",

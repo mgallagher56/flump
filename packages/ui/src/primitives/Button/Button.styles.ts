@@ -153,13 +153,21 @@ export const buttonSpinnerRecipe = cva({
   },
 });
 
-/** E17 Demo 5: Saved confirmation label with fast cross-fade */
+/**
+ * E17 Demo 5: The tick and "Saved", laid over the transparent label (as the pending spinner is) so
+ * the button keeps its width. Fades in over `fast`.
+ */
 export const buttonSavedContentRecipe = cva({
   base: {
+    position: "absolute",
+    insetBlock: "0",
+    insetInline: "0",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "2",
+    whiteSpace: "nowrap",
+    pointerEvents: "none",
     _motionSafe: {
       animationName: "fadeIn",
       animationDuration: "fast",

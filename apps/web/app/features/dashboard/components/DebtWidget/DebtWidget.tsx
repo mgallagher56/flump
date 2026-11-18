@@ -48,9 +48,9 @@ export const DebtWidget: FC<DebtWidgetProps> = ({ data = null }) => {
           ? { to: "/app/accounts", label: "Add a debt" }
           : aprUnknown
             ? { to: "/app/accounts", label: "Add your rates" }
-            : { to: "/app/debt", label: "Open debt" }
+            : { to: "/app/debt", label: "Open cards and loans" }
       }
-      title="Debt and borrowing"
+      title="Cards and loans"
     />
   );
 };

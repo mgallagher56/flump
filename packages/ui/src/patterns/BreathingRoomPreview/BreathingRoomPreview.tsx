@@ -1,5 +1,6 @@
 import {
   buildFinancialPicture,
+  monthsOfCoverFor,
   SAMPLE_HOUSEHOLDS,
   type SampleHouseholdKey,
 } from "@flump/finance-engine";
@@ -21,6 +22,12 @@ import {
   outcomeLabel,
   scenarioControls,
 } from "./BreathingRoomPreview.styles";
+import {
+  BREATHING_ROOM_DESCRIPTION,
+  BREATHING_ROOM_LABEL,
+  breathingRoomPhrase,
+  breathingRoomValue,
+} from "./BreathingRoomPreview.wording";
 
 export interface BreathingRoomPreviewProps {
   id?: string;
@@ -28,36 +35,46 @@ export interface BreathingRoomPreviewProps {
   className?: string;
 }
 
+/** The smallest monthly essentials the sliders can reach, so the ratio always has a divisor. */
+const MIN_ESSENTIALS = 100;
+
+const deltaFormat = new Intl.NumberFormat("en-GB", {
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+
+/**
+ * Breathing room for a sample household, with a what-if zone on top of it. Every figure comes
+ * from the engine's picture of the fixture; when the picture does not know the figure, nothing
+ * renders (no invented fallback).
+ */
 export const BreathingRoomPreview: FC<BreathingRoomPreviewProps> = ({
   id = "breathing-room-preview",
   household = "renter",
   className,
 }) => {
-  const fixture = SAMPLE_HOUSEHOLDS[household].fixture;
-  const picture = buildFinancialPicture(fixture);
-
-  const baselineSavings = picture.netWorth.liquidCash;
-  const baselineEssentials =
-    picture.monthsOfCover.status === "known"
-      ? picture.monthsOfCover.value.monthlyEssentials
-      : household === "homeowner"
-        ? 1780
-        : 1280;
-
-  const baselineMonths =
-    picture.monthsOfCover.status === "known"
-      ? picture.monthsOfCover.value.months
-      : Math.round((baselineSavings / baselineEssentials) * 10) / 10;
-
   const [spendingChange, setSpendingChange] = useState<number>(0);
   const [savingsChange, setSavingsChange] = useState<number>(0);
 
+  const picture = buildFinancialPicture(SAMPLE_HOUSEHOLDS[household].fixture);
+  if (picture.monthsOfCover.status !== "known") return null;
+
+  const {
+    liquidCash: baselineSavings,
+    monthlyEssentials: baselineEssentials,
+    months: baselineMonths,
+  } = picture.monthsOfCover.value;
+
   const isModified = spendingChange !== 0 || savingsChange !== 0;
 
-  const effectiveEssentials = Math.max(100, baselineEssentials + spendingChange);
+  const effectiveEssentials = Math.max(MIN_ESSENTIALS, baselineEssentials + spendingChange);
   const effectiveSavings = Math.max(0, baselineSavings + savingsChange);
-  const updatedMonths = Math.round((effectiveSavings / effectiveEssentials) * 10) / 10;
+  const updatedMonths = monthsOfCoverFor(effectiveSavings, effectiveEssentials) ?? baselineMonths;
   const deltaMonths = Math.round((updatedMonths - baselineMonths) * 10) / 10;
+  const deltaText =
+    deltaMonths === 0
+      ? "No change compared to saved figures"
+      : `${deltaFormat.format(deltaMonths)} ${Math.abs(deltaMonths) === 1 ? "month" : "months"} compared to saved figures`;
 
   const handleReset = () => {
     setSpendingChange(0);
@@ -66,12 +83,15 @@ export const BreathingRoomPreview: FC<BreathingRoomPreviewProps> = ({
 
   const gbp = (val: number) => formatMoney(val, { fractionDigits: 0 }).text;
 
-  const announcement = isModified ? `Breathing room updated: about ${updatedMonths} months.` : "";
+  const announcement = isModified
+    ? `${BREATHING_ROOM_LABEL} updated: ${breathingRoomPhrase(updatedMonths)}.`
+    : "";
 
   return (
     <div className={`${breathingRoomRoot()} ${className ?? ""}`.trim()} data-testid={id} id={id}>
       <ScenarioZone
         announcement={announcement}
+        headingAs="h3"
         basis={`Starting from saved figures: ${gbp(baselineSavings)} in savings, ${gbp(baselineEssentials)} a month in essentials`}
         id={`${id}-zone`}
         isModified={isModified}
@@ -109,21 +129,19 @@ export const BreathingRoomPreview: FC<BreathingRoomPreviewProps> = ({
 
         <div className={outcomeCard()} data-testid={`${id}-outcome`}>
           <p className={outcomeLabel()} id={`${id}-label`}>
-            Breathing room
+            {BREATHING_ROOM_LABEL}
           </p>
-          <div aria-atomic="true" aria-live="polite">
-            <p className={outcomeHeadline()} id={`${id}-headline`}>
-              About {updatedMonths} months
-            </p>
-          </div>
+          {/* The zone announces the change, so the figure itself is not a second live region. */}
+          <p className={outcomeHeadline()} id={`${id}-headline`}>
+            {breathingRoomValue(updatedMonths)}
+          </p>
           <p className={outcomeDescription()} id={`${id}-description`}>
-            How long your savings would cover the essentials.
+            {BREATHING_ROOM_DESCRIPTION}
           </p>
 
           {isModified && (
             <span className={deltaBadge()} data-testid={`${id}-delta`}>
-              {deltaMonths > 0 ? `+${deltaMonths}` : `${deltaMonths}`} months compared to saved
-              figures
+              {deltaText}
             </span>
           )}
 

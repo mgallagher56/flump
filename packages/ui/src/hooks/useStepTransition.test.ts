@@ -95,7 +95,7 @@ describe("useStepTransition", () => {
     expect(result.current.animationState).toBe("idle");
   });
 
-  it("swaps immediately with idle state under prefers-reduced-motion", () => {
+  it("keeps the enter state for a short fade over `fast` under prefers-reduced-motion", () => {
     mockMatchMedia(true);
     const { result, rerender } = renderHook(({ step, idx }) => useStepTransition(step, idx), {
       initialProps: { step: "step-1", idx: 0 },
@@ -103,8 +103,18 @@ describe("useStepTransition", () => {
 
     rerender({ step: "step-2", idx: 1 });
 
+    // Swaps at once, and the enter state lets the recipe run its reduced-motion fade.
     expect(result.current.displayedStep).toBe("step-2");
+    expect(result.current.animationState).toBe("enterNext");
+
+    // The fade lasts `durations.fast` (120ms), not the full `base` arrival.
+    act(() => {
+      vi.advanceTimersByTime(120);
+    });
     expect(result.current.animationState).toBe("idle");
     expect(result.current.isTransitioning).toBe(false);
+
+    rerender({ step: "step-1", idx: 0 });
+    expect(result.current.animationState).toBe("enterBack");
   });
 });

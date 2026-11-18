@@ -24,7 +24,7 @@ describe("sandbox persona figures come from the engine picture (E23)", () => {
     },
   );
 
-  it.each(PERSONAS)("%s: safe to spend and months of cover are known", (p) => {
+  it.each(PERSONAS)("%s: safe to spend and breathing room are known", (p) => {
     const { budgetData } = getSandboxPersonaData(p);
     expect(budgetData.safeToSpendWeekly).not.toBeNull();
     expect(budgetData.monthsOfCover).not.toBeNull();

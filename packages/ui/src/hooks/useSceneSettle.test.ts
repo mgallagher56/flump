@@ -1,4 +1,5 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearSceneSettled, useSceneSettle } from "./useSceneSettle";
 
@@ -49,6 +50,20 @@ describe("useSceneSettle", () => {
 
     const second = renderHook(() => useSceneSettle("empty-accounts"));
     expect(second.result.current).toBe(false);
+  });
+
+  it("still settles on the first view under StrictMode's double effect run", () => {
+    mockMatchMedia(false);
+    const { result } = renderHook(() => useSceneSettle("empty-goals"), { wrapper: StrictMode });
+    expect(result.current).toBe(true);
+  });
+
+  it("stops settling when reduced motion turns on after the first view", () => {
+    const media = mockMatchMedia(false);
+    const { result } = renderHook(() => useSceneSettle("empty-budget"));
+    expect(result.current).toBe(true);
+    act(() => media.set(true));
+    expect(result.current).toBe(false);
   });
 
   it("returns false under prefers-reduced-motion (scene still from the start)", () => {

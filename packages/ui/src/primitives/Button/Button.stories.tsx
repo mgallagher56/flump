@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fn, userEvent, within } from "@storybook/test";
+import { expect, fn, userEvent, waitFor, within } from "@storybook/test";
 import { ArrowRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { flex } from "../../../styled-system/patterns";
 import { Icon } from "../Icon/Icon";
@@ -120,6 +120,33 @@ export const Pending: Story = {
     );
   },
 };
+
+/** E17 Demo 5: the label swaps to "Saved" with a tick, at the same width, and is announced. */
+export const Saved: Story = {
+  render: () => (
+    <div className={row}>
+      <Button saved={false}>Save balance</Button>
+      <Button saved>Save balance</Button>
+      <Button saved variant="secondary">
+        Save balance
+      </Button>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const buttons = canvas.getAllByRole("button", { name: "Save balance" });
+    await expect(buttons[1]).toHaveAttribute("data-saved", "true");
+    await expect(buttons[0].getBoundingClientRect().width).toBeCloseTo(
+      buttons[1].getBoundingClientRect().width,
+      0,
+    );
+    await waitFor(() =>
+      expect(canvas.getAllByRole("status").some((s) => s.textContent === "Saved")).toBe(true),
+    );
+  },
+};
+
+export const SavedDark: Story = { ...Saved, globals: { theme: "dark" } };
 
 export const Icons: Story = {
   render: () => (

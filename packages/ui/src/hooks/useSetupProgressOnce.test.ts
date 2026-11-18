@@ -1,6 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearStoredStepCount, storeStepCount, useSetupProgressOnce } from "./useSetupProgressOnce";
+import {
+  clearStoredStepCount,
+  getStoredStepCount,
+  storeStepCount,
+  useSetupProgressOnce,
+} from "./useSetupProgressOnce";
 
 function mockMatchMedia(initial: boolean) {
   let matches = initial;
@@ -68,6 +74,52 @@ describe("useSetupProgressOnce", () => {
       vi.advanceTimersByTime(320);
     });
     expect(result.current.isAnimating).toBe(false);
+  });
+
+  it("still fills to the new count and finishes under StrictMode's double effect run", () => {
+    mockMatchMedia(false);
+    storeStepCount(2);
+
+    const { result } = renderHook(() => useSetupProgressOnce(3), { wrapper: StrictMode });
+    expect(result.current.currentValue).toBe(2);
+    expect(result.current.isAnimating).toBe(true);
+
+    act(() => {
+      vi.advanceTimersByTime(16);
+    });
+    expect(result.current.currentValue).toBe(3);
+
+    act(() => {
+      vi.advanceTimersByTime(320);
+    });
+    expect(result.current.isAnimating).toBe(false);
+    expect(getStoredStepCount()).toBe(3);
+  });
+
+  it("saves the count only once the fill has played", () => {
+    mockMatchMedia(false);
+    storeStepCount(2);
+
+    renderHook(() => useSetupProgressOnce(3));
+    expect(getStoredStepCount()).toBe(2);
+
+    act(() => {
+      vi.advanceTimersByTime(336);
+    });
+    expect(getStoredStepCount()).toBe(3);
+  });
+
+  it("jumps to the new length when reduced motion resolves during the fill", () => {
+    const media = mockMatchMedia(false);
+    storeStepCount(2);
+
+    const { result } = renderHook(() => useSetupProgressOnce(3));
+    expect(result.current.isAnimating).toBe(true);
+
+    act(() => media.set(true));
+    expect(result.current.currentValue).toBe(3);
+    expect(result.current.isAnimating).toBe(false);
+    expect(getStoredStepCount()).toBe(3);
   });
 
   it("shows immediate end state with no animation under prefers-reduced-motion", () => {

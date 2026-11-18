@@ -92,7 +92,7 @@ describe("CheckInSheet", () => {
 
       await userEvent.click(screen.getAllByRole("button", { name: "No change" })[0] as HTMLElement);
       await userEvent.click(screen.getByRole("button", { name: "No change" }));
-      await screen.findByRole("heading", { name: "Check-in saved" });
+      await screen.findByRole("heading", { name: "November is checked in." });
       expect(onSave).toHaveBeenNthCalledWith(1, {
         month: "2026-11",
         payload: {
@@ -149,7 +149,7 @@ describe("CheckInSheet", () => {
       setup({ accountDetails: allRecorded });
       const dialog = screen.getByRole("dialog", { name: "Monthly check-in" });
       expect(isSheet(dialog)).toBe(false);
-      expect(screen.getByRole("heading", { name: "Check-in saved" })).toBeDefined();
+      expect(screen.getByRole("heading", { name: "November is checked in." })).toBeDefined();
       // Back to the steps: the long task opens in the side sheet.
       await userEvent.click(screen.getByRole("button", { name: "Change a balance" }));
       await waitFor(() => expect(screen.getByTestId("checkin-list")).toBeDefined());
@@ -161,7 +161,7 @@ describe("CheckInSheet", () => {
       setup();
       await userEvent.click(screen.getAllByRole("button", { name: "No change" })[0] as HTMLElement);
       await userEvent.click(screen.getByRole("button", { name: "No change" }));
-      await screen.findByRole("heading", { name: "Check-in saved" });
+      await screen.findByRole("heading", { name: "November is checked in." });
       expect(isSheet(screen.getByRole("dialog", { name: "Monthly check-in" }))).toBe(true);
     });
 

@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui";
+import { Button, Illustration } from "@repo/ui";
 import type { FC } from "react";
 import { BaselineSnapshotPreview } from "../../components/BaselineSnapshotPreview";
 import { Footer } from "../../components/Footer";
@@ -14,6 +14,7 @@ import {
   ctaRow,
   finalCta,
   finalCtaBody,
+  finalCtaIllustration,
   finalCtaTitle,
   hero,
   heroHeading,
@@ -83,6 +84,9 @@ export const HomePage: FC = () => {
         >
           <HomeFAQ />
           <div className={finalCta()} data-testid="home-final-cta" id="get-started">
+            <div className={finalCtaIllustration()} data-testid="home-final-cta-illustration">
+              <Illustration scene="onboarding" size="sm" />
+            </div>
             <h3 className={finalCtaTitle()} id="home-cta-title">
               Ready to see where you stand?
             </h3>

@@ -10,19 +10,14 @@ export const dashboardPreviewRoot = cva({
   },
 });
 
-export const dashboardKpiRow = cva({
-  base: {
-    display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
-    gap: "4",
-    alignItems: "stretch",
-  },
-});
-
 export const dashboardSectionGrid = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+    // Two or three cards depending on the household: on large screens they share one row equally
+    // rather than leave an empty column.
+    gridTemplateColumns: { base: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "none" },
+    gridAutoFlow: { lg: "column" },
+    gridAutoColumns: { lg: "minmax(0, 1fr)" },
     gap: "4",
     alignItems: "stretch",
   },
@@ -88,6 +83,7 @@ export const sectionCardLine = cva({
     textStyle: "body.xs",
     color: "text.muted",
     margin: 0,
+    fontVariantNumeric: "tabular-nums",
   },
 });
 

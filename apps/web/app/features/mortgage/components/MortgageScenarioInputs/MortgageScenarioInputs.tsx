@@ -34,7 +34,7 @@ const EditedNote: FC<{ show: boolean }> = ({ show }) =>
   show ? <p className={editedMark()}>Changed from your saved figure</p> : null;
 
 /**
- * What-if starting figures, behind "More options" in the scenario zone. They start at the saved
+ * What-if starting figures, behind "Starting figures" in the scenario zone. They start at the saved
  * balance, rate and term and only ever change the illustration: nothing here is saved or shown in
  * the headline figures. No card or heading of its own (it sits on the zone surface).
  */
