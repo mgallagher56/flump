@@ -78,11 +78,11 @@ describe("DatePicker", () => {
       <DatePicker aria-label="Date" onValueChange={onValueChange} value="2026-11-16" {...props} />,
     );
     fireEvent.click(screen.getByRole("button", { name: /^Date/ }));
-    return { onValueChange, grid: screen.getByRole("grid") };
+    return { onValueChange, grid: screen.getByRole("table") };
   };
   const focused = () => document.activeElement as HTMLElement;
 
-  it("is a WAI-ARIA date grid with one tab stop and focus on the selected day when it opens", () => {
+  it("is a table of days with one tab stop and focus on the selected day when it opens", () => {
     const { grid } = openPicker();
     expect(grid.getAttribute("aria-labelledby")).toBeTruthy();
     expect(screen.getAllByRole("row")).toHaveLength(7);
@@ -91,8 +91,8 @@ describe("DatePicker", () => {
     expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026, selected");
     const stops = grid.querySelectorAll("button[tabindex='0']");
     expect(stops).toHaveLength(1);
-    expect(screen.getByRole("gridcell", { selected: true }).textContent).toBe("16");
-    // The selection is stated once, on the gridcell; the day buttons are not toggle buttons.
+    expect(screen.getByRole("button", { name: "16 Nov 2026, selected" }).textContent).toBe("16");
+    // The selection is stated once, in the day name; the day buttons are not toggle buttons.
     expect(grid.querySelectorAll("button[aria-pressed]")).toHaveLength(0);
   });
 
@@ -134,7 +134,7 @@ describe("DatePicker", () => {
     fireEvent.keyDown(focused(), { key: "PageDown" });
     for (let i = 0; i < 16; i += 1) fireEvent.keyDown(focused(), { key: "ArrowRight" });
     expect(focused().getAttribute("aria-label")).toBe("1 Feb 2026");
-    expect(screen.getByRole("grid").querySelectorAll("button[tabindex='0']")).toHaveLength(1);
+    expect(screen.getByRole("table").querySelectorAll("button[tabindex='0']")).toHaveLength(1);
   });
 
   it("stops keyboard movement at min and max", () => {

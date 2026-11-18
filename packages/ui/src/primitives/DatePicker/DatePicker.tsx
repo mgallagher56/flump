@@ -5,6 +5,7 @@ import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon/Icon";
 import {
   datePickerContentRecipe,
+  datePickerDayCellRecipe,
   datePickerDayRecipe,
   datePickerDaysGridRecipe,
   datePickerFooterRecipe,
@@ -469,73 +470,65 @@ export const DatePicker: FC<DatePickerProps> = ({
                   <Icon icon={ChevronRight} size="sm" />
                 </button>
               </div>
-              {/* biome-ignore lint/a11y/useSemanticElements: WAI-ARIA date grid of buttons, not a data table */}
-              <div
+              {/* A native table of day buttons, named by the visible month: arrow keys move between days
+                  (one tab stop), and the chosen day says ", selected" in its name. */}
+              <table
                 aria-labelledby={headingId}
                 className={datePickerDaysGridRecipe()}
                 data-testid="datepicker-days"
                 onKeyDown={onGridKeyDown}
-                role="grid"
               >
-                {/* biome-ignore lint/a11y/useSemanticElements: row of the date grid */}
-                {/* biome-ignore lint/a11y/useFocusableInteractive: rows are not focus stops in a date grid */}
-                <div className={datePickerWeekdaysRecipe()} role="row">
-                  {WEEKDAYS.map((weekday) => (
-                    // biome-ignore lint/a11y/useSemanticElements: column header of the date grid
-                    // biome-ignore lint/a11y/useFocusableInteractive: headers are not focus stops in a date grid
-                    <div
-                      className={datePickerWeekdayRecipe()}
-                      key={weekday.long}
-                      role="columnheader"
-                    >
-                      <span aria-hidden="true">{weekday.short}</span>
-                      <span className={datePickerVisuallyHiddenRecipe()}>{weekday.long}</span>
-                    </div>
+                <thead>
+                  <tr className={datePickerWeekdaysRecipe()}>
+                    {WEEKDAYS.map((weekday) => (
+                      <th className={datePickerWeekdayRecipe()} key={weekday.long} scope="col">
+                        <span aria-hidden="true">{weekday.short}</span>
+                        <span className={datePickerVisuallyHiddenRecipe()}>{weekday.long}</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {weeks.map((week) => (
+                    <tr className={datePickerWeekRowRecipe()} key={week[0]?.iso}>
+                      {week.map((cell) => {
+                        const cellDisabled = isOutOfRange(cell.iso);
+                        const isSelected = cell.iso === value;
+                        const isToday = cell.iso === today;
+                        const isFocusStop = !cell.outside && cell.iso === tabStopIso;
+                        return (
+                          <td className={datePickerDayCellRecipe()} key={cell.iso}>
+                            <button
+                              aria-current={isToday ? "date" : undefined}
+                              aria-label={
+                                isSelected
+                                  ? `${formatDisplayDate(cell.iso)}, selected`
+                                  : formatDisplayDate(cell.iso)
+                              }
+                              className={datePickerDayRecipe({
+                                outside: cell.outside,
+                                today: isToday,
+                                selected: isSelected,
+                              })}
+                              data-autofocus={isFocusStop ? "true" : undefined}
+                              data-iso={cell.iso}
+                              disabled={cellDisabled}
+                              onClick={() => selectDate(cell.iso)}
+                              onFocus={() => {
+                                if (!cell.outside) setFocusedIso(cell.iso);
+                              }}
+                              tabIndex={isFocusStop ? 0 : -1}
+                              type="button"
+                            >
+                              {cell.day}
+                            </button>
+                          </td>
+                        );
+                      })}
+                    </tr>
                   ))}
-                </div>
-                {weeks.map((week) => (
-                  // biome-ignore lint/a11y/useSemanticElements: row of the date grid
-                  // biome-ignore lint/a11y/useFocusableInteractive: rows are not focus stops in a date grid
-                  <div className={datePickerWeekRowRecipe()} key={week[0]?.iso} role="row">
-                    {week.map((cell) => {
-                      const cellDisabled = isOutOfRange(cell.iso);
-                      const isSelected = cell.iso === value;
-                      const isToday = cell.iso === today;
-                      const isFocusStop = !cell.outside && cell.iso === tabStopIso;
-                      return (
-                        // biome-ignore lint/a11y/useSemanticElements: cell of the date grid
-                        // biome-ignore lint/a11y/useFocusableInteractive: the button inside takes focus
-                        <div aria-selected={isSelected} key={cell.iso} role="gridcell">
-                          <button
-                            aria-current={isToday ? "date" : undefined}
-                            aria-label={
-                              isSelected
-                                ? `${formatDisplayDate(cell.iso)}, selected`
-                                : formatDisplayDate(cell.iso)
-                            }
-                            className={datePickerDayRecipe({
-                              outside: cell.outside,
-                              today: isToday,
-                              selected: isSelected,
-                            })}
-                            data-autofocus={isFocusStop ? "true" : undefined}
-                            data-iso={cell.iso}
-                            disabled={cellDisabled}
-                            onClick={() => selectDate(cell.iso)}
-                            onFocus={() => {
-                              if (!cell.outside) setFocusedIso(cell.iso);
-                            }}
-                            tabIndex={isFocusStop ? 0 : -1}
-                            type="button"
-                          >
-                            {cell.day}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
+                </tbody>
+              </table>
             </>
           ) : null}
 

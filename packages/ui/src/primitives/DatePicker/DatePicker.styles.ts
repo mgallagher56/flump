@@ -126,13 +126,8 @@ export const datePickerTitleGroupRecipe = cva({
   },
 });
 
-export const datePickerWeekdaysRecipe = cva({
-  base: {
-    display: "grid",
-    gridTemplateColumns: "repeat(7, 1fr)",
-    marginBottom: "1",
-  },
-});
+/** The weekday header row. */
+export const datePickerWeekdaysRecipe = cva({ base: {} });
 
 export const datePickerWeekdayRecipe = cva({
   base: {
@@ -140,25 +135,20 @@ export const datePickerWeekdayRecipe = cva({
     textStyle: "label.sm",
     color: "text.muted",
     py: "1",
+    fontWeight: "normal",
   },
 });
 
+/** The day grid: a native table, seven equal columns. */
 export const datePickerDaysGridRecipe = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5",
-  },
+  base: { width: "100%", tableLayout: "fixed", borderCollapse: "collapse" },
 });
+
+/** One day cell; its padding is the gap between days. */
+export const datePickerDayCellRecipe = cva({ base: { p: "0.5", textAlign: "center" } });
 
 /** One week (role="row") of the date grid. */
-export const datePickerWeekRowRecipe = cva({
-  base: {
-    display: "grid",
-    gridTemplateColumns: "repeat(7, 1fr)",
-    gap: "0.5",
-  },
-});
+export const datePickerWeekRowRecipe = cva({ base: {} });
 
 /** Visually hidden live region that announces the visible month or year range. */
 export const datePickerLiveRegionRecipe = cva({
