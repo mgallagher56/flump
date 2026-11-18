@@ -1,9 +1,1 @@
-[
-  {
-    "id": "GHSA-fc5q-39xc-vjpf",
-    "package": "picomatch",
-    "severity": "high",
-    "reason": "ReDoS on crafted extglob patterns; no patched release exists (every version up to 4.0.7 is affected). One runtime path: the backend image carries typeorm > tinyglobby > picomatch, which only expands the constant migrations glob in apps/backend/src/config/typeorm.options.ts, never user input. Every other path is build, dev or test tooling (vite, rollup, pandacss, storybook, vitest, lint-staged, knip, expo cli and codegen); the marketing image carries vite but never calls it in production. Remove once picomatch ships a fix and the lockfile picks it up.",
-    "expires": "2026-12-01"
-  }
-]
+[]
