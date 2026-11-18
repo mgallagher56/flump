@@ -52,24 +52,24 @@ describe("PageHeader Pattern", () => {
     expect(h1).toContain("ov-wrap_break-word");
   });
 
-  it("shows the page icon beside the h1, still and decorative, and none unless asked", () => {
+  it("shows the page icon at the top, still and decorative, and none unless asked", () => {
     const { rerender } = render(
       <PageHeader
         actions={<button type="button">Add</button>}
+        description="Pots"
         illustration="empty-savings"
         title="Your savings"
       />,
     );
     const art = screen.getByTestId("page-header-illustration");
-    // Below md: icon, h1 and actions share the first row, so the icon adds no height.
+    // Below md the icon starts the description's row, so the h1 keeps its width beside the
+    // actions; the description leaves room for it.
     expect(art.className).toContain("grid-c_1");
-    expect(art.className).toContain("grid-r_1");
-    expect(screen.getByRole("heading", { level: 1 }).className).toContain("grid-c_2");
-    expect(screen.getByRole("button", { name: "Add" }).parentElement?.className).toContain(
-      "grid-c_3",
-    );
-    // The same size on every page: 48px below md, 64px from md.
-    expect(art.className).toContain("w_12");
+    expect(art.className).toContain("grid-r_2");
+    expect(screen.getByRole("heading", { level: 1 }).className).toContain("grid-c_1");
+    expect(screen.getByText("Pots").className).toContain("ps_calc(");
+    // The same size on every page: 40px below md, 64px from md.
+    expect(art.className).toContain("w_10");
     expect(art.className).toContain("md:w_16");
     const svg = art.querySelector("svg");
     expect(svg?.getAttribute("aria-hidden")).toBe("true");

@@ -91,7 +91,7 @@ export const WithIllustrationDark: Story = {
   play: withIllustrationPlay,
 };
 
-/** At 375 the icon, h1 and action share one row, so the first figure is not pushed down. */
+/** At 375 the icon starts the description row, so the h1 keeps its width and nothing moves down. */
 export const WithIllustrationPhone: Story = {
   args: withIllustrationArgs,
   parameters: { viewport: { defaultViewport: "mobile1" } },

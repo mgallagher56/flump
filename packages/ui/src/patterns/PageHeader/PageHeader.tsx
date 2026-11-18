@@ -56,18 +56,18 @@ export const PageHeader: FC<PageHeaderProps> = ({
   const text = description ?? subtitle;
   const withIcon = Boolean(illustration);
   return (
-    <header className={cx(pageHeaderContainer({ withIcon }), className)}>
+    <header className={cx(pageHeaderContainer(), className)}>
       {illustration ? (
         <div className={pageHeaderIcon()} data-testid="page-header-illustration">
           <Illustration scene={illustration} settle={false} size="sm" />
         </div>
       ) : null}
       <div className={pageHeaderText()}>
-        <h1 className={pageHeaderTitle({ withIcon })}>{title}</h1>
-        {text && <p className={pageHeaderDescription()}>{text}</p>}
+        <h1 className={pageHeaderTitle()}>{title}</h1>
+        {text && <p className={pageHeaderDescription({ withIcon })}>{text}</p>}
       </div>
       {(badge || actions) && (
-        <div className={pageHeaderAside({ withIcon })}>
+        <div className={pageHeaderAside()}>
           {typeof badge === "string" ? <span className={pageHeaderBadge()}>{badge}</span> : badge}
           {actions}
         </div>
