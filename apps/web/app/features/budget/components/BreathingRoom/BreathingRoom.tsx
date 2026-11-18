@@ -1,5 +1,5 @@
 import { type Figure, isFigureKnown, type MonthsOfCover } from "@flump/finance-engine";
-import { Illustration, InfoTip, Money, PageSection, ResultBlock } from "@repo/ui";
+import { InfoTip, Money, PageSection, ResultBlock } from "@repo/ui";
 import { LifeBuoy } from "lucide-react";
 import type { FC } from "react";
 import {
@@ -9,12 +9,7 @@ import {
   describeBreathingRoom,
   MONEY_TO_DRAW_ON_LABEL,
 } from "~/utils/breathingRoom";
-import {
-  breathingRoomFigure,
-  breathingRoomResult,
-  breathingRoomRow,
-  breathingRoomScene,
-} from "./BreathingRoom.styles";
+import { breathingRoomFigure, breathingRoomResult, breathingRoomRow } from "./BreathingRoom.styles";
 
 export interface BreathingRoomProps {
   /** The engine's months of cover from the page's financial picture. Never worked out here. */
@@ -25,8 +20,8 @@ export interface BreathingRoomProps {
  * "Breathing room" (owner ruling 15 November 2026): the saved figure in a section of its own, in
  * one result card, outside the modelling zone (STYLE-GUIDE 12.5, UX-GUIDELINES S10). It shows the
  * figure, the owner's one-line description and the money to draw on. Facts only: no target, no
- * colour that says a number is good or bad. From lg the card leaves half the row empty, so one still
- * scene sits beside it there (B10); it is not an empty state, so it does not settle.
+ * colour that says a number is good or bad. No scene of its own: the budget page's illustration is
+ * its page icon in the header, and one illustration is in view (owner direction, 18 Nov 2026).
  */
 export const BreathingRoom: FC<BreathingRoomProps> = ({ figure }) => {
   const saved = isFigureKnown(figure) ? figure.value : null;
@@ -69,16 +64,6 @@ export const BreathingRoom: FC<BreathingRoomProps> = ({ figure }) => {
               : undefined
           }
         />
-        {saved ? (
-          <div
-            aria-hidden="true"
-            className={breathingRoomScene()}
-            data-testid="breathing-room-scene"
-            id="breathing-room-scene"
-          >
-            <Illustration scene="empty-savings" settle={false} size="md" />
-          </div>
-        ) : null}
       </div>
     </PageSection>
   );
