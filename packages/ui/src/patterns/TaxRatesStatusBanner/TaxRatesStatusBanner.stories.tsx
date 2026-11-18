@@ -24,3 +24,12 @@ export const Fallback: Story = {
 export const Provisional: Story = {
   args: { ratesYear: "2027/28", isFallback: false, kind: "provisional" },
 };
+
+/** Figures worked out at another year's rates, while the calendar year's rates are loaded. */
+export const OtherYearsRates: Story = {
+  args: { calendarYear: "2026/27", ratesYear: "2025/26", isFallback: false },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/Using 2025\/26 rates, not 2026\/27 rates/)).toBeInTheDocument();
+  },
+};
