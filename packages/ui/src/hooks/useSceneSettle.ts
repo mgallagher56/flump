@@ -54,7 +54,8 @@ export function clearSceneSettled(): void {
  * On a server-rendered page the still scene is already painted, so the first view after hydration
  * stays still and is recorded as seen; the settle plays only when the scene mounts on the client.
  */
-export function useSceneSettle(sceneKey: string = "default"): boolean {
+/** `enabled` false (a caller that fixes the settle itself) never claims or marks the scene. */
+export function useSceneSettle(sceneKey: string = "default", enabled = true): boolean {
   const reducedMotion = usePrefersReducedMotion();
   const [shouldSettle, setShouldSettle] = useState(false);
   // The scene this instance claimed the settle for. A ref survives StrictMode's second effect run,
@@ -66,6 +67,11 @@ export function useSceneSettle(sceneKey: string = "default"): boolean {
 
   // A layout effect, so the settle starts before the first paint (no still frame, then a replay).
   useIsomorphicLayoutEffect(() => {
+    if (!enabled) {
+      setShouldSettle(false);
+      return;
+    }
+
     if (hydratedFromServer.current) {
       hydratedFromServer.current = false;
       markSceneSettled(sceneKey);
@@ -90,7 +96,7 @@ export function useSceneSettle(sceneKey: string = "default"): boolean {
     } else {
       setShouldSettle(false);
     }
-  }, [sceneKey, reducedMotion]);
+  }, [sceneKey, reducedMotion, enabled]);
 
   return shouldSettle;
 }

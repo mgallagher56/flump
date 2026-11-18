@@ -508,7 +508,11 @@ export const DatePicker: FC<DatePickerProps> = ({
                         <div aria-selected={isSelected} key={cell.iso} role="gridcell">
                           <button
                             aria-current={isToday ? "date" : undefined}
-                            aria-label={formatDisplayDate(cell.iso)}
+                            aria-label={
+                              isSelected
+                                ? `${formatDisplayDate(cell.iso)}, selected`
+                                : formatDisplayDate(cell.iso)
+                            }
                             className={datePickerDayRecipe({
                               outside: cell.outside,
                               today: isToday,

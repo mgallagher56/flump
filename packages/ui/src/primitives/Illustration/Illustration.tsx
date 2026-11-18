@@ -23,7 +23,8 @@ export interface IllustrationProps {
  * an outcome.
  */
 export const Illustration: FC<IllustrationProps> = ({ scene, size = "md", id, settle }) => {
-  const autoSettle = useSceneSettle(scene);
+  // A caller that sets `settle` decides it; the hook then leaves the scene unclaimed for a real empty state.
+  const autoSettle = useSceneSettle(scene, settle === undefined);
   const shouldSettle = settle ?? autoSettle;
 
   return (
