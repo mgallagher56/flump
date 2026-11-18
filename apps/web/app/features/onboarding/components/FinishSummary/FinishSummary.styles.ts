@@ -17,6 +17,7 @@ export const finishSummaryRecipe = sva({
     "savedIcon",
     "error",
     "actions",
+    "finishGroup",
   ],
   base: {
     root: { display: "flex", flexDirection: "column", gap: "5" },
@@ -93,6 +94,14 @@ export const finishSummaryRecipe = sva({
       flexWrap: "wrap",
       alignItems: "center",
       justifyContent: "space-between",
+      gap: "3",
+    },
+    // The two Finish buttons stay together on the right, wrapping on a narrow screen.
+    finishGroup: {
+      display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
+      justifyContent: "flex-end",
       gap: "3",
     },
   },

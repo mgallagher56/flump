@@ -7,6 +7,8 @@ const mockUpdateProfile = vi.fn().mockResolvedValue({});
 const mockSetProfile = vi.fn();
 const mockMarkChecklistStep = vi.fn().mockResolvedValue({});
 
+let mockSearchParams = new URLSearchParams();
+
 let mockLoaderData: any = {
   accounts: [
     { id: "acc-1", name: "Monzo", type: "Current", balance: 4500 },
@@ -34,6 +36,7 @@ vi.mock("react-router", () => ({
   ),
   useLoaderData: () => mockLoaderData,
   useNavigate: () => vi.fn(),
+  useSearchParams: () => [mockSearchParams, vi.fn()],
 }));
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
@@ -116,6 +119,7 @@ describe("BudgetContainer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLoaderData = baseLoaderData;
+    mockSearchParams = new URLSearchParams();
     vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
     global.fetch = vi.fn().mockImplementation(
       async () =>
@@ -527,6 +531,109 @@ describe("BudgetContainer", () => {
     expect(screen.queryByTestId("budget-editor")).toBeNull();
     expect(screen.getByTestId("budget-category-housing")).toBeDefined();
     expect(screen.getByRole("button", { name: "Edit budget" })).toBeDefined();
+  });
+
+  describe("Add common budget items", () => {
+    /** The budget rows onboarding saves for a renter: take-home, rent and other spending. */
+    const seeded = [
+      row({
+        id: "s-1",
+        name: "Monthly Take-Home Income",
+        category: "income",
+        amount: 2500,
+        isIncome: true,
+      }),
+      row({ id: "s-2", name: "Rent Payment", category: "housing", amount: 900 }),
+      row({ id: "s-3", name: "General living and outgoings", category: "living", amount: 400 }),
+    ];
+
+    it("is offered beside Edit budget on a saved budget, as a secondary button", () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: seeded };
+      render(<BudgetContainer />);
+      const add = screen.getByRole("button", { name: "Add common budget items" });
+      expect(add.id).toBe("add-common-items-btn");
+      expect(screen.getByRole("button", { name: "Edit budget" })).toBeDefined();
+      fireEvent.click(add);
+      expect(screen.getByRole("heading", { name: "Add common budget items" })).toBeDefined();
+      expect(screen.getByText("Step 1 of 7")).toBeDefined();
+      expect(screen.getByRole("list", { name: "Common budget items" }).textContent).toContain(
+        "Rent or mortgage: already in your budget",
+      );
+    });
+
+    it("adds only what the budget does not have, and changes no saved entry", async () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: seeded };
+      const passThrough = vi.mocked(apiFetch).getMockImplementation();
+      vi.mocked(apiFetch).mockImplementation(
+        async (_path: string, init?: any) =>
+          row({ id: `new-${init?.body?.name}`, ...init?.body }) as any,
+      );
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Add common budget items" }));
+      fireEvent.click(screen.getByRole("button", { name: "Add these items" }));
+      await screen.findByText("Monthly Take-Home Income");
+      const calls = vi.mocked(apiFetch).mock.calls;
+      expect(calls.every(([, init]) => (init as any)?.method === "POST")).toBe(true);
+      expect(calls.map(([, init]) => (init as any)?.body?.name)).toEqual([
+        "Council Tax",
+        "Gas & Electricity",
+        "Water",
+        "Broadband",
+        "Groceries",
+      ]);
+      if (passThrough) vi.mocked(apiFetch).mockImplementation(passThrough);
+    });
+
+    it("is not offered when the budget has every common item, or when it is empty", () => {
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: [
+          row({ id: "c-1", name: "Rent", category: "housing" }),
+          row({ id: "c-2", name: "Council tax", category: "bills", amount: 150 }),
+          row({ id: "c-3", name: "Energy", category: "bills", amount: 120 }),
+          row({ id: "c-4", name: "Water", category: "bills", amount: 40 }),
+          row({ id: "c-5", name: "Broadband", category: "bills", amount: 30 }),
+          row({ id: "c-6", name: "Groceries", category: "expenses", amount: 300 }),
+        ],
+      };
+      const { unmount } = render(<BudgetContainer />);
+      expect(screen.queryByRole("button", { name: "Add common budget items" })).toBeNull();
+      unmount();
+      mockLoaderData = baseLoaderData;
+      render(<BudgetContainer />);
+      expect(screen.queryByRole("button", { name: "Add common budget items" })).toBeNull();
+    });
+
+    it("?setup=common opens the add wizard on load for a saved budget", () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: seeded };
+      mockSearchParams = new URLSearchParams("setup=common");
+      render(<BudgetContainer />);
+      expect(screen.getByRole("heading", { name: "Add common budget items" })).toBeDefined();
+    });
+
+    it("?setup=common opens first-time setup on an empty budget", () => {
+      mockSearchParams = new URLSearchParams("setup=common");
+      render(<BudgetContainer />);
+      expect(screen.getByText("Set up your budget", { selector: "h2" })).toBeDefined();
+      expect(screen.getByText("Step 1 of 8")).toBeDefined();
+    });
+
+    it("?setup=common opens the wizard once: cancelling stays on the budget", () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: seeded };
+      mockSearchParams = new URLSearchParams("setup=common");
+      const { rerender } = render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      rerender(<BudgetContainer />);
+      expect(screen.queryByRole("heading", { name: "Add common budget items" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Edit budget" })).toBeDefined();
+    });
+
+    it("ignores any other ?setup= value", () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: seeded };
+      mockSearchParams = new URLSearchParams("setup=other");
+      render(<BudgetContainer />);
+      expect(screen.queryByText(/Step 1 of/)).toBeNull();
+    });
   });
 
   it("with no budget, Set up your budget still opens the wizard", () => {

@@ -92,6 +92,25 @@ describe("useFinishOnboarding", () => {
     expect(navigate).toHaveBeenCalledWith("/");
   });
 
+  it("opens the budget page's wizard for common items when asked, with no money in the URL", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockResolvedValue([]);
+    const { result } = setup();
+    await act(() => result.current.finish("budget"));
+    expect(result.current.error).toBeNull();
+    expect(updateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
+    expect(navigate).toHaveBeenCalledWith("/app/budget?setup=common");
+  });
+
+  it("does not leave onboarding for the budget page when seeding fails", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    seedingFails();
+    const { result } = setup();
+    await act(() => result.current.finish("budget"));
+    expect(result.current.error).toBe(PARTIAL_FINISH_ERROR);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it("saves net pay when salary sacrifice was never asked, the method the summary used", async () => {
     // Never asked in onboarding: the take-home in the summary (and the budget income row) is
     // worked out as net pay, so the profile must say so too rather than a salary-sacrifice default.

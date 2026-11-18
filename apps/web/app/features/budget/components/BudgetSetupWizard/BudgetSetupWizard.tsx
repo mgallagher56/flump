@@ -24,7 +24,7 @@ import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { toMonthly } from "~/types/budget";
-import { hasCommonEntry } from "../../commonEntries";
+import { missingWizardCommonItems, WIZARD_COMMON_ITEMS } from "../../wizardCommonItems";
 import { WizardEntryRow } from "../WizardEntryRow";
 import {
   addActions,
@@ -72,8 +72,11 @@ export interface BudgetSetupWizardProps {
   /**
    * "setup" (the default) is the first run: welcome, example figures, then each section. "edit"
    * changes a saved budget: it starts at Income with the saved entries and skips the first two.
+   * "add" adds common entries to a budget that already has some (after onboarding, say): it skips
+   * the welcome, offers only the common entries the budget does not have, keeps every saved entry
+   * as it is, then goes through each section.
    */
-  mode?: "setup" | "edit";
+  mode?: "setup" | "edit" | "add";
 }
 
 type WizardStep =
@@ -98,6 +101,13 @@ const STEPS: WizardStep[] = [
 
 /** Editing a saved budget skips the welcome and the example figures. */
 const EDIT_STEPS: WizardStep[] = STEPS.filter((step) => step !== "welcome" && step !== "defaults");
+
+/** Adding to a saved budget skips the welcome and starts at the common entries. */
+const ADD_STEPS: WizardStep[] = STEPS.filter((step) => step !== "welcome");
+
+const ADD_TITLE = "Add common budget items";
+const ADD_DESCRIPTION =
+  "Add the common items your budget does not have yet. Your saved entries stay as they are.";
 
 const STEP_LABELS: Record<WizardStep, string> = {
   welcome: "Welcome",
@@ -147,37 +157,6 @@ const WELCOME_POINTS = [
   "See your breathing room",
 ];
 
-type NewEntry = Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">;
-
-const defaultItem = (
-  name: string,
-  amount: number,
-  category: string,
-  isEssential: boolean,
-): NewEntry => ({
-  name,
-  amount,
-  category,
-  frequency: "monthly",
-  isIncome: false,
-  isPrimaryIncome: false,
-  isEssential,
-  notes: null,
-  isDefault: true,
-});
-
-// Common entries are names only: the amount starts at 0 for the person to fill in, so no
-// invented figure reaches budget totals, safe to spend or breathing room (E23). The button says
-// "Add common entries", not "example figures", because it adds no figures.
-const DEFAULT_ITEMS: NewEntry[] = [
-  defaultItem("Rent / Mortgage", 0, "housing", true),
-  defaultItem("Council Tax", 0, "bills", true),
-  defaultItem("Gas & Electricity", 0, "bills", true),
-  defaultItem("Water", 0, "bills", true),
-  defaultItem("Broadband", 0, "bills", false),
-  defaultItem("Groceries", 0, "expenses", true),
-];
-
 export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   entries,
   onUpdateEntry,
@@ -190,7 +169,8 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const isEdit = mode === "edit";
-  const steps = isEdit ? EDIT_STEPS : STEPS;
+  const isAdd = mode === "add";
+  const steps = isEdit ? EDIT_STEPS : isAdd ? ADD_STEPS : STEPS;
   const [currentStep, setCurrentStep] = useState<WizardStep>(steps[0] ?? "welcome");
   const [localUpdates, setLocalUpdates] = useState<Record<string, Partial<BudgetEntry>>>({});
   const [saving, setSaving] = useState(false);
@@ -306,9 +286,8 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     applyingDefaults.current = true;
     setSaving(true);
     try {
-      const missing = DEFAULT_ITEMS.filter((item) => !hasCommonEntry(entries, item));
-      for (const item of missing) {
-        await onAddEntry(item);
+      for (const item of missingWizardCommonItems(entries)) {
+        await onAddEntry(item.entry);
       }
       saveAllAndProceed();
     } catch (err) {
@@ -420,11 +399,15 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   };
 
   const incomeEntries = getCategoryEntries("income");
+  const missingCommon = missingWizardCommonItems(entries);
+  const headingTitle = isAdd && currentStep === "defaults" ? ADD_TITLE : STEP_TITLES[currentStep];
+  const headingDescription =
+    isAdd && currentStep === "defaults" ? ADD_DESCRIPTION : STEP_DESCRIPTIONS[currentStep];
 
   return (
     <div className={wizardRoot()}>
       <ProgressBar
-        label={isEdit ? "Edit your budget" : "Budget setup"}
+        label={isEdit ? "Edit your budget" : isAdd ? ADD_TITLE : "Budget setup"}
         valueDisplay={`Step ${stepIndex + 1} of ${steps.length}`}
         value={stepIndex}
         max={steps.length - 1}
@@ -453,8 +436,8 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
       <Card padding="lg">
         <div className={stepBody()}>
           <div>
-            <h2 className={stepTitle()}>{STEP_TITLES[currentStep]}</h2>
-            <p className={stepDescription()}>{STEP_DESCRIPTIONS[currentStep]}</p>
+            <h2 className={stepTitle()}>{headingTitle}</h2>
+            <p className={stepDescription()}>{headingDescription}</p>
           </div>
 
           {currentStep === "welcome" && (
@@ -470,7 +453,42 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             </ul>
           )}
 
-          {currentStep === "defaults" && (
+          {currentStep === "defaults" && isAdd && (
+            <div className={choiceCard({ featured: true })}>
+              <ul aria-label="Common budget items" className={pointList()}>
+                {WIZARD_COMMON_ITEMS.map((item) => {
+                  const has = !missingCommon.includes(item);
+                  return (
+                    <li key={item.label} className={pointRow()}>
+                      <span className={pointIcon()}>
+                        <Icon icon={has ? Check : Plus} size="sm" />
+                      </span>
+                      {item.label}
+                      {has ? ": already in your budget" : ""}
+                    </li>
+                  );
+                })}
+              </ul>
+              {missingCommon.length > 0 ? (
+                <>
+                  <p className={choiceText()}>
+                    The amounts start empty for you to fill in. Select Next to go on without adding
+                    them.
+                  </p>
+                  <Button disabled={saving} type="button" onClick={applyDefaults}>
+                    <Icon icon={Plus} size="sm" />
+                    {saving
+                      ? "Adding…"
+                      : `Add ${missingCommon.length === 1 ? "this item" : "these items"}`}
+                  </Button>
+                </>
+              ) : (
+                <p className={choiceText()}>Your budget already has all of these.</p>
+              )}
+            </div>
+          )}
+
+          {currentStep === "defaults" && !isAdd && (
             <div className={choiceGrid()}>
               <div className={choiceCard({ featured: true })}>
                 <div>
@@ -605,7 +623,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             ) : isLast ? (
               <>
                 <Icon icon={CheckCircle2} size="sm" />
-                {isEdit ? "Finish editing" : "Finish setup"}
+                {isEdit || isAdd ? "Finish editing" : "Finish setup"}
               </>
             ) : (
               <>

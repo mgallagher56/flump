@@ -13,7 +13,7 @@ import {
   STEP_LABELS,
   type StepId,
 } from "../../types";
-import type { FinishSaveState } from "../../useFinishOnboarding";
+import type { FinishDestination, FinishSaveState } from "../../useFinishOnboarding";
 import type { StepOutcome } from "../../useOnboardingForm";
 import { LiveSummaryBar } from "../LiveSummaryBar";
 import { finishSummaryRecipe } from "./FinishSummary.styles";
@@ -23,7 +23,8 @@ export interface FinishSummaryProps {
   summary: OnboardingSummary;
   modules: AppPageKey[];
   isSubmitting: boolean;
-  onFinish: () => void;
+  /** Saves everything, then opens the dashboard or, for "budget", the budget page's wizard. */
+  onFinish: (destination?: FinishDestination) => void;
   onBack: () => void;
   /** Jump to a step (counting from 1) to add or change something. */
   onEdit: (step: number) => void;
@@ -74,6 +75,9 @@ const STUDENT_LOANS: Record<string, string> = {
   POSTGRAD: "Postgraduate loan",
 };
 const percent = new Intl.NumberFormat("en-GB", { style: "percent", maximumFractionDigits: 1 });
+
+export const FINISH_LABEL = "Finish and open dashboard";
+export const FINISH_TO_BUDGET_LABEL = "Finish and add common budget items";
 
 export const SECTIONS_TITLE = "Sections we have set up for you";
 export const NOTHING_ADDED = "Nothing added yet.";
@@ -264,26 +268,39 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
         <Button onClick={onBack} size="sm" type="button" variant="ghost">
           <Icon icon={ArrowLeft} size="sm" /> Back
         </Button>
-        <Button
-          aria-describedby={
-            [
-              error ? "onboarding-finish-error" : null,
-              summary.canFinish
-                ? saveState !== "idle"
-                  ? "onboarding-saved-note"
-                  : null
-                : "finish-income-hint",
-            ]
-              .filter(Boolean)
-              .join(" ") || undefined
-          }
-          disabled={!summary.canFinish}
-          onClick={onFinish}
-          pending={isSubmitting}
-          type="button"
-        >
-          {isSubmitting ? "Saving…" : "Finish and open dashboard"}
-        </Button>
+        <div className={classes.finishGroup}>
+          {/* The same save, then the budget page's wizard: onboarding adds no bills or everyday
+            costs, so this is where the common ones are offered. Secondary: Finish stays the one
+            primary action. */}
+          <Button
+            disabled={!summary.canFinish || isSubmitting}
+            onClick={() => onFinish("budget")}
+            type="button"
+            variant="outline"
+          >
+            {FINISH_TO_BUDGET_LABEL}
+          </Button>
+          <Button
+            aria-describedby={
+              [
+                error ? "onboarding-finish-error" : null,
+                summary.canFinish
+                  ? saveState !== "idle"
+                    ? "onboarding-saved-note"
+                    : null
+                  : "finish-income-hint",
+              ]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
+            disabled={!summary.canFinish}
+            onClick={() => onFinish("dashboard")}
+            pending={isSubmitting}
+            type="button"
+          >
+            {isSubmitting ? "Saving…" : FINISH_LABEL}
+          </Button>
+        </div>
       </div>
     </div>
   );
