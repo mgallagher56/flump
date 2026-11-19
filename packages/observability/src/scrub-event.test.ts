@@ -209,8 +209,9 @@ describe("long values are cleaned before they are cut to length", () => {
   });
 
   it("drops a path segment that the URL limit would cut in half", () => {
-    // "https://h.test/" is 15 characters, so the email starts at 15 + 2,025 + 1 = 2,041 and the
-    // 2,048-character limit falls inside it.
+    // The limit applies to the path, which starts at "/" (index 14 of the URL). In the path the
+    // email starts at 1 + 506 * 4 + 2 = 2,027 ("/", 506 copies of "a.b-", then "c/"), so the
+    // 2,048-character limit falls 21 characters into it.
     const url = `https://h.test/${"a.b-".repeat(506)}c/sentinel.person@example.com/end`;
     const out = scrubEvent({ request: { url } })?.request?.url ?? "";
     expect(out).not.toContain("sentin");
@@ -232,6 +233,21 @@ describe("long values are cleaned before they are cut to length", () => {
       "https://api.example.test/v1/accounts",
     );
     expect(clean("/v1/accounts")).toBe("/v1/accounts");
+    // Host names and IP addresses keep their digits and shape.
+    expect(clean("http://192.168.1.10:8080/api/x")).toBe("http://192.168.1.10:8080/api/x");
+    expect(clean("https://flump-web-pr-123456.up.railway.app/a")).toBe(
+      "https://flump-web-pr-123456.up.railway.app/a",
+    );
+    const longLabel = `${"abcdefghij".repeat(4)}.railway.app`; // a 40-character first label
+    expect(clean(`https://${longLabel}/a`)).toBe(`https://${longLabel}/a`);
     expect(scrubEvent({ transaction: "GET /v1/accounts" })?.transaction).toBe("GET /v1/accounts");
+  });
+});
+
+describe("userinfo in URLs without a scheme", () => {
+  it("drops userinfo from a protocol-relative breadcrumb URL", () => {
+    const url = `//user:${"Pw!z9.".repeat(3)}@localhost:3000/p`;
+    const out = scrubBreadcrumb({ category: "fetch", data: { url } });
+    expect(out?.data?.url).toBe("/p");
   });
 });

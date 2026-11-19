@@ -34,10 +34,11 @@ const WORD_LIKE = /^[A-Za-z][a-z]{3,}$/;
  */
 const CREDENTIAL_PATTERNS: ReadonlyArray<readonly [RegExp, string | ((...m: string[]) => string)]> =
   [
-    // scheme://user:pass@host (userinfo of any connection URL)
-    [/\b([a-z][a-z0-9+.-]{1,20}:\/\/)[^\s/@?#]{1,256}@/gi, `$1${REDACTED}@`],
-    // Cookie: / Set-Cookie: header text runs to the end of the line
-    [/(\b(?:set-)?cookie\s{0,4}[:=]\s{0,4})[^\r\n]{1,2048}/gi, `$1${REDACTED}`],
+    // scheme://user:pass@host (userinfo of any connection URL). The bound is MAX_STRING_LENGTH, the
+    // most capLength leaves, so a long userinfo is matched whole rather than left in clear.
+    [/\b([a-z][a-z0-9+.-]{1,20}:\/\/)[^\s/@?#]{1,8192}@/gi, `$1${REDACTED}@`],
+    // Cookie: / Set-Cookie: header text runs to the end of the line (bounded by MAX_STRING_LENGTH)
+    [/(\b(?:set-)?cookie\s{0,4}[:=]\s{0,4})[^\r\n]{1,8192}/gi, `$1${REDACTED}`],
     // The scheme word is dropped too, so a following key rule has nothing left to match.
     [/\bBearer\s{1,8}\S{1,4096}/gi, REDACTED],
     [
