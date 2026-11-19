@@ -9,12 +9,13 @@ export const BudgetFrequency = z.enum(BUDGET_FREQUENCIES);
 export const BudgetCategory = z.string().trim().min(1).max(64);
 
 /**
- * The saved detail a budget row is replaced with: "take-home" (the profile's salary after tax) or
- * "housing" (the saved rent, mortgage payment or household contribution).
+ * The saved fact a budget line is linked to (`budget_entries.link_kind`, system audit decision 1):
+ * "take_home" (the profile's take-home pay) or "housing" (the saved rent, mortgage payment or
+ * household contribution). A linked line's stored amount is never read. Slice 5 adds more kinds.
  */
-export const BUDGET_ENTRY_LINKS = ["take-home", "housing"] as const;
-export const BudgetEntryLink = z.enum(BUDGET_ENTRY_LINKS);
-export type BudgetEntryLink = z.infer<typeof BudgetEntryLink>;
+export const BUDGET_ENTRY_LINK_KINDS = ["take_home", "housing"] as const;
+export const BudgetEntryLinkKind = z.enum(BUDGET_ENTRY_LINK_KINDS);
+export type BudgetEntryLinkKind = z.infer<typeof BudgetEntryLinkKind>;
 
 export const CreateBudgetEntryRequest = z.strictObject({
   category: BudgetCategory,
@@ -44,8 +45,11 @@ export const UpdateBudgetEntryRequest = z.strictObject({
   /** Omitted ownership and share stay as saved. */
   ownership: AccountOwnership.optional(),
   sharePercent: SharePercent.nullish(),
-  /** Replace the row with a saved detail (send amount 0 with it), or null to unlink it. */
-  linksTo: BudgetEntryLink.nullable().optional(),
+  /**
+   * Link the row to a saved fact (its stored amount is then set to 0 and never read), or null to
+   * unlink it: send the figure the row keeps as `amount` with the null.
+   */
+  linkKind: BudgetEntryLinkKind.nullable().optional(),
 });
 export type UpdateBudgetEntryRequest = z.infer<typeof UpdateBudgetEntryRequest>;
 
@@ -82,8 +86,11 @@ export const BudgetEntryDto = z.strictObject({
   ownership: AccountOwnership.default("sole"),
   /** The user's share (1-100) of a joint entry; null when sole. */
   sharePercent: SharePercent.nullable().default(null),
-  /** The saved detail the row is replaced with, or null; rows from before the column read null. */
-  linksTo: BudgetEntryLink.nullable().default(null),
+  /**
+   * The saved fact the row is linked to, or null; rows from before the column read null. When set,
+   * `amount` is a stored 0 that is never read: the engine resolves the line.
+   */
+  linkKind: BudgetEntryLinkKind.nullable().default(null),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });

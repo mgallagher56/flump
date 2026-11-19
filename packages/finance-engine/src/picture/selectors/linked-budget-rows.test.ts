@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
 import { PortfolioSnapshot } from "../../portfolio.js";
-import { buildFinancialPicture, financialPictureInputFromRows } from "../build.js";
+import {
+  budgetEntryFromRow,
+  buildFinancialPicture,
+  financialPictureInputFromRows,
+} from "../build.js";
 import { figureKnown, figureUnknown, isFigureKnown } from "../figure.js";
 import { selectBudgetTotals } from "./budget-totals.js";
 import { selectHousingPayment } from "./housing-cost.js";
 import {
   LINKED_HOUSING_ID,
   LINKED_TAKE_HOME_ID,
+  resolveLinkedEntries,
   withLinkedBudgetRows,
 } from "./linked-budget-rows.js";
 import type { TakeHome } from "./take-home.js";
@@ -54,7 +59,7 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
       [row({ id: "bill", category: "bills", amount: 1000 })],
       { takeHome: takeHome(2500), housing: null },
     );
-    expect(rows[0]).toMatchObject({ id: LINKED_TAKE_HOME_ID, amount: 2500, linked: "take-home" });
+    expect(rows[0]).toMatchObject({ id: LINKED_TAKE_HOME_ID, amount: 2500, linked: "take_home" });
     expect(totalsOf(rows)).toMatchObject({ income: 2500, essentials: 1000, surplus: 1500 });
     expect(offers).toEqual([]);
   });
@@ -69,7 +74,7 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
     expect(rows.map((r) => r.id)).toEqual(["p"]);
     expect(shadowedRowIds).toEqual([]);
     expect(totalsOf(rows).income).toBe(2000);
-    expect(offers).toEqual([{ link: "take-home", monthly: 2500, kind: null, rowIds: ["p"] }]);
+    expect(offers).toEqual([{ link: "take_home", monthly: 2500, kind: null, rowIds: ["p"] }]);
   });
 
   it.each(["Acme Ltd", "Main job", "Salary", "Partner's salary", "Child Benefit"])(
@@ -97,7 +102,7 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
   });
 
   it("reads the take-home in place of the row the person chose, keeping their other income", () => {
-    // "Paycheck" chosen (stored at £0, linksTo take-home) and Child Benefit £102.
+    // "Paycheck" chosen (stored at £0, linkKind take-home) and Child Benefit £102.
     // Income = 2,500 + 102 = 2,602.
     const { rows, shadowedRowIds, offers } = withLinkedBudgetRows(
       [
@@ -107,7 +112,7 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
           name: "Paycheck",
           amount: 0,
           isIncome: true,
-          linksTo: "take-home",
+          linkKind: "take_home",
         }),
         row({ id: "cb", category: "income", name: "Child Benefit", amount: 102, isIncome: true }),
       ],
@@ -183,7 +188,7 @@ describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
   });
 
   it("two housing rows, one chosen: the saved figure stands in for it with its share", () => {
-    // "Mortgage" chosen (stored £0, joint 50%, linksTo housing) and "Service charge" £80.
+    // "Mortgage" chosen (stored £0, joint 50%, linkKind housing) and "Service charge" £80.
     // Essentials = 950 x 50% + 80 = 475 + 80 = 555.
     const { rows, offers } = withLinkedBudgetRows(
       [
@@ -194,7 +199,7 @@ describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
           amount: 0,
           ownership: "joint",
           sharePercent: 50,
-          linksTo: "housing",
+          linkKind: "housing",
         }),
         row({ id: "sc", category: "housing", name: "Service charge", amount: 80 }),
       ],
@@ -350,5 +355,107 @@ describe("selectHousingPayment: the estimate is the person's share", () => {
         accounts,
       ),
     ).toEqual({ kind: "mortgage", monthly: 4303.32, paymentEstimated: true, isOwnShare: true });
+  });
+});
+
+describe("withLinkedBudgetRows: a linked line's stored amount is never read (decision 1)", () => {
+  const pay = row({
+    id: "pay",
+    category: "income",
+    name: "Paycheck",
+    amount: 0,
+    isIncome: true,
+    linkKind: "take_home",
+  });
+  const rentRow = row({
+    id: "rent",
+    category: "housing",
+    name: "Our rent",
+    amount: 0,
+    linkKind: "housing",
+    ownership: "joint",
+    sharePercent: 50,
+  });
+  const food = row({ id: "food", category: "expenses", name: "Food", amount: 300 });
+
+  it("marks a linked take-home line Not set when no take-home can be worked out", () => {
+    const { rows, shadowedRowIds } = withLinkedBudgetRows([pay, food], {
+      takeHome: noTakeHome,
+      housing: null,
+    });
+    expect(rows[0]).toMatchObject({
+      id: LINKED_TAKE_HOME_ID,
+      linked: "take_home",
+      linkedRowId: "pay",
+      notSet: true,
+    });
+    expect(shadowedRowIds).toEqual(["pay"]);
+    // Unknown, naming the salary: never income £0 and £300 short each month.
+    expect(selectBudgetTotals(rows)).toEqual(figureUnknown(["annualSalary"], "not-set"));
+  });
+
+  it("marks a linked housing line Not set when no housing payment is saved, keeping its name and share", () => {
+    const { rows } = withLinkedBudgetRows([rentRow, food], { takeHome: noTakeHome, housing: null });
+    expect(rows[0]).toMatchObject({
+      id: LINKED_HOUSING_ID,
+      name: "Our rent",
+      linked: "housing",
+      linkedRowId: "rent",
+      notSet: true,
+      ownership: "joint",
+      sharePercent: 50,
+    });
+    expect(selectBudgetTotals(rows)).toEqual(figureUnknown(["monthlyHousingCost"], "not-set"));
+  });
+
+  it("resolves a joint linked rent at the person's share", () => {
+    // Rent £1,000 saved, the row joint at 50%: £500 counts. Essentials = 500 + 300 = 800.
+    const { rows } = withLinkedBudgetRows([rentRow, food], {
+      takeHome: noTakeHome,
+      housing: rent(1000),
+    });
+    expect(rows[0]).toMatchObject({ amount: 1000, linkedRowId: "rent", ownership: "joint" });
+    expect(rows[0]?.notSet).toBeUndefined();
+    expect(totalsOf(rows).essentials).toBe(800);
+  });
+
+  it("does not read a stored amount left on a linked row", () => {
+    // A linked row that somehow kept £1,800 stored still reads the take-home of £2,500.
+    const { rows } = withLinkedBudgetRows([{ ...pay, amount: 1800 }], {
+      takeHome: takeHome(2500),
+      housing: null,
+    });
+    expect(totalsOf(rows).income).toBe(2500);
+    // With no take-home, the stored £1,800 is not used either.
+    const unresolved = withLinkedBudgetRows([{ ...pay, amount: 1800 }], {
+      takeHome: noTakeHome,
+      housing: null,
+    });
+    expect(selectBudgetTotals(unresolved.rows).status).toBe("unknown");
+  });
+});
+
+describe("resolveLinkedEntries", () => {
+  it("swaps each linked entry for its resolved figure, or marks it Not set", () => {
+    const entries = [
+      row({ id: "pay", category: "income", isIncome: true, linkKind: "take_home" }),
+      row({ id: "rent", category: "housing", linkKind: "housing" }),
+      row({ id: "food", category: "expenses", amount: 300 }),
+    ];
+    const { rows } = withLinkedBudgetRows(entries, { takeHome: takeHome(2500), housing: null });
+    const listed = resolveLinkedEntries(entries, rows);
+    expect(listed.map((e) => [e.id, e.amount, e.notSet ?? false])).toEqual([
+      ["pay", 2500, false],
+      ["rent", 0, true],
+      ["food", 300, false],
+    ]);
+  });
+});
+
+describe("budgetEntryFromRow: link kinds", () => {
+  it("keeps a stored link kind and drops anything else", () => {
+    expect(budgetEntryFromRow({ id: "a", linkKind: "take_home" }).linkKind).toBe("take_home");
+    expect(budgetEntryFromRow({ id: "b", linkKind: "housing" }).linkKind).toBe("housing");
+    expect(budgetEntryFromRow({ id: "c", linkKind: "take-home" }).linkKind).toBeUndefined();
   });
 });

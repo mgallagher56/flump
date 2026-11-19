@@ -63,8 +63,11 @@ export interface BudgetCategoryListProps {
 export interface CategoryRow {
   category: string;
   label: string;
+  /** The known lines' monthly total. Not shown when `notSet`. */
   total: number;
   count: number;
+  /** True when a linked line in it is not set: its total is unknown, shown as "Not set". */
+  notSet: boolean;
 }
 
 export { INCOME_CATEGORY };
@@ -93,7 +96,11 @@ export function rankCategories(
   const ranked = all
     .map((category, index) => {
       const inCategory = entries.filter((e) => e.category === category && !isIncomeEntry(e));
-      const total = inCategory.reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
+      const notSet = inCategory.some((e) => e.notSet === true);
+      // A linked line that is not set has no figure: never added as £0.
+      const total = inCategory
+        .filter((e) => e.notSet !== true)
+        .reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
       return {
         index,
         row: {
@@ -101,12 +108,15 @@ export function rankCategories(
           label: CATEGORY_LABELS[category] || category,
           total: Number.isFinite(total) ? total : 0,
           count: inCategory.length,
+          notSet,
         },
       };
     })
     .sort((a, b) => b.row.total - a.row.total || a.index - b.index)
     .map(({ row }) => row);
-  return options.keepEmpty ? ranked : ranked.filter((row) => Math.round(row.total) > 0);
+  return options.keepEmpty
+    ? ranked
+    : ranked.filter((row) => row.notSet || Math.round(row.total) > 0);
 }
 
 /**
@@ -171,7 +181,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                   </span>
                 </span>
                 <span className={rowEnd()}>
-                  {row.count > 0 ? <Money size="sm" value={row.total} /> : null}
+                  {row.count > 0 ? <Money size="sm" value={row.notSet ? null : row.total} /> : null}
                   {spoken ? <VisuallyHidden>{spoken}</VisuallyHidden> : null}
                   {end}
                 </span>

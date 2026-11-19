@@ -17,10 +17,10 @@ import {
   "CHK_budget_entries_share_percent",
   `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 100)`,
 )
-// Review of PR 783 (migration AddBudgetEntryLinksTo1795440000000).
+// System audit decision 1 (migration AddBudgetEntryLinkKind1795440000000).
 @Check(
-  "CHK_budget_entries_links_to",
-  `"links_to" IS NULL OR "links_to" IN ('take-home', 'housing')`,
+  "CHK_budget_entries_link_kind",
+  `"link_kind" IS NULL OR "link_kind" IN ('take_home', 'housing')`,
 )
 @Entity("budget_entries")
 export class BudgetEntry {
@@ -71,12 +71,12 @@ export class BudgetEntry {
   sharePercent: number | null;
 
   /**
-   * The saved detail this row was replaced with ("take-home" or "housing"), or null. Set when the
-   * person chooses "Use your take-home pay" or "Use your saved rent" for a row; its amount is then
-   * 0 and the engine reads the profile's figure in its place, so one value is stored.
+   * The saved fact this line is linked to ("take_home" or "housing"), or null. Set when the person
+   * chooses "Use your take-home pay" or "Use your saved rent" for a row. Its amount is then stored
+   * as 0 and never read: the profile holds the only stored value and the engine resolves the line.
    */
-  @Column({ name: "links_to", type: "varchar", length: 16, nullable: true })
-  linksTo: "take-home" | "housing" | null;
+  @Column({ name: "link_kind", type: "varchar", length: 16, nullable: true })
+  linkKind: "take_home" | "housing" | null;
 
   @Column({ name: "is_default", default: false })
   isDefault: boolean;

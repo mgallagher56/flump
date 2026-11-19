@@ -48,6 +48,22 @@ const entries = [
 ];
 
 describe("<BudgetOverview />", () => {
+  it("says the take-home is not set when a linked income line cannot be worked out, never £0", () => {
+    // The pay line is linked to the take-home, and no salary is saved: totals are unknown.
+    const linked = [
+      entry({ ...income, amount: 0, linkKind: "take_home" }),
+      entry({ id: "e2", category: "expenses", name: "Food", amount: 300 }),
+    ];
+    const picture = buildWorkspacePicture({ budgetEntries: linked });
+    const { container } = customRender(<BudgetOverview entries={linked} picture={picture} />);
+    expect(container.querySelector('[data-figure="budget.surplus"]')).toBeNull();
+    expect(
+      screen.getByText(/Your take-home pay is not set, so what is left over is unknown/),
+    ).toBeDefined();
+    expect(screen.getByTestId("hero-figure").textContent).toContain("Add your salary");
+    expect(screen.queryByText("Short each month")).toBeNull();
+  });
+
   it("leads with Left over each month in the one hero, then money in and going out", () => {
     const { container } = customRender(<BudgetOverview entries={entries} />);
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);

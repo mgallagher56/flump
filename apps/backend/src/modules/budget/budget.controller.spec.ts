@@ -211,14 +211,63 @@ describe("BudgetController", () => {
       });
       const linked = await controller.updateBudgetEntry(req, created.id, {
         amount: 0,
-        linksTo: "take-home",
+        linkKind: "take_home",
       });
-      expect(linked).toMatchObject({ amount: 0, linksTo: "take-home" });
+      expect(linked).toMatchObject({ amount: 0, linkKind: "take_home" });
       const unlinked = await controller.updateBudgetEntry(req, created.id, {
         amount: 2100,
-        linksTo: null,
+        linkKind: null,
       });
-      expect(unlinked).toMatchObject({ amount: 2100, linksTo: null });
+      expect(unlinked).toMatchObject({ amount: 2100, linkKind: null });
+    });
+
+    it("stores no amount on a linked line, whatever amount is sent", async () => {
+      const { controller } = entryController();
+      const created = await controller.createBudgetEntry(req, {
+        category: "income",
+        name: "Paycheck",
+        amount: 2000,
+        isIncome: true,
+      });
+      const linked = await controller.updateBudgetEntry(req, created.id, {
+        amount: 2000,
+        linkKind: "take_home",
+      });
+      expect(linked).toMatchObject({ amount: 0, linkKind: "take_home" });
+      // An amount sent while it stays linked is not stored either.
+      const still = await controller.updateBudgetEntry(req, created.id, { amount: 1500 });
+      expect(still).toMatchObject({ amount: 0, linkKind: "take_home" });
+    });
+
+    it("refuses a link that does not fit the line, or a second line for the same fact", async () => {
+      const { controller } = entryController();
+      const food = await controller.createBudgetEntry(req, {
+        category: "expenses",
+        name: "Food",
+        amount: 300,
+      });
+      await expect(
+        controller.updateBudgetEntry(req, food.id, { linkKind: "take_home" }),
+      ).rejects.toThrow("Only an income line can use your take-home pay");
+      await expect(
+        controller.updateBudgetEntry(req, food.id, { linkKind: "housing" }),
+      ).rejects.toThrow("Only a housing line can use your saved housing payment");
+      const pay = await controller.createBudgetEntry(req, {
+        category: "income",
+        name: "Pay",
+        amount: 2000,
+        isIncome: true,
+      });
+      const bonus = await controller.createBudgetEntry(req, {
+        category: "income",
+        name: "Bonus",
+        amount: 100,
+        isIncome: true,
+      });
+      await controller.updateBudgetEntry(req, pay.id, { linkKind: "take_home" });
+      await expect(
+        controller.updateBudgetEntry(req, bonus.id, { linkKind: "take_home" }),
+      ).rejects.toThrow("Another line already uses this saved figure");
     });
 
     it("creates a sole entry with no share by default", async () => {

@@ -21,6 +21,7 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
 import { type DraftBudgetEntry, isDraftReady } from "../../exampleDrafts";
 import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
+import { isNotSetEntry, notSetActionFor } from "../../linkedEntries";
 import { rankCategories } from "../BudgetCategoryList";
 import { EntryOwnershipField } from "../EntryOwnershipField";
 import {
@@ -299,36 +300,49 @@ interface LinkedEntryRowProps {
   /** Saves the person's own pay entry in place of the take-home from the profile. */
   onOverrideTakeHome: (amount: number) => Promise<boolean>;
   onSaveHousing?: (monthly: number) => Promise<void>;
+  /**
+   * Unlinks the row the person linked (`entry.linkedRowId`): its figure becomes their own, typed
+   * on the row from now on. Shown only on a line that stands in for such a row.
+   */
+  onUnlink?: (entry: BudgetEntry) => Promise<boolean>;
 }
 
 /**
- * A row read from a saved detail (owner items 7 and 33b). It is laid out like a saved entry and
- * says where its figure comes from, with a link there. One stored value: typing a take-home figure
- * saves the person's own pay entry, which then wins; typing a rent saves it to the housing details.
- * A mortgage payment comes from the mortgage details, so it is changed there.
+ * A row read from a saved fact (owner items 7 and 33b, decision 1). It is laid out like a saved
+ * entry and says where its figure comes from, with a link there. One stored value: typing a
+ * take-home figure saves the person's own pay entry, which then wins; typing a rent saves it to the
+ * housing details. A mortgage payment comes from the mortgage details, so it is changed there.
+ * When the saved fact is not set the row shows "Not set" with where to add it, never £0, and a
+ * row the person linked can be unlinked to type their own figure.
  */
 const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
   entry,
   housingStatus,
   onOverrideTakeHome,
   onSaveHousing,
+  onUnlink,
 }) => {
-  const saved = toAmount(entry.amount);
+  const notSet = isNotSetEntry(entry);
+  const saved: number | null = notSet ? null : toAmount(entry.amount);
   const [amount, setAmount] = useState<number | null>(saved);
   const amountRef = useRef<number | null>(saved);
+  const [unlinking, setUnlinking] = useState(false);
   useEffect(() => {
     amountRef.current = saved;
     setAmount(saved);
   }, [saved]);
 
-  const isTakeHome = entry.linked === "take-home";
+  const isTakeHome = entry.linked === "take_home";
   const isMortgage = !isTakeHome && housingStatus === "mortgage";
   const idPart = entry.id.replace(/[^a-z0-9-]/gi, "-");
   const sourceId = `budget-editor-source-${idPart}`;
+  const action = notSet ? notSetActionFor(entry, housingStatus) : null;
+  // Take-home and a mortgage payment are added on their own pages; a rent can be typed here.
+  const showsInput = !isMortgage && !(isTakeHome && notSet);
 
   const saveAmount = async () => {
     const next = amountRef.current;
-    if (next === null || Math.round(next * 100) === Math.round(saved * 100)) {
+    if (next === null || (saved !== null && Math.round(next * 100) === Math.round(saved * 100))) {
       amountRef.current = saved;
       setAmount(saved);
       return;
@@ -344,7 +358,28 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
     }
   };
 
-  const source = isTakeHome ? (
+  const unlink = async () => {
+    if (!onUnlink || unlinking) return;
+    setUnlinking(true);
+    try {
+      await onUnlink(entry);
+    } finally {
+      setUnlinking(false);
+    }
+  };
+
+  const source = notSet ? (
+    isTakeHome ? (
+      <>Linked to your take-home pay, which needs your salary in Profile.</>
+    ) : isMortgage ? (
+      <>Linked to your mortgage payment, which is not saved yet.</>
+    ) : (
+      <>
+        Linked to your housing details, which have no payment saved. A figure you type here saves
+        there.
+      </>
+    )
+  ) : isTakeHome ? (
     <>
       From your salary in{" "}
       <Link className={sourceLink()} to="/app/profile">
@@ -371,11 +406,7 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
       </span>
       <div className={rowControls()}>
         <div className={amountField()}>
-          {isMortgage ? (
-            <span className={linkedAmount()}>
-              <Money size="sm" value={saved} />
-            </span>
-          ) : (
+          {showsInput ? (
             <CurrencyInput
               aria-describedby={sourceId}
               aria-label={`Amount for ${entry.name}`}
@@ -389,6 +420,24 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
                 setAmount(value);
               }}
             />
+          ) : (
+            <span
+              className={linkedAmount()}
+              data-testid={`budget-editor-figure-${idPart}`}
+              id={`budget-editor-figure-${idPart}`}
+            >
+              <Money
+                notSetAction={
+                  action ? (
+                    <Link className={sourceLink()} to={action.to}>
+                      {action.label}
+                    </Link>
+                  ) : undefined
+                }
+                size="sm"
+                value={saved}
+              />
+            </span>
           )}
         </div>
         <div className={frequencyField()}>
@@ -400,6 +449,20 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
       <p className={sourceLine()} data-testid={sourceId} id={sourceId}>
         {source}
       </p>
+      {entry.linkedRowId && onUnlink ? (
+        <div className={sourceLine()}>
+          <Button
+            data-testid={`budget-editor-unlink-${idPart}`}
+            id={`budget-editor-unlink-${idPart}`}
+            disabled={unlinking}
+            size="sm"
+            variant="outline"
+            onClick={() => void unlink()}
+          >
+            Type my own figure
+          </Button>
+        </div>
+      ) : null}
     </li>
   );
 };
@@ -756,10 +819,10 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     if (!offer) return null;
     const figureText = formatCurrency(offer.monthly, { maximumFractionDigits: 0 });
     const what =
-      offer.link === "take-home" ? "take-home pay" : HOUSING_KIND_LABEL[offer.kind ?? "rent"];
+      offer.link === "take_home" ? "take-home pay" : HOUSING_KIND_LABEL[offer.kind ?? "rent"];
     return {
       label: `Use your ${what} of ${figureText}`,
-      onUse: () => void save(entry.id, { amount: 0, linksTo: offer.link }),
+      onUse: () => void save(entry.id, { amount: 0, linkKind: offer.link }),
     };
   };
 
@@ -818,8 +881,8 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   // Typing over the linked take-home saves the person's own pay (owner item 7): back on the row it
   // replaced, unlinked, when there is one, else as a new entry. Either way it is then their figure.
   const overrideTakeHome = (amount: number) => {
-    const replaced = entries.find((e) => shadowedIds.includes(e.id) && e.linksTo === "take-home");
-    if (replaced) return save(replaced.id, { amount, linksTo: null });
+    const replaced = entries.find((e) => shadowedIds.includes(e.id) && e.linkKind === "take_home");
+    if (replaced) return save(replaced.id, { amount, linkKind: null });
     return add(INCOME)({
       name: "Take-home pay",
       amount,
@@ -828,6 +891,23 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
       ownership: "sole",
       sharePercent: null,
     });
+  };
+
+  // "Type my own figure" (decision 1): the linked row keeps the figure it showed as the person's
+  // own, monthly and at the same share, and stops reading the saved fact. A line that was not set
+  // keeps no figure, and its amount field takes focus so the person can type one.
+  const unlink = async (entry: BudgetEntry) => {
+    const rowId = entry.linkedRowId;
+    if (!rowId) return false;
+    const done = await save(rowId, {
+      linkKind: null,
+      amount: entry.notSet ? 0 : toAmount(entry.amount),
+      frequency: "monthly",
+      ownership: entry.ownership === "joint" ? "joint" : "sole",
+      sharePercent: entry.ownership === "joint" ? (entry.sharePercent ?? null) : null,
+    });
+    if (done) pendingFocus.current = `budget-editor-amount-${rowId}`;
+    return done;
   };
 
   const saveHousing = async (monthly: number) => {
@@ -975,6 +1055,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                       key={entry.id}
                       onOverrideTakeHome={overrideTakeHome}
                       onSaveHousing={saveHousing}
+                      onUnlink={unlink}
                     />
                   ))}
                   {rows.map((entry) => (

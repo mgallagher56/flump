@@ -20,15 +20,19 @@ export interface BudgetEntry {
   sharePercent?: number | null;
   contractEndDate?: string | null;
   /**
-   * Set only on a row the engine adds from a saved detail, never stored (owner items 7 and 33b):
-   * "take-home" reads the profile's salary, "housing" the housing details.
+   * Set only on a line the engine makes from a saved fact, never stored (owner items 7 and 33b):
+   * "take_home" reads the profile's salary, "housing" the housing details.
    */
-  linked?: "take-home" | "housing";
+  linked?: "take_home" | "housing";
   /**
-   * Stored on a row the person replaced with a saved detail ("Use your take-home pay"): its
-   * amount is £0 and the engine reads the saved figure in its place.
+   * Stored on a row the person linked to a saved fact ("Use your take-home pay"). Its stored
+   * amount is never read: the engine reads the saved figure in its place.
    */
-  linksTo?: "take-home" | "housing" | null;
+  linkKind?: "take_home" | "housing" | null;
+  /** On an engine line standing in for a row the person linked: that row's stored id. */
+  linkedRowId?: string;
+  /** True on a linked line whose saved fact is not set: it shows "Not set", never £0. */
+  notSet?: true;
   createdAt: string;
   updatedAt: string;
 }

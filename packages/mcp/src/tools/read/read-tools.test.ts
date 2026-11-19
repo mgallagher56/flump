@@ -1,3 +1,4 @@
+import { profileFactsFromProfile } from "@flump/finance-engine";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { estimateTokens } from "../../envelope.js";
 import { resolveShortId, shortId } from "../../short-ids.js";
@@ -281,6 +282,57 @@ describe("read tools v2: oversized fixtures", () => {
       ]);
     } finally {
       await anon.close();
+    }
+  });
+
+  it("get_budget_summary reads a linked line's saved fact, never its stored £0", async () => {
+    const entry = (over: Record<string, unknown>) => ({
+      id: "e",
+      category: "bills",
+      name: "Entry",
+      amount: 0,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: true,
+      ...over,
+    });
+    const budgetEntries = [
+      entry({ id: "pay", category: "income", name: "Pay", isIncome: true, amount: 2000 }),
+      entry({ id: "rent", category: "housing", name: "Rent", linkKind: "housing" }),
+      entry({ id: "food", category: "expenses", name: "Food", amount: 300 }),
+    ];
+    // Rent saved at £950 a month: the linked line counts £950. Essentials 950 + 300 = 1,250;
+    // left over 2,000 - 1,250 = 750.
+    const renting = await connectTestClient({
+      ...emptyUser,
+      profileFacts: {
+        ...profileFactsFromProfile(null),
+        housingStatus: "renting",
+        monthlyHousingCost: 950,
+      },
+      budgetEntries,
+    });
+    // No rent saved: the linked line is not set, so the totals that need it are unknown.
+    const notSaved = await connectTestClient({
+      ...emptyUser,
+      profileFacts: { ...profileFactsFromProfile(null), housingStatus: "renting" },
+      budgetEntries,
+    });
+    try {
+      const known = await call(renting, "get_budget_summary");
+      expect(known.result.essentialMonthlyGbp).toBe(1250);
+      expect(known.result.monthlySurplusBeforeDebtGbp).toBe(750);
+
+      const unknown = await call(notSaved, "get_budget_summary");
+      expect(unknown.result.monthlyIncomeGbp).toBeNull();
+      expect(unknown.result.monthlySurplusBeforeDebtGbp).toBeNull();
+      expect(unknown.missing.map((m) => m.field)).toContain("monthlyHousingCost");
+      const snapshot = await call(notSaved, "get_financial_snapshot");
+      expect(snapshot.result.monthlyEssentialSpendGbp).toBeNull();
+      expect(snapshot.result.emergencyRunwayMonths).toBeNull();
+    } finally {
+      await renting.close();
+      await notSaved.close();
     }
   });
 

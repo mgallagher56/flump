@@ -1,6 +1,7 @@
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
 import { applyBudgetEntryShare } from "../../budget-entry-share.js";
 import { type Figure, figureKnown, figureUnknown } from "../figure.js";
+import type { MissingKey } from "../input.js";
 
 /** Monthly budget totals from saved budget rows. All amounts are pounds a month. */
 export interface BudgetTotals {
@@ -46,9 +47,24 @@ export function budgetRowMonthly(
   return entry.ownership === "joint" ? applyBudgetEntryShare(monthly, entry) : monthly;
 }
 
-/** The one budget-totals selector. No rows means unknown, never £0. */
+/** What a linked line that cannot resolve is missing: the salary, or the housing payment. */
+const NOT_SET_LINK_MISSING: Record<"take_home" | "housing", MissingKey> = {
+  take_home: "annualSalary",
+  housing: "monthlyHousingCost",
+};
+
+/**
+ * The one budget-totals selector. No rows means unknown, never £0. A linked line whose saved fact
+ * is not set (`notSet`) makes the totals unknown too, naming the missing fact: its stored £0 is
+ * never counted as a real figure.
+ */
 export function selectBudgetTotals(budget: readonly BudgetEntryItem[]): Figure<BudgetTotals> {
   if (budget.length === 0) return figureUnknown(["budget"], "not-set");
+  const notSet = new Set<MissingKey>();
+  for (const row of budget) {
+    if (row.notSet && row.linked) notSet.add(NOT_SET_LINK_MISSING[row.linked]);
+  }
+  if (notSet.size > 0) return figureUnknown([...notSet], "not-set");
 
   let income = 0;
   let essentials = 0;

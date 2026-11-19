@@ -11,6 +11,7 @@ import {
   loadReadModel,
   MISSING_INCOME,
   type Missing,
+  missingLinkedLines,
   round2,
   sanitiseText,
   summariseBudget,
@@ -66,7 +67,7 @@ export const getBudgetSummary = defineFlumpTool({
   maxTokens: 1500,
   async handler(_input, ctx, { responseFormat }) {
     const m = await loadReadModel(ctx);
-    const entries = m.raw.budgetEntries ?? [];
+    const entries = m.budgetEntries;
     const b = summariseBudget(entries);
     const missing: Missing[] = [];
     if (!b.hasEntries) {
@@ -77,8 +78,9 @@ export const getBudgetSummary = defineFlumpTool({
       });
     }
     let surplus: number | null = null;
+    missing.push(...missingLinkedLines(b));
     if (b.monthlyIncome === null) {
-      missing.push(MISSING_INCOME);
+      if (b.notSet.length === 0) missing.push(MISSING_INCOME);
     } else {
       surplus = round2(b.monthlyIncome - b.essentialMonthly - b.discretionaryMonthly);
     }

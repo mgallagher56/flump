@@ -1602,6 +1602,41 @@ facts:
     findings: [BU-1, BU-3, BU-7, BU-10, JO-4]
     note: The Retirement page loads these rows.
 
+  - id: budget-entry-link-kind
+    name: Which saved fact a budget line is linked to
+    area: budget
+    source_of_truth:
+      {
+        ref: budget_entries.link_kind,
+        path: apps/backend/src/entities/budget-entry.entity.ts,
+        note: "take_home or housing, or null; a linked line's stored amount is never read",
+      }
+    writers:
+      - {
+          surface: budget,
+          path: apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx,
+          note: "Use your take-home pay or saved rent links a line; Type my own figure unlinks it",
+        }
+    readers:
+      - {
+          surface: picture,
+          path: packages/finance-engine/src/picture/selectors/linked-budget-rows.ts,
+          note: "resolves the line from take-home or the housing payment, or marks it Not set",
+        }
+      - { surface: picture, path: packages/finance-engine/src/picture/selectors/budget-totals.ts }
+      - { surface: budget, path: apps/web/app/features/budget/linkedEntries.ts }
+      - { surface: mcp-read, path: packages/mcp/src/tools/read/common.ts }
+      - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
+      - {
+          surface: export,
+          path: apps/backend/src/modules/privacy/account-export.service.ts,
+          note: "a linked line exports with amount null and its link kind",
+        }
+    links: [L33, L34, L39]
+    verdict: holds
+    findings: [BU-1, BU-2]
+    note: "System audit decision 1 option A, the first part of PLAN slice 5. The profile holds the only stored value: a linked line that cannot resolve shows Not set and makes the budget totals unknown. Slice 5 adds savings and debt kinds and link_account_id."
+
   - id: other-outgoings
     name: Other monthly outgoings as typed in onboarding
     area: budget

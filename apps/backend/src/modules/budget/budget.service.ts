@@ -7,7 +7,7 @@ import {
   MAX_CUSTOM_BUDGET_CATEGORIES,
   type UpdateBudgetEntryRequest,
 } from "@flump/api-contract";
-import { defaultIsEssential } from "@flump/finance-engine";
+import { BUDGET_HOUSING_CATEGORY, defaultIsEssential } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -210,7 +210,12 @@ export class BudgetService {
     if (body.isIncome !== undefined) entry.isIncome = body.isIncome;
     if (body.isEssential !== undefined) entry.isEssential = body.isEssential;
     if (body.notes !== undefined) entry.notes = body.notes ?? null;
-    if (body.linksTo !== undefined) entry.linksTo = body.linksTo;
+    if (body.linkKind !== undefined) entry.linkKind = body.linkKind;
+    if (entry.linkKind) {
+      await assertLinkable(repository, userId, entry);
+      // A linked line stores no amount of its own: the stored 0 is never read.
+      entry.amount = 0;
+    }
     // Omitted ownership and share stay as saved; an explicit null share on a joint entry is 50.
     const nextOwnership: AccountOwnership =
       (ownership ?? entry.ownership) === "joint" ? "joint" : "sole";
@@ -229,5 +234,35 @@ export class BudgetService {
 
     await this.budgetEntryRepository.remove(entry);
     return { success: true };
+  }
+}
+
+/**
+ * A line may be linked only to a fact of its own kind (take-home pay on an income line, housing on
+ * a spending line in the housing category), and to a fact no other line of the user's is linked to:
+ * the engine resolves one line per kind.
+ */
+async function assertLinkable(
+  repository: Repository<BudgetEntry>,
+  userId: string,
+  entry: BudgetEntry,
+): Promise<void> {
+  const fits =
+    entry.linkKind === "take_home"
+      ? entry.isIncome
+      : !entry.isIncome && entry.category === BUDGET_HOUSING_CATEGORY;
+  if (!fits) {
+    throw new BadRequestException(
+      entry.linkKind === "take_home"
+        ? "Only an income line can use your take-home pay"
+        : "Only a housing line can use your saved housing payment",
+    );
+  }
+  const others = await repository.find({
+    where: { userId, linkKind: entry.linkKind ?? undefined },
+    select: { id: true },
+  });
+  if (others.some((other) => other.id !== entry.id)) {
+    throw new BadRequestException("Another line already uses this saved figure");
   }
 }

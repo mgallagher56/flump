@@ -186,7 +186,7 @@ export const LinkedRows: Story = {
         category: "income",
         amount: 2400,
         isIncome: true,
-        linked: "take-home",
+        linked: "take_home",
       },
       {
         ...sampleBudgetEntries()[0],

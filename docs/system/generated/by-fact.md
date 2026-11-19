@@ -35,6 +35,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Name and profile picture](#name-and-avatar)                                                                  | fact   | preferences | Not checked                               |
 | [Budget categories the user added](#custom-budget-categories)                                                 | fact   | budget      | Not checked                               |
 | [Budget lines](#budget-entries)                                                                               | fact   | budget      | Broken                                    |
+| [Which saved fact a budget line is linked to](#budget-entry-link-kind)                                        | fact   | budget      | Holds                                     |
 | [Other monthly outgoings as typed in onboarding](#other-outgoings)                                            | fact   | budget      | Duplicated (two stores that can disagree) |
 | [Monthly savings target and savings settings on the profile](#savings-settings)                               | fact   | budget      | Holds                                     |
 | [Self Assessment income and expense records](#tax-records)                                                    | fact   | tax         | Duplicated (two stores that can disagree) |
@@ -1165,6 +1166,32 @@ Read by:
 - Debt: `apps/web/app/features/debt/utils/debtInputs.ts`
 - AI read tools: `packages/mcp/src/tools/read/common.ts` (its own sums)
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
+
+### Which saved fact a budget line is linked to
+
+<a id="budget-entry-link-kind"></a>
+
+- Id: `budget-entry-link-kind` (stored fact)
+- Verdict: Holds. Findings: BU-1, BU-2. Links: L33, L34, L39.
+- Source of truth: `budget_entries.link_kind` in `apps/backend/src/entities/budget-entry.entity.ts` (take_home or housing, or null; a linked line's stored amount is never read)
+- Note: System audit decision 1 option A, the first part of PLAN slice 5. The profile holds the only stored value: a linked line that cannot resolve shows Not set and makes the budget totals unknown. Slice 5 adds savings and debt kinds and link_account_id.
+
+Other stores:
+
+- none
+
+Entered or changed by:
+
+- Budget: `apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx` (Use your take-home pay or saved rent links a line; Type my own figure unlinks it)
+
+Read by:
+
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/linked-budget-rows.ts` (resolves the line from take-home or the housing payment, or marks it Not set)
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/budget-totals.ts`
+- Budget: `apps/web/app/features/budget/linkedEntries.ts`
+- AI read tools: `packages/mcp/src/tools/read/common.ts`
+- AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
+- Data export and erasure: `apps/backend/src/modules/privacy/account-export.service.ts` (a linked line exports with amount null and its link kind)
 
 ### Other monthly outgoings as typed in onboarding
 

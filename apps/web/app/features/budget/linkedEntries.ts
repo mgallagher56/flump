@@ -26,9 +26,12 @@ export function pageBudgetEntries(
         isEssential: row.isEssential,
         notes: null,
         isDefault: false,
-        ownership: "sole",
-        sharePercent: null,
+        // The share the figures count it at, so the row and the totals agree.
+        ownership: row.ownership === "joint" ? "joint" : "sole",
+        sharePercent: row.sharePercent ?? null,
         linked: row.linked,
+        ...(row.linkedRowId ? { linkedRowId: row.linkedRowId } : {}),
+        ...(row.notSet ? { notSet: true as const } : {}),
         createdAt: "",
         updatedAt: "",
       });
@@ -43,3 +46,20 @@ export function pageBudgetEntries(
 /** True for a row the engine added from a saved detail. Such a row has no stored id to change. */
 export const isLinkedEntry = (entry: Pick<BudgetEntry, "linked">): boolean =>
   entry.linked !== undefined;
+
+/** True for a linked line whose saved fact is not set. Its amount is unknown, never £0. */
+export const isNotSetEntry = (entry: Pick<BudgetEntry, "notSet">): boolean => entry.notSet === true;
+
+/** Where a linked line that is not set sends the person to add the fact it reads. */
+export function notSetActionFor(
+  entry: Pick<BudgetEntry, "linked">,
+  housingStatus: string | null,
+): { to: string; label: string } | null {
+  if (entry.linked === "take_home") {
+    return { to: "/app/profile#settings-age-and-pay", label: "Add your salary" };
+  }
+  if (entry.linked === "housing" && housingStatus === "mortgage") {
+    return { to: "/app/mortgage", label: "Add your mortgage payment" };
+  }
+  return null;
+}
