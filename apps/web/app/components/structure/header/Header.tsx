@@ -88,17 +88,19 @@ const Header: FC<HeaderProps> = (): ReactElement<FC> => {
         }
         activeKey={activeKey}
         items={items}
-        // Never decorative: from 768 to 1023 the logo is the only way home (the inline "Home" link
-        // shows from 1024), so it stays a real link and marks the home page as current.
+        // A real link beside the inline "Home": the logo marks the home page as current only on
+        // phones, where no inline "Home" shows (the bottom bar marks it there too).
         logo={
           <HomeLogo
             current={activeKey === "home" && !!user}
-            markBelowWideOnly
+            markBelowInlineOnly
             renderLink={renderHomeLogoLink}
           />
         }
         menuControls="mobile-nav-drawer"
         menuExpanded={drawerOpen}
+        // Tablets keep the menu button: the groups live in the drawer until navWide.
+        menuBelow="wide"
         menuLabel="Open navigation menu"
         navLabel="Primary"
         renderLink={renderLink}

@@ -25,14 +25,17 @@ export const siteFooterCompactRow = cva({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "4",
+    // One line at normal text sizes; at 200% text it wraps rather than scroll sideways.
+    flexWrap: "wrap",
+    columnGap: "4",
+    rowGap: "1",
     minHeight: "touch",
   },
 });
 
-/** Never wraps: the line stays one line from 320px up, so keep `bottom` short. */
+/** Keep `bottom` short so it shares the logo's line from 320px up at normal text sizes. */
 export const siteFooterCompactText = cva({
-  base: { margin: 0, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
+  base: { margin: 0, minWidth: 0, fontVariantNumeric: "tabular-nums" },
 });
 
 export const siteFooterInner = cva({

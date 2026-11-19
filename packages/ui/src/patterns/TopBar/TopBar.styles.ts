@@ -57,9 +57,9 @@ export const topBarList = cva({
   base: {
     display: "flex",
     alignItems: "center",
-    // Tablets get tighter spacing so the five section names, "Debt and borrowing" included, fit
-    // beside the bar's controls at 768px without shortening a label.
-    gap: { base: "1", _navInline: "0.5", _navWide: "1" },
+    // The links' own padding spaces them; a small gap keeps hover fills apart. The gap, not the
+    // padding, is what gives way so every bar fits at 768px and 1024px with no label shortened.
+    gap: "0.5",
     flexWrap: "nowrap",
     listStyle: "none",
     padding: "0",
@@ -82,7 +82,9 @@ export const topBarLink = cva({
     alignItems: "center",
     gap: "2",
     minH: "8",
-    px: { base: "3", _navInline: "1.5", _navWide: "2.5" },
+    // The same room each side at every width, so text never sits close to the fill's edge (owner
+    // report). Bars that would not fit move links into the menu (`wideOnly`), not this padding.
+    px: "3",
     borderRadius: "full",
     // Text-only links at every width, on both sites: icons pushed the web bar past 1024px and
     // added nothing the words do not say (the drawer and bottom bar keep their icons).

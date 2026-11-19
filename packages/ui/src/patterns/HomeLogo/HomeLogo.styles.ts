@@ -29,12 +29,13 @@ export const homeLogoLink = cva({
     },
   },
   variants: {
-    // For a bar whose inline "Home" link marks the page from navWide (the web app): the logo's
-    // mark then steps aside. Marketing has no such link, so its logo keeps the mark at every width.
-    markBelowWideOnly: {
-      true: { _navWide: { '&[aria-current="page"]::after': { display: "none" } } },
+    // For a bar whose inline "Home" link marks the page wherever links are inline (the web app,
+    // from navInline): the logo's mark then steps aside. Marketing has no such link, so its logo
+    // keeps the mark at every width.
+    markBelowInlineOnly: {
+      true: { _navInline: { '&[aria-current="page"]::after': { display: "none" } } },
       false: {},
     },
   },
-  defaultVariants: { markBelowWideOnly: false },
+  defaultVariants: { markBelowInlineOnly: false },
 });

@@ -69,6 +69,17 @@ export function companyLine(year: number, details: BusinessDetails = BUSINESS_DE
   return `© ${year} ${details.legalName.value}. Company number ${details.companyNumber.value}. ${details.registeredOffice.value}.`;
 }
 
+/**
+ * The short form for a one-line footer: "© 2026 Flump Ltd". The full `companyLine` (number and
+ * registered office) stays on the marketing and signed-out footers.
+ */
+export function shortCompanyLine(
+  year: number,
+  details: BusinessDetails = BUSINESS_DETAILS,
+): string {
+  return `© ${year} ${details.legalName.value}`;
+}
+
 export interface PlaceholderField {
   key: keyof BusinessDetails;
   /** Text that would appear in a build if this placeholder reached it. */

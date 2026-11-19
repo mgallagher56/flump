@@ -36,6 +36,22 @@ describe("buildNavManifest", () => {
     expect(savings?.href).toBe("/app/savings");
   });
 
+  it("signed in: Home shows at every width; on tablets only the bottom bar's pages are inline", () => {
+    const items = buildNavManifest({
+      ...base,
+      signedIn: true,
+      enabledPages: ["accounts", "budget", "savings", "pension", "debt", "mortgage"],
+    });
+    const inlineOnTablets = items.filter((i) => !i.wideOnly).map((i) => i.key);
+    expect(items[0]?.key).toBe("home");
+    expect(items[0]?.wideOnly).toBeFalsy();
+    expect(inlineOnTablets).toEqual(["home", "accounts", "budget", "taxAndPay"]);
+    expect(items.filter((i) => i.wideOnly).map((i) => i.key)).toEqual([
+      "savingsAndPension",
+      "borrowing",
+    ]);
+  });
+
   it("drops switched-off pages", () => {
     const items = buildNavManifest({ ...base, signedIn: true, enabledPages: ["accounts"] });
     expect(items.map((i) => i.key)).not.toContain("budget");

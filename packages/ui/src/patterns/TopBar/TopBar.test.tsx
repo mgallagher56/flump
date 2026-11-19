@@ -122,6 +122,16 @@ describe("TopBar", () => {
     expect(controls[0]?.textContent).toBe("Logo");
   });
 
+  it("hides a wideOnly group below navWide, like a wideOnly link", () => {
+    const items = sampleNavItems.map((item) =>
+      item.children ? { ...item, wideOnly: true } : item,
+    );
+    render(<TopBar items={items} />);
+    const group = items.find((item) => item.children);
+    const button = screen.getByRole("button", { name: new RegExp(String(group?.label)) });
+    expect(button.closest("li")?.className).toContain("navWide:d_list-item");
+  });
+
   it("reports the menu state on the menu button", () => {
     render(
       <TopBar items={sampleNavItems} menuControls="drawer" menuExpanded onMenuClick={() => {}} />,

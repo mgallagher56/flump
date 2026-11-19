@@ -17,6 +17,9 @@ export { isSandboxPath };
 
 export const MORE_NAV_KEY = "more";
 
+/** Top-level pages inline on tablets: the bottom bar's tabs. The rest wait for navWide. */
+const TABLET_INLINE_KEYS: ReadonlySet<string> = new Set(BOTTOM_BAR_TABS.map((tab) => tab.key));
+
 type Translate = TFunction | ((key: string, fallback?: string) => string);
 
 /**
@@ -72,19 +75,24 @@ export function buildNavManifest({
   isPageEnabled,
   t,
 }: NavManifestOptions): AppNavItem[] {
-  // Signed in, "Home" is inline from navWide only: on tablets the logo is the way home, so the
-  // compact bar fits at 768px. Signed out it is the only item, so it always shows.
-  const home = {
-    ...toItem(t, sandbox ? SANDBOX_HOME_NAV_ROUTE : HOME_NAV_ROUTE),
-    wideOnly: signedIn,
-  };
+  // "Home" is a real nav item at every width (owner ruling): inline wherever links are inline,
+  // in the phone bottom bar below that. Signed out it is the only item.
+  const home = toItem(t, sandbox ? SANDBOX_HOME_NAV_ROUTE : HOME_NAV_ROUTE);
   if (!signedIn) return [home];
   const routes = filterNavRoutes(
     AUTH_NAV_ROUTES,
     enabledPages,
     isPageEnabled as Parameters<typeof filterNavRoutes>[2],
   );
-  return [home, ...routes.map((route) => toItem(t, route))];
+  // On tablets (navInline up to navWide) the bar shows the bottom bar's pages (Home, Accounts,
+  // Budget, Pay) and the groups move into the menu, so every link keeps room to breathe at 768px.
+  return [
+    home,
+    ...routes.map((route) => ({
+      ...toItem(t, route),
+      wideOnly: !TABLET_INLINE_KEYS.has(route.key),
+    })),
+  ];
 }
 
 const matches = (pathname: string, href: string): boolean =>
