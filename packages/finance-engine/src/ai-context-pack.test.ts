@@ -142,6 +142,23 @@ describe("budget notes anonymisation (E17-N4)", () => {
     expect(pack.budgetSummary.entries[0]?.notes).toBe(entry.notes);
   });
 
+  it("never carries the picture's budget rows, so typed names stay out when anonymised", () => {
+    // The picture is now built from the typed budget rows (linked take-home and housing rows
+    // included). Only its totals may leave: the rows themselves never reach the pack.
+    const pack = buildFlumpAiContextPack(
+      {
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+        baseline: DEFAULT_FINANCIAL_BASELINE,
+        budgetEntries: [entry],
+      },
+      { anonymizeInstitutions: true },
+    );
+    const json = JSON.stringify(pack);
+    expect(json).not.toContain("budgetRows");
+    expect(json).not.toContain("shadowedBudgetRowIds");
+    expect(json).not.toContain("Starling");
+  });
+
   it("replaces income names with a generic label when anonymised", () => {
     const pack = buildFlumpAiContextPack(
       {
