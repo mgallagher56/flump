@@ -477,6 +477,7 @@ flowchart LR
   s_picture["Engine picture (headline figures)"]
   s_mcp_read["AI read tools"]
   s_context_pack["AI context pack"]
+  s_public_tools["Public calculators"]
   s_export["Data export and erasure"]
   f_tax_records(["Self Assessment income and expense records"])
   s_self_assessment --> f_tax_records
@@ -504,6 +505,7 @@ flowchart LR
   g_estimated_tax -.-> s_self_assessment
   g_estimated_tax -.-> s_mcp_read
   g_estimated_tax -.-> s_context_pack
+  g_estimated_tax -.-> s_public_tools
 ```
 
 ## retirement

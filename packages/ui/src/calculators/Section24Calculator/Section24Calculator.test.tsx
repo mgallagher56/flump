@@ -65,6 +65,36 @@ describe("Section24Calculator", () => {
     expect(outcomes().getByText("£9,600")).toBeDefined();
   });
 
+  it("shows no tax on rent within the £1,000 property allowance (ITTOIA 2005 s.783B)", () => {
+    // £900 rent, £100 costs, no interest, £30,000 salary: rent of £1,000 or less is not charged,
+    // so £0 tax (it was £800 x 20% = £160) and £800 cash left.
+    render(
+      <Section24Calculator
+        initialAllowableExpenses={100}
+        initialMortgageInterest={0}
+        initialOtherIncome={30_000}
+        initialRentalIncome={900}
+      />,
+    );
+    expect(outcomes().getByText("£0")).toBeDefined();
+    expect(outcomes().getByText("£800")).toBeDefined();
+    expect(toolText()).not.toContain("£160");
+  });
+
+  it("caps the interest credit at income above the Personal Allowance (ITTOIA 2005 s.274AA)", () => {
+    // £60,000 rent, no costs, £50,000 interest, no other income. Taxable £47,430: £7,540 +
+    // £9,730 x 40% = £11,432. Credit 20% x £47,430 = £9,486 (not £10,000), so £1,946 tax.
+    render(
+      <Section24Calculator
+        initialAllowableExpenses={0}
+        initialMortgageInterest={50_000}
+        initialOtherIncome={0}
+        initialRentalIncome={60_000}
+      />,
+    );
+    expect(outcomes().getByText("£1,946")).toBeDefined();
+  });
+
   it("keeps other allowable costs behind a drawer named for them, and they change the figures", () => {
     render(<Section24Calculator />);
     expect(screen.getAllByRole("slider")).toHaveLength(3);

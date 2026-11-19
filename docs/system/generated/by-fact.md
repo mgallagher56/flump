@@ -1449,6 +1449,7 @@ Other code paths that compute it:
 - `direct call from the page` [wrapper] in `apps/web/app/containers/tax/TaxContainer.tsx` (salary through payeSalaryForTax)
 - `get_tax_year_position` [wrapper] in `packages/mcp/src/tools/read/getTaxYearPosition.ts` (salary through payeSalaryForTax; no salary saved is reported as not set)
 - `payeSalaryForTax` [wrapper] in `packages/finance-engine/src/paye-salary-for-tax.ts` (the one rule for the salary passed as PAYE pay)
+- `calculateSection24Tax` [wrapper] in `packages/finance-engine/src/section24.ts` (the public Section 24 calculator: entered figures as one year's rental records, other income as salary)
 - `headline strip sums` [duplicate] in `apps/web/app/features/tax/components/TaxHeadline/TaxHeadline.tsx`
 
 Shown on:
@@ -1457,6 +1458,7 @@ Shown on:
 - Self Assessment: `apps/web/app/containers/tax/TaxContainer.tsx`
 - AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
+- Public calculators: `packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx` (tax on rental income, entered figures only)
 
 ## Area: retirement
 

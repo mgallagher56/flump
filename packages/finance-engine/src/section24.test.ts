@@ -93,18 +93,6 @@ describe("section24 module", () => {
     expect(res.netRentalTaxLiabilityGbp).toBe(1600);
   });
 
-  it("counts no Section 24 penalty when there is no mortgage interest, even above £100,000", () => {
-    const res = calculateSection24Tax({
-      grossRentalIncomeGbp: 30000,
-      allowableExpensesGbp: 0,
-      mortgageInterestGbp: 0,
-      otherTaxableIncomeGbp: 90000,
-      taxYear: "2026/27",
-    });
-    expect(res.oldRulesTax).toBe(res.netRentalTaxLiabilityGbp);
-    expect(res.section24Penalty).toBe(0);
-  });
-
   it("shows a cash loss after tax instead of flooring it at zero", () => {
     // Higher-rate landlord: £12,000 rent, £1,000 costs, £11,500 mortgage interest.
     // Taxable profit £11,000 (interest not deducted), taxed at 40% = £4,400.
@@ -132,7 +120,7 @@ describe("section24 module", () => {
     expect(res.netRentalIncomeAfterTax).toBe(-800);
   });
 
-  it("keeps tax and the old-rules comparison at zero or above when there is a loss", () => {
+  it("keeps tax at zero or above when there is a loss", () => {
     const res = calculateSection24Tax({
       grossRentalIncomeGbp: 6000,
       allowableExpensesGbp: 1000,
@@ -143,9 +131,6 @@ describe("section24 module", () => {
     expect(res.netRentalTaxLiabilityGbp).toBe(0);
     expect(res.actualCashProfit).toBe(-4000);
     expect(res.netRentalIncomeAfterTax).toBe(-4000);
-    // Under the old rules a property loss was carried forward, not set against other income.
-    expect(res.oldRulesTax).toBe(0);
-    expect(res.section24Penalty).toBe(0);
   });
 
   it("floors negative inputs before working out the result", () => {
@@ -160,3 +145,140 @@ describe("section24 module", () => {
     expect(res.netRentalIncomeAfterTax).toBe(0);
   });
 });
+
+/**
+ * One model: the public calculator's figures come from calculateUKTax, so it and the signed-in
+ * Self Assessment estimate agree. Sole owner, England, Wales and Northern Ireland bands. Every
+ * figure used is the same in 2025/26 and 2026/27: Personal Allowance 12,570 tapered from 100,000
+ * (ITA 2007 s.35), basic rate band 37,700 at 20%, higher 40%, additional 45% above 125,140,
+ * property allowance 1,000 (ITTOIA 2005 s.783B), finance cost credit at the 20% basic rate.
+ *
+ * Credit (ITTOIA 2005 s.274AA): 20% of the lowest of the finance costs, the property profit and
+ * adjusted total income (net income less savings and dividends, less the Personal Allowance).
+ * Tax on rent = tax with the rent minus tax without it, less the credit.
+ */
+const PR805_CASES = [
+  {
+    // Profit 13,000 all at 20% = 2,600; credit 20% x 6,000 = 1,200; 1,400.
+    case: "basic-rate employee",
+    salary: 30000,
+    rent: 15000,
+    interest: 6000,
+    costs: 2000,
+    credit: 1200,
+    tax: 1400,
+  },
+  {
+    // Salary already above 50,270: profit 13,000 at 40% = 5,200; less 1,200 = 4,000.
+    case: "higher-rate employee",
+    salary: 60000,
+    rent: 15000,
+    interest: 6000,
+    costs: 2000,
+    credit: 1200,
+    tax: 4000,
+  },
+  {
+    // No allowance either way: profit 21,000 at 45% = 9,450; credit 20% x 12,000 = 2,400; 7,050.
+    case: "additional-rate employee",
+    salary: 150000,
+    rent: 24000,
+    interest: 12000,
+    costs: 3000,
+    credit: 2400,
+    tax: 7050,
+  },
+  {
+    // With rent: allowance 12,570 - 13,000/2 = 6,070, taxable 106,930, tax 7,540 + 27,692 =
+    // 35,232. Without: taxable 82,430, tax 7,540 + 17,892 = 25,432. 9,800 - 1,600 = 8,200.
+    case: "allowance taper",
+    salary: 95000,
+    rent: 20000,
+    interest: 8000,
+    costs: 2000,
+    credit: 1600,
+    tax: 8200,
+  },
+  {
+    // Profit 8,000. Taxable 37,430 -> 45,430: 7,486 -> 7,540 + 7,730 x 40% = 10,632; 3,146.
+    // Credit 20% x min(9,000, 8,000) = 1,600; 1,546. (1,000 of interest carries forward.)
+    case: "interest above profit",
+    salary: 50000,
+    rent: 10000,
+    interest: 9000,
+    costs: 2000,
+    credit: 1600,
+    tax: 1546,
+  },
+  {
+    // Profit 16,000, taxable 3,430 at 20% = 686. Adjusted total income 3,430 caps the credit:
+    // 20% x 3,430 = 686 (was 20% x 5,000 = 1,000). Tax 0 either way.
+    case: "no other income",
+    salary: 0,
+    rent: 18000,
+    interest: 5000,
+    costs: 2000,
+    credit: 686,
+    tax: 0,
+  },
+  {
+    // Rent 900 is within the 1,000 property allowance: not charged (s.783B(3)). Was 800 x 20%.
+    case: "small rent",
+    salary: 30000,
+    rent: 900,
+    interest: 0,
+    costs: 100,
+    credit: 0,
+    tax: 0,
+  },
+  {
+    // Taxable 47,430: 7,540 + 9,730 x 40% = 11,432. Credit capped at adjusted total income:
+    // 20% x 47,430 = 9,486 (not 20% x 50,000 = 10,000), so 1,946 (was 1,432).
+    case: "large interest, no other income",
+    salary: 0,
+    rent: 60000,
+    interest: 50000,
+    costs: 0,
+    credit: 9486,
+    tax: 1946,
+  },
+  {
+    // Costs 500 are below the 1,000 property allowance: 14,000 x 20% = 2,800 beats
+    // 14,500 x 20% = 2,900 (s.783B(4) alternative calculation; no finance costs to lose).
+    case: "costs below the property allowance",
+    salary: 30000,
+    rent: 15000,
+    interest: 0,
+    costs: 500,
+    credit: 0,
+    tax: 2800,
+  },
+] as const;
+
+describe.each(["2025/26", "2026/27"] as const)(
+  "calculator cases through the engine, %s",
+  (year) => {
+    it.each(PR805_CASES)("$case", (c) => {
+      const res = calculateSection24Tax({
+        grossRentalIncomeGbp: c.rent,
+        allowableExpensesGbp: c.costs,
+        mortgageInterestGbp: c.interest,
+        otherTaxableIncomeGbp: c.salary,
+        taxYear: year,
+      });
+      expect(res.section24TaxCreditGbp).toBe(c.credit);
+      expect(res.netRentalTaxLiabilityGbp).toBe(c.tax);
+      // Cash left: rent less costs less interest less tax.
+      expect(res.netRentalIncomeAfterTax).toBe(c.rent - c.costs - c.interest - c.tax);
+    });
+
+    it("shows the small rent as untaxed profit of 800 cash and a 0% tax share", () => {
+      const res = calculateSection24LandlordTax(30000, 900, 0, 100, 100, year);
+      expect(res.propertyAllowanceUsedGbp).toBe(900);
+      expect(res.taxableRentalProfitGbp).toBe(0);
+      expect(res.finalTaxDue).toBe(0);
+      expect(res.effectiveTaxRate).toBe(0);
+      expect(res.netRentalIncomeAfterTax).toBe(800);
+    });
+  },
+);
