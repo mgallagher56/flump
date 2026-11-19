@@ -1096,3 +1096,37 @@ function calculateDividendTaxForStack(
 
   return tax;
 }
+
+/**
+ * Income outside PAYE and its costs, as the estimate taxes them: rent and rental costs at the
+ * person's share, self-employed income and costs, taxable savings interest and dividends, and
+ * investment fees. ISA interest is tax-free and finance costs brought forward are not a cost of
+ * the year, so neither is counted. The one figure for the Self Assessment headline strip and the
+ * Dashboard's untaxed income (SA-9).
+ */
+export function incomeOutsidePaye(
+  result: Pick<
+    TaxCalculationResult,
+    | "rentalIncomeGrossShare"
+    | "seIncomeGross"
+    | "savingsInterestGross"
+    | "dividendIncomeGross"
+    | "rentalExpensesExclInterestShare"
+    | "rentalMortgageInterestShare"
+    | "seExpenses"
+    | "savingsExpenses"
+  >,
+): { income: number; costs: number } {
+  return {
+    income:
+      result.rentalIncomeGrossShare +
+      result.seIncomeGross +
+      result.savingsInterestGross +
+      result.dividendIncomeGross,
+    costs:
+      result.rentalExpensesExclInterestShare +
+      result.rentalMortgageInterestShare +
+      result.seExpenses +
+      result.savingsExpenses,
+  };
+}
