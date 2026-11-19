@@ -19,7 +19,7 @@ export interface TaxWidgetProps {
     estimatedTaxDue: number | null;
     /** The facts an unknown estimate is missing (the selector's `missing`). */
     estimatedTaxDueMissing?: readonly string[];
-    /** The estimate's assumption notes, such as the bands a Scottish taxpayer's estimate uses. */
+    /** The estimate's assumption notes from the engine, if any. */
     estimatedTaxDueNotes?: readonly string[];
     recordsCount: number;
   };

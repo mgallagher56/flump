@@ -5,14 +5,26 @@ import {
   btlCard,
   btlList,
   btlListItem,
+  btlPropertyName,
   btlSubtitle,
+  btlYieldLine,
   stackedHeaderSection,
 } from "./BtlOverview.styles";
 
 export interface BtlOverviewProperty {
   id: string;
   name: string;
+  /**
+   * Gross yield in per cent for the current tax year, from the rent linked to this property in
+   * Self Assessment (`grossRentalYieldPct`). null or absent when no rent is linked.
+   */
+  yieldPct?: number | null;
 }
+
+const yieldFormat = new Intl.NumberFormat("en-GB", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 export interface BtlOverviewProps {
   /** The rental Property accounts saved on Accounts (system audit slice 4). */
@@ -22,8 +34,8 @@ export interface BtlOverviewProps {
 }
 
 /**
- * The properties the user lets, read from their rental Property accounts (HM-4, DB-1). Rent and
- * rental yield are not shown: no rent is saved anywhere this page reads (HM-5).
+ * The properties the user lets, read from their rental Property accounts (HM-4, DB-1), each with
+ * its gross yield. Rent is entered once, in Self Assessment, linked to the property (HM-5, L22).
  */
 export const BtlOverview: FC<BtlOverviewProps> = ({ properties, onManage }) => {
   const count = properties.length;
@@ -52,7 +64,12 @@ export const BtlOverview: FC<BtlOverviewProps> = ({ properties, onManage }) => {
           <ul aria-label="Rental properties" className={btlList()}>
             {properties.map((property) => (
               <li className={btlListItem()} key={property.id}>
-                {property.name}
+                <span className={btlPropertyName()}>{property.name}</span>
+                <span className={btlYieldLine()}>
+                  {property.yieldPct !== null && property.yieldPct !== undefined
+                    ? `Gross yield ${yieldFormat.format(property.yieldPct)}%`
+                    : "Add rent in Self Assessment, linked to this property, to see its yield."}
+                </span>
               </li>
             ))}
           </ul>

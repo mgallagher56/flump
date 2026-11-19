@@ -59,22 +59,20 @@ describe("TaxWidget", () => {
     ).toBe("/app/self-assessment/self-employed");
   });
 
-  it("says which bands the estimate uses for a Scottish taxpayer, in the card's one line", () => {
+  it("shows an assumption note the engine gives, in the card's one line", () => {
     render(
       <MemoryRouter>
         <TaxWidget
           data={{
             estimatedTaxDue: 2000,
-            estimatedTaxDueNotes: ["Uses England, Wales and Northern Ireland Income Tax bands."],
+            estimatedTaxDueNotes: ["Assumes no other income."],
             recordsCount: 1,
           }}
         />
       </MemoryRouter>,
     );
     expect(
-      screen.getByText(
-        "Tax on income not taxed through PAYE. Uses England, Wales and Northern Ireland Income Tax bands.",
-      ),
+      screen.getByText("Tax on income not taxed through PAYE. Assumes no other income."),
     ).toBeTruthy();
   });
 });

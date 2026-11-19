@@ -239,6 +239,8 @@ function toContractTaxRecords(p: PersonaFixture) {
     receiptFilename: t.receiptFilename,
     receiptMimeType: t.receiptMimeType,
     hasReceipt: false,
+    // The account the record describes (slice 7); the personas link none.
+    accountId: t.accountId ?? null,
     createdAt: t.createdAt,
     updatedAt: t.updatedAt,
   }));

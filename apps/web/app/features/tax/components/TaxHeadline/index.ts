@@ -1,1 +1,1 @@
-export { nonPayeIncome, TaxHeadline, type TaxHeadlineProps } from "./TaxHeadline";
+export { TaxHeadline, type TaxHeadlineProps } from "./TaxHeadline";

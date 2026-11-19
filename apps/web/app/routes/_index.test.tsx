@@ -208,12 +208,14 @@ describe("_index route", () => {
       params: {},
       context: {},
     } as any)) as any;
-    // 10,000 rental profit, all in the basic band on a 30,000 salary: 20%.
-    expect(data.taxData.estimatedTaxDue).toBe(2000);
-    // The engine's bands note travels with the figure, so the tax widget can show it.
-    expect(data.taxData.estimatedTaxDueNotes).toEqual([
+    // Scottish rates on non-savings income (owner decision 7). Salary 30,000 is taxable 17,430,
+    // past the basic band's top (16,956 in 2026/27, 14,921 in 2025/26), so all 10,000 of rental
+    // profit falls in the intermediate band (to 31,092): 10,000 x 21% = 2,100.
+    expect(data.taxData.estimatedTaxDue).toBe(2100);
+    // The estimate uses Scottish rates, so no England bands note travels with it any more.
+    expect(data.taxData.estimatedTaxDueNotes).not.toContain(
       "Uses England, Wales and Northern Ireland Income Tax bands.",
-    ]);
+    );
   });
 
   it("counts the seeded home Property account once in net worth, labelled (D3)", async () => {

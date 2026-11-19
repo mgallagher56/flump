@@ -7,8 +7,12 @@ import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 export const meta: MetaFunction = () => [{ title: "Mortgage | Flump" }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, userProfile, user } = await loadWorkspaceSnapshot(args);
-  return data({ accounts, accountDetails, userProfile, user });
+  // Tax records give each rental property's rent, entered once in Self Assessment (L22).
+  const { accounts, accountDetails, userProfile, user, taxRecords } = await loadWorkspaceSnapshot(
+    args,
+    { includeTax: true },
+  );
+  return data({ accounts, accountDetails, userProfile, user, taxRecords });
 };
 
 const MortgageRoute = (): ReactElement => {

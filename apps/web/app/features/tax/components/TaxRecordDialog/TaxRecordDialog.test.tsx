@@ -260,3 +260,70 @@ describe("TaxRecordDialog with a category no list holds", () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ category: "rental_income" }));
   });
 });
+
+describe("TaxRecordDialog linked account (slice 7)", () => {
+  const accounts = [
+    { id: "p1", name: "Flat 2", type: "Property", accountSubtype: "rental" },
+    { id: "h1", name: "Home", type: "Property", accountSubtype: "home" },
+    { id: "m1", name: "Flat 2 mortgage", type: "Mortgage", accountSubtype: "btl_mortgage" },
+    { id: "s1", name: "Easy access", type: "Saving" },
+  ];
+  const withAccounts = (initial: TaxRecordDraft, mode: "add" | "edit" = "add") => {
+    const onSave = vi.fn();
+    render(
+      <TaxRecordDialog
+        open
+        accounts={accounts}
+        mode={mode}
+        initial={initial}
+        onOpenChange={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+    return { onSave, dialog: screen.getByRole("dialog") };
+  };
+  const filled = { ...draft, name: "Rent", amount: 1000 };
+
+  it("lists rental properties and mortgages for a rental record, plus Not linked", () => {
+    const { dialog } = withAccounts(filled);
+    const select = within(dialog).getByLabelText("Linked account") as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent)).toEqual([
+      "Not linked",
+      "Flat 2",
+      "Flat 2 mortgage",
+    ]);
+    expect(select.value).toBe("");
+  });
+
+  it("sends the chosen account with the record", () => {
+    const { dialog, onSave } = withAccounts(filled);
+    fireEvent.change(within(dialog).getByLabelText("Linked account"), {
+      target: { value: "p1" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ accountId: "p1" }));
+  });
+
+  it("keeps the saved link when editing", () => {
+    const { dialog, onSave } = withAccounts({ ...filled, accountId: "m1" }, "edit");
+    expect((within(dialog).getByLabelText("Linked account") as HTMLSelectElement).value).toBe("m1");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ accountId: "m1" }));
+  });
+
+  it("clears a link that no longer fits when the source changes", () => {
+    const { dialog, onSave } = withAccounts({ ...filled, accountId: "p1" });
+    fireEvent.change(within(dialog).getByLabelText("Income source"), {
+      target: { value: "savings" },
+    });
+    const select = within(dialog).getByLabelText("Linked account") as HTMLSelectElement;
+    expect(select.value).toBe("");
+    expect([...select.options].map((o) => o.textContent)).toEqual(["Not linked", "Easy access"]);
+    fireEvent.change(within(dialog).getByLabelText("Income source"), {
+      target: { value: "self-employed" },
+    });
+    expect(within(dialog).queryByLabelText("Linked account")).toBeNull();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ accountId: null }));
+  });
+});

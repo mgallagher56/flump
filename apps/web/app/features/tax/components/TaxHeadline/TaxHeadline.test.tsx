@@ -1,19 +1,17 @@
+import {
+  calculateEstimatedTax,
+  calculateUKTax,
+  estimateInputsFor,
+  type TaxRecord,
+} from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { taxRecordsFixture, taxResultFixture } from "../../__fixtures__/taxRecords";
-import {
-  allowanceLine,
-  billDueDate,
-  nonPayeCosts,
-  nonPayeIncome,
-  TaxHeadline,
-} from "./TaxHeadline";
+import { allowanceLine, billDueDate, TaxHeadline } from "./TaxHeadline";
 
 describe("TaxHeadline", () => {
   it("puts the estimated bill in the hero, labelled inside it, and the recorded income in the first KPI", () => {
-    const { container } = render(
-      <TaxHeadline records={taxRecordsFixture} result={taxResultFixture} taxYear="2026/27" />,
-    );
+    const { container } = render(<TaxHeadline result={taxResultFixture} taxYear="2026/27" />);
     const heroes = container.querySelectorAll('[data-tone="hero"]');
     expect(heroes).toHaveLength(1);
     expect(heroes[0].textContent).toContain("Estimated bill");
@@ -36,8 +34,7 @@ describe("TaxHeadline", () => {
     const { container } = render(
       <TaxHeadline
         emptyAction={<button type="button">Add income</button>}
-        records={[]}
-        result={taxResultFixture}
+        result={undefined}
         taxYear="2026/27"
       />,
     );
@@ -46,17 +43,70 @@ describe("TaxHeadline", () => {
     expect(screen.getByRole("button", { name: "Add income" })).toBeDefined();
   });
 
-  it("reconciles: income before costs in the first card, income less costs beside it", () => {
-    const { container } = render(
-      <TaxHeadline records={taxRecordsFixture} result={taxResultFixture} taxYear="2026/27" />,
-    );
-    const first = container.querySelector("[data-kpi-value]")?.textContent ?? "";
-    const before = Number(/£([\d,]+)/.exec(first)?.[1]?.replace(/,/g, ""));
-    const after =
-      nonPayeIncome(taxRecordsFixture, "2026/27") - nonPayeCosts(taxRecordsFixture, "2026/27");
-    expect(before).toBe(nonPayeIncome(taxRecordsFixture, "2026/27"));
+  it("reconciles: the engine's income before costs in the first card, income less costs beside it", () => {
+    const { container } = render(<TaxHeadline result={taxResultFixture} taxYear="2026/27" />);
+    const values = [...container.querySelectorAll("[data-kpi-value]")].map((n) => n.textContent);
+    // The fixture at a 50% share (calculateUKTax's share argument): rent 2,400 a year at half is
+    // 1,200, plus self-employed income; the engine's own totals, never a sum of the records.
+    const income =
+      taxResultFixture.rentalIncomeGrossShare +
+      taxResultFixture.seIncomeGross +
+      taxResultFixture.savingsInterestGross +
+      taxResultFixture.dividendIncomeGross;
+    expect(values[0]).toContain(`£${Math.round(income).toLocaleString("en-GB")}`);
     expect(screen.getByText("Your income less the expenses you recorded")).toBeDefined();
-    expect(container.textContent).toContain(`£${Math.round(after).toLocaleString("en-GB")}`);
+  });
+
+  it("reads rent at the person's share and leaves ISA interest out (SA-9)", () => {
+    // Joint rental property at 50%, rent 12,000, repairs 2,000, ISA interest 300, salary 30,000.
+    // Income outside PAYE: rent 12,000 x 50% = 6,000; ISA interest is tax-free, so 0. 6,000.
+    // After expenses: repairs 2,000 x 50% = 1,000; 6,000 - 1,000 = 5,000.
+    // The old local sums gave 12,000 + 300 = 12,300 and 12,300 - 2,000 = 10,300.
+    const rec = (id: string, over: Partial<TaxRecord>): TaxRecord => ({
+      id,
+      type: "income",
+      source: "rental",
+      category: "rental_income",
+      name: id,
+      amount: 0,
+      frequency: "annual",
+      date: "2026-06-06",
+      endDate: null,
+      notes: null,
+      receiptFilename: null,
+      receiptMimeType: null,
+      receiptData: null,
+      userId: "u",
+      createdAt: "2026-04-06T00:00:00.000Z",
+      updatedAt: "2026-04-06T00:00:00.000Z",
+      ...over,
+    });
+    const records = [
+      rec("rent", { amount: 12000 }),
+      rec("repairs", { type: "expense", category: "repairs_maintenance", amount: 2000 }),
+      rec("isa", { source: "savings", category: "isa_interest", amount: 300 }),
+    ];
+    const accounts = [
+      {
+        id: "p1",
+        type: "Property",
+        accountSubtype: "rental",
+        ownership: "joint",
+        sharePercent: 50,
+      },
+    ];
+    const inputs = estimateInputsFor(
+      { employmentType: "employed", annualSalary: 30000, accounts },
+      records,
+      "2026/27",
+    );
+    if (inputs.status !== "known") throw new Error("expected a known estimate");
+    const { container } = render(
+      <TaxHeadline result={calculateEstimatedTax(inputs)} taxYear="2026/27" />,
+    );
+    const values = [...container.querySelectorAll("[data-kpi-value]")].map((n) => n.textContent);
+    expect(values[0]).toContain("£6,000");
+    expect(values[1]).toContain("£5,000");
   });
 
   it("says when no costs are recorded and offers to add one", () => {
@@ -65,8 +115,7 @@ describe("TaxHeadline", () => {
     render(
       <TaxHeadline
         onAddExpense={onAddExpense}
-        records={incomeOnly}
-        result={taxResultFixture}
+        result={calculateUKTax("2026/27", incomeOnly, 52000, 50)}
         taxYear="2026/27"
       />,
     );
@@ -80,15 +129,13 @@ describe("TaxHeadline", () => {
       ...taxResultFixture,
       payments: { ...taxResultFixture.payments, paymentsOnAccountDue: true },
     };
-    const { rerender } = render(
-      <TaxHeadline records={taxRecordsFixture} result={withPayments} taxYear="2026/27" />,
-    );
+    const { rerender } = render(<TaxHeadline result={withPayments} taxYear="2026/27" />);
     expect(screen.getByText("This year's bill and a first payment on account")).toBeDefined();
     const without = {
       ...taxResultFixture,
       payments: { ...taxResultFixture.payments, paymentsOnAccountDue: false },
     };
-    rerender(<TaxHeadline records={taxRecordsFixture} result={without} taxYear="2026/27" />);
+    rerender(<TaxHeadline result={without} taxYear="2026/27" />);
     expect(screen.queryByText("This year's bill and a first payment on account")).toBeNull();
     expect(screen.getByText("Paid to HMRC")).toBeDefined();
   });
@@ -111,7 +158,6 @@ describe("TaxHeadline", () => {
     );
     render(
       <TaxHeadline
-        records={taxRecordsFixture}
         result={{ ...taxResultFixture, tradingAllowanceUsed: 1000 }}
         taxYear="2026/27"
       />,
@@ -129,18 +175,16 @@ describe("TaxHeadline", () => {
   });
 
   it("keeps the bill's default sub-line when no allowance was used", () => {
-    render(<TaxHeadline records={taxRecordsFixture} result={taxResultFixture} taxYear="2026/27" />);
+    render(<TaxHeadline result={taxResultFixture} taxYear="2026/27" />);
     expect(screen.getByText("Income Tax and National Insurance on this income")).toBeDefined();
   });
 });
 
-describe("nonPayeCosts and finance costs brought forward", () => {
-  it("leaves out an amount brought forward from earlier years: it is not a cost of this year", () => {
+describe("finance costs brought forward", () => {
+  it("are not a cost of the year, so the after-expenses card leaves them out", () => {
     const base = {
-      id: "r",
       userId: "u",
       source: "rental" as const,
-      type: "expense" as const,
       name: "x",
       frequency: "annual" as const,
       date: "2026-06-06",
@@ -148,14 +192,26 @@ describe("nonPayeCosts and finance costs brought forward", () => {
       notes: null,
       receiptFilename: null,
       receiptMimeType: null,
+      receiptData: null,
       createdAt: "2026-06-06T00:00:00.000Z",
       updatedAt: "2026-06-06T00:00:00.000Z",
     };
-    const records = [
-      { ...base, id: "a", category: "repairs_maintenance", amount: 500 },
-      { ...base, id: "b", category: "finance_costs_brought_forward", amount: 1570 },
+    const records: TaxRecord[] = [
+      { ...base, id: "i", type: "income", category: "rental_income", amount: 10000 },
+      { ...base, id: "a", type: "expense", category: "repairs_maintenance", amount: 500 },
+      {
+        ...base,
+        id: "b",
+        type: "expense",
+        category: "finance_costs_brought_forward",
+        amount: 1570,
+      },
     ];
-    // Only the 500 of repairs is a cost recorded for 2026/27.
-    expect(nonPayeCosts(records, "2026/27")).toBe(500);
+    // Only the 500 of repairs is a cost of 2026/27: 10,000 - 500 = 9,500.
+    const { container } = render(
+      <TaxHeadline result={calculateUKTax("2026/27", records, 30000, 100)} taxYear="2026/27" />,
+    );
+    const values = [...container.querySelectorAll("[data-kpi-value]")].map((n) => n.textContent);
+    expect(values[1]).toContain("£9,500");
   });
 });

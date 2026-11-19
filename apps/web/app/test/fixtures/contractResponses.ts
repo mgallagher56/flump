@@ -119,6 +119,7 @@ export const taxRecordFixture = {
   receiptFilename: null,
   receiptMimeType: null,
   hasReceipt: false,
+  accountId: null,
   createdAt: "2026-01-10T12:00:00.000Z",
   updatedAt: "2026-01-11T08:30:00.000Z",
 };

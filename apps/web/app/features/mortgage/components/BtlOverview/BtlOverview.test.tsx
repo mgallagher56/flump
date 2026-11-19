@@ -23,12 +23,31 @@ describe("<BtlOverview />", () => {
     expect(onManage).toHaveBeenCalled();
   });
 
-  it("shows no rent, yield or tax rule, since no rent is saved anywhere it reads (HM-5)", () => {
+  it("shows each property's gross yield from the rent linked to it", () => {
+    // 1,150 a month for the year (13,800) against a value of 230,000: 6.0%.
+    render(
+      <BtlOverview
+        properties={[{ id: "r1", name: "Flat 2", yieldPct: (13800 / 230000) * 100 }]}
+        onManage={vi.fn()}
+      />,
+    );
+    const list = screen.getByRole("list", { name: "Rental properties" });
+    expect(list.textContent).toContain("Gross yield 6.0%");
+    expect(list.textContent).not.toContain("Add rent in Self Assessment");
+  });
+
+  it("says how to see a yield when no rent is linked to the property", () => {
     const { container } = render(
-      <BtlOverview properties={[{ id: "r1", name: "Flat 2" }]} onManage={vi.fn()} />,
+      <BtlOverview
+        properties={[{ id: "r1", name: "Flat 2", yieldPct: null }]}
+        onManage={vi.fn()}
+      />,
     );
     expect(screen.getByText("1 property")).toBeDefined();
-    expect(container.textContent).not.toMatch(/rent|yield|Section 24/i);
+    expect(container.textContent).toContain(
+      "Add rent in Self Assessment, linked to this property, to see its yield.",
+    );
+    expect(container.textContent).not.toMatch(/Section 24/);
   });
 
   it("says when no rental property is saved yet", () => {

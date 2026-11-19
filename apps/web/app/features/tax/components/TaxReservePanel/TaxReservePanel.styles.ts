@@ -74,3 +74,13 @@ export const taperLine = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
+
+/** The read-only share a rental property gives, from Accounts. */
+export const shareLine = cva({
+  base: {
+    textStyle: "body.sm",
+    color: "text.secondary",
+    margin: 0,
+    fontVariantNumeric: "tabular-nums",
+  },
+});

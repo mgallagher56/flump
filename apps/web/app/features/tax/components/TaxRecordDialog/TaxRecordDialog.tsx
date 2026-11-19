@@ -14,6 +14,7 @@ import {
 import { Camera, FileText, Image as ImageIcon, Upload } from "lucide-react";
 import { type ChangeEvent, type FC, type FormEvent, useState } from "react";
 import { isAcceptableReceiptFile, RECEIPT_ACCEPT } from "~/containers/tax/receipt-file";
+import { linkableAccountsFor, linkFits, type TaxAccount } from "../../linkedAccounts";
 import {
   CATEGORY_HINT,
   categoryShortLabel,
@@ -53,6 +54,8 @@ export interface TaxRecordDraft {
   receiptData: string | null;
   /** The user removed a stored receipt. */
   receiptCleared: boolean;
+  /** The account the record describes (slice 7), or null when not linked. */
+  accountId?: string | null;
 }
 
 export interface TaxRecordDialogProps {
@@ -63,6 +66,8 @@ export interface TaxRecordDialogProps {
   onSave: (draft: TaxRecordDraft) => void;
   /** Why the last save failed, shown inside the dialog (the page behind a modal is hidden). */
   saveError?: string | null;
+  /** The user's accounts, for the "Linked account" choice on rental and savings records. */
+  accounts?: readonly TaxAccount[];
 }
 
 type Errors = Partial<Record<"name" | "amount" | "date" | "receipt" | "category", string>>;
@@ -98,6 +103,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
   initial,
   onSave,
   saveError,
+  accounts = [],
 }) => {
   const [draft, setDraft] = useState<TaxRecordDraft>(initial);
   const [errors, setErrors] = useState<Errors>({});
@@ -121,9 +127,15 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
       source,
       type,
       category: selectableCategories(source, type, keptCategory)[0]?.id ?? "",
+      // A link to an account that does not fit the new source is cleared.
+      accountId: linkFits(source, d.accountId, accounts) ? d.accountId : null,
     }));
 
   const categories = selectableCategories(draft.source, draft.type, keptCategory);
+  const linkable = linkableAccountsFor(draft.source, accounts);
+  const linkedAccountId = linkFits(draft.source, draft.accountId, accounts)
+    ? (draft.accountId as string)
+    : "";
 
   const onFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,7 +173,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
     if (!categories.some((c) => c.id === draft.category)) found.category = UNLISTED_CATEGORY_ERROR;
     setErrors(found);
     if (Object.keys(found).length > 0) return;
-    onSave(draft);
+    onSave({ ...draft, accountId: linkedAccountId || null });
   };
 
   const isPdf = draft.receiptMimeType?.includes("pdf");
@@ -289,6 +301,32 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
             )}
           </FormField>
         </div>
+        {linkable.length > 0 ? (
+          <FormField
+            label="Linked account"
+            hint={
+              draft.source === "rental"
+                ? "The property or mortgage this record is for. Its share on Accounts is used."
+                : "The account this income comes from."
+            }
+          >
+            {(field) => (
+              <Select
+                id={field.id}
+                aria-describedby={field.describedBy}
+                value={linkedAccountId}
+                onChange={(e) => set("accountId", e.target.value || null)}
+              >
+                <option value="">Not linked</option>
+                {linkable.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name?.trim() || "Unnamed account"}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </FormField>
+        ) : null}
         <div className={receiptBox()}>
           <span className={receiptLabel()} id="tax-receipt-label">
             Receipt (optional)

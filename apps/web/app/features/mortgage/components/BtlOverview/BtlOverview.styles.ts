@@ -54,7 +54,24 @@ export const btlList = cva({
 
 export const btlListItem = cva({
   base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+    minWidth: 0,
+  },
+});
+
+export const btlPropertyName = cva({
+  base: {
     textStyle: "body.md",
     color: "text.primary",
+  },
+});
+
+export const btlYieldLine = cva({
+  base: {
+    textStyle: "body.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
   },
 });
