@@ -136,10 +136,21 @@ export function estimateInputsFor<R extends TaxRecordFields>(
     taxYear,
     records: inYear,
     payeSalary: payeSalaryForTax({ employmentType: facts.employmentType, annualSalary: salary }),
-    options: {
-      region: facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
-      rentalShares: rentalSharesFromAccounts(facts.accounts ?? []),
-    },
+    options: estimateOptionsFor(facts),
+  };
+}
+
+/**
+ * The region and per-property shares every Self Assessment surface passes to calculateUKTax.
+ * The one place they are worked out, also for a surface that shows the year's figures when the
+ * estimate itself cannot be worked out (the MCP tax tool, a source page).
+ */
+export function estimateOptionsFor(
+  facts: Pick<TaxEstimateFacts, "taxRegion" | "accounts">,
+): Required<Pick<UkTaxCalculationOptions, "region" | "rentalShares">> {
+  return {
+    region: facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
+    rentalShares: rentalSharesFromAccounts(facts.accounts ?? []),
   };
 }
 

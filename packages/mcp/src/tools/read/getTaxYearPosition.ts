@@ -3,13 +3,13 @@ import {
   calculateIncomeTaxOnTaxable,
   calculateUKTax,
   estimateInputsFor,
+  estimateOptionsFor,
   getTaxYearVerification,
   getUkTaxYearRules,
   isLegacySalaryRecord,
   isSelfEmployedType,
   MCP_NOTICE,
   payeSalaryForTax,
-  rentalSharesFromAccounts,
   type TaxEstimateMissingFact,
 } from "@flump/finance-engine";
 import { z } from "zod";
@@ -123,7 +123,7 @@ export const getTaxYearPosition = defineFlumpTool({
       records.filter((r) => !isLegacySalaryRecord(r)),
       salary,
       100,
-      { region, rentalShares: rentalSharesFromAccounts(accounts) },
+      estimateOptionsFor({ taxRegion: facts.taxRegion, accounts }),
     );
     const rules = getUkTaxYearRules(taxYear);
 

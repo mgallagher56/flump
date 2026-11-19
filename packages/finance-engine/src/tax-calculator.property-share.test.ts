@@ -70,6 +70,21 @@ describe("rentalSharesFromAccounts", () => {
     expect(shares.byAccountId).toEqual({ "flat-a": 50, "flat-b": 100, "btl-a": 50 });
   });
 
+  it("gives any mortgage its own share, since a rental record can be linked to it", () => {
+    // A residential mortgage joint at 30%: a rental record linked to it counts at 30%, not at the
+    // unlinked share. It does not change the unlinked share, which comes from rental properties.
+    const resi = {
+      id: "resi",
+      type: "Mortgage",
+      accountSubtype: "residential_mortgage",
+      ownership: "joint",
+      sharePercent: 30,
+    };
+    const shares = rentalSharesFromAccounts([flatA, resi]);
+    expect(shares.byAccountId.resi).toBe(30);
+    expect(shares.unlinked).toEqual({ share: 50, basis: "only-rental" });
+  });
+
   it("uses one rental property's share for records not linked to any account", () => {
     expect(rentalSharesFromAccounts([flatA, home]).unlinked).toEqual({
       share: 50,

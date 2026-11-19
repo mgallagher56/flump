@@ -151,3 +151,32 @@ describe("Scottish bands on non-savings income", () => {
     expect(ewni.netAdditionalTaxToPay).toBe(1400);
   });
 });
+
+describe("a credit larger than all the tax left after PAYE", () => {
+  it("shows the PAYE tax overpaid as an estimated repayment (Scottish starter rate)", () => {
+    // Salary 13,000; rent 3,000 with no costs; mortgage interest 3,000. 2026/27, Scottish.
+    // PAYE: taxable 430 at 19% = 81.70.
+    // With the rent: taxable 3,430, all in the 3,967 starter band: 651.70. Tax on the rent 570.
+    // Credit: 20% x the lowest of interest 3,000, profit 3,000 and income above the allowance
+    //   3,430 = 600, more than the 570 on the rent. It comes off the whole bill (ITA 2007
+    //   s.26(1)(a), s.29(2)): 651.70 - 600 = 51.70.
+    // PAYE took 81.70, so 30 was overpaid: an estimated repayment of 30, and nothing to pay.
+    // The property allowance route (profit 2,000, no credit) costs 81.70 + 380 = 461.70.
+    const r = calculateUKTax("2026/27", rent("2026/27", 3000, 0, 3000), 13000, 100, {
+      region: "SCOTLAND",
+    });
+    expect(r.payeTaxDue).toBeCloseTo(81.7, 2);
+    expect(r.rentalPropertyTaxDueBeforeCredit).toBeCloseTo(570, 2);
+    expect(r.rentalPropertyTaxCredit).toBe(600);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(51.7, 2);
+    expect(r.netAdditionalTaxToPay).toBe(0);
+    expect(r.estimatedRepayment).toBeCloseTo(30, 2);
+  });
+
+  it("is 0 when the bill is positive", () => {
+    const r = calculateUKTax("2026/27", rent("2026/27", 11000, 1000, 3000), 40000, 100, {
+      region: "SCOTLAND",
+    });
+    expect(r.estimatedRepayment).toBe(0);
+  });
+});
