@@ -204,6 +204,9 @@ describe("log volume limits", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     delete process.env.CONTRACT_MODE;
+    // Set by the CONTRACT_ENFORCE_GROUPS case below. Left behind, it turned enforcement off for
+    // every enforce case that ran after it (found by the E41 P2 shuffled runs).
+    delete process.env.CONTRACT_ENFORCE_GROUPS;
   });
 
   it("logs only the 1st, 2nd and 10th occurrence, then every 100th", () => {
