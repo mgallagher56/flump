@@ -324,6 +324,9 @@ The owner listed what they noticed while using the site (about 15 November 2026)
 1. **Enter confirms an ordinary delete (item 27).** Owner's words: "When I try to delete an item, the modal appears then when I press enter it should delete the entry rather than cancel."
    - Built in `ConfirmDialog` (`packages/ui`): focus starts on the confirm button; Enter confirms once per opening; a repeating or held key never fires it, and a key still held from the press that opened the dialog is ignored until released; Escape and Cancel still cancel, and Enter on a focused Cancel cancels. Type-to-confirm dialogs (account erasure, reset all data) are unchanged: focus starts on Cancel and Enter confirms only from the field once the text matches.
    - Supersedes: UX-GUIDELINES D1 "Cancel is the safe default focus" (D1 now states the ruling).
+2. **Delete buttons in a subtle danger style (item 25).** Owner's words: "delete debt should be a subtle danger colour, like other delete/destructive buttons, and there should be no info words under each field".
+   - Built as `Button variant="dangerSubtle"` (danger text and border, no fill) on every delete, remove and disconnect control outside the confirmation; the confirmation keeps the solid danger button; menu items that delete use the danger tone. The edit debt dialog's notes moved behind info icons.
+   - Supersedes: UX-GUIDELINES D3 "uses `danger` styling only inside the confirmation" (D3 now states the ruling).
 
 # Owner decisions, round 11 (2026-11-19): system data audit
 
