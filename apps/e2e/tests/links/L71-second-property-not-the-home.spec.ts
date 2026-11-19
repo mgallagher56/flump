@@ -48,3 +48,27 @@ test("L71 a second property does not change loan to value", async ({ page }) => 
     await backendCall(`/accounts/${rental.id}`, "DELETE");
   }
 });
+
+// L71 (HM-3, DB-6, system audit slice 4): whether a property is the home or a rental is a saved
+// choice. A rental called "Flat 2" (its name does not say buy to let) is left out of the home's
+// loan to value, which stays 186,000 / 310,000 = 60%, with no "more than one property" note.
+// Before slice 4 there was no property kind to save (the subtype was refused).
+test("L71 a property saved as a rental is not the home", async ({ page }) => {
+  await page.goto("/app");
+  await applyPersona(page, "homeowner");
+
+  const rental = (await api(page, "/accounts", "POST", {
+    name: "Flat 2",
+    type: "Property",
+    accountSubtype: "rental",
+    balance: 200000,
+  })) as { id: string };
+  try {
+    await page.goto("/app/mortgage");
+    const saved = page.locator("#mortgage-saved");
+    await expect(saved).toContainText("60%");
+    await expect(saved).not.toContainText("more than one property");
+  } finally {
+    await backendCall(`/accounts/${rental.id}`, "DELETE");
+  }
+});

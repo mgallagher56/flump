@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { backendCall } from "../../support/backend";
 import { waitForHydration } from "../../support/page";
 import { applyPersona } from "../../support/personas";
 
@@ -60,5 +61,36 @@ test("L70 renaming an account keeps the check-in reminder on the Dashboard", asy
     await expect(startRow(page)).toBeVisible();
   } finally {
     await api(page, `/accounts/${current.id}`, "PATCH", { name: "Current account" });
+  }
+});
+
+// L70 (CH-3, system audit slice 4): the reminder reads finished check-ins, so a balance edit (which
+// records this month for that account) and a new account (which records its first month) leave
+// it in place. Before slice 4 either one hid the reminder for the rest of the month.
+test("L70 a balance edit or a new account does not finish the check-in", async ({ page }) => {
+  await page.goto("/app");
+  await applyPersona(page, "homeowner");
+  await page.goto("/app");
+  await waitForHydration(page);
+  if (!(await startRow(page).isVisible())) {
+    await api(page, "/user-profile/reset-financial-data", "POST", { confirmation: "RESET" });
+    await applyPersona(page, "homeowner");
+  }
+  const accounts = (await api(page, "/accounts")) as Array<Account & { balance: number }>;
+  const current = accounts.find((a) => a.name === "Current account");
+  if (!current) throw new Error("homeowner persona has no Current account");
+
+  const created = (await api(page, "/accounts", "POST", {
+    name: "L70 new saver",
+    type: "Saving",
+    balance: 10,
+  })) as Account;
+  try {
+    await api(page, `/accounts/${current.id}`, "PATCH", { balance: current.balance + 1 });
+    await page.goto("/app");
+    await expect(startRow(page)).toBeVisible();
+  } finally {
+    await api(page, `/accounts/${current.id}`, "PATCH", { balance: current.balance });
+    await backendCall(`/accounts/${created.id}`, "DELETE");
   }
 });

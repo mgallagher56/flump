@@ -349,6 +349,9 @@ export const AccountExportAccount = z.strictObject({
   createdAt: ExportTimestamp,
   /** When the account last changed; the version behind its ETag (BE-09). */
   updatedAt: ExportTimestamp,
+  /** Mortgage accounts (system audit slice 4). Optional so an older export still parses. */
+  linkedAccountId: Uuid.nullish(),
+  repaymentType: NullableText.optional(),
 });
 
 /** `accountDetails`: the month-end balance history of each account. */

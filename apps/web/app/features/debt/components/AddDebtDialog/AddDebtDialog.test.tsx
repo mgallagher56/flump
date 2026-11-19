@@ -75,6 +75,19 @@ describe("AddDebtDialog", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("adds a joint debt with the user's share (SD-8)", () => {
+    const { onAddDebt } = open();
+    fill("Name of the debt", "Joint loan");
+    fill("Balance you owe", "6000");
+    fireEvent.change(screen.getByLabelText("Ownership"), { target: { value: "joint" } });
+    fireEvent.change(screen.getByLabelText("Your share"), { target: { value: "50" } });
+    expect(screen.getByText("This is the whole balance. Your share is 50% of it.")).toBeDefined();
+    submit();
+    expect(onAddDebt).toHaveBeenCalledWith(
+      expect.objectContaining({ balance: 6000, ownership: "joint", sharePercent: 50 }),
+    );
+  });
+
   it("needs only a name and balance; blank APR and minimum are flagged unknown", () => {
     const { onAddDebt } = open();
     fill("Name of the debt", "Sofa payments");
@@ -212,12 +225,38 @@ describe("AddDebtDialog in edit mode", () => {
     }
   });
 
-  it("offers no balance field and sends only the changed fields", () => {
+  it("shows the saved balance and sends only the changed fields", () => {
     const { onEditDebt } = renderEdit();
-    expect(screen.queryByLabelText(/^Balance you owe/)).toBeNull();
+    expect((screen.getByLabelText(/^Balance you owe/) as HTMLInputElement).value).toBe("1,000");
     fill("Interest rate", "");
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(onEditDebt).toHaveBeenCalledWith("d1", { apr: 0, aprKnown: false });
+  });
+
+  it("edits the balance after the debt is added (SD-8), sending it only when changed", () => {
+    const { onEditDebt } = renderEdit();
+    fireEvent.change(screen.getByLabelText(/^Balance you owe/), { target: { value: "850" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(onEditDebt).toHaveBeenCalledWith("d1", { balance: 850 });
+  });
+
+  it("edits a joint debt's whole balance, says so, and can make a debt joint", () => {
+    const onEditDebt = vi.fn();
+    customRender(
+      <AddDebtDialog
+        debt={{ ...debt, balance: 400, wholeBalance: 1000, ownership: "joint", sharePercent: 40 }}
+        isOpen
+        onAddDebt={vi.fn()}
+        onClose={vi.fn()}
+        onEditDebt={onEditDebt}
+      />,
+    );
+    // The row holds the user's 40% (400); the field holds the whole 1,000.
+    expect((screen.getByLabelText(/^Balance you owe/) as HTMLInputElement).value).toBe("1,000");
+    expect(screen.getByText("This is the whole balance. Your share is 40% of it.")).toBeDefined();
+    fireEvent.change(screen.getByLabelText("Your share"), { target: { value: "60" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(onEditDebt).toHaveBeenCalledWith("d1", { ownership: "joint", sharePercent: 60 });
   });
 
   it("waits for a save that returns a promise: closes when it lands, stays open with the message when it is refused", async () => {

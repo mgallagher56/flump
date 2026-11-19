@@ -5,6 +5,7 @@ import { useLoaderData, useSearchParams } from "react-router";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { buildAccountRows } from "~/features/accounts/accountRows";
 import { AccountsGroupList } from "~/features/accounts/components/AccountsGroupList";
+import { type MortgageLike, propertyPrefillFor } from "~/features/accounts/propertyPrefill";
 import { CheckInSheet, firstShownElement } from "~/features/snapshot/components/CheckInSheet";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
@@ -69,6 +70,17 @@ const AccountsContainer: FC = () => {
   );
 
   const hasAccounts = accounts.length > 0;
+  const propertyPrefill = useMemo(() => propertyPrefillFor(accounts as MortgageLike[]), [accounts]);
+  const addDialogProps = addPropertyMode
+    ? {
+        initialName: propertyPrefill.name,
+        initialType: "Property",
+        initialSubtype: propertyPrefill.subtype,
+        initialOwnership: propertyPrefill.ownership,
+        initialSharePercent: propertyPrefill.sharePercent,
+        linkMortgage: propertyPrefill.linkMortgage,
+      }
+    : {};
 
   return (
     <PageBody>
@@ -88,10 +100,9 @@ const AccountsContainer: FC = () => {
                 </a>
               </Button>
               <AddEditAccountsDialogBtn
+                {...addDialogProps}
                 defaultOpen={arrivedToAdd}
                 fallbackHref={ADD_HREF}
-                initialName={addPropertyMode ? "Home (your estimate)" : undefined}
-                initialType={addPropertyMode ? "Property" : undefined}
                 openRequestKey={openRequestKey}
                 variant="primary"
               />
@@ -148,10 +159,9 @@ const AccountsContainer: FC = () => {
           <EmptyState
             action={
               <AddEditAccountsDialogBtn
+                {...addDialogProps}
                 defaultOpen={arrivedToAdd}
                 fallbackHref={ADD_HREF}
-                initialName={addPropertyMode ? "Home (your estimate)" : undefined}
-                initialType={addPropertyMode ? "Property" : undefined}
                 openRequestKey={openRequestKey}
                 variant="primary"
               />

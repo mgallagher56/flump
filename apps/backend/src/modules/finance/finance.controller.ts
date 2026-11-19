@@ -1,10 +1,10 @@
 import type {
   ConnectBankRequest,
   CreateAccountRequest,
+  CreateMortgageWithPropertyRequest,
   CreateTransactionRequest,
   TransactionListQuery,
   UpdateAccountRequest,
-  UpdateBalancesRequest,
 } from "@flump/api-contract";
 import { MAX_TRANSACTION_OFFSET } from "@flump/api-contract";
 import {
@@ -109,11 +109,18 @@ export class FinanceController {
     return toPublicAccount(await this.financeService.createAccount(req.user.id, body));
   }
 
-  // Registered before "accounts/:id" so "balances" is never read as an account id.
-  @Patch("accounts/balances")
-  @HttpCode(200)
-  async updateBalances(@Req() req: AuthenticatedRequest, @Body() body: UpdateBalancesRequest) {
-    return (await this.financeService.updateBalances(req.user.id, body)).map(toPublicAccount);
+  /** A mortgage and the property it is on, created and linked in one transaction (slice 4). */
+  @Post("accounts/mortgage-with-property")
+  @HttpCode(201)
+  async createMortgageWithProperty(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: CreateMortgageWithPropertyRequest,
+  ) {
+    const { mortgage, property } = await this.financeService.createMortgageWithProperty(
+      req.user.id,
+      body,
+    );
+    return { mortgage: toPublicAccount(mortgage), property: toPublicAccount(property) };
   }
 
   @Patch("accounts/:id")

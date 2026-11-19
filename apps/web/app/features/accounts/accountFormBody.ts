@@ -9,6 +9,16 @@ export interface AccountFormFields {
   balance?: number;
   creditLimit?: number | null;
   promoZeroPercentUntil?: string | null;
+  interestRate?: number | null;
+  monthlyContribution?: number | null;
+  /** Mortgage only: whole months, 1 to 600. */
+  termMonths?: number | null;
+  /** Mortgage only (YYYY-MM-DD). */
+  fixedRateEndDate?: string | null;
+  /** Mortgage only. */
+  repaymentType?: "repayment" | "interest-only" | null;
+  /** Mortgage only: the Property account it is on. */
+  linkedAccountId?: string | null;
 }
 
 /** A field left out stays undefined (not sent); an empty field is null (cleared). */
@@ -20,6 +30,21 @@ const optionalMoney = (raw: FormDataEntryValue | null): number | null | undefine
   if (raw === "") return null;
   const value = Number(raw);
   return Number.isFinite(value) ? roundTo2dp(value) : undefined;
+};
+
+const optionalTermMonths = (raw: FormDataEntryValue | null): number | null | undefined => {
+  if (raw === null) return undefined;
+  if (raw === "") return null;
+  const value = Math.round(Number(raw));
+  return Number.isFinite(value) && value >= 1 && value <= 600 ? value : undefined;
+};
+
+const optionalRepaymentType = (
+  raw: FormDataEntryValue | null,
+): "repayment" | "interest-only" | null | undefined => {
+  if (raw === null) return undefined;
+  if (raw === "") return null;
+  return raw === "repayment" || raw === "interest-only" ? raw : undefined;
 };
 
 /**
@@ -50,6 +75,12 @@ export const accountFieldsFromForm = (formData: FormData): AccountFormFields => 
     balance: optionalMoney(formData.get("balance")) ?? undefined,
     creditLimit: optionalMoney(formData.get("creditLimit")),
     promoZeroPercentUntil: optionalText(formData.get("promoZeroPercentUntil")),
+    interestRate: optionalMoney(formData.get("interestRate")),
+    monthlyContribution: optionalMoney(formData.get("monthlyContribution")),
+    termMonths: optionalTermMonths(formData.get("termMonths")),
+    fixedRateEndDate: optionalText(formData.get("fixedRateEndDate")),
+    repaymentType: optionalRepaymentType(formData.get("repaymentType")),
+    linkedAccountId: optionalText(formData.get("linkedAccountId")),
   };
   return Object.fromEntries(
     Object.entries(fields).filter(([, value]) => value !== undefined),

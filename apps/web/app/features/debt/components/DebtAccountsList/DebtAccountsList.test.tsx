@@ -94,7 +94,6 @@ describe("DebtAccountsList", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Edit Card" }));
-    expect(screen.queryByLabelText(/^Balance you owe/)).toBeNull();
     fireEvent.change(screen.getByLabelText(/^Interest rate/), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(onUpdateDebt).toHaveBeenCalledWith("a", { apr: 0, aprKnown: false });

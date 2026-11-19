@@ -3,73 +3,42 @@ import { describe, expect, it, vi } from "vitest";
 import { BtlOverview } from "./BtlOverview";
 
 describe("<BtlOverview />", () => {
-  it("shows one prompt, not a row of Not set, when nothing is entered", () => {
+  it("lists the rental properties from Accounts and counts them", () => {
+    const onManage = vi.fn();
     render(
       <BtlOverview
-        grossYield={null}
-        monthlyPayment={null}
-        monthlyRent={0}
-        propertyCount={null}
-        onConfigure={vi.fn()}
-      />,
-    );
-    expect(screen.queryAllByText("Not set").length).toBeLessThanOrEqual(1);
-    expect(
-      screen.getByText("Add your monthly rent and property value to see your rental yield"),
-    ).toBeDefined();
-    expect(screen.getByText("Number of properties not set")).toBeDefined();
-    // No tax rule under the person's own figure.
-    expect(screen.queryByText(/Section 24/)).toBeNull();
-  });
-
-  it("works out the rent left after the mortgage payment, with no status colour", () => {
-    const onConfigure = vi.fn();
-    const { container } = render(
-      <BtlOverview
-        grossYield={6}
-        monthlyPayment={400}
-        monthlyRent={1000}
-        propertyCount={2}
-        onConfigure={onConfigure}
+        properties={[
+          { id: "r1", name: "Flat 2" },
+          { id: "r2", name: "Harbour Street" },
+        ]}
+        onManage={onManage}
       />,
     );
     expect(screen.getByText("Your buy to let properties")).toBeDefined();
     expect(screen.getByText("2 properties")).toBeDefined();
-    expect(screen.getByText("Rent left after the mortgage payment (estimate)")).toBeDefined();
-    // £1,000 rent - £400 payment = £600, in whole pounds with no sign (P39).
-    expect(screen.getByText("£600")).toBeDefined();
-    expect(container.textContent).not.toContain("+£");
-    expect(container.textContent).not.toContain("£600.00");
-    expect(container.textContent).not.toMatch(/Gross|net cash flow/i);
-    expect(container.innerHTML).not.toMatch(/danger|positive/);
-    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0] as HTMLElement);
-    expect(onConfigure).toHaveBeenCalled();
+    const list = screen.getByRole("list", { name: "Rental properties" });
+    expect(list.textContent).toContain("Flat 2");
+    expect(list.textContent).toContain("Harbour Street");
+    fireEvent.click(screen.getByRole("button", { name: "Edit on Accounts" }));
+    expect(onManage).toHaveBeenCalled();
   });
 
-  it("rounds pence to whole pounds: £950.50 - £466.25 = £484.25, shown as £484 (P39)", () => {
+  it("shows no rent, yield or tax rule, since no rent is saved anywhere it reads (HM-5)", () => {
     const { container } = render(
-      <BtlOverview
-        grossYield={5}
-        monthlyPayment={466.25}
-        monthlyRent={950.5}
-        propertyCount={1}
-        onConfigure={vi.fn()}
-      />,
+      <BtlOverview properties={[{ id: "r1", name: "Flat 2" }]} onManage={vi.fn()} />,
     );
-    expect(screen.getByText("£484")).toBeDefined();
-    expect(container.textContent).not.toContain("+£");
+    expect(screen.getByText("1 property")).toBeDefined();
+    expect(container.textContent).not.toMatch(/rent|yield|Section 24/i);
+  });
+
+  it("says when no rental property is saved yet", () => {
+    render(<BtlOverview properties={[]} onManage={vi.fn()} />);
+    expect(screen.getByText("No rental property saved on Accounts yet")).toBeDefined();
+    expect(screen.queryByRole("list")).toBeNull();
   });
 
   it("puts the header's Edit action under the text below sm (RC-11, P62)", () => {
-    render(
-      <BtlOverview
-        grossYield={null}
-        monthlyPayment={null}
-        monthlyRent={0}
-        propertyCount={null}
-        onConfigure={vi.fn()}
-      />,
-    );
+    render(<BtlOverview properties={[{ id: "r1", name: "Flat 2" }]} onManage={vi.fn()} />);
     const section = document.getElementById("btl-overview") as HTMLElement;
     expect(section.className).toContain("flex-wrap_wrap");
     expect(section.className).toContain("flex-wrap_nowrap");

@@ -11,6 +11,7 @@ import {
   AccountListResponse,
   BankConnectionListResponse,
   BudgetEntryListResponse,
+  SnapshotCheckInsResponse,
   TaxRecordListResponse,
   UserProfileResponse,
 } from "@flump/api-contract";
@@ -274,6 +275,12 @@ export interface WorkspaceSnapshot {
   budgetEntries: any[];
   taxRecords: any[];
   bankConnections: any[];
+  /**
+   * The newest month with a completed monthly check-in ("YYYY-MM"), from `snapshot_checkins`
+   * (CH-3). `null` when there has never been one; `undefined` when not asked for or when the
+   * call failed, which callers treat as unknown and so show the check-in reminder.
+   */
+  latestCheckInMonth?: string | null;
 }
 
 export interface BackendBytes {
@@ -340,6 +347,8 @@ export interface WorkspaceFetchOptions {
   includeBudget?: boolean;
   includeTax?: boolean;
   includeConnections?: boolean;
+  /** Also read the latest completed check-in month. A failure here never fails the page. */
+  includeCheckIns?: boolean;
   ensureSignedIn?: boolean;
 }
 
@@ -357,6 +366,7 @@ export async function loadWorkspaceSnapshot(
     includeBudget = false,
     includeTax = false,
     includeConnections = false,
+    includeCheckIns = false,
   } = options;
 
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn });
@@ -384,6 +394,9 @@ export async function loadWorkspaceSnapshot(
   let budgetEntries: any[];
   let taxRecords: any[];
   let bankConnections: any[];
+  const checkIns = includeCheckIns
+    ? fetchLatestCheckInMonth(accessToken, signal)
+    : Promise.resolve(undefined);
   try {
     [accounts, userProfile, budgetEntries, taxRecords, bankConnections] = await Promise.all([
       list("/accounts", AccountListResponse),
@@ -400,6 +413,7 @@ export async function loadWorkspaceSnapshot(
 
   // Every account read carries its monthly history (M24): no separate /account-details call.
   const accountDetails = accounts.flatMap((a) => a.details || []);
+  const latestCheckInMonth = await checkIns;
 
   return {
     user,
@@ -410,7 +424,26 @@ export async function loadWorkspaceSnapshot(
     budgetEntries,
     taxRecords,
     bankConnections,
+    ...(includeCheckIns ? { latestCheckInMonth } : {}),
   };
+}
+
+/**
+ * The latest finished check-in month (`GET /snapshots/check-ins`, system audit slice 4, CH-3).
+ * Fails soft: the reminder is only a way in, so an unknown answer (undefined) shows it.
+ */
+function fetchLatestCheckInMonth(
+  accessToken: string,
+  signal: AbortSignal,
+): Promise<string | null | undefined> {
+  return backendFetch("/snapshots/check-ins", {
+    accessToken,
+    signal,
+    schema: SnapshotCheckInsResponse,
+  }).then(
+    (res) => res.latestCompletedMonth,
+    () => undefined,
+  );
 }
 
 /** A workspace load with the financial picture built from it (decision 10, option B). */
@@ -465,9 +498,12 @@ function backendPictureSource(accessToken: string, signal: AbortSignal): Picture
  */
 export async function loadWorkspacePicture(
   args: LoaderFunctionArgs,
-  options: Pick<WorkspaceFetchOptions, "includeConnections" | "ensureSignedIn"> = {},
+  options: Pick<
+    WorkspaceFetchOptions,
+    "includeConnections" | "ensureSignedIn" | "includeCheckIns"
+  > = {},
 ): Promise<WorkspacePicture> {
-  const { ensureSignedIn = true, includeConnections = false } = options;
+  const { ensureSignedIn = true, includeConnections = false, includeCheckIns = false } = options;
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn });
   if (!user) {
     return {
@@ -487,6 +523,9 @@ export async function loadWorkspacePicture(
 
   let loaded: LoadedFinancialPicture;
   let bankConnections: any[];
+  const checkIns = includeCheckIns
+    ? fetchLatestCheckInMonth(accessToken, signal)
+    : Promise.resolve(undefined);
   try {
     [loaded, bankConnections] = await Promise.all([
       loadFinancialPicture(backendPictureSource(accessToken, signal), { asOf: new Date() }),
@@ -511,6 +550,7 @@ export async function loadWorkspacePicture(
     budgetEntries: loaded.rows.budgetEntries as any[],
     taxRecords: loaded.rows.taxRecords as any[],
     bankConnections,
+    ...(includeCheckIns ? { latestCheckInMonth: await checkIns } : {}),
     picture: loaded.picture,
   };
 }

@@ -75,6 +75,7 @@ describe("HTTP success status", () => {
     expect(creates.sort()).toEqual(
       [
         "accounts.create",
+        "accounts.createMortgageWithProperty",
         "bankConnections.connect",
         "budget.addCategory",
         "budget.create",

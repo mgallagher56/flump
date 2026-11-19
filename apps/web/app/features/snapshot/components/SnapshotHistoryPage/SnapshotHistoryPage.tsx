@@ -57,6 +57,12 @@ export interface SnapshotHistoryPageProps {
   checkInDay?: number | null;
   /** Today in Europe/London, "YYYY-MM-DD"; defaults to the clock within `currentMonth`. */
   today?: string;
+  /**
+   * The newest month with a completed check-in (`snapshot_checkins`, CH-3), null when there has
+   * been none, undefined when it could not be read. Only a completed check-in counts as this
+   * month done: a balance saved some other way does not.
+   */
+  lastCheckInMonth?: MonthKey | null;
 }
 
 const MONTH_WORDS = ["no months", "one month", "two months"] as const;
@@ -76,7 +82,7 @@ export const comparedMonthsText = (comparison: RecordedMonthComparison): string 
     : `${from.name} ${from.year} to ${to.name} ${to.year}`;
 };
 
-/** The hero's quiet prompt while the current month has no check-in: "November not recorded yet". */
+/** The hero's quiet prompt while this month's check-in is not done: "November not recorded yet". */
 export const notRecordedPrompt = (currentMonthName: string): string =>
   `${currentMonthName} not recorded yet`;
 
@@ -140,6 +146,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   initialSheet = null,
   checkInDay = null,
   today,
+  lastCheckInMonth,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const [sheet, setSheet] = useState<CheckInMode | null>(initialSheet);
@@ -158,14 +165,16 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   const previous = history.previousRecorded;
   // The hero compares the last two recorded months only (owner ruling 4): a carried month is
   // never one side of the change. The engine picks the months; this page only words them.
-  const {
-    comparison,
-    currentMonthRecorded,
-    currentMonth: current,
-  } = useMemo(() => selectRecordedMonthComparison(series, currentMonth), [series, currentMonth]);
+  const { comparison, currentMonth: current } = useMemo(
+    () => selectRecordedMonthComparison(series, currentMonth),
+    [series, currentMonth],
+  );
   const enoughForChart = recordedMonths >= MIN_CHART_MONTHS;
-  // The next check-in date shows only once this month is recorded; before that the hero says this
-  // month is not recorded yet, and a December date beside it would contradict it.
+  // This month counts as done only once its check-in is completed (CH-3): one balance saved on
+  // its own, or an account added this month, leaves the prompt in place. Unknown shows it too.
+  const currentMonthRecorded = !!lastCheckInMonth && lastCheckInMonth >= currentMonth;
+  // The next check-in date shows only once this month's check-in is done; before that the hero
+  // says it is not done yet, and a December date beside it would contradict it.
   const thisMonthRecorded = currentMonthRecorded;
   // A real link before hydration (#701: "?checkIn=1" opens the check-in on arrival); once
   // hydrated it opens the sheet in place, as "Start monthly check-in" does.

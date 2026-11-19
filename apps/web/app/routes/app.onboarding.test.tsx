@@ -630,9 +630,23 @@ describe("OnboardingRoute (4-step flow)", () => {
     expect(body("/accounts")).toEqual([
       { name: "Cash and emergency savings", type: "Saving", balance: 5000, isCurrent: true },
       { name: "Workplace and personal pension", type: "Pension", balance: 15000, isCurrent: true },
-      { name: "Home (your estimate)", type: "Property", balance: 300000, isCurrent: true },
-      { name: "Residential Mortgage", type: "Mortgage", balance: 200000, isCurrent: true },
       { name: "Cards and loans baseline", type: "Credit Card", balance: 2000, isCurrent: true },
+    ]);
+    // The mortgage and its home: one call, through the onboarding route action (system audit
+    // slice 4), as ONBOARDING_MORTGAGE_WITH_PROPERTY in web-payloads.ts.
+    expect(body("/app/onboarding/mortgage-with-property")).toEqual([
+      {
+        key: expect.any(String),
+        payload: {
+          mortgage: {
+            name: "Residential Mortgage",
+            accountSubtype: "residential_mortgage",
+            balance: 200000,
+            isCurrent: true,
+          },
+          property: { name: "Home (your estimate)", balance: 300000 },
+        },
+      },
     ]);
     expect(body("/budget-entries")).toEqual([
       {

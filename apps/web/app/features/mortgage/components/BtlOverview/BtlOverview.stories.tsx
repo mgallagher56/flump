@@ -7,11 +7,11 @@ const meta: Meta<typeof BtlOverview> = {
   component: BtlOverview,
   parameters: { layout: "padded" },
   args: {
-    propertyCount: 2,
-    monthlyRent: 1200,
-    grossYield: 5.76,
-    monthlyPayment: 480,
-    onConfigure: fn(),
+    properties: [
+      { id: "r1", name: "Flat 2" },
+      { id: "r2", name: "Harbour Street" },
+    ],
+    onManage: fn(),
   },
 };
 
@@ -20,21 +20,17 @@ type Story = StoryObj<typeof BtlOverview>;
 
 export const Populated: Story = {
   play: async ({ canvasElement, args }) => {
-    const button = within(canvasElement).getAllByRole("button", {
-      name: "Edit",
-    })[0];
-    if (!button) throw new Error("Configure button missing");
-    await userEvent.click(button);
-    await expect(args.onConfigure).toHaveBeenCalled();
+    await userEvent.click(within(canvasElement).getByRole("button", { name: "Edit on Accounts" }));
+    await expect(args.onManage).toHaveBeenCalled();
   },
 };
 
-export const NotSet: Story = {
-  args: { monthlyRent: 0, grossYield: null, monthlyPayment: null, propertyCount: null },
+export const NoProperties: Story = {
+  args: { properties: [] },
   play: async ({ canvasElement }) => {
     await expect(
-      within(canvasElement).getAllByText(/Add your monthly rent and property value/).length,
-    ).toBeGreaterThan(0);
+      within(canvasElement).getByText("No rental property saved on Accounts yet"),
+    ).toBeTruthy();
   },
 };
 

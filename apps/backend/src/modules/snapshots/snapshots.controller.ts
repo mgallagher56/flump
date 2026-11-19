@@ -1,7 +1,12 @@
-import type { SnapshotMonthParams, UpsertSnapshotRequest } from "@flump/api-contract";
+import type {
+  SnapshotCheckInsResponse,
+  SnapshotMonthParams,
+  UpsertSnapshotRequest,
+} from "@flump/api-contract";
 import {
   Body,
   Controller,
+  Get,
   Headers,
   HttpCode,
   Param,
@@ -20,6 +25,13 @@ import { SnapshotsService } from "./snapshots.service";
 @UseGuards(AuthGuard)
 export class SnapshotsController {
   constructor(private readonly snapshots: SnapshotsService) {}
+
+  /** The latest month whose check-in was finished, for the check-in reminder (slice 4, L70). */
+  @Get("snapshots/check-ins")
+  @HttpCode(200)
+  async checkIns(@Req() req: AuthenticatedRequest): Promise<SnapshotCheckInsResponse> {
+    return { latestCompletedMonth: await this.snapshots.latestCompletedMonth(req.user.id) };
+  }
 
   /**
    * Batch upsert of account values for one month (E30). The user id comes from the token only.

@@ -5,6 +5,7 @@ import { deriveOnboardingSummary } from "./deriveOnboardingSummary";
 import { INITIAL_VALUES, type OnboardingValues } from "./types";
 import {
   FINISH_ERROR,
+  MORTGAGE_WITH_PROPERTY_ACTION,
   onboardingProfileUpdate,
   PARTIAL_FINISH_ERROR,
   useFinishOnboarding,
@@ -147,9 +148,106 @@ describe("useFinishOnboarding", () => {
     expect(updateProfile.mock.calls[0]?.[0]).toMatchObject({ isSalarySacrifice: true });
   });
 
-  it("saves an owner's home estimate as a Property account, so net worth and LTV count it", async () => {
+  it("saves an outright owner's home estimate as a Property account, so net worth counts it", async () => {
     updateProfile.mockResolvedValue(undefined);
     apiFetch.mockResolvedValue([]);
+    const owner: OnboardingValues = {
+      ...values,
+      housingStatus: "own_outright",
+      propertyValue: 310000,
+    };
+    const { result } = renderHook(() => useFinishOnboarding(owner, deriveOnboardingSummary(owner)));
+    await act(() => result.current.finish());
+    expect(apiFetch).toHaveBeenCalledWith("/accounts", {
+      method: "POST",
+      body: { name: "Home (your estimate)", type: "Property", balance: 310000, isCurrent: true },
+      schema: CreateAccountResponse,
+    });
+  });
+
+  it("saves a mortgage and its home with one linked call through the route action (slice 4)", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockResolvedValue([]);
+    const pairFetch = vi.fn().mockResolvedValue(new Response("{}", { status: 201 }));
+    vi.stubGlobal("fetch", pairFetch);
+    try {
+      const owner: OnboardingValues = {
+        ...values,
+        housingStatus: "mortgage",
+        propertyValue: 310000,
+        mortgageBalance: 186000,
+      };
+      const { result } = renderHook(() =>
+        useFinishOnboarding(owner, deriveOnboardingSummary(owner)),
+      );
+      await act(() => result.current.finish());
+      expect(pairFetch).toHaveBeenCalledTimes(1);
+      const [url, init] = pairFetch.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe(MORTGAGE_WITH_PROPERTY_ACTION);
+      expect(init.method).toBe("POST");
+      expect(JSON.parse(String(init.body))).toEqual({
+        key: expect.any(String),
+        payload: {
+          mortgage: {
+            name: "Residential Mortgage",
+            accountSubtype: "residential_mortgage",
+            balance: 186000,
+            isCurrent: true,
+          },
+          property: { name: "Home (your estimate)", balance: 310000 },
+        },
+      });
+      // Neither half goes through the browser's /api proxy on its own.
+      const accountPosts = apiFetch.mock.calls
+        .filter(
+          ([endpoint, init]) =>
+            endpoint === "/accounts" &&
+            (init as { method?: string } | undefined)?.method === "POST",
+        )
+        .map(([, init]) => (init as { body: { type?: string } }).body.type);
+      expect(accountPosts).not.toContain("Mortgage");
+      expect(accountPosts).not.toContain("Property");
+      expect(
+        apiFetch.mock.calls.some(([endpoint]) => endpoint === "/accounts/mortgage-with-property"),
+      ).toBe(false);
+      expect(result.current.error).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("stays on the page with an error when the route action refuses the pair", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockResolvedValue([]);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 400 })));
+    try {
+      const owner: OnboardingValues = {
+        ...values,
+        housingStatus: "mortgage",
+        propertyValue: 310000,
+        mortgageBalance: 186000,
+      };
+      const { result } = renderHook(() =>
+        useFinishOnboarding(owner, deriveOnboardingSummary(owner)),
+      );
+      await act(() => result.current.finish());
+      expect(result.current.error).toBe(PARTIAL_FINISH_ERROR);
+      expect(updateProfile).not.toHaveBeenCalledWith({ onboardingCompleted: true });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("adds only the missing home when a retry finds the mortgage saved", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockImplementation((endpoint: string, init?: { method?: string }) => {
+      if (init?.method === "POST") return Promise.resolve({});
+      return Promise.resolve(
+        endpoint === "/accounts"
+          ? [{ name: "Residential Mortgage", type: "Mortgage", balance: -186000 }]
+          : [],
+      );
+    });
     const owner: OnboardingValues = {
       ...values,
       housingStatus: "mortgage",
@@ -160,9 +258,18 @@ describe("useFinishOnboarding", () => {
     await act(() => result.current.finish());
     expect(apiFetch).toHaveBeenCalledWith("/accounts", {
       method: "POST",
-      body: { name: "Home (your estimate)", type: "Property", balance: 310000, isCurrent: true },
+      body: {
+        name: "Home (your estimate)",
+        balance: 310000,
+        type: "Property",
+        accountSubtype: "home",
+        isCurrent: true,
+      },
       schema: CreateAccountResponse,
     });
+    expect(
+      apiFetch.mock.calls.some(([endpoint]) => endpoint === "/accounts/mortgage-with-property"),
+    ).toBe(false);
   });
 
   it("never seeds a second home when any Property account already exists (re-run)", async () => {

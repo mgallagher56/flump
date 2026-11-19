@@ -5,6 +5,8 @@
  */
 
 export const ACCOUNT_ID = "6f1c2a4e-8b3d-4c5e-9f70-1a2b3c4d5e6f";
+/** The property a mortgage-with-property create returns beside the mortgage. */
+const PROPERTY_ID = "7a2d3b5f-9c4e-4d6f-8a81-2b3c4d5e6f70";
 
 export const accountDetailFixture = {
   id: 42,
@@ -258,6 +260,17 @@ export function contractBody(method: string, path: string): unknown {
     return /^\/bank-connections\//.test(p) ? { success: true, consentRevoked: false } : success;
   }
   if (p === "/accounts") return m === "GET" ? [accountWithDetailsFixture] : accountFixture;
+  if (p === "/accounts/mortgage-with-property") {
+    return {
+      mortgage: { ...accountFixture, name: "Residential Mortgage", type: "Mortgage" },
+      property: {
+        ...accountFixture,
+        id: PROPERTY_ID,
+        name: "Home (your estimate)",
+        type: "Property",
+      },
+    };
+  }
   if (p === "/account-details") return [accountDetailFixture];
   if (/^\/accounts\/[^/]+$/.test(p))
     return m === "GET" ? accountWithDetailsFixture : accountFixture;
@@ -288,6 +301,7 @@ export function contractBody(method: string, path: string): unknown {
   if (/^\/imports\/[^/]+(\/commit|\/revert)?$/.test(p)) return importBatchFixture;
   if (p === "/mcp-tokens") return [mcpTokenFixture];
   if (p === "/retirement-plan") return { plan: retirementPlanFixture };
+  if (p === "/snapshots/check-ins") return { latestCompletedMonth: "2026-10" };
   if (/^\/snapshots\/[^/]+$/.test(p)) return snapshotResponseFixture;
   return success;
 }

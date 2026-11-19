@@ -15,13 +15,20 @@ import {
 import type { ToolSlug } from "@repo/ui/tools";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
-import { AddDebtDialog, type DebtEditSource } from "~/features/debt/components/AddDebtDialog";
+import {
+  AddDebtDialog,
+  type DebtEditSource,
+  type DebtOwnership,
+} from "~/features/debt/components/AddDebtDialog";
 import { DebtAccountsList } from "~/features/debt/components/DebtAccountsList";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import { DebtSummary } from "~/features/debt/components/DebtSummary";
 import { PayExtraTool } from "~/features/debt/components/PayExtraTool";
 import { UkDebtInstrumentsCard } from "~/features/debt/components/UkDebtInstrumentsCard";
-import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMapping";
+import {
+  debtItemToAccountPayload,
+  debtTypeToAccountSubtype,
+} from "~/features/debt/utils/debtAccountMapping";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -63,8 +70,10 @@ export const DebtContainer: FC = () => {
         const saved = accounts?.find((a) => String(a.id) === item.id);
         if (!saved) return item;
         const stored = Number(saved.monthlyContribution);
+        const wholeBalance = Math.abs(Number(saved.balance));
         return {
           ...item,
+          ...(Number.isFinite(wholeBalance) ? { wholeBalance } : {}),
           ownership: saved.ownership ?? null,
           sharePercent: saved.sharePercent ?? null,
           ...(saved.monthlyContribution !== null &&
@@ -170,8 +179,9 @@ export const DebtContainer: FC = () => {
       ? (failedResult.error ?? SAVE_ERROR_FALLBACK)
       : null;
 
-  const handleAddDebt = (newDebt: Omit<DebtItem, "id">) => {
+  const handleAddDebt = (newDebt: Omit<DebtItem, "id"> & DebtOwnership) => {
     const payload = debtItemToAccountPayload(newDebt);
+    const accountSubtype = debtTypeToAccountSubtype(newDebt.type);
     fetcher.submit(
       {
         intent: "createDebt",
@@ -183,6 +193,10 @@ export const DebtContainer: FC = () => {
           payload.monthlyContribution === null ? "" : String(payload.monthlyContribution),
         creditLimit: payload.creditLimit === null ? "" : String(payload.creditLimit),
         promoZeroPercentUntil: payload.promoZeroPercentUntil ?? "",
+        ...(accountSubtype ? { accountSubtype } : {}),
+        ...(newDebt.ownership === "joint"
+          ? { ownership: "joint", sharePercent: String(newDebt.sharePercent ?? "") }
+          : {}),
       },
       { method: "POST", action: "/app/debt" },
     );
@@ -196,17 +210,23 @@ export const DebtContainer: FC = () => {
     );
   };
 
-  // Sends only the fields that changed. Balance is not sent: the edit dialog is limited to name,
-  // APR and minimum payment.
+  // Sends only the fields that changed. A balance is the whole amount owed, as the form shows it.
   const handleUpdateDebt = (
     id: string,
-    updates: Partial<DebtItem>,
+    updates: Partial<DebtItem> & DebtOwnership,
   ): void | Promise<string | null> => {
     const current = debts.find((d) => d.id === id);
     if (!current) return;
     const payload = debtItemToAccountPayload({ ...current, ...updates });
     const fields: Record<string, string> = { intent: "updateDebt", accountId: id };
     if ("name" in updates) fields.name = payload.name;
+    if ("balance" in updates) fields.balance = String(payload.balance);
+    if (updates.ownership !== undefined) {
+      fields.ownership = updates.ownership;
+      if (updates.ownership === "joint" && updates.sharePercent != null) {
+        fields.sharePercent = String(updates.sharePercent);
+      }
+    }
     if ("apr" in updates || "aprKnown" in updates) {
       fields.interestRate = payload.interestRate === null ? "" : String(payload.interestRate);
     }

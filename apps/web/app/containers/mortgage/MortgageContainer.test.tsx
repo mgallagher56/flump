@@ -1,7 +1,11 @@
 import { countFigures, countNotSet, expectPageRules } from "@repo/ui/testing";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
-import { accountWithDetailsFixture, contractFetch } from "~/test/fixtures/contractResponses";
+import {
+  ACCOUNT_ID,
+  accountWithDetailsFixture,
+  contractFetch,
+} from "~/test/fixtures/contractResponses";
 import customRender from "~/testUtils/customRender";
 import MortgageContainer, {
   firstResidentialFigures,
@@ -87,6 +91,33 @@ const savedText = (container: HTMLElement) =>
   `${container.querySelector("#mortgage-saved")?.textContent ?? ""}|${
     container.querySelector("#mortgage-summary")?.textContent ?? ""
   }`;
+
+/** Old buy-to-let profile figures: migrated into accounts, and never read for figures now. */
+const OLD_BTL_PROFILE = {
+  hasBuyToLet: true,
+  buyToLetMortgageBalance: 999999,
+  buyToLetMortgageRate: 9,
+  buyToLetMortgageType: "repayment",
+  buyToLetPropertyValue: 111111,
+  buyToLetMonthlyRental: 1200,
+  buyToLetCount: 4,
+};
+
+/** A buy-to-let mortgage linked to its rental property (system audit slice 4). */
+const btlAccounts = (): Record<string, unknown>[] => [
+  {
+    id: "b1",
+    name: "Flat 2 mortgage",
+    type: "Mortgage",
+    accountSubtype: "btl_mortgage",
+    balance: -150000,
+    interestRate: 5,
+    repaymentType: "interest-only",
+    linkedAccountId: "r1",
+    updatedAt: "2026-11-01T09:00:00.000Z",
+  },
+  { id: "r1", name: "Flat 2", type: "Property", accountSubtype: "rental", balance: 250000 },
+];
 
 describe("<MortgageContainer />", () => {
   afterEach(() => {
@@ -515,46 +546,42 @@ describe("<MortgageContainer />", () => {
       expect(screen.queryByRole("tablist", { name: "Property type" })).toBeNull();
     });
 
-    test("tabs under the h1 when the user has both, and buy to let shows its overview", () => {
-      loaderData = { ...loaded(), userProfile: { hasBuyToLet: true } };
-      const { queryByText, getByText } = customRender(<MortgageContainer />);
+    test("tabs under the h1 when the user has both, and buy to let reads its accounts", () => {
+      loaderData = {
+        ...loaded(),
+        accounts: [...loaded().accounts, ...btlAccounts()],
+        userProfile: OLD_BTL_PROFILE,
+      };
+      const { container, queryByText, getByText } = customRender(<MortgageContainer />);
       expect(screen.getByRole("tablist", { name: "Property type" })).toBeDefined();
       expect(queryByText("Your buy to let properties")).toBeNull();
       selectTab("Buy to let");
-      // Balance and rate are not set for buy to let yet, so the page prompts for them.
-      expect(
-        getByText(
-          "Add your buy to let mortgage balance and interest rate to see your monthly payment and what overpaying would change",
-        ),
-      ).toBeDefined();
-      expect(queryByText(/180,000|250,000/)).toBeNull();
+      expect(getByText("Your buy to let properties")).toBeDefined();
+      expect(container.querySelector("[data-tone='hero']")?.textContent).toContain("£150,000");
+      expect(container.textContent).not.toMatch(/999,999|111,111/);
     });
 
-    test("a buy to let mortgage with balance and rate shows the hero and the overview", () => {
-      loaderData = {
-        accounts: [],
-        accountDetails: [],
-        userProfile: {
-          hasBuyToLet: true,
-          buyToLetMortgageBalance: 200000,
-          buyToLetMortgageRate: 5,
-          buyToLetMortgageType: "interest-only",
-          buyToLetMonthlyRental: 1200,
-          buyToLetPropertyValue: 300000,
-          buyToLetCount: 1,
-        },
-      };
+    test("the buy to let tab reads the buy-to-let accounts, never the profile copy (HM-4, DB-1)", () => {
+      loaderData = { accounts: btlAccounts(), accountDetails: [], userProfile: OLD_BTL_PROFILE };
       const { container, getByText } = customRender(<MortgageContainer />);
       // Only buy to let: no tabs, and the page opens on it.
       expect(screen.queryByRole("tablist", { name: "Property type" })).toBeNull();
       const hero = container.querySelector("[data-tone='hero']");
-      expect(hero?.textContent).toContain("£200,000");
-      // Buy to let stores no term, so there is no payoff date; the payment is an estimate.
+      expect(hero?.textContent).toContain("£150,000");
       const saved = container.querySelector("#mortgage-saved")?.textContent ?? "";
-      expect(saved).toMatch(/Monthly payment.*£833Estimate/);
-      expect(saved).not.toContain("Paid off by");
-      expect(getByText("Your buy to let properties")).toBeDefined();
-      expect(container.textContent).not.toMatch(/Section 24/);
+      // Interest-only at 5%: 150,000 x 0.05 / 12 = 625 a month, an estimate.
+      expect(saved).toMatch(/Monthly payment.*£625Estimate/);
+      // Loan to value against the linked rental: 150,000 / 250,000 = 60%.
+      expect(saved).toContain("60%");
+      // Equity: 250,000 - 150,000 = 100,000, both held solely.
+      const equity = container.querySelector("[data-testid='mortgage-equity']") as HTMLElement;
+      expect(equity.textContent).toContain("£100,000");
+      // The count comes from the rental Property accounts, not the profile's 4.
+      expect(getByText("1 property")).toBeDefined();
+      expect(getByText("Flat 2")).toBeDefined();
+      expect(container.textContent).not.toMatch(/999,999|111,111|1,200/);
+      expect(container.textContent).not.toMatch(/rental yield|Section 24/i);
+      expect(container.querySelector("#mortgage-summary")?.textContent).toContain("Interest-only");
       // The what-if zone is closed, so its notice is not on the page yet.
       expectPageRules(container, { projectionNotices: 0 });
       openZone();
@@ -572,6 +599,7 @@ describe("<MortgageContainer />", () => {
             type: "Mortgage",
             accountSubtype: "btl_mortgage",
             balance: -200000,
+            interestRate: 5,
             // 180 months saved on the account = 15 years.
             termMonths: 180,
           },
@@ -592,27 +620,91 @@ describe("<MortgageContainer />", () => {
       expect(patches(fetchSpy)).toHaveLength(0);
     });
 
-    test("buy to let saves balance and rate on the profile and offers no term", async () => {
-      setApiEnv();
-      loaderData = { ...loaded(), userProfile: { hasBuyToLet: true } };
-      const fetchSpy = okFetch();
-      const { getByLabelText, getByRole, queryByLabelText, findByText } = customRender(
-        <MortgageContainer />,
-      );
+    test("with no buy-to-let mortgage the tab offers to add one and makes nothing up from the profile", () => {
+      loaderData = {
+        ...loaded(),
+        accounts: [...loaded().accounts, btlAccounts()[1] as Record<string, unknown>],
+        userProfile: OLD_BTL_PROFILE,
+      };
+      const { container, getByRole, getByText } = customRender(<MortgageContainer />);
       selectTab("Buy to let");
-      fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
+      expect(getByText("No buy to let mortgage added")).toBeDefined();
+      expect(container.textContent).not.toMatch(/999,999|111,111/);
+      fireEvent.click(getByRole("button", { name: "Add a buy to let mortgage" }));
+      expect(mockNavigate).toHaveBeenCalledWith("/app/accounts");
+    });
+
+    test("buy to let saves balance, rate, repayment type and property value on its accounts", async () => {
+      setApiEnv();
+      loaderData = { accounts: btlAccounts(), accountDetails: [], userProfile: OLD_BTL_PROFILE };
+      const fetchSpy = okFetch();
+      const { container, findByText } = customRender(<MortgageContainer />);
+      fireEvent.click(
+        within(container.querySelector("#mortgage-summary") as HTMLElement).getByRole("button", {
+          name: /^Edit$/,
+        }),
+      );
       expect(within(screen.getByRole("dialog")).queryByLabelText(/^Years left/)).toBeNull();
-      fireEvent.change(field(/^Remaining balance/), { target: { value: "200000" } });
-      fireEvent.change(field(/^Interest rate/), { target: { value: "5.1" } });
+      expect(field(/^What the property is worth/).value).toContain("250,000");
+      fireEvent.change(field(/^Remaining balance/), { target: { value: "140000" } });
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.8" } });
+      fireEvent.click(screen.getByRole("radio", { name: /Repayment/ }));
+      fireEvent.change(field(/^What the property is worth/), { target: { value: "260000" } });
       save();
-      await findByText(/Saved repayment type, balance and interest rate/);
-      const profilePatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/user-profile"));
-      if (!profilePatch) throw new Error("expected a profile PATCH");
-      expect(JSON.parse(String((profilePatch[1] as RequestInit).body))).toMatchObject({
-        buyToLetMortgageBalance: 200000,
-        buyToLetMortgageRate: 5.1,
+      await findByText(/Saved repayment type, balance, interest rate and property value/);
+      const mortgagePatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/b1"));
+      if (!mortgagePatch) throw new Error("expected a PATCH of the buy-to-let mortgage");
+      expect(JSON.parse(String((mortgagePatch[1] as RequestInit).body))).toEqual({
+        balance: -140000,
+        interestRate: 4.8,
+        repaymentType: "repayment",
       });
-      expect(patches(fetchSpy).some(([url]) => String(url).includes("/accounts/"))).toBe(false);
+      expect(new Headers((mortgagePatch[1] as RequestInit).headers).get("If-Match")).toBe(
+        '"2026-11-01T09:00:00.000Z"',
+      );
+      const rentalPatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/r1"));
+      if (!rentalPatch) throw new Error("expected a PATCH of the rental property");
+      expect(JSON.parse(String((rentalPatch[1] as RequestInit).body))).toEqual({ balance: 260000 });
+      // Nothing about buy to let goes to the profile any more.
+      expect(patches(fetchSpy).some(([url]) => String(url).endsWith("/user-profile"))).toBe(false);
+    });
+
+    test("a buy-to-let mortgage with no property adds a rental and links it", async () => {
+      setApiEnv();
+      const [mortgage] = btlAccounts();
+      loaderData = {
+        accounts: [{ ...mortgage, linkedAccountId: null }],
+        accountDetails: [],
+        userProfile: {},
+      };
+      const fetchSpy = okFetch();
+      const { container, findByText } = customRender(<MortgageContainer />);
+      expect(container.querySelector("[data-testid='mortgage-equity']")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Add the property value" }));
+      fireEvent.change(field(/^What the property is worth/), { target: { value: "260000" } });
+      save();
+      await findByText(/property value/);
+      const post = fetchSpy.mock.calls.find(
+        ([url, init]) =>
+          String(url) === "/api/accounts" && (init as RequestInit)?.method === "POST",
+      );
+      if (!post) throw new Error("expected a POST of the rental property");
+      expect(JSON.parse(String((post[1] as RequestInit).body))).toEqual({
+        name: "Buy-to-let property",
+        type: "Property",
+        accountSubtype: "rental",
+        balance: 260000,
+        ownership: "sole",
+      });
+      const link = patches(fetchSpy).find(
+        ([url, init]) =>
+          String(url).endsWith("/accounts/b1") &&
+          "linkedAccountId" in JSON.parse(String((init as RequestInit).body)),
+      );
+      if (!link) throw new Error("expected the mortgage to be linked to the new rental");
+      expect(JSON.parse(String((link[1] as RequestInit).body))).toEqual({
+        linkedAccountId: ACCOUNT_ID,
+      });
     });
 
     test("a saved rate stays after choosing the account again, and is not sent back (CS-1)", async () => {
@@ -629,7 +721,7 @@ describe("<MortgageContainer />", () => {
       openEdit();
       fireEvent.change(field(/^Interest rate/), { target: { value: "4.1" } });
       save();
-      await findByText(/Saved repayment type, interest rate/);
+      await findByText(/Saved interest rate/);
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       // Choose the other account, then this one again: the loader still holds 4.5%.
       openEdit();
@@ -689,7 +781,7 @@ describe("<MortgageContainer />", () => {
       expect(getByLabelText(/Fixed rate end date/).textContent).toContain("1 Oct 2099");
       fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
       save();
-      await findAllByText(/Saved repayment type/);
+      await findAllByText(/^Saved /);
       const bodies = patches(fetchSpy)
         .filter(([url]) => String(url).includes("/accounts/"))
         .map(([, init]) => JSON.parse(String((init as RequestInit).body)));
@@ -708,7 +800,7 @@ describe("<MortgageContainer />", () => {
       fireEvent.click(getByRole("radio", { name: /Interest-only/ }));
       fireEvent.click(getByRole("radio", { name: /Repayment/ }));
       save();
-      await findByText(/Saved repayment type/);
+      await findByText(/^Saved /);
 
       const calls = patches(fetchSpy);
       const accountPatch = calls.find(([url]) => String(url).endsWith("/accounts/m1"));
@@ -782,7 +874,7 @@ describe("<MortgageContainer />", () => {
       openEdit();
       expect(field(/^Monthly payment/).value).toContain("1,250");
       save();
-      await findAllByText(/Saved repayment type/);
+      await findAllByText(/^Saved /);
       for (const [, init] of patches(fetchSpy)) {
         expect(JSON.parse(String((init as RequestInit).body))).not.toHaveProperty(
           "monthlyContribution",
@@ -798,11 +890,11 @@ describe("<MortgageContainer />", () => {
       fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
       fireEvent.change(field(/^Years left/), { target: { value: "60" } });
       save();
-      await findByText(/Saved repayment type/);
+      await findByText(/^Saved /);
       const accountPatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
       if (!accountPatch) throw new Error("expected an account PATCH");
+      // The rate is already saved and the repayment type was not changed, so only the term is sent.
       expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
-        interestRate: 4.5,
         termMonths: 600,
       });
       openEdit();
@@ -837,11 +929,7 @@ describe("<MortgageContainer />", () => {
         if (!call) throw new Error("expected an account PATCH");
         return JSON.parse(String((call[1] as RequestInit).body));
       };
-      expect(bodyOf()).toEqual({
-        interestRate: 4.5,
-        termMonths: 240,
-        fixedRateEndDate: "2099-12-31",
-      });
+      expect(bodyOf()).toEqual({ fixedRateEndDate: "2099-12-31" });
 
       fetchSpy.mockClear();
       openEdit();
@@ -851,7 +939,8 @@ describe("<MortgageContainer />", () => {
       fireEvent.click(screen.getByRole("button", { name: "Clear" }));
       save();
       await findAllByText(/fixed rate end date/);
-      expect(bodyOf()).toEqual({ interestRate: 4.5, termMonths: 240, fixedRateEndDate: null });
+      // Only what changed: the repayment type is on the account since the first save.
+      expect(bodyOf()).toEqual({ fixedRateEndDate: null });
     });
 
     test("the term field says where it is saved", () => {
@@ -880,7 +969,7 @@ describe("<MortgageContainer />", () => {
       expect((await findByRole("alert")).textContent).toContain(
         "We could not save your mortgage details. Nothing has changed. Try again.",
       );
-      expect(queryByText(/Saved repayment type/)).toBeNull();
+      expect(queryByText(/^Saved interest rate/)).toBeNull();
     });
 
     test("sends the account's version, and a 412 says it changed somewhere else, reloads and keeps what was typed (BE-16)", async () => {
@@ -908,7 +997,7 @@ describe("<MortgageContainer />", () => {
       const sentHeaders = (patch?.[1]?.headers ?? {}) as Record<string, string>;
       expect(sentHeaders["If-Match"]).toBe('"2026-11-14T09:30:00.123Z"');
       expect(mockRevalidate).toHaveBeenCalledTimes(1);
-      expect(queryByText(/Saved repayment type/)).toBeNull();
+      expect(queryByText(/^Saved interest rate/)).toBeNull();
       // The edit dialog is still open with the rate that was typed.
       expect(field(/^Interest rate/).value).toBe("4.5");
     });
@@ -936,15 +1025,40 @@ describe("<MortgageContainer />", () => {
       openEdit();
       fireEvent.change(field(/^Remaining balance/), { target: { value: "130000" } });
       save();
-      await findAllByText(/Saved repayment type, balance/);
+      await findAllByText(/Saved balance/);
       const accountPatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
       if (!accountPatch) throw new Error("expected an account PATCH");
       expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
         balance: -130000,
-        interestRate: 4.5,
-        termMonths: 240,
       });
       expect(savedText(container)).toContain("£130,000");
+    });
+
+    test("reads the repayment type from the mortgage account before the profile", () => {
+      loaderData = {
+        ...loaded({ repaymentType: "interest-only" }),
+        userProfile: { mortgageType: "repayment" },
+      };
+      const { container } = customRender(<MortgageContainer />);
+      expect(container.querySelector("#mortgage-summary")?.textContent).toContain(
+        "Repayment typeInterest-only",
+      );
+    });
+
+    test("sends only the fields that changed", async () => {
+      setApiEnv();
+      loaderData = loaded({ repaymentType: "repayment" });
+      const fetchSpy = okFetch();
+      const { findByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
+      save();
+      await findByText("Saved interest rate");
+      const accountPatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
+      if (!accountPatch) throw new Error("expected an account PATCH");
+      expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
+        interestRate: 4.6,
+      });
     });
 
     test("a failed save leaves the saved figures as they were", async () => {
@@ -1427,7 +1541,7 @@ describe("<MortgageContainer />", () => {
       openEdit();
       fireEvent.change(field(/^What your home is worth/), { target: { value: "300000" } });
       save();
-      await findAllByText(/Saved repayment type/);
+      await findAllByText(/^Saved /);
       expect(patches(fetchSpy).some(([url]) => /\/accounts\/7a1b2c3d/.test(String(url)))).toBe(
         false,
       );
@@ -1442,7 +1556,7 @@ describe("<MortgageContainer />", () => {
       openEdit();
       fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
       save();
-      const messages = await findAllByText(/Saved repayment type/);
+      const messages = await findAllByText(/^Saved /);
       expect(messages.some((m) => /home value/.test(m.textContent ?? ""))).toBe(false);
       expect(patches(fetchSpy).some(([url]) => String(url).endsWith("/accounts/home"))).toBe(false);
     });
@@ -1466,10 +1580,22 @@ describe("<MortgageContainer />", () => {
       expect(bodyOf(call)).toEqual({
         name: "Home (your estimate)",
         type: "Property",
+        accountSubtype: "home",
         balance: 300000,
         ownership: "joint",
         sharePercent: 40,
       });
+      // The mortgage exists, so the new home is linked to it with a second call (slice 4).
+      const link = patches(fetchSpy).find(
+        ([url, init]) =>
+          String(url).endsWith("/accounts/m1") &&
+          "linkedAccountId" in JSON.parse(String((init as RequestInit).body)),
+      );
+      if (!link) throw new Error("expected the mortgage to be linked to the new home");
+      expect(bodyOf(link)).toEqual({ linkedAccountId: ACCOUNT_ID });
+      expect(posts(fetchSpy).some(([url]) => String(url).includes("mortgage-with-property"))).toBe(
+        false,
+      );
       expect(mockRevalidate).toHaveBeenCalled();
     });
 
@@ -1481,7 +1607,7 @@ describe("<MortgageContainer />", () => {
       openEdit();
       fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
       save();
-      await findAllByText(/Saved repayment type/);
+      await findAllByText(/^Saved /);
       expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
     });
 
@@ -1509,45 +1635,41 @@ describe("<MortgageContainer />", () => {
       ).toBeDefined();
       fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
       save();
-      await findAllByText(/Saved repayment type/);
+      await findAllByText(/^Saved /);
       expect(patches(fetchSpy).some(([url]) => /\/accounts\/home2?$/.test(String(url)))).toBe(
         false,
       );
       expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
     });
 
-    test("buy to let saves the property value on the profile", async () => {
-      setApiEnv();
+    test("the home is the property the mortgage is linked to, even with two possible homes", () => {
       loaderData = {
-        accounts: [],
-        accountDetails: [],
-        userProfile: {
-          hasBuyToLet: true,
-          buyToLetMortgageBalance: 200000,
-          buyToLetMortgageRate: 5,
-          buyToLetMortgageType: "interest-only",
-          buyToLetPropertyValue: 300000,
-        },
+        ...loaded({ linkedAccountId: "home2" }),
+        accounts: [
+          ...loaded({ linkedAccountId: "home2" }).accounts,
+          { id: "home2", name: "Cottage", type: "Property", balance: 400000 },
+        ],
       };
-      const fetchSpy = okFetch();
-      const { container, findByText } = customRender(<MortgageContainer />);
-      // 300,000 - 200,000 = 100,000, sole (the profile holds no share).
+      const { container } = customRender(<MortgageContainer />);
+      // Equity against the linked home: 400,000 - 135,400 = 264,600.
       const row = container.querySelector("[data-testid='mortgage-equity']") as HTMLElement;
-      expect(row.textContent).toContain("£100,000");
-      fireEvent.click(
-        within(container.querySelector("#mortgage-summary") as HTMLElement).getByRole("button", {
-          name: /^Edit$/,
-        }),
-      );
-      const input = field(/^What the property is worth/);
-      expect(input.value).toContain("300,000");
-      fireEvent.change(input, { target: { value: "320000" } });
-      save();
-      await findByText(/property value/);
-      const profilePatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/user-profile"));
-      if (!profilePatch) throw new Error("expected a profile PATCH");
-      expect(bodyOf(profilePatch)).toMatchObject({ buyToLetPropertyValue: 320000 });
-      expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
+      expect(row.textContent).toContain("£264,600");
+      // Loan to value against it: 135,400 / 400,000 = 33.85%, shown as 33.9%.
+      expect(savedText(container)).toContain("33.9%");
+      openEdit();
+      expect(field(/^What your home is worth/).value).toContain("400,000");
+    });
+
+    test("a rental property is never offered as the home value (HM-3)", () => {
+      loaderData = noHome();
+      loaderData.accounts = [
+        ...(loaderData.accounts as unknown[]),
+        { id: "r1", name: "Flat 2", type: "Property", accountSubtype: "rental", balance: 200000 },
+      ];
+      const { container } = customRender(<MortgageContainer />);
+      expect(container.querySelector("[data-testid='mortgage-equity']")).toBeNull();
+      openEdit();
+      expect(field(/^What your home is worth/).value).toBe("");
     });
   });
 });

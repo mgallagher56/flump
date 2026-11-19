@@ -22,7 +22,7 @@ const populated: HomeDashboardProps = {
     hasRunForecast: false,
     completedSteps: ["accounts", "budget", "savings", "pension", "mortgage"],
   },
-  checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-10" },
+  checkIn: { currentMonth: "2026-11", lastCheckInMonth: "2026-10" },
   netWorthPrior: { month: "2026-10", netWorth: 49680 },
   accountsData: { netWorth: 50000, homeEstimate: 0, accountsCount: 4 },
   budgetData: {

@@ -250,5 +250,35 @@ describe("<MortgageEditDialog />", () => {
       expect(screen.getByLabelText(/^What the property is worth/)).toBeDefined();
       expect(screen.queryByText(/Saved as your home on Accounts/)).toBeNull();
     });
+
+    it("says which rental is unclear for buy to let with two or more rental properties", () => {
+      customRender(
+        <MortgageEditDialog {...baseProps()} homeValueMode="fromAccounts" propertyCategory="btl" />,
+      );
+      expect(
+        screen.getByText(
+          "You have more than one rental property on Accounts, so we cannot tell which this mortgage is on. Change each value on Accounts.",
+        ),
+      ).toBeDefined();
+    });
+
+    it("lets buy to let choose between its mortgage accounts", () => {
+      const onSelectAccount = vi.fn();
+      customRender(
+        <MortgageEditDialog
+          {...baseProps()}
+          mortgageAccounts={[
+            { id: "b1", name: "Flat 2 mortgage", balance: -150000 },
+            { id: "b2", name: "Harbour Street mortgage", balance: -90000 },
+          ]}
+          propertyCategory="btl"
+          selectedAccountId="b1"
+          onSelectAccount={onSelectAccount}
+        />,
+      );
+      const select = screen.getByLabelText("Mortgage account") as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: "b2" } });
+      expect(onSelectAccount).toHaveBeenCalledWith("b2");
+    });
   });
 });

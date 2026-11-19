@@ -131,7 +131,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await ds.query(`SELECT id FROM accounts WHERE user_id = $1`, [OWNER_ID])).toEqual([]);
     });
 
-    it("restores every overwritten row and only the balances nothing changed since", async () => {
+    it("restores every overwritten row, and today's balance follows the newest month left", async () => {
       const svc = new ImportsService(ds);
       const current = await insertAccount("Current account", "Current", 500);
       const saving = await insertAccount("Saver", "Saving", 2000);
@@ -170,11 +170,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await balanceOf(current)).toBe(520);
       expect(await balanceOf(saving)).toBe(2100);
 
-      // The user edits the saver's balance after the commit: revert must keep it.
+      // The user edits the saver's balance after the commit. A balance edit records this month
+      // (as PATCH /accounts/:id does), so the row is theirs and the revert keeps it.
+      await ds.query(
+        `UPDATE account_details SET value = 2222, source = 'manual', import_batch_id = NULL
+          WHERE account_id = $1 AND year = 2026 AND month = 11`,
+        [saving],
+      );
       await ds.query(`UPDATE accounts SET balance = 2222 WHERE id = $1`, [saving]);
 
       const reverted = await svc.revert(OWNER_ID, staged.batchId);
-      expect(reverted.revert).toEqual({ restored: 3, removed: 2, kept: 0 });
+      expect(reverted.revert).toEqual({ restored: 3, removed: 1, kept: 1 });
 
       expect(await history(current)).toEqual([
         { month: 9, value: 300, source: "manual", asOfDate: "2026-09-01", importBatchId: null },
@@ -182,8 +188,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       ]);
       expect(await history(saving)).toEqual([
         { month: 10, value: 1900, source: "manual", asOfDate: "2026-10-01", importBatchId: null },
+        expect.objectContaining({ month: 11, value: 2222, source: "manual", importBatchId: null }),
       ]);
-      expect(await balanceOf(current)).toBe(500);
+      // Decision 8 option A (system audit slice 4): with November undone, October's 400 is the
+      // newest record of the current account, so it is today's balance (it was 500, a figure
+      // with no record, before slice 4). The saver keeps the 2,222 the user recorded.
+      expect(await balanceOf(current)).toBe(400);
       expect(await balanceOf(saving)).toBe(2222);
     });
   },

@@ -25,6 +25,9 @@ export const PARTIAL_FINISH_ERROR =
   "We saved some of your details, but not all. Check your connection, then finish again to save the rest.";
 export const SAVED_MESSAGE = "Details saved";
 
+/** The route action that creates a mortgage and its home in one call (routes/app.onboarding.mortgage-with-property.ts). */
+export const MORTGAGE_WITH_PROPERTY_ACTION = "/app/onboarding/mortgage-with-property";
+
 /**
  * Where Finish goes once everything is saved: the dashboard, or the budget page with the wizard
  * open to add common budget items (`?setup=common`, no money in the URL).
@@ -95,6 +98,13 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
   const notify = useOnboardingNotify();
   const { updateProfile, profile } = useUserProfile();
   const seededRef = useRef<Set<string>>(new Set());
+  // One key per opening of onboarding, forwarded by the pair's route action as the backend
+  // Idempotency-Key, so a double submit or a retry after a lost answer saves the pair once.
+  const pairKeyRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `onboarding-${Date.now()}`,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
@@ -164,7 +174,48 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
       // Every enabled job runs even if one fails, so a retry only repeats what is missing.
       const seedResults = await Promise.allSettled(
         seedJobs.map(async (job) => {
-          if (!job.enabled || seededRef.current.has(job.key)) return;
+          if (!job.enabled) return;
+          if (job.endpoint === "/accounts/mortgage-with-property") {
+            // The mortgage and its home in one transaction. An earlier attempt may have saved
+            // either one already (by its name, or any Property for the home): then only the
+            // missing one is added, on its own.
+            const mortgageSaved = seededRef.current.has(job.key);
+            if (mortgageSaved && hasProperty) return;
+            // Built outside the calls, so the conditional-writes law can read each call.
+            const homeOnly = {
+              ...job.payload.property,
+              type: "Property",
+              accountSubtype: "home",
+              isCurrent: true,
+            };
+            const mortgageOnly = { ...job.payload.mortgage, type: "Mortgage" };
+            if (mortgageSaved) {
+              await apiFetch("/accounts", {
+                method: "POST",
+                body: homeOnly,
+                schema: CreateAccountResponse,
+              });
+            } else if (hasProperty) {
+              await apiFetch("/accounts", {
+                method: "POST",
+                body: mortgageOnly,
+                schema: CreateAccountResponse,
+              });
+            } else {
+              // Made on the server by a route action, so the browser's /api proxy allow-list is
+              // unchanged (system audit slice 4).
+              const response = await fetch(MORTGAGE_WITH_PROPERTY_ACTION, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({ payload: job.payload, key: pairKeyRef.current }),
+              });
+              if (!response.ok) throw new Error(`mortgage with property ${response.status}`);
+            }
+            seededRef.current.add(job.key);
+            return;
+          }
+          if (seededRef.current.has(job.key)) return;
           if (hasProperty && job.payload.type === "Property") return;
           // The method is written out in each call, so the conditional-writes law can read it.
           if (job.endpoint === "/accounts") {

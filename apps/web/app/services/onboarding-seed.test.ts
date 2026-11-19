@@ -63,11 +63,17 @@ describe("buildOnboardingSeedJobs", () => {
   });
 
   it("saves the home estimate as a Property account, only for an owner (E16 D3)", () => {
-    const owner = buildOnboardingSeedJobs({ ...input, propertyValue: 310000 });
-    const home = owner.find((j) => j.key === "account:Home (your estimate)");
+    const outright = buildOnboardingSeedJobs({
+      ...input,
+      housingStatus: "own_outright",
+      mortgageBalance: 0,
+      propertyValue: 310000,
+    });
+    const home = outright.find((j) => j.key === "account:Home (your estimate)");
     expect(home?.payload).toEqual({
       name: "Home (your estimate)",
       type: "Property",
+      accountSubtype: "home",
       balance: 310000,
       isCurrent: true,
     });
@@ -78,9 +84,36 @@ describe("buildOnboardingSeedJobs", () => {
       propertyValue: 310000,
     });
     expect(renter.some((j) => j.key === "account:Home (your estimate)")).toBe(false);
+    expect(renter.some((j) => j.endpoint === "/accounts/mortgage-with-property")).toBe(false);
     expect(
       buildOnboardingSeedJobs(input).some((j) => j.key === "account:Home (your estimate)"),
     ).toBe(false);
+  });
+
+  it("seeds a mortgage and a home as one linked pair, keyed by the mortgage (slice 4)", () => {
+    const jobs = buildOnboardingSeedJobs({ ...input, propertyValue: 310000 });
+    const pairs = jobs.filter((j) => j.endpoint === "/accounts/mortgage-with-property");
+    expect(pairs).toHaveLength(1);
+    expect(pairs[0]).toEqual({
+      key: "account:Residential Mortgage",
+      endpoint: "/accounts/mortgage-with-property",
+      payload: {
+        mortgage: {
+          name: "Residential Mortgage",
+          accountSubtype: "residential_mortgage",
+          balance: 180000,
+          isCurrent: true,
+        },
+        property: { name: "Home (your estimate)", balance: 310000 },
+      },
+      enabled: true,
+    });
+    // No separate home or mortgage job beside it, so nothing is created twice.
+    expect(jobs.filter((j) => j.endpoint === "/accounts").map((j) => j.key)).toEqual([
+      "account:Cash and emergency savings",
+      "account:Workplace and personal pension",
+      "account:Cards and loans baseline",
+    ]);
   });
 
   it("names the housing entry after the housing status", () => {
@@ -93,7 +126,11 @@ describe("buildOnboardingSeedJobs", () => {
       mortgageBalance: 0,
     });
     expect(family.some((j) => j.key === "entry:Household contribution")).toBe(true);
-    expect(family.some((j) => j.payload.type === "Property")).toBe(false);
+    expect(
+      family.some(
+        (j) => j.endpoint === "/accounts/mortgage-with-property" || j.payload.type === "Property",
+      ),
+    ).toBe(false);
   });
 
   it("names no housing entry as rent when housing is not answered", () => {

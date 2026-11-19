@@ -3,8 +3,8 @@ import { allRoutes, CONTRACT_GROUPS, findRoute, NON_JSON_RESPONSE_ROUTES } from 
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 58 routes (57 prior routes plus the E33 retirement-plan get and upsert routes, less GET /portfolio-snapshot removed by audit slice 3) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(58);
+  it("has 59 routes (57 prior routes, plus the E33 retirement-plan get and upsert routes, plus the slice 4 mortgage-with-property create and check-ins read, less GET /portfolio-snapshot removed by audit slice 3 and PATCH /accounts/balances removed by slice 4) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(59);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });
@@ -72,14 +72,24 @@ describe("request schemas", () => {
     });
   });
 
-  it("accepts a check-in batch and rejects empty, oversized or malformed ones", () => {
-    const id = "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11";
-    const batch = body("accounts.updateBalances");
-    expect(checkAgainst(batch, { balances: [{ id, balance: -12.5 }] }).ok).toBe(true);
-    expect(checkAgainst(batch, { balances: [] }).ok).toBe(false);
-    expect(checkAgainst(batch, { balances: Array(101).fill({ id, balance: 1 }) }).ok).toBe(false);
-    expect(checkAgainst(batch, { balances: [{ id: "nope", balance: 1 }] }).ok).toBe(false);
-    expect(checkAgainst(batch, { balances: [{ id, balance: "1" }] }).ok).toBe(false);
+  it("accepts a mortgage with its property and refuses a link, a type or a property at £0", () => {
+    const pair = body("accounts.createMortgageWithProperty");
+    const ok = { mortgage: { name: "Mortgage", balance: 186000 }, property: { balance: 310000 } };
+    expect(checkAgainst(pair, ok).ok).toBe(true);
+    expect(checkAgainst(pair, { ...ok, property: { balance: 0 } }).ok).toBe(false);
+    expect(checkAgainst(pair, { ...ok, mortgage: { ...ok.mortgage, type: "Mortgage" } }).ok).toBe(
+      false,
+    );
+    expect(
+      checkAgainst(pair, {
+        ...ok,
+        mortgage: { ...ok.mortgage, linkedAccountId: "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11" },
+      }).ok,
+    ).toBe(false);
+    expect(checkAgainst(body("accounts.update"), { repaymentType: "part-and-part" }).ok).toBe(
+      false,
+    );
+    expect(checkAgainst(body("accounts.update"), { accountSubtype: "rental" }).ok).toBe(true);
   });
 
   it("validates mortgage term fields and the transactions accountId filter", () => {

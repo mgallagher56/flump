@@ -676,3 +676,41 @@ describe("budgetEntryFromRow: link kinds", () => {
     expect(budgetEntryFromRow({ id: "c", linkKind: "take-home" }).linkKind).toBeUndefined();
   });
 });
+
+describe("withLinkedBudgetRows: the housing line with a buy-to-let mortgage (system audit slice 4)", () => {
+  it("still resolves to the home's payment, £1,033.85", () => {
+    // Residential 186,000 at 4.5% over 300 months = £1,033.85 (worked in housing-cost.test.ts).
+    // A buy-to-let mortgage with no term saved used to make the estimate unknown, so the linked
+    // line had nothing to show.
+    const accounts = [
+      {
+        id: "m1",
+        name: "Home mortgage",
+        type: "Mortgage",
+        accountSubtype: "residential_mortgage",
+        balance: 186000,
+        interestRate: 4.5,
+        termMonths: 300,
+      },
+      {
+        id: "b1",
+        name: "Buy-to-let mortgage",
+        type: "Mortgage",
+        accountSubtype: "btl_mortgage",
+        balance: 150000,
+        interestRate: 5,
+        termMonths: null,
+      },
+    ];
+    const housing = selectHousingPayment(
+      { ...emptyProfile, housingStatus: "mortgage" },
+      new PortfolioSnapshot(accounts, []),
+      accounts,
+    );
+    const { rows } = withLinkedBudgetRows(
+      [row({ id: "h", category: "housing", name: "Mortgage", amount: 0, linkKind: "housing" })],
+      { takeHome: noTakeHome, housing },
+    );
+    expect(rows[0]).toMatchObject({ id: LINKED_HOUSING_ID, amount: 1033.85 });
+  });
+});

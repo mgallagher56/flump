@@ -7,6 +7,7 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import DebtContainer from "~/containers/debt/DebtContainer";
+import { accountFieldsFromForm } from "~/features/accounts/accountFormBody";
 import { buildDebtInputs, debtInputsFromPicture } from "~/features/debt/utils/debtInputs";
 import { backendFetch, loadWorkspacePicture } from "~/services/backend-client.server";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
@@ -25,6 +26,21 @@ const storedLiabilityBalance = (value: FormDataEntryValue | null): number => {
   return amount === 0 ? 0 : -amount;
 };
 
+/**
+ * The loan kind, ownership and share, read as every account form reads them; absent stays unsent.
+ * An edit posts the loan kind only when it changed, so an empty one there clears it back to "Not
+ * set" (null). A new debt never sends an empty kind.
+ */
+const loanKindAndOwnership = (formData: FormData, { clearable }: { clearable: boolean }) => {
+  const { accountSubtype, ownership, sharePercent } = accountFieldsFromForm(formData);
+  return {
+    ...(accountSubtype ? { accountSubtype } : {}),
+    ...(clearable && accountSubtype === null ? { accountSubtype: null } : {}),
+    ...(ownership !== undefined ? { ownership } : {}),
+    ...(ownership !== undefined && sharePercent !== undefined ? { sharePercent } : {}),
+  };
+};
+
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const formData = await args.request.formData();
@@ -36,22 +52,24 @@ export const action = async (args: ActionFunctionArgs) => {
     if (intent === "createDebt") {
       const creditLimit = optionalNumber(formData.get("creditLimit"));
       const promoRaw = formData.get("promoZeroPercentUntil");
+      const createBody = {
+        name: formData.get("name"),
+        type: formData.get("type"),
+        balance: storedLiabilityBalance(formData.get("balance")),
+        interestRate: optionalNumber(formData.get("interestRate")),
+        monthlyContribution: optionalNumber(formData.get("monthlyContribution")),
+        // Only a card or overdraft has these, and only when the user gave them.
+        ...(creditLimit !== null ? { creditLimit } : {}),
+        ...(typeof promoRaw === "string" && promoRaw !== ""
+          ? { promoZeroPercentUntil: promoRaw }
+          : {}),
+        ...loanKindAndOwnership(formData, { clearable: false }),
+      };
       await backendFetch("/accounts", {
         schema: CreateAccountResponse,
         accessToken: token,
         method: "POST",
-        body: {
-          name: formData.get("name"),
-          type: formData.get("type"),
-          balance: storedLiabilityBalance(formData.get("balance")),
-          interestRate: optionalNumber(formData.get("interestRate")),
-          monthlyContribution: optionalNumber(formData.get("monthlyContribution")),
-          // Only a card or overdraft has these, and only when the user gave them.
-          ...(creditLimit !== null ? { creditLimit } : {}),
-          ...(typeof promoRaw === "string" && promoRaw !== ""
-            ? { promoZeroPercentUntil: promoRaw }
-            : {}),
-        },
+        body: createBody,
       });
     } else if (intent === "updateDebt") {
       const body: Record<string, unknown> = {};
@@ -65,6 +83,7 @@ export const action = async (args: ActionFunctionArgs) => {
       if (formData.has("monthlyContribution")) {
         body.monthlyContribution = optionalNumber(formData.get("monthlyContribution"));
       }
+      Object.assign(body, loanKindAndOwnership(formData, { clearable: true }));
       if (formData.has("creditLimit")) {
         body.creditLimit = optionalNumber(formData.get("creditLimit"));
       }

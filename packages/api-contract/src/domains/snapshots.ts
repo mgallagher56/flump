@@ -58,6 +58,16 @@ export const UpsertSnapshotResponse = z.strictObject({
 });
 export type UpsertSnapshotResponse = z.infer<typeof UpsertSnapshotResponse>;
 
+/**
+ * GET /snapshots/check-ins: the latest month whose check-in was finished (`snapshot_checkins`),
+ * or null when none is. The check-in reminder reads it (system audit slice 4, L70), so a balance
+ * recorded some other way (a new account, an edit) does not hide the reminder.
+ */
+export const SnapshotCheckInsResponse = z.strictObject({
+  latestCompletedMonth: SnapshotMonth.nullable(),
+});
+export type SnapshotCheckInsResponse = z.infer<typeof SnapshotCheckInsResponse>;
+
 // Parsed request types (z.output: what a handler receives in enforce mode).
 export type UpsertSnapshotRequest = z.infer<typeof UpsertSnapshotRequest>;
 export type SnapshotMonthParams = z.infer<typeof SnapshotMonthParams>;

@@ -1,7 +1,7 @@
 import type { EntityManager } from "typeorm";
-import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
-import { compareYearMonth, type YearMonth } from "./london-date";
+import { syncBalancesToNewestRecord } from "./balance-rule";
+import type { YearMonth } from "./london-date";
 
 export interface SnapshotRowWrite {
   accountId: string;
@@ -45,7 +45,8 @@ const byKey = (x: SnapshotRowWrite, y: SnapshotRowWrite) =>
 /**
  * The E30 upsert, shared by `PUT /snapshots/:month` (source `manual`) and the import commit
  * (source `agent`, stamped with the batch). Runs inside the caller's transaction: latest write
- * wins on (account_id, year, month), and a current-month value also moves the account balance.
+ * wins on (account_id, year, month), and each account's balance then follows its newest recorded
+ * month (decision 8 option A, `syncBalancesToNewestRecord`).
  * Callers have already checked that every account belongs to `userId`. Returns the rows written.
  */
 export async function writeSnapshotRows(
@@ -61,13 +62,13 @@ export async function writeSnapshotRows(
     opts.source === "agent"
       ? await writeProtected(manager, userId, sorted, opts)
       : await writeAll(manager, userId, sorted, opts);
-  // The current month's value is the user's statement of "now", so the account's current balance
-  // follows it. Back-dated or edited past months never touch it.
-  for (const r of written) {
-    if (compareYearMonth(r, opts.current) === 0) {
-      await manager.update(Account, { id: r.accountId, userId }, { balance: r.value });
-    }
-  }
+  // Today's balance is the newest recorded month: a current-month value moves it, and so does a
+  // past month when nothing newer is recorded. A past month under a newer one leaves it alone.
+  await syncBalancesToNewestRecord(
+    manager,
+    userId,
+    written.map((r) => r.accountId),
+  );
   return written;
 }
 

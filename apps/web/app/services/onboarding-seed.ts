@@ -18,18 +18,45 @@ export interface OnboardingSeedInput {
   otherOutgoings: number;
 }
 
-export interface OnboardingSeedJob {
+interface SeedJobBase {
   /** Stable key so a retry never creates the same record twice. */
   key: string;
-  endpoint: "/accounts" | "/budget-entries";
-  payload: Record<string, unknown>;
   enabled: boolean;
 }
 
-const account = (name: string, type: string, balance: number): OnboardingSeedJob => ({
+/** One account or budget entry. */
+export interface OnboardingRecordJob extends SeedJobBase {
+  endpoint: "/accounts" | "/budget-entries";
+  payload: Record<string, unknown>;
+}
+
+/**
+ * The mortgage and the home it is on, created and linked in one backend transaction (system audit
+ * slice 4). Its key is the mortgage's, as a lone mortgage job's would be, so a retry that finds
+ * the mortgage saved never adds a second one.
+ */
+export interface OnboardingMortgageWithHomeJob extends SeedJobBase {
+  endpoint: "/accounts/mortgage-with-property";
+  payload: {
+    mortgage: Record<string, unknown>;
+    property: { name: string; balance: number };
+  };
+}
+
+export type OnboardingSeedJob = OnboardingRecordJob | OnboardingMortgageWithHomeJob;
+
+/** The name onboarding gives the mortgage it seeds. */
+export const ONBOARDING_MORTGAGE_NAME = "Residential Mortgage";
+
+const account = (
+  name: string,
+  type: string,
+  balance: number,
+  accountSubtype?: string,
+): OnboardingRecordJob => ({
   key: `account:${name}`,
   endpoint: "/accounts",
-  payload: { name, type, balance, isCurrent: true },
+  payload: { name, type, ...(accountSubtype ? { accountSubtype } : {}), balance, isCurrent: true },
   enabled: balance > 0,
 });
 
@@ -38,7 +65,7 @@ const budgetEntry = (
   category: string,
   amount: number,
   isIncome: boolean,
-): OnboardingSeedJob => ({
+): OnboardingRecordJob => ({
   key: `entry:${name}`,
   endpoint: "/budget-entries",
   payload: { name, category, amount, isIncome, frequency: "monthly" },
@@ -58,17 +85,39 @@ const HOUSING_ENTRY: Partial<Record<NonNullable<OnboardingSeedInput["housingStat
  */
 export function buildOnboardingSeedJobs(input: OnboardingSeedInput): OnboardingSeedJob[] {
   const housingEntry = input.housingStatus ? HOUSING_ENTRY[input.housingStatus] : undefined;
+  const homeValue = input.propertyValue ?? 0;
+  // Only a home the person owns is saved; any other answer's leftover value is not.
+  const savesHome =
+    homeValue > 0 && (input.housingStatus === "mortgage" || input.housingStatus === "own_outright");
+  const hasMortgage = input.mortgageBalance > 0;
   return [
     account("Cash and emergency savings", "Saving", input.cash),
     account("Workplace and personal pension", "Pension", input.pensionPot),
-    // Only a home the person owns is saved; any other answer's leftover value is not.
-    ...((input.propertyValue ?? 0) > 0 &&
-    (input.housingStatus === "mortgage" || input.housingStatus === "own_outright")
-      ? [account(HOME_ESTIMATE_LABEL, "Property", input.propertyValue ?? 0)]
-      : []),
-    ...(input.mortgageBalance > 0
-      ? [account("Residential Mortgage", "Mortgage", input.mortgageBalance)]
-      : []),
+    // A mortgage and a home: one call creates both and links them (slice 4), in place of two.
+    ...(savesHome && hasMortgage
+      ? [
+          {
+            key: `account:${ONBOARDING_MORTGAGE_NAME}`,
+            endpoint: "/accounts/mortgage-with-property",
+            payload: {
+              mortgage: {
+                name: ONBOARDING_MORTGAGE_NAME,
+                accountSubtype: "residential_mortgage",
+                balance: input.mortgageBalance,
+                isCurrent: true,
+              },
+              property: { name: HOME_ESTIMATE_LABEL, balance: homeValue },
+            },
+            enabled: true,
+          } satisfies OnboardingMortgageWithHomeJob,
+        ]
+      : [
+          // Saved as the home, so it counts as the home and not as a second property.
+          ...(savesHome ? [account(HOME_ESTIMATE_LABEL, "Property", homeValue, "home")] : []),
+          ...(hasMortgage
+            ? [account(ONBOARDING_MORTGAGE_NAME, "Mortgage", input.mortgageBalance)]
+            : []),
+        ]),
     ...(input.unsecuredDebt > 0
       ? [account("Cards and loans baseline", "Credit Card", input.unsecuredDebt)]
       : []),

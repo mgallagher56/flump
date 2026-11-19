@@ -13,8 +13,12 @@ export const CHECK_IN_ROUTE = `${HISTORY_ROUTE}?checkIn=1`;
 export interface MonthlyCheckInCardProps {
   /** The current Europe/London month. */
   currentMonth: MonthKey;
-  /** Latest month with a recorded balance, or null when nothing is recorded yet. */
-  lastRecordedMonth: MonthKey | null;
+  /**
+   * The newest month with a completed monthly check-in (`snapshot_checkins`, CH-3), or null when
+   * there has never been one. Undefined when it could not be read: the reminder then shows. A
+   * balance saved outside the check-in (an edit, a new account) never counts.
+   */
+  lastCheckInMonth?: MonthKey | null;
   /** Whether a check-in is in progress (Rule B17). */
   partDone?: boolean;
   /** Today in Europe/London, "YYYY-MM-DD". Defaults to the clock (or the 1st of `currentMonth`). */
@@ -24,17 +28,21 @@ export interface MonthlyCheckInCardProps {
 }
 
 /**
- * Whether the check-in is shown: never once this month is recorded, always before anything is
- * recorded, otherwise from the user's check-in day (or at once if last month was missed too).
- * The rule lives in `@flump/finance-engine`.
+ * Whether the check-in is shown: never once this month's check-in is done, always before the first
+ * one (or when that is unknown), otherwise from the user's check-in day (or at once if last month
+ * was missed too). The rule lives in `@flump/finance-engine`.
  */
 export const isCheckInDue = ({
   currentMonth,
-  lastRecordedMonth,
+  lastCheckInMonth,
   today,
   checkInDay = null,
 }: MonthlyCheckInCardProps): boolean =>
-  isCheckInDueOn({ today: today ?? londonDateIn(currentMonth), checkInDay, lastRecordedMonth });
+  isCheckInDueOn({
+    today: today ?? londonDateIn(currentMonth),
+    checkInDay,
+    lastRecordedMonth: lastCheckInMonth ?? null,
+  });
 
 /**
  * The dashboard's way into the monthly check-in (E30), as one row shown only when a check-in is
@@ -44,9 +52,9 @@ export const isCheckInDue = ({
 export const MonthlyCheckInCard: FC<MonthlyCheckInCardProps> = (props) => {
   const headingId = useId();
   if (!isCheckInDue(props)) return null;
-  const { lastRecordedMonth } = props;
-  const text = lastRecordedMonth
-    ? `Last recorded month: ${formatMonth(lastRecordedMonth)}. Balances for this month are not recorded yet.`
+  const { lastCheckInMonth } = props;
+  const text = lastCheckInMonth
+    ? `Last check-in: ${formatMonth(lastCheckInMonth)}. This month's check-in is not done yet.`
     : "Record your balances once a month to see your net worth over time.";
 
   return (

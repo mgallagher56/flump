@@ -1,3 +1,4 @@
+import { isBuyToLetAccount } from "../../buy-to-let.js";
 import { calculateMonthlyMortgagePayment } from "../../mortgage.js";
 import type { PortfolioSnapshot, RawAccount } from "../../portfolio.js";
 import { type Figure, type FigureProvenance, figureKnown, figureUnknown } from "../figure.js";
@@ -27,12 +28,16 @@ function positive(value: unknown): number | null {
   return value !== null && value !== undefined && Number.isFinite(n) && n > 0 ? n : null;
 }
 
-/** Payments for every mortgage account, or null when any one lacks a balance, rate or term. */
+/**
+ * Payments for every mortgage on the home, or null when any one lacks a balance, rate or term.
+ * A buy-to-let mortgage is the rental's cost, not housing, so it is left out (system audit
+ * slice 4): it neither adds to the figure nor makes it unknown.
+ */
 function estimateMortgagePayments(
   snapshot: PortfolioSnapshot,
   rawAccounts: readonly RawAccount[],
 ): number | null {
-  const mortgages = rawAccounts.filter((a) => a.type === "Mortgage");
+  const mortgages = rawAccounts.filter((a) => a.type === "Mortgage" && !isBuyToLetAccount(a));
   if (mortgages.length === 0) return null;
   let total = 0;
   for (const account of mortgages) {

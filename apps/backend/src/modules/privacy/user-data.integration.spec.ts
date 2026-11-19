@@ -427,6 +427,26 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     }
   });
 
+  it("erases the slice 4 before-image (account_home_backfill) with the user's accounts", async () => {
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const accountOf = async (userId: string) =>
+      at(await ds.getRepository(Account).findBy({ userId }), 0).id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        `INSERT INTO account_home_backfill (migration, account_id, old_account_subtype)
+         VALUES ('kind', $1, NULL)`,
+        [await accountOf(userId)],
+      );
+    }
+    const accountB = await accountOf(USER_B);
+    await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    const rows: { account_id: string }[] = await ds.query(
+      "SELECT account_id FROM account_home_backfill",
+    );
+    expect(rows.map((r) => r.account_id)).toEqual([accountB]);
+  });
+
   it("also removes history and transactions keyed to the user's accounts under another user_id", async () => {
     await seed(USER_A, "A");
     const account = at(await ds.getRepository(Account).findBy({ userId: USER_A }), 0);

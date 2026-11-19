@@ -4,9 +4,9 @@ export {
   AccountListResponse,
   AccountResponse,
   CreateAccountResponse,
+  CreateMortgageWithPropertyResponse,
   DeleteAccountResponse,
   UpdateAccountResponse,
-  UpdateBalancesResponse,
 } from "./domains/accounts.js";
 export {
   ClientPolicyResponse,
@@ -49,7 +49,7 @@ export {
   UserProfileResponse,
 } from "./domains/profile.js";
 export { RetirementPlanResponse } from "./domains/retirement.js";
-export { UpsertSnapshotResponse } from "./domains/snapshots.js";
+export { SnapshotCheckInsResponse, UpsertSnapshotResponse } from "./domains/snapshots.js";
 export {
   DeleteTaxRecordResponse,
   TaxRecordListResponse,

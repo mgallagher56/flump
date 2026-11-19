@@ -115,6 +115,7 @@ describe("idempotency keys (BE-09, audit M7)", () => {
         .sort(),
     ).toEqual([
       "accounts.create",
+      "accounts.createMortgageWithProperty",
       "budget.addCategory",
       "budget.create",
       "tax.bulkCreate",
@@ -172,7 +173,7 @@ describe("conditional updates (BE-09, audit M7, L15)", () => {
       .map((r) => r.id)
       .sort();
     expect(unconditional).toEqual([...UNCONDITIONAL_UPDATE_ROUTES].sort());
-    expect(unconditional).toEqual(["accounts.updateBalances", "profile.updateChecklist"]);
+    expect(unconditional).toEqual(["profile.updateChecklist"]);
   });
 
   it("reads an If-Match list of ETags, and rejects a list with anything else in it", () => {

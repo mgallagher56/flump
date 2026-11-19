@@ -289,3 +289,34 @@ describe("selectFixedRateEnds", () => {
     ]);
   });
 });
+
+describe("selectHousingCost: a buy-to-let mortgage is not housing (system audit slice 4)", () => {
+  // Residential: 186,000 at 4.5% over 300 months. Worked by hand: r = 0.045 / 12 = 0.00375,
+  // (1.00375)^300 = 3.073742528, payment per pound = 0.00375 x 3.073742528 / 2.073742528
+  // = 0.00555832478, so 186,000 x 0.00555832478 = 1,033.848 → £1,033.85.
+  // Buy to let: 150,000 at 5% with no term saved (as migration 3 creates it from the profile).
+  const residential = mortgage({ balance: 186000, accountSubtype: "residential_mortgage" });
+  const btl = mortgage({
+    id: "b1",
+    name: "Buy-to-let mortgage",
+    accountSubtype: "btl_mortgage",
+    balance: 150000,
+    interestRate: 5,
+    termMonths: null,
+  });
+
+  it("estimates the home's payment only, and an incomplete buy-to-let one does not null it", () => {
+    const fig = run(facts({ housingStatus: "mortgage" }), takeHome(3000), [residential, btl]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value.monthly).toBe(1033.85);
+  });
+
+  it("leaves a complete buy-to-let mortgage out of the sum too", () => {
+    const fig = run(facts({ housingStatus: "mortgage" }), takeHome(3000), [
+      residential,
+      { ...btl, termMonths: 240 },
+    ]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value.monthly).toBe(1033.85);
+  });
+});

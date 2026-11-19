@@ -17,6 +17,7 @@ const loaderData = (rows: Record<string, unknown>) => ({
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
   mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
+  searchParams: { value: "", params: new URLSearchParams(), setParams: () => {} },
 }));
 
 vi.mock("react-router", async () => {
@@ -32,7 +33,14 @@ vi.mock("react-router", async () => {
       </a>
     ),
     useLocation: () => ({ search: "", pathname: "/app/accounts" }),
-    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    // One object per value, as the real hook keeps it between renders (a new one each render
+    // would re-run the page's search-parameter effect for ever).
+    useSearchParams: () => {
+      if (mocks.searchParams.params.toString() !== mocks.searchParams.value) {
+        mocks.searchParams.params = new URLSearchParams(mocks.searchParams.value);
+      }
+      return [mocks.searchParams.params, mocks.searchParams.setParams];
+    },
     Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
     useSubmit: () => ({ onSubmit: vi.fn() }),
     useFetcher: () => ({
@@ -95,6 +103,35 @@ describe("<AccountsContainer />", () => {
       expect(queryByText(gone)).toBeNull();
     }
     expect(getByRole("link", { name: "See your ISA allowance" })).toBeDefined();
+  });
+
+  test("?add=property opens a home prefilled with the unlinked mortgage's share (JO-6)", () => {
+    mocks.searchParams.value = "add=property";
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [
+        { id: "a1", name: "Monzo", type: "Current", balance: 5000 },
+        {
+          id: "m1",
+          name: "Nationwide",
+          type: "Mortgage",
+          balance: -180000,
+          ownership: "joint",
+          sharePercent: 40,
+        },
+      ],
+      accountDetails: [],
+    });
+    try {
+      const { getByRole, getByLabelText } = customRender(<AccountsContainer />);
+      expect(getByRole("dialog")).toBeDefined();
+      expect((getByLabelText("Name") as HTMLInputElement).value).toBe("Home (your estimate)");
+      expect((getByLabelText("Account type") as HTMLSelectElement).value).toBe("Property");
+      expect((getByLabelText("Home or rental") as HTMLSelectElement).value).toBe("home");
+      expect((getByLabelText("Ownership") as HTMLSelectElement).value).toBe("joint");
+      expect((getByLabelText("Your share") as HTMLInputElement).value).toBe("40");
+    } finally {
+      mocks.searchParams.value = "";
+    }
   });
 
   test("should open modal to add an account", async () => {

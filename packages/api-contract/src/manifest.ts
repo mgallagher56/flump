@@ -1,8 +1,8 @@
 import { z } from "zod";
 import {
   CreateAccountRequest,
+  CreateMortgageWithPropertyRequest,
   UpdateAccountRequest,
-  UpdateBalancesRequest,
 } from "./domains/accounts.js";
 import { ConnectBankRequest } from "./domains/bank-connections.js";
 import {
@@ -50,6 +50,7 @@ import {
   ContextPackResponse,
   CreateAccountResponse,
   CreateMcpTokenResponse,
+  CreateMortgageWithPropertyResponse,
   CreateTransactionResponse,
   DeleteAccountResponse,
   DeleteBankConnectionResponse,
@@ -68,12 +69,12 @@ import {
   RetirementPlanResponse,
   RevokeMcpTokenResponse,
   SendPasswordResetResponse,
+  SnapshotCheckInsResponse,
   SyncBankConnectionResponse,
   TaxRecordListResponse,
   TaxRecordResponse,
   TransactionListResponse,
   UpdateAccountResponse,
-  UpdateBalancesResponse,
   UpdateChecklistResponse,
   UpdateProfileResponse,
   UpsertSnapshotResponse,
@@ -150,15 +151,10 @@ export const isIdempotentRoute = (route: RouteDefinition): boolean =>
 /**
  * PATCH and PUT routes that take no `If-Match`, each with its reason (BE-16, audit M7). Every
  * other update route is `etag: "conditional"`. Shrink-only.
- * - `accounts.updateBalances`: one request sets many accounts, so no single version describes it.
- *   No web client calls it; `PUT /snapshots/:month` replaced it and is conditional.
  * - `profile.updateChecklist`: sets one named checklist step to done or not done. The client sends
  *   no figure it read earlier, so there is nothing to overwrite.
  */
-export const UNCONDITIONAL_UPDATE_ROUTES = [
-  "accounts.updateBalances",
-  "profile.updateChecklist",
-] as const;
+export const UNCONDITIONAL_UPDATE_ROUTES = ["profile.updateChecklist"] as const;
 
 /** Whether a route accepts `If-Match` and answers 412 when the resource has changed since. */
 export const isConditionalRoute = (route: RouteDefinition): boolean => route.etag === "conditional";
@@ -240,16 +236,16 @@ export const routes = {
       group: "accounts",
       response: CreateAccountResponse,
     }),
-    // Declared before accounts/:id so Nest matches "balances" literally.
-    updateBalances: defineRoute({
-      id: "accounts.updateBalances",
-      method: "PATCH",
-      path: "accounts/balances",
+    createMortgageWithProperty: defineRoute({
+      id: "accounts.createMortgageWithProperty",
+      method: "POST",
+      status: 201,
+      path: "accounts/mortgage-with-property",
       auth: "user",
       ownership: "user",
-      body: UpdateBalancesRequest,
+      body: CreateMortgageWithPropertyRequest,
       group: "accounts",
-      response: UpdateBalancesResponse,
+      response: CreateMortgageWithPropertyResponse,
     }),
     update: defineRoute({
       id: "accounts.update",
@@ -275,6 +271,15 @@ export const routes = {
     }),
   },
   snapshots: {
+    checkIns: defineRoute({
+      id: "snapshots.checkIns",
+      method: "GET",
+      path: "snapshots/check-ins",
+      auth: "user",
+      ownership: "user",
+      group: "snapshots",
+      response: SnapshotCheckInsResponse,
+    }),
     upsert: defineRoute({
       id: "snapshots.upsert",
       method: "PUT",

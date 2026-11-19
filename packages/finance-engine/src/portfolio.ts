@@ -37,6 +37,8 @@ export interface RawAccount {
   name?: string;
   type?: RawAccountType;
   accountSubtype?: string | null;
+  /** Mortgage accounts: the Property account it is on (system audit slice 4), or null. */
+  linkedAccountId?: string | null;
   balance?: number | string;
   interestRate?: number | string | null;
   monthlyContribution?: number | string | null;
@@ -266,6 +268,12 @@ export class PortfolioSnapshot {
   getAccountSubtype(id: string): string | null {
     const subtype = this.rawById.get(id)?.accountSubtype;
     return typeof subtype === "string" && subtype !== "" ? subtype : null;
+  }
+
+  /** The Property account a mortgage is linked to, or null when it has none. */
+  getLinkedAccountId(id: string): string | null {
+    const linked = this.rawById.get(id)?.linkedAccountId;
+    return typeof linked === "string" && linked !== "" ? linked : null;
   }
 
   getAccount(id: string): ResolvedAccount | undefined {

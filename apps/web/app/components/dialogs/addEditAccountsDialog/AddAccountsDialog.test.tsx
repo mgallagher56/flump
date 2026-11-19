@@ -154,21 +154,25 @@ describe("adding a mortgage with the home's value", () => {
     expect(queryByText(/separate property account/)).toBeNull();
   });
 
-  test("is still offered when the only saved property is buy to let, as the action decides", async () => {
-    const { getByLabelText } = await openAsMortgage([
+  test("offers the link instead when a property with no kind saved is there, and preselects it", async () => {
+    const { getByLabelText, queryByLabelText } = await openAsMortgage([
       { id: "b1", name: "Buy to let flat", type: "Property", balance: 200000 },
     ]);
-    expect(getByLabelText(/^What your home is worth/)).toBeDefined();
+    expect(queryByLabelText(/^What your home is worth/)).toBeNull();
+    const link = getByLabelText("Which property is this mortgage on") as HTMLSelectElement;
+    expect([...link.options].map((o) => o.text)).toEqual(["Not linked", "Buy to let flat"]);
+    expect(link.value).toBe("b1");
   });
 
-  test("is not offered for a buy-to-let mortgage, by kind or by name", async () => {
+  test("asks for the property's value for a buy-to-let mortgage, by kind or by name", async () => {
     const { getByLabelText, queryByLabelText, user } = await openAsMortgage();
     expect(getByLabelText(/^What your home is worth/)).toBeDefined();
     await user.selectOptions(getByLabelText("Kind of mortgage (optional)"), "btl_mortgage");
-    expect(queryByLabelText(/What your home is worth|What the property is worth/)).toBeNull();
+    expect(queryByLabelText(/What your home is worth/)).toBeNull();
+    expect(getByLabelText(/^What the property is worth \(optional\)/)).toBeDefined();
     await user.selectOptions(getByLabelText("Kind of mortgage (optional)"), "");
     fireEvent.change(getByLabelText("Name"), { target: { value: "Buy to let flat" } });
-    expect(queryByLabelText(/What your home is worth|What the property is worth/)).toBeNull();
+    expect(getByLabelText(/^What the property is worth/)).toBeDefined();
   });
 
   test("treats a negative typed balance as no mortgage balance in the equity line", async () => {

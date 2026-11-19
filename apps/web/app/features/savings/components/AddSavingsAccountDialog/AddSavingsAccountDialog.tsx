@@ -1,4 +1,6 @@
 import {
+  type AccountOwnership,
+  DEFAULT_JOINT_SHARE_PERCENT,
   describeJointWholeValue,
   INVESTMENT_RISK_NOTICE,
   isIsaAccount,
@@ -20,6 +22,11 @@ import { Trash2 } from "lucide-react";
 import { type FC, type FormEvent, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
+import { accountFieldSet } from "~/features/accounts/accountFieldSet";
+import {
+  JointOwnershipFields,
+  resolveSharePercent,
+} from "~/features/accounts/components/JointOwnershipFields";
 import {
   SAVINGS_KIND_GROUPS,
   savingsKindFromValue,
@@ -83,11 +90,36 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
     accountToEdit?.ownership === "joint" &&
     isIsaAccount({ accountSubtype: subtypeToSave });
   const isInvestment = kind?.type === "Investment";
+  // The fields for the chosen kind (the same set the Accounts dialog shows): a saver that is not
+  // an ISA can be joint here too (SD-8).
+  const fieldSet = accountFieldSet({
+    type: kind?.type ?? accountToEdit?.type ?? "Saving",
+    name,
+    accountSubtype: subtypeToSave,
+  });
+  const [initialOwnership] = useState<AccountOwnership>(() =>
+    accountToEdit?.ownership === "joint" ? "joint" : "sole",
+  );
+  const [initialShare] = useState<number | null>(() =>
+    initialOwnership === "joint"
+      ? (accountToEdit?.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)
+      : null,
+  );
+  const [ownership, setOwnership] = useState<AccountOwnership>(initialOwnership);
+  const [sharePercent, setSharePercent] = useState<number | null>(
+    initialShare ?? DEFAULT_JOINT_SHARE_PERCENT,
+  );
+  const effectiveOwnership: AccountOwnership =
+    fieldSet.joint && ownership === "joint" ? "joint" : "sole";
+  const shareToSave = resolveSharePercent(effectiveOwnership, sharePercent);
   // The whole stored balance. The caller passes the saved account, not a row at the user's share,
-  // and a joint account says so beside the field (SD-1, JO-1).
+  // and a joint account says so beside the field (SD-1, JO-1, decision 9 A).
   const [initialBalance] = useState<number | null>(() => toNumberOrNull(accountToEdit?.balance));
   const [balance, setBalance] = useState<number | null>(initialBalance);
-  const jointNote = isEditing ? describeJointWholeValue(accountToEdit, "balance") : null;
+  const jointNote = describeJointWholeValue(
+    { type: kind?.type ?? "Saving", ownership: effectiveOwnership, sharePercent: shareToSave },
+    "balance",
+  );
   // No assumed defaults: a new account starts with an empty rate and monthly amount, and empty
   // fields are saved as "not set" rather than 0.
   const [initialRate] = useState<number | null>(() => toNumberOrNull(accountToEdit?.interestRate));
@@ -99,6 +131,9 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
   // An edit sends only the figures the user changed, so an untouched balance is never rewritten
   // (and writes no history row for this month).
   const changed = (now: number | null, before: number | null) => !isEditing || now !== before;
+  const ownershipChanged =
+    effectiveOwnership !== initialOwnership ||
+    (effectiveOwnership === "joint" && shareToSave !== initialShare);
 
   const canSave = name.trim().length > 0 && kind !== null;
   // The add button stays enabled, as in every sheet (RC-12, P28): a missing field is named on press.
@@ -121,9 +156,15 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         intent: isEditing ? "updateSavingsAccount" : "createSavingsAccount",
         accountId: accountToEdit?.id || "",
         ...versionField(accountToEdit),
-        name: name.trim(),
+        ...(!isEditing || name.trim() !== (accountToEdit?.name ?? "") ? { name: name.trim() } : {}),
         ...(kindChanged ? { type: kind.type, accountSubtype: kind.subtype } : {}),
-        ...(becomesSole ? { ownership: "sole" } : {}),
+        // Sent only when changed (a new account sends a joint choice); an ISA is always sole.
+        ...((isEditing ? ownershipChanged : effectiveOwnership === "joint")
+          ? {
+              ownership: effectiveOwnership,
+              ...(shareToSave !== null ? { sharePercent: String(shareToSave) } : {}),
+            }
+          : {}),
         ...(changed(balance, initialBalance) ? { balance: String(Number(balance) || 0) } : {}),
         ...(changed(interestRate, initialRate)
           ? { interestRate: interestRate === null ? "" : String(interestRate) }
@@ -207,6 +248,15 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
           )}
         </FormField>
       </div>
+
+      {fieldSet.joint ? (
+        <JointOwnershipFields
+          ownership={ownership}
+          sharePercent={sharePercent}
+          onOwnershipChange={setOwnership}
+          onSharePercentChange={setSharePercent}
+        />
+      ) : null}
 
       <FormField
         label="Saved each month"

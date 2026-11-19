@@ -51,6 +51,19 @@ export class SnapshotsService {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   /**
+   * The latest month the user finished a check-in for (`snapshot_checkins`), or null. The check-in
+   * reminder reads this rather than "any balance recorded this month", which a new account or a
+   * balance edit also writes (system audit slice 4, CH-3, L70).
+   */
+  async latestCompletedMonth(userId: string): Promise<string | null> {
+    const rows: Array<{ month: string | null }> = await this.dataSource.query(
+      `SELECT max("month") AS "month" FROM "snapshot_checkins" WHERE "user_id" = $1`,
+      [userId],
+    );
+    return rows[0]?.month ?? null;
+  }
+
+  /**
    * `PUT /snapshots/:month`: batch upsert of account values for one Europe/London month. Partial
    * allowed, past months editable, future months rejected. Every account must belong to `userId`;
    * a foreign or unknown id fails the whole request with the same 404 as an unknown account, and

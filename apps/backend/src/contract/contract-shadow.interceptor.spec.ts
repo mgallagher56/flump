@@ -343,14 +343,14 @@ describe("log volume limits", () => {
       expect(body.next.handle).not.toHaveBeenCalled();
 
       const nested = rejectionOf({
-        method: "PATCH",
-        route: { path: "/accounts/balances" },
+        method: "POST",
+        route: { path: "/accounts/mortgage-with-property" },
         params: {},
         query: {},
-        body: { balances: [{ id: "6f1c1f3e-9d6e-4c0e-9f43-0a1b2c3d4e5f", balance: 1, x: 1 }] },
+        body: { mortgage: { name: "m", balance: 1 }, property: { balance: 2, x: 1 } },
       });
       expect(nested.error?.getResponse().issues).toEqual([
-        expect.objectContaining({ path: "body.balances.0.x", code: "unrecognized_keys" }),
+        expect.objectContaining({ path: "body.property.x", code: "unrecognized_keys" }),
       ]);
 
       const query = rejectionOf({

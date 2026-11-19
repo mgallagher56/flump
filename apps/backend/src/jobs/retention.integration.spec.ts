@@ -146,6 +146,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [account.id, account.id],
         );
       }
+      for (const age of ["91 days", "89 days"]) {
+        await ds.query(
+          `INSERT INTO account_home_backfill (migration, account_id, backfilled_at) VALUES ('kind', $1, ${ago(age)})`,
+          [account.id],
+        );
+      }
       for (const [i, age] of ["24 months 1 day", "23 months"].entries()) {
         await ds.query(
           `INSERT INTO user_profiles (user_id, last_active_at) VALUES ($1, ${ago(age)})`,
@@ -192,6 +198,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           pension_rates_backfill: 1,
           student_loan_plan_backfill: 1,
           paye_salary_record_backfill: 1,
+          account_home_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });

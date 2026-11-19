@@ -40,3 +40,21 @@ export const stackedHeaderSection = cva({
     },
   },
 });
+
+export const btlList = cva({
+  base: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+});
+
+export const btlListItem = cva({
+  base: {
+    textStyle: "body.md",
+    color: "text.primary",
+  },
+});

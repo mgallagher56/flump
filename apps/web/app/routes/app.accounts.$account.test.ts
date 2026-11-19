@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const backendFetch = vi.fn();
+const backendFetchAll = vi.fn();
 vi.mock("~/services/backend-client.server", () => ({
   backendFetch: (...a: unknown[]) => backendFetch(...a),
+  backendFetchAll: (...a: unknown[]) => backendFetchAll(...a),
 }));
 vi.mock("~/utils/auth.server", () => ({
   getAuthSession: async () => ({ user: { id: "u1" }, accessToken: "token" }),
@@ -82,6 +84,36 @@ describe("app.accounts.$account loader", () => {
     expect(data.basis).toBeNull();
     expect(data.account).toBe(account);
   });
+
+  it("reads no accounts list for an account that is not a mortgage", async () => {
+    backendFetchAll.mockReset();
+    respond({});
+    expect((await run()).accounts).toEqual([]);
+    expect(backendFetchAll).not.toHaveBeenCalled();
+  });
+
+  it("lists the user's accounts for a mortgage, so its form can offer the property link", async () => {
+    const mortgage = { ...account, type: "Mortgage", name: "Mortgage", balance: -200000 };
+    const home = { id: "h1", name: "Home", type: "Property", balance: 300000 };
+    backendFetch.mockImplementation(async (endpoint: string) =>
+      endpoint === "/user-profile" ? {} : mortgage,
+    );
+    backendFetchAll.mockReset();
+    backendFetchAll.mockResolvedValue([mortgage, home]);
+    expect((await run()).accounts).toEqual([mortgage, home]);
+  });
+
+  it("leaves the list empty when it cannot be read, and still loads the mortgage", async () => {
+    const mortgage = { ...account, type: "Mortgage" };
+    backendFetch.mockImplementation(async (endpoint: string) =>
+      endpoint === "/user-profile" ? {} : mortgage,
+    );
+    backendFetchAll.mockReset();
+    backendFetchAll.mockRejectedValue(new Error("list down"));
+    const data = await run();
+    expect(data.accounts).toEqual([]);
+    expect(data.account).toBe(mortgage);
+  });
 });
 
 const post = (fields: Record<string, string>) => {
@@ -129,6 +161,14 @@ describe("app.accounts.$account action", () => {
           promoZeroPercentUntil: "2027-06-30",
         },
       }),
+    );
+  });
+
+  it("sends only what the form posted: no name or type when they were not changed", async () => {
+    await post({ intent: "update", accountId: "a1", interestRate: "4.2", repaymentType: "" });
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/accounts/a1",
+      expect.objectContaining({ body: { interestRate: 4.2, repaymentType: null } }),
     );
   });
 

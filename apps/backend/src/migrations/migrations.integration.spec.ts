@@ -8,6 +8,7 @@ import { discoverMigrations, type MigrationClass } from "../testing/discoverMigr
 import { at } from "../testing/must";
 import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserMonthIndex1794357300000";
 import { AddAccountDeletionTombstones1794622492000 } from "./AddAccountDeletionTombstones1794622492000";
+import { AddAccountLinkAndRepaymentType1795470000000 } from "./AddAccountLinkAndRepaymentType1795470000000";
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import {
   AddAccountSubtypeCreditLimitAndPromo1795300000000,
@@ -30,6 +31,8 @@ import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndex
 import { AuditActionUserExported1795000000000 } from "./AuditActionUserExported1795000000000";
 import { AuditEventsDeleteAndTruncateGuards1795100000000 } from "./AuditEventsDeleteAndTruncateGuards1795100000000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
+import { BackfillFirstHistoryRow1795470300000 } from "./BackfillFirstHistoryRow1795470300000";
+import { BackfillPropertyKindAndMortgageLink1795470100000 } from "./BackfillPropertyKindAndMortgageLink1795470100000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 import {
@@ -39,6 +42,7 @@ import {
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
 import { PensionAnswersNullable1795480000000 } from "./PensionAnswersNullable1795480000000";
 import { RemovePayeSalaryRecords1795480300000 } from "./RemovePayeSalaryRecords1795480300000";
+import { MoveBuyToLetProfileIntoAccounts1795470200000 } from "./MoveBuyToLetProfileIntoAccounts1795470200000";
 import {
   RemoveSeededExampleData1794355400000,
   SEEDED_ACCOUNTS,
@@ -66,10 +70,11 @@ let MIGRATIONS: MigrationClass[] = [];
 
 // Operational tables a migration creates that no entity maps (left out of the entity
 // comparisons): the BE-05 liability sign before-image (LiabilitySignRule1794358050000) and the
-// BE-07 shared rate-limit counters (AddRateLimitBuckets1794632012000) and the three slice 6
-// before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile, RemovePayeSalaryRecords).
+// BE-07 shared rate-limit counters (AddRateLimitBuckets1794632012000), the three slice 6
+// before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile, RemovePayeSalaryRecords) and
+// the slice 4 before-image (account_home_backfill, BackfillPropertyKindAndMortgageLink1795470100000).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -619,9 +624,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
       await ds.runMigrations();
 
+      // Rows E30 kept. The later slice 4 migration 4 adds a current-month row to accounts created
+      // after their newest record (as these seeded ones are); those rows are its own, tested there.
       const rows = await ds.query(
         `SELECT account_id, user_id, year, month, value::float AS value, as_of_date::text AS as_of_date, source
-         FROM account_details ORDER BY user_id, year, month`,
+         FROM account_details
+         WHERE id NOT IN (SELECT detail_id FROM account_home_backfill WHERE detail_id IS NOT NULL)
+         ORDER BY user_id, year, month`,
       );
       expect(rows).toEqual([
         {
@@ -2391,6 +2400,349 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(
         (await ds.query("SELECT to_regclass('public.paye_salary_record_backfill') AS t"))[0].t,
       ).toBeNull();
+    });
+  });
+
+  describe("system audit slice 4: accounts as the home for homes and loans", () => {
+    const FIRST = "AddAccountLinkAndRepaymentType1795470000000";
+    const LAST = "BackfillFirstHistoryRow1795470300000";
+    /** All migrations, then slice 4's undone, so a test seeds the schema slice 4 meets. */
+    const beforeSlice4 = async (): Promise<void> => {
+      await ds.runMigrations();
+      await undoThrough(FIRST);
+    };
+    const addAccount = async (
+      user: string,
+      name: string,
+      type: string,
+      balance: number,
+      createdAt = "2026-11-10T12:00:00Z",
+    ): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [user, name, type, balance, createdAt],
+      );
+      return at(rows, 0).id;
+    };
+    const accountRow = async (id: string): Promise<Record<string, unknown>> =>
+      at(
+        await ds.query<Array<Record<string, unknown>>>(
+          `SELECT name, type, account_subtype, linked_account_id, repayment_type, balance::float AS balance,
+                  ownership, share_percent FROM accounts WHERE id = $1`,
+          [id],
+        ),
+        0,
+      );
+
+    it("migration 1 adds the link with ON DELETE SET NULL and the repayment type CHECK; down drops both", async () => {
+      await ds.runMigrations();
+      const home = await addAccount("u1", "Home", "Property", 300000);
+      const mortgage = await addAccount("u1", "Mortgage", "Mortgage", -200000);
+      await ds.query("UPDATE accounts SET linked_account_id = $1 WHERE id = $2", [home, mortgage]);
+      await expect(
+        ds.query("UPDATE accounts SET repayment_type = 'part-and-part' WHERE id = $1", [mortgage]),
+      ).rejects.toThrow(/check constraint/i);
+      await expect(
+        ds.query("UPDATE accounts SET linked_account_id = id WHERE id = $1", [mortgage]),
+      ).rejects.toThrow(/check constraint/i);
+      await ds.query("DELETE FROM accounts WHERE id = $1", [home]);
+      expect((await accountRow(mortgage)).linked_account_id).toBeNull();
+      await runUpInTransaction(new AddAccountLinkAndRepaymentType1795470000000());
+      await undoThrough(FIRST);
+      const cols: unknown[] = await ds.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = 'accounts' AND column_name IN ('linked_account_id', 'repayment_type')",
+      );
+      expect(cols).toEqual([]);
+    });
+
+    it("migration 2 saves kinds, links one-of-each pairs and copies the repayment type; down restores", async () => {
+      await beforeSlice4();
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, mortgage_type, housing_status) VALUES ('u1', 'interest-only', 'mortgage'), ('u2', 'repayment', 'mortgage')",
+      );
+      const home = await addAccount("u1", "Home", "Property", 310000);
+      const flat = await addAccount("u1", "Flat 2 BTL", "Property", 200000);
+      const mortgage = await addAccount("u1", "Mortgage", "Mortgage", -186000);
+      const btlLoan = await addAccount("u1", "Buy-to-let mortgage", "Mortgage", -150000);
+      // u2 has two properties neither named buy to let: no way to tell the home, so no kind.
+      const a = await addAccount("u2", "Home", "Property", 250000);
+      const b = await addAccount("u2", "Cottage", "Property", 150000);
+      const u2Mortgage = await addAccount("u2", "Mortgage", "Mortgage", -100000);
+      // u3 has no profile row: no repayment type to copy.
+      const u3Mortgage = await addAccount("u3", "Mortgage", "Mortgage", -90000);
+
+      await ds.runMigrations();
+      expect(await accountRow(home)).toMatchObject({ account_subtype: "home" });
+      expect(await accountRow(flat)).toMatchObject({ account_subtype: "rental" });
+      expect(await accountRow(mortgage)).toMatchObject({
+        account_subtype: "residential_mortgage",
+        linked_account_id: home,
+        repayment_type: "interest-only",
+      });
+      // The buy-to-let tab was never used (no balance or rate saved), so its default is not copied.
+      expect(await accountRow(btlLoan)).toMatchObject({
+        account_subtype: "btl_mortgage",
+        linked_account_id: flat,
+        repayment_type: null,
+      });
+      expect((await accountRow(a)).account_subtype).toBeNull();
+      expect((await accountRow(b)).account_subtype).toBeNull();
+      expect(await accountRow(u2Mortgage)).toMatchObject({
+        account_subtype: "residential_mortgage",
+        linked_account_id: null,
+        repayment_type: "repayment",
+      });
+      expect(await accountRow(u3Mortgage)).toMatchObject({ repayment_type: null });
+
+      // A second run changes nothing.
+      const before = await ds.query("SELECT count(*)::int AS n FROM account_home_backfill");
+      await runUpInTransaction(new BackfillPropertyKindAndMortgageLink1795470100000());
+      expect(await ds.query("SELECT count(*)::int AS n FROM account_home_backfill")).toEqual(
+        before,
+      );
+
+      await undoThrough("BackfillPropertyKindAndMortgageLink1795470100000");
+      for (const id of [home, flat, mortgage, btlLoan, u2Mortgage]) {
+        expect(await accountRow(id)).toMatchObject({
+          account_subtype: null,
+          linked_account_id: null,
+          repayment_type: null,
+        });
+      }
+      const table: Array<{ t: string | null }> = await ds.query(
+        "SELECT to_regclass('public.account_home_backfill') AS t",
+      );
+      expect(table[0]?.t).toBeNull();
+    });
+
+    it("migration 3 moves buy-to-let profile figures into linked accounts; down deletes exactly those", async () => {
+      await beforeSlice4();
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, buy_to_let_property_value, buy_to_let_mortgage_balance,
+           buy_to_let_mortgage_rate, buy_to_let_mortgage_type, property_ownership_share)
+         VALUES ('u4', 235000, 150000, 4.5, 'interest-only', 50),
+                ('u5', 180000, NULL, NULL, 'interest-only', 100)`,
+      );
+      // u5 already has a rental (by name), so nothing new is added for them.
+      const existing = await addAccount("u5", "BTL flat", "Property", 180000);
+      await ds.runMigrations();
+
+      const u4: Array<Record<string, unknown>> = await ds.query(
+        `SELECT id, name, type, account_subtype, linked_account_id, repayment_type, balance::float AS balance,
+                interest_rate::float AS rate, ownership, share_percent
+           FROM accounts WHERE user_id = 'u4' ORDER BY type DESC`,
+      );
+      const property = at(u4, 0);
+      expect(property).toMatchObject({
+        name: "Buy-to-let property",
+        type: "Property",
+        account_subtype: "rental",
+        balance: 235000,
+        ownership: "joint",
+        share_percent: 50,
+      });
+      expect(at(u4, 1)).toMatchObject({
+        name: "Buy-to-let mortgage",
+        type: "Mortgage",
+        account_subtype: "btl_mortgage",
+        balance: -150000,
+        rate: 4.5,
+        repayment_type: "interest-only",
+        linked_account_id: property.id,
+        ownership: "joint",
+        share_percent: 50,
+      });
+      const u5: unknown[] = await ds.query("SELECT id FROM accounts WHERE user_id = 'u5'");
+      expect(u5).toEqual([{ id: existing }]);
+
+      // Idempotent: a second run adds nothing.
+      await runUpInTransaction(new MoveBuyToLetProfileIntoAccounts1795470200000());
+      expect(
+        await ds.query("SELECT count(*)::int AS n FROM accounts WHERE user_id = 'u4'"),
+      ).toEqual([{ n: 2 }]);
+
+      await undoThrough("MoveBuyToLetProfileIntoAccounts1795470200000");
+      expect(await ds.query("SELECT id FROM accounts WHERE user_id = 'u4'")).toEqual([]);
+      expect(await ds.query("SELECT id FROM accounts WHERE user_id = 'u5'")).toEqual([
+        { id: existing },
+      ]);
+    });
+
+    it("migration 3 skips a user whose rental may already exist, and an unlinked mortgage keeps the profile share", async () => {
+      await beforeSlice4();
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, buy_to_let_property_value, buy_to_let_mortgage_balance,
+           buy_to_let_mortgage_rate, buy_to_let_mortgage_type, property_ownership_share)
+         VALUES ('u7', 200000, 120000, 4, 'interest-only', 100),
+                ('u8', NULL, 90000, 3.5, 'repayment', 50)`,
+      );
+      // u7: two properties neither named buy to let, so migration 2 leaves both without a kind;
+      // "Leeds flat" may be the rental, so no copy is added.
+      await addAccount("u7", "Home", "Property", 300000);
+      await addAccount("u7", "Leeds flat", "Property", 200000);
+      await ds.runMigrations();
+      expect(
+        await ds.query("SELECT name FROM accounts WHERE user_id = 'u7' ORDER BY name"),
+      ).toEqual([{ name: "Home" }, { name: "Leeds flat" }]);
+      // u8: no property value, so the mortgage cannot be linked; it takes the profile's 50%.
+      expect(
+        await ds.query(
+          "SELECT linked_account_id, ownership, share_percent FROM accounts WHERE user_id = 'u8'",
+        ),
+      ).toEqual([{ linked_account_id: null, ownership: "joint", share_percent: 50 }]);
+    });
+
+    it("migration 2 takes a renter's only property, with buy-to-let figures, as the rental; migration 3 adds no copy", async () => {
+      await beforeSlice4();
+      // Renter: one property "Leeds flat" at 200,000 and the same 200,000 on the old buy-to-let
+      // tab. Net worth must count it once: 200,000, not 400,000.
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, housing_status, buy_to_let_property_value)
+         VALUES ('r1', 'renting', 200000), ('r2', 'renting', NULL)`,
+      );
+      const flat = await addAccount("r1", "Leeds flat", "Property", 200000);
+      // r2: one property and neither signal, so it stays without a kind.
+      const other = await addAccount("r2", "Cottage", "Property", 150000);
+      await ds.runMigrations();
+      expect((await accountRow(flat)).account_subtype).toBe("rental");
+      expect((await accountRow(other)).account_subtype).toBeNull();
+      const total: Array<{ total: number }> = await ds.query(
+        "SELECT sum(balance)::float AS total FROM accounts WHERE user_id = 'r1' AND type = 'Property'",
+      );
+      expect(total).toEqual([{ total: 200000 }]);
+    });
+
+    it("migration 2 takes a renter's only unnamed mortgage, with buy-to-let figures, as the buy-to-let one; migration 3 adds no copy", async () => {
+      await beforeSlice4();
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, housing_status, buy_to_let_mortgage_balance, buy_to_let_mortgage_rate)
+         VALUES ('r3', 'renting', 120000, 4)`,
+      );
+      const loan = await addAccount("r3", "Mortgage", "Mortgage", -120000);
+      await ds.runMigrations();
+      expect((await accountRow(loan)).account_subtype).toBe("btl_mortgage");
+      expect(
+        await ds.query("SELECT count(*)::int AS n FROM accounts WHERE user_id = 'r3'"),
+      ).toEqual([{ n: 1 }]);
+    });
+
+    it("an owner with a home and buy-to-let figures keeps the home and gains the rental and its mortgage", async () => {
+      await beforeSlice4();
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, housing_status, mortgage_type, buy_to_let_property_value,
+           buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type)
+         VALUES ('o1', 'mortgage', 'repayment', 235000, 150000, 5, 'interest-only')`,
+      );
+      const home = await addAccount("o1", "Home", "Property", 310000);
+      const homeLoan = await addAccount("o1", "Mortgage", "Mortgage", -186000);
+      await ds.runMigrations();
+      expect(await accountRow(home)).toMatchObject({ account_subtype: "home" });
+      expect(await accountRow(homeLoan)).toMatchObject({
+        account_subtype: "residential_mortgage",
+        linked_account_id: home,
+        repayment_type: "repayment",
+      });
+      const added: Array<Record<string, unknown>> = await ds.query(
+        `SELECT name, account_subtype, balance::float AS balance FROM accounts
+          WHERE user_id = 'o1' AND id NOT IN ($1, $2) ORDER BY name`,
+        [home, homeLoan],
+      );
+      expect(added).toEqual([
+        { name: "Buy-to-let mortgage", account_subtype: "btl_mortgage", balance: -150000 },
+        { name: "Buy-to-let property", account_subtype: "rental", balance: 235000 },
+      ]);
+    });
+
+    it("migration 2 sets no repayment type when a user has more than one residential mortgage", async () => {
+      await beforeSlice4();
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, housing_status, mortgage_type) VALUES ('o2', 'mortgage', 'interest-only')",
+      );
+      const first = await addAccount("o2", "Main", "Mortgage", -100000);
+      const second = await addAccount("o2", "Further advance", "Mortgage", -20000);
+      await ds.runMigrations();
+      expect((await accountRow(first)).repayment_type).toBeNull();
+      expect((await accountRow(second)).repayment_type).toBeNull();
+    });
+
+    it("migration 4 records an account created after its newest month, so the balance sync keeps today's figure", async () => {
+      await beforeSlice4();
+      // Added in August at 1,000 with no row; July was back-dated later at 900.
+      const saver = await addAccount("u9", "Saver", "Saving", 1000, "2026-08-10T12:00:00Z");
+      await ds.query(
+        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+         VALUES ($1, 'u9', 2026, 7, 900, '2026-07-31', 'manual')`,
+        [saver],
+      );
+      await ds.runMigrations();
+      const rows: Array<{ month: number; value: number; source: string }> = await ds.query(
+        "SELECT month, value::float AS value, source FROM account_details WHERE account_id = $1 ORDER BY month",
+        [saver],
+      );
+      expect(rows).toEqual([
+        { month: 7, value: 900, source: "manual" },
+        { month: 8, value: 1000, source: "backfill" },
+      ]);
+      await runUpInTransaction(new BackfillFirstHistoryRow1795470300000());
+      expect(
+        await ds.query("SELECT count(*)::int AS n FROM account_details WHERE account_id = $1", [
+          saver,
+        ]),
+      ).toEqual([{ n: 2 }]);
+    });
+
+    it("migration 4 gives each account without history a row in the London month it was added; down removes them", async () => {
+      await beforeSlice4();
+      // 30 Sep 2026 23:30 UTC is 1 Oct 00:30 in London (BST), so the row is October's.
+      const added = await addAccount("u6", "Saver", "Saving", 5000, "2026-09-30T23:30:00Z");
+      const card = await addAccount("u6", "Card", "Credit Card", -300, "2026-11-02T09:00:00Z");
+      const recorded = await addAccount("u6", "Current", "Current", 900, "2026-08-01T09:00:00Z");
+      await ds.query(
+        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+         VALUES ($1, 'u6', 2026, 8, 900, '2026-08-31', 'manual')`,
+        [recorded],
+      );
+      await ds.runMigrations();
+      const rows: Array<Record<string, unknown>> = await ds.query(
+        `SELECT account_id, year, month, value::float AS value, to_char(as_of_date, 'YYYY-MM-DD') AS as_of, source
+           FROM account_details ORDER BY account_id, year, month`,
+      );
+      const byAccount = (id: string) => rows.filter((r) => r.account_id === id);
+      expect(byAccount(added)).toEqual([
+        {
+          account_id: added,
+          year: 2026,
+          month: 10,
+          value: 5000,
+          as_of: "2026-10-01",
+          source: "backfill",
+        },
+      ]);
+      expect(byAccount(card)).toEqual([
+        {
+          account_id: card,
+          year: 2026,
+          month: 11,
+          value: -300,
+          as_of: "2026-11-02",
+          source: "backfill",
+        },
+      ]);
+      expect(byAccount(recorded)).toHaveLength(1);
+
+      await runUpInTransaction(new BackfillFirstHistoryRow1795470300000());
+      expect(await ds.query("SELECT count(*)::int AS n FROM account_details")).toEqual([{ n: 3 }]);
+
+      // A back-filled row the user corrected since is theirs, and stays on revert.
+      await ds.query(
+        "UPDATE account_details SET value = 5100, source = 'manual' WHERE account_id = $1",
+        [added],
+      );
+      await undoThrough(LAST);
+      const left: Array<{ account_id: string }> = await ds.query(
+        "SELECT account_id FROM account_details ORDER BY account_id",
+      );
+      expect(left.map((r) => r.account_id).sort()).toEqual([added, recorded].sort());
     });
   });
 });

@@ -37,14 +37,21 @@ describe("<MortgageSummary />", () => {
     expect(section.className).toContain("flex-wrap_nowrap");
   });
 
-  it("buy to let lists no account and no term", () => {
+  it("buy to let names its mortgage account and lists no term", () => {
     render(
-      <MortgageSummary {...base({ propertyCategory: "btl", mortgageType: "interest-only" })} />,
+      <MortgageSummary
+        {...base({
+          propertyCategory: "btl",
+          mortgageType: "interest-only",
+          accountName: "Buy-to-let mortgage",
+        })}
+      />,
     );
     const card = screen.getByTestId("mortgage-summary");
     expect(card.textContent).toContain("Buy to let");
     expect(card.textContent).toContain("Interest-only");
-    expect(card.textContent).not.toContain("Mortgage account");
+    // The buy to let tab reads a mortgage account now (HM-4), so it says which.
+    expect(card.textContent).toContain("Mortgage accountBuy-to-let mortgage");
     expect(card.textContent).not.toContain("Years left");
   });
 

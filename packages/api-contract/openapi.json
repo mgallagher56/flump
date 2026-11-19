@@ -324,7 +324,12 @@
                               "stocks_and_shares_isa",
                               "general_investment",
                               "residential_mortgage",
-                              "btl_mortgage"
+                              "btl_mortgage",
+                              "home",
+                              "rental",
+                              "car_finance",
+                              "buy_now_pay_later",
+                              "other_loan"
                             ],
                             "type": "string"
                           },
@@ -460,6 +465,18 @@
                       "isCurrent": {
                         "type": "boolean"
                       },
+                      "linkedAccountId": {
+                        "anyOf": [
+                          {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "monthlyContribution": {
                         "anyOf": [
                           {
@@ -481,6 +498,17 @@
                       },
                       "promoZeroPercentUntil": {
                         "type": ["string", "null"]
+                      },
+                      "repaymentType": {
+                        "anyOf": [
+                          {
+                            "enum": ["repayment", "interest-only"],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "sharePercent": {
                         "anyOf": [
@@ -677,7 +705,12 @@
                           "stocks_and_shares_isa",
                           "general_investment",
                           "residential_mortgage",
-                          "btl_mortgage"
+                          "btl_mortgage",
+                          "home",
+                          "rental",
+                          "car_finance",
+                          "buy_now_pay_later",
+                          "other_loan"
                         ],
                         "type": "string"
                       },
@@ -753,6 +786,18 @@
                   "isCurrent": {
                     "type": "boolean"
                   },
+                  "linkedAccountId": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "monthlyContribution": {
                     "anyOf": [
                       {
@@ -775,6 +820,17 @@
                   },
                   "promoZeroPercentUntil": {
                     "type": ["string", "null"]
+                  },
+                  "repaymentType": {
+                    "anyOf": [
+                      {
+                        "enum": ["repayment", "interest-only"],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "sharePercent": {
                     "anyOf": [
@@ -856,7 +912,12 @@
                             "stocks_and_shares_isa",
                             "general_investment",
                             "residential_mortgage",
-                            "btl_mortgage"
+                            "btl_mortgage",
+                            "home",
+                            "rental",
+                            "car_finance",
+                            "buy_now_pay_later",
+                            "other_loan"
                           ],
                           "type": "string"
                         },
@@ -913,6 +974,18 @@
                     "isCurrent": {
                       "type": "boolean"
                     },
+                    "linkedAccountId": {
+                      "anyOf": [
+                        {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "monthlyContribution": {
                       "anyOf": [
                         {
@@ -934,6 +1007,17 @@
                     },
                     "promoZeroPercentUntil": {
                       "type": ["string", "null"]
+                    },
+                    "repaymentType": {
+                      "anyOf": [
+                        {
+                          "enum": ["repayment", "interest-only"],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "sharePercent": {
                       "anyOf": [
@@ -1122,50 +1206,30 @@
         "tags": ["accounts"]
       }
     },
-    "/v1/accounts/balances": {
-      "patch": {
-        "operationId": "accounts.updateBalances",
+    "/v1/accounts/mortgage-with-property": {
+      "post": {
+        "operationId": "accounts.createMortgageWithProperty",
+        "parameters": [
+          {
+            "description": "Makes the create safe to retry. A repeat with the same key and body within 24 hours replays the first response (with Idempotent-Replayed: true) and creates nothing.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "maxLength": 255,
+              "minLength": 1,
+              "pattern": "^[\\x20-\\x7E]+$",
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "additionalProperties": false,
                 "properties": {
-                  "balances": {
-                    "items": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "balance": {
-                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                          "type": "number"
-                        },
-                        "id": {
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "type": "string"
-                        }
-                      },
-                      "required": ["id", "balance"],
-                      "type": "object"
-                    },
-                    "maxItems": 100,
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "required": ["balances"],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
+                  "mortgage": {
                     "additionalProperties": false,
                     "properties": {
                       "accountSubtype": {
@@ -1182,7 +1246,12 @@
                               "stocks_and_shares_isa",
                               "general_investment",
                               "residential_mortgage",
-                              "btl_mortgage"
+                              "btl_mortgage",
+                              "home",
+                              "rental",
+                              "car_finance",
+                              "buy_now_pay_later",
+                              "other_loan"
                             ],
                             "type": "string"
                           },
@@ -1194,21 +1263,6 @@
                       "balance": {
                         "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                         "type": "number"
-                      },
-                      "connectionId": {
-                        "anyOf": [
-                          {
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "createdAt": {
-                        "type": "string"
                       },
                       "creditLimit": {
                         "anyOf": [
@@ -1222,19 +1276,30 @@
                         ]
                       },
                       "currency": {
-                        "pattern": "^[A-Z]{3}$",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "pattern": "^[A-Z]{3}$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "fixedRateEndDate": {
                         "type": ["string", "null"]
                       },
-                      "id": {
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                        "type": "string"
-                      },
                       "interestRate": {
-                        "type": ["number", "null"]
+                        "anyOf": [
+                          {
+                            "maximum": 100,
+                            "minimum": 0,
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "isCurrent": {
                         "type": "boolean"
@@ -1251,15 +1316,27 @@
                         ]
                       },
                       "name": {
+                        "maxLength": 120,
+                        "minLength": 1,
                         "type": "string"
                       },
                       "ownership": {
-                        "default": "sole",
                         "enum": ["sole", "joint"],
                         "type": "string"
                       },
                       "promoZeroPercentUntil": {
                         "type": ["string", "null"]
+                      },
+                      "repaymentType": {
+                        "anyOf": [
+                          {
+                            "enum": ["repayment", "interest-only"],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "sharePercent": {
                         "anyOf": [
@@ -1271,8 +1348,7 @@
                           {
                             "type": "null"
                           }
-                        ],
-                        "default": null
+                        ]
                       },
                       "studentLoanPlan": {
                         "anyOf": [
@@ -1288,60 +1364,481 @@
                       "termMonths": {
                         "anyOf": [
                           {
-                            "maximum": 9007199254740991,
-                            "minimum": -9007199254740991,
+                            "maximum": 600,
+                            "minimum": 1,
                             "type": "integer"
                           },
                           {
                             "type": "null"
                           }
                         ]
-                      },
-                      "type": {
-                        "enum": [
-                          "Current",
-                          "Saving",
-                          "Mortgage",
-                          "Loan",
-                          "Credit Card",
-                          "Owed",
-                          "Investment",
-                          "Pension",
-                          "Property",
-                          "Student Loan",
-                          "Overdraft"
-                        ],
-                        "type": "string"
-                      },
-                      "updatedAt": {
-                        "type": "string"
                       }
                     },
-                    "required": [
-                      "id",
-                      "name",
-                      "type",
-                      "balance",
-                      "interestRate",
-                      "monthlyContribution",
-                      "termMonths",
-                      "fixedRateEndDate",
-                      "isCurrent",
-                      "currency",
-                      "studentLoanPlan",
-                      "ownership",
-                      "sharePercent",
-                      "connectionId",
-                      "createdAt",
-                      "updatedAt"
-                    ],
+                    "required": ["name", "balance"],
                     "type": "object"
                   },
-                  "type": "array"
+                  "property": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "balance": {
+                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                        "type": "number"
+                      },
+                      "name": {
+                        "maxLength": 120,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "ownership": {
+                        "enum": ["sole", "joint"],
+                        "type": "string"
+                      },
+                      "sharePercent": {
+                        "anyOf": [
+                          {
+                            "maximum": 100,
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["balance"],
+                    "type": "object"
+                  }
+                },
+                "required": ["mortgage", "property"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "mortgage": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "accountSubtype": {
+                          "anyOf": [
+                            {
+                              "enum": [
+                                "easy_access",
+                                "notice",
+                                "regular_saver",
+                                "fixed_term",
+                                "general_savings",
+                                "cash_isa",
+                                "lifetime_isa",
+                                "stocks_and_shares_isa",
+                                "general_investment",
+                                "residential_mortgage",
+                                "btl_mortgage",
+                                "home",
+                                "rental",
+                                "car_finance",
+                                "buy_now_pay_later",
+                                "other_loan"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "balance": {
+                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                          "type": "number"
+                        },
+                        "connectionId": {
+                          "anyOf": [
+                            {
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "creditLimit": {
+                          "anyOf": [
+                            {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "currency": {
+                          "pattern": "^[A-Z]{3}$",
+                          "type": "string"
+                        },
+                        "fixedRateEndDate": {
+                          "type": ["string", "null"]
+                        },
+                        "id": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        "interestRate": {
+                          "type": ["number", "null"]
+                        },
+                        "isCurrent": {
+                          "type": "boolean"
+                        },
+                        "linkedAccountId": {
+                          "anyOf": [
+                            {
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "monthlyContribution": {
+                          "anyOf": [
+                            {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "ownership": {
+                          "default": "sole",
+                          "enum": ["sole", "joint"],
+                          "type": "string"
+                        },
+                        "promoZeroPercentUntil": {
+                          "type": ["string", "null"]
+                        },
+                        "repaymentType": {
+                          "anyOf": [
+                            {
+                              "enum": ["repayment", "interest-only"],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "sharePercent": {
+                          "anyOf": [
+                            {
+                              "maximum": 100,
+                              "minimum": 1,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "default": null
+                        },
+                        "studentLoanPlan": {
+                          "anyOf": [
+                            {
+                              "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "termMonths": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "type": {
+                          "enum": [
+                            "Current",
+                            "Saving",
+                            "Mortgage",
+                            "Loan",
+                            "Credit Card",
+                            "Owed",
+                            "Investment",
+                            "Pension",
+                            "Property",
+                            "Student Loan",
+                            "Overdraft"
+                          ],
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "type",
+                        "balance",
+                        "interestRate",
+                        "monthlyContribution",
+                        "termMonths",
+                        "fixedRateEndDate",
+                        "isCurrent",
+                        "currency",
+                        "studentLoanPlan",
+                        "ownership",
+                        "sharePercent",
+                        "connectionId",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "type": "object"
+                    },
+                    "property": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "accountSubtype": {
+                          "anyOf": [
+                            {
+                              "enum": [
+                                "easy_access",
+                                "notice",
+                                "regular_saver",
+                                "fixed_term",
+                                "general_savings",
+                                "cash_isa",
+                                "lifetime_isa",
+                                "stocks_and_shares_isa",
+                                "general_investment",
+                                "residential_mortgage",
+                                "btl_mortgage",
+                                "home",
+                                "rental",
+                                "car_finance",
+                                "buy_now_pay_later",
+                                "other_loan"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "balance": {
+                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                          "type": "number"
+                        },
+                        "connectionId": {
+                          "anyOf": [
+                            {
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "creditLimit": {
+                          "anyOf": [
+                            {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "currency": {
+                          "pattern": "^[A-Z]{3}$",
+                          "type": "string"
+                        },
+                        "fixedRateEndDate": {
+                          "type": ["string", "null"]
+                        },
+                        "id": {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        "interestRate": {
+                          "type": ["number", "null"]
+                        },
+                        "isCurrent": {
+                          "type": "boolean"
+                        },
+                        "linkedAccountId": {
+                          "anyOf": [
+                            {
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "monthlyContribution": {
+                          "anyOf": [
+                            {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "ownership": {
+                          "default": "sole",
+                          "enum": ["sole", "joint"],
+                          "type": "string"
+                        },
+                        "promoZeroPercentUntil": {
+                          "type": ["string", "null"]
+                        },
+                        "repaymentType": {
+                          "anyOf": [
+                            {
+                              "enum": ["repayment", "interest-only"],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "sharePercent": {
+                          "anyOf": [
+                            {
+                              "maximum": 100,
+                              "minimum": 1,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "default": null
+                        },
+                        "studentLoanPlan": {
+                          "anyOf": [
+                            {
+                              "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "termMonths": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": -9007199254740991,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "type": {
+                          "enum": [
+                            "Current",
+                            "Saving",
+                            "Mortgage",
+                            "Loan",
+                            "Credit Card",
+                            "Owed",
+                            "Investment",
+                            "Pension",
+                            "Property",
+                            "Student Loan",
+                            "Overdraft"
+                          ],
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "type",
+                        "balance",
+                        "interestRate",
+                        "monthlyContribution",
+                        "termMonths",
+                        "fixedRateEndDate",
+                        "isCurrent",
+                        "currency",
+                        "studentLoanPlan",
+                        "ownership",
+                        "sharePercent",
+                        "connectionId",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["mortgage", "property"],
+                  "type": "object"
                 }
               }
             },
-            "description": "Success."
+            "description": "Success.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "description": "`true` when this is the stored response of an earlier request with the same Idempotency-Key.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "400": {
             "content": {
@@ -1373,6 +1870,16 @@
             },
             "description": "`forbidden` or `not_invited`: the account may not use this route."
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`conflict`: a request with the same Idempotency-Key is still in progress. Retry shortly."
+          },
           "413": {
             "content": {
               "application/json": {
@@ -1391,7 +1898,7 @@
                 }
               }
             },
-            "description": "`constraint_violation`: the data breaks a stored rule and was not saved."
+            "description": "`constraint_violation`: the data breaks a stored rule and was not saved. `idempotency_key_reused`: the Idempotency-Key was used with a different body."
           },
           "429": {
             "content": {
@@ -1579,7 +2086,12 @@
                             "stocks_and_shares_isa",
                             "general_investment",
                             "residential_mortgage",
-                            "btl_mortgage"
+                            "btl_mortgage",
+                            "home",
+                            "rental",
+                            "car_finance",
+                            "buy_now_pay_later",
+                            "other_loan"
                           ],
                           "type": "string"
                         },
@@ -1715,6 +2227,18 @@
                     "isCurrent": {
                       "type": "boolean"
                     },
+                    "linkedAccountId": {
+                      "anyOf": [
+                        {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "monthlyContribution": {
                       "anyOf": [
                         {
@@ -1736,6 +2260,17 @@
                     },
                     "promoZeroPercentUntil": {
                       "type": ["string", "null"]
+                    },
+                    "repaymentType": {
+                      "anyOf": [
+                        {
+                          "enum": ["repayment", "interest-only"],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "sharePercent": {
                       "anyOf": [
@@ -1947,7 +2482,12 @@
                           "stocks_and_shares_isa",
                           "general_investment",
                           "residential_mortgage",
-                          "btl_mortgage"
+                          "btl_mortgage",
+                          "home",
+                          "rental",
+                          "car_finance",
+                          "buy_now_pay_later",
+                          "other_loan"
                         ],
                         "type": "string"
                       },
@@ -2011,6 +2551,18 @@
                   "isCurrent": {
                     "type": "boolean"
                   },
+                  "linkedAccountId": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "monthlyContribution": {
                     "anyOf": [
                       {
@@ -2033,6 +2585,17 @@
                   },
                   "promoZeroPercentUntil": {
                     "type": ["string", "null"]
+                  },
+                  "repaymentType": {
+                    "anyOf": [
+                      {
+                        "enum": ["repayment", "interest-only"],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "sharePercent": {
                     "anyOf": [
@@ -2113,7 +2676,12 @@
                             "stocks_and_shares_isa",
                             "general_investment",
                             "residential_mortgage",
-                            "btl_mortgage"
+                            "btl_mortgage",
+                            "home",
+                            "rental",
+                            "car_finance",
+                            "buy_now_pay_later",
+                            "other_loan"
                           ],
                           "type": "string"
                         },
@@ -2170,6 +2738,18 @@
                     "isCurrent": {
                       "type": "boolean"
                     },
+                    "linkedAccountId": {
+                      "anyOf": [
+                        {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "monthlyContribution": {
                       "anyOf": [
                         {
@@ -2191,6 +2771,17 @@
                     },
                     "promoZeroPercentUntil": {
                       "type": ["string", "null"]
+                    },
+                    "repaymentType": {
+                      "anyOf": [
+                        {
+                          "enum": ["repayment", "interest-only"],
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "sharePercent": {
                       "anyOf": [
@@ -10469,6 +11060,94 @@
           }
         ],
         "tags": ["profile"]
+      }
+    },
+    "/v1/snapshots/check-ins": {
+      "get": {
+        "operationId": "snapshots.checkIns",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "latestCompletedMonth": {
+                      "anyOf": [
+                        {
+                          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["latestCompletedMonth"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`unauthorized`: missing or invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`forbidden` or `not_invited`: the account may not use this route."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": ["snapshots"]
       }
     },
     "/v1/snapshots/{month}": {

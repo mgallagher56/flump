@@ -150,6 +150,8 @@ flowchart LR
   f_balance_history -.-> s_context_pack
   f_check_in_done(["Whether a month's check-in was finished"])
   s_check_in --> f_check_in_done
+  s_onboarding --> f_check_in_done
+  f_check_in_done -.-> s_dashboard
   f_check_in_done -.-> s_export
   f_ownership_share(["Joint ownership and the user's share of an account"])
   s_accounts --> f_ownership_share
@@ -296,9 +298,21 @@ flowchart LR
   f_home_value -.-> s_dashboard
   f_home_value -.-> s_accounts
   f_property_kind(["Whether a property is the home or a rental"])
+  s_accounts --> f_property_kind
+  s_account_service --> f_property_kind
   f_property_kind -.-> s_picture
   f_property_kind -.-> s_mortgage
   f_property_kind -.-> s_account_service
+  f_mortgage_property_link(["Which property a mortgage is on"])
+  s_accounts --> f_mortgage_property_link
+  s_account_service --> f_mortgage_property_link
+  s_mortgage --> f_mortgage_property_link
+  f_mortgage_property_link -.-> s_picture
+  f_mortgage_property_link -.-> s_mortgage
+  f_repayment_type(["How a mortgage is repaid"])
+  s_accounts --> f_repayment_type
+  s_mortgage --> f_repayment_type
+  f_repayment_type -.-> s_mortgage
   f_buy_to_let_mortgage(["Buy-to-let mortgage balance, rate and type"])
   s_accounts --> f_buy_to_let_mortgage
   s_mortgage --> f_buy_to_let_mortgage

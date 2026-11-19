@@ -8,11 +8,23 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import SavingsContainer from "~/containers/savings/SavingsContainer";
+import { accountFieldsFromForm } from "~/features/accounts/accountFormBody";
 import { backendFetch, loadWorkspacePicture } from "~/services/backend-client.server";
 import { ifMatchFromForm, PROFILE_VERSION_FIELD, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
+
+/** Ownership and share, as the shared account form reads them: a sole account clears the share. */
+const ownershipFields = (formData: FormData) => {
+  const { ownership, sharePercent } = accountFieldsFromForm(formData);
+  return {
+    ...(ownership !== undefined ? { ownership } : {}),
+    ...(sharePercent !== undefined && !(ownership === "sole" && !formData.has("sharePercent"))
+      ? { sharePercent }
+      : {}),
+  };
+};
 
 export const meta: MetaFunction = () => [{ title: "Your savings | Flump" }];
 
@@ -33,24 +45,24 @@ export const action = async (args: ActionFunctionArgs) => {
       const interestRate = formData.get("interestRate");
       const monthlyContribution = formData.get("monthlyContribution");
 
+      const createBody = {
+        name,
+        type,
+        ...(typeof accountSubtype === "string" && accountSubtype !== "" ? { accountSubtype } : {}),
+        balance: balance ? roundTo2dp(Number(balance)) : 0,
+        interestRate:
+          interestRate !== null && interestRate !== "" ? roundTo2dp(Number(interestRate)) : null,
+        monthlyContribution:
+          monthlyContribution !== null && monthlyContribution !== ""
+            ? roundTo2dp(Number(monthlyContribution))
+            : null,
+        ...ownershipFields(formData),
+      };
       await backendFetch(`/accounts`, {
         schema: CreateAccountResponse,
         accessToken: token,
         method: "POST",
-        body: {
-          name,
-          type,
-          ...(typeof accountSubtype === "string" && accountSubtype !== ""
-            ? { accountSubtype }
-            : {}),
-          balance: balance ? roundTo2dp(Number(balance)) : 0,
-          interestRate:
-            interestRate !== null && interestRate !== "" ? roundTo2dp(Number(interestRate)) : null,
-          monthlyContribution:
-            monthlyContribution !== null && monthlyContribution !== ""
-              ? roundTo2dp(Number(monthlyContribution))
-              : null,
-        },
+        body: createBody,
       });
     } else if (intent === "updateSavingsAccount") {
       const name = formData.get("name");
@@ -66,9 +78,8 @@ export const action = async (args: ActionFunctionArgs) => {
       if (accountSubtype !== null && accountSubtype !== undefined) {
         updatePayload.accountSubtype = accountSubtype !== "" ? accountSubtype : null;
       }
-      // Sent only when a saved joint account is saved as an ISA, which is held in one name. The
-      // backend clears the share of a sole account, so no share is sent.
-      if (formData.get("ownership") === "sole") updatePayload.ownership = "sole";
+      // Sent only when the ownership or share changed (a joint account saved as an ISA is sole).
+      Object.assign(updatePayload, ownershipFields(formData));
       if (balance !== null && balance !== undefined)
         updatePayload.balance = roundTo2dp(Number(balance));
       if (interestRate !== null && interestRate !== undefined) {
