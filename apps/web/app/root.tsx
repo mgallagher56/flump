@@ -28,7 +28,7 @@ import { useRouteFocus } from "./hooks/useRouteFocus";
 import { useScrollRestoreAfterGrowth } from "./hooks/useScrollRestoreAfterGrowth";
 import type { UserProfile } from "./hooks/useUserProfile";
 import i18n from "./i18n";
-import { registerSavedDataReload, revalidateOnConflict } from "./services/conflict";
+import { registerSavedDataReload, revalidateRootData } from "./services/conflict";
 import { scrollRestorationKey } from "./utils/scrollRestorationKey";
 import "@repo/ui/fonts.css";
 import styles from "./index.css?url";
@@ -50,7 +50,7 @@ export const links = () => [
 export const middleware = [securityMiddleware];
 
 // A save refused with 412 reloads the profile too, so the next save sends its latest version.
-export const shouldRevalidate = revalidateOnConflict;
+export const shouldRevalidate = revalidateRootData;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = i18n.lng;

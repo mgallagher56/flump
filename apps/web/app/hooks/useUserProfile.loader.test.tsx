@@ -34,7 +34,11 @@ function backend(initial: Record<string, unknown>) {
         ...state.saved,
         ...(body.dismissed !== undefined
           ? { setupChecklistDismissed: body.dismissed }
-          : { setupChecklistCompletedSteps: body.completed ? [...steps, body.step] : steps }),
+          : {
+              setupChecklistCompletedSteps: body.completed
+                ? [...steps, body.step]
+                : steps.filter((s) => s !== body.step),
+            }),
         updatedAt: next,
       };
     } else {
@@ -102,6 +106,42 @@ describe("useUserProfile reads the root loader's saved profile (slice 8)", () =>
       await result.current.markChecklistStep("runway", true);
     });
     expect(api.fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("a step undone and redone before the reload lands sends both changes", async () => {
+    const api = backend({ updatedAt: V1, setupChecklistCompletedSteps: ["budget"] });
+    vi.stubGlobal("fetch", api.fetchMock);
+    const { result } = renderHook(() => useUserProfile(), {
+      wrapper: withRootLoader(() => ({ userProfile: api.state.saved })),
+    });
+    await act(async () => {
+      await Promise.all([
+        result.current.markChecklistStep("budget", false),
+        result.current.markChecklistStep("budget", true),
+      ]);
+    });
+    expect(api.bodies).toEqual([
+      { step: "budget", completed: false },
+      { step: "budget", completed: true },
+    ]);
+  });
+
+  it("a save made just before leaving the page can skip its own reload", async () => {
+    const api = backend({ updatedAt: V1, displayName: "Before" });
+    vi.stubGlobal("fetch", api.fetchMock);
+    let loads = 0;
+    const { result } = renderHook(() => useUserProfile(), {
+      wrapper: withRootLoader(() => {
+        loads += 1;
+        return { userProfile: api.state.saved };
+      }),
+    });
+    const before = loads;
+    await act(async () => {
+      await result.current.updateProfile({ displayName: "After" }, { reload: false });
+    });
+    expect(api.bodies).toEqual([{ displayName: "After" }]);
+    expect(loads).toBe(before);
   });
 
   it("stores the dismissed checklist on the profile and reloads it (decision 13)", async () => {

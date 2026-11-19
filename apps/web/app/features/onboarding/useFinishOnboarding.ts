@@ -240,7 +240,9 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
       }
 
       // Only now is onboarding complete; a failed seed leaves the flag false so the user stays here.
-      await updateProfile({ onboardingCompleted: true });
+      // No reload here: this page's loader would redirect to the Dashboard first. The navigation
+      // below loads every saved figure, the root's profile included (revalidateRootData).
+      await updateProfile({ onboardingCompleted: true }, { reload: false });
 
       clearOnboardingSeed();
       notify(SAVED_MESSAGE);

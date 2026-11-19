@@ -94,7 +94,10 @@ describe("useFinishOnboarding", () => {
     const { result } = setup();
     await act(() => result.current.finish());
     expect(result.current.error).toBeNull();
-    expect(updateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
+    expect(updateProfile).toHaveBeenLastCalledWith(
+      { onboardingCompleted: true },
+      { reload: false },
+    );
     expect(navigate).toHaveBeenCalledWith("/");
   });
 
@@ -104,7 +107,10 @@ describe("useFinishOnboarding", () => {
     const { result } = setup();
     await act(() => result.current.finish("budget"));
     expect(result.current.error).toBeNull();
-    expect(updateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
+    expect(updateProfile).toHaveBeenLastCalledWith(
+      { onboardingCompleted: true },
+      { reload: false },
+    );
     expect(navigate).toHaveBeenCalledWith("/app/budget?setup=common");
   });
 
