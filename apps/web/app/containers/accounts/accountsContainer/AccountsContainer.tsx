@@ -24,7 +24,12 @@ const RETURN_FOCUS_TO = firstShownElement([
  * and net worth once. No hero (P6) and no summary strip: the list is the summary.
  */
 const AccountsContainer: FC = () => {
-  const { accounts = [], accountDetails = [], picture } = useLoaderData<typeof loader>();
+  const {
+    accounts = [],
+    accountDetails = [],
+    userProfile = null,
+    picture,
+  } = useLoaderData<typeof loader>();
   // Before hydration the buttons are plain links (#701): "?add=1" and "?checkIn=1" open the add
   // dialog or the check-in on arrival, then the parameter is removed so a reload does not reopen.
   const [params, setParams] = useSearchParams();
