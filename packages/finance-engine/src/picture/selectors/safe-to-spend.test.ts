@@ -172,3 +172,75 @@ describe("selectSafeToSpend with only £0 suggested rows", () => {
     });
   });
 });
+
+describe("selectSafeToSpend: edges", () => {
+  it("is unknown for an unsupported tax year when the budget has no income", () => {
+    expect(
+      selectSafeToSpend(figureUnknown([], "unsupported-year"), [row({ amount: 500 })], empty),
+    ).toEqual({ status: "unknown", missing: [], reason: "unsupported-year" });
+  });
+
+  it("names the missing essentials too when the budget has neither income nor essentials", () => {
+    expect(
+      selectSafeToSpend(
+        figureUnknown(["annualSalary"], "not-set"),
+        [row({ amount: 40, isEssential: false })],
+        empty,
+      ),
+    ).toEqual({
+      status: "unknown",
+      missing: ["annualSalary", "budgetIncome", "budgetEssentials"],
+      reason: "not-set",
+    });
+  });
+
+  it("counts planned savings in the shortfall", () => {
+    const fig = selectSafeToSpend(
+      takeHome(1000),
+      [takeHomeLine(1000), row({ amount: 900 }), row({ category: "savings", amount: 300 })],
+      empty,
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    // 1,000 - 900 essentials - 300 savings = -200: 200 short.
+    expect(fig.value.monthlyShortfall).toBe(200);
+  });
+
+  it("has no shortfall when commitments use exactly all the income", () => {
+    const fig = selectSafeToSpend(
+      takeHome(1000),
+      [takeHomeLine(1000), row({ amount: 1000 })],
+      empty,
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    // 1,000 - 1,000 = 0: nothing left and nothing short (a plain 0, not -0).
+    expect(fig.value.monthlyShortfall).toBe(0);
+  });
+
+  it("leaves out the take-home's assumptions when the income is typed, not the take-home line", () => {
+    const fig = selectSafeToSpend(
+      takeHome(2600, ["Assuming no student loan."]),
+      [row({ amount: 2400, isIncome: true, category: "income" }), row({ amount: 1000 })],
+      empty,
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.provenance).toBe("derived");
+    expect(fig.assumptions).toBeUndefined();
+  });
+
+  it("does not note estimated minimums when the budgeted debt payment is the one counted", () => {
+    // The card has no saved minimum, so it is estimated at max(25, 2.5% x 3,000) = £75. The debt
+    // row of £400 is larger, so the £400 is the debt commitment and the estimate is not used.
+    const fig = selectSafeToSpend(
+      takeHome(2000),
+      [takeHomeLine(2000), row({ amount: 500 }), row({ category: "debt", amount: 400 })],
+      new PortfolioSnapshot([
+        { id: "c", name: "Card", type: "Credit Card", balance: 3000, interestRate: 20 },
+      ]),
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value.commitments.accountMinimums).toBe(75);
+    expect(fig.value.commitments.debtCommitment).toBe(400);
+    expect(fig.provenance).toBe("derived");
+    expect(fig.assumptions).toBeUndefined();
+  });
+});

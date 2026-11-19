@@ -116,3 +116,100 @@ describe("profileFromFacts", () => {
     expect(profileFactsFromProfile(profileFromFacts(facts))).toEqual(facts);
   });
 });
+
+describe("loadFinancialPicture: rows and the date it builds for", () => {
+  it("keeps the tax records the source returns", async () => {
+    const source = memorySource();
+    source.taxRecords = async () => [
+      {
+        id: "t1",
+        userId: "u",
+        type: "expense",
+        source: "rental",
+        category: "repairs",
+        name: "Boiler repair",
+        amount: 300,
+        frequency: "one-off",
+        date: "2026-06-01",
+        endDate: null,
+        notes: null,
+        receiptFilename: null,
+        receiptMimeType: null,
+        createdAt: "2026-06-01",
+        updatedAt: "2026-06-01",
+      },
+    ];
+    const loaded = await loadFinancialPicture(source, { asOf: AS_OF });
+    expect(loaded.rows.taxRecords.map((r) => r.id)).toEqual(["t1"]);
+  });
+
+  it("treats a source that returns nothing for a table as no rows", async () => {
+    const source = memorySource();
+    const nothing = async () => undefined as never;
+    source.accounts = nothing;
+    source.accountDetails = nothing;
+    source.budgetEntries = nothing;
+    source.taxRecords = nothing;
+    const loaded = await loadFinancialPicture(source, { asOf: AS_OF });
+    expect(loaded.rows).toMatchObject({
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [],
+      taxRecords: [],
+    });
+  });
+
+  it("builds the picture for the asOf date it is given, not today", async () => {
+    const source = memorySource();
+    source.accounts = async () => [
+      { id: "isa", name: "Cash ISA", type: "Saving", balance: 1000, monthlyContribution: 100 },
+    ];
+    // 10 May 2026: the tax year began on 6 April, and 6 May has started a second month, so
+    // £100 a month x 2 months = £200 of the ISA allowance used.
+    const loaded = await loadFinancialPicture(source, { asOf: new Date(2026, 4, 10, 12) });
+    expect(loaded.picture.isaAllowanceUsed).toBe(200);
+  });
+});
+
+describe("profileFromFacts: what it writes", () => {
+  const unanswered: ProfileFacts = {
+    annualSalary: null,
+    employmentType: null,
+    taxRegion: null,
+    studentLoanPlans: null,
+    pensionPercent: null,
+    isSalarySacrifice: null,
+    monthlyTakeHome: null,
+    housingStatus: null,
+    monthlyHousingCost: null,
+    mortgageType: null,
+    propertyOwnershipShare: null,
+  };
+
+  it("writes no field for an unanswered fact", () => {
+    expect(profileFromFacts(unanswered)).toEqual({});
+  });
+
+  it("writes only the basis when there are no facts", () => {
+    expect(profileFromFacts(null, { countProperty: true, countStudentLoan: false })).toEqual({
+      netWorthCountsProperty: true,
+      netWorthCountsStudentLoan: false,
+    });
+  });
+
+  it("round-trips a saved take-home and a share of the home", () => {
+    const facts: ProfileFacts = {
+      ...unanswered,
+      monthlyTakeHome: 2400,
+      housingStatus: "mortgage",
+      propertyOwnershipShare: 50,
+    };
+    const profile = profileFromFacts(facts);
+    expect(profile).toEqual({
+      monthlyTakeHome: 2400,
+      housingStatus: "mortgage",
+      propertyOwnershipShare: 50,
+    });
+    expect(profileFactsFromProfile(profile)).toEqual(facts);
+  });
+});

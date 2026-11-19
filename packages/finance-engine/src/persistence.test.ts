@@ -3,6 +3,7 @@ import {
   BrowserCookieSeedAdapter,
   BrowserStorageDriver,
   clearOnboardingSeed,
+  getStorageDriver,
   hasSessionPresenceCookie,
   InMemoryProfileAdapter,
   InMemoryStorageDriver,
@@ -13,9 +14,11 @@ import {
   readAndClearOnboardingSeed,
   readOnboardingSeed,
   readOnboardingSeedFromHeader,
+  SESSION_PRESENCE_COOKIE,
   setSessionPresenceCookie,
   setStorageDriver,
 } from "./persistence.js";
+import { decodeSeedPayload, encodeSeedPayload } from "./profile.js";
 import type { FinancialBaseline, OnboardingSeedPayload } from "./types.js";
 
 describe("Profile Persistence", () => {
@@ -214,5 +217,196 @@ describe("Profile Persistence", () => {
     expect(adapter.getSeed()).toEqual(seed);
     adapter.clearSeed();
     expect(adapter.getSeed()).toBeNull();
+  });
+});
+
+describe("storage keys", () => {
+  it("names the seed key and the session presence cookie that the web app and backend read", () => {
+    expect(ONBOARDING_SEED_STORAGE_KEY).toBe("flump_onboarding_seed");
+    expect(SESSION_PRESENCE_COOKIE).toBe("flump_has_session");
+  });
+});
+
+describe("InMemoryStorageDriver", () => {
+  it("stores, reads and removes items and cookies separately", () => {
+    const driver = new InMemoryStorageDriver();
+    expect(driver.getItem("k")).toBeNull();
+    expect(driver.getCookie("k")).toBeNull();
+
+    driver.setItem("k", "item");
+    driver.setCookie("k", "cookie");
+    expect(driver.getItem("k")).toBe("item");
+    expect(driver.getCookie("k")).toBe("cookie");
+
+    driver.removeItem("k");
+    expect(driver.getItem("k")).toBeNull();
+    expect(driver.getCookie("k")).toBe("cookie");
+    driver.removeCookie("k");
+    expect(driver.getCookie("k")).toBeNull();
+  });
+
+  it("clear empties both items and cookies", () => {
+    const driver = new InMemoryStorageDriver();
+    driver.setItem("a", "1");
+    driver.setCookie("b", "2");
+    driver.clear();
+    expect(driver.getItem("a")).toBeNull();
+    expect(driver.getCookie("b")).toBeNull();
+  });
+});
+
+describe("BrowserStorageDriver cookies", () => {
+  let writes: string[] = [];
+
+  beforeEach(() => {
+    writes = [];
+    (globalThis as unknown as Record<string, unknown>).document = {
+      get cookie() {
+        return "";
+      },
+      set cookie(val: string) {
+        writes.push(val);
+      },
+    };
+  });
+
+  afterEach(() => {
+    delete (globalThis as unknown as Record<string, unknown>).window;
+    delete (globalThis as unknown as Record<string, unknown>).document;
+  });
+
+  it("writes a host-only, lax, path-wide cookie with the value URL-encoded", () => {
+    new BrowserStorageDriver().setCookie("seed", "a b", 60);
+    expect(writes).toEqual(["seed=a%20b; path=/; max-age=60; SameSite=Lax"]);
+  });
+
+  it("adds the domain attribute only when a domain is given", () => {
+    const driver = new BrowserStorageDriver();
+    driver.setCookie("seed", "v", 60, "example.test");
+    driver.removeCookie("seed", "example.test");
+    expect(writes).toEqual([
+      "seed=v; path=/; max-age=60; SameSite=Lax; domain=example.test",
+      "seed=; path=/; max-age=0; SameSite=Lax; domain=example.test",
+    ]);
+  });
+
+  it("removes a cookie by expiring it now", () => {
+    new BrowserStorageDriver().removeCookie("seed");
+    expect(writes).toEqual(["seed=; path=/; max-age=0; SameSite=Lax"]);
+  });
+
+  it("adds Secure on https pages and leaves it off on http", () => {
+    const driver = new BrowserStorageDriver();
+    (globalThis as unknown as Record<string, unknown>).window = { location: { protocol: "http:" } };
+    driver.setCookie("seed", "v", 60);
+    (globalThis as unknown as Record<string, unknown>).window = {
+      location: { protocol: "https:" },
+    };
+    driver.setCookie("seed", "v", 60);
+    expect(writes).toEqual([
+      "seed=v; path=/; max-age=60; SameSite=Lax",
+      "seed=v; path=/; max-age=60; SameSite=Lax; Secure",
+    ]);
+  });
+
+  it("leaves Secure off when the page location cannot be read", () => {
+    (globalThis as unknown as Record<string, unknown>).window = {
+      get location() {
+        throw new Error("blocked");
+      },
+    };
+    new BrowserStorageDriver().setCookie("seed", "v", 60);
+    expect(writes).toEqual(["seed=v; path=/; max-age=60; SameSite=Lax"]);
+  });
+
+  it("reads no cookie, without throwing, where there is no document", () => {
+    delete (globalThis as unknown as Record<string, unknown>).document;
+    expect(new BrowserStorageDriver().getCookie("seed")).toBeNull();
+  });
+});
+
+describe("storage driver selection", () => {
+  afterEach(() => {
+    setStorageDriver(null);
+    delete (globalThis as unknown as Record<string, unknown>).window;
+    delete (globalThis as unknown as Record<string, unknown>).document;
+  });
+
+  it("uses the in-memory driver where there is no window and no document", () => {
+    setStorageDriver(null);
+    expect(getStorageDriver()).toBeInstanceOf(InMemoryStorageDriver);
+  });
+
+  it("uses the browser driver when only a window exists", () => {
+    (globalThis as unknown as Record<string, unknown>).window = {};
+    expect(getStorageDriver()).toBeInstanceOf(BrowserStorageDriver);
+  });
+
+  it("uses the browser driver when only a document exists", () => {
+    (globalThis as unknown as Record<string, unknown>).document = { cookie: "" };
+    expect(getStorageDriver()).toBeInstanceOf(BrowserStorageDriver);
+  });
+
+  it("writes the seed through a driver that was set", () => {
+    const driver = new InMemoryStorageDriver();
+    setStorageDriver(driver);
+    expect(getStorageDriver()).toBe(driver);
+    persistOnboardingSeed({ salary: 40000 });
+    expect(driver.getItem(ONBOARDING_SEED_STORAGE_KEY)).not.toBeNull();
+    expect(driver.getCookie(ONBOARDING_SEED_STORAGE_KEY)).not.toBeNull();
+  });
+});
+
+describe("readOnboardingSeed sources", () => {
+  let driver: InMemoryStorageDriver;
+
+  beforeEach(() => {
+    driver = new InMemoryStorageDriver();
+    setStorageDriver(driver);
+  });
+
+  afterEach(() => {
+    setStorageDriver(null);
+  });
+
+  it("prefers the cookie seed over the localStorage seed", () => {
+    driver.setCookie(ONBOARDING_SEED_STORAGE_KEY, encodeSeedPayload({ salary: 1 }));
+    driver.setItem(ONBOARDING_SEED_STORAGE_KEY, encodeSeedPayload({ salary: 2 }));
+    expect(readOnboardingSeed()).toEqual({ salary: 1 });
+  });
+
+  it("falls back to localStorage when the cookie cannot be decoded", () => {
+    expect(decodeSeedPayload("not-a-seed")).toBeNull();
+    driver.setCookie(ONBOARDING_SEED_STORAGE_KEY, "not-a-seed");
+    driver.setItem(ONBOARDING_SEED_STORAGE_KEY, encodeSeedPayload({ salary: 2 }));
+    expect(readOnboardingSeed()).toEqual({ salary: 2 });
+  });
+
+  it("reads the localStorage seed when there is no cookie", () => {
+    driver.setItem(ONBOARDING_SEED_STORAGE_KEY, encodeSeedPayload({ salary: 3 }));
+    expect(readOnboardingSeed()).toEqual({ salary: 3 });
+  });
+});
+
+describe("readOnboardingSeedFromHeader", () => {
+  it("returns null, without throwing, for a seed cookie with broken percent-encoding", () => {
+    expect(readOnboardingSeedFromHeader(`${ONBOARDING_SEED_STORAGE_KEY}=%E0%A4%A`)).toBeNull();
+  });
+});
+
+describe("BrowserStorageDriver localStorage", () => {
+  afterEach(() => {
+    delete (globalThis as unknown as Record<string, unknown>).window;
+  });
+
+  it("reads null when localStorage throws, as in some private browsing modes", () => {
+    (globalThis as unknown as Record<string, unknown>).window = {
+      localStorage: {
+        getItem: () => {
+          throw new Error("SecurityError");
+        },
+      },
+    };
+    expect(new BrowserStorageDriver().getItem("k")).toBeNull();
   });
 });

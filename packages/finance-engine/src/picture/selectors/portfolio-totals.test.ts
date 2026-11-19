@@ -77,3 +77,26 @@ describe("selectDebtTotals", () => {
     expect(debt.monthlyMinimums).toBeGreaterThan(60);
   });
 });
+
+describe("selectDebtTotals: minimums", () => {
+  it("adds stored and estimated minimums to the penny", () => {
+    // Card: stored £60. Loan: none stored, so max(25, 2.5% x 4,000) = £100. Total £160.
+    expect(selectDebtTotals(snapshot).monthlyMinimums).toBe(160);
+  });
+
+  it("is not estimated when every debt has a stored minimum", () => {
+    const stored = new PortfolioSnapshot([
+      {
+        id: "card",
+        name: "Card",
+        type: "Credit Card",
+        balance: 1200,
+        interestRate: 22,
+        monthlyContribution: 60.25,
+      },
+    ]);
+    const debt = selectDebtTotals(stored);
+    expect(debt.minimumsEstimated).toBe(false);
+    expect(debt.monthlyMinimums).toBe(60.25);
+  });
+});

@@ -2,7 +2,7 @@
 
 Mutation testing makes one small fault at a time in the code (a `>` becomes `>=`, a `-` becomes `+`) and runs the tests. If no test fails, the fault "survived": the tests would not notice that mistake. The tool is [StrykerJS](https://stryker-mutator.io/). The plan is [E41](../audit/plans/E41-mutation-testing-and-test-speed-plan.md).
 
-Status: slice M1. The whole of `packages/finance-engine` is mutation-tested once a week in CI, and its score is checked against a floor. Pull requests that change engine source get an advisory list of faults no test caught. No test has been written to kill a survivor yet: that is M2. Other packages come in M3 to M5.
+Status: slice M2, part A. The whole of `packages/finance-engine` is mutation-tested once a week in CI, and its score is checked against a floor. Pull requests that change engine source get an advisory list of faults no test caught. M2 part A added kill tests for every engine file outside tax and pay and recorded the faults left over in the [triage ledger](./mutation-triage.md). Part B does the tax and pay files. Other packages come in M3 to M5.
 
 ## Run it locally
 
@@ -94,6 +94,28 @@ Survivors by function, with line numbers in `packages/finance-engine/src/mortgag
 | Total                              | 220      | 10          | 115 lines                                                                                                                                                                                                                  |
 
 These are not triaged. Some will be equivalent (the changed code behaves the same for every input), and some may be faults TypeScript would reject, because no type checker runs (see below). Triage and kill tests are M2.
+
+## What M2 part A measured (19 November 2026)
+
+Tests were written for the engine files outside tax and pay: 46 files, from `health-score.ts` (35% before) to the `picture` selectors. Every expected figure is worked by hand in a comment beside it (AGENTS.md section 14). Faults that no honest test can catch are in the [triage ledger](./mutation-triage.md) with a reason. The property tests in `retirement.test.ts` and `uk-tax.property.test.ts` now have a fixed seed, so their results repeat.
+
+Both runs were forced (no saved results), on branch `e41-m2-kill-tests-a`.
+
+| Figure                                      | Before (M1 laptop) | Laptop, one run | CI, 8 shards (run 44583684783) |
+| ------------------------------------------- | ------------------ | --------------- | ------------------------------ |
+| Faults                                      | 11,863             | 11,918          | 11,916                         |
+| Killed                                      | 8,208              | 10,338          | 10,305                         |
+| Timed out (counted as caught)               | 66                 | 52              | 265                            |
+| Survived                                    | 3,092              | 1,342           | 1,162                          |
+| No coverage                                 | 470                | 167             | 167                            |
+| **Stryker's score**                         | **69.91%**         | **87.32%**      | **88.83%**                     |
+| Score without time-limit kills and timeouts | not measured       | **86.07%**      | 86.60%                         |
+| Stryker time                                | 66 min             | 65 min          | 20 min for the whole workflow  |
+
+- 97 faults on the laptop were "killed" only by a test's own time limit: the 5,000 ms sweep in `uk-tax-year.property.test.ts` and the 250 ms curve in `uk-what-if.property.test.ts` failed for being slow, not for a wrong figure. All are in tax files (80 in `uk-tax-thresholds.ts`). CI had none. They are not counted as caught.
+- CI timed out 265 faults against 52 on the laptop; 109 of CI's are in `tax-rules.ts`, where the laptop shows the same faults as survivors. Part B triages them.
+- The floor. `scripts/mutation-baseline.json` sets the engine's floor at **85%**: floor(86.07) - 1, from the laptop score with time-limit kills and timeouts left out. It is the lowest honest figure, so a later run that times out fewer faults does not fail with no code change.
+- After part A, 1,466 faults are not caught on the laptop (survived or no coverage; this count includes the two housing files re-measured after their last tests). 435 are in the files part A covered, and each has a row in the ledger (264 rows, as one row may cover several faults on a line). The other 1,031 are in the tax and pay files, for part B.
 
 ## What M1 measured on the whole engine
 
