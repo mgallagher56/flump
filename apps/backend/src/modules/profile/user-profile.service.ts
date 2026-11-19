@@ -1,6 +1,7 @@
 import {
   MAX_BUDGET_CATEGORY_NAME_LENGTH,
   MAX_CUSTOM_BUDGET_CATEGORIES,
+  type UpdateChecklistRequest,
   type UpdateProfileRequest,
 } from "@flump/api-contract";
 import {
@@ -462,10 +463,13 @@ export class UserProfileService implements ProfileLifecycle {
     return { recorded };
   }
 
+  /**
+   * Sets one named step done or not done, or records that the person closed the checklist
+   * (decision 13). Unconditional by contract: each change names exactly what it sets.
+   */
   async updateChecklist(
     userId: string,
-    step: string,
-    completed: boolean,
+    change: UpdateChecklistRequest,
     email?: string,
   ): Promise<ProfileView> {
     const profile = await this.findOrCreateProfile(userId, {
@@ -492,6 +496,15 @@ export class UserProfileService implements ProfileLifecycle {
       onboardingCompleted: false,
     });
 
+    if (change.dismissed !== undefined) {
+      profile.setupChecklistDismissed = change.dismissed;
+      const saved = await this.userProfileRepository.save(profile);
+      return { ...this.formatProfile(saved), email: email || null };
+    }
+
+    // The contract requires both when `dismissed` is absent.
+    const step = change.step ?? "";
+    const completed = change.completed === true;
     const steps = Array.isArray(profile.setupChecklistCompletedSteps)
       ? [...profile.setupChecklistCompletedSteps]
       : [];

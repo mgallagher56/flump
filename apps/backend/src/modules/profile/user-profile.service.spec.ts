@@ -149,6 +149,17 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.profile.annualSalary).toBeNull();
   });
 
+  it("a reset shows the setup checklist again (decision 13)", async () => {
+    mockUserProfileRepo.findOne.mockResolvedValueOnce({
+      userId: "user-123",
+      setupChecklistCompletedSteps: ["budget"],
+      setupChecklistDismissed: true,
+    });
+    const result = await service.resetFinancialData("user-123");
+    expect(result.profile.setupChecklistDismissed).toBe(false);
+    expect(result.profile.setupChecklistCompletedSteps).toEqual([]);
+  });
+
   it("clears this profile's migration before-images on reset, so no rollback restores them", async () => {
     // Slice 6 security review: the before-images hang off the profile row, which a reset keeps.
     mockUserProfileRepo.findOne.mockResolvedValueOnce({ id: "profile-9", userId: "user-123" });
@@ -330,7 +341,7 @@ describe("UserProfileService (Deep Module)", () => {
     it("updateChecklist creates a new profile with the pension answers not set", async () => {
       mockUserProfileRepo.findOne.mockResolvedValue(null);
 
-      await service.updateChecklist("user-123", "profile", true);
+      await service.updateChecklist("user-123", { step: "profile", completed: true });
 
       expect(mockUserProfileRepo.create).toHaveBeenCalledWith(expect.objectContaining(UNANSWERED));
     });
@@ -543,7 +554,10 @@ describe("UserProfileService (Deep Module)", () => {
         .mockRejectedValueOnce(uniqueViolation())
         .mockImplementationOnce((entity: Record<string, unknown>) => Promise.resolve(entity));
 
-      const result = await service.updateChecklist("user-123", "profile", true);
+      const result = await service.updateChecklist("user-123", {
+        step: "profile",
+        completed: true,
+      });
 
       expect(result.setupChecklistCompletedSteps).toEqual(["profile"]);
     });

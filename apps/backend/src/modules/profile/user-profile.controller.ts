@@ -279,11 +279,6 @@ export class UserProfileController {
     @Req() req: AuthenticatedRequest,
     @Body() body: UpdateChecklistRequest,
   ): Promise<ProfileView> {
-    return this.userProfileService.updateChecklist(
-      req.user.id,
-      body.step,
-      body.completed,
-      req.user?.email,
-    );
+    return this.userProfileService.updateChecklist(req.user.id, body, req.user?.email);
   }
 }

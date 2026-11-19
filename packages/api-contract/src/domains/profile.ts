@@ -108,10 +108,23 @@ export const UpdateProfileRequest = z.strictObject({
 });
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
 
-export const UpdateChecklistRequest = z.strictObject({
-  step: z.string().min(1).max(64),
-  completed: z.boolean(),
-});
+/**
+ * PATCH /user-profile/checklist: set one named step done or not done, or record that the person
+ * closed the checklist (decision 13: stored on the profile, not in the browser).
+ */
+export const UpdateChecklistRequest = z
+  .strictObject({
+    step: z.string().min(1).max(64).optional(),
+    completed: z.boolean().optional(),
+    dismissed: z.boolean().optional(),
+  })
+  .refine(
+    (body) =>
+      body.dismissed !== undefined
+        ? body.step === undefined && body.completed === undefined
+        : body.step !== undefined && body.completed !== undefined,
+    { message: "Send a step and whether it is done, or whether the checklist is dismissed." },
+  );
 export type UpdateChecklistRequest = z.infer<typeof UpdateChecklistRequest>;
 
 // --- Responses (E21) ---
@@ -161,6 +174,8 @@ export const UserProfileDto = z.strictObject({
   savingsAllocationMode: z.enum(["total", "per_account"]),
   savingsDefaultInterestRate: z.number().finite(),
   setupChecklistCompletedSteps: z.array(z.string()),
+  /** The person closed the setup checklist (decision 13); a reset clears it. */
+  setupChecklistDismissed: z.boolean(),
   customBudgetCategories: z.array(z.string()),
   enabledPages: z.array(z.string()),
   dashboardWidgets: z.array(z.string()),
@@ -324,6 +339,7 @@ export const AccountExportProfile = z.strictObject({
   savingsAllocationMode: z.string(),
   savingsDefaultInterestRate: NullableNumber,
   setupChecklistCompletedSteps: TextList,
+  setupChecklistDismissed: z.boolean(),
   customBudgetCategories: TextList,
   enabledPages: TextList,
   dashboardWidgets: TextList,

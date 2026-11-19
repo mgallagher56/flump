@@ -173,6 +173,7 @@ export function formatProfileRow(profile: UserProfile) {
     setupChecklistCompletedSteps: Array.isArray(profile.setupChecklistCompletedSteps)
       ? profile.setupChecklistCompletedSteps
       : [],
+    setupChecklistDismissed: Boolean(profile.setupChecklistDismissed),
     enabledPages: Array.isArray(profile.enabledPages)
       ? withoutRetiredModules(profile.enabledPages)
       : ["accounts", "budget", "savings", "pension", "mortgage"],
@@ -268,6 +269,7 @@ export function clearFinancialProfileFields(profile: UserProfile): void {
   profile.monthlyHousingCost = null;
   profile.monthlyOtherOutgoings = null;
   profile.setupChecklistCompletedSteps = [];
+  profile.setupChecklistDismissed = false;
   profile.hasResetFinancialData = true;
   profile.onboardingCompleted = false;
 }
@@ -298,6 +300,7 @@ export const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> =>
   savingsAllocationMode: "per_account",
   savingsDefaultInterestRate: 5.0,
   setupChecklistCompletedSteps: [],
+  setupChecklistDismissed: false,
   onboardingCompleted: false,
   netWorthCountsProperty: true,
   netWorthCountsStudentLoan: false,

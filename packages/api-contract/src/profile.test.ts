@@ -102,6 +102,15 @@ describe("UpdateChecklistRequest", () => {
       false,
     );
   });
+
+  it("accepts a dismissal on its own, never mixed with a step (decision 13)", () => {
+    expect(UpdateChecklistRequest.safeParse({ dismissed: true }).success).toBe(true);
+    expect(UpdateChecklistRequest.safeParse({ dismissed: true, step: "budget" }).success).toBe(
+      false,
+    );
+    expect(UpdateChecklistRequest.safeParse({ step: "budget" }).success).toBe(false);
+    expect(UpdateChecklistRequest.safeParse({}).success).toBe(false);
+  });
 });
 
 describe("DeleteUserRequest and DeleteUserResponse (BE-04)", () => {

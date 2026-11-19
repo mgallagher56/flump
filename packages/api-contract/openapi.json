@@ -13657,6 +13657,9 @@
                       },
                       "type": "array"
                     },
+                    "setupChecklistDismissed": {
+                      "type": "boolean"
+                    },
                     "studentLoanPlans": {
                       "anyOf": [
                         {
@@ -13725,6 +13728,7 @@
                     "savingsAllocationMode",
                     "savingsDefaultInterestRate",
                     "setupChecklistCompletedSteps",
+                    "setupChecklistDismissed",
                     "customBudgetCategories",
                     "enabledPages",
                     "dashboardWidgets",
@@ -14523,6 +14527,9 @@
                       },
                       "type": "array"
                     },
+                    "setupChecklistDismissed": {
+                      "type": "boolean"
+                    },
                     "studentLoanPlans": {
                       "anyOf": [
                         {
@@ -14591,6 +14598,7 @@
                     "savingsAllocationMode",
                     "savingsDefaultInterestRate",
                     "setupChecklistCompletedSteps",
+                    "setupChecklistDismissed",
                     "customBudgetCategories",
                     "enabledPages",
                     "dashboardWidgets",
@@ -14736,13 +14744,15 @@
                   "completed": {
                     "type": "boolean"
                   },
+                  "dismissed": {
+                    "type": "boolean"
+                  },
                   "step": {
                     "maxLength": 64,
                     "minLength": 1,
                     "type": "string"
                   }
                 },
-                "required": ["step", "completed"],
                 "type": "object"
               }
             }
@@ -15050,6 +15060,9 @@
                       },
                       "type": "array"
                     },
+                    "setupChecklistDismissed": {
+                      "type": "boolean"
+                    },
                     "studentLoanPlans": {
                       "anyOf": [
                         {
@@ -15118,6 +15131,7 @@
                     "savingsAllocationMode",
                     "savingsDefaultInterestRate",
                     "setupChecklistCompletedSteps",
+                    "setupChecklistDismissed",
                     "customBudgetCategories",
                     "enabledPages",
                     "dashboardWidgets",
@@ -15693,6 +15707,9 @@
                           },
                           "type": "array"
                         },
+                        "setupChecklistDismissed": {
+                          "type": "boolean"
+                        },
                         "studentLoanPlans": {
                           "anyOf": [
                             {
@@ -15761,6 +15778,7 @@
                         "savingsAllocationMode",
                         "savingsDefaultInterestRate",
                         "setupChecklistCompletedSteps",
+                        "setupChecklistDismissed",
                         "customBudgetCategories",
                         "enabledPages",
                         "dashboardWidgets",
