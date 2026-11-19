@@ -1,14 +1,15 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
 import { applyPersona } from "../../support/personas";
-import { api, entryNamed, kpiCard } from "./budget-links.helpers";
+import { api, entryNamed, leftOver } from "./budget-links.helpers";
 
 test.use({ storageState: AUTH_STATE });
 
 // L57 (JO-8, audit slice 5): a shared rent counts at its share. The saved rent is the whole rent;
-// the linked rent line says it is joint and the person's share, and the budget and Retirement both
-// count that share. Named L14b so it runs among the renter specs: no extra persona switch.
-test("L57 a joint rent at 50% counts at half on Budget and Retirement", async ({ page }) => {
+// the linked rent line says it is joint and the person's share, and every budget figure counts
+// that share (Retirement too: engine test in retirement-input.test.ts; this persona has no saved
+// plan to show it). Named L14b so it runs among the renter specs: no extra persona switch.
+test("L57 a joint rent at 50% counts at half on Budget and the Dashboard", async ({ page }) => {
   await page.goto("/app");
   await applyPersona(page, "renter");
 
@@ -25,10 +26,11 @@ test("L57 a joint rent at 50% counts at half on Budget and Retirement", async ({
     // Budget: the renter's saved £950 at 50% is £475.
     await page.goto("/app/budget");
     await expect(page.getByTestId("budget-category-housing")).toContainText("£475");
-
-    // Retirement: the same £475 a month, £5,700 a year in today's prices.
-    await page.goto("/app/retirement");
-    await expect(kpiCard(page, "Housing in retirement")).toContainText("£5,700");
+    // Left over: the renter's £125 with £950 rent becomes £125 + 475 = £600 at half the rent.
+    const budgetLeftOver = await leftOver(page);
+    expect(budgetLeftOver).toBe(600);
+    await page.goto("/app");
+    expect(await leftOver(page)).toBe(600);
   } finally {
     await api(page, `/budget-entries/${row.id}`, "PATCH", {
       linkKind: null,

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
 import { applyPersona } from "../../support/personas";
-import { accountNamed, api, entryNamed, pounds } from "./budget-links.helpers";
+import { accountNamed, api, entryNamed, leftOver } from "./budget-links.helpers";
 
 test.use({ storageState: AUTH_STATE });
 
@@ -16,33 +16,29 @@ test("L13 a mortgage payment saved on the account reaches the linked housing lin
 
   const mortgage = await accountNamed(page, "Residential mortgage");
   const row = await entryNamed(page, "Mortgage payment");
-  const before = { monthlyContribution: mortgage.monthlyContribution ?? null };
+  const saved = { monthlyContribution: mortgage.monthlyContribution ?? null };
 
   try {
     await api(page, `/budget-entries/${row.id}`, "PATCH", { linkKind: "housing", amount: 0 });
     await page.goto("/app/budget");
     await expect(page.getByTestId("budget-category-housing")).toContainText("£1,250");
-    const leftOver = pounds(
-      await page.locator('[data-figure="budget.surplus"]').first().textContent(),
-    );
+    const before = await leftOver(page);
 
     // The payment changes on the mortgage account only: £1,250 to £1,400.
     await api(page, `/accounts/${mortgage.id}`, "PATCH", { monthlyContribution: 1400 });
 
     await page.reload();
     await expect(page.getByTestId("budget-category-housing")).toContainText("£1,400");
-    // Left over falls by 1,400 - 1,250 = £150.
-    const after = pounds(
-      await page.locator('[data-figure="budget.surplus"]').first().textContent(),
-    );
-    expect(after).toBe(leftOver - 150);
+    // Left over falls by 1,400 - 1,250 = £150 (homeowner: £135 to £15 short).
+    const after = await leftOver(page);
+    expect(after).toBe(before - 150);
 
+    // The Dashboard shows the same left over. A shortfall shows there with a minus sign or as
+    // short, so the amounts are compared.
     await page.goto("/app");
-    expect(pounds(await page.locator('[data-figure="budget.surplus"]').first().textContent())).toBe(
-      after,
-    );
+    expect(Math.abs(await leftOver(page))).toBe(Math.abs(after));
   } finally {
-    await api(page, `/accounts/${mortgage.id}`, "PATCH", before);
+    await api(page, `/accounts/${mortgage.id}`, "PATCH", saved);
     await api(page, `/budget-entries/${row.id}`, "PATCH", { linkKind: null, amount: row.amount });
   }
 });

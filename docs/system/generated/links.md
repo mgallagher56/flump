@@ -6,10 +6,10 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 | Verdict                                   | Count |
 | ----------------------------------------- | ----- |
-| Holds                                     | 38    |
+| Holds                                     | 41    |
 | Holds with a manual step or a delay       | 6     |
-| Broken                                    | 16    |
-| Duplicated (two stores that can disagree) | 13    |
+| Broken                                    | 14    |
+| Duplicated (two stores that can disagree) | 12    |
 | Not checked                               | 0     |
 
 ## A. Accounts and balances
@@ -29,20 +29,20 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 ## B. Home and mortgage
 
-| Id  | Statement                                                                                                                                                                               | Verdict                                   | Checked in | Findings   |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ---------- |
-| L08 | A mortgage added in Accounts appears on the Mortgage page with the same balance, rate, term, payment and fix end date.                                                                  | Holds                                     | browser    | SD-8       |
-| L09 | Mortgage details edited on the Mortgage page are the details on Accounts and in debt totals and net worth.                                                                              | Holds                                     | browser    | none       |
-| L10 | A home value entered with the mortgage in Accounts is the home value on the Mortgage page, in equity, loan to value, net worth and the Dashboard.                                       | Holds                                     | browser    | none       |
-| L11 | A home value edited on the Mortgage page is the Property account on Accounts.                                                                                                           | Holds                                     | code       | none       |
-| L12 | Equity is the same figure wherever it is shown.                                                                                                                                         | Holds                                     | code       | none       |
-| L13 | The mortgage payment saved on the mortgage account is the housing cost in housing details, the budget's housing row, the commitments in safe to spend, and the retirement housing cost. | Broken                                    | browser    | HM-1, BU-5 |
-| L14 | Changing rent in housing details changes the budget's housing row, essentials, Breathing room, safe to spend and the retirement housing cost.                                           | Duplicated (two stores that can disagree) | code       | HM-2, BU-4 |
-| L15 | A fix end date saved on the mortgage shows wherever fix end is shown.                                                                                                                   | Holds                                     | code       | none       |
-| L16 | Housing status and the has-a-mortgage flag on the profile agree with whether a mortgage account exists.                                                                                 | Broken                                    | code       | HM-6       |
-| L17 | Mortgage type (repayment or interest only) has one store and one place to change it.                                                                                                    | Holds                                     | code       | none       |
-| L18 | A property and its mortgage are linked. The mortgage's share is copied to the property when the pair is first set up, and either may then hold its own share (decision 14 option B).    | Holds                                     | browser    | HM-7, JO-6 |
-| L71 | Whether a property is the home or a rental is a saved choice, not a guess from its name.                                                                                                | Holds                                     | browser    | HM-3, DB-6 |
+| Id  | Statement                                                                                                                                                                               | Verdict | Checked in | Findings   |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------- |
+| L08 | A mortgage added in Accounts appears on the Mortgage page with the same balance, rate, term, payment and fix end date.                                                                  | Holds   | browser    | SD-8       |
+| L09 | Mortgage details edited on the Mortgage page are the details on Accounts and in debt totals and net worth.                                                                              | Holds   | browser    | none       |
+| L10 | A home value entered with the mortgage in Accounts is the home value on the Mortgage page, in equity, loan to value, net worth and the Dashboard.                                       | Holds   | browser    | none       |
+| L11 | A home value edited on the Mortgage page is the Property account on Accounts.                                                                                                           | Holds   | code       | none       |
+| L12 | Equity is the same figure wherever it is shown.                                                                                                                                         | Holds   | code       | none       |
+| L13 | The mortgage payment saved on the mortgage account is the housing cost in housing details, the budget's housing row, the commitments in safe to spend, and the retirement housing cost. | Holds   | browser    | HM-1, BU-5 |
+| L14 | Changing rent in housing details changes the budget's housing row, essentials, Breathing room, safe to spend and the retirement housing cost.                                           | Holds   | browser    | HM-2, BU-4 |
+| L15 | A fix end date saved on the mortgage shows wherever fix end is shown.                                                                                                                   | Holds   | code       | none       |
+| L16 | Housing status and the has-a-mortgage flag on the profile agree with whether a mortgage account exists.                                                                                 | Broken  | code       | HM-6       |
+| L17 | Mortgage type (repayment or interest only) has one store and one place to change it.                                                                                                    | Holds   | code       | none       |
+| L18 | A property and its mortgage are linked. The mortgage's share is copied to the property when the pair is first set up, and either may then hold its own share (decision 14 option B).    | Holds   | browser    | HM-7, JO-6 |
+| L71 | Whether a property is the home or a rental is a saved choice, not a guess from its name.                                                                                                | Holds   | browser    | HM-3, DB-6 |
 
 ## C. Buy to let
 
@@ -123,7 +123,7 @@ Each line is a statement a user would expect to be true, with the verdict from t
 | --- | ------------------------------------------------------------------------------------ | ------- | ---------- | ---------- |
 | L55 | Marking an account joint at 40% changes every figure that counts it in the same way. | Broken  | browser    | JO-5, JO-9 |
 | L56 | A joint budget entry counts at its share in every budget figure.                     | Broken  | code       | JO-4       |
-| L57 | A joint housing cost counts at its share.                                            | Broken  | code       | JO-8       |
+| L57 | A joint housing cost counts at its share.                                            | Holds   | browser    | JO-8       |
 
 ## K. Retirement
 

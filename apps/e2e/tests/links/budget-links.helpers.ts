@@ -51,6 +51,16 @@ export function pounds(text: string | null): number {
   return Number(match[1].replace(/,/g, ""));
 }
 
+/**
+ * The budget's left over as a signed figure: the hero shows a shortfall as a positive amount
+ * under "Short each month", with `data-figure-sign="-1"`.
+ */
+export async function leftOver(page: Page): Promise<number> {
+  const figure = page.locator('[data-figure="budget.surplus"]').first();
+  const sign = (await figure.getAttribute("data-figure-sign")) === "-1" ? -1 : 1;
+  return sign * pounds(await figure.textContent());
+}
+
 /** A KPI card by its label: the nearest element around the label that holds a £ figure. */
 export const kpiCard = (page: Page, label: string): Locator =>
   page.getByText(label, { exact: true }).first().locator("xpath=ancestor::*[contains(., '£')][1]");

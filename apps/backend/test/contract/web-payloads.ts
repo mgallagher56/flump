@@ -61,12 +61,15 @@ export const ONBOARDING_BUDGET_ENTRIES = [
     isIncome: true,
     frequency: "monthly",
   },
+  // Linked to the saved housing payment, so it stores no amount (audit slice 5).
   {
     name: "Mortgage Payment",
     category: "housing",
-    amount: 900,
+    amount: 0,
     isIncome: false,
+    isEssential: true,
     frequency: "monthly",
+    linkKind: "housing",
   },
   {
     name: "General living and outgoings",
