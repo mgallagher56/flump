@@ -90,7 +90,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   onApplyIncrease,
 }) => {
   const { profile: storeProfile } = useUserProfile();
-  const profile = savedProfile ?? storeProfile;
+  const profile = storeProfile ?? savedProfile;
   const { formatCurrency } = useFormatCurrency();
   const inRouter = useInRouterContext();
   const savedSalary = initialSalary && initialSalary > 0 ? initialSalary : 0;

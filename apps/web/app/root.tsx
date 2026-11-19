@@ -23,7 +23,7 @@ import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
 import { useIsFocusedShell } from "./features/onboarding/focusedShell";
-import { useRootUser } from "./hooks/useRootUser";
+import { forgetRootUserOnAuthError, useRootUser } from "./hooks/useRootUser";
 import { useRouteFocus } from "./hooks/useRouteFocus";
 import { useScrollRestoreAfterGrowth } from "./hooks/useScrollRestoreAfterGrowth";
 import type { UserProfile } from "./hooks/useUserProfile";
@@ -275,6 +275,7 @@ export function ErrorBoundary() {
   // Present when the root loader ran and a page below it failed; undefined when the root loader
   // itself failed, and then the header renders signed out.
   const rootData = useRouteLoaderData<typeof loader>("root");
+  forgetRootUserOnAuthError(error);
   const rootUser = useRootUser();
   const title =
     isRouteErrorResponse(error) && error.status === 404

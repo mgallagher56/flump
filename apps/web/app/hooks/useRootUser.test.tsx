@@ -2,9 +2,13 @@ import { renderHook } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { useRouteLoaderData } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resetRememberedRootUser, useRootUser } from "./useRootUser";
+import { forgetRootUserOnAuthError, resetRememberedRootUser, useRootUser } from "./useRootUser";
 
-vi.mock("react-router", () => ({ useRouteLoaderData: vi.fn() }));
+vi.mock("react-router", () => ({
+  useRouteLoaderData: vi.fn(),
+  isRouteErrorResponse: (e: unknown) =>
+    typeof e === "object" && e !== null && "status" in e && "statusText" in e,
+}));
 
 const loaderData = vi.mocked(useRouteLoaderData);
 const signedIn = { id: "user-1", email: "reader@example.test" };
@@ -42,6 +46,24 @@ describe("useRootUser", () => {
     expect(result.current).toEqual(signedIn);
 
     loaderData.mockReturnValue(undefined);
+    rerender();
+    expect(result.current).toEqual(signedIn);
+  });
+
+  it("forgets the remembered user when the error is a lost or refused session", () => {
+    loaderData.mockReturnValue({ user: signedIn });
+    const { result, rerender } = renderHook(() => useRootUser());
+    loaderData.mockReturnValue(undefined);
+    forgetRootUserOnAuthError({ status: 401, statusText: "Unauthorized", data: null });
+    rerender();
+    expect(result.current).toBeNull();
+  });
+
+  it("keeps the remembered user for other errors", () => {
+    loaderData.mockReturnValue({ user: signedIn });
+    const { result, rerender } = renderHook(() => useRootUser());
+    loaderData.mockReturnValue(undefined);
+    forgetRootUserOnAuthError({ status: 500, statusText: "Server Error", data: null });
     rerender();
     expect(result.current).toEqual(signedIn);
   });

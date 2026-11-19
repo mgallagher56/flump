@@ -1,7 +1,7 @@
 import { PageBody } from "@repo/ui";
 import type { ReactElement } from "react";
 import { isRouteErrorResponse, useLocation, useRevalidator, useRouteError } from "react-router";
-import { useRootUser } from "../../../../hooks/useRootUser";
+import { forgetRootUserOnAuthError, useRootUser } from "../../../../hooks/useRootUser";
 import { BACKEND_ERROR_KINDS, type BackendErrorKind } from "../../../../services/backend-error";
 import { RouteErrorState, type RouteErrorStateProps } from "../RouteErrorState";
 import { boundaryRoot } from "./RouteErrorBoundary.styles";
@@ -85,6 +85,7 @@ export function RouteErrorBoundary({
   const revalidator = useRevalidator();
   const { pathname } = useLocation();
   // Signed-out visitors have no dashboard, so the home link gets a neutral label for them.
+  forgetRootUserOnAuthError(error);
   const signedIn = Boolean(useRootUser());
   const kind = kindFromError(error);
   const onAccountDetail = ACCOUNT_DETAIL.test(pathname);

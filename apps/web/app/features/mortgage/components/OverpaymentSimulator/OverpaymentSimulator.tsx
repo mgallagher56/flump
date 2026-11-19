@@ -115,6 +115,9 @@ export const overpayEmptyPrompt = (
     interestRate > 0 ? null : "interest rate",
     remainingTerm > 0 ? null : "years left",
   ].filter((x): x is string => x !== null);
+  // Every figure is there but the engine still has no answer (for example no scheduled payment).
+  if (missing.length === 0)
+    return "Check your starting figures to see what overpaying would change.";
   if (missing.length === 1 && missing[0] === "years left") {
     return "Add the years left under Starting figures to see what overpaying would change.";
   }

@@ -152,6 +152,10 @@ describe("<OverpaymentSimulator />", () => {
   });
 
   test("names only the figures that are missing", () => {
+    // Every figure present: no list of missing figures to name.
+    expect(overpayEmptyPrompt(150000, 4.5, 20)).toBe(
+      "Check your starting figures to see what overpaying would change.",
+    );
     expect(overpayEmptyPrompt(0, 5, 20)).toBe(
       "Add your balance to see what overpaying would change.",
     );
