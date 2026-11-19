@@ -33,6 +33,22 @@ describe("migration file names", () => {
     }
   });
 
+  it("export no function other than the migration class, since TypeORM constructs every one", async () => {
+    // TypeORM loads each file in the migrations glob and calls `new` on every exported function,
+    // so an exported helper function stops the backend booting ("function is not a constructor").
+    // Constants may be exported; helper functions stay module-private.
+    const files = readdirSync(__dirname).filter((f) => /\d{13}\.ts$/.test(f));
+    for (const file of files) {
+      const exported: Record<string, unknown> = await import(join(__dirname, file));
+      for (const [name, value] of Object.entries(exported)) {
+        if (typeof value !== "function") continue;
+        const proto = (value as { prototype?: { up?: unknown; down?: unknown } }).prototype;
+        expect(typeof proto?.up, `${file} exports ${name}`).toBe("function");
+        expect(typeof proto?.down, `${file} exports ${name}`).toBe("function");
+      }
+    }
+  });
+
   it("take the migration lock through config/migration-lock.ts after AddUserIdIndexes", () => {
     // Older migrations are already applied everywhere; newer ones must lift the pool's timeouts
     // before waiting on the lock, which the helpers do (see takeMigrationLock).
