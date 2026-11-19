@@ -237,7 +237,6 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
                 autoComplete="bday-year"
                 className={numericField()}
                 data-testid="birth-year-input"
-                maxLength={4}
                 pattern="[0-9]*"
                 value={yearText === "" ? null : Number(yearText)}
                 onBlur={commitYear}
