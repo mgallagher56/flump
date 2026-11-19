@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.46.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.45.0...flump/web-v1.46.0) (2026-11-19)
+
+
+### Features ✨
+
+* accounts hold the home and loans (audit slice 4) ([946450c](https://github.com/mgallagher56/flump/commit/946450c96e4956a2c6761aeedc0fec5dc87158cc))
+* **budget:** link budget lines to accounts on the Budget page and in the wizard (audit slice 5) ([d895587](https://github.com/mgallagher56/flump/commit/d8955874d016397586317f0f1647eb566f446eda))
+* legacy PAYE salary records no longer replace the salary (audit slice 6, item 6) ([4fbcfc6](https://github.com/mgallagher56/flump/commit/4fbcfc6802c0c248904f1b516c99e7274be40e05))
+* pay and pension answers (audit slice 6) ([057a6f7](https://github.com/mgallagher56/flump/commit/057a6f78eb92a9580c4018d506ca1866af0d6a17))
+
+
+### Bug Fixes 🪲
+
+* a fully recorded month can still be finished; link specs that reseed run last ([8369058](https://github.com/mgallagher56/flump/commit/83690582af9c1779a1e49a663ce2abfb4735fb08))
+* a month is checked in only when its check-in was finished (audit slice 4, CH-3) ([f165c99](https://github.com/mgallagher56/flump/commit/f165c99ba641812a6fc5d59eefb2536db7ab7f75))
+* **budget:** review findings for slice 5 ([ba1ae58](https://github.com/mgallagher56/flump/commit/ba1ae58ac2df4e355f8eae359ab47709fc7f45b1))
+* **retirement:** the planner lists the lines the plan counts; plain savings names only ([1825798](https://github.com/mgallagher56/flump/commit/1825798565f02dd282c14660cf3d7727fe52fa83))
+* **web:** History's prompt says the check-in is not done, not that the month is unrecorded ([e369c3b](https://github.com/mgallagher56/flump/commit/e369c3ba108e90761ba1019e8aa4db064d5fcc8f))
+
+
+### Tests 🧪
+
+* expectations after the rebase onto slice 3 (audit slice 4) ([d8ee28b](https://github.com/mgallagher56/flump/commit/d8ee28b0df2ce7523117a6bd4751c2f0dd1bff67))
+
 ## [1.45.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.44.0...flump/web-v1.45.0) (2026-11-19)
 
 
