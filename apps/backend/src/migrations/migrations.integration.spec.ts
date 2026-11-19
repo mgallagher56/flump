@@ -40,6 +40,7 @@ import {
   ClearDefaultPensionRates1795480100000,
   PENSION_DEFAULTS_CLEAR_BEFORE,
 } from "./ClearDefaultPensionRates1795480100000";
+import { ClearUnchosenSectionOrder1795500000000 } from "./ClearUnchosenSectionOrder1795500000000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
 import { LinkBudgetLinesToAccounts1795490000000 } from "./LinkBudgetLinesToAccounts1795490000000";
 import { MoveBuyToLetProfileIntoAccounts1795470200000 } from "./MoveBuyToLetProfileIntoAccounts1795470200000";
@@ -1965,6 +1966,33 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       ]);
     });
   });
+  describe("ClearUnchosenSectionOrder1795500000000 (home section order)", () => {
+    const NAME = "ClearUnchosenSectionOrder1795500000000";
+    const rows = (): Promise<unknown[]> =>
+      ds.query(
+        "SELECT user_id, dashboard_widget_order, dashboard_widgets FROM user_profiles ORDER BY user_id",
+      );
+
+    it("clears every saved section order and nothing else, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, dashboard_widget_order, dashboard_widgets) VALUES
+           ('u1', 'accounts,budget,savings', 'accounts,budget'),
+           ('u2', NULL, 'tax')`,
+      );
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      const after = [
+        { user_id: "u1", dashboard_widget_order: null, dashboard_widgets: "accounts,budget" },
+        { user_id: "u2", dashboard_widget_order: null, dashboard_widgets: "tax" },
+      ];
+      expect(await rows()).toEqual(after);
+      await runUpInTransaction(new ClearUnchosenSectionOrder1795500000000());
+      expect(await rows()).toEqual(after);
+    });
+  });
+
   describe("SavingsRowsNotEssential1795450000000 (owner item 28)", () => {
     const NAME = "SavingsRowsNotEssential1795450000000";
     const rows = (): Promise<unknown[]> =>
