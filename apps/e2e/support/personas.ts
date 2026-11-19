@@ -864,7 +864,9 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
         if (response.status !== 429) return response;
         const retryAfter = response.headers.get("Retry-After");
         const waitMs =
-          retryAfter && /^\d{1,6}$/.test(retryAfter) ? Number(retryAfter) * 1000 + 500 : 0;
+          retryAfter && Number.isInteger(Number(retryAfter)) && Number(retryAfter) >= 0
+            ? Number(retryAfter) * 1000 + 500
+            : 0;
         if (waitMs === 0 || waitMs > windowMs) return response;
         const report = (window as unknown as Record<string, unknown>)[binding] as (
           method: string,

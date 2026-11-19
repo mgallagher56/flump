@@ -23,7 +23,9 @@ export const pageApi = async <T = unknown>(
       // One retry after a 429 whose Retry-After is within one window (rate-limit-retry.ts).
       const retryAfter = response.status === 429 ? response.headers.get("Retry-After") : null;
       const waitMs =
-        retryAfter && /^\d{1,6}$/.test(retryAfter) ? Number(retryAfter) * 1000 + 500 : 0;
+        retryAfter && Number.isInteger(Number(retryAfter)) && Number(retryAfter) >= 0
+          ? Number(retryAfter) * 1000 + 500
+          : 0;
       if (waitMs > 0 && waitMs <= windowMs) {
         const report = (window as unknown as Record<string, unknown>)[binding] as (
           method: string,
