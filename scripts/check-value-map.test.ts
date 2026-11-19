@@ -329,7 +329,16 @@ describe("browser storage keys", () => {
   });
 
   test("any key passed to a storage call is found: a literal, a template prefix, a constant", () => {
-    const shared = new Map([["PREFS_KEY", ["prefs_v1"]]]);
+    const shared = new Map([
+      [
+        "PREFS_KEY",
+        [
+          { file: "keys.ts", value: "prefs_v1" },
+          // Another file exporting the same name is not the one imported.
+          { file: "other/keys.ts", value: "other_prefs" },
+        ],
+      ],
+    ]);
     const source = [
       'import { PREFS_KEY } from "./keys";',
       'const DRAFT = "draft.";',
