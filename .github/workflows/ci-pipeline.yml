@@ -329,7 +329,7 @@ jobs:
       # turbo.json makes these tasks depend on ^build and generate, so the workspace packages
       # the stories import (e.g. @flump/finance-engine) are built (or replayed) first.
       - name: ♿ Storybook ${{ matrix.name }}
-        run: bunx turbo run ${{ matrix.task }} --filter=@flump/web
+        run: bunx turbo run ${{ matrix.task }} --filter=@flump/web --force
 
       - name: 🏭 Storybook build smoke
         if: matrix.smoke
