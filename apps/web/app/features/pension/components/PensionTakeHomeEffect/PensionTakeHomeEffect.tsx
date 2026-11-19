@@ -19,6 +19,7 @@ import {
   THead,
   Th,
   Tr,
+  useTableSort,
 } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { Link } from "react-router";
@@ -85,6 +86,47 @@ export interface PensionTakeHomeEffectProps {
 const COMPONENT_ROWS = DELTA_TABLE_ROWS.filter((r) => r.key !== "pension");
 const money = (n: number) => formatMoney(n, { fractionDigits: 0 }).text;
 const signed = (n: number) => formatMoney(n, { fractionDigits: 0, signDisplay: "always" }).text;
+
+/**
+ * Where the change comes from, a row per part. Sorting only: a handful of fixed parts, so no
+ * filter, and the natural order (Income Tax, then National Insurance) until a header is used.
+ */
+const ComponentTable: FC<{
+  rows: typeof COMPONENT_ROWS;
+  components: UkWhatIfResult["components"];
+}> = ({ rows, components }) => {
+  const { sortedRows, getSortProps } = useTableSort({
+    rows,
+    columns: {
+      part: { value: (r) => r.label },
+      change: { value: (r) => components[r.key], firstDirection: "desc" },
+    },
+  });
+  return (
+    <Table caption={PENSION_TAKE_HOME_COPY.tableTitle}>
+      <THead>
+        <Tr>
+          <Th scope="col" text {...getSortProps("part")}>
+            {PENSION_TAKE_HOME_COPY.partColumn}
+          </Th>
+          <Th numeric scope="col" {...getSortProps("change")}>
+            {PENSION_TAKE_HOME_COPY.changeColumn}
+          </Th>
+        </Tr>
+      </THead>
+      <TBody>
+        {sortedRows.map(({ key, label }) => (
+          <Tr key={key}>
+            <Th scope="row">{label}</Th>
+            <Td label={PENSION_TAKE_HOME_COPY.changeColumn} numeric>
+              {money(components[key])}
+            </Td>
+          </Tr>
+        ))}
+      </TBody>
+    </Table>
+  );
+};
 
 /**
  * The "Effect on take-home pay" tool's outcome: one figure (the monthly change) and two
@@ -182,26 +224,7 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
       <p className={effectNote()}>{methodNote}</p>
       {rows.length > 0 ? (
         <CollapsibleDrawer title="Show details" variant="quiet">
-          <Table caption={PENSION_TAKE_HOME_COPY.tableTitle}>
-            <THead>
-              <Tr>
-                <Th scope="col">{PENSION_TAKE_HOME_COPY.partColumn}</Th>
-                <Th numeric scope="col">
-                  {PENSION_TAKE_HOME_COPY.changeColumn}
-                </Th>
-              </Tr>
-            </THead>
-            <TBody>
-              {rows.map(({ key, label }) => (
-                <Tr key={key}>
-                  <Th scope="row">{label}</Th>
-                  <Td label={PENSION_TAKE_HOME_COPY.changeColumn} numeric>
-                    {money(result.components[key])}
-                  </Td>
-                </Tr>
-              ))}
-            </TBody>
-          </Table>
+          <ComponentTable components={result.components} rows={rows} />
         </CollapsibleDrawer>
       ) : null}
     </div>

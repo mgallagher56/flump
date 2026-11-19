@@ -7,29 +7,31 @@ import {
 import {
   Button,
   EmptyState,
-  FormField,
   formatDate,
   Icon,
   IconButton,
   Menu,
   type MenuEntry,
   Money,
-  Select,
   Table,
+  TableFilterSelect,
   TableToolbar,
   TBody,
   Td,
   THead,
   Th,
+  useTableFilter,
+  useTableSort,
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { MoreHorizontal } from "lucide-react";
-import { type FC, useMemo, useState } from "react";
+import { type FC, type MouseEvent, useMemo, useState } from "react";
 import { categoryShortLabel, recordAmount, SOURCE_LABEL, SOURCE_OPTIONS } from "../../tax-labels";
 import {
   amountCell,
   amountUnit,
   cellMuted,
+  clickableRow,
   dateFigures,
   filters,
   nameButton,
@@ -43,8 +45,6 @@ import {
 } from "./TaxRecordsTable.styles";
 
 export const TAX_RECORDS_PAGE_SIZE = 10;
-/** The source and type filters show only past this many records in the year. */
-export const TAX_RECORDS_FILTER_FROM = 8;
 
 /** "6 Apr 2026" from `@repo/ui`'s short date (three-letter months); an unreadable date shows as is. */
 const shortDate = (iso: string) => formatDate(iso, { placeholder: iso });
@@ -53,6 +53,21 @@ const countFormat = new Intl.NumberFormat("en-GB");
 const categoryName = (catId: string, source: TaxSource) => {
   const category = getCategoriesForSource(source).find((c) => c.id === catId);
   return category ? categoryShortLabel(category) : catId;
+};
+
+/** Income counts up, an expense down, so sorting by amount puts the biggest income first. */
+const signedAmount = (r: TaxRecord) => (r.type === "income" ? recordAmount(r) : -recordAmount(r));
+
+/**
+ * A click on the row opens the record, unless it landed on a control inside the row (the name
+ * button, the actions menu) or came from the menu's portal, which is not inside the row.
+ */
+const isRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
+  const target = e.target as HTMLElement;
+  if (!e.currentTarget.contains(target)) return false;
+  if (target.closest("button, a, input, select, textarea, [role='menuitem']")) return false;
+  // Selecting text in a cell is not a click on the row.
+  return !window.getSelection()?.toString();
 };
 
 /** How often an amount is paid, after the amount: "£1,500 a month". A one-off has none. */
@@ -78,10 +93,11 @@ export interface TaxRecordsTableProps {
 
 /**
  * The records that count towards the page's tax year, ten to a page. Each record's name is a
- * button that opens it for editing, so the table works from the keyboard (E8 J-03); its other
- * actions are in one menu at the end of the row. Under `md` the row is the name, its category,
- * the amount and the menu; the date and source columns join from `md`. The source column shows
- * only when the year has more than one source, and the filters only past eight records.
+ * button that opens it for editing, so the table works from the keyboard (E8 J-03); a click
+ * anywhere else on the row does the same with a mouse. The row's menu holds Edit, View receipt
+ * and Delete. Under `md` the row is the name, its category, the amount and the menu; the date and
+ * source columns join from `md`. The source column and filter show only when the list has more
+ * than one source. The search and type filter are always shown, and every column sorts.
  */
 export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
   records,
@@ -93,55 +109,46 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
   include,
   caption,
 }) => {
-  const [source, setSource] = useState<"all" | TaxSource>("all");
-  const [type, setType] = useState<"all" | "income" | "expense">("all");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "source" | "date" | "amount">("date");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
 
   const inYear = useMemo(
-    () => records.filter(include ?? ((r) => isRecordActiveInTaxYear(r, taxYear))),
+    () =>
+      records
+        .filter(include ?? ((r) => isRecordActiveInTaxYear(r, taxYear)))
+        // By name first, so records on the same date (or of the same amount) read A to Z.
+        .sort((a, b) => a.name.localeCompare(b.name, "en-GB")),
     [records, taxYear, include],
   );
-  const showFilters = inYear.length > TAX_RECORDS_FILTER_FROM;
   const sources = new Set(inYear.map((r) => r.source));
   const showSource = sources.size > 1;
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const factor = sortDir === "asc" ? 1 : -1;
-    return inYear
-      .filter((r) => !showFilters || source === "all" || r.source === source)
-      .filter((r) => !showFilters || type === "all" || r.type === type)
-      .filter(
-        (r) =>
-          !showFilters ||
-          !query ||
-          r.name.toLowerCase().includes(query) ||
-          categoryName(r.category, r.source).toLowerCase().includes(query),
-      )
-      .sort((a, b) => {
-        if (sortBy === "name") return a.name.localeCompare(b.name) * factor;
-        if (sortBy === "source")
-          return SOURCE_LABEL[a.source].localeCompare(SOURCE_LABEL[b.source]) * factor;
-        if (sortBy === "amount") {
-          const av = a.type === "income" ? recordAmount(a) : -recordAmount(a);
-          const bv = b.type === "income" ? recordAmount(b) : -recordAmount(b);
-          return (av - bv) * factor;
-        }
-        return a.date.localeCompare(b.date) * factor || a.name.localeCompare(b.name);
-      });
-  }, [inYear, showFilters, source, type, search, sortBy, sortDir]);
+  const { filteredRows, query, setQuery, filterValues, setFilter, isFiltered } = useTableFilter({
+    rows: inYear,
+    searchText: (r) => [r.name, categoryName(r.category, r.source)],
+    filters: { source: (r) => r.source, type: (r) => r.type },
+  });
 
-  const toggleSort = (col: "name" | "source" | "date" | "amount") => {
-    if (sortBy === col) {
-      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(col);
-      setSortDir(col === "date" || col === "amount" ? "desc" : "asc");
-    }
-    setPage(0);
+  const { sortedRows: filtered, getSortProps } = useTableSort({
+    rows: filteredRows,
+    columns: {
+      name: { value: (r) => r.name },
+      source: { value: (r) => SOURCE_LABEL[r.source] },
+      date: { value: (r) => r.date, firstDirection: "desc" },
+      amount: { value: signedAmount, firstDirection: "desc" },
+    },
+    initial: { key: "date", direction: "desc" },
+  });
+
+  /** A header's sort props that also go back to page 1. */
+  const sortProps = (key: "name" | "source" | "date" | "amount") => {
+    const props = getSortProps(key);
+    return {
+      ...props,
+      onSort: () => {
+        props.onSort();
+        setPage(0);
+      },
+    };
   };
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / TAX_RECORDS_PAGE_SIZE));
@@ -149,12 +156,10 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
   const start = current * TAX_RECORDS_PAGE_SIZE;
   const rows = filtered.slice(start, start + TAX_RECORDS_PAGE_SIZE);
 
-  const onFilter =
-    <T,>(setter: (v: T) => void) =>
-    (v: T) => {
-      setter(v);
-      setPage(0);
-    };
+  const onFilter = (name: "source" | "type") => (value: string) => {
+    setFilter(name, value);
+    setPage(0);
+  };
 
   if (inYear.length === 0) {
     return (
@@ -173,47 +178,38 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
 
   return (
     <div className={root()}>
-      {showFilters ? (
-        <TableToolbar
-          className={filters()}
-          searchLabel="Search records"
-          searchPlaceholder="Filter by name or category"
-          searchValue={search}
-          onSearchChange={onFilter(setSearch)}
-        >
-          <FormField label="Income source">
-            {(field) => (
-              <Select
-                id={field.id}
-                value={source}
-                onChange={(e) => onFilter(setSource)(e.target.value as "all" | TaxSource)}
-              >
-                <option value="all">All sources</option>
-                {SOURCE_OPTIONS.filter((o) => sources.has(o.value)).map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </FormField>
-          <FormField label="Type">
-            {(field) => (
-              <Select
-                id={field.id}
-                value={type}
-                onChange={(e) => onFilter(setType)(e.target.value as "all" | "income" | "expense")}
-              >
-                <option value="all">Income and expenses</option>
-                <option value="income">Income</option>
-                <option value="expense">Expenses</option>
-              </Select>
-            )}
-          </FormField>
-        </TableToolbar>
-      ) : null}
+      <TableToolbar
+        className={filters()}
+        searchLabel="Search records"
+        searchPlaceholder="Filter by name or category"
+        searchValue={query}
+        onSearchChange={(value) => {
+          setQuery(value);
+          setPage(0);
+        }}
+      >
+        {showSource ? (
+          <TableFilterSelect
+            allLabel="All sources"
+            label="Income source"
+            options={SOURCE_OPTIONS.filter((o) => sources.has(o.value))}
+            value={filterValues.source}
+            onChange={onFilter("source")}
+          />
+        ) : null}
+        <TableFilterSelect
+          allLabel="Income and expenses"
+          label="Type"
+          options={[
+            { value: "income", label: "Income" },
+            { value: "expense", label: "Expenses" },
+          ]}
+          value={filterValues.type}
+          onChange={onFilter("type")}
+        />
+      </TableToolbar>
 
-      {showFilters || pageCount > 1 ? (
+      {isFiltered || pageCount > 1 ? (
         <p aria-live="polite" className={summary()}>
           {filtered.length === 0
             ? "No records match these filters."
@@ -227,35 +223,18 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
         <Table caption={caption ?? `Records for ${taxYear}`}>
           <THead>
             <tr>
-              <Th
-                sortDirection={sortBy === "name" ? sortDir : "none"}
-                text
-                onSort={() => toggleSort("name")}
-              >
+              <Th text {...sortProps("name")}>
                 Record
               </Th>
               {showSource ? (
-                <Th
-                  className={wideOnly()}
-                  sortDirection={sortBy === "source" ? sortDir : "none"}
-                  text
-                  onSort={() => toggleSort("source")}
-                >
+                <Th className={wideOnly()} text {...sortProps("source")}>
                   Source
                 </Th>
               ) : null}
-              <Th
-                className={wideOnly()}
-                sortDirection={sortBy === "date" ? sortDir : "none"}
-                onSort={() => toggleSort("date")}
-              >
+              <Th className={wideOnly()} {...sortProps("date")}>
                 Date
               </Th>
-              <Th
-                numeric
-                sortDirection={sortBy === "amount" ? sortDir : "none"}
-                onSort={() => toggleSort("amount")}
-              >
+              <Th numeric {...sortProps("amount")}>
                 Amount
               </Th>
               <Th numeric>
@@ -268,6 +247,11 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
               const amount = recordAmount(record);
               const per = PER[record.frequency];
               const items: MenuEntry[] = [
+                {
+                  id: `edit-${record.id}`,
+                  label: "Edit",
+                  onSelect: () => onEdit(record),
+                },
                 ...(record.hasReceipt
                   ? [
                       {
@@ -285,7 +269,13 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                 },
               ];
               return (
-                <tr key={record.id}>
+                <tr
+                  className={clickableRow()}
+                  key={record.id}
+                  onClick={(e) => {
+                    if (isRowClick(e)) onEdit(record);
+                  }}
+                >
                   <Td text>
                     <button className={nameButton()} type="button" onClick={() => onEdit(record)}>
                       {record.name}

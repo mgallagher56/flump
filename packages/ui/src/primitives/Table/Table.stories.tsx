@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
-import { useState } from "react";
 import { css } from "../../../styled-system/css";
+import { useTableSort } from "../../hooks/useTableSort";
 import { Money } from "../Money";
 import { StatusBadge } from "../StatusBadge";
-import { type SortDirection, Table, TBody, Td, THead, Th, Tr } from "./Table";
+import { Table, TBody, Td, THead, Th, Tr } from "./Table";
 
 const panel = css({
   backgroundColor: "surface.card",
@@ -277,39 +277,30 @@ const gbp = new Intl.NumberFormat("en-GB", {
   maximumFractionDigits: 0,
 });
 
-/** Sortable headers: a button in each header; only the sorted column carries aria-sort. */
+/** Sortable headers from `useTableSort`: a button in each header, with aria-sort on every one. */
 const SortableTable = () => {
-  const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
-  const [dir, setDir] = useState<Exclude<SortDirection, "none">>("desc");
-  const sort = (col: "name" | "amount") => {
-    if (col === sortBy) setDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortBy(col);
-      setDir(col === "amount" ? "desc" : "asc");
-    }
-  };
-  const factor = dir === "asc" ? 1 : -1;
-  const rows = [...SORT_ROWS].sort((a, b) =>
-    sortBy === "name" ? a.name.localeCompare(b.name) * factor : (a.amount - b.amount) * factor,
-  );
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: SORT_ROWS,
+    columns: {
+      name: { value: (r) => r.name },
+      amount: { value: (r) => r.amount, firstDirection: "desc" },
+    },
+    initial: { key: "amount", direction: "desc" },
+  });
   return (
     <Table caption="Records for 2026/27">
       <THead>
         <tr>
-          <Th sortDirection={sortBy === "name" ? dir : "none"} text onSort={() => sort("name")}>
+          <Th text {...getSortProps("name")}>
             Record
           </Th>
-          <Th
-            numeric
-            sortDirection={sortBy === "amount" ? dir : "none"}
-            onSort={() => sort("amount")}
-          >
+          <Th numeric {...getSortProps("amount")}>
             Amount
           </Th>
         </tr>
       </THead>
       <TBody>
-        {rows.map((r) => (
+        {sortedRows.map((r) => (
           <tr key={r.name}>
             <Td>{r.name}</Td>
             <Td numeric>{gbp.format(r.amount)}</Td>
@@ -324,14 +315,14 @@ const sortablePlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const [record, amount] = canvas.getAllByRole("columnheader");
   await expect(amount).toHaveAttribute("aria-sort", "descending");
-  await expect(record).not.toHaveAttribute("aria-sort");
+  await expect(record).toHaveAttribute("aria-sort", "none");
   // Keyboard: focus the Record sort button and press Enter, then Space to reverse.
   const recordButton = canvas.getByRole("button", { name: "Record" });
   recordButton.focus();
   await expect(recordButton).toHaveFocus();
   await userEvent.keyboard("{Enter}");
   await expect(record).toHaveAttribute("aria-sort", "ascending");
-  await expect(amount).not.toHaveAttribute("aria-sort");
+  await expect(amount).toHaveAttribute("aria-sort", "none");
   await expect(canvas.getAllByRole("row")[1]).toHaveTextContent("Design retainer");
   await userEvent.keyboard(" ");
   await expect(record).toHaveAttribute("aria-sort", "descending");

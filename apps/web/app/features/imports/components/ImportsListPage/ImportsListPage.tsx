@@ -6,11 +6,15 @@ import {
   PageHeader,
   StatusBadge,
   Table,
+  TableFilterSelect,
+  TableToolbar,
   TBody,
   Td,
   THead,
   Th,
   Tr,
+  useTableFilter,
+  useTableSort,
 } from "@repo/ui";
 import type { FC } from "react";
 import { Link } from "react-router";
@@ -41,43 +45,74 @@ function outcome(b: ImportBatch): string {
 }
 
 /** The user's imports, newest first, with a link to review or revisit each one. */
+const STATUS_FILTER_OPTIONS = (Object.keys(STATUS_LABEL) as ImportBatch["status"][]).map(
+  (value) => ({ value, label: STATUS_LABEL[value] }),
+);
+
 export const ImportsListPage: FC<ImportsListPageProps> = ({ batches }) => {
+  const { filteredRows, filterValues, setFilter } = useTableFilter({
+    rows: batches,
+    filters: { status: (b) => b.status },
+  });
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: filteredRows,
+    columns: {
+      received: { value: (b) => new Date(b.createdAt), firstDirection: "desc" },
+      status: { value: (b) => STATUS_LABEL[b.status] },
+      outcome: { value: outcome },
+    },
+  });
   const table = (
-    <Table caption="Your imports, newest first" stacked>
-      <THead>
-        <Tr>
-          <Th>Received</Th>
-          <Th>Status</Th>
-          <Th>Outcome</Th>
-          <Th align="end">Action</Th>
-        </Tr>
-      </THead>
-      <TBody>
-        {batches.map((b) => (
-          <Tr key={b.batchId}>
-            <Th scope="row">{formatDate(b.createdAt)}</Th>
-            <Td label="Status">
-              <StatusBadge size="sm" variant={STATUS_TONE[b.status]}>
-                {STATUS_LABEL[b.status]}
-              </StatusBadge>
-            </Td>
-            <Td label="Outcome">{outcome(b)}</Td>
-            <Td align="end" label="Action">
-              <Button asChild size="sm" variant={b.status === "staged" ? "primary" : "ghost"}>
-                <Link
-                  aria-label={`${b.status === "staged" ? "Review" : "View"} import received ${formatDate(b.createdAt)}`}
-                  data-testid={`import-open-${b.batchId}`}
-                  id={`import-open-${b.batchId}`}
-                  to={`/app/imports/${b.batchId}`}
-                >
-                  {b.status === "staged" ? "Review" : "View"}
-                </Link>
-              </Button>
-            </Td>
+    <>
+      <TableToolbar>
+        <TableFilterSelect
+          allLabel="All statuses"
+          label="Status"
+          options={STATUS_FILTER_OPTIONS}
+          value={filterValues.status}
+          onChange={(v) => setFilter("status", v)}
+        />
+      </TableToolbar>
+      <Table caption="Your imports, newest first" stacked>
+        <THead>
+          <Tr>
+            <Th {...getSortProps("received")}>Received</Th>
+            <Th text {...getSortProps("status")}>
+              Status
+            </Th>
+            <Th text {...getSortProps("outcome")}>
+              Outcome
+            </Th>
+            <Th align="end">Action</Th>
           </Tr>
-        ))}
-      </TBody>
-    </Table>
+        </THead>
+        <TBody>
+          {sortedRows.map((b) => (
+            <Tr key={b.batchId}>
+              <Th scope="row">{formatDate(b.createdAt)}</Th>
+              <Td label="Status">
+                <StatusBadge size="sm" variant={STATUS_TONE[b.status]}>
+                  {STATUS_LABEL[b.status]}
+                </StatusBadge>
+              </Td>
+              <Td label="Outcome">{outcome(b)}</Td>
+              <Td align="end" label="Action">
+                <Button asChild size="sm" variant={b.status === "staged" ? "primary" : "ghost"}>
+                  <Link
+                    aria-label={`${b.status === "staged" ? "Review" : "View"} import received ${formatDate(b.createdAt)}`}
+                    data-testid={`import-open-${b.batchId}`}
+                    id={`import-open-${b.batchId}`}
+                    to={`/app/imports/${b.batchId}`}
+                  >
+                    {b.status === "staged" ? "Review" : "View"}
+                  </Link>
+                </Button>
+              </Td>
+            </Tr>
+          ))}
+        </TBody>
+      </Table>
+    </>
   );
 
   return (

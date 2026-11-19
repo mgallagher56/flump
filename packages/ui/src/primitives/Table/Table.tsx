@@ -188,11 +188,17 @@ export interface ThProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, "a
   sortDirection?: SortDirection;
   /** Called when the user activates the column sort button. */
   onSort?: () => void;
+  /**
+   * Skip the table's own header styles and take only `className`, for a header in a plain
+   * `<table>` styled by its feature (it still gets the sort button, its icon and `aria-sort`).
+   */
+  bare?: boolean;
 }
 
-const ARIA_SORT: Record<Exclude<SortDirection, "none">, "ascending" | "descending"> = {
+const ARIA_SORT: Record<SortDirection, "ascending" | "descending" | "none"> = {
   asc: "ascending",
   desc: "descending",
+  none: "none",
 };
 
 export const Th: FC<ThProps> = ({
@@ -202,6 +208,7 @@ export const Th: FC<ThProps> = ({
   text = false,
   sortDirection,
   onSort,
+  bare = false,
   className,
   scope,
   ...props
@@ -214,11 +221,12 @@ export const Th: FC<ThProps> = ({
     sortDirection === "asc" ? ArrowUp : sortDirection === "desc" ? ArrowDown : ArrowUpDown;
   return (
     <th
-      // Only the column the table is sorted by carries aria-sort (WAI-ARIA: one header at a time).
-      aria-sort={
-        onSort && sortDirection && sortDirection !== "none" ? ARIA_SORT[sortDirection] : undefined
+      // A sortable header always says how it is sorted: "ascending" or "descending" on the sorted
+      // column, "none" on the others. A header that cannot sort carries no aria-sort at all.
+      aria-sort={onSort ? ARIA_SORT[sortDirection ?? "none"] : undefined}
+      className={
+        bare ? className : cx(thRecipe({ align: resolvedAlign, appearance, text }), className)
       }
-      className={cx(thRecipe({ align: resolvedAlign, appearance, text }), className)}
       role={stacked ? (resolvedScope === "row" ? "rowheader" : "columnheader") : undefined}
       scope={resolvedScope}
       {...props}

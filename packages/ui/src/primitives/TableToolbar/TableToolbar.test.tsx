@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { TableToolbar } from "./TableToolbar";
+import { TableFilterSelect, TableToolbar } from "./TableToolbar";
 
 describe("TableToolbar", () => {
   it("draws a labelled search field and reports what is typed", () => {
@@ -36,5 +36,30 @@ describe("TableToolbar", () => {
   it("defaults the label to Search and treats a missing value as empty", () => {
     render(<TableToolbar onSearchChange={vi.fn()} />);
     expect((screen.getByRole("searchbox", { name: "Search" }) as HTMLInputElement).value).toBe("");
+  });
+
+  it("draws a category filter whose first option shows every row", () => {
+    const onChange = vi.fn();
+    render(
+      <TableFilterSelect
+        allLabel="All accounts"
+        label="Account"
+        options={[
+          { value: "isa", label: "Cash ISA" },
+          { value: "current", label: "Current account" },
+        ]}
+        value="all"
+        onChange={onChange}
+      />,
+    );
+    const select = screen.getByRole("combobox", { name: "Account" }) as HTMLSelectElement;
+    expect(select.value).toBe("all");
+    expect(Array.from(select.options).map((o) => o.text)).toEqual([
+      "All accounts",
+      "Cash ISA",
+      "Current account",
+    ]);
+    fireEvent.change(select, { target: { value: "isa" } });
+    expect(onChange).toHaveBeenCalledWith("isa");
   });
 });

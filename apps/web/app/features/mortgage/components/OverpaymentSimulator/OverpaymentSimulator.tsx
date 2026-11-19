@@ -10,7 +10,9 @@ import {
   ResultBlock,
   SimulatorSplitLayout,
   SliderField,
+  Th,
   useChartFigure,
+  useTableSort,
 } from "@repo/ui";
 import { type FC, useId, useMemo, useState } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -28,6 +30,60 @@ import {
   stateNote,
   toolHint,
 } from "./OverpaymentSimulator.styles";
+
+/**
+ * The chart's data table, a row a year. It keeps year order until a header sorts it, and has no
+ * filter: it is a schedule.
+ */
+const BalanceByYearTable: FC<{
+  rows: readonly ChartRow[];
+  hasOverpayment: boolean;
+  formatCurrency: (value: number) => string;
+}> = ({ rows, hasOverpayment, formatCurrency }) => {
+  const { sortedRows, getSortProps } = useTableSort({
+    rows,
+    columns: {
+      year: { value: (r) => Number(r.year) },
+      standard: { value: (r) => r.standard, firstDirection: "desc" },
+      overpay: { value: (r) => r.overpay, firstDirection: "desc" },
+    },
+  });
+  return (
+    <table className={dataTable()}>
+      <caption>
+        {hasOverpayment
+          ? "Mortgage balance by year, no overpayment and with overpayment"
+          : "Mortgage balance by year"}
+      </caption>
+      <thead>
+        <tr>
+          <Th bare scope="col" {...getSortProps("year")}>
+            Year
+          </Th>
+          <Th bare scope="col" {...getSortProps("standard")}>
+            {hasOverpayment ? "Balance owed, no overpayment" : "Balance owed"}
+          </Th>
+          {hasOverpayment ? (
+            <Th bare scope="col" {...getSortProps("overpay")}>
+              Balance owed, with overpayment
+            </Th>
+          ) : null}
+        </tr>
+      </thead>
+      <tbody>
+        {sortedRows.map((row) => (
+          <tr key={row.year}>
+            <th className={dataCell} scope="row">
+              {row.year}
+            </th>
+            <td className={dataCell}>{formatCurrency(row.standard)}</td>
+            {hasOverpayment ? <td className={dataCell}>{formatCurrency(row.overpay)}</td> : null}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 
 export interface OverpaymentSimulatorProps {
   loanAmount: number;
@@ -345,35 +401,11 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
       <ChartFigure
         dataTable={
-          <table className={dataTable()}>
-            <caption>
-              {hasOverpayment
-                ? "Mortgage balance by year, no overpayment and with overpayment"
-                : "Mortgage balance by year"}
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Year</th>
-                <th scope="col">
-                  {hasOverpayment ? "Balance owed, no overpayment" : "Balance owed"}
-                </th>
-                {hasOverpayment ? <th scope="col">Balance owed, with overpayment</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {chartData.map((row) => (
-                <tr key={row.year}>
-                  <th className={dataCell} scope="row">
-                    {row.year}
-                  </th>
-                  <td className={dataCell}>{formatCurrency(row.standard)}</td>
-                  {hasOverpayment ? (
-                    <td className={dataCell}>{formatCurrency(row.overpay)}</td>
-                  ) : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <BalanceByYearTable
+            formatCurrency={formatCurrency}
+            hasOverpayment={hasOverpayment}
+            rows={chartData}
+          />
         }
         // One line is named by the title; two are named by the legend, never by labels on the plot.
         directLabels={false}

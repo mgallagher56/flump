@@ -1,4 +1,16 @@
-import { Table, TBody, Td, THead, Th, Tr, VisuallyHidden } from "@repo/ui";
+import {
+  Table,
+  TableFilterSelect,
+  TableToolbar,
+  TBody,
+  Td,
+  THead,
+  Th,
+  Tr,
+  useTableFilter,
+  useTableSort,
+  VisuallyHidden,
+} from "@repo/ui";
 import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { formatSignedChange, spokenChange } from "../../snapshotCopy";
@@ -33,6 +45,20 @@ const Change: FC<{ value: number }> = ({ value }) => (
  */
 export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = ({ rows, month, previousMonth }) => {
   const { formatCurrency } = useFormatCurrency();
+  const { filteredRows, query, setQuery, filterValues, setFilter } = useTableFilter({
+    rows,
+    searchText: (r) => r.name,
+    filters: { kind: (r) => (r.isLiability ? "debt" : "owned") },
+  });
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: filteredRows,
+    columns: {
+      account: { value: (r) => r.name },
+      previous: { value: (r) => r.previous, firstDirection: "desc" },
+      current: { value: (r) => r.current, firstDirection: "desc" },
+      effect: { value: (r) => r.effect, firstDirection: "desc" },
+    },
+  });
 
   return (
     <div
@@ -40,22 +66,45 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = ({ rows, month, p
       data-testid="snapshot-change-accounts"
       id="snapshot-change-accounts"
     >
+      <TableToolbar
+        searchLabel="Search accounts"
+        searchPlaceholder="Account name"
+        searchValue={query}
+        onSearchChange={setQuery}
+      >
+        <TableFilterSelect
+          allLabel="All accounts"
+          label="Type"
+          options={[
+            { value: "owned", label: "What you own" },
+            { value: "debt", label: "Debts" },
+          ]}
+          value={filterValues.kind}
+          onChange={(v) => setFilter("kind", v)}
+        />
+      </TableToolbar>
       <Table
         className={changeTable()}
         caption={`Change by account, ${formatMonth(previousMonth)} to ${formatMonth(month)}`}
       >
         <THead>
           <Tr>
-            <Th>Account</Th>
-            <Th className={wideOnly()} numeric>
+            <Th text {...getSortProps("account")}>
+              Account
+            </Th>
+            <Th className={wideOnly()} numeric {...getSortProps("previous")}>
               {formatMonth(previousMonth)}
             </Th>
-            <Th numeric>{formatMonth(month)}</Th>
-            <Th numeric>Effect on net worth</Th>
+            <Th numeric {...getSortProps("current")}>
+              {formatMonth(month)}
+            </Th>
+            <Th numeric {...getSortProps("effect")}>
+              Effect on net worth
+            </Th>
           </Tr>
         </THead>
         <TBody>
-          {rows.map((r) => (
+          {sortedRows.map((r) => (
             <Tr data-list-row="" key={r.accountId}>
               <Th scope="row">
                 {r.name}

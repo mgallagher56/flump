@@ -1,4 +1,4 @@
-import { CollapsibleDrawer, Money, Table, TBody, Td, THead, Th, Tr } from "@repo/ui";
+import { CollapsibleDrawer, Money, Table, TBody, Td, THead, Th, Tr, useTableSort } from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import { cardBody, drawerBody, takeHomeRow } from "./TakeHomeBreakdown.styles";
 
@@ -73,6 +73,14 @@ const TABLE_ORDER: readonly PayPartKey[] = [
 export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figures }) => {
   const parts = monthlyPayParts(figures);
   const rows = TABLE_ORDER.filter((k) => k === "takeHome" || parts[k] > 0);
+  // Sorting only: five rows at most, in the order pay is taken, so no filter.
+  const { sortedRows, getSortProps } = useTableSort({
+    rows,
+    columns: {
+      part: { value: (k) => PAY_PART_LABELS[k] },
+      amount: { value: (k) => parts[k], firstDirection: "desc" },
+    },
+  });
 
   return (
     <section
@@ -86,14 +94,16 @@ export const TakeHomeBreakdown: FC<TakeHomeBreakdownProps> = ({ details, ...figu
           <Table caption="Where your pay goes each month">
             <THead>
               <Tr>
-                <Th scope="col">Part</Th>
-                <Th numeric scope="col">
+                <Th scope="col" text {...getSortProps("part")}>
+                  Part
+                </Th>
+                <Th numeric scope="col" {...getSortProps("amount")}>
                   A month
                 </Th>
               </Tr>
             </THead>
             <TBody>
-              {rows.map((key) => (
+              {sortedRows.map((key) => (
                 <Tr key={key} className={key === "takeHome" ? takeHomeRow() : undefined}>
                   <Th scope="row">{PAY_PART_LABELS[key]}</Th>
                   <Td label="A month" numeric>

@@ -1,10 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
-import { useState } from "react";
-import { FormField } from "../FormField";
-import { Select } from "../Select";
+import { useTableFilter } from "../../hooks/useTableFilter";
 import { Table, TBody, Td, THead, Th } from "../Table";
-import { TableToolbar } from "./TableToolbar";
+import { TableFilterSelect, TableToolbar } from "./TableToolbar";
 
 const RECORDS = [
   { name: "Design retainer", kind: "Income", amount: "£2,400" },
@@ -12,32 +10,31 @@ const RECORDS = [
   { name: "Saver interest", kind: "Income", amount: "£320" },
 ] as const;
 
-/** A toolbar driving a small table: search by name and filter by type. */
+/** A toolbar driving a small table through `useTableFilter`: search by name and filter by type. */
 const ToolbarWithTable = () => {
-  const [search, setSearch] = useState("");
-  const [kind, setKind] = useState("all");
-  const rows = RECORDS.filter(
-    (r) =>
-      r.name.toLowerCase().includes(search.trim().toLowerCase()) &&
-      (kind === "all" || r.kind === kind),
-  );
+  const { filteredRows, query, setQuery, filterValues, setFilter } = useTableFilter({
+    rows: RECORDS,
+    searchText: (r) => r.name,
+    filters: { kind: (r) => r.kind },
+  });
   return (
     <div>
       <TableToolbar
         searchLabel="Search records"
         searchPlaceholder="Name"
-        searchValue={search}
-        onSearchChange={setSearch}
+        searchValue={query}
+        onSearchChange={setQuery}
       >
-        <FormField label="Type">
-          {(field) => (
-            <Select id={field.id} value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="all">Income and costs</option>
-              <option value="Income">Income</option>
-              <option value="Cost">Costs</option>
-            </Select>
-          )}
-        </FormField>
+        <TableFilterSelect
+          allLabel="Income and costs"
+          label="Type"
+          options={[
+            { value: "Income", label: "Income" },
+            { value: "Cost", label: "Costs" },
+          ]}
+          value={filterValues.kind}
+          onChange={(v) => setFilter("kind", v)}
+        />
       </TableToolbar>
       <Table caption="Records for 2026/27">
         <THead>
@@ -48,7 +45,7 @@ const ToolbarWithTable = () => {
           </tr>
         </THead>
         <TBody>
-          {rows.map((r) => (
+          {filteredRows.map((r) => (
             <tr key={r.name}>
               <Td>{r.name}</Td>
               <Td text>{r.kind}</Td>

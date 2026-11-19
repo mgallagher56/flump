@@ -15,6 +15,7 @@ import {
   THead,
   Th,
   useChartFigure,
+  useTableSort,
 } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -96,6 +97,57 @@ const MAX_CHART_MONTHS = 360;
  * shifts with the time zone, and through `formatMonthTick`, which never writes "Sept". Ticks, the
  * tooltip and the data table all use it. (The web app does not depend on `@flump/format`.)
  */
+/**
+ * The chart's data table, a row a year. It keeps month order until a header sorts it; a debt not
+ * paid off on minimum payments ("Not paid off") sorts last. No filter: it is a schedule.
+ */
+const DebtByYearTable: FC<{
+  rows: readonly ChartRow[];
+  showBaseline: boolean;
+  formatCurrency: (value: number) => string;
+}> = ({ rows, showBaseline, formatCurrency }) => {
+  const { sortedRows, getSortProps } = useTableSort({
+    rows,
+    columns: {
+      month: { value: (r) => r.month },
+      scenario: { value: (r) => r.scenario, firstDirection: "desc" },
+      minimum: { value: (r) => r.minimum, firstDirection: "desc" },
+    },
+  });
+  return (
+    <Table caption="Debt remaining by year">
+      <THead>
+        <tr>
+          <Th {...getSortProps("month")}>Month</Th>
+          <Th numeric {...getSortProps("scenario")}>
+            {showBaseline ? "With the extra payment" : "Debt remaining"}
+          </Th>
+          {showBaseline ? (
+            <Th numeric {...getSortProps("minimum")}>
+              Minimum payments only
+            </Th>
+          ) : null}
+        </tr>
+      </THead>
+      <TBody>
+        {sortedRows.map((row) => (
+          <tr key={row.month}>
+            <Td>{monthLabel(row.month)}</Td>
+            <Td className={dataCell} numeric>
+              {formatCurrency(row.scenario)}
+            </Td>
+            {showBaseline ? (
+              <Td className={dataCell} numeric>
+                {row.minimum === null ? "Not paid off" : formatCurrency(row.minimum)}
+              </Td>
+            ) : null}
+          </tr>
+        ))}
+      </TBody>
+    </Table>
+  );
+};
+
 export const monthLabel = (offset: number, now: Date = new Date()): string => {
   const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
   const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -378,30 +430,11 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
 
       <ChartFigure
         dataTable={
-          <Table caption="Debt remaining by year">
-            <THead>
-              <tr>
-                <Th>Month</Th>
-                <Th numeric>{showBaseline ? "With the extra payment" : "Debt remaining"}</Th>
-                {showBaseline ? <Th numeric>Minimum payments only</Th> : null}
-              </tr>
-            </THead>
-            <TBody>
-              {yearRows.map((row) => (
-                <tr key={row.month}>
-                  <Td>{monthLabel(row.month)}</Td>
-                  <Td className={dataCell} numeric>
-                    {formatCurrency(row.scenario)}
-                  </Td>
-                  {showBaseline ? (
-                    <Td className={dataCell} numeric>
-                      {row.minimum === null ? "Not paid off" : formatCurrency(row.minimum)}
-                    </Td>
-                  ) : null}
-                </tr>
-              ))}
-            </TBody>
-          </Table>
+          <DebtByYearTable
+            formatCurrency={formatCurrency}
+            rows={yearRows}
+            showBaseline={showBaseline}
+          />
         }
         // One line is named by the title; two are named by the legend, never by labels on the plot.
         directLabels={false}
