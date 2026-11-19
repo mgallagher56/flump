@@ -143,7 +143,12 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   banner,
   footer,
 }) => {
-  const { profile: hookProfile, updateProfile, markChecklistStep } = useUserProfile();
+  const {
+    profile: hookProfile,
+    updateProfile,
+    markChecklistStep,
+    dismissChecklist,
+  } = useUserProfile();
   const profile = useMemo(
     () => (userProfile ? normalizeProfile(userProfile) : hookProfile),
     [userProfile, hookProfile],
@@ -412,6 +417,9 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             anotherNoticeShows={checkInShows}
             completedSteps={effectiveCompletedSteps}
             enabledPages={enabledPages}
+            // Saved on the profile (decision 13); the sandbox only hides it for this visit.
+            dismissed={Boolean(checklistProps.dismissed || profile.setupChecklistDismissed)}
+            onDismiss={persistVisibility ? dismissChecklist : undefined}
             onSkipStep={handleSkipChecklistStep}
             skipError={checklistError}
           />
