@@ -10,10 +10,10 @@ import { numericTransformer } from "./numeric.transformer";
 
 // A user's tax records by date, newest first (scanned backwards). (AddUserIdIndexes1794358100000)
 @Index("IDX_tax_records_user_date", ["userId", "date"])
-// System audit slice 7 (TaxRecordAccountLink1795550000000): a user's records grouped by the account
-// they describe, and the (account_id, user_id) foreign key's own index, so deleting an account
-// finds its records without a scan.
-@Index("IDX_tax_records_user_account", ["userId", "accountId"])
+// System audit slice 7 (TaxRecordAccountLink1795550000000): the (account_id, user_id) foreign key's
+// own index. It serves a user's records for one account too, and deleting an account finds its
+// records without a scan. A (user_id, account_id) index would duplicate it and draw the planner
+// away from IDX_tax_records_user_date for the list of a user's records.
 @Index("IDX_tax_records_account_user", ["accountId", "userId"])
 @Entity("tax_records")
 export class TaxRecord {

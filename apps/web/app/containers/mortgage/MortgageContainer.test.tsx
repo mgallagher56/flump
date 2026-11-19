@@ -752,6 +752,26 @@ describe("<MortgageContainer />", () => {
       });
     });
 
+    test("clears the saved message's timer when the page goes, so it never fires after", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      okFetch();
+      const setSpy = vi.spyOn(globalThis, "setTimeout");
+      const clearSpy = vi.spyOn(globalThis, "clearTimeout");
+      const { findByText, unmount } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.1" } });
+      save();
+      await findByText(/Saved interest rate/);
+      const timerIndex = setSpy.mock.calls.findIndex((call) => call[1] === 3000);
+      expect(timerIndex).toBeGreaterThanOrEqual(0);
+      const timer = setSpy.mock.results[timerIndex]?.value;
+      unmount();
+      expect(clearSpy).toHaveBeenCalledWith(timer);
+      setSpy.mockRestore();
+      clearSpy.mockRestore();
+    });
+
     test("a saved rate stays after choosing the account again, and is not sent back (CS-1)", async () => {
       setApiEnv();
       loaderData = {

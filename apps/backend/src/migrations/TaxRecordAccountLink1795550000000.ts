@@ -15,19 +15,19 @@ import { takeMigrationLock } from "../config/migration-lock";
  *      slice 5 added (created here too if it is missing). Deleting the account sets only
  *      `account_id` to null (`ON DELETE SET NULL (column)`, Postgres 15 and later): the record
  *      stays, unlinked.
- *   3. An index on (user_id, account_id) for a user's records by account, and one on
- *      (account_id, user_id), which leads with the foreign key's first column so deleting an
- *      account finds its records without a scan.
+ *   3. An index on (account_id, user_id), which leads with the foreign key's first column, so
+ *      deleting an account finds its records without a scan; it also serves a user's records for
+ *      one account. A second index on (user_id, account_id) would duplicate it and draw the
+ *      planner away from IDX_tax_records_user_date for the list of a user's records.
  *
- * Re-running ends in the same state: the column and indexes are created only when missing and
+ * Re-running ends in the same state: the column and index are created only when missing and
  * the key is dropped and re-added. The log line is a count only.
  *
- * Down drops the indexes, the key and the column (any links are lost; the records stay). The
+ * Down drops the index, the key and the column (any links are lost; the records stay). The
  * unique index on accounts belongs to slice 5's migration.
  */
 export const TAX_RECORD_ACCOUNT_COLUMN = "account_id";
 export const TAX_RECORD_ACCOUNT_FOREIGN_KEY = "FK_tax_records_account";
-export const TAX_RECORD_OWNER_ACCOUNT_INDEX = "IDX_tax_records_user_account";
 export const TAX_RECORD_ACCOUNT_OWNER_INDEX = "IDX_tax_records_account_user";
 const ACCOUNTS_OWNER_KEY_INDEX = "UQ_accounts_id_user_id";
 
@@ -59,9 +59,6 @@ export class TaxRecordAccountLink1795550000000 implements MigrationInterface {
        ON DELETE SET NULL ("${TAX_RECORD_ACCOUNT_COLUMN}")`,
     );
     await queryRunner.query(
-      `CREATE INDEX IF NOT EXISTS "${TAX_RECORD_OWNER_ACCOUNT_INDEX}" ON "tax_records" ("user_id", "${TAX_RECORD_ACCOUNT_COLUMN}")`,
-    );
-    await queryRunner.query(
       `CREATE INDEX IF NOT EXISTS "${TAX_RECORD_ACCOUNT_OWNER_INDEX}" ON "tax_records" ("${TAX_RECORD_ACCOUNT_COLUMN}", "user_id")`,
     );
     const [row]: Array<{ n: number }> = await queryRunner.query(
@@ -76,7 +73,6 @@ export class TaxRecordAccountLink1795550000000 implements MigrationInterface {
     await queryRunner.query("SET LOCAL lock_timeout = '10s'");
     await queryRunner.query(`LOCK TABLE "tax_records" IN ACCESS EXCLUSIVE MODE`);
     await queryRunner.query(`DROP INDEX IF EXISTS "${TAX_RECORD_ACCOUNT_OWNER_INDEX}"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "${TAX_RECORD_OWNER_ACCOUNT_INDEX}"`);
     await queryRunner.query(
       `ALTER TABLE "tax_records" DROP CONSTRAINT IF EXISTS "${TAX_RECORD_ACCOUNT_FOREIGN_KEY}"`,
     );

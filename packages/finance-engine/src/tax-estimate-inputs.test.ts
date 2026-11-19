@@ -313,19 +313,27 @@ describe("estimateInputsFor: the facts that decide it", () => {
     expect(out).toEqual({ status: "unknown", missing: ["selfEmploymentRecords"] });
   });
 
-  it("reads an unsaved or negative share as 100% and keeps a saved 100%", () => {
-    const share = (propertyOwnershipShare: number | null | undefined) => {
+  it("reads the share of unlinked rent from the rental property account (slice 7, decision 6)", () => {
+    // The profile's property_ownership_share is no longer read. One rental property: its share,
+    // with joint and no share read as 50% and a negative share as 50% (resolveAccountSharePercent).
+    const share = (ownership: string, sharePercent: number | null) => {
       const out = estimateInputsFor(
-        { employmentType: "employed", annualSalary: 30000, propertyOwnershipShare },
+        {
+          employmentType: "employed",
+          annualSalary: 30000,
+          accounts: [
+            { id: "f", type: "Property", accountSubtype: "rental", ownership, sharePercent },
+          ],
+        },
         [rent(12000)],
         Y,
       );
-      return out.status === "known" ? out.ownershipShare : "unknown";
+      return out.status === "known" ? out.options.rentalShares.unlinked.share : "unknown";
     };
-    expect(share(null)).toBe(100);
-    expect(share(undefined)).toBe(100);
-    expect(share(-10)).toBe(100);
-    expect(share(100)).toBe(100);
-    expect(share(50)).toBe(50);
+    expect(share("sole", null)).toBe(100);
+    expect(share("joint", null)).toBe(50);
+    expect(share("joint", -10)).toBe(50);
+    expect(share("joint", 100)).toBe(100);
+    expect(share("joint", 40)).toBe(40);
   });
 });

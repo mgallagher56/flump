@@ -38,7 +38,7 @@ export class RentalShareOntoPropertyAccounts1795550100000 implements MigrationIn
       `CREATE TABLE "${RENTAL_SHARE_BACKFILL_TABLE}" (
          "id" serial PRIMARY KEY,
          "account_id" uuid NOT NULL REFERENCES "accounts"("id") ON DELETE CASCADE,
-         "old_ownership" varchar NOT NULL,
+         "old_sole_or_joint" varchar NOT NULL,
          "old_share_percent" integer,
          -- The share up() wrote, so down() restores only an account the person has not changed.
          "new_share_percent" integer NOT NULL,
@@ -61,7 +61,7 @@ export class RentalShareOntoPropertyAccounts1795550100000 implements MigrationIn
            AND round(u."property_ownership_share") BETWEEN 1 AND 99
        ),
        img AS (
-         INSERT INTO "${RENTAL_SHARE_BACKFILL_TABLE}" ("account_id", "old_ownership", "old_share_percent", "new_share_percent")
+         INSERT INTO "${RENTAL_SHARE_BACKFILL_TABLE}" ("account_id", "old_sole_or_joint", "old_share_percent", "new_share_percent")
          SELECT "id", "ownership", "share_percent", "profile_share" FROM t
        )
        UPDATE "accounts" a SET "ownership" = 'joint', "share_percent" = t."profile_share"
@@ -83,7 +83,7 @@ export class RentalShareOntoPropertyAccounts1795550100000 implements MigrationIn
     await queryRunner.query(`LOCK TABLE "accounts" IN SHARE ROW EXCLUSIVE MODE`);
     await queryRunner.query(
       // Only where the account still holds what up() wrote: a share the person set since is kept.
-      `UPDATE "accounts" a SET "ownership" = r."old_ownership", "share_percent" = r."old_share_percent"
+      `UPDATE "accounts" a SET "ownership" = r."old_sole_or_joint", "share_percent" = r."old_share_percent"
        FROM "${RENTAL_SHARE_BACKFILL_TABLE}" r
        WHERE r."account_id" = a."id" AND a."ownership" = 'joint'
          AND a."share_percent" = r."new_share_percent"`,

@@ -234,10 +234,10 @@ describe("selectEstimatedTaxDue: untaxed income and provenance", () => {
     expect(fig.status === "known" && fig.assumptions).toBeUndefined();
   });
 
-  it("is marked as an assumption for a Scottish taxpayer", () => {
+  it("is derived, not an assumption, for a Scottish taxpayer: Scottish bands are used (slice 7)", () => {
     const fig = selectEstimatedTaxDue({ ...employee(30000), taxRegion: "SCOTLAND" }, [rent(5000)], {
       taxYear: Y,
     });
-    expect(fig.status === "known" && fig.provenance).toBe("assumption");
+    expect(fig.status === "known" && fig.provenance).toBe("derived");
   });
 });

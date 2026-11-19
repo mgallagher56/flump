@@ -83,7 +83,6 @@ import { StudentLoanPlanToProfile1795480200000 } from "./StudentLoanPlanToProfil
 import {
   TAX_RECORD_ACCOUNT_FOREIGN_KEY,
   TAX_RECORD_ACCOUNT_OWNER_INDEX,
-  TAX_RECORD_OWNER_ACCOUNT_INDEX,
   TaxRecordAccountLink1795550000000,
 } from "./TaxRecordAccountLink1795550000000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
@@ -3556,8 +3555,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     const indexes = async (): Promise<string[]> =>
       (
         (await ds.query(
-          `SELECT indexname FROM pg_indexes WHERE tablename = 'tax_records' AND indexname IN ($1, $2) ORDER BY indexname`,
-          [TAX_RECORD_ACCOUNT_OWNER_INDEX, TAX_RECORD_OWNER_ACCOUNT_INDEX],
+          `SELECT indexname FROM pg_indexes WHERE tablename = 'tax_records' AND indexname = $1`,
+          [TAX_RECORD_ACCOUNT_OWNER_INDEX],
         )) as { indexname: string }[]
       ).map((r) => r.indexname);
     const account = async (userId: string): Promise<string> =>
@@ -3584,15 +3583,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         0,
       ).account_id;
 
-    it("adds the column, the owner key and both indexes, and a second run changes nothing", async () => {
+    it("adds the column, the owner key and its index, and a second run changes nothing", async () => {
       await ds.runMigrations();
       expect(await applied()).toContain(NAME);
       expect(await column()).toHaveLength(1);
       expect(await key()).toHaveLength(1);
-      expect(await indexes()).toEqual([
-        TAX_RECORD_ACCOUNT_OWNER_INDEX,
-        TAX_RECORD_OWNER_ACCOUNT_INDEX,
-      ]);
+      expect(await indexes()).toEqual([TAX_RECORD_ACCOUNT_OWNER_INDEX]);
       const mine = await account("u1");
       const linked = await record("u1", mine);
       const before = await columns();
@@ -3658,7 +3654,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       at(await ds.query("SELECT ownership, share_percent FROM accounts WHERE id = $1", [id]), 0);
     const beforeImage = async (): Promise<unknown[]> =>
       ds.query(
-        `SELECT account_id, old_ownership, old_share_percent, new_share_percent FROM "${RENTAL_SHARE_BACKFILL_TABLE}" ORDER BY account_id`,
+        `SELECT account_id, old_sole_or_joint, old_share_percent, new_share_percent FROM "${RENTAL_SHARE_BACKFILL_TABLE}" ORDER BY account_id`,
       );
 
     it("gives a sole rental the profile's share, leaves the rest, and a second run changes nothing", async () => {
@@ -3699,13 +3695,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         expect.arrayContaining([
           {
             account_id: soleRental,
-            old_ownership: "sole",
+            old_sole_or_joint: "sole",
             old_share_percent: null,
             new_share_percent: 50,
           },
           {
             account_id: roundedRental,
-            old_ownership: "sole",
+            old_sole_or_joint: "sole",
             old_share_percent: null,
             new_share_percent: 33,
           },

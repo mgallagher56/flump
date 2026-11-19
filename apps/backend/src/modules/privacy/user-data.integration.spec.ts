@@ -533,7 +533,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       at(await ds.getRepository(Account).findBy({ userId }), 0).id;
     for (const userId of [USER_A, USER_B]) {
       await ds.query(
-        `INSERT INTO rental_share_onto_property_backfill (account_id, old_ownership, new_share_percent)
+        `INSERT INTO rental_share_onto_property_backfill (account_id, old_sole_or_joint, new_share_percent)
          VALUES ($1, 'sole', 50)`,
         [await accountOf(userId)],
       );

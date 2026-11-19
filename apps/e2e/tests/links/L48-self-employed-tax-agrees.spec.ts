@@ -157,11 +157,11 @@ type SavedTaxRecord = {
 };
 
 // L21 (SA-4, owner decision 5): a buy-to-let mortgage added in Accounts brings its interest into
-// Self Assessment as a "Calculated" figure to confirm, and confirming it saves a record linked to
+// Self Assessment as an estimated figure to check, and adding it saves a record linked to
 // the mortgage. The figure depends on the month (the mortgage's one history point is this month),
 // so the test checks the card and the link, not the amount; the amount is worked by hand in
 // apps/web/app/features/tax/linkedAccounts.test.ts.
-test("L21 a buy-to-let mortgage's calculated interest is added as a record linked to it", async ({
+test("L21 a buy-to-let mortgage's estimated interest is added as a record linked to it", async ({
   page,
 }) => {
   await page.goto("/app");
@@ -189,10 +189,10 @@ test("L21 a buy-to-let mortgage's calculated interest is added as a record linke
     await page.goto("/app/self-assessment");
     const card = page.getByTestId(`calculated-figure-${mortgageId}`);
     await expect(card).toContainText(
-      /Calculated mortgage interest for \d{4}\/\d{2}: £[\d,]+\.\d{2}/,
+      /Estimated mortgage interest for \d{4}\/\d{2}: £[\d,]+\.\d{2}/,
     );
     await expect(card).toContainText("4.5% rate");
-    await card.getByRole("button", { name: /^Add as a record/ }).click();
+    await card.getByRole("button", { name: /^Add this estimate as a record/ }).click();
     // Once the linked record is saved, the page reloads its data and the offer goes.
     await expect(card).toHaveCount(0);
 
