@@ -53,7 +53,7 @@ export interface IconTileProps {
   icon: LucideIcon;
   /** Picks the tile colour from the domain map. Ignored when `tone` is given. */
   domain?: IconTileDomain;
-  /** Explicit tile colour, for things outside the money domains. Defaults to neutral. */
+  /** Explicit tile colour, for things outside the areas. Defaults to neutral. */
   tone?: IconTileTone;
   /**
    * Accessible name. Omit when the tile sits beside visible text that already names it (the

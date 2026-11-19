@@ -12,9 +12,9 @@ export interface SectionHeaderProps {
   description?: ReactNode;
   /** A Lucide icon for the tile. The tile is decorative: the title names the section. */
   icon: LucideIcon;
-  /** Tile colour from the money domain. Ignored when `tone` is given. */
+  /** Tile colour from the area map. Ignored when `tone` is given. */
   domain?: IconTileDomain;
-  /** Explicit tile colour. `accent` is the E17 Damson, for sections outside the money domains. */
+  /** Explicit tile colour. `accent` is the E17 Damson, for sections outside the areas. */
   tone?: IconTileTone;
   /** Heading level. Defaults to `h2`: sections sit directly under the page title. */
   as?: Exclude<HeadingElement, "h1">;

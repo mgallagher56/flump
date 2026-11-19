@@ -1,7 +1,7 @@
 import { cva } from "../../../styled-system/css";
 
 /**
- * E16 P9.3: a 40px rounded tile on the domain's tint behind a Lucide icon. The icon uses
+ * A 40px rounded tile on the domain's tint behind a Lucide icon. The icon uses
  * `text.primary`, which clears 4.5:1 on every tint and on `surface.subtle` in both themes.
  * The neutral tile sits on `surface.subtle` with a `border` edge: `surface.sunken` was darker than
  * the dark card and read as a hole, so the tile all but vanished in dark mode.
@@ -25,7 +25,7 @@ export const iconTile = cva({
       sky: { backgroundColor: "surface.tint.sky" },
       rose: { backgroundColor: "surface.tint.rose" },
       violet: { backgroundColor: "surface.tint.violet" },
-      /** E17 Damson: wayfinding outside the money domains (STYLE-GUIDE C7). Never beside a status. */
+      /** E17 Damson: wayfinding outside the areas (STYLE-GUIDE C7). Never beside a status. */
       accent: { backgroundColor: "accent.subtle", color: "accent" },
       neutral: {
         backgroundColor: "surface.subtle",

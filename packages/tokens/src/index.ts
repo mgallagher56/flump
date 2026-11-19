@@ -242,7 +242,7 @@ export const semanticTokens = {
       scrim: { value: { base: "rgba(43, 38, 32, 0.4)", _dark: "rgba(8, 6, 4, 0.6)" } },
       // E16 PR 1 (P9, D16 option a): domain tints for icon tiles and at most ONE tinted section per
       // page. Never around a KpiStrip, a ScenarioZone or a chart, and KPI cards are never tinted.
-      // Teal: net worth, mortgage, pension. Apricot: debt. Sage: savings. text.primary, secondary
+      // Teal: net worth, mortgage. Apricot: debt. Sage: savings (sky, rose and violet: see the area map in IconTile). text.primary, secondary
       // and muted clear 4.5:1 on each, and each is >= 2 deltaE76 from every other surface (tests).
       // Dark (P77): as light and as saturated as text.muted at 4.5:1 allows, about 1.25:1 and
       // 16 deltaE76 against surface.card, so an icon tile reads on a card (it was 1.05 to 1.15:1).

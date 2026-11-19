@@ -69,7 +69,7 @@ const domainsPlay: Story["play"] = async ({ canvasElement }) => {
   }
 };
 
-/** One colour per domain: teal for net worth, mortgage and pension, sage for savings, apricot for debt, neutral for pay and tax. */
+/** One colour per area: teal for net worth and mortgage, sky for pension, sage for savings, apricot for debt, violet for tax, rose for budget and pay, damson for accounts. */
 export const Domains: Story = { render: () => <DomainList />, play: domainsPlay };
 
 export const DomainsDark: Story = {

@@ -9,7 +9,7 @@ describe("SECTION_COLOURS", () => {
     expect(new Set(colours).size).toBe(SECTION_PRIORITY.length);
   });
 
-  it("keeps the colours the money domains already use elsewhere (E16 P9.3)", () => {
+  it("keeps the colours debt, savings and mortgage already had", () => {
     expect(SECTION_COLOURS.debt).toBe("apricot");
     expect(SECTION_COLOURS.savings).toBe("sage");
     expect(SECTION_COLOURS.mortgage).toBe("teal");
@@ -17,6 +17,12 @@ describe("SECTION_COLOURS", () => {
 
   it("is the same colour the section's pages use (one home per value)", () => {
     // Pension page tile is sky like its card; tax is violet; budget rose; accounts damson (accent).
+    // Literal colours, so a change to the map has to be a deliberate edit here too.
+    expect(SECTION_COLOURS.pension).toBe("sky");
+    expect(SECTION_COLOURS.tax).toBe("violet");
+    expect(SECTION_COLOURS.budget).toBe("rose");
+    expect(SECTION_COLOURS.accounts).toBe("damson");
+    expect(SECTION_COLOURS.retirement).toBe(SECTION_COLOURS.pension);
     expect(ICON_TILE_DOMAIN_TONE.pension).toBe(SECTION_TILE_TONE[SECTION_COLOURS.pension]);
     expect(ICON_TILE_DOMAIN_TONE.tax).toBe(SECTION_TILE_TONE[SECTION_COLOURS.tax]);
     expect(ICON_TILE_DOMAIN_TONE.budget).toBe(SECTION_TILE_TONE[SECTION_COLOURS.budget]);

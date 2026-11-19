@@ -312,7 +312,11 @@ describe("BrowserStorageDriver cookies", () => {
       configurable: true,
     });
     setStorageDriver(new BrowserStorageDriver());
-    expect(readOnboardingSeed()).toBeNull();
+    try {
+      expect(readOnboardingSeed()).toBeNull();
+    } finally {
+      setStorageDriver(null);
+    }
   });
 
   it("removes a cookie by expiring it now", () => {

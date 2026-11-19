@@ -21,7 +21,7 @@ export const TOOL_SLUGS = [
 
 export type ToolSlug = (typeof TOOL_SLUGS)[number];
 
-/** The money domain a tool belongs to. Picks its `IconTile` colour (E16 P9.3). */
+/** The money domain a tool belongs to. Picks its `IconTile` colour (see ICON_TILE_DOMAIN_TONE). */
 export type ToolDomain = "debt" | "mortgage" | "pay" | "tax";
 
 /** Names a Lucide icon in `toolIcons.ts`; kept as a string so this file stays free of React. */
