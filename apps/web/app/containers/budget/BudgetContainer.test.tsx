@@ -180,10 +180,14 @@ describe("BudgetContainer", () => {
     expect(screen.queryByRole("heading", { name: "Your details" })).toBeNull();
     // Categories are added in Edit budget, so the read-only list has no Add category.
     expect(screen.queryByRole("button", { name: "Add category" })).toBeNull();
-    // The zone starts in a closed drawer below the saved Breathing room figure.
-    const drawer = screen.getByRole("button", { name: /^Model a change to your budget/ });
+    // The zone starts closed below the saved Breathing room figure, with a one-line summary
+    // (owner item 4, UX S11).
+    const drawer = screen.getByRole("button", {
+      name: "Show what-if: redundancy pay, a spending cut",
+    });
     expect(drawer.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByRole("region", { name: "Model a change to your budget" })).toBeNull();
+    expect(screen.queryByTestId("runway-result")).toBeNull();
+    expect(screen.getByText(/^Starts from your savings of/)).toBeDefined();
     fireEvent.click(drawer);
     expect(drawer.getAttribute("aria-expanded")).toBe("true");
     const zone = screen.getByRole("region", { name: "Model a change to your budget" });
@@ -676,7 +680,9 @@ describe("BudgetContainer", () => {
     const savedStrip = strip();
     const requestsBefore = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length;
 
-    fireEvent.click(screen.getByRole("button", { name: /^Model a change to your budget/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show what-if: redundancy pay, a spending cut" }),
+    );
     fireEvent.change(screen.getByLabelText("Redundancy pay or lump sum"), {
       target: { value: "9000" },
     });
@@ -689,7 +695,9 @@ describe("BudgetContainer", () => {
     // ...and is gone after a reload (a fresh mount).
     unmount();
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /^Model a change to your budget/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show what-if: redundancy pay, a spending cut" }),
+    );
     expect((screen.getByLabelText("Redundancy pay or lump sum") as HTMLInputElement).value).toBe(
       "",
     );

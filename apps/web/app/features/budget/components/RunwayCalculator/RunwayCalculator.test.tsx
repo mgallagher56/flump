@@ -130,7 +130,7 @@ describe("RunwayCalculator", () => {
     expect(outcomeFigure()).toBe("6.3 months");
   });
 
-  it("collapsible puts the zone in a closed drawer whose button names it", () => {
+  it("collapsible starts the zone closed, with a one-line summary and a button naming it", () => {
     render(
       <RunwayCalculator
         accountDetails={[]}
@@ -139,9 +139,12 @@ describe("RunwayCalculator", () => {
         entries={mockEntries}
       />,
     );
-    const toggle = screen.getByRole("button", { name: /^Model a change to your budget/ });
+    const toggle = screen.getByRole("button", {
+      name: "Show what-if: redundancy pay, a spending cut",
+    });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByTestId("runway-result")).toBeNull();
+    expect(screen.getByText(/^Starts from your/)).toBeDefined();
     // The trigger repeats no figure: the saved one sits above it on the page.
     expect(toggle.textContent).not.toMatch(/\d/);
     fireEvent.click(toggle);
