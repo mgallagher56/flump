@@ -1,4 +1,8 @@
-import { describeJointWholeValue, INVESTMENT_RISK_NOTICE, isIsaAccount } from "@flump/finance-engine";
+import {
+  describeJointWholeValue,
+  INVESTMENT_RISK_NOTICE,
+  isIsaAccount,
+} from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
