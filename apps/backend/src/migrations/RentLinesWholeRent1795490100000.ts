@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import type { MigrationInterface, QueryRunner } from "typeorm";
 import { takeMigrationLock } from "../config/migration-lock";
 
@@ -23,6 +24,8 @@ export const RENT_SHARE_BACKFILL_TABLE = "rent_share_backfill";
 export class RentLinesWholeRent1795490100000 implements MigrationInterface {
   name = "RentLinesWholeRent1795490100000";
 
+  private readonly logger = new Logger("RentLinesWholeRent");
+
   public async up(queryRunner: QueryRunner): Promise<void> {
     await takeMigrationLock(queryRunner);
     await queryRunner.query("SET LOCAL lock_timeout = '10s'");
@@ -43,7 +46,7 @@ export class RentLinesWholeRent1795490100000 implements MigrationInterface {
       `CREATE INDEX "IDX_${RENT_SHARE_BACKFILL_TABLE}_entry" ON "${RENT_SHARE_BACKFILL_TABLE}" ("budget_entry_id")`,
     );
     await queryRunner.query(`LOCK TABLE "budget_entries" IN SHARE ROW EXCLUSIVE MODE`);
-    await queryRunner.query(
+    const changed: unknown[] = await queryRunner.query(
       `WITH t AS (
          SELECT b."id", b."ownership", b."share_percent"
          FROM "budget_entries" b
@@ -55,8 +58,12 @@ export class RentLinesWholeRent1795490100000 implements MigrationInterface {
          SELECT "id", "ownership", "share_percent" FROM t
        )
        UPDATE "budget_entries" b SET "ownership" = 'sole', "share_percent" = NULL
-       FROM t WHERE b."id" = t."id"`,
+       FROM t WHERE b."id" = t."id"
+       RETURNING b."id"`,
     );
+    // TypeORM returns an UPDATE as [rows, rowCount]. A count only: never ids, names or amounts.
+    const count = Array.isArray(changed[0]) ? Number(changed[1]) : changed.length;
+    this.logger.log(`Renters' joint linked rent lines set to sole: ${count}`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
