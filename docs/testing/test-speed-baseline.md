@@ -337,3 +337,12 @@ Slowest 20 files:
 | packages/mcp/src/tools/read/retirement-tools.test.ts | 0.1 s |
 | packages/mcp/src/evals/graders.test.ts               | 0.1 s |
 | packages/mcp/src/auth/failed-auth-limiter.test.ts    | 0.0 s |
+
+## CI shape after E41 P5 (measured 19 November 2026)
+
+- Vitest web runs as two `--shard` halves; "⚡ Vitest web coverage" merges their blob reports and applies the web coverage floors to the whole run. Backend and packages is its own job. "⚡ Vitest Tests" passes only when all of them pass.
+- Storybook a11y runs as two halves per theme, plus the light build smoke as its own leg. The jobs that keep the required names ("♿ Storybook a11y (light)" and "(dark)") pass only when every leg of their theme passed. `scripts/ci-config.test.ts` checks this wiring.
+- Forced runs (no Turbo cache), three before and three after:
+  - Storybook: longest leg 89 to 116 s, against 121 to 211 s for the single job.
+  - Vitest web: start of the first half to the end of the merge, 197 to 210 s (one queued run 291 s), against 196 to 251 s for the single job. The merge job's own set-up costs back most of what the halves save.
+- Every needless rebase is a full CI run, about 5 to 8 runner-minutes and 3 to 5 minutes of wall time. The merge queue's rule (only the next pull request in the queue rebases) saves more than most of these slices.
