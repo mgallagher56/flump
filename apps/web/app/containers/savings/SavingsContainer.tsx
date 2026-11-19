@@ -42,7 +42,6 @@ import {
 import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummaryCards";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
-import { useUserProfile } from "~/hooks/useUserProfile";
 import { emptyWrap, toolPanel, zoneSummary } from "./SavingsContainer.styles";
 
 /**
@@ -69,13 +68,6 @@ export const SavingsContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];
-  const userProfile = loaderData?.userProfile;
-
-  const { setProfile, markChecklistStep } = useUserProfile();
-
-  useEffect(() => {
-    if (userProfile) setProfile(userProfile);
-  }, [userProfile, setProfile]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [tool, setTool] = useState<Tool>("forecast");
@@ -116,9 +108,8 @@ export const SavingsContainer: FC = () => {
     }));
   }, [accounts, accountDetails]);
 
-  useEffect(() => {
-    if (savingsAccounts.length > 0) markChecklistStep("savings", true).catch(() => {});
-  }, [savingsAccounts.length, markChecklistStep]);
+  // No checklist write here: the Dashboard reads the savings step as done once a savings account
+  // exists, so opening this page never writes to the profile (LD-2, CS-6).
 
   // The total and the ISA allowance used come from the shared loader's picture (audit slice 3),
   // the figures the Dashboard and the AI read.

@@ -27,7 +27,7 @@ import {
 } from "@repo/ui";
 import { ListPlus } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
-import { useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
 import { AccountLinkNotice } from "~/features/budget/components/AccountLinkNotice";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
 import { BreathingRoom } from "~/features/budget/components/BreathingRoom";
@@ -91,20 +91,18 @@ function writableEntryFields<T extends Partial<BudgetEntry>>(entry: T) {
   return fields;
 }
 
+/** A stable empty list, so a missing loader value never reads as new rows on every render. */
+const NO_ENTRIES: BudgetEntry[] = [];
+
 const BudgetContainer: FC = () => {
   const {
     accounts = [],
     accountDetails = [],
-    budgetEntries = [],
+    budgetEntries = NO_ENTRIES,
     userProfile,
   } = useLoaderData<typeof loader>();
 
-  const { profile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
-
-  // Sync profile from loader into atom
-  useEffect(() => {
-    if (userProfile) setProfile(userProfile);
-  }, [userProfile, setProfile]);
+  const { profile, updateProfile, markChecklistStep } = useUserProfile();
 
   const [view, setView] = useState<BudgetView>("budget");
   // Fixed when the wizard opens, so saving amounts part way through never switches its mode.
@@ -113,6 +111,12 @@ const BudgetContainer: FC = () => {
   // The one category whose entries are open in the list (E16 PR 5: rows open their entries).
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
+  // Each write reloads saved data (audit slice 8, L63): the hero, the Dashboard and the next page
+  // read the saved lines, and the list follows the reloaded rows.
+  const revalidator = useRevalidator();
+  useEffect(() => {
+    setEntries(budgetEntries);
+  }, [budgetEntries]);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
 
   // Custom categories initialized from profile + any non-standard categories in entries
@@ -313,6 +317,7 @@ const BudgetContainer: FC = () => {
       setActionError(null);
       savedEntriesRef.current = [...savedEntriesRef.current, created];
       setEntries((prev) => [...prev, created]);
+      revalidator.revalidate();
     } catch (err) {
       setActionError("We could not add that entry. Nothing has changed. Try again.");
       throw err;
@@ -360,6 +365,7 @@ const BudgetContainer: FC = () => {
       });
       setActionError(null);
       setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
+      revalidator.revalidate();
     } catch (err) {
       setActionError(
         isConflict(err)
@@ -392,6 +398,7 @@ const BudgetContainer: FC = () => {
     }
     setActionError(null);
     setEntries((prev) => prev.filter((e) => e.id !== id));
+    revalidator.revalidate();
     return true;
   };
 

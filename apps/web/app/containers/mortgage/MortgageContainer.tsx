@@ -50,7 +50,7 @@ import {
 } from "~/features/mortgage/mortgageFormat";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
-import { useUserProfile } from "~/hooks/useUserProfile";
+import { normalizeProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
 import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
@@ -264,20 +264,15 @@ const MortgageContainer: FC = () => {
   const { accounts = [], accountDetails = [], userProfile } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { profile, setProfile, updateProfile } = useUserProfile();
+  const { profile, updateProfile } = useUserProfile();
   const revalidator = useRevalidator();
   const { formatCurrency } = useFormatCurrency();
 
-  // Sync profile from loader into atom. Until it has synced, the loader's profile is the source.
-  const [profileSynced, setProfileSynced] = useState(false);
-  useEffect(() => {
-    if (userProfile) setProfile(userProfile);
-    setProfileSynced(true);
-  }, [userProfile, setProfile]);
-
-  const profileFacts = (
-    profileSynced ? profile : { ...profile, ...(userProfile ?? {}) }
-  ) as typeof profile;
+  // Loader data only (audit slice 8): this page's saved profile, else the root loader's.
+  const profileFacts = useMemo(
+    () => (userProfile ? normalizeProfile(userProfile) : profile),
+    [userProfile, profile],
+  );
 
   const [propertyCategory, setPropertyCategory] = useState<PropertyCategory>("residential");
   const isBtl = propertyCategory === "btl";
@@ -671,8 +666,9 @@ const MortgageContainer: FC = () => {
         // Two possible homes found at save time: neither is written.
         if (propertySaved) saved.push(isBtl ? "property value" : "home value");
       }
-      // Reload the saved rows so loan to value and equity read the stored property value.
-      if (propertySaved) revalidator.revalidate();
+      // Reload saved data after any stored change (audit slice 8, L63), so loan to value, equity
+      // and the next page read what was saved, not this page's copy.
+      if (saved.length > 0) revalidator.revalidate();
       setLoanAmount(next.loanAmount);
       setInterestRate(next.interestRate);
       setRemainingTerm(next.remainingTerm);

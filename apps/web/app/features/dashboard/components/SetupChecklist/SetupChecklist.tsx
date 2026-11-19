@@ -36,9 +36,6 @@ import {
   toggleText,
 } from "./SetupChecklist.styles";
 
-/** Dismissal is remembered per browser, not per account. */
-export const SETUP_CHECKLIST_DISMISSED_KEY = "flump_setup_checklist_dismissed";
-
 export interface ChecklistStep {
   key: string;
   label: string;
@@ -68,23 +65,14 @@ export interface SetupChecklistProps {
    * Home shows one notice at a time (P27).
    */
   anotherNoticeShows?: boolean;
+  /**
+   * Saved on the profile (decision 13), from loader data, so the server and the browser draw the
+   * same thing on the first paint (CS-2).
+   */
+  dismissed?: boolean;
+  /** Saves the dismissal on the profile. The checklist hides at once either way. */
+  onDismiss?: () => void | Promise<void>;
 }
-
-const readDismissed = (): boolean => {
-  try {
-    return window.localStorage.getItem(SETUP_CHECKLIST_DISMISSED_KEY) === "true";
-  } catch {
-    return false;
-  }
-};
-
-const writeDismissed = () => {
-  try {
-    window.localStorage.setItem(SETUP_CHECKLIST_DISMISSED_KEY, "true");
-  } catch {
-    // Storage can be blocked or full; the checklist still hides for this visit.
-  }
-};
 
 /** App housekeeping only: each step adds figures to Flump, never a money task (R4). */
 export const buildSteps = (props: SetupChecklistProps): ChecklistStep[] => [
@@ -153,7 +141,9 @@ const selectStepsForPages = (props: SetupChecklistProps): ChecklistStep[] => {
 export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
   const panelId = useId();
   const [expanded, setExpanded] = useState(false);
-  const [dismissed, setDismissed] = useState(readDismissed);
+  // Hidden at once on "Hide"; the saved flag keeps it hidden after the reload.
+  const [hiddenNow, setHiddenNow] = useState(false);
+  const dismissed = Boolean(props.dismissed) || hiddenNow;
   const [localSkipped, setLocalSkipped] = useState<string[]>([]);
   // Captured once on mount so the finish card appears when a user finishes during a visit,
   // while users whose setup was already done when opening the dashboard never see it.
@@ -175,8 +165,8 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
   const nextStep = steps.find((s) => !s.isComplete) ?? null;
 
   const handleDismiss = () => {
-    setDismissed(true);
-    writeDismissed();
+    setHiddenNow(true);
+    if (props.onDismiss) void Promise.resolve(props.onDismiss()).catch(() => undefined);
   };
 
   const handleSkip = (stepKey: string) => {

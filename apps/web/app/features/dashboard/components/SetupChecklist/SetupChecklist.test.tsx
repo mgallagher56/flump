@@ -1,13 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { renderToString } from "react-dom/server";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  buildSteps,
-  SETUP_CHECKLIST_DISMISSED_KEY,
-  SetupChecklist,
-  type SetupChecklistProps,
-} from "./SetupChecklist";
+import { buildSteps, SetupChecklist, type SetupChecklistProps } from "./SetupChecklist";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -31,6 +27,23 @@ const renderChecklist = (props: Partial<SetupChecklistProps> = {}) =>
 
 describe("SetupChecklist", () => {
   beforeEach(() => window.localStorage.clear());
+
+  it("renders nothing when the profile says it was dismissed, on the server as in the browser (decision 13, CS-2)", () => {
+    const tree = (
+      <MemoryRouter>
+        <SetupChecklist {...base} dismissed />
+      </MemoryRouter>
+    );
+    expect(renderToString(tree)).toBe("");
+    const { container } = render(tree);
+    expect(container.innerHTML).toBe("");
+  });
+
+  it("ignores a dismissal left in browser storage by an earlier version", () => {
+    window.localStorage.setItem("flump_setup_checklist_dismissed", "true");
+    renderChecklist();
+    expect(screen.getByTestId("setup-checklist")).toBeDefined();
+  });
 
   it("renders the compact 2A row with ProgressRing, next step and single collapsed action", () => {
     renderChecklist();
@@ -130,10 +143,13 @@ describe("SetupChecklist", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("hides on request and remembers it", () => {
-    renderChecklist();
+  it("hides on request at once and asks for the dismissal to be saved on the profile", () => {
+    const onDismiss = vi.fn();
+    renderChecklist({ onDismiss });
     fireEvent.click(screen.getByRole("button", { name: "Hide setup checklist" }));
-    expect(window.localStorage.getItem(SETUP_CHECKLIST_DISMISSED_KEY)).toBe("true");
+    expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("setup-checklist")).toBeNull();
+    // Nothing is kept in the browser any more.
+    expect(window.localStorage.getItem("flump_setup_checklist_dismissed")).toBeNull();
   });
 });

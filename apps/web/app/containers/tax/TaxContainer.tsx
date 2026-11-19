@@ -54,7 +54,6 @@ import {
 import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.self-assessment";
 import { PROFILE_VERSION_FIELD, versionField } from "~/services/conflict";
-import { useFinancialBaseline } from "~/state/baseline.store";
 import { isPageEnabled } from "~/utils/pageConfig";
 import { propertyShareProfileFirst, salaryProfileFirst } from "~/utils/profileFirst";
 import {
@@ -187,11 +186,10 @@ const SelfAssessmentPage: FC<{
   // Which year's rates apply today, and whether that is a fallback (E22)
   const ratesContext = useMemo(() => getUkTaxYearContext(), []);
   const currentTaxYear = getCurrentUKTaxYear();
-  const { baseline } = useFinancialBaseline();
 
-  // The saved profile wins; the onboarding baseline is only a fallback with no profile row.
-  const profileSalary = salaryProfileFirst(userProfile, baseline.annualGrossSalary);
-  const profileShare = propertyShareProfileFirst(userProfile, baseline.propertyOwnershipSharePct);
+  // Saved figures only (audit slice 8): no browser baseline stands in for them.
+  const profileSalary = salaryProfileFirst(userProfile);
+  const profileShare = propertyShareProfileFirst(userProfile);
 
   // Null while the salary is not known: the panels show the "add your salary" prompt, and the
   // calculation counts it as none.

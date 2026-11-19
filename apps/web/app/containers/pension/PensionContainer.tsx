@@ -28,9 +28,8 @@ import { PensionSummary } from "~/features/pension/components/PensionSummary";
 import { savedPensionRate } from "~/features/pension/contribution";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
-import { useUserProfile } from "~/hooks/useUserProfile";
+import { normalizeProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
-import { seededProfile } from "~/utils/profileFirst";
 import { roundTo2dp } from "~/utils/roundTo2dp";
 import {
   REGION_ASSUMPTION_LABEL,
@@ -55,15 +54,12 @@ export const PensionContainer: FC = () => {
   const retirementAvailable = loaderData?.retirementAvailable === true;
 
   const { formatCurrency } = useFormatCurrency();
-  const { profile: atomProfile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
-  // Saved loader figures until the atom holds this user's profile (no 5% and 3% first paint).
-  const profile = seededProfile(atomProfile, userProfile as typeof atomProfile | undefined);
-
-  useEffect(() => {
-    if (userProfile) {
-      setProfile(userProfile);
-    }
-  }, [userProfile, setProfile]);
+  const { profile: rootProfile, updateProfile } = useUserProfile();
+  // Loader data only (audit slice 8): this page's saved profile, else the root loader's.
+  const profile = useMemo(
+    () => (userProfile ? normalizeProfile(userProfile) : rootProfile),
+    [userProfile, rootProfile],
+  );
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
@@ -188,12 +184,8 @@ export const PensionContainer: FC = () => {
     : directMonthlyContrib > 0
       ? directMonthlyContrib
       : null;
-  // Mark setup checklist step as completed if accounts exist
-  useEffect(() => {
-    if (pensionAccounts.length > 0) {
-      markChecklistStep("pension", true).catch(() => {});
-    }
-  }, [pensionAccounts.length, markChecklistStep]);
+  // No checklist write here: the Dashboard reads the pension step as done once a pot exists, so
+  // opening this page never writes to the profile (LD-2, CS-6).
 
   const handleSaveDetails = async (values: PensionDetailsSaveValues) => {
     const salaryValue = Math.max(0, values.annualSalary ?? 0);
