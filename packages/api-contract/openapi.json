@@ -3552,10 +3552,10 @@
                       "isPrimaryIncome": {
                         "type": "boolean"
                       },
-                      "linksTo": {
+                      "linkKind": {
                         "anyOf": [
                           {
-                            "enum": ["take-home", "housing"],
+                            "enum": ["take_home", "housing"],
                             "type": "string"
                           },
                           {
@@ -3609,7 +3609,7 @@
                       "isDefault",
                       "ownership",
                       "sharePercent",
-                      "linksTo",
+                      "linkKind",
                       "createdAt",
                       "updatedAt"
                     ],
@@ -3821,10 +3821,10 @@
                     "isPrimaryIncome": {
                       "type": "boolean"
                     },
-                    "linksTo": {
+                    "linkKind": {
                       "anyOf": [
                         {
-                          "enum": ["take-home", "housing"],
+                          "enum": ["take_home", "housing"],
                           "type": "string"
                         },
                         {
@@ -3878,7 +3878,7 @@
                     "isDefault",
                     "ownership",
                     "sharePercent",
-                    "linksTo",
+                    "linkKind",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -4205,10 +4205,10 @@
                       "isPrimaryIncome": {
                         "type": "boolean"
                       },
-                      "linksTo": {
+                      "linkKind": {
                         "anyOf": [
                           {
-                            "enum": ["take-home", "housing"],
+                            "enum": ["take_home", "housing"],
                             "type": "string"
                           },
                           {
@@ -4262,7 +4262,7 @@
                       "isDefault",
                       "ownership",
                       "sharePercent",
-                      "linksTo",
+                      "linkKind",
                       "createdAt",
                       "updatedAt"
                     ],
@@ -4493,10 +4493,10 @@
                   "isIncome": {
                     "type": "boolean"
                   },
-                  "linksTo": {
+                  "linkKind": {
                     "anyOf": [
                       {
-                        "enum": ["take-home", "housing"],
+                        "enum": ["take_home", "housing"],
                         "type": "string"
                       },
                       {
@@ -4586,10 +4586,10 @@
                     "isPrimaryIncome": {
                       "type": "boolean"
                     },
-                    "linksTo": {
+                    "linkKind": {
                       "anyOf": [
                         {
-                          "enum": ["take-home", "housing"],
+                          "enum": ["take_home", "housing"],
                           "type": "string"
                         },
                         {
@@ -4643,7 +4643,7 @@
                     "isDefault",
                     "ownership",
                     "sharePercent",
-                    "linksTo",
+                    "linkKind",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -7374,10 +7374,10 @@
                                   "isIncome": {
                                     "type": "boolean"
                                   },
-                                  "linksTo": {
+                                  "linkKind": {
                                     "anyOf": [
                                       {
-                                        "enum": ["take-home", "housing"],
+                                        "enum": ["take_home", "housing"],
                                         "type": "string"
                                       },
                                       {
@@ -7416,6 +7416,76 @@
                                   "frequency",
                                   "isIncome",
                                   "isEssential"
+                                ],
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "entriesNotSet": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "category": {
+                                    "type": "string"
+                                  },
+                                  "frequency": {
+                                    "type": "string"
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "isEssential": {
+                                    "type": "boolean"
+                                  },
+                                  "isIncome": {
+                                    "type": "boolean"
+                                  },
+                                  "linkKind": {
+                                    "anyOf": [
+                                      {
+                                        "enum": ["take_home", "housing"],
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "notSet": {
+                                    "const": true,
+                                    "type": "boolean"
+                                  },
+                                  "notes": {
+                                    "type": ["string", "null"]
+                                  },
+                                  "ownership": {
+                                    "enum": ["sole", "joint"],
+                                    "type": "string"
+                                  },
+                                  "sharePercent": {
+                                    "anyOf": [
+                                      {
+                                        "maximum": 100,
+                                        "minimum": 1,
+                                        "type": "integer"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "category",
+                                  "name",
+                                  "frequency",
+                                  "isIncome",
+                                  "isEssential",
+                                  "notSet"
                                 ],
                                 "type": "object"
                               },
@@ -8476,10 +8546,10 @@
                               "isIncome": {
                                 "type": "boolean"
                               },
-                              "linksTo": {
+                              "linkKind": {
                                 "anyOf": [
                                   {
-                                    "enum": ["take-home", "housing"],
+                                    "enum": ["take_home", "housing"],
                                     "type": "string"
                                   },
                                   {

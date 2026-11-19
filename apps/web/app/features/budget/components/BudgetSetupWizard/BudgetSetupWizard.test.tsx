@@ -70,12 +70,25 @@ describe("BudgetSetupWizard: take-home from the profile (owner item 7)", () => {
   });
 
   it("reads the take-home in place of an entry the person chose to replace with it", async () => {
-    const chosen = { ...mockEntries[0], amount: 0, linksTo: "take-home" } as BudgetEntry;
+    const chosen = { ...mockEntries[0], amount: 0, linkKind: "take_home" } as BudgetEntry;
     render(<BudgetSetupWizard {...props} entries={[chosen]} monthlyTakeHome={2400} />);
     goToIncome();
     expect((await screen.findByTestId("wizard-linked-take-home")).textContent).toContain(
       "Your take-home pay of £2,400 a month is already in your budget",
     );
+  });
+
+  it("shows the summary totals as Not set while a linked entry's saved figure is not set", async () => {
+    // The chosen pay entry stores £0; with no take-home its £0 is never counted.
+    const chosen = { ...mockEntries[0], amount: 0, linkKind: "take_home" } as BudgetEntry;
+    render(<BudgetSetupWizard {...props} entries={[chosen]} mode="edit" monthlyTakeHome={null} />);
+    for (const step of ["Income", "Housing", "Bills", "Expenses", "Savings"]) {
+      await screen.findByRole("heading", { name: new RegExp(step, "i") });
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    }
+    const total = (await screen.findByText("Total income")).parentElement;
+    expect(total?.textContent).toContain("Not set");
+    expect(screen.queryByText("Short each month")).toBeNull();
   });
 
   it("starts a new savings entry as not essential (owner item 28)", async () => {

@@ -396,6 +396,7 @@ flowchart LR
   s_picture["Engine picture (headline figures)"]
   s_mcp_read["AI read tools"]
   s_context_pack["AI context pack"]
+  s_export["Data export and erasure"]
   f_custom_budget_categories(["Budget categories the user added"])
   s_budget --> f_custom_budget_categories
   f_custom_budget_categories -.-> s_budget
@@ -408,6 +409,13 @@ flowchart LR
   f_budget_entries -.-> s_debt
   f_budget_entries -.-> s_mcp_read
   f_budget_entries -.-> s_context_pack
+  f_budget_entry_link_kind(["Which saved fact a budget line is linked to"])
+  s_budget --> f_budget_entry_link_kind
+  f_budget_entry_link_kind -.-> s_picture
+  f_budget_entry_link_kind -.-> s_budget
+  f_budget_entry_link_kind -.-> s_mcp_read
+  f_budget_entry_link_kind -.-> s_context_pack
+  f_budget_entry_link_kind -.-> s_export
   f_other_outgoings(["Other monthly outgoings as typed in onboarding"])
   s_onboarding --> f_other_outgoings
   f_savings_settings(["Monthly savings target and savings settings on the profile"])

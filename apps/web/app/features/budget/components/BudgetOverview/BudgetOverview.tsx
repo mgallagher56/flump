@@ -22,7 +22,8 @@ export interface BudgetOverviewProps {
    * loaders use). The overview never adds rows up itself (E23 section 2). Saved data only: no
    * scenario input ever reaches these figures.
    */
-  picture?: Pick<FinancialPicture, "budget" | "safeToSpend">;
+  picture?: Pick<FinancialPicture, "budget" | "safeToSpend"> &
+    Partial<Pick<FinancialPicture, "budgetRows">>;
 }
 
 /**
@@ -53,7 +54,23 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
   const surplus = budget?.surplus ?? 0;
   const isShort = hasIncome && surplus < 0;
 
-  const subline = safeToSpend ? (
+  // A linked line whose saved fact is not set leaves the totals unknown (never counted as £0), so
+  // the headline says which figure is missing and where to add it.
+  const notSetLinks = new Set(
+    (picture.budgetRows ?? []).filter((row) => row.notSet).map((row) => row.linked),
+  );
+  const notSetPrompt = notSetLinks.has("take_home") ? (
+    <>
+      Your take-home pay is not set, so what is left over is unknown.{" "}
+      <SampleAwareLink className={inlineLink()} to="/app/profile#settings-age-and-pay">
+        Add your salary
+      </SampleAwareLink>
+    </>
+  ) : notSetLinks.has("housing") ? (
+    "Your housing payment is not set, so what is left over is unknown. Add it in your housing details below."
+  ) : null;
+
+  const subline = notSetPrompt ? undefined : safeToSpend ? (
     <>
       {/* Monthly, to match "left over" above; a different measure, so it says what it leaves out
           (owner ruling 2026-11-15). */}
@@ -76,7 +93,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
   return (
     <div className={overviewRoot()}>
       <HeroFigure
-        emptyPrompt="Add your income to see what is left over each month."
+        emptyPrompt={notSetPrompt ?? "Add your income to see what is left over each month."}
         explain="Money in each month, minus your bills, spending and savings in your budget."
         label={isShort ? "Short each month" : "Left over each month"}
         subline={subline}
@@ -95,7 +112,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
       <KpiStrip
         // One prompt only when both figures are unknown; a known figure is never hidden.
         emptyPrompt={
-          !hasIncome && goingOut === null
+          !hasIncome && goingOut === null && !notSetPrompt
             ? { title: "Add your income and spending to see money in and going out" }
             : undefined
         }

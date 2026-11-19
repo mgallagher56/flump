@@ -96,7 +96,45 @@ describe("rankCategories", () => {
         entry({ id: "p2", category: "pets", amount: 100, isIncome: true }),
       ],
     );
-    expect(rows).toEqual([{ category: "pets", label: expect.any(String), total: 60, count: 1 }]);
+    expect(rows).toEqual([
+      { category: "pets", label: expect.any(String), total: 60, count: 1, notSet: false },
+    ]);
+  });
+
+  it("keeps a category whose linked line is not set, and never counts that line as £0", () => {
+    // Housing: a linked rent with no saved rent (Not set) beside a £80 service charge.
+    const rows = rankCategories(
+      ["housing", "bills"],
+      [
+        entry({ id: "linked:housing", amount: 0, linked: "housing", notSet: true }),
+        entry({ id: "s", name: "Service charge", amount: 80 }),
+        entry({ id: "w", category: "bills", name: "Water", amount: 40 }),
+      ],
+    );
+    expect(rows.find((r) => r.category === "housing")).toMatchObject({ notSet: true, count: 2 });
+    // Only a Not set line in it: kept, so the Not set line is seen.
+    const only = rankCategories(
+      ["housing"],
+      [entry({ id: "linked:housing", amount: 0, linked: "housing", notSet: true })],
+    );
+    expect(only.map((r) => r.category)).toEqual(["housing"]);
+  });
+});
+
+describe("<BudgetCategoryList /> Not set", () => {
+  it("shows Not set for a category total that a linked line leaves unknown", () => {
+    customRender(
+      <BudgetCategoryList
+        categories={["housing"]}
+        entries={[entry({ id: "linked:housing", amount: 0, linked: "housing", notSet: true })]}
+        openCategory={null}
+        renderEntries={() => null}
+        onToggleCategory={() => {}}
+      />,
+    );
+    const row = screen.getByTestId("budget-category-housing");
+    expect(row.textContent).toContain("Not set");
+    expect(row.textContent).not.toContain("£0");
   });
 });
 

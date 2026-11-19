@@ -401,7 +401,8 @@ export const AccountExportBudgetEntry = z.strictObject({
   id: Uuid,
   category: z.string(),
   name: z.string(),
-  amount: z.number().finite(),
+  /** Null on a line linked to a saved fact: it stores no amount of its own (see `linkKind`). */
+  amount: z.number().finite().nullable(),
   frequency: z.string(),
   isIncome: z.boolean(),
   isPrimaryIncome: z.boolean(),
@@ -411,8 +412,11 @@ export const AccountExportBudgetEntry = z.strictObject({
   /** E34 C1. Optional so an export from a backend without these columns still parses. */
   ownership: z.string().optional(),
   sharePercent: NullableNumber.optional(),
-  /** The saved detail the row is replaced with. Optional for exports from before the column. */
-  linksTo: NullableText.optional(),
+  /**
+   * The saved fact the line is linked to ("take_home" or "housing"), or null. A linked line's
+   * figure is read from the profile in this same export. Optional for exports from before it.
+   */
+  linkKind: NullableText.optional(),
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
 });

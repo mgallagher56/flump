@@ -259,6 +259,9 @@ function exportRow(table: UserDataTable, row: Record<string, unknown>): Record<s
       ) {
         return [c, decryptReceiptData(val, row.id)];
       }
+      // A budget line linked to a saved fact stores no amount of its own: its stored 0 is never
+      // a figure, so the export says so with null. The fact itself is in the profile section.
+      if (table.key === "budgetEntries" && c === "amount" && row.linkKind) return [c, null];
       return [c, val ?? null];
     }),
   );

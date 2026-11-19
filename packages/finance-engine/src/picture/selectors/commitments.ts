@@ -43,7 +43,8 @@ export function essentialCommitments(
   let budgetDebtPayments = 0;
   let essentialSavings = 0;
   for (const row of budget) {
-    if (row.isIncome) continue;
+    // A linked line that is not set has no figure; callers treat the budget as unknown first.
+    if (row.isIncome || row.notSet) continue;
     const monthly = budgetRowMonthly(row);
     if (row.category === SAVINGS_CATEGORY) {
       if (row.isEssential) essentialSavings += monthly;

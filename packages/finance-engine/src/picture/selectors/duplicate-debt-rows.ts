@@ -81,7 +81,13 @@ export function findPossibleDuplicateDebtRows(
 
   const found: PossibleDuplicateDebtRow[] = [];
   for (const row of budget) {
-    if (row.isIncome || row.category === DEBT_CATEGORY || row.category === SAVINGS_CATEGORY) {
+    if (
+      row.isIncome ||
+      row.linked ||
+      row.linkKind ||
+      row.category === DEBT_CATEGORY ||
+      row.category === SAVINGS_CATEGORY
+    ) {
       continue;
     }
     const monthly = budgetRowMonthly(row);

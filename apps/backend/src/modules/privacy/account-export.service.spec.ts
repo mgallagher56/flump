@@ -188,3 +188,49 @@ describe("AccountExportService receipts (SEC-D, L4)", () => {
     expect(doc.taxRecords[0]?.receiptData).toBe(plaintext);
   });
 });
+
+describe("AccountExportService linked budget lines", () => {
+  const budgetRow = (over: Record<string, unknown>) => ({
+    id: "00000000-0000-4000-8000-0000000000b1",
+    category: "income",
+    name: "Pay",
+    amount: 0,
+    frequency: "monthly",
+    isIncome: true,
+    linkKind: null,
+    ...over,
+  });
+
+  it("exports a linked line with no amount and its link kind, and an ordinary line as stored", async () => {
+    const { dataSource } = createMockDataSource({
+      rowsByEntity: {
+        BudgetEntry: [
+          budgetRow({ linkKind: "take_home" }),
+          budgetRow({ id: "00000000-0000-4000-8000-0000000000b2", name: "Bonus", amount: 120 }),
+        ],
+      },
+    });
+    const service = new AccountExportService(dataSource as never);
+    const json: string[] = [];
+    await service.writeExport("user-1", async (chunk) => {
+      json.push(chunk);
+    });
+    const doc = JSON.parse(json.join("")) as { budgetEntries: Array<Record<string, unknown>> };
+    expect(doc.budgetEntries[0]).toMatchObject({ amount: null, linkKind: "take_home" });
+    expect(doc.budgetEntries[1]).toMatchObject({ amount: 120, linkKind: null });
+
+    const csv: string[] = [];
+    await service.writeCsvExport(
+      "user-1",
+      async (chunk) => {
+        csv.push(chunk);
+      },
+      { section: "budgetEntries" },
+    );
+    const [header, linked] = csv.join("").split(/\r?\n/);
+    const cells = (line = "") => line.split(",");
+    const amountAt = cells(header).indexOf("amount");
+    expect(cells(linked)[amountAt]).toBe("");
+    expect(cells(linked)[cells(header).indexOf("linkKind")]).toBe("take_home");
+  });
+});

@@ -15,7 +15,12 @@ import {
   selectHousingCost,
   selectHousingPayment,
 } from "./selectors/housing-cost.js";
-import { type BudgetLinkOffer, withLinkedBudgetRows } from "./selectors/linked-budget-rows.js";
+import {
+  type BudgetLinkOffer,
+  budgetRowLinkOf,
+  type LinkedBudgetRows,
+  withLinkedBudgetRows,
+} from "./selectors/linked-budget-rows.js";
 import { type LoanToValue, selectLoanToValue } from "./selectors/loan-to-value.js";
 import { type MonthsOfCover, selectMonthsOfCover } from "./selectors/months-of-cover.js";
 import {
@@ -74,10 +79,7 @@ export function buildFinancialPicture(
 ): FinancialPicture {
   const snapshot = opts.snapshot ?? new PortfolioSnapshot(input.accounts, input.details);
   const takeHome = selectTakeHome(input.profile, { taxYear: opts.taxYear });
-  const linked = withLinkedBudgetRows(input.budget, {
-    takeHome,
-    housing: selectHousingPayment(input.profile, snapshot, input.accounts),
-  });
+  const linked = linkedBudgetRowsFor(input, { ...opts, snapshot, takeHome });
   const budget = linked.rows;
   return {
     takeHome,
@@ -98,6 +100,23 @@ export function buildFinancialPicture(
   };
 }
 
+/**
+ * The budget with its linked lines resolved (`withLinkedBudgetRows`), for a reader that needs the
+ * rows without the rest of the picture (the MCP tools). The same sources the picture uses.
+ */
+export function linkedBudgetRowsFor(
+  input: Pick<FinancialPictureInput, "profile" | "accounts" | "details" | "budget">,
+  opts: Pick<BuildFinancialPictureOptions, "taxYear" | "snapshot"> & {
+    takeHome?: Figure<TakeHome>;
+  } = {},
+): LinkedBudgetRows {
+  const snapshot = opts.snapshot ?? new PortfolioSnapshot(input.accounts, input.details);
+  return withLinkedBudgetRows(input.budget, {
+    takeHome: opts.takeHome ?? selectTakeHome(input.profile, { taxYear: opts.taxYear }),
+    housing: selectHousingPayment(input.profile, snapshot, input.accounts),
+  });
+}
+
 /** A budget row as any caller holds it: API JSON, a TypeORM entity or a fixture. */
 export interface BudgetRowLike {
   id?: unknown;
@@ -110,7 +129,7 @@ export interface BudgetRowLike {
   ownership?: unknown;
   sharePercent?: unknown;
   isPrimaryIncome?: unknown;
-  linksTo?: unknown;
+  linkKind?: unknown;
 }
 
 export interface FinancialPictureRows {
@@ -143,7 +162,8 @@ export function budgetEntryFromRow(row: BudgetRowLike, index = 0): BudgetEntryIt
     sharePercent: shareFromRow(row.sharePercent),
     // Set only when true, so rows without the flag map exactly as before.
     ...(row.isPrimaryIncome === true ? { isPrimaryIncome: true } : {}),
-    ...(row.linksTo === "take-home" || row.linksTo === "housing" ? { linksTo: row.linksTo } : {}),
+    // A linked row's stored amount is never read: the linked-rows selector resolves it.
+    ...(budgetRowLinkOf(row.linkKind) ? { linkKind: budgetRowLinkOf(row.linkKind) } : {}),
   };
 }
 

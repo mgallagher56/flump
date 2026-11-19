@@ -16,6 +16,7 @@ import {
   loadReadModel,
   MISSING_INCOME,
   type Missing,
+  missingLinkedLines,
   NET_WORTH_LEFT_OUT_VALUES,
   netWorthBasisNotes,
   round2,
@@ -75,7 +76,7 @@ export const getFinancialSnapshot = defineFlumpTool({
     if (asOfMonth) return historicalSnapshot(ctx, asOfMonth);
     const m = await loadReadModel(ctx);
     const s = m.snapshot;
-    const budget = summariseBudget(m.raw.budgetEntries ?? []);
+    const budget = summariseBudget(m.budgetEntries);
     const missing: Missing[] = [];
     const provenance: Record<string, string> = {
       netWorthGbp: "account_balances",
@@ -85,12 +86,15 @@ export const getFinancialSnapshot = defineFlumpTool({
     if (m.accounts.length === 0) missing.push(ASK_NO_ACCOUNTS);
 
     const income = budget.monthlyIncome;
-    const essential = budget.hasEntries ? budget.essentialMonthly : null;
+    // A linked housing line that is not set leaves essential spending unknown, never short by it.
+    const essential =
+      budget.hasEntries && !budget.notSet.includes("housing") ? budget.essentialMonthly : null;
+    missing.push(...missingLinkedLines(budget));
     const assumptions: Array<{ field: string; source: "default"; reason: string }> = [];
     let surplus: number | null = null;
     let runway: number | null = null;
     if (income === null) {
-      missing.push(MISSING_INCOME);
+      if (budget.notSet.length === 0) missing.push(MISSING_INCOME);
       provenance.monthlyIncomeGbp = "not_available";
       provenance.monthlySurplusAfterStoredMinimumsGbp = "not_available";
     } else {
@@ -120,7 +124,7 @@ export const getFinancialSnapshot = defineFlumpTool({
     if (essential !== null && essential > 0) {
       runway = Math.round((s.getTotalLiquidCash() / essential) * 10) / 10;
       provenance.emergencyRunwayMonths = "account_balances_and_budget_entries";
-    } else {
+    } else if (!budget.notSet.includes("housing")) {
       missing.push({
         field: "monthlyEssentialSpendGbp",
         why: "No essential spending entries in the budget, so breathing room cannot be worked out.",

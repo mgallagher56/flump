@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { IsoDateTime, ResponseMoney, Uuid } from "../primitives.js";
 import { NetWorthLeftOut, ResolvedAccountDto } from "./accounts.js";
+import { BudgetEntryLinkKind } from "./budget.js";
 import { RetirementPlanDto } from "./retirement.js";
 
 /** Expiry choices (E17 D5-A). `null` ("never expires") is rejected. */
@@ -116,8 +117,19 @@ const ContextPackBudgetEntry = z.strictObject({
   ownership: z.enum(["sole", "joint"]).optional(),
   /** The user's share of a joint entry, 1 to 100; null where none is saved. */
   sharePercent: z.number().int().min(1).max(100).nullable().optional(),
-  /** A row the person replaced with a saved detail; the engine reads that figure in its place. */
-  linksTo: z.enum(["take-home", "housing"]).nullable().optional(),
+  /**
+   * A row the person linked to a saved fact. Its stored amount is never read: the engine resolves
+   * the line from the profile or housing details.
+   */
+  linkKind: BudgetEntryLinkKind.nullable().optional(),
+});
+
+/**
+ * A linked budget line whose saved fact is not set (salary cleared, no rent saved). It has no
+ * amount, so it is listed apart from `entries` and left out of every total.
+ */
+const ContextPackBudgetLineNotSet = ContextPackBudgetEntry.omit({ amount: true }).extend({
+  notSet: z.literal(true),
 });
 
 /** `FlumpAiContextPack` from `@flump/finance-engine`, after JSON serialisation. */
@@ -174,7 +186,10 @@ export const AiContextPackDto = z.strictObject({
       })
       .nullable(),
     emergencyRunwayMonths: z.number().nullable(),
+    /** Saved entries; a linked one carries the figure it reads from the saved fact. */
     entries: z.array(ContextPackBudgetEntry),
+    /** Linked entries whose saved fact is not set. Absent from packs built before it. */
+    entriesNotSet: z.array(ContextPackBudgetLineNotSet).optional(),
   }),
   taxSummary: z.strictObject({
     currentTaxYear: z.string(),

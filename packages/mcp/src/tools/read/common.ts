@@ -7,10 +7,13 @@ import {
   createBudgetCategoryAnonymiser,
   DEFAULT_NET_WORTH_BASIS,
   genericAccountLabel,
+  linkedBudgetRowsFor,
   type NetWorthBasis,
   type NetWorthLeftOut,
   PortfolioSnapshot,
+  profileFactsFromProfile,
   type ResolvedAccount,
+  resolveLinkedEntries,
   resolveSnapshotNetWorthScope,
 } from "@flump/finance-engine";
 import { effectiveAnonymize } from "../../auth/scopes.js";
@@ -86,6 +89,12 @@ export interface ReadModel extends AccountIndex {
   basis: NetWorthBasis;
   /** What net worth leaves out under the basis, in display order. */
   netWorthLeavesOut: NetWorthLeftOut[];
+  /**
+   * The saved budget entries with each row the person linked to a saved fact resolved (the take-home
+   * pay or housing payment a month, or a `notSet` line). Budget tools read these, never
+   * `raw.budgetEntries`, so a linked row's stored amount is never counted.
+   */
+  budgetEntries: BudgetEntryItem[];
 }
 
 /** The engine's closed account category for a stored account type (never the free-text type). */
@@ -146,10 +155,23 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
   const snapshot = new PortfolioSnapshot(raw.accounts ?? [], raw.accountDetails ?? []);
   // The provider boundary: a provider built before the choices existed sends no basis.
   const basis = raw.netWorthBasis ?? { ...DEFAULT_NET_WORTH_BASIS };
+  const entries = raw.budgetEntries ?? [];
+  const resolved = entries.some((e) => e.linkKind)
+    ? linkedBudgetRowsFor(
+        {
+          profile: raw.profileFacts ?? profileFactsFromProfile(null),
+          accounts: raw.accounts ?? [],
+          details: raw.accountDetails ?? [],
+          budget: entries,
+        },
+        { snapshot },
+      ).rows
+    : [];
   return {
     raw,
     snapshot,
     basis,
+    budgetEntries: resolveLinkedEntries(entries, resolved),
     netWorthLeavesOut: resolveSnapshotNetWorthScope(snapshot, basis).leftOut,
     ...indexAccounts(ctx, snapshot.getResolvedAccounts()),
   };
@@ -214,20 +236,30 @@ export const ASK_NO_ACCOUNTS: Missing = {
 
 export interface MonthlyBudget {
   hasEntries: boolean;
+  /** Linked lines whose saved fact is not set: left out of every total, never counted as £0. */
+  notSet: Array<"take_home" | "housing">;
   monthlyIncome: number | null;
   essentialMonthly: number;
   discretionaryMonthly: number;
   byCategory: Array<{ category: string; monthly: number; essential: boolean }>;
 }
 
-/** Budget totals from entries only. Income is null when no income entry exists (no salary-based guess). */
+/**
+ * Budget totals from entries only. Income is null when no income entry exists (no salary-based
+ * guess), and when a linked line's saved fact is not set (`notSet`), so nothing left over is shown.
+ */
 export function summariseBudget(entries: readonly BudgetEntryItem[]): MonthlyBudget {
   let income = 0;
   let hasIncome = false;
   let essential = 0;
   let discretionary = 0;
+  const notSet = new Set<"take_home" | "housing">();
   const cats = new Map<string, { monthly: number; essential: boolean }>();
   for (const e of entries) {
+    if (e.notSet) {
+      if (e.linkKind) notSet.add(e.linkKind);
+      continue;
+    }
     // A joint entry counts at the user's share (E34 C1), as the financial picture counts it.
     const m = budgetRowMonthly(e);
     if (e.isIncome) {
@@ -244,7 +276,9 @@ export function summariseBudget(entries: readonly BudgetEntryItem[]): MonthlyBud
   }
   return {
     hasEntries: entries.length > 0,
-    monthlyIncome: hasIncome ? round2(income) : null,
+    notSet: [...notSet],
+    // A linked line that is not set leaves what is left over unknown, as the web's totals are.
+    monthlyIncome: hasIncome && notSet.size === 0 ? round2(income) : null,
     essentialMonthly: round2(essential),
     discretionaryMonthly: round2(discretionary),
     byCategory: [...cats.entries()]
@@ -255,6 +289,23 @@ export function summariseBudget(entries: readonly BudgetEntryItem[]): MonthlyBud
       }))
       .sort((a, b) => b.monthly - a.monthly),
   };
+}
+
+/** What a linked line that is not set is missing, for a tool's missing[]. */
+export function missingLinkedLines(budget: MonthlyBudget): Missing[] {
+  return budget.notSet.map((kind) =>
+    kind === "take_home"
+      ? {
+          field: "salary",
+          why: "An income entry is linked to the take-home pay worked out from the saved salary, and no salary is saved. Income is left unknown rather than counted as zero.",
+          askUser: "What is your salary before tax? It can be added in Profile in Flump.",
+        }
+      : {
+          field: "monthlyHousingCost",
+          why: "A housing entry is linked to the saved housing payment, and none is saved. It is left out of the totals rather than counted as zero.",
+          askUser: "How much is your rent or mortgage payment each month?",
+        },
+  );
 }
 
 export const MISSING_INCOME: Missing = {

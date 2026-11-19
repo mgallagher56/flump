@@ -22,6 +22,7 @@ import { isSelfEmployedType, payeSalaryForTax } from "./paye-salary-for-tax.js";
 import { buildFinancialPicture } from "./picture/build.js";
 import { isFigureKnown } from "./picture/figure.js";
 import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
+import { resolveLinkedEntries } from "./picture/selectors/linked-budget-rows.js";
 import {
   type MonthlyPortfolioHistoryPoint,
   PortfolioSnapshot,
@@ -74,15 +75,49 @@ export interface BudgetEntryItem {
   /** True when the person marked this row as their own main pay. Read by the take-home link. */
   isPrimaryIncome?: boolean;
   /**
-   * Set only on a row the engine adds from a saved detail (owner items 7 and 33b): "take-home"
+   * Set only on a line the engine makes from a saved fact (owner items 7 and 33b): "take_home"
    * from the profile's salary, "housing" from the housing details. Never stored.
    */
-  linked?: "take-home" | "housing";
+  linked?: "take_home" | "housing";
   /**
-   * Stored on a row the person chose to replace with a saved detail ("Use your take-home pay"):
-   * its own amount is 0 and the linked figure stands in for it, keeping its ownership and share.
+   * Stored on a row the person linked to a saved fact ("Use your take-home pay"). Its stored
+   * amount is never read: the linked figure stands in for it, keeping its ownership and share.
    */
-  linksTo?: "take-home" | "housing" | null;
+  linkKind?: "take_home" | "housing" | null;
+  /** On an engine line standing in for a row the person linked: that row's stored id. */
+  linkedRowId?: string;
+  /**
+   * True on a linked line whose saved fact is not set (salary cleared, no rent saved). Its amount
+   * is not a figure: it shows "Not set" with an action, and totals that would count it are unknown.
+   */
+  notSet?: true;
+}
+
+/** A linked budget entry whose saved fact is not set: no amount, left out of every total. */
+export type ContextPackBudgetLineNotSet = Omit<BudgetEntryItem, "amount" | "notSet"> & {
+  notSet: true;
+};
+
+/**
+ * The saved entries with each linked row's figure resolved, and apart from them the linked rows
+ * whose saved fact is not set (they have no amount): a linked row's stored £0 is never listed.
+ */
+function contextPackLines(
+  entries: readonly BudgetEntryItem[],
+  resolved: readonly BudgetEntryItem[],
+): { entries: BudgetEntryItem[]; entriesNotSet: ContextPackBudgetLineNotSet[] } {
+  const listed: BudgetEntryItem[] = [];
+  const notSet: ContextPackBudgetLineNotSet[] = [];
+  for (const entry of resolveLinkedEntries(entries, resolved)) {
+    const { linkedRowId: _id, notSet: isNotSet, ...line } = entry;
+    if (isNotSet) {
+      const { amount: _amount, ...rest } = line;
+      notSet.push({ ...rest, notSet: true });
+    } else {
+      listed.push(line);
+    }
+  }
+  return { entries: listed, entriesNotSet: notSet };
 }
 
 export interface BuildContextPackInput {
@@ -284,7 +319,13 @@ export interface FlumpAiContextPack {
     safeToSpend: SafeToSpendResult | null;
     /** Months of cover: liquid cash over essential commitments. */
     emergencyRunwayMonths: number | null;
+    /**
+     * The saved entries. A row the person linked to a saved fact carries the resolved figure a
+     * month; one whose fact is not set is in `entriesNotSet` instead, never at its stored £0.
+     */
     entries: BudgetEntryItem[];
+    /** Linked entries whose saved fact is not set: listed apart, with no amount. */
+    entriesNotSet: ContextPackBudgetLineNotSet[];
   };
   taxSummary: {
     currentTaxYear: string;
@@ -530,7 +571,7 @@ export function buildFlumpAiContextPack(
           }
         : null,
       emergencyRunwayMonths: pictureCover?.months ?? null,
-      entries: budgetEntries,
+      ...contextPackLines(budgetEntries, picture.budgetRows),
     },
     taxSummary: {
       currentTaxYear,

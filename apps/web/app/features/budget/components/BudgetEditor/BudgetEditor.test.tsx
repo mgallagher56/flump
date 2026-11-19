@@ -279,7 +279,7 @@ describe("BudgetEditor", () => {
       category: "income",
       amount: 2400,
       isIncome: true,
-      linked: "take-home",
+      linked: "take_home",
     });
     const rent = row({ id: "linked:housing", name: "Rent", amount: 950, linked: "housing" });
 
@@ -306,7 +306,7 @@ describe("BudgetEditor", () => {
 
     it("offers the take-home for an income row and replaces the row the person picks", async () => {
       const { onUpdate } = setup({
-        linkOffers: [{ link: "take-home", monthly: 2400, kind: null, rowIds: ["b-2"] }],
+        linkOffers: [{ link: "take_home", monthly: 2400, kind: null, rowIds: ["b-2"] }],
       });
       const use = screen.getByRole("button", {
         name: "Use your take-home pay of £2,400 in place of Salary",
@@ -317,7 +317,7 @@ describe("BudgetEditor", () => {
       fireEvent.click(use);
       // One stored value: the row keeps its place at £0 and the take-home is read in its place.
       await waitFor(() =>
-        expect(onUpdate).toHaveBeenCalledWith("b-2", { amount: 0, linksTo: "take-home" }),
+        expect(onUpdate).toHaveBeenCalledWith("b-2", { amount: 0, linkKind: "take_home" }),
       );
     });
 
@@ -337,7 +337,7 @@ describe("BudgetEditor", () => {
         category: "income",
         amount: 0,
         isIncome: true,
-        linksTo: "take-home",
+        linkKind: "take_home",
       });
       const { onAdd, onUpdate } = setup({
         entries: [chosen],
@@ -349,7 +349,7 @@ describe("BudgetEditor", () => {
       fireEvent.change(amount, { target: { value: "2500" } });
       fireEvent.blur(amount);
       await waitFor(() =>
-        expect(onUpdate).toHaveBeenCalledWith("pay", { amount: 2500, linksTo: null }),
+        expect(onUpdate).toHaveBeenCalledWith("pay", { amount: 2500, linkKind: null }),
       );
       expect(onAdd).not.toHaveBeenCalled();
     });
@@ -384,6 +384,114 @@ describe("BudgetEditor", () => {
       expect(screen.getByTestId("budget-editor-source-linked-housing").textContent).toBe(
         "From your mortgage details.",
       );
+    });
+  });
+
+  describe("linked lines the person chose (decision 1)", () => {
+    const chosenPay = row({
+      id: "pay",
+      name: "Paycheck",
+      category: "income",
+      amount: 0,
+      isIncome: true,
+      linkKind: "take_home",
+    });
+    const chosenRent = row({ id: "rent", name: "Our rent", amount: 0, linkKind: "housing" });
+
+    it("shows a take-home that is not set as Not set with a link to add the salary, never £0", () => {
+      setup({
+        entries: [chosenPay],
+        shadowedIds: ["pay"],
+        linkedEntries: [
+          row({
+            id: "linked:take-home",
+            name: "Take-home pay",
+            category: "income",
+            amount: 0,
+            isIncome: true,
+            linked: "take_home",
+            linkedRowId: "pay",
+            notSet: true,
+          }),
+        ],
+      });
+      expect(screen.queryByLabelText("Amount for Take-home pay")).toBeNull();
+      const figure = screen.getByTestId("budget-editor-figure-linked-take-home");
+      expect(figure.textContent).toContain("Not set");
+      expect(figure.textContent).not.toContain("£0");
+      // The global test setup renders links as their text; notSetActionFor's test checks the href.
+      expect(within(figure).getByText("Add your salary")).toBeDefined();
+    });
+
+    it("unlinks a take-home line, keeping the figure it showed as the person's own", async () => {
+      const { onUpdate } = setup({
+        entries: [chosenPay],
+        shadowedIds: ["pay"],
+        linkedEntries: [
+          row({
+            id: "linked:take-home",
+            name: "Take-home pay",
+            category: "income",
+            amount: 2400,
+            isIncome: true,
+            linked: "take_home",
+            linkedRowId: "pay",
+          }),
+        ],
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Type my own figure" }));
+      await waitFor(() =>
+        expect(onUpdate).toHaveBeenCalledWith("pay", {
+          linkKind: null,
+          amount: 2400,
+          frequency: "monthly",
+          ownership: "sole",
+          sharePercent: null,
+        }),
+      );
+    });
+
+    it("unlinks a housing line that is not set with no figure, keeping its share", async () => {
+      const { onUpdate } = setup({
+        entries: [chosenRent],
+        shadowedIds: ["rent"],
+        housingStatus: "renting",
+        linkedEntries: [
+          row({
+            id: "linked:housing",
+            name: "Our rent",
+            amount: 0,
+            linked: "housing",
+            linkedRowId: "rent",
+            notSet: true,
+            ownership: "joint",
+            sharePercent: 50,
+          }),
+        ],
+      });
+      // A rent can be typed here to save it to the housing details: the field starts empty.
+      expect((screen.getByLabelText("Amount for Our rent") as HTMLInputElement).value).toBe("");
+      fireEvent.click(screen.getByRole("button", { name: "Type my own figure" }));
+      await waitFor(() =>
+        expect(onUpdate).toHaveBeenCalledWith("rent", {
+          linkKind: null,
+          amount: 0,
+          frequency: "monthly",
+          ownership: "joint",
+          sharePercent: 50,
+        }),
+      );
+    });
+
+    it("offers no unlink on a line the engine added on its own", () => {
+      setup({
+        entries: [],
+        linkedEntries: [
+          row({ id: "linked:housing", name: "Rent", amount: 950, linked: "housing" }),
+        ],
+        housingStatus: "renting",
+      });
+      expect(screen.queryByRole("button", { name: "Type my own figure" })).toBeNull();
     });
   });
 

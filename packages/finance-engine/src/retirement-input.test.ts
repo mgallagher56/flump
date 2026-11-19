@@ -282,3 +282,36 @@ describe("one projection: the Retirement scenario at the saved values is the sav
     expect(calculateRetirementPlan(scenario.input)).toEqual(calculateRetirementPlan(saved.input));
   });
 });
+
+describe("buildRetirementPlanInput: linked budget lines (decision 1)", () => {
+  it("never builds a target line from a linked line's stored amount", () => {
+    const entry = (over: Record<string, unknown>) => ({
+      id: "e",
+      category: "bills",
+      name: "Entry",
+      amount: 0,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: true,
+      ...over,
+    });
+    const built = buildRetirementPlanInput({
+      plan: { ...savedPlan, target: { kind: "budget", lineSettings: [] } },
+      birthYear: 1981,
+      now: NOW,
+      accounts,
+      budgetEntries: [
+        // Linked lines are left out: take-home is income and housing is modelled on its own.
+        entry({ id: "pay", category: "income", isIncome: true, linkKind: "take_home" }),
+        entry({ id: "rent", category: "housing", linkKind: "housing" }),
+        entry({ id: "food", category: "expenses", amount: 300 }),
+      ],
+    });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    const target = built.input.target;
+    expect(target?.kind).toBe("budget");
+    if (target?.kind !== "budget") return;
+    expect(target.lines.map((l) => l.id)).toEqual(["food"]);
+  });
+});

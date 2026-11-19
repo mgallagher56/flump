@@ -221,6 +221,9 @@ function budgetTarget(
     .filter(
       (e) =>
         !e.isIncome &&
+        // A linked line's stored amount is never read (take-home and housing are left out anyway).
+        !e.linkKind &&
+        !e.linked &&
         !isHousingBudgetLine({ category: e.category }) &&
         e.category.trim().toLowerCase() !== SAVINGS_CATEGORY,
     )

@@ -71,6 +71,11 @@ export interface BudgetSetupWizardProps {
   /** Pre-filled monthly take-home from user profile */
   monthlyTakeHome: number | null;
   /**
+   * The saved housing payment a housing entry the person linked reads, a month at their share,
+   * or null when none is saved (that entry is then "Not set" and the totals are unknown).
+   */
+  linkedHousingMonthly?: number | null;
+  /**
    * "setup" (the default) is the first run: welcome, example figures, then each section. "edit"
    * changes a saved budget: it starts at Income with the saved entries and skips the first two.
    * "add" adds common entries to a budget that already has some (after onboarding, say): it skips
@@ -166,6 +171,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   onComplete,
   onCancel,
   monthlyTakeHome,
+  linkedHousingMonthly = null,
   mode = "setup",
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -300,18 +306,27 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   };
 
   const allEffective = entries.map(getEffectiveEntry);
+  // A linked entry's stored amount is never read (decision 1): it reads the saved take-home or
+  // housing payment, and while that is not set the totals are unknown, never short by it.
+  const ownMonthly = (e: BudgetEntry): number => (e.linkKind ? 0 : toMonthly(e));
   // The take-home the budget reads from the profile (item 7): in place of an income entry the
   // person chose to replace with it, or while no income entry has an amount. Names decide nothing.
-  const takeHomeChosen = allEffective.some((e) => e.isIncome && e.linksTo === "take-home");
-  const ownIncome = allEffective.some((e) => e.isIncome && toMonthly(e) > 0);
+  const takeHomeChosen = allEffective.some((e) => e.isIncome && e.linkKind === "take_home");
+  const housingChosen = allEffective.some((e) => !e.isIncome && e.linkKind === "housing");
+  const ownIncome = allEffective.some((e) => e.isIncome && ownMonthly(e) > 0);
   const linkedTakeHome = monthlyTakeHome && (takeHomeChosen || !ownIncome) ? monthlyTakeHome : null;
-  const totalIncome =
-    allEffective.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0) +
-    (linkedTakeHome ?? 0);
-  const totalExpenses = allEffective
-    .filter((e) => !e.isIncome)
-    .reduce((s, e) => s + toMonthly(e), 0);
-  const surplus = totalIncome - totalExpenses;
+  const linkNotSet =
+    (takeHomeChosen && !monthlyTakeHome) || (housingChosen && linkedHousingMonthly === null);
+  const totalIncome = linkNotSet
+    ? null
+    : allEffective.filter((e) => e.isIncome).reduce((s, e) => s + ownMonthly(e), 0) +
+      (linkedTakeHome ?? 0);
+  const totalExpenses = linkNotSet
+    ? null
+    : allEffective.filter((e) => !e.isIncome).reduce((s, e) => s + ownMonthly(e), 0) +
+      (housingChosen ? (linkedHousingMonthly ?? 0) : 0);
+  const surplus =
+    totalIncome === null || totalExpenses === null ? null : totalIncome - totalExpenses;
 
   const stepLabel = STEP_LABELS[currentStep];
 
@@ -603,9 +618,11 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 </span>
               </div>
               <div className={summaryRow()}>
-                <span>{surplus >= 0 ? "Left over each month" : "Short each month"}</span>
                 <span>
-                  <Money size="lg" value={Math.abs(surplus)} /> a month
+                  {surplus === null || surplus >= 0 ? "Left over each month" : "Short each month"}
+                </span>
+                <span>
+                  <Money size="lg" value={surplus === null ? null : Math.abs(surplus)} /> a month
                 </span>
               </div>
               <p className={summaryNote()}>

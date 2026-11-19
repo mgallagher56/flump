@@ -7,6 +7,7 @@ import {
   isSelfAssessmentEstimated,
 } from "./ai-context-pack.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
+import { profileFactsFromProfile } from "./picture/input.js";
 import { DEFAULT_FINANCIAL_BASELINE, userProfileToSavedBaseline } from "./profile.js";
 
 describe("FlumpAiContextPack Builder & Markdown Formatter", () => {
@@ -183,6 +184,63 @@ describe("budget notes anonymisation (E17-N4)", () => {
       { anonymizeInstitutions: false },
     );
     expect("notes" in (pack.budgetSummary.entries[0] ?? {})).toBe(false);
+  });
+});
+
+describe("linked budget lines in the context pack (decision 1)", () => {
+  const line = (over: Record<string, unknown>) => ({
+    id: "e",
+    category: "bills",
+    name: "Entry",
+    amount: 0,
+    frequency: "monthly",
+    isIncome: false,
+    isEssential: true,
+    ...over,
+  });
+  const budgetEntries = [
+    line({ id: "pay", category: "income", name: "Pay", isIncome: true, amount: 2000 }),
+    line({ id: "rent", category: "housing", name: "Rent", linkKind: "housing" as const }),
+    line({ id: "food", category: "expenses", name: "Food", amount: 300 }),
+  ];
+
+  it("lists a linked line at the saved figure and counts it in the totals", () => {
+    // Rent saved at £950. Essentials 950 + 300 = 1,250; left over 2,000 - 1,250 = 750.
+    const pack = buildFlumpAiContextPack(
+      {
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+        baseline: DEFAULT_FINANCIAL_BASELINE,
+        profileFacts: {
+          ...profileFactsFromProfile(null),
+          housingStatus: "renting",
+          monthlyHousingCost: 950,
+        },
+        budgetEntries,
+      },
+      { anonymizeInstitutions: false },
+    );
+    expect(pack.budgetSummary.entries.find((e) => e.id === "rent")?.amount).toBe(950);
+    expect(pack.budgetSummary.essentialBillsMonthly).toBe(1250);
+    expect(pack.budgetSummary.monthlySurplus).toBe(750);
+  });
+
+  it("lists a linked line whose fact is not set apart, with no amount, and leaves the totals unknown", () => {
+    const pack = buildFlumpAiContextPack(
+      {
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+        baseline: DEFAULT_FINANCIAL_BASELINE,
+        profileFacts: { ...profileFactsFromProfile(null), housingStatus: "renting" },
+        budgetEntries,
+      },
+      { anonymizeInstitutions: false },
+    );
+    expect(pack.budgetSummary.entries.find((e) => e.id === "rent")).toBeUndefined();
+    expect(pack.budgetSummary.entriesNotSet).toEqual([
+      expect.objectContaining({ id: "rent", linkKind: "housing", notSet: true }),
+    ]);
+    expect("amount" in (pack.budgetSummary.entriesNotSet[0] ?? {})).toBe(false);
+    expect(pack.budgetSummary.monthlySurplus).toBeNull();
+    expect(pack.budgetSummary.essentialBillsMonthly).toBeNull();
   });
 });
 

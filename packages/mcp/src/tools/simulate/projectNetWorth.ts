@@ -9,6 +9,7 @@ import {
   ASK_NO_ACCOUNTS,
   loadReadModel,
   type Missing,
+  missingLinkedLines,
   sanitiseText,
   summariseBudget,
 } from "../read/common.js";
@@ -129,7 +130,7 @@ export const projectNetWorth = defineFlumpTool({
         agentSupplied("monthlySavingGbp", saving, "Monthly saving supplied in the call."),
       );
     } else {
-      const budget = summariseBudget(m.raw.budgetEntries ?? []);
+      const budget = summariseBudget(m.budgetEntries);
       if (budget.monthlyIncome !== null) {
         const surplus = round2(
           budget.monthlyIncome - budget.essentialMonthly - budget.discretionaryMonthly,
@@ -147,6 +148,7 @@ export const projectNetWorth = defineFlumpTool({
         }
       } else {
         saving = 0;
+        missing.push(...missingLinkedLines(budget));
         missing.push({
           field: "monthlySavingGbp",
           why: "No income entry in the budget and no monthly saving supplied, so zero saving was used.",

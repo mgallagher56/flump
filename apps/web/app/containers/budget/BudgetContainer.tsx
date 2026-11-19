@@ -232,6 +232,12 @@ const BudgetContainer: FC = () => {
   // row and the figures it adds to agree (owner items 7 and 33b).
   const pageEntries = useMemo(() => pageBudgetEntries(entries, picture), [entries, picture]);
   const linkedEntries = useMemo(() => pageEntries.filter((e) => e.linked), [pageEntries]);
+  // The saved housing payment a housing row the person linked reads, at their share; null when
+  // not saved, so the wizard shows its totals as not set rather than counting £0.
+  const linkedHousingMonthly = useMemo(() => {
+    const line = pageEntries.find((e) => e.linked === "housing" && e.linkedRowId && !e.notSet);
+    return line ? toMonthly(line) : null;
+  }, [pageEntries]);
 
   // Housing cost shows once: as the housing row in "Where your money goes". The row names the
   // tenure, and opening it says where the saved figure lives, or links to the mortgage page
@@ -539,16 +545,26 @@ const BudgetContainer: FC = () => {
         items={pageEntries
           .filter((e) => e.category === category && !e.isIncome)
           .map((e, _i, rows) =>
-            // One line per entry. A single entry is the row's own total, so it shows its name
-            // only: its figure would repeat the row's (P6).
-            rows.length > 1
+            // A linked line whose saved fact is not set shows "Not set", never £0; the housing
+            // details above (or the mortgage page) are where it is added.
+            e.notSet
               ? {
                   id: e.id,
                   label: e.name,
-                  value: Math.abs(toMonthly(e)),
-                  valueProps: { fractionDigits: 0, size: "sm" as const },
+                  secondary: "Linked to your saved housing payment, which is not set",
+                  value: null,
+                  valueProps: { size: "sm" as const },
                 }
-              : { id: e.id, label: e.name },
+              : // One line per entry. A single entry is the row's own total, so it shows its name
+                // only: its figure would repeat the row's (P6).
+                rows.length > 1
+                ? {
+                    id: e.id,
+                    label: e.name,
+                    value: Math.abs(toMonthly(e)),
+                    valueProps: { fractionDigits: 0, size: "sm" as const },
+                  }
+                : { id: e.id, label: e.name },
           )}
         label={`${getCategoryLabel(category)} entries`}
         noun={{ one: "entry", other: "entries" }}
@@ -615,6 +631,7 @@ const BudgetContainer: FC = () => {
           monthlyTakeHome={
             picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
           }
+          linkedHousingMonthly={linkedHousingMonthly}
           onAddEntry={addEntry}
           onDeleteEntry={async (id) => {
             await deleteEntry(id);
