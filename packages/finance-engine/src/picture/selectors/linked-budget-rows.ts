@@ -1,7 +1,6 @@
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
 import { BUDGET_HOUSING_CATEGORY } from "../../budget-entry-names.js";
 import type { Figure } from "../figure.js";
-import { budgetRowMonthly } from "./budget-totals.js";
 import type { HousingPayment } from "./housing-cost.js";
 import type { TakeHome } from "./take-home.js";
 
@@ -20,23 +19,27 @@ export const LINKED_TAKE_HOME_ID = "linked:take-home";
 export const LINKED_HOUSING_ID = "linked:housing";
 
 /** The name a linked housing row shows, by how the person pays for housing. */
-const HOUSING_ROW_NAME: Record<HousingPayment["kind"], string> = {
+export const HOUSING_ROW_NAME: Record<HousingPayment["kind"], string> = {
   rent: "Rent",
   mortgage: "Mortgage payment",
   household: "Household contribution",
 };
 
 /**
- * A link the person can choose to make. Nothing changes until they do: choosing a row stores
- * `linkKind` on it with its amount set to £0, so the saved detail is the one stored value.
+ * A saved fact that is not in the budget yet. The budget already has rows of that kind (income
+ * rows, or housing rows), so nothing is added or replaced on its own: the page says the saved
+ * figure is not in this budget and offers two actions, to add it as its own linked line or to
+ * replace one of the listed rows with it. Until the person chooses, it is counted nowhere.
  */
 export interface BudgetLinkOffer {
   link: BudgetRowLink;
-  /** The saved figure the row would read, pounds a month. */
+  /** The saved figure the line would read, pounds a month. */
   monthly: number;
   /** For housing: rent, mortgage payment or household contribution. Null for take-home. */
   kind: HousingPayment["kind"] | null;
-  /** The saved rows the person can pick from, in budget order. */
+  /** True when the figure is the mortgage accounts' estimate ("about £X"). */
+  paymentEstimated: boolean;
+  /** The saved rows the person can pick one of to replace, in budget order. */
   rowIds: string[];
 }
 
@@ -45,7 +48,7 @@ export interface LinkedBudgetRows {
   rows: BudgetEntryItem[];
   /** Saved rows a linked row stands in for. Kept in storage, left out of every figure. */
   shadowedRowIds: string[];
-  /** Links the budget page offers as an action instead of making them itself. */
+  /** Saved facts not in the budget yet, each with the rows it could replace. */
   offers: BudgetLinkOffer[];
 }
 
@@ -54,14 +57,7 @@ export interface LinkedBudgetRows {
  * figure: it shows "Not set" with an action, and every total that would count it is unknown.
  */
 function notSetLine(base: BudgetEntryItem, chosen: BudgetEntryItem): BudgetEntryItem {
-  return {
-    ...base,
-    amount: 0,
-    ownership: chosen.ownership ?? "sole",
-    sharePercent: chosen.sharePercent ?? null,
-    linkedRowId: chosen.id,
-    notSet: true,
-  };
+  return { ...base, amount: 0, linkedRowId: chosen.id, notSet: true };
 }
 
 const isIncomeRow = (row: BudgetEntryItem): boolean => row.isIncome === true;
@@ -74,32 +70,28 @@ const isHousingRow = (row: BudgetEntryItem): boolean =>
  * The budget with its linked rows (owner items 7 and 33b). One stored value each, read here. No
  * row name is read for any of these money decisions: a name decides nothing.
  *
- * Take-home pay (worked out from the profile's salary by the take-home selector):
- * - A row the person linked to it (`linkKind: "take_home"`) reads it in that row's place, and
- *   reads "Not set" (`notSet`) when no take-home can be worked out: its stored amount is never read.
- * - Otherwise, while the budget has any income row with an amount above £0, nothing is added or
- *   hidden: the person's own rows are their income, and the link is only offered.
- * - Otherwise (no income rows, or only £0 ones) the take-home row is added. £0 rows stay listed.
- *
- * Housing (the saved rent, mortgage payment or household contribution, or the mortgage
- * accounts' estimate), by category: every spending row in "housing" is a payment row.
- * - A row the person linked to it (`linkKind: "housing"`) reads it in that row's place, and
- *   reads "Not set" when no housing payment is saved.
- * - An estimate gives way to any housing row with an amount above £0: nothing is added.
- * - No housing rows: the housing row is added.
- * - Exactly one housing row with no figure typed (£0): the linked figure stands in for it, carrying
- *   its id (`linkedRowId`) so the editor can turn it back into an ordinary row.
- * - A housing row with a figure typed, or more than one row: nothing changes, and the link is
- *   offered. A typed figure never leaves the totals until the person chooses the link.
+ * A saved fact (take-home pay worked out from the profile's salary; the saved rent, mortgage
+ * payment or household contribution, or the mortgage accounts' estimate) is in the budget only
+ * through a line linked to it (`linkKind`). Other rows never stand in for it:
+ * - A row the person linked reads the fact in that row's place, and reads "Not set" (`notSet`)
+ *   when the fact is not saved: its stored amount is never read.
+ * - No row is linked and the budget has no rows of that kind at all (no income rows, or no
+ *   housing rows): the linked line is added.
+ * - No row is linked and the budget has rows of that kind (even a £0 one): nothing is added or
+ *   replaced, and an offer says the saved figure is not in this budget. It is counted nowhere
+ *   until the person adds it as its own line or picks a row for it to replace.
  * - A second row linked to the same fact reads "Not set" (the database allows one per kind).
  *
- * A linked row standing in for a saved row keeps that row's ownership and share, unless the
- * figure is already the person's share (the mortgage accounts' estimate, from share-scaled
- * balances), so a shared row is never replaced by a whole amount. Nothing is written: the rows exist only in the figures and on screen.
+ * A linked line is always the person's own figure at 100% (sole), whatever the row it stands in
+ * for says: take-home pay is the person's own, and the housing figure is exactly what
+ * `selectHousingCost` counts (the saved amount, asked for as the person's own cost, or the
+ * mortgage accounts' estimate, already at the person's share), so no second share is applied.
+ * A saved £0 (a household contribution of nothing) is a real £0, not "Not set". Nothing is
+ * written: the rows exist only in the figures and on screen.
  */
 export function withLinkedBudgetRows(
   budget: readonly BudgetEntryItem[],
-  sources: { takeHome: Figure<TakeHome>; housing: HousingPayment | null },
+  sources: { takeHome: Figure<Pick<TakeHome, "monthly">>; housing: HousingPayment | null },
 ): LinkedBudgetRows {
   // No budget yet stays no budget (unknown, never £0): linked rows join a budget once it is started.
   if (budget.length === 0) return { rows: [...budget], shadowedRowIds: [], offers: [] };
@@ -109,13 +101,16 @@ export function withLinkedBudgetRows(
   let addTakeHome: BudgetEntryItem | null = null;
   let addHousing: BudgetEntryItem | null = null;
 
-  // Take-home pay.
-  const takeHome = sources.takeHome.status === "known" ? sources.takeHome.value.monthly : 0;
+  // Take-home pay. A salary of £0 is not set, so known take-home is above £0.
+  const takeHome =
+    sources.takeHome.status === "known" && sources.takeHome.value.monthly > 0
+      ? sources.takeHome.value.monthly
+      : null;
   const takeHomeBase: BudgetEntryItem = {
     id: LINKED_TAKE_HOME_ID,
     category: "income",
     name: "Take-home pay",
-    amount: takeHome,
+    amount: takeHome ?? 0,
     frequency: "monthly",
     isIncome: true,
     isEssential: true,
@@ -123,96 +118,63 @@ export function withLinkedBudgetRows(
     sharePercent: null,
     linked: "take_home",
   };
-  const chosenTakeHome = budget.find((row) => isIncomeRow(row) && row.linkKind === "take_home");
+  const incomeRows = budget.filter(isIncomeRow);
+  const chosenTakeHome = incomeRows.find((row) => row.linkKind === "take_home");
   if (chosenTakeHome) {
     // The person linked this row: its stored amount is never read, resolved or not.
     replaced.set(
       chosenTakeHome.id,
-      takeHome > 0
-        ? {
-            ...takeHomeBase,
-            ownership: chosenTakeHome.ownership ?? "sole",
-            sharePercent: chosenTakeHome.sharePercent ?? null,
-            linkedRowId: chosenTakeHome.id,
-          }
+      takeHome !== null
+        ? { ...takeHomeBase, linkedRowId: chosenTakeHome.id }
         : notSetLine(takeHomeBase, chosenTakeHome),
     );
-  } else if (takeHome > 0) {
-    const ownIncome = budget.filter((row) => isIncomeRow(row) && budgetRowMonthly(row) > 0);
-    if (ownIncome.length > 0) {
+  } else if (takeHome !== null) {
+    if (incomeRows.length === 0) {
+      addTakeHome = takeHomeBase;
+    } else {
       offers.push({
         link: "take_home",
         monthly: takeHome,
         kind: null,
-        rowIds: ownIncome.map((row) => row.id),
+        paymentEstimated: false,
+        rowIds: incomeRows.map((row) => row.id),
       });
-    } else {
-      addTakeHome = takeHomeBase;
     }
   }
 
-  // Housing.
-  const housing = sources.housing && sources.housing.monthly > 0 ? sources.housing : null;
+  // Housing. A saved £0 (household contribution) is a real figure: only null is not set.
+  const housing = sources.housing;
   const housingRows = budget.filter(isHousingRow);
   const chosenHousing = housingRows.find((row) => row.linkKind === "housing");
-  if (chosenHousing && !housing) {
-    // Linked, but no housing payment is saved: "Not set", never the stored £0.
+  const housingBase: BudgetEntryItem = {
+    id: LINKED_HOUSING_ID,
+    category: BUDGET_HOUSING_CATEGORY,
+    name: housing ? HOUSING_ROW_NAME[housing.kind] : (chosenHousing?.name ?? "Housing"),
+    amount: housing?.monthly ?? 0,
+    frequency: "monthly",
+    isIncome: false,
+    isEssential: true,
+    ownership: "sole",
+    sharePercent: null,
+    linked: "housing",
+  };
+  if (chosenHousing) {
     replaced.set(
       chosenHousing.id,
-      notSetLine(
-        {
-          id: LINKED_HOUSING_ID,
-          category: BUDGET_HOUSING_CATEGORY,
-          name: chosenHousing.name,
-          amount: 0,
-          frequency: "monthly",
-          isIncome: false,
-          isEssential: true,
-          ownership: "sole",
-          sharePercent: null,
-          linked: "housing",
-        },
-        chosenHousing,
-      ),
+      housing
+        ? { ...housingBase, linkedRowId: chosenHousing.id }
+        : notSetLine(housingBase, chosenHousing),
     );
-  }
-  if (housing) {
-    const base: BudgetEntryItem = {
-      id: LINKED_HOUSING_ID,
-      category: BUDGET_HOUSING_CATEGORY,
-      name: HOUSING_ROW_NAME[housing.kind],
-      amount: housing.monthly,
-      frequency: "monthly",
-      isIncome: false,
-      isEssential: true,
-      ownership: "sole",
-      sharePercent: null,
-      linked: "housing",
-    };
-    // The saved amount carries no share, so it takes the replaced row's; the estimate is already
-    // the person's share, so it counts as it is.
-    const standIn = (row: BudgetEntryItem): BudgetEntryItem =>
-      housing.isOwnShare === true
-        ? base
-        : { ...base, ownership: row.ownership ?? "sole", sharePercent: row.sharePercent ?? null };
-    const typed = housingRows.some((row) => budgetRowMonthly(row) > 0);
-    if (chosenHousing) {
-      replaced.set(chosenHousing.id, { ...standIn(chosenHousing), linkedRowId: chosenHousing.id });
-    } else if (housing.paymentEstimated && typed) {
-      // The person's own figure wins over an estimate; nothing to add or offer.
-    } else if (housingRows.length === 0) {
-      addHousing = base;
-    } else if (housingRows.length === 1 && !typed) {
-      // One empty housing row: the saved figure fills it. Nothing typed leaves the totals, and the
-      // line carries the row's id, so "Type my own figure" can write the figure back to it.
-      const only = housingRows[0] as BudgetEntryItem;
-      replaced.set(only.id, { ...standIn(only), linkedRowId: only.id });
-    } else if (!housing.paymentEstimated) {
-      // A figure the person typed is never replaced unasked: the link is offered instead.
+  } else if (housing) {
+    if (housingRows.length === 0) {
+      addHousing = housingBase;
+    } else if (housing.monthly > 0) {
+      // A saved £0 left out changes no figure, so it is not offered.
       offers.push({
         link: "housing",
         monthly: housing.monthly,
         kind: housing.kind,
+        paymentEstimated: housing.paymentEstimated,
         rowIds: housingRows.map((row) => row.id),
       });
     }

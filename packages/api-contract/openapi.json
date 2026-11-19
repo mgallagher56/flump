@@ -3738,6 +3738,17 @@
                   "isIncome": {
                     "type": "boolean"
                   },
+                  "linkKind": {
+                    "anyOf": [
+                      {
+                        "enum": ["take_home", "housing"],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "name": {
                     "maxLength": 120,
                     "minLength": 1,

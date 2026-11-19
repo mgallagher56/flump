@@ -11,6 +11,7 @@ import { type EstimatedTaxDue, selectEstimatedTaxDue } from "./selectors/estimat
 import {
   type AccountFixedRateEnd,
   type HousingCost,
+  type HousingPayment,
   selectFixedRateEnds,
   selectHousingCost,
   selectHousingPayment,
@@ -50,6 +51,11 @@ export interface FinancialPicture {
    * pay or the saved housing payment replaces.
    */
   budgetLinkOffers: BudgetLinkOffer[];
+  /**
+   * The monthly housing payment the budget's linked housing line reads (the person's own cost),
+   * or null when it is not saved. The setup wizard resolves its pending rows with it.
+   */
+  housingPayment: HousingPayment | null;
   budget: Figure<BudgetTotals>;
   safeToSpend: Figure<SafeToSpend>;
   monthsOfCover: Figure<MonthsOfCover>;
@@ -79,13 +85,15 @@ export function buildFinancialPicture(
 ): FinancialPicture {
   const snapshot = opts.snapshot ?? new PortfolioSnapshot(input.accounts, input.details);
   const takeHome = selectTakeHome(input.profile, { taxYear: opts.taxYear });
-  const linked = linkedBudgetRowsFor(input, { ...opts, snapshot, takeHome });
+  const housingPayment = selectHousingPayment(input.profile, snapshot, input.accounts);
+  const linked = withLinkedBudgetRows(input.budget, { takeHome, housing: housingPayment });
   const budget = linked.rows;
   return {
     takeHome,
     budgetRows: budget,
     shadowedBudgetRowIds: linked.shadowedRowIds,
     budgetLinkOffers: linked.offers,
+    housingPayment,
     budget: selectBudgetTotals(budget),
     safeToSpend: selectSafeToSpend(takeHome, budget, snapshot),
     monthsOfCover: selectMonthsOfCover(budget, snapshot),

@@ -164,9 +164,21 @@ export class BudgetService {
       isEssential: body.isEssential ?? defaultIsEssential(body.category, body.isIncome ?? false),
       notes: body.notes ?? null,
       isDefault: false,
+      linkKind: body.linkKind ?? null,
       ...share,
     });
-    return this.budgetEntryRepository.save(entry);
+    if (entry.linkKind) {
+      await assertLinkable(this.budgetEntryRepository, userId, entry);
+      // A linked line stores no amount of its own: the stored 0 is never read.
+      entry.amount = 0;
+    }
+    try {
+      return await this.budgetEntryRepository.save(entry);
+    } catch (err) {
+      // Two writes raced past the check above: the unique index keeps one line per fact.
+      if (isLinkKindUniqueViolation(err)) throw new BadRequestException(LINK_TAKEN_MESSAGE);
+      throw err;
+    }
   }
 
   /** Conditional on `expected` when given (412 when stale, BE-09). */

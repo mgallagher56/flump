@@ -54,18 +54,18 @@ describe("BudgetSetupWizard: take-home from the profile (owner item 7)", () => {
     goToIncome();
     const note = await screen.findByTestId("wizard-linked-take-home");
     expect(note.textContent).toBe(
-      "Your take-home pay of £2,400 a month is already in your budget, worked out from your salary in Profile. If you add an income entry with an amount, your entries are used instead.",
+      "Your take-home pay of £2,400 a month is in your budget, worked out from your salary in Profile. If you add income entries of your own, you choose whether to keep it too.",
     );
     expect(screen.queryByRole("button", { name: /^Use / })).toBeNull();
   });
 
-  it("uses any income entry with an amount, whatever its name, in place of the take-home", async () => {
-    // "Acme Ltd" £2,000: the person's own figure, so the take-home is not added as well.
+  it("says the take-home is not in the budget beside any income entry, whatever its name", async () => {
+    // "Acme Ltd" £2,000: the person's own entry, so the take-home is neither added nor swapped in.
     const acme = { ...mockEntries[0], id: "acme", name: "Acme Ltd", amount: 2000 } as BudgetEntry;
     render(<BudgetSetupWizard {...props} entries={[acme]} monthlyTakeHome={2400} />);
     goToIncome();
     expect((await screen.findByTestId("wizard-linked-take-home")).textContent).toContain(
-      "Your own income entries are used in place of the take-home pay",
+      "Your take-home pay of £2,400 from Profile is not in this budget yet.",
     );
   });
 
@@ -74,8 +74,39 @@ describe("BudgetSetupWizard: take-home from the profile (owner item 7)", () => {
     render(<BudgetSetupWizard {...props} entries={[chosen]} monthlyTakeHome={2400} />);
     goToIncome();
     expect((await screen.findByTestId("wizard-linked-take-home")).textContent).toContain(
-      "Your take-home pay of £2,400 a month is already in your budget",
+      "Your take-home pay of £2,400 a month is in your budget",
     );
+  });
+
+  it("counts an engine-added or linked take-home and housing line in the summary totals", async () => {
+    // Take-home £2,400 from the profile and rent £950 saved. Entries: the "Rent" entry linked to
+    // the saved rent (£0 stored) and Food £300; no income entry, so the take-home line is added.
+    // Total income = 2,400. Total spending = 950 + 300 = 1,250. Left over = 2,400 - 1,250 = 1,150.
+    const rent = { ...mockEntries[1], amount: 0, linkKind: "housing" } as BudgetEntry;
+    const food = {
+      ...mockEntries[1],
+      id: "food",
+      category: "expenses",
+      name: "Food",
+      amount: 300,
+    } as BudgetEntry;
+    render(
+      <BudgetSetupWizard
+        {...props}
+        entries={[rent, food]}
+        housingPayment={{ kind: "rent", monthly: 950, paymentEstimated: false }}
+        mode="edit"
+        monthlyTakeHome={2400}
+      />,
+    );
+    for (const step of ["Income", "Housing", "Bills", "Expenses", "Savings"]) {
+      await screen.findByRole("heading", { name: new RegExp(step, "i") });
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    }
+    expect((await screen.findByText("Total income")).parentElement?.textContent).toContain(
+      "£2,400",
+    );
+    expect(screen.getByText("Total spending").parentElement?.textContent).toContain("£1,250");
   });
 
   it("shows the summary totals as Not set while a linked entry's saved figure is not set", async () => {

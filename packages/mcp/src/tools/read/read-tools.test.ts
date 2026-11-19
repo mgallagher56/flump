@@ -29,6 +29,17 @@ type Env = {
 const call = async (h: TestHarness, name: string, args: Record<string, unknown> = {}) =>
   (await h.callJson(name, args)) as Env;
 
+/** Salary £36,000 (employed, no pension) and rent £1,000 saved. */
+const savedPayAndRent = {
+  ...profileFactsFromProfile(null),
+  annualSalary: 36000,
+  employmentType: "employed" as const,
+  pensionPercent: 0,
+  isSalarySacrifice: false,
+  housingStatus: "renting" as const,
+  monthlyHousingCost: 1000,
+};
+
 describe("read tools v2: registration", () => {
   it("registers the eight read tools in a fixed order", () => {
     expect(READ_TOOLS.map((t) => t.name)).toEqual([
@@ -337,22 +348,15 @@ describe("read tools v2: oversized fixtures", () => {
   });
 
   it("get_budget_summary counts the lines the engine adds or fills, as the web does", async () => {
-    // Salary £36,000 (employed, no pension) and rent £1,000 saved. Budget: one empty housing row
-    // (£0) and Food £300, no income row. The web adds the take-home row and fills the housing row
-    // with £1,000, so essentials = 1,000 + 300 = 1,300 and income is the take-home, never null.
+    // Salary £36,000 (employed, no pension) and rent £1,000 saved. Budget: a housing row linked to
+    // the saved rent (£0 stored) and Food £300, no income row. The web adds the take-home row and
+    // reads £1,000 into the linked row, so essentials = 1,000 + 300 = 1,300 and income is the
+    // take-home, never null.
     const data = {
       ...emptyUser,
-      profileFacts: {
-        ...profileFactsFromProfile(null),
-        annualSalary: 36000,
-        employmentType: "employed" as const,
-        pensionPercent: 0,
-        isSalarySacrifice: false,
-        housingStatus: "renting" as const,
-        monthlyHousingCost: 1000,
-      },
+      profileFacts: savedPayAndRent,
       budgetEntries: [
-        { id: "h", category: "housing", name: "Rent", amount: 0 },
+        { id: "h", category: "housing", name: "Rent", amount: 0, linkKind: "housing" as const },
         { id: "food", category: "expenses", name: "Food", amount: 300 },
       ].map((e) => ({ ...e, frequency: "monthly", isIncome: false, isEssential: true })),
     };
@@ -363,6 +367,36 @@ describe("read tools v2: oversized fixtures", () => {
       // Take-home on £36,000 (England, 2026-27): tax 20% x (36,000 - 12,570) = 4,686; NI 8% x
       // (36,000 - 12,570) = 1,874.40; (36,000 - 4,686 - 1,874.40) / 12 = 2,453.30, shown to the pound.
       expect(r.result.monthlyIncomeGbp).toBe(2453);
+      expect(r.result.savedFiguresNotInBudget).toEqual([]);
+    } finally {
+      await client.close();
+    }
+  });
+
+  it("get_budget_summary says a saved figure is not in the budget, and does not count it", async () => {
+    // Same saved salary and rent. Budget: Child benefit £100 (income) and Home insurance £30
+    // (housing), neither linked. Neither stands in for the saved figure: income = 100,
+    // essentials = 30, and both saved figures are listed as not in the budget.
+    const data = {
+      ...emptyUser,
+      profileFacts: savedPayAndRent,
+      budgetEntries: [
+        { id: "cb", category: "income", name: "Child benefit", amount: 100, isIncome: true },
+        { id: "hi", category: "housing", name: "Home insurance", amount: 30, isIncome: false },
+      ].map((e) => ({ ...e, frequency: "monthly", isEssential: true })),
+    };
+    const client = await connectTestClient(data);
+    try {
+      const r = await call(client, "get_budget_summary");
+      expect(r.result.monthlyIncomeGbp).toBe(100);
+      expect(r.result.essentialMonthlyGbp).toBe(30);
+      expect(r.result.savedFiguresNotInBudget).toEqual([
+        { figure: "take_home_pay", monthlyGbp: 2453, estimated: false },
+        { figure: "rent", monthlyGbp: 1000, estimated: false },
+      ]);
+      expect(r.result.notes.join(" ")).toContain(
+        "The user's saved rent of £1,000 a month is not in this budget",
+      );
     } finally {
       await client.close();
     }

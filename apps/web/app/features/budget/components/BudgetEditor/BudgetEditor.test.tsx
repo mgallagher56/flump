@@ -306,7 +306,15 @@ describe("BudgetEditor", () => {
 
     it("offers the take-home for an income row and replaces the row the person picks", async () => {
       const { onUpdate } = setup({
-        linkOffers: [{ link: "take_home", monthly: 2400, kind: null, rowIds: ["b-2"] }],
+        linkOffers: [
+          {
+            link: "take_home",
+            monthly: 2400,
+            kind: null,
+            paymentEstimated: false,
+            rowIds: ["b-2"],
+          },
+        ],
       });
       const use = screen.getByRole("button", {
         name: "Use your take-home pay of £2,400 in place of Salary",
@@ -323,7 +331,15 @@ describe("BudgetEditor", () => {
 
     it("names the saved housing figure when it offers to replace a housing row", () => {
       setup({
-        linkOffers: [{ link: "housing", monthly: 950, kind: "mortgage", rowIds: ["b-1"] }],
+        linkOffers: [
+          {
+            link: "housing",
+            monthly: 950,
+            kind: "mortgage",
+            paymentEstimated: false,
+            rowIds: ["b-1"],
+          },
+        ],
       });
       expect(screen.getByTestId("budget-editor-use-link-b-1").textContent).toBe(
         "Use your saved mortgage payment of £950",
@@ -382,7 +398,7 @@ describe("BudgetEditor", () => {
       });
       expect(screen.queryByLabelText("Amount for Mortgage payment")).toBeNull();
       expect(screen.getByTestId("budget-editor-source-linked-housing").textContent).toBe(
-        "From your mortgage details.",
+        "Your own cost, from your mortgage details.",
       );
     });
   });
@@ -483,10 +499,10 @@ describe("BudgetEditor", () => {
       );
     });
 
-    it("turns an empty housing row the saved rent filled back into the person's own row", async () => {
-      // The one housing row was empty (£0, never linked), so the saved rent of £950 fills it. The
-      // line carries that row's id: "Type my own figure" writes £950 to it, an ordinary row again.
-      const emptyRent = row({ id: "rent", name: "Rent or mortgage", amount: 0 });
+    it("turns a housing row linked to the saved rent back into the person's own row", async () => {
+      // The housing row is linked to the saved rent of £950, the person's own cost. The line
+      // carries that row's id: "Type my own figure" writes £950 to it, an ordinary sole row again.
+      const emptyRent = row({ id: "rent", name: "Rent", amount: 0, linkKind: "housing" });
       const { onUpdate } = setup({
         entries: [emptyRent],
         shadowedIds: ["rent"],
@@ -502,7 +518,7 @@ describe("BudgetEditor", () => {
         ],
       });
       expect(screen.getByTestId("budget-editor-source-linked-housing").textContent).toContain(
-        "From your housing details",
+        "Your own cost, from your housing details",
       );
       fireEvent.click(screen.getByRole("button", { name: "Type my own figure" }));
       await waitFor(() =>

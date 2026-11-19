@@ -5,9 +5,12 @@ import {
   DeleteBudgetEntryResponse,
 } from "@flump/api-contract";
 import {
+  BUDGET_HOUSING_CATEGORY,
+  type BudgetLinkOffer,
   DEBT_CATEGORY,
   findPossibleDuplicateDebtRows,
   getUkTaxYearContext,
+  HOUSING_ROW_NAME,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
 import {
@@ -29,6 +32,7 @@ import { BreathingRoom } from "~/features/budget/components/BreathingRoom";
 import { BreathingRoomBasis } from "~/features/budget/components/BreathingRoomBasis";
 import { BudgetCategoryList } from "~/features/budget/components/BudgetCategoryList";
 import { BudgetEditor } from "~/features/budget/components/BudgetEditor";
+import { BudgetLinkNotice } from "~/features/budget/components/BudgetLinkNotice";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
 import { DuplicateDebtNotice } from "~/features/budget/components/DuplicateDebtNotice";
@@ -39,6 +43,7 @@ import {
   exampleBudgetDrafts,
   isDraftReady,
 } from "~/features/budget/exampleDrafts";
+import { INCOME_CATEGORY } from "~/features/budget/income";
 import { pageBudgetEntries } from "~/features/budget/linkedEntries";
 import { missingWizardCommonItems } from "~/features/budget/wizardCommonItems";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
@@ -232,12 +237,6 @@ const BudgetContainer: FC = () => {
   // row and the figures it adds to agree (owner items 7 and 33b).
   const pageEntries = useMemo(() => pageBudgetEntries(entries, picture), [entries, picture]);
   const linkedEntries = useMemo(() => pageEntries.filter((e) => e.linked), [pageEntries]);
-  // The saved housing payment a housing row the person linked reads, at their share; null when
-  // not saved, so the wizard shows its totals as not set rather than counting £0.
-  const linkedHousingMonthly = useMemo(() => {
-    const line = pageEntries.find((e) => e.linked === "housing" && e.linkedRowId && !e.notSet);
-    return line ? toMonthly(line) : null;
-  }, [pageEntries]);
 
   // Housing cost shows once: as the housing row in "Where your money goes". The row names the
   // tenure, and opening it says where the saved figure lives, or links to the mortgage page
@@ -253,6 +252,24 @@ const BudgetContainer: FC = () => {
     await updateProfile(update);
     setSavedHousing(update);
   };
+
+  // "Add your take-home pay of £X" (or rent): a new entry linked to the saved figure, beside the
+  // person's own entries. Its stored amount is £0 and never read.
+  const addLinkedEntry = (offer: BudgetLinkOffer) =>
+    addEntry({
+      category: offer.link === "take_home" ? INCOME_CATEGORY : BUDGET_HOUSING_CATEGORY,
+      name: offer.link === "take_home" ? "Take-home pay" : HOUSING_ROW_NAME[offer.kind ?? "rent"],
+      amount: 0,
+      frequency: "monthly",
+      isIncome: offer.link === "take_home",
+      isPrimaryIncome: false,
+      isEssential: true,
+      ownership: "sole",
+      sharePercent: null,
+      notes: null,
+      isDefault: false,
+      linkKind: offer.link,
+    });
 
   const isBudgetEmpty = useMemo(() => {
     if (entries.length === 0) return true;
@@ -631,7 +648,7 @@ const BudgetContainer: FC = () => {
           monthlyTakeHome={
             picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
           }
-          linkedHousingMonthly={linkedHousingMonthly}
+          housingPayment={picture.housingPayment}
           onAddEntry={addEntry}
           onDeleteEntry={async (id) => {
             await deleteEntry(id);
@@ -646,6 +663,7 @@ const BudgetContainer: FC = () => {
             <>
               {/* Removing or zeroing every entry keeps the editor open until Finish editing. */}
               {!isBudgetEmpty && <BudgetOverview entries={entries} picture={picture} />}
+              <BudgetLinkNotice offers={picture.budgetLinkOffers} onAdd={addLinkedEntry} />
               <BudgetEditor
                 categories={allCategories}
                 entries={entries}
@@ -686,7 +704,14 @@ const BudgetContainer: FC = () => {
               title="No budget yet"
             />
           ) : (
-            <BudgetOverview entries={entries} picture={picture} />
+            <>
+              <BudgetOverview entries={entries} picture={picture} />
+              <BudgetLinkNotice
+                offers={picture.budgetLinkOffers}
+                onAdd={addLinkedEntry}
+                onChooseEntry={() => setView("editing")}
+              />
+            </>
           )}
 
           {view === "budget" && !isBudgetEmpty && (

@@ -25,6 +25,17 @@ const result = z.object({
   monthlySurplusBeforeDebtGbp: z.number().nullable(),
   entryCount: z.number(),
   notes: z.array(z.string()),
+  /**
+   * Saved figures that are not in this budget: the budget has entries of that kind of its own and
+   * the user has not added the saved figure or chosen an entry for it to replace. Not counted.
+   */
+  savedFiguresNotInBudget: z.array(
+    z.object({
+      figure: z.enum(["take_home_pay", "rent", "mortgage_payment", "household_contribution"]),
+      monthlyGbp: z.number(),
+      estimated: z.boolean(),
+    }),
+  ),
   categories: z.array(
     z.object({ category: z.string(), monthlyGbp: z.number(), essential: z.boolean() }),
   ),
@@ -44,6 +55,20 @@ const result = z.object({
 });
 
 /** Scrubbing can make two categories identical; merge them so rows stay unique. */
+const NOT_IN_BUDGET_FIGURE = {
+  take_home: "take_home_pay",
+  rent: "rent",
+  mortgage: "mortgage_payment",
+  household: "household_contribution",
+} as const;
+
+const NOT_IN_BUDGET_NAME = {
+  take_home_pay: "take-home pay",
+  rent: "rent",
+  mortgage_payment: "mortgage payment",
+  household_contribution: "household contribution",
+} as const;
+
 function mergeCategories<T extends { category: string; monthlyGbp: number; essential: boolean }>(
   rows: T[],
 ): T[] {
@@ -61,7 +86,7 @@ export const getBudgetSummary = defineFlumpTool({
   name: "get_budget_summary",
   title: "Budget summary",
   description:
-    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. With no income entry, income is the take-home pay worked out from the saved salary, as in the Flump budget. Income and the left-over amount are null (with a question in missing[]) when neither exists. Detailed format lists each entry.",
+    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. With no income entry, income is the take-home pay worked out from the saved salary, as in the Flump budget; a saved take-home pay or housing payment that the budget does not include is listed in savedFiguresNotInBudget and not counted. Income and the left-over amount are null (with a question in missing[]) when neither exists. Detailed format lists each entry.",
   input: {},
   result,
   maxTokens: 1500,
@@ -105,6 +130,17 @@ export const getBudgetSummary = defineFlumpTool({
           }))
         : undefined;
 
+    const notInBudget = m.budgetLinkOffers.map((offer) => ({
+      figure:
+        NOT_IN_BUDGET_FIGURE[offer.link === "take_home" ? "take_home" : (offer.kind ?? "rent")],
+      monthlyGbp: round2(offer.monthly),
+      estimated: offer.paymentEstimated,
+    }));
+    const notInBudgetNotes = notInBudget.map(
+      (f) =>
+        `The user's saved ${NOT_IN_BUDGET_NAME[f.figure]} of ${f.estimated ? "about " : ""}£${f.monthlyGbp.toLocaleString("en-GB", { maximumFractionDigits: 0 })} a month is not in this budget and is not counted in these totals. The budget has its own entries of that kind; the user can add the saved figure or choose an entry for it to replace on the budget page.`,
+    );
+
     return {
       result: {
         monthlyIncomeGbp: b.monthlyIncome,
@@ -114,7 +150,9 @@ export const getBudgetSummary = defineFlumpTool({
         entryCount: entries.length,
         notes: [
           "The left-over figure here is income minus spending, before any debt payments. get_financial_snapshot gives it after saved minimum payments, and get_debt_overview lists the minimums.",
+          ...notInBudgetNotes,
         ],
+        savedFiguresNotInBudget: notInBudget,
         categories: mergeCategories(
           b.byCategory.map((c) => ({
             category: categoryLabel(c.category),
