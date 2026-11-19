@@ -1001,6 +1001,15 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Status (2026-11-18):** plan only; nothing built.
 - **Labels:** needs-triage
 
+## E40. One home per value: system data audit and restructure
+
+- **Severity:** P1 for slices 1 and 2 (wrong figures shown today, and one case that changes saved data); P2 for the rest (owner request, 2026-11-19).
+- **Blocked by:** owner decisions 1 to 13 in the plan, each for the slice that names it. Slice 2 needs only decision 9. The tax changes in slices 2 and 7 need the owner's vector sign-off (E4).
+- **Done when:** every stored fact about a user has one source of truth and every shared figure has one engine function, as listed in `docs/system/value-map.yaml`; a CI check fails when a stored value has no entry in that map, when an entry points at a missing file, or when a figure is computed outside its engine function; each of the 72 expected cross-page links in the map holds and has a test; no page puts a joint account's share into a form as the whole; the AI tools read the same picture as the pages and invent no value for a fact that is not saved; budget lines that repeat a saved fact are linked to it; buy-to-let details live on accounts and reach the Mortgage page and Self Assessment; the dead columns, endpoints and tables listed in the plan are gone.
+- **Notes:** the audit found 19 links that hold, 8 that hold with a manual step, 14 duplicated and 31 broken, with ten root causes. Nine slices: 1 the value map and its checks; 2 wrong numbers today; 3 one assembler; 4 accounts as the home for homes and loans; 5 budget lines linked to saved facts; 6 pay and pension answers; 7 Self Assessment joined up; 8 browser state; 9 database housekeeping. Slices 1 and 2 can run together. E39 should start after slice 5, E37 should use slice 7's record link, and E12 should take its data model from the map after slice 4. Decision 10 confirms or amends E23 D-1-B (`GET /financial-picture`, never built). Audit: [system-2026-11/SUMMARY.md](system-2026-11/SUMMARY.md). Plan: [system-2026-11/PLAN.md](system-2026-11/PLAN.md). Map: [docs/system](../system/README.md).
+- **Status (2026-11-19):** audit, target model, plan and the first version of the value map only; nothing built.
+- **Labels:** needs-triage
+
 # Added 2026-11-16: Active & In-Progress Work Without a PR (Handoff Notes)
 
 This section captures work that was scoped, planned, or partially shipped as of **2026-11-16** and does **not** yet have an open PR, so it can be picked up cleanly in the next session.
