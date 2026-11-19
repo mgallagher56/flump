@@ -4,6 +4,10 @@ export default defineConfig({
   test: {
     include: ["src/**/*.{test,spec}.ts"],
     exclude: ["node_modules", "dist"],
+    // Files share one module graph per worker (E41 P4, owner decision 10; proved by five clean
+    // shuffled runs). Every global a test changes is put back in afterEach or afterAll: fake
+    // timers, the stubbed Buffer, window and document, the storage driver and fast-check's seed.
+    isolate: false,
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
