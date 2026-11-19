@@ -170,7 +170,7 @@ export const AiContextPackDto = z.strictObject({
     /** Saving and Investment balances at the user's share (the picture's savings totals). */
     totalSavings: z.number(),
     monthlySavingsContributions: z.number(),
-    /** Balance-weighted savings rate; null with no savings balance, never a default. */
+    /** Balance-weighted savings rate; null with no savings balance or when any savings account has no saved rate, never a default. */
     weightedSavingsRate: z.number().nullable(),
     /** The engine's saved-balance net worth series, ending in the current month. */
     monthlyHistory: z.array(EngineResult),
