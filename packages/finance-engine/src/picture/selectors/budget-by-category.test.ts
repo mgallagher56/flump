@@ -65,6 +65,17 @@ describe("selectBudgetByCategory", () => {
     ).toEqual([{ category: "housing", monthly: 800, essential: true, group: "essentials" }]);
   });
 
+  it("leaves out a linked line whose saved fact is not set, never a £0 category", () => {
+    // A housing line linked to the saved rent, with no rent saved (notSet), next to food £300.
+    // Only food is listed: the housing line has no figure.
+    expect(
+      selectBudgetByCategory([
+        row({ category: "housing", amount: 0, linked: "housing", notSet: true }),
+        row({ category: "food", amount: 300 }),
+      ]),
+    ).toEqual([{ category: "food", monthly: 300, essential: true, group: "essentials" }]);
+  });
+
   it("is empty with no spending rows", () => {
     expect(selectBudgetByCategory([])).toEqual([]);
     expect(selectBudgetByCategory([row({ amount: 2000, isIncome: true })])).toEqual([]);

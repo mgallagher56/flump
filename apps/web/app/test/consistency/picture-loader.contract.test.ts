@@ -219,10 +219,12 @@ function toContractBudget(p: PersonaFixture) {
     amount: b.amount,
     frequency: b.frequency,
     isIncome: b.isIncome,
-    isPrimaryIncome: false,
+    isPrimaryIncome: b.isPrimaryIncome === true,
     isEssential: b.isEssential,
     notes: b.notes ?? null,
     isDefault: false,
+    // A linked row (budget_entries.link_kind) stores £0 and takes its figure from the saved fact.
+    linkKind: b.linkKind ?? null,
     ...(b.ownership != null ? { ownership: b.ownership } : {}),
     ...(b.sharePercent != null ? { sharePercent: b.sharePercent } : {}),
     createdAt: STAMP,
@@ -355,5 +357,87 @@ describe.each(NAMES)("persona %s: the web loader's picture equals the engine loa
     expect(after.debtFreeDate).toBe(before.debtFreeDate);
     expect(after.savingsBalance).toBe(before.savingsBalance);
     expect(after.isaUsed).toBe(before.isaUsed);
+  });
+});
+
+/**
+ * Linked budget lines (budget_entries.link_kind, PR 783): each stores £0 and takes its figure from
+ * the saved fact. No persona has one, so this builds one. The salary is £12,570, the personal
+ * allowance and the National Insurance primary threshold for 2026/27, with no pension and no
+ * student loan, so no tax and no NI are due and take-home is worked out by hand.
+ */
+function linkedPersona(salary: number | null): PersonaFixture {
+  const row = (
+    id: string,
+    category: string,
+    name: string,
+    amount: number,
+    extra: Partial<BudgetEntryItem> = {},
+  ): BudgetEntryItem => ({
+    id,
+    category,
+    name,
+    amount,
+    frequency: "monthly",
+    isIncome: false,
+    isEssential: false,
+    ...extra,
+  });
+  return {
+    netWorthBasis: PERSONAS.dan.fixture.netWorthBasis,
+    profile: {
+      annualSalary: salary,
+      employmentType: "employed",
+      taxRegion: "ENGLAND",
+      studentLoanPlans: [],
+      pensionPercent: 0,
+      isSalarySacrifice: false,
+      housingStatus: "renting",
+      monthlyHousingCost: 850,
+    },
+    accounts: [{ id: "linked-current", name: "Current account", type: "Current", balance: 5000 }],
+    details: [],
+    budget: [
+      // Stored £0: the figure comes from the take-home pay and the saved rent.
+      row("linked-pay", "income", "Take-home pay", 0, { isIncome: true, linkKind: "take_home" }),
+      row("linked-rent", "housing", "Rent", 0, { isEssential: true, linkKind: "housing" }),
+      row("linked-food", "food", "Groceries", 300, { isEssential: true }),
+      row("linked-fun", "entertainment", "Going out", 100),
+    ],
+    taxRecords: [],
+  } as PersonaFixture;
+}
+
+describe("linked budget lines: the web loader's picture equals the engine loader's", () => {
+  async function bothPictures(p: PersonaFixture) {
+    const persona = wirePersona(p);
+    globalThis.fetch = personaFetch(persona) as typeof fetch;
+    const web = await loadWorkspacePicture({ request: new Request("http://x/") } as never);
+    const engine = await loadFinancialPicture(inMemorySource(persona), { asOf: AS_OF });
+    return { web: web.picture as FinancialPicture, engine: engine.picture };
+  }
+
+  it("a linked line counts its saved fact, never the stored £0", async () => {
+    const { web, engine } = await bothPictures(linkedPersona(12570));
+    expect(web).toEqual(engine);
+    // By hand: take-home = 12,570 a year (no tax, no NI, no pension) / 12 = 1,047.50, which the
+    // take-home figure gives in whole pounds (Math.round), so income = 1,048.
+    // Essentials = rent 850 (the saved fact) + groceries 300 = 1,150. Discretionary = 100.
+    // Left over = 1,048 - 1,150 - 100 = -202.
+    expect(isFigureKnown(web.budget)).toBe(true);
+    if (!isFigureKnown(web.budget)) return;
+    expect(web.budget.value.income).toBe(1048);
+    expect(web.budget.value.essentials).toBe(1150);
+    expect(web.budget.value.discretionary).toBe(100);
+    expect(web.budget.value.surplus).toBe(-202);
+  });
+
+  it("a linked line whose saved fact is not set leaves the totals unknown, naming the fact", async () => {
+    const { web, engine } = await bothPictures(linkedPersona(null));
+    expect(web).toEqual(engine);
+    // No salary saved: the take-home line has no figure, so left over is unknown, not 0 - 1,250.
+    expect(isFigureKnown(web.budget)).toBe(false);
+    if (isFigureKnown(web.budget)) return;
+    expect(web.budget.missing).toEqual(["annualSalary"]);
   });
 });

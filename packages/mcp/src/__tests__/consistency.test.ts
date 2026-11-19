@@ -457,12 +457,13 @@ describe("BU-3 worked example: the AI tools give the Dashboard's left over and B
   it("uses the hand-worked figures", async () => {
     // Left over: 2,500 - essentials (900 + 300 + 100 = 1,300) - savings 200 = 1,000. The card's
     // £100 minimum is the same payment as the debt row, so it is not taken off again.
-    // Breathing room essentials: rent and food 1,200 plus the larger of the saved minimum (100)
-    // and the debt row (100) = 1,300. 6,000 / 1,300 = 4.615..., shown as 4.6 months.
+    // Breathing room essentials: rent and food 1,200, plus the larger of the saved minimum (100)
+    // and the debt row (100), plus the essential savings row 200 (owner item 28: a saving the
+    // person would keep paying) = 1,500. 6,000 / 1,500 = 4.0 months.
     const snap = ((await h.callJson("get_financial_snapshot")) as Envelope<SnapshotResult>).result;
     expect(snap.monthlySurplusAfterStoredMinimumsGbp).toBe(1000);
-    expect(snap.monthlyEssentialSpendGbp).toBe(1300);
-    expect(snap.emergencyRunwayMonths).toBe(4.6);
+    expect(snap.monthlyEssentialSpendGbp).toBe(1500);
+    expect(snap.emergencyRunwayMonths).toBe(4);
     // Net worth 6,000 - 2,000 = 4,000.
     expect(snap.netWorthGbp).toBe(4000);
 
@@ -485,5 +486,98 @@ describe("BU-3 worked example: the AI tools give the Dashboard's left over and B
       asOf: new Date(),
     });
     await expectToolsMatchPicture(h, picture);
+  });
+});
+
+/**
+ * Linked budget lines (budget_entries.link_kind, PR 783): each stores £0 and takes its figure from
+ * the saved fact. Salary £12,570 is the personal allowance and the NI primary threshold, with no
+ * pension and no student loan, so take-home is 12,570 / 12 = 1,047.50, which the take-home
+ * figure gives in whole pounds: 1,048. Rent is saved as £850 a month.
+ */
+function linkedInput(annualSalary: number | null) {
+  const row = (
+    id: string,
+    category: string,
+    name: string,
+    amount: number,
+    extra: Record<string, unknown> = {},
+  ) => ({
+    id,
+    category,
+    name,
+    amount,
+    frequency: "monthly",
+    isIncome: false,
+    isEssential: false,
+    ...extra,
+  });
+  return {
+    baseline: BASELINE,
+    profileFacts: {
+      annualSalary,
+      employmentType: "employed" as const,
+      taxRegion: "ENGLAND" as const,
+      studentLoanPlans: [],
+      pensionPercent: 0,
+      isSalarySacrifice: false,
+      housingStatus: "renting" as const,
+      monthlyHousingCost: 850,
+    },
+    netWorthBasis: { countProperty: true, countStudentLoan: false },
+    accounts: [{ id: "cur", name: "Current", type: "Current", balance: 5000 }],
+    accountDetails: [],
+    budgetEntries: [
+      row("pay", "income", "Take-home pay", 0, { isIncome: true, linkKind: "take_home" }),
+      row("rent", "housing", "Rent", 0, { isEssential: true, linkKind: "housing" }),
+      row("food", "food", "Groceries", 300, { isEssential: true }),
+      row("fun", "entertainment", "Going out", 100),
+    ],
+    taxRecords: [],
+  } as Parameters<typeof connectTestClient>[0];
+}
+
+describe("linked budget lines: the AI tools count the saved fact, never the stored £0", () => {
+  let h: TestHarness;
+  afterEach(async () => h?.close());
+
+  it("salary and rent saved: the tools give the hand-worked figures and match the picture", async () => {
+    const input = linkedInput(12570);
+    h = await connectTestClient(input);
+    // Income 1,048 (take-home). Essentials: rent 850 (saved) + groceries 300 = 1,150.
+    // Discretionary 100. Left over = 1,048 - 1,150 - 100 = -202.
+    const b = ((await h.callJson("get_budget_summary")) as Envelope<BudgetResult>).result;
+    expect(b.monthlyIncomeGbp).toBe(1048);
+    expect(b.essentialMonthlyGbp).toBe(1150);
+    expect(b.discretionaryMonthlyGbp).toBe(100);
+    expect(b.monthlySurplusBeforeDebtGbp).toBe(-202);
+    // Breathing room: cash 5,000 / essentials 1,150 = 4.347..., shown as 4.3 months.
+    const snap = ((await h.callJson("get_financial_snapshot")) as Envelope<SnapshotResult>).result;
+    expect(snap.monthlySurplusAfterStoredMinimumsGbp).toBe(-202);
+    expect(snap.monthlyEssentialSpendGbp).toBe(1150);
+    expect(snap.emergencyRunwayMonths).toBe(4.3);
+
+    const { picture } = await loadFinancialPicture(inMemoryPictureSource(input), {
+      asOf: new Date(),
+    });
+    await expectToolsMatchPicture(h, picture);
+  });
+
+  it("no salary saved: income and left over are not set, spending is still the saved lines", async () => {
+    h = await connectTestClient(linkedInput(null));
+    const b = (await h.callJson("get_budget_summary")) as Envelope<BudgetResult>;
+    expect(b.result.monthlyIncomeGbp).toBeNull();
+    expect(b.result.monthlySurplusBeforeDebtGbp).toBeNull();
+    // Essentials 850 + 300 = 1,150 and discretionary 100: the take-home line is the only one
+    // without a figure, so the spending lines still count. Never a £0 income.
+    expect(b.result.essentialMonthlyGbp).toBe(1150);
+    expect(b.result.discretionaryMonthlyGbp).toBe(100);
+    expect((b.missing ?? []).map((m) => m.field)).toContain("salary");
+
+    const snap = (await h.callJson("get_financial_snapshot")) as Envelope<SnapshotResult>;
+    expect(snap.result.monthlyIncomeGbp).toBeNull();
+    expect(snap.result.monthlySurplusAfterStoredMinimumsGbp).toBeNull();
+    // Breathing room does not use income, so it stays known: 5,000 / 1,150 = 4.3 months.
+    expect(snap.result.emergencyRunwayMonths).toBe(4.3);
   });
 });
