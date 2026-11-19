@@ -447,6 +447,37 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(rows.map((r) => r.account_id)).toEqual([accountB]);
   });
 
+  it("a financial data reset removes the user's slice 5 rent before-image, and no other user's", async () => {
+    // The reset deletes the user's budget lines, and the before-image goes with them by ON DELETE
+    // CASCADE, so no down() can bring a reset line's share back.
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const lineOf = async (userId: string) =>
+      at(await ds.getRepository(BudgetEntry).findBy({ userId }), 0).id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        "INSERT INTO rent_share_backfill (budget_entry_id, old_sole_or_joint, old_share_percent) VALUES ($1, 'joint', 50)",
+        [await lineOf(userId)],
+      );
+    }
+    const lineB = await lineOf(USER_B);
+    const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
+    await new UserProfileService(
+      repo(UserProfile),
+      repo(Account),
+      repo(AccountDetail),
+      repo(BankConnection),
+      identity,
+      ds,
+      new LoggingBankConsentRevoker(),
+      deletion,
+    ).resetFinancialData(USER_A);
+    const rows: { budget_entry_id: string }[] = await ds.query(
+      "SELECT budget_entry_id FROM rent_share_backfill",
+    );
+    expect(rows.map((r) => r.budget_entry_id)).toEqual([lineB]);
+  });
+
   it("erases the slice 5 before-image (rent_share_backfill) with the user's budget lines", async () => {
     await seed(USER_A, "A");
     await seed(USER_B, "B");

@@ -1,6 +1,7 @@
 import "reflect-metadata";
+import { Logger } from "@nestjs/common";
 import { DataSource, type DataSourceOptions } from "typeorm";
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
@@ -2925,7 +2926,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       const renterLinked = await line("renter", "housing", "joint", 50);
       const renterTyped = await line("renter", null, "joint", 50);
       const ownerLinked = await line("owner", "housing", "joint", 50);
+      const logged = vi.spyOn(Logger.prototype, "log");
       await ds.runMigrations();
+      // Counts only: one line changed, and no id in the message.
+      expect(logged).toHaveBeenCalledWith("Renters' joint linked rent lines set to sole: 1");
+      logged.mockRestore();
       expect(await applied()).toContain(NAME);
       expect(await share(renterLinked)).toEqual({ ownership: "sole", share_percent: null });
       // A typed row's share always counted, and a mortgage line's share is never read: unchanged.
