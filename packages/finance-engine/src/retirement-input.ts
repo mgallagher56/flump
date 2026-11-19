@@ -3,6 +3,7 @@ import type { BudgetEntryItem, BuildContextPackInput } from "./ai-context-pack.j
 import { applyAccountShare } from "./joint-share.js";
 import { figureUnknown } from "./picture/figure.js";
 import { SAVINGS_CATEGORY } from "./picture/selectors/budget-totals.js";
+import { rentAtShare } from "./picture/selectors/housing-cost.js";
 import { withLinkedBudgetRows } from "./picture/selectors/linked-budget-rows.js";
 import { isBuyToLetAccount } from "./picture/selectors/loan-to-value.js";
 import { PortfolioSnapshot, type RawAccount } from "./portfolio.js";
@@ -272,6 +273,18 @@ export function retirementBudgetLines(
   return lines;
 }
 
+/**
+ * The saved rent at the person's share (audit slice 5, JO-8): the same rule the budget's linked
+ * housing line and the housing cost use (`rentAtShare`). A household contribution is already the
+ * person's own; a mortgage holder's figure is passed as it is (Retirement models the mortgage).
+ */
+function savedHousingAtShare(args: BuildRetirementPlanInputArgs): number | null {
+  const saved = finiteOrNull(args.monthlyHousingCostGbp);
+  const status = normaliseHousingStatus(args.housingStatus);
+  if (saved === null || status !== "renting") return saved;
+  return rentAtShare(saved, args.budgetEntries ?? []);
+}
+
 function budgetTarget(
   lineSettings: readonly { budgetEntryId: string; status?: BudgetLineRetirementStatus }[],
   entries: readonly BudgetEntryItem[],
@@ -372,7 +385,7 @@ export function buildRetirementPlanInput(
     target,
     housing: {
       housingStatus: normaliseHousingStatus(args.housingStatus),
-      monthlyHousingCostGbp: finiteOrNull(args.monthlyHousingCostGbp),
+      monthlyHousingCostGbp: savedHousingAtShare(args),
       mortgage: mortgageDetails(args.accounts),
       override: plan?.housingOverride ?? null,
     },

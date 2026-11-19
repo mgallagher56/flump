@@ -46,7 +46,9 @@ interface Copy {
   allowZero?: boolean;
 }
 
-const OWN_SHARE_HINT = "What you pay. Your own share if you split it.";
+/** The saved rent is the whole rent; a shared rent's share is set on the budget's rent line. */
+const OWN_SHARE_HINT =
+  "The whole rent for your home. If you share it, mark the rent line joint in Edit budget.";
 /** Shown on Save when the amount is missing, or £0 where £0 is not an answer. */
 export const housingAmountError = (allowZero: boolean | undefined): string =>
   allowZero ? "Enter an amount. £0 is fine." : "Enter an amount more than £0.";

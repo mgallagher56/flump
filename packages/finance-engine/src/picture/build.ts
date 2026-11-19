@@ -106,7 +106,12 @@ export function buildFinancialPicture(
 ): FinancialPicture {
   const snapshot = opts.snapshot ?? new PortfolioSnapshot(input.accounts, input.details);
   const takeHome = selectTakeHome(input.profile, { taxYear: opts.taxYear });
-  const housingPayment = selectHousingPayment(input.profile, snapshot, input.accounts);
+  const housingPayment = selectHousingPayment(
+    input.profile,
+    snapshot,
+    input.accounts,
+    input.budget,
+  );
   const linked = withLinkedBudgetRows(input.budget, {
     takeHome,
     housing: housingPayment,
@@ -126,7 +131,7 @@ export function buildFinancialPicture(
     monthsOfCover: selectMonthsOfCover(budget, snapshot),
     netWorth: selectNetWorth(snapshot, input.netWorthBasis),
     debt: selectDebtTotals(snapshot),
-    housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts),
+    housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts, input.budget),
     fixedRateEnds: selectFixedRateEnds(input.accounts, asOf),
     loanToValue: selectLoanToValue(snapshot),
     estimatedTaxDue: selectEstimatedTaxDue(input.profile, input.taxRecords, {
@@ -152,7 +157,7 @@ export function linkedBudgetRowsFor(
   const snapshot = opts.snapshot ?? new PortfolioSnapshot(input.accounts, input.details);
   return withLinkedBudgetRows(input.budget, {
     takeHome: opts.takeHome ?? selectTakeHome(input.profile, { taxYear: opts.taxYear }),
-    housing: selectHousingPayment(input.profile, snapshot, input.accounts),
+    housing: selectHousingPayment(input.profile, snapshot, input.accounts, input.budget),
     accounts: snapshot,
   });
 }

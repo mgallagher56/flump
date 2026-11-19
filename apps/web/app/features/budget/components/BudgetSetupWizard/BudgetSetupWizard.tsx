@@ -1,6 +1,7 @@
 import {
   accountFitsBudgetLink,
   BUDGET_ACCOUNT_LINK_CATEGORY,
+  BUDGET_HOUSING_CATEGORY,
   type BudgetAccountLink,
   budgetEntryFromRow,
   budgetLinkAccountMonthly,
@@ -8,6 +9,7 @@ import {
   defaultIsEssential,
   figureKnown,
   figureUnknown,
+  HOUSING_ROW_NAME,
   type HousingPayment,
   isBudgetAccountLink,
   type PortfolioSnapshot,
@@ -315,7 +317,23 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     setSaving(true);
     try {
       for (const item of missingWizardCommonItems(entries)) {
-        await onAddEntry(item.entry);
+        // With a housing payment saved, the housing item is linked to it (audit slice 5): it
+        // reads the rent or mortgage payment, so there is nothing to retype and nothing to go
+        // stale. The budget allows one linked housing line, so only when none is there yet.
+        const linkHousing =
+          item.entry.category === BUDGET_HOUSING_CATEGORY &&
+          housingPayment !== null &&
+          !entries.some((e) => e.linkKind === "housing");
+        await onAddEntry(
+          linkHousing && housingPayment
+            ? {
+                ...item.entry,
+                name: HOUSING_ROW_NAME[housingPayment.kind],
+                isEssential: true,
+                linkKind: "housing",
+              }
+            : item.entry,
+        );
       }
       saveAllAndProceed();
     } catch (err) {

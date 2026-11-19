@@ -122,8 +122,25 @@ export function buildOnboardingSeedJobs(input: OnboardingSeedInput): OnboardingS
       ? [account("Cards and loans baseline", "Credit Card", input.unsecuredDebt)]
       : []),
     budgetEntry("Monthly Take-Home Income", "income", input.monthlyTakeHome, true),
+    // Linked to the saved housing payment (the profile figure saved with these answers, or the
+    // mortgage account's payment once one is saved): no copy that goes stale (audit slice 5).
     ...(input.monthlyHousing > 0 && housingEntry
-      ? [budgetEntry(housingEntry, "housing", input.monthlyHousing, false)]
+      ? [
+          {
+            key: `entry:${housingEntry}`,
+            endpoint: "/budget-entries",
+            payload: {
+              name: housingEntry,
+              category: "housing",
+              amount: 0,
+              isIncome: false,
+              isEssential: true,
+              frequency: "monthly",
+              linkKind: "housing",
+            },
+            enabled: true,
+          } satisfies OnboardingRecordJob,
+        ]
       : []),
     ...(input.otherOutgoings > 0
       ? [budgetEntry("General living and outgoings", "living", input.otherOutgoings, false)]

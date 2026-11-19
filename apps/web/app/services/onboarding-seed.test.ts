@@ -139,4 +139,16 @@ describe("buildOnboardingSeedJobs", () => {
       unset.some((j) => j.endpoint === "/budget-entries" && j.payload.category === "housing"),
     ).toBe(false);
   });
+
+  // Audit slice 5: the housing line is linked to the saved housing payment (the profile figure
+  // onboarding saves, or the mortgage account's payment once saved), not a copy of it.
+  it("creates the housing line linked to the saved housing payment, storing no amount", () => {
+    for (const housingStatus of ["renting", "mortgage", "living_with_family"] as const) {
+      const job = buildOnboardingSeedJobs({ ...input, housingStatus, monthlyHousing: 950 }).find(
+        (j) => j.endpoint === "/budget-entries" && j.payload.category === "housing",
+      );
+      expect(job?.payload).toMatchObject({ category: "housing", amount: 0, linkKind: "housing" });
+      expect(job?.enabled).toBe(true);
+    }
+  });
 });

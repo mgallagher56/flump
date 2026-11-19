@@ -293,7 +293,9 @@ describe("P3 Gareth", () => {
     expect(raw?.termMonths).toBe(36);
   });
 
-  it("estimates the housing cost from the stored mortgage, not the budget row (E32)", () => {
+  // Audit slice 5 (HM-1): the payment saved on the mortgage account is the housing cost, ahead of
+  // the balance, rate and term estimate. Gareth's mortgage saves £1,150 a month.
+  it("takes the housing cost from the mortgage account's saved payment, not the budget row", () => {
     const picture = buildFinancialPicture(
       { ...fixture, profile: { ...fixture.profile, housingStatus: "mortgage" } },
       OPTS,
@@ -301,9 +303,13 @@ describe("P3 Gareth", () => {
     if (!isFigureKnown(picture.housingCost)) throw new Error("expected known housing cost");
     const v = picture.housingCost.value;
     expect(v.kind).toBe("mortgage");
-    expect(v.paymentEstimated).toBe(true);
+    expect(v.monthly).toBe(1150);
+    expect(v.paymentEstimated).toBe(false);
     expect(v.takeHomeMonthly).toBe(takeHomeValue(fixture).monthly);
-    expect(v.sharePct).toBeCloseTo((v.monthly / v.takeHomeMonthly) * 100, 1);
+    // The share is rounded to one decimal place, so it is within 0.05 of the exact ratio.
+    expect(Math.abs(v.sharePct - (v.monthly / v.takeHomeMonthly) * 100)).toBeLessThanOrEqual(
+      0.0500001,
+    );
   });
 });
 

@@ -363,3 +363,44 @@ describe("buildRetirementPlanInput: linked budget lines (decision 1)", () => {
     ]);
   });
 });
+
+// Audit slice 5, the housing line (L14, L57, JO-8): Retirement counts the rent at the share the
+// linked rent line says, the same figure the budget counts.
+describe("buildRetirementPlanInput: housing from the one housing figure", () => {
+  const rentLine = (over: Record<string, unknown>) => ({
+    id: "rent",
+    category: "housing",
+    name: "Rent",
+    amount: 0,
+    frequency: "monthly",
+    isIncome: false,
+    isEssential: true,
+    linkKind: "housing",
+    ...over,
+  });
+  const build = (budgetEntries: ReturnType<typeof rentLine>[]) =>
+    buildRetirementPlanInput({
+      plan: savedPlan,
+      birthYear: 1981,
+      now: NOW,
+      accounts,
+      housingStatus: "renting",
+      monthlyHousingCostGbp: 1500,
+      budgetEntries,
+    });
+
+  it("counts a shared rent at the rent line's share", () => {
+    // £1,500 at 50% = £750.
+    const built = build([rentLine({ ownership: "joint", sharePercent: 50 })]);
+    if (!built.ok) throw new Error("expected built");
+    expect(built.input.housing?.monthlyHousingCostGbp).toBe(750);
+  });
+
+  it("counts the whole saved rent when the rent line is sole, or there is none", () => {
+    const sole = build([rentLine({})]);
+    const none = build([]);
+    if (!sole.ok || !none.ok) throw new Error("expected built");
+    expect(sole.input.housing?.monthlyHousingCostGbp).toBe(1500);
+    expect(none.input.housing?.monthlyHousingCostGbp).toBe(1500);
+  });
+});

@@ -18,7 +18,7 @@ import {
   useOptionalToast,
 } from "@repo/ui";
 import { Plus, Trash2 } from "lucide-react";
-import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
+import { type FC, type FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { HousingTenure } from "~/features/housing/components/HousingDetails";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -307,6 +307,15 @@ interface LinkedEntryRowProps {
   accounts: readonly LinkableAccount[];
   /** Deletes a savings or debt line the person linked (its stored row). */
   onRemove?: (entry: BudgetEntry) => void;
+  /**
+   * The stored row a rent or household line stands in for, and how to save its ownership and
+   * share (audit slice 5, JO-8): the saved rent is the whole rent, and this row says whether it is
+   * shared and the person's share.
+   */
+  sharedRent?: {
+    stored: BudgetEntry;
+    onChange: (ownership: "sole" | "joint", sharePercent: number | null) => void;
+  };
   /** Saves the person's own pay entry in place of the take-home from the profile. */
   onOverrideTakeHome: (amount: number) => Promise<boolean>;
   onSaveHousing?: (monthly: number) => Promise<void>;
@@ -335,6 +344,7 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
   housingStatus,
   accounts,
   onRemove,
+  sharedRent,
   onOverrideTakeHome,
   onSaveHousing,
   onUnlink,
@@ -361,9 +371,11 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
       ? { to: "/app/savings", label: "Savings" }
       : { to: "/app/debt", label: "Debt" };
   const accountAmount = entry.linked === "savings" ? "monthly saving" : "monthly payment";
+  // A shared rent shows the person's share; the whole rent is what the housing details hold.
+  const rentShared = sharedRent?.stored.ownership === "joint";
   // Take-home, a mortgage payment and an account's amount are changed on their own pages; a rent
-  // can be typed here.
-  const showsInput = !isMortgage && !isAccountLine && !(isTakeHome && notSet);
+  // can be typed here, unless it is shared (the figure shown is a share, the field would be whole).
+  const showsInput = !isMortgage && !isAccountLine && !rentShared && !(isTakeHome && notSet);
 
   const saveAmount = async () => {
     const next = amountRef.current;
@@ -436,8 +448,10 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
       </Link>
       .
     </>
+  ) : rentShared ? (
+    <>Your share of the whole rent in your housing details. Change the rent there.</>
   ) : (
-    <>Your own cost, from your housing details. A change here updates them across Flump.</>
+    <>The whole rent, from your housing details. A change here updates them across Flump.</>
   );
 
   return (
@@ -505,6 +519,18 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
       <p className={sourceLine()} data-testid={sourceId} id={sourceId}>
         {source}
       </p>
+      {/* A shared rent counts at its share (JO-8); a mortgage's share is on the mortgage account. */}
+      {sharedRent ? (
+        <div className={ownershipCell()}>
+          <EntryOwnershipField
+            entryName={entry.name}
+            idPrefix={`budget-editor-${idPart}`}
+            ownership={sharedRent.stored.ownership === "joint" ? "joint" : "sole"}
+            sharePercent={sharedRent.stored.sharePercent ?? null}
+            onChange={sharedRent.onChange}
+          />
+        </div>
+      ) : null}
       {entry.linkedRowId && onUnlink ? (
         <div className={sourceLine()}>
           <Button
@@ -591,7 +617,9 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
     setOpen(false);
   };
 
-  useEffect(() => {
+  // A layout effect, so focus moves in the same frame the row opens or closes and never sits on
+  // the page in between.
+  useLayoutEffect(() => {
     if (open) {
       nameRef.current?.focus();
     } else if (returnFocus.current) {
@@ -681,8 +709,11 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
       <div className={addActions()}>
         <Button
           aria-label={`Add to ${label}`}
+          // Focus race (slice 6): while it saves the button stays focusable and says it is busy
+          // (aria-disabled), so keyboard focus never drops to the page; submit ignores presses.
+          aria-disabled={adding || undefined}
           data-testid={`budget-editor-add-${slug}`}
-          disabled={!name.trim() || adding}
+          disabled={!name.trim()}
           id={`budget-editor-add-${slug}`}
           size="sm"
           type="submit"
@@ -881,6 +912,20 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     return done;
   };
 
+  // A linked rent line carries the stored row's ownership and share (JO-8).
+  const sharedRentFor = (entry: BudgetEntry) => {
+    if (entry.linked !== "housing" || !entry.linkedRowId) return undefined;
+    // Only a rent is shared: a household contribution is already the person's own payment.
+    if (housingStatus !== "renting") return undefined;
+    const stored = entries.find((e) => e.id === entry.linkedRowId);
+    if (!stored) return undefined;
+    return {
+      stored,
+      onChange: (ownership: "sole" | "joint", sharePercent: number | null) =>
+        void save(stored.id, { ownership, sharePercent }),
+    };
+  };
+
   const saveHousing = async (monthly: number) => {
     if (!onSaveHousing) return;
     await onSaveHousing(monthly);
@@ -977,6 +1022,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                       entry={entry}
                       housingStatus={housingStatus}
                       key={entry.id}
+                      sharedRent={sharedRentFor(entry)}
                       onRemove={(line) =>
                         // The stored row is what is deleted; the dialog names the line.
                         line.linkedRowId
