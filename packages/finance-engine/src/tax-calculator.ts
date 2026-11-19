@@ -158,7 +158,7 @@ export const SAVINGS_CATEGORIES = [
   { id: "isa_interest", name: "ISA interest and returns (tax-free)", type: "income" as const },
   {
     id: "investment_fees",
-    name: "Deductible investment management fees",
+    name: "Investment management fees (not taken off for tax)",
     type: "expense" as const,
   },
 ];
@@ -505,6 +505,7 @@ export interface TaxCalculationResult {
   savingsInterestGross: number;
   isaInterestGross: number;
   dividendIncomeGross: number;
+  /** Investment fees recorded. Reported only: they do not reduce the tax (ITTOIA 2005 s.370, s.384). */
   savingsExpenses: number;
   personalSavingsAllowance: number;
   dividendAllowance: number;
@@ -805,7 +806,9 @@ export function calculateUKTax(
     const { rentalProfitBeforeInterestShare, creditableFinanceCosts } = property;
 
     // Net taxable savings interest before PSA
-    const netTaxableSavingsInterest = Math.max(0, savingsInterestGross - savingsExpenses);
+    // Interest is taxed on the full amount arising (ITTOIA 2005 s.370): an individual's
+    // investment fees are not deducted, so `savingsExpenses` is reported but not used here.
+    const netTaxableSavingsInterest = Math.max(0, savingsInterestGross);
 
     // 2. Tax Calculations
     // Total income for tax rate and allowance determination
@@ -1104,8 +1107,9 @@ function calculateDividendTaxForStack(
 
 /**
  * Income outside PAYE and its costs, as the estimate taxes them: rent and rental costs at the
- * person's share, self-employed income and costs, taxable savings interest and dividends, and
- * investment fees. ISA interest is tax-free and finance costs brought forward are not a cost of
+ * person's share, self-employed income and costs, taxable savings interest and dividends.
+ * Investment fees are not deducted for tax (ITTOIA 2005 s.370), so they are not costs here. ISA
+ * interest is tax-free and finance costs brought forward are not a cost of
  * the year, so neither is counted. The one figure for the Self Assessment headline strip and the
  * Dashboard's untaxed income (SA-9).
  */
@@ -1119,7 +1123,6 @@ export function incomeOutsidePaye(
     | "rentalExpensesExclInterestShare"
     | "rentalMortgageInterestShare"
     | "seExpenses"
-    | "savingsExpenses"
   >,
 ): { income: number; costs: number } {
   return {
@@ -1131,7 +1134,6 @@ export function incomeOutsidePaye(
     costs:
       result.rentalExpensesExclInterestShare +
       result.rentalMortgageInterestShare +
-      result.seExpenses +
-      result.savingsExpenses,
+      result.seExpenses,
   };
 }

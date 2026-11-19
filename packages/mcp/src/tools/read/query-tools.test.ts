@@ -667,7 +667,7 @@ describe("query reads (re-plan PR B)", () => {
       expect(collectToolOutputViolations(e)).toEqual([]);
     });
 
-    it("income parts add up to the total, with savings net of investment fees", async () => {
+    it("income parts add up to the total, with savings interest in full (fees are not deducted)", async () => {
       const records = [
         taxRecord({
           id: "s1",
@@ -699,7 +699,9 @@ describe("query reads (re-plan PR B)", () => {
       try {
         const e = (await sav.callJson("get_tax_year_position", { taxYear: "2025/26" })) as Env;
         const i = e.result.income;
-        expect(i.savingsInterestGbp).toBe(1700);
+        // Interest is taxed on the full amount arising (ITTOIA 2005 s.370): the 300 of
+        // investment fees is not taken off, so 2,000 (it was 1,700 before slice 7).
+        expect(i.savingsInterestGbp).toBe(2000);
         expect(
           i.payeSalaryGbp +
             i.selfEmployedProfitGbp +

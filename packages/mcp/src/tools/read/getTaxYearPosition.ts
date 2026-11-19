@@ -211,10 +211,8 @@ export const getTaxYearPosition = defineFlumpTool({
           payeSalaryGbp: round2(ledger.effectivePayeSalary),
           selfEmployedProfitGbp: round2(ledger.seProfit),
           rentalProfitShareGbp: round2(ledger.rentalProfitBeforeInterestShare),
-          // Net of investment fees, as it enters total income.
-          savingsInterestGbp: round2(
-            Math.max(0, ledger.savingsInterestGross - ledger.savingsExpenses),
-          ),
+          // The full amount: investment fees are not deducted (ITTOIA 2005 s.370).
+          savingsInterestGbp: round2(Math.max(0, ledger.savingsInterestGross)),
           dividendsGbp: round2(ledger.dividendIncomeGross),
           totalGbp: round2(total),
         },
