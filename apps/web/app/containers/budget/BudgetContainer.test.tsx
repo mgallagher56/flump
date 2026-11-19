@@ -1061,6 +1061,76 @@ describe("BudgetContainer", () => {
       expect(housing.textContent).not.toContain("£900");
     });
 
+    // Each POST answers with the row it was sent, so the page holds what was saved.
+    // Only the next two requests, so later tests keep the pass-through.
+    const echoCreates = () => {
+      for (const id of ["new-1", "new-2"]) {
+        vi.mocked(apiFetch).mockImplementationOnce((async (
+          _url: string,
+          init?: { body?: unknown },
+        ) => row({ id, ...(init?.body as Record<string, unknown>) })) as never);
+      }
+    };
+    const addInEditor = (slug: string, name: string, amount: string) => {
+      fireEvent.click(screen.getByTestId(`budget-editor-open-add-${slug}`));
+      fireEvent.change(screen.getByTestId(`budget-editor-new-name-${slug}`), {
+        target: { value: name },
+      });
+      const field = screen.getByTestId(`budget-editor-new-amount-${slug}`);
+      fireEvent.focus(field);
+      fireEvent.change(field, { target: { value: amount } });
+      fireEvent.click(screen.getByTestId(`budget-editor-add-${slug}`));
+    };
+    const posted = () =>
+      vi
+        .mocked(apiFetch)
+        .mock.calls.filter(([url, init]) => url === "/budget-entries" && init?.method === "POST")
+        .map(([, init]) => init?.body as Record<string, unknown>);
+
+    it("keeps the take-home it added when the person adds their own income entry", async () => {
+      // Salary saved, Groceries £300 only: the engine adds the take-home line. Adding "Child
+      // benefit £100" first saves that line linked to the take-home (£0 stored), then the entry,
+      // so the budget is the linked take-home plus £100, and nothing is left to offer.
+      echoCreates();
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: spendingOnly,
+        userProfile: salaryProfile,
+      };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      addInEditor("income", "Child benefit", "100");
+      await waitFor(() => expect(posted()).toHaveLength(2));
+      expect(posted()[0]).toMatchObject({ isIncome: true, amount: 0, linkKind: "take_home" });
+      expect(posted()[1]).toMatchObject({ name: "Child benefit", amount: 100, isIncome: true });
+      expect(posted()[1]?.linkKind).toBeUndefined();
+      expect(screen.getByTestId("budget-editor-name-linked-take-home")).toBeDefined();
+      expect(screen.queryByTestId("budget-link-notice")).toBeNull();
+    });
+
+    it("keeps the rent it added when the person adds their own housing entry", async () => {
+      // Rent £900 saved and no housing entry: the engine adds the rent line. Adding "Home
+      // insurance £30" first saves that line linked to the rent, so housing is £900 + £30.
+      echoCreates();
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: spendingOnly,
+        userProfile: {
+          ...baseLoaderData.userProfile,
+          housingStatus: "renting",
+          monthlyHousingCost: 900,
+        },
+      };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      addInEditor("housing", "Home insurance", "30");
+      await waitFor(() => expect(posted()).toHaveLength(2));
+      expect(posted()[0]).toMatchObject({ category: "housing", name: "Rent", linkKind: "housing" });
+      expect(posted()[1]).toMatchObject({ name: "Home insurance", amount: 30 });
+      expect(screen.getByTestId("budget-editor-name-linked-housing")).toBeDefined();
+      expect(screen.queryByTestId("budget-link-notice")).toBeNull();
+    });
+
     it("lists the saved rent in Housing through the rent row linked to it", () => {
       mockLoaderData = {
         ...baseLoaderData,
