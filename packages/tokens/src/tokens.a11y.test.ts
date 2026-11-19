@@ -709,7 +709,7 @@ describe("Round 5 hue and series separation", () => {
 // E16 PR 1: domain tints (P9, D16 option a) and light card separation (plan 4.1)
 // ---------------------------------------------------------------------------
 
-const TINTS = ["teal", "apricot", "sage", "sky", "gold", "violet"].map((t) => `surface.tint.${t}`);
+const TINTS = ["teal", "apricot", "sage", "sky", "rose", "violet"].map((t) => `surface.tint.${t}`);
 
 describe("E16 surface tints", () => {
   it.each(TINTS)(
@@ -757,10 +757,20 @@ describe("E16 surface tints", () => {
       ["chart.series2", "surface.tint.sage"],
       ["chart.series3", "surface.tint.apricot"],
       ["chart.series4", "surface.tint.violet"],
+      ["chart.series5", "surface.tint.rose"],
       ["chart.series6", "surface.tint.sky"],
-      ["chart.series7", "surface.tint.gold"],
     ];
     for (const [fg, bg] of PAIRS) assertPair({ fg, bg, themes: BOTH, min: 3, role: "ui" });
+  });
+
+  it("the home section tints never pass for a status background (C8)", () => {
+    const STATUS_BGS = ["positive", "warning", "danger", "info", "neutral"].map(
+      (s) => `status.${s}.bg`,
+    );
+    for (const theme of BOTH)
+      for (const tint of ["sky", "rose", "violet"].map((t) => `surface.tint.${t}`))
+        for (const bg of STATUS_BGS)
+          expect(deltaE(tint, bg, theme), `${tint} vs ${bg} (${theme})`).toBeGreaterThanOrEqual(5);
   });
 
   it("tints differ between themes", () => {

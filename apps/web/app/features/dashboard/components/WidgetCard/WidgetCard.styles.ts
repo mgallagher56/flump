@@ -32,7 +32,7 @@ export const widgetCard = cva({
       apricot: { borderTopColor: "chart.series3" },
       violet: { borderTopColor: "chart.series4" },
       sky: { borderTopColor: "chart.series6" },
-      gold: { borderTopColor: "chart.series7" },
+      rose: { borderTopColor: "chart.series5" },
       damson: { borderTopColor: "accent" },
     },
     interactive: {

@@ -9,7 +9,6 @@ type Profile = {
   employmentType?: string | null;
   enabledPages?: string[] | null;
   dashboardWidgets?: string[] | null;
-  dashboardWidgetOrder?: string[] | null;
 };
 type TaxRecordRow = { id: string };
 
@@ -54,7 +53,6 @@ test("L48 a self-employed estimate is the same on Self Assessment and the Dashbo
       employmentType: "self-employed",
       enabledPages: withTax(before.enabledPages),
       dashboardWidgets: withTax(before.dashboardWidgets),
-      dashboardWidgetOrder: withTax(before.dashboardWidgetOrder),
     });
     const created = (await backendCall("/tax-records", "POST", {
       type: "income",
@@ -85,7 +83,6 @@ test("L48 a self-employed estimate is the same on Self Assessment and the Dashbo
       employmentType: before.employmentType ?? "employed",
       enabledPages: before.enabledPages ?? null,
       dashboardWidgets: before.dashboardWidgets ?? null,
-      dashboardWidgetOrder: before.dashboardWidgetOrder ?? null,
     });
   }
 });
@@ -109,7 +106,6 @@ test("L48 a self-employed estimate with no self-employed record is not set on bo
       employmentType: "self-employed",
       enabledPages: withTax(before.enabledPages),
       dashboardWidgets: withTax(before.dashboardWidgets),
-      dashboardWidgetOrder: withTax(before.dashboardWidgetOrder),
     });
     const created = (await backendCall("/tax-records", "POST", {
       type: "income",
@@ -139,7 +135,6 @@ test("L48 a self-employed estimate with no self-employed record is not set on bo
       employmentType: before.employmentType ?? "employed",
       enabledPages: before.enabledPages ?? null,
       dashboardWidgets: before.dashboardWidgets ?? null,
-      dashboardWidgetOrder: before.dashboardWidgetOrder ?? null,
     });
   }
 });

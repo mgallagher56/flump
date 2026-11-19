@@ -205,6 +205,34 @@ describe("<WidgetVisibilityPanel /> order", () => {
     expect(screen.getByTestId("widget-order-status").getAttribute("aria-live")).toBe("polite");
   });
 
+  it("drops the moved message when the save fails or the panel closes", () => {
+    const props = {
+      ...base({ widgetKeys: ["accounts", "budget", "debt"] as DashboardWidgetKey[] }),
+    };
+    const { rerender } = render(
+      <WidgetVisibilityPanel {...props} onMove={vi.fn()} onResetOrder={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Move Budget up" }));
+    expect(screen.getByTestId("widget-order-status").textContent).toBe(
+      "Budget moved to position 1 of 3.",
+    );
+    rerender(
+      <WidgetVisibilityPanel
+        {...props}
+        error="We could not save that change."
+        onMove={vi.fn()}
+        onResetOrder={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("widget-order-status").textContent).toBe("");
+    fireEvent.click(screen.getByRole("button", { name: "Move Budget up" }));
+    rerender(
+      <WidgetVisibilityPanel {...props} open={false} onMove={vi.fn()} onResetOrder={vi.fn()} />,
+    );
+    rerender(<WidgetVisibilityPanel {...props} onMove={vi.fn()} onResetOrder={vi.fn()} />);
+    expect(screen.getByTestId("widget-order-status").textContent).toBe("");
+  });
+
   it("puts the default order back", async () => {
     render(<Reorderable initial={["accounts", "budget", "debt"]} />);
     const reset = screen.getByRole("button", { name: "Reset to default order" });

@@ -23,7 +23,7 @@ export const iconTile = cva({
       sage: { backgroundColor: "surface.tint.sage" },
       apricot: { backgroundColor: "surface.tint.apricot" },
       sky: { backgroundColor: "surface.tint.sky" },
-      gold: { backgroundColor: "surface.tint.gold" },
+      rose: { backgroundColor: "surface.tint.rose" },
       violet: { backgroundColor: "surface.tint.violet" },
       /** E17 Damson: wayfinding outside the money domains (STYLE-GUIDE C7). Never beside a status. */
       accent: { backgroundColor: "accent.subtle", color: "accent" },
@@ -46,7 +46,7 @@ export const iconTile = cva({
     { tone: "apricot", colouredIcon: true, css: { color: "chart.series3" } },
     { tone: "violet", colouredIcon: true, css: { color: "chart.series4" } },
     { tone: "sky", colouredIcon: true, css: { color: "chart.series6" } },
-    { tone: "gold", colouredIcon: true, css: { color: "chart.series7" } },
+    { tone: "rose", colouredIcon: true, css: { color: "chart.series5" } },
   ],
   defaultVariants: { tone: "neutral", colouredIcon: false },
 });
