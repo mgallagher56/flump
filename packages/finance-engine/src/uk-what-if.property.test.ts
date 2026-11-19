@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { SUPPORTED_UK_TAX_YEARS, type UkTaxRegion, type UkTaxYear } from "./types.js";
 import { computeUkTakeHome, type UkIncomeScenario, type UkPensionMethod } from "./uk-take-home.js";
+import { scenarioAtGross } from "./uk-tax-thresholds.js";
 import { getUkTaxYearRules, type UkStudentLoanPlanKey } from "./uk-tax-year.js";
 import { marginalRateCurve, whatIfGrossChange, whatIfSacrificeChange } from "./uk-what-if.js";
 
@@ -163,20 +164,54 @@ describe("what-if properties", () => {
 describe("marginalRateCurve", () => {
   const s: UkIncomeScenario = { taxYear: "2026/27", region: "ENGLAND_NI_WALES", salary: 39000 };
 
-  // About 35 ms on a laptop (plan budget 50 ms). The test allows headroom and retries, because parallel
-  // test files share the CPU.
-  it("defaults to about 600 points from 0 to 150,000 and computes within budget", {
-    retry: 2,
-  }, () => {
-    marginalRateCurve(s); // warm up module caches
-    const t0 = performance.now();
-    const c = marginalRateCurve({ ...s, studentLoans: ["plan2"], childBenefit: { children: 2 } });
-    const ms = performance.now() - t0;
+  // The curve's own work is three take-home calculations per point (at g, g + 1 and g + 1,000) for
+  // 601 points: 1,803 calls of computeUkTakeHome, plus the what-if at your pay. Its cost is checked
+  // against those same 1,803 calls timed straight after it, not against a fixed number of
+  // milliseconds: CPU contention from tests running beside it slows both alike, so the check does
+  // not flake, but a curve that did more work per point (a re-sweep, a table rebuilt per call)
+  // would cost many times the reference and fail. The time itself is reported as an annotation.
+  // (E41: a wall-clock limit here failed when the backend specs began running in parallel.)
+  it("defaults to about 600 points from 0 to 150,000 at the cost of three take-home calls each", async ({
+    annotate,
+  }) => {
+    const scenario: UkIncomeScenario = {
+      ...s,
+      studentLoans: ["plan2"],
+      childBenefit: { children: 2 },
+    };
+    const reference = () => {
+      for (let g = 0; g <= 150_000; g += 250) {
+        computeUkTakeHome(scenarioAtGross(scenario, g));
+        computeUkTakeHome(scenarioAtGross(scenario, g + 1));
+        computeUkTakeHome(scenarioAtGross(scenario, g + 1000));
+      }
+    };
+    marginalRateCurve(scenario); // warm up module caches
+    reference();
+    let curveMs = Number.POSITIVE_INFINITY;
+    let referenceMs = Number.POSITIVE_INFINITY;
+    let c = marginalRateCurve(scenario);
+    // Best of five, each pair back to back, so a pause in one run does not decide the result.
+    for (let i = 0; i < 5; i++) {
+      const t0 = performance.now();
+      c = marginalRateCurve(scenario);
+      const t1 = performance.now();
+      reference();
+      const t2 = performance.now();
+      curveMs = Math.min(curveMs, t1 - t0);
+      referenceMs = Math.min(referenceMs, t2 - t1);
+    }
     expect(c.points).toHaveLength(601);
     expect(c.points[0]?.gross).toBe(0);
     expect(c.points.at(-1)?.gross).toBe(150_000);
-    // Plan budget is 50 ms in the browser; CI machines vary, so allow headroom here.
-    expect(ms).toBeLessThan(250);
+    // Measured ratio of curve to reference on a loaded laptop: 0.83 to 2.05 over nine rounds (the
+    // curve also builds 601 point objects and the what-if at your pay). Four times the reference
+    // leaves room for that and for noise; work that grows several-fold, such as a re-sweep per
+    // point or a rules table rebuilt per call, fails.
+    expect(curveMs).toBeLessThan(4 * referenceMs);
+    await annotate(
+      `curve ${curveMs.toFixed(1)} ms; the same 1,803 take-home calls ${referenceMs.toFixed(1)} ms (plan budget 50 ms in the browser)`,
+    );
   });
 
   it("reads the default median example: 39,000 keeps 72% of the next 1,000", () => {
