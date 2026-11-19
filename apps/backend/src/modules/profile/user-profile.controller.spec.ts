@@ -333,6 +333,29 @@ describe("UserProfileController", () => {
       expect(removed.setupChecklistCompletedSteps).toEqual(["set_budget"]);
     });
 
+    it("stores the checklist as dismissed on the profile and leaves the steps alone (decision 13)", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce({
+        userId: "u1",
+        setupChecklistCompletedSteps: ["budget"],
+        setupChecklistDismissed: false,
+      });
+      const dismissed = await controller.updateChecklist(
+        { user: { id: "u1" } },
+        { dismissed: true },
+      );
+      expect(dismissed.setupChecklistDismissed).toBe(true);
+      expect(dismissed.setupChecklistCompletedSteps).toEqual(["budget"]);
+    });
+
+    it("reads a profile saved before the flag existed as not dismissed", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "u1" });
+      const added = await controller.updateChecklist(
+        { user: { id: "u1" } },
+        { step: "budget", completed: true },
+      );
+      expect(added.setupChecklistDismissed).toBe(false);
+    });
+
     it("rejects sendPasswordReset (503) when the identity provider has no email for the user", async () => {
       await expect(controller.sendPasswordReset({ user: { id: "u1" } })).rejects.toMatchObject({
         status: 503,

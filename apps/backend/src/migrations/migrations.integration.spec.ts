@@ -64,6 +64,7 @@ import {
 } from "./RemoveSeededExampleData1794355400000";
 import { RentLinesWholeRent1795490100000 } from "./RentLinesWholeRent1795490100000";
 import { SavingsRowsNotEssential1795450000000 } from "./SavingsRowsNotEssential1795450000000";
+import { SetupChecklistDismissed1795500100000 } from "./SetupChecklistDismissed1795500100000";
 import { StudentLoanPlanToProfile1795480200000 } from "./StudentLoanPlanToProfile1795480200000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
 import { WidenPensionPercentPrecision1795460000000 } from "./WidenPensionPercentPrecision1795460000000";
@@ -3182,6 +3183,52 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await undoThrough(NAME);
       expect(await check()).toEqual([]);
       await account("savings");
+    });
+  });
+
+  describe("SetupChecklistDismissed1795500100000 (audit slice 8, decision 13)", () => {
+    const NAME = "SetupChecklistDismissed1795500100000";
+    const dismissedColumn = async (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT data_type, is_nullable, column_default FROM information_schema.columns
+         WHERE table_name = 'user_profiles' AND column_name = 'setup_checklist_dismissed'`,
+      );
+    const dismissed = async (userId: string): Promise<boolean> =>
+      at(
+        await ds.query("SELECT setup_checklist_dismissed FROM user_profiles WHERE user_id = $1", [
+          userId,
+        ]),
+        0,
+      ).setup_checklist_dismissed;
+
+    it("adds a not-null flag that reads false for every existing profile; a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      expect(await dismissedColumn()).toEqual([]);
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('before')");
+
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      expect(await dismissedColumn()).toEqual([
+        { data_type: "boolean", is_nullable: "NO", column_default: "false" },
+      ]);
+      // The browser held the dismissal before, so no profile starts dismissed.
+      expect(await dismissed("before")).toBe(false);
+
+      await ds.query(
+        "UPDATE user_profiles SET setup_checklist_dismissed = true WHERE user_id = 'before'",
+      );
+      await runUpInTransaction(new SetupChecklistDismissed1795500100000());
+      expect(await dismissed("before")).toBe(true);
+    });
+
+    it("drops the flag on revert, and up runs again", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      expect(await dismissedColumn()).toEqual([]);
+      await ds.runMigrations();
+      expect(await dismissedColumn()).toHaveLength(1);
+      expect(await tables()).toEqual(ENTITY_TABLES);
     });
   });
 });

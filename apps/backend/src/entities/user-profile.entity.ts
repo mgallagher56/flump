@@ -250,6 +250,10 @@ export class UserProfile {
   @Column({ name: "setup_checklist_completed_steps", type: "simple-array", default: "" })
   setupChecklistCompletedSteps: string[];
 
+  /** The person closed the setup checklist on the Dashboard (decision 13); a reset clears it. */
+  @Column({ name: "setup_checklist_dismissed", type: "boolean", default: false })
+  setupChecklistDismissed: boolean;
+
   @Column({ name: "custom_budget_categories", type: "simple-array", nullable: true })
   customBudgetCategories: string[] | null;
 
