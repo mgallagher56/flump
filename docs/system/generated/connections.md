@@ -235,6 +235,7 @@ flowchart LR
   f_account_monthly_amount ==> g_debt_free_date
   f_card_limit_and_zero_percent_end ==> g_debt_free_date
   g_debt_free_date -.-> s_dashboard
+  g_debt_free_date -.-> s_mcp_read
   g_debt_free_date -.-> s_debt
   g_debt_free_date -.-> s_mcp_simulate
   g_debt_free_date -.-> s_context_pack
@@ -244,6 +245,7 @@ flowchart LR
   f_ownership_share ==> g_savings_total
   g_savings_total -.-> s_dashboard
   g_savings_total -.-> s_savings
+  g_savings_total -.-> s_context_pack
   g_savings_interest{{"Savings interest over the next 12 months"}}
   f_account_balance ==> g_savings_interest
   f_account_rate ==> g_savings_interest

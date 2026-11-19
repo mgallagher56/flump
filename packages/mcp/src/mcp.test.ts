@@ -8,7 +8,7 @@ import {
   type McpTokenStoreAdapter,
   TokenVerifier,
 } from "./auth/token-verifier.js";
-import { inMemoryQueries } from "./provider/in-memory.js";
+import { inMemoryQueries, withFinancialPicture } from "./provider/in-memory.js";
 import { createFlumpMcpServer } from "./server.js";
 import type { McpUserDataProvider } from "./types.js";
 
@@ -199,7 +199,7 @@ describe("Flump McpServer Tools & Resources", () => {
     ],
   });
   const mockDataProvider: McpUserDataProvider = {
-    getUserFinancialData: load,
+    getUserFinancialData: async (userId) => withFinancialPicture(await load(userId)),
     ...inMemoryQueries(load),
   };
 

@@ -22,8 +22,24 @@ import { financeServiceWithIntake } from "../../testing/finance-service";
 import { at, must } from "../../testing/must";
 import { UserProfileService } from "../profile/user-profile.service";
 import { AgentDataService } from "./agent-data.service";
+import { FinancialPictureService } from "./financial-picture.service";
 import { McpService } from "./mcp.service";
 import { McpTokenService } from "./mcp-token.service";
+
+/** The service with its picture loader built from the same mocks (old positional order). */
+function agentData(
+  budget: never,
+  tax: never,
+  transactions: never,
+  finance: never,
+  profile: never,
+  accounts: never,
+  details: never,
+  plans: never,
+): AgentDataService {
+  const picture = new FinancialPictureService(budget, tax, finance, profile);
+  return new AgentDataService(tax, transactions, profile, accounts, details, plans, picture);
+}
 
 function build(mode: "workos" | "dev") {
   const config = { get: vi.fn().mockReturnValue(undefined) };
@@ -386,19 +402,19 @@ describe("McpService.getContextPack for a brand-new user", () => {
       {} as never,
       { isErased: async () => false } as never,
     );
-    const agentData = new AgentDataService(
+    const dataService = agentData(
       budget as never,
       tax as never,
       transactions as never,
-      finance,
-      profileService,
+      finance as never,
+      profileService as never,
       accounts as never,
       details as never,
       retirementPlans as never,
     );
     const service = new McpService(
       new McpTokenService(mcpTokens as never),
-      agentData,
+      dataService,
       config as never,
       "workos",
       {} as never,

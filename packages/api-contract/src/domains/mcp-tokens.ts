@@ -165,7 +165,14 @@ export const AiContextPackDto = z.strictObject({
     totalPensions: z.number(),
     totalConsumerDebt: z.number(),
     totalMortgageBalance: z.number(),
-    weightedSavingsRate: z.number(),
+    /** Saved Student Loan account balances, whether or not net worth counts them. */
+    totalStudentLoans: z.number(),
+    /** Saving and Investment balances at the user's share (the picture's savings totals). */
+    totalSavings: z.number(),
+    monthlySavingsContributions: z.number(),
+    /** Balance-weighted savings rate; null with no savings balance, never a default. */
+    weightedSavingsRate: z.number().nullable(),
+    /** The engine's saved-balance net worth series, ending in the current month. */
     monthlyHistory: z.array(EngineResult),
     /** Strict: this is the account data AI clients receive, so a leaked field must be flagged. */
     accounts: z.array(ResolvedAccountDto),
@@ -177,7 +184,14 @@ export const AiContextPackDto = z.strictObject({
   debtSummary: z.strictObject({
     consumerDebts: z.array(EngineResult),
     totalStartingDebtGbp: z.number(),
-    avalancheVsSnowballComparison: EngineResult,
+    /** From the picture's minimum-only schedule: no assumed extra payment. */
+    monthlyMinimumsGbp: z.number().nullable(),
+    monthlyMinimumsEstimated: z.boolean(),
+    debtFreeDate: z.string().nullable(),
+    debtFreeDateUnknownReason: z.enum(["aprUnknown", "notClearedOnMinimums"]).nullable(),
+    totalInterestGbp: z.number().nullable(),
+    /** On minimum payments; null whenever there is no debt-free date. */
+    avalancheVsSnowballComparison: EngineResult.nullable(),
     promoCliffAlerts: z.array(EngineResult),
     studentLoanEvaluation: EngineResult.optional(),
   }),
@@ -208,6 +222,13 @@ export const AiContextPackDto = z.strictObject({
     currentTaxYear: z.string(),
     ukTaxCalculation: EngineResult,
     selfAssessmentLedgerSummary: EngineResult.optional(),
+  }),
+  /** The ISA allowance this tax year, present whether or not a salary is saved. */
+  isaAllowance: z.strictObject({
+    allowanceGbp: z.number(),
+    /** The picture's estimate from the monthly ISA saving; null when none is saved. */
+    usedGbp: z.number().nullable(),
+    remainingGbp: z.number().nullable(),
   }),
 });
 export type AiContextPackDto = z.infer<typeof AiContextPackDto>;

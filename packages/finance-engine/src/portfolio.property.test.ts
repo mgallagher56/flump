@@ -5,7 +5,8 @@
 import fc from "fast-check";
 import { describe, it } from "vitest";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
-import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "./portfolio.js";
+import { PortfolioSnapshot, type RawAccount } from "./portfolio.js";
+import { type SnapshotRow, selectNetWorthSeries } from "./snapshots.js";
 
 const PARAMS = { seed: 20260101, numRuns: 200 } as const;
 const pounds = fc.integer({ min: -2_000_000, max: 2_000_000 }); // pence-free whole pounds
@@ -132,8 +133,15 @@ describe("PortfolioSnapshot properties", () => {
           type: "Saving",
           balance: 0,
         }));
-        const snap = new PortfolioSnapshot(accounts, details as RawAccountDetail[]);
-        const history = snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 1000);
+        const history = selectNetWorthSeries(
+          accounts,
+          details as SnapshotRow[],
+          DEFAULT_NET_WORTH_BASIS,
+        ).map((p) => ({
+          year: Number(p.month.slice(0, 4)),
+          month: Number(p.month.slice(5, 7)),
+          netWorth: p.netWorth,
+        }));
 
         // Reference model: last row wins per (account, month), then last known at or before m.
         const byKey = new Map<string, number>();

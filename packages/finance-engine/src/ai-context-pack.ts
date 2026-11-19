@@ -7,6 +7,7 @@ import {
   genericAccountLabel,
 } from "./anonymise.js";
 import { formatBreathingRoomFigure } from "./breathing-room-wording.js";
+import { selectSavedNetWorthSeries } from "./check-in.js";
 import {
   calculateDebtSchedule,
   compareAvalancheAndSnowball,
@@ -19,9 +20,14 @@ import {
   type NetWorthLeftOut,
 } from "./net-worth-basis.js";
 import { isSelfEmployedType, payeSalaryForTax } from "./paye-salary-for-tax.js";
-import { buildFinancialPicture } from "./picture/build.js";
+import {
+  budgetEntryFromRow,
+  buildFinancialPicture,
+  type FinancialPicture,
+} from "./picture/build.js";
 import { isFigureKnown } from "./picture/figure.js";
 import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
+import { isaAllowanceFor } from "./picture/selectors/isa-allowance-used.js";
 import {
   type BudgetLinkOffer,
   listedBudgetEntries,
@@ -35,6 +41,7 @@ import {
 } from "./portfolio.js";
 import type { SavedFinancialBaseline, UnsavedBaselineField } from "./profile.js";
 import type { RetirementSavedPlanInput } from "./retirement-input.js";
+import type { NetWorthPoint } from "./snapshots.js";
 import {
   calculateUKTax,
   type TaxCalculationResult,
@@ -52,15 +59,21 @@ import type {
   PromoCliffAlert,
   SafeToSpendResult,
   StudentLoanEvaluationResult,
+  UkAllowancesStatus,
   UkTaxCalculationResult,
 } from "./types.js";
 import { calculateUkTax as computeUkTax } from "./uk-tax.js";
-import { resolveUkTaxYear } from "./uk-tax-year.js";
+import { getUkCalendarDate, resolveUkTaxYear } from "./uk-tax-year.js";
 import type { WorkplacePensionInput } from "./workplace-pension.js";
 
 export interface AnonymizationOptions {
   /** If true, bank and provider names ("Monzo", "Barclays", etc.) are mapped to generic labels */
   anonymizeInstitutions?: boolean;
+  /**
+   * The date date-based figures are measured from (debt-free date, ISA allowance used, the last
+   * history month). Defaults to now; pass a fixed date in tests.
+   */
+  asOf?: Date;
 }
 
 export interface BudgetEntryItem {
@@ -150,6 +163,11 @@ export interface BuildContextPackInput {
   workplacePension?: WorkplacePensionInput | null;
   /** The saved birth year from the profile, or null. The baseline `age` has a default, so it is not used. */
   birthYear?: number | null;
+  /**
+   * The financial picture already built from these same rows (the MCP provider sends it). When
+   * absent the pack builds it from the rows above, so there is one way the figures are made.
+   */
+  picture?: FinancialPicture;
 }
 
 /** The user id an anonymised pack or input carries in place of the real one. */
@@ -245,7 +263,7 @@ export interface UkTaxCalculationNotApplicable {
 export type UkTaxCalculationWithAssumptions = UkTaxCalculationResult & { assumptions?: string[] };
 
 export type PackUkTaxCalculation =
-  | UkTaxCalculationWithAssumptions
+  | ContextPackUkTaxResult
   | UkTaxCalculationNotSet
   | UkTaxCalculationNotApplicable;
 
@@ -254,7 +272,7 @@ export const PENSION_NOT_SET_ASSUMPTION =
   "Pension contribution not set; this estimate assumes none.";
 
 /** True when the pack's salary tax calculation holds worked-out figures. */
-export function isUkTaxCalculated(tx: PackUkTaxCalculation): tx is UkTaxCalculationWithAssumptions {
+export function isUkTaxCalculated(tx: PackUkTaxCalculation): tx is ContextPackUkTaxResult {
   return !("notSet" in tx) && !("notApplicable" in tx);
 }
 
@@ -294,7 +312,15 @@ export interface FlumpAiContextPack {
     totalPensions: number;
     totalConsumerDebt: number;
     totalMortgageBalance: number;
-    weightedSavingsRate: number;
+    /** Saved Student Loan account balances, whether or not net worth counts them. */
+    totalStudentLoans: number;
+    /** Saving and Investment account balances at the user's share (picture.savings). */
+    totalSavings: number;
+    /** Monthly amounts saved into those accounts, at the user's share. */
+    monthlySavingsContributions: number;
+    /** Balance-weighted rate on those accounts, or null with no savings balance (never a default). */
+    weightedSavingsRate: number | null;
+    /** Net worth by month from the engine's saved-balance series, ending this month. */
     monthlyHistory: MonthlyPortfolioHistoryPoint[];
     accounts: ResolvedAccount[];
     /** The basis net worth, totals and history were computed under. */
@@ -302,11 +328,24 @@ export interface FlumpAiContextPack {
     /** What net worth leaves out under that basis, in display order. */
     netWorthLeavesOut: NetWorthLeftOut[];
   };
+  /** From picture.debtSummary: consumer debt on minimum payments only (no assumed extra). */
   debtSummary: {
     consumerDebts: NormalizedDebtItem[];
     totalStartingDebtGbp: number;
-    avalancheVsSnowballComparison: AvalancheVsSnowballComparison;
+    /** Minimum payments a month, or null with no consumer debt. */
+    monthlyMinimumsGbp: number | null;
+    /** True when any minimum payment is an estimate rather than a saved figure. */
+    monthlyMinimumsEstimated: boolean;
+    /** Month and year the debts clear on minimum payments, or null (see the reason). */
+    debtFreeDate: string | null;
+    /** Why there is no date: an APR is not saved, or minimums do not clear the debts. */
+    debtFreeDateUnknownReason: DebtFreeDateUnknownReason | null;
+    /** Interest on the same minimum-only schedule, or null whenever the date is null. */
+    totalInterestGbp: number | null;
+    /** Highest rate first against smallest balance first, on minimum payments; null with no date. */
+    avalancheVsSnowballComparison: AvalancheVsSnowballComparison | null;
     promoCliffAlerts: PromoCliffAlert[];
+    /** Run only when a plan and a saved Student Loan account balance exist. */
     studentLoanEvaluation?: StudentLoanEvaluationResult;
   };
   /**
@@ -350,6 +389,30 @@ export interface FlumpAiContextPack {
      */
     selfAssessmentLedgerSummary?: TaxCalculationResult | SelfAssessmentNotSet;
   };
+  /** The ISA allowance used and remaining, present whether or not a salary is saved. */
+  isaAllowance: ContextPackIsaAllowance;
+}
+
+export type DebtFreeDateUnknownReason = "aprUnknown" | "notClearedOnMinimums";
+
+/**
+ * The salary tax calculation as the pack carries it: the ISA allowance used is the picture's
+ * estimate (SD-3), and used and remaining are null when no monthly ISA saving is saved, never 0
+ * used. `{ notSet: ["annualSalary"] }` when no salary is saved (AI-1).
+ */
+export type ContextPackUkTaxResult = Omit<UkTaxCalculationWithAssumptions, "allowances"> & {
+  allowances: Omit<UkAllowancesStatus, "isaAllowanceUsedGbp" | "isaAllowanceRemainingGbp"> & {
+    isaAllowanceUsedGbp: number | null;
+    isaAllowanceRemainingGbp: number | null;
+  };
+};
+
+/** The ISA allowance this tax year, known whether or not a salary is saved (SD-3). */
+export interface ContextPackIsaAllowance {
+  allowanceGbp: number;
+  /** The picture's estimate from the monthly ISA saving, or null when none is saved. */
+  usedGbp: number | null;
+  remainingGbp: number | null;
 }
 
 /**
@@ -413,36 +476,7 @@ export function buildFlumpAiContextPack(
     .getResolvedAccounts()
     .map((a) => ({ ...a, netWorthBalance: snapshot.netWorthBalanceOf(a, input.netWorthBasis) }));
 
-  // 4. Resolve Debt Items and Debt Schedules
-  const debtItems = snapshot.toDebtItems();
-  const { consumerDebts } = filterConsumerDebts(debtItems);
-  // No extra payment (AI-5): the same minimum-payments plan the Debt page shows.
-  const comparison = compareAvalancheAndSnowball(debtItems, 0);
-  const totalDebtBalance = consumerDebts.reduce((sum, d) => sum + d.balanceGbp, 0);
-
-  // Analyze promo cliffs if any
-  const fullSchedule = calculateDebtSchedule(consumerDebts, 0, "AVALANCHE");
-  const promoCliffAlerts = fullSchedule.promoCliffAlerts;
-
-  // The student loan check needs a saved salary and a saved balance (AI-1): no guessed balance.
-  const studentLoanBalance = resolvedAccounts
-    .filter((a) => a.category === "studentLoans")
-    .reduce((sum, a) => sum + a.nominalBalance, 0);
-  let studentLoanEvaluation: StudentLoanEvaluationResult | undefined;
-  if (
-    salaryKnown &&
-    studentLoanBalance > 0 &&
-    safeBaseline.studentLoanPlan &&
-    safeBaseline.studentLoanPlan !== "NONE"
-  ) {
-    studentLoanEvaluation = evaluateUkStudentLoan(
-      safeBaseline.studentLoanPlan,
-      annualSalary,
-      studentLoanBalance,
-    );
-  }
-
-  // 5. Budget & Runway Evaluation
+  // 4. Budget & Runway Evaluation
   // M-PRIV4 and ruling 7: anonymised, no user-typed entry or category name and no note leaves.
   // Entries become neutral labels by group ("Bills 1", "Income 2") and typed categories
   // "Custom category 1", as the MCP budget tool does. Built-in categories stay, so totals match.
@@ -460,27 +494,89 @@ export function buildFlumpAiContextPack(
   const taxRecords =
     isAnonymized && input.taxRecords ? anonymiseTaxRecords(input.taxRecords) : input.taxRecords;
 
-  // The budget summary comes from the one financial picture, so MCP and web agree (E23). It reads
-  // the typed names (never sent anywhere) so the linked take-home and housing rows match the web.
-  const picture = buildFinancialPicture(
-    {
-      profile: input.profileFacts ?? profileFactsFromProfile(null),
-      netWorthBasis: input.netWorthBasis,
-      accounts: sanitizedRawAccounts,
-      details: rawDetails,
-      budget: rawBudgetEntries.map((entry, idx) => ({ ...entry, id: entry.id || `b_${idx}` })),
-    },
-    { snapshot },
-  );
+  // Every shared figure comes from the one financial picture, so the pack equals the pages (E23,
+  // audit slice 3). The provider's picture is used when it sent one; otherwise it is built here
+  // from the saved rows as given (names intact, so the home estimate label and ISA names count;
+  // only figures are read from it).
+  const asOf = options.asOf ?? new Date();
+  const picture =
+    input.picture ??
+    buildFinancialPicture(
+      {
+        profile: input.profileFacts ?? profileFactsFromProfile(null),
+        netWorthBasis: input.netWorthBasis,
+        accounts: rawAccounts,
+        details: rawDetails,
+        budget: rawBudgetEntries.map(budgetEntryFromRow),
+      },
+      { asOf },
+    );
   const pictureBudget = isFigureKnown(picture.budget) ? picture.budget.value : null;
   const pictureSafeToSpend = isFigureKnown(picture.safeToSpend) ? picture.safeToSpend.value : null;
   const pictureCover = isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value : null;
 
+  // 5. Debts: the picture's minimum-only schedule (SD-6, AI-5), never an assumed extra payment.
+  const debt = picture.debtSummary;
+  const debtItems = snapshot.toDebtItems();
+  const { consumerDebts } = filterConsumerDebts(debtItems);
+  const debtFreeDateUnknownReason: DebtFreeDateUnknownReason | null =
+    debt === null || debt.debtFreeDate !== null
+      ? null
+      : debt.debts.some((d) => d.aprKnown === false)
+        ? "aprUnknown"
+        : "notClearedOnMinimums";
+  // The order comparison runs on minimum payments too, and only when the date is known, so it
+  // can never show a date the picture leaves out.
+  const comparison = debt?.debtFreeDate != null ? compareAvalancheAndSnowball(debtItems, 0) : null;
+  const promoCliffAlerts =
+    consumerDebts.length > 0
+      ? calculateDebtSchedule(consumerDebts, 0, "AVALANCHE", { referenceDate: asOf })
+          .promoCliffAlerts
+      : [];
+
+  // Student loan: needs a saved salary and the saved Student Loan account balance (AI-1, AI-7),
+  // never an assumed salary or balance.
+  const studentLoanBalance = picture.netWorth.studentLoans;
+  let studentLoanEvaluation: StudentLoanEvaluationResult | undefined;
+  if (
+    salaryKnown &&
+    safeBaseline.studentLoanPlan &&
+    safeBaseline.studentLoanPlan !== "NONE" &&
+    studentLoanBalance > 0
+  ) {
+    studentLoanEvaluation = evaluateUkStudentLoan(
+      safeBaseline.studentLoanPlan,
+      annualSalary,
+      studentLoanBalance,
+    );
+  }
+
   const observations = buildObservations({
-    consumerDebtGbp: totalDebtBalance,
+    consumerDebtGbp: debt?.totalDebt ?? 0,
     monthsOfCover: pictureCover?.months ?? null,
     leftOverMonthly: pictureBudget?.hasIncome ? pictureBudget.surplus : null,
   });
+
+  // History: the engine's saved-balance series (AI-6), as History and get_balance_history read
+  // it, through the current month so the last point is the picture's net worth.
+  const monthlyHistory = selectSavedNetWorthSeries(
+    rawAccounts,
+    rawDetails,
+    getUkCalendarDate(asOf).slice(0, 7),
+    input.netWorthBasis,
+  )
+    .slice(-HISTORY_MONTHS)
+    .map(toHistoryPoint);
+
+  // ISA allowance used (SD-3): the picture's estimate, or null when no monthly ISA saving is set.
+  const isaAllowanceGbp = isaAllowanceFor(asOf);
+  const isaAllowanceUsedGbp = picture.isaAllowanceUsed;
+  const isaAllowance: ContextPackIsaAllowance = {
+    allowanceGbp: isaAllowanceGbp,
+    usedGbp: isaAllowanceUsedGbp,
+    remainingGbp:
+      isaAllowanceUsedGbp === null ? null : Math.max(0, isaAllowanceGbp - isaAllowanceUsedGbp),
+  };
 
   // 7. UK Tax Calculation & Self-Assessment Ledger
   // The tax year that applies today (AI-3, SA-8), never a stored or default baseline year.
@@ -509,8 +605,8 @@ export function buildFlumpAiContextPack(
   const ukTaxCalculation: PackUkTaxCalculation = isSelfEmployedType(taxFacts.employmentType)
     ? { notApplicable: "selfEmployed" }
     : payeSalary > 0
-      ? {
-          ...computeUkTax({
+      ? withPictureIsa(
+          computeUkTax({
             grossSalary: payeSalary,
             pensionContributionPct,
             isSalarySacrifice: safeBaseline.isSalarySacrifice,
@@ -518,9 +614,10 @@ export function buildFlumpAiContextPack(
             region: safeBaseline.ukRegion,
             taxYear: currentTaxYear,
           }),
+          isaAllowance,
           // Item 4: the assumption is stated, not left silent.
-          ...(pensionAssumed ? { assumptions: [PENSION_NOT_SET_ASSUMPTION] } : {}),
-        }
+          pensionAssumed ? [PENSION_NOT_SET_ASSUMPTION] : undefined,
+        )
       : { notSet: ["annualSalary"] };
 
   // The Self Assessment estimate follows the one rule every surface uses (estimateInputsFor).
@@ -548,20 +645,28 @@ export function buildFlumpAiContextPack(
       totalAssets: picture.netWorth.totalAssets,
       homeEstimate: picture.netWorth.homeEstimate,
       totalLiabilities: picture.netWorth.totalLiabilities,
-      totalLiquidCash: snapshot.getTotalLiquidCash(),
-      totalInvestments: snapshot.getTotalInvestments(),
-      totalPensions: snapshot.getTotalPensions(),
-      totalConsumerDebt: snapshot.getTotalConsumerDebt(),
-      totalMortgageBalance: snapshot.getTotalMortgageBalance(),
-      weightedSavingsRate: snapshot.getWeightedSavingsRate(),
-      monthlyHistory: snapshot.getMonthlyHistory(input.netWorthBasis),
+      totalLiquidCash: picture.netWorth.liquidCash,
+      totalInvestments: picture.netWorth.investments,
+      totalPensions: picture.netWorth.pensions,
+      totalConsumerDebt: picture.debt.consumerDebt,
+      totalMortgageBalance: picture.debt.mortgage,
+      totalStudentLoans: picture.netWorth.studentLoans,
+      totalSavings: picture.savings.balance,
+      monthlySavingsContributions: picture.savings.monthlyContributions,
+      weightedSavingsRate: picture.savings.weightedRate,
+      monthlyHistory,
       accounts: resolvedAccounts,
       netWorthBasis: picture.netWorth.basis,
       netWorthLeavesOut: picture.netWorth.leftOut,
     },
     debtSummary: {
       consumerDebts,
-      totalStartingDebtGbp: Math.round(totalDebtBalance * 100) / 100,
+      totalStartingDebtGbp: round2(debt?.totalDebt ?? 0),
+      monthlyMinimumsGbp: debt === null ? null : round2(debt.monthlyMinimumTotal),
+      monthlyMinimumsEstimated: debt?.monthlyMinimumEstimated ?? false,
+      debtFreeDate: debt?.debtFreeDate ?? null,
+      debtFreeDateUnknownReason,
+      totalInterestGbp: debt?.totalInterest == null ? null : round2(debt.totalInterest),
       avalancheVsSnowballComparison: comparison,
       promoCliffAlerts,
       studentLoanEvaluation,
@@ -589,6 +694,43 @@ export function buildFlumpAiContextPack(
       ukTaxCalculation,
       selfAssessmentLedgerSummary,
     },
+    isaAllowance,
+  };
+}
+
+/** How many months of net worth history the pack carries. */
+const HISTORY_MONTHS = 12;
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+/** A "YYYY-MM" series point in the pack's history shape. */
+function toHistoryPoint(p: NetWorthPoint): MonthlyPortfolioHistoryPoint {
+  const year = Number(p.month.slice(0, 4));
+  const month = Number(p.month.slice(5, 7));
+  return {
+    year,
+    month,
+    label: `${MONTH_LABELS[month - 1]} ${year}`,
+    netWorth: p.netWorth,
+    totalAssets: p.totalAssets,
+    totalLiabilities: p.totalLiabilities,
   };
 }
 
@@ -633,6 +775,34 @@ function formatSignedGbp(value: number): string {
   return value < 0 ? `-£${abs}` : `£${abs}`;
 }
 
+/** The debt lines from the picture's minimum-only schedule; nothing when there is no debt. */
+function formatDebtSchedule(d: FlumpAiContextPack["debtSummary"]): string {
+  if (d.monthlyMinimumsGbp === null) return "";
+  const lines = [
+    `\n- **Minimum payments, a month:** £${d.monthlyMinimumsGbp.toLocaleString("en-GB")}${d.monthlyMinimumsEstimated ? " (some are estimates)" : ""}`,
+  ];
+  if (d.debtFreeDate !== null) {
+    lines.push(
+      `\n- **Debt-free date on minimum payments (highest rate first):** ${d.debtFreeDate}, total interest £${(d.totalInterestGbp ?? 0).toLocaleString("en-GB")}`,
+    );
+  } else if (d.debtFreeDateUnknownReason === "aprUnknown") {
+    lines.push(
+      "\n- **Debt-free date on minimum payments:** not shown, because an interest rate (APR) is not saved for every debt",
+    );
+  } else {
+    lines.push(
+      "\n- **Debt-free date on minimum payments:** not shown, because minimum payments do not clear the debts within the 30 years the estimate covers",
+    );
+  }
+  const snowball = d.avalancheVsSnowballComparison?.snowball;
+  if (snowball) {
+    lines.push(
+      `\n- **Smallest balance first, on minimum payments:** debt-free date ${snowball.debtFreeDate}, total interest £${snowball.totalInterest.toLocaleString("en-GB")}`,
+    );
+  }
+  return lines.join("");
+}
+
 /**
  * Formats a FlumpAiContextPack into human-readable Markdown suitable for clipboard export.
  */
@@ -654,9 +824,8 @@ export function formatAiContextPackMarkdown(pack: FlumpAiContextPack): string {
   const tx = pack.taxSummary.ukTaxCalculation;
   // The breakdown shows only the parts the totals include under the user's choices.
   const { countProperty, countStudentLoan } = p.netWorthBasis;
-  const studentLoans = p.accounts
-    .filter((a) => a.category === "studentLoans")
-    .reduce((sum, a) => sum + a.nominalBalance, 0);
+  const studentLoans = p.totalStudentLoans;
+  const isa = pack.isaAllowance;
 
   return `# Flump context pack
 Generated: ${pack.metadata.generatedAt} | Anonymised: ${pack.metadata.isAnonymized ? "yes" : "no"} | Currency: ${pack.metadata.currency}
@@ -669,7 +838,7 @@ ${pack.observations.map((o) => `  * ${o}`).join("\n") || "  * None."}
 - **Net worth:** ${formatSignedGbp(p.netWorth)}${formatLeavesOut(p.netWorthLeavesOut)}
 - **What you own:** £${p.totalAssets.toLocaleString("en-GB")} (cash you can get at quickly: £${p.totalLiquidCash.toLocaleString("en-GB")}, investments: £${p.totalInvestments.toLocaleString("en-GB")}, pensions: £${p.totalPensions.toLocaleString("en-GB")}${countProperty && p.homeEstimate > 0 ? `, Home (your estimate): £${p.homeEstimate.toLocaleString("en-GB")}` : ""})
 - **What you owe:** £${p.totalLiabilities.toLocaleString("en-GB")} (debts: £${p.totalConsumerDebt.toLocaleString("en-GB")}${countProperty ? `, mortgages: £${p.totalMortgageBalance.toLocaleString("en-GB")}` : ""}${countStudentLoan ? `, student loans: £${studentLoans.toLocaleString("en-GB")}` : ""})
-- **Average savings rate:** ${p.weightedSavingsRate}% AER
+- **Savings and investments:** £${p.totalSavings.toLocaleString("en-GB")}, with £${p.monthlySavingsContributions.toLocaleString("en-GB")} a month going in\n- **Average savings rate:** ${p.weightedSavingsRate === null ? "not set" : `${p.weightedSavingsRate}% AER`}
 
 ### Accounts:
 ${p.accounts
@@ -682,10 +851,7 @@ ${p.accounts
   .join("\n")}
 
 ## 3. Debts
-- **Debt balance:** £${d.totalStartingDebtGbp.toLocaleString("en-GB")}
-- **Highest rate first (avalanche):** debt-free date ${d.avalancheVsSnowballComparison.avalanche.debtFreeDate}, total interest £${d.avalancheVsSnowballComparison.avalanche.totalInterest.toLocaleString("en-GB")}
-- **Smallest balance first (snowball):** debt-free date ${d.avalancheVsSnowballComparison.snowball.debtFreeDate}, total interest £${d.avalancheVsSnowballComparison.snowball.totalInterest.toLocaleString("en-GB")}
-- **Interest difference (highest rate first compared with minimum payments only):** £${d.avalancheVsSnowballComparison.interestSavedAvalancheVsMin.toLocaleString("en-GB")}
+- **Debt balance:** £${d.totalStartingDebtGbp.toLocaleString("en-GB")}${formatDebtSchedule(d)}
 ${
   d.promoCliffAlerts.length > 0
     ? `\n### When the 0% deal ends:\n${d.promoCliffAlerts
@@ -698,8 +864,10 @@ ${
 }
 ${
   d.studentLoanEvaluation
-    ? `\n### Student loan:\n- Plan: ${d.studentLoanEvaluation.plan.toUpperCase()} | Projected outcome: ${d.studentLoanEvaluation.projectedOutcome}\n- Detail: ${d.studentLoanEvaluation.reasoning}`
-    : ""
+    ? `\n### Student loan:\n- Balance saved: £${studentLoans.toLocaleString("en-GB")}\n- Plan: ${d.studentLoanEvaluation.plan.toUpperCase()} | Projected outcome: ${d.studentLoanEvaluation.projectedOutcome}\n- Detail: ${d.studentLoanEvaluation.reasoning}`
+    : b.studentLoanPlan && b.studentLoanPlan !== "NONE"
+      ? `\n### Student loan:\n- Plan: ${String(b.studentLoanPlan).toUpperCase()} | No student loan balance is saved, so no repayment estimate is shown.`
+      : ""
 }
 
 ## 4. Budget
@@ -716,7 +884,12 @@ ${
     : "notApplicable" in tx
       ? `- **Salary before tax:** Not used. Self-employed income comes from the Self Assessment records.\n- **Tax region:** ${b.ukRegion}\n`
       : `- **Salary before tax:** Not set\n- **Tax region:** ${b.ukRegion}\n`
-}${formatSelfAssessment(pack.taxSummary.selfAssessmentLedgerSummary)}`;
+}- **ISA allowance used this tax year:** ${
+    isa.usedGbp === null
+      ? "Not set (no monthly amount is saved into an ISA)"
+      : `£${isa.usedGbp.toLocaleString("en-GB")} of £${isa.allowanceGbp.toLocaleString("en-GB")} (an estimate from the monthly amount saved; lump sums are not counted)`
+  }
+${formatSelfAssessment(pack.taxSummary.selfAssessmentLedgerSummary)}`;
 }
 
 /** What to add for each fact a Self Assessment estimate can be missing. */
@@ -738,12 +911,34 @@ function formatSelfAssessment(
   return `- **Self Assessment estimate:** ${gbp(Math.max(0, ledger.netAdditionalTaxToPay))}\n`;
 }
 
+/**
+ * The salary tax calculation with the picture's ISA figures (SD-3) in place of the calculator's
+ * "nothing used" assumption, and any assumption it makes in plain words.
+ */
+function withPictureIsa(
+  base: UkTaxCalculationResult,
+  isa: ContextPackIsaAllowance,
+  assumptions: string[] | undefined,
+): ContextPackUkTaxResult {
+  return {
+    ...base,
+    allowances: {
+      ...base.allowances,
+      isaAllowanceGbp: isa.allowanceGbp,
+      isaAllowanceUsedGbp: isa.usedGbp,
+      isaAllowanceRemainingGbp: isa.remainingGbp,
+    },
+    ...(assumptions ? { assumptions } : {}),
+  };
+}
+
 /** The salary-based tax lines, shown only when a salary is saved (AI-1). */
 function formatSalaryTax(
   salary: number,
   b: ContextPackBaseline,
-  tx: UkTaxCalculationWithAssumptions,
+  tx: ContextPackUkTaxResult,
 ): string {
+  const allowances = tx.allowances;
   return `- **Salary before tax:** £${salary.toLocaleString("en-GB")}
 - **Tax region:** ${b.ukRegion}
 ${(tx.assumptions ?? []).map((a) => `- **Assumption:** ${a}\n`).join("")}- **Adjusted net income:** £${tx.adjustedNetIncomeGbp.toLocaleString("en-GB")}
@@ -753,8 +948,7 @@ ${
     ? `- **Contribution that brings adjusted net income to £100,000:** £${tx.taxTrap.contributionRequiredToEscapeGbp.toLocaleString("en-GB")}\n- **Estimated tax difference at that contribution:** £${tx.taxTrap.estimatedTaxSavedByEscapingGbp.toLocaleString("en-GB")}`
     : ""
 }
-- **ISA allowance unused this tax year:** £${tx.allowances.isaAllowanceRemainingGbp.toLocaleString("en-GB")} of £20,000
-- **Pension annual allowance unused this tax year:** £${tx.allowances.pensionAllowanceRemainingGbp.toLocaleString("en-GB")} of £${tx.allowances.pensionAnnualAllowanceGbp.toLocaleString("en-GB")}
-- **Personal Savings Allowance:** £${tx.allowances.personalSavingsAllowanceGbp.toLocaleString("en-GB")} (${tx.allowances.marginalIncomeTaxBand} band)
+- **Pension annual allowance unused this tax year:** £${allowances.pensionAllowanceRemainingGbp.toLocaleString("en-GB")} of £${allowances.pensionAnnualAllowanceGbp.toLocaleString("en-GB")}
+- **Personal Savings Allowance:** £${allowances.personalSavingsAllowanceGbp.toLocaleString("en-GB")} (${allowances.marginalIncomeTaxBand} band)
 `;
 }

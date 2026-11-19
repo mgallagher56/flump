@@ -79,17 +79,23 @@ describe("read tools v2: mixed persona golden outputs", () => {
       studentLoanGbp: 0,
       accountCount: 4,
       debtCount: 2,
+      // Left over, as the Dashboard shows it: income 3,200 minus essentials (rent 1,100 plus
+      // insurance 240 / 12 = 20, so 1,120) minus eating out (50 x 52 / 12 = 216.67) = 1,863.33.
+      // Saved minimums are not taken off again (BU-3).
       monthlyIncomeGbp: 3200,
-      monthlyEssentialSpendGbp: 1120,
-      monthlySurplusAfterStoredMinimumsGbp: 3200 - 1120 - 216.67 - 200,
-      emergencyRunwayMonths: 9,
+      // Breathing room's essentials: 1,120 plus the debt minimums. The loan stores 200; the card
+      // stores none, so it is estimated at max(25, 2.5% x 3,000) = 75. 1,120 + 275 = 1,395.
+      monthlyEssentialSpendGbp: 1395,
+      monthlySurplusAfterStoredMinimumsGbp: 1863.33,
+      // Cash 2,100 + 8,000 = 10,100; 10,100 / 1,395 = 7.24, shown as 7.2 months.
+      emergencyRunwayMonths: 7.2,
       asOfMonth: null,
       netWorthLeavesOut: [],
       notes: expect.arrayContaining([expect.stringMatching(/Student loans/)]),
     });
-    // The card has no stored minimum: it is excluded and the response says so.
+    // The card has no stored minimum: the essentials use an estimate and the response says so.
     expect(e.assumptions).toEqual([
-      expect.objectContaining({ field: "monthlySurplusAfterStoredMinimumsGbp", source: "default" }),
+      expect.objectContaining({ field: "monthlyEssentialSpendGbp", source: "default" }),
     ]);
     expect(e.missing.map((m) => m.field)).toContain("debts.minimumPayment");
   });

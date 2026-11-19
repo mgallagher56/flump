@@ -4,10 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const backendFetch = vi.fn();
-const loadWorkspaceSnapshot = vi.fn();
+const loadWorkspacePicture = vi.fn();
 vi.mock("~/services/backend-client.server", () => ({
   backendFetch: (...a: unknown[]) => backendFetch(...a),
-  loadWorkspaceSnapshot: (...a: unknown[]) => loadWorkspaceSnapshot(...a),
+  loadWorkspacePicture: (...a: unknown[]) => loadWorkspacePicture(...a),
 }));
 const getAuthSession = vi.fn();
 vi.mock("~/utils/auth.server", () => ({
@@ -33,12 +33,13 @@ describe("app.pension loader: retirementAvailable (RD9)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getAuthSession.mockResolvedValue({ user: { id: "u1" }, accessToken: "tok" });
-    loadWorkspaceSnapshot.mockResolvedValue({
+    loadWorkspacePicture.mockResolvedValue({
       accounts: [],
       accountDetails: [],
       userProfile: { id: "p1" },
       user: { id: "u1" },
       accessToken: "server-only-token",
+      picture: null,
     });
   });
 

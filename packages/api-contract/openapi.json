@@ -7593,11 +7593,18 @@
                           "additionalProperties": false,
                           "properties": {
                             "avalancheVsSnowballComparison": {
-                              "additionalProperties": {},
-                              "propertyNames": {
-                                "type": "string"
-                              },
-                              "type": "object"
+                              "anyOf": [
+                                {
+                                  "additionalProperties": {},
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "consumerDebts": {
                               "items": {
@@ -7608,6 +7615,26 @@
                                 "type": "object"
                               },
                               "type": "array"
+                            },
+                            "debtFreeDate": {
+                              "type": ["string", "null"]
+                            },
+                            "debtFreeDateUnknownReason": {
+                              "anyOf": [
+                                {
+                                  "enum": ["aprUnknown", "notClearedOnMinimums"],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "monthlyMinimumsEstimated": {
+                              "type": "boolean"
+                            },
+                            "monthlyMinimumsGbp": {
+                              "type": ["number", "null"]
                             },
                             "promoCliffAlerts": {
                               "items": {
@@ -7626,6 +7653,9 @@
                               },
                               "type": "object"
                             },
+                            "totalInterestGbp": {
+                              "type": ["number", "null"]
+                            },
                             "totalStartingDebtGbp": {
                               "type": "number"
                             }
@@ -7633,9 +7663,30 @@
                           "required": [
                             "consumerDebts",
                             "totalStartingDebtGbp",
+                            "monthlyMinimumsGbp",
+                            "monthlyMinimumsEstimated",
+                            "debtFreeDate",
+                            "debtFreeDateUnknownReason",
+                            "totalInterestGbp",
                             "avalancheVsSnowballComparison",
                             "promoCliffAlerts"
                           ],
+                          "type": "object"
+                        },
+                        "isaAllowance": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "allowanceGbp": {
+                              "type": "number"
+                            },
+                            "remainingGbp": {
+                              "type": ["number", "null"]
+                            },
+                            "usedGbp": {
+                              "type": ["number", "null"]
+                            }
+                          },
+                          "required": ["allowanceGbp", "usedGbp", "remainingGbp"],
                           "type": "object"
                         },
                         "metadata": {
@@ -7817,6 +7868,9 @@
                               },
                               "type": "array"
                             },
+                            "monthlySavingsContributions": {
+                              "type": "number"
+                            },
                             "netWorth": {
                               "type": "number"
                             },
@@ -7861,8 +7915,14 @@
                             "totalPensions": {
                               "type": "number"
                             },
-                            "weightedSavingsRate": {
+                            "totalSavings": {
                               "type": "number"
+                            },
+                            "totalStudentLoans": {
+                              "type": "number"
+                            },
+                            "weightedSavingsRate": {
+                              "type": ["number", "null"]
                             }
                           },
                           "required": [
@@ -7875,6 +7935,9 @@
                             "totalPensions",
                             "totalConsumerDebt",
                             "totalMortgageBalance",
+                            "totalStudentLoans",
+                            "totalSavings",
+                            "monthlySavingsContributions",
                             "weightedSavingsRate",
                             "monthlyHistory",
                             "accounts",
@@ -7915,7 +7978,8 @@
                         "portfolio",
                         "debtSummary",
                         "budgetSummary",
-                        "taxSummary"
+                        "taxSummary",
+                        "isaAllowance"
                       ],
                       "type": "object"
                     }
@@ -9245,328 +9309,6 @@
           }
         ],
         "tags": ["mcp-tokens"]
-      }
-    },
-    "/v1/portfolio-snapshot": {
-      "get": {
-        "operationId": "accounts.portfolioSnapshot",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "currency": {
-                      "pattern": "^[A-Z]{3}$",
-                      "type": "string"
-                    },
-                    "monthlyHistory": {
-                      "items": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "label": {
-                            "type": "string"
-                          },
-                          "month": {
-                            "maximum": 12,
-                            "minimum": 1,
-                            "type": "integer"
-                          },
-                          "netWorth": {
-                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                            "type": "number"
-                          },
-                          "totalAssets": {
-                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                            "type": "number"
-                          },
-                          "totalLiabilities": {
-                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                            "type": "number"
-                          },
-                          "year": {
-                            "maximum": 9007199254740991,
-                            "minimum": -9007199254740991,
-                            "type": "integer"
-                          }
-                        },
-                        "required": [
-                          "year",
-                          "month",
-                          "label",
-                          "netWorth",
-                          "totalAssets",
-                          "totalLiabilities"
-                        ],
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "netWorth": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "netWorthLeavesOut": {
-                      "items": {
-                        "enum": ["property", "mortgage", "studentLoan", "homeValueMissing"],
-                        "type": "string"
-                      },
-                      "type": "array"
-                    },
-                    "resolvedAccounts": {
-                      "items": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "category": {
-                            "enum": [
-                              "cash",
-                              "savings",
-                              "investments",
-                              "pensions",
-                              "debt",
-                              "mortgages",
-                              "property",
-                              "studentLoans",
-                              "other"
-                            ],
-                            "type": "string"
-                          },
-                          "currency": {
-                            "pattern": "^[A-Z]{3}$",
-                            "type": "string"
-                          },
-                          "history": {
-                            "items": {
-                              "additionalProperties": false,
-                              "properties": {
-                                "month": {
-                                  "maximum": 12,
-                                  "minimum": 1,
-                                  "type": "integer"
-                                },
-                                "value": {
-                                  "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                                  "type": "number"
-                                },
-                                "year": {
-                                  "maximum": 9007199254740991,
-                                  "minimum": -9007199254740991,
-                                  "type": "integer"
-                                }
-                              },
-                              "required": ["year", "month", "value"],
-                              "type": "object"
-                            },
-                            "type": "array"
-                          },
-                          "id": {
-                            "minLength": 1,
-                            "type": "string"
-                          },
-                          "interestRate": {
-                            "type": "number"
-                          },
-                          "interestRateKnown": {
-                            "type": "boolean"
-                          },
-                          "isAsset": {
-                            "type": "boolean"
-                          },
-                          "isLiability": {
-                            "type": "boolean"
-                          },
-                          "latestBalance": {
-                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                            "type": "number"
-                          },
-                          "latestMonth": {
-                            "maximum": 12,
-                            "minimum": 1,
-                            "type": "integer"
-                          },
-                          "latestYear": {
-                            "maximum": 9007199254740991,
-                            "minimum": -9007199254740991,
-                            "type": "integer"
-                          },
-                          "monthlyContribution": {
-                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                            "type": "number"
-                          },
-                          "monthlyContributionKnown": {
-                            "type": "boolean"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "netWorthBalance": {
-                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                            "type": "number"
-                          },
-                          "nominalBalance": {
-                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                            "type": "number"
-                          },
-                          "overdrawnAmount": {
-                            "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                            "type": "number"
-                          },
-                          "rawType": {
-                            "enum": [
-                              "Current",
-                              "Saving",
-                              "Mortgage",
-                              "Loan",
-                              "Credit Card",
-                              "Owed",
-                              "Investment",
-                              "Pension",
-                              "Property",
-                              "Student Loan",
-                              "Overdraft"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "rawType",
-                          "category",
-                          "isAsset",
-                          "isLiability",
-                          "nominalBalance",
-                          "netWorthBalance",
-                          "latestBalance",
-                          "overdrawnAmount",
-                          "interestRate",
-                          "interestRateKnown",
-                          "monthlyContribution",
-                          "monthlyContributionKnown",
-                          "currency",
-                          "history"
-                        ],
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "totalAssets": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "totalConsumerDebt": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "totalInvestments": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "totalLiabilities": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "totalLiquidCash": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "totalMortgageBalance": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "totalPensions": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "totalProperty": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "totalStudentLoans": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "netWorth",
-                    "totalAssets",
-                    "totalLiabilities",
-                    "totalLiquidCash",
-                    "totalInvestments",
-                    "totalPensions",
-                    "totalConsumerDebt",
-                    "totalMortgageBalance",
-                    "totalProperty",
-                    "totalStudentLoans",
-                    "resolvedAccounts",
-                    "monthlyHistory",
-                    "netWorthLeavesOut",
-                    "currency"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Success."
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`unauthorized`: missing or invalid credentials."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`rate_limited`: too many requests. See the Retry-After header."
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`internal_error`: an unexpected failure. Quote the requestId."
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "tags": ["accounts"]
       }
     },
     "/v1/retirement-plan": {

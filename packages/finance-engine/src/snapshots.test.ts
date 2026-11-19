@@ -100,7 +100,9 @@ describe("selectNetWorthSeries (E30)", () => {
     expect(series[0]?.netWorth).toBe(2);
   });
 
-  it("agrees with PortfolioSnapshot.getMonthlyHistory on recorded months", () => {
+  it("carries a liability forward as an amount owed across months", () => {
+    // Jan: cash 1000 - debt 200 - mortgage 90000 = -89200. Feb: cash 1100, debt 200 and the
+    // mortgage 89900 carry or update: 1100 - 200 - 89900 = -89000.
     const rows = [
       row("cash", 2026, 1, 1000),
       row("debt", 2026, 1, 200),
@@ -108,14 +110,7 @@ describe("selectNetWorthSeries (E30)", () => {
       row("cash", 2026, 2, 1100),
       row("mort", 2026, 2, 89900),
     ];
-    const mine = seriesOf(accounts, rows).map((p) => p.netWorth);
-    const engine = new PortfolioSnapshot(
-      accounts.map((a) => ({ ...a, balance: 0 })),
-      rows.map((r) => ({ ...r })),
-    )
-      .getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12)
-      .map((p) => p.netWorth);
-    expect(mine).toEqual(engine);
+    expect(seriesOf(accounts, rows).map((p) => p.netWorth)).toEqual([-89200, -89000]);
   });
 });
 

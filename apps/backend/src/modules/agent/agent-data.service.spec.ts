@@ -1,5 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AgentDataService } from "./agent-data.service";
+import { FinancialPictureService } from "./financial-picture.service";
+
+/** The service with its picture loader built from the same mocks (old positional order). */
+function agentData(
+  budget: never,
+  tax: never,
+  transactions: never,
+  finance: never,
+  profile: never,
+  accounts: never,
+  details: never,
+  plans: never,
+): AgentDataService {
+  const picture = new FinancialPictureService(budget, tax, finance, profile);
+  return new AgentDataService(tax, transactions, profile, accounts, details, plans, picture);
+}
 
 describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16, E17-N7)", () => {
   const record = {
@@ -21,7 +37,7 @@ describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16,
 
   function build() {
     const taxFind = vi.fn(async () => [record]);
-    const service = new AgentDataService(
+    const service = agentData(
       { find: vi.fn(async () => []) } as never,
       { find: taxFind } as never,
       {} as never,
@@ -59,7 +75,7 @@ describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16,
 
 describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
   function serviceWith(profile: Record<string, unknown>) {
-    return new AgentDataService(
+    return agentData(
       { find: vi.fn(async () => []) } as never,
       { find: vi.fn(async () => []) } as never,
       {} as never,
@@ -105,19 +121,34 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
 
   it("builds the baseline from saved facts only: no invented salary or defaults (SA-2, AI-1, AI-2)", async () => {
     const service = serviceWith({});
-    for (const baseline of [
-      (await service.getUserFinancialData("u1")).baseline,
-      await service.getBaseline("u1"),
-    ]) {
-      // 0 is "no salary known", never the 45,000 display default; no pension is assumed.
-      expect(baseline.annualGrossSalary).toBe(0);
-      expect(baseline.pensionContributionPct).toBe(0);
-      expect(baseline.employerPensionMatchPct).toBe(0);
-      expect(baseline.age).toBeUndefined();
-      expect(baseline.totalCashSavings).toBeUndefined();
-      expect(baseline.totalPensionPot).toBeUndefined();
-      expect(baseline.monthlyOtherOutgoings).toBeUndefined();
-    }
+    const { baseline } = await service.getUserFinancialData("u1");
+    // 0 is "no salary known", never the 45,000 display default; no pension is assumed.
+    expect(baseline.annualGrossSalary).toBe(0);
+    expect(baseline.pensionContributionPct).toBe(0);
+    expect(baseline.employerPensionMatchPct).toBe(0);
+    expect(baseline.age).toBeUndefined();
+    expect(baseline.totalCashSavings).toBeUndefined();
+    expect(baseline.totalPensionPot).toBeUndefined();
+    expect(baseline.monthlyOtherOutgoings).toBeUndefined();
+  });
+
+  it("reads profile facts without defaults: unanswered stays null (audit slice 3)", async () => {
+    const facts = await serviceWith({}).getProfileFacts("u1");
+    expect(facts.annualSalary).toBeNull();
+    expect(facts.employmentType).toBeNull();
+    expect(facts.taxRegion).toBeNull();
+    expect(facts.propertyOwnershipShare).toBeNull();
+  });
+
+  it("returns the picture built from the same rows (audit slice 3)", async () => {
+    // No accounts or budget: net worth is a real £0 and the budget is unknown, never £0.
+    const data = await serviceWith({ annualSalary: 24000, pensionPercent: 4 }).getUserFinancialData(
+      "u1",
+    );
+    expect(data.picture.netWorth.netWorth).toBe(0);
+    expect(data.picture.budget.status).toBe("unknown");
+    // 24,000 x 4 / 100 / 12 = 80.
+    expect(data.picture.pensionContributionMonthly).toBe(80);
   });
 
   it("maps a saved salary, region and pension", async () => {
@@ -173,7 +204,7 @@ describe("AgentDataService.getUserFinancialData retirement plan and birth year (
   function serviceWith(profile: Record<string, unknown>, row: Record<string, unknown> | null) {
     const writes = { save: vi.fn(), insert: vi.fn(), upsert: vi.fn(), update: vi.fn() };
     const findOne = vi.fn(async () => row);
-    const service = new AgentDataService(
+    const service = agentData(
       { find: vi.fn(async () => []) } as never,
       { find: vi.fn(async () => []) } as never,
       {} as never,
@@ -275,7 +306,7 @@ describe("AgentDataService ranged MCP reads (E17 re-plan PR B, unit)", () => {
         isCurrent: null,
       },
     ]);
-    const service = new AgentDataService(
+    const service = agentData(
       {} as never,
       { createQueryBuilder: () => qb } as never,
       {} as never,
@@ -381,7 +412,7 @@ describe("AgentDataService.getAccounts carries joint ownership (E34)", () => {
         sharePercent: 40,
       },
     ]);
-    const service = new AgentDataService(
+    const service = agentData(
       {} as never,
       {} as never,
       {} as never,

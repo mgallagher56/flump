@@ -48,5 +48,20 @@
     "kind": "retyped-response-property",
     "where": "PUT /v1/retirement-plan 200 response.plan.updatedAt",
     "reason": "Review fix (17 Nov 2026): GET /retirement-plan no longer creates a row, so a user with no saved plan gets the defaults with a null id, createdAt and updatedAt. The route shipped on 15 Nov, the page is friends beta only (E33 RD9) and the web app is the only client; it is updated in the same change."
+  },
+  {
+    "kind": "removed-path",
+    "where": "/v1/portfolio-snapshot",
+    "reason": "Audit slice 3 (system audit 2026-11, DB-12 item 6): the route had no caller in this repository (web, marketing, MCP, backend, e2e or the parked mobile companion). Removed with coordinator sign-off on 19 November 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/mcp-tokens/context-pack 200 response.pack.debtSummary.avalancheVsSnowballComparison",
+    "reason": "Audit slice 3 (AI-5, SD-6): null when an interest rate is unknown, instead of a debt-free date built on 0% and a hidden extra payment. Coordinator sign-off 19 November 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/mcp-tokens/context-pack 200 response.pack.portfolio.weightedSavingsRate",
+    "reason": "Audit slice 3 (AI-7): null when no savings rate is known, instead of a 5% default. Coordinator sign-off 19 November 2026."
   }
 ]

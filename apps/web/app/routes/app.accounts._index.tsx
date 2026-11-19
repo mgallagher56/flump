@@ -23,7 +23,7 @@ import {
   backendFetch,
   backendFetchAll,
   type HttpMethod,
-  loadWorkspaceSnapshot,
+  loadWorkspacePicture,
 } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict, versionEtag } from "~/services/conflict";
@@ -221,8 +221,8 @@ export const meta: MetaFunction = () => [{ title: "Accounts | Flump" }];
 export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, bankConnections, user, accessToken, userProfile } =
-    await loadWorkspaceSnapshot(args, {
+  const { accounts, accountDetails, bankConnections, user, accessToken, userProfile, picture } =
+    await loadWorkspacePicture(args, {
       includeConnections: true,
     });
   // Bank connection is owner-only (E19 D3-B). Failing closed: any error hides the entry points.
@@ -247,6 +247,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     bankConnectionsEnabled,
     user,
     userProfile,
+    picture,
   });
 };
 

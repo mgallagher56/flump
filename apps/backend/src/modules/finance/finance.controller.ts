@@ -103,12 +103,6 @@ export class FinanceController {
     return sendPage(res, page);
   }
 
-  @Get("portfolio-snapshot")
-  @HttpCode(200)
-  async getPortfolioSnapshot(@Req() req: AuthenticatedRequest) {
-    return this.financeService.getPortfolioSnapshot(req.user.id);
-  }
-
   @Post("accounts")
   @HttpCode(201)
   async createAccount(@Req() req: AuthenticatedRequest, @Body() body: CreateAccountRequest) {

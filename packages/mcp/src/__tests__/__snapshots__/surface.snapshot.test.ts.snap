@@ -65,7 +65,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and breathing room (emergencyRunwayMonths: how long savings would cover the essentials). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Net worth follows the user's choices for property and student loans; netWorthLeavesOut lists what it leaves out. Call this first for a summary.",
+    "description": "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp: income entries minus spending and savings entries, the figure the Dashboard shows) and breathing room (emergencyRunwayMonths: how long cash would cover the essentials in monthlyEssentialSpendGbp). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Net worth follows the user's choices for property and student loans; netWorthLeavesOut lists what it leaves out. Call this first for a summary.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -1305,7 +1305,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. With no income entry, income is the take-home pay worked out from the saved salary, as in the Flump budget; a saved take-home pay or housing payment that the budget does not include is listed in savedFiguresNotInBudget and not counted. Income and the left-over amount are null (with a question in missing[]) when neither exists. Detailed format lists each entry.",
+    "description": "Monthly budget totals from the user's budget entries: income, essential and flexible spending, savings, the amount left over each month (the figure the Dashboard shows), and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. Income and the left-over amount are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -1501,44 +1501,18 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               },
               "type": "array",
             },
-            "savedFiguresNotInBudget": {
-              "items": {
-                "additionalProperties": false,
-                "properties": {
-                  "estimated": {
-                    "type": "boolean",
-                  },
-                  "figure": {
-                    "enum": [
-                      "take_home_pay",
-                      "rent",
-                      "mortgage_payment",
-                      "household_contribution",
-                    ],
-                    "type": "string",
-                  },
-                  "monthlyGbp": {
-                    "type": "number",
-                  },
-                },
-                "required": [
-                  "figure",
-                  "monthlyGbp",
-                  "estimated",
-                ],
-                "type": "object",
-              },
-              "type": "array",
+            "savingsMonthlyGbp": {
+              "type": "number",
             },
           },
           "required": [
             "monthlyIncomeGbp",
             "essentialMonthlyGbp",
             "discretionaryMonthlyGbp",
+            "savingsMonthlyGbp",
             "monthlySurplusBeforeDebtGbp",
             "entryCount",
             "notes",
-            "savedFiguresNotInBudget",
             "categories",
           ],
           "type": "object",
@@ -1597,7 +1571,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans. An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; simulate_debt_payoff gives those.",
+    "description": "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans, and the month the debts clear on minimum payments alone (debtFreeDateOnMinimums, the date the Debt page shows; null when an APR is not recorded). An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; simulate_debt_payoff gives those.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -1708,6 +1682,12 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
         "result": {
           "additionalProperties": false,
           "properties": {
+            "debtFreeDateOnMinimums": {
+              "type": [
+                "string",
+                "null",
+              ],
+            },
             "debts": {
               "items": {
                 "additionalProperties": false,
@@ -1795,6 +1775,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "totalConsumerDebtGbp",
             "overdrawnGbp",
             "totalMinimumPaymentsGbp",
+            "debtFreeDateOnMinimums",
             "weightedAprPct",
             "mortgageGbp",
             "studentLoanGbp",

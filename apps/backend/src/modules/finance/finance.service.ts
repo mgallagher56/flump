@@ -103,10 +103,6 @@ export class FinanceService {
     return this.accountIntakeService.getAccountDetails(userId, accountId);
   }
 
-  async getPortfolioSnapshot(userId: string) {
-    return this.accountIntakeService.getPortfolioSnapshot(userId);
-  }
-
   async createAccount(userId: string, body: CreateAccountDto) {
     return this.accountIntakeService.createAccount(userId, body);
   }

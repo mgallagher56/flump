@@ -7,7 +7,6 @@ import { Account } from "../entities/account.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { TaxRecord } from "../entities/tax-record.entity";
-import { UserProfile } from "../entities/user-profile.entity";
 import { countAccountOrphans } from "../integrity/account-orphans";
 import { AccountIntakeService } from "../modules/finance/account-intake.service";
 import { TaxService } from "../modules/tax/tax.service";
@@ -314,7 +313,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         new AccountIntakeService(
           ds.getRepository(Account),
           ds.getRepository(AccountDetail),
-          ds.getRepository(UserProfile),
           ds.getRepository(BankConnection),
         );
       const children = async (id: string) => ({

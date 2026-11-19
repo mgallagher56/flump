@@ -665,12 +665,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
         deletion,
       );
     const intake = () =>
-      new AccountIntakeService(
-        repo(Account),
-        repo(AccountDetail),
-        repo(UserProfile),
-        repo(BankConnection),
-      );
+      new AccountIntakeService(repo(Account), repo(AccountDetail), repo(BankConnection));
 
     it("a new profile has today's defaults: property counts, student loans do not", async () => {
       const view = await profiles().getProfile(USER_A);
@@ -729,53 +724,14 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       });
     });
 
-    it.each([
-      [true, false, 134000, ["studentLoan"]],
-      [true, true, 109000, []],
-      [false, false, 20000, ["property", "mortgage", "studentLoan"]],
-      [false, true, -5000, ["property", "mortgage"]],
-    ] as const)(
-      "the portfolio snapshot follows the choices: property %s, student loan %s",
-      async (countProperty, countStudentLoan, netWorth, leftOut) => {
-        const m = ds.manager;
-        // Liabilities are stored negative (BE-05).
-        for (const [name, type, balance] of [
-          ["Home", "Property", 300000],
-          ["Residential Mortgage", "Mortgage", -186000],
-          ["Student loan", "Student Loan", -25000],
-          ["Savings", "Saving", 20000],
-          // B's accounts and choices never reach A's figures.
-        ] as const) {
-          await m.save(m.create(Account, { userId: USER_A, name, type, balance }));
-        }
-        await m.save(m.create(Account, { userId: USER_B, name: "B", type: "Saving", balance: 9 }));
-        await profiles().updateProfile(USER_A, {
-          netWorthCountsProperty: countProperty,
-          netWorthCountsStudentLoan: countStudentLoan,
-        });
-        await profiles().updateProfile(USER_B, {
-          netWorthCountsProperty: !countProperty,
-          netWorthCountsStudentLoan: !countStudentLoan,
-        });
-
-        const snap = await intake().getPortfolioSnapshot(USER_A);
-        expect(snap.netWorth).toBe(netWorth);
-        expect(snap.totalAssets - snap.totalLiabilities).toBe(netWorth);
-        expect(snap.netWorthLeavesOut).toEqual(leftOut);
-        expect(snap.resolvedAccounts.reduce((sum, a) => sum + a.netWorthBalance, 0)).toBe(netWorth);
-        expect(snap.totalProperty).toBe(300000);
-        expect(snap.totalStudentLoans).toBe(25000);
-      },
-    );
-
-    it("the portfolio snapshot uses the defaults when no profile exists", async () => {
+    it("an account read returns only the caller's accounts, whatever the other user chose", async () => {
       const m = ds.manager;
-      await m.save(
-        m.create(Account, { userId: USER_A, name: "Loan", type: "Student Loan", balance: -100 }),
-      );
-      const snap = await intake().getPortfolioSnapshot(USER_A);
-      expect(snap.netWorth).toBe(0);
-      expect(snap.netWorthLeavesOut).toEqual(["studentLoan"]);
+      await m.save(m.create(Account, { userId: USER_A, name: "A", type: "Saving", balance: 5 }));
+      await m.save(m.create(Account, { userId: USER_B, name: "B", type: "Saving", balance: 9 }));
+      await profiles().updateProfile(USER_B, { netWorthCountsProperty: false });
+
+      const accounts = await intake().getAccounts(USER_A);
+      expect(accounts.map((a) => a.name)).toEqual(["A"]);
     });
   });
 });

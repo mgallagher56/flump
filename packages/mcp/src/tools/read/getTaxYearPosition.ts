@@ -5,10 +5,8 @@ import {
   estimateInputsFor,
   getTaxYearVerification,
   getUkTaxYearRules,
-  isSelfEmployedType,
   MCP_NOTICE,
   payeSalaryForTax,
-  type SavedFinancialBaseline,
   type TaxEstimateMissingFact,
 } from "@flump/finance-engine";
 import { z } from "zod";
@@ -93,40 +91,30 @@ export const getTaxYearPosition = defineFlumpTool({
   maxTokens: 3000,
   async handler(input, ctx) {
     const { taxYear, assumptions } = resolveTaxYear(input.taxYear);
-    const baseline = await ctx.dataProvider.getBaseline(ctx.token.userId);
+    const facts = await ctx.dataProvider.getProfileFacts(ctx.token.userId);
     const { records } = await loadTaxYearRecords(ctx, taxYear);
     // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
-    const selfEmployed = isSelfEmployedType(baseline.employmentStatus);
-    const notSet = (baseline as SavedFinancialBaseline).notSet ?? [];
-    const savedSalary = Number(baseline.annualGrossSalary);
-    const share = Number(baseline.propertyOwnershipSharePct);
-    // As on the Tax page, a stored 0 is kept (no share of the rent); only a missing value means 100.
-    const ownershipShare = Number.isFinite(share) && share >= 0 && share <= 100 ? share : 100;
+    const selfEmployed = facts.employmentType === "self-employed";
+    const share = facts.propertyOwnershipShare;
+    // As on the Tax page, a saved 0 is kept (no share of the rent); only no saved value means 100.
+    const ownershipShare =
+      share !== null && share !== undefined && share >= 0 && share <= 100 ? share : 100;
     // Whether the estimate can be worked out: the one rule every surface uses.
-    const inputs = estimateInputsFor(
-      {
-        employmentType: baseline.employmentStatus,
-        annualSalary:
-          notSet.includes("annualGrossSalary") || !(savedSalary > 0) ? null : savedSalary,
-        propertyOwnershipShare: ownershipShare,
-      },
-      records,
-      taxYear,
-    );
+    const inputs = estimateInputsFor(facts, records, taxYear);
     const salary =
       inputs.status === "known"
         ? inputs.payeSalary
         : payeSalaryForTax({
-            employmentType: baseline.employmentStatus,
-            annualSalary: savedSalary,
+            employmentType: facts.employmentType,
+            annualSalary: facts.annualSalary,
           });
 
     // The Tax page's own calculation, so the figures match the app.
     const ledger = calculateUKTax(taxYear, records, salary, ownershipShare);
     const rules = getUkTaxYearRules(taxYear);
     const region: "SCOTLAND" | "ENGLAND_NI_WALES" =
-      baseline.ukRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES";
-    const regionAssumed = baseline.ukRegionAssumed !== false || !baseline.ukRegion;
+      facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES";
+    const regionAssumed = facts.taxRegion === null;
 
     const total = ledger.totalGrossIncome;
     const standard = rules.ewni.personalAllowance;
@@ -151,7 +139,7 @@ export const getTaxYearPosition = defineFlumpTool({
     const missing: Missing[] = [];
     const estimateMissing: TaxEstimateMissingFact[] =
       inputs.status === "known" ? [] : inputs.missing;
-    if (salary === 0 && records.length === 0) {
+    if (salary === 0 && records.length === 0 && !selfEmployed) {
       missing.push({
         field: "annualSalary",
         why: "No salary is saved and no tax records fall in this tax year, so every figure is zero and there is no estimate.",

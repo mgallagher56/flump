@@ -10,7 +10,7 @@ import {
 } from "react-router";
 import { RetirementPlanner } from "~/features/retirement/components/RetirementPlanner";
 import { retirementArgsFromLoader } from "~/features/retirement/retirementInput";
-import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { backendFetch, loadWorkspacePicture } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
@@ -37,7 +37,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const token = requireAccessToken({ accessToken });
 
   const [snapshot, planRes] = await Promise.all([
-    loadWorkspaceSnapshot(args, { includeBudget: true }),
+    // The shared loader reads every row the picture needs, budget lines included (PP-6).
+    loadWorkspacePicture(args),
     backendFetch("/retirement-plan", {
       schema: RetirementPlanResponse,
       accessToken: token,

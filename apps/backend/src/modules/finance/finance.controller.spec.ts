@@ -310,26 +310,11 @@ describe("FinanceController & FinanceService", () => {
       },
     ];
     const mockDetails = [{ id: "det-1", accountId: "acc-1", month: 1, year: 2026, value: 1000 }];
-    const mockSnapshot = {
-      netWorth: 1000,
-      totalAssets: 1000,
-      totalLiabilities: 0,
-      totalLiquidCash: 1000,
-      totalInvestments: 0,
-      totalPensions: 0,
-      totalConsumerDebt: 0,
-      totalMortgageBalance: 0,
-      resolvedAccounts: [],
-      monthlyHistory: [],
-      currency: "GBP",
-    };
-
     const mockFinanceService = {
       getAccounts: vi.fn(),
       listAccounts: vi.fn().mockResolvedValue({ items: mockAccounts, nextCursor: null }),
       getAccount: vi.fn().mockResolvedValue(mockAccounts[0]),
       listAccountDetails: vi.fn().mockResolvedValue({ items: mockDetails, nextCursor: null }),
-      getPortfolioSnapshot: vi.fn().mockResolvedValue(mockSnapshot),
       createAccount: vi.fn().mockResolvedValue(mockAccounts[0]),
       updateAccount: vi.fn().mockResolvedValue(mockAccounts[0]),
       deleteAccount: vi.fn().mockResolvedValue({ success: true }),
@@ -344,7 +329,6 @@ describe("FinanceController & FinanceService", () => {
     expect(await controller.getAccount(userReq, "acc-1")).toEqual(publicAccount);
     expect(await controller.getAccountDetails(userReq)).toEqual(mockDetails);
     expect(await controller.getAccountSpecificDetails(userReq, "acc-1")).toEqual(mockDetails);
-    expect(await controller.getPortfolioSnapshot(userReq)).toEqual(mockSnapshot);
 
     const createDto = { name: "Savings", type: "Saving", balance: 500 } as const;
     await controller.createAccount(userReq, createDto);

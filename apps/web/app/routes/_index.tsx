@@ -18,10 +18,9 @@ import {
   londonDate,
   londonMonth,
 } from "~/features/snapshot/snapshotModel";
-import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { buildDebtSummary } from "~/utils/debtSummary";
+import { loadWorkspacePicture } from "~/services/backend-client.server";
 import { isDemoMode } from "~/utils/demoData";
-import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
+import { knownOrNull } from "~/utils/financialPicture";
 import { getMarketingUrl } from "~/utils/marketingUrl";
 
 export const meta: MetaFunction = () => [{ title: "Your money | Flump" }];
@@ -51,14 +50,10 @@ export function describeMissingTakeHome(profile: TakeHomeProfile | undefined): s
 }
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, userProfile, budgetEntries, accountDetails, taxRecords, user } =
-    await loadWorkspaceSnapshot(args, {
-      ensureSignedIn: false,
-      includeBudget: true,
-      includeTax: true,
-    });
+  const { accounts, userProfile, budgetEntries, accountDetails, taxRecords, user, picture } =
+    await loadWorkspacePicture(args, { ensureSignedIn: false });
 
-  if (!user) {
+  if (!user || !picture) {
     // Demo is a single experience at /sandbox; signed-in users never see demo data.
     if (isDemoMode(args.request.url)) {
       return redirect("/sandbox");
@@ -73,13 +68,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   const completedSteps = (userProfile?.setupChecklistCompletedSteps as string[]) ?? [];
 
-  // Every derived figure (net worth, debt, budget totals, safe to spend, breathing room) comes
-  // from the one financial picture, built once from saved rows (E23 section 2).
+  // Every derived figure comes from the one financial picture, which the shared loader builds
+  // from every saved row it needs (E23 section 2; audit slice 3, decision 10).
   const portfolioSnapshot = new PortfolioSnapshot(accounts, accountDetails);
-  const picture = buildWorkspacePicture(
-    { userProfile, accounts, accountDetails, budgetEntries, taxRecords },
-    { snapshot: portfolioSnapshot },
-  );
   const { totalAssets, totalLiabilities, netWorth, liquidCash, homeEstimate, basis, leftOut } =
     picture.netWorth;
   const budget = knownOrNull(picture.budget);
@@ -93,20 +84,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const savingsAccounts = Array.isArray(accounts)
     ? accounts.filter((a: any) => a.type === "Saving" || a.type === "Investment")
     : [];
-  // At the user's share, from the engine, as the Savings page and net worth read it (SD-2).
-  const totalSavingsBalance = savingsAccounts.reduce(
-    (sum: number, a: any) =>
-      sum +
-      (portfolioSnapshot.getAccount(String(a.id))?.nominalBalance ?? (Number(a.balance) || 0)),
-    0,
-  );
-  const totalMonthlyContributions = savingsAccounts.reduce(
-    (sum: number, a: any) => sum + (Number(a.monthlyContribution) || 0),
-    0,
-  );
-  // No savings balance means no weighted rate: never substitute a default rate for a real one.
-  const weightedInterestRate =
-    totalSavingsBalance > 0 ? portfolioSnapshot.getWeightedSavingsRate(0) : null;
+  // At the user's share, as the Savings page and net worth read them (SD-2). No balance means no
+  // weighted rate, never a default one.
+  const {
+    balance: totalSavingsBalance,
+    monthlyContributions: totalMonthlyContributions,
+    weightedRate: weightedInterestRate,
+  } = picture.savings;
 
   // Pension accounts data
   const pensionAccounts = Array.isArray(accounts)
@@ -160,18 +144,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     : [...picture.estimatedTaxDue.missing];
 
   // Estimated take-home comes from the engine's one selector; unknown stays unknown.
-  const takeHomeFigure = selectTakeHome(profileFactsFromProfile(userProfile));
+  const takeHomeFigure = picture.takeHome;
   const takeHome = isFigureKnown(takeHomeFigure) ? takeHomeFigure.value : null;
-  const pensionPercentKnown =
-    userProfile?.pensionPercent !== null &&
-    userProfile?.pensionPercent !== undefined &&
-    String(userProfile.pensionPercent) !== "";
-  const monthlyContributionEst =
-    userProfile?.annualSalary && pensionPercentKnown
-      ? Math.round(
-          (Number(userProfile.annualSalary) * Number(userProfile.pensionPercent)) / 100 / 12,
-        )
-      : null;
+  const monthlyContributionEst = picture.pensionContributionMonthly;
 
   // The hero's one delta compares today's net worth with the latest recorded month before this
   // one (E16 P6). Only that month and its total leave the loader. The series is computed under the
@@ -299,7 +274,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       estimatedTaxDueMissing,
       recordsCount: currentYearRecords.length,
     },
-    debtData: buildDebtSummary(portfolioSnapshot),
+    debtData: picture.debtSummary,
   };
 };
 

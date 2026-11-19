@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "./portfolio.js";
+import { type SnapshotRow, selectNetWorthSeries } from "./snapshots.js";
+
+const seriesOf = (accounts: RawAccount[], details: RawAccountDetail[]) =>
+  selectNetWorthSeries(accounts, details as SnapshotRow[], DEFAULT_NET_WORTH_BASIS);
 
 const current = (balance: number, id = "cur"): RawAccount => ({
   id,
@@ -17,25 +21,22 @@ const saving = (balance: number, id = "sav"): RawAccount => ({
 
 describe("E23 D22: current figure and history", () => {
   it("a PATCHed balance wins over the latest history row", () => {
-    const snapshot = new PortfolioSnapshot(
-      [saving(5000)],
-      [
-        { accountId: "sav", year: 2026, month: 1, value: 1000 },
-        { accountId: "sav", year: 2026, month: 2, value: 2000 },
-      ],
-    );
+    const accounts = [saving(5000)];
+    const details = [
+      { accountId: "sav", year: 2026, month: 1, value: 1000 },
+      { accountId: "sav", year: 2026, month: 2, value: 2000 },
+    ];
+    const snapshot = new PortfolioSnapshot(accounts, details);
     expect(snapshot.getLatestBalance("sav")).toBe(5000);
     expect(snapshot.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(5000);
     // History keeps the recorded past figures.
-    expect(snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS).map((p) => p.netWorth)).toEqual([
-      1000, 2000,
-    ]);
+    expect(seriesOf(accounts, details).map((p) => p.netWorth)).toEqual([1000, 2000]);
   });
 
   const table: Array<{
     name: string;
     details: RawAccountDetail[];
-    expected: Array<{ month: number; netWorth: number }>;
+    expected: Array<{ month: string; netWorth: number }>;
   }> = [
     {
       name: "carries the last value across a gap month",
@@ -44,10 +45,10 @@ describe("E23 D22: current figure and history", () => {
         { accountId: "sav", year: 2026, month: 4, value: 1600 },
       ],
       expected: [
-        { month: 1, netWorth: 1000 },
-        { month: 2, netWorth: 1000 },
-        { month: 3, netWorth: 1000 },
-        { month: 4, netWorth: 1600 },
+        { month: "2026-01", netWorth: 1000 },
+        { month: "2026-02", netWorth: 1000 },
+        { month: "2026-03", netWorth: 1000 },
+        { month: "2026-04", netWorth: 1600 },
       ],
     },
     {
@@ -58,8 +59,8 @@ describe("E23 D22: current figure and history", () => {
         { accountId: "cur", year: 2026, month: 1, value: 300 },
       ],
       expected: [
-        { month: 12, netWorth: 1200 },
-        { month: 1, netWorth: 1300 },
+        { month: "2025-12", netWorth: 1200 },
+        { month: "2026-01", netWorth: 1300 },
       ],
     },
     {
@@ -69,7 +70,7 @@ describe("E23 D22: current figure and history", () => {
         { accountId: "sav", year: 2026, month: 1, value: 1000 },
         { accountId: "sav", year: 2026, month: 1, value: 1100 },
       ],
-      expected: [{ month: 1, netWorth: 1100 }],
+      expected: [{ month: "2026-01", netWorth: 1100 }],
     },
     {
       name: "skips a row without a month",
@@ -79,7 +80,7 @@ describe("E23 D22: current figure and history", () => {
         { accountId: "sav", year: 2026, month: 13, value: 999 },
         { accountId: "sav", year: 2026, month: 2, value: 700 },
       ],
-      expected: [{ month: 2, netWorth: 700 }],
+      expected: [{ month: "2026-02", netWorth: 700 }],
     },
     {
       name: "skips a row without a year instead of defaulting to 2025",
@@ -87,13 +88,12 @@ describe("E23 D22: current figure and history", () => {
         { accountId: "sav", month: 1, value: 999 } as unknown as RawAccountDetail,
         { accountId: "sav", year: 2026, month: 3, value: 400 },
       ],
-      expected: [{ month: 3, netWorth: 400 }],
+      expected: [{ month: "2026-03", netWorth: 400 }],
     },
   ];
 
   it.each(table)("$name", ({ details, expected }) => {
-    const snapshot = new PortfolioSnapshot([saving(0), current(0)], details);
-    const history = snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 24);
+    const history = seriesOf([saving(0), current(0)], details);
     expect(history.map((p) => ({ month: p.month, netWorth: p.netWorth }))).toEqual(expected);
   });
 
@@ -103,12 +103,12 @@ describe("E23 D22: current figure and history", () => {
       { id: "pen", type: "Pension", balance: 0 },
       { id: "sl", type: "Student Loan", balance: 0 },
     ];
-    const snapshot = new PortfolioSnapshot(accounts, [
+    const series = seriesOf(accounts, [
       { accountId: "prop", year: 2026, month: 1, value: 200000 },
       { accountId: "pen", year: 2026, month: 1, value: 30000 },
       { accountId: "sl", year: 2026, month: 1, value: -40000 },
     ]);
-    expect(snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS)[0]?.netWorth).toBe(230000);
+    expect(series[0]?.netWorth).toBe(230000);
   });
 });
 
@@ -155,14 +155,14 @@ describe("E23 D17: asset signs", () => {
   });
 
   it("history keeps the real sign of an overdrawn current account", () => {
-    const snapshot = new PortfolioSnapshot(
+    const series = seriesOf(
       [current(0), saving(0)],
       [
         { accountId: "cur", year: 2026, month: 1, value: -1500 },
         { accountId: "sav", year: 2026, month: 1, value: 4000 },
       ],
     );
-    expect(snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS)[0]).toMatchObject({
+    expect(series[0]).toMatchObject({
       netWorth: 2500,
       totalAssets: 4000,
       totalLiabilities: 1500,

@@ -133,7 +133,6 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         method: "get",
         path: () => `/accounts/${accountId}/details`,
       },
-      { key: "GET /portfolio-snapshot", method: "get", path: () => "/portfolio-snapshot" },
       {
         key: "POST /accounts",
         method: "post",
@@ -205,7 +204,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
   });
 
   describe("lists never return A's rows to B", () => {
-    it("GET /accounts, /account-details, /transactions, /bank-connections, /portfolio-snapshot", async () => {
+    it("GET /accounts, /account-details, /transactions, /bank-connections", async () => {
       const a = await h.call("get", "/accounts", h.tokens.a);
       expect(a.status).toBe(200);
       expect(a.body.map((r: { id: string }) => r.id)).toEqual([accountId]);
@@ -217,9 +216,6 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       expect(aConnections.body).toHaveLength(1);
       const aDetails = await h.call("get", "/account-details", h.tokens.a);
       expect(aDetails.status).toBe(200);
-      const aSnapshot = await h.call("get", "/portfolio-snapshot", h.tokens.a);
-      expect(aSnapshot.status).toBe(200);
-      expect(aSnapshot.body.netWorth).toBe(1204.5);
 
       const b = await h.call("get", "/accounts", h.tokens.b);
       expect(b.status).toBe(200);
@@ -234,10 +230,6 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         expect(res.status, path).toBe(200);
         expect(res.body, path).toEqual([]);
       }
-      const bSnapshot = await h.call("get", "/portfolio-snapshot", h.tokens.b);
-      expect(bSnapshot.status).toBe(200);
-      expect(bSnapshot.body.netWorth).toBe(0);
-      expect(JSON.stringify(bSnapshot.body)).not.toContain(accountId);
 
       const capability = await h.call("get", "/bank-connections/capability", h.tokens.b);
       expect(capability.status).toBe(200);
@@ -247,7 +239,6 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         "GET /account-details",
         "GET /transactions",
         "GET /bank-connections",
-        "GET /portfolio-snapshot",
         "GET /bank-connections/capability",
       ]) {
         ran(key);

@@ -7,7 +7,7 @@ import type { BuildContextPackInput } from "@flump/finance-engine";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { filterKnownScopes, type McpScope, WRITE_STAGE_SCOPE } from "../auth/scopes.js";
 import { type McpLogger, stderrLogger } from "../logger.js";
-import { inMemoryQueries } from "../provider/in-memory.js";
+import { inMemoryQueries, withFinancialPicture } from "../provider/in-memory.js";
 import { createFlumpMcpServer, RETIREMENT_TOOL_NAMES } from "../server.js";
 import type { McpUserDataProvider } from "../types.js";
 
@@ -124,7 +124,8 @@ export async function runStdio(
   // token whose scopes change (or that is revoked) fails its next read and the tool call with it.
   const getUserFinancialData = async () => toEngineInput((await readInput()).input);
   const dataProvider: McpUserDataProvider = {
-    getUserFinancialData,
+    // The picture is built here from the same input, by the engine's one assembler.
+    getUserFinancialData: async () => withFinancialPicture(await getUserFinancialData()),
     ...inMemoryQueries(getUserFinancialData),
   };
 

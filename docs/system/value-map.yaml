@@ -1902,7 +1902,7 @@ figures:
           function: "PortfolioSnapshot.getTotalNetWorth called directly",
           status: wrapper,
           path: packages/mcp/src/tools/read/getFinancialSnapshot.ts,
-          note: "same formula, a second assembler",
+          note: "past month only (asOfMonth), over the recorded month-end values; today's figure reads the shared picture",
         }
       - {
           function: deriveOnboardingSummary,
@@ -1930,13 +1930,7 @@ figures:
     name: Net worth over time
     area: accounts
     computed_by: { function: selectNetWorthSeries, path: packages/finance-engine/src/snapshots.ts }
-    other_paths:
-      - {
-          function: PortfolioSnapshot.getMonthlyHistory,
-          status: duplicate,
-          path: packages/finance-engine/src/portfolio.ts,
-          note: "a second series that stops at the last recorded month; feeds the context pack",
-        }
+    other_paths: []
     inputs: [balance-history, account-balance, ownership-share, net-worth-choices]
     shown_on:
       - { surface: history, path: apps/web/app/features/snapshot/snapshotModel.ts }
@@ -1957,24 +1951,13 @@ figures:
       }
     other_paths:
       - {
-          function: "context pack debt balance",
-          status: duplicate,
-          path: packages/finance-engine/src/ai-context-pack.ts,
-          note: "leaves out an overdrawn current account",
-        }
-      - {
-          function: "local sums",
-          status: duplicate,
-          path: packages/mcp/src/tools/read/getDebtOverview.ts,
-        }
-      - {
           function: "payoff balance fallback",
           status: duplicate,
           path: apps/web/app/containers/debt/DebtContainer.tsx,
         }
     inputs: [account-balance, ownership-share]
     shown_on:
-      - { surface: dashboard, path: apps/web/app/utils/debtSummary.ts }
+      - { surface: dashboard, path: apps/web/app/routes/_index.tsx }
       - { surface: debt, path: apps/web/app/features/debt/utils/debtInputs.ts }
       - { surface: mcp-read, path: packages/mcp/src/tools/read/getDebtOverview.ts }
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
@@ -1988,11 +1971,11 @@ figures:
     computed_by:
       { function: compareAvalancheAndSnowball, path: packages/finance-engine/src/debt-payoff.ts }
     other_paths:
-      - { function: buildDebtSummary, status: wrapper, path: apps/web/app/utils/debtSummary.ts }
       - {
-          function: "context pack payoff with a fixed extra 50 a month",
-          status: duplicate,
-          path: packages/finance-engine/src/ai-context-pack.ts,
+          function: selectDebtSummary,
+          status: wrapper,
+          path: packages/finance-engine/src/picture/selectors/debt-summary.ts,
+          note: "the picture's debt summary; the Dashboard, get_debt_overview and the context pack read it",
         }
       - {
           function: simulate_debt_payoff,
@@ -2002,7 +1985,8 @@ figures:
         }
     inputs: [account-balance, account-rate, account-monthly-amount, card-limit-and-zero-percent-end]
     shown_on:
-      - { surface: dashboard, path: apps/web/app/utils/debtSummary.ts }
+      - { surface: dashboard, path: apps/web/app/routes/_index.tsx }
+      - { surface: mcp-read, path: packages/mcp/src/tools/read/getDebtOverview.ts }
       - { surface: debt, path: apps/web/app/containers/debt/DebtContainer.tsx }
       - { surface: mcp-simulate, path: packages/mcp/src/tools/simulate/simulateDebtPayoff.ts }
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
@@ -2142,16 +2126,6 @@ figures:
         path: packages/finance-engine/src/picture/selectors/budget-totals.ts,
       }
     other_paths:
-      - {
-          function: summariseBudget,
-          status: duplicate,
-          path: packages/mcp/src/tools/read/common.ts,
-        }
-      - {
-          function: "get_financial_snapshot surplus",
-          status: duplicate,
-          path: packages/mcp/src/tools/read/getFinancialSnapshot.ts,
-        }
       - { function: toMonthly, status: duplicate, path: apps/web/app/types/budget.ts }
       - {
           function: "wizard totals",
@@ -2208,12 +2182,6 @@ figures:
       }
     other_paths:
       - {
-          function: "get_financial_snapshot runway",
-          status: duplicate,
-          path: packages/mcp/src/tools/read/getFinancialSnapshot.ts,
-          note: "a different essentials base",
-        }
-      - {
           function: "runway what-if sums",
           status: duplicate,
           path: apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.tsx,
@@ -2233,20 +2201,15 @@ figures:
     area: accounts
     computed_by:
       {
-        function: "PortfolioSnapshot balances at share, summed on the Savings page",
-        path: packages/finance-engine/src/portfolio.ts,
+        function: selectSavingsTotals,
+        path: packages/finance-engine/src/picture/selectors/savings-totals.ts,
       }
     other_paths:
-      - {
-          function: "Dashboard sum",
-          status: duplicate,
-          path: apps/web/app/routes/_index.tsx,
-          note: "at the share, from the portfolio snapshot",
-        }
       - {
           function: "Savings page sum",
           status: duplicate,
           path: apps/web/app/containers/savings/SavingsContainer.tsx,
+          note: "at the share; moves to the loader's picture once the containers read it",
         }
     inputs: [account-balance, account-monthly-amount, ownership-share]
     shown_on:
@@ -2255,10 +2218,11 @@ figures:
           path: apps/web/app/features/dashboard/components/SavingsWidget/SavingsWidget.tsx,
         }
       - { surface: savings, path: apps/web/app/containers/savings/SavingsContainer.tsx }
+      - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L42, L55]
-    verdict: broken
+    verdict: duplicated
     findings: []
-    note: No engine selector owns this total; the Dashboard and Savings page both sum at the share.
+    note: The Dashboard and the context pack read selectSavingsTotals from the shared picture, at the user's share. The Savings page still sums the same way itself.
 
   - id: savings-interest
     name: Savings interest over the next 12 months
@@ -2273,7 +2237,7 @@ figures:
           function: PortfolioSnapshot.getWeightedSavingsRate,
           status: duplicate,
           path: packages/finance-engine/src/portfolio.ts,
-          note: "a second weighted rate with different rules; computed for the Dashboard and not shown",
+          note: "a second weighted rate with different rules; the context pack shows it as the average savings rate, through selectSavingsTotals",
         }
     inputs: [account-balance, account-rate, account-monthly-amount, ownership-share]
     shown_on:
@@ -2288,14 +2252,19 @@ figures:
     computed_by:
       {
         function: estimateIsaUsed,
-        path: apps/web/app/features/savings/components/SavingsAccountsList/isaAllowance.utils.ts,
+        path: packages/finance-engine/src/picture/selectors/isa-allowance-used.ts,
       }
     other_paths:
+      - {
+          function: "re-export for the Savings page",
+          status: wrapper,
+          path: apps/web/app/features/savings/components/SavingsAccountsList/isaAllowance.utils.ts,
+        }
       - {
           function: "fixed 0 used",
           status: default,
           path: packages/finance-engine/src/uk-tax.ts,
-          note: "the AI pack always reports the whole allowance unused",
+          note: "the allowance status default; the context pack replaces it with the picture's figure, or not set",
         }
     inputs: [account-monthly-amount]
     shown_on:
@@ -2305,9 +2274,9 @@ figures:
         }
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L41]
-    verdict: duplicated
+    verdict: holds
     findings: [SD-3]
-    note: Computed outside the engine, with its own copy of the allowance.
+    note: One engine function. The Savings page calls it through the re-export; the context pack reads it from the shared picture.
 
   - id: estimated-tax
     name: Estimated Self Assessment tax
@@ -2368,7 +2337,12 @@ figures:
           status: duplicate,
           path: apps/web/app/containers/pension/PensionContainer.tsx,
         }
-      - { function: "Dashboard estimate", status: duplicate, path: apps/web/app/routes/_index.tsx }
+      - {
+          function: selectPensionContributionMonthly,
+          status: duplicate,
+          path: packages/finance-engine/src/picture/selectors/pension-contribution.ts,
+          note: "the Dashboard estimate, salary times the employee rate, moved into the engine unchanged",
+        }
       - {
           function: "project_net_worth pension saving",
           status: duplicate,

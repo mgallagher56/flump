@@ -17,6 +17,7 @@ import { UserProfile } from "../entities/user-profile.entity";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { AgentModule } from "./agent/agent.module";
+import { FinancialPictureService } from "./agent/financial-picture.service";
 import { McpController } from "./agent/mcp.controller";
 import { BankingModule } from "./banking/banking.module";
 import { BankProviderRegistry } from "./banking/providers/provider.registry";
@@ -154,7 +155,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("each domain module b
     ["finance", FinanceModule, [FinanceController, FinanceService]],
     ["privacy", PrivacyModule, [AccountDeletionService, AccountExportService]],
     ["profile", ProfileModule, [UserProfileController, UserProfileService]],
-    ["agent", AgentModule, [McpController]],
+    ["agent", AgentModule, [McpController, FinancialPictureService]],
   ];
 
   it.each(cases)("%s", async (_name, domainModule, resolves) => {

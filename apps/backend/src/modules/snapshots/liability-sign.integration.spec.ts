@@ -183,7 +183,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       new AccountIntakeService(
         ds.getRepository(Account),
         ds.getRepository(AccountDetail),
-        ds.getRepository(UserProfile),
         ds.getRepository(BankConnection),
       );
 

@@ -25,7 +25,6 @@ export function financeServiceWithIntake(
   const intake = new AccountIntakeService(
     accounts as Repository<Account>,
     details as Repository<AccountDetail>,
-    profiles as Repository<UserProfile>,
     connections as Repository<BankConnection>,
   );
   return new FinanceService(

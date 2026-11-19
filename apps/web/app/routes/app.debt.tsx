@@ -8,7 +8,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import { data } from "react-router";
 import DebtContainer from "~/containers/debt/DebtContainer";
 import { buildDebtInputs } from "~/features/debt/utils/debtInputs";
-import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { backendFetch, loadWorkspacePicture } from "~/services/backend-client.server";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
@@ -108,13 +108,14 @@ export const meta: MetaFunction = () => [{ title: "Cards and loans | Flump" }];
 export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, userProfile, budgetEntries, user } =
-    await loadWorkspaceSnapshot(args, { includeBudget: true });
+  const { accounts, accountDetails, userProfile, budgetEntries, user, picture } =
+    await loadWorkspacePicture(args);
 
   return data({
     accounts,
     accountDetails,
     userProfile,
+    picture,
     debtInputs: buildDebtInputs(accounts, accountDetails, budgetEntries, userProfile),
     user,
   });

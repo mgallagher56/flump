@@ -1,8 +1,11 @@
 import {
   anonymousBudgetEntryLabels,
   budgetRowMonthly,
+  isFigureKnown,
   MCP_NOTICE,
   resolveBudgetEntrySharePercent,
+  selectBudgetByCategory,
+  selectBudgetTotals,
 } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
@@ -14,14 +17,21 @@ import {
   missingLinkedLines,
   round2,
   sanitiseText,
-  summariseBudget,
 } from "./common.js";
 
 const result = z.object({
   monthlyIncomeGbp: z.number().nullable(),
+  /** Essential entries, savings entries left out. Debt entries marked essential are included. */
   essentialMonthlyGbp: z.number(),
+  /** Every other spending entry, savings entries left out. */
   discretionaryMonthlyGbp: z.number(),
-  /** Income minus essential and discretionary spend, before any debt payments. */
+  /** Entries in the savings category, whatever their essential flag. */
+  savingsMonthlyGbp: z.number(),
+  /**
+   * Left over each month, as the Dashboard shows it: income minus essential, discretionary and
+   * savings entries. Debt payments count only where they are budget entries. The key name is
+   * kept for existing clients.
+   */
   monthlySurplusBeforeDebtGbp: z.number().nullable(),
   entryCount: z.number(),
   notes: z.array(z.string()),
@@ -86,29 +96,39 @@ export const getBudgetSummary = defineFlumpTool({
   name: "get_budget_summary",
   title: "Budget summary",
   description:
-    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. With no income entry, income is the take-home pay worked out from the saved salary, as in the Flump budget; a saved take-home pay or housing payment that the budget does not include is listed in savedFiguresNotInBudget and not counted. Income and the left-over amount are null (with a question in missing[]) when neither exists. Detailed format lists each entry.",
+    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, savings, the amount left over each month (the figure the Dashboard shows), and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. With no income entry, income is the take-home pay worked out from the saved salary, as in the Flump budget; a saved take-home pay or housing payment that the budget does not include is listed in savedFiguresNotInBudget and not counted. Income and the left-over amount are null (with a question in missing[]) when neither exists. Detailed format lists each entry.",
   input: {},
   result,
   maxTokens: 1500,
   async handler(_input, ctx, { responseFormat }) {
     const m = await loadReadModel(ctx);
+    // The budget as the picture resolved it: linked lines in place, shadowed rows left out.
     const entries = m.budgetEntries;
-    const b = summariseBudget(entries);
+    const rows = m.picture.budgetRows;
+    // A linked line whose saved fact is not set makes the picture's totals unknown. Spending is
+    // still known: it is the same selector over the lines that are set. Income and left over stay
+    // unknown, never counted with a £0 line.
+    const notSetMissing = missingLinkedLines(rows);
+    const totalsFigure = isFigureKnown(m.picture.budget)
+      ? m.picture.budget
+      : notSetMissing.length > 0
+        ? selectBudgetTotals(rows.filter((row) => !row.notSet))
+        : m.picture.budget;
+    const totals = isFigureKnown(totalsFigure) ? totalsFigure.value : null;
     const missing: Missing[] = [];
-    if (!b.hasEntries) {
+    if (entries.length === 0) {
       missing.push({
         field: "budgetEntries",
         why: "No budget entries are recorded.",
         askUser: "What are your main monthly outgoings, such as rent or mortgage, bills and food?",
       });
     }
-    let surplus: number | null = null;
-    missing.push(...missingLinkedLines(b));
-    if (b.monthlyIncome === null) {
-      if (b.notSet.length === 0) missing.push(MISSING_INCOME);
-    } else {
-      surplus = round2(b.monthlyIncome - b.essentialMonthly - b.discretionaryMonthly);
-    }
+    // Income and left over are null without an income entry, or with a linked line not set.
+    missing.push(...notSetMissing);
+    const incomeKnown = totals?.hasIncome === true && notSetMissing.length === 0;
+    const income = incomeKnown ? totals.income : null;
+    const surplus = incomeKnown ? totals.surplus : null;
+    if (!totals?.hasIncome && notSetMissing.length === 0) missing.push(MISSING_INCOME);
 
     // M-PRIV4 and ruling 7: anonymised, neither an entry name ("Rent to J Smith") nor a custom
     // category name ("Jane's nursery") reaches the agent. A custom category becomes "Custom
@@ -143,18 +163,19 @@ export const getBudgetSummary = defineFlumpTool({
 
     return {
       result: {
-        monthlyIncomeGbp: b.monthlyIncome,
-        essentialMonthlyGbp: b.essentialMonthly,
-        discretionaryMonthlyGbp: b.discretionaryMonthly,
+        monthlyIncomeGbp: income,
+        essentialMonthlyGbp: totals?.essentials ?? 0,
+        discretionaryMonthlyGbp: totals?.discretionary ?? 0,
+        savingsMonthlyGbp: totals?.savings ?? 0,
         monthlySurplusBeforeDebtGbp: surplus,
         entryCount: entries.length,
         notes: [
-          "The left-over figure here is income minus spending, before any debt payments. get_financial_snapshot gives it after saved minimum payments, and get_debt_overview lists the minimums.",
+          "Left over is income minus essential, flexible and savings entries, as on the Dashboard. Categories add up to those three totals; savings entries are listed as not essential.",
           ...notInBudgetNotes,
         ],
         savedFiguresNotInBudget: notInBudget,
         categories: mergeCategories(
-          b.byCategory.map((c) => ({
+          selectBudgetByCategory(rows).map((c) => ({
             category: categoryLabel(c.category),
             monthlyGbp: c.monthly,
             essential: c.essential,

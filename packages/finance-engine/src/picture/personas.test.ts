@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_NET_WORTH_BASIS } from "../net-worth-basis.js";
 import { PortfolioSnapshot } from "../portfolio.js";
+import { type SnapshotRow, selectNetWorthSeries } from "../snapshots.js";
 import {
   calculateUKTax,
   getRecordAnnualTotalForTaxYear,
@@ -58,6 +59,11 @@ function takeHomeValue(fixture: PersonaFixture): TakeHome {
 
 function snapshot(fixture: PersonaFixture): PortfolioSnapshot {
   return new PortfolioSnapshot(fixture.accounts, fixture.details);
+}
+
+/** The saved net worth series for a persona's rows, under the default basis. */
+function seriesFor(fixture: PersonaFixture, rows = fixture.details) {
+  return selectNetWorthSeries(fixture.accounts, rows as SnapshotRow[], DEFAULT_NET_WORTH_BASIS);
 }
 
 function budgetTotals(fixture: PersonaFixture) {
@@ -435,7 +441,7 @@ describe("new user", () => {
   it("has no portfolio, history, budget or tax rows", () => {
     const snap = snapshot(newUser);
     expect(snap.getResolvedAccounts()).toEqual([]);
-    expect(snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS)).toEqual([]);
+    expect(seriesFor(newUser)).toEqual([]);
     expect(snap.toDebtItems()).toEqual([]);
     expect(newUser.budget).toEqual([]);
     expect(newUser.taxRecords).toEqual([]);
@@ -462,34 +468,26 @@ describe("heavy persona", () => {
     expect(snap.toDebtItems().map((d) => d.id)).not.toContain("heavy-owed");
   });
 
-  // History only includes accounts that have detail rows (portfolio.ts filters on
-  // history.length > 0), so its end-state net worth differs from getTotalNetWorth() by design today.
+  // Without `through` the series only includes accounts that have detail rows, so its end-state
+  // net worth differs from getTotalNetWorth(); the saved balances join only in the through month.
   it("carries values forward month by month, with the later duplicate row winning", () => {
-    const history = snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12);
+    const history = seriesFor(heavy);
     expect(history).toHaveLength(heavyHistoryExpected.length);
     history.forEach((point, i) => {
       const e = heavyHistoryExpected[i];
-      expect([point.year, point.month]).toEqual([e?.year, e?.month]);
+      expect(point.month).toBe(`${e?.year}-${String(e?.month).padStart(2, "0")}`);
       expect(point.totalAssets).toBe(e?.totalAssets);
       expect(point.totalLiabilities).toBe(e?.totalLiabilities);
       expect(point.netWorth).toBe(e?.netWorth);
     });
   });
 
-  it("limits history to the most recent months asked for", () => {
-    const last3 = snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 3);
-    expect(last3.map((p) => p.month)).toEqual([9, 10, 11]);
-    expect(last3.at(-1)?.netWorth).toBe(heavyHistoryExpected.at(-1)?.netWorth);
-  });
-
   it("excludes the student loan from history", () => {
-    const withoutLoanRow = new PortfolioSnapshot(
-      heavy.accounts,
+    const withoutLoanRow = seriesFor(
+      heavy,
       heavy.details.filter((d) => d.accountId !== "heavy-student-loan"),
     );
-    expect(withoutLoanRow.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12)).toEqual(
-      snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12),
-    );
+    expect(withoutLoanRow).toEqual(seriesFor(heavy));
   });
 
   it.each(Object.keys(heavyTaxYearsExpected))("sums the records for %s on its own", (year) => {

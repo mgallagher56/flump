@@ -42,7 +42,7 @@ vi.mock("react-router", async () => {
 
 vi.mock("~/services/backend-client.server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("~/services/backend-client.server")>();
-  return { ...actual, loadWorkspaceSnapshot: vi.fn() };
+  return { ...actual, loadWorkspaceSnapshot: vi.fn(), loadWorkspacePicture: vi.fn() };
 });
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
@@ -86,7 +86,7 @@ import {
 import { loader as dashboardLoader } from "~/routes/_index";
 import { loader as historyLoader } from "~/routes/app.accounts.history";
 import { loader as debtLoader } from "~/routes/app.debt";
-import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { loadWorkspacePicture, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 
 /** The four net worth choice combinations; the first is the default (today's figures). */
 const ALL_BASES: NetWorthBasis[] = [
@@ -130,7 +130,6 @@ function workspace(fixture: PersonaFixture) {
       updatedAt: "2026-01-01",
     })),
     taxRecords: fixture.taxRecords,
-    portfolioSnapshot: null,
   };
 }
 
@@ -253,6 +252,7 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
 
   beforeEach(() => {
     vi.mocked(loadWorkspaceSnapshot).mockResolvedValue(workspace(fixture) as never);
+    vi.mocked(loadWorkspacePicture).mockResolvedValue({ ...workspace(fixture), picture } as never);
   });
 
   it("dashboard loader returns the picture's figures", async () => {
@@ -573,6 +573,7 @@ describe.each(BASIS_CASES)(
 
     beforeEach(() => {
       vi.mocked(loadWorkspaceSnapshot).mockResolvedValue(rows as never);
+      vi.mocked(loadWorkspacePicture).mockResolvedValue({ ...rows, picture } as never);
     });
 
     it("the picture is computed under the saved choice", () => {

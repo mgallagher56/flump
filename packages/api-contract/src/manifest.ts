@@ -63,7 +63,6 @@ import {
   McpInputResponse,
   McpTokenActivityListResponse,
   McpTokenListResponse,
-  PortfolioSnapshotResponse,
   ReadinessResponse,
   ResetFinancialDataResponse,
   RetirementPlanResponse,
@@ -229,15 +228,6 @@ export const routes = {
       response: AccountDetailListResponse,
       page: "accountDetails",
       query: pageQuery("accountDetails"),
-    }),
-    portfolioSnapshot: defineRoute({
-      id: "accounts.portfolioSnapshot",
-      method: "GET",
-      path: "portfolio-snapshot",
-      auth: "user",
-      ownership: "user",
-      group: "accounts",
-      response: PortfolioSnapshotResponse,
     }),
     create: defineRoute({
       id: "accounts.create",

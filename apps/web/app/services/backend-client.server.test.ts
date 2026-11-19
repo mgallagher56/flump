@@ -7,11 +7,15 @@ import {
   bankConnectionFixture,
   budgetEntryFixture,
   jsonResponse,
-  portfolioSnapshotFixture,
   profileFixture,
   taxRecordFixture,
 } from "~/test/fixtures/contractResponses";
-import { backendFetch, backendFetchBytes, loadWorkspaceSnapshot } from "./backend-client.server";
+import {
+  backendFetch,
+  backendFetchBytes,
+  loadWorkspacePicture,
+  loadWorkspaceSnapshot,
+} from "./backend-client.server";
 import { CLIENT_IP_HEADER, CLIENT_IP_KEY_ENV, CLIENT_IP_SIG_HEADER } from "./client-ip.server";
 
 vi.mock("~/utils/auth.server", async (importOriginal) => ({
@@ -37,9 +41,6 @@ describe("backend-client.server", () => {
       if (url.includes("/v1/tax-records")) return Promise.resolve(jsonResponse([taxRecordFixture]));
       if (url.includes("/v1/bank-connections")) {
         return Promise.resolve(jsonResponse([bankConnectionFixture]));
-      }
-      if (url.includes("/v1/portfolio-snapshot")) {
-        return Promise.resolve(jsonResponse(portfolioSnapshotFixture));
       }
       return Promise.resolve(new Response("Not found", { status: 404 }));
     });
@@ -67,14 +68,60 @@ describe("backend-client.server", () => {
       includeBudget: true,
       includeTax: true,
       includeConnections: true,
-      includePortfolioSnapshot: true,
     });
 
     expect(snapshot.budgetEntries.length).toBe(1);
     expect(snapshot.taxRecords.length).toBe(1);
     expect(snapshot.bankConnections.length).toBe(1);
-    expect(snapshot.portfolioSnapshot).toBeDefined();
-    expect(snapshot.portfolioSnapshot?.netWorth).toBe(15000);
+  });
+
+  describe("loadWorkspacePicture", () => {
+    const calls = () => vi.mocked(globalThis.fetch).mock.calls.map(([url]) => String(url));
+    const count = (path: string) => calls().filter((u) => u.includes(`/v1${path}`)).length;
+
+    it("reads each table once, returns the rows and builds the picture from them", async () => {
+      const result = await loadWorkspacePicture({ request: new Request("http://x/") } as any);
+
+      expect(count("/accounts")).toBe(1);
+      expect(count("/user-profile")).toBe(1);
+      expect(count("/budget-entries")).toBe(1);
+      expect(count("/tax-records")).toBe(1);
+      expect(count("/bank-connections")).toBe(0);
+      expect(count("/account-details")).toBe(0);
+      // The contract fills defaults (ownership, sharePercent), so compare the fixture fields.
+      expect(result.accounts).toMatchObject([accountWithDetailsFixture]);
+      expect(result.accountDetails).toMatchObject([accountDetailFixture]);
+      expect(result.userProfile).toMatchObject(profileFixture);
+      expect(result.budgetEntries).toMatchObject([budgetEntryFixture]);
+      expect(result.taxRecords).toMatchObject([taxRecordFixture]);
+      expect(result.bankConnections).toEqual([]);
+      expect(result.picture).not.toBeNull();
+      // One Current account with balance 1234.56 and no debts, so net worth = 1234.56 - 0. The
+      // account's own balance is the saved figure; the monthly row (1100.10) feeds history only.
+      expect(result.picture?.netWorth.netWorth).toBeCloseTo(1234.56, 2);
+    });
+
+    it("reads bank connections only when asked", async () => {
+      const result = await loadWorkspacePicture({ request: new Request("http://x/") } as any, {
+        includeConnections: true,
+      });
+      expect(count("/bank-connections")).toBe(1);
+      expect(result.bankConnections).toMatchObject([bankConnectionFixture]);
+    });
+
+    it("returns no picture and makes no request when nobody is signed in", async () => {
+      const { getAuthSession } = await import("~/utils/auth.server");
+      vi.mocked(getAuthSession).mockResolvedValueOnce({
+        user: null,
+        accessToken: undefined,
+      } as any);
+      const result = await loadWorkspacePicture({ request: new Request("http://x/") } as any, {
+        ensureSignedIn: false,
+      });
+      expect(result.picture).toBeNull();
+      expect(result.user).toBeNull();
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    });
   });
 
   it("rejects with a 503 route error when the backend is unreachable", async () => {

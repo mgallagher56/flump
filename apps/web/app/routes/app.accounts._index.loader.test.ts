@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // The global test setup stubs parts of react-router; the loader needs the real `data`.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
-const loadWorkspaceSnapshot = vi.fn();
+const loadWorkspacePicture = vi.fn();
 const backendFetch = vi.fn();
 vi.mock("~/services/backend-client.server", () => ({
-  loadWorkspaceSnapshot: (...a: unknown[]) => loadWorkspaceSnapshot(...a),
+  loadWorkspacePicture: (...a: unknown[]) => loadWorkspacePicture(...a),
   backendFetch: (...a: unknown[]) => backendFetch(...a),
 }));
 vi.mock("~/utils/auth.server", () => ({
@@ -23,6 +23,7 @@ const snapshot = (accessToken?: string) => ({
   user: null,
   accessToken,
   userProfile: null,
+  picture: null,
 });
 
 const load = async (): Promise<Record<string, unknown>> => {
@@ -38,31 +39,31 @@ const load = async (): Promise<Record<string, unknown>> => {
 // backend capability (E19 D3-B). The loader fails closed.
 describe("accounts loader bank connect capability", () => {
   beforeEach(() => {
-    loadWorkspaceSnapshot.mockReset();
+    loadWorkspacePicture.mockReset();
     backendFetch.mockReset();
   });
 
   it("is off without an access token, and never asks the backend", async () => {
-    loadWorkspaceSnapshot.mockResolvedValue(snapshot());
+    loadWorkspacePicture.mockResolvedValue(snapshot());
     expect((await load()).bankConnectionsEnabled).toBe(false);
     expect(backendFetch).not.toHaveBeenCalled();
   });
 
   it("is on only when the capability says enabled", async () => {
-    loadWorkspaceSnapshot.mockResolvedValue(snapshot("token"));
+    loadWorkspacePicture.mockResolvedValue(snapshot("token"));
     backendFetch.mockResolvedValue({ enabled: true });
     expect((await load()).bankConnectionsEnabled).toBe(true);
     expect(backendFetch.mock.calls[0]?.[0]).toBe("/bank-connections/capability");
   });
 
   it("is off when the capability call fails", async () => {
-    loadWorkspaceSnapshot.mockResolvedValue(snapshot("token"));
+    loadWorkspacePicture.mockResolvedValue(snapshot("token"));
     backendFetch.mockRejectedValue(new Error("feature_disabled"));
     expect((await load()).bankConnectionsEnabled).toBe(false);
   });
 
   it("no longer sends a savings allowance band (the ISA card moved to savings)", async () => {
-    loadWorkspaceSnapshot.mockResolvedValue(snapshot());
+    loadWorkspacePicture.mockResolvedValue(snapshot());
     expect(await load()).not.toHaveProperty("psaTaxBand");
   });
 });

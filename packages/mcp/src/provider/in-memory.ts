@@ -1,7 +1,16 @@
-import { type BuildContextPackInput, DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
+import {
+  type BuildContextPackInput,
+  DEFAULT_NET_WORTH_BASIS,
+  loadFinancialPicture,
+  type PictureRowSource,
+  profileFactsFromProfile,
+  profileFromFacts,
+  type TaxRecord,
+} from "@flump/finance-engine";
 import type {
   AccountCoverage,
   AccountSnapshotRow,
+  McpFinancialData,
   McpTaxRecord,
   McpUserDataProvider,
   MonthRange,
@@ -21,6 +30,31 @@ export function parseMonth(value: string): number | null {
 }
 
 type Queries = Omit<McpUserDataProvider, "getUserFinancialData">;
+
+/**
+ * A picture row source over an already-loaded data set (one user's), for the stdio transport
+ * and tests. The input holds saved facts rather than a profile row, so the profile is rebuilt
+ * from them in a shape that maps back to the same facts and net worth choices.
+ */
+export function inMemoryPictureSource(data: BuildContextPackInput): PictureRowSource {
+  return {
+    profile: async () => profileFromFacts(data.profileFacts, data.netWorthBasis),
+    accounts: async () => [...(data.accounts ?? [])],
+    accountDetails: async () => [...(data.accountDetails ?? [])],
+    budgetEntries: async () => [...(data.budgetEntries ?? [])],
+    // The picture reads only the tax fields the pack input carries; receipts are never present.
+    taxRecords: async () => [...(data.taxRecords ?? [])] as TaxRecord[],
+  };
+}
+
+/** The data set with its financial picture, built by the engine's one assembler. */
+export async function withFinancialPicture(
+  data: BuildContextPackInput,
+  asOf: Date = new Date(),
+): Promise<McpFinancialData> {
+  const { picture } = await loadFinancialPicture(inMemoryPictureSource(data), { asOf });
+  return { ...data, picture };
+}
 
 function rowsOf(data: BuildContextPackInput): AccountSnapshotRow[] {
   const owned = new Set((data.accounts ?? []).map((a) => String(a.id)));
@@ -50,8 +84,8 @@ export function inMemoryQueries(load: (userId: string) => Promise<BuildContextPa
     async getAccounts(userId) {
       return (await load(userId)).accounts ?? [];
     },
-    async getBaseline(userId) {
-      return (await load(userId)).baseline;
+    async getProfileFacts(userId) {
+      return (await load(userId)).profileFacts ?? profileFactsFromProfile(null);
     },
     async getNetWorthBasis(userId) {
       return (await load(userId)).netWorthBasis ?? { ...DEFAULT_NET_WORTH_BASIS };
