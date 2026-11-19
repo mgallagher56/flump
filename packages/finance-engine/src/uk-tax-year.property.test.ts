@@ -247,14 +247,25 @@ describe("sweep 0..300000 step 250 per year, region and variant", () => {
     expect(violations.slice(0, 5)).toEqual([]);
   });
 
-  it("the whole sweep runs in under 5 seconds", () => {
+  // The sweep's time is reported, not asserted: a fixed limit in milliseconds tests the CI machine's
+  // load, not the code (E41; the backend specs now run beside this package). What is asserted is
+  // that every year, region and salary in the sweep returns a result.
+  it("the whole sweep returns a result for every year, region and salary, and reports its time", async ({
+    annotate,
+  }) => {
     const t0 = performance.now();
+    let results = 0;
     for (const year of SUPPORTED_UK_TAX_YEARS) {
       for (const region of REGIONS) {
-        for (const gross of GROSSES) calculateUkTax({ grossSalary: gross, taxYear: year, region });
+        for (const gross of GROSSES) {
+          const r = calculateUkTax({ grossSalary: gross, taxYear: year, region });
+          if (Number.isFinite(r.netTakeHomePayAnnualGbp)) results++;
+        }
       }
     }
-    expect(performance.now() - t0).toBeLessThan(5000);
+    const ms = performance.now() - t0;
+    expect(results).toBe(SUPPORTED_UK_TAX_YEARS.length * REGIONS.length * GROSSES.length);
+    await annotate(`${results} calculations in ${ms.toFixed(0)} ms`);
   });
 
   // calculateUkTax reads Class 1 NI from the per-year table (previously year-less; fixed in E4).
