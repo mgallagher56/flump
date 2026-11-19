@@ -5,6 +5,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
   <div>
     <header
       class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
+      data-sticky-header=""
     >
       <div
         class="d_flex ai_center gap_3 navWide:gap_5 min-h_touch navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
@@ -286,6 +287,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
   <div>
     <header
       class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
+      data-sticky-header=""
     >
       <div
         class="d_flex ai_center gap_3 navWide:gap_5 min-h_touch navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
@@ -823,6 +825,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
   <div>
     <header
       class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
+      data-sticky-header=""
     >
       <div
         class="d_flex ai_center gap_3 navWide:gap_5 min-h_touch navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
