@@ -64,10 +64,10 @@ vi.mock("react-router", () => ({
   }),
 }));
 
-vi.mock("~/hooks/useUserProfile", () => ({
+vi.mock("~/hooks/useUserProfile", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/hooks/useUserProfile")>()),
   useUserProfile: () => ({
     profile: testProfileData,
-    setProfile: vi.fn(),
     updateProfile: mockUpdateProfile,
     markChecklistStep: mockMarkChecklistStep,
   }),
@@ -243,6 +243,13 @@ describe("PensionContainer", () => {
     });
   });
 
+  it("opening the page with pots writes no checklist step (LD-2, CS-6)", () => {
+    useFixture(FILLED);
+    render(<PensionContainer />);
+    // Slice 8: the Dashboard reads the pension step from the saved pots; a visit writes nothing.
+    expect(mockMarkChecklistStep).not.toHaveBeenCalled();
+  });
+
   it("keeps the UK pension rules as saved facts in one quiet drawer", () => {
     useFixture(FILLED);
     render(<PensionContainer />);
@@ -394,7 +401,7 @@ describe("PensionContainer", () => {
     restore();
   });
 
-  it("shows the saved loader rates on the first render, before the profile atom is seeded", async () => {
+  it("shows the saved loader rates on the first render, whatever the root profile holds", async () => {
     const { DEFAULT_PROFILE } =
       await vi.importActual<typeof import("~/hooks/useUserProfile")>("~/hooks/useUserProfile");
     testLoaderData = {
@@ -410,7 +417,7 @@ describe("PensionContainer", () => {
         employmentType: "employed",
       },
     };
-    // The atom still holds DEFAULT_PROFILE: empty id and the 5% and 3% creation rates.
+    // The root profile is the empty default: this page's own loader profile is the one read.
     testProfileData = DEFAULT_PROFILE;
     const { container } = render(<PensionContainer />);
     const strip = container.querySelector("[data-density='compact']") as HTMLElement;
@@ -473,15 +480,6 @@ describe("PensionContainer", () => {
           ...extra,
         },
       });
-
-    beforeEach(async () => {
-      const { getDefaultStore } = await import("jotai");
-      const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");
-      getDefaultStore().set(financialBaselineAtom, {
-        ...NO_SALARY_BASELINE,
-        pensionContributionPct: 0,
-      });
-    });
 
     it("is hidden below £90,000 and above £125,140", () => {
       saved(89_999);
@@ -549,16 +547,9 @@ describe("PensionContainer", () => {
       expect(mockSubmit).not.toHaveBeenCalled();
     });
 
-    it("seeds a contribution that lands at £100,000 from the saved profile, whatever the baseline says", async () => {
+    // Slice 8: no browser baseline is read any more, so this proves the saved profile is used.
+    it("seeds a contribution that lands at £100,000 from the saved profile", async () => {
       const { calculate100kTaxTrap } = await import("@flump/finance-engine");
-      const { getDefaultStore } = await import("jotai");
-      const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");
-      // A stale local baseline that disagrees with the saved profile.
-      getDefaultStore().set(financialBaselineAtom, {
-        ...NO_SALARY_BASELINE,
-        annualGrossSalary: 150_000,
-        pensionContributionPct: 20,
-      });
       saved(110_000, { pensionPercent: 5, pensionEmployerPercent: 4 });
       render(<PensionContainer />);
       expect(trapNote()?.textContent).toContain("brings it back to that line.");
@@ -570,12 +561,8 @@ describe("PensionContainer", () => {
       expect(ani(percent - 0.5)).toBeGreaterThan(100_000);
     });
 
-    it("reads the region from the saved profile, not the baseline (PP-9)", async () => {
-      const { getDefaultStore } = await import("jotai");
-      const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");
-      const store = getDefaultStore();
-      // A stale baseline that says Scotland while the saved profile has no region.
-      store.set(financialBaselineAtom, { ...NO_SALARY_BASELINE, ukRegion: "SCOTLAND" });
+    // Slice 8: no browser baseline is read any more, so this proves the saved region is used.
+    it("reads the region from the saved profile (PP-9)", () => {
       saved(110_000, { taxRegion: "SCOTLAND" });
       const scottish = render(<PensionContainer />);
       expect(screen.queryByRole("button", { name: "About Tax region" })).toBeNull();
@@ -586,15 +573,13 @@ describe("PensionContainer", () => {
       english.unmount();
       saved(110_000);
       render(<PensionContainer />);
-      // No saved region: the assumption sits behind the "i" beside the line (owner item 23),
-      // whatever the baseline says.
+      // No saved region: the assumption sits behind the "i" beside the line (owner item 23).
       expect(screen.queryByText(/uses England, Wales and Northern Ireland/i)).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "About Tax region" }));
       expect(screen.getByText(/uses England, Wales and Northern Ireland/i)).toBeDefined();
       expect(screen.getByRole("link", { name: /set your region/i }).getAttribute("href")).toBe(
         "/app/profile",
       );
-      store.set(financialBaselineAtom, NO_SALARY_BASELINE);
     });
   });
 

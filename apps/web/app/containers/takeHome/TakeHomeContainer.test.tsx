@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const navigate = vi.fn();
 const profileState: { profile: Record<string, unknown> } = { profile: {} };
-const baselineState = { annualGrossSalary: 0 };
 /** The shared profile store; null means it holds the same row as the loader. */
 const storeState: { profile: Record<string, unknown> | null } = { profile: null };
 
@@ -26,11 +25,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => ({
   ...(await importOriginal<typeof import("~/hooks/useUserProfile")>()),
   useUserProfile: () => ({
     profile: storeState.profile ?? profileState.profile,
-    setProfile: vi.fn(),
   }),
-}));
-vi.mock("~/state/baseline.store", () => ({
-  useFinancialBaseline: () => ({ baseline: baselineState }),
 }));
 
 import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
@@ -47,13 +42,12 @@ describe("<TakeHomeContainer /> with saved figures", () => {
     navigate.mockClear();
     profileState.profile = { ...SAVED_PROFILE };
     storeState.profile = null;
-    baselineState.annualGrossSalary = 0;
   });
 
   it("draws the full page on its first render, before the profile store is filled (P61)", () => {
-    // The store holds DEFAULT_PROFILE until the page's effect copies the loader row in. The first
-    // render must already show what the saved row gives, so nothing changes size when the store
-    // fills: the strip of three, with the pension and student loan card (5% pension and Plan 2).
+    // The root profile is still DEFAULT_PROFILE; the page reads its own loader row, so the first
+    // render already shows what the saved row gives and nothing changes size later: the strip of
+    // three, with the pension and student loan card (5% pension and Plan 2).
     storeState.profile = DEFAULT_PROFILE as unknown as Record<string, unknown>;
     const { container } = render(<TakeHomeContainer />);
     expect(container.querySelectorAll("[data-kpi-value]")).toHaveLength(3);
@@ -61,12 +55,11 @@ describe("<TakeHomeContainer /> with saved figures", () => {
     expect(screen.queryByRole("link", { name: "Add your details" })).toBeNull();
   });
 
-  it("uses the saved salary, not a stale onboarding baseline salary", () => {
-    baselineState.annualGrossSalary = 30000;
+  // Slice 8: no browser baseline is read any more, so this proves the saved salary is used.
+  it("uses the saved salary", () => {
     const { container } = render(<TakeHomeContainer />);
-    // £45,000 saved is £3,750 a month before tax; the stale £30,000 would be £2,500.
+    // £45,000 saved is £3,750 a month before tax.
     expect(container.textContent).toContain("£3,750");
-    expect(container.textContent).not.toContain("£2,500");
   });
 
   it("meets the page rules: figure budget, one hero, one notice, at most one primary button", () => {
@@ -165,13 +158,13 @@ describe("<TakeHomeContainer /> with saved figures", () => {
 describe("<TakeHomeContainer /> without a saved salary", () => {
   beforeEach(() => {
     profileState.profile = { ...SAVED_PROFILE, annualSalary: null };
-    baselineState.annualGrossSalary = 0;
   });
 
-  it("falls back to the onboarding baseline salary only when none is saved", () => {
-    baselineState.annualGrossSalary = 30000;
+  // Slice 8: there is no browser baseline to fall back to; with no saved salary the page asks for it.
+  it("never falls back to a browser salary when none is saved", () => {
     const { container } = render(<TakeHomeContainer />);
-    expect(container.textContent).toContain("£2,500");
+    expect(screen.getByText(/Add your salary before tax/)).toBeDefined();
+    expect(container.textContent).not.toContain("£2,500");
   });
 
   it("shows one setup prompt with one button, and no £0 figures, tabs or zone", () => {
@@ -186,12 +179,10 @@ describe("<TakeHomeContainer /> without a saved salary", () => {
     expect(container.textContent).not.toContain("£0");
   });
 
-  it("shows the setup prompt, never £0 or the stale baseline, when a saved profile has no salary", () => {
-    // A profile row exists (it has an id) but no salary is saved. The browser baseline (30,000,
-    // which would be £2,500 a month) is not used once the profile exists, and an unknown salary
-    // is not shown as £0.
+  it("shows the setup prompt, never £0, when a saved profile has no salary", () => {
+    // A profile row exists (it has an id) but no salary is saved: an unknown salary is not shown
+    // as £0 (slice 8: no browser baseline is read).
     profileState.profile = { ...SAVED_PROFILE, id: "profile-1", annualSalary: null };
-    baselineState.annualGrossSalary = 30000;
     const { container } = render(<TakeHomeContainer />);
     expect(screen.getByText(/Add your salary before tax/)).toBeDefined();
     expect(container.textContent).not.toContain("£2,500");

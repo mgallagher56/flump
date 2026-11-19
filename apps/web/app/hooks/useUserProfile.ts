@@ -315,8 +315,8 @@ const rememberWritten = (saved: { id?: string; updatedAt?: string } | null | und
 /** The newer of the loaded version and the one this tab last wrote, for the same profile. */
 const versionToSend = (loaded: UserProfile): string => {
   if (writtenVersion && writtenVersion.id === loaded.id) {
-    // ISO-8601 instants in one format compare as strings.
-    return writtenVersion.updatedAt.localeCompare(loaded.updatedAt) > 0
+    // Compared as instants, so a change in how the backend writes the timestamp cannot mislead.
+    return Date.parse(writtenVersion.updatedAt) > Date.parse(loaded.updatedAt)
       ? writtenVersion.updatedAt
       : loaded.updatedAt;
   }

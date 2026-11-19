@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerSavedDataReload } from "~/services/conflict";
 import { profileFixture } from "~/test/fixtures/contractResponses";
+import { profileBackend } from "~/test/profileBackend";
 import { withRootLoader } from "~/test/rootLoaderRouter";
 
 // The real router: the profile is the root loader's, and a save reloads it (audit slice 8).
@@ -23,26 +24,11 @@ const savedBody = (updatedAt: string, extra: Record<string, unknown> = {}) => ({
 });
 const refused = () => new Response(JSON.stringify({ kind: "client" }), { status: 412 });
 
-/**
- * A stand-in backend: the root loader reads `state.saved`; each queued answer is returned in turn,
- * and a 200 answer becomes the saved profile the next reload reads.
- */
 function backend(updatedAt: string) {
-  const state = { saved: savedBody(updatedAt) as Record<string, unknown> };
-  const answers: (() => Response)[] = [];
-  const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => {
-    const answer = answers.shift();
-    if (!answer) throw new Error("no answer queued");
-    const res = answer();
-    if (res.status === 200) state.saved = await res.clone().json();
-    return res;
-  });
+  const api = profileBackend({ updatedAt });
   const answerSaved = (v: string, extra: Record<string, unknown> = {}) =>
-    answers.push(() => new Response(JSON.stringify(savedBody(v, extra)), { status: 200 }));
-  const answerWith = (res: () => Response) => answers.push(res);
-  const sentIfMatch = (call: number): string | undefined =>
-    (fetchMock.mock.calls[call]?.[1]?.headers as Record<string, string> | undefined)?.["If-Match"];
-  return { state, fetchMock, answerSaved, answerWith, sentIfMatch };
+    api.answer(savedBody(v, extra));
+  return { ...api, answerSaved };
 }
 
 /** Profile saves send the version they read and never overwrite a change made elsewhere (BE-16). */

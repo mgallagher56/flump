@@ -1,33 +1,28 @@
-import type { Decorator, Meta, StoryObj } from "@storybook/react";
-import { createStore, Provider } from "jotai";
+import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "storybook/test";
-import { DEFAULT_PROFILE, type UserProfile, userProfileAtom } from "~/hooks/useUserProfile";
+import { DEFAULT_PROFILE, type UserProfile } from "~/hooks/useUserProfile";
 import { TakeHomeCalculator } from "./TakeHomeCalculator";
 
-const withSavedProfile =
-  (overrides: Partial<UserProfile>): Decorator =>
-  (Story) => {
-    const store = createStore();
-    store.set(userProfileAtom, {
-      ...DEFAULT_PROFILE,
-      employmentType: "employed",
-      pensionPercent: 5,
-      isSalarySacrifice: false,
-      ...overrides,
-    } as UserProfile);
-    return (
-      <Provider store={store}>
-        <Story />
-      </Provider>
-    );
-  };
+/** The saved profile comes from the root loader's data only (audit slice 8). */
+const savedProfile = (overrides: Partial<UserProfile>) => ({
+  router: {
+    loaderData: {
+      userProfile: {
+        ...DEFAULT_PROFILE,
+        employmentType: "employed",
+        pensionPercent: 5,
+        isSalarySacrifice: false,
+        ...overrides,
+      },
+    },
+  },
+});
 
 const meta: Meta<typeof TakeHomeCalculator> = {
   title: "5. Calculators/Take-home/TakeHomeCalculator",
   component: TakeHomeCalculator,
-  parameters: { layout: "padded" },
+  parameters: { layout: "padded", ...savedProfile({}) },
   args: { initialSalary: 62000, onApplyIncrease: fn() },
-  decorators: [withSavedProfile({})],
 };
 
 export default meta;
@@ -51,7 +46,7 @@ export const Default: Story = {
 };
 
 export const WithStudentLoan: Story = {
-  decorators: [withSavedProfile({ studentLoanPlans: ["PLAN_2"] } as Partial<UserProfile>)],
+  parameters: savedProfile({ studentLoanPlans: ["PLAN_2"] }),
 };
 
 export const NoSalary: Story = {
@@ -65,7 +60,7 @@ export const NoSalary: Story = {
 /** No salary saved, a take-home typed during setup: the hero is that figure, the parts are not set. */
 export const TypedTakeHome: Story = {
   args: { initialSalary: null },
-  decorators: [withSavedProfile({ annualSalary: null, monthlyTakeHome: 2500 })],
+  parameters: savedProfile({ annualSalary: null, monthlyTakeHome: 2500 }),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("The take-home pay you entered")[0]).toBeDefined();
