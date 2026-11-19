@@ -1,5 +1,5 @@
 import fc from "fast-check";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { findAdviceHits } from "./compliance/advice-lexicon.js";
 import {
   calculateEvenRealDrawdown,
@@ -800,10 +800,14 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
 
   describe("Property-based invariants (fast-check)", () => {
     // A fixed seed keeps the generated cases the same on every run (E41 M2), so a mutation score
-    // for retirement.ts does not change from run to run. Vitest isolates each test file, so this
-    // global setting reaches only the properties in this file.
+    // for retirement.ts does not change from run to run. Test files share one module graph per
+    // worker (isolate off, E41 P4), so the setting is reset after these properties and reaches
+    // no other file.
     beforeAll(() => {
       fc.configureGlobal({ seed: 20261119 });
+    });
+    afterAll(() => {
+      fc.resetConfigureGlobal();
     });
 
     it("satisfies Fisher equation identity: (1 + realRate) * (1 + inflationRate) = 1 + nominalRate", () => {
