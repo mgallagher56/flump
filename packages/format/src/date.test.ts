@@ -24,6 +24,39 @@ describe("formatDate", () => {
     expect(formatDate("2026-13-45")).toBe("Not set");
     expect(formatDate(null, { placeholder: "-" })).toBe("-");
   });
+  it("names every month with its three-letter short form", () => {
+    // The 15th of each month of 2026, January to December.
+    const shortNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    shortNames.forEach((name, i) => {
+      const month = String(i + 1).padStart(2, "0");
+      expect(formatDate(`2026-${month}-15`)).toBe(`15 ${name} 2026`);
+    });
+  });
+  it("rejects a date-only string that is not a real calendar date", () => {
+    // February 2026 has 28 days and April has 30, so neither the 30th of February nor the 31st
+    // of April exists; they must not roll over into March or May.
+    expect(formatDate("2026-02-30")).toBe("Not set");
+    expect(formatDate("2026-04-31")).toBe("Not set");
+    expect(formatMonthYear("2026-02-30")).toBe("Not set");
+  });
+  it("does not read a date out of surrounding text", () => {
+    // Text before or after the date makes the whole string something other than a date.
+    expect(formatDate("x2026-03-02")).toBe("Not set");
+    expect(formatDate("2026-02-01x")).toBe("Not set");
+  });
 });
 
 describe("formatRelativeTime", () => {
@@ -76,6 +109,27 @@ describe("formatMonthYear", () => {
     expect(formatMonthYear("2030-03-01")).toBe("Mar 2030");
     expect(formatMonthYear("2030-03-01", { month: "long" })).toBe("March 2030");
     expect(formatMonthYear(new Date(2026, 8, 30))).toBe("Sep 2026");
+  });
+  it("names every month in full with month: long", () => {
+    // The first of each month of 2030, January to December.
+    const longNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    longNames.forEach((name, i) => {
+      const month = String(i + 1).padStart(2, "0");
+      expect(formatMonthYear(`2030-${month}-01`, { month: "long" })).toBe(`${name} 2030`);
+    });
   });
   it("returns the placeholder for missing or invalid input", () => {
     expect(formatMonthYear(undefined)).toBe("Not set");

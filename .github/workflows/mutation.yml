@@ -1,6 +1,6 @@
 name: 🧬 Mutation testing
 
-# E41 M1 (docs/audit/plans/E41-mutation-testing-and-test-speed-plan.md, decisions 3 to 6).
+# E41 M1 and M3 (docs/audit/plans/E41-mutation-testing-and-test-speed-plan.md, decisions 3 to 6).
 # Stryker makes one small fault at a time in a package's source and runs its tests; a fault no
 # test fails on has "survived". See docs/testing/mutation-testing.md.
 #
@@ -13,9 +13,18 @@ name: 🧬 Mutation testing
 # Reports are HTML and JSON artifacts only, no hosted dashboard (decision 6). No secrets.
 on:
   schedule:
-    # Sunday 02:17 UTC: packages/finance-engine. A new package gets its own cron, an entry in the
-    # "Pick packages" step below and a floor in scripts/mutation-baseline.json.
-    - cron: "17 2 * * 0"
+    # One cron per package, 02:17 UTC on its own night (packages that share a night start later).
+    # A new package gets its own cron, an entry in the "Pick packages" step below, its folder in
+    # PACKAGES in the "Changed files" job, its paths below and a floor in
+    # scripts/mutation-baseline.json.
+    - cron: "17 2 * * 0" # Sunday: packages/finance-engine
+    - cron: "17 2 * * 1" # Monday: packages/mcp
+    - cron: "17 2 * * 2" # Tuesday: packages/api-contract
+    - cron: "17 2 * * 3" # Wednesday: packages/banking
+    - cron: "17 2 * * 4" # Thursday: packages/observability
+    - cron: "17 2 * * 5" # Friday: packages/format
+    - cron: "17 2 * * 6" # Saturday: packages/api-client
+    - cron: "47 3 * * 0" # Sunday, after the engine: packages/business-details
   workflow_dispatch:
     inputs:
       package:
@@ -33,6 +42,27 @@ on:
       - "packages/finance-engine/src/**"
       - "packages/finance-engine/stryker.config.json"
       - "packages/finance-engine/vitest.config.ts"
+      - "packages/mcp/src/**"
+      - "packages/mcp/stryker.config.json"
+      - "packages/mcp/vitest.config.ts"
+      - "packages/api-contract/src/**"
+      - "packages/api-contract/stryker.config.json"
+      - "packages/api-contract/vitest.config.ts"
+      - "packages/banking/src/**"
+      - "packages/banking/stryker.config.json"
+      - "packages/banking/vitest.config.ts"
+      - "packages/observability/src/**"
+      - "packages/observability/stryker.config.json"
+      - "packages/observability/vitest.config.ts"
+      - "packages/format/src/**"
+      - "packages/format/stryker.config.json"
+      - "packages/format/vitest.config.ts"
+      - "packages/api-client/src/**"
+      - "packages/api-client/stryker.config.json"
+      - "packages/api-client/vitest.config.ts"
+      - "packages/business-details/src/**"
+      - "packages/business-details/stryker.config.json"
+      - "packages/business-details/vitest.config.ts"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -49,8 +79,11 @@ jobs:
     timeout-minutes: 5
     outputs:
       targets: ${{ steps.pick.outputs.targets }}
+      shards: ${{ steps.pick.outputs.shards }}
     steps:
-      # Each target is a package folder and a short name for artifact and cache keys.
+      # Each target is a package folder, a short name for artifact and cache keys, and how many
+      # shards its files are split into. Shard counts come from each package's measured full run
+      # (docs/testing/mutation-testing.md): a small package runs in one shard.
       - name: 🗂️ Pick packages
         id: pick
         env:
@@ -58,25 +91,48 @@ jobs:
           SCHEDULE: ${{ github.event.schedule }}
           INPUT: ${{ inputs.package }}
         run: |
-          engine='{"package":"packages/finance-engine","slug":"finance-engine"}'
-          all="[$engine]"
+          engine='{"package":"packages/finance-engine","slug":"finance-engine","shards":8}'
+          mcp='{"package":"packages/mcp","slug":"mcp","shards":4}'
+          contract='{"package":"packages/api-contract","slug":"api-contract","shards":2}'
+          banking='{"package":"packages/banking","slug":"banking","shards":1}'
+          observability='{"package":"packages/observability","slug":"observability","shards":1}'
+          format='{"package":"packages/format","slug":"format","shards":1}'
+          client='{"package":"packages/api-client","slug":"api-client","shards":1}'
+          business='{"package":"packages/business-details","slug":"business-details","shards":1}'
+          all="[$engine,$mcp,$contract,$banking,$observability,$format,$client,$business]"
           if [ "$EVENT" = "schedule" ]; then
             case "$SCHEDULE" in
               "17 2 * * 0") targets="[$engine]" ;;
+              "17 2 * * 1") targets="[$mcp]" ;;
+              "17 2 * * 2") targets="[$contract]" ;;
+              "17 2 * * 3") targets="[$banking]" ;;
+              "17 2 * * 4") targets="[$observability]" ;;
+              "17 2 * * 5") targets="[$format]" ;;
+              "17 2 * * 6") targets="[$client]" ;;
+              "47 3 * * 0") targets="[$business]" ;;
               *) echo "::error::No package is set for the schedule '$SCHEDULE'"; exit 1 ;;
             esac
           else
             case "$INPUT" in
               all) targets="$all" ;;
               packages/finance-engine) targets="[$engine]" ;;
+              packages/mcp) targets="[$mcp]" ;;
+              packages/api-contract) targets="[$contract]" ;;
+              packages/banking) targets="[$banking]" ;;
+              packages/observability) targets="[$observability]" ;;
+              packages/format) targets="[$format]" ;;
+              packages/api-client) targets="[$client]" ;;
+              packages/business-details) targets="[$business]" ;;
               *) echo "::error::'$INPUT' has no mutation config. Use all or a package folder from: $all"; exit 1 ;;
             esac
           fi
           echo "targets=$targets" >> "$GITHUB_OUTPUT"
+          # One matrix entry per shard of each package: the target plus its shard number.
+          echo "shards=$(jq -c '[.[] as $t | range(1; $t.shards + 1) | {target: $t, shard: .}]' <<<"$targets")" >> "$GITHUB_OUTPUT"
 
-  # Each package is split into shards of similar size that run side by side. The engine's first run
-  # took 4 to 18 minutes per shard, 19 minutes in all (docs/testing/mutation-testing.md); the
-  # timeout leaves room for a slower runner. Keep SHARDS equal to the length of the shard list.
+  # Each package is split into shards of similar size that run side by side, as many as its target
+  # sets in the "Pick packages" step. The engine's first run took 4 to 18 minutes per shard, 19
+  # minutes in all (docs/testing/mutation-testing.md); the timeout leaves room for a slower runner.
   full:
     name: 🧬 Mutation testing (${{ matrix.target.slug }}, shard ${{ matrix.shard }})
     needs: plan
@@ -85,12 +141,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.plan.outputs.targets) }}
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        include: ${{ fromJSON(needs.plan.outputs.shards) }}
     env:
       PACKAGE: ${{ matrix.target.package }}
       SHARD: ${{ matrix.shard }}
-      SHARDS: 8
+      SHARDS: ${{ matrix.target.shards }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -105,6 +160,12 @@ jobs:
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
+
+      # Workspace packages resolve each other through their built dist (api-client and mcp import
+      # @flump/api-contract, mcp also the engine and api-client). Built before Stryker writes
+      # faults into the source files, and never the package under test itself.
+      - name: 🏗️ Build the package's dependencies
+        run: bunx turbo run build --filter="./$PACKAGE^..."
 
       # Picked before Stryker runs: the run writes faults into the source files (inPlace).
       - name: 🗂️ Files in this shard
@@ -173,6 +234,7 @@ jobs:
     env:
       PACKAGE: ${{ matrix.target.package }}
       SLUG: ${{ matrix.target.slug }}
+      SHARDS: ${{ matrix.target.shards }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -194,7 +256,7 @@ jobs:
         shell: bash # -eo pipefail, so the check's exit code is kept through tee
         run: |
           reports=()
-          for i in 1 2 3 4 5 6 7 8; do
+          for i in $(seq 1 "$SHARDS"); do
             report="shard-reports/mutation-report-$SLUG-shard$i/mutation.json"
             [ -f "$report" ] || { echo "::error::No report from shard $i"; exit 1; }
             reports+=("$report")
@@ -210,7 +272,10 @@ jobs:
     # packages/finance-engine. Until then it never fails the workflow.
     continue-on-error: true
     env:
-      PACKAGE: packages/finance-engine
+      # Every package with a stryker.config.json. Keep in step with "Pick packages" and the paths.
+      PACKAGES: >-
+        packages/finance-engine packages/mcp packages/api-contract packages/banking
+        packages/observability packages/format packages/api-client packages/business-details
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -226,42 +291,62 @@ jobs:
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
 
+      # One line per package with changed source files: the folder, a space, then the files.
       - name: 🗂️ Changed source files
         id: targets
         shell: bash # -eo pipefail, so a failing git diff or script stops the job
         run: |
           # HEAD is GitHub's merge commit; its first parent is main as it was at that merge, so
           # changes that reached main after the pull request opened are not counted as its own.
-          targets=$(git diff --name-only HEAD^1 HEAD | bun scripts/check-mutation-score.ts targets "$PACKAGE")
-          echo "targets=$targets" >> "$GITHUB_OUTPUT"
-          if [ -z "$targets" ]; then
-            echo "No changed source file in $PACKAGE to mutate (tests, fixtures and barrels are left out)." >> "$GITHUB_STEP_SUMMARY"
+          changed=$(git diff --name-only HEAD^1 HEAD)
+          : > "$RUNNER_TEMP/mutation-targets.txt"
+          for package in $PACKAGES; do
+            targets=$(bun scripts/check-mutation-score.ts targets "$package" <<<"$changed")
+            if [ -n "$targets" ]; then echo "$package $targets" >> "$RUNNER_TEMP/mutation-targets.txt"; fi
+          done
+          if [ -s "$RUNNER_TEMP/mutation-targets.txt" ]; then
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No changed source file to mutate in $PACKAGES (tests, fixtures and barrels are left out)." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      # As in the weekly shards: dependencies are built from unmutated source before any run.
+      - name: 🏗️ Build the packages' dependencies
+        if: steps.targets.outputs.any == 'true'
+        shell: bash # -eo pipefail
+        run: |
+          while read -r package _; do
+            bunx turbo run build --filter="./$package^..."
+          done < "$RUNNER_TEMP/mutation-targets.txt"
 
       # No incremental cache here: each weekly shard's file covers only its own files, and test ids
       # are numbered per run, so shard files cannot be joined. Only the changed files are mutated.
       - name: 🧬 Run Stryker on the changed files
-        if: steps.targets.outputs.targets != ''
-        working-directory: ${{ env.PACKAGE }}
-        env:
-          TARGETS: ${{ steps.targets.outputs.targets }}
+        if: steps.targets.outputs.any == 'true'
+        shell: bash # -eo pipefail
         run: |
           node --version
-          node ../../node_modules/@stryker-mutator/core/bin/stryker.js run --mutate "$TARGETS" \
-            --reporters clear-text,html,json,progress-append-only
+          while read -r package targets; do
+            (cd "$package" && node "$GITHUB_WORKSPACE/node_modules/@stryker-mutator/core/bin/stryker.js" run \
+              --mutate "$targets" --reporters clear-text,html,json,progress-append-only)
+          done < "$RUNNER_TEMP/mutation-targets.txt"
 
       - name: 📋 List the faults no test caught
-        if: steps.targets.outputs.targets != ''
-        run: bun scripts/check-mutation-score.ts survivors "$PACKAGE" >> "$GITHUB_STEP_SUMMARY"
+        if: steps.targets.outputs.any == 'true'
+        shell: bash # -eo pipefail
+        run: |
+          while read -r package _; do
+            bun scripts/check-mutation-score.ts survivors "$package" >> "$GITHUB_STEP_SUMMARY"
+          done < "$RUNNER_TEMP/mutation-targets.txt"
 
       - name: 📎 Upload report
-        if: always() && steps.targets.outputs.targets != ''
+        if: always() && steps.targets.outputs.any == 'true'
         # actions/upload-artifact v7.0.2
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: mutation-report-changed
           path: |
-            ${{ env.PACKAGE }}/reports/mutation/mutation.html
-            ${{ env.PACKAGE }}/reports/mutation/mutation.json
+            packages/*/reports/mutation/mutation.html
+            packages/*/reports/mutation/mutation.json
           retention-days: 14
           if-no-files-found: warn

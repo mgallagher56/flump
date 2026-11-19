@@ -64,6 +64,17 @@ describe("formatCurrency", () => {
     for (let i = 0; i < 120; i++) formatPercent(1.5, { fractionDigits: i % 20 });
     expect(formatCurrency(1234.5, "GBP", { fractionDigits: 2 })).toBe("£1,234.50");
   });
+  it("keeps fixed digits after the formatter cache has filled and been emptied", () => {
+    // The cache holds at most 50 formatters; one per currency code for 60 codes fills it past
+    // that bound, so every formatter after this point is built afresh.
+    const codes = Intl.supportedValuesOf("currency").slice(0, 60);
+    expect(codes).toHaveLength(60);
+    for (const code of codes) formatCurrency(1, code);
+    // 4 percentage points at one fixed decimal: "4.0%", the trailing zero kept.
+    expect(formatPercent(4, { fractionDigits: 1 })).toBe("4.0%");
+    // 1,234.5 pounds with pence: "£1,234.50".
+    expect(formatCurrency(1234.5, "GBP", { fractionDigits: 2 })).toBe("£1,234.50");
+  });
 });
 
 describe("formatPercent", () => {
@@ -108,5 +119,15 @@ describe("speakCurrency", () => {
     expect(speakCurrency(1.01, "EUR")).toBe("1 euro and 1 cent");
     expect(speakCurrency(7, "ZZZ")).toBe("7 ZZZ");
     expect(speakCurrency(7.5, "ZZZ")).toBe("7.50 ZZZ");
+  });
+  it("uses the singular and plural names of dollars and euros", () => {
+    // 1.01 dollars is one whole dollar and one cent: both names singular.
+    expect(speakCurrency(1.01, "USD")).toBe("1 dollar and 1 cent");
+    // 2.50 euros is two whole euros and 50 cents: both names plural.
+    expect(speakCurrency(2.5, "EUR")).toBe("2 euros and 50 cents");
+  });
+  it("does not say minus for a negative amount that rounds to zero pence", () => {
+    // -0.004 pounds is 0.4 of a penny, which rounds to 0 pence: nothing to say minus about.
+    expect(speakCurrency(-0.004)).toBe("0 pounds");
   });
 });
