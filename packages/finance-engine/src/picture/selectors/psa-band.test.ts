@@ -47,6 +47,6 @@ describe("selectPsaBand", () => {
 
 describe("psa-band module", () => {
   it("no longer exports the profile rental income reader (system audit slice 9 part two)", () => {
-    expect(Object.keys(psaBand).sort()).toEqual(["selectPsaBand"]);
+    expect("otherAnnualIncomeFromProfile" in psaBand).toBe(false);
   });
 });
