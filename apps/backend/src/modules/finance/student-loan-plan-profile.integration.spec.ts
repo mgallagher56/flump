@@ -97,6 +97,45 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await storedPlans()).toBe("PLAN_5");
     });
 
+    it("an edit that does not touch the plan never brings back a later 'no student loan'", async () => {
+      // Review finding: Plan 2 account, then Settings says no loan (say it is paid off but the
+      // account is kept). A balance edit or rename must leave that answer alone.
+      await insertProfile(null);
+      const created = await intake().createAccount(USER, {
+        ...loan,
+        studentLoanPlan: "PLAN_2",
+      } as never);
+      await ds.query("UPDATE user_profiles SET student_loan_plans = '' WHERE user_id = $1", [USER]);
+      await intake().updateAccount(USER, created.id, { balance: 39000 } as never);
+      await intake().updateAccount(USER, created.id, { name: "Plan 2 loan" } as never);
+      expect(await storedPlans()).toBe("");
+    });
+
+    it("turning an account into a Student Loan with a plan writes it", async () => {
+      await insertProfile(null);
+      const created = await intake().createAccount(USER, {
+        name: "Loan",
+        type: "Loan",
+        balance: 5000,
+        currency: "GBP",
+      } as never);
+      await intake().updateAccount(USER, created.id, {
+        type: "Student Loan",
+        studentLoanPlan: "PLAN_4",
+      } as never);
+      expect(await storedPlans()).toBe("PLAN_4");
+    });
+
+    it("clearing the plan on the account leaves the profile's plan", async () => {
+      await insertProfile(null);
+      const created = await intake().createAccount(USER, {
+        ...loan,
+        studentLoanPlan: "PLAN_2",
+      } as never);
+      await intake().updateAccount(USER, created.id, { studentLoanPlan: null } as never);
+      expect(await storedPlans()).toBe("PLAN_2");
+    });
+
     it("with no profile row yet, the account is saved and no profile is invented", async () => {
       await intake().createAccount(USER, { ...loan, studentLoanPlan: "PLAN_2" } as never);
       const profiles = await ds.query("SELECT 1 FROM user_profiles WHERE user_id = $1", [USER]);

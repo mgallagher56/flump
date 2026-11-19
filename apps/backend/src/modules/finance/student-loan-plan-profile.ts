@@ -34,22 +34,25 @@ export function profilePlansAfterAccountWrite(
 
 /**
  * Applies profilePlansAfterAccountWrite inside the account write's transaction (`manager`), so
- * the account and the profile change together or not at all. A user with no profile row yet is
- * left without one: the profile is created on first read, with the plan still on the account.
+ * the account and the profile change together or not at all. It is one conditional UPDATE: the
+ * "profile has none" test is in its WHERE, so a Settings save landing at the same moment is never
+ * overwritten (no read then write). A user with no profile row matches nothing and gets none: the
+ * profile is created on first read, with the plan still on the account. `student_loan_plans` is a
+ * simple-array: null is not answered and '' is "no student loan".
  */
 export async function writeStudentLoanPlanToProfile(
   manager: EntityManager,
   userId: string,
   account: { type: string; studentLoanPlan: string | null },
 ): Promise<void> {
-  if (account.type !== "Student Loan" || !isPlan(account.studentLoanPlan)) return;
-  const profiles = manager.getRepository(UserProfile);
-  const profile = await profiles.findOne({ where: { userId } });
-  if (!profile) return;
-  const next = profilePlansAfterAccountWrite(
-    profile.studentLoanPlans,
-    account.type,
-    account.studentLoanPlan,
-  );
-  if (next) await profiles.update({ id: profile.id }, { studentLoanPlans: next });
+  const next = profilePlansAfterAccountWrite(null, account.type, account.studentLoanPlan);
+  if (!next) return;
+  await manager
+    .getRepository(UserProfile)
+    .createQueryBuilder()
+    .update(UserProfile)
+    .set({ studentLoanPlans: next })
+    .where("user_id = :userId", { userId })
+    .andWhere("(student_loan_plans IS NULL OR student_loan_plans = '')")
+    .execute();
 }
