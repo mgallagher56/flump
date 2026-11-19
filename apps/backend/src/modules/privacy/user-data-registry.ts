@@ -407,6 +407,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         isDefault: "budget-entries",
         ownership: "budget-entries",
         sharePercent: "budget-entries",
+        linkKind: "budget-entry-link-kind",
       },
       notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
     },
