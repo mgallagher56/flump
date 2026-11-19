@@ -31,17 +31,6 @@ function withoutRetiredModules(keys: string[]): string[] {
   return keys.filter((k) => !RETIRED_MODULE_KEYS.includes(k));
 }
 
-function withoutRetiredModuleKeys<V>(record: Record<string, V> | null | undefined) {
-  if (!record) return record;
-  return Object.fromEntries(
-    Object.entries(record).filter(([k]) => !RETIRED_MODULE_KEYS.includes(k)),
-  ) as Record<string, V>;
-}
-
-function nonEmptyRecord<V>(record: Record<string, V> | null | undefined) {
-  return record && Object.keys(record).length > 0 ? record : undefined;
-}
-
 // E23 profile facts: validated here so a bad value is a 400, never a CHECK-violation 500.
 export function oneOfOrNull<T extends string>(
   value: unknown,
@@ -90,8 +79,27 @@ export function moneyOrNull(value: unknown, field: string): number | null {
 
 /** The profile row as it goes on the wire (E21 contract): every key present, decimals as numbers. */
 export function formatProfileRow(profile: UserProfile) {
-  // last_active_at is retention bookkeeping (BE-06), not part of the profile contract.
-  const { lastActiveAt: _lastActiveAt, ...rest } = profile;
+  // last_active_at is retention bookkeeping (BE-06), not part of the profile contract. The
+  // retired columns (system audit slice 9 part two) stay on the row until the drop PR, but
+  // nothing reads them, so they never go on the wire.
+  const {
+    lastActiveAt: _lastActiveAt,
+    hasRentalIncome: _hasRentalIncome,
+    rentalIncomeMonthly: _rentalIncomeMonthly,
+    hasBuyToLet: _hasBuyToLet,
+    buyToLetCount: _buyToLetCount,
+    buyToLetPropertyValue: _buyToLetPropertyValue,
+    buyToLetMonthlyRental: _buyToLetMonthlyRental,
+    buyToLetMortgageBalance: _buyToLetMortgageBalance,
+    buyToLetMortgageRate: _buyToLetMortgageRate,
+    buyToLetMortgageType: _buyToLetMortgageType,
+    monthlySavingsTarget: _monthlySavingsTarget,
+    savingsAllocationMode: _savingsAllocationMode,
+    savingsDefaultInterestRate: _savingsDefaultInterestRate,
+    dashboardWidgetSizes: _dashboardWidgetSizes,
+    dashboardWidgetConfig: _dashboardWidgetConfig,
+    ...rest
+  } = profile;
   return {
     ...rest,
     // Nullable columns with no DB default are absent from a just-inserted entity; pin them to
@@ -129,27 +137,6 @@ export function formatProfileRow(profile: UserProfile) {
       profile.secondIncomeMonthly !== null && profile.secondIncomeMonthly !== undefined
         ? Number(profile.secondIncomeMonthly)
         : null,
-    rentalIncomeMonthly:
-      profile.rentalIncomeMonthly !== null && profile.rentalIncomeMonthly !== undefined
-        ? Number(profile.rentalIncomeMonthly)
-        : null,
-    buyToLetPropertyValue:
-      profile.buyToLetPropertyValue !== null && profile.buyToLetPropertyValue !== undefined
-        ? Number(profile.buyToLetPropertyValue)
-        : null,
-    buyToLetMonthlyRental:
-      profile.buyToLetMonthlyRental !== null && profile.buyToLetMonthlyRental !== undefined
-        ? Number(profile.buyToLetMonthlyRental)
-        : null,
-    buyToLetMortgageBalance:
-      profile.buyToLetMortgageBalance !== null && profile.buyToLetMortgageBalance !== undefined
-        ? Number(profile.buyToLetMortgageBalance)
-        : null,
-    buyToLetMortgageRate:
-      profile.buyToLetMortgageRate !== null && profile.buyToLetMortgageRate !== undefined
-        ? Number(profile.buyToLetMortgageRate)
-        : null,
-    buyToLetMortgageType: profile.buyToLetMortgageType || "interest-only",
     // Null until the person answers (owner decision 3, slice 6): never a stand-in rate.
     pensionPercent:
       profile.pensionPercent !== null && profile.pensionPercent !== undefined
@@ -164,16 +151,6 @@ export function formatProfileRow(profile: UserProfile) {
         ? Boolean(profile.isSalarySacrifice)
         : null,
     isSalarySacrificeEmployerNi: Boolean(profile.isSalarySacrificeEmployerNi),
-    monthlySavingsTarget:
-      profile.monthlySavingsTarget !== null && profile.monthlySavingsTarget !== undefined
-        ? Number(profile.monthlySavingsTarget)
-        : null,
-    savingsDefaultInterestRate:
-      profile.savingsDefaultInterestRate !== null &&
-      profile.savingsDefaultInterestRate !== undefined
-        ? Number(profile.savingsDefaultInterestRate)
-        : 5.0,
-    savingsAllocationMode: profile.savingsAllocationMode || "per_account",
     setupChecklistCompletedSteps: Array.isArray(profile.setupChecklistCompletedSteps)
       ? profile.setupChecklistCompletedSteps
       : [],
@@ -195,12 +172,6 @@ export function formatProfileRow(profile: UserProfile) {
           ),
         ]
       : [],
-    dashboardWidgetSizes: nonEmptyRecord(
-      withoutRetiredModuleKeys(profile.dashboardWidgetSizes),
-    ) || {
-      accounts: "wide",
-    },
-    dashboardWidgetConfig: withoutRetiredModuleKeys(profile.dashboardWidgetConfig) || {},
     customBudgetCategories: Array.isArray(profile.customBudgetCategories)
       ? profile.customBudgetCategories
       : [],
@@ -291,17 +262,12 @@ export const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> =>
   monthlyTakeHome: null,
   hasSecondIncome: false,
   secondIncomeMonthly: null,
-  hasRentalIncome: false,
-  rentalIncomeMonthly: null,
   hasMortgage: false,
   propertyOwnershipShare: 100.0,
   pensionPercent: null,
   pensionEmployerPercent: null,
   isSalarySacrifice: null,
   isSalarySacrificeEmployerNi: false,
-  monthlySavingsTarget: null,
-  savingsAllocationMode: "per_account",
-  savingsDefaultInterestRate: 5.0,
   setupChecklistCompletedSteps: [],
   setupChecklistDismissed: false,
   onboardingCompleted: false,

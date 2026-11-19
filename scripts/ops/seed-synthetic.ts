@@ -102,9 +102,9 @@ async function insertPersona(db: SeedClient, persona: SyntheticPersona, userId: 
     `INSERT INTO user_profiles
        (user_id, display_name, first_name, last_name, employment_type, annual_salary,
         monthly_take_home, has_mortgage, pension_percent, pension_employer_percent,
-        is_salary_sacrifice, has_rental_income, rental_income_monthly, enabled_pages,
-        dashboard_widgets, dashboard_widget_order, onboarding_completed)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$14,true)`,
+        is_salary_sacrifice, enabled_pages, dashboard_widgets, dashboard_widget_order,
+        onboarding_completed)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$12,true)`,
     [
       userId,
       p.displayName,
@@ -117,8 +117,6 @@ async function insertPersona(db: SeedClient, persona: SyntheticPersona, userId: 
       p.pensionPercent ?? 5,
       p.pensionEmployerPercent ?? 3,
       p.isSalarySacrifice ?? true,
-      p.hasRentalIncome ?? false,
-      p.rentalIncomeMonthly ?? null,
       p.enabledPages.join(","), // TypeORM simple-array storage
     ],
   );

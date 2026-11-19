@@ -142,32 +142,18 @@ export class UserProfileService implements ProfileLifecycle {
       monthlyTakeHome: null,
       hasSecondIncome: false,
       secondIncomeMonthly: null,
-      hasRentalIncome: false,
-      rentalIncomeMonthly: null,
       hasMortgage: false,
       mortgageType: "repayment",
       propertyOwnershipShare: 100.0,
-      hasBuyToLet: false,
-      buyToLetCount: 1,
-      buyToLetPropertyValue: null,
-      buyToLetMonthlyRental: null,
-      buyToLetMortgageBalance: null,
-      buyToLetMortgageRate: null,
-      buyToLetMortgageType: "interest-only",
       pensionPercent: null,
       pensionEmployerPercent: null,
       isSalarySacrifice: null,
       isSalarySacrificeEmployerNi: false,
-      monthlySavingsTarget: null,
-      savingsAllocationMode: "per_account",
-      savingsDefaultInterestRate: 5.0,
       setupChecklistCompletedSteps: [],
       enabledPages: ["accounts", "budget", "savings", "pension", "mortgage"],
       dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage"],
       // Empty: the dashboard's default section order until the user moves a section.
       dashboardWidgetOrder: [],
-      dashboardWidgetSizes: { accounts: "wide" },
-      dashboardWidgetConfig: {},
       onboardingCompleted: false,
       netWorthCountsProperty: true,
       netWorthCountsStudentLoan: false,
@@ -272,45 +258,20 @@ export class UserProfileService implements ProfileLifecycle {
     if (body.hasSecondIncome !== undefined) profile.hasSecondIncome = body.hasSecondIncome;
     if (body.secondIncomeMonthly !== undefined)
       profile.secondIncomeMonthly = body.secondIncomeMonthly ?? null;
-    if (body.hasRentalIncome !== undefined) profile.hasRentalIncome = body.hasRentalIncome;
-    if (body.rentalIncomeMonthly !== undefined)
-      profile.rentalIncomeMonthly = body.rentalIncomeMonthly ?? null;
     if (body.hasMortgage !== undefined) profile.hasMortgage = body.hasMortgage;
     if (body.mortgageType !== undefined) profile.mortgageType = body.mortgageType;
     if (body.propertyOwnershipShare !== undefined)
       profile.propertyOwnershipShare = body.propertyOwnershipShare;
-    if (body.hasBuyToLet !== undefined) profile.hasBuyToLet = body.hasBuyToLet;
-    if (body.buyToLetCount !== undefined) profile.buyToLetCount = body.buyToLetCount;
-    if (body.buyToLetPropertyValue !== undefined)
-      profile.buyToLetPropertyValue = body.buyToLetPropertyValue ?? null;
-    if (body.buyToLetMonthlyRental !== undefined)
-      profile.buyToLetMonthlyRental = body.buyToLetMonthlyRental ?? null;
-    if (body.buyToLetMortgageBalance !== undefined)
-      profile.buyToLetMortgageBalance = body.buyToLetMortgageBalance ?? null;
-    if (body.buyToLetMortgageRate !== undefined)
-      profile.buyToLetMortgageRate = body.buyToLetMortgageRate ?? null;
-    if (body.buyToLetMortgageType !== undefined)
-      profile.buyToLetMortgageType = body.buyToLetMortgageType;
     if (body.pensionPercent !== undefined) profile.pensionPercent = body.pensionPercent;
     if (body.pensionEmployerPercent !== undefined)
       profile.pensionEmployerPercent = body.pensionEmployerPercent;
     if (body.isSalarySacrifice !== undefined) profile.isSalarySacrifice = body.isSalarySacrifice;
     if (body.isSalarySacrificeEmployerNi !== undefined)
       profile.isSalarySacrificeEmployerNi = body.isSalarySacrificeEmployerNi;
-    if (body.monthlySavingsTarget !== undefined)
-      profile.monthlySavingsTarget = body.monthlySavingsTarget ?? null;
-    if (body.savingsAllocationMode !== undefined)
-      profile.savingsAllocationMode = body.savingsAllocationMode;
-    if (body.savingsDefaultInterestRate !== undefined)
-      profile.savingsDefaultInterestRate = body.savingsDefaultInterestRate;
     if (body.enabledPages !== undefined) profile.enabledPages = body.enabledPages;
     if (body.dashboardWidgets !== undefined) profile.dashboardWidgets = body.dashboardWidgets;
     if (body.dashboardWidgetOrder !== undefined)
       profile.dashboardWidgetOrder = body.dashboardWidgetOrder;
-    if (body.dashboardWidgetSizes !== undefined)
-      profile.dashboardWidgetSizes = body.dashboardWidgetSizes;
-    if (body.dashboardWidgetConfig !== undefined)
-      profile.dashboardWidgetConfig = body.dashboardWidgetConfig;
     if (body.customBudgetCategories !== undefined) {
       const categories = Array.isArray(body.customBudgetCategories)
         ? body.customBudgetCategories
@@ -482,16 +443,11 @@ export class UserProfileService implements ProfileLifecycle {
       monthlyTakeHome: null,
       hasSecondIncome: false,
       secondIncomeMonthly: null,
-      hasRentalIncome: false,
-      rentalIncomeMonthly: null,
       hasMortgage: false,
       propertyOwnershipShare: 100.0,
       pensionPercent: null,
       pensionEmployerPercent: null,
       isSalarySacrifice: null,
-      monthlySavingsTarget: null,
-      savingsAllocationMode: "per_account",
-      savingsDefaultInterestRate: 5.0,
       setupChecklistCompletedSteps: [],
       onboardingCompleted: false,
     });
