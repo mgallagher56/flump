@@ -3668,6 +3668,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await profile("whole", 100);
       // "none" has no profile row at all.
       await profile("thirds", 33.4);
+      // 99.6 rounds to 100, which is held solely: the account stays sole.
+      await profile("nearly", 99.6);
       const soleRental = await property("half", "rental", "sole", null);
       const home = await property("half", "home", "sole", null);
       const jointRental = await property("half", "rental", "joint", 40);
@@ -3675,6 +3677,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       const noShareRental = await property("none", "rental", "sole", null);
       // 33.4 rounds to 33, as MoveBuyToLetProfileIntoAccounts rounds it.
       const roundedRental = await property("thirds", "rental", "sole", null);
+      const nearlyWholeRental = await property("nearly", "rental", "sole", null);
       const logged = vi.spyOn(Logger.prototype, "log");
       await ds.runMigrations();
       // Counts only: two accounts changed, and no id in the message.
@@ -3689,6 +3692,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await share(jointRental)).toEqual({ ownership: "joint", share_percent: 40 });
       expect(await share(wholeRental)).toEqual({ ownership: "sole", share_percent: null });
       expect(await share(noShareRental)).toEqual({ ownership: "sole", share_percent: null });
+      expect(await share(nearlyWholeRental)).toEqual({ ownership: "sole", share_percent: null });
       const image = await beforeImage();
       expect(image).toHaveLength(2);
       expect(image).toEqual(
