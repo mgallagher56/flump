@@ -6,10 +6,10 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 | Verdict                                   | Count |
 | ----------------------------------------- | ----- |
-| Holds                                     | 30    |
-| Holds with a manual step or a delay       | 8     |
-| Broken                                    | 21    |
-| Duplicated (two stores that can disagree) | 14    |
+| Holds                                     | 38    |
+| Holds with a manual step or a delay       | 6     |
+| Broken                                    | 16    |
+| Duplicated (two stores that can disagree) | 13    |
 | Not checked                               | 0     |
 
 ## A. Accounts and balances
