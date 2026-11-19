@@ -176,9 +176,14 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         budgetEntries: rows.budgetEntries,
         taxRecords: rows.taxRecords,
       });
-      for (const leak of [USER_B, bAccount.id, bBudget.id, bTax.id, "999999", "777", "888"]) {
+      for (const leak of [USER_B, bAccount.id, bBudget.id, bTax.id]) {
         expect(loaded).not.toContain(leak);
       }
+      // B's amounts are compared as values, not as text inside the JSON: a random id or a
+      // timestamp of A's can contain "777" or "888" by chance, which made this test fail at random.
+      expect(rows.accounts.map((a) => Number(a.balance))).not.toContain(999999);
+      expect(rows.budgetEntries.map((b) => Number(b.amount))).toEqual([300]);
+      expect(rows.taxRecords.map((t) => Number(t.amount))).toEqual([120]);
 
       // Tax records come back without any receipt column (receiptData is never selected). The
       // entity class declares every field, so an unselected column is present but undefined.
