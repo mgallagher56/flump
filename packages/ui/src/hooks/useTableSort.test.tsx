@@ -50,6 +50,36 @@ describe("useTableSort", () => {
     expect(result.current.sortedRows.map((r) => r.amount)).toEqual([45.5, 300, 1200, null]);
   });
 
+  it("puts an invalid date last in both directions", () => {
+    const rows = [
+      { name: "a", date: "2026-05-01" },
+      { name: "bad", date: "not a date" },
+      { name: "c", date: "2027-01-31" },
+    ];
+    const dateColumns = {
+      date: {
+        value: (r: (typeof rows)[number]) => new Date(r.date),
+        firstDirection: "desc" as const,
+      },
+    };
+    const { result } = renderHook(() => useTableSort({ rows, columns: dateColumns }));
+    act(() => result.current.toggleSort("date"));
+    expect(result.current.sortedRows.map((r) => r.name)).toEqual(["c", "a", "bad"]);
+    act(() => result.current.toggleSort("date"));
+    expect(result.current.sortedRows.map((r) => r.name)).toEqual(["a", "c", "bad"]);
+  });
+
+  it("puts empty and whitespace-only text last in both directions", () => {
+    const rows = [{ name: "" }, { name: "Banana" }, { name: "   " }, { name: "apple" }];
+    const textColumns = { name: { value: (r: { name: string }) => r.name } };
+    const { result } = renderHook(() => useTableSort({ rows, columns: textColumns }));
+    act(() => result.current.toggleSort("name"));
+    // Ascending: apple, Banana, then the two Not set rows in their given order.
+    expect(result.current.sortedRows.map((r) => r.name)).toEqual(["apple", "Banana", "", "   "]);
+    act(() => result.current.toggleSort("name"));
+    expect(result.current.sortedRows.map((r) => r.name)).toEqual(["Banana", "apple", "", "   "]);
+  });
+
   it("sorts dates by time, newest first on the first click", () => {
     const { result } = renderHook(() => useTableSort({ rows: ROWS, columns }));
     act(() => result.current.toggleSort("date"));
@@ -130,16 +160,16 @@ const SortableHarness = () => {
 };
 
 describe("useTableSort with Th", () => {
-  it("toggles aria-sort through ascending, descending and none", () => {
+  it("toggles aria-sort through ascending, descending and off", () => {
     render(<SortableHarness />);
     const record = screen.getByRole("columnheader", { name: /Record/ });
     const amount = screen.getByRole("columnheader", { name: /Amount/ });
-    expect(record.getAttribute("aria-sort")).toBe("none");
-    expect(amount.getAttribute("aria-sort")).toBe("none");
+    expect(record.getAttribute("aria-sort")).toBeNull();
+    expect(amount.getAttribute("aria-sort")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Record" }));
     expect(record.getAttribute("aria-sort")).toBe("ascending");
-    expect(amount.getAttribute("aria-sort")).toBe("none");
+    expect(amount.getAttribute("aria-sort")).toBeNull();
     expect(screen.getAllByRole("row")[1]?.textContent).toContain("apple");
 
     fireEvent.click(screen.getByRole("button", { name: "Record" }));
@@ -147,7 +177,7 @@ describe("useTableSort with Th", () => {
     expect(screen.getAllByRole("row")[1]?.textContent).toContain("item 10");
 
     fireEvent.click(screen.getByRole("button", { name: "Record" }));
-    expect(record.getAttribute("aria-sort")).toBe("none");
+    expect(record.getAttribute("aria-sort")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Amount" }));
     expect(amount.getAttribute("aria-sort")).toBe("descending");

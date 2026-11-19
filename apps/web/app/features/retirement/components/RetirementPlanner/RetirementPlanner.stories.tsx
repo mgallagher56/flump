@@ -130,7 +130,9 @@ export const WorkplacePension: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByDisplayValue("6%")).toBeInTheDocument();
     await expect(canvas.getByRole("figure", { name: "Pot each year" })).toBeInTheDocument();
-    await userEvent.click(canvas.getByLabelText("Only pay that counts for your pension"));
+    await userEvent.click(
+      canvas.getByLabelText("Base contributions on pay that counts for your pension"),
+    );
     await expect(canvas.getByText(/Change from your saved plan/)).toBeInTheDocument();
     await expect(
       canvas.getByRole("link", { name: /Pension guidance from MoneyHelper/ }),
@@ -165,7 +167,9 @@ export const WorkplacePensionDefaultRates: Story = {
       canvas.getByRole("button", { name: /Assumptions, pots and year by year/ }),
     );
     await expect(canvas.getByText(/the auto-enrolment minimums/)).toBeInTheDocument();
-    await userEvent.click(canvas.getByLabelText("Only pay that counts for your pension"));
+    await userEvent.click(
+      canvas.getByLabelText("Base contributions on pay that counts for your pension"),
+    );
     await expect(canvas.queryByText("Edited. Not saved.")).toBeNull();
   },
 };

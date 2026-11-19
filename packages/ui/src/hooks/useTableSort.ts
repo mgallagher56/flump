@@ -50,8 +50,13 @@ export interface UseTableSortResult<T, K extends string> {
 
 const collator = new Intl.Collator("en-GB", { numeric: true, sensitivity: "base" });
 
-const isNotSet = (v: SortValue): v is null | undefined =>
-  v === null || v === undefined || (typeof v === "number" && Number.isNaN(v));
+/** Not set: null, undefined, NaN, an invalid Date, or text that is empty or only spaces. */
+const isNotSet = (v: SortValue): boolean =>
+  v === null ||
+  v === undefined ||
+  (typeof v === "number" && Number.isNaN(v)) ||
+  (v instanceof Date && Number.isNaN(v.getTime())) ||
+  (typeof v === "string" && v.trim() === "");
 
 /**
  * Compare two sort values, ascending. Numbers and dates compare numerically, text with the en-GB

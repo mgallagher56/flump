@@ -288,7 +288,9 @@ describe("RetirementPlanner", () => {
       const slider = screen.getByLabelText("Your contribution") as HTMLInputElement;
       expect(slider.value).toBe("6");
       expect(screen.getByDisplayValue("6%")).toBeTruthy();
-      const qualifying = screen.getByLabelText("Only pay that counts for your pension");
+      const qualifying = screen.getByLabelText(
+        "Base contributions on pay that counts for your pension",
+      );
       // The band sits behind the "i" beside the checkbox, read with it (owner item 23).
       expect(screen.getByRole("button", { name: "About Pay that counts" })).toBeTruthy();
       expect(qualifying.getAttribute("aria-describedby")).toBe("retirement-qualifying-info");
@@ -326,7 +328,9 @@ describe("RetirementPlanner", () => {
       const heroBefore = hero().textContent;
       fireEvent.change(screen.getByLabelText("Your contribution"), { target: { value: "10" } });
       expect(outcome().textContent).toMatch(/Change from your saved plan: \+~£[\d,]+ a year\./);
-      fireEvent.click(screen.getByLabelText("Only pay that counts for your pension"));
+      fireEvent.click(
+        screen.getByLabelText("Base contributions on pay that counts for your pension"),
+      );
       expect(outcome().textContent).toMatch(/Change from your saved plan: [+-]~£[\d,]+ a year\./);
       expect(hero().textContent).toBe(heroBefore);
       expect(onSavePlan).not.toHaveBeenCalled();

@@ -71,7 +71,7 @@ vi.mock("recharts", async () => {
 });
 
 import { INTEREST_LABEL } from "~/features/savings/components/SavingsSummaryCards/SavingsSummaryCards";
-import SavingsContainer, { parsePayRise } from "./SavingsContainer";
+import SavingsContainer, { parsePayRise, withFullStop } from "./SavingsContainer";
 
 const zone = () => screen.getByRole("region", { name: "Model a change to your savings" });
 
@@ -228,6 +228,14 @@ describe("SavingsContainer", () => {
     render(<SavingsContainer />);
     expect(mockNavigate).toHaveBeenCalledWith("/app/take-home", { replace: true });
     window.location.hash = "";
+  });
+
+  it("ends the illustration summary with one full stop", () => {
+    // forecastOutcomeText has none ("£12,000 in 5 years"); depositOutcomeText may ("... target.").
+    expect(withFullStop("£12,000 in 5 years")).toBe("£12,000 in 5 years.");
+    expect(withFullStop("Your starting amount already meets this target.")).toBe(
+      "Your starting amount already meets this target.",
+    );
   });
 
   it("parses a pay rise handed over from Take-home pay in router state", () => {

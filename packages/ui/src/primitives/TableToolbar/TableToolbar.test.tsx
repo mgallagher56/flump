@@ -62,4 +62,24 @@ describe("TableToolbar", () => {
     fireEvent.change(select, { target: { value: "isa" } });
     expect(onChange).toHaveBeenCalledWith("isa");
   });
+
+  it("links its hint to the select and pairs id with data-testid", () => {
+    render(
+      <TableFilterSelect
+        allLabel="All accounts"
+        hint="Shows records from one account"
+        label="Account"
+        options={[{ value: "isa", label: "Cash ISA" }]}
+        value="all"
+        onChange={vi.fn()}
+      />,
+    );
+    const select = screen.getByRole("combobox", { name: "Account" });
+    expect(select.getAttribute("data-testid")).toBe(select.id);
+    const describedBy = select.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy ?? "")?.textContent).toBe(
+      "Shows records from one account",
+    );
+  });
 });

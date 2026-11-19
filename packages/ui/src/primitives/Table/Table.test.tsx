@@ -358,7 +358,7 @@ describe("Table Primitive", () => {
     // An unsorted sortable column says "none"; the sort control is a native button, so Enter and
     // Space work from the keyboard.
     const amountHeader = screen.getByRole("columnheader", { name: /Amount/ });
-    expect(amountHeader.getAttribute("aria-sort")).toBe("none");
+    expect(amountHeader.getAttribute("aria-sort")).toBeNull();
     const amountButton = screen.getByRole("button", { name: "Amount" });
     expect(amountButton.tagName).toBe("BUTTON");
     expect(amountButton.getAttribute("type")).toBe("button");

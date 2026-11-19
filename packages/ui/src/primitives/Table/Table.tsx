@@ -195,10 +195,10 @@ export interface ThProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, "a
   bare?: boolean;
 }
 
-const ARIA_SORT: Record<SortDirection, "ascending" | "descending" | "none"> = {
+const ARIA_SORT: Record<SortDirection, "ascending" | "descending" | undefined> = {
   asc: "ascending",
   desc: "descending",
-  none: "none",
+  none: undefined,
 };
 
 export const Th: FC<ThProps> = ({
@@ -221,8 +221,8 @@ export const Th: FC<ThProps> = ({
     sortDirection === "asc" ? ArrowUp : sortDirection === "desc" ? ArrowDown : ArrowUpDown;
   return (
     <th
-      // A sortable header always says how it is sorted: "ascending" or "descending" on the sorted
-      // column, "none" on the others. A header that cannot sort carries no aria-sort at all.
+      // Only the sorted column carries aria-sort ("ascending" or "descending"), as the WAI-ARIA
+      // authoring practices advise; other headers, sortable or not, carry none.
       aria-sort={onSort ? ARIA_SORT[sortDirection ?? "none"] : undefined}
       className={
         bare ? className : cx(thRecipe({ align: resolvedAlign, appearance, text }), className)

@@ -103,6 +103,7 @@ export interface BudgetRowLike {
   isEssential?: unknown;
   ownership?: unknown;
   sharePercent?: unknown;
+  isPrimaryIncome?: unknown;
 }
 
 export interface FinancialPictureRows {
@@ -133,6 +134,8 @@ export function budgetEntryFromRow(row: BudgetRowLike, index = 0): BudgetEntryIt
     isEssential: row.isEssential === true,
     ownership: row.ownership === "joint" ? "joint" : "sole",
     sharePercent: shareFromRow(row.sharePercent),
+    // Set only when true, so rows without the flag map exactly as before.
+    ...(row.isPrimaryIncome === true ? { isPrimaryIncome: true } : {}),
   };
 }
 

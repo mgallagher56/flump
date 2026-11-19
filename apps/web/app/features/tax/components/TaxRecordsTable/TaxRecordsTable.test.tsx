@@ -143,7 +143,7 @@ describe("TaxRecordsTable", () => {
   it("sorts columns ascending and descending when headers are clicked", () => {
     setup();
     const recordHeader = screen.getByRole("columnheader", { name: "Record" });
-    expect(recordHeader.getAttribute("aria-sort")).toBe("none");
+    expect(recordHeader.getAttribute("aria-sort")).toBeNull();
     expect(screen.getByRole("columnheader", { name: "Date" }).getAttribute("aria-sort")).toBe(
       "descending",
     );
