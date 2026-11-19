@@ -1,30 +1,25 @@
 /**
  * "Breathing room" wording for the previews (owner ruling 15 November 2026, STYLE-GUIDE 12.6).
  * The figure is the engine's `monthsOfCover`; this file only words it and works nothing out.
- * It mirrors `apps/web/app/utils/breathingRoom.ts` so marketing and the app read the same.
+ * The wording itself lives in the engine (`breathing-room-wording.ts`), shared with the app and
+ * AI text, so marketing and the app read the same.
  */
+
+import {
+  formatBreathingRoomFigure,
+  breathingRoomPhrase as phrase,
+  breathingRoomValue as value,
+} from "@flump/finance-engine";
 
 export const BREATHING_ROOM_LABEL = "Breathing room";
 export const BREATHING_ROOM_DESCRIPTION = "How long your savings would cover the essentials.";
 
-const monthsFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+/** "4.7 months", "1 month", "1 year 1 month", "10+ years". Plain wording: no target is implied. */
+export const formatBreathingRoomMonths = (months: number): string =>
+  formatBreathingRoomFigure(months);
 
-/** "4.7 months", "1 month", "10+ years". Plain wording: no target is implied. */
-export const formatBreathingRoomMonths = (months: number): string => {
-  if (months > 120) return `${Math.floor(months / 12)}+ years`;
-  // The plural follows the figure as shown, so 1.04 reads "1 month", not "1 months".
-  const shown = monthsFormat.format(Math.max(0, months));
-  return `${shown} ${shown === "1" ? "month" : "months"}`;
-};
-
-/** The figure as a value: "About 1.5 months", "About 1 month", "More than 10 years". */
-export const breathingRoomValue = (months: number): string =>
-  months > 120
-    ? `More than ${Math.floor(months / 12)} years`
-    : `About ${formatBreathingRoomMonths(months)}`;
+/** The figure as a value: "About 1.5 months", "About 1 year 1 month", "More than 10 years". */
+export const breathingRoomValue = (months: number): string => value(months);
 
 /** The figure inside a line: "about 1.5 months". */
-export const breathingRoomPhrase = (months: number): string => {
-  const value = breathingRoomValue(months);
-  return value.charAt(0).toLowerCase() + value.slice(1);
-};
+export const breathingRoomPhrase = (months: number): string => phrase(months);

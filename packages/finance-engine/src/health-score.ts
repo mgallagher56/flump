@@ -1,3 +1,4 @@
+import { formatBreathingRoomFigure } from "./breathing-room-wording.js";
 import { filterConsumerDebts, normalizeDebtItem } from "./debt-payoff.js";
 import type {
   DebtItem,
@@ -108,10 +109,12 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       name: "Breathing room",
       score: Math.min(100, Math.round(runwayScore)),
       weight: 0.5,
-      comment: `Cash covers ${runwayMonths.toFixed(1)} months of essential spending.`,
+      comment: `Cash covers ${formatBreathingRoomFigure(runwayMonths)} of essential spending.`,
     });
     if (runwayMonths < 3) {
-      observations.push(`Cash covers ${runwayMonths.toFixed(1)} months of essential spending.`);
+      observations.push(
+        `Cash covers ${formatBreathingRoomFigure(runwayMonths)} of essential spending.`,
+      );
     }
 
     // 2. Cash Savings Yield Optimization (Weight 0.25)
@@ -197,7 +200,7 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       name: "Breathing room",
       score: runwayScore,
       weight: 0.25,
-      comment: `Cash covers ${runwayMonths.toFixed(1)} months of essential spending.`,
+      comment: `Cash covers ${formatBreathingRoomFigure(runwayMonths)} of essential spending.`,
     });
   }
 

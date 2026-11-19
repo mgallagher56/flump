@@ -339,6 +339,8 @@ The owner listed what they noticed while using the site (about 15 November 2026)
    - Supersedes: the rework's removal of the housing sync (which wrote into budget rows). Existing £0 seeded rows are left in place; a cleanup is proposed, not done.
 7. **Informational text behind info icons (item 23).** Owner's words: "Move any informational bits of text to an i icon with a tooltip to display the info".
    - Built with `InfoTip descriptionId`, named in the field's `aria-describedby`. Kept visible: validation errors, the fixed legal and projection notices and the "can go down as well as up" line. UX-GUIDELINES F14 states the rule.
+8. **Breathing room in years from 12 months (coordinator item A).** Owner's words: "When the breathing room gets to 12, it should show 1 year, and then if it was 13 months, it should show 1 year 1 month."
+   - Built in one formatter (`packages/finance-engine/src/breathing-room-wording.ts`) used by the web app, the marketing previews and AI text. Under a year: one decimal place ("About 1.5 months"). When that rounds to 12 or more, whole months rounded half up give "About 1 year", "About 1 year 1 month", "About 2 years 3 months"; "About" stays because the figure is still an estimate. Above 120 months it still reads "More than 10 years". STYLE-GUIDE 12.6 states the rule.
 
 # Owner decisions, round 11 (2026-11-19): system data audit
 
