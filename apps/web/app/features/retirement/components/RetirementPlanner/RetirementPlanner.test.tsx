@@ -62,16 +62,36 @@ const planArgs: BuildRetirementPlanInputArgs = {
   ],
 };
 
-const renderPlanner = (props: Partial<RetirementPlannerProps> = {}) =>
-  render(
+const ZONE_SHOW = "Show what-if: change your plan";
+
+/** Renders the planner with its scenario zone opened (it starts closed below the saved figures). */
+const renderPlanner = (props: Partial<RetirementPlannerProps> = {}, { openZone = true } = {}) => {
+  const result = render(
     <MemoryRouter>
       <RetirementPlanner planArgs={planArgs} accountDetails={[]} {...props} />
     </MemoryRouter>,
   );
+  const toggle = screen.queryByRole("button", { name: ZONE_SHOW });
+  if (openZone && toggle) fireEvent.click(toggle);
+  return result;
+};
 
 const hero = () => screen.getByTestId("hero-figure");
 
 describe("RetirementPlanner", () => {
+  it("starts with the scenario zone closed, summarising the saved plan, and opens it", () => {
+    renderPlanner({}, { openZone: false });
+    const toggle = screen.getByRole("button", { name: ZONE_SHOW });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      screen.getByText("Starts from your saved plan: retiring at 60, planning to age 80."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("slider", { name: "Retirement age" })).toBeNull();
+    fireEvent.click(toggle);
+    expect(screen.getByRole("slider", { name: "Retirement age" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Hide what-if" })).toBeTruthy();
+  });
+
   it("shows no housing cost as an exact £0, not an estimate, and the tracked month in words", () => {
     renderPlanner({
       accountDetails: [{ accountId: "pen", year: 2026, month: 10, value: 100_000 }],

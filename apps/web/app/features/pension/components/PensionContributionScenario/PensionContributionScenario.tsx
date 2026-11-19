@@ -47,7 +47,38 @@ export interface PensionContributionScenarioProps {
   takeHomeFacts: ProfileFacts;
   /** True when the page shows another tax figure (the £100,000 line), so the notice needs the lead. */
   showsOtherTaxFigure?: boolean;
+  /**
+   * The zone sits below saved figures, so it starts closed. Pass `open` and `onOpenChange` when the
+   * page opens it itself (the £100,000 line's "Model this contribution").
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
+
+export const PENSION_ZONE_SHOW_LABEL = "Show what-if: change your contribution";
+
+const percentText = (value: number): string =>
+  `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }).format(value)}%`;
+const wholePounds = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+  maximumFractionDigits: 0,
+});
+
+/**
+ * The closed zone's one line: the saved starting figures, or the contribution being illustrated
+ * once it differs from the saved one. ScenarioZone renders it in its summary line, which sets
+ * tabular-nums, and the figures are formatted en-GB here.
+ */
+export const pensionZoneSummary = (
+  salary: number,
+  savedPercent: number,
+  scenarioPercent: number,
+  isModified: boolean,
+): string =>
+  isModified
+    ? `Your illustration: a contribution of ${percentText(scenarioPercent)} instead of ${percentText(savedPercent)}.`
+    : `Starts from your contribution of ${percentText(savedPercent)} of your ${wholePounds.format(salary)} salary.`;
 
 /**
  * The Pension page's one ScenarioZone (decision RD6): the effect of changing your contribution on
@@ -62,6 +93,8 @@ export const PensionContributionScenario: FC<PensionContributionScenarioProps> =
   savedEmployeePercent,
   takeHomeFacts,
   showsOtherTaxFigure = false,
+  open,
+  onOpenChange,
 }) => {
   const { values } = scenario;
   const deltaYear = (salary * (values.contributionPercent - savedEmployeePercent)) / 100;
@@ -92,10 +125,20 @@ export const PensionContributionScenario: FC<PensionContributionScenarioProps> =
 
   return (
     <ScenarioZone
+      collapsible
       id={PENSION_SCENARIO_ZONE_ID}
       isModified={scenario.isModified}
       notice={notice}
+      open={open}
+      showLabel={PENSION_ZONE_SHOW_LABEL}
+      summary={pensionZoneSummary(
+        salary,
+        savedEmployeePercent,
+        values.contributionPercent,
+        scenario.isModified,
+      )}
       title={PENSION_ZONE_TITLE}
+      onOpenChange={onOpenChange}
       onReset={scenario.reset}
     >
       <SimulatorSplitLayout

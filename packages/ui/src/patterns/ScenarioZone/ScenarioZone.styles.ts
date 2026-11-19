@@ -24,6 +24,10 @@ export const scenarioZone = sva({
     "footer",
     "footerActions",
     "reset",
+    "summary",
+    "toggle",
+    "chevron",
+    "panel",
   ],
   base: {
     root: {
@@ -106,6 +110,79 @@ export const scenarioZone = sva({
       flexShrink: "0",
       gap: "1.5",
       _disabled: { cursor: "not-allowed" },
+    },
+    /** The one line a closed zone shows: its starting figures or the last illustration. */
+    summary: {
+      margin: "0",
+      color: "text.secondary",
+      textStyle: "body.sm",
+      fontVariantNumeric: "tabular-nums",
+    },
+    /**
+     * The disclosure button of a collapsible zone: the B14 small outline pill with a chevron (32px
+     * high, `border.strong`, radius lg), the same look as `CollapsibleDrawer`'s quiet trigger.
+     */
+    toggle: {
+      position: "relative",
+      display: "inline-flex",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      gap: "1.5",
+      height: "control.sm",
+      mt: "2",
+      px: "3",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: "border.strong",
+      borderRadius: "lg",
+      backgroundColor: "transparent",
+      color: "text.primary",
+      textStyle: "label.sm",
+      fontWeight: "semibold",
+      textAlign: "left",
+      cursor: "pointer",
+      _motionSafe: {
+        transition: "background-color token(durations.fast) token(easings.standard)",
+      },
+      // Keeps the 32px look but gives coarse pointers a 44px target with an invisible hit area.
+      "@media (pointer: coarse)": {
+        _before: {
+          content: '""',
+          position: "absolute",
+          insetInline: "0",
+          top: "50%",
+          transform: "translateY(-50%)",
+          height: "touch",
+        },
+      },
+      _hover: { backgroundColor: "surface.subtle" },
+      _focusVisible: {
+        outline: "2px solid",
+        outlineColor: "border.focusRing",
+        outlineOffset: "2px",
+      },
+    },
+    chevron: {
+      display: "inline-flex",
+      flexShrink: "0",
+      _motionSafe: { transition: "transform token(durations.base) token(easings.standard)" },
+      "[aria-expanded='true'] > &": { transform: "rotate(180deg)" },
+    },
+    /**
+     * Everything under the header. A disclosure arrives over `durations.base` with `easings.enter`
+     * (STYLE-GUIDE 11, UX-GUIDELINES M2), a fade only and only under `_motionSafe`.
+     */
+    panel: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "4",
+      minWidth: "0",
+      _motionSafe: {
+        animationName: "fadeIn",
+        animationDuration: "base",
+        animationTimingFunction: "enter",
+      },
+      _hidden: { display: "none" },
     },
   },
 });

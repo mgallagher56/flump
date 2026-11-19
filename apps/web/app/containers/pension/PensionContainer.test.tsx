@@ -130,6 +130,9 @@ const restore = () => {
 const openDetails = () =>
   fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
 const zone = () => screen.getByRole("region", { name: "Model a change to your contribution" });
+/** The zone starts closed below the saved figures. */
+const openZone = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Show what-if: change your contribution" }));
 const slider = (label: string) => within(zone()).getByLabelText(label) as HTMLInputElement;
 const savedText = () =>
   [
@@ -145,6 +148,9 @@ describe("PensionContainer", () => {
     it("filled: one hero, one primary button, one notice, at most 12 figures before disclosure", () => {
       useFixture(FILLED);
       const { container } = render(<PensionContainer />);
+      // The scenario zone starts closed, so its one notice is behind the disclosure.
+      expectPageRules(container, { maxFigures: 12, maxNotSet: 0, projectionNotices: 0 });
+      openZone();
       expectPageRules(container, { maxFigures: 12, maxNotSet: 0, projectionNotices: 1 });
       const hero = container.querySelector("[data-tone='hero']");
       expect(hero?.textContent).toContain("Total in your pots");
@@ -441,6 +447,7 @@ describe("PensionContainer", () => {
       expect(note.textContent).not.toMatch(/marginal rate|£100k|trap|escape/i);
       expect(zone().compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       // The page's one notice carries the standard unverified sentence.
+      openZone();
       expect(zone().querySelector("[data-notice='projection']")?.textContent).toContain(
         "Unverified estimate.",
       );
@@ -452,6 +459,7 @@ describe("PensionContainer", () => {
       expect(trapNote()?.textContent).toContain(
         "The Personal Allowance reduces when adjusted net income is above £100,000.",
       );
+      openZone();
       expect(zone().querySelector("[data-notice='projection']")?.textContent).toContain(
         "Unverified estimate.",
       );
@@ -534,6 +542,7 @@ describe("PensionContainer", () => {
       vi.stubGlobal("fetch", fetchSpy);
       render(<PensionContainer />);
       const before = savedText();
+      openZone();
       fireEvent.change(slider("Your contribution"), { target: { value: "12" } });
       expect(savedText()).toBe(before);
       expect(
@@ -548,6 +557,7 @@ describe("PensionContainer", () => {
 
     it("is one take-home tool with one input, seeded from the saved contribution, and resets", () => {
       render(<PensionContainer />);
+      openZone();
       expect(screen.queryByRole("tab")).toBeNull();
       expect(within(zone()).getAllByRole("slider")).toHaveLength(1);
       expect(slider("Your contribution").value).toBe("8");

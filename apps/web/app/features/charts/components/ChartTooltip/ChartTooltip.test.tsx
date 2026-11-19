@@ -53,6 +53,26 @@ describe("ChartTooltip", () => {
     expect(container.querySelector("svg")?.getAttribute("data-swatch")).toBe("area");
   });
 
+  test("passes the payload to labelFormatter and words values through valueFormatter", () => {
+    const rows = [
+      { dataKey: "pot", name: "Pot", value: 98765, color: "red", payload: { month: "Jun 2040" } },
+    ];
+    const { getByText, queryByText } = customRender(
+      <ChartTooltip
+        active
+        label={2040}
+        labelFormatter={(l, p) =>
+          (p[0]?.payload as { month?: string } | undefined)?.month ?? String(l)
+        }
+        payload={rows}
+        valueFormatter={(v) => `about £${Math.round((v ?? 0) / 1000)}k`}
+      />,
+    );
+    expect(getByText("Jun 2040")).toBeDefined();
+    expect(getByText("about £99k")).toBeDefined();
+    expect(queryByText("£98,765")).toBeNull();
+  });
+
   test("reads Not set for missing values, never £0", () => {
     const { getByText, queryByText } = customRender(
       <ChartTooltip

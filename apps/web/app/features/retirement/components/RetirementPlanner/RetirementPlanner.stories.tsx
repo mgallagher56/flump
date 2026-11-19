@@ -75,6 +75,10 @@ export const Light: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Retirement plan")).toBeInTheDocument();
+    // The scenario zone starts closed below the saved figures.
+    const toggle = canvas.getByRole("button", { name: "Show what-if: change your plan" });
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(toggle);
     await expect(canvas.getByText("From State Pension age (67)")).toBeInTheDocument();
     await userEvent.click(canvas.getByRole("button", { name: "Higher case (8%)" }));
     await expect(

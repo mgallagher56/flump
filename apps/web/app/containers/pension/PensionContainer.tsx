@@ -78,6 +78,8 @@ export const PensionContainer: FC = () => {
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   // Bumped by "Model this contribution" so the page scrolls to the scenario zone.
   const [scrollToZone, setScrollToZone] = useState(0);
+  // The scenario zone starts closed below the saved figures; "Model this contribution" opens it.
+  const [isZoneOpen, setIsZoneOpen] = useState(false);
   const { hash } = useLocation();
 
   // Filter pension accounts and calculate current balances
@@ -262,6 +264,7 @@ export const PensionContainer: FC = () => {
     // Rounded up to the slider's half-percent step, so the illustration reaches £100,000.
     const percent = Math.min(MAX_CONTRIBUTION_PERCENT, Math.ceil(needed * 2) / 2);
     scenario.set("contributionPercent", percent);
+    setIsZoneOpen(true);
     setScrollToZone((n) => n + 1);
   };
 
@@ -351,11 +354,13 @@ export const PensionContainer: FC = () => {
 
       <PensionContributionScenario
         hasSalary={hasSalary}
+        open={isZoneOpen}
         salary={annualSalary}
         savedEmployeePercent={employeePercent}
         scenario={scenario}
         showsOtherTaxFigure={showTrapNote}
         takeHomeFacts={takeHomeFacts}
+        onOpenChange={setIsZoneOpen}
       />
 
       {/* Personal Allowance taper (E31, ruling 6): one factual line after the main content, and

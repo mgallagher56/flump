@@ -22,6 +22,11 @@ export interface ChartTooltipRow {
   swatch?: ChartSwatchStyle;
   /** Pounds. Unknown (null, undefined, NaN) reads "Not set", never £0. */
   value: number | null | undefined;
+  /**
+   * Already formatted text shown in place of the whole-pound amount, for a figure the chart words
+   * differently (an estimate rounded to "about £X", a percentage). Keep it en-GB.
+   */
+  formattedValue?: ReactNode;
 }
 
 export interface ChartTooltipContentProps {
@@ -54,7 +59,11 @@ export const ChartTooltipContent: FC<ChartTooltipContentProps> = ({
           <ChartSwatch color={row.color} swatch={row.swatch} />
           <span className={chartTooltipLabel()}>{row.label}</span>
           <span className={chartTooltipValue()}>
-            <Money fractionDigits={fractionDigits} size="sm" value={row.value} />
+            {row.formattedValue !== undefined ? (
+              row.formattedValue
+            ) : (
+              <Money fractionDigits={fractionDigits} size="sm" value={row.value} />
+            )}
           </span>
         </li>
       ))}

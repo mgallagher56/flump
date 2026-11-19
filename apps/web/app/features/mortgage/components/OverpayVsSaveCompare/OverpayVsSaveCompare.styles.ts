@@ -1,5 +1,4 @@
 import { css, cva } from "@repo/ui/styled-system/css";
-import { token } from "@repo/ui/styled-system/tokens";
 
 const numeric = { fontVariantNumeric: "tabular-nums" } as const;
 
@@ -64,28 +63,3 @@ export const dataTable = css({
 });
 
 export const dataCell = css({ ...numeric });
-
-export const tooltipContentStyle = {
-  backgroundColor: token.var("colors.surface.overlay"),
-  borderColor: token.var("colors.border"),
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderRadius: "10px",
-  padding: "10px 14px",
-  color: token.var("colors.text.primary"),
-  fontSize: "12px",
-  fontVariantNumeric: "tabular-nums",
-} as const;
-
-export const tooltipItemStyle = {
-  color: token.var("colors.text.primary"),
-  padding: "2px 0",
-  fontSize: "12px",
-} as const;
-
-export const tooltipLabelStyle = {
-  color: token.var("colors.text.muted"),
-  fontWeight: 600,
-  marginBottom: "4px",
-  fontSize: "11px",
-} as const;

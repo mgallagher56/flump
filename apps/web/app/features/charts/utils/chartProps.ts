@@ -10,7 +10,14 @@
  *
  * Nothing here imports recharts, so the presets are plain data and easy to unit test.
  */
-import { CHART_INK, type ChartColorRole, chartColor, formatAxisCurrency } from "@repo/ui";
+import {
+  CHART_BAR_CURSOR,
+  CHART_INK,
+  CHART_LINE_CURSOR,
+  type ChartColorRole,
+  chartColor,
+  formatAxisCurrency,
+} from "@repo/ui";
 
 const AXIS_TICK = { fill: CHART_INK.axisText, fontSize: 12 } as const;
 
@@ -41,17 +48,11 @@ export const chartYAxisProps = {
   tickFormatter: (value: number): string => formatAxisCurrency(value),
 } as const;
 
-/** Vertical crosshair for line and area charts. */
-export const chartCursorProps = {
-  stroke: chartColor("grid"),
-  strokeWidth: 1,
-} as const;
+/** The shared hover cursor for line and area charts (`CHART_LINE_CURSOR` from `@repo/ui`). */
+export const chartCursorProps = CHART_LINE_CURSOR;
 
-/** Subtle tokenised tint behind hovered bar groups in bar charts. */
-export const chartBarCursorProps = {
-  fill: CHART_INK.cursorFill,
-  fillOpacity: 0.45,
-} as const;
+/** The shared hover band behind bar groups (`CHART_BAR_CURSOR` from `@repo/ui`). */
+export const chartBarCursorProps = CHART_BAR_CURSOR;
 
 export interface ChartLinePropsOptions {
   /** Dashed, for forecast data (never colour alone). */

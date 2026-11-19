@@ -15,7 +15,7 @@ import {
 } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartBarCursorProps } from "~/features/charts";
+import { ChartTooltip, chartBarCursorProps } from "~/features/charts";
 import { OVERPAYMENT_RANGE } from "~/features/mortgage/components/OverpaymentSimulator";
 import { rateFractionDigits } from "~/features/mortgage/mortgageFormat";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -31,10 +31,14 @@ import {
   rateList,
   rateRow,
   resultsBody,
-  tooltipContentStyle,
-  tooltipItemStyle,
-  tooltipLabelStyle,
 } from "./OverpayVsSaveCompare.styles";
+
+/** Bars read as filled swatches in the tooltip, keyed by each bar's dataKey. */
+const BAR_SWATCHES = {
+  "Money paid in": "area",
+  "Interest saved": "area",
+  "Interest earned after tax": "area",
+} as const;
 
 export interface OverpayVsSaveCompareProps {
   loanAmount: number;
@@ -304,12 +308,8 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                     tickLine={false}
                   />
                   <Tooltip
-                    contentStyle={tooltipContentStyle}
+                    content={<ChartTooltip swatches={BAR_SWATCHES} />}
                     cursor={chartBarCursorProps}
-                    formatter={(value) => formatCurrency(Number(value))}
-                    itemStyle={tooltipItemStyle}
-                    labelStyle={tooltipLabelStyle}
-                    separator=": "
                   />
                   <Bar
                     dataKey="Money paid in"

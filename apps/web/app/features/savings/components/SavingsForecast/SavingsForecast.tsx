@@ -31,7 +31,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { chartCursorProps } from "~/features/charts";
+import { ChartTooltip, chartCursorProps } from "~/features/charts";
 import { formatEstimate } from "~/utils/roundEstimate";
 import { nearDataAxis } from "~/utils/yAxisTicks";
 import {
@@ -353,11 +353,7 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
                 tickMargin={8}
                 ticks={yAxis.ticks}
               />
-              <Tooltip
-                cursor={chartCursorProps}
-                formatter={(value) => pounds.format(Number(value) || 0)}
-                separator=": "
-              />
+              <Tooltip content={<ChartTooltip />} cursor={chartCursorProps} />
               {/* A line, not an area: the axis starts near the data, so a fill would overstate growth. */}
               <Line
                 dataKey="balance"

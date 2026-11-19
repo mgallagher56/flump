@@ -1,5 +1,5 @@
-import { CircleDashed, RotateCcw } from "lucide-react";
-import { type FC, type ReactNode, useId } from "react";
+import { ChevronDown, CircleDashed, RotateCcw } from "lucide-react";
+import { type FC, type ReactNode, useId, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
 import { Heading } from "../../primitives/Heading/Heading";
@@ -12,6 +12,8 @@ import { scenarioZone } from "./ScenarioZone.styles";
 export const SCENARIO_BADGE_TEXT = "Illustration, not saved";
 export const SCENARIO_RESET_LABEL = "Reset to saved figures";
 export const SCENARIO_ANNOUNCEMENT_PREFIX = "Illustration:";
+export const SCENARIO_SHOW_LABEL = "Show what-if";
+export const SCENARIO_HIDE_LABEL = "Hide what-if";
 
 export interface ScenarioZoneProps {
   /** The zone heading. Defaults to "Model a change". */
@@ -65,6 +67,34 @@ export interface ScenarioZoneProps {
    * its one notice elsewhere, so it appears once per page.
    */
   showNotice?: boolean;
+  /**
+   * Lets the reader close the zone to its header (owner item 4). A closed zone keeps its title,
+   * badge and one `summary` line, and a disclosure button labelled after its contents. Use it
+   * wherever saved figures sit above the zone, closed by default.
+   */
+  collapsible?: boolean;
+  /** Uncontrolled start state of a collapsible zone. Default false: closed. */
+  defaultOpen?: boolean;
+  /**
+   * Controlled open state, for a page that opens the zone itself (a "Model this" link that seeds
+   * an input, a handover from another page). Pair with `onOpenChange`.
+   */
+  open?: boolean;
+  /** Called with the next state when the reader presses the disclosure button. */
+  onOpenChange?: (open: boolean) => void;
+  /**
+   * One line shown in place of `basis` while the zone is closed: the starting figures ("Starts
+   * from your pot of £X and contributions of £Y a month") or, once something has changed, the
+   * last illustration. Defaults to `basis`. Saved values and en-GB formatting only.
+   */
+  summary?: ReactNode;
+  /**
+   * The disclosure button text while closed, naming what opens: "Show what-if: change your
+   * contribution". Never "More options". Defaults to "Show what-if".
+   */
+  showLabel?: string;
+  /** The disclosure button text while open. Defaults to "Hide what-if". */
+  hideLabel?: string;
   className?: string;
 }
 
@@ -87,9 +117,25 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   announcement,
   id,
   showNotice = true,
+  collapsible = false,
+  defaultOpen = false,
+  open,
+  onOpenChange,
+  summary,
+  showLabel = SCENARIO_SHOW_LABEL,
+  hideLabel = SCENARIO_HIDE_LABEL,
   className,
 }) => {
   const headingId = useId();
+  const panelId = useId();
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const isOpen = !collapsible || (open ?? uncontrolledOpen);
+  const toggle = () => {
+    const next = !isOpen;
+    if (open === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
+  const headerLine = isOpen ? basis : (summary ?? basis);
   const slots = scenarioZone();
   const resolvedNotice = showNotice ? (notice ?? <ProjectionNotice />) : null;
   const showReset = Boolean(onReset) && isModified;
@@ -98,30 +144,8 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
     onReset?.();
     document.getElementById(headingId)?.focus();
   };
-  return (
-    <section
-      aria-labelledby={headingId}
-      id={id}
-      className={cx(slots.root, className)}
-      data-testid="scenario-zone"
-    >
-      <div className={slots.header}>
-        <div className={slots.titleRow}>
-          <Heading
-            as={headingAs}
-            data-testid="scenario-zone-title"
-            id={headingId}
-            size="md"
-            tabIndex={-1}
-          >
-            {title}
-          </Heading>
-          <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
-            {SCENARIO_BADGE_TEXT}
-          </StatusBadge>
-        </div>
-        {basis ? <p className={slots.basis}>{basis}</p> : null}
-      </div>
+  const content = (
+    <>
       {tools}
       {result ? (
         <div className={slots.split} data-testid="scenario-zone-split">
@@ -157,6 +181,61 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
           {resolvedNotice}
         </div>
       ) : null}
+    </>
+  );
+  return (
+    <section
+      aria-labelledby={headingId}
+      id={id}
+      className={cx(slots.root, className)}
+      data-testid="scenario-zone"
+    >
+      <div className={slots.header}>
+        <div className={slots.titleRow}>
+          <Heading
+            as={headingAs}
+            data-testid="scenario-zone-title"
+            id={headingId}
+            size="md"
+            tabIndex={-1}
+          >
+            {title}
+          </Heading>
+          <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
+            {SCENARIO_BADGE_TEXT}
+          </StatusBadge>
+        </div>
+        {headerLine ? (
+          <p
+            className={isOpen ? slots.basis : slots.summary}
+            data-testid={isOpen ? undefined : "scenario-zone-summary"}
+          >
+            {headerLine}
+          </p>
+        ) : null}
+        {collapsible ? (
+          <button
+            aria-controls={panelId}
+            aria-expanded={isOpen}
+            className={slots.toggle}
+            data-testid="scenario-zone-toggle"
+            type="button"
+            onClick={toggle}
+          >
+            {isOpen ? hideLabel : showLabel}
+            <span aria-hidden="true" className={slots.chevron}>
+              <Icon icon={ChevronDown} size="sm" />
+            </span>
+          </button>
+        ) : null}
+      </div>
+      {collapsible ? (
+        <div className={slots.panel} hidden={!isOpen} id={panelId}>
+          {isOpen ? content : null}
+        </div>
+      ) : (
+        content
+      )}
       <LiveRegion
         message={announcement ? `${SCENARIO_ANNOUNCEMENT_PREFIX} ${announcement}` : ""}
         visuallyHidden

@@ -1,3 +1,4 @@
+import { CHART_BAR_CURSOR, CHART_LINE_CURSOR } from "@repo/ui";
 import { describe, expect, it } from "vitest";
 import {
   chartBandProps,
@@ -13,9 +14,14 @@ describe("chartProps", () => {
   it("uses the quiet chart.grid token for the grid, with no vertical lines", () => {
     expect(chartGridProps.stroke).toBe("var(--colors-chart-grid)");
     expect(chartGridProps.vertical).toBe(false);
-    expect(chartCursorProps.stroke).toBe("var(--colors-chart-grid)");
-    expect(chartBarCursorProps.fill).toBe("var(--colors-primary-subtle)");
-    expect(chartBarCursorProps.fillOpacity).toBeLessThan(1);
+  });
+
+  it("uses the shared hover cursors: a dashed baseline line and a grid-tinted bar band", () => {
+    expect(chartCursorProps).toBe(CHART_LINE_CURSOR);
+    expect(chartCursorProps.stroke).toBe("var(--colors-chart-baseline)");
+    expect(chartCursorProps.strokeDasharray).toBe("4 4");
+    expect(chartBarCursorProps).toBe(CHART_BAR_CURSOR);
+    expect(chartBarCursorProps.fill).toBe("var(--colors-chart-grid)");
   });
 
   it("mutes axis text and removes tick lines", () => {
