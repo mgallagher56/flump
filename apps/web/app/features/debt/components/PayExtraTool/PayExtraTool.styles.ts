@@ -34,7 +34,8 @@ export const leftOverRow = css({
   fontVariantNumeric: "tabular-nums",
 });
 
-export const orderHint = css({ margin: "0", textStyle: "body.sm", color: "text.secondary" });
+/** The payoff order tabs with the InfoTip that explains the selected order beside them. */
+export const orderRow = css({ display: "flex", alignItems: "center", gap: "2", flexWrap: "wrap" });
 
 export const chartWrap = css({ width: "100%", height: "240px", minWidth: 0 });
 

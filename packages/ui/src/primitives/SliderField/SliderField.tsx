@@ -4,6 +4,7 @@ import {
   type FC,
   type FocusEvent,
   type KeyboardEvent,
+  type ReactNode,
   useEffect,
   useId,
   useRef,
@@ -15,6 +16,7 @@ import {
   sliderFieldContainer,
   sliderFieldHeader,
   sliderFieldLabel,
+  sliderFieldLabelRow,
   sliderFieldValuePill,
   sliderHelperText,
   sliderInputTrack,
@@ -45,6 +47,13 @@ export interface SliderFieldProps {
   /** Formats the value for assistive tech (aria-valuetext). Defaults to the pill format. */
   formatValue?: (value: number) => string;
   helperText?: string;
+  /** Optional element (such as an InfoTip) rendered inline beside the label. */
+  labelAddon?: ReactNode;
+  /**
+   * Extra ids for the range input's `aria-describedby`, such as an InfoTip's `descriptionId`, so a
+   * screen reader reads that text with the slider. Joined with the helper text's id when both exist.
+   */
+  "aria-describedby"?: string;
   onChange: (value: number) => void;
   /** Called when the pill is blurred while empty. */
   onClear?: () => void;
@@ -84,6 +93,8 @@ export const SliderField: FC<SliderFieldProps> = ({
   unitSuffix = "",
   formatValue,
   helperText,
+  labelAddon,
+  "aria-describedby": ariaDescribedBy,
   onChange,
   onClear,
   className,
@@ -211,9 +222,18 @@ export const SliderField: FC<SliderFieldProps> = ({
   return (
     <div className={cx(sliderFieldContainer(), className)}>
       <div className={sliderFieldHeader()}>
-        <label className={sliderFieldLabel()} htmlFor={inputId}>
-          {label}
-        </label>
+        {labelAddon ? (
+          <span className={sliderFieldLabelRow()}>
+            <label className={sliderFieldLabel()} htmlFor={inputId}>
+              {label}
+            </label>
+            {labelAddon}
+          </span>
+        ) : (
+          <label className={sliderFieldLabel()} htmlFor={inputId}>
+            {label}
+          </label>
+        )}
         <div className={sliderFieldValuePill({ disabled: !!disabled })}>
           {showAffixes && unitPrefix && <span className={sliderPillAffix()}>{unitPrefix}</span>}
           <input
@@ -235,7 +255,10 @@ export const SliderField: FC<SliderFieldProps> = ({
       </div>
 
       <input
-        aria-describedby={helperText ? helperId : undefined}
+        aria-describedby={
+          [ariaDescribedBy, helperText ? helperId : undefined].filter(Boolean).join(" ") ||
+          undefined
+        }
         aria-label={label}
         aria-valuetext={valueText}
         className={sliderInputTrack()}

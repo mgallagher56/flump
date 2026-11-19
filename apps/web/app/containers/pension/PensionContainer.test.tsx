@@ -523,6 +523,9 @@ describe("PensionContainer", () => {
       store.set(financialBaselineAtom, NO_SALARY_BASELINE);
       saved(110_000);
       render(<PensionContainer />);
+      // The assumption sits behind the "i" beside the line (owner item 23), not as its own line.
+      expect(screen.queryByText(/uses England, Wales and Northern Ireland/i)).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "About Tax region" }));
       expect(screen.getByText(/uses England, Wales and Northern Ireland/i)).toBeDefined();
       expect(screen.getByRole("link", { name: /set your region/i }).getAttribute("href")).toBe(
         "/app/profile",

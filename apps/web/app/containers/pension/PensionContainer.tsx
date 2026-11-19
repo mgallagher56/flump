@@ -7,7 +7,7 @@ import {
   profileFactsFromProfile,
   salarySacrificeFromProfile,
 } from "@flump/finance-engine";
-import { Button, EmptyState, Icon, PageBody, PageHeader } from "@repo/ui";
+import { Button, EmptyState, Icon, InfoTip, PageBody, PageHeader } from "@repo/ui";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Link, useLoaderData, useLocation } from "react-router";
@@ -39,13 +39,7 @@ import {
   REGION_SETTINGS_PATH,
   regionLinkStyle,
 } from "~/utils/taxTrapCopy";
-import {
-  mutedNote,
-  retirementLine,
-  retirementLink,
-  trapLine,
-  trapText,
-} from "./PensionContainer.styles";
+import { retirementLine, retirementLink, trapLine, trapText } from "./PensionContainer.styles";
 
 export const RETIREMENT_PATH = "/app/retirement";
 
@@ -372,6 +366,18 @@ export const PensionContainer: FC = () => {
             {taxTrap.isInTaxTrap
               ? "Your adjusted net income is above £100,000, where the Personal Allowance reduces."
               : "The Personal Allowance reduces when adjusted net income is above £100,000."}
+            {/* The rates assumption sits behind the "i" (owner item 23); its link is in the popover. */}
+            {!knownRegion && (
+              <>
+                {" "}
+                <InfoTip id="pension-trap-region-info" term="Tax region">
+                  {REGION_ASSUMPTION_LABEL}{" "}
+                  <Link to={REGION_SETTINGS_PATH} className={regionLinkStyle}>
+                    Set your region
+                  </Link>
+                </InfoTip>
+              </>
+            )}
           </p>
           {taxTrap.isInTaxTrap && (
             <p className={trapText}>
@@ -388,14 +394,6 @@ export const PensionContainer: FC = () => {
               >
                 Model this contribution
               </Button>
-            </p>
-          )}
-          {!knownRegion && (
-            <p className={mutedNote}>
-              {REGION_ASSUMPTION_LABEL}{" "}
-              <Link to={REGION_SETTINGS_PATH} className={regionLinkStyle}>
-                Set your region
-              </Link>
             </p>
           )}
         </div>

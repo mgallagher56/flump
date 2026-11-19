@@ -290,7 +290,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
                 <Icon icon={isPdf ? FileText : ImageIcon} size="sm" />
                 <span>{draft.receiptFilename}</span>
               </span>
-              <Button size="sm" type="button" variant="ghost" onClick={clearReceipt}>
+              <Button size="sm" type="button" variant="dangerSubtle" onClick={clearReceipt}>
                 Remove receipt
               </Button>
             </div>

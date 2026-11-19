@@ -117,6 +117,27 @@ describe("AddDebtDialog", () => {
     ).toBe("true");
   });
 
+  it("puts the credit limit and 0% notes behind info icons the fields name in aria-describedby", () => {
+    open();
+    expect(screen.queryByText(/^Your card or overdraft limit/, { selector: "p" })).toBeNull();
+    expect(screen.queryByText(/^When any 0% promotional/, { selector: "p" })).toBeNull();
+    expect(screen.getByRole("button", { name: "About Credit limit" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "About 0% interest period" })).toBeDefined();
+
+    const limit = screen.getByLabelText(/^Credit limit/);
+    const limitNote = document.getElementById("add-debt-credit-limit-info");
+    expect(limitNote?.textContent).toBe("Your card or overdraft limit, even if the balance is £0.");
+    expect(limit.getAttribute("aria-describedby")?.split(" ")).toContain(
+      "add-debt-credit-limit-info",
+    );
+
+    const promo = screen.getByRole("button", { name: /^0% interest period ends/ });
+    expect(document.getElementById("add-debt-promo-end-info")?.textContent).toBe(
+      "When any 0% promotional interest period ends.",
+    );
+    expect(promo.getAttribute("aria-describedby")?.split(" ")).toContain("add-debt-promo-end-info");
+  });
+
   it("allows £0 balance on a credit card with credit limit and 0% promo end date", () => {
     const { onAddDebt } = open();
     fill("Name of the debt", "0% Balance Transfer");
@@ -173,6 +194,13 @@ describe("AddDebtDialog in edit mode", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onDeleteDebt).toHaveBeenCalledWith("d1");
     expect(onEditDebt).not.toHaveBeenCalled();
+  });
+
+  it("styles Delete debt as a subtle danger button", () => {
+    renderEdit();
+    expect(screen.getByRole("button", { name: "Delete debt" }).getAttribute("data-variant")).toBe(
+      "dangerSubtle",
+    );
   });
 
   it("keeps each footer button on one line", () => {

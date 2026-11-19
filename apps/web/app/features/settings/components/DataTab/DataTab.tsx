@@ -102,14 +102,14 @@ export const DataTab: FC = () => {
         tone="neutral"
       >
         <Card className={sectionCard()}>
-          {/* Danger styling only inside the confirmation (UX D3): at rest this is a plain button. */}
+          {/* Subtle danger at rest (owner item 25); the confirmation dialog carries the full danger button. */}
           <div>
             <Button
               data-testid="reset-financial-data-trigger"
               id="reset-financial-data-trigger"
               size="sm"
               type="button"
-              variant="outline"
+              variant="dangerSubtle"
               onClick={() => {
                 setResetError(null);
                 setResetNeedsSignIn(false);

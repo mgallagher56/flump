@@ -320,7 +320,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   id={`revoke-token-${tok.id}`}
                   size="sm"
                   type="button"
-                  variant="outline"
+                  variant="dangerSubtle"
                   onClick={() => {
                     setRevokeError(null);
                     setRevokeTarget(tok);

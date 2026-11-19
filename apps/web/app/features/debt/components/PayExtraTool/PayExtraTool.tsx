@@ -5,6 +5,7 @@ import {
   ChartLegend,
   chartColor,
   formatMonthTick,
+  InfoTip,
   ResultBlock,
   SimulatorSplitLayout,
   SliderField,
@@ -49,7 +50,7 @@ import {
   leftOverRow,
   mutedNote,
   noteLink,
-  orderHint,
+  orderRow,
 } from "./PayExtraTool.styles";
 
 export type PayoffOrder = "avalanche" | "snowball";
@@ -73,6 +74,9 @@ export interface PayExtraToolProps {
 }
 
 /** R1: both orders carry the same fields and the same verbs. */
+/** The extra payment InfoTip's hidden description, named by the slider's aria-describedby. */
+const EXTRA_PAYMENT_INFO_ID = "pay-extra-payment-info";
+
 const ORDERS: { value: PayoffOrder; label: string; hint: string }[] = [
   {
     value: "snowball",
@@ -365,9 +369,14 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
   const controls = (
     <div className={controlsStack}>
       <SliderField
+        aria-describedby={EXTRA_PAYMENT_INFO_ID}
         format="currency"
-        helperText="On top of your minimum payments."
         label="Extra payment each month"
+        labelAddon={
+          <InfoTip descriptionId={EXTRA_PAYMENT_INFO_ID} term="Extra payment each month">
+            On top of your minimum payments.
+          </InfoTip>
+        }
         max={max}
         min={0}
         step={10}
@@ -398,16 +407,18 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
 
   const content = (
     <div className={contentStack}>
-      <Tabs
-        aria-label="Payoff order"
-        items={ORDERS.map(({ value, label }) => ({ value, label }))}
-        size="sm"
-        value={selectedStrategy}
-        onValueChange={(value) => onSelectStrategy(value as PayoffOrder)}
-      />
-      <p className={orderHint}>
-        {sameResult ? "Both orders give the same result for your debts." : activeOrder.hint}
-      </p>
+      <div className={orderRow}>
+        <Tabs
+          aria-label="Payoff order"
+          items={ORDERS.map(({ value, label }) => ({ value, label }))}
+          size="sm"
+          value={selectedStrategy}
+          onValueChange={(value) => onSelectStrategy(value as PayoffOrder)}
+        />
+        <InfoTip id="payoff-order-info" term="Payoff order">
+          {sameResult ? "Both orders give the same result for your debts." : activeOrder.hint}
+        </InfoTip>
+      </div>
 
       {/* The zone's one result card (E17 5A): the change, one sentence and one supporting row. */}
       <ResultBlock

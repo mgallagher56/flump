@@ -65,10 +65,26 @@ describe("UkDebtInstrumentsCard", () => {
     fireEvent.change(p.getByLabelText("Average arranged overdraft balance"), {
       target: { value: "1500" },
     });
-    fireEvent.change(p.getByLabelText(/Overdraft interest rate \(EAR\)/), {
+    fireEvent.change(p.getByLabelText(/^Overdraft interest rate \(EAR\)/), {
       target: { value: "40" },
     });
     expect(p.getByText("£600 a year")).toBeDefined();
+    expect(p.queryByText(/^Unlike a fixed loan payment/)).toBeNull();
+    expect(p.getByRole("button", { name: "About Overdraft interest" })).toBeDefined();
+  });
+
+  it("explains the EAR field in an info icon the field names in aria-describedby", () => {
+    customRender(<UkDebtInstrumentsCard />);
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /Arranged overdraft cost/ }), {
+      button: 0,
+    });
+    const p = panel(/Arranged overdraft cost/);
+    const ear = p.getByLabelText(/^Overdraft interest rate \(EAR\)/);
+    expect(ear.getAttribute("aria-describedby")).toBe("uk-debt-overdraft-ear-info");
+    expect(document.getElementById("uk-debt-overdraft-ear-info")?.textContent).toBe(
+      "The rate on your bank's overdraft page.",
+    );
+    expect(p.queryByText("The rate on your bank's overdraft page.", { selector: "p" })).toBeNull();
   });
 
   it("states the final payment result as a fact", () => {
@@ -78,7 +94,12 @@ describe("UkDebtInstrumentsCard", () => {
     });
     const p = panel(/Car finance final payment/);
     fireEvent.change(p.getByLabelText("Months left in the agreement"), { target: { value: "18" } });
-    expect(p.getByText(/Saving £\d+ a month for the remaining term would add up to/)).toBeDefined();
+    // The explanation sits behind the info icon beside the heading (owner item 23).
+    expect(p.queryByText(/Saving £\d+ a month for the remaining term/)).toBeNull();
+    fireEvent.click(p.getByRole("button", { name: "About Spreading the final payment" }));
+    expect(
+      screen.getByText(/Saving £\d+ a month for the remaining term would add up to/),
+    ).toBeDefined();
   });
 
   it("switches student loan plan and shows the repayment taken from pay", () => {

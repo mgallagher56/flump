@@ -66,14 +66,14 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
       tone="neutral"
     >
       <Card className={sectionCard()}>
-        {/* Danger styling only inside the confirmation (UX D3): at rest this is a plain button. */}
+        {/* Subtle danger at rest (owner item 25); the confirmation dialog carries the full danger button. */}
         <div>
           <Button
             data-testid="delete-account-trigger"
             id="delete-account-trigger"
             size="sm"
             type="button"
-            variant="outline"
+            variant="dangerSubtle"
             onClick={() => {
               setAttempted(false);
               setOpen(true);

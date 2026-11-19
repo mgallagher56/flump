@@ -8,6 +8,7 @@ import {
   CurrencyInput,
   controlProps,
   FormField,
+  InfoTip,
   PercentInput,
   Select,
   Tabs,
@@ -28,6 +29,7 @@ import {
   keyFigureValue,
   resultBox,
   resultHeading,
+  resultHeadingRow,
   resultNote,
   toolGrid,
 } from "./UkDebtInstrumentsCard.styles";
@@ -56,6 +58,7 @@ const wholeMonths = (value: number | null): number | null =>
   value !== null && Number.isInteger(value) && value >= 1 ? value : null;
 
 const NEEDS_FIGURES = "Enter all the figures to see the result.";
+const OVERDRAFT_EAR_INFO_ID = "uk-debt-overdraft-ear-info";
 
 const FactRow: FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className={factRow()}>
@@ -63,6 +66,23 @@ const FactRow: FC<{ label: string; value: string }> = ({ label, value }) => (
     <dd>{value}</dd>
   </div>
 );
+
+/**
+ * A result panel's heading. When the result is shown, its explanatory note sits behind an info
+ * icon beside the heading rather than as a paragraph (owner item 23).
+ */
+const ResultHeading: FC<{ title: string; info?: { term: string; text: ReactNode } }> = ({
+  title,
+  info,
+}) =>
+  info ? (
+    <div className={resultHeadingRow}>
+      <h3 className={resultHeading}>{title}</h3>
+      <InfoTip term={info.term}>{info.text}</InfoTip>
+    </div>
+  ) : (
+    <h3 className={resultHeading}>{title}</h3>
+  );
 
 export interface UkDebtInstrumentsCardProps {
   className?: string;
@@ -169,7 +189,17 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
       </div>
 
       <div className={resultBox()}>
-        <h3 className={resultHeading}>When the 0% deal ends</h3>
+        <ResultHeading
+          info={
+            cliffResult === null
+              ? undefined
+              : {
+                  term: "When the 0% deal ends",
+                  text: "Minimum payments alone may not pay off the balance before the 0% deal ends. Any balance left is then charged the later APR.",
+                }
+          }
+          title="When the 0% deal ends"
+        />
         {cliffResult === null ? (
           <p className={footnote}>{NEEDS_FIGURES}</p>
         ) : (
@@ -190,11 +220,6 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
                 value={formatCurrency(cliffResult.penaltyInterestFirstYearIfUnpaid)}
               />
             </dl>
-
-            <p className={footnote}>
-              Minimum payments alone may not pay off the balance before the 0% deal ends. Any
-              balance left is then charged the later APR.
-            </p>
           </>
         )}
       </div>
@@ -214,12 +239,19 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
           )}
         </FormField>
         <FormField
-          hint="The rate on your bank's overdraft page."
           label="Overdraft interest rate (EAR)"
+          labelAddon={
+            <InfoTip descriptionId={OVERDRAFT_EAR_INFO_ID} term="Overdraft interest rate (EAR)">
+              The rate on your bank's overdraft page.
+            </InfoTip>
+          }
         >
           {(field) => (
             <PercentInput
               {...controlProps(field)}
+              aria-describedby={[field.describedBy, OVERDRAFT_EAR_INFO_ID]
+                .filter(Boolean)
+                .join(" ")}
               value={overdraftEar}
               onValueChange={setOverdraftEar}
             />
@@ -228,7 +260,17 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
       </div>
 
       <div className={resultBox()}>
-        <h3 className={resultHeading}>Overdraft interest a year (estimate)</h3>
+        <ResultHeading
+          info={
+            overdraftResult === null || overdraftBalance === null
+              ? undefined
+              : {
+                  term: "Overdraft interest",
+                  text: "Unlike a fixed loan payment, overdraft interest is charged to the account, which increases the overdrawn balance.",
+                }
+          }
+          title="Overdraft interest a year (estimate)"
+        />
         {overdraftResult === null || overdraftBalance === null ? (
           <p className={footnote}>{NEEDS_FIGURES}</p>
         ) : (
@@ -244,10 +286,6 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
                 About {formatCurrency(overdraftResult.monthlyPoundCost)} a month in interest charges
               </span>
             </div>
-            <p className={footnote}>
-              Unlike a fixed loan payment, overdraft interest is charged to the account, which
-              increases the overdrawn balance.
-            </p>
           </>
         )}
       </div>
@@ -288,7 +326,17 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
       </div>
 
       <div className={resultBox()}>
-        <h3 className={resultHeading}>Spreading the final payment</h3>
+        <ResultHeading
+          info={
+            balloonResult === null || balloonAmount === null
+              ? undefined
+              : {
+                  term: "Spreading the final payment",
+                  text: `Saving ${formatCurrency(balloonResult.monthlySinkingFundNeeded)} a month for the remaining term would add up to ${formatCurrency(balloonAmount)}, the optional final payment if the car is bought. Interest on savings is not included.`,
+                }
+          }
+          title="Spreading the final payment"
+        />
         {balloonResult === null || balloonAmount === null ? (
           <p className={footnote}>{NEEDS_FIGURES}</p>
         ) : (
@@ -303,11 +351,6 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
                 value={formatCurrency(balloonResult.totalCostOfFinance)}
               />
             </dl>
-            <p className={footnote}>
-              Saving {formatCurrency(balloonResult.monthlySinkingFundNeeded)} a month for the
-              remaining term would add up to {formatCurrency(balloonAmount)}, the optional final
-              payment if the car is bought. Interest on savings is not included.
-            </p>
           </>
         )}
       </div>

@@ -10,6 +10,7 @@ import {
   CollapsibleDrawer,
   DELTA_TABLE_ROWS,
   formatMoney,
+  InfoTip,
   ResultBlock,
   StatusBadge,
   Table,
@@ -211,9 +212,15 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
         id="pension-take-home-result"
         label={PENSION_TAKE_HOME_COPY.outcomeLabel}
         labelAddon={
-          <StatusBadge size="sm" variant="neutral">
-            {asAtTaxYear(before.ratesYear)}
-          </StatusBadge>
+          <>
+            <StatusBadge size="sm" variant="neutral">
+              {asAtTaxYear(before.ratesYear)}
+            </StatusBadge>
+            {/* How the change is paid sits behind the "i" (owner item 23), not as a paragraph. */}
+            <InfoTip id="pension-take-home-method" term="How the change is paid">
+              {methodNote}
+            </InfoTip>
+          </>
         }
         note={`${PENSION_TAKE_HOME_COPY.reliefLabel}: ${money(Math.max(0, reliefMonthly))} ${PENSION_TAKE_HOME_COPY.perMonth}.`}
         row={{
@@ -221,7 +228,6 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
           value: `${signed(pensionMonthly)} ${PENSION_TAKE_HOME_COPY.perMonth}`,
         }}
       />
-      <p className={effectNote()}>{methodNote}</p>
       {rows.length > 0 ? (
         <CollapsibleDrawer title="Show details" variant="quiet">
           <ComponentTable components={result.components} rows={rows} />

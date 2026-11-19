@@ -18,6 +18,16 @@ export const sliderFieldHeader = cva({
   },
 });
 
+/** Label and its addon (an InfoTip) side by side, on the left of the header. */
+export const sliderFieldLabelRow = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "1",
+    minWidth: 0,
+  },
+});
+
 export const sliderFieldLabel = cva({
   base: {
     textStyle: "label.md",

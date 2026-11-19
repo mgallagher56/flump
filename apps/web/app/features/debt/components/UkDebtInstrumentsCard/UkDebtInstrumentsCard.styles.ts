@@ -44,6 +44,9 @@ export const resultHeading = css({
   color: "text.primary",
 });
 
+/** A result heading with its InfoTip beside it. */
+export const resultHeadingRow = css({ display: "flex", alignItems: "center", gap: "1" });
+
 /** A plain result sentence: no alarm or reassurance colours (copy guide 2.3). */
 export const resultNote = css({
   margin: 0,
