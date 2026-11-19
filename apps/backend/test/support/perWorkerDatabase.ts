@@ -73,6 +73,8 @@ export async function setUpWorkerDatabase(env: NodeJS.ProcessEnv = process.env):
     throw new Error("VITEST_POOL_ID is not set; cannot give this worker its own database");
   assertSafeTestDatabase(base, env);
   const derived = workerDatabaseUrl(base, poolId);
+  // The worker's own database passes the same check before anything is created.
+  assertSafeTestDatabase(derived, env);
   await ensureDatabase(base, decodeURIComponent(new URL(derived).pathname.slice(1)));
   env.TEST_DATABASE_URL_BEFORE_WORKER = base;
   env.TEST_DATABASE_URL = derived;
