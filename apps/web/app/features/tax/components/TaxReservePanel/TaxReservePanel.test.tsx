@@ -100,6 +100,44 @@ describe("TaxReservePanel", () => {
     ).toBeDefined();
   });
 
+  it("says the property allowance leaves finance costs brought forward unused", () => {
+    // Salary 30,000; rent 900; costs 100; 500 brought forward. The allowance route (tax 0)
+    // beats the costs route (160 - 100 = 60), so the 500 is not used and carries forward.
+    const rec = (category: string, amount: number) => ({
+      id: category,
+      type: category === "rental_income" ? ("income" as const) : ("expense" as const),
+      source: "rental" as const,
+      category,
+      name: category,
+      amount,
+      frequency: "annual" as const,
+      date: "2026-06-06",
+      endDate: null,
+      notes: null,
+    });
+    const result = calculateUKTax(
+      "2026/27",
+      [
+        rec("rental_income", 900),
+        rec("repairs_maintenance", 100),
+        rec("finance_costs_brought_forward", 500),
+      ],
+      30000,
+      100,
+    );
+    setup(30_900, 30000, result);
+    expect(
+      screen.getByText(
+        "This estimate uses the £1,000 property allowance, so finance costs brought forward are not used this year.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "£500 of mortgage interest could not be used this year. It carries forward to next year.",
+      ),
+    ).toBeDefined();
+  });
+
   it("says nothing about carrying interest forward when it is all used", () => {
     setup();
     expect(screen.queryByText(/carries forward/)).toBeNull();

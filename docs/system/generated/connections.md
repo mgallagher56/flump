@@ -506,6 +506,12 @@ flowchart LR
   g_estimated_tax -.-> s_mcp_read
   g_estimated_tax -.-> s_context_pack
   g_estimated_tax -.-> s_public_tools
+  g_finance_costs_carried_forward{{"Mortgage interest carried forward to next year"}}
+  f_tax_records ==> g_finance_costs_carried_forward
+  f_rental_share_for_tax ==> g_finance_costs_carried_forward
+  g_finance_costs_carried_forward -.-> s_self_assessment
+  g_finance_costs_carried_forward -.-> s_mcp_read
+  g_finance_costs_carried_forward -.-> s_public_tools
 ```
 
 ## retirement

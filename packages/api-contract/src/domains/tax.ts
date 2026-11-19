@@ -19,6 +19,35 @@ export const RECEIPT_MIME_TYPES = [
  */
 export const LEGACY_PAYE_SALARY_CATEGORY = "paye_salary";
 
+/**
+ * Residential finance costs not relieved in earlier years (ITTOIA 2005 s.274AA(4)), entered as a
+ * rental expense record in the year they are used. The engine reads the same id
+ * (`FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY` in finance-engine).
+ */
+export const FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY = "finance_costs_brought_forward";
+
+/** That category only makes sense as a rental expense. */
+const broughtForwardIsRentalExpense = (
+  record: { category?: string; source?: string; type?: string },
+  ctx: z.RefinementCtx,
+) => {
+  if (record.category?.trim() !== FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY) return;
+  if (record.source !== undefined && record.source !== "rental") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["source"],
+      message: "Finance costs brought forward are rental records",
+    });
+  }
+  if (record.type !== undefined && record.type !== "expense") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["type"],
+      message: "Finance costs brought forward are an expense",
+    });
+  }
+};
+
 const taxRecordFields = {
   type: z.enum(TAX_RECORD_TYPES),
   source: z.enum(TAX_RECORD_SOURCES),
@@ -43,7 +72,7 @@ const taxRecordFields = {
 };
 
 /** `frequency` defaults to "one-off" in the column, so it is optional on create. */
-export const CreateTaxRecordRequest = z.strictObject({
+const CreateTaxRecordFields = z.strictObject({
   ...taxRecordFields,
   frequency: taxRecordFields.frequency.optional(),
   endDate: taxRecordFields.endDate.optional(),
@@ -53,7 +82,13 @@ export const CreateTaxRecordRequest = z.strictObject({
   receiptData: taxRecordFields.receiptData.optional(),
 });
 
-export const UpdateTaxRecordRequest = CreateTaxRecordRequest.partial();
+export const CreateTaxRecordRequest = CreateTaxRecordFields.superRefine(
+  broughtForwardIsRentalExpense,
+);
+
+export const UpdateTaxRecordRequest = CreateTaxRecordFields.partial().superRefine(
+  broughtForwardIsRentalExpense,
+);
 
 /** Most records (and most caps) one `POST tax-records/bulk` accepts; the backend handler enforces it too. */
 export const MAX_BULK_TAX_RECORDS = 500;

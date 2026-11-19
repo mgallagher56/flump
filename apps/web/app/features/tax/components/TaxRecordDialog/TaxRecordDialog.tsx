@@ -15,6 +15,7 @@ import { Camera, FileText, Image as ImageIcon, Upload } from "lucide-react";
 import { type ChangeEvent, type FC, type FormEvent, useState } from "react";
 import { isAcceptableReceiptFile, RECEIPT_ACCEPT } from "~/containers/tax/receipt-file";
 import {
+  CATEGORY_HINT,
   categoryShortLabel,
   FREQUENCY_OPTIONS,
   SOURCE_OPTIONS,
@@ -332,7 +333,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
         ) : null}
         <CollapsibleDrawer title="Category and notes" variant="quiet" defaultOpen={hasDetails}>
           <div className={moreDetails()}>
-            <FormField label="Category">
+            <FormField label="Category" hint={CATEGORY_HINT[draft.category]}>
               {(field) => (
                 <Select
                   id={field.id}

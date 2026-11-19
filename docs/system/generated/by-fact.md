@@ -66,6 +66,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Savings interest over the next 12 months](#savings-interest)                                                 | figure | accounts    | Holds                                     |
 | [ISA allowance used this tax year](#isa-allowance-used)                                                       | figure | accounts    | Holds                                     |
 | [Estimated Self Assessment tax](#estimated-tax)                                                               | figure | tax         | Broken                                    |
+| [Mortgage interest carried forward to next year](#finance-costs-carried-forward)                              | figure | tax         | Holds                                     |
 | [Paid into pensions each month](#pension-going-in)                                                            | figure | pay         | Duplicated (two stores that can disagree) |
 | [Estimated income in retirement](#retirement-income)                                                          | figure | retirement  | Broken                                    |
 | [Calculated balance offered in the check-in](#check-in-calculated-balance)                                    | figure | accounts    | Holds                                     |
@@ -1459,6 +1460,26 @@ Shown on:
 - AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
 - Public calculators: `packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx` (tax on rental income, entered figures only)
+
+### Mortgage interest carried forward to next year
+
+<a id="finance-costs-carried-forward"></a>
+
+- Id: `finance-costs-carried-forward` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `calculateUKTax` in `packages/finance-engine/src/tax-calculator.ts`
+- Built from: `tax-records`, `rental-share-for-tax`
+- Note: Finance costs not relieved this year (ITTOIA 2005 s.274AA(4)). An amount brought forward is a tax record in the rental category finance_costs_brought_forward, counted only in the tax year it is filed in and not shared by ownership.
+
+Other code paths that compute it:
+
+- `calculateSection24Tax` [wrapper] in `packages/finance-engine/src/section24.ts` (the public calculator; the amount brought forward is an optional input)
+
+Shown on:
+
+- Self Assessment: `apps/web/app/features/tax/components/TaxReservePanel/TaxReservePanel.tsx`
+- AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
+- Public calculators: `packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx`
 
 ## Area: retirement
 
