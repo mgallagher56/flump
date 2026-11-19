@@ -115,6 +115,7 @@ Both runs were forced, on branch `e41-m2-kill-tests-b` after PRs 807, 808 and 81
 
 - The laptop was so loaded that the two self-timing tests (`uk-tax-year.property.test.ts`, 5,000 ms; `uk-what-if.property.test.ts`, 250 ms) failed first for 784 faults. For each of those, and for each timeout, the honest figure counts the fault as caught only when an earlier run on identical source saw a real assertion fail on it (659 time-limit kills and some timeouts qualify). Everything else counts as not caught: 830 faults, each with a ledger row.
 - The floor. `scripts/mutation-baseline.json` sets the engine floor at **92%**: floor(93.04) - 1. CI's figure without timeouts is also 93.04%.
+- After the independent review, two assertions that pinned possible bugs were removed (investment fees taken off savings interest before tax; a Plan 1 and Plan 2 repayment put wholly on Plan 1). That leaves two more faults not caught, so the honest figure is 93.03% and the floor stays at 92.
 - The ledger's "Timeout" class records faults a test does catch but that Stryker reported as timeouts; its "Tax gate" class now holds only the Scottish personal savings allowance band edge, which awaits a ruling (E25).
 
 ## What M2 part A measured (19 November 2026)
