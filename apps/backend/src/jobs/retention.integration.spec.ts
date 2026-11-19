@@ -167,6 +167,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
            VALUES ($1, NULL, 'PLAN_2', ${ago(age)})`,
           [profile.id],
         );
+        await ds.query(
+          `INSERT INTO paye_salary_record_backfill (profile_id, tax_record_id, record, backfilled_at)
+           VALUES ($1, $2, '{}'::jsonb, ${ago(age)})`,
+          [profile.id, crypto.randomUUID()],
+        );
       }
     }
 
@@ -186,6 +191,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           liability_sign_backfill: 1,
           pension_rates_backfill: 1,
           student_loan_plan_backfill: 1,
+          paye_salary_record_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });
@@ -199,6 +205,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("liability_sign_backfill")).toBe(1);
       expect(await count("pension_rates_backfill")).toBe(1);
       expect(await count("student_loan_plan_backfill")).toBe(1);
+      expect(await count("paye_salary_record_backfill")).toBe(1);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
     });

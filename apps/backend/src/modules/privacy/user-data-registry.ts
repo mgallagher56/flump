@@ -859,6 +859,11 @@ export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reas
     reason:
       "slice 6 migration before-image (the student loan plans copied from accounts) kept 90 days so its down() can restore them; rows go with the profile by ON DELETE CASCADE; not exported, as it is a rollback copy and the current plans are in the export",
   },
+  paye_salary_record_backfill: {
+    parent: "user_profiles",
+    reason:
+      "slice 6 migration before-image holding the legacy PAYE salary records removed from tax_records (their own fields, never a receipt) kept 90 days so its down() can restore them; rows go with the profile by ON DELETE CASCADE; not exported, as it is a rollback copy and the salary is in the export",
+  },
 };
 
 /**

@@ -5,6 +5,7 @@ import {
   estimateInputsFor,
   getTaxYearVerification,
   getUkTaxYearRules,
+  isLegacySalaryRecord,
   isSelfEmployedType,
   MCP_NOTICE,
   payeSalaryForTax,
@@ -111,7 +112,13 @@ export const getTaxYearPosition = defineFlumpTool({
           });
 
     // The Tax page's own calculation, so the figures match the app.
-    const ledger = calculateUKTax(taxYear, records, salary, ownershipShare);
+    // A legacy PAYE salary record never stands in for the saved salary (slice 6).
+    const ledger = calculateUKTax(
+      taxYear,
+      records.filter((r) => !isLegacySalaryRecord(r)),
+      salary,
+      ownershipShare,
+    );
     const rules = getUkTaxYearRules(taxYear);
     const region: "SCOTLAND" | "ENGLAND_NI_WALES" =
       facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES";

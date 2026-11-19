@@ -106,6 +106,13 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     reason:
       "slice 6 migration before-image, kept 90 days so the migration can be rolled back; after that its down() restores nothing",
   },
+  {
+    name: "paye_salary_record_backfill",
+    table: "paye_salary_record_backfill",
+    where: `"backfilled_at" < $1::timestamptz - interval '90 days'`,
+    reason:
+      "slice 6 migration before-image, kept 90 days so the migration can be rolled back; after that its down() restores nothing",
+  },
 ];
 
 /** Profiles with no authenticated request for this long are due for erasure (D4). */

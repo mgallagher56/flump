@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   MAX_BULK_TAX_RECORDS as CONTRACT_MAX_BULK_TAX_RECORDS,
   type CreateTaxRecordRequest,
+  LEGACY_PAYE_SALARY_CATEGORY,
   type TaxRecordCap,
   type UpdateTaxRecordRequest,
 } from "@flump/api-contract";
@@ -67,6 +68,11 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
   const picked: Record<string, unknown> = {};
   for (const key of TAX_RECORD_FIELDS) {
     if (body?.[key] !== undefined) picked[key] = body[key];
+  }
+  // Slice 6: the profile salary is the one salary figure, so no record may be salary. The
+  // contract refuses it too; this holds with CONTRACT_MODE off or in shadow mode.
+  if (picked.category === LEGACY_PAYE_SALARY_CATEGORY) {
+    throw new BadRequestException("Salary is saved on your profile, not as a tax record");
   }
   const mime = validateReceipt(picked);
   // Receipt metadata only changes together with the data: a bare filename or MIME type from the

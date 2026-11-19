@@ -159,6 +159,7 @@ describe("UserProfileService (Deep Module)", () => {
     expect(deletes.map(([sql, params]) => [sql, params])).toEqual([
       ['DELETE FROM "pension_rates_backfill" WHERE "profile_id" = $1', ["profile-9"]],
       ['DELETE FROM "student_loan_plan_backfill" WHERE "profile_id" = $1', ["profile-9"]],
+      ['DELETE FROM "paye_salary_record_backfill" WHERE "profile_id" = $1', ["profile-9"]],
     ]);
   });
 

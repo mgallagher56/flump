@@ -38,6 +38,7 @@ import {
 } from "./ClearDefaultPensionRates1795480100000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
 import { PensionAnswersNullable1795480000000 } from "./PensionAnswersNullable1795480000000";
+import { RemovePayeSalaryRecords1795480300000 } from "./RemovePayeSalaryRecords1795480300000";
 import {
   RemoveSeededExampleData1794355400000,
   SEEDED_ACCOUNTS,
@@ -65,10 +66,10 @@ let MIGRATIONS: MigrationClass[] = [];
 
 // Operational tables a migration creates that no entity maps (left out of the entity
 // comparisons): the BE-05 liability sign before-image (LiabilitySignRule1794358050000) and the
-// BE-07 shared rate-limit counters (AddRateLimitBuckets1794632012000) and the two slice 6
-// before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile).
+// BE-07 shared rate-limit counters (AddRateLimitBuckets1794632012000) and the three slice 6
+// before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile, RemovePayeSalaryRecords).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -2262,6 +2263,133 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       ]);
       expect(
         (await ds.query("SELECT to_regclass('public.student_loan_plan_backfill') AS t"))[0].t,
+      ).toBeNull();
+    });
+  });
+
+  describe("RemovePayeSalaryRecords1795480300000 (slice 6)", () => {
+    const NAME = "RemovePayeSalaryRecords1795480300000";
+    const salaries = (): Promise<unknown[]> =>
+      ds.query("SELECT user_id, annual_salary::text AS salary FROM user_profiles ORDER BY user_id");
+    const records = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT id, user_id, type, source, category, name, amount::text AS amount, frequency,
+                date::text AS date, end_date::text AS end_date, notes,
+                created_at::text AS created_at, updated_at::text AS updated_at,
+                receipt_filename, receipt_mime_type, receipt_data
+         FROM tax_records ORDER BY user_id, name`,
+      );
+    const record = (
+      userId: string,
+      category: string,
+      name: string,
+      amount: number,
+      frequency: string,
+      date: string,
+      receipt: string | null = null,
+    ): Promise<unknown> =>
+      ds.query(
+        `INSERT INTO tax_records (user_id, type, source, category, name, amount, frequency, date, notes,
+                                  receipt_filename, receipt_mime_type, receipt_data, created_at)
+         VALUES ($1, 'income', 'paye', $2, $3, $4, $5, $6::text::date, 'note', $7, $8, $9, $6::text::timestamptz)`,
+        [
+          userId,
+          category,
+          name,
+          amount,
+          frequency,
+          date,
+          receipt ? "p60.pdf" : null,
+          receipt ? "application/pdf" : null,
+          receipt,
+        ],
+      );
+
+    const seed = async (): Promise<void> => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, annual_salary) VALUES
+           ('e1-empty', NULL), ('e2-saved', 58000), ('e3-monthly', NULL),
+           ('e4-receipt', NULL), ('e5-one-off', NULL), ('e6-zero', 0)`,
+      );
+      // e1: the latest yearly record (2026-04-06, £40,000) is copied; both go.
+      await record("e1-empty", "paye_salary", "Pay 2025", 35000, "annual", "2025-04-06");
+      await record("e1-empty", "paye_salary", "Pay 2026", 40000, "annual", "2026-04-06");
+      // Another PAYE category is not a salary record and stays.
+      await record("e1-empty", "paye_tax", "Tax paid", 6486, "annual", "2026-04-06");
+      // e2: a saved salary wins; the record still goes.
+      await record("e2-saved", "paye_salary", "Pay", 60000, "annual", "2026-04-06");
+      // e3: monthly £3,000 x 12 = £36,000.
+      await record("e3-monthly", "paye_salary", "Pay", 3000, "monthly", "2026-04-06");
+      // e4: carries a receipt, so it is neither copied nor deleted.
+      await record("e4-receipt", "paye_salary", "Pay", 50000, "annual", "2026-04-06", "cipher");
+      // e5: a one-off payslip is not a year's salary; it goes, nothing is copied.
+      await record("e5-one-off", "paye_salary", "Payslip", 2500, "one-off", "2026-04-30");
+      // e6: a salary saved as 0 counts as empty, as the engine reads it: £40,000 is copied.
+      await record("e6-zero", "paye_salary", "Pay", 40000, "annual", "2026-04-06");
+      // A user with no profile: left alone.
+      await record("ghost", "paye_salary", "Pay", 30000, "annual", "2026-04-06");
+    };
+
+    it("copies the latest yearly or monthly record into an empty salary and removes the records", async () => {
+      await seed();
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      const afterSalaries = [
+        { user_id: "e1-empty", salary: "40000.00" },
+        { user_id: "e2-saved", salary: "58000.00" },
+        { user_id: "e3-monthly", salary: "36000.00" },
+        { user_id: "e4-receipt", salary: null },
+        { user_id: "e5-one-off", salary: null },
+        { user_id: "e6-zero", salary: "40000.00" },
+      ];
+      expect(await salaries()).toEqual(afterSalaries);
+      const left = (await records()) as { user_id: string; category: string }[];
+      expect(left.map((r) => [r.user_id, r.category])).toEqual([
+        ["e1-empty", "paye_tax"],
+        ["e4-receipt", "paye_salary"],
+        ["ghost", "paye_salary"],
+      ]);
+      const image: { record: Record<string, unknown>; salary_copied: string | null }[] =
+        await ds.query(
+          "SELECT record, salary_copied::text AS salary_copied FROM paye_salary_record_backfill",
+        );
+      expect(image).toHaveLength(6);
+      expect(
+        image
+          .map((r) => r.salary_copied)
+          .filter(Boolean)
+          .sort(),
+      ).toEqual(["36000.00", "40000.00", "40000.00"]);
+      // Never a receipt column in the image.
+      for (const row of image)
+        expect(Object.keys(row.record).some((k) => k.startsWith("receipt"))).toBe(false);
+
+      await runUpInTransaction(new RemovePayeSalaryRecords1795480300000());
+      expect(await salaries()).toEqual(afterSalaries);
+      expect(await records()).toHaveLength(3);
+    });
+
+    it("down brings the records back exactly and empties only a salary still equal to the copy", async () => {
+      await seed();
+      const before = await records();
+      await ds.runMigrations();
+      // e3 changes the copied salary afterwards: kept on revert.
+      await ds.query("UPDATE user_profiles SET annual_salary = 37000 WHERE user_id = 'e3-monthly'");
+      await undoThrough(NAME);
+      expect(await records()).toEqual(before);
+      expect(await salaries()).toEqual([
+        { user_id: "e1-empty", salary: null },
+        { user_id: "e2-saved", salary: "58000.00" },
+        { user_id: "e3-monthly", salary: "37000.00" },
+        { user_id: "e4-receipt", salary: null },
+        { user_id: "e5-one-off", salary: null },
+        // The exact old value comes back: 0, not null.
+        { user_id: "e6-zero", salary: "0.00" },
+      ]);
+      expect(
+        (await ds.query("SELECT to_regclass('public.paye_salary_record_backfill') AS t"))[0].t,
       ).toBeNull();
     });
   });

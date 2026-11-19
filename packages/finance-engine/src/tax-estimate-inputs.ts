@@ -4,7 +4,7 @@ import { isRecordActiveInTaxYear, type TaxRecordFields } from "./tax-calculator.
 /**
  * The fact a Self Assessment estimate can be missing:
  * - `untaxedIncomeRecords`: no income outside PAYE in the year, so there is nothing to estimate;
- * - `annualSalary`: an employee with no saved salary and no logged salary record (the salary
+ * - `annualSalary`: an employee with no saved salary (the salary
  *   decides the band the other income falls in);
  * - `selfEmploymentRecords`: a self-employed person with no self-employed income record in the
  *   year (their trading income decides the band the other income falls in).
@@ -37,6 +37,14 @@ export type TaxEstimateInputs<R extends TaxRecordFields = TaxRecordFields> =
       ownershipShare: number;
     }
   | { status: "unknown"; missing: TaxEstimateMissingFact[] };
+
+/** The legacy PAYE salary category, which no longer replaces the saved salary (slice 6). */
+export const LEGACY_PAYE_SALARY_CATEGORY = "paye_salary";
+
+/** True for a legacy PAYE salary record (source "paye", category "paye_salary"). */
+export function isLegacySalaryRecord(record: Pick<TaxRecordFields, "source" | "category">) {
+  return record.source === "paye" && record.category === LEGACY_PAYE_SALARY_CATEGORY;
+}
 
 /** Records that carry income no employer has already taxed. ISA interest is tax-free. */
 export function isUntaxedIncomeRecord(record: TaxRecordFields): boolean {
@@ -72,7 +80,7 @@ function salaryDecidesEstimate(employmentType: string | null | undefined): boole
  *
  * - No income outside PAYE active in the year: unknown (`untaxedIncomeRecords`).
  * - An employee, or someone whose employment type is not answered, with no saved salary (or 0)
- *   and no logged PAYE salary record: unknown (`annualSalary`).
+ *   is unknown (`annualSalary`). A legacy PAYE salary record never stands in for it.
  * - A self-employed person with no self-employed income record in the year: unknown
  *   (`selfEmploymentRecords`), unless their saved salary is exactly 0.
  * - Otherwise known: the PAYE pay is payeSalaryForTax (never a self-employed person's salary).
@@ -82,7 +90,13 @@ export function estimateInputsFor<R extends TaxRecordFields>(
   records: readonly R[] | null | undefined,
   taxYear: string,
 ): TaxEstimateInputs<R> {
-  const inYear = (records ?? []).filter((r) => isRecordActiveInTaxYear(r, taxYear));
+  // A legacy PAYE salary record never stands in for the saved salary (slice 6): the profile
+  // salary is the one salary figure. New records cannot be salary (the record form and the API
+  // refuse it), and a migration copied the latest old one into an empty profile salary and
+  // removed them all, so any that remain are left out here.
+  const inYear = (records ?? []).filter(
+    (r) => isRecordActiveInTaxYear(r, taxYear) && !isLegacySalaryRecord(r),
+  );
   if (!inYear.some(isUntaxedIncomeRecord)) {
     return { status: "unknown", missing: ["untaxedIncomeRecords"] };
   }
@@ -92,8 +106,7 @@ export function estimateInputsFor<R extends TaxRecordFields>(
     saved !== null && saved !== undefined && Number.isFinite(Number(saved)) && Number(saved) > 0
       ? Number(saved)
       : null;
-  const loggedSalary = inYear.some((r) => r.source === "paye" && r.category === "paye_salary");
-  if (salaryDecidesEstimate(facts.employmentType) && salary === null && !loggedSalary) {
+  if (salaryDecidesEstimate(facts.employmentType) && salary === null) {
     return { status: "unknown", missing: ["annualSalary"] };
   }
   const loggedTrading = inYear.some((r) => r.source === "self-employed" && r.type === "income");

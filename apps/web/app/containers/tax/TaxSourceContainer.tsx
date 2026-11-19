@@ -4,6 +4,7 @@ import {
   estimateInputsFor,
   getCurrentUKTaxYear,
   getRecordAnnualTotalForTaxYear,
+  isLegacySalaryRecord,
   isRecordActiveInTaxYear,
   type TaxRecord,
   type TaxSource,
@@ -116,7 +117,8 @@ const TaxSourceContainer: FC = () => {
     () =>
       calculateUKTax(
         taxYear,
-        records,
+        // A legacy PAYE salary record never stands in for the saved salary (slice 6).
+        records.filter((r) => !isLegacySalaryRecord(r)),
         inputs.status === "known" ? inputs.payeSalary : 0,
         ownershipShare,
       ),
