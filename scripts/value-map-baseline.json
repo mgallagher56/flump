@@ -6,12 +6,6 @@
     }
   },
   "secondFormulas": {
-    "apps/web/app/types/budget.ts": {
-      "counts": {
-        "monthly-yearly": 1
-      },
-      "findings": ["BU-3", "AI-4"]
-    },
     "apps/web/app/containers/savings/SavingsContainer.tsx": {
       "counts": {
         "sum-of-saved-amounts": 1

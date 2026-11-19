@@ -1630,7 +1630,16 @@ facts:
         }
       - { surface: picture, path: packages/finance-engine/src/picture/selectors/budget-totals.ts }
       - { surface: budget, path: apps/web/app/features/budget/linkedEntries.ts }
-      - { surface: mcp-read, path: packages/mcp/src/tools/read/common.ts }
+      - {
+          surface: picture,
+          path: packages/finance-engine/src/picture/load.ts,
+          note: "the shared loader reads the whole budget row, link kind included, for every page and the AI tools",
+        }
+      - {
+          surface: mcp-read,
+          path: packages/mcp/src/tools/read/common.ts,
+          note: "lists the picture's resolved rows; not resolved a second time",
+        }
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
       - {
           surface: export,
@@ -2126,7 +2135,12 @@ figures:
         path: packages/finance-engine/src/picture/selectors/budget-totals.ts,
       }
     other_paths:
-      - { function: toMonthly, status: duplicate, path: apps/web/app/types/budget.ts }
+      - {
+          function: "Budget page rebuild from rows edited on the page",
+          status: wrapper,
+          path: apps/web/app/containers/budget/BudgetContainer.tsx,
+          note: "the same engine builder over the live rows, so an edit updates every figure at once; saved data comes from the shared loader",
+        }
       - {
           function: "wizard totals",
           status: duplicate,

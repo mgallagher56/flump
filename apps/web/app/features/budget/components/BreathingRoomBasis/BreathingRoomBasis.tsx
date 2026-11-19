@@ -1,4 +1,5 @@
 import {
+  budgetRowMonthly,
   DEBT_CATEGORY,
   PortfolioSnapshot,
   type RawAccount,
@@ -8,7 +9,7 @@ import { CollapsibleDrawer, IconTile, Money, Switch } from "@repo/ui";
 import { Landmark, ListChecks } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
-import { type BudgetEntry, getCategoryLabel, toMonthly } from "~/types/budget";
+import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
 import { isIncomeEntry } from "../../income";
 import { breathingRoomBasis } from "./BreathingRoomBasis.styles";
 
@@ -59,7 +60,7 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
       }),
     [accounts, snapshot],
   );
-  const spending = entries.filter((e) => !isIncomeEntry(e) && toMonthly(e) > 0);
+  const spending = entries.filter((e) => !isIncomeEntry(e) && budgetRowMonthly(e) > 0);
   const counted = spending.filter((e) => e.isEssential || fixedReason(e) !== null).length;
 
   const toggle = async (entry: BudgetEntry, next: boolean) => {
@@ -141,7 +142,7 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
                       hint={
                         <span className={slots.hint}>
                           {getCategoryLabel(entry.category)},{" "}
-                          <Money size="sm" tone="muted" value={toMonthly(entry)} /> a month
+                          <Money size="sm" tone="muted" value={budgetRowMonthly(entry)} /> a month
                           {reason ? `. ${reason}` : null}
                         </span>
                       }

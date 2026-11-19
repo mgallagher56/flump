@@ -1,4 +1,5 @@
 import {
+  budgetRowMonthly,
   DEBT_CATEGORY,
   type Figure,
   isFigureKnown,
@@ -20,7 +21,6 @@ import {
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetEntry } from "~/types/budget";
-import { toMonthly } from "~/types/budget";
 import {
   breathingRoomPhrase,
   describeBreathingRoom,
@@ -283,12 +283,14 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   );
 
   const totalKeptIncome = useMemo(
-    () => nonPrimaryIncome.filter((e) => keptIncome[e.id]).reduce((s, e) => s + toMonthly(e), 0),
+    () =>
+      nonPrimaryIncome.filter((e) => keptIncome[e.id]).reduce((s, e) => s + budgetRowMonthly(e), 0),
     [nonPrimaryIncome, keptIncome],
   );
 
   const totalSelectedExpenses = useMemo(
-    () => expenseEntries.filter((e) => keptExpenses[e.id]).reduce((s, e) => s + toMonthly(e), 0),
+    () =>
+      expenseEntries.filter((e) => keptExpenses[e.id]).reduce((s, e) => s + budgetRowMonthly(e), 0),
     [expenseEntries, keptExpenses],
   );
 
@@ -304,7 +306,10 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     [poolAccounts, defaultAccounts, snapshot],
   );
   const defaultSelectedExpenses = useMemo(
-    () => expenseEntries.filter((e) => defaultExpenses[e.id]).reduce((s, e) => s + toMonthly(e), 0),
+    () =>
+      expenseEntries
+        .filter((e) => defaultExpenses[e.id])
+        .reduce((s, e) => s + budgetRowMonthly(e), 0),
     [expenseEntries, defaultExpenses],
   );
   const pool = saved
@@ -385,7 +390,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           items={nonPrimaryIncome.map((e) => ({
             id: e.id,
             name: e.name,
-            amount: toMonthly(e),
+            amount: budgetRowMonthly(e),
             perMonth: true,
             checked: !!keptIncome[e.id],
             onToggle: () => toggleIncome(e.id),

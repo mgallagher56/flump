@@ -7,7 +7,7 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import DebtContainer from "~/containers/debt/DebtContainer";
-import { buildDebtInputs } from "~/features/debt/utils/debtInputs";
+import { buildDebtInputs, debtInputsFromPicture } from "~/features/debt/utils/debtInputs";
 import { backendFetch, loadWorkspacePicture } from "~/services/backend-client.server";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
@@ -108,15 +108,15 @@ export const meta: MetaFunction = () => [{ title: "Cards and loans | Flump" }];
 export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, userProfile, budgetEntries, user, picture } =
-    await loadWorkspacePicture(args);
+  const { accounts, accountDetails, userProfile, user, picture } = await loadWorkspacePicture(args);
 
   return data({
     accounts,
     accountDetails,
     userProfile,
     picture,
-    debtInputs: buildDebtInputs(accounts, accountDetails, budgetEntries, userProfile),
+    // The shared loader's picture: nothing is rebuilt. Null only with nobody signed in (no rows).
+    debtInputs: picture ? debtInputsFromPicture(picture) : buildDebtInputs([], [], []),
     user,
   });
 };

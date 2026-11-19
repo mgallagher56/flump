@@ -7,6 +7,7 @@ import {
 import {
   BUDGET_HOUSING_CATEGORY,
   type BudgetLinkOffer,
+  budgetRowMonthly,
   DEBT_CATEGORY,
   findPossibleDuplicateDebtRows,
   getUkTaxYearContext,
@@ -55,7 +56,7 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { CONFLICT_MESSAGE, isConflict, versionEtag } from "~/services/conflict";
-import { type BudgetEntry, getCategoryLabel, toMonthly } from "~/types/budget";
+import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { clearRunwaySettings, type RunwayScenario } from "~/utils/runwayStorage";
 
@@ -595,7 +596,7 @@ const BudgetContainer: FC = () => {
           housingStatus={housingStatus}
           rowTotal={pageEntries
             .filter((e) => e.category === "housing" && !e.isIncome)
-            .reduce((sum, e) => sum + Math.abs(toMonthly(e)), 0)}
+            .reduce((sum, e) => sum + Math.abs(budgetRowMonthly(e)), 0)}
           savedAmount={pictureProfile?.monthlyHousingCost ?? null}
           onSave={handleSaveHousing}
         />
@@ -621,7 +622,7 @@ const BudgetContainer: FC = () => {
                 ? {
                     id: e.id,
                     label: e.name,
-                    value: Math.abs(toMonthly(e)),
+                    value: Math.abs(budgetRowMonthly(e)),
                     valueProps: { fractionDigits: 0, size: "sm" as const },
                   }
                 : { id: e.id, label: e.name },

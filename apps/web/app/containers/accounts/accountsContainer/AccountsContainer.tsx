@@ -1,4 +1,4 @@
-import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
+import type { RawAccountDetail } from "@flump/finance-engine";
 import { Button, EmptyState, PageBody, PageHeader } from "@repo/ui";
 import { type FC, type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useLoaderData, useSearchParams } from "react-router";
@@ -9,8 +9,6 @@ import { CheckInSheet, firstShownElement } from "~/features/snapshot/components/
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
 import type { loader } from "~/routes/app.accounts._index";
-import { isFutureMonth } from "~/utils/accounts";
-import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { emptyWrap, headerActions, phoneOnly, wideOnly } from "./AccountsContainer.styles";
 
 const ADD_HREF = "/app/accounts?add=1";
@@ -26,7 +24,7 @@ const RETURN_FOCUS_TO = firstShownElement([
  * and net worth once. No hero (P6) and no summary strip: the list is the summary.
  */
 const AccountsContainer: FC = () => {
-  const { accounts = [], accountDetails = [], userProfile = null } = useLoaderData<typeof loader>();
+  const { accounts = [], accountDetails = [], picture } = useLoaderData<typeof loader>();
   // Before hydration the buttons are plain links (#701): "?add=1" and "?checkIn=1" open the add
   // dialog or the check-in on arrival, then the parameter is removed so a reload does not reopen.
   const [params, setParams] = useSearchParams();
@@ -55,26 +53,11 @@ const AccountsContainer: FC = () => {
   };
   const saveSnapshot = useSaveSnapshot(accountDetails);
 
-  // Totals come from the finance engine so Property, Student Loan and Overdraft are classified
-  // in one place, under the user's net worth choices (saved on their profile).
-  const snapshot = useMemo(
-    () =>
-      new PortfolioSnapshot(
-        accounts as RawAccount[],
-        (accountDetails as RawAccountDetail[]).filter(
-          (detail) => !isFutureMonth(detail.month, detail.year),
-        ),
-      ),
-    [accounts, accountDetails],
-  );
-
-  // Net worth and its parts come from the one financial picture (E23), built on the same
-  // snapshot, so the seeded "Home (your estimate)" Property account (D3) counts here exactly as
-  // on the dashboard.
-  const netWorth = useMemo(
-    () => buildWorkspacePicture({ userProfile, accounts }, { snapshot }).netWorth,
-    [userProfile, accounts, snapshot],
-  );
+  // Net worth and its parts come from the one financial picture the shared loader built (E23,
+  // audit slice 3), so the seeded "Home (your estimate)" Property account (D3) counts here exactly
+  // as on the Dashboard, under the user's net worth choices. Nothing is rebuilt on the page. The
+  // loader requires sign-in, so the picture is there whenever accounts are.
+  const netWorth = picture?.netWorth ?? null;
 
   const rows = useMemo(
     () => buildAccountRows(accounts as never[], accountDetails as never[]),
@@ -117,7 +100,7 @@ const AccountsContainer: FC = () => {
         title="Your accounts"
       />
 
-      {hasAccounts ? (
+      {hasAccounts && netWorth ? (
         <>
           <AccountsGroupList
             afterNetWorth={
