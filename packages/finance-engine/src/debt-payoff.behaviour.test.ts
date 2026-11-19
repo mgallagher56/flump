@@ -162,20 +162,24 @@ describe("calculateDebtSchedule month by month", () => {
     const m1 = res.schedule[0];
     expect(m1?.calendarDate).toBe("2026-02");
     expect(m1?.totalInterestGbp).toBe(3);
-    // The principal and payment columns are not asserted for a debt that charges interest:
-    // by the rule M1 pays 100, of which 3.00 is interest and 97.00 principal, but the code
-    // reports 100 principal, 0 interest on the row and 103 paid in total. Reported to the
-    // coordinator as a possible bug (E41 M2); see the triage ledger.
+    // M1 pays 100, of which 3.00 is interest and 97.00 principal.
+    expect(m1?.totalPrincipalGbp).toBe(97);
+    expect(m1?.totalPaymentsGbp).toBe(100);
     expect(m1?.remainingDebtGbp).toBe(203);
     expect(m1?.payments).toMatchObject([
       {
         debtId: "d",
         debtName: "Card",
+        startingBalanceGbp: 300,
+        interestChargedGbp: 3,
+        principalPaidGbp: 97,
         endingBalanceGbp: 203,
         isPaidOff: false,
       },
     ]);
     const m4 = res.schedule[3];
+    // M4 pays the last 6.14: 0.06 interest and 6.08 principal.
+    expect(m4?.payments[0]?.principalPaidGbp).toBe(6.08);
     expect(m4?.payments[0]?.endingBalanceGbp).toBe(0);
     expect(m4?.payments[0]?.isPaidOff).toBe(true);
     expect(res.firstQuickWinMonth).toBe(4);
@@ -193,11 +197,16 @@ describe("calculateDebtSchedule month by month", () => {
     });
     const m1 = res.schedule[0];
     expect(m1?.totalInterestGbp).toBe(10);
+    // Paid 10 + 150 = 160, of which 10 is B's interest: principal 150.
+    expect(m1?.totalPrincipalGbp).toBe(150);
+    expect(m1?.totalPaymentsGbp).toBe(160);
     expect(m1?.remainingDebtGbp).toBe(950);
     const a = m1?.payments.find((p) => p.debtId === "a");
     const b = m1?.payments.find((p) => p.debtId === "b");
     expect(a).toMatchObject({ principalPaidGbp: 10, endingBalanceGbp: 90, isPaidOff: false });
+    // B paid 50 + 100 = 150 = 10 interest + 140 principal.
     expect(b).toMatchObject({
+      principalPaidGbp: 140,
       endingBalanceGbp: 860,
       isPaidOff: false,
     });
@@ -218,7 +227,9 @@ describe("calculateDebtSchedule month by month", () => {
     const a = m1?.payments.find((p) => p.debtId === "a");
     const b = m1?.payments.find((p) => p.debtId === "b");
     expect(a).toMatchObject({ principalPaidGbp: 100, endingBalanceGbp: 0, isPaidOff: true });
-    expect(b).toMatchObject({ endingBalanceGbp: 950, isPaidOff: false });
+    // B paid 50 + 10 = 60 = 10 interest + 50 principal. Month: paid 160, principal 150.
+    expect(b).toMatchObject({ principalPaidGbp: 50, endingBalanceGbp: 950, isPaidOff: false });
+    expect(m1?.totalPrincipalGbp).toBe(150);
     expect(m1?.remainingDebtGbp).toBe(950);
     expect(res.firstQuickWinDebtName).toBe("Card A");
     expect(res.firstQuickWinMonth).toBe(1);
@@ -227,8 +238,12 @@ describe("calculateDebtSchedule month by month", () => {
     const m2 = res.schedule[1];
     expect(m2?.totalInterestGbp).toBe(9.5);
     expect(m2?.payments).toHaveLength(1);
+    // B paid 50 + 110 = 160 = 9.50 interest + 150.50 principal; 950 - 150.50 = 799.50.
     expect(m2?.payments[0]).toMatchObject({
       debtId: "b",
+      startingBalanceGbp: 950,
+      interestChargedGbp: 9.5,
+      principalPaidGbp: 150.5,
       endingBalanceGbp: 799.5,
     });
   });
@@ -247,9 +262,9 @@ describe("calculateDebtSchedule month by month", () => {
     expect(m1?.remainingDebtGbp).toBe(70);
   });
 
-  it("gives payment rows that add up: start + interest charged - paid = end", () => {
-    // A statement row must reconcile whichever column shows the interest, so this holds
-    // without fixing what the starting balance means. Uses the two-debt snowball case above.
+  it("gives payment rows that add up: start - principal = end", () => {
+    // The starting balance is before the month's interest and principal is the payment less
+    // that interest, so start - principal = end on every row. Uses the two-debt snowball case.
     const res = calculateDebtSchedule([cardA, loanB], 100, "SNOWBALL", {
       referenceDate: REF,
       maxMonths: 2,
@@ -257,10 +272,7 @@ describe("calculateDebtSchedule month by month", () => {
     const rows = res.schedule.flatMap((m) => m.payments);
     expect(rows).toHaveLength(3);
     for (const row of rows) {
-      expect(row.startingBalanceGbp + row.interestChargedGbp - row.principalPaidGbp).toBeCloseTo(
-        row.endingBalanceGbp,
-        2,
-      ); // toBeCloseTo: penny sums in floating point
+      expect(row.startingBalanceGbp - row.principalPaidGbp).toBeCloseTo(row.endingBalanceGbp, 2); // toBeCloseTo: penny sums in floating point
     }
   });
 
