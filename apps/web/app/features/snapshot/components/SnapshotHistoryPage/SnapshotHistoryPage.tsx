@@ -82,9 +82,13 @@ export const comparedMonthsText = (comparison: RecordedMonthComparison): string 
     : `${from.name} ${from.year} to ${to.name} ${to.year}`;
 };
 
-/** The hero's quiet prompt while this month's check-in is not done: "November not recorded yet". */
+/**
+ * The hero's quiet prompt while this month's check-in is not done: "November check-in not done
+ * yet". It reads finished check-ins (system audit slice 4), so it says check-in, not recorded: a
+ * new account or an edit records this month's balance without finishing the check-in.
+ */
 export const notRecordedPrompt = (currentMonthName: string): string =>
-  `${currentMonthName} not recorded yet`;
+  `${currentMonthName} check-in not done yet`;
 
 /**
  * What net worth leaves out, as one sentence for the hero's subline, so no line sits between the
