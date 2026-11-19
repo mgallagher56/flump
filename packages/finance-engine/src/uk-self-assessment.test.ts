@@ -292,3 +292,41 @@ describe("compareExpensesWithAllowance", () => {
     ).toThrow(UnsupportedUkTaxYearError);
   });
 });
+
+describe("the allowance at exactly the recorded costs", () => {
+  // https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income: the trading
+  // and property allowances are 1,000. The engine uses the allowance when it is at least as large
+  // as the costs (module comment), so costs equal to the allowance take the allowance.
+  it("uses the allowance when the costs equal it", () => {
+    // income 5,000, costs 1,000, allowance 1,000: profit 5,000 - 1,000 = 4,000 either way, and the
+    // allowance is the deduction used.
+    expect(calculateTradingProfit(5000, 1000, rules)).toEqual({
+      profit: 4000,
+      allowanceUsed: 1000,
+    });
+    expect(calculatePropertyProfit(5000, 1000, rules)).toEqual({
+      profit: 4000,
+      allowanceUsed: 1000,
+    });
+  });
+
+  it("gives full relief when income is exactly the allowance", () => {
+    // income 1,000 with a 1,000 allowance (2025/26): 0 < 1,000 <= 1,000, so the allowance covers
+    // all of it.
+    const c = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2025/26",
+      grossIncome: 1000,
+      recordedExpenses: 0,
+    });
+    expect(c.withinFullRelief).toBe(true);
+    // One penny more is no longer fully covered.
+    const over = compareExpensesWithAllowance({
+      source: "self-employed",
+      taxYear: "2025/26",
+      grossIncome: 1000.01,
+      recordedExpenses: 0,
+    });
+    expect(over.withinFullRelief).toBe(false);
+  });
+});

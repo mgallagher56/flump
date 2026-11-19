@@ -3,6 +3,7 @@ import {
   balanceWeightedRate,
   estimateSavingsInterestNext12Months,
   interestOverNext12MonthsAtAer,
+  monthlyRateFromAer,
   totalMonthlySavingAtShare,
 } from "./savings-interest.js";
 
@@ -169,5 +170,57 @@ describe("balanceWeightedRate", () => {
       ]),
     ).toBe(3);
     expect(balanceWeightedRate([{ balance: 10 }])).toBeNull();
+  });
+});
+
+describe("monthlyRateFromAer", () => {
+  it("is the monthly rate that compounds to the AER", () => {
+    // 12% AER: 1.12^(1/12) - 1. ln(1.12) = 0.113329; / 12 = 0.0094441; e^0.0094441 - 1 = 0.0094888.
+    expect(monthlyRateFromAer(12)).toBeCloseTo(0.0094888, 6);
+  });
+
+  it("is 0 for a negative rate, and for one that is not a number", () => {
+    expect(monthlyRateFromAer(-2)).toBe(0);
+    expect(monthlyRateFromAer(Number.NaN)).toBe(0);
+    expect(monthlyRateFromAer(Number.POSITIVE_INFINITY)).toBe(0);
+  });
+});
+
+describe("interestOverNext12MonthsAtAer: balances and savings that cannot count", () => {
+  it("counts a negative starting balance as 0", () => {
+    // Same as a £0 balance with £100 a month at 12% AER: £64.65 (worked in the test above).
+    expect(interestOverNext12MonthsAtAer(-1000, 12, 100)).toBeCloseTo(64.65, 1);
+  });
+
+  it("counts a starting balance that is not a finite number as 0", () => {
+    expect(interestOverNext12MonthsAtAer(Number.POSITIVE_INFINITY, 12, 100)).toBeCloseTo(64.65, 1);
+  });
+
+  it("counts a negative monthly saving as 0", () => {
+    // £1,000 at 12% AER and nothing paid in: 1,000 x 0.12 = £120.
+    expect(interestOverNext12MonthsAtAer(1000, 12, -100)).toBeCloseTo(120, 6);
+  });
+
+  it("counts a monthly saving that is not a finite number as 0", () => {
+    expect(interestOverNext12MonthsAtAer(1000, 12, Number.POSITIVE_INFINITY)).toBeCloseTo(120, 6);
+  });
+});
+
+describe("blank stored values", () => {
+  it("reads a blank monthly saving as not set, not as £0", () => {
+    expect(
+      totalMonthlySavingAtShare([{ type: "Saving", balance: 100, monthlyContribution: "" }]),
+    ).toBeNull();
+  });
+
+  it("reads a blank rate as no rate, never as 0%", () => {
+    // Only the account with a rate is counted: £1,000 at 12% AER = £120.
+    const out = estimateSavingsInterestNext12Months([
+      { type: "Saving", balance: 1000, interestRate: 12 },
+      { type: "Saving", balance: 5000, interestRate: "" },
+    ]);
+    expect(out?.accountsCounted).toBe(1);
+    expect(out?.accountsWithoutRate).toBe(1);
+    expect(out?.total).toBeCloseTo(120, 6);
   });
 });

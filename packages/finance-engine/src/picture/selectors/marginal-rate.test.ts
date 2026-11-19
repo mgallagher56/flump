@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getUkIncomeThresholds } from "../../uk-tax-thresholds.js";
+import { getUkIncomeThresholds, type UkIncomeThreshold } from "../../uk-tax-thresholds.js";
 import { getUkTaxYearRules } from "../../uk-tax-year.js";
 import { whatIfGrossChange } from "../../uk-what-if.js";
 import { isFigureKnown } from "../figure.js";
@@ -143,5 +143,129 @@ describe("taper thresholds (E31)", () => {
 describe("nextThresholdAbove", () => {
   it("returns null when nothing lies above", () => {
     expect(nextThresholdAbove([], 10_000)).toBeNull();
+  });
+});
+
+describe("incomeScenarioFromFacts: details", () => {
+  it("orders the plans undergraduate first, then postgraduate, whatever order they were saved in", () => {
+    const { scenario } = incomeScenarioFromFacts(
+      { ...FACTS, studentLoanPlans: ["POSTGRAD", "PLAN_5", "PLAN_4", "PLAN_1"] },
+      opts,
+    );
+    expect(scenario.studentLoans).toEqual(["plan1", "plan4", "plan5", "postgrad"]);
+  });
+
+  it("leaves student loans out when none are saved", () => {
+    const { scenario } = incomeScenarioFromFacts({ ...FACTS, studentLoanPlans: [] }, opts);
+    expect(scenario).not.toHaveProperty("studentLoans");
+  });
+
+  it("leaves the pension out when salary sacrifice is not answered", () => {
+    const { scenario, missing } = incomeScenarioFromFacts(
+      { ...FACTS, isSalarySacrifice: null },
+      opts,
+    );
+    expect(scenario).not.toHaveProperty("pension");
+    expect(missing).toEqual(["isSalarySacrifice"]);
+  });
+
+  it("names the salary as missing when it is 0 or less", () => {
+    expect(incomeScenarioFromFacts({ ...FACTS, annualSalary: 0 }, opts).missing).toEqual([
+      "annualSalary",
+    ]);
+    expect(incomeScenarioFromFacts({ ...FACTS, annualSalary: -1 }, opts).missing).toEqual([
+      "annualSalary",
+    ]);
+  });
+});
+
+describe("selectMarginalRate: year, labels and the taper window", () => {
+  it("uses the tax year asked for", () => {
+    const fig = selectMarginalRate(FACTS, { taxYear: "2021/22" });
+    expect(isFigureKnown(fig) && fig.value.ratesYear).toBe("2021/22");
+  });
+
+  it("is derived with no assumptions when the region is saved, and an assumption when it is not", () => {
+    const saved = selectMarginalRate(FACTS, opts);
+    expect(isFigureKnown(saved) && saved.provenance).toBe("derived");
+    expect(isFigureKnown(saved) && saved.assumptions).toBeUndefined();
+    const assumed = selectMarginalRate({ ...FACTS, taxRegion: null }, opts);
+    expect(isFigureKnown(assumed) && assumed.provenance).toBe("assumption");
+  });
+
+  it("offers the taper from exactly 90,000 of adjusted net income (2026/27)", () => {
+    // Taper start 100,000 (ITA 2007 s.35) less the 10,000 window = 90,000. No pension, so adjusted
+    // net income equals pay.
+    const fig = selectMarginalRate(
+      { ...FACTS, annualSalary: 90_000, studentLoanPlans: [], pensionPercent: 0 },
+      opts,
+    );
+    expect(isFigureKnown(fig) && fig.value.nextThreshold?.kind).toBe("taperStart");
+  });
+
+  it("is an unverified estimate when a rule group it uses is unverified (student loans, 2025/26)", () => {
+    // uk-rule-sources.ts lists the 2025/26 student loan group as unverified.
+    const fig = selectMarginalRate(FACTS, { taxYear: "2025/26" });
+    expect(isFigureKnown(fig) && fig.value.isUnverifiedEstimate).toBe(true);
+  });
+});
+
+describe("nextThresholdAbove: which threshold is next", () => {
+  const th = (
+    kind: UkIncomeThreshold["kind"],
+    grossAt: number | null,
+    extra: Partial<UkIncomeThreshold> = {},
+  ): UkIncomeThreshold => ({
+    kind,
+    measure: "taxableIncome",
+    at: 0,
+    bandExtension: 0,
+    grossAt,
+    aniAt: null,
+    ruleKey: "personalAllowance",
+    status: "verified",
+    source: "",
+    ...extra,
+  });
+
+  it("counts a threshold exactly 50p above pay, and skips one closer than that", () => {
+    expect(nextThresholdAbove([th("higherRate", 10_000.5)], 10_000)?.distance).toBe(0.5);
+    expect(
+      nextThresholdAbove([th("higherRate", 10_000.2), th("studentLoan", 12_000)], 10_000)?.kind,
+    ).toBe("studentLoan");
+  });
+
+  it("skips thresholds below pay and ones never crossed", () => {
+    expect(nextThresholdAbove([th("higherRate", 5_000), th("taperEnd", null)], 10_000)).toBeNull();
+  });
+
+  it("picks the nearest above pay in any order, and the first listed on a tie", () => {
+    expect(
+      nextThresholdAbove([th("additionalRate", 20_000), th("higherRate", 12_000)], 10_000)?.kind,
+    ).toBe("higherRate");
+    expect(
+      nextThresholdAbove([th("taperEnd", 12_000), th("additionalRate", 12_000)], 10_000)?.kind,
+    ).toBe("taperEnd");
+  });
+
+  it("carries the plan and the band when the threshold has them", () => {
+    // Distance 12,000 - 10,000 = 2,000.
+    expect(nextThresholdAbove([th("studentLoan", 12_000, { plan: "plan2" })], 10_000)).toEqual({
+      kind: "studentLoan",
+      plan: "plan2",
+      grossAt: 12_000,
+      distance: 2000,
+    });
+    expect(
+      nextThresholdAbove(
+        [th("higherRate", 12_000, { band: { name: "Higher rate", rate: 0.4 } })],
+        10_000,
+      ),
+    ).toEqual({
+      kind: "higherRate",
+      band: { name: "Higher rate", rate: 0.4 },
+      grossAt: 12_000,
+      distance: 2000,
+    });
   });
 });

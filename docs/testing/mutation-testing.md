@@ -2,7 +2,7 @@
 
 Mutation testing makes one small fault at a time in the code (a `>` becomes `>=`, a `-` becomes `+`) and runs the tests. If no test fails, the fault "survived": the tests would not notice that mistake. The tool is [StrykerJS](https://stryker-mutator.io/). The plan is [E41](../audit/plans/E41-mutation-testing-and-test-speed-plan.md).
 
-Status: slice M2, part A. The whole of `packages/finance-engine` is mutation-tested once a week in CI, and its score is checked against a floor. Pull requests that change engine source get an advisory list of faults no test caught. M2 part A added kill tests for every engine file outside tax and pay and recorded the faults left over in the [triage ledger](./mutation-triage.md). Part B does the tax and pay files. Other packages come in M3 to M5.
+Status: slice M2 done. The whole of `packages/finance-engine` is mutation-tested once a week in CI, and its score is checked against a floor. Pull requests that change engine source get an advisory list of faults no test caught. M2 added kill tests for every engine file (part A outside tax and pay, part B tax and pay) and recorded every fault left over in the [triage ledger](./mutation-triage.md). Other packages come in M3 to M5.
 
 ## Run it locally
 
@@ -94,6 +94,28 @@ Survivors by function, with line numbers in `packages/finance-engine/src/mortgag
 | Total                              | 220      | 10          | 115 lines                                                                                                                                                                                                                  |
 
 These are not triaged. Some will be equivalent (the changed code behaves the same for every input), and some may be faults TypeScript would reject, because no type checker runs (see below). Triage and kill tests are M2.
+
+## What M2 part B measured (19 November 2026)
+
+Part B wrote tests for the tax and pay files: `uk-*`, `tax-*`, `section24.ts`, `savings-interest.ts`, `workplace-pension.ts`, `paye-salary-for-tax.ts` and the four tax selectors in `picture/selectors`. The owner approved tests that assert tax figures on 19 November 2026; every new figure is worked by hand with its GOV.UK or legislation source in a comment, and the owner signs the figures off in the part B PR. Part B also settled the three faults part A had left as "Tax gate".
+
+Both runs were forced, on branch `e41-m2-kill-tests-b` after PRs 807, 808 and 810.
+
+| Figure                                           | Laptop, one run                   | CI, 8 shards (run 44609048418)      |
+| ------------------------------------------------ | --------------------------------- | ----------------------------------- |
+| Faults                                           | 11,940                            | 11,940                              |
+| Killed                                           | 11,181                            | 11,103                              |
+| Of those, killed only by a test's own time limit | 784                               | 0                                   |
+| Timed out                                        | 96                                | 139                                 |
+| Survived                                         | 597                               | 632                                 |
+| No coverage                                      | 59                                | 59                                  |
+| **Stryker's score**                              | **94.50%**                        | **94.21%**                          |
+| Score without time-limit kills and timeouts      | **93.04%** (see below)            | 93.04%                              |
+| Stryker time                                     | 106 min (laptop under heavy load) | about 20 min for the whole workflow |
+
+- The laptop was so loaded that the two self-timing tests (`uk-tax-year.property.test.ts`, 5,000 ms; `uk-what-if.property.test.ts`, 250 ms) failed first for 784 faults. For each of those, and for each timeout, the honest figure counts the fault as caught only when an earlier run on identical source saw a real assertion fail on it (659 time-limit kills and some timeouts qualify). Everything else counts as not caught: 830 faults, each with a ledger row.
+- The floor. `scripts/mutation-baseline.json` sets the engine floor at **92%**: floor(93.04) - 1. CI's figure without timeouts is also 93.04%.
+- The ledger's "Timeout" class records faults a test does catch but that Stryker reported as timeouts; its "Tax gate" class now holds only the Scottish personal savings allowance band edge, which awaits a ruling (E25).
 
 ## What M2 part A measured (19 November 2026)
 

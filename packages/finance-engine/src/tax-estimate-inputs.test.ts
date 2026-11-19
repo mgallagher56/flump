@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { taxRecord } from "./picture/__fixtures__/builders.js";
 import type { TaxRecord } from "./tax-calculator.js";
-import { estimateInputsFor } from "./tax-estimate-inputs.js";
+import {
+  estimateInputsFor,
+  isLegacySalaryRecord,
+  isUntaxedIncomeRecord,
+} from "./tax-estimate-inputs.js";
 
 const Y = "2026/27";
 let n = 0;
@@ -181,5 +185,88 @@ describe("estimateInputsFor (one rule for every Self Assessment surface)", () =>
       Y,
     );
     expect(out.status === "known" && out.records).toEqual([inYear]);
+  });
+});
+
+describe("isLegacySalaryRecord", () => {
+  it("needs both the paye source and the paye_salary category", () => {
+    expect(isLegacySalaryRecord({ source: "paye", category: "paye_salary" })).toBe(true);
+    expect(isLegacySalaryRecord({ source: "paye", category: "bonus" })).toBe(false);
+    expect(isLegacySalaryRecord({ source: "rental", category: "paye_salary" })).toBe(false);
+  });
+});
+
+describe("isUntaxedIncomeRecord", () => {
+  it("never counts an expense, even a rental or self-employed one", () => {
+    expect(isUntaxedIncomeRecord(annual("rental", "expense", "repairs_maintenance", 500))).toBe(
+      false,
+    );
+    expect(isUntaxedIncomeRecord(annual("self-employed", "expense", "office_costs", 500))).toBe(
+      false,
+    );
+  });
+
+  it("counts taxable savings interest and dividends from the savings source", () => {
+    expect(isUntaxedIncomeRecord(annual("savings", "income", "savings_interest", 500))).toBe(true);
+    expect(isUntaxedIncomeRecord(annual("savings", "income", "dividend_income", 500))).toBe(true);
+  });
+
+  it("does not count a savings category from another source", () => {
+    expect(isUntaxedIncomeRecord(annual("paye", "income", "savings_interest", 500))).toBe(false);
+  });
+});
+
+describe("estimateInputsFor: the facts that decide it", () => {
+  it("reads an employment type left out the same as one not answered", () => {
+    // Not answered could be an employee, so a missing salary is unknown, not worked from £0.
+    expect(estimateInputsFor({ annualSalary: null }, [rent(12000)], Y)).toEqual({
+      status: "unknown",
+      missing: ["annualSalary"],
+    });
+    expect(estimateInputsFor({ employmentType: "", annualSalary: null }, [rent(12000)], Y)).toEqual(
+      { status: "unknown", missing: ["annualSalary"] },
+    );
+  });
+
+  it("is unknown untaxedIncomeRecords when there are no records at all", () => {
+    expect(estimateInputsFor({ employmentType: "employed", annualSalary: 30000 }, null, Y)).toEqual(
+      {
+        status: "unknown",
+        missing: ["untaxedIncomeRecords"],
+      },
+    );
+  });
+
+  it("does not read a salary that is not a finite positive number as saved", () => {
+    for (const annualSalary of [0, -5000, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(
+        estimateInputsFor({ employmentType: "employed", annualSalary }, [rent(12000)], Y),
+      ).toEqual({ status: "unknown", missing: ["annualSalary"] });
+    }
+  });
+
+  it("does not take a self-employed expense record as logged trading income", () => {
+    const out = estimateInputsFor(
+      { employmentType: "self-employed", annualSalary: 40000 },
+      [rent(12000), annual("self-employed", "expense", "office_costs", 500)],
+      Y,
+    );
+    expect(out).toEqual({ status: "unknown", missing: ["selfEmploymentRecords"] });
+  });
+
+  it("reads an unsaved or negative share as 100% and keeps a saved 100%", () => {
+    const share = (propertyOwnershipShare: number | null | undefined) => {
+      const out = estimateInputsFor(
+        { employmentType: "employed", annualSalary: 30000, propertyOwnershipShare },
+        [rent(12000)],
+        Y,
+      );
+      return out.status === "known" ? out.ownershipShare : "unknown";
+    };
+    expect(share(null)).toBe(100);
+    expect(share(undefined)).toBe(100);
+    expect(share(-10)).toBe(100);
+    expect(share(100)).toBe(100);
+    expect(share(50)).toBe(50);
   });
 });
