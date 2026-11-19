@@ -72,6 +72,9 @@ const okFetch = () => vi.spyOn(globalThis, "fetch").mockImplementation(contractF
 
 /** Radix tabs select on mouse down, not click. */
 const selectTab = (name: string | RegExp) => fireEvent.mouseDown(screen.getByRole("tab", { name }));
+/** The what-if zone starts closed below the saved figures; open it from its named button. */
+const openZone = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Show what-if: overpay or a new rate" }));
 /** A field in the edit dialog. */
 const field = (label: RegExp) =>
   within(screen.getByRole("dialog")).getByLabelText(label) as HTMLInputElement;
@@ -237,6 +240,9 @@ describe("<MortgageContainer />", () => {
       expect(saved.textContent).not.toMatch(/Estimate/);
       // "Your details" shows years left in years and months.
       expect(getByText("18 years 2 months")).toBeDefined();
+      // The what-if zone is closed, so its notice is not on the page yet.
+      expectPageRules(container, { maxNotSet: 0, projectionNotices: 0 });
+      openZone();
       expectPageRules(container, { maxNotSet: 0, projectionNotices: 1 });
     });
 
@@ -250,6 +256,7 @@ describe("<MortgageContainer />", () => {
         userProfile: {},
       };
       const { container } = customRender(<MortgageContainer />);
+      openZone();
       selectTab("Rate change");
       const results = container.querySelector("#remortgage-results") as HTMLElement;
       expect(results.textContent).toContain("Current payment£1,250");
@@ -259,6 +266,8 @@ describe("<MortgageContainer />", () => {
     test("page rules: one hero, one notice below the h1, one primary, first view within budget", () => {
       loaderData = loaded();
       const { container } = customRender(<MortgageContainer />);
+      expectPageRules(container, { maxNotSet: 0, projectionNotices: 0 });
+      openZone();
       expectPageRules(container, { maxNotSet: 0, projectionNotices: 1 });
       // "Your details" sits above the scenario zone.
       expect(countFigures(container.querySelector("#mortgage-saved") as HTMLElement)).toBe(4);
@@ -326,9 +335,24 @@ describe("<MortgageContainer />", () => {
   });
 
   describe("scenario zone", () => {
+    test("starts closed with a one-line summary and opens from the named button", () => {
+      loaderData = loaded();
+      customRender(<MortgageContainer />);
+      expect(screen.getByText(/^Starts from your mortgage of/)).toBeDefined();
+      expect(screen.queryByRole("tablist", { name: "Mortgage what-if tools" })).toBeNull();
+      const button = screen.getByRole("button", { name: "Show what-if: overpay or a new rate" });
+      expect(button.getAttribute("aria-expanded")).toBe("false");
+      fireEvent.click(button);
+      expect(
+        screen.getByRole("button", { name: "Hide what-if" }).getAttribute("aria-expanded"),
+      ).toBe("true");
+      expect(screen.getByRole("tablist", { name: "Mortgage what-if tools" })).toBeDefined();
+    });
+
     test("three tools in one Tabs control, the first selected", () => {
       loaderData = loaded();
       const { container, getByRole } = customRender(<MortgageContainer />);
+      openZone();
       expect(getByRole("region", { name: "Model a change to your mortgage" })).toBeDefined();
       expect(screen.getByText("Illustration, not saved")).toBeDefined();
       expect(getByRole("tablist", { name: "Mortgage what-if tools" })).toBeDefined();
@@ -351,6 +375,10 @@ describe("<MortgageContainer />", () => {
       loaderData = loaded();
       searchParams = new URLSearchParams("tool=overpay-vs-save");
       customRender(<MortgageContainer />);
+      // The zone opens by itself for a ?tool= link.
+      expect(
+        screen.getByRole("button", { name: "Hide what-if" }).getAttribute("aria-expanded"),
+      ).toBe("true");
       expect(
         screen.getByRole("tab", { name: "Overpay or save" }).getAttribute("aria-selected"),
       ).toBe("true");
@@ -361,6 +389,9 @@ describe("<MortgageContainer />", () => {
       loaderData = loaded();
       searchParams = new URLSearchParams("tool=nonsense");
       customRender(<MortgageContainer />);
+      // An unknown value does not open the zone.
+      expect(screen.queryByRole("tab", { name: "Overpay" })).toBeNull();
+      openZone();
       expect(screen.getByRole("tab", { name: "Overpay" }).getAttribute("aria-selected")).toBe(
         "true",
       );
@@ -369,6 +400,7 @@ describe("<MortgageContainer />", () => {
     test("the one notice is the standard notice, with no ERC lead", () => {
       loaderData = loaded();
       const { container } = customRender(<MortgageContainer />);
+      openZone();
       const notices = container.querySelectorAll("[data-notice='projection']");
       expect(notices).toHaveLength(1);
       expect(notices[0]?.textContent).not.toMatch(/fixed-rate deals|early repayment/);
@@ -377,6 +409,7 @@ describe("<MortgageContainer />", () => {
     test("starting figures sit behind Starting figures and start from the saved figures", () => {
       loaderData = loaded();
       const { getByRole, getByLabelText, queryByLabelText } = customRender(<MortgageContainer />);
+      openZone();
       expect(queryByLabelText("Balance to try")).toBeNull();
       fireEvent.click(getByRole("button", { name: "Starting figures" }));
       expect((getByLabelText("Balance to try") as HTMLInputElement).value).toBe("135400");
@@ -388,6 +421,7 @@ describe("<MortgageContainer />", () => {
       loaderData = loaded();
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       const { container, getAllByRole, getByRole } = customRender(<MortgageContainer />);
+      openZone();
       fireEvent.click(getByRole("button", { name: "Starting figures" }));
       const before = savedText(container);
       const sliders = container.querySelectorAll("input[type='range']");
@@ -408,6 +442,7 @@ describe("<MortgageContainer />", () => {
       loaderData = loaded();
       const setItem = vi.spyOn(Storage.prototype, "setItem");
       const { container, getByRole } = customRender(<MortgageContainer />);
+      openZone();
       fireEvent.click(getByRole("button", { name: "Starting figures" }));
       const slider = container.querySelector("input[type='range']") as HTMLInputElement;
       fireEvent.change(slider, { target: { value: "500000" } });
@@ -426,6 +461,7 @@ describe("<MortgageContainer />", () => {
     test("the rate change tool uses the fix date, and the zone has one Starting figures drawer", () => {
       loaderData = loaded({ fixedRateEndDate: "2099-10-01" });
       const { queryByText } = customRender(<MortgageContainer />);
+      openZone();
       selectTab("Rate change");
       // No loan to value bands in the tool.
       expect(screen.getAllByRole("button", { name: "Starting figures" })).toHaveLength(1);
@@ -443,6 +479,7 @@ describe("<MortgageContainer />", () => {
         userProfile: {},
       };
       const { container, getByRole, getByLabelText } = customRender(<MortgageContainer />);
+      openZone();
       fireEvent.click(getByRole("button", { name: "Starting figures" }));
       fireEvent.change(getByLabelText("Rate to try"), { target: { value: "3" } });
       selectTab("Rate change");
@@ -458,6 +495,7 @@ describe("<MortgageContainer />", () => {
     test("Edit in Your details opens the dialog with the saved values, not the scenario", () => {
       loaderData = loaded();
       const { container, getByRole } = customRender(<MortgageContainer />);
+      openZone();
       fireEvent.click(getByRole("button", { name: "Starting figures" }));
       const slider = container.querySelector("input[type='range']") as HTMLInputElement;
       fireEvent.change(slider, { target: { value: "500000" } });
@@ -514,6 +552,9 @@ describe("<MortgageContainer />", () => {
       expect(saved).not.toContain("Paid off by");
       expect(getByText("Your buy to let properties")).toBeDefined();
       expect(container.textContent).not.toMatch(/Section 24/);
+      // The what-if zone is closed, so its notice is not on the page yet.
+      expectPageRules(container, { projectionNotices: 0 });
+      openZone();
       expectPageRules(container, { projectionNotices: 1 });
     });
 
@@ -1030,6 +1071,7 @@ describe("<MortgageContainer />", () => {
       expect(strip).toContain("50%");
       expect(strip).toContain("£200,000");
       expect(strip).toContain("Whole loan, held jointly");
+      openZone();
       fireEvent.click(getByRole("button", { name: "Starting figures" }));
       // An overpayment pays the whole loan, so it is never applied to a share of it.
       expect((getByLabelText("Balance to try") as HTMLInputElement).value).toBe("200000");

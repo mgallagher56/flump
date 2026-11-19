@@ -21,6 +21,8 @@ test("a complete mortgage shows the saved monthly payment as the hero and a plai
   await expect(page.locator("#mortgage-saved")).toContainText("£186,000");
 
   await expect(page.getByRole("region", { name: "Model a change to your mortgage" })).toBeVisible();
+  // The zone starts closed; open it from its named button.
+  await page.getByRole("button", { name: "Show what-if: overpay or a new rate" }).click();
   await page.getByRole("tab", { name: "Overpay", exact: true }).click();
   // At £0 the tool shows one prompt and no figures.
   await expect(page.getByText("Move the slider to see what changes")).toBeVisible();

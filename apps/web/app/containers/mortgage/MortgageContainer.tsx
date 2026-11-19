@@ -133,6 +133,9 @@ const isScenarioTool = (value: string | null): value is ScenarioTool =>
 
 const SCENARIO_ZONE_ID = "mortgage-scenario";
 
+/** Years left and the rate in the closed zone summary: up to 2 decimals, en-GB. */
+const YEARS_AND_RATE = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+
 const scrollToId = (id: string) => {
   document.getElementById(id)?.scrollIntoView?.({ behavior: "smooth", block: "start" });
 };
@@ -295,9 +298,12 @@ const MortgageContainer: FC = () => {
   );
   const scenario = useScenarioState(savedFigures);
   const [scenarioTool, setScenarioTool] = useState<ScenarioTool>("overpayment");
+  // The zone starts closed below the saved figures (UX S11); a "Model this" link opens it.
+  const [scenarioOpen, setScenarioOpen] = useState(false);
 
   const openScenarioTool = (tool: ScenarioTool) => {
     setScenarioTool(tool);
+    setScenarioOpen(true);
     scrollToId(SCENARIO_ZONE_ID);
   };
 
@@ -545,6 +551,7 @@ const MortgageContainer: FC = () => {
     if (!isComplete || !isScenarioTool(toolParam) || handledToolParam.current === toolParam) return;
     handledToolParam.current = toolParam;
     setScenarioTool(toolParam);
+    setScenarioOpen(true);
     scrollToId(SCENARIO_ZONE_ID);
   }, [toolParam, isComplete]);
 
@@ -1126,10 +1133,19 @@ const MortgageContainer: FC = () => {
 
       <ScenarioZone
         announcement={scenarioAnnouncement}
+        collapsible
         id={SCENARIO_ZONE_ID}
         isModified={scenario.isModified}
         notice={<ProjectionNotice />}
+        open={scenarioOpen}
+        showLabel="Show what-if: overpay or a new rate"
+        summary={
+          scenarioAnnouncement
+            ? `Your illustration: ${scenarioAnnouncement}.`
+            : `Starts from your mortgage of ${formatCurrency(loanAmount)} at ${YEARS_AND_RATE.format(interestRate)}% with ${YEARS_AND_RATE.format(remainingTerm)} years left.`
+        }
         title="Model a change to your mortgage"
+        onOpenChange={setScenarioOpen}
         onReset={scenario.reset}
       >
         <Tabs
