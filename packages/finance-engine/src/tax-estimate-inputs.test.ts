@@ -46,6 +46,22 @@ describe("estimateInputsFor (one rule for every Self Assessment surface)", () =>
     expect(out).toEqual({ status: "unknown", missing: ["annualSalary"] });
   });
 
+  it("employment type not answered and no salary: unknown annualSalary, not worked from £0", () => {
+    // The person may be employed, so a missing salary is not read as no pay.
+    const out = estimateInputsFor({ employmentType: null, annualSalary: null }, [rent(12000)], Y);
+    expect(out).toEqual({ status: "unknown", missing: ["annualSalary"] });
+  });
+
+  it("employment type other (not working) and no salary: known, PAYE pay 0, share 100", () => {
+    // "other" has no employer, so no salary is the answer, not a gap.
+    const out = estimateInputsFor(
+      { employmentType: "other", annualSalary: null },
+      [rent(12000)],
+      Y,
+    );
+    expect(out).toMatchObject({ status: "known", payeSalary: 0, ownershipShare: 100 });
+  });
+
   it("the baseline spelling PAYE with salary 0 reads the same: unknown annualSalary", () => {
     const out = estimateInputsFor({ employmentType: "PAYE", annualSalary: 0 }, [rent(12000)], Y);
     expect(out).toEqual({ status: "unknown", missing: ["annualSalary"] });

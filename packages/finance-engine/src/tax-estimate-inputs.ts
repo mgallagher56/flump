@@ -48,8 +48,19 @@ export function isUntaxedIncomeRecord(record: TaxRecordFields): boolean {
   );
 }
 
-function isEmployedType(employmentType: string | null | undefined): boolean {
-  return employmentType === "employed" || employmentType === "PAYE";
+/**
+ * True when the salary decides the estimate: an employee, or someone who has not said how they
+ * are paid (an unanswered type could be either, so a missing salary is not read as none). "other"
+ * (not working, retired) with no salary has no PAYE pay, so it is not one.
+ */
+function salaryDecidesEstimate(employmentType: string | null | undefined): boolean {
+  return (
+    employmentType === "employed" ||
+    employmentType === "PAYE" ||
+    employmentType === null ||
+    employmentType === undefined ||
+    employmentType === ""
+  );
 }
 
 /**
@@ -60,8 +71,8 @@ function isEmployedType(employmentType: string | null | undefined): boolean {
  * the missing fact; no figure is worked out from a stand-in £0.
  *
  * - No income outside PAYE active in the year: unknown (`untaxedIncomeRecords`).
- * - An employee with no saved salary (or 0) and no logged PAYE salary record: unknown
- *   (`annualSalary`).
+ * - An employee, or someone whose employment type is not answered, with no saved salary (or 0)
+ *   and no logged PAYE salary record: unknown (`annualSalary`).
  * - A self-employed person with no self-employed income record in the year: unknown
  *   (`selfEmploymentRecords`), unless their saved salary is exactly 0.
  * - Otherwise known: the PAYE pay is payeSalaryForTax (never a self-employed person's salary).
@@ -82,7 +93,7 @@ export function estimateInputsFor<R extends TaxRecordFields>(
       ? Number(saved)
       : null;
   const loggedSalary = inYear.some((r) => r.source === "paye" && r.category === "paye_salary");
-  if (isEmployedType(facts.employmentType) && salary === null && !loggedSalary) {
+  if (salaryDecidesEstimate(facts.employmentType) && salary === null && !loggedSalary) {
     return { status: "unknown", missing: ["annualSalary"] };
   }
   const loggedTrading = inYear.some((r) => r.source === "self-employed" && r.type === "income");
