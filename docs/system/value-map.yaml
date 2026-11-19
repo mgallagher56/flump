@@ -2071,12 +2071,6 @@ figures:
           path: apps/web/app/features/onboarding/deriveOnboardingSummary.ts,
           note: "preview from typed values",
         }
-      - {
-          function: calculateNetWorth,
-          status: legacy,
-          path: packages/banking/src/client/index.ts,
-          note: "no caller found",
-        }
     inputs: [account-balance, ownership-share, net-worth-choices, home-value]
     shown_on:
       - { surface: dashboard, path: apps/web/app/routes/_index.tsx }

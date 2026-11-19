@@ -2,6 +2,7 @@ import {
   ACCOUNT_SUBTYPES,
   ACCOUNT_SUBTYPES_BY_TYPE,
   ACCOUNT_TYPES,
+  type AccountDetailsOption,
   CREDIT_FIELD_ACCOUNT_TYPES,
   MORTGAGE_REPAYMENT_TYPES,
   type MortgageRepaymentType,
@@ -532,25 +533,56 @@ export class AccountIntakeService implements IAccountIntake {
     }));
   }
 
-  /** One page of the user's accounts, each with its monthly history (BE-09, M-API1). */
-  async listAccounts(userId: string, page: PageRequest): Promise<Page<AccountWithDetails>> {
+  /**
+   * One page of the user's accounts (BE-09, M-API1), each with the monthly history `details` asks
+   * for (system audit slice 9, DB-12): `all` every month oldest first (the default), `latest` the
+   * newest recorded month only, `none` no history and no second query.
+   */
+  async listAccounts(
+    userId: string,
+    page: PageRequest,
+    details: AccountDetailsOption = "all",
+  ): Promise<Page<AccountWithDetails>> {
     const qb = this.accountRepository
       .createQueryBuilder("a")
       .where("a.userId = :userId", { userId });
     const { items, nextCursor } = await keysetPage(qb, ACCOUNT_ORDER, page);
-    const details =
-      items.length > 0
-        ? await this.accountDetailRepository.find({
-            where: { accountId: In(items.map((a) => a.id)) },
-            order: { year: "ASC", month: "ASC" },
-          })
-        : [];
+    const rows = await this.historyFor(
+      items.map((a) => a.id),
+      details,
+    );
     const byAccount = new Map<string, AccountDetail[]>();
-    for (const d of details) byAccount.set(d.accountId, [...(byAccount.get(d.accountId) ?? []), d]);
+    for (const d of rows) byAccount.set(d.accountId, [...(byAccount.get(d.accountId) ?? []), d]);
     return {
       items: items.map((a) => ({ ...toAccountResponse(a), details: byAccount.get(a.id) ?? [] })),
       nextCursor,
     };
+  }
+
+  /**
+   * The history rows of the listed accounts, which are already the caller's own (the same filter
+   * `all` has always used), oldest first. `latest` keeps one row per account, the newest by year
+   * and month (unique per account), chosen by the database.
+   */
+  private async historyFor(
+    accountIds: string[],
+    details: AccountDetailsOption,
+  ): Promise<AccountDetail[]> {
+    if (accountIds.length === 0 || details === "none") return [];
+    if (details === "all") {
+      return this.accountDetailRepository.find({
+        where: { accountId: In(accountIds) },
+        order: { year: "ASC", month: "ASC" },
+      });
+    }
+    return this.accountDetailRepository
+      .createQueryBuilder("d")
+      .distinctOn(["d.accountId"])
+      .where("d.accountId IN (:...accountIds)", { accountIds })
+      .orderBy("d.accountId", "ASC")
+      .addOrderBy("d.year", "DESC")
+      .addOrderBy("d.month", "DESC")
+      .getMany();
   }
 
   /**

@@ -1,10 +1,4 @@
-import { isAssetCategory, isLiabilityCategory } from "../core/sign-enforcement.js";
-import type {
-  ConsentStatus,
-  FlumpAccountCategory,
-  FlumpBudgetBucket,
-  NormalizedAccount,
-} from "../core/types.js";
+import type { ConsentStatus, FlumpAccountCategory, FlumpBudgetBucket } from "../core/types.js";
 
 export * from "../core/sign-enforcement.js";
 export * from "../core/types.js";
@@ -125,48 +119,4 @@ export function getBudgetBucketMetadata(bucket: FlumpBudgetBucket): {
         color: "#10b981", // Green
       };
   }
-}
-
-/**
- * Calculates aggregate Net Worth from normalized accounts.
- */
-export function calculateNetWorth(accounts: NormalizedAccount[]): {
-  totalNetWorthGbp: number;
-  totalAssetsGbp: number;
-  totalLiabilitiesGbp: number;
-  liquidCashGbp: number;
-  weightedAverageSavingsYieldApr: number;
-} {
-  let totalAssets = 0;
-  let totalLiabilities = 0;
-  let liquidCash = 0;
-  let weightedYieldSum = 0;
-  let yieldingCashSum = 0;
-
-  for (const acc of accounts) {
-    if (isAssetCategory(acc.category)) {
-      totalAssets += acc.netWorthImpactGbp;
-      if (acc.category === "CURRENT" || acc.category === "SAVINGS" || acc.category === "CASH_ISA") {
-        liquidCash += acc.netWorthImpactGbp;
-        if (acc.interestRateApr && acc.interestRateApr > 0) {
-          weightedYieldSum += acc.netWorthImpactGbp * acc.interestRateApr;
-          yieldingCashSum += acc.netWorthImpactGbp;
-        }
-      }
-    } else if (isLiabilityCategory(acc.category)) {
-      totalLiabilities += acc.principalOwedGbp;
-    }
-  }
-
-  const netWorth = totalAssets - totalLiabilities;
-  const weightedYield =
-    yieldingCashSum > 0 ? Math.round((weightedYieldSum / yieldingCashSum) * 100) / 100 : 0;
-
-  return {
-    totalNetWorthGbp: Math.round(netWorth * 100) / 100,
-    totalAssetsGbp: Math.round(totalAssets * 100) / 100,
-    totalLiabilitiesGbp: Math.round(totalLiabilities * 100) / 100,
-    liquidCashGbp: Math.round(liquidCash * 100) / 100,
-    weightedAverageSavingsYieldApr: weightedYield,
-  };
 }

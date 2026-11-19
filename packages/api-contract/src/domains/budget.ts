@@ -118,7 +118,7 @@ export const BudgetEntryDto = z.strictObject({
 });
 export type BudgetEntryDto = z.infer<typeof BudgetEntryDto>;
 
-/** `GET budget-entries` and `POST budget-entries/seed-defaults` (the full list after seeding). */
+/** `GET budget-entries`. */
 export const BudgetEntryListResponse = z.array(BudgetEntryDto);
 export type BudgetEntryListResponse = z.infer<typeof BudgetEntryListResponse>;
 

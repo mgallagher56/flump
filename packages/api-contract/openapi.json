@@ -300,6 +300,15 @@
               "pattern": "^[A-Za-z0-9_-]{1,512}$",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "details",
+            "required": false,
+            "schema": {
+              "enum": ["none", "latest", "all"],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4765,190 +4774,6 @@
               }
             },
             "description": "`constraint_violation`: the data breaks a stored rule and was not saved. `idempotency_key_reused`: the Idempotency-Key was used with a different body."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`rate_limited`: too many requests. See the Retry-After header."
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`internal_error`: an unexpected failure. Quote the requestId."
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "tags": ["budget"]
-      }
-    },
-    "/v1/budget-entries/seed-defaults": {
-      "post": {
-        "operationId": "budget.seedDefaults",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "amount": {
-                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                        "type": "number"
-                      },
-                      "category": {
-                        "type": "string"
-                      },
-                      "createdAt": {
-                        "type": "string"
-                      },
-                      "frequency": {
-                        "enum": ["monthly", "annual", "weekly"],
-                        "type": "string"
-                      },
-                      "id": {
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                        "type": "string"
-                      },
-                      "isDefault": {
-                        "type": "boolean"
-                      },
-                      "isEssential": {
-                        "type": "boolean"
-                      },
-                      "isIncome": {
-                        "type": "boolean"
-                      },
-                      "isPrimaryIncome": {
-                        "type": "boolean"
-                      },
-                      "linkAccountId": {
-                        "anyOf": [
-                          {
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "default": null
-                      },
-                      "linkKind": {
-                        "anyOf": [
-                          {
-                            "enum": ["take_home", "housing", "savings", "debt"],
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "default": null
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "notes": {
-                        "type": ["string", "null"]
-                      },
-                      "ownership": {
-                        "default": "sole",
-                        "enum": ["sole", "joint"],
-                        "type": "string"
-                      },
-                      "sharePercent": {
-                        "anyOf": [
-                          {
-                            "maximum": 100,
-                            "minimum": 1,
-                            "type": "integer"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "default": null
-                      },
-                      "updatedAt": {
-                        "type": "string"
-                      },
-                      "userId": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "userId",
-                      "category",
-                      "name",
-                      "amount",
-                      "frequency",
-                      "isIncome",
-                      "isPrimaryIncome",
-                      "isEssential",
-                      "notes",
-                      "isDefault",
-                      "ownership",
-                      "sharePercent",
-                      "linkKind",
-                      "linkAccountId",
-                      "createdAt",
-                      "updatedAt"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Success."
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`unauthorized`: missing or invalid credentials."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
           },
           "429": {
             "content": {

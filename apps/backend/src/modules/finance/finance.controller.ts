@@ -6,8 +6,9 @@ import type {
   TransactionListQuery,
   UpdateAccountRequest,
 } from "@flump/api-contract";
-import { MAX_TRANSACTION_OFFSET } from "@flump/api-contract";
+import { AccountDetailsOption, MAX_TRANSACTION_OFFSET } from "@flump/api-contract";
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -36,6 +37,29 @@ import { toPublicAccount } from "./account-intake.service";
 import { FinanceService } from "./finance.service";
 
 /**
+ * The `details` option of `GET /accounts` (system audit slice 9): `none`, `latest` or `all`, and
+ * `all` when it is left out. The contract interceptor has already checked it in enforce mode; it
+ * is checked again here so the rule holds in shadow or off mode, with the same 400.
+ */
+function resolveDetailsOption(query: unknown): AccountDetailsOption {
+  const raw = (query ?? {}) as Record<string, unknown>;
+  if (raw.details === undefined) return "all";
+  const parsed = AccountDetailsOption.safeParse(raw.details);
+  if (parsed.success) return parsed.data;
+  throw new BadRequestException({
+    code: "validation_failed",
+    message: "Request failed validation",
+    issues: [
+      {
+        path: "query.details",
+        code: "invalid_details",
+        message: "must be one of none, latest, all",
+      },
+    ],
+  });
+}
+
+/**
  * Bodies, params and query are typed from the contract (`z.infer` of the manifest schemas): the
  * contract interceptor replaces them with the parsed output before a handler runs (BE-09). Every
  * route names its success status, which must match the manifest (test/contract/http-status).
@@ -57,6 +81,7 @@ export class FinanceController {
     const page = await this.financeService.listAccounts(
       req.user.id,
       resolvePage(query, "accounts"),
+      resolveDetailsOption(query),
     );
     return sendPage(res, page, toPublicAccount);
   }

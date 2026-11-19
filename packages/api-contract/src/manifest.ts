@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  AccountListQuery,
   CreateAccountRequest,
   CreateMortgageWithPropertyRequest,
   UpdateAccountRequest,
@@ -189,7 +190,7 @@ export const routes = {
       group: "accounts",
       response: AccountListResponse,
       page: "accounts",
-      query: pageQuery("accounts"),
+      query: AccountListQuery,
     }),
     listDetails: defineRoute({
       id: "accounts.listDetails",
@@ -448,15 +449,6 @@ export const routes = {
       response: BudgetEntryListResponse,
       page: "budget",
       query: pageQuery("budget"),
-    }),
-    seedDefaults: defineRoute({
-      id: "budget.seedDefaults",
-      method: "POST",
-      path: "budget-entries/seed-defaults",
-      auth: "user",
-      ownership: "user",
-      group: "budget",
-      response: BudgetEntryListResponse,
     }),
     addCategory: defineRoute({
       id: "budget.addCategory",

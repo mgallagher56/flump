@@ -247,6 +247,56 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
   });
 
   describe("single-row reads", () => {
+    it("GET /accounts?details=: none, the newest month, or every month (default), own rows only", async () => {
+      // Two past months beside the row creating the account recorded (decision 8 option A).
+      for (const [year, month, value] of [
+        [2024, 6, 1100],
+        [2024, 1, 1000],
+      ] as const) {
+        await h.dataSource.query(
+          `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+           VALUES ($1, $2, $3, $4, $5, make_date($3, $4, 1), 'manual')`,
+          [accountId, USER_A, year, month, value],
+        );
+      }
+      const months = (body: Array<{ details: Array<{ year: number; month: number }> }>) =>
+        body.map((a) => a.details.map((d) => `${d.year}-${d.month}`));
+
+      const all = await h.call("get", "/accounts", h.tokens.a);
+      expect(all.status).toBe(200);
+      const every = months(all.body)[0] ?? [];
+      expect(every.slice(0, 2)).toEqual(["2024-1", "2024-6"]);
+      expect(every.length).toBeGreaterThanOrEqual(2);
+      const newest = every[every.length - 1];
+
+      const explicitAll = await h.call("get", "/accounts?details=all", h.tokens.a);
+      expect(explicitAll.body).toEqual(all.body);
+
+      const latest = await h.call("get", "/accounts?details=latest", h.tokens.a);
+      expect(latest.status).toBe(200);
+      expect(months(latest.body)).toEqual([[newest]]);
+      // The newest month is the same row in both answers, every field.
+      expect(latest.body[0].details[0]).toEqual(all.body[0].details[every.length - 1]);
+
+      const none = await h.call("get", "/accounts?details=none", h.tokens.a);
+      expect(none.status).toBe(200);
+      expect(months(none.body)).toEqual([[]]);
+      // Only the history changes: every other field is the same.
+      expect({ ...none.body[0], details: undefined }).toEqual({
+        ...all.body[0],
+        details: undefined,
+      });
+
+      const bad = await h.call("get", "/accounts?details=some", h.tokens.a);
+      expect(bad.status).toBe(400);
+
+      for (const details of ["none", "latest", "all"]) {
+        const b = await h.call("get", `/accounts?details=${details}`, h.tokens.b);
+        expect(b.status, details).toBe(200);
+        expect(b.body, details).toEqual([]);
+      }
+    });
+
     it("GET /accounts/:id: A 200, B 404 identical to not-found", async () => {
       const a = await h.call("get", `/accounts/${accountId}`, h.tokens.a);
       expect(a.status).toBe(200);

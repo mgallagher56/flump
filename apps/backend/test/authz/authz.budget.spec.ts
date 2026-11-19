@@ -87,11 +87,6 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
     }> = [
       { key: "GET /budget-entries", method: "get", path: () => "/budget-entries" },
       {
-        key: "POST /budget-entries/seed-defaults",
-        method: "post",
-        path: () => "/budget-entries/seed-defaults",
-      },
-      {
         key: "POST /budget-entries/categories",
         method: "post",
         path: () => "/budget-entries/categories",
@@ -186,18 +181,12 @@ describe.skipIf(dbMode === "skip")("authz: budget controller (real Postgres)", (
     ran("DELETE /budget-entries/:id");
   });
 
-  it("POST /budget-entries/seed-defaults: returns only the caller's own rows, adding none", async () => {
-    const own = await h.call("post", "/budget-entries/seed-defaults", h.tokens.b);
-    expect(own.status).toBeLessThan(300);
-    expect(Array.isArray(own.body)).toBe(true);
-    for (const row of own.body) {
-      expect(row.userId).toBe(USER_B);
-      expect(row.id).not.toBe(entryId);
-    }
+  it("POST /budget-entries/seed-defaults is gone (system audit slice 9): 404, and nothing changes", async () => {
+    const res = await h.call("post", "/budget-entries/seed-defaults", h.tokens.b);
+    expect(res.status).toBe(404);
     await expectEntryUntouched();
-    const a = await h.call("get", "/budget-entries", h.tokens.a);
-    expect(a.body.map((r: { id: string }) => r.id)).toEqual([entryId]);
-    ran("POST /budget-entries/seed-defaults");
+    const b = await h.call("get", "/budget-entries", h.tokens.b);
+    expect(b.body).toEqual([]);
   });
 
   it("POST /budget-entries/categories: custom categories are per user, probe body rejected", async () => {

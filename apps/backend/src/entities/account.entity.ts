@@ -19,6 +19,12 @@ import { numericTransformer } from "./numeric.transformer";
   `"type" NOT IN ('Mortgage', 'Credit Card', 'Loan', 'Overdraft', 'Student Loan') OR "balance" <= 0`,
 )
 @Check("CHK_accounts_ownership", `"ownership" IN ('sole', 'joint')`)
+// System audit slice 9 (AccountTypeCheck1795510100000): the eleven account types of the API
+// contract's ACCOUNT_TYPES. account.entity.spec.ts keeps this list equal to it.
+@Check(
+  "CHK_accounts_type",
+  `"type" IN ('Current', 'Saving', 'Mortgage', 'Loan', 'Credit Card', 'Owed', 'Investment', 'Pension', 'Property', 'Student Loan', 'Overdraft')`,
+)
 // System audit slice 4 (AddAccountLinkAndRepaymentType1795470000000).
 @Check(
   "CHK_accounts_repayment_type",

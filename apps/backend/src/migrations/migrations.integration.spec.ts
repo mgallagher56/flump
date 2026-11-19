@@ -7,7 +7,17 @@ import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
 import { at } from "../testing/must";
+import {
+  AccountDetailsOwnerKey1795510000000,
+  OWNER_KEY,
+} from "./AccountDetailsOwnerKey1795510000000";
 import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserMonthIndex1794357300000";
+import {
+  ACCOUNT_TYPE_CHECK,
+  ACCOUNT_TYPE_REFUSAL,
+  ACCOUNT_TYPES_AT_1795510100000,
+  AccountTypeCheck1795510100000,
+} from "./AccountTypeCheck1795510100000";
 import { AddAccountDeletionTombstones1794622492000 } from "./AddAccountDeletionTombstones1794622492000";
 import { AddAccountLinkAndRepaymentType1795470000000 } from "./AddAccountLinkAndRepaymentType1795470000000";
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
@@ -432,7 +442,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       });
       const withDetails = await insertAccount("u4", at(SEEDED_ACCOUNTS, 1));
       await ds.query(
-        "INSERT INTO account_details (account_id, user_id, month, year, value, as_of_date) VALUES ($1, 'u', 1, 2024, 5, '2024-01-31')",
+        "INSERT INTO account_details (account_id, user_id, month, year, value, as_of_date) VALUES ($1, 'u4', 1, 2024, 5, '2024-01-31')",
         [withDetails],
       );
       const withTransactions = await insertAccount("u5", at(SEEDED_ACCOUNTS, 2));
@@ -506,8 +516,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
           name: `Custom ${user}`,
         });
         await ds.query(
-          "INSERT INTO account_details (account_id, user_id, month, year, value, as_of_date) VALUES ($1, 'u', 1, 2024, 5, '2024-01-31')",
-          [account],
+          "INSERT INTO account_details (account_id, user_id, month, year, value, as_of_date) VALUES ($1, $2, 1, 2024, 5, '2024-01-31')",
+          [account, user],
         );
         await ds.query(
           `INSERT INTO transactions (account_id, user_id, amount, description, category) VALUES ($1, $2, 1, 'x', 'y')`,
@@ -3007,6 +3017,142 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         "SELECT 1 FROM information_schema.tables WHERE table_name = 'rent_share_backfill'",
       );
       expect(tables).toEqual([]);
+    });
+  });
+
+  describe("AccountDetailsOwnerKey1795510000000 (audit slice 9, DB-14)", () => {
+    const NAME = "AccountDetailsOwnerKey1795510000000";
+    const account = async (userId: string): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency) VALUES ($1, 'Account', 'Saving', 100, 'GBP') RETURNING id`,
+        [userId],
+      );
+      return at(rows, 0).id;
+    };
+    const history = (accountId: string, userId: string, month = 1) =>
+      ds.query(
+        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+         VALUES ($1, $2, 2026, $3, 100, make_date(2026, $3, 1), 'manual')`,
+        [accountId, userId, month],
+      );
+    const ownerKey = async (): Promise<Array<{ convalidated: boolean }>> =>
+      ds.query(
+        `SELECT convalidated FROM pg_constraint WHERE conname = '${OWNER_KEY}' AND conrelid = 'account_details'::regclass`,
+      );
+
+    it("refuses a history row naming another user, cascades a delete, and a second run changes nothing", async () => {
+      const logged = vi.spyOn(Logger.prototype, "log");
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      // Counts only, no id.
+      expect(logged).toHaveBeenCalledWith(
+        "History rows whose user differs from their account's: 0",
+      );
+      logged.mockRestore();
+      expect(await ownerKey()).toEqual([{ convalidated: true }]);
+      const mine = await account("u1");
+      await history(mine, "u1");
+      await expect(history(mine, "u2", 2)).rejects.toThrow(/foreign key/i);
+      await runUpInTransaction(new AccountDetailsOwnerKey1795510000000());
+      expect(await ownerKey()).toEqual([{ convalidated: true }]);
+      await ds.query("DELETE FROM accounts WHERE id = $1", [mine]);
+      expect(await ds.query("SELECT 1 FROM account_details")).toEqual([]);
+    });
+
+    it("with a mismatched row already stored, changes no row and checks new and changed rows only", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      const mine = await account("u1");
+      await history(mine, "u2");
+      const logged = vi.spyOn(Logger.prototype, "log");
+      const warned = vi.spyOn(Logger.prototype, "warn");
+      await ds.runMigrations();
+      expect(logged).toHaveBeenCalledWith(
+        "History rows whose user differs from their account's: 1",
+      );
+      expect(warned).toHaveBeenCalledWith(
+        `${OWNER_KEY} left NOT VALID: new and changed rows are checked, existing rows are unchanged`,
+      );
+      logged.mockRestore();
+      warned.mockRestore();
+      expect(await applied()).toContain(NAME);
+      expect(await ownerKey()).toEqual([{ convalidated: false }]);
+      // The stored row is untouched, and a change to its value alone still saves.
+      await ds.query("UPDATE account_details SET value = 150 WHERE account_id = $1", [mine]);
+      expect(await ds.query("SELECT user_id, value::text AS value FROM account_details")).toEqual([
+        { user_id: "u2", value: "150.00" },
+      ]);
+      // A new row, or moving a row to another user, is refused.
+      await expect(history(mine, "u3", 2)).rejects.toThrow(/foreign key/i);
+      await expect(
+        ds.query("UPDATE account_details SET user_id = 'u3' WHERE account_id = $1", [mine]),
+      ).rejects.toThrow(/foreign key/i);
+    });
+
+    it("down removes the key and nothing else", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      expect(await ownerKey()).toEqual([]);
+      const index: unknown[] = await ds.query(
+        "SELECT 1 FROM pg_indexes WHERE indexname = 'UQ_accounts_id_user_id'",
+      );
+      expect(index).toHaveLength(1);
+      const mine = await account("u1");
+      await history(mine, "u2");
+    });
+  });
+
+  describe("AccountTypeCheck1795510100000 (audit slice 9, DB-6)", () => {
+    const NAME = "AccountTypeCheck1795510100000";
+    const account = async (type: string): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency) VALUES ('u1', 'Account', $1, 0, 'GBP') RETURNING id`,
+        [type],
+      );
+      return at(rows, 0).id;
+    };
+    const check = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT 1 FROM pg_constraint WHERE conname = '${ACCOUNT_TYPE_CHECK}' AND conrelid = 'accounts'::regclass`,
+      );
+
+    it("accepts each of the eleven types, refuses any other spelling, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      expect(await check()).toHaveLength(1);
+      for (const type of ACCOUNT_TYPES_AT_1795510100000) await account(type);
+      for (const type of ["savings", "Savings", "ISA", " Current", ""]) {
+        await expect(account(type), type).rejects.toThrow(/check constraint/i);
+      }
+      await runUpInTransaction(new AccountTypeCheck1795510100000());
+      expect(await check()).toHaveLength(1);
+      const count: Array<{ n: string }> = await ds.query(
+        "SELECT count(*)::text AS n FROM accounts",
+      );
+      expect(count[0]?.n).toBe("11");
+    });
+
+    it("stops with the count and changes nothing when a stored type is outside the eleven", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      const odd = await account("savings");
+      const logged = vi.spyOn(Logger.prototype, "log");
+      await expect(runUpInTransaction(new AccountTypeCheck1795510100000())).rejects.toThrow(
+        `${ACCOUNT_TYPE_REFUSAL}: 1. Nothing was changed.`,
+      );
+      expect(logged).toHaveBeenCalledWith("Accounts with a type outside the eleven: 1");
+      logged.mockRestore();
+      expect(await check()).toEqual([]);
+      expect(await ds.query("SELECT type FROM accounts WHERE id = $1", [odd])).toEqual([
+        { type: "savings" },
+      ]);
+    });
+
+    it("down removes the check", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      expect(await check()).toEqual([]);
+      await account("savings");
     });
   });
 });

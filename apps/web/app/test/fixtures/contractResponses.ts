@@ -278,9 +278,7 @@ export function contractBody(method: string, path: string): unknown {
   if (p === "/user-profile/reset-financial-data") {
     return { success: true, message: "Financial data reset", profile: profileFixture };
   }
-  if (p === "/budget-entries" || p === "/budget-entries/seed-defaults") {
-    return m === "GET" || p.endsWith("seed-defaults") ? [budgetEntryFixture] : budgetEntryFixture;
-  }
+  if (p === "/budget-entries") return m === "GET" ? [budgetEntryFixture] : budgetEntryFixture;
   if (/^\/budget-entries\/categories$/.test(p)) return { success: true, categories: ["living"] };
   if (/^\/budget-entries\/[^/]+$/.test(p)) return budgetEntryFixture;
   if (p === "/tax-records" || p === "/tax-records/bulk") {

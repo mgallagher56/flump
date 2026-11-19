@@ -37,27 +37,16 @@ describe("BudgetController", () => {
     expect(budgetRepo.rows).toEqual([]);
   });
 
-  it("seedDefaultBudgetEntries adds no empty suggestion rows (owner item 33a)", async () => {
-    const budgetRepo = createInMemoryRepository();
-    const controller = budgetController(budgetRepo, createInMemoryRepository());
-
-    const result = await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
-
-    expect(result).toEqual([]);
-    expect(budgetRepo.rows).toEqual([]);
-    expect(budgetRepo.save).not.toHaveBeenCalled();
-  });
-
-  it("seedDefaultBudgetEntries returns the user's own entries unchanged", async () => {
-    const budgetRepo = createInMemoryRepository([
-      { id: "u1", userId: "user-123", name: "Gym", isDefault: false, amount: 99 },
-    ]);
-    const controller = budgetController(budgetRepo, createInMemoryRepository());
-
-    const result = await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
-
-    expect(result.map((r) => r.name)).toEqual(["Gym"]);
-    expect(budgetRepo.rows).toHaveLength(1);
+  it("serves no POST budget-entries/seed-defaults (system audit slice 9, DB-15: no caller)", () => {
+    // RequestMethod: GET 0, POST 1, PUT 2, DELETE 3, PATCH 4.
+    const proto = BudgetController.prototype as unknown as Record<string, object>;
+    const routes = Object.getOwnPropertyNames(proto)
+      .map((name) => proto[name])
+      .filter((fn): fn is object => typeof fn === "function" && Reflect.hasMetadata("path", fn))
+      .map((fn) => `${Reflect.getMetadata("method", fn)} ${Reflect.getMetadata("path", fn)}`);
+    expect(routes).toContain("1 budget-entries/categories");
+    expect(routes).not.toContain("1 budget-entries/seed-defaults");
+    expect("seedDefaults" in BudgetService.prototype).toBe(false);
   });
 
   it("should add custom category to user profile and validate input", async () => {

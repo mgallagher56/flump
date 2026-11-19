@@ -619,7 +619,6 @@ Other code paths that compute it:
 
 - `PortfolioSnapshot.getTotalNetWorth called directly` [wrapper] in `packages/mcp/src/tools/read/getFinancialSnapshot.ts` (past month only (asOfMonth), over the recorded month-end values; today's figure reads the shared picture)
 - `deriveOnboardingSummary` [duplicate] in `apps/web/app/features/onboarding/deriveOnboardingSummary.ts` (preview from typed values)
-- `calculateNetWorth` [legacy] in `packages/banking/src/client/index.ts` (no caller found)
 
 Shown on:
 
