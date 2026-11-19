@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SampleModeProvider } from "~/context/SampleModeContext";
 import type { DebtSummary } from "~/utils/debtSummary";
 import { HomeDashboard, type HomeDashboardProps, selectSectionCards } from "./HomeDashboard";
-import { dashboardHeader, showHideButton } from "./HomeDashboard.styles";
+import { showHideButton } from "./HomeDashboard.styles";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -14,6 +14,8 @@ const mockUpdateProfile = vi.hoisted(() => vi.fn());
 const mockMarkChecklistStep = vi.hoisted(() => vi.fn().mockResolvedValue({}));
 const ALL_ENABLED = ["accounts", "budget", "savings", "pension", "mortgage", "tax", "debt"];
 const mockEnabledPages = vi.hoisted(() => ({ current: null as string[] | null }));
+/** The saved section order; empty means the default order. */
+const mockSavedOrder = vi.hoisted(() => ({ current: [] as string[] }));
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
   const actual: any = await importOriginal();
@@ -30,6 +32,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
         "mortgage",
         "tax",
       ]);
+      const [order, setOrder] = useState<string[]>(mockSavedOrder.current);
       return {
         profile: {
           id: "1",
@@ -38,13 +41,17 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
           currency: "GBP",
           enabledPages: mockEnabledPages.current ?? ALL_ENABLED,
           dashboardWidgets: widgets,
-          dashboardWidgetOrder: ["tax", "accounts"],
+          dashboardWidgetOrder: order,
           dashboardWidgetSizes: { accounts: "wide" },
           dashboardWidgetConfig: {},
         },
-        updateProfile: async (updates: { dashboardWidgets?: string[] }) => {
+        updateProfile: async (updates: {
+          dashboardWidgets?: string[];
+          dashboardWidgetOrder?: string[];
+        }) => {
           await mockUpdateProfile(updates);
           if (updates.dashboardWidgets) setWidgets(updates.dashboardWidgets);
+          if (updates.dashboardWidgetOrder) setOrder(updates.dashboardWidgetOrder);
         },
         markChecklistStep: mockMarkChecklistStep,
       };
@@ -266,7 +273,7 @@ describe("HomeDashboard", () => {
     expect(screen.getByText("What you owe")).toBeTruthy();
   });
 
-  it("shows all enabled sections the user has figures for in priority order", () => {
+  it("shows all enabled sections the user has figures for in the default order", () => {
     renderDashboard(withDebt);
     expect(screen.getByTestId("widget-card-debt")).toBeTruthy();
     expect(screen.getByTestId("widget-card-mortgage")).toBeTruthy();
@@ -315,13 +322,15 @@ describe("HomeDashboard", () => {
     expect(screen.queryByText("Add your budget to see what is left over each month")).toBeNull();
   });
 
-  it("keeps the h1 and the icon-only sections button on one row below md", () => {
+  it("puts the sections button in the Your sections heading row, icon only below md", () => {
     renderDashboard(noDebt);
     const button = screen.getByRole("button", { name: "Choose what shows here" });
+    const sectionHeader = document.getElementById("dashboard-sections-header");
+    expect(sectionHeader?.contains(button)).toBe(true);
+    expect(screen.getByRole("heading", { level: 1 }).closest("header")?.contains(button)).toBe(
+      false,
+    );
     for (const cls of showHideButton().split(" ")) expect(button.classList).toContain(cls);
-    const header = screen.getByRole("heading", { level: 1 }).closest("header");
-    for (const cls of dashboardHeader().split(" ")) expect(header?.classList).toContain(cls);
-    expect(dashboardHeader()).toMatch(/mdDown:flex-wrap_nowrap/);
     expect(showHideButton()).toMatch(/mdDown:w_touch/);
   });
 
@@ -493,6 +502,109 @@ describe("HomeDashboard", () => {
     const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
     for (const box of within(dialog).getAllByRole("checkbox")) fireEvent.click(box);
     await waitFor(() => expect(screen.getByText(/Every section is hidden/)).toBeTruthy());
+  });
+
+  it("draws the cards in the saved order, with sections it does not name after them", () => {
+    mockSavedOrder.current = ["tax", "accounts"];
+    try {
+      renderDashboard(withDebt);
+      const drawn = Array.from(document.querySelectorAll("[data-section-card]")).map((card) =>
+        card.getAttribute("data-section-card"),
+      );
+      expect(drawn).toEqual([
+        "tax",
+        "accounts",
+        "debt",
+        "mortgage",
+        "savings",
+        "pension",
+        "budget",
+      ]);
+    } finally {
+      mockSavedOrder.current = [];
+    }
+  });
+
+  it("moves a section from the chooser and writes only dashboardWidgetOrder", async () => {
+    renderDashboard(withDebt);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Move Budget up" }));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
+    const payload = mockUpdateProfile.mock.calls[0]?.[0];
+    expect(Object.keys(payload)).toEqual(["dashboardWidgetOrder"]);
+    // Default: debt, mortgage, savings, pension, tax, budget, accounts. Budget swaps with tax.
+    expect(payload.dashboardWidgetOrder).toEqual([
+      "debt",
+      "mortgage",
+      "savings",
+      "pension",
+      "budget",
+      "tax",
+      "accounts",
+    ]);
+    const drawn = Array.from(document.querySelectorAll("[data-section-card]")).map((card) =>
+      card.getAttribute("data-section-card"),
+    );
+    expect(drawn.indexOf("budget")).toBeLessThan(drawn.indexOf("tax"));
+  });
+
+  it("keeps a hidden section's place in the order", async () => {
+    renderDashboard(withDebt);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: /^Cards and loans/ }));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Move Mortgage up" }));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(2));
+    const order = mockUpdateProfile.mock.calls[1]?.[0].dashboardWidgetOrder;
+    expect(order.slice(0, 2)).toEqual(["mortgage", "debt"]);
+  });
+
+  it("puts the default order back and saves it", async () => {
+    mockSavedOrder.current = ["accounts"];
+    try {
+      renderDashboard(withDebt);
+      fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+      const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+      fireEvent.click(within(dialog).getByRole("button", { name: "Reset to default order" }));
+      await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
+      expect(mockUpdateProfile.mock.calls[0]?.[0]).toEqual({ dashboardWidgetOrder: [] });
+      await waitFor(() =>
+        expect(
+          document.querySelector("[data-section-card]")?.getAttribute("data-section-card"),
+        ).toBe("debt"),
+      );
+    } finally {
+      mockSavedOrder.current = [];
+    }
+  });
+
+  it("puts the order back and says the dashboard is unchanged when saving the order fails", async () => {
+    mockUpdateProfile.mockRejectedValueOnce(new Error("offline"));
+    renderDashboard(withDebt);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Move Mortgage up" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(
+      /We could not save that change\. Your dashboard is unchanged\. Try again\./,
+    );
+    expect(document.querySelector("[data-section-card]")?.getAttribute("data-section-card")).toBe(
+      "debt",
+    );
+  });
+
+  it("keeps the order in this session only in the sandbox", async () => {
+    renderDashboard(withDebt, true);
+    fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+    const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Move Mortgage up" }));
+    await waitFor(() =>
+      expect(document.querySelector("[data-section-card]")?.getAttribute("data-section-card")).toBe(
+        "mortgage",
+      ),
+    );
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
   });
 
   it("shows the stale-rates banner when the calendar is past the latest supported tax year", () => {
