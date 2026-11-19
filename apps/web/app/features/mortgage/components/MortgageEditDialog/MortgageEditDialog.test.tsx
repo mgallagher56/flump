@@ -82,6 +82,9 @@ describe("<MortgageEditDialog />", () => {
     customRender(<MortgageEditDialog {...props} />);
     expect(screen.queryByLabelText(/^Remaining balance/)).toBeNull();
     expect(screen.queryByLabelText(/^Years left/)).toBeNull();
+    // The repayment type is stored on the account only (system audit leftovers, item 3), so with
+    // no account there is nowhere to save it and it is not offered.
+    expect(screen.queryByRole("radio", { name: /Interest-only/ })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Add mortgage account" }));
     expect(props.onAddAccount).toHaveBeenCalled();
   });

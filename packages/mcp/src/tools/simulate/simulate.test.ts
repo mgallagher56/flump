@@ -373,6 +373,9 @@ describe("simulate tools v2", () => {
       const assumed = e.assumptions.filter((a) => a.field.endsWith(".revertAprPct"));
       expect(assumed).toHaveLength(1);
       expect(assumed[0]).toMatchObject({ source: "default", value: 24.9 });
+      // Named by the short id the other tools use, never the stored account id.
+      expect(assumed[0]?.field).toMatch(/^debts\.acc_[^.]+\.revertAprPct$/);
+      expect(JSON.stringify(assumed[0])).not.toContain("cc_promo");
       expect(e.result.notes.join(" ")).toContain("0% deal");
     });
 

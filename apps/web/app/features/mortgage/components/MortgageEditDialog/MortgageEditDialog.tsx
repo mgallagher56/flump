@@ -359,12 +359,16 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
           />
         ) : null}
 
-        <RadioCardGroup
-          legend="Repayment type"
-          options={TYPE_OPTIONS}
-          value={editMortgageType}
-          onValueChange={(value) => onEditMortgageTypeChange(value as MortgageKind)}
-        />
+        {/* Stored on the mortgage account only (system audit leftovers, item 3): with no account
+            there is nowhere to save it, so it is not offered. */}
+        {canSaveFigures ? (
+          <RadioCardGroup
+            legend="Repayment type"
+            options={TYPE_OPTIONS}
+            value={editMortgageType}
+            onValueChange={(value) => onEditMortgageTypeChange(value as MortgageKind)}
+          />
+        ) : null}
 
         {/* The estimate shows only while no payment is entered: an entered payment is the fact. */}
         {canSaveFigures && canSaveTerm && !hasEnteredPayment ? (

@@ -61,6 +61,8 @@ const ACCOUNT_COLUMNS = {
   isCurrent: true,
   ownership: true,
   sharePercent: true,
+  repaymentType: true,
+  promoZeroPercentUntil: true,
   createdAt: true,
 } as const satisfies FindOptionsSelect<Account>;
 
@@ -169,6 +171,10 @@ export class AgentDataService implements McpUserDataProvider {
       // E34: a joint account counts at the user's share in every MCP figure.
       ownership: a.ownership,
       sharePercent: a.sharePercent,
+      // How a mortgage is repaid (housing cost) and when a 0% deal ends (debt payoff), as the
+      // web reads them (system audit leftovers, items 3 and 6).
+      repaymentType: a.repaymentType ?? null,
+      promoZeroPercentUntil: a.promoZeroPercentUntil ?? null,
     }));
   }
 

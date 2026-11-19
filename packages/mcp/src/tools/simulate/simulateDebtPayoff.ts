@@ -274,10 +274,14 @@ export const simulateDebtPayoff = defineFlumpTool({
     const primary = runs[0] as (typeof runs)[number];
 
     // A 0% deal that ends inside any modelled schedule with no rate saved for after it is
-    // charged the engine's assumed rate from its end date. Listed once per debt.
+    // charged the engine's assumed rate from its end date. Listed once per debt, by the short id
+    // the other tools use: the engine's debt id is the stored account id, which never leaves.
     const assumedIds = new Set(
       [...runs.map((x) => x.r), minimumRun].flatMap((r) =>
-        r.promoRevertAssumed.map((p) => p.debtId),
+        r.promoRevertAssumed.flatMap((p) => {
+          const id = idByUuid.get(p.debtId);
+          return id === undefined ? [] : [id];
+        }),
       ),
     );
     for (const name of assumedIds) {
