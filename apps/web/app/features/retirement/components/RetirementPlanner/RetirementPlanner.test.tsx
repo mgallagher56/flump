@@ -466,4 +466,57 @@ describe("RetirementPlanner", () => {
       /Change from your saved plan: \+~£[\d,]+ a year\./,
     );
   });
+
+  // Audit slice 5: the planner lists the lines the plan counts. A debt line linked to a loan shows
+  // the loan's payment at the person's share (£360 joint at 50% = £180), never its stored £0, and
+  // a linked line whose account is gone is not listed.
+  it("lists a linked debt line at the loan's payment and leaves out one that is Not set", async () => {
+    const user = userEvent.setup();
+    renderPlanner({
+      planArgs: {
+        ...planArgs,
+        accounts: [
+          ...planArgs.accounts,
+          {
+            id: "car",
+            name: "Car loan",
+            type: "Loan",
+            balance: -6000,
+            monthlyContribution: 360,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+        ],
+        budgetEntries: [
+          ...(planArgs.budgetEntries ?? []),
+          {
+            id: "44444444-4444-4444-8444-444444444444",
+            category: "debt",
+            name: "Car loan payment",
+            amount: 0,
+            frequency: "monthly",
+            isIncome: false,
+            isEssential: true,
+            linkKind: "debt",
+            linkAccountId: "car",
+          },
+          {
+            id: "55555555-5555-4555-8555-555555555555",
+            category: "debt",
+            name: "Old card",
+            amount: 0,
+            frequency: "monthly",
+            isIncome: false,
+            isEssential: true,
+            linkKind: "debt",
+            linkAccountId: null,
+          },
+        ],
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "From budget lines" }));
+    expect(screen.getByText("Car loan payment")).toBeDefined();
+    expect(screen.getByText("£180 / monthly")).toBeDefined();
+    expect(screen.queryByText("Old card")).toBeNull();
+  });
 });

@@ -13,12 +13,12 @@ import {
   DEFAULT_RETIREMENT_INFLATION_RATE,
   doesAccountCountTowardsRetirement,
   getUkTaxYearRules,
-  isHousingBudgetLine,
   type RetirementGrowthCase,
   type RetirementInputBuildResult,
   type RetirementInputOverrides,
   type RetirementPlanResult,
   resolveUkTaxYear,
+  retirementBudgetLines,
   selectRetirementCountedSeries,
   toSnapshotRows,
   UK_QUALIFYING_EARNINGS_LOWER,
@@ -445,15 +445,11 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
   );
   const [formError, setFormError] = useState<string | null>(null);
 
+  // The same lines the plan counts (`retirementBudgetLines`): a debt line linked to a loan shows
+  // the loan's payment, never its stored £0, and a linked line that is Not set is not listed.
   const nonHousingBudgetLines = useMemo(
-    () =>
-      budgetEntries.filter(
-        (entry) =>
-          !entry.isIncome &&
-          !isHousingBudgetLine({ category: entry.category }) &&
-          entry.category.trim().toLowerCase() !== "savings",
-      ),
-    [budgetEntries],
+    () => retirementBudgetLines(budgetEntries, planArgs.accounts),
+    [budgetEntries, planArgs.accounts],
   );
 
   const countedSeries = useMemo(() => {
