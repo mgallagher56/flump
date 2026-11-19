@@ -137,7 +137,8 @@ export class TokenVerifier {
       if (Number.isNaN(expiresAtMs)) {
         throw new AuthenticationError("This AI connection token has no expiry. Create a new one.");
       }
-      if (expiresAtMs < Date.now()) {
+      // Valid only while now is before the expiry (as for a JWT exp), so refused at the instant itself.
+      if (expiresAtMs <= Date.now()) {
         throw new AuthenticationError("This AI connection token has expired.");
       }
 

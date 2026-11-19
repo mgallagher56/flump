@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AuthenticationError,
   hashPatToken,
@@ -223,5 +223,29 @@ describe("TokenVerifier details", () => {
       new TokenVerifier({ tokenStore: storeWith({}) }).recordRequest("tok_1", 1),
     ).resolves.toBeUndefined();
     await expect(new TokenVerifier().recordRequest("tok_1", 1)).resolves.toBeUndefined();
+  });
+});
+
+describe("TokenVerifier at the expiry instant", () => {
+  // A token is valid only while the time is before its expiry (as for a JWT's `exp`, RFC 7519
+  // section 4.1.4): refused at the exact millisecond of expiry, accepted one millisecond before.
+  const expiry = new Date("2026-11-19T12:00:00.000Z");
+  const verify = () =>
+    new TokenVerifier({ tokenStore: storeWith({ expiresAt: expiry }) }).verifyAuthorizationHeader(
+      `Bearer ${PAT}`,
+    );
+
+  afterEach(() => vi.useRealTimers());
+
+  it("refuses a token at its exact expiry instant", async () => {
+    vi.useFakeTimers({ now: expiry.getTime() });
+    const err = await verify().catch((e) => e);
+    expect(err).toBeInstanceOf(AuthenticationError);
+    expect(err.message).toMatch(/expired/);
+  });
+
+  it("accepts a token one millisecond before it expires", async () => {
+    vi.useFakeTimers({ now: expiry.getTime() - 1 });
+    await expect(verify()).resolves.toMatchObject({ userId: "user_abc", tokenId: "tok_1" });
   });
 });
