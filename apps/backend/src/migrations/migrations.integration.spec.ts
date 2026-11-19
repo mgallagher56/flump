@@ -3658,7 +3658,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       at(await ds.query("SELECT ownership, share_percent FROM accounts WHERE id = $1", [id]), 0);
     const beforeImage = async (): Promise<unknown[]> =>
       ds.query(
-        `SELECT account_id, user_id, old_ownership, old_share_percent FROM "${RENTAL_SHARE_BACKFILL_TABLE}" ORDER BY account_id`,
+        `SELECT account_id, old_ownership, old_share_percent, new_share_percent FROM "${RENTAL_SHARE_BACKFILL_TABLE}" ORDER BY account_id`,
       );
 
     it("gives a sole rental the profile's share, leaves the rest, and a second run changes nothing", async () => {
@@ -3699,15 +3699,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         expect.arrayContaining([
           {
             account_id: soleRental,
-            user_id: "half",
             old_ownership: "sole",
             old_share_percent: null,
+            new_share_percent: 50,
           },
           {
             account_id: roundedRental,
-            user_id: "thirds",
             old_ownership: "sole",
             old_share_percent: null,
+            new_share_percent: 33,
           },
         ]),
       );
@@ -3733,6 +3733,21 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         `SELECT 1 FROM information_schema.tables WHERE table_name = '${RENTAL_SHARE_BACKFILL_TABLE}'`,
       );
       expect(tables).toEqual([]);
+    });
+
+    it("keeps a share the person set after the migration when it is reverted", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await profile("half", 50);
+      await profile("other", 50);
+      const changedSince = await property("half", "rental", "sole", null);
+      const untouched = await property("other", "rental", "sole", null);
+      await ds.runMigrations();
+      // The person sets their own share on one account after the migration.
+      await ds.query("UPDATE accounts SET share_percent = 40 WHERE id = $1", [changedSince]);
+      await undoThrough(NAME);
+      expect(await share(changedSince)).toEqual({ ownership: "joint", share_percent: 40 });
+      expect(await share(untouched)).toEqual({ ownership: "sole", share_percent: null });
     });
 
     it("drops the before-image row with its account", async () => {
