@@ -80,6 +80,8 @@ const STANDARD_CATEGORIES: string[] = ["housing", "bills", "expenses", "savings"
  * Leaves out the keys the backend accepts and ignores on budget-entry writes (`isPrimaryIncome`
  * and `isDefault` are server-owned, `contractEndDate` has no column), so they are never sent.
  */
+const LINKED_TAKE_HOME_ENTRY = { link: "take_home", kind: null } as const;
+
 function writableEntryFields<T extends Partial<BudgetEntry>>(entry: T) {
   const {
     isPrimaryIncome: _primary,
@@ -255,7 +257,7 @@ const BudgetContainer: FC = () => {
 
   // "Add your take-home pay of £X" (or rent): a new entry linked to the saved figure, beside the
   // person's own entries. Its stored amount is £0 and never read.
-  const addLinkedEntry = (offer: BudgetLinkOffer) =>
+  const addLinkedEntry = (offer: Pick<BudgetLinkOffer, "link" | "kind">) =>
     addEntry({
       category: offer.link === "take_home" ? INCOME_CATEGORY : BUDGET_HOUSING_CATEGORY,
       name: offer.link === "take_home" ? "Take-home pay" : HOUSING_ROW_NAME[offer.kind ?? "rent"],
@@ -311,6 +313,10 @@ const BudgetContainer: FC = () => {
   }, [setupParam, setSearchParams]);
 
   const [actionError, setActionError] = useState<string | null>(null);
+  // The saved entries as of the last write, so adds made one after another (before a re-render)
+  // see each other.
+  const savedEntriesRef = useRef(entries);
+  savedEntriesRef.current = entries;
 
   const addEntry = async (
     entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">,
@@ -322,11 +328,40 @@ const BudgetContainer: FC = () => {
         schema: BudgetEntryResponse,
       });
       setActionError(null);
+      savedEntriesRef.current = [...savedEntriesRef.current, created];
       setEntries((prev) => [...prev, created]);
     } catch (err) {
       setActionError("We could not add that entry. Nothing has changed. Try again.");
       throw err;
     }
+  };
+
+  // An entry the person adds themselves (editor add row, wizard). A take-home or housing line the
+  // engine added on its own counts only while the budget has no row of that kind, so adding one
+  // ("Child benefit") would drop the figure they were looking at. Before that first row of the
+  // kind is added, the line is saved as a stored row linked to the saved figure (amount £0, the
+  // link checks apply), so it stays in the budget and the link rule holds from then on.
+  const addOwnEntry = async (
+    entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">,
+  ) => {
+    const current = savedEntriesRef.current;
+    if (!entry.linkKind && current.length > 0) {
+      const isHousing = !entry.isIncome && entry.category === BUDGET_HOUSING_CATEGORY;
+      if (
+        entry.isIncome &&
+        picture.takeHome.status === "known" &&
+        !current.some((e) => e.isIncome)
+      ) {
+        await addLinkedEntry(LINKED_TAKE_HOME_ENTRY);
+      } else if (
+        isHousing &&
+        picture.housingPayment &&
+        !current.some((e) => !e.isIncome && e.category === BUDGET_HOUSING_CATEGORY)
+      ) {
+        await addLinkedEntry({ link: "housing", kind: picture.housingPayment.kind });
+      }
+    }
+    await addEntry(entry);
   };
 
   const updateEntry = async (id: string, update: Partial<BudgetEntry>) => {
@@ -649,7 +684,7 @@ const BudgetContainer: FC = () => {
             picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
           }
           housingPayment={picture.housingPayment}
-          onAddEntry={addEntry}
+          onAddEntry={addOwnEntry}
           onDeleteEntry={async (id) => {
             await deleteEntry(id);
           }}
@@ -667,7 +702,7 @@ const BudgetContainer: FC = () => {
               <BudgetEditor
                 categories={allCategories}
                 entries={entries}
-                onAdd={addEntry}
+                onAdd={addOwnEntry}
                 onAddCategory={() => setIsAddCategoryOpen(true)}
                 onDelete={deleteEntry}
                 onDeleteCategory={handleDeleteCategory}
