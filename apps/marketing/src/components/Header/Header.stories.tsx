@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, within } from "@storybook/test";
+import { expect, waitFor, within } from "@storybook/test";
 import { Header } from "./Header";
 
 const meta: Meta<typeof Header> = {
@@ -36,3 +36,41 @@ export const Tablet: Story = {
 };
 
 export const TabletDark: Story = { ...Tablet, globals: { theme: "dark" } };
+
+/**
+ * 200% text on a phone (the root font size doubled, as browser text zoom and the phone sweep do):
+ * the bar keeps only the logo, the theme button and the menu button, all on screen; Sign in and
+ * the invite stay in the menu (phone sweep 4). On a wide screen the bar is not cramped.
+ */
+const largeTextPlay: Story["play"] = async ({ canvasElement }) => {
+  const root = document.documentElement;
+  const before = root.style.fontSize;
+  root.style.fontSize = "200%";
+  try {
+    const canvas = within(canvasElement);
+    const header = canvasElement.querySelector("header") as HTMLElement;
+    // The sign-in and sign-up group (its label depends on the site's sign-up mode).
+    const auth = header.querySelector("[class*='container_top-bar']") as HTMLElement;
+    await expect(auth).toBeInTheDocument();
+    const cramped = header.clientWidth / Number.parseFloat(getComputedStyle(root).fontSize) <= 17;
+    if (cramped) {
+      await waitFor(() => expect(getComputedStyle(auth).display).toBe("none"));
+      const menu = canvas.getByRole("button", { name: /open navigation menu/i });
+      await expect(menu.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
+    }
+    for (const el of header.querySelectorAll("*")) {
+      const box = el.getBoundingClientRect();
+      if (box.width > 0) await expect(box.right).toBeLessThanOrEqual(window.innerWidth + 1);
+    }
+  } finally {
+    root.style.fontSize = before;
+  }
+};
+
+export const PhoneLargeText: Story = {
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "mobile2" } },
+  play: largeTextPlay,
+};
+
+export const PhoneLargeTextDark: Story = { ...PhoneLargeText, globals: { theme: "dark" } };

@@ -10,6 +10,7 @@ import {
   navDrawerLink,
   ThemeToggle,
   TopBar,
+  topBarOptionalAction,
   VisuallyHidden,
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
@@ -148,7 +149,7 @@ export const Header: FC = () => {
             <div className={wideOnly()}>
               <ThemeToggle onChange={setPreference} preference={preference} />
             </div>
-            <div className={headerAuth()}>
+            <div className={cx(headerAuth(), topBarOptionalAction())}>
               {hasSession ? (
                 <Button asChild className={headerButton()} size="sm" variant="primary">
                   <a href={`${appUrl}/`}>

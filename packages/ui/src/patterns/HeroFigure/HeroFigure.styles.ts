@@ -1,7 +1,16 @@
 import { sva } from "../../../styled-system/css";
 
-/** A phone at large text (narrower than 20em); see PageHeader.styles.ts. */
-const LARGE_TEXT_PHONE = "@media screen and (max-width: 19.99em)";
+/**
+ * The card is too narrow for the hero size. Container queries, not media queries, because rem in a
+ * container query follows the root font size (browser text zoom and a root `font-size: 200%`),
+ * where an em media query only follows the browser's initial size. A rem width is then a fixed
+ * multiple of the figure's size: "£1,234,567" is about 5.5em, so at 3rem it needs about 16.5rem,
+ * at numeric.kpi (2rem) about 11rem and at numeric.lg (1.25rem) about 7rem. A 320px phone at
+ * default text leaves about 15.5rem and keeps the hero size; a 375px phone at 200% text leaves
+ * about 7.5rem and steps to numeric.lg.
+ */
+const NARROW_CARD = "@container hero-figure (min-width: 10.01rem) and (max-width: 14rem)";
+const NARROWEST_CARD = "@container hero-figure (max-width: 10rem)";
 
 /**
  * E16 P2: the page's one headline figure. `hero` is the single deep-teal block per page
@@ -38,6 +47,9 @@ export const heroFigure = sva({
       width: "100%",
       maxWidth: "100%",
       paddingInlineEnd: { md: "24" },
+      // The figure steps down its size by the card's own width (NARROW_CARD).
+      containerType: "inline-size",
+      containerName: "hero-figure",
     },
     content: {
       display: "flex",
@@ -69,11 +81,12 @@ export const heroFigure = sva({
       textStyle: "numeric.hero",
       fontVariantNumeric: "tabular-nums",
       margin: "0",
-      // A figure is read whole: it never breaks mid-number ("£592,70 / 0", phone audit P43). On a
-      // phone at large text the fluid hero size steps down to the numeric.lg step so it still fits
-      // the card on one line.
+      // A figure is read whole: it never breaks mid-number ("£592,70 / 0", phone audit P43). In a
+      // card too narrow for the hero size (a phone at large text) it steps down, so
+      // "£1,234,567" still fits the card on one line (phone sweep 4).
       whiteSpace: "nowrap",
-      [LARGE_TEXT_PHONE]: { textStyle: "numeric.lg" },
+      [NARROW_CARD]: { textStyle: "numeric.kpi" },
+      [NARROWEST_CARD]: { textStyle: "numeric.lg" },
     },
     delta: {
       display: "inline-flex",

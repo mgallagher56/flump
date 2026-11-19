@@ -21,6 +21,7 @@ import {
   kpiNotSet,
   kpiNotSetAction,
   kpiSubtext,
+  kpiValueBox,
   kpiValueRow,
 } from "./KpiCard.styles";
 
@@ -91,6 +92,9 @@ export interface KpiCardProps {
   className?: string;
 }
 
+/** True when the text holds any digit 0 to 9 (a figure, not a word value). */
+const hasDigit = (text: string): boolean => [...text].some((c) => c >= "0" && c <= "9");
+
 const DELTA_ICON: Record<KpiDeltaDirection, LucideIcon> = {
   up: ArrowUp,
   down: ArrowDown,
@@ -130,24 +134,27 @@ const renderValue = (
   cardTone: KpiCardTone,
 ) => (
   // One wrapper and one text style for every kind of value, so a strip never mixes sizes (R2-2).
-  <div
-    className={kpiHeroValue({
-      tone: cardTone,
-      word: typeof value === "string" && !/\d/.test(value),
-    })}
-    data-kpi-value=""
-  >
-    {typeof value === "number" ? (
-      <Money
-        {...valueFormat}
-        className={kpiMoney()}
-        size="kpi"
-        tone={cardTone === "hero" ? "onContrast" : "default"}
-        value={value}
-      />
-    ) : (
-      value
-    )}
+  // The outer box is the size container the value's steps read (see kpiValueBox).
+  <div className={kpiValueBox()} data-kpi-value-box="">
+    <div
+      className={kpiHeroValue({
+        tone: cardTone,
+        word: typeof value === "string" && !hasDigit(value),
+      })}
+      data-kpi-value=""
+    >
+      {typeof value === "number" ? (
+        <Money
+          {...valueFormat}
+          className={kpiMoney()}
+          size="kpi"
+          tone={cardTone === "hero" ? "onContrast" : "default"}
+          value={value}
+        />
+      ) : (
+        value
+      )}
+    </div>
   </div>
 );
 

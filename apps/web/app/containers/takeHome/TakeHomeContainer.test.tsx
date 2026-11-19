@@ -22,7 +22,8 @@ vi.mock("react-router", async (importOriginal) => ({
   useLoaderData: () => ({ userProfile: profileState.profile }),
   useNavigate: () => navigate,
 }));
-vi.mock("~/hooks/useUserProfile", () => ({
+vi.mock("~/hooks/useUserProfile", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/hooks/useUserProfile")>()),
   useUserProfile: () => ({
     profile: storeState.profile ?? profileState.profile,
     setProfile: vi.fn(),
@@ -32,6 +33,7 @@ vi.mock("~/state/baseline.store", () => ({
   useFinancialBaseline: () => ({ baseline: baselineState }),
 }));
 
+import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
 import TakeHomeContainer from "./TakeHomeContainer";
 
 const PAY_PARTS = ["Income Tax", "National Insurance", "Pension", "Student loan"];
@@ -49,10 +51,10 @@ describe("<TakeHomeContainer /> with saved figures", () => {
   });
 
   it("draws the full page on its first render, before the profile store is filled (P61)", () => {
-    // The store is empty until the page's effect copies the loader row in. The first render must
-    // already show what the saved row gives, so nothing changes size when the store fills: the
-    // strip of three, with the pension and student loan card (5% pension and Plan 2 are saved).
-    storeState.profile = {};
+    // The store holds DEFAULT_PROFILE until the page's effect copies the loader row in. The first
+    // render must already show what the saved row gives, so nothing changes size when the store
+    // fills: the strip of three, with the pension and student loan card (5% pension and Plan 2).
+    storeState.profile = DEFAULT_PROFILE as unknown as Record<string, unknown>;
     const { container } = render(<TakeHomeContainer />);
     expect(container.querySelectorAll("[data-kpi-value]")).toHaveLength(3);
     expect(screen.getByText("Pension and student loan")).toBeDefined();

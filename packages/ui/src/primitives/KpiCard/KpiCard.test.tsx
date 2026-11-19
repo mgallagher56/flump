@@ -57,9 +57,20 @@ describe("KpiCard Primitive", () => {
 
   it("keeps the value in its own row, with the badge below it", () => {
     render(<KpiCard deltaText="+2%" label="Savings" value="£4,000" />);
-    const valueRow = screen.getByText("£4,000").parentElement;
+    const valueRow = screen.getByText("£4,000").closest("[data-kpi-value-box]")?.parentElement;
     expect(valueRow?.textContent).toBe("£4,000");
     expect(valueRow?.nextElementSibling?.textContent).toBe("+2%");
+  });
+
+  it("makes the value box, not the card, the size container, so a strip's subgrid holds", () => {
+    // A size container cannot be a subgrid: with the card as the container the strip's shared
+    // rows were lost and a label wrapped at 200% text ran over the figure (phone sweep 4).
+    const { container } = render(<KpiCard label="Left over each month" value={420} />);
+    const card = container.firstElementChild as HTMLElement;
+    expect(card.className).not.toContain("cq-t_");
+    const box = card.querySelector("[data-kpi-value-box]") as HTMLElement;
+    expect(box.className).toContain("cq-t_inline-size");
+    expect(box.querySelector("[data-kpi-value]")?.textContent).toBe("£420");
   });
 
   it("renders without a caption", () => {

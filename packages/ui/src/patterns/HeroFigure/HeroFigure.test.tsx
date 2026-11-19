@@ -35,9 +35,17 @@ describe("HeroFigure", () => {
     const value = screen.getByText("£592,700").closest("p") as HTMLElement;
     expect(value.className).toContain("white-space_nowrap");
     expect(value.className).not.toContain("ov-wrap_anywhere");
+    // A container query on the card (rem follows a root font-size change; an em media query
+    // does not), so the step also applies when the root text size is doubled (phone sweep 4).
     expect(value.className).toContain(
-      "[@media_screen_and_(max-width:_19.99em)]:textStyle_numeric.lg",
+      "[@container_hero-figure_(min-width:_10.01rem)_and_(max-width:_14rem)]:textStyle_numeric.kpi",
     );
+    expect(value.className).toContain(
+      "[@container_hero-figure_(max-width:_10rem)]:textStyle_numeric.lg",
+    );
+    const root = screen.getByRole("group", { name: "Net worth" }).className;
+    expect(root).toContain("cq-t_inline-size");
+    expect(root).toContain("cq-n_hero-figure");
   });
 
   it("reads a negative value as minus", () => {

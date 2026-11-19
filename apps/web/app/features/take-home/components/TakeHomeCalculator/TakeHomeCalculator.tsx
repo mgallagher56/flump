@@ -22,7 +22,7 @@ import { type FC, useMemo, useState } from "react";
 import { Link, useInRouterContext } from "react-router";
 import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
+import { DEFAULT_PROFILE, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import { NextPoundExplorer, useNextPoundScenario } from "../NextPoundExplorer";
 import { PayRiseTool } from "../PayRiseTool";
 import { monthlyPayParts, TakeHomeBreakdown } from "../TakeHomeBreakdown";
@@ -90,7 +90,9 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   onApplyIncrease,
 }) => {
   const { profile: storeProfile } = useUserProfile();
-  const profile = storeProfile ?? savedProfile;
+  // The store starts as DEFAULT_PROFILE until the loader fills it: read the saved row until then
+  // (no layout shift on the first render, P61), and the live store after (fresh after edits).
+  const profile = storeProfile !== DEFAULT_PROFILE ? storeProfile : (savedProfile ?? storeProfile);
   const { formatCurrency } = useFormatCurrency();
   const inRouter = useInRouterContext();
   const savedSalary = initialSalary && initialSalary > 0 ? initialSalary : 0;

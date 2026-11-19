@@ -8,7 +8,9 @@ export const kpiCardContainer = cva({
     borderStyle: "solid",
     borderColor: "border",
     p: "density.cardPad",
-    containerType: "inline-size",
+    // Not a size container itself: a container cannot be a subgrid, so the strip's shared label,
+    // value and foot rows (P21) were lost and a label wrapped at large text ran over the value
+    // (phone sweep 4). The value box below is the container for the value's size steps.
     display: "flex",
     flexDirection: "column",
     // Top-aligned so the value sits at the same height in every card of a strip (known #15).
@@ -96,6 +98,15 @@ export const kpiAction = cva({
     flex: "none",
     height: "6",
   },
+});
+
+/**
+ * The container for the value's size steps: as wide as the card's content box, so the steps below
+ * read the card width without making the card a size container (which would break the strip's
+ * subgrid, see kpiCardContainer).
+ */
+export const kpiValueBox = cva({
+  base: { containerType: "inline-size", minWidth: 0, width: "100%" },
 });
 
 /**

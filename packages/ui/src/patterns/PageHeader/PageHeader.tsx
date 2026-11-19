@@ -20,7 +20,7 @@ export interface PageHeaderProps {
   /** @deprecated Use `description`. Kept so existing screens keep working. */
   subtitle?: string;
   /**
-   * The one actions slot, shown top right: one primary button (the page's only primary, E16 P7.4)
+   * The one actions slot, shown top right (on a phone, under the description): one primary button (the page's only primary, E16 P7.4)
    * and at most one secondary. Anything more belongs in the page body or a menu.
    */
   actions?: ReactNode;
@@ -68,7 +68,7 @@ export const PageHeader: FC<PageHeaderProps> = ({
         {text && <p className={pageHeaderDescription({ withIcon })}>{text}</p>}
       </div>
       {(badge || actions) && (
-        <div className={pageHeaderAside()}>
+        <div className={pageHeaderAside({ afterText: withText })}>
           {typeof badge === "string" ? <span className={pageHeaderBadge()}>{badge}</span> : badge}
           {actions}
         </div>
