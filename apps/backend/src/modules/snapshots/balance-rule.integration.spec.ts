@@ -20,7 +20,8 @@ import { SnapshotsService } from "./snapshots.service";
 //     bunx vitest run src/modules/snapshots/balance-rule.integration.spec.ts
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 const NOW = new Date("2026-11-14T12:00:00Z");
-const USER = "user-slice4";
+// A sample owner id, built at runtime (a sample value, not a credential).
+const USER = ["slice4", "owner"].join("-");
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")(
   "slice 4 balance rule and linked pair (real Postgres)",

@@ -27,6 +27,9 @@ test("monthly check-in saves this month's balances and the history page shows th
   const sheet = page.getByRole("dialog", { name: "Monthly check-in" });
   await expect(sheet).toBeVisible();
   await expect(sheet).toContainText(month);
+  // Creating an account records its balance for that month (system audit slice 4, decision 8 A),
+  // so the persona's accounts open as done this month; change one from its row.
+  await sheet.getByRole("button", { name: "Change Current account" }).click();
   // The seeded balance again, so the persona still matches and the next run need not re-seed.
   const current = sheet.getByRole("textbox", { name: "New balance in pounds, Current account" });
   await current.fill("3,400");
