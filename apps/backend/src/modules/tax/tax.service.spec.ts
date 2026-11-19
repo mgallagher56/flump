@@ -191,3 +191,41 @@ describe("TaxService.readReceipt (SEC-D, L4 legacy plaintext)", () => {
     expect(qb.execute).not.toHaveBeenCalled();
   });
 });
+
+describe("TaxService finance costs brought forward records", () => {
+  const bf = {
+    type: "expense",
+    source: "rental",
+    category: "finance_costs_brought_forward",
+    name: "Brought forward",
+    amount: 1570,
+    frequency: "annual",
+    date: "2026-06-06",
+  };
+
+  it("refuses one that is not a yearly rental expense, even with the contract check off", async () => {
+    const service = new TaxService(createInMemoryRepository() as never);
+    await expect(
+      service.createRecord("u1", { ...bf, frequency: "monthly" } as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.createRecord("u1", { ...bf, source: "self-employed" } as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("checks an update on the merged record, not only the fields sent", async () => {
+    const service = new TaxService(createInMemoryRepository() as never);
+    const created = await service.createRecord("u1", bf as never);
+    // Each change alone looks harmless; on this record it would make it an income or monthly.
+    await expect(
+      service.updateRecord("u1", created.id, { type: "income" } as never, undefined),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.updateRecord("u1", created.id, { frequency: "monthly" } as never, undefined),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    // An ordinary change still works.
+    await expect(
+      service.updateRecord("u1", created.id, { amount: 1000 } as never, undefined),
+    ).resolves.toMatchObject({ amount: 1000 });
+  });
+});

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  broughtForwardRuleError,
   CreateTaxRecordRequest,
   FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY,
   UpdateTaxRecordRequest,
@@ -41,5 +42,25 @@ describe("finance costs brought forward record", () => {
         .success,
     ).toBe(false);
     expect(UpdateTaxRecordRequest.safeParse({ amount: 10 }).success).toBe(true);
+  });
+});
+
+describe("finance costs brought forward frequency", () => {
+  it("is refused as a monthly record: it is one figure for one year", () => {
+    expect(CreateTaxRecordRequest.safeParse({ ...record, frequency: "monthly" }).success).toBe(
+      false,
+    );
+    expect(CreateTaxRecordRequest.safeParse({ ...record, frequency: "one-off" }).success).toBe(
+      true,
+    );
+  });
+
+  it("names the rule for a whole record, so an update can be checked after merging", () => {
+    expect(broughtForwardRuleError({ ...record })).toBeNull();
+    expect(broughtForwardRuleError({ ...record, type: "income" })).not.toBeNull();
+    expect(broughtForwardRuleError({ ...record, frequency: "monthly" })).not.toBeNull();
+    expect(
+      broughtForwardRuleError({ ...record, category: "repairs_maintenance", type: "income" }),
+    ).toBeNull();
   });
 });

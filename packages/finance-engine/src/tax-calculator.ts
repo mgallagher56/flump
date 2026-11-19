@@ -76,6 +76,13 @@ export interface UserProfile {
  */
 export const FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY = "finance_costs_brought_forward";
 
+/** A record of finance costs brought forward: never a property cost or income of the year. */
+export const isFinanceCostsBroughtForwardRecord = (record: {
+  source: string;
+  category: string;
+}): boolean =>
+  record.source === "rental" && record.category === FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY;
+
 export const RENTAL_CATEGORIES = [
   { id: "rental_income", name: "Rental income", type: "income" as const },
   {
@@ -293,6 +300,27 @@ export function isRecordActiveInTaxYear(record: TaxRecordFields, taxYear: string
   return getRecordAnnualTotalForTaxYear(record, taxYear) > 0;
 }
 
+/**
+ * Income and costs recorded for one tax year, as entered, before any allowance. Finance costs
+ * brought forward are left out: they are not a cost of the year. Optionally for one source.
+ */
+export function recordedTotalsForTaxYear(
+  records: readonly TaxRecordFields[],
+  taxYear: string,
+  source?: TaxSource,
+): { income: number; expenses: number } {
+  let income = 0;
+  let expenses = 0;
+  for (const r of records) {
+    if (source !== undefined && r.source !== source) continue;
+    if (isFinanceCostsBroughtForwardRecord(r)) continue;
+    const yearly = getRecordAnnualTotalForTaxYear(r, taxYear);
+    if (r.type === "income") income += yearly;
+    else expenses += yearly;
+  }
+  return { income, expenses };
+}
+
 export function buildCopiedRecordForTaxYear(
   record: TaxRecord,
   targetTaxYear: string,
@@ -489,6 +517,8 @@ export function calculateUKTax(
   for (const cat of SAVINGS_CATEGORIES) savingsRecordValues[cat.id] = months.map(() => 0);
 
   for (const record of records) {
+    // Counted once, below, not month by month.
+    if (isFinanceCostsBroughtForwardRecord(record)) continue;
     for (let i = 0; i < months.length; i++) {
       const month = months[i]!;
       const val = getRecordValueForMonth(record, month);
@@ -511,7 +541,17 @@ export function calculateUKTax(
   }
 
   // Sum Rental
+  // Finance costs brought forward: one figure for one year, counted once in the tax year of its
+  // date whatever its frequency, and only as a rental expense. Not a cost of this year: it joins
+  // the finance costs below (ITTOIA 2005 s.274A(3)(c)).
   let financeCostsBroughtForwardRecords = 0;
+  for (const record of records) {
+    if (!isFinanceCostsBroughtForwardRecord(record) || record.type !== "expense") continue;
+    if (getTaxYearForRecordDate(record.date) !== taxYear) continue;
+    const amount =
+      typeof record.amount === "string" ? Number.parseFloat(record.amount) : record.amount;
+    if (amount > 0) financeCostsBroughtForwardRecords += amount;
+  }
   for (const catId in rentalRecordValues) {
     const arr = rentalRecordValues[catId];
     const sum = arr ? arr.reduce((a, b) => a + b, 0) : 0;
@@ -519,9 +559,6 @@ export function calculateUKTax(
       rentalIncomeGross += sum;
     } else if (catId === "mortgage_interest") {
       rentalMortgageInterest += sum;
-    } else if (catId === FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY) {
-      // Not a cost of this year: it joins the finance costs below (ITTOIA 2005 s.274A(3)(c)).
-      financeCostsBroughtForwardRecords += sum;
     } else {
       rentalExpensesExclInterest += sum;
     }

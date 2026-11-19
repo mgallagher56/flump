@@ -1,12 +1,12 @@
 import {
   type TaxRecord as EngineTaxRecord,
   getCurrentUKTaxYear,
-  getRecordAnnualTotalForTaxYear,
   isFigureKnown,
   isRecordActiveInTaxYear,
   type MissingKey,
   PortfolioSnapshot,
   profileFactsFromProfile,
+  recordedTotalsForTaxYear,
   selectTakeHome,
 } from "@flump/finance-engine";
 import type { ReactElement } from "react";
@@ -130,16 +130,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const currentYearRecords = (Array.isArray(taxRecords) ? taxRecords : []).filter((r: any) =>
     isRecordActiveInTaxYear(r as EngineTaxRecord, currentTaxYear),
   );
-  const taxRecordTotal = (type: string) =>
-    currentYearRecords
-      .filter((r: any) => r.type === type)
-      .reduce(
-        (sum: number, r: any) =>
-          sum + getRecordAnnualTotalForTaxYear(r as EngineTaxRecord, currentTaxYear),
-        0,
-      );
-  const totalTaxIncome = taxRecordTotal("income");
-  const totalTaxExpenses = taxRecordTotal("expense");
+  // Finance costs brought forward are not a cost of the year, so the engine's totals leave them out.
+  const { income: totalTaxIncome, expenses: totalTaxExpenses } = recordedTotalsForTaxYear(
+    currentYearRecords as EngineTaxRecord[],
+    currentTaxYear,
+  );
   const netProfit = Math.max(0, totalTaxIncome - totalTaxExpenses);
   // C-11: the engine's self assessment estimate (tax on income outside PAYE) for the current tax
   // year, from the picture. Unknown (no income outside PAYE) stays null, never £0.

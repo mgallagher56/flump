@@ -1029,3 +1029,32 @@ describe("in-memory provider queries", () => {
     expect(ids.sort()).toEqual(["t-int", "t-odd", "t-rent", "t-se"]);
   });
 });
+
+describe("list_tax_records and finance costs brought forward", () => {
+  let h: TestHarness;
+  beforeAll(async () => {
+    h = await connectTestClient({
+      ...persona,
+      taxRecords: [
+        ...TAX_RECORDS,
+        taxRecord({
+          id: "t-bf",
+          type: "expense",
+          category: "finance_costs_brought_forward",
+          name: "Brought forward",
+          amount: 1570,
+          frequency: "annual",
+          date: "2025-06-06",
+        }),
+      ] as never,
+    });
+  });
+  afterAll(async () => h.close());
+
+  it("lists the record but does not count it as a cost of the year", async () => {
+    // Same totals as without it: income 17,000, costs 4,850 (the 1,570 is not a cost).
+    const e = (await h.callJson("list_tax_records", { taxYear: "2025/26" })) as Env;
+    expect(e.result.totals).toMatchObject({ incomeGbp: 17000, expensesGbp: 4850 });
+    expect(e.result.rowCount).toBe(5);
+  });
+});

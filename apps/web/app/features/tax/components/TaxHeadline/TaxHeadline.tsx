@@ -1,6 +1,6 @@
 import {
-  FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY,
   getRecordAnnualTotalForTaxYear,
+  isFinanceCostsBroughtForwardRecord,
   isRecordActiveInTaxYear,
   type TaxCalculationResult,
   type TaxRecord,
@@ -59,7 +59,7 @@ export const nonPayeCosts = (records: TaxRecord[], taxYear: string): number =>
         r.source !== "paye" &&
         r.type === "expense" &&
         // Brought forward from earlier years: not a cost of this year.
-        r.category !== FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY &&
+        !isFinanceCostsBroughtForwardRecord(r) &&
         isRecordActiveInTaxYear(r, taxYear),
     )
     .reduce((sum, r) => sum + getRecordAnnualTotalForTaxYear(r, taxYear), 0);

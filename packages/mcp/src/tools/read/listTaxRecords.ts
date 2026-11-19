@@ -1,4 +1,8 @@
-import { createTaxRecordAnonymiser, MCP_NOTICE } from "@flump/finance-engine";
+import {
+  createTaxRecordAnonymiser,
+  isFinanceCostsBroughtForwardRecord,
+  MCP_NOTICE,
+} from "@flump/finance-engine";
 import { z } from "zod";
 import { effectiveAnonymize } from "../../auth/scopes.js";
 import { defineFlumpTool } from "../../define-tool.js";
@@ -116,12 +120,14 @@ export const listTaxRecords = defineFlumpTool({
       if (inYear <= 0) continue;
       const source = safeSource(r.source);
       const isIncome = r.type === "income";
+      // Finance costs brought forward are listed but are not a cost of the year.
+      const notACost = !isIncome && isFinanceCostsBroughtForwardRecord(r);
       if (isIncome) income += inYear;
-      else expenses += inYear;
+      else if (!notACost) expenses += inYear;
 
       const st = sourceTotals.get(source) ?? { incomeGbp: 0, expensesGbp: 0 };
       if (isIncome) st.incomeGbp += inYear;
-      else st.expensesGbp += inYear;
+      else if (!notACost) st.expensesGbp += inYear;
       sourceTotals.set(source, st);
 
       if (input.groupBy === "month") {
@@ -129,13 +135,13 @@ export const listTaxRecords = defineFlumpTool({
           const g = groupTotals.get(months[i] as string);
           if (!g || v <= 0) return;
           if (isIncome) g.incomeGbp += v;
-          else g.expensesGbp += v;
+          else if (!notACost) g.expensesGbp += v;
         });
       } else {
         const gk = `${source}|${category}`;
         const g = groupTotals.get(gk) ?? { source, incomeGbp: 0, expensesGbp: 0 };
         if (isIncome) g.incomeGbp += inYear;
-        else g.expensesGbp += inYear;
+        else if (!notACost) g.expensesGbp += inYear;
         groupTotals.set(gk, g);
       }
 
