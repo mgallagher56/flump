@@ -271,6 +271,7 @@ export const FLOWS: Flow[] = [
 
       await openFromNav(actor, "Debt and borrowing", "Mortgage");
       await expect(page.getByRole("heading", { level: 1, name: "Your mortgage" })).toBeVisible();
+      await actor.press(page.getByRole("button", { name: "Show what-if: overpay or a new rate" }));
       await actor.type(page.getByRole("textbox", { name: "Extra each month input" }), "200");
       await actor.key("Enter");
       await expect(page.getByRole("slider", { name: "Extra each month" })).toHaveValue("200");
