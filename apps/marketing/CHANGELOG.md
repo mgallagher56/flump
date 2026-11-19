@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.36.3](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.2...flump/marketing-v1.36.3) (2026-11-19)
+
+
+### Bug Fixes 🪲
+
+* **ui,web,marketing:** address the independent review of the audit fixes ([75d4b82](https://github.com/mgallagher56/flump/commit/75d4b82be71417add422880226d310dea3261e87))
+* **ui,web,marketing:** audit fixes for the weekend design PRs ([f7ce718](https://github.com/mgallagher56/flump/commit/f7ce7180c4dcdbb1fa9c1adb1e6a11af1d9c1e97))
+* **web,marketing,ui:** CI fixes and the phase 2 sweep's own findings ([0255b3b](https://github.com/mgallagher56/flump/commit/0255b3bff8d3cdd49539cbac6a1731761d593c16))
+* **web,marketing,ui:** coordinator review: scroll keys, keyboard inset, query changes, honest tests ([8e13566](https://github.com/mgallagher56/flump/commit/8e13566a10cb058b6aff55fe8a9e631165d7db21))
+* **web,marketing,ui:** phone audit phase 2 fixes ([e16e72c](https://github.com/mgallagher56/flump/commit/e16e72c21ebd1bcceb76c091774869455b4550fe))
+* **web,marketing,ui:** phone fixes for scroll, footer, keyboard, drawer side and bottom bar ([4758815](https://github.com/mgallagher56/flump/commit/47588152e8ca524d2898114d00dddbeea9f84b07))
+* **web,ui:** nav link padding, Home at every width, review fixes ([bcacd90](https://github.com/mgallagher56/flump/commit/bcacd9017f47f83ee3dd29de594a80cd95bf1a78))
+
+
+### Miscellaneous 🙃
+
+* **marketing:** production-only install in the image, vite loaded only in dev; drop the withdrawn picomatch exception ([350f619](https://github.com/mgallagher56/flump/commit/350f6199b7c8f323ed9c587ade96c73d986f6b95))
+
 ## [1.36.2](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.1...flump/marketing-v1.36.2) (2026-11-17)
 
 
