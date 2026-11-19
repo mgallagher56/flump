@@ -267,6 +267,7 @@ export function parseBankCsvContent(
           ? "American Express"
           : "HSBC";
 
+  const balanceGbp = Math.round(computedBalance * 100) / 100;
   const account = enforceSignConvention({
     externalAccountId,
     provider: "csv",
@@ -274,8 +275,8 @@ export function parseBankCsvContent(
     name: `${institutionName} Statement`,
     category,
     currency: "GBP",
-    netWorthImpactGbp: Math.round(computedBalance * 100) / 100,
-    principalOwedGbp: category === "CREDIT_CARD" ? Math.abs(computedBalance) : 0,
+    netWorthImpactGbp: balanceGbp,
+    principalOwedGbp: category === "CREDIT_CARD" ? Math.abs(balanceGbp) : 0,
     isTaxFreeIsaWrapper: false,
     lastSyncedAt: new Date().toISOString(),
   });
