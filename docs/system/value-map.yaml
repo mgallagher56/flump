@@ -277,7 +277,7 @@ links:
   - {
       id: L13,
       group: B. Home and mortgage,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
       findings: [HM-1, BU-5],
       statement: "The mortgage payment saved on the mortgage account is the housing cost in housing details, the budget's housing row, the commitments in safe to spend, and the retirement housing cost.",
@@ -285,8 +285,8 @@ links:
   - {
       id: L14,
       group: B. Home and mortgage,
-      verdict: duplicated,
-      checked: code,
+      verdict: holds,
+      checked: browser,
       findings: [HM-2, BU-4],
       statement: "Changing rent in housing details changes the budget's housing row, essentials, Breathing room, safe to spend and the retirement housing cost.",
     }
@@ -655,8 +655,8 @@ links:
   - {
       id: L57,
       group: J. Joint ownership,
-      verdict: broken,
-      checked: code,
+      verdict: holds,
+      checked: browser,
       findings: [JO-8],
       statement: "A joint housing cost counts at its share.",
     }
@@ -1217,10 +1217,10 @@ facts:
           note: "commitments take the larger of the two; a linked debt line reads the account, so both sides are the same figure",
         }
       - {
-          ref: "budget_entries housing row",
+          ref: "budget_entries housing row typed by hand",
           status: duplicate,
           path: packages/finance-engine/src/picture/selectors/commitments.ts,
-          note: "the mortgage payment as the budget knows it",
+          note: "a typed row is the person's plan figure; the linked housing line reads the home mortgage's payment instead (housing-cost)",
         }
     writers:
       - { surface: savings, path: apps/web/app/routes/app.savings.tsx }
@@ -1512,36 +1512,30 @@ facts:
       {
         ref: user_profiles.monthly_housing_cost,
         path: apps/backend/src/entities/user-profile.entity.ts,
-        note: "today no store is the agreed truth; this is the one housing details edits",
+        note: "the rent (whole, taken at the linked rent line's share) or board; for a mortgage holder the home mortgage's saved payment (account-monthly-amount) comes first, then its estimate, then this; one figure, selectHousingCost (audit slice 5)",
       }
     other_stores:
       - {
-          ref: "budget_entries housing row",
+          ref: "budget_entries housing row typed by hand",
           status: duplicate,
-          path: apps/web/app/services/onboarding-seed.ts,
-          note: "essentials, Breathing room and safe to spend read this",
-        }
-      - {
-          ref: "accounts.monthly_contribution on the mortgage",
-          status: duplicate,
-          path: apps/backend/src/entities/account.entity.ts,
-          note: "the Mortgage page and Retirement read this",
+          path: packages/finance-engine/src/picture/selectors/commitments.ts,
+          note: "a typed plan figure stays the person's own; the housing line onboarding and the wizard create is linked and stores no amount, and the page offers the link for a typed row",
         }
     writers:
       - {
           surface: onboarding,
           path: apps/web/app/features/onboarding/useFinishOnboarding.ts,
-          note: "writes the profile and a budget row",
+          note: "writes the profile and a linked housing line (no amount)",
         }
       - {
           surface: budget,
           path: apps/web/app/containers/budget/BudgetContainer.tsx,
-          note: "Edit your rent writes the profile only",
+          note: "Edit your rent writes the profile; the linked line reads it",
         }
       - {
           surface: mortgage,
           path: apps/web/app/containers/mortgage/MortgageContainer.tsx,
-          note: "writes the account only",
+          note: "writes the mortgage account's payment, which the linked line reads",
         }
     readers:
       - {
@@ -1550,13 +1544,23 @@ facts:
         }
       - {
           surface: picture,
-          path: packages/finance-engine/src/picture/selectors/housing-cost.ts,
-          note: "a figure nothing shows",
+          path: packages/finance-engine/src/picture/selectors/linked-budget-rows.ts,
+          note: "the linked housing line reads selectHousingPayment",
         }
-      - { surface: retirement, path: packages/finance-engine/src/retirement.ts }
+      - {
+          surface: picture,
+          path: packages/finance-engine/src/picture/selectors/housing-cost.ts,
+          note: "selectHousingCost and selectHousingPayment share one housingPayment",
+        }
+      - {
+          surface: retirement,
+          path: packages/finance-engine/src/retirement-input.ts,
+          note: "the rent at the linked rent line's share (rentAtShare); the mortgage from the account",
+        }
     links: [L13, L14, L57]
-    verdict: duplicated
+    verdict: holds
     findings: [HM-1, HM-2, BU-4, BU-5, JO-8, DB-3]
+    note: "Holds once the housing line is linked: onboarding and the wizard link it; a typed housing row stays the person's own figure (decision 1), with the page's link offer beside it."
 
   - id: account-type
     name: Account type and kind

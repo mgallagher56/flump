@@ -656,12 +656,15 @@ describe("OnboardingRoute (4-step flow)", () => {
         isIncome: true,
         frequency: "monthly",
       },
+      // Linked to the saved housing payment: it stores no amount (audit slice 5).
       {
         name: "Mortgage Payment",
         category: "housing",
-        amount: 900,
+        amount: 0,
         isIncome: false,
+        isEssential: true,
         frequency: "monthly",
+        linkKind: "housing",
       },
       {
         name: "General living and outgoings",

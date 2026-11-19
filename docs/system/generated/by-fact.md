@@ -31,7 +31,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Buy-to-let mortgage balance, rate and type](#buy-to-let-mortgage)                                            | fact   | home        | Broken                                    |
 | [Rent received on a rental property](#buy-to-let-rent)                                                        | fact   | home        | Duplicated (two stores that can disagree) |
 | [Housing status, has a mortgage, and mortgage type](#housing-status)                                          | fact   | home        | Broken                                    |
-| [Monthly housing cost (rent or mortgage payment)](#housing-cost)                                              | fact   | home        | Duplicated (two stores that can disagree) |
+| [Monthly housing cost (rent or mortgage payment)](#housing-cost)                                              | fact   | home        | Holds                                     |
 | [Account type and kind](#account-type)                                                                        | fact   | accounts    | Broken                                    |
 | [Estimated yearly return on an investment account](#investment-return)                                        | fact   | accounts    | Broken                                    |
 | [Name and profile picture](#name-and-avatar)                                                                  | fact   | preferences | Not checked                               |
@@ -475,7 +475,7 @@ Other stores:
 
 - `budget_entries savings rows typed by hand` [duplicate] in `packages/finance-engine/src/picture/selectors/safe-to-spend.ts` (planned savings read these; a line linked to the account (link_account_id) reads the account instead, and the budget page offers a one-tap link for a typed row that matches)
 - `budget_entries debt rows typed by hand` [duplicate] in `packages/finance-engine/src/picture/selectors/commitments.ts` (commitments take the larger of the two; a linked debt line reads the account, so both sides are the same figure)
-- `budget_entries housing row` [duplicate] in `packages/finance-engine/src/picture/selectors/commitments.ts` (the mortgage payment as the budget knows it)
+- `budget_entries housing row typed by hand` [duplicate] in `packages/finance-engine/src/picture/selectors/commitments.ts` (a typed row is the person's plan figure; the linked housing line reads the home mortgage's payment instead (housing-cost))
 
 Entered or changed by:
 
@@ -962,25 +962,26 @@ Read by:
 <a id="housing-cost"></a>
 
 - Id: `housing-cost` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: HM-1, HM-2, BU-4, BU-5, JO-8, DB-3. Links: L13, L14, L57.
-- Source of truth: `user_profiles.monthly_housing_cost` in `apps/backend/src/entities/user-profile.entity.ts` (today no store is the agreed truth; this is the one housing details edits)
+- Verdict: Holds. Findings: HM-1, HM-2, BU-4, BU-5, JO-8, DB-3. Links: L13, L14, L57.
+- Source of truth: `user_profiles.monthly_housing_cost` in `apps/backend/src/entities/user-profile.entity.ts` (the rent (whole, taken at the linked rent line's share) or board; for a mortgage holder the home mortgage's saved payment (account-monthly-amount) comes first, then its estimate, then this; one figure, selectHousingCost (audit slice 5))
+- Note: Holds once the housing line is linked: onboarding and the wizard link it; a typed housing row stays the person's own figure (decision 1), with the page's link offer beside it.
 
 Other stores:
 
-- `budget_entries housing row` [duplicate] in `apps/web/app/services/onboarding-seed.ts` (essentials, Breathing room and safe to spend read this)
-- `accounts.monthly_contribution on the mortgage` [duplicate] in `apps/backend/src/entities/account.entity.ts` (the Mortgage page and Retirement read this)
+- `budget_entries housing row typed by hand` [duplicate] in `packages/finance-engine/src/picture/selectors/commitments.ts` (a typed plan figure stays the person's own; the housing line onboarding and the wizard create is linked and stores no amount, and the page offers the link for a typed row)
 
 Entered or changed by:
 
-- Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts` (writes the profile and a budget row)
-- Budget: `apps/web/app/containers/budget/BudgetContainer.tsx` (Edit your rent writes the profile only)
-- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx` (writes the account only)
+- Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts` (writes the profile and a linked housing line (no amount))
+- Budget: `apps/web/app/containers/budget/BudgetContainer.tsx` (Edit your rent writes the profile; the linked line reads it)
+- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx` (writes the mortgage account's payment, which the linked line reads)
 
 Read by:
 
 - Budget: `apps/web/app/features/housing/components/HousingDetails/HousingDetails.tsx`
-- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/housing-cost.ts` (a figure nothing shows)
-- Retirement plan: `packages/finance-engine/src/retirement.ts`
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/linked-budget-rows.ts` (the linked housing line reads selectHousingPayment)
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/housing-cost.ts` (selectHousingCost and selectHousingPayment share one housingPayment)
+- Retirement plan: `packages/finance-engine/src/retirement-input.ts` (the rent at the linked rent line's share (rentAtShare); the mortgage from the account)
 
 ### Home equity
 
