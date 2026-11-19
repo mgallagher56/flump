@@ -6,6 +6,10 @@ import { VisuallyHidden } from "../../primitives/VisuallyHidden/VisuallyHidden";
 import {
   siteFooterBlurb,
   siteFooterBottom,
+  siteFooterCompactItem,
+  siteFooterCompactLink,
+  siteFooterCompactList,
+  siteFooterCompactNav,
   siteFooterCompactRow,
   siteFooterCompactText,
   siteFooterGrid,
@@ -23,6 +27,11 @@ export interface SiteFooterLink {
   external?: boolean;
   /** Opens in a new tab. Implies `external`. */
   newTab?: boolean;
+  /**
+   * Compact footer only: the widths it shows at, so the line never wraps. `belowMd` for a short
+   * form on phones, `fromMd` for links that fit only from 768px. Default: every width.
+   */
+  show?: "always" | "belowMd" | "fromMd";
 }
 
 export interface SiteFooterColumn {
@@ -52,6 +61,12 @@ export interface SiteFooterProps {
   bottom: ReactNode;
   /** The logo at the start of the compact footer, usually `<HomeLogo />`. */
   logo?: ReactNode;
+  /** Compact footer: links on the logo's line, each shown only where the line still fits. */
+  links?: SiteFooterLink[];
+  /** Compact footer: name of the links' navigation landmark. */
+  linksLabel?: string;
+  /** Compact footer: show `bottom` from this width only (where it fits after the links). */
+  bottomFrom?: "always" | "lg";
   /** Router link slot for in-site links, so the ui package needs no router. */
   renderLink?: SiteFooterRenderLink;
   className?: string;
@@ -74,6 +89,9 @@ export const SiteFooter: FC<SiteFooterProps> = ({
   columns = [],
   bottom,
   logo,
+  links = [],
+  linksLabel = "Footer",
+  bottomFrom = "always",
   renderLink = defaultRenderLink,
   className,
 }) =>
@@ -81,7 +99,38 @@ export const SiteFooter: FC<SiteFooterProps> = ({
     <footer className={cx(siteFooterRoot({ variant }), className)}>
       <div className={siteFooterCompactRow()}>
         {logo}
-        <Text as="p" className={siteFooterCompactText()} color="muted" textStyle="body.sm">
+        {links.length > 0 && (
+          <nav aria-label={linksLabel} className={siteFooterCompactNav()}>
+            <ul className={siteFooterCompactList()}>
+              {links.map((link) => (
+                <li
+                  className={siteFooterCompactItem({ show: link.show ?? "always" })}
+                  key={link.key}
+                >
+                  {link.external || link.newTab ? (
+                    <a
+                      className={siteFooterCompactLink()}
+                      href={link.href}
+                      rel={link.newTab ? "noreferrer" : undefined}
+                      target={link.newTab ? "_blank" : undefined}
+                    >
+                      {link.label}
+                      {link.newTab && <VisuallyHidden> (opens in a new tab)</VisuallyHidden>}
+                    </a>
+                  ) : (
+                    renderLink(link, siteFooterCompactLink(), link.label)
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+        <Text
+          as="p"
+          className={siteFooterCompactText({ from: bottomFrom })}
+          color="muted"
+          textStyle="body.sm"
+        >
           {bottom}
         </Text>
       </div>

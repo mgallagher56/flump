@@ -5,49 +5,70 @@ import { waitForHydration } from "../support/page";
 
 /**
  * Phone chrome from the owner's report of 2026-11-18: the signed-in footer is one line with the
- * logo and stays clear of the bottom bar, and the menu button sits on the side its drawer opens.
+ * logo and its links at every width (owner ruling: links stay on the logo's line, never a second
+ * line) and stays clear of the bottom bar, and the menu button sits on the side its drawer opens.
  */
 
 const BAR = 'nav[aria-label="Main navigation"]';
 
 async function footerLine(page: Page) {
   return page.locator("footer").evaluate((footer) => {
-    const text = footer.querySelector("p");
-    const logo = footer.querySelector('[data-testid="home-logo"]');
-    const range = document.createRange();
-    if (text) range.selectNodeContents(text);
-    const lineHeight = text ? Number.parseFloat(getComputedStyle(text).lineHeight) : 0;
-    const textBox = range.getBoundingClientRect();
-    const logoBox = logo?.getBoundingClientRect();
+    const shown = (el: Element) => {
+      const box = el.getBoundingClientRect();
+      return box.width > 0 && box.height > 0;
+    };
+    const row = footer.firstElementChild as HTMLElement;
+    const parts = [
+      footer.querySelector('[data-testid="home-logo"]'),
+      ...Array.from(footer.querySelectorAll("nav a")),
+      footer.querySelector(":scope > div > p"),
+    ].filter((el): el is Element => el !== null && shown(el));
+    const centres = parts.map((el) => {
+      const box = el.getBoundingClientRect();
+      return box.top + box.height / 2;
+    });
+    const text = footer.querySelector(":scope > div > p");
     return {
-      textLines: Math.round(textBox.height / lineHeight),
-      // Logo and text share one row: their vertical centres are within a few pixels.
-      sameRow: logoBox
-        ? Math.abs(logoBox.top + logoBox.height / 2 - (textBox.top + textBox.height / 2)) < 6
-        : false,
-      links: footer.querySelectorAll("a").length,
-      navs: footer.querySelectorAll("nav").length,
-      rowBottom: Math.max(textBox.bottom, logoBox?.bottom ?? 0),
-      textRight: textBox.right,
+      links: Array.from(footer.querySelectorAll("nav a"))
+        .filter(shown)
+        .map((el) => (el.textContent ?? "").trim()),
+      companyShown: text ? shown(text) : false,
+      // Every part sits on one row: their vertical centres agree within a few pixels.
+      centreSpread: Math.max(...centres) - Math.min(...centres),
+      rowHeight: row.getBoundingClientRect().height,
+      tallestPart: Math.max(...parts.map((el) => el.getBoundingClientRect().height)),
+      rowBottom: row.getBoundingClientRect().bottom,
+      overflow: row.scrollWidth - row.clientWidth,
+      right: Math.max(...parts.map((el) => el.getBoundingClientRect().right)),
     };
   });
 }
 
+const PHONE_LINKS = ["Settings", "Calculators", "Send feedback"];
+const WIDE_LINKS = ["Settings", "Security", "Data and export", "All calculators", "Send feedback"];
+
 test.describe("signed-in footer", () => {
   test.use({ storageState: AUTH_STATE });
 
-  for (const width of [320, 375, 390, 430, 1280]) {
-    test(`is one line with the logo at ${width} wide, above the bottom bar`, async ({ page }) => {
+  for (const width of [320, 375, 390, 430, 768, 1024, 1280]) {
+    test(`is one line with the logo and its links at ${width} wide, above the bottom bar`, async ({
+      page,
+    }) => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto("/app/accounts");
       await waitForHydration(page);
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       const line = await footerLine(page);
-      expect(line.textLines, "company line wraps").toBe(1);
-      expect(line.sameRow, "logo and text on one row").toBe(true);
-      expect(line.links, "only the logo link").toBe(1);
-      expect(line.navs).toBe(0);
-      expect(line.textRight).toBeLessThanOrEqual(width);
+      expect(line.links).toEqual(width < 768 ? PHONE_LINKS : WIDE_LINKS);
+      expect(line.companyShown, "company name shown only where it fits").toBe(width >= 1024);
+      expect(line.centreSpread, "everything on one row").toBeLessThanOrEqual(4);
+      // One row: the row is no taller than its tallest part (the logo or a 44px link target).
+      expect(
+        line.rowHeight - line.tallestPart,
+        "footer row taller than one row",
+      ).toBeLessThanOrEqual(1);
+      expect(line.overflow, "row overflows").toBeLessThanOrEqual(0);
+      expect(line.right).toBeLessThanOrEqual(width);
       const bar = page.locator(BAR);
       if (width < 768) {
         const barTop = (await bar.boundingBox())?.y ?? 0;

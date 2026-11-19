@@ -19,23 +19,73 @@ export const siteFooterRoot = cva({
   defaultVariants: { variant: "full" },
 });
 
-/** The compact footer's single row: logo at the start, the company line at the end. */
+/** The compact footer's single row: logo, then the links, then the company line where it fits. */
 export const siteFooterCompactRow = cva({
   base: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    // One line at normal text sizes; at 200% text it wraps rather than scroll sideways.
-    flexWrap: "wrap",
-    columnGap: "4",
-    rowGap: "1",
+    gap: { base: "3", md: "6" },
     minHeight: "touch",
+    // Never a second line: links that would not fit are left out at that width (`show`).
+    flexWrap: "nowrap",
+    minWidth: 0,
   },
 });
 
-/** Keep `bottom` short so it shares the logo's line from 320px up at normal text sizes. */
+export const siteFooterCompactNav = cva({ base: { minWidth: 0 } });
+
+export const siteFooterCompactList = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    gap: { base: "3", md: "5" },
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    flexWrap: "nowrap",
+  },
+});
+
+export const siteFooterCompactItem = cva({
+  base: { flexShrink: 0 },
+  variants: {
+    show: {
+      always: {},
+      belowMd: { md: { display: "none" } },
+      fromMd: { display: "none", md: { display: "list-item" } },
+    },
+  },
+  defaultVariants: { show: "always" },
+});
+
+/** A 44px-tall target around small text, so the line stays short without small targets. */
+export const siteFooterCompactLink = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: "touch",
+    textStyle: "label.sm",
+    color: "text.secondary",
+    whiteSpace: "nowrap",
+    textDecoration: "none",
+    borderRadius: "sm",
+    _hover: { color: "primary", textDecoration: "underline" },
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  },
+});
+
+/** The company line: last on the row, pushed to the end, shown only where it fits. */
 export const siteFooterCompactText = cva({
-  base: { margin: 0, minWidth: 0, fontVariantNumeric: "tabular-nums" },
+  base: {
+    margin: 0,
+    marginLeft: "auto",
+    whiteSpace: "nowrap",
+    fontVariantNumeric: "tabular-nums",
+  },
+  variants: {
+    from: { always: {}, lg: { display: "none", lg: { display: "block" } } },
+  },
+  defaultVariants: { from: "always" },
 });
 
 export const siteFooterInner = cva({
