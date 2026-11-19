@@ -76,6 +76,8 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
   return (
     <CollapsibleDrawer
       className={slots.root}
+      closedLabel="Show what counts"
+      openLabel="Hide what counts"
       subtitle={`${drawOn.length} ${drawOn.length === 1 ? "account" : "accounts"}, ${counted} of ${spending.length} spending entries`}
       title="What Breathing room counts"
     >
