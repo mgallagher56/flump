@@ -32,7 +32,14 @@ export const siteFooterCompactRow = cva({
   },
 });
 
-export const siteFooterCompactNav = cva({ base: { minWidth: 0 } });
+/**
+ * The links stay on the logo's line (owner ruling). When they cannot all fit, as at 200% text on a
+ * phone, the line scrolls sideways inside the footer instead of widening the page, which on a phone
+ * also stretches the fixed bottom bar off screen (phone sweep 5).
+ */
+export const siteFooterCompactNav = cva({
+  base: { minWidth: 0, overflowX: "auto", overscrollBehaviorX: "contain" },
+});
 
 export const siteFooterCompactList = cva({
   base: {

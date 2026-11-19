@@ -75,4 +75,16 @@ describe("SiteFooter", () => {
     expect(screen.queryByRole("heading")).toBeNull();
     expect(container.querySelectorAll("footer > div")).toHaveLength(1);
   });
+
+  it("compact: links that cannot all fit scroll inside the footer, never widening the page", () => {
+    render(
+      <SiteFooter
+        links={[{ key: "a", label: "Always", href: "/a" }]}
+        logo={<a href="/">Logo</a>}
+        variant="compact"
+      />,
+    );
+    // At 200% text on a phone the one line of links is wider than the screen (phone sweep 5).
+    expect(screen.getByRole("navigation", { name: "Footer" }).className).toContain("ov-x_auto");
+  });
 });
