@@ -383,7 +383,7 @@ The thirteen decisions in [E41-mutation-testing-and-test-speed-plan.md](./E41-mu
 | 6 | Hosted Stryker dashboard (outside service) | A: no; HTML reports as CI artifacts only |
 | 7 | String faults | B: off in `apps/web` and `packages/ui` only; the number left out is reported |
 | 8 | Tests that assert a tax figure | A: through the existing vector sign-off. **The sign-off itself is not given by this acceptance** |
-| 9 | Speed target | B: two numbers set by the owner after the P0 baseline |
+| 9 | Speed target | B: two numbers set by the owner after the P0 baseline. Set on 19 November 2026 ("Yes, accept both"): required checks typical 3 min 30 s, worst 6 min; local web unit run 2 min on a quiet machine. Targets to report against, not CI gates |
 | 10 | May a fix reduce test isolation | B: per package, with five clean shuffled runs as proof and coordinator sign-off; backend unit files and pure packages only |
 | 11 | Backend database specs in mutation runs | A: left out at first; M4 reports what they alone cover |
 | 12 | A new law | B: after M6 the coordinator adds a short AGENTS.md section |
