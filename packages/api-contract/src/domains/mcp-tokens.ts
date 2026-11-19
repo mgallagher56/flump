@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IsoDateTime, ResponseMoney, Uuid } from "../primitives.js";
+import { IsoDate, IsoDateTime, ResponseMoney, Uuid } from "../primitives.js";
 import { NetWorthLeftOut, ResolvedAccountDto } from "./accounts.js";
 import { BudgetEntryLinkKind } from "./budget.js";
 import { RetirementPlanDto } from "./retirement.js";
@@ -327,7 +327,7 @@ const McpInputAccount = z.strictObject({
   /** The user's share of a joint account, 0 to 100; null where none is saved. */
   sharePercent: z.number().nullable().optional(),
   /** The day a 0% deal ends ("YYYY-MM-DD"); null or left out where none is saved. */
-  promoZeroPercentUntil: z.string().nullable().optional(),
+  promoZeroPercentUntil: IsoDate.nullable().optional(),
   /** A mortgage's repayment type; null or left out where none is saved (read as repayment). */
   repaymentType: z.enum(["repayment", "interest-only"]).nullable().optional(),
 });

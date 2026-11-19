@@ -436,4 +436,39 @@ describe("AgentDataService.getAccounts carries joint ownership (E34)", () => {
     )[0].select;
     expect(select).toMatchObject({ ownership: true, sharePercent: true });
   });
+
+  it("selects and returns a mortgage's repayment type and a card's 0% end date (leftovers 3, 6)", async () => {
+    const row = {
+      balance: "-1000",
+      interestRate: null,
+      monthlyContribution: null,
+      termMonths: null,
+      fixedRateEndDate: null,
+      currency: "GBP",
+      isCurrent: true,
+      ownership: "sole",
+      sharePercent: null,
+    };
+    const accountFind = vi.fn(async () => [
+      { ...row, id: "m1", name: "Home", type: "Mortgage", repaymentType: "interest-only" },
+      { ...row, id: "c1", name: "Card", type: "Credit Card", promoZeroPercentUntil: "2027-02-01" },
+    ]);
+    const service = agentData(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { getProfile: async () => ({}) } as never,
+      { find: accountFind } as never,
+      {} as never,
+      {} as never,
+    );
+    const [m, c] = await service.getAccounts("u1");
+    expect(m).toMatchObject({ repaymentType: "interest-only", promoZeroPercentUntil: null });
+    expect(c).toMatchObject({ repaymentType: null, promoZeroPercentUntil: "2027-02-01" });
+    const select = (
+      accountFind.mock.calls[0] as unknown as [{ select: Record<string, boolean> }]
+    )[0].select;
+    expect(select).toMatchObject({ repaymentType: true, promoZeroPercentUntil: true });
+  });
 });
