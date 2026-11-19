@@ -4,6 +4,7 @@ import {
   anonymiseContextPackInput,
   buildFlumpAiContextPack,
   formatAiContextPackMarkdown,
+  isSelfAssessmentEstimated,
 } from "./ai-context-pack.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { DEFAULT_FINANCIAL_BASELINE, userProfileToSavedBaseline } from "./profile.js";
@@ -797,7 +798,112 @@ describe("audit slice 2: the pack states saved facts and today's tax year", () =
       ],
     });
     const ledger = pack.taxSummary.selfAssessmentLedgerSummary;
-    expect(ledger?.effectivePayeSalary).toBe(0);
-    expect(Math.round(ledger?.netAdditionalTaxToPay ?? 0)).toBe(6872);
+    if (!ledger || !isSelfAssessmentEstimated(ledger)) throw new Error("expected a ledger");
+    expect(ledger.effectivePayeSalary).toBe(0);
+    expect(Math.round(ledger.netAdditionalTaxToPay)).toBe(6872);
+  });
+});
+
+describe("PR 785 review: the pack follows the one estimate rule (estimateInputsFor)", () => {
+  afterEach(() => vi.useRealTimers());
+  const rent = {
+    id: "r1",
+    type: "income" as const,
+    source: "rental" as const,
+    category: "rental_income",
+    name: "Rent",
+    amount: 10000,
+    frequency: "annual" as const,
+    date: "2026-05-01",
+  };
+  const on19Nov = () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-19T12:00:00Z"));
+  };
+
+  it("self-employed, 40,000 salary kept, rent but no self-employed record: no estimate", () => {
+    // Before: the ledger worked from £0 PAYE pay and gave a known figure. Now it names the fact.
+    on19Nov();
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({
+        employmentType: "self-employed",
+        annualSalary: 40000,
+      }),
+      taxRecords: [rent],
+    });
+    expect(pack.taxSummary.selfAssessmentLedgerSummary).toEqual({
+      notSet: ["selfEmploymentRecords"],
+    });
+    expect(formatAiContextPackMarkdown(pack)).toContain(
+      "- **Self Assessment estimate:** Not set. Add self-employed income records for this tax year.",
+    );
+  });
+
+  it("employee with no saved salary and rent: no estimate, names the salary", () => {
+    on19Nov();
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({ employmentType: "employed", annualSalary: null }),
+      taxRecords: [rent],
+    });
+    expect(pack.taxSummary.selfAssessmentLedgerSummary).toEqual({ notSet: ["annualSalary"] });
+    expect(formatAiContextPackMarkdown(pack)).toContain(
+      "- **Self Assessment estimate:** Not set. Add a salary.",
+    );
+  });
+
+  it("an employee with salary 30,000 and 10,000 rent gets the estimate in the Markdown", () => {
+    // 2026/27: rent 10,000 less the 1,000 property allowance = 9,000, all in the basic band
+    // above a 30,000 salary: 9,000 x 20% = 1,800.
+    on19Nov();
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({
+        employmentType: "employed",
+        annualSalary: 30000,
+        pensionPercent: 0,
+      }),
+      taxRecords: [rent],
+    });
+    expect(formatAiContextPackMarkdown(pack)).toContain("- **Self Assessment estimate:** £1,800");
+  });
+
+  it("states the no-pension assumption when a salary is saved but no pension rate (item 4)", () => {
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({ annualSalary: 30000, pensionPercent: null }),
+    });
+    const tx = pack.taxSummary.ukTaxCalculation;
+    expect("assumptions" in tx && tx.assumptions).toEqual([
+      "Pension contribution not set; this estimate assumes none.",
+    ]);
+    expect(formatAiContextPackMarkdown(pack)).toContain(
+      "- **Assumption:** Pension contribution not set; this estimate assumes none.",
+    );
+    // A saved 0% is a fact, not an assumption.
+    const saved = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({ annualSalary: 30000, pensionPercent: 0 }),
+    });
+    expect(saved.taxSummary.ukTaxCalculation).not.toHaveProperty("assumptions");
+    expect(formatAiContextPackMarkdown(saved)).not.toContain("**Assumption:**");
+  });
+
+  it("works no salary tax for a self-employed person: their salary is not PAYE pay (item 6)", () => {
+    // Before: computeUkTax took the 40,000 as employment income (adjusted net income 40,000).
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({
+        employmentType: "self-employed",
+        annualSalary: 40000,
+      }),
+    });
+    expect(pack.taxSummary.ukTaxCalculation).toEqual({ notApplicable: "selfEmployed" });
+    const md = formatAiContextPackMarkdown(pack);
+    expect(md).toContain(
+      "- **Salary before tax:** Not used. Self-employed income comes from the Self Assessment records.",
+    );
+    expect(md).not.toContain("Adjusted net income");
   });
 });

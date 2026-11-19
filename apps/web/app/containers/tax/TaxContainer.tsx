@@ -1,6 +1,7 @@
 import {
   calculateUKTax,
   categorizeAccountType,
+  estimateInputsFor,
   getCurrentUKTaxYear,
   getPreviousTaxYear,
   getTaxYearForRecordDate,
@@ -8,13 +9,14 @@ import {
   isBuyToLetAccount,
   isRecordActiveInTaxYear,
   isSupportedUkTaxYear,
-  payeSalaryForTax,
   type TaxCalculationResult,
+  type TaxEstimateMissingFact,
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
 import {
   Button,
+  ButtonLink,
   CollapsibleDrawer,
   DELTA_PANEL_COPY,
   EmptyState,
@@ -28,7 +30,7 @@ import {
 } from "@repo/ui";
 import { MoreHorizontal } from "lucide-react";
 import { type FC, useCallback, useMemo, useState } from "react";
-import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
+import { Link, useLoaderData, useRevalidator, useSearchParams } from "react-router";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddIncomeMenu } from "~/features/tax/components/AddIncomeMenu";
@@ -42,7 +44,13 @@ import { TaxYearComparison } from "~/features/tax/components/TaxYearComparison";
 import { availableTaxYears, resolveSelectedTaxYear } from "~/features/tax/hooks/taxYears";
 import { useTaxRecordEditor } from "~/features/tax/hooks/useTaxRecordEditor";
 import { SOURCE_PAGE_ORDER, taxYearFromParam } from "~/features/tax/source-pages";
-import { SCOTTISH_BANDS_NOTE, SOURCE_LABEL } from "~/features/tax/tax-labels";
+import {
+  addableEstimateFact,
+  ESTIMATE_MISSING_PROMPT,
+  SALARY_SETTINGS_PATH,
+  SCOTTISH_BANDS_NOTE,
+  SOURCE_LABEL,
+} from "~/features/tax/tax-labels";
 import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.self-assessment";
 import { PROFILE_VERSION_FIELD, versionField } from "~/services/conflict";
@@ -223,21 +231,37 @@ const SelfAssessmentPage: FC<{
     onSuccess: () => setTaxYearToDelete(null),
   });
 
-  // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
+  // The engine's one rule (estimateInputsFor), as the Dashboard: a self-employed person's salary
+  // is not PAYE pay, and a year whose estimate depends on a fact not set has no figure.
   const employmentType = userProfile?.employmentType ?? null;
-  const calculatedTaxYearsData = useMemo(() => {
-    const salary = payeSalaryForTax({ employmentType, annualSalary: payeSalary });
+  const { calculatedTaxYearsData, missingByYear } = useMemo(() => {
     const results: Record<string, TaxCalculationResult> = {};
+    const missing: Record<string, TaxEstimateMissingFact[]> = {};
     for (const year of availableYears) {
       // calculateUKTax is strict and throws for unsupported years (E22).
       if (!isSupportedUkTaxYear(year)) continue;
-      results[year] = calculateUKTax(year, initialRecords, salary, propertyOwnershipShare);
+      const inputs = estimateInputsFor(
+        { employmentType, annualSalary: payeSalary, propertyOwnershipShare },
+        initialRecords,
+        year,
+      );
+      if (inputs.status === "known") {
+        results[year] = calculateUKTax(
+          year,
+          inputs.records,
+          inputs.payeSalary,
+          inputs.ownershipShare,
+        );
+      } else {
+        missing[year] = inputs.missing;
+      }
     }
-    return results;
+    return { calculatedTaxYearsData: results, missingByYear: missing };
   }, [availableYears, initialRecords, payeSalary, propertyOwnershipShare, employmentType]);
 
-  const activeYearData: TaxCalculationResult | undefined =
-    calculatedTaxYearsData[selectedTaxYear] ?? Object.values(calculatedTaxYearsData)[0];
+  const activeYearData: TaxCalculationResult | undefined = calculatedTaxYearsData[selectedTaxYear];
+  // The fact to add when the selected year's estimate cannot be worked out.
+  const missingFact = addableEstimateFact(missingByYear[selectedTaxYear]);
 
   const handleSaveProfile = useCallback(() => {
     setIsProfileSaving(true);
@@ -307,8 +331,23 @@ const SelfAssessmentPage: FC<{
   );
   // The one "Unverified estimate" notice goes only where an estimate is shown: a year with
   // income outside PAYE. A year with expenses only has no estimate, so no notice.
-  const showEstimate =
-    activeYearData !== undefined && nonPayeIncome(initialRecords, selectedTaxYear) > 0;
+  const hasNonPayeIncome = nonPayeIncome(initialRecords, selectedTaxYear) > 0;
+  const showEstimate = activeYearData !== undefined && hasNonPayeIncome;
+  const unknownAction =
+    missingFact === "selfEmploymentRecords" ? (
+      <Button
+        size="sm"
+        type="button"
+        variant="secondary"
+        onClick={() => editor.openAdd("self-employed", "income")}
+      >
+        {ESTIMATE_MISSING_PROMPT.selfEmploymentRecords.actionLabel}
+      </Button>
+    ) : missingFact === "annualSalary" ? (
+      <ButtonLink asChild size="sm" variant="secondary">
+        <Link to={SALARY_SETTINGS_PATH}>{ESTIMATE_MISSING_PROMPT.annualSalary.actionLabel}</Link>
+      </ButtonLink>
+    ) : undefined;
 
   return (
     <PageBody className={pageRoot()} data-testid="tax-page">
@@ -365,15 +404,18 @@ const SelfAssessmentPage: FC<{
         records={initialRecords}
         result={activeYearData}
         taxYear={selectedTaxYear}
+        unknownAction={unknownAction}
+        unknownPrompt={missingFact ? ESTIMATE_MISSING_PROMPT[missingFact].prompt : undefined}
       />
 
       {/* How the estimate is worked out sits with the estimate, before the list of sources. */}
-      {showEstimate && activeYearData ? (
+      {/* Shown while the estimate is unknown too, so the salary can be typed in here. */}
+      {hasNonPayeIncome && (activeYearData || missingFact) ? (
         <CollapsibleDrawer title="How the estimate is worked out" variant="quiet">
           <TaxReservePanel
             taxYear={selectedTaxYear}
             result={activeYearData}
-            totalIncome={activeYearData.totalGrossIncome || (payeSalary ?? 0)}
+            totalIncome={activeYearData?.totalGrossIncome || (payeSalary ?? 0)}
             payeSalary={payeSalary}
             onPayeSalaryChange={setPayeSalary}
             ownershipSharePct={propertyOwnershipShare}

@@ -5,7 +5,7 @@ import type {
 } from "@flump/finance-engine";
 import { CollapsibleDrawer, Money, PageSection, VisuallyHidden } from "@repo/ui";
 import { Scale } from "lucide-react";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import {
   exclusions,
   figure,
@@ -44,9 +44,12 @@ export interface AllowanceComparisonProps {
   comparison: AllowanceComparisonResult;
   /**
    * The allowance the page's estimate used for this source: the calculation's
-   * `tradingAllowanceUsed` or `propertyAllowanceUsed`, so the words match the estimate.
+   * `tradingAllowanceUsed` or `propertyAllowanceUsed`, so the words match the estimate. null when
+   * the estimate cannot be worked out (a fact it depends on is not set).
    */
-  allowanceUsedInEstimate: number;
+  allowanceUsedInEstimate: number | null;
+  /** Said in place of which deduction the estimate uses, when it cannot be worked out. */
+  unknownEstimate?: ReactNode;
   /** Rental: the person's share of the property, 0 to 100. */
   ownershipSharePct?: number;
   /**
@@ -67,12 +70,14 @@ export const AllowanceComparison: FC<AllowanceComparisonProps> = ({
   allowanceUsedInEstimate,
   ownershipSharePct,
   routesTie = false,
+  unknownEstimate,
 }) => {
   const rental = comparison.source === "rental";
   const allowanceName = rental ? "property allowance" : "trading allowance";
   const AllowanceName = rental ? "Property allowance" : "Trading allowance";
   const limited = comparison.usableAllowance < comparison.allowance;
-  const usesAllowance = allowanceUsedInEstimate > 0;
+  const estimateKnown = allowanceUsedInEstimate !== null;
+  const usesAllowance = (allowanceUsedInEstimate ?? 0) > 0;
   const showShare = rental && ownershipSharePct !== undefined && ownershipSharePct < 100;
 
   const largerLine =
@@ -130,9 +135,16 @@ export const AllowanceComparison: FC<AllowanceComparisonProps> = ({
               {`These figures are your ${percentFormat.format(ownershipSharePct ?? 100)}% share of the property.`}
             </p>
           ) : null}
-          <p className={line()}>
-            {largerLine} {estimateLine}
-          </p>
+          {estimateKnown ? (
+            <p className={line()}>
+              {largerLine} {estimateLine}
+            </p>
+          ) : (
+            <>
+              <p className={line()}>{largerLine}</p>
+              {unknownEstimate ? <p className={line()}>{unknownEstimate}</p> : null}
+            </>
+          )}
           <p className={line()}>The allowance replaces your expenses. It is not added to them.</p>
           {/* Only when it is true of the estimate: the allowance was used, not the expenses. */}
           {comparison.withinFullRelief && usesAllowance ? (

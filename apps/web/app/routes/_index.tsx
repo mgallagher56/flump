@@ -154,6 +154,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const estimatedTaxDueNotes: string[] = isFigureKnown(picture.estimatedTaxDue)
     ? [...(picture.estimatedTaxDue.assumptions ?? [])]
     : [];
+  // What an unknown estimate is missing, so the card names the fact to add.
+  const estimatedTaxDueMissing: string[] = isFigureKnown(picture.estimatedTaxDue)
+    ? []
+    : [...picture.estimatedTaxDue.missing];
 
   // Estimated take-home comes from the engine's one selector; unknown stays unknown.
   const takeHomeFigure = selectTakeHome(profileFactsFromProfile(userProfile));
@@ -292,6 +296,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       netProfit,
       estimatedTaxDue,
       estimatedTaxDueNotes,
+      estimatedTaxDueMissing,
       recordsCount: currentYearRecords.length,
     },
     debtData: buildDebtSummary(portfolioSnapshot),

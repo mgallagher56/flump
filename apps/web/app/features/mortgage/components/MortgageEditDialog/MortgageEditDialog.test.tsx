@@ -177,7 +177,9 @@ describe("<MortgageEditDialog />", () => {
       );
       expect(screen.queryByLabelText(/What your home is worth/)).toBeNull();
       expect(
-        screen.getByText("Your home value comes from your properties on Accounts."),
+        screen.getByText(
+          "You have more than one property on Accounts, so we cannot tell which is your home. Change each value on Accounts.",
+        ),
       ).toBeDefined();
       // One mortgage against several homes would misstate the equity, so no line shows.
       expect(screen.queryByTestId("home-equity-line")).toBeNull();

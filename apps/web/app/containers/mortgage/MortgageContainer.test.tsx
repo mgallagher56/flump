@@ -1427,7 +1427,9 @@ describe("<MortgageContainer />", () => {
       expect(dialog.queryByTestId("home-equity-line")).toBeNull();
       expect(dialog.queryByLabelText(/^What your home is worth/)).toBeNull();
       expect(
-        dialog.getByText("Your home value comes from your properties on Accounts."),
+        dialog.getByText(
+          "You have more than one property on Accounts, so we cannot tell which is your home. Change each value on Accounts.",
+        ),
       ).toBeDefined();
       fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
       save();

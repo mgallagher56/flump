@@ -51,4 +51,21 @@ describe("TaxYearComparison", () => {
     );
     expect(screen.queryByText("Add salary")).toBeNull();
   });
+
+  it("shows Not set, never £0, for a year whose estimate cannot be worked out", () => {
+    // 2025/26 has no result (a fact the estimate depends on is not set); 2026/27 has one.
+    render(
+      <MemoryRouter>
+        <TaxYearComparison
+          years={["2025/26", "2026/27"]}
+          selectedYear="2026/27"
+          results={{ "2026/27": taxResultFixture }}
+        />
+      </MemoryRouter>,
+    );
+    const bill = screen.getByRole("rowheader", { name: "Estimated tax bill" }).closest("tr");
+    const cells = Array.from(bill?.querySelectorAll("td") ?? []).map((c) => c.textContent);
+    expect(cells[0]).toBe("Not set");
+    expect(cells[1]).not.toBe("Not set");
+  });
 });

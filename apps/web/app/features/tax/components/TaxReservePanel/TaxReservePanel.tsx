@@ -27,7 +27,11 @@ const TAPER_NOTE_FROM = 90_000;
 
 export interface TaxReservePanelProps {
   taxYear: string;
-  result: TaxCalculationResult;
+  /**
+   * The worked estimate. Undefined while a fact it depends on is not set: then only "Your
+   * figures" shows, so the salary can be added here, and no workings from a stand-in £0.
+   */
+  result?: TaxCalculationResult;
   /** Total income in this estimate, before pension contributions and Gift Aid. */
   totalIncome: number;
   /** Yearly salary, 0 when that is the saved figure, null when it is not known. */
@@ -141,70 +145,78 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
           </div>
         </Card>
 
-        <Card padding="lg">
-          <div className={cardBody()}>
-            <h3 className={cardTitle()}>Workings for {taxYear}</h3>
-            <dl className={list()}>
-              <Line
-                label="Salary through PAYE"
-                value={
-                  result.effectivePayeSalary > 0 || payeSalary !== null ? (
-                    gbp(result.effectivePayeSalary)
-                  ) : (
-                    <NotSet href="/app/profile#settings-age-and-pay" subject="salary" />
-                  )
-                }
-              />
-              <Line label="Self-employed profit" value={gbp(result.seProfit)} />
-              <Line
-                label="Your share of rental profit, before mortgage interest"
-                value={gbp(result.rentalProfitBeforeInterestShare)}
-              />
-              <Line
-                label="Savings interest and dividends"
-                value={gbp(result.savingsInterestGross + result.dividendIncomeGross)}
-              />
-              <Line emphasis="subtotal" label="Total income" value={gbp(result.totalGrossIncome)} />
-              <Line label="Personal Allowance" value={gbp(result.personalAllowance)} />
-              <Line label="Taxable income" value={gbp(result.totalTaxableIncome)} />
-              <Line label="Income Tax on self-employed profit" value={gbp(result.seTaxDue)} />
-              <Line
-                label="National Insurance on self-employed profit (Class 4)"
-                value={gbp(result.seClass4NIDue)}
-              />
-              <Line
-                label="Tax on rental profit"
-                value={gbp(result.rentalPropertyTaxDueBeforeCredit)}
-              />
-              <Line
-                label="Tax credit for mortgage interest (Section 24)"
-                value={gbp(-result.rentalPropertyTaxCredit)}
-              />
-              {result.savingsTaxDue > 0 ? (
+        {result ? (
+          <Card padding="lg">
+            <div className={cardBody()}>
+              <h3 className={cardTitle()}>Workings for {taxYear}</h3>
+              <dl className={list()}>
                 <Line
-                  label="Tax on savings interest above the Personal Savings Allowance"
-                  value={gbp(result.savingsTaxDue)}
+                  label="Salary through PAYE"
+                  value={
+                    result.effectivePayeSalary > 0 || payeSalary !== null ? (
+                      gbp(result.effectivePayeSalary)
+                    ) : (
+                      <NotSet href="/app/profile#settings-age-and-pay" subject="salary" />
+                    )
+                  }
                 />
-              ) : null}
-              {result.dividendTaxDue > 0 ? (
-                <Line label="Dividend tax" value={gbp(result.dividendTaxDue)} />
-              ) : null}
-              <Line
-                emphasis="total"
-                label="Estimated tax bill"
-                value={gbp(result.netAdditionalTaxToPay)}
-              />
-            </dl>
-            {taperNote ? <p className={taperLine()}>{taperNote}</p> : null}
-          </div>
-        </Card>
+                <Line label="Self-employed profit" value={gbp(result.seProfit)} />
+                <Line
+                  label="Your share of rental profit, before mortgage interest"
+                  value={gbp(result.rentalProfitBeforeInterestShare)}
+                />
+                <Line
+                  label="Savings interest and dividends"
+                  value={gbp(result.savingsInterestGross + result.dividendIncomeGross)}
+                />
+                <Line
+                  emphasis="subtotal"
+                  label="Total income"
+                  value={gbp(result.totalGrossIncome)}
+                />
+                <Line label="Personal Allowance" value={gbp(result.personalAllowance)} />
+                <Line label="Taxable income" value={gbp(result.totalTaxableIncome)} />
+                <Line label="Income Tax on self-employed profit" value={gbp(result.seTaxDue)} />
+                <Line
+                  label="National Insurance on self-employed profit (Class 4)"
+                  value={gbp(result.seClass4NIDue)}
+                />
+                <Line
+                  label="Tax on rental profit"
+                  value={gbp(result.rentalPropertyTaxDueBeforeCredit)}
+                />
+                <Line
+                  label="Tax credit for mortgage interest (Section 24)"
+                  value={gbp(-result.rentalPropertyTaxCredit)}
+                />
+                {result.savingsTaxDue > 0 ? (
+                  <Line
+                    label="Tax on savings interest above the Personal Savings Allowance"
+                    value={gbp(result.savingsTaxDue)}
+                  />
+                ) : null}
+                {result.dividendTaxDue > 0 ? (
+                  <Line label="Dividend tax" value={gbp(result.dividendTaxDue)} />
+                ) : null}
+                <Line
+                  emphasis="total"
+                  label="Estimated tax bill"
+                  value={gbp(result.netAdditionalTaxToPay)}
+                />
+              </dl>
+              {taperNote ? <p className={taperLine()}>{taperNote}</p> : null}
+            </div>
+          </Card>
+        ) : null}
       </div>
 
-      <PaymentsOnAccountCard
-        annualSelfAssessmentTax={result.netAdditionalTaxToPay}
-        taxDeductedAtSource={result.payeTaxDue}
-        taxYear={taxYear}
-      />
+      {result ? (
+        <PaymentsOnAccountCard
+          annualSelfAssessmentTax={result.netAdditionalTaxToPay}
+          taxDeductedAtSource={result.payeTaxDue}
+          taxYear={taxYear}
+        />
+      ) : null}
     </div>
   );
 };

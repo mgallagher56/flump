@@ -419,3 +419,26 @@ describe("toMcpInputWire with stored values outside today's lists", () => {
     expect(wire.taxRecords[0]).toMatchObject({ type: "expense", frequency: "one-off" });
   });
 });
+
+describe("toMcpInputWire carries the unsaved-figure list (PR 785 review, item 6)", () => {
+  it("sends notSet so the local pack leaves unsaved pension rates out, never 0", () => {
+    const unsaved: BuildContextPackInput = {
+      ...raw,
+      baseline: {
+        ...raw.baseline,
+        pensionContributionPct: 0,
+        employerPensionMatchPct: 0,
+        notSet: ["pensionContributionPct", "employerPensionMatchPct"],
+      },
+    };
+    const wire = JSON.parse(JSON.stringify(toMcpInputWire(unsaved, false)));
+    const parsed = McpInputResponse.shape.input.safeParse(wire);
+    expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+    expect(wire.baseline.notSet).toEqual(["pensionContributionPct", "employerPensionMatchPct"]);
+  });
+
+  it("sends no notSet key when every figure is saved", () => {
+    const wire = JSON.parse(JSON.stringify(toMcpInputWire(raw, false)));
+    expect(wire.baseline).not.toHaveProperty("notSet");
+  });
+});

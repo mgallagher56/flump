@@ -1,5 +1,5 @@
-import { payeSalaryForTax } from "../../paye-salary-for-tax.js";
-import { calculateUKTax, isRecordActiveInTaxYear, type TaxRecord } from "../../tax-calculator.js";
+import { calculateUKTax, type TaxRecord } from "../../tax-calculator.js";
+import { estimateInputsFor } from "../../tax-estimate-inputs.js";
 import type { UkTaxYear } from "../../types.js";
 import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.js";
 import { type Figure, figureKnown, figureUnknown } from "../figure.js";
@@ -22,16 +22,6 @@ export interface SelectEstimatedTaxDueOptions {
 
 export const ESTIMATED_TAX_EWNI_BANDS_NOTE =
   "Uses England, Wales and Northern Ireland Income Tax bands.";
-
-/** Records that carry income no employer has already taxed. ISA interest is tax-free. */
-function isUntaxedIncome(record: TaxRecord): boolean {
-  if (record.type !== "income") return false;
-  if (record.source === "rental" || record.source === "self-employed") return true;
-  return (
-    record.source === "savings" &&
-    (record.category === "savings_interest" || record.category === "dividend_income")
-  );
-}
 
 /**
  * Estimated tax due for the current tax year (C-11): what calculateUKTax encodes as
@@ -61,34 +51,10 @@ export function selectEstimatedTaxDue(
     throw error;
   }
 
-  const inYear = (records ?? []).filter((r) => isRecordActiveInTaxYear(r, taxYear));
-  if (!inYear.some(isUntaxedIncome)) return figureUnknown(["untaxedIncomeRecords"], "not-set");
-
-  const selfEmployed = facts.employmentType === "self-employed";
-  const salary = facts.annualSalary !== null && facts.annualSalary > 0 ? facts.annualSalary : null;
-  const loggedSalary = inYear.some((r) => r.source === "paye" && r.category === "paye_salary");
-  if (facts.employmentType === "employed" && salary === null && !loggedSalary) {
-    return figureUnknown(["annualSalary"], "not-set");
-  }
-  const loggedTrading = inYear.some((r) => r.source === "self-employed" && r.type === "income");
-  if (selfEmployed && !loggedTrading && facts.annualSalary !== 0) {
-    return figureUnknown(["selfEmploymentRecords"], "not-set");
-  }
-
-  const share =
-    facts.propertyOwnershipShare !== null &&
-    facts.propertyOwnershipShare !== undefined &&
-    facts.propertyOwnershipShare >= 0 &&
-    facts.propertyOwnershipShare <= 100
-      ? facts.propertyOwnershipShare
-      : 100;
-
-  const result = calculateUKTax(
-    taxYear,
-    inYear,
-    payeSalaryForTax({ employmentType: facts.employmentType, annualSalary: salary }),
-    share,
-  );
+  // The one rule every Self Assessment surface uses (estimateInputsFor).
+  const inputs = estimateInputsFor(facts, records, taxYear);
+  if (inputs.status !== "known") return figureUnknown(inputs.missing, "not-set");
+  const result = calculateUKTax(taxYear, inputs.records, inputs.payeSalary, inputs.ownershipShare);
   const untaxedIncome =
     result.rentalIncomeGrossShare +
     result.seIncomeGross +

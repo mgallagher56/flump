@@ -6,8 +6,9 @@
  * employer has already taxed, so it is never passed as PAYE pay; their self-employed tax records
  * carry that income. An unknown salary (null, missing or not a positive number) counts as none.
  *
- * Owner decision 15 (what the salary field means for a self-employed person) is open. This keeps
- * the treatment the Dashboard selector already used, and adds no new rule.
+ * Owner decision 15, option A, accepted 19 Nov 2026: the salary field is pay from an employer
+ * only, and a self-employed person's income comes from their Self Assessment records. Whether an
+ * estimate can be worked out at all is estimateInputsFor (tax-estimate-inputs.ts), which calls this.
  */
 export interface PayeSalaryForTaxInput {
   /**

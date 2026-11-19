@@ -29,9 +29,12 @@ const clientIpEnv = { WEB_CLIENT_IP_HMAC_KEY: randomBytes(32).toString("hex") };
 /**
  * The built backend, web app and marketing site, shared by the smoke and visual configs.
  * `extraEnv` is added to every server (the visual suite passes its frozen clock).
+ * `backendEnv` is added to the backend only: the main config uses it to let the test user into
+ * the friends-beta retirement page, which the visual, a11y, sweep and interaction suites must not see.
  */
 export function webServers(
   extraEnv: Record<string, string> = {},
+  backendEnv: Record<string, string> = {},
 ): NonNullable<PlaywrightTestConfig["webServer"]> {
   const databaseUrl = resolveDatabaseUrl();
   return [
@@ -51,9 +54,7 @@ export function webServers(
         DB_SSL: "false",
         CORS_ALLOWED_ORIGINS: WEB_URL,
         FRONTEND_URL: WEB_URL,
-        // Retirement is a friends-beta page (retirement.access.ts). Let the fixed dev-bypass test
-        // user in, so the L58 link test can reach it. Test harness only.
-        RETIREMENT_ALLOWED_USER_IDS: "dev_user_123",
+        ...backendEnv,
       },
     },
     {

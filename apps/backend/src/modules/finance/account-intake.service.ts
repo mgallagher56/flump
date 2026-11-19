@@ -778,7 +778,8 @@ export class AccountIntakeService implements IAccountIntake {
         account.balance = storedBalance(account.type, Number(body.balance));
       } else if (typeChanged && Number.isFinite(Number(account.balance))) {
         // A type change alone re-signs the stored balance too (BE-05, audit H6). A debt that
-        // becomes an asset turns the amount owed positive, as its history does (CH-4).
+        // becomes an asset that cannot be overdrawn turns positive, as its history does; one that
+        // becomes a current account stays overdrawn (CH-4, typeChangeFlipsSign).
         const current = Number(account.balance);
         account.balance = debtBecomesAsset(previousType, account.type)
           ? Math.abs(current)

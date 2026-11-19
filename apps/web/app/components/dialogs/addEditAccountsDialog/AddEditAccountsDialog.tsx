@@ -5,6 +5,7 @@ import {
   describeJointLiabilityNotice,
   isBuyToLetAccount,
   isResidentialHomeAccount,
+  typeChangeFlipsSign,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -77,6 +78,9 @@ const studentLoanPlans = {
   items: [{ id: "", name: "Choose a plan" }, ...STUDENT_LOAN_PLAN_OPTIONS.map((p) => ({ ...p }))],
 };
 const PLAN_REQUIRED_MESSAGE = "Choose a repayment plan";
+/** Shown before saving a type change that turns a debt into something you own (CH-4). */
+export const TYPE_FLIPS_SIGN_NOTE =
+  "This turns the debt into something you own, so net worth this month and in every past month rises by twice its balance.";
 
 /**
  * Liabilities are stored as minus the amount owed, but the form shows the positive amount owed,
@@ -514,6 +518,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     type: formInput.type?.[0],
     ownership: effectiveOwnership,
   });
+  // A debt changed to a type that cannot be overdrawn turns positive, past months too (CH-4).
+  const typeFlipsSign =
+    isEditAccount && typeChangeFlipsSign(selectedAccount.type, formInput.type?.[0]);
   // A saved joint account edited into an ISA or pension is saved as sole: say so (E34).
   const becomesSole = isEditAccount && selectedAccount.ownership === "joint" && !jointEligible;
 
@@ -651,6 +658,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 />
               )}
             </FormField>
+            {typeFlipsSign ? (
+              <p className={jointNotice()} data-testid="type-flips-sign-note" role="note">
+                {TYPE_FLIPS_SIGN_NOTE}
+              </p>
+            ) : null}
             {formInput.type?.[0] === SAVING ||
             formInput.type?.[0] === INVESTMENT ||
             formInput.type?.[0] === MORTGAGE ? (

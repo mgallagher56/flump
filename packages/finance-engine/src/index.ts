@@ -1,4 +1,5 @@
 export * from "./account-category.js";
+export * from "./account-type-change.js";
 export * from "./ai-context-pack.js";
 export * from "./anonymise.js";
 export * from "./budget-entry-share.js";
@@ -27,6 +28,7 @@ export * from "./savings-interest.js";
 export * from "./section24.js";
 export * from "./snapshots.js";
 export * from "./tax-calculator.js";
+export * from "./tax-estimate-inputs.js";
 export * from "./tax-rules.js";
 export * from "./tax-year-verification.js";
 export * from "./types.js";
