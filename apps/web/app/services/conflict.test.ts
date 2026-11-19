@@ -10,6 +10,7 @@ import {
   registerSavedDataReload,
   reloadAfterConflict,
   revalidateOnConflict,
+  revalidateRootData,
   VERSION_FIELD,
   versionEtag,
   versionField,
@@ -66,6 +67,22 @@ describe("conditional writes on the web (BE-16)", () => {
     expect(revalidateOnConflict(args(400, false))).toBe(false);
     expect(revalidateOnConflict(args(undefined, true))).toBe(true);
     expect(revalidateOnConflict(args(200, true))).toBe(true);
+  });
+
+  it("reloads the root's saved profile on every page change, so no page keeps an old one (slice 8)", () => {
+    const nav = (from: string, to: string, defaultShouldRevalidate = false) =>
+      ({
+        currentUrl: new URL(`https://app.test${from}`),
+        nextUrl: new URL(`https://app.test${to}`),
+        defaultShouldRevalidate,
+      }) as never;
+    expect(revalidateRootData(nav("/app", "/app/pension"))).toBe(true);
+    // The same page with a new query or hash is not a page change.
+    expect(revalidateRootData(nav("/app/budget", "/app/budget?setup=common"))).toBe(false);
+    expect(revalidateRootData(nav("/app/budget", "/app/budget", true))).toBe(true);
+    expect(revalidateRootData({ actionStatus: 412, defaultShouldRevalidate: false } as never)).toBe(
+      true,
+    );
   });
 
   it("reloads saved data for a browser-side save only while the app shell has registered how", () => {

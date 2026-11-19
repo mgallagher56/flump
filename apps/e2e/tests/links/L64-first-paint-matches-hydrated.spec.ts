@@ -50,12 +50,11 @@ test("L64 the first paint and the hydrated Dashboard show the same pages and che
     });
     await page.goto("/app");
     await waitForHydration(page);
-    await page.waitForLoadState("networkidle");
-    const hydrated = await firstView(page);
 
     expect(server.nav).not.toContain("Savings and pension");
     expect(server.checklist).toBe(0);
-    expect(hydrated).toEqual(server);
+    // Effects run just after hydration; anything that changed the view would show here.
+    await expect.poll(() => firstView(page)).toEqual(server);
     expect(hydrationErrors).toEqual([]);
   } finally {
     await api(page, "/user-profile/checklist", "PATCH", { dismissed: false });

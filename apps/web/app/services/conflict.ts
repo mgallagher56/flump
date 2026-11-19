@@ -78,3 +78,15 @@ export const revalidateOnConflict: ShouldRevalidateFunction = ({
   actionStatus,
   defaultShouldRevalidate,
 }) => actionStatus === CONFLICT_STATUS || defaultShouldRevalidate;
+
+/**
+ * The root route's `shouldRevalidate` (audit slice 8). The root loader holds the saved profile the
+ * navigation, the header and every profile save read, so it reloads on each page change as well
+ * as after a 412: a profile changed on another device or in another tab is never shown, or sent
+ * as If-Match, from an older copy. A new query or hash on the same page is not a page change.
+ */
+export const revalidateRootData: ShouldRevalidateFunction = (args) => {
+  if (revalidateOnConflict(args)) return true;
+  const { currentUrl, nextUrl } = args;
+  return Boolean(currentUrl && nextUrl && currentUrl.pathname !== nextUrl.pathname);
+};

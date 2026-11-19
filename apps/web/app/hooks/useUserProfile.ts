@@ -306,22 +306,43 @@ const inOrder = <T>(write: () => Promise<T>): Promise<T> => {
  * follows each save; until then the next save in the queue sends this, not the older loaded one.
  * Browser only: writes never run on the server, where module state is shared between requests.
  */
-let writtenVersion: { id: string; updatedAt: string } | null = null;
+let writtenVersion: { id: string; updatedAt: string; steps: string[] } | null = null;
 
-const rememberWritten = (saved: { id?: string; updatedAt?: string } | null | undefined) => {
-  if (saved?.id && saved.updatedAt) writtenVersion = { id: saved.id, updatedAt: saved.updatedAt };
+const rememberWritten = (
+  saved:
+    | { id?: string; updatedAt?: string; setupChecklistCompletedSteps?: string[] }
+    | null
+    | undefined,
+) => {
+  if (saved?.id && saved.updatedAt) {
+    writtenVersion = {
+      id: saved.id,
+      updatedAt: saved.updatedAt,
+      steps: Array.isArray(saved.setupChecklistCompletedSteps)
+        ? saved.setupChecklistCompletedSteps
+        : [],
+    };
+  }
 };
+
+/** True when this tab's last write is newer than the loaded profile (the reload has not landed). */
+const writtenIsNewer = (loaded: UserProfile): boolean =>
+  Boolean(
+    writtenVersion &&
+      writtenVersion.id === loaded.id &&
+      // Compared as instants, so a change in how the backend writes the timestamp cannot mislead.
+      Date.parse(writtenVersion.updatedAt) > Date.parse(loaded.updatedAt),
+  );
 
 /** The newer of the loaded version and the one this tab last wrote, for the same profile. */
-const versionToSend = (loaded: UserProfile): string => {
-  if (writtenVersion && writtenVersion.id === loaded.id) {
-    // Compared as instants, so a change in how the backend writes the timestamp cannot mislead.
-    return Date.parse(writtenVersion.updatedAt) > Date.parse(loaded.updatedAt)
-      ? writtenVersion.updatedAt
-      : loaded.updatedAt;
-  }
-  return loaded.updatedAt;
-};
+const versionToSend = (loaded: UserProfile): string =>
+  writtenIsNewer(loaded) && writtenVersion ? writtenVersion.updatedAt : loaded.updatedAt;
+
+/** The completed setup steps as last known: this tab's newer write, else the loaded profile. */
+const completedStepsNow = (loaded: UserProfile): string[] =>
+  writtenIsNewer(loaded) && writtenVersion
+    ? writtenVersion.steps
+    : loaded.setupChecklistCompletedSteps;
 
 /** Test seam: forget the version this tab last wrote. */
 export function forgetWrittenProfileVersion(): void {
@@ -359,8 +380,12 @@ export function useUserProfile() {
     await revalidatorRef.current.revalidate();
   }, []);
 
+  /**
+   * Saves profile fields. `reload: false` skips the reload for a save made just before leaving the
+   * page (onboarding's last step): the navigation that follows loads saved data itself.
+   */
   const updateProfile = useCallback(
-    (updates: UserProfileUpdate): Promise<void> =>
+    (updates: UserProfileUpdate, options: { reload?: boolean } = {}): Promise<void> =>
       inOrder(async () => {
         try {
           const updated = await apiFetch("/user-profile", {
@@ -381,7 +406,7 @@ export function useUserProfile() {
           }
           throw err;
         }
-        await reloadSavedData();
+        if (options.reload !== false) await reloadSavedData();
       }),
     [reloadSavedData, toast],
   );
@@ -391,10 +416,12 @@ export function useUserProfile() {
    * on a page visit (LD-2, CS-6). A step already in that state sends nothing.
    */
   const markChecklistStep = useCallback(
-    (step: string, completed: boolean): Promise<void> => {
-      const done = profileRef.current.setupChecklistCompletedSteps.includes(step);
-      if (done === completed) return Promise.resolve();
-      return inOrder(async () => {
+    (step: string, completed: boolean): Promise<void> =>
+      inOrder(async () => {
+        // Checked when its turn in the queue comes, against the latest known steps, so a step
+        // undone and redone before the reload lands still sends both.
+        const done = completedStepsNow(profileRef.current).includes(step);
+        if (done === completed) return;
         // Unconditional by contract (UNCONDITIONAL_UPDATE_ROUTES): it sets one named step. It
         // still moves the profile's version, so it shares the queue and remembers the answer.
         const updated = await apiFetch("/user-profile/checklist", {
@@ -404,8 +431,7 @@ export function useUserProfile() {
         });
         rememberWritten(updated);
         await reloadSavedData();
-      });
-    },
+      }),
     [reloadSavedData],
   );
 

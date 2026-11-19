@@ -208,7 +208,10 @@ describe("OnboardingRoute (4-step flow)", () => {
       expect(mockUpdateProfile).toHaveBeenCalledWith(
         expect.objectContaining({ enabledPages: expect.any(Array) }),
       );
-      expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
+      expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+        { onboardingCompleted: true },
+        { reload: false },
+      );
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
     expect(mockNotify).toHaveBeenCalledWith("Details saved");
@@ -394,7 +397,10 @@ describe("OnboardingRoute (4-step flow)", () => {
     clickFinish();
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
     expect(accountCalls()).toBe(accountsFirst);
-    expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
+    expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+      { onboardingCompleted: true },
+      { reload: false },
+    );
   });
 
   it("skips accounts and budget entries that already exist on the backend", async () => {
@@ -683,6 +689,9 @@ describe("OnboardingRoute (4-step flow)", () => {
       enabledPages: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
       dashboardWidgets: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
     });
-    expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
+    expect(mockUpdateProfile).toHaveBeenLastCalledWith(
+      { onboardingCompleted: true },
+      { reload: false },
+    );
   });
 });
