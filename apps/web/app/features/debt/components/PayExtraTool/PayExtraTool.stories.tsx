@@ -78,8 +78,16 @@ export const NoExtraPayment: Story = {
 export const SameResult: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // The line now sits in the "About Payoff order" popover.
+    await userEvent.click(
+      canvas.getAllByRole("button", { name: "About Payoff order" })[0] as HTMLElement,
+    );
     await expect(
-      canvas.getAllByText("Both orders give the same result for your debts.").length,
+      (
+        await within(document.body).findAllByText(
+          "Both orders give the same result for your debts.",
+        )
+      ).length,
     ).toBeGreaterThan(0);
   },
 };

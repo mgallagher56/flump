@@ -128,7 +128,9 @@ export const WorkplacePension: Story = {
   args: workplaceArgs,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByDisplayValue("6%")).toBeInTheDocument();
+    // The what-if zone starts closed; its content mounts once opened.
+    await userEvent.click(canvas.getByRole("button", { name: "Show what-if: change your plan" }));
+    await expect(canvas.getByDisplayValue("6")).toBeInTheDocument();
     await expect(canvas.getByRole("figure", { name: "Pot each year" })).toBeInTheDocument();
     await userEvent.click(
       canvas.getByLabelText("Base contributions on pay that counts for your pension"),
@@ -163,6 +165,7 @@ export const WorkplacePensionDefaultRates: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Show what-if: change your plan" }));
     await userEvent.click(
       canvas.getByRole("button", { name: /Assumptions, pots and year by year/ }),
     );

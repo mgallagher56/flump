@@ -57,6 +57,12 @@ export const Filled: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect((await canvas.findAllByText("Total in your pots")).length).toBeGreaterThan(0);
+    // The what-if zone starts closed and its projection notice mounts on open, so open each theme's.
+    for (const button of await canvas.findAllByRole("button", {
+      name: "Show what-if: change your contribution",
+    })) {
+      await userEvent.click(button);
+    }
     for (const root of themes(canvasElement)) {
       expectPageRules(root, { maxFigures: 12, projectionNotices: 1 });
     }
