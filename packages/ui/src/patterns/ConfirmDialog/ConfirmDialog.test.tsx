@@ -378,12 +378,59 @@ describe("ConfirmDialog", () => {
     expect(document.body.querySelector('[role="alertdialog"]')?.parentElement).toBe(document.body);
   });
 
-  it("opens at its title: Cancel takes focus without scrolling the dialog (P09)", () => {
-    const focus = vi.spyOn(HTMLButtonElement.prototype, "focus");
-    setup({ requireText: "delete" });
-    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
-    expect(screen.getByRole("alertdialog").scrollTop).toBe(0);
-    focus.mockRestore();
+  describe("opens at its title, without scrolling the dialog (P09)", () => {
+    /**
+     * jsdom never scrolls, so the spy stands in for a browser that scrolls the dialog to the
+     * focused button: it records which button took focus and sets the dialog's scrollTop to 120.
+     * The dialog must then put it back to 0.
+     */
+    const spyOnFocus = () => {
+      let scrollTop = 0;
+      const focused: string[] = [];
+      const focus = vi.spyOn(HTMLButtonElement.prototype, "focus").mockImplementation(function (
+        this: HTMLButtonElement,
+      ) {
+        focused.push(this.textContent ?? "");
+        const dialog = this.closest<HTMLElement>('[role="alertdialog"]');
+        if (dialog && !Object.hasOwn(dialog, "scrollTop")) {
+          Object.defineProperty(dialog, "scrollTop", {
+            configurable: true,
+            get: () => scrollTop,
+            set: (value: number) => {
+              scrollTop = value;
+            },
+          });
+        }
+        scrollTop = 120;
+      });
+      return { focus, focused, scrollTop: () => scrollTop };
+    };
+
+    it("single: Confirm takes focus with preventScroll and the dialog is back at the top", () => {
+      const spy = spyOnFocus();
+      setup({ scope: "single" });
+      expect(spy.focus).toHaveBeenCalledWith({ preventScroll: true });
+      expect(spy.focused).toEqual(["Delete year"]);
+      expect(screen.getByRole("alertdialog").scrollTop).toBe(0);
+      spy.focus.mockRestore();
+    });
+
+    it("bulk: Cancel takes focus with preventScroll and the dialog is back at the top", () => {
+      const spy = spyOnFocus();
+      setup({ scope: "bulk" });
+      expect(spy.focus).toHaveBeenCalledWith({ preventScroll: true });
+      expect(spy.focused).toEqual(["Cancel"]);
+      expect(screen.getByRole("alertdialog").scrollTop).toBe(0);
+      spy.focus.mockRestore();
+    });
+
+    it("type to confirm: Cancel takes focus, as for bulk", () => {
+      const spy = spyOnFocus();
+      setup({ scope: "single", requireText: "delete" });
+      expect(spy.focused).toEqual(["Cancel"]);
+      expect(screen.getByRole("alertdialog").scrollTop).toBe(0);
+      spy.focus.mockRestore();
+    });
   });
 
   it("sets the type-to-confirm field at 16px so iOS does not zoom (P09)", () => {

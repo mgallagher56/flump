@@ -67,7 +67,7 @@ export const AprNotSet: Story = {
   },
 };
 
-/** No debts: the h1, and the empty state with its illustration and one Add button, standing alone (P55). */
+/** No debts: the h1, the empty state with its illustration and one Add button, and the MoneyHelper line. */
 export const Empty: Story = {
   parameters: { router: { loaderData: loaderData([]) } },
   play: async ({ canvasElement }) => {
@@ -77,7 +77,9 @@ export const Empty: Story = {
     ).toBeGreaterThan(0);
     await expect(canvas.getAllByText("No debts added").length).toBeGreaterThan(0);
     await expect(canvas.queryAllByRole("tab").length).toBe(0);
-    await expect(canvas.queryAllByRole("complementary", { name: "Debt advice" }).length).toBe(0);
+    await expect(
+      canvas.getAllByRole("complementary", { name: "Debt advice" }).length,
+    ).toBeGreaterThan(0);
   },
 };
 

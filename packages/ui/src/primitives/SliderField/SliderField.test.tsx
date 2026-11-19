@@ -223,6 +223,30 @@ describe("SliderField Primitive", () => {
     expect(input.parentElement?.className).toContain("textStyle_label.md");
   });
 
+  it("pill grows with its value, so £1,250,000 fits at 16px (P08 follow-up)", () => {
+    const { rerender } = render(
+      <SliderField
+        label="Property price"
+        max={2_000_000}
+        min={0}
+        unitPrefix="£"
+        value={1_250_000}
+        onChange={vi.fn()}
+      />,
+    );
+    const input = screen.getByLabelText("Property price input") as HTMLInputElement;
+    expect(input.value).toBe("1,250,000");
+    // "1,250,000" is 9 characters; one more of room makes 10. No fixed width caps it.
+    expect(input.size).toBe(10);
+    expect(input.className).toContain("w_auto");
+    expect(input.className).toContain("field-sizing_content");
+    expect(input.className).not.toContain("w_88px");
+
+    // A short value stays compact: "5" sits in the 4-character floor plus one.
+    rerender(<SliderField label="Property price" max={100} min={0} value={5} onChange={vi.fn()} />);
+    expect(input.size).toBe(5);
+  });
+
   it("keeps focus-visible outline on the range slider", () => {
     render(<SliderField label="Rate" max={100} min={0} value={5} onChange={vi.fn()} />);
     expect(screen.getByRole("slider").className).toContain("focusVisible:");

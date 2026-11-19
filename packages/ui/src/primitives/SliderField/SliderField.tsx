@@ -247,6 +247,8 @@ export const SliderField: FC<SliderFieldProps> = ({
             disabled={disabled}
             inputMode={min < 0 || decimalsOf(step) > 0 ? "decimal" : "numeric"}
             placeholder="Not set"
+            // Wide enough for the whole value plus a character of room ("Not set" when empty).
+            size={Math.max(4, (draft ?? display).length || "Not set".length) + 1}
             type="text"
             value={draft ?? display}
             onBlur={handlePillBlur}
