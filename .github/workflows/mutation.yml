@@ -165,7 +165,7 @@ jobs:
       # @flump/api-contract, mcp also the engine and api-client). Built before Stryker writes
       # faults into the source files, and never the package under test itself.
       - name: 🏗️ Build the package's dependencies
-        run: bunx turbo run build --filter="./$PACKAGE^..."
+        run: bunx turbo run build --filter="{./$PACKAGE}^..."
 
       # Picked before Stryker runs: the run writes faults into the source files (inPlace).
       - name: 🗂️ Files in this shard
@@ -316,7 +316,7 @@ jobs:
         shell: bash # -eo pipefail
         run: |
           while read -r package _; do
-            bunx turbo run build --filter="./$package^..."
+            bunx turbo run build --filter="{./$package}^..."
           done < "$RUNNER_TEMP/mutation-targets.txt"
 
       # No incremental cache here: each weekly shard's file covers only its own files, and test ids
