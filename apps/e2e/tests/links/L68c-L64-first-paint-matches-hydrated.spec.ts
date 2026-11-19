@@ -6,6 +6,9 @@ import { api } from "./budget-links.helpers";
 
 test.use({ storageState: AUTH_STATE });
 
+// Runs after L68 (the file name sorts it there): L68 starts a fresh minute of the backend's request
+// limits, and the burst of homeowner specs before L67 has no room left for this one.
+
 /** The primary bar's top-level items and whether the setup checklist shows. */
 async function firstView(page: Page) {
   const nav = page.locator("header").first().locator('nav[aria-label="Primary"]');

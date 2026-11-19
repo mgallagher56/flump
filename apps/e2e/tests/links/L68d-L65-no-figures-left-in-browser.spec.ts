@@ -5,6 +5,9 @@ import { applyPersona } from "../../support/personas";
 
 test.use({ storageState: AUTH_STATE });
 
+// Runs after L68 (the file name sorts it there): L68 starts a fresh minute of the backend's request
+// limits, and the burst of homeowner specs before L67 has no room left for this one.
+
 /** Every browser storage entry, as "key=value". */
 const stored = (page: Page) =>
   page.evaluate(() =>
@@ -35,7 +38,8 @@ test("L65 signed-in pages keep no figures in the browser, and sign-out clears ol
     sessionStorage.clear();
   });
 
-  for (const path of ["/app", "/app/savings", "/app/pension", "/app/take-home", "/app/budget"]) {
+  // The pages that read the old browser baseline or checklist flag, kept to three page loads.
+  for (const path of ["/app", "/app/pension", "/app/take-home"]) {
     await page.goto(path);
     await waitForHydration(page);
   }
