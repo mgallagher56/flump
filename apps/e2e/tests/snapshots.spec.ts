@@ -28,14 +28,18 @@ test("monthly check-in saves this month's balances and the history page shows th
   await expect(sheet).toBeVisible();
   await expect(sheet).toContainText(month);
   // Creating an account records its balance for that month (system audit slice 4, decision 8 A),
-  // so the persona's accounts open as done this month; change one from its row.
+  // so every persona account is done this month and the sheet opens on its summary. Change a
+  // balance from there, then the account's own row.
+  await sheet.getByRole("button", { name: "Change a balance" }).click();
   await sheet.getByRole("button", { name: "Change Current account" }).click();
   // The seeded balance again, so the persona still matches and the next run need not re-seed.
   const current = sheet.getByRole("textbox", { name: "New balance in pounds, Current account" });
   await current.fill("3,400");
-  // Enter confirms the row and saves it at once (save as you go), then moves to the next row.
+  // Enter confirms the row and saves it at once (save as you go). Every other account is already
+  // done this month, so the save is the last one and the summary follows it.
   await current.press("Enter");
-  await expect(sheet.getByText("Updated £3,400")).toBeVisible();
+  const monthName = month.split(" ")[0];
+  await expect(sheet.getByRole("heading", { name: `${monthName} is checked in.` })).toBeVisible();
 
   // Closing reloads the page's saved data; an interrupted check-in resumes where it stopped.
   await page.keyboard.press("Escape");
