@@ -1,4 +1,5 @@
 import {
+  ASSUMED_PROMO_REVERT_APR_PCT,
   calculateDebtSchedule,
   type DebtItem,
   type DebtPayoffResult,
@@ -108,8 +109,7 @@ function toRows(
 export const simulateDebtPayoff = defineFlumpTool({
   name: "simulate_debt_payoff",
   title: "Model debt payoff",
-  description:
-    "Models paying off the user's recorded debts (up to 20) with an optional extra monthly amount, with highest rate first (avalanche) and smallest balance first (snowball), beside minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an APR is never guessed. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.",
+  description: `Models paying off the user's recorded debts (up to 20) with an optional extra monthly amount, with highest rate first (avalanche) and smallest balance first (snowball), beside minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an unrecorded APR is never guessed. After a 0% deal ends with no rate saved for after it, ${ASSUMED_PROMO_REVERT_APR_PCT}% APR is assumed and listed in assumptions[]. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.`,
   input: {
     strategy: z
       .enum(["avalanche", "snowball", "compare"])
@@ -227,7 +227,7 @@ export const simulateDebtPayoff = defineFlumpTool({
       }),
     ];
     const notes = [
-      "Interest is charged monthly at the APR divided by 12. Rates, balances and payments stay fixed.",
+      "Interest is charged monthly at the APR divided by 12. Balances and payments stay fixed, and rates stay fixed except that a 0% deal switches to its rate for after the deal on its end date.",
     ];
     const startingDebtGbp = round2(sim.reduce((s, d) => s + (d.balanceGbp ?? 0), 0));
     const envelope = { assumptions, missing, provenance: { strategies: "account_balances" } };
@@ -266,11 +266,29 @@ export const simulateDebtPayoff = defineFlumpTool({
           ? [{ strategy: "SNOWBALL", name: "snowball" }]
           : [{ strategy: "AVALANCHE", name: "avalanche" }];
     const runs = picks.map((p) => ({ ...p, r: run(p.strategy, extra) }));
+    const minimumRun = run("AVALANCHE", 0);
     const strategies = [
       ...runs.map((x) => toStrategyResult(x.name, x.r)),
-      toStrategyResult("minimum_only", run("AVALANCHE", 0)),
+      toStrategyResult("minimum_only", minimumRun),
     ];
     const primary = runs[0] as (typeof runs)[number];
+
+    // A 0% deal that ends inside any modelled schedule with no rate saved for after it is
+    // charged the engine's assumed rate from its end date. Listed once per debt.
+    const assumedIds = new Set(
+      [...runs.map((x) => x.r), minimumRun].flatMap((r) =>
+        r.promoRevertAssumed.map((p) => p.debtId),
+      ),
+    );
+    for (const name of assumedIds) {
+      assumptions.push(
+        defaulted(
+          `debts.${name}.revertAprPct`,
+          ASSUMED_PROMO_REVERT_APR_PCT,
+          `The 0% deal on ${name} ends with no rate saved for after it, so ${ASSUMED_PROMO_REVERT_APR_PCT}% APR is assumed from its end date.`,
+        ),
+      );
+    }
 
     if (strategies.some((s) => !s.payoffAchievable)) {
       notes.push(

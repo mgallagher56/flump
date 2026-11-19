@@ -99,7 +99,7 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
       monthlyTakeHome: null,
       housingStatus: null,
       monthlyHousingCost: null,
-      mortgageType: null,
+      // No mortgageType: the engine reads each mortgage account's own type (leftovers, item 3).
       propertyOwnershipShare: null,
     });
   });

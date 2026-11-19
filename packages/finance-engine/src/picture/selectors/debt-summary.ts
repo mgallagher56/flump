@@ -1,7 +1,7 @@
 import { calculateDebtSchedule, normalizeDebtItem } from "../../debt-payoff.js";
 import { isHighInterestDebt } from "../../health-score.js";
 import type { PortfolioSnapshot } from "../../portfolio.js";
-import type { DebtItem } from "../../types.js";
+import type { DebtItem, PromoRevertAssumption } from "../../types.js";
 
 export interface DebtSummary {
   totalDebt: number;
@@ -14,6 +14,11 @@ export interface DebtSummary {
   debtFreeDate: string | null;
   /** Interest paid on the same minimum-only schedule, or null whenever the date is null. */
   totalInterest: number | null;
+  /**
+   * Debts whose 0% deal ends inside that schedule with no rate saved for after it, so the
+   * assumed rate (`ASSUMED_PROMO_REVERT_APR_PCT`) is charged. Empty when nothing is assumed.
+   */
+  promoRevertAssumed: PromoRevertAssumption[];
   debts: DebtItem[];
 }
 
@@ -51,6 +56,7 @@ export function selectDebtSummary(
     monthlyMinimumEstimated: debts.some((d) => d.minimumPaymentEstimated === true),
     debtFreeDate,
     totalInterest: debtFreeDate === null ? null : minimumOnly.totalInterestPaidGbp,
+    promoRevertAssumed: minimumOnly.promoRevertAssumed,
     debts,
   };
 }

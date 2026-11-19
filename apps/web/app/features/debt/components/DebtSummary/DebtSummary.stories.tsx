@@ -50,3 +50,12 @@ export const EstimatedMinimums: Story = {
     await expect(canvasElement.textContent).toContain("some are estimates");
   },
 };
+
+export const PromoRateAssumed: Story = {
+  args: { promoRevertAssumed: true },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.textContent).toContain(
+      "After a 0% deal ends we assume 24.9% APR, as no rate for after the deal is saved.",
+    );
+  },
+};

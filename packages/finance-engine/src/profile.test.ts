@@ -352,10 +352,12 @@ describe("userProfileToSavedBaseline (SA-2, AI-1, AI-2)", () => {
       employerPensionMatchPct: 4,
       totalCashSavings: 0,
       totalPensionPot: 22000,
-      monthlyOtherOutgoings: 600,
       monthlyHousingCost: 1200,
     });
     expect(baseline).not.toHaveProperty("notSet");
+    // The onboarding copy of other outgoings is not read (system audit leftovers, item 4): the
+    // budget is the one home of spending, and the context pack carries it as budgetSummary.
+    expect(baseline.monthlyOtherOutgoings).toBeUndefined();
   });
 
   it("keeps 0 housing cost for someone who neither rents nor pays a mortgage", () => {

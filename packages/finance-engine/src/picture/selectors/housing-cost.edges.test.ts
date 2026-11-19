@@ -24,7 +24,6 @@ const facts = (over: Partial<ProfileFacts> = {}): ProfileFacts => ({
   isSalarySacrifice: false,
   housingStatus: null,
   monthlyHousingCost: null,
-  mortgageType: null,
   ...over,
 });
 

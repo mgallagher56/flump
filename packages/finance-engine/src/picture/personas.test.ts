@@ -439,7 +439,6 @@ describe("new user", () => {
       monthlyTakeHome: null,
       housingStatus: null,
       monthlyHousingCost: null,
-      mortgageType: null,
       propertyOwnershipShare: null,
     });
     expect(facts).toEqual(newUser.profile);

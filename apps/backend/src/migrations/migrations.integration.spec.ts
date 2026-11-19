@@ -43,6 +43,7 @@ import { AuditActionUserExported1795000000000 } from "./AuditActionUserExported1
 import { AuditEventsDeleteAndTruncateGuards1795100000000 } from "./AuditEventsDeleteAndTruncateGuards1795100000000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { BackfillFirstHistoryRow1795470300000 } from "./BackfillFirstHistoryRow1795470300000";
+import { BackfillMortgageRepaymentType1795530000000 } from "./BackfillMortgageRepaymentType1795530000000";
 import { BackfillPropertyKindAndMortgageLink1795470100000 } from "./BackfillPropertyKindAndMortgageLink1795470100000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
@@ -87,9 +88,11 @@ let MIGRATIONS: MigrationClass[] = [];
 // comparisons): the BE-05 liability sign before-image (LiabilitySignRule1794358050000) and the
 // BE-07 shared rate-limit counters (AddRateLimitBuckets1794632012000), the three slice 6
 // before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile, RemovePayeSalaryRecords) and
-// the slice 4 before-image (account_home_backfill, BackfillPropertyKindAndMortgageLink1795470100000).
+// the slice 4 before-image (account_home_backfill, BackfillPropertyKindAndMortgageLink1795470100000)
+// and its later repeat for repayment types (mortgage_repayment_type_backfill,
+// BackfillMortgageRepaymentType1795530000000).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -3228,6 +3231,125 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await dismissedColumn()).toEqual([]);
       await ds.runMigrations();
       expect(await dismissedColumn()).toHaveLength(1);
+      expect(await tables()).toEqual(ENTITY_TABLES);
+    });
+  });
+
+  describe("BackfillMortgageRepaymentType1795530000000 (slice 4 rule 4 again, residential)", () => {
+    const NAME = "BackfillMortgageRepaymentType1795530000000";
+    const profile = (user: string, mortgageType: string): Promise<unknown> =>
+      ds.query("INSERT INTO user_profiles (user_id, mortgage_type) VALUES ($1, $2)", [
+        user,
+        mortgageType,
+      ]);
+    const mortgage = async (
+      user: string,
+      subtype: string | null,
+      repaymentType: string | null = null,
+      name = "Mortgage",
+    ): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, account_subtype, repayment_type)
+         VALUES ($1, $2, 'Mortgage', -100000, $3, $4) RETURNING id`,
+        [user, name, subtype, repaymentType],
+      );
+      return at(rows, 0).id;
+    };
+    const types = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT user_id, account_subtype, repayment_type FROM accounts
+         WHERE type = 'Mortgage' ORDER BY user_id, account_subtype NULLS FIRST, name`,
+      );
+    const imageCount = async (): Promise<number> =>
+      (await ds.query("SELECT count(*)::int AS n FROM mortgage_repayment_type_backfill"))[0].n;
+
+    it("fills only a user's sole residential mortgage from the profile; a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      // Filled: the only residential mortgage, by kind or (no kind, not named buy to let) as the
+      // engine reads it, and one beside a buy-to-let mortgage, which does not count.
+      await profile("a-sole", "interest-only");
+      await mortgage("a-sole", "residential_mortgage");
+      await profile("b-no-kind", "interest-only");
+      await mortgage("b-no-kind", null, null, "Nationwide");
+      await profile("c-with-btl", "repayment");
+      await mortgage("c-with-btl", "residential_mortgage");
+      await mortgage("c-with-btl", "btl_mortgage");
+      // Left alone: two residential mortgages (no way to tell which the profile described), a
+      // buy-to-let mortgage by kind or by name, and a mortgage that already has a type.
+      await profile("d-two", "interest-only");
+      await mortgage("d-two", "residential_mortgage", null, "First");
+      await mortgage("d-two", null, null, "Second");
+      await profile("e-btl", "interest-only");
+      await mortgage("e-btl", "btl_mortgage");
+      await profile("f-btl-name", "interest-only");
+      await mortgage("f-btl-name", null, null, "BTL flat");
+      await profile("g-typed", "interest-only");
+      await mortgage("g-typed", "residential_mortgage", "repayment");
+      // No profile: nothing to copy.
+      await mortgage("h-no-profile", "residential_mortgage");
+
+      await ds.runMigrations();
+      const after = [
+        {
+          user_id: "a-sole",
+          account_subtype: "residential_mortgage",
+          repayment_type: "interest-only",
+        },
+        { user_id: "b-no-kind", account_subtype: null, repayment_type: "interest-only" },
+        { user_id: "c-with-btl", account_subtype: "btl_mortgage", repayment_type: null },
+        {
+          user_id: "c-with-btl",
+          account_subtype: "residential_mortgage",
+          repayment_type: "repayment",
+        },
+        { user_id: "d-two", account_subtype: null, repayment_type: null },
+        { user_id: "d-two", account_subtype: "residential_mortgage", repayment_type: null },
+        { user_id: "e-btl", account_subtype: "btl_mortgage", repayment_type: null },
+        { user_id: "f-btl-name", account_subtype: null, repayment_type: null },
+        {
+          user_id: "g-typed",
+          account_subtype: "residential_mortgage",
+          repayment_type: "repayment",
+        },
+        { user_id: "h-no-profile", account_subtype: "residential_mortgage", repayment_type: null },
+      ];
+      expect(await types()).toEqual(after);
+      expect(await imageCount()).toBe(3);
+
+      await runUpInTransaction(new BackfillMortgageRepaymentType1795530000000());
+      expect(await types()).toEqual(after);
+      expect(await imageCount()).toBe(3);
+    });
+
+    it("down puts back null where the copied value still stands, keeps a later answer, and drops the image", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await profile("a-copied", "interest-only");
+      const copied = await mortgage("a-copied", "residential_mortgage");
+      await profile("b-changed", "interest-only");
+      const changed = await mortgage("b-changed", "residential_mortgage");
+      await ds.runMigrations();
+      // b answers on the Mortgage page after the copy: kept on revert.
+      await ds.query("UPDATE accounts SET repayment_type = 'repayment' WHERE id = $1", [changed]);
+
+      await undoThrough(NAME);
+      const typeOf = async (id: string): Promise<unknown> =>
+        at(
+          await ds.query<Array<{ repayment_type: string | null }>>(
+            "SELECT repayment_type FROM accounts WHERE id = $1",
+            [id],
+          ),
+          0,
+        ).repayment_type;
+      expect(await typeOf(copied)).toBeNull();
+      expect(await typeOf(changed)).toBe("repayment");
+      expect(
+        (await ds.query("SELECT to_regclass('public.mortgage_repayment_type_backfill') AS t"))[0].t,
+      ).toBeNull();
+      // And up runs again on the reverted schema.
+      await ds.runMigrations();
+      expect(await typeOf(copied)).toBe("interest-only");
       expect(await tables()).toEqual(ENTITY_TABLES);
     });
   });

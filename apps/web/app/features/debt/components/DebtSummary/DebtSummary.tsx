@@ -1,7 +1,8 @@
+import { ASSUMED_PROMO_REVERT_APR_PCT } from "@flump/finance-engine";
 import { Button, HeroFigure, KpiCard, KpiStrip } from "@repo/ui";
 import type { FC } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { summaryStack } from "./DebtSummary.styles";
+import { assumptionLine, summaryStack } from "./DebtSummary.styles";
 
 export interface DebtSummaryProps {
   /** Saved total owed, always a positive amount (liabilities are stored negative). */
@@ -20,11 +21,19 @@ export interface DebtSummaryProps {
   payoffAchievable?: boolean;
   /** Opens the edit form for a debt without a rate (the one prompt's one button). */
   onAddRate?: () => void;
+  /** True when a 0% deal ends inside the schedule with no rate saved for after it. */
+  promoRevertAssumed?: boolean;
 }
 
 /** How the debt-free date is worked out (UX extra C): its inputs and assumptions, no judgement. */
+/** The quiet line shown when the rate after a 0% deal is the engine's assumption. */
+export const PROMO_REVERT_ASSUMED_LINE = `After a 0% deal ends we assume ${new Intl.NumberFormat(
+  "en-GB",
+  { maximumFractionDigits: 2 },
+).format(ASSUMED_PROMO_REVERT_APR_PCT)}% APR, as no rate for after the deal is saved.`;
+
 export const ESTIMATE_EXPLAIN =
-  "Worked out from your saved balances, APRs and minimum payments. It assumes no new borrowing and that rates stay the same.";
+  "Worked out from your saved balances, APRs and minimum payments. It assumes no new borrowing and that rates stay the same, apart from a 0% deal ending.";
 
 /**
  * Debt page first view (E16 PR 6, ruling D2): the saved total in `HeroFigure`, then a strip of 2.
@@ -41,6 +50,7 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
   minimumEstimated = false,
   payoffAchievable = true,
   onAddRate,
+  promoRevertAssumed = false,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const aprUnknown = missingAprCount > 0;
@@ -89,6 +99,9 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
           />,
         ]}
       />
+      {promoRevertAssumed && !aprUnknown ? (
+        <p className={assumptionLine}>{PROMO_REVERT_ASSUMED_LINE}</p>
+      ) : null}
     </div>
   );
 };

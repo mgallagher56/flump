@@ -25,6 +25,24 @@ import {
   roundPence,
 } from "./uk-tax-year.js";
 
+/**
+ * The APR assumed once a 0% deal ends when no rate for after the deal is saved. An assumption,
+ * not a rule: lenders set their own rates, and 24.9% is a typical UK credit card purchase rate.
+ * Wherever it is applied the result says so (`revertAprAssumed`, `promoRevertAssumed`), so the
+ * user and any AI client are told.
+ */
+export const ASSUMED_PROMO_REVERT_APR_PCT = 24.9;
+
+/** The rate after a 0% deal ends: the saved revert APR when it is a finite number (0 counts). */
+export function resolvePromoRevertApr(revertApr: number | undefined): {
+  aprPct: number;
+  assumed: boolean;
+} {
+  return typeof revertApr === "number" && Number.isFinite(revertApr)
+    ? { aprPct: revertApr, assumed: false }
+    : { aprPct: ASSUMED_PROMO_REVERT_APR_PCT, assumed: true };
+}
+
 export interface DebtPayoffOptions {
   strategy?: DebtPayoffStrategy;
   monthlyExtraBudgetGbp?: number;
@@ -157,6 +175,7 @@ export function analyzePromoCliff(
 
   const projectedPayoffDate = new Date(referenceDate);
   projectedPayoffDate.setUTCMonth(projectedPayoffDate.getUTCMonth() + projectedPayoffMonthIndex);
+  const revert = resolvePromoRevertApr(debt.revertApr);
 
   return {
     debtId: debt.id,
@@ -164,7 +183,8 @@ export function analyzePromoCliff(
     promoExpiryDate: debt.promoAprExpiryDate,
     projectedPayoffDate: formatMonthYear(projectedPayoffDate),
     projectedBalanceAtExpiryGbp: Math.round(projectedBalanceAtExpiry * 100) / 100,
-    revertApr: debt.revertApr ?? 24.9,
+    revertApr: revert.aprPct,
+    revertAprAssumed: revert.assumed,
     requiredMonthlyToClearBeforeCliff,
     hasCliffRisk,
   };
@@ -216,6 +236,8 @@ interface SimDebtState {
   promoExpiryDate?: string;
   revertApr?: number;
   monthPaidOff?: number;
+  /** True once a month was charged at the assumed rate because no revert APR is saved. */
+  revertAssumedApplied?: boolean;
 }
 
 /** Internal shared simulation core (main run and minimum-only baseline). No recursion. */
@@ -293,12 +315,15 @@ function simulateSchedule(
     // Apply monthly interest
     for (const d of remainingDebts) {
       openingById.set(d.id, d.balance);
-      // Check if 0% promo has expired
+      // Before a 0% deal ends the stored APR applies. From the end date on, the saved revert
+      // APR applies, or the assumed rate when none is saved (0 is a saved rate).
       let currentApr = d.apr;
       if (d.promoExpiryDate) {
         const expiry = new Date(d.promoExpiryDate);
-        if (simDate.getTime() >= expiry.getTime() && d.revertApr) {
-          currentApr = d.revertApr;
+        if (simDate.getTime() >= expiry.getTime()) {
+          const revert = resolvePromoRevertApr(d.revertApr);
+          currentApr = Math.max(0, revert.aprPct);
+          if (revert.assumed) d.revertAssumedApplied = true;
         }
       }
 
@@ -436,6 +461,7 @@ export function calculateDebtSchedule(
       payoffAchievable: true,
       interestSavedVsMinimumGbp: 0,
       promoCliffAlerts: [],
+      promoRevertAssumed: [],
       schedule: [],
       crossoverProjection: crossover,
       fiveYearPostDebtWealthGbp: crossover[crossover.length - 1]?.projectedWealthGbp ?? 0,
@@ -462,6 +488,11 @@ export function calculateDebtSchedule(
   } = main;
 
   const debtFreeDateFormatted = formatMonthYear(simDate);
+
+  // Debts charged the assumed rate in at least one month of this schedule.
+  const promoRevertAssumed = activeDebts
+    .filter((d) => d.revertAssumedApplied === true)
+    .map((d) => ({ debtId: d.id, aprPct: ASSUMED_PROMO_REVERT_APR_PCT }));
 
   // Analyze promo cliffs
   const promoCliffAlerts: PromoCliffAlert[] = [];
@@ -522,6 +553,7 @@ export function calculateDebtSchedule(
     firstQuickWinMonth,
     interestSavedVsMinimumGbp: interestSavedVsMinimum,
     promoCliffAlerts,
+    promoRevertAssumed,
     schedule,
     crossoverProjection,
     fiveYearPostDebtWealthGbp: fiveYearPostDebtWealth,
@@ -561,6 +593,7 @@ export function calculateAvalanche(debts: DebtItem[], extraMonthlyPayment = 0): 
     totalPaid: Math.round((res.totalStartingDebtGbp + res.totalInterestPaidGbp) * 100) / 100,
     quickWinDebtName: res.firstQuickWinDebtName,
     quickWinMonths: res.firstQuickWinMonth,
+    promoRevertAssumed: res.promoRevertAssumed,
     monthlySchedule,
   };
 }
@@ -598,6 +631,7 @@ export function calculateSnowball(debts: DebtItem[], extraMonthlyPayment = 0): P
     totalPaid: Math.round((res.totalStartingDebtGbp + res.totalInterestPaidGbp) * 100) / 100,
     quickWinDebtName: res.firstQuickWinDebtName,
     quickWinMonths: res.firstQuickWinMonth,
+    promoRevertAssumed: res.promoRevertAssumed,
     monthlySchedule,
   };
 }
@@ -651,7 +685,7 @@ export function compareAvalancheAndSnowball(
 export function calculateZeroPercentCliff(
   balance: number,
   monthsRemaining: number,
-  revertApr = 24.9,
+  revertApr = ASSUMED_PROMO_REVERT_APR_PCT,
   currentMonthlyPayment = 0,
 ): ZeroPercentCliffResult {
   if (monthsRemaining <= 0 || balance <= 0) {

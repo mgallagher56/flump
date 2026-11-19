@@ -121,4 +121,28 @@ describe("selectDebtSummary: edges", () => {
     );
     expect(s?.debtFreeDate).toBe("April 2031");
   });
+  it("says when a 0% deal ends with no rate saved for after it, so 24.9% APR is assumed", () => {
+    // Card £1,000 at a saved 0% with a £100 minimum, the deal ending 1 February 2027. Months
+    // 1 (15 Dec 2026) and 2 (15 Jan 2027) are inside the deal: 1000 -> 900 -> 800. From month 3
+    // (15 Feb 2027) the assumed 24.9% applies (2.075% a month): 800 x 0.02075 = 16.60, then
+    // 14.87, 13.10, 11.30, 9.46, 7.58, 5.66, 3.71 and 1.71 as the balance falls by about £100 a
+    // month (worked month by month in debt-payoff.behaviour.test.ts). Total 83.99 over 11
+    // months: 15 November 2026 plus 11 months is October 2027.
+    const card = {
+      id: "c",
+      name: "Card",
+      type: "Credit Card",
+      balance: -1000,
+      interestRate: 0,
+      monthlyContribution: 100,
+    };
+    const s = selectDebtSummary(snap([{ ...card, promoZeroPercentUntil: "2027-02-01" }]), AS_OF);
+    expect(s?.debtFreeDate).toBe("October 2027");
+    expect(s?.totalInterest).toBe(83.99);
+    expect(s?.promoRevertAssumed).toEqual([{ debtId: "c", aprPct: 24.9 }]);
+    // With no deal end saved, nothing is assumed: 10 months at 0%, September 2027.
+    const plain = selectDebtSummary(snap([card]), AS_OF);
+    expect(plain?.debtFreeDate).toBe("September 2027");
+    expect(plain?.promoRevertAssumed).toEqual([]);
+  });
 });

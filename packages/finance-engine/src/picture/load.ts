@@ -112,7 +112,6 @@ export function profileFromFacts(
   if (facts.monthlyTakeHome != null) profile.monthlyTakeHome = facts.monthlyTakeHome;
   if (facts.housingStatus != null) profile.housingStatus = facts.housingStatus;
   if (facts.monthlyHousingCost != null) profile.monthlyHousingCost = facts.monthlyHousingCost;
-  if (facts.mortgageType != null) profile.mortgageType = facts.mortgageType;
   if (facts.propertyOwnershipShare != null) {
     profile.propertyOwnershipShare = facts.propertyOwnershipShare;
   }

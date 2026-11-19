@@ -136,6 +136,28 @@ describe("_index route", () => {
     expect(data.budgetData.hasSpending).toBe(false);
   });
 
+  it("marks the budget step from saved rows or the finished wizard, never the stored default flag", async () => {
+    const run = async (budgetEntries: unknown[], steps: string[] = []) => {
+      mockWorkspace({
+        user: { id: "u1", email: "real@example.com" },
+        accounts: [],
+        accountDetails: [],
+        budgetEntries,
+        taxRecords: [],
+        userProfile: { onboardingCompleted: true, setupChecklistCompletedSteps: steps },
+      } as any);
+      const request = new Request("http://localhost/");
+      return ((await loader({ request, params: {}, context: {} } as any)) as any).hasBudget;
+    };
+    // An old row still flagged as a default is a saved row like any other (system audit
+    // leftovers, item 5): the flag is not read.
+    expect(
+      await run([{ id: "b1", name: "Rent", category: "housing", amount: 900, isDefault: true }]),
+    ).toBe(true);
+    expect(await run([])).toBe(false);
+    expect(await run([], ["budget"])).toBe(true);
+  });
+
   it("never invents an estimated tax due figure from tax records", async () => {
     mockWorkspace({
       user: { id: "u1", email: "real@example.com" },

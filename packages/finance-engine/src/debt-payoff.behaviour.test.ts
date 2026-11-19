@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ASSUMED_PROMO_REVERT_APR_PCT,
   analyzePromoCliff,
   bridgePayoffMonth,
   calculateAvalanche,
@@ -317,15 +318,7 @@ describe("calculateDebtSchedule month by month", () => {
     expect(res.schedule.map((m) => m.totalInterestGbp)).toEqual([0, 9, 8.09]);
   });
 
-  it("keeps the promotional rate when no revert APR is given", () => {
-    const res = calculateDebtSchedule(
-      [debt("p", "Promo", 1000, 0, 100, { promoAprExpiryDate: "2026-03-15" })],
-      0,
-      "AVALANCHE",
-      { referenceDate: REF, maxMonths: 3 },
-    );
-    expect(res.schedule.map((m) => m.totalInterestGbp)).toEqual([0, 0, 0]);
-  });
+  // A promotion with no revert APR is covered in "a 0% deal with no rate saved for after it".
 
   it("treats a balance under a penny as already cleared", () => {
     const res = calculateDebtSchedule([debt("d", "Card", 0.005, 20, 5)], 0, "AVALANCHE", {
@@ -672,5 +665,118 @@ describe("bridgePayoffMonth", () => {
 
   it("returns null when every point is after payoff", () => {
     expect(bridgePayoffMonth([p(3, 0, true)])).toBeNull();
+  });
+});
+
+describe("a 0% deal with no rate saved for after it", () => {
+  // £1,000 at 0% with a £100 minimum, from 15 January 2026. The deal ends 1 April 2026, so
+  // months 1 (15 Feb) and 2 (15 Mar) are before the end and month 3 (15 Apr) is after it.
+  // With no revert APR the assumed 24.9% applies: 24.9% / 12 = 2.075% a month.
+  const promo = (extra: Partial<DebtItem> = {}) =>
+    debt("p", "Promo", 1000, 0, 100, { promoAprExpiryDate: "2026-04-01", ...extra });
+  const run = (d: DebtItem, maxMonths?: number) =>
+    calculateDebtSchedule([d], 0, "AVALANCHE", {
+      referenceDate: REF,
+      ...(maxMonths ? { maxMonths } : {}),
+    });
+
+  it("names the assumed rate as one constant of 24.9", () => {
+    expect(ASSUMED_PROMO_REVERT_APR_PCT).toBe(24.9);
+  });
+
+  it("charges the assumed rate from the month after the deal ends, through to payoff", () => {
+    // M1: 1000 - 100 = 900. M2: 900 - 100 = 800 (no interest during the deal).
+    // M3: 800 x 0.02075 = 16.60 -> 816.60 - 100 = 716.60.
+    // M4: 716.60 x 0.02075 = 14.86945 -> 14.87 -> 731.47 - 100 = 631.47.
+    // M5: 631.47 x 0.02075 = 13.1030 -> 13.10 -> 644.57 - 100 = 544.57.
+    // M6: 544.57 x 0.02075 = 11.2998 -> 11.30 -> 555.87 - 100 = 455.87.
+    // M7: 455.87 x 0.02075 = 9.4593 -> 9.46 -> 465.33 - 100 = 365.33.
+    // M8: 365.33 x 0.02075 = 7.5806 -> 7.58 -> 372.91 - 100 = 272.91.
+    // M9: 272.91 x 0.02075 = 5.6629 -> 5.66 -> 278.57 - 100 = 178.57.
+    // M10: 178.57 x 0.02075 = 3.7053 -> 3.71 -> 182.28 - 100 = 82.28.
+    // M11: 82.28 x 0.02075 = 1.7073 -> 1.71 -> 83.99, the minimum clears it.
+    // Interest: 16.60 + 14.87 + 13.10 + 11.30 + 9.46 + 7.58 + 5.66 + 3.71 + 1.71 = 83.99.
+    // 15 January plus 11 months is December 2026. Before this fix the stored 0% applied for
+    // ever: 10 months (November 2026) and no interest.
+    const res = run(promo());
+    expect(res.schedule.map((m) => m.totalInterestGbp)).toEqual([
+      0, 0, 16.6, 14.87, 13.1, 11.3, 9.46, 7.58, 5.66, 3.71, 1.71,
+    ]);
+    expect(res.schedule.slice(0, 4).map((m) => m.remainingDebtGbp)).toEqual([
+      900, 800, 716.6, 631.47,
+    ]);
+    expect(res.totalInterestPaidGbp).toBe(83.99);
+    expect(res.monthsToPayoff).toBe(11);
+    expect(res.debtFreeDate).toBe("December 2026");
+    expect(res.promoRevertAssumed).toEqual([{ debtId: "p", aprPct: 24.9 }]);
+  });
+
+  it("treats a revert APR of 0 as given: no interest ever, and nothing assumed", () => {
+    // 1000 / 100 = 10 months at 0%, so November 2026 with no interest.
+    const res = run(promo({ revertApr: 0 }));
+    expect(res.totalInterestPaidGbp).toBe(0);
+    expect(res.monthsToPayoff).toBe(10);
+    expect(res.promoRevertAssumed).toEqual([]);
+  });
+
+  it("uses a given revert APR in place of the assumption", () => {
+    // M3: 800 x 19.9% / 12 = 800 x 0.0165833 = 13.2667 -> 13.27.
+    const res = run(promo({ revertApr: 19.9 }), 3);
+    expect(res.schedule.map((m) => m.totalInterestGbp)).toEqual([0, 0, 13.27]);
+    expect(res.promoRevertAssumed).toEqual([]);
+  });
+
+  it("floors a negative revert APR at 0, as it does a stored APR", () => {
+    const res = run(promo({ revertApr: -5 }), 3);
+    expect(res.schedule.map((m) => m.totalInterestGbp)).toEqual([0, 0, 0]);
+    expect(res.promoRevertAssumed).toEqual([]);
+  });
+
+  it("treats a revert APR that is not a finite number as not given", () => {
+    const res = run(promo({ revertApr: Number.NaN }), 3);
+    expect(res.schedule.map((m) => m.totalInterestGbp)).toEqual([0, 0, 16.6]);
+    expect(res.promoRevertAssumed).toEqual([{ debtId: "p", aprPct: 24.9 }]);
+  });
+
+  it("applies the assumption on the end date itself, not before it", () => {
+    // Ending 15 April 00:00 UTC, month 3's own date: month 3 charges 800 x 0.02075 = 16.60.
+    expect(
+      run(promo({ promoAprExpiryDate: "2026-04-15" }), 3).schedule.map((m) => m.totalInterestGbp),
+    ).toEqual([0, 0, 16.6]);
+    // One second later, month 3 is still inside the deal.
+    const later = run(promo({ promoAprExpiryDate: "2026-04-15T00:00:01Z" }), 3);
+    expect(later.schedule.map((m) => m.totalInterestGbp)).toEqual([0, 0, 0]);
+    expect(later.promoRevertAssumed).toEqual([]);
+  });
+
+  it("assumes nothing when the debt is paid off before the deal ends", () => {
+    // 10 months clears it by November 2026, before a deal ending June 2027.
+    const res = run(promo({ promoAprExpiryDate: "2027-06-01" }));
+    expect(res.totalInterestPaidGbp).toBe(0);
+    expect(res.promoRevertAssumed).toEqual([]);
+  });
+
+  it("gives the promo cliff alert the same rate and flag as the schedule", () => {
+    const assumed = run(promo()).promoCliffAlerts[0];
+    expect(assumed?.revertApr).toBe(24.9);
+    expect(assumed?.revertAprAssumed).toBe(true);
+    const zero = run(promo({ revertApr: 0 })).promoCliffAlerts[0];
+    expect(zero?.revertApr).toBe(0);
+    expect(zero?.revertAprAssumed).toBe(false);
+    const nan = analyzePromoCliff(promo({ revertApr: Number.NaN }), 3, REF);
+    expect(nan?.revertApr).toBe(24.9);
+    expect(nan?.revertAprAssumed).toBe(true);
+  });
+
+  it("passes the list through the avalanche and snowball results", () => {
+    expect(calculateAvalanche([promo()]).promoRevertAssumed).toEqual([
+      { debtId: "p", aprPct: 24.9 },
+    ]);
+    expect(calculateSnowball([promo({ revertApr: 5 })]).promoRevertAssumed).toEqual([]);
+  });
+
+  it("uses the assumed rate as the zero-percent cliff default", () => {
+    // 1000 after the deal at 24.9%: a year's interest is 249.
+    expect(calculateZeroPercentCliff(1000, 0).penaltyInterestFirstYearIfUnpaid).toBe(249);
   });
 });

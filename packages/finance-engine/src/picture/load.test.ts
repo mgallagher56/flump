@@ -102,7 +102,6 @@ describe("profileFromFacts", () => {
       monthlyTakeHome: null,
       housingStatus: "mortgage",
       monthlyHousingCost: 1100,
-      mortgageType: "repayment",
       propertyOwnershipShare: null,
     };
     const basis = { countProperty: false, countStudentLoan: true };
@@ -182,7 +181,6 @@ describe("profileFromFacts: what it writes", () => {
     monthlyTakeHome: null,
     housingStatus: null,
     monthlyHousingCost: null,
-    mortgageType: null,
     propertyOwnershipShare: null,
   };
 

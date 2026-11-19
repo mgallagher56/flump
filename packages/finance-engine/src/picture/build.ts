@@ -173,7 +173,6 @@ export interface BudgetRowLike {
   isEssential?: unknown;
   ownership?: unknown;
   sharePercent?: unknown;
-  isPrimaryIncome?: unknown;
   linkKind?: unknown;
   linkAccountId?: unknown;
 }
@@ -206,8 +205,6 @@ export function budgetEntryFromRow(row: BudgetRowLike, index = 0): BudgetEntryIt
     isEssential: row.isEssential === true,
     ownership: row.ownership === "joint" ? "joint" : "sole",
     sharePercent: shareFromRow(row.sharePercent),
-    // Set only when true, so rows without the flag map exactly as before.
-    ...(row.isPrimaryIncome === true ? { isPrimaryIncome: true } : {}),
     // A linked row's stored amount is never read: the linked-rows selector resolves it.
     ...(budgetRowLinkOf(row.linkKind) ? { linkKind: budgetRowLinkOf(row.linkKind) } : {}),
     // The account a savings or debt line reads; null once that account is deleted.

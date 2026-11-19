@@ -1,4 +1,5 @@
 import {
+  ASSUMED_PROMO_REVERT_APR_PCT,
   calculateCarFinanceBalloon,
   calculateOverdraftCost,
   calculateZeroPercentCliff,
@@ -103,7 +104,7 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
   // 1. 0% balance transfer
   const [btBalance, setBtBalance] = useState<number | null>(3000);
   const [btMonths, setBtMonths] = useState<number | null>(10);
-  const [btRevertApr, setBtRevertApr] = useState<number | null>(24.9);
+  const [btRevertApr, setBtRevertApr] = useState<number | null>(ASSUMED_PROMO_REVERT_APR_PCT);
   const btMonthsValue = wholeMonths(btMonths);
 
   const cliffResult = useMemo(

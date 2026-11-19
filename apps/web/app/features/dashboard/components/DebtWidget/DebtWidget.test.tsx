@@ -35,6 +35,15 @@ describe("DebtWidget", () => {
     expect(debtCardShowsEstimate(summary)).toBe(true);
   });
 
+  it("says in the caption when a rate after a 0% deal is assumed, with no figure in the line", () => {
+    renderWidget({ ...summary, promoRevertAssumed: [{ debtId: "c", aprPct: 24.9 }] });
+    expect(
+      screen.getByText(
+        "Assumes you pay the minimum on each debt every month, and an assumed APR once a 0% deal ends.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("names the page Cards and loans and links to it by that name", () => {
     renderWidget(summary);
     expect(screen.getByText("Cards and loans")).toBeTruthy();

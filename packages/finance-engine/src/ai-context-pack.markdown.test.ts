@@ -232,24 +232,31 @@ describe("context pack Markdown: debts", () => {
   });
 
   it("lists each 0% deal that ends, with the payment that clears it first", () => {
-    const alert = (debtName: string, required: number): PromoCliffAlert => ({
+    const alert = (
+      debtName: string,
+      required: number,
+      revertApr: number,
+      revertAprAssumed: boolean,
+    ): PromoCliffAlert => ({
       debtId: debtName,
       debtName,
       promoExpiryDate: "2027-05-19",
       projectedPayoffDate: "May 2028",
       projectedBalanceAtExpiryGbp: 0,
-      revertApr: 24.9,
+      revertApr,
+      revertAprAssumed,
       requiredMonthlyToClearBeforeCliff: required,
       hasCliffRisk: true,
     });
     const pack = withDebt(emptyPack(), {
-      promoCliffAlerts: [alert("Card 1", 200), alert("Card 2", 75.5)],
+      promoCliffAlerts: [alert("Card 1", 200, 24.9, true), alert("Card 2", 75.5, 19.9, false)],
     });
+    // An assumed rate says so; a saved one is stated plainly.
     expect(debts(pack)).toBe(
       "- **Debt balance:** £0\n\n" +
         "### When the 0% deal ends:\n" +
-        "- Card 1: the 0% deal ends 2027-05-19, then 24.9% APR. Monthly payment that pays it off before then: £200\n" +
-        "- Card 2: the 0% deal ends 2027-05-19, then 24.9% APR. Monthly payment that pays it off before then: £75.5",
+        "- Card 1: the 0% deal ends 2027-05-19, then 24.9% APR (assumed: no rate for after the deal is saved). Monthly payment that pays it off before then: £200\n" +
+        "- Card 2: the 0% deal ends 2027-05-19, then 19.9% APR. Monthly payment that pays it off before then: £75.5",
     );
   });
 

@@ -166,6 +166,8 @@ export interface PayoffResult {
   totalPaid: number;
   quickWinDebtName?: string;
   quickWinMonths?: number;
+  /** As `DebtPayoffResult.promoRevertAssumed`; optional for results built outside the engine. */
+  promoRevertAssumed?: PromoRevertAssumption[];
   monthlySchedule: PayoffScheduleMonth[];
 }
 
@@ -268,13 +270,22 @@ export interface DebtScheduleMonth {
   payments: DebtScheduleMonthPayment[];
 }
 
+/** A debt charged the assumed rate after its 0% deal ended, as no revert APR is saved. */
+export interface PromoRevertAssumption {
+  debtId: string;
+  aprPct: number;
+}
+
 export interface PromoCliffAlert {
   debtId: string;
   debtName: string;
   promoExpiryDate: string;
   projectedPayoffDate: string;
   projectedBalanceAtExpiryGbp: number;
+  /** The rate after the deal: the saved revert APR, or `ASSUMED_PROMO_REVERT_APR_PCT`. */
   revertApr: number;
+  /** True when no revert APR is saved, so `revertApr` is the assumed rate. */
+  revertAprAssumed: boolean;
   requiredMonthlyToClearBeforeCliff: number;
   hasCliffRisk: boolean;
 }
@@ -302,6 +313,11 @@ export interface DebtPayoffResult {
   firstQuickWinMonth?: number;
   interestSavedVsMinimumGbp: number;
   promoCliffAlerts: PromoCliffAlert[];
+  /**
+   * Debts whose 0% deal ended inside the schedule with no revert APR saved, so the assumed rate
+   * (`ASSUMED_PROMO_REVERT_APR_PCT`) was charged. Empty when nothing was assumed.
+   */
+  promoRevertAssumed: PromoRevertAssumption[];
   schedule: DebtScheduleMonth[];
   crossoverProjection: CrossoverMonth[];
   fiveYearPostDebtWealthGbp: number;

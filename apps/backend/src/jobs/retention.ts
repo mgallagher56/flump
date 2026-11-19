@@ -121,6 +121,13 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
       "system audit slice 4 before-image, kept 90 days so its migrations can be rolled back; after that their down() undoes nothing",
   },
   {
+    name: "mortgage_repayment_type_backfill",
+    table: "mortgage_repayment_type_backfill",
+    where: `"backfilled_at" < $1::timestamptz - interval '90 days'`,
+    reason:
+      "before-image of the repayment types copied to sole residential mortgages, kept 90 days so the migration can be rolled back; after that its down() restores nothing",
+  },
+  {
     name: "rent_share_backfill",
     table: "rent_share_backfill",
     where: `"backfilled_at" < $1::timestamptz - interval '90 days'`,

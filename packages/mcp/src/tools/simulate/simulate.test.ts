@@ -341,6 +341,46 @@ describe("simulate tools v2", () => {
       const text = await h.callText("simulate_debt_payoff", { includeSchedule: "yearly" });
       expect(text).not.toMatch(/Amex|Santander|Monzo|Barclays/);
     });
+
+    it("charges 24.9% after a 0% deal ends with no rate saved, and lists the assumption", async () => {
+      // £1,000 card at a saved 0% with a £100 minimum; the deal ended in 2020, so every month
+      // is after it and the assumed 24.9% (2.075% a month) applies from month 1:
+      // 1000 -> +20.75 -> 920.75; +19.11 -> 839.86; +17.43 -> 757.29; +15.71 -> 673.00;
+      // +13.96 -> 586.96; +12.18 -> 499.14; +10.36 -> 409.50; +8.50 -> 318.00; +6.60 -> 224.60;
+      // +4.66 -> 129.26; +2.68 -> 31.94; +0.66 -> 32.60, which the minimum clears in month 12.
+      // Interest 20.75 + 19.11 + 17.43 + 15.71 + 13.96 + 12.18 + 10.36 + 8.50 + 6.60 + 4.66
+      // + 2.68 + 0.66 = 132.60. (At the stored 0% it was 10 months with no interest.)
+      h = await connectTestClient({
+        ...emptyUser,
+        accounts: [
+          {
+            id: "cc_promo",
+            name: "Card",
+            type: "Credit Card",
+            balance: 1000,
+            interestRate: 0,
+            monthlyContribution: 100,
+            promoZeroPercentUntil: "2020-01-01",
+          },
+        ],
+      });
+      const e = await call("simulate_debt_payoff", { strategy: "avalanche" });
+      const minimum = e.result.strategies.find(
+        (s: { strategy: string }) => s.strategy === "minimum_only",
+      );
+      expect(minimum.monthsToPayoff).toBe(12);
+      expect(minimum.totalInterestPaidGbp).toBe(132.6);
+      const assumed = e.assumptions.filter((a) => a.field.endsWith(".revertAprPct"));
+      expect(assumed).toHaveLength(1);
+      expect(assumed[0]).toMatchObject({ source: "default", value: 24.9 });
+      expect(e.result.notes.join(" ")).toContain("0% deal");
+    });
+
+    it("lists no rate assumption when no 0% deal ends", async () => {
+      h = await connectTestClient(mixedAccountsWithHistory);
+      const e = await call("simulate_debt_payoff", {});
+      expect(e.assumptions.some((a) => a.field.endsWith(".revertAprPct"))).toBe(false);
+    });
   });
 
   describe("project_net_worth", () => {

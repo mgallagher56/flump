@@ -88,8 +88,6 @@ export interface BudgetEntryItem {
   /** E34 C1: "joint" counts the entry at `sharePercent` (50 when unset); absent means sole. */
   ownership?: "sole" | "joint" | string | null;
   sharePercent?: number | null;
-  /** True when the person marked this row as their own main pay. Read by the take-home link. */
-  isPrimaryIncome?: boolean;
   /**
    * Set only on a line the engine makes from a saved fact (owner items 7 and 33b, audit slice 5):
    * "take_home" from the profile's salary, "housing" from the housing details, "savings" and
@@ -878,7 +876,7 @@ ${
     ? `\n### When the 0% deal ends:\n${d.promoCliffAlerts
         .map(
           (c) =>
-            `- ${c.debtName}: the 0% deal ends ${c.promoExpiryDate}, then ${c.revertApr}% APR. Monthly payment that pays it off before then: £${c.requiredMonthlyToClearBeforeCliff}`,
+            `- ${c.debtName}: the 0% deal ends ${c.promoExpiryDate}, then ${c.revertApr}% APR${c.revertAprAssumed ? " (assumed: no rate for after the deal is saved)" : ""}. Monthly payment that pays it off before then: £${c.requiredMonthlyToClearBeforeCliff}`,
         )
         .join("\n")}`
     : ""

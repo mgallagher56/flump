@@ -206,7 +206,6 @@ describe("profileFactsFromProfile", () => {
       monthlyTakeHome: null,
       housingStatus: null,
       monthlyHousingCost: null,
-      mortgageType: null,
       propertyOwnershipShare: null,
     });
   });

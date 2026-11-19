@@ -19,7 +19,6 @@ export const homeowner: PersonaFixture = {
     isSalarySacrifice: false,
     housingStatus: "mortgage",
     monthlyHousingCost: 1050,
-    mortgageType: "repayment",
   },
   accounts: [
     { id: "homeowner-cash", name: "Cash and emergency savings", type: "Saving", balance: 21000 },

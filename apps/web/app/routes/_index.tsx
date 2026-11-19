@@ -183,7 +183,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
     hasAccounts: Array.isArray(accounts) && accounts.length > 0,
     hasBudget:
       completedSteps.includes("budget") ||
-      (Array.isArray(budgetEntries) && budgetEntries.some((e: any) => !e.isDefault)),
+      // Marked by the action (slice 8): the finished wizard, or any saved budget row. The stored
+      // default flag is not read (system audit leftovers, item 5); the backend writes it false on
+      // every row and the seeded template rows were removed by migration.
+      (Array.isArray(budgetEntries) && budgetEntries.length > 0),
     hasSavings: savingsAccounts.length > 0,
     hasPension: pensionAccounts.length > 0 || completedSteps.includes("pension"),
     hasMortgageAccount: mortgageAccounts.length > 0,

@@ -35,7 +35,6 @@ const base: ProfileFacts = {
   isSalarySacrifice: false,
   housingStatus: null,
   monthlyHousingCost: null,
-  mortgageType: null,
 };
 
 const status = fc.constantFrom("renting", "mortgage", "own_outright", null) as fc.Arbitrary<

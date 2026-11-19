@@ -39,6 +39,8 @@ export interface RawAccount {
   accountSubtype?: string | null;
   /** Mortgage accounts: the Property account it is on (system audit slice 4), or null. */
   linkedAccountId?: string | null;
+  /** Mortgage accounts: how it is repaid (system audit slice 4), or null when not set. */
+  repaymentType?: "repayment" | "interest-only" | null;
   balance?: number | string;
   interestRate?: number | string | null;
   monthlyContribution?: number | string | null;

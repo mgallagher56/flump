@@ -216,6 +216,36 @@ describe("RunwayCalculator", () => {
     expect(outcomeFigure()).toBe("8.3 months");
   });
 
+  it("leaves out the linked take-home line, and reads no stored primary-income flag", () => {
+    const row = {
+      userId: "user-1",
+      category: "income" as const,
+      frequency: "monthly" as const,
+      isIncome: true,
+      isEssential: false,
+      notes: null,
+      isDefault: false,
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-01-01T00:00:00Z",
+    };
+    const entriesWithIncome = [
+      ...mockEntries,
+      // The engine's linked take-home line: the pay that stops, so never offered as kept.
+      { ...row, id: "th", name: "Take-home pay", amount: 2500, isPrimaryIncome: false },
+      // An old row flagged primary income but linked to nothing (system audit leftovers, item 5):
+      // the flag is no longer read, so it is offered like any other income line.
+      { ...row, id: "old", name: "Salary", amount: 400, isPrimaryIncome: true },
+    ].map((e) => (e.id === "th" ? { ...e, linked: "take_home" as const } : e));
+    render(
+      <RunwayCalculator accountDetails={[]} accounts={mockAccounts} entries={entriesWithIncome} />,
+    );
+    // Other income starts excluded, so the saved figure is unchanged: £10,000 over £1,500.
+    expect(outcomeFigure()).toBe("6.7 months");
+    openMoreOptions();
+    expect(screen.queryByRole("switch", { name: "Take-home pay" })).toBeNull();
+    expect(screen.getByRole("switch", { name: "Salary" })).toBeDefined();
+  });
+
   it("labels the calculator as an illustration that is not saved", () => {
     render(<RunwayCalculator accountDetails={[]} accounts={mockAccounts} entries={mockEntries} />);
     expect(screen.getByRole("region", { name: "Model a change to your budget" })).toBeDefined();

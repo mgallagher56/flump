@@ -817,7 +817,14 @@ describe("<MortgageContainer />", () => {
       const profilePatch = calls.find(([url]) => String(url).endsWith("/user-profile"));
       if (!profilePatch) throw new Error("expected a profile PATCH");
       const profileBody = JSON.parse(String((profilePatch[1] as RequestInit).body));
-      for (const key of ["mortgageRate", "mortgageTermYears", "mortgageBalance", "homeValue"]) {
+      // The repayment type lives on the account only (system audit leftovers, item 3).
+      for (const key of [
+        "mortgageRate",
+        "mortgageTermYears",
+        "mortgageBalance",
+        "homeValue",
+        "mortgageType",
+      ]) {
         expect(profileBody).not.toHaveProperty(key);
       }
     });
@@ -1035,6 +1042,17 @@ describe("<MortgageContainer />", () => {
         balance: -130000,
       });
       expect(savedText(container)).toContain("£130,000");
+    });
+
+    test("never reads the profile's old repayment answer: an account with none set is repayment", () => {
+      loaderData = {
+        ...loaded({ repaymentType: null }),
+        userProfile: { mortgageType: "interest-only" },
+      };
+      const { container } = customRender(<MortgageContainer />);
+      expect(container.querySelector("#mortgage-summary")?.textContent).toContain(
+        "Repayment typeRepayment",
+      );
     });
 
     test("reads the repayment type from the mortgage account before the profile", () => {

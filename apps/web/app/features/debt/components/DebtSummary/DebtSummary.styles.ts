@@ -7,3 +7,11 @@ export const summaryStack = css({
   gap: "4",
   fontVariantNumeric: "tabular-nums",
 });
+
+/** The one quiet line under the strip when a rate after a 0% deal is assumed. */
+export const assumptionLine = css({
+  margin: 0,
+  fontSize: "sm",
+  color: "text.secondary",
+  fontVariantNumeric: "tabular-nums",
+});
