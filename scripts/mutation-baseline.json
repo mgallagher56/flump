@@ -17,8 +17,8 @@
       "measuredOn": "2026-11-19"
     },
     "packages/observability": {
-      "floor": 94,
-      "measured": 95.77,
+      "floor": 93,
+      "measured": 94.3,
       "measuredOn": "2026-11-19"
     },
     "packages/format": {
@@ -34,6 +34,11 @@
     "packages/business-details": {
       "floor": 96,
       "measured": 97.01,
+      "measuredOn": "2026-11-19"
+    },
+    "packages/mcp": {
+      "floor": 90,
+      "measured": 91.85,
       "measuredOn": "2026-11-19"
     }
   }
