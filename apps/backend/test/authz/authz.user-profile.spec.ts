@@ -97,7 +97,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     resetSentTo.length = 0;
     deletedLogins.length = 0;
     const patched = await h.call("patch", "/user-profile", h.tokens.a, {
-      displayName: "A Secret Name",
+      firstName: "A Secret Name",
       annualSalary: 50000,
     });
     expect(patched.status).toBe(200);
@@ -141,7 +141,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   const expectProfileAUntouched = async () => {
     const row = await profiles().findOneByOrFail({ userId: USER_A });
     expect(row.id).toBe(profileAId);
-    expect(row.displayName).toBe("A Secret Name");
+    expect(row.firstName).toBe("A Secret Name");
     expect(Number(row.annualSalary)).toBe(50000);
     expect(row.hasResetFinancialData).toBeFalsy();
   };
@@ -158,7 +158,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         key: "PATCH /user-profile",
         method: "patch",
         path: "/user-profile",
-        body: { displayName: "pwned" },
+        body: { firstName: "pwned" },
       },
       {
         key: "POST /user-profile/send-password-reset",
@@ -219,14 +219,14 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   it("GET /user-profile: each caller gets only their own profile", async () => {
     const a = await h.call("get", "/user-profile", h.tokens.a);
     expect(a.status).toBe(200);
-    expect(a.body.displayName).toBe("A Secret Name");
+    expect(a.body.firstName).toBe("A Secret Name");
     expect(a.body.annualSalary).toBe(50000);
 
     const b = await h.call("get", "/user-profile", h.tokens.b);
     expect(b.status).toBe(200);
     expect(b.body.userId).toBe(USER_B);
     expect(b.body.id).not.toBe(profileAId);
-    expect(b.body.displayName).toBeNull();
+    expect(b.body.firstName).toBeNull();
     expect(b.body.annualSalary).toBeNull();
     expect(b.text).not.toContain("A Secret Name");
     await expectProfileAUntouched();
@@ -237,12 +237,12 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expectProbeRejected(
       await h.call("patch", "/user-profile", h.tokens.b, {
         ...probeBody(profileAId),
-        displayName: "B Name",
+        firstName: "B Name",
       }),
     );
     await expectProfileAUntouched();
     const res = await h.call("patch", "/user-profile", h.tokens.b, {
-      displayName: "B Name",
+      firstName: "B Name",
       annualSalary: 1,
     });
     expect(res.status).toBe(200);
@@ -250,7 +250,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(res.body.id).not.toBe(profileAId);
     await expectProfileAUntouched();
     const b = await profiles().findOneByOrFail({ userId: USER_B });
-    expect(b.displayName).toBe("B Name");
+    expect(b.firstName).toBe("B Name");
     expect(await profiles().count()).toBe(2);
     ran("PATCH /user-profile");
   });
@@ -276,6 +276,31 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     for (const key of ["hasBuyToLet", "monthlySavingsTarget", "dashboardWidgetSizes"]) {
       expect(got.body).not.toHaveProperty(key);
     }
+  });
+
+  it("PATCH /user-profile: displayName and hasSecondIncome are accepted and ignored for one release, and GET carries neither (system audit slice 9 part three)", async () => {
+    await profiles().update(
+      { userId: USER_A },
+      { displayName: "Stored Name", hasSecondIncome: true },
+    );
+    const res = await h.call("patch", "/user-profile", h.tokens.a, {
+      displayName: "Changed Name",
+      hasSecondIncome: false,
+      annualSalary: 41000,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.annualSalary).toBe(41000);
+    expect(res.body).not.toHaveProperty("displayName");
+    expect(res.body).not.toHaveProperty("hasSecondIncome");
+    const after = await profiles().findOneByOrFail({ userId: USER_A });
+    expect(Number(after.annualSalary)).toBe(41000);
+    expect(after.displayName).toBe("Stored Name");
+    expect(after.hasSecondIncome).toBe(true);
+    const got = await h.call("get", "/user-profile", h.tokens.a);
+    expect(got.status).toBe(200);
+    expect(got.body).not.toHaveProperty("displayName");
+    expect(got.body).not.toHaveProperty("hasSecondIncome");
+    expect(got.text).not.toContain("Stored Name");
   });
 
   it("PATCH /user-profile/checklist: steps are per user, probe body rejected", async () => {

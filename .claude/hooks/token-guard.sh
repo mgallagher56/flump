@@ -8,7 +8,7 @@ case "$file" in
   *) exit 0 ;;
 esac
 case "$file" in
-  */tokens/*|*/styled-system/*|*/node_modules/*|*.test.ts|*.test.tsx|*.config.ts|*/apps/backend/*|*/apps/mobile-companion/*|*/packages/finance-engine/*|*/packages/banking/*|*/packages/common/*|*/packages/mcp/*) exit 0 ;;
+  */tokens/*|*/styled-system/*|*/node_modules/*|*.test.ts|*.test.tsx|*.config.ts|*/apps/backend/*|*/packages/finance-engine/*|*/packages/banking/*|*/packages/common/*|*/packages/mcp/*) exit 0 ;;
 esac
 [ -f "$file" ] || exit 0
 

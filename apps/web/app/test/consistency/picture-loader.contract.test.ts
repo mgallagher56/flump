@@ -157,7 +157,6 @@ function toContractProfile(p: PersonaFixture) {
     id: "00000000-0000-4000-8000-0000000000aa",
     userId: OWNER_ID,
     email: null,
-    displayName: null,
     firstName: null,
     lastName: null,
     avatarUrl: null,
@@ -167,7 +166,6 @@ function toContractProfile(p: PersonaFixture) {
     annualSalary: f.annualSalary,
     // A typed take-home is a fact now (owner decision 2 option A), so it round-trips too.
     monthlyTakeHome: f.monthlyTakeHome ?? null,
-    hasSecondIncome: false,
     secondIncomeMonthly: null,
     hasRentalIncome: false,
     rentalIncomeMonthly: null,

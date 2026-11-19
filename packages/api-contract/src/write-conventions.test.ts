@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { DEFAULT_TRANSACTION_PAGE, MAX_TRANSACTION_PAGE } from "./domains/transactions.js";
 import {
   etagFor,
   IdempotencyKey,
@@ -13,7 +12,6 @@ import {
   isConditionalRoute,
   isIdempotentRoute,
   type RouteDefinition,
-  routes,
   UNCONDITIONAL_UPDATE_ROUTES,
 } from "./manifest.js";
 import { buildOpenApiDocument, openApiPath } from "./openapi.js";
@@ -54,13 +52,11 @@ describe("pagination law (BE-09, audit M-API1)", () => {
     }
   });
 
-  it("keeps small per-user lists whole by default; transactions keep BE-08's bounds", () => {
-    // The lists the web client reads whole until BE-10 follows X-Next-Cursor are larger, and
-    // GET /transactions keeps the page sizes BE-08 gave it (500 by default, 1000 at most).
+  it("keeps small per-user lists whole by default", () => {
+    // The lists the web client reads whole until BE-10 follows X-Next-Cursor are larger.
     const wholeForWeb: Record<string, number> = {
       accountDetails: 5000,
       tax: 2000,
-      transactions: 1000,
     };
     for (const [kind, limits] of Object.entries(PAGE_LIMITS)) {
       expect(limits.default, kind).toBeLessThanOrEqual(limits.max);
@@ -69,11 +65,6 @@ describe("pagination law (BE-09, audit M-API1)", () => {
     expect(PAGE_LIMITS.accountDetails).toEqual({ default: 5000, max: 5000 });
     expect(PAGE_LIMITS.tax).toEqual({ default: 2000, max: 2000 });
     expect(PAGE_LIMITS.accounts).toEqual({ default: 500, max: 500 });
-    expect(PAGE_LIMITS.transactions).toEqual({
-      default: DEFAULT_TRANSACTION_PAGE,
-      max: MAX_TRANSACTION_PAGE,
-    });
-    expect(PAGE_LIMITS.transactions).toEqual({ default: 500, max: 1000 });
     expect(PAGE_LIMITS.activity).toEqual({ default: 100, max: 500 });
   });
 
@@ -88,12 +79,6 @@ describe("pagination law (BE-09, audit M-API1)", () => {
     expect(query.safeParse({ limit: "2.5" }).success).toBe(false);
     expect(query.safeParse({ page: "2" }).success).toBe(false);
     expect(PageCursor.safeParse("a".repeat(513)).success).toBe(false);
-    expect(
-      routes.transactions.list.query.parse({
-        accountId: "6f1c2a4e-8b3d-4c5e-9f70-1a2b3c4d5e6f",
-        limit: "10",
-      }),
-    ).toEqual({ accountId: "6f1c2a4e-8b3d-4c5e-9f70-1a2b3c4d5e6f", limit: 10 });
   });
 
   it("documents limit, cursor and the X-Next-Cursor header on every paginated route", () => {
@@ -120,7 +105,6 @@ describe("idempotency keys (BE-09, audit M7)", () => {
       "budget.create",
       "tax.bulkCreate",
       "tax.create",
-      "transactions.create",
     ]);
   });
 

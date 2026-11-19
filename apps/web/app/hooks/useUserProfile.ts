@@ -20,7 +20,6 @@ export type TaxRegion = "ENGLAND" | "WALES" | "SCOTLAND" | "NORTHERN_IRELAND";
 export interface UserProfile {
   id: string;
   userId: string;
-  displayName?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
@@ -38,7 +37,6 @@ export interface UserProfile {
   annualSalary?: number | null;
   monthlyTakeHome?: number | null;
   studentLoanPlan?: string | null;
-  hasSecondIncome: boolean;
   secondIncomeMonthly?: number | null;
   hasRentalIncome: boolean;
   rentalIncomeMonthly?: number | null;
@@ -82,7 +80,6 @@ export type UserProfileUpdate = Partial<
 export const DEFAULT_PROFILE: UserProfile = {
   id: "",
   userId: "",
-  displayName: null,
   firstName: null,
   lastName: null,
   email: null,
@@ -92,7 +89,6 @@ export const DEFAULT_PROFILE: UserProfile = {
   employmentType: null,
   annualSalary: null,
   monthlyTakeHome: null,
-  hasSecondIncome: false,
   secondIncomeMonthly: null,
   hasRentalIncome: false,
   rentalIncomeMonthly: null,

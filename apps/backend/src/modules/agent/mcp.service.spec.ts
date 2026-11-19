@@ -385,7 +385,6 @@ describe("McpService.getContextPack for a brand-new user", () => {
     const config = { get: vi.fn().mockReturnValue(undefined) };
     const finance = financeServiceWithIntake(
       accounts as never,
-      transactions as never,
       details as never,
       connections as never,
       profiles as never,

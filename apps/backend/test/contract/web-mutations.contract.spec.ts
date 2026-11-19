@@ -199,15 +199,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         expect(tax.body.amount).toBe(2500.75);
         const taxList = (await get("/tax-records")).body as Array<Record<string, unknown>>;
         expect(taxList.map((r) => r.amount)).toEqual([2500.75]);
-
-        const tx = await send("post", "/transactions", {
-          accountId: created.body.id,
-          amount: -12.34,
-          description: "Coffee",
-          category: "food",
-        });
-        expect2xx(tx, "POST /transactions");
-        expect(tx.body.amount).toBe(-12.34);
       });
     });
 

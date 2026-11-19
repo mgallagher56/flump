@@ -523,7 +523,6 @@ export const EVERYTHING: Persona = {
     taxRegion: "ENGLAND",
     birthYear: birthYear(52),
     studentLoanPlans: ["PLAN_1"],
-    hasSecondIncome: true,
     secondIncomeMonthly: 1100,
     hasRentalIncome: true,
     rentalIncomeMonthly: 1150,

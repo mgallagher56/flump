@@ -12858,388 +12858,6 @@
         "tags": ["tax"]
       }
     },
-    "/v1/transactions": {
-      "get": {
-        "operationId": "transactions.list",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "accountId",
-            "required": false,
-            "schema": {
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "maximum": 1000,
-              "minimum": 1,
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "pattern": "^[A-Za-z0-9_-]{1,512}$",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "schema": {
-              "maximum": 100000,
-              "minimum": 0,
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "accountId": {
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                        "type": "string"
-                      },
-                      "amount": {
-                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                        "type": "number"
-                      },
-                      "category": {
-                        "type": "string"
-                      },
-                      "description": {
-                        "type": "string"
-                      },
-                      "id": {
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                        "type": "string"
-                      },
-                      "timestamp": {
-                        "type": "string"
-                      },
-                      "userId": {
-                        "minLength": 1,
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "accountId",
-                      "userId",
-                      "amount",
-                      "description",
-                      "category",
-                      "timestamp"
-                    ],
-                    "type": "object"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Success.",
-            "headers": {
-              "X-Next-Cursor": {
-                "description": "The cursor of the next page: pass it back as `?cursor=`. Absent on the last page.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`validation_failed`: the request does not match the contract."
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`unauthorized`: missing or invalid credentials."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`rate_limited`: too many requests. See the Retry-After header."
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`internal_error`: an unexpected failure. Quote the requestId."
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "tags": ["transactions"]
-      },
-      "post": {
-        "operationId": "transactions.create",
-        "parameters": [
-          {
-            "description": "Makes the create safe to retry. A repeat with the same key and body within 24 hours replays the first response (with Idempotent-Replayed: true) and creates nothing.",
-            "in": "header",
-            "name": "Idempotency-Key",
-            "required": false,
-            "schema": {
-              "maxLength": 255,
-              "minLength": 1,
-              "pattern": "^[\\x20-\\x7E]+$",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "additionalProperties": false,
-                "properties": {
-                  "accountId": {
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                    "type": "string"
-                  },
-                  "amount": {
-                    "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                    "type": "number"
-                  },
-                  "category": {
-                    "maxLength": 64,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "description": {
-                    "maxLength": 255,
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  "timestamp": {
-                    "type": "string"
-                  }
-                },
-                "required": ["accountId", "amount", "description", "category"],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "accountId": {
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                      "type": "string"
-                    },
-                    "amount": {
-                      "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                      "type": "number"
-                    },
-                    "category": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                      "type": "string"
-                    },
-                    "timestamp": {
-                      "type": "string"
-                    },
-                    "userId": {
-                      "minLength": 1,
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "accountId",
-                    "userId",
-                    "amount",
-                    "description",
-                    "category",
-                    "timestamp"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Success.",
-            "headers": {
-              "Idempotent-Replayed": {
-                "description": "`true` when this is the stored response of an earlier request with the same Idempotency-Key.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`validation_failed`: the request does not match the contract."
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`unauthorized`: missing or invalid credentials."
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`conflict`: a request with the same Idempotency-Key is still in progress. Retry shortly."
-          },
-          "413": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`payload_too_large`: the request body is over the size limit."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`constraint_violation`: the data breaks a stored rule and was not saved. `idempotency_key_reused`: the Idempotency-Key was used with a different body."
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`rate_limited`: too many requests. See the Retry-After header."
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`internal_error`: an unexpected failure. Quote the requestId."
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "tags": ["transactions"]
-      }
-    },
     "/v1/user-profile": {
       "delete": {
         "operationId": "profile.deleteUser",
@@ -13442,9 +13060,6 @@
                       },
                       "type": "array"
                     },
-                    "displayName": {
-                      "type": ["string", "null"]
-                    },
                     "email": {
                       "type": ["string", "null"]
                     },
@@ -13475,9 +13090,6 @@
                       "type": "boolean"
                     },
                     "hasResetFinancialData": {
-                      "type": "boolean"
-                    },
-                    "hasSecondIncome": {
                       "type": "boolean"
                     },
                     "housingStatus": {
@@ -13628,7 +13240,6 @@
                     "id",
                     "userId",
                     "email",
-                    "displayName",
                     "firstName",
                     "lastName",
                     "avatarUrl",
@@ -13637,7 +13248,6 @@
                     "employmentType",
                     "annualSalary",
                     "monthlyTakeHome",
-                    "hasSecondIncome",
                     "secondIncomeMonthly",
                     "hasRentalIncome",
                     "rentalIncomeMonthly",
@@ -14123,9 +13733,6 @@
                       },
                       "type": "array"
                     },
-                    "displayName": {
-                      "type": ["string", "null"]
-                    },
                     "email": {
                       "type": ["string", "null"]
                     },
@@ -14156,9 +13763,6 @@
                       "type": "boolean"
                     },
                     "hasResetFinancialData": {
-                      "type": "boolean"
-                    },
-                    "hasSecondIncome": {
                       "type": "boolean"
                     },
                     "housingStatus": {
@@ -14309,7 +13913,6 @@
                     "id",
                     "userId",
                     "email",
-                    "displayName",
                     "firstName",
                     "lastName",
                     "avatarUrl",
@@ -14318,7 +13921,6 @@
                     "employmentType",
                     "annualSalary",
                     "monthlyTakeHome",
-                    "hasSecondIncome",
                     "secondIncomeMonthly",
                     "hasRentalIncome",
                     "rentalIncomeMonthly",
@@ -14561,9 +14163,6 @@
                       },
                       "type": "array"
                     },
-                    "displayName": {
-                      "type": ["string", "null"]
-                    },
                     "email": {
                       "type": ["string", "null"]
                     },
@@ -14594,9 +14193,6 @@
                       "type": "boolean"
                     },
                     "hasResetFinancialData": {
-                      "type": "boolean"
-                    },
-                    "hasSecondIncome": {
                       "type": "boolean"
                     },
                     "housingStatus": {
@@ -14747,7 +14343,6 @@
                     "id",
                     "userId",
                     "email",
-                    "displayName",
                     "firstName",
                     "lastName",
                     "avatarUrl",
@@ -14756,7 +14351,6 @@
                     "employmentType",
                     "annualSalary",
                     "monthlyTakeHome",
-                    "hasSecondIncome",
                     "secondIncomeMonthly",
                     "hasRentalIncome",
                     "rentalIncomeMonthly",
@@ -15113,9 +14707,6 @@
                           },
                           "type": "array"
                         },
-                        "displayName": {
-                          "type": ["string", "null"]
-                        },
                         "email": {
                           "type": ["string", "null"]
                         },
@@ -15146,9 +14737,6 @@
                           "type": "boolean"
                         },
                         "hasResetFinancialData": {
-                          "type": "boolean"
-                        },
-                        "hasSecondIncome": {
                           "type": "boolean"
                         },
                         "housingStatus": {
@@ -15299,7 +14887,6 @@
                         "id",
                         "userId",
                         "email",
-                        "displayName",
                         "firstName",
                         "lastName",
                         "avatarUrl",
@@ -15308,7 +14895,6 @@
                         "employmentType",
                         "annualSalary",
                         "monthlyTakeHome",
-                        "hasSecondIncome",
                         "secondIncomeMonthly",
                         "hasRentalIncome",
                         "rentalIncomeMonthly",

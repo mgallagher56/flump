@@ -30,7 +30,7 @@
 
 **Flump** is an open-source financial management and decision-making platform built specifically to demystify personal finance and taxation. It bridges the gap between everyday budgeting, net worth tracking, and forward-looking financial decisions – with built-in engines for the UK tax system, pension auto-enrolment rules, rental property landlord restrictions (Section 24), and mortgage optimisation scenarios.
 
-Designed as a modern Turborepo monorepo, Flump brings together a high-performance web dashboard, a mobile companion app with biometric authentication, an enterprise-grade NestJS backend, and shared TypeScript domain packages.
+Designed as a modern Turborepo monorepo, Flump brings together a high-performance web dashboard, an enterprise-grade NestJS backend, and shared TypeScript domain packages.
 
 For a granular breakdown of every live route, component, and user interaction, consult the **[Pages & Features Catalog](docs/pages_and_features.md)**.
 
@@ -104,7 +104,6 @@ For a granular breakdown of every live route, component, and user interaction, c
 ### 📱 Multi-platform ecosystem
 
 - **Web dashboard (`apps/web`)**: Server-rendered React Router 7 app styled with Panda CSS, supporting accessible UI primitives and full keyboard navigation.
-- **Mobile companion (`apps/mobile-companion`)**: Native iOS and Android app built with Expo and React Native, featuring FaceID/TouchID biometric authentication.
 - **Marketing site (`apps/marketing`)**: Fast, SEO-optimised landing site powered by Express and Vite.
 
 ---
@@ -118,7 +117,6 @@ flump/
 ├── apps/
 │   ├── web/                # React Router 7 + React 19 web app (Panda CSS, WorkOS AuthKit)
 │   ├── backend/            # NestJS REST API with TypeORM & PostgreSQL
-│   ├── mobile-companion/   # Expo / React Native mobile app with biometric auth
 │   └── marketing/          # SSR landing & marketing site (Express + Vite)
 │
 ├── packages/
@@ -284,9 +282,6 @@ bun --filter @flump/web dev
 
 # Backend only
 bun --filter backend dev
-
-# Mobile companion (Expo)
-bun --filter mobile-companion dev
 ```
 
 ---

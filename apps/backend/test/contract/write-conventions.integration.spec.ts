@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { MAX_TRANSACTION_PAGE } from "@flump/api-contract";
+import { PAGE_LIMITS } from "@flump/api-contract";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { claimVersion, expectedVersion } from "../../src/contract/etag";
 import { Account } from "../../src/entities/account.entity";
@@ -175,26 +175,6 @@ describe.skipIf(dbMode === "skip")("write conventions (real Postgres)", () => {
       expect(pages).toEqual([[ids[1]], [ids[0]]]);
     });
 
-    it("pages transactions newest first, narrowed to one account", async () => {
-      const account = await createAccount("Current");
-      const other = await createAccount("Other");
-      const ids: string[] = [];
-      for (const [i, accountId] of [account.id, account.id, other.id, account.id].entries()) {
-        const res = await h.call("post", "/transactions", h.tokens.a, {
-          accountId,
-          amount: -i - 1,
-          description: `t${i}`,
-          category: "food",
-          timestamp: `2026-11-0${i + 1}T10:00:00.000Z`,
-        });
-        expect(res.status).toBe(201);
-        if (accountId === account.id) ids.push(res.body.id);
-      }
-      const pages = await walk(`/transactions?accountId=${account.id}`, 2);
-      expect(pages.flat()).toEqual([...ids].reverse());
-      expect(pages.map((p) => p.length)).toEqual([2, 1]);
-    });
-
     it("pages tax records (date keys) and monthly values (integer keys)", async () => {
       for (const name of ["a", "b", "c"]) {
         const res = await h.call("post", "/tax-records", h.tokens.a, {
@@ -228,7 +208,7 @@ describe.skipIf(dbMode === "skip")("write conventions (real Postgres)", () => {
       for (const url of [
         `/accounts?cursor=${forged}`,
         "/accounts?cursor=not%20base64",
-        `/transactions?limit=${MAX_TRANSACTION_PAGE + 1}`,
+        `/tax-records?limit=${PAGE_LIMITS.tax.max + 1}`,
         "/budget-entries?limit=0",
       ]) {
         const res = await h.call("get", url, h.tokens.a);
@@ -317,10 +297,17 @@ describe.skipIf(dbMode === "skip")("write conventions (real Postgres)", () => {
     });
 
     it("frees the key when the create fails, so a corrected retry goes through", async () => {
+      // A savings line linked to an account the caller does not have: the service answers 404.
       const missing = "00000000-0000-4000-8000-000000000000";
-      const tx = { accountId: missing, amount: -1, description: "x", category: "food" };
+      const line = {
+        category: "savings",
+        name: "Saving",
+        amount: 50,
+        linkKind: "savings",
+        linkAccountId: missing,
+      };
       const failed = await h
-        .call("post", "/transactions", h.tokens.a, tx)
+        .call("post", "/budget-entries", h.tokens.a, line)
         .set("Idempotency-Key", "t");
       expect(failed.status).toBe(404);
       expect(await keys().count()).toBe(0);
@@ -400,7 +387,7 @@ describe.skipIf(dbMode === "skip")("write conventions (real Postgres)", () => {
         {
           path: "/user-profile",
           etag: profile.headers.etag as string,
-          patch: { displayName: "Ada" },
+          patch: { firstName: "Ada" },
         },
       ];
       await pause(5);
@@ -421,14 +408,14 @@ describe.skipIf(dbMode === "skip")("write conventions (real Postgres)", () => {
       await pause(5);
       // 2099 passes the contract (max 2100) but not the service's "no later than this year".
       const bad = await h
-        .call("patch", "/user-profile", h.tokens.a, { displayName: "Half", birthYear: 2099 })
+        .call("patch", "/user-profile", h.tokens.a, { firstName: "Half", birthYear: 2099 })
         .set("If-Match", etag);
       expect(bad.status).toBe(400);
       const after = await h.call("get", "/user-profile", h.tokens.a);
       expect(after.headers.etag).toBe(etag);
-      expect(after.body.displayName).toBe(read.body.displayName);
+      expect(after.body.firstName).toBe(read.body.firstName);
       const ok = await h
-        .call("patch", "/user-profile", h.tokens.a, { displayName: "Whole" })
+        .call("patch", "/user-profile", h.tokens.a, { firstName: "Whole" })
         .set("If-Match", etag);
       expect(ok.status).toBe(200);
     });

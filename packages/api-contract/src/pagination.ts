@@ -18,8 +18,6 @@ export const PAGE_LIMITS = {
   tax: { default: 2000, max: 2000 },
   mcpTokens: { default: 500, max: 500 },
   imports: { default: 500, max: 500 },
-  // BE-08 bounded GET /transactions at these sizes (DEFAULT_TRANSACTION_PAGE, MAX_TRANSACTION_PAGE).
-  transactions: { default: 500, max: 1000 },
   activity: { default: 100, max: 500 },
 } as const;
 export type PageKind = keyof typeof PAGE_LIMITS;

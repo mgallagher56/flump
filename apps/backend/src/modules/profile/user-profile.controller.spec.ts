@@ -115,7 +115,7 @@ describe("UserProfileController", () => {
       });
 
       expect(result.userId).toBe("user-123");
-      expect(result.displayName).toBe("Jane Doe");
+      expect(result).not.toHaveProperty("displayName");
       expect(result.firstName).toBe("Jane");
       expect(result.lastName).toBe("Doe");
       expect(result.email).toBe("jane@example.com");
@@ -125,7 +125,7 @@ describe("UserProfileController", () => {
   });
 
   describe("updateUserProfile", () => {
-    it("updates firstName, lastName, and displayName", async () => {
+    it("updates firstName and lastName", async () => {
       mockUserProfileRepo.findOne.mockResolvedValueOnce({
         userId: "user-123",
         displayName: "Old Name",
@@ -136,7 +136,6 @@ describe("UserProfileController", () => {
       const result = await controller.updateUserProfile(
         { user: { id: "user-123", email: "jane@example.com" } },
         {
-          displayName: "Jane Smith",
           firstName: "Jane",
           lastName: "Smith",
         },
@@ -144,7 +143,6 @@ describe("UserProfileController", () => {
 
       expect(mockUserProfileRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          displayName: "Jane Smith",
           firstName: "Jane",
           lastName: "Smith",
         }),
@@ -280,7 +278,6 @@ describe("UserProfileController", () => {
           employmentType: "employed",
           annualSalary: 60000,
           monthlyTakeHome: 3500,
-          hasSecondIncome: true,
           secondIncomeMonthly: 500,
           hasRentalIncome: true,
           rentalIncomeMonthly: 1000,

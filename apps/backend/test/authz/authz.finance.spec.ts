@@ -69,13 +69,17 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
     });
     expect(created.status).toBe(201);
     accountId = created.body.id;
-    const tx = await h.call("post", "/transactions", h.tokens.a, {
-      accountId,
-      amount: -12.34,
-      description: "A coffee",
-      category: "food",
-    });
-    expect(tx.status).toBe(201);
+    // GET and POST /transactions are gone (system audit slice 9); bank sync and imports still
+    // store rows, so one is seeded directly to check account deletes and lists leave it alone.
+    await transactions().save(
+      transactions().create({
+        accountId,
+        userId: USER_A,
+        amount: -12.34,
+        description: "A coffee",
+        category: "food",
+      }),
+    );
     const connection = await connections().save(
       connections().create({
         userId: USER_A,
@@ -152,13 +156,6 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         body: { name: "pwned" },
       },
       { key: "DELETE /accounts/:id", method: "delete", path: () => `/accounts/${accountId}` },
-      { key: "GET /transactions", method: "get", path: () => "/transactions" },
-      {
-        key: "POST /transactions",
-        method: "post",
-        path: () => "/transactions",
-        body: { accountId: MISSING_ID, amount: 1, description: "x", category: "x" },
-      },
       { key: "GET /bank-connections", method: "get", path: () => "/bank-connections" },
       {
         key: "GET /bank-connections/capability",
@@ -204,13 +201,10 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
   });
 
   describe("lists never return A's rows to B", () => {
-    it("GET /accounts, /account-details, /transactions, /bank-connections", async () => {
+    it("GET /accounts, /account-details, /bank-connections", async () => {
       const a = await h.call("get", "/accounts", h.tokens.a);
       expect(a.status).toBe(200);
       expect(a.body.map((r: { id: string }) => r.id)).toEqual([accountId]);
-      const aTx = await h.call("get", "/transactions", h.tokens.a);
-      expect(aTx.status).toBe(200);
-      expect(aTx.body).toHaveLength(1);
       const aConnections = await h.call("get", "/bank-connections", h.tokens.a);
       expect(aConnections.status).toBe(200);
       expect(aConnections.body).toHaveLength(1);
@@ -220,12 +214,7 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       const b = await h.call("get", "/accounts", h.tokens.b);
       expect(b.status).toBe(200);
       expect(b.body).toEqual([]);
-      for (const path of [
-        "/transactions",
-        "/bank-connections",
-        "/account-details",
-        `/transactions?accountId=${accountId}`,
-      ]) {
+      for (const path of ["/bank-connections", "/account-details"]) {
         const res = await h.call("get", path, h.tokens.b);
         expect(res.status, path).toBe(200);
         expect(res.body, path).toEqual([]);
@@ -237,7 +226,6 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       for (const key of [
         "GET /accounts",
         "GET /account-details",
-        "GET /transactions",
         "GET /bank-connections",
         "GET /bank-connections/capability",
       ]) {
@@ -472,40 +460,19 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
   });
 
   describe("transactions", () => {
-    it("POST /transactions: A 201; B posting to A's account gets 404 identical to not-found", async () => {
-      const own = await h.call("post", "/transactions", h.tokens.a, {
+    it("GET and POST /transactions are gone (system audit slice 9): 404, and nothing changes", async () => {
+      const before = await transactions().count();
+      const list = await h.call("get", "/transactions", h.tokens.a);
+      expect(list.status).toBe(404);
+      const create = await h.call("post", "/transactions", h.tokens.a, {
         accountId,
         amount: -1,
         description: "A again",
         category: "food",
       });
-      expect(own.status).toBe(201);
-      expect(own.body.userId).toBe(USER_A);
-
-      const before = await transactions().count();
-      expectProbeRejected(
-        await h.call("post", "/transactions", h.tokens.b, {
-          ...probeBody(accountId),
-          accountId,
-          amount: 5000,
-          description: "injected",
-          category: "x",
-        }),
-      );
-      const body = (id: string) => ({
-        accountId: id,
-        amount: 5000,
-        description: "injected",
-        category: "x",
-      });
-      const asB = await h.call("post", "/transactions", h.tokens.b, body(accountId));
-      const missing = await h.call("post", "/transactions", h.tokens.b, body(MISSING_ID));
-      expect(asB.status).toBe(404);
-      expect(missing.status).toBe(404);
-      expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
+      expect(create.status).toBe(404);
       expect(await transactions().count()).toBe(before);
       expect(await transactions().findBy({ userId: USER_B })).toEqual([]);
-      ran("POST /transactions");
     });
   });
 

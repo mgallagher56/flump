@@ -358,9 +358,9 @@ describe("log volume limits", () => {
 
       const query = rejectionOf({
         method: "GET",
-        route: { path: "/transactions" },
+        route: { path: "/budget-entries" },
         params: {},
-        query: { accountId: "6f1c1f3e-9d6e-4c0e-9f43-0a1b2c3d4e5f", cacheBust: "1" },
+        query: { limit: "5", cacheBust: "1" },
       });
       expect(query.error?.getResponse().issues).toEqual([
         expect.objectContaining({ path: "query.cacheBust", code: "unrecognized_keys" }),
@@ -422,7 +422,6 @@ describe("log volume limits", () => {
           "tax",
           "profile",
           "bank-connections",
-          "transactions",
           "snapshots",
           "imports",
           "mcp-tokens",

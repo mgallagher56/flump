@@ -241,7 +241,6 @@ export class UserProfileService implements ProfileLifecycle {
    */
   private applyProfileUpdate(profile: UserProfile, body: UpdateProfileRequest): boolean {
     const wasOnboarded = Boolean(profile.onboardingCompleted);
-    if (body.displayName !== undefined) profile.displayName = body.displayName ?? null;
     if (body.firstName !== undefined) profile.firstName = body.firstName ?? null;
     if (body.lastName !== undefined) profile.lastName = body.lastName ?? null;
     if (body.avatarUrl !== undefined) profile.avatarUrl = body.avatarUrl ?? null;
@@ -257,7 +256,6 @@ export class UserProfileService implements ProfileLifecycle {
       // salary is cleared. Onboarding's take-home mode sends both and keeps its typed figure.
       profile.monthlyTakeHome = null;
     }
-    if (body.hasSecondIncome !== undefined) profile.hasSecondIncome = body.hasSecondIncome;
     if (body.secondIncomeMonthly !== undefined)
       profile.secondIncomeMonthly = body.secondIncomeMonthly ?? null;
     if (body.hasRentalIncome !== undefined) profile.hasRentalIncome = body.hasRentalIncome;

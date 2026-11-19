@@ -255,6 +255,35 @@ describe("UserProfileService (Deep Module)", () => {
     log.mockRestore();
   });
 
+  describe("displayName and hasSecondIncome (system audit slice 9 part three)", () => {
+    // Their only reader was the deleted mobile app. The columns stay until the drop PR (and stay
+    // in the export); the API neither returns nor writes them. secondIncomeMonthly is unaffected.
+    const STORED = { displayName: "Sam Taylor", hasSecondIncome: true };
+
+    it("never returns them from a read, an update or a checklist change", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "p1", userId: "user-123", ...STORED });
+      const read = await service.getProfile("user-123");
+      const updated = await service.updateProfile("user-123", { annualSalary: 41000 });
+      const checklist = await service.updateChecklist("user-123", { dismissed: true });
+      for (const result of [read, updated, checklist]) {
+        expect(Object.keys(STORED).filter((key) => key in result)).toEqual([]);
+      }
+    });
+
+    it("saves the other fields of an old-shaped PATCH and leaves both stored columns untouched", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "p1", userId: "user-123", ...STORED });
+      await service.updateProfile("user-123", {
+        displayName: "Someone Else",
+        hasSecondIncome: false,
+        secondIncomeMonthly: 400,
+        annualSalary: 41000,
+      });
+      const saved = at(mockUserProfileRepo.save.mock.calls, -1)[0];
+      expect(saved).toMatchObject(STORED);
+      expect(saved).toMatchObject({ annualSalary: 41000, secondIncomeMonthly: 400 });
+    });
+  });
+
   it("filters the retired forecast module key on read without touching the stored row", async () => {
     const stored = {
       id: "profile-1",

@@ -62,8 +62,8 @@ describe("useUserProfile conditional saves", () => {
     api.answerSaved(V2);
     api.answerSaved(V3);
     await act(async () => {
-      await result.current.updateProfile({ displayName: "One" });
-      await result.current.updateProfile({ displayName: "Two" });
+      await result.current.updateProfile({ firstName: "One" });
+      await result.current.updateProfile({ firstName: "Two" });
     });
     expect(api.sentIfMatch(0)).toBe(`"${V1}"`);
     expect(api.sentIfMatch(1)).toBe(`"${V2}"`);
@@ -77,7 +77,7 @@ describe("useUserProfile conditional saves", () => {
     api.answerSaved(V3);
     await act(async () => {
       await Promise.all([
-        result.current.updateProfile({ displayName: "One" }),
+        result.current.updateProfile({ firstName: "One" }),
         result.current.updateProfile({ annualSalary: 41000 }),
       ]);
     });
@@ -91,7 +91,7 @@ describe("useUserProfile conditional saves", () => {
     api.answerSaved(V3);
     await act(async () => {
       await result.current.markChecklistStep("budget", true);
-      await result.current.updateProfile({ displayName: "One" });
+      await result.current.updateProfile({ firstName: "One" });
     });
     expect(api.sentIfMatch(0)).toBeUndefined();
     expect(api.sentIfMatch(1)).toBe(`"${V2}"`);
@@ -102,7 +102,7 @@ describe("useUserProfile conditional saves", () => {
     api.answerWith(refused);
     let error: unknown;
     await act(async () => {
-      error = await result.current.updateProfile({ displayName: "Lost update" }).catch((e) => e);
+      error = await result.current.updateProfile({ firstName: "Lost update" }).catch((e) => e);
     });
     expect((error as { status?: number }).status).toBe(412);
     expect(toast).toHaveBeenCalledWith({
@@ -113,12 +113,12 @@ describe("useUserProfile conditional saves", () => {
     expect(reload).toHaveBeenCalledTimes(1);
     // Nothing was stored: the profile on screen is still the one that was read.
     expect(result.current.profile.updatedAt).toBe(V1);
-    expect(result.current.profile.displayName).toBe(profileFixture.displayName);
+    expect(result.current.profile.firstName).toBe(profileFixture.firstName);
 
     // A later save is not blocked by the failed one.
     api.answerSaved(V3);
     await act(async () => {
-      await result.current.updateProfile({ displayName: "Again" });
+      await result.current.updateProfile({ firstName: "Again" });
     });
     await waitFor(() => expect(result.current.profile.updatedAt).toBe(V3));
   });
@@ -127,7 +127,7 @@ describe("useUserProfile conditional saves", () => {
     const { result, api } = withProfile(V1);
     api.answerWith(() => new Response(null, { status: 503 }));
     await act(async () => {
-      await result.current.updateProfile({ displayName: "x" }).catch(() => undefined);
+      await result.current.updateProfile({ firstName: "x" }).catch(() => undefined);
     });
     expect(toast).not.toHaveBeenCalled();
     expect(reload).not.toHaveBeenCalled();
@@ -137,7 +137,7 @@ describe("useUserProfile conditional saves", () => {
     const { result, api } = withProfile("");
     api.answerSaved(V2);
     await act(async () => {
-      await result.current.updateProfile({ displayName: "First" });
+      await result.current.updateProfile({ firstName: "First" });
     });
     expect(api.sentIfMatch(0)).toBeUndefined();
   });

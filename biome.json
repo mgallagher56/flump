@@ -23,11 +23,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "apps/marketing/src/index.css",
-        "apps/web/src/index.css",
-        "apps/mobile-companion/global.css"
-      ],
+      "includes": ["apps/marketing/src/index.css", "apps/web/src/index.css"],
       "linter": {
         "rules": {
           "suspicious": {

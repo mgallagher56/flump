@@ -25,7 +25,6 @@ import { must } from "../../src/testing/must";
 
 const REPO_ROOT = join(__dirname, "..", "..", "..", "..");
 const WEB_APP_DIR = join(REPO_ROOT, "apps", "web", "app");
-const MOBILE_CLIENT = join(REPO_ROOT, "apps", "mobile-companion", "src", "api", "client.ts");
 
 type Method = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 interface Call {
@@ -317,26 +316,5 @@ describe("web to backend route inventory", () => {
   it("every non-literal call site is on the known-dynamic allow-list", () => {
     const allowed = new Set(KNOWN_DYNAMIC.map((d) => `${d.file}:${d.token}`));
     expect(webDynamic.filter((d) => !allowed.has(d))).toEqual([]);
-  });
-
-  it("mobile client (report-only): lists calls with no backend route", () => {
-    const text = readFileSync(MOBILE_CLIENT, "utf8");
-    const calls: Call[] = [];
-    for (const m of text.matchAll(
-      /apiFetch(?:<[^()]*>)?\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1([^)]*)\)/g,
-    )) {
-      const method = (/method:\s*"(GET|POST|PATCH|PUT|DELETE)"/.exec(m[3] ?? "")?.[1] ??
-        "GET") as Method;
-      calls.push({ method, path: normalisePath(must(m[2], "path")), source: "mobile-companion" });
-    }
-    const missing = calls.filter((c) => !routes.some((r) => matches(r, c)));
-    if (missing.length > 0) {
-      console.warn(
-        `[route-inventory] mobile-companion calls with no backend route (report-only):\n${missing
-          .map((c) => `  ${c.method} ${c.path}`)
-          .join("\n")}`,
-      );
-    }
-    expect(calls.length).toBeGreaterThan(0);
   });
 });

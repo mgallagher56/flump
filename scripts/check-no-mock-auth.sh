@@ -7,14 +7,11 @@ cd "$(dirname "$0")/.."
 
 PATTERN='mock-session-token|dev_user_123|user_mock|mock_mcp_'
 
-# Files (exact paths) and directory prefixes where the literals are allowed.
+# Files (exact paths) where the literals are allowed.
 ALLOWED_FILES=(
   "apps/backend/src/auth/dev-bypass.verifier.ts"
   "apps/web/app/utils/auth.server.ts"
   "apps/backend/src/migrations/RemoveSeededExampleData1794355400000.ts"
-)
-ALLOWED_PREFIXES=(
-  "apps/mobile-companion/"
 )
 
 # SCAN_ROOTS can be overridden to exercise the scan-error path in tests.
@@ -40,9 +37,6 @@ while IFS= read -r file; do
   for f in "${ALLOWED_FILES[@]}"; do
     [ "$file" = "$f" ] && allowed=1
   done
-  for p in "${ALLOWED_PREFIXES[@]}"; do
-    case "$file" in "$p"*) allowed=1 ;; esac
-  done
   case "$(basename "$file")" in
     *.test.* | *.spec.*) allowed=1 ;;
   esac
@@ -54,7 +48,7 @@ done <<<"$candidates"
 if [ -n "$matches" ]; then
   echo "Mock auth literals found outside the allow-list:" >&2
   printf '%s' "$matches" >&2
-  echo "Allowed: ${ALLOWED_FILES[*]} ${ALLOWED_PREFIXES[*]} *.test.* *.spec.*" >&2
+  echo "Allowed: ${ALLOWED_FILES[*]} *.test.* *.spec.*" >&2
   exit 1
 fi
 

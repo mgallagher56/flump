@@ -49,7 +49,6 @@ export const HousingStatus = z.enum(["renting", "mortgage", "own_outright", "liv
  * rejected (BE-09). Both `null` and absent are accepted on nullable columns.
  */
 export const UpdateProfileRequest = z.strictObject({
-  displayName: ShortText.nullish(),
   firstName: ShortText.nullish(),
   lastName: ShortText.nullish(),
   avatarUrl: AvatarUrl.nullish(),
@@ -58,7 +57,6 @@ export const UpdateProfileRequest = z.strictObject({
   employmentType: z.enum(["employed", "self-employed", "other"]).nullish(),
   annualSalary: Money.nullish(),
   monthlyTakeHome: Money.nullish(),
-  hasSecondIncome: z.boolean().optional(),
   secondIncomeMonthly: Money.nullish(),
   hasRentalIncome: z.boolean().optional(),
   rentalIncomeMonthly: Money.nullish(),
@@ -93,6 +91,12 @@ export const UpdateProfileRequest = z.strictObject({
   /** Net worth choices: count property less its mortgage; count student loans as a debt. */
   netWorthCountsProperty: z.boolean().optional(),
   netWorthCountsStudentLoan: z.boolean().optional(),
+  // Retired (system audit slice 9 part three): accepted and ignored on write for one release, so
+  // a browser tab still running the previous web bundle can save. Their only reader was the
+  // deleted apps/mobile-companion. Nothing writes or returns them (the columns stay, and stay in
+  // the export, until the column-drop PR, which removes them here too).
+  displayName: ShortText.nullish(),
+  hasSecondIncome: z.boolean().optional(),
 });
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
 
@@ -130,7 +134,6 @@ export const UserProfileDto = z.strictObject({
   id: Uuid,
   userId: z.string().min(1),
   email: z.string().nullable(),
-  displayName: z.string().nullable(),
   firstName: z.string().nullable(),
   lastName: z.string().nullable(),
   avatarUrl: z.string().nullable(),
@@ -139,7 +142,6 @@ export const UserProfileDto = z.strictObject({
   employmentType: z.enum(["employed", "self-employed", "other"]).nullable(),
   annualSalary: NullableAmount,
   monthlyTakeHome: NullableAmount,
-  hasSecondIncome: z.boolean(),
   secondIncomeMonthly: NullableAmount,
   hasRentalIncome: z.boolean(),
   rentalIncomeMonthly: NullableAmount,

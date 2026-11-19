@@ -55,7 +55,3 @@ export {
   TaxRecordListResponse,
   TaxRecordResponse,
 } from "./domains/tax.js";
-export {
-  CreateTransactionResponse,
-  TransactionListResponse,
-} from "./domains/transactions.js";

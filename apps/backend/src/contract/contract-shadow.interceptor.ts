@@ -61,7 +61,7 @@ const MAX_PATH_CHARS = 80;
 /**
  * Whether to check the `n`th response for a route. Outside production every response is checked
  * (the contract and authz suites rely on that). In production the first 20 per route per process
- * and then 1 in 50 are checked, so large bodies (transactions, the context pack) do not pay a
+ * and then 1 in 50 are checked, so large bodies (monthly values, the context pack) do not pay a
  * second serialisation and a full parse on every request.
  */
 export const shouldCheckResponse = (n: number, env: NodeJS.ProcessEnv = process.env): boolean =>

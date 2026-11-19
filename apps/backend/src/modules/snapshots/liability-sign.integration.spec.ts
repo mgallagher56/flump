@@ -7,7 +7,6 @@ import { typeOrmOptionsFromEnv } from "../../config/typeorm.options";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
-import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import {
   BEFORE_IMAGE_TABLE,
@@ -541,7 +540,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         } as unknown as BankProviderRegistry;
         const finance = financeServiceWithIntake(
           ds.getRepository(Account),
-          ds.getRepository(Transaction),
           ds.getRepository(AccountDetail),
           ds.getRepository(BankConnection),
           ds.getRepository(UserProfile),

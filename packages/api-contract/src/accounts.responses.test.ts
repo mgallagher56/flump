@@ -17,11 +17,6 @@ import {
   SyncBankConnectionResponse,
 } from "./domains/bank-connections.js";
 import { UpsertSnapshotResponse } from "./domains/snapshots.js";
-import {
-  CreateTransactionResponse,
-  TransactionDto,
-  TransactionListResponse,
-} from "./domains/transactions.js";
 import { checkAgainst } from "./validate.js";
 
 const ACCOUNT_ID = "6f1c2a4e-8b3d-4c5e-9f70-1a2b3c4d5e6f";
@@ -84,16 +79,6 @@ const connection = {
   lastSyncedAt: "2026-11-01T08:00:00.000Z",
   createdAt: "2026-10-01T08:00:00.000Z",
   updatedAt: "2026-11-01T08:00:00.000Z",
-};
-
-const transaction = {
-  id: "c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f",
-  accountId: ACCOUNT_ID,
-  userId: USER_ID,
-  amount: -12.5,
-  description: "Coffee",
-  category: "Eating out",
-  timestamp: "2026-11-02T10:00:00.000Z",
 };
 
 const ok = (schema: Parameters<typeof checkAgainst>[0], value: unknown) =>
@@ -210,18 +195,6 @@ describe("snapshots responses", () => {
     ok(UpsertSnapshotResponse, { ...result, values: [], completed: false });
     bad(UpsertSnapshotResponse, { ...result, userId: USER_ID });
     bad(UpsertSnapshotResponse, { ...result, values: [{ ...result.values[0], value: "-250.50" }] });
-  });
-});
-
-describe("transactions responses", () => {
-  it("accepts a transaction list and the created transaction", () => {
-    ok(TransactionListResponse, [transaction]);
-    ok(CreateTransactionResponse, transaction);
-  });
-
-  it("rejects an amount as a string and an unknown key", () => {
-    bad(TransactionDto, { ...transaction, amount: "-12.50" });
-    bad(CreateTransactionResponse, { ...transaction, merchant: "Cafe" });
   });
 });
 

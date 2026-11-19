@@ -22,7 +22,3 @@ docs
 .husky
 .claude
 .agents
-
-# Mobile is not in any server image; the manifests stage still needs its package.json
-apps/mobile-companion/**
-!apps/mobile-companion/package.json

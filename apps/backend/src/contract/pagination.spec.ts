@@ -1,4 +1,4 @@
-import { DEFAULT_TRANSACTION_PAGE, MAX_TRANSACTION_PAGE } from "@flump/api-contract";
+import { PAGE_LIMITS } from "@flump/api-contract";
 import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -54,7 +54,7 @@ const rowsOf = (n: number) =>
 
 describe("resolvePage", () => {
   it("defaults to the kind's default and caps at its maximum", () => {
-    expect(resolvePage(undefined, "transactions")).toEqual({ limit: DEFAULT_TRANSACTION_PAGE });
+    expect(resolvePage(undefined, "activity")).toEqual({ limit: PAGE_LIMITS.activity.default });
     expect(resolvePage({}, "accounts")).toEqual({ limit: 500 });
     expect(resolvePage({ limit: "25" }, "budget")).toEqual({ limit: 25 });
     expect(resolvePage({ limit: 7, cursor: "abc_-" }, "tax")).toEqual({
@@ -66,12 +66,12 @@ describe("resolvePage", () => {
   it("rejects a limit out of range or a malformed cursor with 400 validation_failed", () => {
     for (const query of [
       { limit: "0" },
-      { limit: String(MAX_TRANSACTION_PAGE + 1) },
+      { limit: String(PAGE_LIMITS.activity.max + 1) },
       { limit: "x" },
       { cursor: "a b" },
     ]) {
       try {
-        resolvePage(query, "transactions");
+        resolvePage(query, "activity");
         expect.unreachable();
       } catch (error) {
         expect(error).toBeInstanceOf(BadRequestException);
@@ -82,7 +82,7 @@ describe("resolvePage", () => {
   });
 
   it("ignores the route's other query fields", () => {
-    expect(resolvePage({ accountId: ID, limit: "3" }, "transactions")).toEqual({ limit: 3 });
+    expect(resolvePage({ accountId: ID, limit: "3" }, "accountDetails")).toEqual({ limit: 3 });
   });
 });
 

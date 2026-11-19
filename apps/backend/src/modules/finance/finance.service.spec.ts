@@ -1,6 +1,5 @@
-import type { CreateTransactionRequest } from "@flump/api-contract";
 import { BankSyncOrchestrator } from "@flump/banking/server";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { financeServiceWithIntake } from "../../testing/finance-service";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
@@ -27,15 +26,7 @@ const createService = () => {
     AccountDetail: accountDetailRepo,
     Transaction: transactionRepo,
   });
-  const service = financeServiceWithIntake(
-    accountRepo,
-    transactionRepo,
-    accountDetailRepo,
-    {},
-    {},
-    {},
-    {},
-  );
+  const service = financeServiceWithIntake(accountRepo, accountDetailRepo, {}, {}, {}, {});
   return { service, accountRepo, transactionRepo, accountDetailRepo };
 };
 
@@ -95,86 +86,6 @@ describe("FinanceService", () => {
       expect(order(transactionRepo.delete)).toBeLessThan(order(accountRepo.remove));
     });
   });
-  describe("createTransaction", () => {
-    it("saves with the caller's userId and ignores client-supplied id and userId", async () => {
-      const { service, transactionRepo, accountRepo } = createService();
-      accountRepo.findOne.mockResolvedValue({ id: "acc-1", userId: "userA" });
-
-      await service.createTransaction("userA", {
-        id: "other-id",
-        userId: "userB",
-        accountId: "acc-1",
-        amount: -5,
-        description: "Coffee",
-        category: "Food",
-        timestamp: "2026-01-01T10:00:00Z",
-      } as unknown as CreateTransactionRequest);
-
-      const created = at(transactionRepo.create.mock.calls, 0)[0];
-      expect(created.userId).toBe("userA");
-      expect(created).not.toHaveProperty("id");
-      expect(created).toMatchObject({
-        accountId: "acc-1",
-        amount: -5,
-        description: "Coffee",
-        category: "Food",
-      });
-      expect(transactionRepo.save.mock.calls[0]?.[0].userId).toBe("userA");
-      expect(accountRepo.findOne).toHaveBeenCalledWith({
-        where: { id: "acc-1", userId: "userA" },
-      });
-    });
-
-    it("stores a client timestamp as a Date and rejects an unparseable one", async () => {
-      const { service, transactionRepo, accountRepo } = createService();
-      accountRepo.findOne.mockResolvedValue({ id: "acc-1", userId: "userA" });
-      const body = { accountId: "acc-1", amount: 1, description: "x", category: "y" };
-
-      await service.createTransaction("userA", { ...body, timestamp: "2026-01-01T10:00:00Z" });
-      expect(transactionRepo.create.mock.calls[0]?.[0].timestamp).toEqual(
-        new Date("2026-01-01T10:00:00Z"),
-      );
-
-      await expect(
-        service.createTransaction("userA", { ...body, timestamp: "not a date" }),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    });
-
-    it("rejects a transaction against an account the caller does not own and saves nothing", async () => {
-      const { service, transactionRepo, accountRepo } = createService();
-      accountRepo.findOne.mockResolvedValue(null);
-
-      await expect(
-        service.createTransaction("userB", {
-          accountId: "acc-A",
-          amount: 1,
-          description: "x",
-          category: "y",
-        }),
-      ).rejects.toBeInstanceOf(NotFoundException);
-
-      expect(accountRepo.findOne).toHaveBeenCalledWith({
-        where: { id: "acc-A", userId: "userB" },
-      });
-      expect(transactionRepo.save).not.toHaveBeenCalled();
-    });
-
-    it("rejects a transaction with no accountId without querying", async () => {
-      const { service, transactionRepo, accountRepo } = createService();
-
-      await expect(
-        service.createTransaction("userA", {
-          amount: 1,
-          description: "x",
-          category: "y",
-        } as CreateTransactionRequest),
-      ).rejects.toBeInstanceOf(BadRequestException);
-
-      expect(accountRepo.findOne).not.toHaveBeenCalled();
-      expect(transactionRepo.save).not.toHaveBeenCalled();
-    });
-  });
-
   describe("bank connection responses", () => {
     const TOKEN_FIELDS = ["accessToken", "refreshToken", "userId"];
     const makeConn = (over: Record<string, unknown> = {}) => ({
@@ -196,7 +107,6 @@ describe("FinanceService", () => {
       const bankRepo = createInMemoryRepository(seed);
       const provider = { fetchAccounts: vi.fn().mockResolvedValue([]) };
       const service = financeServiceWithIntake(
-        {},
         {},
         {},
         bankRepo,
