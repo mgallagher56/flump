@@ -113,7 +113,7 @@ describe("ImportsService", () => {
       expect(err).toBeInstanceOf(BadRequestException);
       expect(err?.getStatus()).toBe(400);
       expect(err?.message).toBe(
-        'Imported account "Second mortgage" (row m2): termMonths must be an integer between 1 and 600, or null',
+        "Imported account in row m2: termMonths must be an integer between 1 and 600, or null",
       );
       expect(saved).toHaveLength(0);
     });
