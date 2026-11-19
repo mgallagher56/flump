@@ -187,7 +187,9 @@ export function pensionContribution(salary: number, pension?: UkPensionInput): n
 /**
  * Student loan repayment for several plans. One undergraduate plan charges its rate over its threshold.
  * With several undergraduate plans the rate is charged once over the lowest of their thresholds
- * (UNVERIFIED until the accountant ruling). Postgraduate is charged separately on top.
+ * (UNVERIFIED until the accountant ruling). With Plan 1 and Plan 2 that repayment is split as
+ * GOV.UK sets out; other pairs put it all on the lowest-threshold plan. Postgraduate is charged
+ * separately on top.
  */
 function studentLoanRepayments(
   pay: number,
@@ -203,8 +205,21 @@ function studentLoanRepayments(
     const threshold = (p: UkStudentLoanPlanKey) =>
       rules.studentLoans.plans[p]?.threshold ?? Number.POSITIVE_INFINITY;
     const lowest = ug.reduce((a, b) => (threshold(b) < threshold(a) ? b : a));
-    byPlan[lowest] = calculateStudentLoanRepayment(pay, lowest, rules);
+    const repayment = calculateStudentLoanRepayment(pay, lowest, rules);
+    byPlan[lowest] = repayment;
     for (const other of ug) if (other !== lowest) byPlan[other] = 0;
+    // GOV.UK "Repaying your student loan: what you pay": with Plan 1 and Plan 2 the Plan 1 loan
+    // takes at most 9% of the gap between the two thresholds, and the rest goes to Plan 2. The
+    // total is unchanged. GOV.UK gives no such rule for other pairs, so they keep the split above.
+    if (ug.length === 2 && ug.includes("plan1") && ug.includes("plan2")) {
+      const plan1 = rules.studentLoans.plans.plan1;
+      const plan2 = rules.studentLoans.plans.plan2;
+      if (plan1 && plan2 && plan2.threshold > plan1.threshold) {
+        const plan1Cap = plan1.rate * (plan2.threshold - plan1.threshold);
+        byPlan.plan1 = roundPence(Math.min(repayment, plan1Cap));
+        byPlan.plan2 = roundPence(repayment - byPlan.plan1);
+      }
+    }
   }
   if (unique.includes("postgrad")) {
     byPlan.postgrad = calculateStudentLoanRepayment(pay, "postgrad", rules);
