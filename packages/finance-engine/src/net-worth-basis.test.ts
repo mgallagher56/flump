@@ -224,11 +224,9 @@ describe("history under the basis", () => {
     [false, true, [-8000, -6000]],
   ] as const)("property %s, student loan %s: every month", (p, s, expected) => {
     const b = basis(p, s);
-    const history = new PortfolioSnapshot(example, details).getMonthlyHistory(b);
-    expect(history.map((h) => h.netWorth)).toEqual(expected);
     const series = selectNetWorthSeries(example, rows, b);
     expect(series.map((h) => h.netWorth)).toEqual(expected);
-    for (const h of history) expect(h.totalAssets - h.totalLiabilities).toBe(h.netWorth);
+    for (const h of series) expect(h.totalAssets - h.totalLiabilities).toBe(h.netWorth);
   });
 
   it("a counted student loan is an amount owed in the series", () => {

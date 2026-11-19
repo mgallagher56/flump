@@ -6,6 +6,7 @@ import {
   type RawAccount,
   type RawAccountDetail,
 } from "./portfolio.js";
+import { type SnapshotRow, selectNetWorthSeries } from "./snapshots.js";
 
 describe("PortfolioSnapshot domain module", () => {
   const sampleAccounts: RawAccount[] = [
@@ -211,18 +212,21 @@ describe("PortfolioSnapshot domain module", () => {
     });
   });
 
-  describe("getMonthlyHistory", () => {
+  describe("selectNetWorthSeries", () => {
     it("generates chronological history points from account details", () => {
-      const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      const history = snapshot.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS, 12);
+      const history = selectNetWorthSeries(
+        sampleAccounts,
+        sampleDetails as SnapshotRow[],
+        DEFAULT_NET_WORTH_BASIS,
+      );
 
       expect(history.length).toBe(2);
-      expect(history[0]?.month).toBe(1);
+      expect(history[0]?.month).toBe("2026-01");
       expect(history[0]?.totalAssets).toBe(1200 + 8000);
       expect(history[0]?.totalLiabilities).toBe(3000);
       expect(history[0]?.netWorth).toBe(6200);
 
-      expect(history[1]?.month).toBe(2);
+      expect(history[1]?.month).toBe("2026-02");
       expect(history[1]?.totalAssets).toBe(1800 + 11500);
       expect(history[1]?.totalLiabilities).toBe(2200);
       expect(history[1]?.netWorth).toBe(11100);

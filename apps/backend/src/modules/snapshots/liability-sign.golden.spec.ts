@@ -3,6 +3,8 @@ import {
   PortfolioSnapshot,
   type RawAccount,
   type RawAccountDetail,
+  type SnapshotRow,
+  selectNetWorthSeries,
 } from "@flump/finance-engine";
 import { PERSONAS, type PersonaFixture } from "@flump/finance-engine/testing";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -46,7 +48,11 @@ function figures(fixture: PersonaFixture) {
     totalMortgageBalance: snapshot.getTotalMortgageBalance(),
     totalStudentLoans: snapshot.getTotalStudentLoans(),
     totalProperty: snapshot.getTotalProperty(),
-    history: snapshot.getMonthlyHistory(fixture.netWorthBasis, 24),
+    history: selectNetWorthSeries(
+      fixture.accounts,
+      fixture.details as SnapshotRow[],
+      fixture.netWorthBasis,
+    ).slice(-24),
     pictureNetWorth: picture.netWorth,
     pictureDebt: picture.debt,
   };

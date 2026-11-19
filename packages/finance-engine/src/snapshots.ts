@@ -12,7 +12,7 @@ import type { RawAccount } from "./portfolio.js";
  *   the caller's job and must be the same in both directions (advice policy R1).
  * - Assets keep their real sign, liabilities (cards, loans, mortgages and, when the basis counts
  *   them, student loans) count as the absolute value, and accounts the net worth basis leaves out
- *   are excluded, matching `PortfolioSnapshot.getMonthlyHistory`.
+ *   are excluded.
  */
 
 export interface SnapshotRow {

@@ -15,6 +15,7 @@ import {
 } from "./joint-share.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { PortfolioSnapshot } from "./portfolio.js";
+import { selectNetWorthSeries } from "./snapshots.js";
 
 describe("E34 Slice 1: joint account & mortgage share helpers", () => {
   describe("canAccountBeJoint / ISA & pension exclusions (E34 Section 2)", () => {
@@ -368,47 +369,46 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
 
   describe("PortfolioSnapshot joint-share integration (E34 Slice 2)", () => {
     it("scales joint mortgage, property, savings and history by sharePercent while keeping ISAs and pensions at 100%", () => {
-      const snap = new PortfolioSnapshot(
-        [
-          {
-            id: "home",
-            name: "Home",
-            type: "Property",
-            balance: 400_000,
-            ownership: "joint",
-            sharePercent: 50,
-          },
-          {
-            id: "mort",
-            name: "Joint Mortgage",
-            type: "Mortgage",
-            balance: -280_000,
-            ownership: "joint",
-            sharePercent: 50,
-            monthlyContribution: 1_500,
-          },
-          {
-            id: "isa",
-            name: "Stocks & Shares ISA",
-            type: "Investment",
-            balance: 30_000,
-            ownership: "joint",
-            sharePercent: 50,
-          },
-          {
-            id: "pen",
-            name: "Workplace Pension",
-            type: "Pension",
-            balance: 50_000,
-            ownership: "joint",
-            sharePercent: 50,
-          },
-        ],
-        [
-          { accountId: "home", year: 2026, month: 10, value: 390_000 },
-          { accountId: "mort", year: 2026, month: 10, value: -282_000 },
-        ],
-      );
+      const accounts = [
+        {
+          id: "home",
+          name: "Home",
+          type: "Property",
+          balance: 400_000,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+        {
+          id: "mort",
+          name: "Joint Mortgage",
+          type: "Mortgage",
+          balance: -280_000,
+          ownership: "joint",
+          sharePercent: 50,
+          monthlyContribution: 1_500,
+        },
+        {
+          id: "isa",
+          name: "Stocks & Shares ISA",
+          type: "Investment",
+          balance: 30_000,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+        {
+          id: "pen",
+          name: "Workplace Pension",
+          type: "Pension",
+          balance: 50_000,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+      ];
+      const details = [
+        { accountId: "home", year: 2026, month: 10, value: 390_000 },
+        { accountId: "mort", year: 2026, month: 10, value: -282_000 },
+      ];
+      const snap = new PortfolioSnapshot(accounts, details);
 
       expect(snap.getTotalProperty()).toBe(200_000);
       expect(snap.getTotalMortgageBalance()).toBe(140_000);
@@ -418,16 +418,15 @@ describe("E34 Slice 1: joint account & mortgage share helpers", () => {
       expect(snap.getTotalNetWorth(DEFAULT_NET_WORTH_BASIS)).toBe(
         200_000 + 30_000 + 50_000 - 140_000,
       );
-      expect(snap.getMonthlyHistory(DEFAULT_NET_WORTH_BASIS)).toEqual([
-        {
-          year: 2026,
-          month: 10,
-          label: "Oct 2026",
-          totalAssets: 195_000,
-          totalLiabilities: 141_000,
-          netWorth: 54_000,
-        },
-      ]);
+      // Series: home 390,000 x 50% = 195,000; mortgage 282,000 x 50% = 141,000 owed.
+      const series = selectNetWorthSeries(accounts, details, DEFAULT_NET_WORTH_BASIS);
+      expect(series).toHaveLength(1);
+      expect(series[0]).toMatchObject({
+        month: "2026-10",
+        totalAssets: 195_000,
+        totalLiabilities: 141_000,
+        netWorth: 54_000,
+      });
     });
   });
 });

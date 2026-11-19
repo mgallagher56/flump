@@ -6,7 +6,6 @@ import {
   AccountResponse,
   CreateAccountResponse,
   DeleteAccountResponse,
-  PortfolioSnapshotResponse,
   UpdateAccountResponse,
   UpdateBalancesResponse,
 } from "./domains/accounts.js";
@@ -73,27 +72,6 @@ const detail = {
   source: "manual",
   importBatchId: null,
   updatedAt: "2026-10-31T20:00:00.000Z",
-};
-
-const resolved = {
-  id: ACCOUNT_ID,
-  name: "Everyday current",
-  rawType: "Current",
-  category: "cash",
-  isAsset: true,
-  isLiability: false,
-  nominalBalance: 1234.56,
-  netWorthBalance: 1234.56,
-  latestBalance: 1234.56,
-  overdrawnAmount: 0,
-  interestRate: 0,
-  interestRateKnown: false,
-  monthlyContribution: 0,
-  monthlyContributionKnown: false,
-  currency: "GBP",
-  latestMonth: 10,
-  latestYear: 2026,
-  history: [{ year: 2026, month: 10, value: 1100.1 }],
 };
 
 const connection = {
@@ -213,54 +191,6 @@ describe("accounts responses", () => {
   it("accepts the delete result and rejects extra keys", () => {
     ok(DeleteAccountResponse, { success: true });
     bad(DeleteAccountResponse, { success: true, id: ACCOUNT_ID });
-  });
-
-  it("accepts a portfolio snapshot, with and without history", () => {
-    const snapshot = {
-      netWorth: -181266.19,
-      totalAssets: 1234.56,
-      totalLiabilities: 182500.75,
-      totalLiquidCash: 1234.56,
-      totalInvestments: 0,
-      totalPensions: 0,
-      totalConsumerDebt: 0,
-      totalMortgageBalance: 182500.75,
-      totalProperty: 0,
-      totalStudentLoans: 0,
-      resolvedAccounts: [
-        resolved,
-        {
-          ...resolved,
-          id: mortgage.id,
-          rawType: "Mortgage",
-          category: "mortgages",
-          isAsset: false,
-          isLiability: true,
-          latestMonth: undefined,
-          latestYear: undefined,
-          history: [],
-        },
-      ],
-      monthlyHistory: [
-        {
-          year: 2026,
-          month: 10,
-          label: "Oct 2026",
-          netWorth: 1100.1,
-          totalAssets: 1100.1,
-          totalLiabilities: 0,
-        },
-      ],
-      netWorthLeavesOut: ["studentLoan"],
-      currency: "GBP",
-    };
-    // JSON.stringify drops undefined keys, as the wire does.
-    ok(PortfolioSnapshotResponse, JSON.parse(JSON.stringify(snapshot)));
-    bad(PortfolioSnapshotResponse, { ...snapshot, netWorth: "-181266.19" });
-    bad(PortfolioSnapshotResponse, { ...snapshot, resolvedAccounts: [{ ...resolved, extra: 1 }] });
-    bad(PortfolioSnapshotResponse, { ...snapshot, netWorthLeavesOut: ["pension"] });
-    const { netWorthLeavesOut: _omitted, ...withoutLeavesOut } = snapshot;
-    bad(PortfolioSnapshotResponse, withoutLeavesOut);
   });
 });
 

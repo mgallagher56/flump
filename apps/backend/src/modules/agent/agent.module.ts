@@ -14,6 +14,7 @@ import { ImportsModule } from "../imports/imports.module";
 import { ProfileModule } from "../profile/profile.module";
 import { AgentAuditService } from "./agent-audit.service";
 import { AgentDataService } from "./agent-data.service";
+import { FinancialPictureService } from "./financial-picture.service";
 import { McpController } from "./mcp.controller";
 import { McpService } from "./mcp.service";
 import { McpImportsAdapter } from "./mcp-imports.adapter";
@@ -43,6 +44,7 @@ import { McpTokenService } from "./mcp-token.service";
   providers: [
     AgentAuditService,
     AgentDataService,
+    FinancialPictureService,
     McpImportsAdapter,
     McpPatGuard,
     McpService,

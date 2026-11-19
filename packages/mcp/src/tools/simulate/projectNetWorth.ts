@@ -1,7 +1,9 @@
 import {
   calculateForecast,
   contributionMonthlyFromPercent,
+  isFigureKnown,
   type LifeEventScenario,
+  type NetWorthLeftOut,
 } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
@@ -11,7 +13,6 @@ import {
   type Missing,
   missingLinkedLines,
   sanitiseText,
-  summariseBudget,
 } from "../read/common.js";
 import {
   agentSupplied,
@@ -26,6 +27,30 @@ import {
 } from "./common.js";
 
 export const MAX_EVENTS = 10;
+
+/** Neutral notes for what the user's net worth choices leave out of the estimate. */
+function netWorthBasisLeavesOutNotes(
+  basis: { countProperty: boolean; countStudentLoan: boolean },
+  leftOut: readonly NetWorthLeftOut[],
+): string[] {
+  const notes: string[] = [];
+  if (!basis.countProperty && (leftOut.includes("property") || leftOut.includes("mortgage"))) {
+    notes.push(
+      "Property and mortgages are not counted in net worth under the user's choices, so they are left out of the estimate.",
+    );
+  }
+  if (!basis.countStudentLoan && leftOut.includes("studentLoan")) {
+    notes.push(
+      "Student loans are not counted in net worth under the user's choices, so they are left out of the estimate.",
+    );
+  }
+  if (leftOut.includes("homeValueMissing")) {
+    notes.push(
+      "A mortgage has no home value saved beside it, so the starting net worth counts the mortgage without the home's value.",
+    );
+  }
+  return notes;
+}
 export const MAX_HORIZON_YEARS = 40;
 
 const event = z.object({
@@ -130,16 +155,16 @@ export const projectNetWorth = defineFlumpTool({
         agentSupplied("monthlySavingGbp", saving, "Monthly saving supplied in the call."),
       );
     } else {
-      const budget = summariseBudget(m.budgetEntries);
-      if (budget.monthlyIncome !== null) {
-        const surplus = round2(
-          budget.monthlyIncome - budget.essentialMonthly - budget.discretionaryMonthly,
-        );
+      // The picture's left over each month: the figure the Budget page shows. Unknown when there
+      // is no income entry or a linked line's saved fact is not set.
+      const budget = isFigureKnown(m.picture.budget) ? m.picture.budget.value : null;
+      if (budget?.hasIncome) {
+        const surplus = round2(budget.surplus);
         saving = Math.max(0, surplus);
         assumptions.push(
           derived(
             "monthlySavingGbp",
-            "Budget income minus essential and flexible spending. Minimum debt payments and pension contributions are not deducted or added, so the figure assumes the budget already includes them.",
+            "The amount left over each month in the budget: income minus spending and saving rows. Minimum debt payments and pension contributions are not deducted or added, so the figure assumes the budget already includes them.",
             surplus,
           ),
         );
@@ -148,7 +173,7 @@ export const projectNetWorth = defineFlumpTool({
         }
       } else {
         saving = 0;
-        missing.push(...missingLinkedLines(budget));
+        missing.push(...missingLinkedLines(m.picture.budgetRows));
         missing.push({
           field: "monthlySavingGbp",
           why: "No income entry in the budget and no monthly saving supplied, so zero saving was used.",
@@ -190,7 +215,11 @@ export const projectNetWorth = defineFlumpTool({
       );
     }
 
-    const equity = Math.max(0, s.getTotalProperty() - s.getTotalMortgageBalance());
+    // Property equity only when net worth counts property (the user's choice), as on every page.
+    const nw = m.picture.netWorth;
+    const equity = m.basis.countProperty
+      ? Math.max(0, s.getTotalProperty() - s.getTotalMortgageBalance())
+      : 0;
     const scenarios: LifeEventScenario[] = input.events.map((e, i) => ({
       id: `event_${i + 1}`,
       // The engine only treats BUY_HOME specially (lump sum becomes equity); the other type is a plain cost.
@@ -222,22 +251,31 @@ export const projectNetWorth = defineFlumpTool({
     const shown = forecast.trajectory.filter(
       (t) => detailed || t.year === 0 || t.year % 5 === 0 || t.year === input.horizonYears,
     );
+    // The start is the picture's net worth under the user's basis (AI-8). Whatever the model does
+    // not grow (a counted student loan, negative equity, a mortgage with no home value, other
+    // assets) is held at today's amount in every year, so year 0 equals the figure the pages show.
+    const startingNetWorth = round2(nw.netWorth);
+    const heldFlat = round2(startingNetWorth - forecast.startingNetWorthGbp);
+    const at = (v: number) => round2(v + heldFlat);
     const last = forecast.trajectory[forecast.trajectory.length - 1];
     const notes = [
       ...earlyNotes,
-      ...(s.getTotalProperty() < s.getTotalMortgageBalance()
-        ? ["Property is worth less than the mortgage; negative equity is counted as zero."]
+      ...netWorthBasisLeavesOutNotes(m.basis, m.netWorthLeavesOut),
+      ...(heldFlat !== 0
+        ? [
+            `${heldFlat < 0 ? "-" : ""}£${Math.abs(heldFlat).toLocaleString("en-GB")} of today's net worth (such as a counted student loan, negative equity or other things you own) is not modelled, so it is held at today's amount in every year.`,
+          ]
         : []),
       "The estimate assumes saving pays down debt first, then goes to investments (up to £20,000 a year) and cash.",
-      "Student loans are excluded. Mortgage repayments and inflation are not modelled.",
+      "Mortgage and student loan repayments and inflation are not modelled.",
     ];
 
     return {
       result: {
         horizonYears: input.horizonYears,
-        startingNetWorthGbp: forecast.startingNetWorthGbp,
-        endBaselineNetWorthGbp: last?.baselineNetWorthGbp ?? forecast.startingNetWorthGbp,
-        endScenarioNetWorthGbp: last?.scenarioNetWorthGbp ?? forecast.startingNetWorthGbp,
+        startingNetWorthGbp: startingNetWorth,
+        endBaselineNetWorthGbp: at(last?.baselineNetWorthGbp ?? forecast.startingNetWorthGbp),
+        endScenarioNetWorthGbp: at(last?.scenarioNetWorthGbp ?? forecast.startingNetWorthGbp),
         eventsApplied: scenarios.map((e) => ({
           label: e.title,
           startYear: e.startYear,
@@ -247,8 +285,8 @@ export const projectNetWorth = defineFlumpTool({
         })),
         points: shown.map((t) => ({
           year: t.year,
-          baselineNetWorthGbp: t.baselineNetWorthGbp,
-          scenarioNetWorthGbp: t.scenarioNetWorthGbp,
+          baselineNetWorthGbp: at(t.baselineNetWorthGbp),
+          scenarioNetWorthGbp: at(t.scenarioNetWorthGbp),
           ...(detailed
             ? {
                 cashGbp: t.cashBalanceGbp,

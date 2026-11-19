@@ -146,23 +146,6 @@ export const bankConnectionFixture = {
   updatedAt: "2026-11-01T08:00:00.000Z",
 };
 
-export const portfolioSnapshotFixture = {
-  netWorth: 15000,
-  totalAssets: 20000,
-  totalLiabilities: 5000,
-  totalLiquidCash: 20000,
-  totalInvestments: 0,
-  totalPensions: 0,
-  totalConsumerDebt: 5000,
-  totalMortgageBalance: 0,
-  totalProperty: 0,
-  totalStudentLoans: 0,
-  resolvedAccounts: [],
-  monthlyHistory: [],
-  netWorthLeavesOut: [],
-  currency: "GBP",
-};
-
 /** A JSON response, as the backend sends it. */
 export const jsonResponse = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
@@ -278,7 +261,6 @@ export function contractBody(method: string, path: string): unknown {
   if (p === "/account-details") return [accountDetailFixture];
   if (/^\/accounts\/[^/]+$/.test(p))
     return m === "GET" ? accountWithDetailsFixture : accountFixture;
-  if (p === "/portfolio-snapshot") return portfolioSnapshotFixture;
   if (p === "/user-profile" || p === "/user-profile/checklist") return profileFixture;
   if (p === "/user-profile/reset-financial-data") {
     return { success: true, message: "Financial data reset", profile: profileFixture };

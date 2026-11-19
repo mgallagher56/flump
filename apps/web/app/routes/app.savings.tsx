@@ -8,7 +8,7 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import SavingsContainer from "~/containers/savings/SavingsContainer";
-import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { backendFetch, loadWorkspacePicture } from "~/services/backend-client.server";
 import { ifMatchFromForm, PROFILE_VERSION_FIELD, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
@@ -120,10 +120,10 @@ export const action = async (args: ActionFunctionArgs) => {
 export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, userProfile, budgetEntries, user } =
-    await loadWorkspaceSnapshot(args, { includeBudget: true });
+  const { accounts, accountDetails, userProfile, budgetEntries, user, picture } =
+    await loadWorkspacePicture(args);
 
-  return data({ accounts, accountDetails, userProfile, budgetEntries, user });
+  return data({ accounts, accountDetails, userProfile, budgetEntries, user, picture });
 };
 
 const SavingsRoute = (): ReactElement => {

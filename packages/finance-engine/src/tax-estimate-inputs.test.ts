@@ -151,4 +151,16 @@ describe("estimateInputsFor (one rule for every Self Assessment surface)", () =>
     );
     expect(out.status === "known" && out.records).toEqual([now]);
   });
+
+  it("the 2026/27 year runs 6 April 2026 to 5 April 2027: records a day either side are left out", () => {
+    const inYear = annual("rental", "income", "rental_income", 10000, "2026-04-06");
+    const before = annual("rental", "income", "rental_income", 5000, "2026-04-05");
+    const after = annual("rental", "income", "rental_income", 5000, "2027-04-06");
+    const out = estimateInputsFor(
+      { employmentType: "employed", annualSalary: 30000 },
+      [before, inYear, after],
+      Y,
+    );
+    expect(out.status === "known" && out.records).toEqual([inYear]);
+  });
 });

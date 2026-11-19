@@ -10,7 +10,7 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import PensionContainer from "~/containers/pension/PensionContainer";
-import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { backendFetch, loadWorkspacePicture } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, PROFILE_VERSION_FIELD, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
@@ -210,11 +210,9 @@ async function isRetirementAvailable(args: LoaderFunctionArgs): Promise<boolean>
 }
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const [{ accounts, accountDetails, userProfile, user }, retirementAvailable] = await Promise.all([
-    loadWorkspaceSnapshot(args),
-    isRetirementAvailable(args),
-  ]);
-  return data({ accounts, accountDetails, userProfile, user, retirementAvailable });
+  const [{ accounts, accountDetails, userProfile, user, picture }, retirementAvailable] =
+    await Promise.all([loadWorkspacePicture(args), isRetirementAvailable(args)]);
+  return data({ accounts, accountDetails, userProfile, user, picture, retirementAvailable });
 };
 
 const PensionRoute = (): ReactElement => {

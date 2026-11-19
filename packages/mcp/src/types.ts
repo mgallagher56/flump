@@ -1,8 +1,9 @@
 import type {
   BuildContextPackInput,
-  FinancialBaseline,
+  FinancialPicture,
   FlumpAiContextPack,
   NetWorthBasis,
+  ProfileFacts,
   RawAccount,
   TaxRecord,
 } from "@flump/finance-engine";
@@ -47,6 +48,13 @@ export type McpTaxRecord = Pick<
 > & { notes?: string | null };
 
 /**
+ * One user's saved rows for the context pack, plus the financial picture built from those same
+ * rows by the engine's one assembler (`loadFinancialPicture`). The read tools report the
+ * picture's figures and never rebuild it.
+ */
+export type McpFinancialData = BuildContextPackInput & { picture: FinancialPicture };
+
+/**
  * Read-only access to ONE user's data. Every method takes the caller's user id from the verified
  * token and must only ever return that user's rows (the authz harness proves it on real Postgres).
  * The ranged methods filter in the database; they never load the whole history to filter here.
@@ -55,11 +63,11 @@ export interface McpUserDataProvider {
   getUserFinancialData(
     userId: string,
     options?: { anonymizeInstitutions?: boolean },
-  ): Promise<BuildContextPackInput>;
+  ): Promise<McpFinancialData>;
   /** The user's accounts in stored (creation) order, without history rows. */
   getAccounts(userId: string): Promise<RawAccount[]>;
-  /** The user's profile baseline (salary, region, ownership share). */
-  getBaseline(userId: string): Promise<FinancialBaseline>;
+  /** The user's saved profile facts (salary, employment type, region, ownership share). */
+  getProfileFacts(userId: string): Promise<ProfileFacts>;
   /** What the user's net worth counts (their saved choices; the default when none are saved). */
   getNetWorthBasis(userId: string): Promise<NetWorthBasis>;
   /**

@@ -9,13 +9,18 @@ import {
   buildFinancialPicture,
   buildFlumpAiContextPack,
   type FinancialBaseline,
+  type FinancialPicture,
   isFigureKnown,
+  loadFinancialPicture,
   type NetWorthBasis,
   PortfolioSnapshot,
   resolveSnapshotNetWorthScope,
+  type SnapshotRow,
+  selectNetWorthSeries,
 } from "@flump/finance-engine";
 import { PERSONAS, type PersonaName } from "@flump/finance-engine/testing";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { inMemoryPictureSource } from "../provider/in-memory.js";
 import { connectTestClient, type TestHarness } from "../testing/client.js";
 
 const BASELINE: FinancialBaseline = {
@@ -131,6 +136,8 @@ const BASES: NetWorthBasis[] = [
 
 interface Envelope<T> {
   result: T;
+  taxYear?: string;
+  missing?: Array<{ field: string }>;
 }
 
 describe.each(NAMES.flatMap((name) => BASES.map((basis) => [name, basis] as const)))(
@@ -163,6 +170,14 @@ describe.each(NAMES.flatMap((name) => BASES.map((basis) => [name, basis] as cons
       expect(pack.portfolio.netWorthLeavesOut).toEqual(p.netWorth.leftOut);
     });
 
+    it("project_net_worth: year 0 is the picture's net worth under the basis", async () => {
+      const p = picture();
+      const e = (await h.callJson("project_net_worth", { expectedReturnPct: 5 })) as Envelope<{
+        startingNetWorthGbp: number;
+      }>;
+      expect(e.result.startingNetWorthGbp).toBe(Math.round(p.netWorth.netWorth * 100) / 100);
+    });
+
     it("get_financial_snapshot: net worth, totals and leave-out list", async () => {
       const p = picture();
       const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -179,9 +194,10 @@ describe.each(NAMES.flatMap((name) => BASES.map((basis) => [name, basis] as cons
     });
 
     it("get_balance_history total: every month matches the engine history", async () => {
-      const history = new PortfolioSnapshot(fixture.accounts, fixture.details).getMonthlyHistory(
+      const history = selectNetWorthSeries(
+        fixture.accounts,
+        fixture.details as SnapshotRow[],
         basis,
-        120,
       );
       const leftOut = resolveSnapshotNetWorthScope(
         new PortfolioSnapshot(fixture.accounts, fixture.details),
@@ -190,8 +206,7 @@ describe.each(NAMES.flatMap((name) => BASES.map((basis) => [name, basis] as cons
       const first = history[0];
       const last = history[history.length - 1];
       if (!first || !last) return;
-      const month = (p: { year: number; month: number }) =>
-        `${p.year}-${String(p.month).padStart(2, "0")}`;
+      const month = (p: { month: string }) => p.month;
       const e = (await h.callJson("get_balance_history", {
         from: month(first),
         to: month(last),
@@ -219,3 +234,256 @@ describe.each(NAMES.flatMap((name) => BASES.map((basis) => [name, basis] as cons
     });
   },
 );
+
+// ---------------------------------------------------------------------------------------------
+// The one assembler (audit slice 3, owner decision 10 option B). Every AI read tool's shared
+// figure must equal the picture `loadFinancialPicture` builds from the same rows. The web half
+// of this contract (pages against the same picture) is added beside these cases in phase B.
+// ---------------------------------------------------------------------------------------------
+
+interface SnapshotResult {
+  netWorthGbp: number;
+  assetsGbp: number;
+  liabilitiesGbp: number;
+  monthlyIncomeGbp: number | null;
+  monthlyEssentialSpendGbp: number | null;
+  monthlySurplusAfterStoredMinimumsGbp: number | null;
+  emergencyRunwayMonths: number | null;
+}
+interface BudgetResult {
+  monthlyIncomeGbp: number | null;
+  essentialMonthlyGbp: number;
+  discretionaryMonthlyGbp: number;
+  savingsMonthlyGbp: number;
+  monthlySurplusBeforeDebtGbp: number | null;
+  categories: Array<{ monthlyGbp: number }>;
+}
+interface DebtResult {
+  totalConsumerDebtGbp: number;
+  totalMinimumPaymentsGbp: number;
+  debtFreeDateOnMinimums: string | null;
+  mortgageGbp: number;
+  studentLoanGbp: number;
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Reads the three summary tools and checks each shared figure against the loaded picture. */
+async function expectToolsMatchPicture(h: TestHarness, picture: FinancialPicture) {
+  const budget = isFigureKnown(picture.budget) ? picture.budget.value : null;
+  const cover = isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value : null;
+
+  const snap = ((await h.callJson("get_financial_snapshot")) as Envelope<SnapshotResult>).result;
+  expect(snap.netWorthGbp).toBe(round2(picture.netWorth.netWorth));
+  expect(snap.assetsGbp).toBe(round2(picture.netWorth.totalAssets));
+  expect(snap.liabilitiesGbp).toBe(round2(picture.netWorth.totalLiabilities));
+  expect(snap.monthlyIncomeGbp).toBe(budget?.hasIncome ? budget.income : null);
+  expect(snap.monthlyEssentialSpendGbp).toBe(cover?.monthlyEssentials ?? null);
+  expect(snap.monthlySurplusAfterStoredMinimumsGbp).toBe(budget?.hasIncome ? budget.surplus : null);
+  expect(snap.emergencyRunwayMonths).toBe(cover?.months ?? null);
+
+  const b = ((await h.callJson("get_budget_summary")) as Envelope<BudgetResult>).result;
+  expect(b.monthlyIncomeGbp).toBe(budget?.hasIncome ? budget.income : null);
+  expect(b.essentialMonthlyGbp).toBe(budget?.essentials ?? 0);
+  expect(b.discretionaryMonthlyGbp).toBe(budget?.discretionary ?? 0);
+  expect(b.savingsMonthlyGbp).toBe(budget?.savings ?? 0);
+  expect(b.monthlySurplusBeforeDebtGbp).toBe(budget?.hasIncome ? budget.surplus : null);
+  // Categories add up to the three spending totals, give or take a penny per category from
+  // rounding each category to the penny.
+  const categorySum = b.categories.reduce((s, c) => s + c.monthlyGbp, 0);
+  const spending =
+    (budget?.essentials ?? 0) + (budget?.discretionary ?? 0) + (budget?.savings ?? 0);
+  expect(Math.abs(categorySum - spending)).toBeLessThanOrEqual(0.01 * b.categories.length + 1e-9);
+
+  const d = ((await h.callJson("get_debt_overview")) as Envelope<DebtResult>).result;
+  expect(d.totalConsumerDebtGbp).toBe(round2(picture.debt.consumerDebt));
+  expect(d.totalMinimumPaymentsGbp).toBe(picture.debt.monthlyMinimums);
+  expect(d.mortgageGbp).toBe(round2(picture.debt.mortgage));
+  expect(d.studentLoanGbp).toBe(round2(picture.debt.studentLoans));
+  expect(d.debtFreeDateOnMinimums).toBe(picture.debtSummary?.debtFreeDate ?? null);
+}
+
+describe.each(NAMES)("persona %s: AI read tools match the loaded picture", (name) => {
+  const { fixture } = PERSONAS[name];
+  const input = {
+    baseline: BASELINE,
+    profileFacts: fixture.profile,
+    netWorthBasis: fixture.netWorthBasis,
+    accounts: fixture.accounts,
+    accountDetails: fixture.details,
+    budgetEntries: fixture.budget,
+    taxRecords: fixture.taxRecords,
+  };
+  let h: TestHarness;
+  beforeAll(async () => {
+    h = await connectTestClient(input);
+  });
+  afterAll(async () => h.close());
+
+  it("snapshot, budget summary and debt overview", async () => {
+    const { picture } = await loadFinancialPicture(inMemoryPictureSource(input), {
+      asOf: new Date(),
+    });
+    // The loader reaches the same picture as building straight from the fixture.
+    expect(picture.netWorth).toEqual(buildFinancialPicture(fixture).netWorth);
+    expect(picture.budget).toEqual(buildFinancialPicture(fixture).budget);
+    await expectToolsMatchPicture(h, picture);
+  });
+
+  it("context pack and project_net_worth start: the picture's figures", async () => {
+    const asOf = new Date();
+    const { picture } = await loadFinancialPicture(inMemoryPictureSource(input), { asOf });
+    // The pack builds its own picture from the same rows; every shared figure must agree.
+    const pack = buildFlumpAiContextPack(input, { asOf });
+    const totals = isFigureKnown(picture.budget) ? picture.budget.value : null;
+    expect(pack.budgetSummary.monthlySurplus).toBe(totals?.hasIncome ? totals.surplus : null);
+    expect(pack.budgetSummary.emergencyRunwayMonths).toBe(
+      isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value.months : null,
+    );
+    expect(pack.portfolio.netWorth).toBe(picture.netWorth.netWorth);
+    expect(pack.debtSummary.totalStartingDebtGbp).toBe(
+      Math.round((picture.debtSummary?.totalDebt ?? 0) * 100) / 100,
+    );
+    expect(pack.debtSummary.debtFreeDate).toBe(picture.debtSummary?.debtFreeDate ?? null);
+    expect(pack.isaAllowance.usedGbp).toBe(picture.isaAllowanceUsed);
+    expect(pack.portfolio.weightedSavingsRate).toBe(picture.savings.weightedRate);
+    // The last history month is the current month at the picture's net worth.
+    const lastPoint = pack.portfolio.monthlyHistory.at(-1);
+    if (lastPoint) expect(lastPoint.netWorth).toBeCloseTo(picture.netWorth.netWorth, 6);
+
+    const e = (await h.callJson("project_net_worth", { expectedReturnPct: 5 })) as Envelope<{
+      startingNetWorthGbp: number;
+      points: Array<{ year: number; baselineNetWorthGbp: number }>;
+    }>;
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    expect(e.result.startingNetWorthGbp).toBe(round2(picture.netWorth.netWorth));
+    expect(e.result.points[0]?.baselineNetWorthGbp).toBe(round2(picture.netWorth.netWorth));
+  });
+
+  it("get_tax_year_position: the current year's Self Assessment estimate is the picture's", async () => {
+    const { picture } = await loadFinancialPicture(inMemoryPictureSource(input), {
+      asOf: new Date(),
+    });
+    const e = (await h.callJson("get_tax_year_position", {})) as Envelope<{
+      estimate: { selfAssessmentGbp: number };
+    }>;
+    const due = picture.estimatedTaxDue;
+    if (isFigureKnown(due)) {
+      expect(e.taxYear).toBe(due.value.taxYear);
+      // The picture keeps whole pounds; the tool reports pence.
+      expect(Math.round(e.result.estimate.selfAssessmentGbp)).toBe(due.value.amount);
+    } else {
+      // Unknown on the Dashboard: the tool names the same missing fact rather than a bare figure.
+      const fields = (e.missing ?? []).map((m) => m.field);
+      for (const key of due.missing) expect(fields).toContain(key);
+    }
+  });
+});
+
+describe("BU-3 worked example: the AI tools give the Dashboard's left over and Breathing room", () => {
+  // Cash £6,000; card £2,000 at 20% APR with a saved £100 minimum. Budget: income £2,500, rent
+  // £900, food £300, savings £200 (saved as essential), card payment £100 in "debt" (essential).
+  const input = {
+    baseline: BASELINE,
+    profileFacts: PERSONAS[NAMES[0] as PersonaName].fixture.profile,
+    netWorthBasis: { countProperty: true, countStudentLoan: false },
+    accounts: [
+      { id: "cur", name: "Current", type: "Current", balance: 6000 },
+      {
+        id: "card",
+        name: "Card",
+        type: "Credit Card",
+        balance: -2000,
+        interestRate: 20,
+        monthlyContribution: 100,
+      },
+    ],
+    accountDetails: [],
+    budgetEntries: [
+      {
+        id: "i",
+        category: "income",
+        name: "Pay",
+        amount: 2500,
+        frequency: "monthly",
+        isIncome: true,
+        isEssential: false,
+      },
+      {
+        id: "r",
+        category: "housing",
+        name: "Rent",
+        amount: 900,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: true,
+      },
+      {
+        id: "f",
+        category: "food",
+        name: "Food",
+        amount: 300,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: true,
+      },
+      {
+        id: "s",
+        category: "savings",
+        name: "Saver",
+        amount: 200,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: true,
+      },
+      {
+        id: "d",
+        category: "debt",
+        name: "Card",
+        amount: 100,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: true,
+      },
+    ],
+    taxRecords: [],
+  };
+  let h: TestHarness;
+  beforeAll(async () => {
+    h = await connectTestClient(input);
+  });
+  afterAll(async () => h.close());
+
+  it("uses the hand-worked figures", async () => {
+    // Left over: 2,500 - essentials (900 + 300 + 100 = 1,300) - savings 200 = 1,000. The card's
+    // £100 minimum is the same payment as the debt row, so it is not taken off again.
+    // Breathing room essentials: rent and food 1,200 plus the larger of the saved minimum (100)
+    // and the debt row (100) = 1,300. 6,000 / 1,300 = 4.615..., shown as 4.6 months.
+    const snap = ((await h.callJson("get_financial_snapshot")) as Envelope<SnapshotResult>).result;
+    expect(snap.monthlySurplusAfterStoredMinimumsGbp).toBe(1000);
+    expect(snap.monthlyEssentialSpendGbp).toBe(1300);
+    expect(snap.emergencyRunwayMonths).toBe(4.6);
+    // Net worth 6,000 - 2,000 = 4,000.
+    expect(snap.netWorthGbp).toBe(4000);
+
+    // Budget summary: essentials 1,300 (the debt row is essential), flexible 0, savings 200;
+    // categories 900 + 300 + 200 + 100 = 1,500 = 1,300 + 0 + 200.
+    const b = ((await h.callJson("get_budget_summary")) as Envelope<BudgetResult>).result;
+    expect(b.essentialMonthlyGbp).toBe(1300);
+    expect(b.discretionaryMonthlyGbp).toBe(0);
+    expect(b.savingsMonthlyGbp).toBe(200);
+    expect(b.monthlySurplusBeforeDebtGbp).toBe(1000);
+    expect(b.categories.reduce((s, c) => s + c.monthlyGbp, 0)).toBe(1500);
+
+    // Debt overview: £2,000 owed, £100 of minimums. The date is the picture's minimum-only date.
+    const d = ((await h.callJson("get_debt_overview")) as Envelope<DebtResult>).result;
+    expect(d.totalConsumerDebtGbp).toBe(2000);
+    expect(d.totalMinimumPaymentsGbp).toBe(100);
+    expect(d.debtFreeDateOnMinimums).not.toBeNull();
+
+    const { picture } = await loadFinancialPicture(inMemoryPictureSource(input), {
+      asOf: new Date(),
+    });
+    await expectToolsMatchPicture(h, picture);
+  });
+});

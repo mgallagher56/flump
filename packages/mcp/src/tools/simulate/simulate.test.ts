@@ -325,6 +325,64 @@ describe("simulate tools v2", () => {
       expect(car.result.points[0].cashGbp).toBeUndefined();
     });
 
+    it("starts at the picture's net worth when the user does not count the home (AI-8)", async () => {
+      // Home £300,000, mortgage £200,000, cash £10,000, property not counted. Net worth under
+      // that choice: £10,000 cash only. The old local sum added equity 300,000 - 200,000 =
+      // £100,000 and started at £110,000.
+      const accounts = [
+        { id: "home", name: "Home", type: "Property", balance: 300000 },
+        { id: "mort", name: "Mortgage", type: "Mortgage", balance: 200000, interestRate: 4 },
+        { id: "cash", name: "Current", type: "Current", balance: 10000 },
+      ];
+      h = await connectTestClient({
+        ...emptyUser,
+        accounts,
+        netWorthBasis: { countProperty: false, countStudentLoan: false },
+      });
+      const e = await call("project_net_worth", { expectedReturnPct: 5, monthlySavingGbp: 0 });
+      expect(e.result.startingNetWorthGbp).toBe(10000);
+      expect(e.result.points[0].baselineNetWorthGbp).toBe(10000);
+      expect(e.result.notes).toContain(
+        "Property and mortgages are not counted in net worth under the user's choices, so they are left out of the estimate.",
+      );
+
+      // Counting the home: 10,000 + (300,000 - 200,000) = £110,000.
+      await h.close();
+      h = await connectTestClient({
+        ...emptyUser,
+        accounts,
+        netWorthBasis: { countProperty: true, countStudentLoan: false },
+      });
+      const counted = await call("project_net_worth", {
+        expectedReturnPct: 5,
+        monthlySavingGbp: 0,
+      });
+      expect(counted.result.startingNetWorthGbp).toBe(110000);
+    });
+
+    it("holds a counted student loan at today's balance from year 0", async () => {
+      // Cash £10,000 and a counted student loan of £25,000: net worth 10,000 - 25,000 = -£15,000.
+      // The forecast does not model the loan, so -£25,000 is held flat; with no saving and 4%
+      // cash interest, year 1 is 10,000 x 1.04 - 25,000 = -£14,600.
+      h = await connectTestClient({
+        ...emptyUser,
+        accounts: [
+          { id: "cash", name: "Current", type: "Current", balance: 10000 },
+          { id: "sl", name: "Student loan", type: "Student Loan", balance: 25000 },
+        ],
+        netWorthBasis: { countProperty: true, countStudentLoan: true },
+      });
+      const e = await call("project_net_worth", {
+        expectedReturnPct: 5,
+        monthlySavingGbp: 0,
+        horizonYears: 1,
+      });
+      expect(e.result.startingNetWorthGbp).toBe(-15000);
+      expect(
+        e.result.points.map((p: { baselineNetWorthGbp: number }) => p.baselineNetWorthGbp),
+      ).toEqual([-15000, -14600]);
+    });
+
     it("adds the breakdown in detailed format", async () => {
       h = await connectTestClient(homeowner);
       const e = await call("project_net_worth", {

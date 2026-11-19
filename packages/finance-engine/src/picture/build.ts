@@ -7,6 +7,7 @@ import type { UkTaxYear } from "../types.js";
 import type { Figure } from "./figure.js";
 import { type FinancialPictureInput, profileFactsFromProfile } from "./input.js";
 import { type BudgetTotals, selectBudgetTotals } from "./selectors/budget-totals.js";
+import { type DebtSummary, selectDebtSummary } from "./selectors/debt-summary.js";
 import { type EstimatedTaxDue, selectEstimatedTaxDue } from "./selectors/estimated-tax-due.js";
 import {
   type AccountFixedRateEnd,
@@ -22,8 +23,10 @@ import {
   type LinkedBudgetRows,
   withLinkedBudgetRows,
 } from "./selectors/linked-budget-rows.js";
+import { selectIsaAllowanceUsed } from "./selectors/isa-allowance-used.js";
 import { type LoanToValue, selectLoanToValue } from "./selectors/loan-to-value.js";
 import { type MonthsOfCover, selectMonthsOfCover } from "./selectors/months-of-cover.js";
+import { selectPensionContributionMonthly } from "./selectors/pension-contribution.js";
 import {
   type DebtTotals,
   type NetWorthTotals,
@@ -31,6 +34,7 @@ import {
   selectNetWorth,
 } from "./selectors/portfolio-totals.js";
 import { type SafeToSpend, selectSafeToSpend } from "./selectors/safe-to-spend.js";
+import { type SavingsTotals, selectSavingsTotals } from "./selectors/savings-totals.js";
 import { selectTakeHome, type TakeHome } from "./selectors/take-home.js";
 
 /**
@@ -69,6 +73,14 @@ export interface FinancialPicture {
   loanToValue: Figure<LoanToValue>;
   /** Self assessment estimate on income outside PAYE, current tax year (C-11). */
   estimatedTaxDue: Figure<EstimatedTaxDue>;
+  /** Saving and Investment accounts: balance and monthly saving at the user's share. */
+  savings: SavingsTotals;
+  /** Consumer debt on minimum payments only, or null when there is none. */
+  debtSummary: DebtSummary | null;
+  /** ISA allowance used this tax year (an estimate from monthly saving), or null. */
+  isaAllowanceUsed: number | null;
+  /** Estimated employee pension contribution a month from salary and percentage, or null. */
+  pensionContributionMonthly: number | null;
 }
 
 export interface BuildFinancialPictureOptions {
@@ -88,6 +100,7 @@ export function buildFinancialPicture(
   const housingPayment = selectHousingPayment(input.profile, snapshot, input.accounts);
   const linked = withLinkedBudgetRows(input.budget, { takeHome, housing: housingPayment });
   const budget = linked.rows;
+  const asOf = opts.asOf ?? new Date();
   return {
     takeHome,
     budgetRows: budget,
@@ -100,11 +113,15 @@ export function buildFinancialPicture(
     netWorth: selectNetWorth(snapshot, input.netWorthBasis),
     debt: selectDebtTotals(snapshot),
     housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts),
-    fixedRateEnds: selectFixedRateEnds(input.accounts, opts.asOf ?? new Date()),
+    fixedRateEnds: selectFixedRateEnds(input.accounts, asOf),
     loanToValue: selectLoanToValue(snapshot),
     estimatedTaxDue: selectEstimatedTaxDue(input.profile, input.taxRecords, {
       taxYear: opts.taxYear,
     }),
+    savings: selectSavingsTotals(snapshot),
+    debtSummary: selectDebtSummary(snapshot, asOf),
+    isaAllowanceUsed: selectIsaAllowanceUsed(input.accounts, asOf),
+    pensionContributionMonthly: selectPensionContributionMonthly(input.profile),
   };
 }
 

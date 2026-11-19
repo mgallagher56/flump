@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Account } from "../../entities/account.entity";
 import type { AccountDetail } from "../../entities/account-detail.entity";
 import type { BankConnection } from "../../entities/bank-connection.entity";
-import type { UserProfile } from "../../entities/user-profile.entity";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
 import { at } from "../../testing/must";
 import { AccountIntakeService } from "./account-intake.service";
@@ -13,13 +12,11 @@ import { AccountIntakeService } from "./account-intake.service";
 const intakeOver = (
   accounts: unknown,
   details: unknown,
-  profiles: unknown,
   connections: unknown,
 ): AccountIntakeService =>
   new AccountIntakeService(
     accounts as Repository<Account>,
     details as Repository<AccountDetail>,
-    profiles as Repository<UserProfile>,
     connections as Repository<BankConnection>,
   );
 
@@ -63,7 +60,6 @@ describe("AccountIntakeService (Deep Module)", () => {
   let service: AccountIntakeService;
   let mockAccountRepo: Mocks["accountRepo"];
   let mockAccountDetailRepo: Mocks["accountDetailRepo"];
-  let mockUserProfileRepo: Mocks["userProfileRepo"];
   let mockBankConnectionRepo: Mocks["bankConnectionRepo"];
   let mockAuditInsert: Mocks["auditInsert"];
 
@@ -72,16 +68,10 @@ describe("AccountIntakeService (Deep Module)", () => {
       auditInsert: mockAuditInsert,
       accountRepo: mockAccountRepo,
       accountDetailRepo: mockAccountDetailRepo,
-      userProfileRepo: mockUserProfileRepo,
       bankConnectionRepo: mockBankConnectionRepo,
     } = createMocks());
 
-    service = intakeOver(
-      mockAccountRepo,
-      mockAccountDetailRepo,
-      mockUserProfileRepo,
-      mockBankConnectionRepo,
-    );
+    service = intakeOver(mockAccountRepo, mockAccountDetailRepo, mockBankConnectionRepo);
   });
 
   describe("stored-balance sign rule (BE-05, audit H6)", () => {
@@ -214,25 +204,15 @@ describe("AccountIntakeService (Deep Module)", () => {
     expect(mockAccountRepo.save).not.toHaveBeenCalled();
   });
 
-  it("getPortfolioSnapshot for a new user returns zero totals without writing", async () => {
-    mockAccountRepo.find.mockResolvedValue([]);
-
-    const snapshot = await service.getPortfolioSnapshot("user-123");
-
-    expect(snapshot.netWorth).toBe(0);
-    expect(snapshot.resolvedAccounts).toEqual([]);
-    expect(mockAccountRepo.save).not.toHaveBeenCalled();
-  });
-
-  it("concurrent getAccounts and getPortfolioSnapshot insert nothing", async () => {
+  it("concurrent getAccounts calls insert nothing", async () => {
     const accountRepo = createInMemoryRepository();
     const detailRepo = createInMemoryRepository();
     const profileRepo = createInMemoryRepository();
-    const concurrent = intakeOver(accountRepo, detailRepo, profileRepo, mockBankConnectionRepo);
+    const concurrent = intakeOver(accountRepo, detailRepo, mockBankConnectionRepo);
 
     await Promise.all([
       concurrent.getAccounts("user-123"),
-      concurrent.getPortfolioSnapshot("user-123"),
+      concurrent.getAccounts("user-123"),
       concurrent.getAccounts("user-123"),
     ]);
 
@@ -254,39 +234,7 @@ describe("AccountIntakeService (Deep Module)", () => {
     expect(mockAccountDetailRepo.find).toHaveBeenCalled();
   });
 
-  it("calculates PortfolioSnapshot rollup using @flump/finance-engine", async () => {
-    mockAccountRepo.find.mockResolvedValue([
-      {
-        id: "acc-1",
-        userId: "user-123",
-        name: "Main Checking",
-        type: "Current",
-        balance: 5000,
-        currency: "GBP",
-        isCurrent: true,
-      },
-      {
-        id: "acc-2",
-        userId: "user-123",
-        name: "Mortgage",
-        type: "Mortgage",
-        balance: -100000,
-        currency: "GBP",
-        isCurrent: true,
-      },
-    ]);
-    mockAccountDetailRepo.find.mockResolvedValue([]);
-
-    const snapshot = await service.getPortfolioSnapshot("user-123");
-
-    expect(snapshot).toBeDefined();
-    expect(snapshot.totalAssets).toBe(5000);
-    expect(snapshot.totalLiabilities).toBe(100000);
-    expect(snapshot.netWorth).toBe(-95000);
-    expect(snapshot.currency).toBe("GBP");
-  });
-
-  it("getPortfolioSnapshot runs two queries: accounts, then their history (audit M24)", async () => {
+  it("getAccounts runs two queries: accounts, then their history (audit M24)", async () => {
     mockAccountRepo.find.mockResolvedValue([
       { id: "acc-1", userId: "user-123", name: "Cash", type: "Current", balance: 900 },
     ]);
@@ -295,12 +243,11 @@ describe("AccountIntakeService (Deep Module)", () => {
       { accountId: "acc-1", year: 2026, month: 2, value: 900 },
     ]);
 
-    const snapshot = await service.getPortfolioSnapshot("user-123");
+    const accounts = await service.getAccounts("user-123");
 
     expect(mockAccountRepo.find).toHaveBeenCalledTimes(1);
     expect(mockAccountDetailRepo.find).toHaveBeenCalledTimes(1);
-    expect(snapshot.totalAssets).toBe(900);
-    expect(snapshot.monthlyHistory.length).toBeGreaterThan(0);
+    expect(accounts[0]?.details).toHaveLength(2);
   });
 
   it("deletes account and cascades delete to associated account details", async () => {
@@ -606,7 +553,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         { id: FOREIGN, userId: "userB", name: "Theirs", balance: 999 },
       ]);
       const details = createInMemoryRepository();
-      const svc = intakeOver(accounts, details, mockUserProfileRepo, mockBankConnectionRepo);
+      const svc = intakeOver(accounts, details, mockBankConnectionRepo);
       return { svc, accounts, details };
     };
 
@@ -740,7 +687,7 @@ describe("AccountIntakeService (Deep Module)", () => {
         ids.map((id) => ({ id, userId: "userA", balance: 0 })),
       );
       const details = createInMemoryRepository();
-      const svc = intakeOver(accounts, details, mockUserProfileRepo, mockBankConnectionRepo);
+      const svc = intakeOver(accounts, details, mockBankConnectionRepo);
       const result = await svc.updateBalances("userA", {
         balances: ids.map((id) => ({ id, balance: 1 })),
       });
@@ -815,12 +762,7 @@ describe("AccountIntakeService (Deep Module)", () => {
           sharePercent: 60,
         },
       ]);
-      const svc = intakeOver(
-        accounts,
-        createInMemoryRepository(),
-        mockUserProfileRepo,
-        mockBankConnectionRepo,
-      );
+      const svc = intakeOver(accounts, createInMemoryRepository(), mockBankConnectionRepo);
       const updated = await svc.updateAccount("userA", "a1", { ownership: "sole" });
       expect(updated.ownership).toBe("sole");
       expect(updated.sharePercent).toBeNull();
@@ -838,12 +780,7 @@ describe("AccountIntakeService (Deep Module)", () => {
           sharePercent: 60,
         },
       ]);
-      const svc = intakeOver(
-        accounts,
-        createInMemoryRepository(),
-        mockUserProfileRepo,
-        mockBankConnectionRepo,
-      );
+      const svc = intakeOver(accounts, createInMemoryRepository(), mockBankConnectionRepo);
       return { accounts, svc };
     };
 
@@ -888,12 +825,7 @@ describe("AccountIntakeService (Deep Module)", () => {
           sharePercent: 50,
         },
       ]);
-      const svc = intakeOver(
-        accounts,
-        createInMemoryRepository(),
-        mockUserProfileRepo,
-        mockBankConnectionRepo,
-      );
+      const svc = intakeOver(accounts, createInMemoryRepository(), mockBankConnectionRepo);
       return { accounts, svc };
     };
 
@@ -936,7 +868,6 @@ describe("AccountIntakeService (Deep Module)", () => {
       intakeOver(
         createInMemoryRepository([{ id: "a1", userId: "userA", balance: 0, ...row }]),
         createInMemoryRepository(),
-        mockUserProfileRepo,
         mockBankConnectionRepo,
       );
 
@@ -1120,9 +1051,6 @@ describe("AccountIntakeService (Deep Module)", () => {
 });
 
 describe("E34 C1: a property follows its mortgage's share", () => {
-  const profiles = {
-    findOne: vi.fn().mockResolvedValue({ userId: "userA", hasResetFinancialData: false }),
-  };
   const connections = { findOne: vi.fn().mockResolvedValue(null) };
   const home = (extra: Record<string, unknown> = {}) => ({
     id: "home",
@@ -1147,7 +1075,7 @@ describe("E34 C1: a property follows its mortgage's share", () => {
   });
   const setup = (rows: Record<string, unknown>[]) => {
     const accounts = createInMemoryRepository(rows);
-    const svc = intakeOver(accounts, createInMemoryRepository(), profiles, connections);
+    const svc = intakeOver(accounts, createInMemoryRepository(), connections);
     const row = async (id: string) =>
       (await accounts.findOne({ where: { id } })) as unknown as Account;
     return { svc, row };

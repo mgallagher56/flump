@@ -102,21 +102,6 @@ export interface MonthlyPortfolioHistoryPoint {
   totalLiabilities: number;
 }
 
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
 function isValidHistoryYear(year: number): boolean {
   return Number.isInteger(year) && year >= 1900 && year <= 2200;
 }
@@ -447,75 +432,5 @@ export class PortfolioSnapshot {
           ...(promoAprExpiryDate !== undefined ? { promoAprExpiryDate } : {}),
         };
       });
-  }
-
-  /**
-   * Generates a timeline of portfolio history across recent months.
-   *
-   * Every month between the first and last recorded month is present. Each account carries its
-   * last known value forward (C-16) and contributes nothing before its first row. Assets keep
-   * their real sign: a negative asset value counts as a liability so assets minus liabilities
-   * is the signed sum. Accounts the basis leaves out are excluded; a counted student loan is a
-   * liability. The basis applies to every month (recomputed at read time).
-   */
-  getMonthlyHistory(basis: NetWorthBasis, monthsCount = 12): MonthlyPortfolioHistoryPoint[] {
-    const tracked = this.resolvedAccounts.filter(
-      (a) => countsTowardNetWorth(a.category, basis) && a.history.length > 0,
-    );
-    if (tracked.length === 0) return [];
-
-    let first = Number.POSITIVE_INFINITY;
-    let last = Number.NEGATIVE_INFINITY;
-    for (const acc of tracked) {
-      for (const h of acc.history) {
-        const idx = h.year * 12 + (h.month - 1);
-        if (idx < first) first = idx;
-        if (idx > last) last = idx;
-      }
-    }
-
-    const start = Math.max(first, last - Math.max(0, Math.floor(monthsCount)) + 1);
-    const pointers = new Map<string, number>(); // accountId -> index of last row at or before idx
-    const lastKnown = new Map<string, number>();
-    const points: MonthlyPortfolioHistoryPoint[] = [];
-
-    for (let idx = first; idx <= last; idx++) {
-      let assets = 0;
-      let liabilities = 0;
-      for (const acc of tracked) {
-        let p = pointers.get(acc.id) ?? 0;
-        while (p < acc.history.length) {
-          const row = acc.history[p]!;
-          if (row.year * 12 + (row.month - 1) > idx) break;
-          lastKnown.set(acc.id, row.value);
-          p++;
-        }
-        pointers.set(acc.id, p);
-
-        const value = lastKnown.get(acc.id);
-        if (value === undefined) continue;
-        if (acc.isLiability || acc.category === "studentLoans") {
-          liabilities += Math.abs(value);
-        } else if (value >= 0) {
-          assets += value;
-        } else {
-          liabilities += -value;
-        }
-      }
-
-      if (idx < start) continue;
-      const year = Math.floor(idx / 12);
-      const month = (idx % 12) + 1;
-      points.push({
-        year,
-        month,
-        label: `${MONTH_NAMES[month - 1]} ${year}`,
-        netWorth: assets - liabilities,
-        totalAssets: assets,
-        totalLiabilities: liabilities,
-      });
-    }
-
-    return points;
   }
 }

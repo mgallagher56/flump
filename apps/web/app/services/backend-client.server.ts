@@ -11,10 +11,15 @@ import {
   AccountListResponse,
   BankConnectionListResponse,
   BudgetEntryListResponse,
-  PortfolioSnapshotResponse,
   TaxRecordListResponse,
   UserProfileResponse,
 } from "@flump/api-contract";
+import {
+  type FinancialPicture,
+  type LoadedFinancialPicture,
+  loadFinancialPicture,
+  type PictureRowSource,
+} from "@flump/finance-engine";
 import type { LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
 import { getRequestId, withRequestIdHeader } from "~/security/request-id.server";
@@ -259,27 +264,12 @@ async function pageWithRetries<T>(
   }
 }
 
-export interface PortfolioSnapshotData {
-  netWorth: number;
-  totalAssets: number;
-  totalLiabilities: number;
-  totalLiquidCash: number;
-  totalInvestments: number;
-  totalPensions: number;
-  totalConsumerDebt: number;
-  totalMortgageBalance: number;
-  resolvedAccounts: any[];
-  monthlyHistory: any[];
-  currency: string;
-}
-
 export interface WorkspaceSnapshot {
   user: any;
   /** Server-only. Must never be returned from a loader (it would be serialised into the page). */
   accessToken?: string;
   accounts: any[];
   accountDetails: any[];
-  portfolioSnapshot: PortfolioSnapshotData | null;
   userProfile: any | null;
   budgetEntries: any[];
   taxRecords: any[];
@@ -350,7 +340,6 @@ export interface WorkspaceFetchOptions {
   includeBudget?: boolean;
   includeTax?: boolean;
   includeConnections?: boolean;
-  includePortfolioSnapshot?: boolean;
   ensureSignedIn?: boolean;
 }
 
@@ -368,7 +357,6 @@ export async function loadWorkspaceSnapshot(
     includeBudget = false,
     includeTax = false,
     includeConnections = false,
-    includePortfolioSnapshot = false,
   } = options;
 
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn });
@@ -379,7 +367,6 @@ export async function loadWorkspaceSnapshot(
       accessToken,
       accounts: [],
       accountDetails: [],
-      portfolioSnapshot: null,
       userProfile: null,
       budgetEntries: [],
       taxRecords: [],
@@ -397,25 +384,16 @@ export async function loadWorkspaceSnapshot(
   let budgetEntries: any[];
   let taxRecords: any[];
   let bankConnections: any[];
-  let portfolioSnapshot: PortfolioSnapshotData | null;
   try {
-    [accounts, userProfile, budgetEntries, taxRecords, bankConnections, portfolioSnapshot] =
-      await Promise.all([
-        list("/accounts", AccountListResponse),
-        backendFetch("/user-profile", { accessToken, signal, schema: UserProfileResponse }),
-        includeBudget ? list("/budget-entries", BudgetEntryListResponse) : Promise.resolve([]),
-        includeTax ? list("/tax-records", TaxRecordListResponse) : Promise.resolve([]),
-        includeConnections
-          ? list("/bank-connections", BankConnectionListResponse)
-          : Promise.resolve([]),
-        includePortfolioSnapshot
-          ? backendFetch("/portfolio-snapshot", {
-              accessToken,
-              signal,
-              schema: PortfolioSnapshotResponse,
-            })
-          : Promise.resolve(null),
-      ]);
+    [accounts, userProfile, budgetEntries, taxRecords, bankConnections] = await Promise.all([
+      list("/accounts", AccountListResponse),
+      backendFetch("/user-profile", { accessToken, signal, schema: UserProfileResponse }),
+      includeBudget ? list("/budget-entries", BudgetEntryListResponse) : Promise.resolve([]),
+      includeTax ? list("/tax-records", TaxRecordListResponse) : Promise.resolve([]),
+      includeConnections
+        ? list("/bank-connections", BankConnectionListResponse)
+        : Promise.resolve([]),
+    ]);
   } catch (err) {
     throwRouteError(err);
   }
@@ -428,11 +406,97 @@ export async function loadWorkspaceSnapshot(
     accessToken,
     accounts,
     accountDetails,
-    portfolioSnapshot,
     userProfile,
     budgetEntries,
     taxRecords,
     bankConnections,
+  };
+}
+
+/** A workspace load with the financial picture built from it (decision 10, option B). */
+export interface WorkspacePicture extends WorkspaceSnapshot {
+  /** The engine's picture of the saved rows, or null when nobody is signed in. */
+  picture: FinancialPicture | null;
+}
+
+/**
+ * The rows the picture is built from, read from the backend with the caller's own token, so the
+ * backend scopes every list to that user. Accounts carry their monthly rows (M24), so the
+ * details come from the same response and the accounts are fetched once.
+ */
+function backendPictureSource(accessToken: string, signal: AbortSignal): PictureRowSource {
+  let accounts: Promise<any[]> | undefined;
+  const loadAccounts = () => {
+    accounts ??= backendFetchAll("/accounts", { accessToken, signal, schema: AccountListResponse });
+    return accounts;
+  };
+  return {
+    profile: () =>
+      backendFetch("/user-profile", { accessToken, signal, schema: UserProfileResponse }),
+    accounts: loadAccounts,
+    accountDetails: async () => (await loadAccounts()).flatMap((a) => a.details || []),
+    budgetEntries: () =>
+      backendFetchAll("/budget-entries", { accessToken, signal, schema: BudgetEntryListResponse }),
+    taxRecords: () =>
+      backendFetchAll("/tax-records", { accessToken, signal, schema: TaxRecordListResponse }),
+  } as PictureRowSource;
+}
+
+/**
+ * The one loader helper for pages that show a derived figure. The engine's
+ * `loadFinancialPicture` decides which rows the picture needs and asks this source for each, so
+ * a page cannot leave a table out (PP-6). The page gets the rows it lists and the picture built
+ * from those same rows.
+ */
+export async function loadWorkspacePicture(
+  args: LoaderFunctionArgs,
+  options: Pick<WorkspaceFetchOptions, "includeConnections" | "ensureSignedIn"> = {},
+): Promise<WorkspacePicture> {
+  const { ensureSignedIn = true, includeConnections = false } = options;
+  const { user, accessToken } = await getAuthSession(args, { ensureSignedIn });
+  if (!user) {
+    return {
+      user: null,
+      accessToken,
+      accounts: [],
+      accountDetails: [],
+      userProfile: null,
+      budgetEntries: [],
+      taxRecords: [],
+      bankConnections: [],
+      picture: null,
+    };
+  }
+  if (!accessToken) throwRouteError(new BackendError("unauthorised", "/accounts"));
+  const signal = args.request.signal;
+
+  let loaded: LoadedFinancialPicture;
+  let bankConnections: any[];
+  try {
+    [loaded, bankConnections] = await Promise.all([
+      loadFinancialPicture(backendPictureSource(accessToken, signal), { asOf: new Date() }),
+      includeConnections
+        ? backendFetchAll("/bank-connections", {
+            accessToken,
+            signal,
+            schema: BankConnectionListResponse,
+          })
+        : Promise.resolve([]),
+    ]);
+  } catch (err) {
+    throwRouteError(err);
+  }
+
+  return {
+    user,
+    accessToken,
+    accounts: loaded.rows.accounts as any[],
+    accountDetails: loaded.rows.accountDetails as any[],
+    userProfile: loaded.rows.profile,
+    budgetEntries: loaded.rows.budgetEntries as any[],
+    taxRecords: loaded.rows.taxRecords as any[],
+    bankConnections,
+    picture: loaded.picture,
   };
 }
 

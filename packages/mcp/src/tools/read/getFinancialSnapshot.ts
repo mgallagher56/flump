@@ -1,5 +1,6 @@
 import {
   getUkCalendarDate,
+  isFigureKnown,
   MCP_NOTICE,
   PortfolioSnapshot,
   resolveNetWorthScope,
@@ -20,7 +21,6 @@ import {
   NET_WORTH_LEFT_OUT_VALUES,
   netWorthBasisNotes,
   round2,
-  summariseBudget,
 } from "./common.js";
 
 const result = z.object({
@@ -41,8 +41,15 @@ const result = z.object({
   accountCount: z.number(),
   debtCount: z.number(),
   monthlyIncomeGbp: z.number().nullable(),
+  /**
+   * The monthly essentials Breathing room divides by: essential budget entries without savings
+   * or debt entries, plus the larger of saved debt minimums and debt entries.
+   */
   monthlyEssentialSpendGbp: z.number().nullable(),
-  /** Income minus essential and discretionary spend minus STORED debt minimums only. */
+  /**
+   * Left over each month, as the Dashboard shows it: income entries minus spending and savings
+   * entries. The key name is kept for existing clients; saved minimums are not subtracted again.
+   */
   monthlySurplusAfterStoredMinimumsGbp: z.number().nullable(),
   emergencyRunwayMonths: z.number().nullable(),
   /** "YYYY-MM" when the balances are as at a past month, else null (current balances). */
@@ -59,7 +66,7 @@ export const getFinancialSnapshot = defineFlumpTool({
   name: "get_financial_snapshot",
   title: "Summary of your figures",
   description:
-    "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp) and breathing room (emergencyRunwayMonths: how long savings would cover the essentials). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Net worth follows the user's choices for property and student loans; netWorthLeavesOut lists what it leaves out. Call this first for a summary.",
+    "Summary of the user's figures in one call: net worth, what they own (assetsGbp), what they owe (liabilitiesGbp), cash, investments, pensions, debts and, when a budget exists, the amount left over each month (monthlySurplusAfterStoredMinimumsGbp: income entries minus spending and savings entries, the figure the Dashboard shows) and breathing room (emergencyRunwayMonths: how long cash would cover the essentials in monthlyEssentialSpendGbp). Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (in the form 2025-04) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Net worth follows the user's choices for property and student loans; netWorthLeavesOut lists what it leaves out. Call this first for a summary.",
   input: {
     asOfMonth: z
       .string()
@@ -75,8 +82,13 @@ export const getFinancialSnapshot = defineFlumpTool({
     // A past month needs only the accounts and that month's rows, never the whole history.
     if (asOfMonth) return historicalSnapshot(ctx, asOfMonth);
     const m = await loadReadModel(ctx);
-    const s = m.snapshot;
-    const budget = summariseBudget(m.budgetEntries);
+    const { netWorth } = m.picture;
+    const budget = isFigureKnown(m.picture.budget) ? m.picture.budget.value : null;
+    const cover = isFigureKnown(m.picture.monthsOfCover) ? m.picture.monthsOfCover.value : null;
+    // Linked lines whose saved fact is not set (take-home pay, the housing payment).
+    const notSet = new Set(
+      m.picture.budgetRows.filter((row) => row.notSet && row.linked).map((row) => row.linked),
+    );
     const missing: Missing[] = [];
     const provenance: Record<string, string> = {
       netWorthGbp: "account_balances",
@@ -85,46 +97,27 @@ export const getFinancialSnapshot = defineFlumpTool({
 
     if (m.accounts.length === 0) missing.push(ASK_NO_ACCOUNTS);
 
-    const income = budget.monthlyIncome;
-    // A linked housing line that is not set leaves essential spending unknown, never short by it.
-    const essential =
-      budget.hasEntries && !budget.notSet.includes("housing") ? budget.essentialMonthly : null;
-    missing.push(...missingLinkedLines(budget));
-    const assumptions: Array<{ field: string; source: "default"; reason: string }> = [];
-    let surplus: number | null = null;
-    let runway: number | null = null;
+    // Income and left over are null without an income entry, or with a linked line not set (the
+    // picture's totals are then unknown): no salary-based guess, never a £0 line counted.
+    missing.push(...missingLinkedLines(m.picture.budgetRows));
+    const income = budget?.hasIncome ? budget.income : null;
+    const surplus = budget?.hasIncome ? budget.surplus : null;
     if (income === null) {
-      if (budget.notSet.length === 0) missing.push(MISSING_INCOME);
+      if (notSet.size === 0) missing.push(MISSING_INCOME);
       provenance.monthlyIncomeGbp = "not_available";
       provenance.monthlySurplusAfterStoredMinimumsGbp = "not_available";
     } else {
-      const debts = s.toDebtItems();
-      const stored = debts.filter((d) => !d.minimumPaymentEstimated);
-      const estimatedCount = debts.length - stored.length;
-      const minStored = stored.reduce(
-        (sum, d) => sum + (d.minimumPaymentGbp ?? d.minimumPayment ?? 0),
-        0,
-      );
-      surplus = round2(income - budget.essentialMonthly - budget.discretionaryMonthly - minStored);
       provenance.monthlyIncomeGbp = "budget_entries";
-      provenance.monthlySurplusAfterStoredMinimumsGbp = "budget_entries_and_stored_debt_minimums";
-      if (estimatedCount > 0) {
-        assumptions.push({
-          field: "monthlySurplusAfterStoredMinimumsGbp",
-          source: "default",
-          reason: `No minimum payment is saved for ${estimatedCount} of the debts, so none is subtracted for them. The left-over figure is higher by their minimums.`,
-        });
-        missing.push({
-          field: "debts.minimumPayment",
-          why: `No minimum payment is saved for ${estimatedCount} of the debts, so the left-over figure does not subtract them.`,
-          askUser: "What is the minimum monthly payment on each of your debts?",
-        });
-      }
+      provenance.monthlySurplusAfterStoredMinimumsGbp = "budget_entries";
     }
-    if (essential !== null && essential > 0) {
-      runway = Math.round((s.getTotalLiquidCash() / essential) * 10) / 10;
+    // The essentials the Dashboard shows beside Breathing room (monthsOfCover.monthlyEssentials):
+    // essential entries without savings or debt entries, plus the larger of saved debt minimums
+    // and debt entries, so a payment recorded in both places counts once.
+    const essential = cover ? cover.monthlyEssentials : null;
+    const runway = cover ? cover.months : null;
+    if (cover) {
       provenance.emergencyRunwayMonths = "account_balances_and_budget_entries";
-    } else if (!budget.notSet.includes("housing")) {
+    } else if (!notSet.has("housing")) {
       missing.push({
         field: "monthlyEssentialSpendGbp",
         why: "No essential spending entries in the budget, so breathing room cannot be worked out.",
@@ -132,21 +125,35 @@ export const getFinancialSnapshot = defineFlumpTool({
           "Roughly how much do you spend each month on essentials (rent or mortgage, bills, food)?",
       });
     }
+    const assumptions: Array<{ field: string; source: "default"; reason: string }> = [];
+    const estimatedCount = m.snapshot.toDebtItems().filter((d) => d.minimumPaymentEstimated).length;
+    if (cover && estimatedCount > 0) {
+      assumptions.push({
+        field: "monthlyEssentialSpendGbp",
+        source: "default",
+        reason: `No minimum payment is saved for ${estimatedCount} of the debts, so the essentials use an estimate for them: the greater of £25 or 2.5% of the balance.`,
+      });
+      missing.push({
+        field: "debts.minimumPayment",
+        why: `No minimum payment is saved for ${estimatedCount} of the debts, so the essentials and breathing room use an estimate for them.`,
+        askUser: "What is the minimum monthly payment on each of your debts?",
+      });
+    }
 
     return {
       result: {
-        netWorthGbp: round2(s.getTotalNetWorth(m.basis)),
-        assetsGbp: round2(s.getTotalAssets(m.basis)),
-        liabilitiesGbp: round2(s.getTotalLiabilities(m.basis)),
-        liquidCashGbp: round2(s.getTotalLiquidCash()),
-        investmentsGbp: round2(s.getTotalInvestments()),
-        pensionsGbp: round2(s.getTotalPensions()),
-        propertyGbp: round2(s.getTotalProperty()),
-        consumerDebtGbp: round2(s.getTotalConsumerDebt()),
-        mortgageGbp: round2(s.getTotalMortgageBalance()),
-        studentLoanGbp: round2(s.getTotalStudentLoans()),
+        netWorthGbp: round2(netWorth.netWorth),
+        assetsGbp: round2(netWorth.totalAssets),
+        liabilitiesGbp: round2(netWorth.totalLiabilities),
+        liquidCashGbp: round2(netWorth.liquidCash),
+        investmentsGbp: round2(netWorth.investments),
+        pensionsGbp: round2(netWorth.pensions),
+        propertyGbp: round2(netWorth.property),
+        consumerDebtGbp: round2(m.picture.debt.consumerDebt),
+        mortgageGbp: round2(m.picture.debt.mortgage),
+        studentLoanGbp: round2(netWorth.studentLoans),
         accountCount: m.accounts.length,
-        debtCount: s.toDebtItems().length,
+        debtCount: m.picture.debt.debtCount,
         monthlyIncomeGbp: income,
         monthlyEssentialSpendGbp: essential,
         monthlySurplusAfterStoredMinimumsGbp: surplus,
@@ -155,7 +162,7 @@ export const getFinancialSnapshot = defineFlumpTool({
         netWorthLeavesOut: m.netWorthLeavesOut,
         notes: [
           ...netWorthBasisNotes(m.basis, m.netWorthLeavesOut),
-          "The left-over figure is income minus spending and saved minimum debt payments. Estimated minimums are not subtracted.",
+          "Left over is income minus spending and savings entries in the budget, as on the Dashboard.",
         ],
       },
       provenance,

@@ -57,6 +57,9 @@ const pack = {
     totalPensions: 5000,
     totalConsumerDebt: 2499.5,
     totalMortgageBalance: 0,
+    totalStudentLoans: 0,
+    totalSavings: 6000,
+    monthlySavingsContributions: 0,
     weightedSavingsRate: 4.1,
     monthlyHistory: [],
     netWorthBasis: { countProperty: true, countStudentLoan: false },
@@ -87,7 +90,12 @@ const pack = {
   debtSummary: {
     consumerDebts: [],
     totalStartingDebtGbp: 2499.5,
-    avalancheVsSnowballComparison: { interestSavedAvalancheVsMin: 0 },
+    monthlyMinimumsGbp: 75,
+    monthlyMinimumsEstimated: true,
+    debtFreeDate: null,
+    debtFreeDateUnknownReason: "aprUnknown",
+    totalInterestGbp: null,
+    avalancheVsSnowballComparison: null,
     promoCliffAlerts: [],
   },
   budgetSummary: {
@@ -116,6 +124,7 @@ const pack = {
     ],
   },
   taxSummary: { currentTaxYear: "2026/27", ukTaxCalculation: { adjustedNetIncomeGbp: 39900 } },
+  isaAllowance: { allowanceGbp: 20000, usedGbp: null, remainingGbp: null },
 };
 
 describe("mcp-tokens response schemas", () => {

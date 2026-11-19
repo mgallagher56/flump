@@ -19,6 +19,12 @@ const result = z.object({
   totalConsumerDebtGbp: z.number(),
   overdrawnGbp: z.number(),
   totalMinimumPaymentsGbp: z.number(),
+  /**
+   * Month and year the consumer debts clear on minimum payments alone (no extra), as the Debt
+   * page and the Dashboard show it. Null when there is no consumer debt, when any APR is not
+   * recorded, or when the minimums never clear the debt.
+   */
+  debtFreeDateOnMinimums: z.string().nullable(),
   weightedAprPct: z.number().nullable(),
   mortgageGbp: z.number(),
   studentLoanGbp: z.number(),
@@ -29,7 +35,7 @@ export const getDebtOverview = defineFlumpTool({
   name: "get_debt_overview",
   title: "Debt overview",
   description:
-    "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans. An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; simulate_debt_payoff gives those.",
+    "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans, and the month the debts clear on minimum payments alone (debtFreeDateOnMinimums, the date the Debt page shows; null when an APR is not recorded). An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; simulate_debt_payoff gives those.",
   input: {},
   result,
   maxTokens: 1500,
@@ -83,6 +89,7 @@ export const getDebtOverview = defineFlumpTool({
         : null;
 
     const hasEstimated = debts.some((d) => d.minimumPaymentStatus === "estimated");
+    const summary = m.picture.debtSummary;
     const notes = [
       "Student loans are income-contingent and not counted as debt here.",
       ...(known.length < debts.length
@@ -91,17 +98,23 @@ export const getDebtOverview = defineFlumpTool({
       ...(hasEstimated
         ? ["Some minimum payments are estimates: the greater of £25 or 2.5% of the balance."]
         : []),
+      ...(summary && summary.debtFreeDate === null
+        ? [
+            "debtFreeDateOnMinimums is null because an APR is not recorded or the minimum payments do not clear the debt.",
+          ]
+        : []),
     ];
 
     return {
       result: {
         debts,
-        totalConsumerDebtGbp: round2(m.snapshot.getTotalConsumerDebt()),
+        totalConsumerDebtGbp: round2(m.picture.debt.consumerDebt),
         overdrawnGbp: round2(m.accounts.reduce((s, a) => s + a.overdrawnAmount, 0)),
-        totalMinimumPaymentsGbp: round2(debts.reduce((s, d) => s + d.minimumPaymentGbp, 0)),
+        totalMinimumPaymentsGbp: m.picture.debt.monthlyMinimums,
+        debtFreeDateOnMinimums: summary?.debtFreeDate ?? null,
         weightedAprPct: weightedApr,
-        mortgageGbp: round2(m.snapshot.getTotalMortgageBalance()),
-        studentLoanGbp: round2(m.snapshot.getTotalStudentLoans()),
+        mortgageGbp: round2(m.picture.debt.mortgage),
+        studentLoanGbp: round2(m.picture.debt.studentLoans),
         notes,
       },
       provenance: { debts: "account_balances" },

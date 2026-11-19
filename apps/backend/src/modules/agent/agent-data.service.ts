@@ -1,9 +1,8 @@
 import {
-  type BuildContextPackInput,
   budgetEntryFromRow,
-  type FinancialBaseline,
   type NetWorthBasis,
   netWorthBasisFromProfile,
+  type ProfileFacts,
   profileFactsFromProfile,
   type RawAccount,
   userProfileToSavedBaseline,
@@ -12,6 +11,7 @@ import {
 import {
   type AccountCoverage,
   type AccountSnapshotRow,
+  type McpFinancialData,
   type McpTaxRecord,
   type McpUserDataProvider,
   type MonthRange,
@@ -31,14 +31,13 @@ import {
 } from "typeorm";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
-import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
-import { FinanceService } from "../finance/finance.service";
-import { type ProfileView, UserProfileService } from "../profile/user-profile.service";
+import { UserProfileService } from "../profile/user-profile.service";
 import { isRetirementAllowed } from "../retirement/retirement.access";
 import { savedPlanInputFromRow } from "../retirement/retirement.service";
+import { FinancialPictureService, wireProfile } from "./financial-picture.service";
 
 /** The saved birth year as a whole positive number, or null when none is saved. */
 const birthYearOf = (value: unknown): number | null => {
@@ -46,33 +45,7 @@ const birthYearOf = (value: unknown): number | null => {
   return value !== null && value !== undefined && Number.isInteger(n) && n > 0 ? n : null;
 };
 
-/** The profile as the engine reads it: the wire shape, dates as ISO strings. */
-const isoOf = (value: unknown): string | undefined =>
-  value instanceof Date ? value.toISOString() : typeof value === "string" ? value : undefined;
-const wireProfile = (profile: ProfileView) => ({
-  ...profile,
-  createdAt: isoOf(profile.createdAt),
-  updatedAt: isoOf(profile.updatedAt),
-});
-
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Tax-record columns sent to MCP clients, selected explicitly. No `receipt*` column is ever
- * read, so a receipt blob or filename cannot reach the provider output (E20-N15, E17-N7).
- */
-const TAX_RECORD_COLUMNS = {
-  id: true,
-  type: true,
-  source: true,
-  category: true,
-  name: true,
-  amount: true,
-  frequency: true,
-  date: true,
-  endDate: true,
-  notes: true,
-} as const satisfies FindOptionsSelect<TaxRecord>;
 
 /** Account columns the MCP query tools need. No connection or external ids. */
 const ACCOUNT_COLUMNS = {
@@ -159,13 +132,10 @@ const MONTH_INDEX = `(d."year" * 12 + d."month" - 1)`;
 @Injectable()
 export class AgentDataService implements McpUserDataProvider {
   constructor(
-    @InjectRepository(BudgetEntry)
-    private readonly budgetEntryRepository: Repository<BudgetEntry>,
     @InjectRepository(TaxRecord)
     private readonly taxRecordRepository: Repository<TaxRecord>,
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
-    private readonly financeService: FinanceService,
     private readonly userProfileService: UserProfileService,
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
@@ -173,6 +143,7 @@ export class AgentDataService implements McpUserDataProvider {
     private readonly accountDetailRepository: Repository<AccountDetail>,
     @InjectRepository(RetirementPlan)
     private readonly retirementPlanRepository: Repository<RetirementPlan>,
+    private readonly financialPicture: FinancialPictureService,
   ) {}
 
   // --- Ranged reads for the MCP query tools (E17 re-plan PR B) ---------------------------------
@@ -201,9 +172,8 @@ export class AgentDataService implements McpUserDataProvider {
     }));
   }
 
-  async getBaseline(userId: string): Promise<FinancialBaseline> {
-    const profile = wireProfile(await this.userProfileService.getProfile(userId));
-    return userProfileToSavedBaseline(profile, userId);
+  async getProfileFacts(userId: string): Promise<ProfileFacts> {
+    return profileFactsFromProfile(wireProfile(await this.userProfileService.getProfile(userId)));
   }
 
   async getNetWorthBasis(userId: string): Promise<NetWorthBasis> {
@@ -331,23 +301,13 @@ export class AgentDataService implements McpUserDataProvider {
     // Kept for the McpUserDataProvider interface: the raw input is the same either way, and
     // buildFlumpAiContextPack applies anonymizeInstitutions when it builds the pack.
     _options: { anonymizeInstitutions?: boolean } = {},
-  ): Promise<BuildContextPackInput> {
-    const profile = wireProfile(await this.userProfileService.getProfile(userId));
+  ): Promise<McpFinancialData> {
+    // The one assembler reads the profile, accounts, history, budget and tax records (each
+    // query filtered by userId) and builds the picture the read tools report.
+    const loaded = await this.financialPicture.load(userId);
+    const { accounts, accountDetails, budgetEntries, taxRecords } = loaded.rows;
+    const profile = loaded.rows.profile ?? {};
     const baseline = userProfileToSavedBaseline(profile, userId);
-
-    const accounts = await this.financeService.getAccounts(userId);
-    const accountDetails = await this.financeService.getAccountDetails(userId);
-
-    const budgetEntries = await this.budgetEntryRepository.find({
-      where: { userId },
-      order: { createdAt: "ASC" },
-    });
-
-    const taxRecords = await this.taxRecordRepository.find({
-      where: { userId },
-      select: TAX_RECORD_COLUMNS,
-      order: { date: "DESC" },
-    });
 
     // Read only: no row means no saved plan (null), never a created default (E33). RD9: outside
     // the friends beta the plan is not read and the key is left out.
@@ -389,6 +349,7 @@ export class AgentDataService implements McpUserDataProvider {
           }
         : {}),
       birthYear: birthYearOf(profile.birthYear),
+      picture: loaded.picture,
     };
   }
 

@@ -1,8 +1,12 @@
-import { getCurrentUKTaxYear } from "@flump/finance-engine";
+import {
+  buildFinancialPicture,
+  financialPictureInputFromRows,
+  getCurrentUKTaxYear,
+} from "@flump/finance-engine";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { loadWorkspacePicture } from "~/services/backend-client.server";
 import { default as Index, loader } from "./_index";
 
 vi.mock("react-router", async (importOriginal) => {
@@ -35,7 +39,7 @@ vi.mock("~/utils/auth.server", () => ({
 
 vi.mock("~/services/backend-client.server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("~/services/backend-client.server")>();
-  return { ...actual, loadWorkspaceSnapshot: vi.fn(actual.loadWorkspaceSnapshot) };
+  return { ...actual, loadWorkspacePicture: vi.fn(actual.loadWorkspacePicture) };
 });
 
 vi.mock("~/features/dashboard/components/HomeDashboard", () => ({
@@ -43,6 +47,25 @@ vi.mock("~/features/dashboard/components/HomeDashboard", () => ({
 }));
 
 import { useLoaderData } from "react-router";
+
+/**
+ * The shared loader's result for these rows: the rows as given and the picture the engine builds
+ * from them, as `loadWorkspacePicture` returns it.
+ */
+function mockWorkspace(rows: any) {
+  const picture = rows.user
+    ? buildFinancialPicture(
+        financialPictureInputFromRows({
+          profile: rows.userProfile ?? null,
+          accounts: rows.accounts ?? [],
+          accountDetails: rows.accountDetails ?? [],
+          budgetEntries: rows.budgetEntries ?? [],
+          taxRecords: rows.taxRecords ?? [],
+        }),
+      )
+    : null;
+  return vi.mocked(loadWorkspacePicture).mockResolvedValueOnce({ ...rows, picture });
+}
 
 describe("_index route", () => {
   it("redirects signed-out ?demo=true to /sandbox", async () => {
@@ -53,14 +76,13 @@ describe("_index route", () => {
   });
 
   it("signed-in ?demo=true returns the real workspace, never demo data", async () => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+    mockWorkspace({
       user: { id: "u1", email: "real@example.com" },
       accounts: [],
       accountDetails: [],
       budgetEntries: [],
       taxRecords: [],
       userProfile: { onboardingCompleted: true },
-      portfolioSnapshot: undefined,
     } as any);
     const request = new Request("http://localhost/?demo=true");
     const data = (await loader({ request, params: {}, context: {} } as any)) as any;
@@ -70,7 +92,7 @@ describe("_index route", () => {
   });
 
   it("flags a budget that holds income but no spending yet (straight after onboarding)", async () => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+    mockWorkspace({
       user: { id: "u1", email: "real@example.com" },
       accounts: [],
       accountDetails: [],
@@ -79,7 +101,6 @@ describe("_index route", () => {
       ],
       taxRecords: [],
       userProfile: { onboardingCompleted: true },
-      portfolioSnapshot: undefined,
     } as any);
     const request = new Request("http://localhost/");
     const data = (await loader({ request, params: {}, context: {} } as any)) as any;
@@ -90,7 +111,7 @@ describe("_index route", () => {
   });
 
   it("does not count the zero-amount seeded default rows as spending", async () => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+    mockWorkspace({
       user: { id: "u1", email: "real@example.com" },
       accounts: [],
       accountDetails: [],
@@ -108,7 +129,6 @@ describe("_index route", () => {
       ],
       taxRecords: [],
       userProfile: { onboardingCompleted: true },
-      portfolioSnapshot: undefined,
     } as any);
     const request = new Request("http://localhost/");
     const data = (await loader({ request, params: {}, context: {} } as any)) as any;
@@ -117,14 +137,13 @@ describe("_index route", () => {
   });
 
   it("never invents an estimated tax due figure from tax records", async () => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+    mockWorkspace({
       user: { id: "u1", email: "real@example.com" },
       accounts: [],
       accountDetails: [],
       budgetEntries: [],
       taxRecords: [{ type: "income", amount: 100000, date: "2019-05-01", frequency: "annual" }],
       userProfile: { onboardingCompleted: true },
-      portfolioSnapshot: undefined,
     } as any);
     const request = new Request("http://localhost/");
     const data = (await loader({ request, params: {}, context: {} } as any)) as any;
@@ -146,7 +165,7 @@ describe("_index route", () => {
       date,
       endDate: `${Number(year.slice(0, 4)) + 1}-04-05`,
     });
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+    mockWorkspace({
       user: { id: "u1", email: "real@example.com" },
       accounts: [],
       accountDetails: [],
@@ -161,7 +180,6 @@ describe("_index route", () => {
         employmentType: "employed",
         taxRegion: "SCOTLAND",
       },
-      portfolioSnapshot: undefined,
     } as any);
     const data = (await loader({
       request: new Request("http://localhost/"),
@@ -177,7 +195,7 @@ describe("_index route", () => {
   });
 
   it("counts the seeded home Property account once in net worth, labelled (D3)", async () => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+    mockWorkspace({
       user: { id: "u1", email: "real@example.com" },
       accounts: [
         { id: "c", name: "Cash", type: "Saving", balance: 21000 },
@@ -190,7 +208,6 @@ describe("_index route", () => {
       taxRecords: [],
       // A profile homeValue (never stored by the backend) is not added on top.
       userProfile: { onboardingCompleted: true, housingStatus: "mortgage", homeValue: 500000 },
-      portfolioSnapshot: undefined,
     } as any);
     const data = (await loader({
       request: new Request("http://localhost/"),
@@ -206,7 +223,7 @@ describe("_index route", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-11-14T12:00:00Z"));
     try {
-      vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+      mockWorkspace({
         user: { id: "u1", email: "real@example.com" },
         accounts: [{ id: "c", name: "Cash", type: "Saving", balance: 5320 }],
         accountDetails: [
@@ -216,7 +233,6 @@ describe("_index route", () => {
         budgetEntries: [],
         taxRecords: [],
         userProfile: { onboardingCompleted: true },
-        portfolioSnapshot: undefined,
       } as any);
       const data = (await loader({
         request: new Request("http://localhost/"),
@@ -230,14 +246,13 @@ describe("_index route", () => {
   });
 
   it("has no earlier month for the hero delta without a history", async () => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+    mockWorkspace({
       user: { id: "u1", email: "real@example.com" },
       accounts: [{ id: "c", name: "Cash", type: "Saving", balance: 5320 }],
       accountDetails: [],
       budgetEntries: [],
       taxRecords: [],
       userProfile: { onboardingCompleted: true },
-      portfolioSnapshot: undefined,
     } as any);
     const data = (await loader({
       request: new Request("http://localhost/"),
@@ -249,7 +264,7 @@ describe("_index route", () => {
 
   it("rejects when the workspace snapshot fails instead of returning zeroed data", async () => {
     const failure = new Error("snapshot failed");
-    vi.mocked(loadWorkspaceSnapshot).mockRejectedValueOnce(failure);
+    vi.mocked(loadWorkspacePicture).mockRejectedValueOnce(failure);
     const request = new Request("http://localhost/");
     await expect(loader({ request, params: {}, context: {} } as any)).rejects.toBe(failure);
   });
@@ -261,12 +276,11 @@ describe("_index route", () => {
     budgetEntries: [],
     taxRecords: [],
     userProfile: { onboardingCompleted: true },
-    portfolioSnapshot: undefined,
     ...overrides,
   });
 
   it("signed-in loader returns debtData null when the only liability is a mortgage", async () => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce(
+    mockWorkspace(
       signedInSnapshot({
         accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000 }],
       }) as any,
@@ -277,7 +291,7 @@ describe("_index route", () => {
   });
 
   it("signed-in loader computes debtData from consumer debts with no invented figures", async () => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce(
+    mockWorkspace(
       signedInSnapshot({
         accounts: [
           {
@@ -302,7 +316,7 @@ describe("_index route", () => {
   });
 
   const loadSignedIn = async (overrides: Record<string, unknown>) => {
-    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce(signedInSnapshot(overrides) as any);
+    mockWorkspace(signedInSnapshot(overrides) as any);
     const request = new Request("http://localhost/");
     return (await loader({ request, params: {}, context: {} } as any)) as any;
   };

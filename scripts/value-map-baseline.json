@@ -3,56 +3,50 @@
     "no-source-of-truth:property-kind": {
       "findings": ["HM-3", "DB-6"],
       "note": "Whether a property is the home or a rental is inferred from its name. Slice 4 stores it as accounts.account_subtype."
-    },
-    "figure-outside-engine:savings-total": {
-      "findings": ["SD-2", "JO-3"],
-      "note": "No engine selector for the savings total; the Savings page and the Dashboard each sum balances. Slice 3 adds one."
-    },
-    "figure-outside-engine:isa-allowance-used": {
-      "findings": ["SD-3"],
-      "note": "ISA allowance used is worked out in the web app. Slice 3 moves it into the engine."
     }
   },
   "secondFormulas": {
     "apps/web/app/types/budget.ts": {
-      "counts": { "monthly-yearly": 1 },
+      "counts": {
+        "monthly-yearly": 1
+      },
       "findings": ["BU-3", "AI-4"]
     },
-    "apps/web/app/features/savings/components/SavingsAccountsList/isaAllowance.utils.ts": {
-      "counts": { "sum-of-saved-amounts": 1 },
-      "findings": ["SD-3"]
-    },
-    "apps/web/app/utils/debtSummary.ts": {
-      "counts": { "sum-of-saved-amounts": 1 },
-      "findings": ["SD-6"]
-    },
     "apps/web/app/containers/savings/SavingsContainer.tsx": {
-      "counts": { "sum-of-saved-amounts": 1 },
+      "counts": {
+        "sum-of-saved-amounts": 1
+      },
       "findings": ["SD-2"]
     },
     "apps/web/app/containers/pension/PensionContainer.tsx": {
-      "counts": { "sum-of-saved-amounts": 1 },
+      "counts": {
+        "sum-of-saved-amounts": 1
+      },
       "findings": ["PP-11"]
     },
     "apps/web/app/containers/debt/DebtContainer.tsx": {
-      "counts": { "sum-of-saved-amounts": 2 },
+      "counts": {
+        "sum-of-saved-amounts": 2
+      },
       "findings": ["SD-6"]
     },
     "apps/web/app/containers/mortgage/MortgageContainer.tsx": {
-      "counts": { "monthly-yearly": 1 },
+      "counts": {
+        "monthly-yearly": 1
+      },
       "findings": ["HM-5"]
     },
     "packages/mcp/src/tools/simulate/simulateDebtPayoff.ts": {
-      "counts": { "sum-of-saved-amounts": 1 },
+      "counts": {
+        "sum-of-saved-amounts": 1
+      },
       "findings": ["SD-6"]
     },
     "packages/mcp/src/tools/read/getDebtOverview.ts": {
-      "counts": { "sum-of-saved-amounts": 3 },
+      "counts": {
+        "sum-of-saved-amounts": 2
+      },
       "findings": ["SD-6"]
-    },
-    "packages/mcp/src/tools/read/getFinancialSnapshot.ts": {
-      "counts": { "sum-of-saved-amounts": 1 },
-      "findings": ["AI-4", "BU-6"]
     }
   }
 }

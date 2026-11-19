@@ -2,6 +2,7 @@ import {
   type BuildContextPackInput,
   calculateUKTax,
   getUkCalendarDate,
+  type ProfileFacts,
   type TaxRecord,
 } from "@flump/finance-engine";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -89,7 +90,19 @@ const TAX_RECORDS: TaxRecord[] = [
   }),
 ];
 
+/** Saved profile facts, which the tax tool reads (audit slice 3); unanswered stays null. */
+const facts = (over: Partial<ProfileFacts> = {}): ProfileFacts => ({
+  annualSalary: null,
+  employmentType: null,
+  taxRegion: null,
+  studentLoanPlans: null,
+  pensionPercent: null,
+  isSalarySacrifice: null,
+  ...over,
+});
+
 const persona: BuildContextPackInput = {
+  profileFacts: facts({ annualSalary: 98000, employmentType: "employed", taxRegion: "ENGLAND" }),
   baseline: {
     ...emptyUser.baseline,
     annualGrossSalary: 98000,
@@ -702,10 +715,12 @@ describe("query reads (re-plan PR B)", () => {
       const scot = await connectTestClient({
         ...persona,
         baseline: { ...persona.baseline, ukRegion: "SCOTLAND", ukRegionAssumed: false },
+        profileFacts: { ...facts({ annualSalary: 98000 }), taxRegion: "SCOTLAND" },
       });
       const assumed = await connectTestClient({
         ...emptyUser,
         baseline: { ...emptyUser.baseline, annualGrossSalary: 40000, ukRegionAssumed: true },
+        profileFacts: facts({ annualSalary: 40000, employmentType: "employed" }),
       });
       try {
         const s = (await scot.callJson("get_tax_year_position", { taxYear: "2025/26" })) as Env;
@@ -736,6 +751,7 @@ describe("query reads (re-plan PR B)", () => {
           employmentStatus: "SELF_EMPLOYED",
           annualGrossSalary: 40000,
         },
+        profileFacts: facts({ annualSalary: 40000, employmentType: "self-employed" }),
         taxRecords: [
           taxRecord({
             id: "se1",
@@ -768,6 +784,7 @@ describe("query reads (re-plan PR B)", () => {
           employmentStatus: "SELF_EMPLOYED",
           annualGrossSalary: 40000,
         },
+        profileFacts: facts({ annualSalary: 40000, employmentType: "self-employed" }),
         taxRecords: [
           taxRecord({
             id: "r1",

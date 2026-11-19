@@ -59,9 +59,9 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Left over each month and budget totals](#left-over)                                                          | figure | budget      | Broken                                    |
 | [Safe to spend](#safe-to-spend)                                                                               | figure | budget      | Holds                                     |
 | [Breathing room (months of cover)](#months-of-cover)                                                          | figure | budget      | Broken                                    |
-| [Savings total and saved each month](#savings-total)                                                          | figure | accounts    | Broken                                    |
+| [Savings total and saved each month](#savings-total)                                                          | figure | accounts    | Duplicated (two stores that can disagree) |
 | [Savings interest over the next 12 months](#savings-interest)                                                 | figure | accounts    | Holds                                     |
-| [ISA allowance used this tax year](#isa-allowance-used)                                                       | figure | accounts    | Duplicated (two stores that can disagree) |
+| [ISA allowance used this tax year](#isa-allowance-used)                                                       | figure | accounts    | Holds                                     |
 | [Estimated Self Assessment tax](#estimated-tax)                                                               | figure | tax         | Broken                                    |
 | [Paid into pensions each month](#pension-going-in)                                                            | figure | pay         | Duplicated (two stores that can disagree) |
 | [Estimated income in retirement](#retirement-income)                                                          | figure | retirement  | Broken                                    |
@@ -301,7 +301,7 @@ Shown on:
 Other code paths that compute it:
 
 - `local salary times rate` [duplicate] in `apps/web/app/containers/pension/PensionContainer.tsx`
-- `Dashboard estimate` [duplicate] in `apps/web/app/routes/_index.tsx`
+- `selectPensionContributionMonthly` [duplicate] in `packages/finance-engine/src/picture/selectors/pension-contribution.ts` (the Dashboard estimate, salary times the employee rate, moved into the engine unchanged)
 - `project_net_worth pension saving` [duplicate] in `packages/mcp/src/tools/simulate/projectNetWorth.ts`
 
 Shown on:
@@ -606,7 +606,7 @@ Read by:
 
 Other code paths that compute it:
 
-- `PortfolioSnapshot.getTotalNetWorth called directly` [wrapper] in `packages/mcp/src/tools/read/getFinancialSnapshot.ts` (same formula, a second assembler)
+- `PortfolioSnapshot.getTotalNetWorth called directly` [wrapper] in `packages/mcp/src/tools/read/getFinancialSnapshot.ts` (past month only (asOfMonth), over the recorded month-end values; today's figure reads the shared picture)
 - `deriveOnboardingSummary` [duplicate] in `apps/web/app/features/onboarding/deriveOnboardingSummary.ts` (preview from typed values)
 - `calculateNetWorth` [legacy] in `packages/banking/src/client/index.ts` (no caller found)
 
@@ -629,7 +629,7 @@ Shown on:
 
 Other code paths that compute it:
 
-- `PortfolioSnapshot.getMonthlyHistory` [duplicate] in `packages/finance-engine/src/portfolio.ts` (a second series that stops at the last recorded month; feeds the context pack)
+- none
 
 Shown on:
 
@@ -649,13 +649,11 @@ Shown on:
 
 Other code paths that compute it:
 
-- `context pack debt balance` [duplicate] in `packages/finance-engine/src/ai-context-pack.ts` (leaves out an overdrawn current account)
-- `local sums` [duplicate] in `packages/mcp/src/tools/read/getDebtOverview.ts`
 - `payoff balance fallback` [duplicate] in `apps/web/app/containers/debt/DebtContainer.tsx`
 
 Shown on:
 
-- Dashboard: `apps/web/app/utils/debtSummary.ts`
+- Dashboard: `apps/web/app/routes/_index.tsx`
 - Debt: `apps/web/app/features/debt/utils/debtInputs.ts`
 - AI read tools: `packages/mcp/src/tools/read/getDebtOverview.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
@@ -671,13 +669,13 @@ Shown on:
 
 Other code paths that compute it:
 
-- `buildDebtSummary` [wrapper] in `apps/web/app/utils/debtSummary.ts`
-- `context pack payoff with a fixed extra 50 a month` [duplicate] in `packages/finance-engine/src/ai-context-pack.ts`
+- `selectDebtSummary` [wrapper] in `packages/finance-engine/src/picture/selectors/debt-summary.ts` (the picture's debt summary; the Dashboard, get_debt_overview and the context pack read it)
 - `simulate_debt_payoff` [duplicate] in `packages/mcp/src/tools/simulate/simulateDebtPayoff.ts` (drops debts with no rate and still gives a date)
 
 Shown on:
 
-- Dashboard: `apps/web/app/utils/debtSummary.ts`
+- Dashboard: `apps/web/app/routes/_index.tsx`
+- AI read tools: `packages/mcp/src/tools/read/getDebtOverview.ts`
 - Debt: `apps/web/app/containers/debt/DebtContainer.tsx`
 - AI simulate tools: `packages/mcp/src/tools/simulate/simulateDebtPayoff.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
@@ -687,20 +685,20 @@ Shown on:
 <a id="savings-total"></a>
 
 - Id: `savings-total` (derived figure)
-- Verdict: Broken. Findings: none. Links: L42, L55.
-- Computed by: `PortfolioSnapshot balances at share, summed on the Savings page` in `packages/finance-engine/src/portfolio.ts`
+- Verdict: Duplicated (two stores that can disagree). Findings: none. Links: L42, L55.
+- Computed by: `selectSavingsTotals` in `packages/finance-engine/src/picture/selectors/savings-totals.ts`
 - Built from: `account-balance`, `account-monthly-amount`, `ownership-share`
-- Note: No engine selector owns this total; the Dashboard and Savings page both sum at the share.
+- Note: The Dashboard and the context pack read selectSavingsTotals from the shared picture, at the user's share. The Savings page still sums the same way itself.
 
 Other code paths that compute it:
 
-- `Dashboard sum` [duplicate] in `apps/web/app/routes/_index.tsx` (at the share, from the portfolio snapshot)
-- `Savings page sum` [duplicate] in `apps/web/app/containers/savings/SavingsContainer.tsx`
+- `Savings page sum` [duplicate] in `apps/web/app/containers/savings/SavingsContainer.tsx` (at the share; moves to the loader's picture once the containers read it)
 
 Shown on:
 
 - Dashboard: `apps/web/app/features/dashboard/components/SavingsWidget/SavingsWidget.tsx`
 - Savings: `apps/web/app/containers/savings/SavingsContainer.tsx`
+- AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
 
 ### Savings interest over the next 12 months
 
@@ -713,7 +711,7 @@ Shown on:
 
 Other code paths that compute it:
 
-- `PortfolioSnapshot.getWeightedSavingsRate` [duplicate] in `packages/finance-engine/src/portfolio.ts` (a second weighted rate with different rules; computed for the Dashboard and not shown)
+- `PortfolioSnapshot.getWeightedSavingsRate` [duplicate] in `packages/finance-engine/src/portfolio.ts` (a second weighted rate with different rules; the context pack shows it as the average savings rate, through selectSavingsTotals)
 
 Shown on:
 
@@ -724,14 +722,15 @@ Shown on:
 <a id="isa-allowance-used"></a>
 
 - Id: `isa-allowance-used` (derived figure)
-- Verdict: Duplicated (two stores that can disagree). Findings: SD-3. Links: L41.
-- Computed by: `estimateIsaUsed` in `apps/web/app/features/savings/components/SavingsAccountsList/isaAllowance.utils.ts`
+- Verdict: Holds. Findings: SD-3. Links: L41.
+- Computed by: `estimateIsaUsed` in `packages/finance-engine/src/picture/selectors/isa-allowance-used.ts`
 - Built from: `account-monthly-amount`
-- Note: Computed outside the engine, with its own copy of the allowance.
+- Note: One engine function. The Savings page calls it through the re-export; the context pack reads it from the shared picture.
 
 Other code paths that compute it:
 
-- `fixed 0 used` [default] in `packages/finance-engine/src/uk-tax.ts` (the AI pack always reports the whole allowance unused)
+- `re-export for the Savings page` [wrapper] in `apps/web/app/features/savings/components/SavingsAccountsList/isaAllowance.utils.ts`
+- `fixed 0 used` [default] in `packages/finance-engine/src/uk-tax.ts` (the allowance status default; the context pack replaces it with the picture's figure, or not set)
 
 Shown on:
 
@@ -1248,8 +1247,6 @@ Read by:
 
 Other code paths that compute it:
 
-- `summariseBudget` [duplicate] in `packages/mcp/src/tools/read/common.ts`
-- `get_financial_snapshot surplus` [duplicate] in `packages/mcp/src/tools/read/getFinancialSnapshot.ts`
 - `toMonthly` [duplicate] in `apps/web/app/types/budget.ts`
 - `wizard totals` [duplicate] in `apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx`
 - `deriveOnboardingSummary` [duplicate] in `apps/web/app/features/onboarding/deriveOnboardingSummary.ts`
@@ -1293,7 +1290,6 @@ Shown on:
 
 Other code paths that compute it:
 
-- `get_financial_snapshot runway` [duplicate] in `packages/mcp/src/tools/read/getFinancialSnapshot.ts` (a different essentials base)
 - `runway what-if sums` [duplicate] in `apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.tsx` (applies a joint share twice)
 
 Shown on:

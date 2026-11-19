@@ -10,12 +10,6 @@ import {
   categorizeAccountType,
   DEFAULT_JOINT_SHARE_PERCENT,
   isBuyToLetAccount,
-  type MonthlyPortfolioHistoryPoint,
-  type NetWorthLeftOut,
-  netWorthBasisFromProfile,
-  PortfolioSnapshot,
-  type ResolvedAccount,
-  resolveSnapshotNetWorthScope,
 } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -32,7 +26,6 @@ import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
 import { Transaction } from "../../entities/transaction.entity";
-import { UserProfile } from "../../entities/user-profile.entity";
 import { londonDate } from "../snapshots/london-date";
 import { debtBecomesAsset, resignHistoryForType, storedBalance } from "../snapshots/stored-balance";
 
@@ -70,25 +63,6 @@ export interface CreateAccountDto {
 }
 
 export type UpdateAccountDto = Partial<CreateAccountDto>;
-
-export interface PortfolioSnapshotResponse {
-  netWorth: number;
-  totalAssets: number;
-  totalLiabilities: number;
-  totalLiquidCash: number;
-  totalInvestments: number;
-  totalPensions: number;
-  totalConsumerDebt: number;
-  totalMortgageBalance: number;
-  totalProperty: number;
-  /** Income-contingent, so never in debt totals (D-5-B); in net worth only when the user counts it. */
-  totalStudentLoans: number;
-  resolvedAccounts: ResolvedAccount[];
-  monthlyHistory: MonthlyPortfolioHistoryPoint[];
-  /** What net worth leaves out under the user's own choices, in display order. */
-  netWorthLeavesOut: NetWorthLeftOut[];
-  currency: string;
-}
 
 const DEFAULT_ACCOUNT_CURRENCY = "GBP";
 
@@ -490,7 +464,6 @@ interface IAccountIntake {
   ): Promise<Account>;
   updateBalances(userId: string, body: UpdateBalancesDto): Promise<Account[]>;
   deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse>;
-  getPortfolioSnapshot(userId: string): Promise<PortfolioSnapshotResponse>;
 }
 
 @Injectable()
@@ -500,8 +473,6 @@ export class AccountIntakeService implements IAccountIntake {
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(AccountDetail)
     private readonly accountDetailRepository: Repository<AccountDetail>,
-    @InjectRepository(UserProfile)
-    private readonly userProfileRepository: Repository<UserProfile>,
     @InjectRepository(BankConnection)
     private readonly bankConnectionRepository: Repository<BankConnection>,
   ) {}
@@ -859,41 +830,5 @@ export class AccountIntakeService implements IAccountIntake {
       await recordAuditEvent(em, { userId, action: "account.deleted", targetId: id });
       return result;
     });
-  }
-
-  /**
-   * Two queries (audit M24): the user's accounts, then their history. getAccounts already loads
-   * every detail of those accounts, so the snapshot reuses them instead of reading them again.
-   */
-  async getPortfolioSnapshot(userId: string): Promise<PortfolioSnapshotResponse> {
-    const accounts = await this.getAccounts(userId);
-    const details = accounts.flatMap((a) => a.details);
-    const snapshot = new PortfolioSnapshot(accounts, details);
-    // Net worth, totals and history follow the user's own choices of what counts.
-    const profile = await this.userProfileRepository.findOne({
-      where: { userId },
-      select: { id: true, netWorthCountsProperty: true, netWorthCountsStudentLoan: true },
-    });
-    const basis = netWorthBasisFromProfile(profile);
-
-    return {
-      netWorth: snapshot.getTotalNetWorth(basis),
-      totalAssets: snapshot.getTotalAssets(basis),
-      totalLiabilities: snapshot.getTotalLiabilities(basis),
-      totalLiquidCash: snapshot.getTotalLiquidCash(),
-      totalInvestments: snapshot.getTotalInvestments(),
-      totalPensions: snapshot.getTotalPensions(),
-      totalConsumerDebt: snapshot.getTotalConsumerDebt(),
-      totalMortgageBalance: snapshot.getTotalMortgageBalance(),
-      totalProperty: snapshot.getTotalProperty(),
-      totalStudentLoans: snapshot.getTotalStudentLoans(),
-      // Each account's netWorthBalance is its contribution under the user's basis (0 when left out).
-      resolvedAccounts: snapshot
-        .getResolvedAccounts()
-        .map((a) => ({ ...a, netWorthBalance: snapshot.netWorthBalanceOf(a, basis) })),
-      monthlyHistory: snapshot.getMonthlyHistory(basis),
-      netWorthLeavesOut: resolveSnapshotNetWorthScope(snapshot, basis).leftOut,
-      currency: accounts[0]?.currency || "GBP",
-    };
   }
 }

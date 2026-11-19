@@ -5,7 +5,6 @@ export {
   AccountResponse,
   CreateAccountResponse,
   DeleteAccountResponse,
-  PortfolioSnapshotResponse,
   UpdateAccountResponse,
   UpdateBalancesResponse,
 } from "./domains/accounts.js";

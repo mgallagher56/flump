@@ -119,10 +119,8 @@ describe("OpenAPI status codes, errors, money and deprecation (BE-09)", () => {
       type: "number",
       description: MONEY_WIRE_DESCRIPTION,
     });
-    const snapshot = op("accounts.portfolioSnapshot").responses["200"]?.content?.[
-      "application/json"
-    ].schema;
-    expect(snapshot.properties.netWorth.description).toBe(MONEY_WIRE_DESCRIPTION);
+    const list = op("accounts.list").responses["200"]?.content?.["application/json"].schema;
+    expect(list.items.properties.balance.description).toBe(MONEY_WIRE_DESCRIPTION);
     expect(doc.info.description).toContain("decision D9");
   });
 

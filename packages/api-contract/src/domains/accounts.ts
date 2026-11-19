@@ -312,33 +312,6 @@ export const PortfolioHistoryPointDto = z.strictObject({
 });
 export type PortfolioHistoryPointDto = z.infer<typeof PortfolioHistoryPointDto>;
 
-/** GET /portfolio-snapshot */
-export const PortfolioSnapshotResponse = z.strictObject({
-  netWorth: Amount,
-  totalAssets: Amount,
-  totalLiabilities: Amount,
-  totalLiquidCash: Amount,
-  totalInvestments: Amount,
-  totalPensions: Amount,
-  totalConsumerDebt: Amount,
-  totalMortgageBalance: Amount,
-  totalProperty: Amount,
-  /**
-   * Income-contingent, so never in debt totals (D-5-B). In netWorth and totalLiabilities only
-   * when the user counts student loans.
-   */
-  totalStudentLoans: Amount,
-  resolvedAccounts: z.array(ResolvedAccountDto),
-  monthlyHistory: z.array(PortfolioHistoryPointDto),
-  /**
-   * What netWorth, the totals and monthlyHistory leave out under the user's own choices, in
-   * display order. `homeValueMissing`: a mortgage counts with no home value saved beside it.
-   */
-  netWorthLeavesOut: z.array(NetWorthLeftOut),
-  currency: Currency,
-});
-export type PortfolioSnapshotResponse = z.infer<typeof PortfolioSnapshotResponse>;
-
 // Parsed request types (z.output: what a handler receives in enforce mode).
 export type CreateAccountRequest = z.infer<typeof CreateAccountRequest>;
 export type UpdateAccountRequest = z.infer<typeof UpdateAccountRequest>;
