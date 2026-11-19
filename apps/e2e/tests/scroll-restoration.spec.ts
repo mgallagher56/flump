@@ -104,9 +104,9 @@ test.describe("web app", () => {
   });
 
   test("a link to an anchor lands on the anchor", async ({ page }) => {
-    await page.goto("/app/profile#settings-tax-basis");
+    await page.goto("/app/profile#settings-age-and-pay");
     await waitForHydration(page);
-    await expect(page.locator("#settings-tax-basis")).toBeInViewport();
+    await expect(page.locator("#settings-age-and-pay")).toBeInViewport();
     expect(await scrollY(page)).toBeGreaterThan(0);
   });
 });

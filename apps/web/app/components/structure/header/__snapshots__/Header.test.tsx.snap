@@ -481,7 +481,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
               </a>
             </li>
             <li
-              class="pos_relative flex-sh_0"
+              class="pos_relative flex-sh_0 d_none navWide:d_list-item"
             >
               <button
                 aria-expanded="false"
@@ -541,7 +541,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
               </button>
             </li>
             <li
-              class="pos_relative flex-sh_0"
+              class="pos_relative flex-sh_0 d_none navWide:d_list-item"
             >
               <button
                 aria-expanded="false"
