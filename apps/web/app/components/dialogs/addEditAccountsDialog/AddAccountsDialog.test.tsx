@@ -121,12 +121,18 @@ describe("adding a mortgage with the home's value", () => {
 
   test("offers the home value for a new mortgage when no property is saved, and sends it", async () => {
     mocks.mockFetcherSubmit.mockClear();
-    const { getByLabelText, getByText, getByTestId, getAllByText, user } = await openAsMortgage();
+    const { getByLabelText, getByRole, getByText, getByTestId, getAllByText, user } =
+      await openAsMortgage();
+    // The note sits behind an info button; the field names its hidden copy in aria-describedby.
+    const note = getByText(
+      "Your own estimate. We add it as your home, so you do not need a separate property account.",
+    );
     expect(
-      getByText(
-        "Your own estimate. We add it as your home, so you do not need a separate property account.",
-      ),
-    ).toBeDefined();
+      getByLabelText(/^What your home is worth \(optional\)/)
+        .getAttribute("aria-describedby")
+        ?.split(" "),
+    ).toContain(note.id);
+    expect(getByRole("button", { name: "About your home value" })).toBeDefined();
     fireEvent.change(getByLabelText("Amount owed"), { target: { value: "200000" } });
     fireEvent.change(getByLabelText(/^What your home is worth \(optional\)/), {
       target: { value: "300000" },

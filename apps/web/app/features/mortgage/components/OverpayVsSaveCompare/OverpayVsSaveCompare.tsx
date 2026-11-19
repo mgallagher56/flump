@@ -1,10 +1,12 @@
 import { compareMortgageOverpayVsSave } from "@flump/finance-engine";
 import {
   ChartFigure,
+  CollapsibleDrawer,
   chartColor,
   controlProps,
   FormField,
   formatAxisCurrency,
+  InfoTip,
   Num,
   ResultBlock,
   Select,
@@ -13,7 +15,7 @@ import {
   Th,
   useTableSort,
 } from "@repo/ui";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useId, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartTooltip, chartBarCursorProps } from "~/features/charts";
 import { OVERPAYMENT_RANGE } from "~/features/mortgage/components/OverpaymentSimulator";
@@ -25,11 +27,7 @@ import {
   controlPanel,
   dataCell,
   dataTable,
-  noteText,
-  outcomeNote,
-  panelHint,
-  rateList,
-  rateRow,
+  netRateLine,
   resultsBody,
 } from "./OverpayVsSaveCompare.styles";
 
@@ -68,6 +66,9 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const reducedMotion = usePrefersReducedMotion();
+  const uid = useId().replace(/:/g, "");
+  const savingsRateNoteId = `overpay-compare-rate-note-${uid}`;
+  const horizonNoteId = `overpay-compare-years-note-${uid}`;
   const isInterestOnly = mortgageType === "interest-only";
   const [savingsRate, setSavingsRate] = useState<number>(4.8); // Default 4.8% savings ROI
   const [taxBracket, setTaxBracket] = useState<string>("isa"); // 'isa' (0%), 'basic' (20%), 'higher' (40%), 'additional' (45%)
@@ -162,13 +163,10 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
       ? `Both give about the same over ${years} (estimate)`
       : `${isOverpayBetter ? "Overpaying the mortgage" : "Saving the money"} gives more over ${years} (estimate)`;
 
+  // Three inputs in view (the amount, the savings rate and its tax). The years compared are named
+  // in the result's label, so their slider waits behind a quiet toggle.
   const controls = (
     <div className={controlPanel()}>
-      <p className={panelHint}>
-        Assumptions you can change: the amount each month, your savings rate and the tax on your
-        savings interest.
-      </p>
-
       <SliderField
         format="currency"
         label="Amount each month"
@@ -180,10 +178,19 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
       />
 
       <SliderField
+        describedBy={savingsRateNoteId}
         format="percent"
         fractionDigits={rateFractionDigits(savingsRate)}
-        helperText="Assumption: change this to match your account."
         label="Savings interest rate"
+        labelAddon={
+          <InfoTip
+            descriptionId={savingsRateNoteId}
+            label="About the savings interest rate"
+            term="Savings interest rate"
+          >
+            An assumption you choose. Change it to match your account.
+          </InfoTip>
+        }
         max={12}
         min={0.1}
         step={0.05}
@@ -193,59 +200,90 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
 
       <FormField label="Tax on your savings interest">
         {(field) => (
-          <Select
-            {...controlProps(field)}
-            options={TAX_OPTIONS}
-            value={taxBracket}
-            onChange={(e) => setTaxBracket(e.target.value)}
-          />
+          <>
+            <Select
+              {...controlProps(field)}
+              aria-describedby={
+                [field.describedBy, "overpay-compare-net-rate"].filter(Boolean).join(" ") ||
+                undefined
+              }
+              options={TAX_OPTIONS}
+              value={taxBracket}
+              onChange={(e) => setTaxBracket(e.target.value)}
+            />
+            {/* The tax choice's effect, kept beside it: a figure, not supporting text. */}
+            <p
+              className={netRateLine}
+              data-testid="overpay-compare-net-rate"
+              id="overpay-compare-net-rate"
+            >
+              After tax:{" "}
+              <Num
+                fractionDigits={rateFractionDigits(netSavingsRate)}
+                kind="percent"
+                size="sm"
+                value={netSavingsRate}
+              />
+            </p>
+          </>
         )}
       </FormField>
 
-      <dl className={rateList}>
-        <div className={rateRow}>
-          <dt>Savings interest rate after tax</dt>
-          <dd>
-            <Num
-              data-testid="overpay-compare-net-rate"
-              fractionDigits={rateFractionDigits(netSavingsRate)}
-              id="overpay-compare-net-rate"
-              kind="percent"
-              size="sm"
-              value={netSavingsRate}
-            />
-          </dd>
-        </div>
-      </dl>
-
-      <SliderField
-        helperText="Assumption: whole years to compare, up to your remaining term."
-        label="Years to compare"
-        max={horizonMax}
-        min={1}
-        step={1}
-        unitSuffix="years"
-        value={horizonValue}
-        onChange={setHorizonYears}
-      />
+      <CollapsibleDrawer title="Show the years compared" variant="quiet">
+        <SliderField
+          describedBy={horizonNoteId}
+          label="Years to compare"
+          labelAddon={
+            <InfoTip
+              descriptionId={horizonNoteId}
+              label="About the years to compare"
+              term="Years to compare"
+            >
+              Whole years, up to the years left on your mortgage
+            </InfoTip>
+          }
+          max={horizonMax}
+          min={1}
+          step={1}
+          unitSuffix="years"
+          value={horizonValue}
+          onChange={setHorizonYears}
+        />
+      </CollapsibleDrawer>
     </div>
   );
 
   const content = (
     <div className={resultsBody()}>
-      {inputsKnown && overpayment <= 0 ? (
-        <p className={outcomeNote} id="overpay-compare-no-amount">
-          Choose an amount each month to compare overpaying with saving.
-        </p>
-      ) : inputsKnown ? (
+      {!inputsKnown || overpayment <= 0 ? (
+        // The same one result card, empty: it says what to add, in place.
+        <ResultBlock
+          emptyPrompt={
+            inputsKnown
+              ? "Choose an amount each month to compare overpaying with saving."
+              : "Add your mortgage balance, interest rate and years left to compare overpaying with saving."
+          }
+          figure={null}
+          hideLabel
+          id="overpay-compare-outcome"
+          label="Overpaying compared with saving"
+        />
+      ) : (
         <>
-          {/* The zone's one result card (E17 5A). The label names the option with the higher
+          {/* The tool's one result card (E17 5A). The label names the option with the higher
               total, so no extra sentence restates it; one option's worth is the row and the
-              other's is the sentence. */}
+              other's is the sentence. What the estimate assumes sits behind the info button. */}
           <ResultBlock
             figure={formatCurrency(difference)}
             id="overpay-compare-outcome"
             label={outcomeText}
+            labelAddon={
+              <InfoTip label="About this estimate" term="What this estimate assumes">
+                Interest you do not pay on the mortgage is not taxed, and savings interest is taxed
+                at the rate you chose. Money overpaid on a mortgage usually cannot be taken back
+                out.
+              </InfoTip>
+            }
             note={`Saving is worth (estimate): ${formatCurrency(savingsBalance)}.`}
             row={{
               label: "Overpaying is worth (estimate)",
@@ -330,17 +368,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
             </div>
           </ChartFigure>
         </>
-      ) : (
-        <p className={outcomeNote} id="overpay-compare-not-set">
-          Add your mortgage balance, interest rate and years left to compare overpaying with saving.
-        </p>
       )}
-
-      <p className={noteText}>
-        This estimate assumes interest you do not pay on the mortgage is not taxed, and savings
-        interest is taxed at the rate you chose above. Money overpaid on a mortgage usually cannot
-        be taken back out.
-      </p>
     </div>
   );
 
@@ -350,6 +378,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
       contentLabel="Overpay or save results"
       controls={controls}
       controlsLabel="Savings assumptions"
+      controlsSpan={4}
     />
   );
 };

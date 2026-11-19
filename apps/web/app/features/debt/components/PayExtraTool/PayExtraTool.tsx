@@ -369,7 +369,7 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
   const controls = (
     <div className={controlsStack}>
       <SliderField
-        aria-describedby={EXTRA_PAYMENT_INFO_ID}
+        describedBy={EXTRA_PAYMENT_INFO_ID}
         format="currency"
         label="Extra payment each month"
         labelAddon={

@@ -37,20 +37,6 @@ export const dialogFooterGroup = cva({
   },
 });
 
-/**
- * Delete as a quiet destructive action: a ghost button in the danger text colour, left of Cancel
- * and Save from `sm`, below them on a phone. It opens the confirmation; it never deletes itself.
- * The attribute selector outranks the ghost variant's own text colour.
- */
-export const deleteAction = cva({
-  base: {
-    "&[data-variant=ghost]": {
-      color: "status.danger.text",
-      _hover: { bg: "status.danger.bg" },
-    },
-  },
-});
-
 /** The delete question's consequence, in the Edit dialog's body while it asks. */
 export const deleteConsequence = cva({
   base: { margin: 0, textStyle: "body.md", color: "text.secondary" },

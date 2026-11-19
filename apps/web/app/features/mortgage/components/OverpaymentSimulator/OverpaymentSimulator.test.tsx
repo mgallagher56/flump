@@ -20,8 +20,11 @@ describe("<OverpaymentSimulator />", () => {
     expect(getAllByRole("group", { name: "Paid off sooner by" })).toHaveLength(1);
     expect(getByText("Monthly payment with the extra")).toBeDefined();
     // A lifetime projection: "~" and three significant figures (B9), never to the pound.
-    const note = getByText(/^Less interest in total \(estimate\): ~£[\d,]+\.$/).textContent ?? "";
-    const digits = note.replace(/\D/g, "");
+    const note =
+      getByText(
+        /^Less interest in total \(estimate\): ~£[\d,]+\. Assumes the rate stays at 4% for the whole term\.$/,
+      ).textContent ?? "";
+    const digits = (note.match(/~£([\d,]+)/)?.[1] ?? "").replace(/\D/g, "");
     expect(digits.length <= 3 || /^\d{3}0+$/.test(digits)).toBe(true);
     expect(container.querySelectorAll("#overpayment-outcome dt")).toHaveLength(1);
     // The payment summary under the slider is gone: it repeated the figure beside the outcome.
@@ -140,18 +143,38 @@ describe("<OverpaymentSimulator />", () => {
     expect(figure.textContent).toMatch(
       /Illustration: overpaying £200 a month means ~£[\d,]+ less interest in total/,
     );
-    expect(figure.textContent).toMatch(/Assumes the rate stays at 4% for the whole term\./);
     expect(figure.textContent).not.toMatch(/Projection, not a forecast/);
   });
 
-  test("the early repayment charge fact is a quiet helper line under the slider", () => {
-    const { getByLabelText, getByText, container } = customRender(
+  test("the rate assumption sits in the result card, at £0 too, not under the chart", () => {
+    const { getByTestId, getByRole, rerender } = customRender(<OverpaymentSimulator {...props} />);
+    expect(getByTestId("overpayment-outcome").textContent).toMatch(
+      /Assumes the rate stays at 4% for the whole term\./,
+    );
+    expect(getByRole("figure", { name: "Mortgage balance by year" }).textContent).not.toMatch(
+      /Assumes the rate/,
+    );
+    rerender(<OverpaymentSimulator {...props} overpayment={0} />);
+    expect(getByTestId("overpayment-outcome").textContent).toMatch(
+      /Assumes the rate stays at 4% for the whole term\./,
+    );
+  });
+
+  test("the early repayment charge fact is behind an info button and read with the slider", async () => {
+    const { getByLabelText, getByRole, findByRole, container } = customRender(
       <OverpaymentSimulator {...props} />,
     );
     expect(OVERPAYMENT_ERC_NOTE).toMatch(/^Many fixed-rate deals allow overpayments/);
-    const helper = getByText(OVERPAYMENT_ERC_NOTE);
+    // No visible paragraph: only the hidden copy the slider names, and the popover once opened.
+    const hidden = Array.from(container.querySelectorAll("[id^='overpayment-erc-note-']"));
+    expect(hidden).toHaveLength(1);
+    expect(hidden[0]?.textContent).toBe(OVERPAYMENT_ERC_NOTE);
     const describedBy = getByLabelText("Extra each month").getAttribute("aria-describedby") ?? "";
-    expect(describedBy.split(" ")).toContain(helper.id);
+    expect(describedBy.split(" ")).toContain(hidden[0]?.id);
+    expect(container.textContent).not.toMatch(/Model an extra payment each month/);
+    fireEvent.click(getByRole("button", { name: "About overpayment limits" }));
+    const popover = await findByRole("dialog", { name: "Overpayment limits" });
+    expect(popover.textContent).toContain(OVERPAYMENT_ERC_NOTE);
     expect(container.querySelectorAll("[data-notice='projection']")).toHaveLength(0);
   });
 });

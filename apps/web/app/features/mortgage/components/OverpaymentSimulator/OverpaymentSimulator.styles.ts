@@ -5,12 +5,6 @@ export const controlsBody = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
-export const toolHint = css({
-  textStyle: "body.sm",
-  color: "text.secondary",
-  margin: 0,
-});
-
 export const chartWrap = cva({
   base: {
     height: "300px",
@@ -62,12 +56,4 @@ export const outcomeColumn = cva({
     gap: { base: "12px", md: "16px" },
     fontVariantNumeric: "tabular-nums",
   },
-});
-
-export const stateNote = css({
-  margin: 0,
-  fontVariantNumeric: "tabular-nums",
-  marginTop: "8px",
-  fontSize: "xs",
-  color: "text.muted",
 });

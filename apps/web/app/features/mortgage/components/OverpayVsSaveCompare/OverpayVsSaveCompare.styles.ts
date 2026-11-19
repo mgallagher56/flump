@@ -7,40 +7,16 @@ export const controlPanel = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
-export const panelHint = css({
-  textStyle: "body.sm",
-  color: "text.secondary",
-  m: 0,
-  ...numeric,
-});
-
 export const resultsBody = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0, ...numeric },
 });
 
-export const rateList = css({
-  display: "grid",
-  gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
-  gap: "12px 24px",
-  m: 0,
-});
-
-export const rateRow = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "2px",
-  minWidth: 0,
-  "& dt": { textStyle: "label.sm", color: "text.muted" },
-  "& dd": { m: 0, color: "text.primary", ...numeric },
-});
-
-export const outcomeNote = css({ textStyle: "body.sm", color: "text.secondary", m: 0, ...numeric });
-
-export const noteText = css({
+/** The savings rate after the chosen tax, one quiet line under the tax choice. */
+export const netRateLine = css({
   textStyle: "body.sm",
-  color: "text.muted",
+  color: "text.secondary",
   m: 0,
-  maxWidth: "70ch",
+  ...numeric,
 });
 
 export const chartWrapper = css({

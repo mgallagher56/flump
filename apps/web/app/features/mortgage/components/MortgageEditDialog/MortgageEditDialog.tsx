@@ -5,12 +5,14 @@ import {
   DatePicker,
   Dialog,
   FormField,
+  type FormFieldControlState,
+  InfoTip,
   InlineAlert,
   Money,
   PercentInput,
   RadioCardGroup,
   Select,
-  TextInput,
+  WholeNumberInput,
 } from "@repo/ui";
 import type { FC } from "react";
 import { HomeEquityLine } from "~/features/mortgage/components/HomeEquityLine";
@@ -87,6 +89,29 @@ export interface MortgageEditDialogProps {
   /** The user's share of a joint mortgage, for the equity line; `null` when held solely. */
   mortgageSharePercent?: number | null;
 }
+
+/** Ids of the hidden copies of the info buttons' text, named in their fields' aria-describedby. */
+const NOTE_IDS = {
+  balance: "mortgage-edit-balance-note",
+  term: "mortgage-edit-term-note",
+  payment: "mortgage-edit-payment-note",
+  homeValue: "mortgage-edit-home-value-note",
+} as const;
+
+/** The field's own hint and error ids, plus the id of the text behind its info button. */
+const withNote = (field: FormFieldControlState, noteId: string): FormFieldControlState => ({
+  ...field,
+  describedBy: [field.describedBy, noteId].filter(Boolean).join(" "),
+});
+
+const SAVED_ON_ACCOUNT = "Saved on your mortgage account";
+
+/** A typed whole number as the dialog holds it: a string, "" when empty (never "0"). */
+const wholeOrNull = (text: string): number | null => {
+  if (text.trim() === "") return null;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : null;
+};
 
 const TYPE_OPTIONS = [
   { value: "repayment", label: "Repayment" },
@@ -180,10 +205,21 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
         <div className={editGrid()}>
           {canSaveFigures ? (
             <>
-              <FormField hint="Saved on your mortgage account" label="Remaining balance">
+              <FormField
+                label="Remaining balance"
+                labelAddon={
+                  <InfoTip
+                    descriptionId={NOTE_IDS.balance}
+                    label="About the remaining balance"
+                    term="Remaining balance"
+                  >
+                    {SAVED_ON_ACCOUNT}
+                  </InfoTip>
+                }
+              >
                 {(field) => (
                   <CurrencyInput
-                    {...controlProps(field)}
+                    {...controlProps(withNote(field, NOTE_IDS.balance))}
                     value={editLoanAmount > 0 ? editLoanAmount : null}
                     onValueChange={(v) => onEditLoanAmountChange(v ?? 0)}
                   />
@@ -215,23 +251,31 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
           {/* The term is stored in whole months, so it is typed as whole years and months. */}
           {canSaveTerm ? (
             <div className={termPair()}>
-              <FormField hint="Saved on your mortgage account" label="Years left">
+              <FormField
+                label="Years left"
+                labelAddon={
+                  <InfoTip descriptionId={NOTE_IDS.term} label="About years left" term="Years left">
+                    {SAVED_ON_ACCOUNT}
+                  </InfoTip>
+                }
+              >
                 {(field) => (
-                  <TextInput
-                    {...controlProps(field)}
-                    inputMode="numeric"
-                    value={editTermYears}
-                    onChange={(e) => onEditTermYearsChange(e.target.value)}
+                  <WholeNumberInput
+                    {...controlProps(withNote(field, NOTE_IDS.term))}
+                    min={0}
+                    value={wholeOrNull(editTermYears)}
+                    onValueChange={(v) => onEditTermYearsChange(v === null ? "" : String(v))}
                   />
                 )}
               </FormField>
               <FormField label="Months">
                 {(field) => (
-                  <TextInput
+                  <WholeNumberInput
                     {...controlProps(field)}
-                    inputMode="numeric"
-                    value={editTermMonths}
-                    onChange={(e) => onEditTermMonthsChange(e.target.value)}
+                    max={11}
+                    min={0}
+                    value={wholeOrNull(editTermMonths)}
+                    onValueChange={(v) => onEditTermMonthsChange(v === null ? "" : String(v))}
                   />
                 )}
               </FormField>
@@ -250,12 +294,20 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
           ) : null}
           {canSaveTerm && onEditMonthlyPaymentChange ? (
             <FormField
-              hint="The amount you pay your lender each month, without any overpayment."
               label="Monthly payment"
+              labelAddon={
+                <InfoTip
+                  descriptionId={NOTE_IDS.payment}
+                  label="About the monthly payment"
+                  term="Monthly payment"
+                >
+                  The amount you pay your lender each month, without any overpayment
+                </InfoTip>
+              }
             >
               {(field) => (
                 <CurrencyInput
-                  {...controlProps(field)}
+                  {...controlProps(withNote(field, NOTE_IDS.payment))}
                   value={editMonthlyPayment}
                   onValueChange={(v) => onEditMonthlyPaymentChange(v)}
                 />
@@ -264,14 +316,22 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
           ) : null}
           {homeValueMode === "input" && onEditHomeValueChange ? (
             <FormField
-              hint={
-                isBtl ? "Your own estimate." : "Your own estimate. Saved as your home on Accounts."
-              }
               label={isBtl ? "What the property is worth" : "What your home is worth"}
+              labelAddon={
+                <InfoTip
+                  descriptionId={NOTE_IDS.homeValue}
+                  label={isBtl ? "About the property value" : "About your home value"}
+                  term={isBtl ? "Property value" : "Home value"}
+                >
+                  {isBtl
+                    ? "Your own estimate"
+                    : "Your own estimate. Saved as your home on Accounts."}
+                </InfoTip>
+              }
             >
               {(field) => (
                 <CurrencyInput
-                  {...controlProps(field)}
+                  {...controlProps(withNote(field, NOTE_IDS.homeValue))}
                   min={0}
                   value={editHomeValue}
                   onValueChange={(v) => onEditHomeValueChange(v)}

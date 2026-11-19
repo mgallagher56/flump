@@ -91,9 +91,12 @@ describe("<MortgageEditDialog />", () => {
     customRender(<MortgageEditDialog {...props} />);
     const input = screen.getByLabelText(/^Monthly payment/) as HTMLInputElement;
     expect(input.value).toContain("1,250");
-    expect(
-      screen.getByText("The amount you pay your lender each month, without any overpayment."),
-    ).toBeTruthy();
+    // The note is behind an info button; the field names its hidden copy in aria-describedby.
+    const noteIds = (input.getAttribute("aria-describedby") ?? "").split(" ");
+    expect(noteIds.map((id) => document.getElementById(id)?.textContent)).toContain(
+      "The amount you pay your lender each month, without any overpayment",
+    );
+    expect(screen.getByRole("button", { name: "About the monthly payment" })).toBeDefined();
     fireEvent.change(input, { target: { value: "1300" } });
     fireEvent.blur(input);
     expect(props.onEditMonthlyPaymentChange).toHaveBeenCalledWith(1300);
@@ -102,6 +105,48 @@ describe("<MortgageEditDialog />", () => {
   it("does not offer the monthly payment without a linked account", () => {
     customRender(<MortgageEditDialog {...baseProps()} canSaveTerm={false} mortgageAccounts={[]} />);
     expect(screen.queryByLabelText(/^Monthly payment/)).toBeNull();
+  });
+
+  it("keeps field notes behind info buttons, read with their fields, and no visible hints", () => {
+    const { container } = customRender(
+      <MortgageEditDialog
+        {...baseProps()}
+        editHomeValue={null}
+        homeValueMode="input"
+        onEditHomeValueChange={vi.fn()}
+      />,
+    );
+    const described = (label: RegExp) =>
+      (screen.getByLabelText(label).getAttribute("aria-describedby") ?? "")
+        .split(" ")
+        .map((id) => document.getElementById(id)?.textContent ?? "");
+    expect(described(/^Remaining balance/)).toContain("Saved on your mortgage account");
+    expect(described(/^Years left/)).toContain("Saved on your mortgage account");
+    expect(described(/^What your home is worth/)).toContain(
+      "Your own estimate. Saved as your home on Accounts.",
+    );
+    for (const name of [
+      "About the remaining balance",
+      "About years left",
+      "About the monthly payment",
+      "About your home value",
+    ]) {
+      expect(screen.getByRole("button", { name })).toBeDefined();
+    }
+    // No FormField hint paragraphs remain.
+    expect(container.ownerDocument.querySelectorAll("[id$='-hint']")).toHaveLength(0);
+  });
+
+  it("types the term into whole number fields with no leading zero", () => {
+    const props = { ...baseProps(), editTermYears: "0", editTermMonths: "0" };
+    customRender(<MortgageEditDialog {...props} />);
+    const years = screen.getByLabelText(/^Years left/) as HTMLInputElement;
+    fireEvent.change(years, { target: { value: "018" } });
+    expect(props.onEditTermYearsChange).toHaveBeenLastCalledWith("18");
+    const months = screen.getByLabelText(/^Months/) as HTMLInputElement;
+    fireEvent.change(months, { target: { value: "" } });
+    // Empty stays empty, never 0.
+    expect(props.onEditTermMonthsChange).toHaveBeenLastCalledWith("");
   });
 
   it("shows the term as whole years and months, with no decimal years or read-back line", () => {

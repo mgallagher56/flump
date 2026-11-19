@@ -7,15 +7,9 @@ export const simRoot = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0, ...numeric },
 });
 
-export const simDescription = css({
-  textStyle: "body.sm",
-  color: "text.secondary",
-  margin: 0,
-  maxWidth: "70ch",
-});
-
+/** The same 16px rhythm as the other mortgage tools' controls. */
 export const panel = cva({
-  base: { display: "flex", flexDirection: "column", gap: "18px", minWidth: 0 },
+  base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
 export const fieldGroup = css({

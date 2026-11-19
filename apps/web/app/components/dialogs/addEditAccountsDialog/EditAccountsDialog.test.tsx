@@ -247,7 +247,7 @@ describe("<EditAccountDialogBtn", () => {
     });
   });
 
-  test("delete is a quiet ghost action and the confirmation names only what exists", async () => {
+  test("delete is the subtle danger button and the confirmation names only what exists", async () => {
     mocks.mockUseLoaderData.mockReturnValue({
       accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
     });
@@ -256,7 +256,7 @@ describe("<EditAccountDialogBtn", () => {
     );
     await user.click(getByText("edit"));
     const deleteBtn = getByText("delete").closest("button") as HTMLButtonElement;
-    expect(deleteBtn.dataset.variant).toBe("ghost");
+    expect(deleteBtn.dataset.variant).toBe("dangerSubtle");
     expect(getByText("save").closest("button")?.dataset.variant).toBe("primary");
     expect(getByRole("button", { name: "Cancel" }).dataset.variant).toBe("ghost");
 

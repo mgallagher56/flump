@@ -1,4 +1,4 @@
-import { fireEvent } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import {
@@ -11,6 +11,10 @@ const OverpayVsSaveCompare = (
     Partial<Pick<OverpayVsSaveCompareProps, "onOverpaymentChange">>,
 ) => <Compare onOverpaymentChange={vi.fn()} {...props} />;
 
+/** The years slider waits behind a quiet toggle: open it. */
+const openYears = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Show the years compared" }));
+
 describe("<OverpayVsSaveCompare />", () => {
   const defaultProps = {
     loanAmount: 250000,
@@ -20,15 +24,21 @@ describe("<OverpayVsSaveCompare />", () => {
   };
 
   test("renders comparison header, parameters, and chart", () => {
-    const { getByText, getByTestId } = customRender(<OverpayVsSaveCompare {...defaultProps} />);
+    const { getByText, getByTestId, getAllByRole, queryByLabelText } = customRender(
+      <OverpayVsSaveCompare {...defaultProps} />,
+    );
 
-    expect(getByText(/^Assumptions you can change/)).toBeDefined();
+    // At most three inputs in view: the amount, the savings rate and its tax.
+    expect(document.body.textContent).not.toMatch(/Assumptions you can change/);
+    expect(getAllByRole("slider")).toHaveLength(2);
+    expect(queryByLabelText("Years to compare")).toBeNull();
     expect(document.body.textContent).toMatch(
       /overpaying the mortgage gives a total £[\d,.]+ higher/i,
     );
     expect(document.body.textContent).not.toMatch(/verdict|emergency fund|liquid|vs\.|parameters/i);
     expect(getByText("Savings interest rate")).toBeDefined();
     expect(getByText("Tax on your savings interest")).toBeDefined();
+    openYears();
     expect(getByText("Years to compare")).toBeDefined();
     // No neutral fact takes a danger or positive tone.
     expect(getByTestId("overpay-compare-net-rate").outerHTML).not.toMatch(/danger|positive/);
@@ -51,6 +61,7 @@ describe("<OverpayVsSaveCompare />", () => {
     expect(getByDisplayValue("Higher rate (40% tax)")).toBeDefined();
 
     // Change horizon slider
+    openYears();
     const horizon = getByLabelText("Years to compare") as HTMLInputElement;
     fireEvent.change(horizon, { target: { value: "15" } });
     expect(horizon.value).toBe("15");
@@ -108,6 +119,13 @@ describe("<OverpayVsSaveCompare />", () => {
 });
 
 describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
+  const defaultPropsForNotes = {
+    loanAmount: 250000,
+    interestRate: 5,
+    remainingTerm: 25,
+    overpayment: 300,
+  };
+
   test("says what to add rather than 0% when the mortgage details are missing", () => {
     const { getByText, container } = customRender(
       <OverpayVsSaveCompare loanAmount={0} interestRate={0} overpayment={300} remainingTerm={0} />,
@@ -116,8 +134,8 @@ describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
     expect(container.textContent ?? "").not.toMatch(/0\.00%|£\s*0(?:[,.]0+)*(?!\d)/);
   });
 
-  test("the note states the assumptions without advice; the ERC fact is the zone notice", () => {
-    const { container } = customRender(
+  test("the assumptions sit behind the result's info button, without advice", async () => {
+    const { container, getByRole, findByRole } = customRender(
       <OverpayVsSaveCompare
         loanAmount={250000}
         interestRate={5}
@@ -125,8 +143,27 @@ describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
         remainingTerm={25}
       />,
     );
-    expect(container.textContent).toMatch(/usually cannot be taken back out/);
-    expect(container.textContent).not.toMatch(/early repayment charge|Always keep/);
+    // No visible paragraph under the result.
+    expect(container.textContent).not.toMatch(/usually cannot be taken back out/);
+    fireEvent.click(getByRole("button", { name: "About this estimate" }));
+    const popover = await findByRole("dialog", { name: "What this estimate assumes" });
+    expect(popover.textContent).toMatch(/usually cannot be taken back out/);
+    expect(popover.textContent).not.toMatch(/early repayment charge|Always keep/);
+  });
+
+  test("the savings rate and years notes are named by their sliders", () => {
+    const { getByRole } = customRender(<OverpayVsSaveCompare {...defaultPropsForNotes} />);
+    const described = (name: string) =>
+      (getByRole("slider", { name }).getAttribute("aria-describedby") ?? "")
+        .split(" ")
+        .map((id) => document.getElementById(id)?.textContent ?? "")
+        .join(" ");
+    expect(described("Savings interest rate")).toContain("Change it to match your account.");
+    openYears();
+    expect(described("Years to compare")).toContain("up to the years left on your mortgage");
+    // The tax choice names its after-tax rate.
+    const select = document.querySelector("select") as HTMLSelectElement;
+    expect(select.getAttribute("aria-describedby")).toContain("overpay-compare-net-rate");
   });
 
   test("shows rates as entered, not padded to two places", () => {
@@ -179,6 +216,7 @@ describe("<OverpayVsSaveCompare /> horizon rule", () => {
     const { getByLabelText, container } = customRender(
       <OverpayVsSaveCompare {...props} remainingTerm={0.5} />,
     );
+    openYears();
     const horizon = getByLabelText("Years to compare") as HTMLInputElement;
     expect(horizon.min).toBe("1");
     expect(horizon.max).toBe("1");
@@ -191,6 +229,7 @@ describe("<OverpayVsSaveCompare /> horizon rule", () => {
     const { getByLabelText, container } = customRender(
       <OverpayVsSaveCompare {...props} remainingTerm={7.9} />,
     );
+    openYears();
     const horizon = getByLabelText("Years to compare") as HTMLInputElement;
     expect(horizon.max).toBe("7");
     fireEvent.change(horizon, { target: { value: "5" } });

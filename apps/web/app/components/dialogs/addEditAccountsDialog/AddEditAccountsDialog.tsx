@@ -11,9 +11,11 @@ import {
   Button,
   CurrencyInput,
   controlProps,
+  DatePicker,
   Dialog,
   FormField,
   Icon,
+  InfoTip,
   PercentInput,
   Select,
   TextInput,
@@ -40,7 +42,6 @@ import { HomeEquityLine } from "~/features/mortgage/components/HomeEquityLine";
 import type { loader } from "~/routes/app.accounts._index";
 import { versionField } from "~/services/conflict";
 import {
-  deleteAction,
   deleteConsequence,
   dialogFooterGroup,
   fieldStack,
@@ -81,6 +82,9 @@ const PLAN_REQUIRED_MESSAGE = "Choose a repayment plan";
 /** Shown before saving a type change that turns a debt into something you own (CH-4). */
 export const TYPE_FLIPS_SIGN_NOTE =
   "This turns the debt into something you own, so net worth this month and in every past month rises by twice its balance.";
+
+/** Hidden copy of the home value's info text, named in that field's aria-describedby. */
+const HOME_VALUE_NOTE_ID = "account-home-value-note";
 
 /**
  * Liabilities are stored as minus the amount owed, but the form shows the positive amount owed,
@@ -374,8 +378,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     }));
   }, []);
 
-  const onChangePromoDateInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormInput((prevState) => ({ ...prevState, promoZeroPercentUntil: e.target.value }));
+  const onChangePromoDateInput = useCallback((value: string) => {
+    setFormInput((prevState) => ({ ...prevState, promoZeroPercentUntil: value }));
   }, []);
 
   const onChangePlanInput = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -584,11 +588,12 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           ) : (
             <>
               {isEditAccount ? (
+                // Delete as a quiet destructive action (the shared subtle danger button). It opens
+                // the confirmation; it never deletes itself.
                 <Button
-                  className={deleteAction()}
                   ref={deleteButtonRef}
                   type="button"
-                  variant="ghost"
+                  variant="dangerSubtle"
                   onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     dismissDelete();
@@ -766,12 +771,26 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             {showHomeValue ? (
               <>
                 <FormField
-                  hint="Your own estimate. We add it as your home, so you do not need a separate property account."
                   label="What your home is worth (optional)"
+                  labelAddon={
+                    <InfoTip
+                      descriptionId={HOME_VALUE_NOTE_ID}
+                      label="About your home value"
+                      term="Home value"
+                    >
+                      Your own estimate. We add it as your home, so you do not need a separate
+                      property account.
+                    </InfoTip>
+                  }
                 >
                   {(field) => (
                     <CurrencyInput
-                      {...controlProps(field)}
+                      {...controlProps({
+                        ...field,
+                        describedBy: [field.describedBy, HOME_VALUE_NOTE_ID]
+                          .filter(Boolean)
+                          .join(" "),
+                      })}
                       min={0}
                       name="homeValue"
                       value={homeValue}
@@ -809,12 +828,12 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                   label="0% interest period ends (optional)"
                 >
                   {(field) => (
-                    <TextInput
+                    <DatePicker
                       {...controlProps(field)}
+                      clearable
                       name="promoZeroPercentUntil"
-                      type="date"
                       value={formInput.promoZeroPercentUntil}
-                      onChange={onChangePromoDateInput}
+                      onValueChange={onChangePromoDateInput}
                     />
                   )}
                 </FormField>

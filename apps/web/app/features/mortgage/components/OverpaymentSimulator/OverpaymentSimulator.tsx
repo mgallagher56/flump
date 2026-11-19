@@ -6,6 +6,7 @@ import {
   chartColor,
   formatAxisCurrency,
   formatMonthTick,
+  InfoTip,
   niceYDomain,
   ResultBlock,
   SimulatorSplitLayout,
@@ -28,8 +29,6 @@ import {
   dataCell,
   dataTable,
   outcomeColumn,
-  stateNote,
-  toolHint,
 } from "./OverpaymentSimulator.styles";
 
 /**
@@ -95,7 +94,10 @@ export interface OverpaymentSimulatorProps {
   mortgageType?: "repayment" | "interest-only";
 }
 
-/** The early repayment charge fact, shown once as a quiet helper line under the overpayment slider. */
+/**
+ * The early repayment charge fact, behind the info button beside the overpayment slider. The button
+ * renders it hidden too, so the slider names it in `aria-describedby` and it is read with the field.
+ */
 export const OVERPAYMENT_ERC_NOTE =
   "Many fixed-rate deals allow overpayments of up to 10% of the balance a year with no charge. Above that, an early repayment charge (ERC) may apply. Your lender's terms set out the limit.";
 
@@ -230,7 +232,9 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
   mortgageType = "repayment",
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const gradientId = `overpay-standard-${useId().replace(/:/g, "")}`;
+  const uid = useId().replace(/:/g, "");
+  const gradientId = `overpay-standard-${uid}`;
+  const ercNoteId = `overpayment-erc-note-${uid}`;
   const isInterestOnly = mortgageType === "interest-only";
   // A zero (or negative) input means the user has not told us that figure yet.
   const hasInputs = loanAmount > 0 && interestRate > 0 && remainingTerm > 0;
@@ -315,14 +319,19 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
   const controls = (
     <div className={controlsBody()}>
-      <p className={toolHint}>
-        Model an extra payment each month to see the estimated payoff date.
-      </p>
-
       <SliderField
+        describedBy={ercNoteId}
         format="currency"
-        helperText={OVERPAYMENT_ERC_NOTE}
         label="Extra each month"
+        labelAddon={
+          <InfoTip
+            descriptionId={ercNoteId}
+            label="About overpayment limits"
+            term="Overpayment limits"
+          >
+            {OVERPAYMENT_ERC_NOTE}
+          </InfoTip>
+        }
         max={OVERPAYMENT_RANGE.max}
         min={OVERPAYMENT_RANGE.min}
         step={OVERPAYMENT_RANGE.step}
@@ -365,12 +374,14 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
   const standardName = hasOverpayment ? "No overpayment" : "Balance owed";
   // The slider's value pill names the amount, so the line's name does not repeat it.
   const overpayName = "With overpayment";
+  // The one assumption, stated with the result it qualifies (copy guide 4.4).
+  const rateAssumption = `Assumes the rate stays at ${formatRate(interestRate)} for the whole term.`;
 
   const content = (
     <div className={outcomeColumn()}>
-      {/* The zone's one result card (E17 5A): the change, one sentence and one supporting row.
-          At £0 there is no change to state: one short prompt (the payment and the term are
-          already on the page). */}
+      {/* The tool's one result card (E17 5A): the change, one note (the interest and the rate
+          assumption) and one supporting row. At £0 there is no change to state: one short prompt
+          and the assumption (the payment and the term are already on the page). */}
       <ResultBlock
         emptyPrompt="Move the slider to see what changes"
         figure={hasOverpayment ? outcomeText : null}
@@ -379,8 +390,8 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         label={showBulletReduced ? "Less to repay at the end of the term" : "Paid off sooner by"}
         note={
           hasOverpayment
-            ? `Less interest in total (estimate): ${formatEstimate(interestSaved ?? 0)}.`
-            : undefined
+            ? `Less interest in total (estimate): ${formatEstimate(interestSaved ?? 0)}. ${rateAssumption}`
+            : rateAssumption
         }
         row={
           hasOverpayment
@@ -439,9 +450,6 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
           showOverpay={hasOverpayment}
           standardName={standardName}
         />
-        <p className={stateNote}>
-          Assumes the rate stays at {formatRate(interestRate)} for the whole term.
-        </p>
       </ChartFigure>
     </div>
   );

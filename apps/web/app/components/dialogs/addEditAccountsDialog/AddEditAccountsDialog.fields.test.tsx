@@ -67,9 +67,8 @@ describe("kind of account", () => {
 
 describe("credit limit and 0% date", () => {
   test("show only on a credit card or overdraft, and are sent from there", async () => {
-    const { getByText, getAllByText, getByLabelText, queryByLabelText, user } = customRender(
-      <AddEditAccountsDialogBtn />,
-    );
+    const { getByText, getAllByText, getByLabelText, getByRole, queryByLabelText, user } =
+      customRender(<AddEditAccountsDialogBtn />);
     await user.click(getByText("addAccount"));
     for (const type of ["Current", "Saving", "Loan", "Mortgage"]) {
       await user.selectOptions(getByLabelText("Account type"), type);
@@ -82,7 +81,13 @@ describe("credit limit and 0% date", () => {
     await user.selectOptions(getByLabelText("Account type"), "Credit Card");
     await user.type(getByLabelText("Name"), "Card");
     await user.type(getByLabelText("Credit limit (optional)"), "5000");
-    await user.type(getByLabelText("0% interest period ends (optional)"), "2027-06-30");
+    // The shared, themed date picker (owner item 20): open it and pick 30 June 2027.
+    await user.click(getByRole("button", { name: /^0% interest period ends/ }));
+    await user.click(getByRole("button", { name: /^Choose year/ }));
+    await user.click(getByRole("button", { name: "2027" }));
+    await user.click(getByRole("button", { name: /^Choose month/ }));
+    await user.click(getByRole("button", { name: "Jun" }));
+    await user.click(getByRole("button", { name: "30 Jun 2027" }));
     await user.click(getAllByText("addAccount").at(-1) as HTMLElement);
     expect(submitted()).toMatchObject({
       type: "Credit Card",
