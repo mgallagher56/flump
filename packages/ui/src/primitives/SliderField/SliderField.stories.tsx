@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "@storybook/test";
 import { useState } from "react";
+import { InfoTip } from "../InfoTip";
 import { SliderField, type SliderFieldProps } from "./SliderField";
 
 // SliderField is controlled, so a static `value` arg would reset the pill after every keystroke
@@ -150,6 +151,30 @@ export const NotSet: Story = {
 
 export const Disabled: Story = {
   args: { disabled: true, value: 200, helperText: "Locked while the plan is fixed." },
+};
+
+/** An InfoTip beside the label in place of helper text; the slider names its hidden description. */
+export const WithInfoTip: Story = {
+  args: {
+    label: "Extra payment each month",
+    value: 100,
+    "aria-describedby": "slider-story-info",
+    labelAddon: (
+      <InfoTip descriptionId="slider-story-info" term="Extra payment each month">
+        On top of your minimum payments.
+      </InfoTip>
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("slider")).toHaveAttribute(
+      "aria-describedby",
+      "slider-story-info",
+    );
+    await expect(
+      canvas.getByRole("button", { name: "About Extra payment each month" }),
+    ).toBeInTheDocument();
+  },
 };
 
 export const LongLabel: Story = {

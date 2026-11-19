@@ -132,6 +132,31 @@ describe("SliderField Primitive", () => {
     expect(document.getElementById(id as string)?.textContent).toBe("Help");
   });
 
+  it("renders a label addon and names extra describedby ids with the helper id", () => {
+    render(
+      <>
+        <span id="rate-info">Explains the rate</span>
+        <SliderField
+          aria-describedby="rate-info"
+          helperText="Help"
+          label="Rate"
+          labelAddon={<button type="button">About Rate</button>}
+          max={10}
+          min={0}
+          value={1}
+          onChange={vi.fn()}
+        />
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "About Rate" })).toBeDefined();
+    const ids = screen.getByRole("slider").getAttribute("aria-describedby")?.split(" ") ?? [];
+    expect(ids[0]).toBe("rate-info");
+    expect(ids).toHaveLength(2);
+    expect(document.getElementById(ids[1])?.textContent).toBe("Help");
+    // The label still names the range input.
+    expect(screen.getByLabelText("Rate", { selector: "input[type=range]" })).toBeDefined();
+  });
+
   it("value pill has input boundary", () => {
     render(<SliderField label="Rate" max={100} min={0} value={5} onChange={vi.fn()} />);
     const pill = screen.getByLabelText("Rate input").parentElement;

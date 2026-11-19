@@ -165,7 +165,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                     </Button>
                     <Button
                       size="sm"
-                      variant="destructive"
+                      variant="dangerSubtle"
                       onClick={() => setDisconnectTarget(conn)}
                     >
                       <Icon icon={Trash2} size="sm" />

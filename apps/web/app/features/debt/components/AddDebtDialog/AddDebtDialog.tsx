@@ -49,6 +49,12 @@ export interface AddDebtDialogProps {
 }
 
 const FORM_ID = "add-debt-form";
+const CREDIT_LIMIT_INFO_ID = "add-debt-credit-limit-info";
+const PROMO_END_INFO_ID = "add-debt-promo-end-info";
+
+/** The field's own hint or error ids plus the InfoTip's hidden description, so both are read. */
+const describedByWith = (describedBy: string | undefined, infoId: string): string =>
+  [describedBy, infoId].filter(Boolean).join(" ");
 
 const TYPE_OPTIONS: { value: NonNullable<DebtItem["type"]>; label: string }[] = [
   { value: "credit_card", label: "Credit card" },
@@ -247,12 +253,17 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
         <div className={fieldRow()}>
           <FormField
             error={creditLimitError}
-            hint="Your card or overdraft limit, even if the balance is £0."
             label="Credit limit (optional)"
+            labelAddon={
+              <InfoTip descriptionId={CREDIT_LIMIT_INFO_ID} term="Credit limit">
+                Your card or overdraft limit, even if the balance is £0.
+              </InfoTip>
+            }
           >
             {(field) => (
               <CurrencyInput
                 {...controlProps(field)}
+                aria-describedby={describedByWith(field.describedBy, CREDIT_LIMIT_INFO_ID)}
                 min={0}
                 value={creditLimit}
                 onValueChange={setCreditLimit}
@@ -260,12 +271,17 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
             )}
           </FormField>
           <FormField
-            hint="When any 0% promotional interest period ends."
             label="0% interest period ends (optional)"
+            labelAddon={
+              <InfoTip descriptionId={PROMO_END_INFO_ID} term="0% interest period">
+                When any 0% promotional interest period ends.
+              </InfoTip>
+            }
           >
             {(field) => (
               <DatePicker
                 {...controlProps(field)}
+                aria-describedby={describedByWith(field.describedBy, PROMO_END_INFO_ID)}
                 clearable
                 value={promoZeroPercentUntil}
                 onValueChange={setPromoZeroPercentUntil}
@@ -301,7 +317,7 @@ export const AddDebtDialog: FC<AddDebtDialogProps> = ({
             <Button
               className={cx(deleteAction, footerButton)}
               type="button"
-              variant="outline"
+              variant="dangerSubtle"
               onClick={() => {
                 onClose();
                 onDeleteDebt(debt.id);

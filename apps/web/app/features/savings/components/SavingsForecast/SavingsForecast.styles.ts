@@ -1,4 +1,4 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { css, cva } from "@repo/ui/styled-system/css";
 
 export const forecastControls = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", minWidth: 0 },
@@ -51,6 +51,10 @@ export const annotationText = cva({
 export const annotationChip = cva({
   base: { fill: "surface.card", stroke: "border.subtle", strokeWidth: "1" },
 });
+
+/** The today's money checkbox with its InfoTip beside it (outside the label, so a tap on the
+ * icon never toggles the box). */
+export const checkboxRow = css({ display: "flex", alignItems: "center", gap: "1" });
 
 export const moreOptions = cva({
   base: { display: "flex", flexDirection: "column", gap: "4", pt: "2" },

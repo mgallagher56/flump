@@ -317,7 +317,7 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
                     id="remove-picture-button"
                     size="sm"
                     type="button"
-                    variant="outline"
+                    variant="dangerSubtle"
                     onClick={handleRemoveImage}
                   >
                     <Icon icon={Trash2} size="sm" />

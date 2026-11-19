@@ -288,8 +288,13 @@ describe("RetirementPlanner", () => {
       const slider = screen.getByLabelText("Your contribution") as HTMLInputElement;
       expect(slider.value).toBe("6");
       expect(screen.getByDisplayValue("6%")).toBeTruthy();
-      expect(screen.getByLabelText("Only pay that counts for your pension")).toBeTruthy();
-      expect(screen.getByText(/£6,240 and £50,270 a year/)).toBeTruthy();
+      const qualifying = screen.getByLabelText("Only pay that counts for your pension");
+      // The band sits behind the "i" beside the checkbox, read with it (owner item 23).
+      expect(screen.getByRole("button", { name: "About Pay that counts" })).toBeTruthy();
+      expect(qualifying.getAttribute("aria-describedby")).toBe("retirement-qualifying-info");
+      expect(document.getElementById("retirement-qualifying-info")?.textContent).toMatch(
+        /£6,240 and £50,270 a year/,
+      );
       expect(screen.queryByLabelText("Extra monthly contribution")).toBeNull();
       expect(slider.max).toBe(String(MAX_CONTRIBUTION_PERCENT));
       expect(MAX_CONTRIBUTION_PERCENT).toBe(40);

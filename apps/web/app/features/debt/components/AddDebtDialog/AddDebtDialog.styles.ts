@@ -4,31 +4,39 @@ export const debtForm = cva({
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
+    gap: "4",
     fontVariantNumeric: "tabular-nums",
   },
 });
 
+/**
+ * Two fields side by side from `md`, one column below. From `md` each field becomes a subgrid of
+ * three rows (label, control, error), so labels sit on one baseline (a wrapped label pushes both
+ * controls down together), the controls share a top edge and the columns are the same width.
+ */
 export const fieldRow = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
-    alignItems: "start",
-    gap: "12px",
-    "& [data-field-label-row]": {
-      sm: {
-        minHeight: "2.5rem",
-        display: "flex",
-        alignItems: "flex-end",
+    gridTemplateColumns: { base: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
+    gap: "4",
+    "& > *": {
+      md: {
+        display: "grid",
+        gridRow: "span 3",
+        gridTemplateRows: "subgrid",
+        rowGap: "1.5",
       },
+    },
+    "& [data-field-label-row]": {
+      md: { alignSelf: "end" },
     },
   },
 });
 
 /**
- * Edit mode's "Delete debt": a quiet outline button set apart from Save. The dialog footer stacks
- * its buttons below `sm` (this one last) and puts it on the left from `sm`. It stays neutral (the
- * judgement guard keeps danger colours for the confirmation step, which is danger-toned).
+ * Edit mode's "Delete debt" (`Button variant="dangerSubtle"`, owner item 25), set apart from Save.
+ * The dialog footer stacks its buttons below `sm` (this one last) and puts it on the left from
+ * `sm`. The page still asks for confirmation before anything is deleted.
  */
 export const deleteAction = css({ sm: { marginInlineEnd: "auto" } });
 

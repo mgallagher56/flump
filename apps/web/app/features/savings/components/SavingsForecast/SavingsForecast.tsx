@@ -8,6 +8,7 @@ import {
   controlProps,
   FormField,
   formatAxisCurrency,
+  InfoTip,
   Money,
   pickTicks,
   ResultBlock,
@@ -38,6 +39,7 @@ import {
   annotationChip,
   annotationText,
   chartWrap,
+  checkboxRow,
   forecastContent,
   forecastControls,
   moreOptions,
@@ -64,6 +66,10 @@ export type SavingsForecastValues = {
 };
 
 export const DEFAULT_FORECAST_YEARS = 5;
+
+/** InfoTip descriptions the controls name in aria-describedby (owner item 23). */
+const TODAYS_MONEY_INFO_ID = "forecast-todays-money-info";
+const GOAL_INFO_ID = "forecast-goal-info";
 
 export const FORECAST_PROMPT =
   "Add a monthly amount or an interest rate to see how your savings could grow.";
@@ -243,18 +249,31 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
       />
       <CollapsibleDrawer title="Goal and inflation options" variant="quiet">
         <div className={moreOptions()}>
-          <Checkbox
-            checked={values.todaysMoney}
-            data-testid="forecast-todays-money"
-            hint={`Allows for ${TODAYS_MONEY_INFLATION}% a year inflation, as the retirement plan does.`}
-            id="forecast-todays-money"
-            label="Show in today's money"
-            onChange={(e) => onChange("todaysMoney", e.target.checked)}
-          />
-          <FormField hint="See how long it could take to reach an amount." label="Your own goal">
+          <div className={checkboxRow}>
+            <Checkbox
+              aria-describedby={TODAYS_MONEY_INFO_ID}
+              checked={values.todaysMoney}
+              data-testid="forecast-todays-money"
+              id="forecast-todays-money"
+              label="Show in today's money"
+              onChange={(e) => onChange("todaysMoney", e.target.checked)}
+            />
+            <InfoTip descriptionId={TODAYS_MONEY_INFO_ID} term="Today's money">
+              {`Allows for ${TODAYS_MONEY_INFLATION}% a year inflation, as the retirement plan does.`}
+            </InfoTip>
+          </div>
+          <FormField
+            label="Your own goal"
+            labelAddon={
+              <InfoTip descriptionId={GOAL_INFO_ID} term="Your own goal">
+                See how long it could take to reach an amount.
+              </InfoTip>
+            }
+          >
             {(field) => (
               <CurrencyInput
                 {...controlProps(field)}
+                aria-describedby={[field.describedBy, GOAL_INFO_ID].filter(Boolean).join(" ")}
                 min={0}
                 value={values.goal}
                 onValueChange={(value) => onChange("goal", value)}

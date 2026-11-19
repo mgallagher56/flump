@@ -4,7 +4,7 @@ import {
   whatIfSacrificeChange,
 } from "@flump/finance-engine";
 import { formatMoney } from "@repo/ui";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   computePensionTakeHomeEffect,
@@ -43,11 +43,15 @@ describe("<PensionTakeHomeEffect />", () => {
       `${formatMoney(expected.deltaTakeHome / 12, { fractionDigits: 0, signDisplay: "always" }).text} a month`,
     );
     expect(screen.getByText(PENSION_TAKE_HOME_COPY.reachesPension)).toBeDefined();
+    // The method sits behind the "i" beside the label (owner item 23), not as a paragraph.
+    expect(screen.queryByText(PENSION_TAKE_HOME_COPY.methodSalarySacrifice)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "About How the change is paid" }));
     expect(screen.getByText(PENSION_TAKE_HOME_COPY.methodSalarySacrifice)).toBeDefined();
   });
 
   it("uses net pay when the saved contribution is not salary sacrifice", () => {
     renderEffect({ ...FACTS, isSalarySacrifice: false }, 2400);
+    fireEvent.click(screen.getByRole("button", { name: "About How the change is paid" }));
     expect(screen.getByText(PENSION_TAKE_HOME_COPY.methodNetPay)).toBeDefined();
   });
 

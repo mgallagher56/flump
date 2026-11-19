@@ -218,7 +218,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
       <div className={formActions()}>
         {isEditing && onDeleteRequest ? (
           <span className={deleteAction()}>
-            <Button type="button" variant="ghost" onClick={onDeleteRequest}>
+            <Button type="button" variant="dangerSubtle" onClick={onDeleteRequest}>
               <Icon icon={Trash2} size="sm" />
               Delete pot
             </Button>

@@ -50,7 +50,19 @@ describe("PayExtraTool", () => {
       "Smallest balance first",
       "Highest rate first",
     ]);
+    // The order's explanation sits behind the info icon beside the tabs, not inline (owner item 23).
+    expect(screen.queryByText("Pays the debt with the highest APR first.")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "About Payoff order" }));
     expect(screen.getByText("Pays the debt with the highest APR first.")).toBeDefined();
+  });
+
+  it("explains the extra payment in an info icon the slider names in aria-describedby", () => {
+    renderTool();
+    expect(screen.getByRole("button", { name: "About Extra payment each month" })).toBeDefined();
+    const slider = screen.getByRole("slider");
+    expect(slider.getAttribute("aria-describedby")).toBe("pay-extra-payment-info");
+    const note = document.getElementById("pay-extra-payment-info");
+    expect(note?.textContent).toBe("On top of your minimum payments.");
   });
 
   it("switching order calls back with the new order", () => {
@@ -142,6 +154,7 @@ describe("PayExtraTool", () => {
       { id: "cc", name: "Card", balance: 3000, apr: 22.9, minimumPayment: 90, type: "credit_card" },
     ];
     renderTool({ comparison: compareAvalancheAndSnowball(one, 0), startBalance: 3000 });
+    fireEvent.click(screen.getByRole("button", { name: "About Payoff order" }));
     expect(screen.getByText("Both orders give the same result for your debts.")).toBeDefined();
     expect(screen.queryByText("Pays the debt with the highest APR first.")).toBeNull();
   });

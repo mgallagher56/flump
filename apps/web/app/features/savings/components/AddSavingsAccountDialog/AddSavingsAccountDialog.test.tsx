@@ -32,6 +32,36 @@ describe("AddSavingsAccountDialog", () => {
     expect(screen.getByLabelText("Saved each month")).toBeDefined();
   });
 
+  it("explains Saved each month in an info icon the field names, with no inline hint", () => {
+    render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "About Saved each month" })).toBeDefined();
+    expect(screen.getByLabelText("Saved each month").getAttribute("aria-describedby")).toBe(
+      "savings-account-monthly-info",
+    );
+    expect(
+      screen.queryByText("What you put into this account each month.", { selector: "p" }),
+    ).toBeNull();
+    // A plain savings rate has no InfoTip and no hint.
+    expect(screen.queryByRole("button", { name: /^About Estimated annual return/ })).toBeNull();
+    expect(
+      screen.getByLabelText("Interest rate (AER)").getAttribute("aria-describedby"),
+    ).toBeNull();
+  });
+
+  it("styles Delete account as a subtle danger button", () => {
+    render(
+      <AddSavingsAccountDialog
+        accountToEdit={{ id: "a1", name: "Easy access", type: "Savings", balance: "100" } as never}
+        isOpen={true}
+        onClose={vi.fn()}
+        onDeleteRequest={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Delete account" }).getAttribute("data-variant"),
+    ).toBe("dangerSubtle");
+  });
+
   it("keeps Add account disabled until the account has a name and a kind", () => {
     render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
     const add = screen.getByRole("button", { name: "Add account" }) as HTMLButtonElement;
@@ -74,7 +104,16 @@ describe("AddSavingsAccountDialog", () => {
     fireEvent.change(screen.getByLabelText(/Kind of account/), {
       target: { value: "Investment:stocks_and_shares_isa" },
     });
-    expect(screen.getByLabelText("Estimated annual return (%)")).toBeDefined();
+    const rate = screen.getByLabelText("Estimated annual return (%)");
+    // The risk line stays visible; the explanation sits behind the "i" (owner item 23).
+    expect(screen.getByText("Investment returns can go down as well as up.")).toBeDefined();
+    expect(screen.getByRole("button", { name: "About Estimated annual return" })).toBeDefined();
+    expect(rate.getAttribute("aria-describedby")?.split(" ")).toContain(
+      "savings-account-return-info",
+    );
+    expect(document.getElementById("savings-account-return-info")?.textContent).toBe(
+      "An estimate used for projections.",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Add account" }));
     expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({
       type: "Investment",

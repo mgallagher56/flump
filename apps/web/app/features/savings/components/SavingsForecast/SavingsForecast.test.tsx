@@ -76,6 +76,26 @@ describe("SavingsForecast", () => {
     );
   });
 
+  it("explains today's money and the goal in info icons the controls name", () => {
+    render(<Harness initial={filled} />);
+    const toggle = screen.queryByRole("button", { name: /Goal and inflation options/ });
+    if (toggle && toggle.getAttribute("aria-expanded") === "false") fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "About Today's money" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "About Your own goal" })).toBeDefined();
+    expect(screen.getByLabelText("Show in today's money").getAttribute("aria-describedby")).toBe(
+      "forecast-todays-money-info",
+    );
+    expect(screen.getByLabelText("Your own goal").getAttribute("aria-describedby")).toBe(
+      "forecast-goal-info",
+    );
+    expect(document.getElementById("forecast-goal-info")?.textContent).toBe(
+      "See how long it could take to reach an amount.",
+    );
+    expect(
+      screen.queryByText("See how long it could take to reach an amount.", { selector: "p" }),
+    ).toBeNull();
+  });
+
   it("builds the announcement text", () => {
     expect(forecastOutcomeText(filled, 21000)).toMatch(/^~£[\d,]+ in 5 years$/);
     expect(forecastOutcomeText({ ...filled, monthly: null, rate: null }, 21000)).toBe(

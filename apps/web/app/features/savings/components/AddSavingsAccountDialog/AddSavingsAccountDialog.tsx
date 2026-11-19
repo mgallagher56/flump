@@ -6,6 +6,7 @@ import {
   Dialog,
   FormField,
   Icon,
+  InfoTip,
   InlineAlert,
   PercentInput,
   Select,
@@ -34,6 +35,10 @@ export interface AddSavingsAccountDialogProps {
    */
   onDeleteRequest?: () => void;
 }
+
+/** InfoTip descriptions the fields name in aria-describedby (owner item 23). */
+const RETURN_INFO_ID = "savings-account-return-info";
+const MONTHLY_INFO_ID = "savings-account-monthly-info";
 
 export const ISA_BECOMES_SOLE_NOTICE =
   "An ISA cannot be held jointly. Saving this makes the account yours only.";
@@ -161,16 +166,25 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
           )}
         </FormField>
         <FormField
-          hint={
-            isInvestment
-              ? "An estimate used for projections. Investment returns can go down as well as up."
-              : undefined
-          }
+          // The risk line stays visible (fixed wording); only the explanation moves to the "i".
+          hint={isInvestment ? "Investment returns can go down as well as up." : undefined}
           label={isInvestment ? "Estimated annual return (%)" : "Interest rate (AER)"}
+          labelAddon={
+            isInvestment ? (
+              <InfoTip descriptionId={RETURN_INFO_ID} term="Estimated annual return">
+                An estimate used for projections.
+              </InfoTip>
+            ) : undefined
+          }
         >
           {(field) => (
             <PercentInput
               {...controlProps(field)}
+              aria-describedby={
+                [isInvestment ? RETURN_INFO_ID : undefined, field.describedBy]
+                  .filter(Boolean)
+                  .join(" ") || undefined
+              }
               max={100}
               min={0}
               value={interestRate}
@@ -180,10 +194,18 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         </FormField>
       </div>
 
-      <FormField hint="What you put into this account each month." label="Saved each month">
+      <FormField
+        label="Saved each month"
+        labelAddon={
+          <InfoTip descriptionId={MONTHLY_INFO_ID} term="Saved each month">
+            What you put into this account each month.
+          </InfoTip>
+        }
+      >
         {(field) => (
           <CurrencyInput
             {...controlProps(field)}
+            aria-describedby={[field.describedBy, MONTHLY_INFO_ID].filter(Boolean).join(" ")}
             value={monthlyContribution}
             onValueChange={setMonthlyContribution}
           />
@@ -199,7 +221,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
       <div className={formActions()}>
         {isEditing && onDeleteRequest ? (
           <span className={deleteAction()}>
-            <Button type="button" variant="ghost" onClick={onDeleteRequest}>
+            <Button type="button" variant="dangerSubtle" onClick={onDeleteRequest}>
               <Icon icon={Trash2} size="sm" />
               Delete account
             </Button>

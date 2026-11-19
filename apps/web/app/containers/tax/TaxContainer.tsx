@@ -496,7 +496,7 @@ const SelfAssessmentPage: FC<{
                 className={narrowOnly()}
                 size="sm"
                 type="button"
-                variant="ghost"
+                variant="dangerSubtle"
                 onClick={() => setTaxYearToDelete(selectedTaxYear)}
               >
                 Delete all records for {selectedTaxYear}

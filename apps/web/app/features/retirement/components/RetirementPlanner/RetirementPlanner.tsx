@@ -30,6 +30,7 @@ import {
   CurrencyInput,
   formatMoney,
   HeroFigure,
+  InfoTip,
   KpiCard,
   KpiStrip,
   type KpiStripItems,
@@ -62,6 +63,7 @@ import {
   budgetLineItem,
   budgetLineName,
   budgetLinesList,
+  checkboxRow,
   controlsCard,
   fieldGrid,
   fieldGroup,
@@ -89,6 +91,8 @@ export interface RetirementPlannerProps {
 export const PROFILE_PATH = "/app/profile#settings-age-and-pay";
 export const STATE_PENSION_AGE_CHECKER_URL = "https://www.gov.uk/state-pension-age";
 export const PENSION_DETAILS_PATH = "/app/pension#pension-details";
+/** The qualifying earnings InfoTip's hidden text, named by the checkbox (owner item 23). */
+const QUALIFYING_INFO_ID = "retirement-qualifying-info";
 
 const gbpFormatter = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -679,12 +683,17 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                         }
                         onChange={(v) => scenario.set("employeePercent", v)}
                       />
-                      <Checkbox
-                        label="Only pay that counts for your pension"
-                        hint={`Counts only pay between ${formatWholeGbp(UK_QUALIFYING_EARNINGS_LOWER)} and ${formatWholeGbp(UK_QUALIFYING_EARNINGS_UPPER)} a year.`}
-                        checked={scenario.values.useQualifyingEarnings}
-                        onChange={(e) => scenario.set("useQualifyingEarnings", e.target.checked)}
-                      />
+                      <div className={checkboxRow}>
+                        <Checkbox
+                          aria-describedby={QUALIFYING_INFO_ID}
+                          label="Only pay that counts for your pension"
+                          checked={scenario.values.useQualifyingEarnings}
+                          onChange={(e) => scenario.set("useQualifyingEarnings", e.target.checked)}
+                        />
+                        <InfoTip descriptionId={QUALIFYING_INFO_ID} term="Pay that counts">
+                          {`Counts only pay between ${formatWholeGbp(UK_QUALIFYING_EARNINGS_LOWER)} and ${formatWholeGbp(UK_QUALIFYING_EARNINGS_UPPER)} a year.`}
+                        </InfoTip>
+                      </div>
                     </div>
                   ) : (
                     <SliderField
@@ -745,7 +754,11 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                   {latestCounted && (
                     <PageSection
                       title="Counted towards retirement"
-                      description="The accounts that count towards retirement, from your monthly check-ins."
+                      titleAddon={
+                        <InfoTip term="Counted towards retirement">
+                          The accounts that count towards retirement, from your monthly check-ins.
+                        </InfoTip>
+                      }
                       icon={Calendar}
                     >
                       <p className={mutedNote()}>

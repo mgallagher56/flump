@@ -1,4 +1,8 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { css, cva } from "@repo/ui/styled-system/css";
+
+/** A checkbox with its InfoTip beside it (outside the label, so a tap on the icon never toggles
+ * the box). */
+export const checkboxRow = css({ display: "flex", alignItems: "center", gap: "1" });
 
 export const plannerStack = cva({
   base: {
