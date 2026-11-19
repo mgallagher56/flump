@@ -776,6 +776,68 @@ describe("query reads (re-plan PR B)", () => {
       }
     });
 
+    it("taxes a Scottish landlord's rent at Scottish rates, at the property account's share (slice 7)", async () => {
+      // Salary 40,000; rent 22,000 less 2,000 of costs and 6,000 of interest, on a rental property
+      // and its buy-to-let mortgage both held jointly at 50%: rent profit 10,000, interest 3,000.
+      // 2026/27, Scottish bands (decision 7): without the rent taxable 27,430 is 5,551.07; with it
+      // 37,430 is 8,982.05; tax on the rent 3,430.98; credit 20% x 3,000 = 600; bill 2,830.98.
+      // (Worked in finance-engine tax-calculator.scottish.test.ts.)
+      const rec = (category: string, amount: number, accountId: string, type = "expense") =>
+        taxRecord({
+          id: category,
+          type,
+          source: "rental",
+          category,
+          amount,
+          frequency: "annual",
+          date: "2026-05-01",
+          accountId,
+        } as never);
+      const scot = await connectTestClient({
+        ...emptyUser,
+        baseline: { ...emptyUser.baseline, employmentStatus: "PAYE", annualGrossSalary: 40000 },
+        profileFacts: {
+          ...facts({ annualSalary: 40000, employmentType: "employed" }),
+          taxRegion: "SCOTLAND",
+        },
+        accounts: [
+          {
+            id: "flat",
+            name: "Flat",
+            type: "Property",
+            accountSubtype: "rental",
+            balance: 230000,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+          {
+            id: "btl",
+            name: "Flat mortgage",
+            type: "Mortgage",
+            accountSubtype: "btl_mortgage",
+            linkedAccountId: "flat",
+            balance: -150000,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+        ] as never,
+        taxRecords: [
+          rec("rental_income", 22000, "flat", "income"),
+          rec("repairs_maintenance", 2000, "flat"),
+          rec("mortgage_interest", 6000, "btl"),
+        ] as never,
+      });
+      try {
+        const e = (await scot.callJson("get_tax_year_position", { taxYear: "2026/27" })) as Env;
+        expect(e.result.income.rentalProfitShareGbp).toBe(10000);
+        expect(e.result.section24.financeCostsShareGbp).toBe(3000);
+        expect(e.result.section24.taxCreditGbp).toBe(600);
+        expect(e.result.estimate.selfAssessmentGbp).toBe(2830.98);
+      } finally {
+        await scot.close();
+      }
+    });
+
     it("a legacy PAYE salary record never replaces the saved salary (slice 6, SA-6)", async () => {
       // Saved 58,000; rent 12,000 less repairs 2,000 is a profit of 10,000, all above the 50,270
       // basic-rate limit: 10,000 x 40% = £4,000. With the old £40,000 record standing in for the

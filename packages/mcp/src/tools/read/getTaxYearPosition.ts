@@ -2,6 +2,7 @@ import {
   calculateHicbcPercent,
   calculateIncomeTaxOnTaxable,
   calculateUKTax,
+  rentalSharesFromAccounts,
   estimateInputsFor,
   getTaxYearVerification,
   getUkTaxYearRules,
@@ -99,12 +100,14 @@ export const getTaxYearPosition = defineFlumpTool({
     const { records } = await loadTaxYearRecords(ctx, taxYear);
     // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
     const selfEmployed = isSelfEmployedType(facts.employmentType);
-    const share = facts.propertyOwnershipShare;
-    // As on the Tax page, a saved 0 is kept (no share of the rent); only no saved value means 100.
-    const ownershipShare =
-      share !== null && share !== undefined && share >= 0 && share <= 100 ? share : 100;
+    // As on the Self Assessment page: each rental record at its property's or mortgage's share
+    // (decision 6), and Scottish rates on non-savings income for a Scottish taxpayer (decision 7).
+    const accounts = await ctx.dataProvider.getAccounts(ctx.token.userId);
+    const region: "SCOTLAND" | "ENGLAND_NI_WALES" =
+      facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES";
+    const regionAssumed = facts.taxRegion === null;
     // Whether the estimate can be worked out: the one rule every surface uses.
-    const inputs = estimateInputsFor(facts, records, taxYear);
+    const inputs = estimateInputsFor({ ...facts, accounts }, records, taxYear);
     const salary =
       inputs.status === "known"
         ? inputs.payeSalary
@@ -119,12 +122,10 @@ export const getTaxYearPosition = defineFlumpTool({
       taxYear,
       records.filter((r) => !isLegacySalaryRecord(r)),
       salary,
-      ownershipShare,
+      100,
+      { region, rentalShares: rentalSharesFromAccounts(accounts) },
     );
     const rules = getUkTaxYearRules(taxYear);
-    const region: "SCOTLAND" | "ENGLAND_NI_WALES" =
-      facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES";
-    const regionAssumed = facts.taxRegion === null;
 
     const total = ledger.totalGrossIncome;
     const standard = rules.ewni.personalAllowance;
