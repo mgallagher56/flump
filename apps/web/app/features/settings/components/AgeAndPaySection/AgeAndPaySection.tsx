@@ -8,8 +8,8 @@ import {
   PageSection,
   PercentInput,
   Select,
-  TextInput,
   useOptionalToast,
+  WholeNumberInput,
 } from "@repo/ui";
 import { CalendarDays } from "lucide-react";
 import { type FC, type FocusEvent, type KeyboardEvent, useRef, useState } from "react";
@@ -232,18 +232,17 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
             label="Year of birth"
           >
             {(field) => (
-              <TextInput
+              <WholeNumberInput
                 {...controlProps(field)}
                 autoComplete="bday-year"
                 className={numericField()}
                 data-testid="birth-year-input"
-                inputMode="numeric"
                 maxLength={4}
                 pattern="[0-9]*"
-                value={yearText}
+                value={yearText === "" ? null : Number(yearText)}
                 onBlur={commitYear}
-                onChange={(e) => {
-                  setYearText(e.target.value.replace(/\D/g, "").slice(0, 4));
+                onValueChange={(year) => {
+                  setYearText(year === null ? "" : String(year));
                   if (yearError) setYearError(null);
                 }}
                 onKeyDown={onEnter(commitYear)}

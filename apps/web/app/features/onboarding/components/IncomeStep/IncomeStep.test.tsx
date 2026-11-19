@@ -109,7 +109,7 @@ describe("<IncomeStep />", () => {
 
   it("explains an age that cannot be saved", () => {
     setup();
-    const age = screen.getByRole("spinbutton", { name: /your age/i });
+    const age = screen.getByRole("textbox", { name: /your age/i });
     fireEvent.change(age, { target: { value: "12" } });
     expect(screen.getByText(AGE_ERROR)).toBeDefined();
     expect(age.getAttribute("aria-invalid")).toBe("true");

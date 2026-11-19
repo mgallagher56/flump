@@ -281,7 +281,7 @@ export const FLOWS: Flow[] = [
     async run(actor) {
       const { page } = actor;
       const income = page.getByRole("region", { name: "You and income" });
-      await actor.type(income.getByRole("spinbutton", { name: "Your age" }), "31");
+      await actor.type(income.getByRole("textbox", { name: "Your age" }), "31");
       await actor.press(income.getByRole("radio", { name: /^Employed/ }));
       await actor.type(income.getByRole("textbox", { name: /^Yearly salary before tax/ }), "36000");
       await actor.choose(

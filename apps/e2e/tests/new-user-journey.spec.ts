@@ -53,7 +53,7 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
 
   await test.step("setup: income is required, the other steps can be left for later", async () => {
     const income = page.getByRole("region", { name: "You and income" });
-    await income.getByRole("spinbutton", { name: "Your age" }).fill("31");
+    await income.getByRole("textbox", { name: "Your age" }).fill("31");
     await income.getByRole("radio", { name: /^Employed/ }).check();
     await income.getByRole("textbox", { name: /^Yearly salary before tax/ }).fill("36,000");
     await income.getByRole("combobox", { name: /^Where do you pay tax/ }).selectOption("England");

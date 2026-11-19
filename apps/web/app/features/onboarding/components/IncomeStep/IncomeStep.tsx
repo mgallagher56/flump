@@ -5,12 +5,12 @@ import {
   FormField,
   RadioCardGroup,
   Select,
-  TextInput,
+  WholeNumberInput,
 } from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { TaxRegion } from "~/hooks/useUserProfile";
-import { AGE_ERROR, AGE_MAX, AGE_MIN, isInvalidAge } from "../../age";
+import { AGE_ERROR, isInvalidAge } from "../../age";
 import {
   type EmploymentType,
   type IncomeMode,
@@ -100,17 +100,11 @@ export const IncomeStep: FC<IncomeStepProps> = ({
       <div className={classes.pair}>
         <FormField error={ageError} id="baseline-age" label="Your age">
           {(field) => (
-            <TextInput
+            <WholeNumberInput
               {...controlProps(field)}
-              inputMode="numeric"
-              max={AGE_MAX}
-              min={AGE_MIN}
-              onChange={(event) =>
-                update({ age: event.target.value === "" ? null : Number(event.target.value) })
-              }
+              onValueChange={(age) => update({ age })}
               placeholder="For example, 32"
-              type="number"
-              value={values.age ?? ""}
+              value={values.age}
             />
           )}
         </FormField>

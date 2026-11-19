@@ -3,8 +3,16 @@ import {
   getUkTaxYearRules,
   type TaxCalculationResult,
 } from "@flump/finance-engine";
-import { Button, Card, CurrencyInput, controlProps, FormField, Money, TextInput } from "@repo/ui";
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import {
+  Button,
+  Card,
+  CurrencyInput,
+  controlProps,
+  FormField,
+  Money,
+  PercentInput,
+} from "@repo/ui";
+import type { FC, ReactNode } from "react";
 import { NotSet } from "~/features/feedback/components/NotSet";
 import { PaymentsOnAccountCard } from "../PaymentsOnAccountCard";
 import {
@@ -77,13 +85,6 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
   onSave,
   saving,
 }) => {
-  const [shareText, setShareText] = useState(String(ownershipSharePct));
-  useEffect(() => {
-    setShareText((current) =>
-      Number.parseFloat(current) === ownershipSharePct ? current : String(ownershipSharePct),
-    );
-  }, [ownershipSharePct]);
-
   const taperNote =
     totalIncome >= TAPER_START && totalIncome <= TAPER_END
       ? `Total income in this estimate is ${pounds.format(totalIncome)}, in the £100,000 to £125,140 band where the Personal Allowance reduces.`
@@ -115,19 +116,14 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
             </FormField>
             <FormField label="Your share of the rental property (%)">
               {(field) => (
-                <TextInput
+                <PercentInput
                   {...controlProps(field)}
-                  inputMode="decimal"
-                  suffix="%"
-                  type="text"
-                  value={shareText}
-                  onChange={(e) => {
-                    setShareText(e.target.value);
-                    const parsed = Number.parseFloat(e.target.value);
-                    onOwnershipShareChange(
-                      Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : 0,
-                    );
-                  }}
+                  max={100}
+                  min={0}
+                  value={ownershipSharePct}
+                  onValueChange={(next) =>
+                    onOwnershipShareChange(next === null ? 0 : Math.min(100, Math.max(0, next)))
+                  }
                 />
               )}
             </FormField>
