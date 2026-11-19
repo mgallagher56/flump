@@ -158,6 +158,15 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
     ) : (
       <>
         {phone ? <CheckInCard checkIn={checkIn} /> : <CheckInList checkIn={checkIn} />}
+        {checkIn.allAnswered ? (
+          // Every balance has a figure this month, but the check-in was not finished (a balance
+          // saved on its own counts as a figure, not as a check-in): finish it here.
+          <div className={footerRow()}>
+            <Button onClick={() => void checkIn.finish()} type="button">
+              {CHECK_IN_COPY.finish}
+            </Button>
+          </div>
+        ) : null}
         {showInstructions ? (
           <div className={checkInScene()}>
             <Illustration id="checkin-start-scene" scene="check-in" settle={false} size="sm" />

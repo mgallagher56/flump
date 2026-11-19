@@ -732,7 +732,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected, backfill, or agent for an import the user reviewed and committed in Flump). Use it to see which months are missing before reading or adding history. Paged at 25 accounts; ask for the next page while page is below totalPages.",
+    "description": "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected, backfill for the balance an account was added with or one filled in from earlier records, or agent for an import the user reviewed and committed in Flump). Use it to see which months are missing before reading or adding history. Paged at 25 accounts; ask for the next page while page is below totalPages.",
     "execution": {
       "taskSupport": "forbidden",
     },
