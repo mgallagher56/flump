@@ -3,6 +3,10 @@ import { Logger } from "@nestjs/common";
 import { DataSource, type DataSourceOptions } from "typeorm";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
+import {
+  DROPPED_PROFILE_COLUMNS,
+  PROFILE_COLUMN_DROP_TABLE,
+} from "../integrity/profile-column-drop";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
@@ -90,9 +94,10 @@ let MIGRATIONS: MigrationClass[] = [];
 // before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile, RemovePayeSalaryRecords) and
 // the slice 4 before-image (account_home_backfill, BackfillPropertyKindAndMortgageLink1795470100000)
 // and its later repeat for repayment types (mortgage_repayment_type_backfill,
-// BackfillMortgageRepaymentType1795530000000).
+// BackfillMortgageRepaymentType1795530000000), and the slice 9 column-drop before-image
+// (profile_column_drop_backfill, profile-column-drop.ts).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -2581,6 +2586,32 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(table[0]?.t).toBeNull();
     });
 
+    it("migrations 2 and 3 run cleanly once slice 9 has dropped the buy-to-let columns, taking no figure from them", async () => {
+      // The columns-present path is every other test in this block (beforeSlice4 restores them).
+      await ds.runMigrations();
+      const gone: unknown[] = await ds.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = 'user_profiles' AND column_name LIKE 'buy_to_let%'",
+      );
+      expect(gone).toEqual([]);
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, mortgage_type, housing_status) VALUES ('u7', 'interest-only', 'mortgage')",
+      );
+      const flat = await addAccount("u7", "BTL flat", "Property", 200000);
+      const btlLoan = await addAccount("u7", "BTL mortgage", "Mortgage", -120000);
+      await ds.query("UPDATE accounts SET account_subtype = 'btl_mortgage' WHERE id = $1", [
+        btlLoan,
+      ]);
+      const before: unknown[] = await ds.query("SELECT count(*)::int AS n FROM accounts");
+
+      await runUpInTransaction(new BackfillPropertyKindAndMortgageLink1795470100000());
+      await runUpInTransaction(new MoveBuyToLetProfileIntoAccounts1795470200000());
+
+      // The name test still applies; the repayment type is never taken from a dropped column.
+      expect((await accountRow(flat)).account_subtype).toBe("rental");
+      expect((await accountRow(btlLoan)).repayment_type).toBeNull();
+      expect(await ds.query("SELECT count(*)::int AS n FROM accounts")).toEqual(before);
+    });
+
     it("migration 3 moves buy-to-let profile figures into linked accounts; down deletes exactly those", async () => {
       await beforeSlice4();
       await ds.query(
@@ -3186,6 +3217,149 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await undoThrough(NAME);
       expect(await check()).toEqual([]);
       await account("savings");
+    });
+  });
+
+  describe("slice 9 profile column drops (audit slice 9, decision 12)", () => {
+    const FIRST = at(DROPPED_PROFILE_COLUMNS, 0).migration;
+    // A value other than the column's default for each dropped column, as Postgres prints it.
+    const SET: Record<string, string> = {
+      has_buy_to_let: "true",
+      buy_to_let_count: "2",
+      buy_to_let_property_value: "165000.50",
+      buy_to_let_monthly_rental: "875.00",
+      buy_to_let_mortgage_balance: "92000.00",
+      buy_to_let_mortgage_rate: "5.10",
+      buy_to_let_mortgage_type: "repayment",
+      monthly_savings_target: "300.00",
+      savings_allocation_mode: "total",
+      savings_default_interest_rate: "4.25",
+      dashboard_widget_sizes: '{"accounts":"wide"}',
+      dashboard_widget_config: "{}",
+    };
+    const NAMES = DROPPED_PROFILE_COLUMNS.map((c) => c.column);
+    const definitions = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT column_name, data_type, numeric_precision, numeric_scale, is_nullable, column_default
+         FROM information_schema.columns
+         WHERE table_schema = current_schema() AND table_name = 'user_profiles' AND column_name = ANY($1) ORDER BY column_name`,
+        [NAMES],
+      );
+    const values = async (userId: string): Promise<Record<string, string | null>> => {
+      const rows: Record<string, string | null>[] = await ds.query(
+        `SELECT ${NAMES.map((n) => `"${n}"::text AS "${n}"`).join(", ")} FROM user_profiles WHERE user_id = $1`,
+        [userId],
+      );
+      return at(rows, 0);
+    };
+    const imageRows = async (): Promise<
+      Array<{ user_id: string; column_name: string; old_value: string }>
+    > =>
+      ds.query(
+        `SELECT p.user_id, b.column_name, b.old_value FROM "${PROFILE_COLUMN_DROP_TABLE}" b
+         JOIN user_profiles p ON p.id = b.profile_id ORDER BY p.user_id, b.column_name`,
+      );
+    const imageTable = (): Promise<unknown[]> =>
+      ds.query(
+        "SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = $1",
+        [PROFILE_COLUMN_DROP_TABLE],
+      );
+    // Undoes every drop, then stores one profile with every column set and one left at defaults.
+    const seedBeforeDrops = async (): Promise<void> => {
+      await ds.runMigrations();
+      await undoThrough(FIRST);
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, ${NAMES.map((n) => `"${n}"`).join(", ")})
+         VALUES ('set', ${NAMES.map((_, i) => `$${i + 1}`).join(", ")})`,
+        NAMES.map((n) => SET[n]),
+      );
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('defaults')");
+    };
+
+    it("lists each of the twelve retired columns once, each in its own migration", () => {
+      expect(new Set(NAMES).size).toBe(12);
+      expect([...NAMES].sort()).toEqual(Object.keys(SET).sort());
+      expect(new Set(DROPPED_PROFILE_COLUMNS.map((c) => c.migration)).size).toBe(12);
+      for (const { migration } of DROPPED_PROFILE_COLUMNS) {
+        expect(MIGRATIONS.map((m) => m.name)).toContain(migration);
+      }
+    });
+
+    it("drops each column after copying every value that differs from its default; a second run changes nothing", async () => {
+      await seedBeforeDrops();
+      const logged = vi.spyOn(Logger.prototype, "log");
+      await ds.runMigrations();
+      for (const { column, migration } of DROPPED_PROFILE_COLUMNS) {
+        expect(await applied()).toContain(migration);
+        // Counts only: no id and no value.
+        expect(logged).toHaveBeenCalledWith(
+          `user_profiles.${column} dropped; values kept in the before-image: 1`,
+        );
+      }
+      logged.mockRestore();
+      expect(await definitions()).toEqual([]);
+      // The profile at defaults has nothing to keep: re-adding the column restores its default.
+      expect(await imageRows()).toEqual(
+        [...NAMES].sort().map((n) => ({ user_id: "set", column_name: n, old_value: SET[n] })),
+      );
+
+      const drops = MIGRATIONS.filter((m) =>
+        DROPPED_PROFILE_COLUMNS.some((c) => c.migration === m.name),
+      );
+      expect(drops).toHaveLength(12);
+      for (const migration of drops) {
+        await runUpInTransaction(
+          new migration() as { up: (qr: import("typeorm").QueryRunner) => Promise<void> },
+        );
+      }
+      expect(await definitions()).toEqual([]);
+      expect(await imageRows()).toHaveLength(12);
+    });
+
+    it("down re-adds each column as it was and puts every value back; the before-image goes with the last down", async () => {
+      await seedBeforeDrops();
+      const shapeBefore = await definitions();
+      expect(shapeBefore).toHaveLength(12);
+      const defaultsBefore = await values("defaults");
+      expect(await values("set")).toEqual(SET);
+
+      await ds.runMigrations();
+      // A profile created after the drop gets each column's default when it comes back.
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('after')");
+      await undoThrough(FIRST);
+
+      expect(await definitions()).toEqual(shapeBefore);
+      expect(await values("set")).toEqual(SET);
+      expect(await values("defaults")).toEqual(defaultsBefore);
+      expect(await values("after")).toEqual(defaultsBefore);
+      expect(await imageTable()).toEqual([]);
+
+      // And up runs again from there.
+      await ds.runMigrations();
+      expect(await definitions()).toEqual([]);
+      expect(await imageRows()).toHaveLength(12);
+      expect(await tables()).toEqual(ENTITY_TABLES);
+    });
+
+    it("undoing one drop restores only that column and keeps the other copies", async () => {
+      await seedBeforeDrops();
+      await ds.runMigrations();
+      const last = at(DROPPED_PROFILE_COLUMNS, DROPPED_PROFILE_COLUMNS.length - 1);
+      await undoThrough(last.migration);
+      const restored: Array<{ v: string }> = await ds.query(
+        `SELECT "${last.column}"::text AS v FROM user_profiles WHERE user_id = 'set'`,
+      );
+      expect(restored).toEqual([{ v: SET[last.column] }]);
+      const left = await imageRows();
+      expect(left).toHaveLength(11);
+      expect(left.map((r) => r.column_name)).not.toContain(last.column);
+    });
+
+    it("a deleted profile takes its before-image rows with it", async () => {
+      await seedBeforeDrops();
+      await ds.runMigrations();
+      await ds.query("DELETE FROM user_profiles WHERE user_id = 'set'");
+      expect(await imageRows()).toEqual([]);
     });
   });
 

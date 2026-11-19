@@ -115,59 +115,6 @@ export class UserProfile {
   })
   propertyOwnershipShare: number;
 
-  @Column({ name: "has_buy_to_let", default: false })
-  hasBuyToLet: boolean;
-
-  @Column({ name: "buy_to_let_count", default: 1 })
-  buyToLetCount: number;
-
-  @Column({
-    name: "buy_to_let_property_value",
-    type: "decimal",
-    precision: 12,
-    scale: 2,
-    nullable: true,
-    transformer: numericTransformer,
-  })
-  buyToLetPropertyValue: number | null;
-
-  @Column({
-    name: "buy_to_let_monthly_rental",
-    type: "decimal",
-    precision: 12,
-    scale: 2,
-    nullable: true,
-    transformer: numericTransformer,
-  })
-  buyToLetMonthlyRental: number | null;
-
-  @Column({
-    name: "buy_to_let_mortgage_balance",
-    type: "decimal",
-    precision: 12,
-    scale: 2,
-    nullable: true,
-    transformer: numericTransformer,
-  })
-  buyToLetMortgageBalance: number | null;
-
-  @Column({
-    name: "buy_to_let_mortgage_rate",
-    type: "decimal",
-    precision: 5,
-    scale: 2,
-    nullable: true,
-    transformer: numericTransformer,
-  })
-  buyToLetMortgageRate: number | null;
-
-  @Column({
-    name: "buy_to_let_mortgage_type",
-    type: "varchar",
-    default: "interest-only",
-  })
-  buyToLetMortgageType: "repayment" | "interest-only";
-
   @Column({
     name: "pension_percent",
     type: "decimal",
@@ -220,33 +167,6 @@ export class UserProfile {
   })
   isSalarySacrificeEmployerNi: boolean;
 
-  @Column({
-    name: "monthly_savings_target",
-    type: "decimal",
-    precision: 12,
-    scale: 2,
-    nullable: true,
-    transformer: numericTransformer,
-  })
-  monthlySavingsTarget: number | null;
-
-  @Column({
-    name: "savings_allocation_mode",
-    type: "varchar",
-    default: "per_account",
-  })
-  savingsAllocationMode: "total" | "per_account";
-
-  @Column({
-    name: "savings_default_interest_rate",
-    type: "decimal",
-    precision: 5,
-    scale: 2,
-    default: 5.0,
-    transformer: numericTransformer,
-  })
-  savingsDefaultInterestRate: number;
-
   @Column({ name: "setup_checklist_completed_steps", type: "simple-array", default: "" })
   setupChecklistCompletedSteps: string[];
 
@@ -265,12 +185,6 @@ export class UserProfile {
 
   @Column({ name: "dashboard_widget_order", type: "simple-array", nullable: true })
   dashboardWidgetOrder: string[] | null;
-
-  @Column({ name: "dashboard_widget_sizes", type: "simple-json", nullable: true })
-  dashboardWidgetSizes: Record<string, "normal" | "wide"> | null;
-
-  @Column({ name: "dashboard_widget_config", type: "simple-json", nullable: true })
-  dashboardWidgetConfig: Record<string, unknown> | null;
 
   @Column({ name: "has_reset_financial_data", default: false })
   hasResetFinancialData: boolean;

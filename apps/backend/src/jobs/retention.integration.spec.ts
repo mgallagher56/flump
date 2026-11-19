@@ -197,6 +197,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [profile.id, crypto.randomUUID()],
         );
       }
+      // The slice 9 column-drop before-image is kept 30 days: one row past it and one inside it.
+      for (const [age, column] of [
+        ["31 days", "monthly_savings_target"],
+        ["29 days", "savings_allocation_mode"],
+      ]) {
+        await ds.query(
+          `INSERT INTO profile_column_drop_backfill (profile_id, column_name, old_value, backfilled_at)
+           VALUES ($1, $2, 'x', ${ago(age as string)})`,
+          [profile.id, column],
+        );
+      }
     }
 
     it("deletes every row past its cutoff and keeps the rest", async () => {
@@ -219,6 +230,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           account_home_backfill: 1,
           rent_share_backfill: 1,
           mortgage_repayment_type_backfill: 1,
+          profile_column_drop_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });
@@ -234,6 +246,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("student_loan_plan_backfill")).toBe(1);
       expect(await count("paye_salary_record_backfill")).toBe(1);
       expect(await count("mortgage_repayment_type_backfill")).toBe(1);
+      expect(await count("profile_column_drop_backfill")).toBe(1);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
     });

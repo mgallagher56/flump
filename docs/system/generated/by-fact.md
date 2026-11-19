@@ -40,7 +40,6 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Which saved fact a budget line is linked to](#budget-entry-link-kind)                                        | fact   | budget      | Holds                                     |
 | [Which account a savings or debt budget line reads](#budget-entry-link-account)                               | fact   | budget      | Holds                                     |
 | [Other monthly outgoings as typed in onboarding](#other-outgoings)                                            | fact   | budget      | Duplicated (two stores that can disagree) |
-| [Monthly savings target and savings settings on the profile](#savings-settings)                               | fact   | budget      | Holds                                     |
 | [Self Assessment income and expense records](#tax-records)                                                    | fact   | tax         | Duplicated (two stores that can disagree) |
 | [Share of a rental property, as used for tax](#rental-share-for-tax)                                          | fact   | tax         | Duplicated (two stores that can disagree) |
 | [Retirement plan (ages, target, State Pension inputs, growth cases, excluded accounts)](#retirement-plan)     | fact   | retirement  | Holds                                     |
@@ -446,7 +445,7 @@ Read by:
 
 Other stores:
 
-- `user_profiles.savings_default_interest_rate` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (default 5; nothing reads it)
+- none
 
 Entered or changed by:
 
@@ -800,7 +799,7 @@ Read by:
 
 Other stores:
 
-- `user_profiles.buy_to_let_property_value` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (copied into a rental Property account by MoveBuyToLetProfileIntoAccounts1795470200000; nothing reads it; dropped in slice 9)
+- none
 
 Entered or changed by:
 
@@ -894,7 +893,7 @@ Read by:
 
 Other stores:
 
-- `user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type, has_buy_to_let, buy_to_let_count` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (copied into a buy-to-let Mortgage account by MoveBuyToLetProfileIntoAccounts1795470200000; nothing reads them; dropped in slice 9)
+- none
 
 Entered or changed by:
 
@@ -918,7 +917,6 @@ Read by:
 
 Other stores:
 
-- `user_profiles.buy_to_let_monthly_rental` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (the Mortgage page yield reads it; no screen writes it)
 - `user_profiles.rental_income_monthly` [legacy] in `apps/backend/src/entities/user-profile.entity.ts`
 - `budget_entries income row` [duplicate] in `apps/backend/src/entities/budget-entry.entity.ts`
 
@@ -1295,27 +1293,6 @@ Other stores:
 Entered or changed by:
 
 - Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts`
-
-Read by:
-
-- none
-
-### Monthly savings target and savings settings on the profile
-
-<a id="savings-settings"></a>
-
-- Id: `savings-settings` (stored fact)
-- Verdict: Holds. Findings: SD-11, DB-9. Links: L43.
-- Source of truth: `user_profiles.monthly_savings_target, savings_allocation_mode, savings_default_interest_rate` in `apps/backend/src/entities/user-profile.entity.ts`
-- Note: Dead. No form writes them and no figure reads them.
-
-Other stores:
-
-- none
-
-Entered or changed by:
-
-- none
 
 Read by:
 

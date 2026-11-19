@@ -1,5 +1,6 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
 import { takeMigrationLock } from "../config/migration-lock";
+import { buyToLetProfileColumnsPresent } from "../integrity/profile-column-drop";
 import { HOME_BACKFILL_TABLE } from "./BackfillPropertyKindAndMortgageLink1795470100000";
 
 /**
@@ -41,6 +42,9 @@ export class MoveBuyToLetProfileIntoAccounts1795470200000 implements MigrationIn
     await takeMigrationLock(queryRunner);
     await queryRunner.query("SET LOCAL lock_timeout = '10s'");
     await queryRunner.query(`LOCK TABLE "accounts" IN SHARE ROW EXCLUSIVE MODE`);
+    // Slice 9 dropped the buy-to-let profile columns. Where they are gone (a re-run, or a database
+    // built by synchronize) there are no figures to move.
+    if (!(await buyToLetProfileColumnsPresent(queryRunner))) return;
 
     await queryRunner.query(
       `WITH created AS (

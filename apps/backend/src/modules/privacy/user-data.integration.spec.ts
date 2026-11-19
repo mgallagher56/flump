@@ -443,6 +443,42 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     }
   });
 
+  it("the slice 9 column-drop before-image goes with an erased profile and is cleared by a reset", async () => {
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const profileOf = async (userId: string): Promise<string> =>
+      (await ds.query("SELECT id FROM user_profiles WHERE user_id = $1", [userId]))[0].id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        `INSERT INTO profile_column_drop_backfill (profile_id, column_name, old_value)
+         VALUES ($1, 'monthly_savings_target', '300.00')`,
+        [await profileOf(userId)],
+      );
+    }
+    const left = async (): Promise<string[]> =>
+      (
+        (await ds.query("SELECT profile_id FROM profile_column_drop_backfill")) as {
+          profile_id: string;
+        }[]
+      ).map((r) => r.profile_id);
+    const profileB = await profileOf(USER_B);
+    await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    expect(await left()).toEqual([profileB]);
+    const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
+    // A reset keeps the profile row, so ON DELETE CASCADE never fires: the reset deletes them.
+    await new UserProfileService(
+      repo(UserProfile),
+      repo(Account),
+      repo(AccountDetail),
+      repo(BankConnection),
+      identity,
+      ds,
+      new LoggingBankConsentRevoker(),
+      deletion,
+    ).resetFinancialData(USER_B);
+    expect(await left()).toEqual([]);
+  });
+
   it("erases the slice 4 before-image (account_home_backfill) with the user's accounts", async () => {
     await seed(USER_A, "A");
     await seed(USER_B, "B");

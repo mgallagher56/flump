@@ -1172,13 +1172,6 @@ facts:
     area: accounts
     source_of_truth:
       { ref: accounts.interest_rate, path: apps/backend/src/entities/account.entity.ts }
-    other_stores:
-      - {
-          ref: user_profiles.savings_default_interest_rate,
-          status: legacy,
-          path: apps/backend/src/entities/user-profile.entity.ts,
-          note: "default 5; nothing reads it",
-        }
     writers:
       - { surface: savings, path: apps/web/app/routes/app.savings.tsx }
       - { surface: debt, path: apps/web/app/routes/app.debt.tsx }
@@ -1294,13 +1287,6 @@ facts:
         ref: "accounts row of type Property, balance",
         path: apps/backend/src/entities/account.entity.ts,
       }
-    other_stores:
-      - {
-          ref: user_profiles.buy_to_let_property_value,
-          status: legacy,
-          path: apps/backend/src/entities/user-profile.entity.ts,
-          note: "copied into a rental Property account by MoveBuyToLetProfileIntoAccounts1795470200000; nothing reads it; dropped in slice 9",
-        }
     writers:
       - {
           surface: accounts,
@@ -1405,13 +1391,6 @@ facts:
         ref: "accounts row of type Mortgage with subtype btl_mortgage",
         path: apps/backend/src/entities/account.entity.ts,
       }
-    other_stores:
-      - {
-          ref: "user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type, has_buy_to_let, buy_to_let_count",
-          status: legacy,
-          path: apps/backend/src/entities/user-profile.entity.ts,
-          note: "copied into a buy-to-let Mortgage account by MoveBuyToLetProfileIntoAccounts1795470200000; nothing reads them; dropped in slice 9",
-        }
     writers:
       - { surface: accounts, path: apps/web/app/routes/app.accounts._index.tsx }
       - {
@@ -1446,12 +1425,6 @@ facts:
         path: apps/backend/src/entities/tax-record.entity.ts,
       }
     other_stores:
-      - {
-          ref: user_profiles.buy_to_let_monthly_rental,
-          status: legacy,
-          path: apps/backend/src/entities/user-profile.entity.ts,
-          note: "the Mortgage page yield reads it; no screen writes it",
-        }
       - {
           ref: user_profiles.rental_income_monthly,
           status: legacy,
@@ -1822,19 +1795,6 @@ facts:
     verdict: duplicated
     findings: [BU-10, DB-3]
     note: The profile copy is read by no figure.
-
-  - id: savings-settings
-    name: Monthly savings target and savings settings on the profile
-    area: budget
-    source_of_truth:
-      {
-        ref: "user_profiles.monthly_savings_target, savings_allocation_mode, savings_default_interest_rate",
-        path: apps/backend/src/entities/user-profile.entity.ts,
-      }
-    links: [L43]
-    verdict: holds
-    findings: [SD-11, DB-9]
-    note: Dead. No form writes them and no figure reads them.
 
   # ---------- tax ----------
   - id: tax-records
