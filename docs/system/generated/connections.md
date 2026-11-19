@@ -150,7 +150,6 @@ flowchart LR
   f_balance_history -.-> s_context_pack
   f_check_in_done(["Whether a month's check-in was finished"])
   s_check_in --> f_check_in_done
-  s_onboarding --> f_check_in_done
   f_check_in_done -.-> s_dashboard
   f_check_in_done -.-> s_export
   f_ownership_share(["Joint ownership and the user's share of an account"])

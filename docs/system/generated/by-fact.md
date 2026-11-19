@@ -400,8 +400,7 @@ Other stores:
 
 Entered or changed by:
 
-- Monthly check-in: `apps/backend/src/modules/snapshots/snapshots.service.ts`
-- Onboarding: `apps/backend/src/modules/snapshots/first-snapshot.ts` (finishing onboarding records its month as checked in)
+- Monthly check-in: `apps/backend/src/modules/snapshots/snapshots.service.ts` (only the check-in's last step; a new account's first row (source backfill) is not a check-in)
 
 Read by:
 

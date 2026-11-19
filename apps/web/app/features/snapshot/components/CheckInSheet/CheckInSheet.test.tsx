@@ -145,8 +145,8 @@ describe("CheckInSheet", () => {
     // The Sheet names its surface; the centred Dialog does not.
     const isSheet = (el: HTMLElement) => el.hasAttribute("data-sheet-side");
 
-    it("shows the summary in a dialog from md when every account is already recorded", async () => {
-      setup({ accountDetails: allRecorded });
+    it("shows the summary in a dialog from md when the month is checked in", async () => {
+      setup({ accountDetails: allRecorded, checkedIn: true });
       const dialog = screen.getByRole("dialog", { name: "Monthly check-in" });
       expect(isSheet(dialog)).toBe(false);
       expect(screen.getByRole("heading", { name: "November is checked in." })).toBeDefined();
@@ -157,6 +157,31 @@ describe("CheckInSheet", () => {
       await waitFor(() => expect(document.activeElement?.id).toBe(`checkin-change-${CURRENT}`));
     });
 
+    it("opens on the account list when every account has a row this month but the check-in is not finished (slice 4, CH-3)", () => {
+      // Balances saved one by one (an edit on each account), with no finished check-in: not
+      // "November is checked in.", which only a finished check-in says.
+      setup({ accountDetails: allRecorded, checkedIn: false });
+      expect(screen.queryByRole("heading", { name: "November is checked in." })).toBeNull();
+      expect(screen.getByTestId("checkin-list")).toBeDefined();
+    });
+
+    it("asks for each balance when the month holds only the rows accounts were added with", () => {
+      // Accounts added this month write a first row with source "backfill": the check-in still
+      // asks for every balance, as for a month with no rows.
+      setup({
+        accountDetails: [
+          ...details,
+          { accountId: CURRENT, year: 2026, month: 11, value: 1500, source: "backfill" },
+          { accountId: MORTGAGE, year: 2026, month: 11, value: -180000, source: "backfill" },
+        ],
+        checkedIn: false,
+      });
+      expect(screen.queryByRole("heading", { name: "November is checked in." })).toBeNull();
+      expect(
+        screen.getAllByRole("textbox", { name: /^New balance in pounds/ }).length,
+      ).toBeGreaterThan(0);
+    });
+
     it("keeps the sheet for a check-in finished in this session, and on a phone", async () => {
       setup();
       await userEvent.click(screen.getAllByRole("button", { name: "No change" })[0] as HTMLElement);
@@ -165,9 +190,9 @@ describe("CheckInSheet", () => {
       expect(isSheet(screen.getByRole("dialog", { name: "Monthly check-in" }))).toBe(true);
     });
 
-    it("rises as the bottom sheet on a phone when every account is already recorded", () => {
+    it("rises as the bottom sheet on a phone when the month is checked in", () => {
       phoneWidth();
-      setup({ accountDetails: allRecorded });
+      setup({ accountDetails: allRecorded, checkedIn: true });
       expect(isSheet(screen.getByRole("dialog", { name: "Monthly check-in" }))).toBe(true);
     });
 

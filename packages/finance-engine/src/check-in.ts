@@ -474,7 +474,10 @@ export function buildCheckInSteps(
       const category = categorizeAccountType(type);
       const isLiability = isLiabilityCategory(category) || category === "studentLoans";
       const rows = checkInHistoryFor(accountId, details);
-      const atMonth = rows.find((r) => r.month === month) ?? null;
+      // A `backfill` row in the month is the balance an account was added with (system audit
+      // slice 4) or one a migration filled in: a figure, not a check-in answer, so the step stays
+      // open (CH-3, L70: a new account does not finish the check-in).
+      const atMonth = rows.find((r) => r.month === month && r.source !== "backfill") ?? null;
       const before = rows.filter((r) => compareCheckInMonths(r.month, month) < 0).at(-1) ?? null;
       const shown = (v: number) => (isLiability ? Math.abs(v) : v);
       // No change repeats the saved balance (the current balance, D22), not the latest recorded

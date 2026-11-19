@@ -58,6 +58,11 @@ export interface CheckInSheetProps {
   /** The user's net worth choices: rows they leave out say "Not counted in net worth". */
   basis: NetWorthBasis;
   /**
+   * Whether this month's check-in was finished (`snapshot_checkins`). Only then does the sheet open
+   * on its summary; a month with history rows but no finished check-in opens on the account list.
+   */
+  checkedIn?: boolean;
+  /**
    * The page's "Start monthly check-in" control, where focus returns on close when the check-in opened
    * with nothing focused (from `?checkIn=1`).
    */
@@ -109,8 +114,16 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
   onSave,
   basis,
   returnFocusTo,
+  checkedIn = false,
 }) => {
-  const checkIn = useCheckIn({ accounts, accountDetails, month: currentMonth, open, onSave });
+  const checkIn = useCheckIn({
+    accounts,
+    accountDetails,
+    month: currentMonth,
+    open,
+    onSave,
+    checkedIn,
+  });
   const phone = useBelowMd();
   const { steps, answers, finished } = checkIn;
   const summary = useMemo(

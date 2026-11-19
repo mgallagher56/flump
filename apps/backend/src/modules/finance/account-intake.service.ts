@@ -698,7 +698,15 @@ export class AccountIntakeService implements IAccountIntake {
     account: Account,
   ): Promise<void> {
     if (account.connectionId) return;
-    await this.upsertCurrentMonthHistory(details, userId, account.id, Number(account.balance));
+    // Source `backfill`: the balance the account was added with, not a check-in answer, so the
+    // monthly check-in still asks for it this month (CH-3; slice 2's rule, L70).
+    await this.upsertCurrentMonthHistory(
+      details,
+      userId,
+      account.id,
+      Number(account.balance),
+      "backfill",
+    );
   }
 
   /**
@@ -726,6 +734,7 @@ export class AccountIntakeService implements IAccountIntake {
     userId: string,
     accountId: string,
     value: number,
+    source: "manual" | "backfill" = "manual",
   ): Promise<unknown> {
     // One clock reading for year, month and date, so the row always satisfies the month CHECK.
     const asOfDate = londonDate();
@@ -733,7 +742,7 @@ export class AccountIntakeService implements IAccountIntake {
     // A balance edit or check-in is a manual snapshot value (E30): it also sticks against sync.
     // Clearing import_batch_id hands the row back to the user: an import revert no longer owns it.
     return details.upsert(
-      { accountId, userId, year, month, value, asOfDate, source: "manual", importBatchId: null },
+      { accountId, userId, year, month, value, asOfDate, source, importBatchId: null },
       ["accountId", "year", "month"],
     );
   }

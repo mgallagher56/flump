@@ -166,7 +166,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [created.id],
         );
       expect(rows.map((r) => [r.year, r.month, Number(r.value), r.source])).toEqual([
-        [2026, 11, 5000, "manual"],
+        [2026, 11, 5000, "backfill"],
       ]);
     });
 

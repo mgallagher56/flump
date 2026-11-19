@@ -183,10 +183,16 @@ export const meta: MetaFunction = () => [{ title: "Accounts | Flump" }];
 export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, bankConnections, user, accessToken, userProfile, picture } =
-    await loadWorkspacePicture(args, {
-      includeConnections: true,
-    });
+  const {
+    accounts,
+    accountDetails,
+    bankConnections,
+    user,
+    accessToken,
+    userProfile,
+    picture,
+    latestCheckInMonth,
+  } = await loadWorkspacePicture(args, { includeConnections: true, includeCheckIns: true });
   // Bank connection is owner-only (E19 D3-B). Failing closed: any error hides the entry points.
   let bankConnectionsEnabled = false;
   if (accessToken) {
@@ -211,6 +217,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     userProfile,
     // Net worth from the shared picture (audit slice 3); only this part leaves the server.
     netWorth: picture?.netWorth ?? null,
+    // The latest finished check-in, so the check-in sheet opens on its summary only then.
+    latestCheckInMonth: latestCheckInMonth ?? null,
   });
 };
 

@@ -30,6 +30,7 @@ const AccountsContainer: FC = () => {
     accountDetails = [],
     userProfile = null,
     netWorth = null,
+    latestCheckInMonth = null,
   } = useLoaderData<typeof loader>();
   // Before hydration the buttons are plain links (#701): "?add=1" and "?checkIn=1" open the add
   // dialog or the check-in on arrival, then the parameter is removed so a reload does not reopen.
@@ -147,6 +148,7 @@ const AccountsContainer: FC = () => {
             accountDetails={accountDetails as RawAccountDetail[]}
             accounts={accounts}
             basis={netWorth.basis}
+            checkedIn={!!latestCheckInMonth && latestCheckInMonth >= londonMonth()}
             currentMonth={londonMonth()}
             onOpenChange={setCheckInOpen}
             onSave={saveSnapshot}
