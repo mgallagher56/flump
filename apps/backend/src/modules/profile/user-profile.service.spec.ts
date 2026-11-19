@@ -276,6 +276,15 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.dashboardWidgetSizes).toEqual({ accounts: "wide" });
   });
 
+  it("drops unknown, retired and repeated section ids from a stored order on read", async () => {
+    mockUserProfileRepo.findOne.mockResolvedValue({
+      id: "profile-1",
+      userId: "user-123",
+      dashboardWidgetOrder: ["tax", "forecast", "retirement", "tax", "debt", ""],
+    });
+    expect((await service.getProfile("user-123")).dashboardWidgetOrder).toEqual(["tax", "debt"]);
+  });
+
   it("has no saved section order for a new profile or a stored null, so the dashboard uses its default", async () => {
     mockUserProfileRepo.findOne.mockResolvedValue(null);
     const created = await service.getProfile("user-123");

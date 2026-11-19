@@ -19,6 +19,28 @@ const AvatarUrl = z
 const ShortText = z.string().trim().max(120);
 const PageKeyList = z.array(z.string().min(1).max(64)).max(20);
 
+/**
+ * The home sections, in their default order. A saved section order holds only these, each once
+ * (empty means the default order). A refinement rather than an enum, so the published request
+ * schema keeps its shape; the check runs on every PATCH all the same.
+ */
+export const DASHBOARD_SECTION_KEYS = [
+  "debt",
+  "mortgage",
+  "savings",
+  "pension",
+  "tax",
+  "budget",
+  "accounts",
+] as const;
+
+const SectionOrder = PageKeyList.refine(
+  (keys) =>
+    new Set(keys).size === keys.length &&
+    keys.every((k) => (DASHBOARD_SECTION_KEYS as readonly string[]).includes(k)),
+  { message: "Each section may appear once, and only known sections." },
+);
+
 /** Where the person lives. Null (not answered) is never read as renting. */
 export const HousingStatus = z.enum(["renting", "mortgage", "own_outright", "living_with_family"]);
 
@@ -60,7 +82,7 @@ export const UpdateProfileRequest = z.strictObject({
   savingsDefaultInterestRate: Percent.optional(),
   enabledPages: PageKeyList.optional(),
   dashboardWidgets: PageKeyList.optional(),
-  dashboardWidgetOrder: PageKeyList.optional(),
+  dashboardWidgetOrder: SectionOrder.optional(),
   dashboardWidgetSizes: z.record(z.string(), z.enum(["normal", "wide"])).optional(),
   dashboardWidgetConfig: z.record(z.string(), z.unknown()).optional(),
   customBudgetCategories: z

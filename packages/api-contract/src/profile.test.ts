@@ -27,6 +27,20 @@ describe("UpdateProfileRequest", () => {
     expect(avatar(`https://example.com/${"a".repeat(2048)}`)).toBe(false);
   });
 
+  it("takes a section order of known sections, each once, and rejects anything else", () => {
+    const order = (dashboardWidgetOrder: unknown) =>
+      UpdateProfileRequest.safeParse({ dashboardWidgetOrder }).success;
+    expect(order([])).toBe(true);
+    expect(order(["tax", "debt", "accounts"])).toBe(true);
+    expect(order(["debt", "mortgage", "savings", "pension", "tax", "budget", "accounts"])).toBe(
+      true,
+    );
+    // Unknown, retired and repeated ids are refused, so a stored order only ever holds sections.
+    expect(order(["tax", "forecast"])).toBe(false);
+    expect(order(["retirement"])).toBe(false);
+    expect(order(["tax", "debt", "tax"])).toBe(false);
+  });
+
   it("allows null on nullable columns and rejects bad percentages", () => {
     expect(UpdateProfileRequest.safeParse({ annualSalary: null, firstName: null }).success).toBe(
       true,

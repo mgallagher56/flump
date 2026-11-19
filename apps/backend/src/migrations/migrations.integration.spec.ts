@@ -1973,7 +1973,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         "SELECT user_id, dashboard_widget_order, dashboard_widgets FROM user_profiles ORDER BY user_id",
       );
 
-    it("clears every saved section order and nothing else, and a second run changes nothing", async () => {
+    it("up clears every saved section order and nothing else", async () => {
       await ds.runMigrations();
       await undoThrough(NAME);
       await ds.query(
@@ -1983,13 +1983,34 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       );
       await ds.runMigrations();
       expect(await applied()).toContain(NAME);
-      const after = [
+      expect(await rows()).toEqual([
         { user_id: "u1", dashboard_widget_order: null, dashboard_widgets: "accounts,budget" },
         { user_id: "u2", dashboard_widget_order: null, dashboard_widgets: "tax" },
-      ];
-      expect(await rows()).toEqual(after);
+      ]);
+    });
+
+    it("a re-run once recorded (a second instance in a rolling deploy) keeps orders chosen since", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, dashboard_widget_order) VALUES ('u1', 'tax,debt')`,
+      );
       await runUpInTransaction(new ClearUnchosenSectionOrder1795500000000());
-      expect(await rows()).toEqual(after);
+      expect(await rows()).toEqual([
+        { user_id: "u1", dashboard_widget_order: "tax,debt", dashboard_widgets: null },
+      ]);
+    });
+
+    it("down restores nothing and keeps orders chosen since", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, dashboard_widget_order) VALUES ('u1', 'tax,debt')`,
+      );
+      await undoThrough(NAME);
+      expect(await applied()).not.toContain(NAME);
+      expect(await rows()).toEqual([
+        { user_id: "u1", dashboard_widget_order: "tax,debt", dashboard_widgets: null },
+      ]);
     });
   });
 
