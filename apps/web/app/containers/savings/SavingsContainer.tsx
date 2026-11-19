@@ -30,7 +30,6 @@ import {
 import { InvestmentReturns } from "~/features/savings/components/InvestmentReturns";
 import { PayRiseScenario } from "~/features/savings/components/PayRiseScenario";
 import {
-  estimateIsaUsed,
   isIsaAccount,
   SavingsAccountsList,
 } from "~/features/savings/components/SavingsAccountsList";
@@ -121,8 +120,13 @@ export const SavingsContainer: FC = () => {
     if (savingsAccounts.length > 0) markChecklistStep("savings", true).catch(() => {});
   }, [savingsAccounts.length, markChecklistStep]);
 
+  // The total and the ISA allowance used come from the shared loader's picture (audit slice 3),
+  // the figures the Dashboard and the AI read.
+  const savingsBalance: number = loaderData?.savingsBalance ?? 0;
+  const isaAllowanceUsed: number | null = loaderData?.isaAllowanceUsed ?? null;
+
   const saved = useMemo(() => {
-    const total = savingsAccounts.reduce((sum, acc) => sum + (Number(acc.balance) || 0), 0);
+    const total = savingsBalance;
     // `balance` is at the user's share (PortfolioSnapshot), while `monthlyContribution` is the
     // whole stored saving: the engine scales it by the share so both are on one basis.
     const monthly = totalMonthlySavingAtShare(savingsAccounts);
@@ -133,9 +137,9 @@ export const SavingsContainer: FC = () => {
       // blended rate across ISA and non-ISA savings hides that ISA interest is tax-free.
       averageRate: balanceWeightedRate(savingsAccounts),
       interest: estimateSavingsInterestNext12Months(savingsAccounts),
-      isaUsed: estimateIsaUsed(savingsAccounts),
+      isaUsed: isaAllowanceUsed,
     };
-  }, [savingsAccounts]);
+  }, [savingsAccounts, savingsBalance, isaAllowanceUsed]);
 
   // What-if inputs, in memory only (useScenarioState): nothing here reaches saved data.
   const savedForecast = useMemo<SavingsForecastValues>(

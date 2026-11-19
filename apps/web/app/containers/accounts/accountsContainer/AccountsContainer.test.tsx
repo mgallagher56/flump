@@ -8,10 +8,10 @@ import customRender from "~/testUtils/customRender";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import AccountsContainer from "./AccountsContainer";
 
-/** Loader data as the shared loader returns it: the saved rows and the picture built from them. */
+/** Loader data as the loader returns it: the saved rows and the picture's net worth from them. */
 const loaderData = (rows: Record<string, unknown>) => ({
   ...rows,
-  picture: buildWorkspacePicture(rows as Parameters<typeof buildWorkspacePicture>[0]),
+  netWorth: buildWorkspacePicture(rows as Parameters<typeof buildWorkspacePicture>[0]).netWorth,
 });
 
 const mocks = vi.hoisted(() => ({
@@ -221,5 +221,27 @@ describe("<AccountsContainer />", () => {
     );
     const { getByTestId } = customRender(<AccountsContainer />);
     expect(getByTestId("accounts-open-check-in-phone").textContent).toBe("Start monthly check-in");
+  });
+
+  test("a home value saved on the profile hides the not-counted home notice (P41)", () => {
+    // A mortgage with no Property account: without a saved home value, net worth says the home
+    // is not counted; with one saved on the profile, that notice is not shown.
+    const accounts = [
+      { id: "a1", name: "Current", type: "Current", balance: 5000 },
+      { id: "m1", name: "Mortgage", type: "Mortgage", balance: -150000 },
+    ];
+    mocks.mockUseLoaderData.mockReturnValue(
+      loaderData({ accounts, accountDetails: [], userProfile: { homeValue: null } }),
+    );
+    const without = customRender(<AccountsContainer />);
+    expect(without.queryByText(/not counted until you add an estimate/)).not.toBeNull();
+    without.unmount();
+
+    mocks.mockUseLoaderData.mockReturnValue({
+      ...loaderData({ accounts, accountDetails: [], userProfile: { homeValue: null } }),
+      userProfile: { homeValue: 250000 },
+    });
+    const withHome = customRender(<AccountsContainer />);
+    expect(withHome.queryByText(/not counted until you add an estimate/)).toBeNull();
   });
 });

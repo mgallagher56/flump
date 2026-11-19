@@ -123,7 +123,17 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { accounts, accountDetails, userProfile, budgetEntries, user, picture } =
     await loadWorkspacePicture(args);
 
-  return data({ accounts, accountDetails, userProfile, budgetEntries, user, picture });
+  return data({
+    accounts,
+    accountDetails,
+    userProfile,
+    budgetEntries,
+    user,
+    // The shared picture's savings figures (audit slice 3): the page shows these, not its own sums.
+    // Only these two leave the server, not the whole picture.
+    savingsBalance: picture?.savings.balance ?? 0,
+    isaAllowanceUsed: picture?.isaAllowanceUsed ?? null,
+  });
 };
 
 const SavingsRoute = (): ReactElement => {

@@ -36,7 +36,6 @@ const READ_ROUTES = [
   "/user-profile",
   "/accounts",
   "/account-details",
-  "/portfolio-snapshot",
   "/budget-entries",
   "/tax-records",
 ] as const;

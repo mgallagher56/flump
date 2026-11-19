@@ -52,12 +52,12 @@
   {
     "kind": "removed-path",
     "where": "/v1/portfolio-snapshot",
-    "reason": "Audit slice 3 (system audit 2026-11, DB-12 item 6): the route had no caller in this repository (web, marketing, MCP, backend, e2e or the parked mobile companion). Removed with coordinator sign-off on 19 November 2026."
+    "reason": "Audit slice 3 (system audit 2026-11, DB-12 item 6): no app or AI caller used the route. The only callers were the load-smoke script and its budget file, which were removed in the same PR (the picture now comes from the shared loader). Removed with coordinator sign-off on 19 November 2026."
   },
   {
     "kind": "retyped-response-property",
     "where": "GET /v1/mcp-tokens/context-pack 200 response.pack.debtSummary.avalancheVsSnowballComparison",
-    "reason": "Audit slice 3 (AI-5, SD-6): null when an interest rate is unknown, instead of a debt-free date built on 0% and a hidden extra payment. Coordinator sign-off 19 November 2026."
+    "reason": "Audit slice 3 (AI-5, SD-6): null when an interest rate is unknown or when the minimum payments never clear the debt, instead of a debt-free date built on 0% and a hidden extra payment. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "retyped-response-property",

@@ -10,7 +10,7 @@ they are not there (6 accounts, 20 budget entries), makes one unrecorded pass, t
 sends:
 
 - 4 authenticated reads a second, round-robin over `/user-profile`, `/accounts`,
-  `/account-details`, `/portfolio-snapshot`, `/budget-entries` and `/tax-records`;
+  `/account-details`, `/budget-entries` and `/tax-records`;
 - 10 `/health/ready` requests a second (this route runs a database query and has no rate limit).
 
 Requests leave on a fixed timetable whether or not earlier ones have answered, so a slow server

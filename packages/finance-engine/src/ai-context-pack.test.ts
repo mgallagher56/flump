@@ -320,6 +320,27 @@ describe("overdrawn accounts in the markdown (E23 C-15)", () => {
   });
 });
 
+describe("an overdrawn current account is consumer debt in the pack", () => {
+  it("gives £500 total debt for a lone -£500 current account, as portfolio.totalConsumerDebt", () => {
+    // One Current account at -£500 and no debt accounts. The overdrawn amount is 500, so
+    // consumer debt is 500 (not 0, which the debt-account schedule alone would give).
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "u" },
+      accounts: [{ id: "c1", name: "Everyday", type: "Current", balance: -500 }],
+      budgetEntries: [],
+    });
+    expect(pack.debtSummary.totalStartingDebtGbp).toBe(500);
+    expect(pack.portfolio.totalConsumerDebt).toBe(500);
+    // No debt account, so no minimum-payment schedule and no debt-free date to compute.
+    expect(pack.debtSummary.monthlyMinimumsGbp).toBeNull();
+    expect(pack.debtSummary.debtFreeDate).toBeNull();
+    expect(pack.observations).toContain(
+      "Debts total £500, not counting mortgages and student loans.",
+    );
+  });
+});
+
 describe("buildFlumpAiContextPack budget summary comes from the financial picture (E23)", () => {
   const baseline = { ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 60000, userId: "u" };
 
@@ -1167,6 +1188,15 @@ describe("the pack takes its shared figures from the financial picture (audit sl
     const md = formatAiContextPackMarkdown(pack);
     expect(md).toContain("**Average savings rate:** not set");
     expect(md).not.toContain("5% AER");
+    expect(md).not.toContain("0% AER");
+  });
+
+  it("says the savings rate is not set when a saver has no saved rate, never 0% AER", () => {
+    // £10,000 saver with no interest rate stored: an unknown rate is not 0%, so no average.
+    const pack = build([{ id: "s1", name: "Easy access", type: "Saving", balance: 10000 }]);
+    expect(pack.portfolio.weightedSavingsRate).toBeNull();
+    const md = formatAiContextPackMarkdown(pack);
+    expect(md).toContain("**Average savings rate:** not set");
     expect(md).not.toContain("0% AER");
   });
 
