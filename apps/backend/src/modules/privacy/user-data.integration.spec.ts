@@ -99,7 +99,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     vi.restoreAllMocks();
   });
 
-  /** One row in every table that carries a user id, labelled so a leak is easy to spot. */
   /** The owner-approved finance costs brought forward record: an ordinary tax_records row. */
   const saveBroughtForward = (userId: string) =>
     ds.getRepository(TaxRecord).save(
@@ -115,6 +114,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       }),
     );
 
+  /** One row in every table that carries a user id, labelled so a leak is easy to spot. */
   const seed = async (userId: string, label: string) => {
     const m = ds.manager;
     const connection = await m.save(

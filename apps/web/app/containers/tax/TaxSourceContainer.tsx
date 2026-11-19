@@ -3,9 +3,9 @@ import {
   compareExpensesWithAllowance,
   estimateInputsFor,
   getCurrentUKTaxYear,
-  getRecordAnnualTotalForTaxYear,
   isLegacySalaryRecord,
   isRecordActiveInTaxYear,
+  recordedTotalsForTaxYear,
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
@@ -56,18 +56,9 @@ const DESCRIPTION: Record<TaxSource, string> = {
   paye: "Bonuses, taxable benefits and pension contributions on top of your salary.",
 };
 
-/** The year's income and expenses for one source, before any allowance. */
-const sourceTotals = (records: TaxRecord[], source: TaxSource, taxYear: string) => {
-  let income = 0;
-  let expenses = 0;
-  for (const r of records) {
-    if (r.source !== source || !isRecordActiveInTaxYear(r, taxYear)) continue;
-    const yearly = getRecordAnnualTotalForTaxYear(r, taxYear);
-    if (r.type === "income") income += yearly;
-    else expenses += yearly;
-  }
-  return { income, expenses };
-};
+/** The year's income and expenses for one source, before any allowance (engine). */
+const sourceTotals = (records: TaxRecord[], source: TaxSource, taxYear: string) =>
+  recordedTotalsForTaxYear(records, taxYear, source);
 
 /**
  * One income source's page: its income and expenses for a tax year, the allowance beside the

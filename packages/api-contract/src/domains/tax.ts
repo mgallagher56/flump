@@ -26,26 +26,37 @@ export const LEGACY_PAYE_SALARY_CATEGORY = "paye_salary";
  */
 export const FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY = "finance_costs_brought_forward";
 
-/** That category only makes sense as a rental expense. */
-const broughtForwardIsRentalExpense = (
-  record: { category?: string; source?: string; type?: string },
-  ctx: z.RefinementCtx,
-) => {
-  if (record.category?.trim() !== FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY) return;
+interface RecordShape {
+  category?: string;
+  source?: string;
+  type?: string;
+  frequency?: string;
+}
+
+/**
+ * Why a record breaks the brought-forward rules, or null. That category is one figure for one
+ * year, so it must be a rental expense and not monthly. Fields left out are not checked here, so
+ * a partial update is checked again on the merged record (the backend's updateRecord).
+ */
+export const broughtForwardRuleError = (
+  record: RecordShape,
+): { path: "source" | "type" | "frequency"; message: string } | null => {
+  if (record.category?.trim() !== FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY) return null;
   if (record.source !== undefined && record.source !== "rental") {
-    ctx.addIssue({
-      code: "custom",
-      path: ["source"],
-      message: "Finance costs brought forward are rental records",
-    });
+    return { path: "source", message: "Finance costs brought forward are rental records" };
   }
   if (record.type !== undefined && record.type !== "expense") {
-    ctx.addIssue({
-      code: "custom",
-      path: ["type"],
-      message: "Finance costs brought forward are an expense",
-    });
+    return { path: "type", message: "Finance costs brought forward are an expense" };
   }
+  if (record.frequency === "monthly") {
+    return { path: "frequency", message: "Finance costs brought forward are one figure a year" };
+  }
+  return null;
+};
+
+const broughtForwardIsRentalExpense = (record: RecordShape, ctx: z.RefinementCtx) => {
+  const error = broughtForwardRuleError(record);
+  if (error) ctx.addIssue({ code: "custom", path: [error.path], message: error.message });
 };
 
 const taxRecordFields = {

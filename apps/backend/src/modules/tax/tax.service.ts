@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  broughtForwardRuleError,
   MAX_BULK_TAX_RECORDS as CONTRACT_MAX_BULK_TAX_RECORDS,
   type CreateTaxRecordRequest,
   LEGACY_PAYE_SALARY_CATEGORY,
@@ -64,6 +65,12 @@ const TAX_RECORD_FIELDS = [
   "receiptData",
 ] as const;
 
+/** Finance costs brought forward are one yearly rental expense (contract rule, also held here). */
+const assertBroughtForwardRules = (record: Partial<TaxRecord>): void => {
+  const error = broughtForwardRuleError(record);
+  if (error) throw new BadRequestException(error.message);
+};
+
 const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxRecord> => {
   const picked: Record<string, unknown> = {};
   for (const key of TAX_RECORD_FIELDS) {
@@ -74,6 +81,7 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
   if (picked.category === LEGACY_PAYE_SALARY_CATEGORY) {
     throw new BadRequestException("Salary is saved on your profile, not as a tax record");
   }
+  assertBroughtForwardRules(picked);
   const mime = validateReceipt(picked);
   // Receipt metadata only changes together with the data: a bare filename or MIME type from the
   // client is ignored, so metadata can never disagree with the stored bytes.
@@ -338,6 +346,8 @@ export class TaxService {
           picked.receiptData = encryptReceiptData(picked.receiptData, record.id);
         }
         Object.assign(record, picked);
+        // Checked on the merged record: a change to one field can break the rules on its own.
+        assertBroughtForwardRules(record);
         withAnnualEndDate(record);
         return repository.save(record);
       },

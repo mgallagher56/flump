@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calculateUKTax, type TaxRecordFields } from "./tax-calculator.js";
+import {
+  calculateUKTax,
+  recordedTotalsForTaxYear,
+  type TaxRecordFields,
+} from "./tax-calculator.js";
 
 /**
  * How much of the bill the rent causes (Section 24 audit, owner-approved fix of three cases).
@@ -366,5 +370,60 @@ describe.each(YEARS)("finance costs brought forward as a record, %s", (year) => 
     );
     expect(r.financeCostsBroughtForward).toBe(0);
     expect(r.rentalPropertyTaxCredit).toBe(1200);
+  });
+});
+
+describe("finance costs brought forward: entered once", () => {
+  it("counts a record once, in the tax year of its date, whatever its frequency", () => {
+    // A 500 record saved as monthly from 1 June 2026 must not become 5,000 in 2026/27 or recur
+    // in 2027/28: an amount brought forward is a single figure for one year.
+    const monthly = {
+      ...rental("2026/27", "finance_costs_brought_forward", 500),
+      frequency: "monthly" as const,
+    };
+    const base = [
+      rental("2026/27", "rental_income", 15000),
+      rental("2026/27", "mortgage_interest", 6000),
+      rental("2026/27", "repairs_maintenance", 2000),
+    ];
+    const r = calculateUKTax("2026/27", [...base, monthly], 30000, 100);
+    expect(r.financeCostsBroughtForward).toBe(500);
+    // A monthly record from June 2025 does not run on into 2026/27.
+    const earlier = {
+      ...rental("2025/26", "finance_costs_brought_forward", 500),
+      frequency: "monthly" as const,
+    };
+    const next = calculateUKTax("2026/27", [...base, earlier], 30000, 100);
+    expect(next.financeCostsBroughtForward).toBe(0);
+  });
+
+  it("is a brought-forward amount only as a rental expense", () => {
+    // Saved as income by mistake: not counted as finance costs (and not as rent).
+    const asIncome = {
+      ...rental("2026/27", "finance_costs_brought_forward", 500),
+      type: "income" as const,
+    };
+    const r = calculateUKTax("2026/27", [asIncome], 30000, 100);
+    expect(r.financeCostsBroughtForward).toBe(0);
+    expect(r.rentalIncomeGross).toBe(0);
+  });
+});
+
+describe("recordedTotalsForTaxYear", () => {
+  it("adds up recorded income and costs for the year, leaving out finance costs brought forward", () => {
+    // Rent 900 and repairs 100 in 2026/27, plus 500 brought forward: income 900, costs 100.
+    const records = [
+      rental("2026/27", "rental_income", 900),
+      rental("2026/27", "repairs_maintenance", 100),
+      rental("2026/27", "finance_costs_brought_forward", 500),
+      savings("2026/27", "savings_interest", 40),
+    ];
+    expect(recordedTotalsForTaxYear(records, "2026/27")).toEqual({ income: 940, expenses: 100 });
+    expect(recordedTotalsForTaxYear(records, "2026/27", "rental")).toEqual({
+      income: 900,
+      expenses: 100,
+    });
+    // Records from another year are left out.
+    expect(recordedTotalsForTaxYear(records, "2025/26")).toEqual({ income: 0, expenses: 0 });
   });
 });
