@@ -1,8 +1,8 @@
 import { DataSource } from "typeorm";
-import { assertSafeTestDatabase } from "./assertSafeTestDatabase";
+import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 
 /**
- * Used by the setup file of the backend "db" Vitest project (test/support/per-worker-database.setup.mts,
+ * Used by the setup file of the backend "db" Vitest project (per-worker-database.setup.mts,
  * vitest.config.ts, E41 P2).
  *
  * The real-Postgres specs each reset the schema of TEST_DATABASE_URL, so two of them must never
@@ -36,11 +36,10 @@ async function ensureDatabase(baseUrl: string, name: string): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     const ds = new DataSource({ type: "postgres", url: baseUrl, entities: [], migrations: [] });
     await ds.initialize();
+    const runner = ds.createQueryRunner();
     try {
-      const found: unknown[] = await ds.query("SELECT 1 FROM pg_database WHERE datname = $1", [
-        name,
-      ]);
-      if (found.length === 0) await ds.query(`CREATE DATABASE "${name}"`);
+      // TypeORM checks pg_database first and quotes the name itself.
+      await runner.createDatabase(name, true);
       return;
     } catch (error) {
       const code =
@@ -51,6 +50,7 @@ async function ensureDatabase(baseUrl: string, name: string): Promise<void> {
       if (code !== TEMPLATE_IN_USE || attempt >= 5) throw error;
       await new Promise((resolve) => setTimeout(resolve, 200 * attempt));
     } finally {
+      await runner.release();
       await ds.destroy();
     }
   }

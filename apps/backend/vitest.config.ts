@@ -65,7 +65,7 @@ export default defineConfig({
           // The real-Postgres suites (migrations, contract, authz) each reset the schema of
           // TEST_DATABASE_URL, so two must never share a database at once. Each worker gets its
           // own database on the same local server ("<name>_w<worker>"), so the files run in
-          // parallel while each still has a database to itself (src/testing/perWorkerDatabase.ts).
+          // parallel while each still has a database to itself (test/support/perWorkerDatabase.ts).
           setupFiles: ["./test/support/per-worker-database.setup.mts"],
         },
       },
