@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.41.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.40.0...flump/backend-v1.41.0) (2026-11-19)
+
+
+### Features ✨
+
+* **accounts:** a Student Loan account's plan goes to the profile when it has none (audit slice 6, L30) ([4593f35](https://github.com/mgallagher56/flump/commit/4593f3586b620473833aac75f08805d35346491a))
+* **api-contract:** PATCH /user-profile accepts and ignores the 14 retired fields for one release ([7888d95](https://github.com/mgallagher56/flump/commit/7888d95caa4531af3d9e36401195a23146f7a352))
+* **backend:** system audit slice 9 part one, database housekeeping ([df3fdd6](https://github.com/mgallagher56/flump/commit/df3fdd643e3273e56fd034d713add5710818ee19))
+* **dashboard:** one colour per section card, a saved section order, and the chooser beside the cards ([22ce2af](https://github.com/mgallagher56/flump/commit/22ce2af834694ed5ce66201e68437c2ed96c7eca))
+* **profile:** the setup checklist's dismissed state is stored on the profile (decision 13) ([498b9f6](https://github.com/mgallagher56/flump/commit/498b9f6dd806d74c1252ab9607e82539f2b2da7d))
+* slice 9 part two, stop reading and writing 14 dead profile fields (non-web) ([033b1e9](https://github.com/mgallagher56/flump/commit/033b1e9025bdcada3b9fc2320d471a6799508e2e))
+* **tax:** finance costs brought forward as a rental tax record ([9f275c5](https://github.com/mgallagher56/flump/commit/9f275c52ee54c4570901f29ddc592f569e4a2f2d))
+
+
+### Bug Fixes 🪲
+
+* **accounts:** only a plan edit writes the profile, in one conditional update (independent review) ([81d12d5](https://github.com/mgallagher56/flump/commit/81d12d5a4014e7f6456f9e514599e57097352384))
+* **backend:** slice 9 review findings: type check skips instead of throwing; stronger tests ([dba448f](https://github.com/mgallagher56/flump/commit/dba448fcc910189f5fab23ab3d31b29eb5bbb738))
+* **budget:** review findings on the housing line ([723593e](https://github.com/mgallagher56/flump/commit/723593e9f074481d6e072caac5b559dfff99b3b7))
+* keep rental income on the profile; the MCP baseline still reads it ([bf4598b](https://github.com/mgallagher56/flump/commit/bf4598b96abeab59ef2a955c7acbbfe1db333d95))
+* **privacy:** the slice 5 rent before-image is erased with its budget line ([7996020](https://github.com/mgallagher56/flump/commit/79960203b82ae84a3b830f2bc0db8dfe7f24433b))
+* **profile:** clear saved section orders nobody chose ([6c3f033](https://github.com/mgallagher56/flump/commit/6c3f033c0e0df00d34bd9c7db2570d632fb5931a))
+* **profile:** the lifecycle interface takes the checklist change; version compared as instants ([06250ee](https://github.com/mgallagher56/flump/commit/06250ee46137eb6b79f9fd5cc0cc83fd5da83791))
+* **profile:** the section order migration runs once and logs counts; orders hold known sections only ([e5bf913](https://github.com/mgallagher56/flump/commit/e5bf913a50bdd36fc1b6c6ad6b04f8f6789cf4b9))
+* review findings: keep Dashboard's isDefault reader; looser psa-band export test; drop needless authz restore ([4553411](https://github.com/mgallagher56/flump/commit/45534117c194d7517f0b392407c33cea7bf92417))
+* **tax:** brought-forward record counted once and never as a cost ([094f076](https://github.com/mgallagher56/flump/commit/094f076ec15d74f2f865c0bf2961182d57cba309))
+
+
+### Tests 🧪
+
+* **backend:** match statements by plain text, not regex (Semgrep regex_dos on the new spec) ([22e98c7](https://github.com/mgallagher56/flump/commit/22e98c75486437b3f63d92e5995527e4696bad28))
+* housing line link specs, onboarding payload fixtures, value map and parity log ([4db90c4](https://github.com/mgallagher56/flump/commit/4db90c48867db9ded87e9b8c29976519cd477946))
+* **privacy:** a financial data reset clears the rent before-image; the migration logs its count ([a081883](https://github.com/mgallagher56/flump/commit/a081883fb491c10e4e23f3f7e8843a74f99719ea))
+* **visual:** homeowner Budget baselines from CI (run 44572665057): the mortgage offer reads the saved payment ([4a45cb9](https://github.com/mgallagher56/flump/commit/4a45cb9996f564b8d34f592d22c7ad37d160737a))
+
 ## [1.40.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.39.0...flump/backend-v1.40.0) (2026-11-19)
 
 
