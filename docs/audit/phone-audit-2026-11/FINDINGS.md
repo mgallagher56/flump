@@ -3,7 +3,7 @@
 Status: audit, phase 1 (no product code changed). Decisions: none needed (see the end).
 
 What was run: the journeys in `JOURNEYS.md`, driven by `apps/e2e/sweep/phone.spec.ts` against a
-local build of `main` at `974072a9b` (18 November 2026), at 320x568, 375x812, 390x844 and
+local build of `main` at `f5631d4f0` (19 November 2026, after PRs 777 and 779 merged; a first pass on `974072a9b` was re-checked row by row against it), at 320x568, 375x812, 390x844 and
 430x932 in light and dark with Chromium touch and mobile emulation, plus 812x375 landscape on the
 main pages. Every page records measured checks (`apps/e2e/sweep/phoneChecks.ts`); every overlay
 records its edge, height, close control, focus, scroll lock and scroll after closing; persona
@@ -49,7 +49,7 @@ Measured at every width and theme unless stated, so these need no fix:
 
 | Root  | Component                                                                    | Findings it fixes                      |
 | ----- | ---------------------------------------------------------------------------- | -------------------------------------- |
-| RC-1  | `PageHeader` below `md` (`packages/ui/src/patterns/PageHeader/PageHeader.styles.ts:11-12`) | P01, P02, P03, P04             |
+| RC-1  | `PageHeader` below `md` (`packages/ui/src/patterns/PageHeader/PageHeader.styles.ts:11-12`), its actions and its new illustration slot | P01, P02, P03, P04, P49, P50, P51, P53 |
 | RC-2  | `Tabs` trigger heights and the scrolling tab row (`packages/ui/src/primitives/Tabs/Tabs.styles.ts`) | P05, P06, P07                 |
 | RC-3  | `SliderField` value pill at 14px (`packages/ui/src/primitives/SliderField/SliderField.styles.ts:41,62-70`) | P08                       |
 | RC-4  | Overlay focus return without `preventScroll` (`packages/ui/src/primitives/Dialog/useDialogFocusReturn.ts:64,69`) | P12                       |
@@ -58,13 +58,15 @@ Measured at every width and theme unless stated, so these need no fix:
 | RC-7  | Button `variant="link"` drops the touch minimum (`packages/ui/src/primitives/Button/Button.styles.ts:83-85,101-106`) | P16         |
 | RC-8  | Route error boundary renders the signed-out shell                            | P17, P18                               |
 | RC-9  | `KpiStrip` and `KpiCard` on a phone                                          | P20, P21, P22                          |
+| RC-11 | A section or card header with an action beside its text (`SectionHeader` with action, the collapsed scenario entry card) | P24, P25, P62, P63 |
+| RC-12 | Three different sheet footers (stacked, side by side, a lone Save)            | P28, P64                               |
 | RC-10 | Fixed chrome sized in rem at large text                                      | P19                                    |
 
 ## Findings
 
 | Id  | Journey, step | Page or component (file) | Widths, themes | What is wrong | Rule | Severity | Likely cause | Proposed fix |
 | --- | ------------- | ------------------------ | -------------- | ------------- | ---- | -------- | ------------ | ------------ |
-| P01 | J5 1 | Self Assessment header, `apps/web/app/containers/tax/TaxContainer.tsx` with RC-1 | 320, 375; both | The tax-year picker sits on top of the "Self Assessment" title and the first line of its description | A6, owner's eye | gets in the way | RC-1: the grid's `minmax(min-content, 1fr) auto` lets the action overlap a long h1 | RC-1: below `md` use a wrapping flex row; the action drops under the h1 when it does not fit |
+| P01 | J5 1, J9 1 | Self Assessment header, `apps/web/app/containers/tax/TaxContainer.tsx` with RC-1 | 320, 375; both | The tax-year picker sits on top of the "Self Assessment" title and the first line of its description, with or without records | A6, owner's eye | gets in the way | RC-1: the grid's `minmax(min-content, 1fr) auto` lets the action overlap a long h1 | RC-1: below `md` use a wrapping flex row; the action drops under the h1 when it does not fit |
 | P02 | J2 9, J3, J4, J5, J6 (200% text) | `PageHeader`, Accounts, Budget, Pension | 375 light | At 200% text the description and action row stick out past the screen and the page scrolls sideways | A6, WCAG 1.4.4, 1.4.10 | gets in the way | RC-1: `md` is em-based so never applies; min-content of h1 plus a nowrap aside exceeds the width | RC-1 as P01; column `minmax(0, 1fr)` at least |
 | P03 | J2, J7 | `PageHeader` on Budget, Debt, History, Accounts | 320, 375; both | The h1 wraps to two or three lines beside the action ("Net worth history" takes three) | owner's eye | cosmetic | RC-1 by design (comment at `PageHeader.styles.ts:4-6`) | RC-1: let the action drop under the h1 instead of squeezing it |
 | P04 | J2 to J6 | Page "Add" actions (`SavingsContainer.tsx`, `PensionContainer.tsx` against Accounts, Debt) | all | Some "Add" header buttons have a "+" icon and some do not | SG 12, owner's eye | cosmetic | Each page passes its own button | One rule in `PageHeader` actions: icon or none, everywhere |
@@ -81,14 +83,14 @@ Measured at every width and theme unless stated, so these need no fix:
 | P15 | J10 | `TopBar`, `NavDrawer`, `MobileBottomBar`, right `Sheet`, `Toast` | landscape on notched phones | Only the bottom safe-area inset is padded; with `viewport-fit=cover` (`apps/web/app/root.tsx:226`) the header, drawer, bottom bar and toasts can sit under the notch at the sides in landscape | R5 | gets in the way (device to confirm) | RC-6: no `safe-area-inset-left/right/top` anywhere | RC-6: pad TopBar top and sides, NavDrawer top and side, bottom bars and toasts left and right |
 | P16 | J2 2, J7 2 | "See how it has changed" (`AccountsGroupList.tsx:304`), "Add earlier months" (`SnapshotHistoryPage.tsx:298-308`) | all | These link-style buttons are about 20px tall on touch | A5, WCAG 2.5.8 | gets in the way | RC-7: the `link` variant forces `minH: 0, py: 0` | RC-7: a coarse-pointer `::before` hit area of 44px on the `link` variant, as `CollapsibleDrawer` does |
 | P17 | J2 8 | Error state, `apps/web/app/features/feedback/components/RouteErrorState/RouteErrorState.tsx`, `apps/web/app/root.tsx:263` | all | When a page's data fails to load, a signed-in user sees a header with "Sign in" and no bottom bar | N6, E6 | gets in the way | RC-8: the root error boundary renders without the loader's user | RC-8: keep the signed-in shell (read the session in the boundary or render the boundary inside the app layout) |
-| P18 | J8 3 | Missing account (`/app/accounts/does-not-exist`), not-found page header | all | A missing account shows "a problem on our side" with "Try again" instead of not-found with a way back to Accounts; the not-found shell shows the session's initials ("DE") instead of the user's | E6, N6 | gets in the way | The loader passes a 400 from the backend through; the shell reads the dev session name | Map 400 and 404 for an account id to the not-found state with "Back to accounts"; take initials from the profile |
+| P18 | J8 3 | Missing account (`/app/accounts/does-not-exist`), not-found page header | all | A missing account shows "a problem on our side" with "Try again" instead of not-found with a way back to Accounts | E6, N6 | gets in the way | The loader passes a 400 from the backend through | Map 400 and 404 for an account id to the not-found state with "Back to accounts" |
 | P19 | J2 9 (200% text) | `AppBottomBar`, `MobileBottomBar`, `TopBar` | 375 light | At 200% text the header and bottom bar take 228 of 812px (28%) and the bar labels truncate to "Acc…" and "Bud…" | A6, owner's eye (oversized chrome) | gets in the way | RC-10: bar and header heights scale with text | RC-10: let the bar labels wrap or switch to two lines, cap the bar height, compact the header at large text |
 | P20 | J3 2, J5 4 | Mortgage `KpiStrip` | 320 to 430 | Three KPI cards stack as full-width cards, a whole screen tall | R3 | gets in the way | RC-9: three cards fall back to one column | RC-9: two columns with the third full width, or a list (R3) |
 | P21 | J2 to J6 | `KpiCard` pairs on Home, Debt, Budget | 320, 375 | When one card's label wraps, the two figures sit at different heights | owner's eye (siblings uneven) | cosmetic | RC-9: no shared label height in a row | RC-9: align the figure row across a strip (grid rows or `align-items: end` on the value) |
 | P22 | J2 4, J2 5 | Pension and Take-home `KpiStrip` | 320, 375 | A single full-width KPI card with a much larger figure than the two-up cards on other pages | owner's eye | cosmetic | RC-9 | RC-9: one size of KPI figure on a phone |
 | P23 | J2 3, J4 4 | Budget hero, `apps/web/app/containers/budget/BudgetContainer.tsx` | all | The headline says "£125 left over" while its own sub-line gives a different figure (£262; £320 against £0 for the debt payer) | H11, owner's eye | gets in the way | The caption describes a different quantity in one sentence | Name the second figure for what it is, or move it out of the hero (wording is this lane's to set in phase 2) |
 | P24 | J2 3, J4 4 | Budget "Model a change to your budget" card | 320, 375 | The card's text is squeezed into a narrow column beside its button, about seven lines | owner's eye | cosmetic | Text and button share one row at every width | Stack the button under the text below `sm` |
-| P25 | J5 1 | Self Assessment "Income sources" header | 320, 375 | A second "Add income" button beside the heading squeezes the description to one word a line and splits a word at 320 | H13, owner's eye | gets in the way | `SectionHeader` with an action at phone width | Drop the duplicate action (the page has one primary) or stack it below the heading |
+| P25 | J5 1 | Self Assessment "Income sources" header | 320, 375; both | A second add button beside the heading squeezes the description to one letter a line at 320 and 375 | H13, owner's eye | gets in the way | `SectionHeader` with an action at phone width | Drop the duplicate action (the page has one primary) or stack it below the heading |
 | P26 | J2 7 | History chart | all | The net worth chart has no month labels on the x-axis | C7 | gets in the way | Ticks hidden at phone width | Show at most 4 short month ticks on a phone |
 | P27 | J2 1 | Home | all | Two notices show together ("Setup finished" with an illustration, and "November balances not recorded yet"), and the setup body repeats its heading | E8, O4 | gets in the way | Both rows render when both are true | Show one: the check-in row replaces the setup row once setup is finished |
 | P28 | J2 2, J4 2 | Add account and Add savings sheets | all | The two sheets lay out their buttons differently (stacked and enabled when empty, against side by side and disabled) | SG 12, owner's eye | cosmetic | Separate form footers | One sheet footer: primary full width above Cancel, same enabled rule |
@@ -111,6 +113,61 @@ Measured at every width and theme unless stated, so these need no fix:
 | P45 | J8 1 | Settings name fields, account menu items | all | First and last name inputs are 42px tall; account menu items are 40px (`AvatarMenu.styles.ts:52-58`) | A5 | cosmetic | `TextInput` md height; `AvatarMenu` has no min-height | `minHeight: "touch"` on coarse pointers for both, or build the account menu on `@repo/ui` Menu |
 | P46 | J2 1 | Home logo link | 320 | Only on Home, an underline sits under the logo like a current-page marker | owner's eye | cosmetic | Active link style on the logo | No current-page style on the logo |
 | P47 | J1 | `ConnectBankWizard`, `BankConnectionsList` | n/a | Imported by no page: dead code | owner's eye | cosmetic | Left from an earlier plan | Remove in phase 2 (no user effect) |
+| P48 | J5 1, J9 1 | Self Assessment bill card, `apps/web/app/containers/tax/TaxContainer.tsx` | 320; both | The "Add income or expense" button runs out of its card and off the screen, so the page scrolls sideways | A6, R1, WCAG 1.4.10 | gets in the way | A nowrap button with a long label inside a padded card | Let the button take the card's width and wrap its label, or shorten it to "Add income" with the menu naming both |
+| P49 | J2 9 (200% text) | `PageHeader` illustration slot | 375 light | At 200% text the 40px header illustration does not scale and overlaps the first letters of the description | A6 | gets in the way | Fixed-size illustration beside rem-sized text | RC-1: hide the header illustration at large text sizes or stack it above the description |
+| P50 | J9 1, J2 1 | `PageHeader` on pages with no description (empty Debt, Mortgage, Pension; Home) | 320 to 430 | The illustration sits alone on its own row under the h1, about 60px of space for nothing | owner's eye | cosmetic | RC-1: the illustration is placed in the description row | RC-1: no illustration row when there is no description |
+| P51 | J2 3 | Budget header actions | 320 | Two header buttons of different widths ("Add common budget items" wraps, "Edit budget" does not) squeeze the h1 and push the description a row lower | H13, owner's eye | gets in the way | RC-1 with two actions | One header action; the second moves into the page or a menu |
+| P52 | J9 1 | Empty Budget | all | Two calls to action with different names ("Set up your budget" in the header, "Add common entries" in the empty state), neither matching "Add common budget items" on the filled page | E4, H13 | gets in the way | Header action kept on the empty page | Header plus one `EmptyState` with one button, named as on the filled page (overlaps ux-batch-g, budget page) |
+| P53 | J2 | Header illustrations | all | Take-home, History, Settings and Retirement have no header illustration while the other pages do, and Accounts, Mortgage, Self Assessment and the error state share one wallet scene | SG 8.2, owner's eye | cosmetic | Partial adoption in PR 779 | Map one scene per section in the illustration map, or none on those pages by rule |
+| P54 | J9 1 | Empty Self Assessment | all | No `EmptyState`: a "Not set" bill card with an oversized button, unlike every other empty page | E4 | gets in the way | `TaxContainer` renders its full layout when empty | The page's `EmptyState` with one button |
+| P55 | J9 1 | Empty Budget and Debt | all | The MoneyHelper notice shows under the empty state | E4 | cosmetic | Notice rendered unconditionally | Leave the notice out of the empty page (fixed wording itself unchanged) |
+| P56 | J1 5 | Onboarding progress | all | The progress bar fills only visited steps, so after "Skip this step" step 4 shows segments 1 and 4 filled and 2 and 3 empty | owner's eye | gets in the way | Progress counts visited, not reached | Fill every step up to the current one |
+| P57 | J1 5 | Onboarding step change, `apps/web/app/features/onboarding/components/OnboardingFlow` | 375; both | Step 3 opens scrolled down with "Step 3 of 4" cut at the top | owner's eye (same class as O-1) | gets in the way | The window keeps its scroll position across steps | Scroll to the step heading and focus it on each step change; check with phone-nav-fixes, whose scroll fix may cover this |
+| P58 | J1 5 | Onboarding header and salary chips | 320 | "Set up Flump" wraps beside "Save and exit"; the example-salary chips wrap unevenly (one chip, then two) | owner's eye | cosmetic | Header and chip row widths | Shorter header row; chips in an even grid |
+| P59 | J6 2 | Retirement plan, `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx` | all | All ten inputs are 14px (iOS zoom) and 40px tall, set out as one long plain form with the headline "Not set" above it | R7, A5, R2 | gets in the way | Own inputs, not `CurrencyInput`, `PercentInput` or `SliderField` | Use the shared inputs (16px, 44px on touch); layout is ux-batch-g's shared number inputs work |
+| P60 | J1, J9 | Calculators on marketing and `/tools` (pay rise, balance transfer, overdraft, mortgage, 100k, section 24) | all | The calculators' value inputs are 14px (iOS zoom), and at 320 slider labels wrap to two or three lines beside the value pill | R7, owner's eye | gets in the way | RC-3 (`SliderField`) | RC-3 |
+| P61 | J2 4 | Take-home "The next £1,000" tab | 375 light | Opening the tab shifts the layout after it renders (CLS 0.2) | WCAG 2.2 2.4.11 related, owner's eye | gets in the way | Content sized after the tab's data or chart renders | Reserve the chart and result heights |
+| P62 | J3 2, J5 4 | Mortgage "Your details" and "Let properties" headers | 320, 375 | An Edit button beside the description squeezes it to three or four words a line | owner's eye | cosmetic | RC-11 | RC-11: below `sm` the action goes under the text |
+| P63 | J2 4, J6 2 | "What could your savings do?" and the retirement accounts card | 320, 375 | Text squeezed beside its button, as P24 | owner's eye | cosmetic | RC-11 | RC-11 (overlaps ux-batch-g, collapsible what-if zones) |
+| P64 | J2 3 | Housing (edit rent) sheet | all | A third footer pattern: a small left-aligned Save with no Cancel; its description "This updates your details." says little | SG 12, owner's eye | cosmetic | RC-12 | RC-12: one sheet footer; say what is saved ("Saves your rent to your details") |
+| P65 | J2 4 | Savings grouped list | 375 | Under the new grouped kinds the "Easy access savings" row shows no balance, only its name and a pencil | H6 | gets in the way | Row template for a grouped kind | Show the row's one figure |
+| P66 | J3 2 | Edit mortgage dialog | 320 | The "Saved on your mortgage account" helper wraps inside the half-width Years column and the account select truncates to "(£186…" | owner's eye | cosmetic | Two-column field row at 320 | One column below `sm` |
+| P67 | J2 3 | Budget suggested categories | all | The chip "Health & Fitness" uses an ampersand and title case | copy guide | cosmetic | Suggestion list text | "Health and fitness" |
+| P68 | J2 2 | "Connect AI" icon | all | A sparkle icon in the drawer and a robot icon in the account menu | SG 7, owner's eye | cosmetic | Two icon choices | One icon in `navConfig.ts` and `AvatarMenu` |
+| P69 | J2 3 | Budget bill-move notice | all | "Keep it here" is a borderless text button beside the outlined "Move to debts" | owner's eye (siblings uneven) | cosmetic | Mixed button variants | Both secondary, or a text pair |
+| P70 | J1 2 | Marketing menu, `apps/marketing/src/components/Header/Header.tsx` | all | The menu opens from the right while its button is top left (the same fault as O-4), and the page behind it is not scroll-locked | owner's eye (same class as O-4), R4 | gets in the way | Shares `NavDrawer` | Fix with O-4 in the shared drawer; check the phone-nav-fixes PR covers marketing |
+| P71 | J1 2 | Marketing menu items | 320 | "AI connection" wraps to two lines so that item is taller than the others; each subtitle repeats its label; no Contact link | owner's eye (one item spaced differently), N8 | cosmetic | Item copy and list | Shorter subtitles that add meaning; add Contact |
+| P72 | J1 1 | Marketing header, landscape | 812x375 | The hamburger shows beside the inline links, so the navigation appears twice; the hero card is fully below the first screen | owner's eye | cosmetic | Header breakpoints | Hide the menu button once inline links show; reduce hero top padding in short viewports |
+| P73 | J1 3 | Marketing page tops (Tools index against Pricing, Security, Contact); Preview section gap | 320 to 430 | The Tools heading starts about 90px down where others start at 115 to 130px; Preview has an extra-large gap before "Dashboard picture" | owner's eye (inconsistent padding) | cosmetic | Page-level spacing | One `MarketingSection` top spacing |
+| P74 | J1 1 | Marketing home | 375 | The FAQ heading is centred while every other heading is left-aligned; one feature card's icon tile is untinted while the others are tinted | owner's eye (siblings uneven) | cosmetic | `HomeFAQ`, feature cards | Left-align; tint all three or none |
+| P75 | J1 3, J9 2 | Tool guide rows and debt calculator rows, `packages/ui/src/tools/ToolGuide/ToolGuide.tsx`, `DebtSnowballCalculator.tsx` | 320, 375 | "Guide · 3 sections" fits one line but "Frequently asked questions · 3 questions" wraps; debt names wrap to three lines beside Edit and Remove | owner's eye | gets in the way | Row layouts at narrow widths | Count on its own line; actions under the name below `sm` |
+| P76 | J9 2 | Not-found and account-deleted cards | 320 | Card side insets differ (12px, 28px, 16px), and "Go to the Flump homepage" wraps and says "homepage" where the 404 says "home page" | SG 4, copy guide | cosmetic | Separate page wrappers | `PageBody` gutters; "Go to the home page" |
+| P77 | J1 3 | Tool card icon tiles and the 404 sun, dark | 375 dark | Dark brown tiles on a dark card barely show | A1 (non-text contrast 3:1 for meaningful icons) | cosmetic | Tint token in dark | Dark `tint.apricot` with more contrast against `surface.card` |
+| P78 | J10 | Accounts and Budget, landscape | 812x375 | In landscape the hero figure starts at 245px of 375, so the h1 and the headline are not both in the first view | H3 | cosmetic | Header 67px plus page header in a short viewport | Compact page header below 480px tall |
+
+## Overlaps with other lanes
+
+- **phone-nav-fixes** owns O-1 to O-5. Same class, to check once it merges: P12 and P13 (scroll
+  after closing an overlay and after Back), P57 (onboarding step opens scrolled down), P70 (the
+  marketing menu opens on the opposite side, as O-4), P14 (one drawer item styled differently, as
+  O-5) and P11 (drawer scroll lock).
+- **ux-batch-g** (sortable tables, shared number inputs, date pickers, chart tooltips, collapsible
+  what-if zones, budget page changes, info text behind info icons). Recorded here, not planned for
+  phase 2 unless that lane leaves them: P08, P59 and P60 (shared number inputs: the 16px input text
+  is the phone part), P26 (chart axes and readout), P24 and P63 (collapsible what-if zones), P23,
+  P33, P51 and P52 (budget page), P32 (info tips).
+
+## Out of scope, noted in passing
+
+- Pre-launch placeholders on marketing and in footers ("support@example.invalid", "Company number
+  00000000", "address to be confirmed") are known placeholders, not phone faults.
+- The signed-out web footer and the marketing footer differ in columns and wording (N8 asks for
+  help and security in the same place on every surface; both footers have them).
+- `/signup` answered 500 locally because the hosted sign-in is not configured in the test
+  environment; the page showed the normal error card. `/login` with the test-only dev session
+  signs straight in. Neither says anything about staging.
+- Marketing tinted bands: owner decision D16 allows sage and apricot section bands on marketing,
+  so the home page's bands are not a finding.
 
 ## Could not reach, and what needs a real device
 
