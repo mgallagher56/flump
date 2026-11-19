@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import {

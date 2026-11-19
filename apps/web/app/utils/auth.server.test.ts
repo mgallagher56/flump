@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, describe, expect, it, test, vi } from "vitest";
 import {
   authHeader,

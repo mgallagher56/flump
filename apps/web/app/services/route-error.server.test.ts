@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { BackendError, type BackendErrorKind, type RouteErrorPayload } from "./backend-error";
 import { actionErrorResponse, throwRouteError } from "./route-error.server";

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { assertProductionEnv, CLIENT_IP_KEY_ENV } from "./requiredEnv";
 

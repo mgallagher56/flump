@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // The global test setup stubs parts of react-router; the loader needs the real exports.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { UserProfileResponse } from "@flump/api-contract";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runWithRequestId } from "~/security/request-id.server";

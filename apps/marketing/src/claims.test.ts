@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { ADVICE_PATTERNS, findAdviceHits } from "@flump/finance-engine";

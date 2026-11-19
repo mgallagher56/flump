@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { BUSINESS_DETAILS, formatPrice } from "@flump/business-details";
 import { describe, expect, it } from "vitest";
 import { PRICE_NOT_SET, PRICING, pricingFrom } from "./pricing";

@@ -147,7 +147,6 @@ export default defineConfig(({ mode, isSsrBuild }) => {
               "./app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
               "./server/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
             ],
-            logHeapUsage: true,
             setupFiles: ["./test/setup-test-env.ts", "./test/vitest.setup.ts"],
             useAtomics: true,
           },

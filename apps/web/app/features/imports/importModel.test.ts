@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { EXISTING_ACCOUNTS, PREVIEW_ACCOUNTS, PREVIEW_ROWS } from "./fixtures";
 import {

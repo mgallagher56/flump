@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { CHART_BAR_CURSOR, CHART_LINE_CURSOR } from "@repo/ui";
 import { describe, expect, it } from "vitest";
 import {

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { ICON_TILE_DOMAIN_TONE } from "@repo/ui";
 import { describe, expect, it } from "vitest";
 import { SECTION_COLOURS, SECTION_TILE_TONE } from "./sectionColours";

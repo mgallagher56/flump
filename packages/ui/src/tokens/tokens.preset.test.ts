@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * How `@repo/ui` wires the shared tokens (`@flump/tokens`) into Panda, ships fonts and draws card
  * edges. The token values themselves are tested in packages/tokens.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Pins `@flump/format` (the formatter mobile will use) to what the web shows today through
  * `Money` and `Num`: every currency and percent row of the cross-platform fixture must come out

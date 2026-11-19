@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { AccountTypeEnum, isLiabilityType, toDisplayBalance } from "./utils";
 
 describe("isLiabilityType", () => {

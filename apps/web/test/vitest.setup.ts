@@ -1,4 +1,3 @@
-import { configure } from "@testing-library/react";
 import React, { type ReactNode } from "react";
 
 if (!global.window) global.window = {} as any;
@@ -68,7 +67,12 @@ vi.mock("react-i18next", () => ({
   },
 }));
 
-configure({ testIdAttribute: "id" });
+// Testing Library is only loaded where there is a DOM: files marked `@vitest-environment node`
+// render nothing, so they skip importing it (E41 P3).
+if (typeof document !== "undefined") {
+  const { configure } = await import("@testing-library/react");
+  configure({ testIdAttribute: "id" });
+}
 
 afterEach(() => {
   vi.clearAllMocks();

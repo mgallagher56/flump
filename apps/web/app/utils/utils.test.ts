@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { vi } from "vitest";
 
 import { noop, safeRedirect, useMatchesData, validateEmail } from "./utils";
