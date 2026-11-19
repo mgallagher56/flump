@@ -54,6 +54,17 @@ tx_004,04/02/2026,12:00:00,Direct Debit,Octopus Energy,,Bills,-110.00,GBP,-110.0
     expect(payment?.amountGbp).toBe(500);
   });
 
+  it("rounds a credit card statement's balance and amount owed to whole pence", () => {
+    // Two charges of £0.10 and £0.20 are £0.30 owed. In binary floating point 0.1 + 0.2 is
+    // 0.30000000000000004, so both figures must be rounded to pence: owed 0.3, net worth -0.3.
+    const csv = `Date,Description,Card Member,Account #,Amount
+07/02/2026,Shop A,Card Holder,12345,0.10
+08/02/2026,Shop B,Card Holder,12345,0.20`;
+    const { account } = parseBankCsvContent(csv, "amex-acc", "CREDIT_CARD");
+    expect(account.principalOwedGbp).toBe(0.3);
+    expect(account.netWorthImpactGbp).toBe(-0.3);
+  });
+
   it("parses a generic HSBC-style statement (date, description, amount, balance)", () => {
     const csv = `Date,Description,Amount,Balance
 09/02/2026,Co-op Food,-12.30,500.00
