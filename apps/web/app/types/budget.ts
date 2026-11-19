@@ -1,4 +1,3 @@
-import { applyBudgetEntryShare } from "@flump/finance-engine";
 import { seriesColor } from "@repo/ui";
 
 export type BudgetCategory = "housing" | "bills" | "expenses" | "savings" | "income" | string;
@@ -64,20 +63,6 @@ export function getDaysUntilContractEnd(contractEndDate?: string | null): number
   if (Number.isNaN(target)) return null;
   const now = new Date().getTime();
   return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
-}
-
-/** Normalise any entry to the user's monthly amount (a joint entry at their share) */
-export function toMonthly(entry: BudgetEntry): number {
-  const amount = Number(entry.amount);
-  const safeAmount = Number.isFinite(amount) ? amount : 0;
-  const monthly =
-    entry.frequency === "annual"
-      ? safeAmount / 12
-      : entry.frequency === "weekly"
-        ? safeAmount * (52 / 12)
-        : safeAmount;
-  // E34 C1: a joint entry counts at the user's share, as the engine's budget totals count it.
-  return entry.ownership === "joint" ? applyBudgetEntryShare(monthly, entry) : monthly;
 }
 
 export const BASE_CATEGORY_LABELS: Record<string, string> = {

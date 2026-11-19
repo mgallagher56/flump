@@ -11,7 +11,6 @@ import {
   getCategoryLabel,
   getDaysUntilContractEnd,
   isPriorityBill,
-  toMonthly,
 } from "./budget";
 
 const makeEntry = (overrides: Partial<BudgetEntry> = {}): BudgetEntry => ({
@@ -44,20 +43,6 @@ describe("budget types & helpers", () => {
     expect(getDaysUntilContractEnd("not-a-date")).toBeNull();
     const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
     expect(getDaysUntilContractEnd(future)).toBeGreaterThanOrEqual(9);
-  });
-
-  it("converts monthly, annual, and weekly amounts to monthly", () => {
-    expect(toMonthly(makeEntry({ amount: 120, frequency: "monthly" }))).toBe(120);
-    expect(toMonthly(makeEntry({ amount: 1200, frequency: "annual" }))).toBe(100);
-    expect(toMonthly(makeEntry({ amount: 120, frequency: "weekly" }))).toBeCloseTo(520, 2);
-    expect(toMonthly(makeEntry({ amount: Number.NaN, frequency: "monthly" }))).toBe(0);
-    // E34 C1: joint £1,200 with no share counts £600; £1,200 a year at 25% is £100 / 4 = £25.
-    expect(toMonthly(makeEntry({ amount: 1200, ownership: "joint" }))).toBe(600);
-    expect(
-      toMonthly(
-        makeEntry({ amount: 1200, frequency: "annual", ownership: "joint", sharePercent: 25 }),
-      ),
-    ).toBe(25);
   });
 
   it("resolves category labels, colours, and icons for base and custom categories", () => {

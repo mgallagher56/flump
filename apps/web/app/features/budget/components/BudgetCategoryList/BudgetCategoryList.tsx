@@ -1,10 +1,11 @@
+import { budgetRowMonthly } from "@flump/finance-engine";
 import { Button, Card, Icon, Money, PageSection, VisuallyHidden } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { ArrowRight, ChartPie, ChevronDown, Pencil, Plus } from "lucide-react";
 import { type FC, type ReactNode, useMemo } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import type { BudgetEntry } from "~/types/budget";
-import { CATEGORY_LABELS, toMonthly } from "~/types/budget";
+import { CATEGORY_LABELS } from "~/types/budget";
 import { categoryIcon } from "../../categoryIcons";
 import { INCOME_CATEGORY, isIncomeEntry } from "../../income";
 import {
@@ -100,7 +101,7 @@ export function rankCategories(
       // A linked line that is not set has no figure: never added as £0.
       const total = inCategory
         .filter((e) => e.notSet !== true)
-        .reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
+        .reduce((s, e) => s + Math.abs(budgetRowMonthly(e)), 0);
       return {
         index,
         row: {

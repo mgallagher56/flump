@@ -619,6 +619,8 @@ describe.each(BASIS_CASES)(
         userProfile: rows.userProfile,
         bankConnections: [],
         bankConnectionsEnabled: false,
+        // As the shared loader returns it: the page reads net worth from the picture.
+        picture,
       };
       const page = render(<AccountsContainer />);
       // R2-5: net worth is the accounts page's hero; its value is the paragraph after the label.

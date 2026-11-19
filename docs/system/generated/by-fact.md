@@ -1189,7 +1189,8 @@ Read by:
 - Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/linked-budget-rows.ts` (resolves the line from take-home or the housing payment, or marks it Not set)
 - Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/budget-totals.ts`
 - Budget: `apps/web/app/features/budget/linkedEntries.ts`
-- AI read tools: `packages/mcp/src/tools/read/common.ts`
+- Engine picture (headline figures): `packages/finance-engine/src/picture/load.ts` (the shared loader reads the whole budget row, link kind included, for every page and the AI tools)
+- AI read tools: `packages/mcp/src/tools/read/common.ts` (lists the picture's resolved rows; not resolved a second time)
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
 - Data export and erasure: `apps/backend/src/modules/privacy/account-export.service.ts` (a linked line exports with amount null and its link kind)
 
@@ -1247,7 +1248,7 @@ Read by:
 
 Other code paths that compute it:
 
-- `toMonthly` [duplicate] in `apps/web/app/types/budget.ts`
+- `Budget page rebuild from rows edited on the page` [wrapper] in `apps/web/app/containers/budget/BudgetContainer.tsx` (the same engine builder over the live rows, so an edit updates every figure at once; saved data comes from the shared loader)
 - `wizard totals` [duplicate] in `apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx`
 - `deriveOnboardingSummary` [duplicate] in `apps/web/app/features/onboarding/deriveOnboardingSummary.ts`
 
