@@ -1,22 +1,45 @@
 import type { Locator, Page } from "@playwright/test";
+import { allowRateLimitRetry, RATE_LIMIT_BINDING, RETRY_WINDOW_MS } from "./rate-limit-retry";
 
 /**
  * A call through the same-origin `/api` proxy from the signed-in page, as the web app makes it
  * from the browser (the proxy is a strict allow-list of those calls). Shared by the link tests.
  */
-export const pageApi = <T = unknown>(page: Page, path: string, method = "GET", body?: unknown) =>
-  page.evaluate(
-    async ({ path, method, body }) => {
-      const response = await fetch(`/api${path}`, {
+export const pageApi = async <T = unknown>(
+  page: Page,
+  path: string,
+  method = "GET",
+  body?: unknown,
+): Promise<T> => {
+  await allowRateLimitRetry(page);
+  return page.evaluate(
+    async ({ path, method, body, windowMs, binding }) => {
+      const init: RequestInit = {
         method,
         headers: { "Content-Type": "application/json", "x-flump-request": "1" },
         body: body === undefined ? undefined : JSON.stringify(body),
-      });
+      };
+      let response = await fetch(`/api${path}`, init);
+      // One retry after a 429 whose Retry-After is within one window (rate-limit-retry.ts).
+      const retryAfter = response.status === 429 ? response.headers.get("Retry-After") : null;
+      const waitMs =
+        retryAfter && /^\d{1,6}$/.test(retryAfter) ? Number(retryAfter) * 1000 + 500 : 0;
+      if (waitMs > 0 && waitMs <= windowMs) {
+        const report = (window as unknown as Record<string, unknown>)[binding] as (
+          method: string,
+          path: string,
+          waitMs: number,
+        ) => Promise<void>;
+        await report(method, path, waitMs);
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+        response = await fetch(`/api${path}`, init);
+      }
       if (!response.ok) throw new Error(`${method} ${path} ${response.status}`);
       return (await response.json()) as unknown;
     },
-    { path, method, body },
+    { path, method, body, windowMs: RETRY_WINDOW_MS, binding: RATE_LIMIT_BINDING },
   ) as Promise<T>;
+};
 
 export interface LinkAccount {
   id: string;
