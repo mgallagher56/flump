@@ -1,5 +1,46 @@
 # Changelog
 
+## [1.39.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.38.0...flump/backend-v1.39.0) (2026-11-19)
+
+
+### Features ✨
+
+* audit slice 3, one assembler (E40) ([27dd820](https://github.com/mgallagher56/flump/commit/27dd820db90cebfda3deace6528fa47830db70ee))
+* **backend:** E34 C1 a property follows its mortgage's share ([43ec7f1](https://github.com/mgallagher56/flump/commit/43ec7f1723d3bf7b7af291b1fa9b4d8b0e6684f8))
+* **budget:** link_kind column, linked lines resolved everywhere, unlink ([d71854b](https://github.com/mgallagher56/flump/commit/d71854b5d4c312ebabaa05fbae0d2f1dd20aee70))
+* **budget:** one stored value for take-home and housing, owner budget requests restored ([e8b3156](https://github.com/mgallagher56/flump/commit/e8b3156d6c7e79167e47f1aa31e2aa86ae6e9829))
+* E34 C1 joint marking and share on budget entries ([bb294ff](https://github.com/mgallagher56/flump/commit/bb294ff0d6c09f8913058f53aa6bb0d4acb1565e))
+* **laws:** one home per value check for the value map (system audit slice 1) ([94d4f32](https://github.com/mgallagher56/flump/commit/94d4f32225cfa7c71ea602a2ebb64239d03bff74))
+* **web:** UX Batch E: profile age and pay, check-in day, Self Assessment sources and allowances ([27a214f](https://github.com/mgallagher56/flump/commit/27a214fd447f051325d53cae3cc38b5f676ab5ed))
+
+
+### Bug Fixes 🪲
+
+* **backend:** keep migration helper functions private so TypeORM can boot ([a9d0fcf](https://github.com/mgallagher56/flump/commit/a9d0fcfd56500022eb79fa5420b52b5df37d4bac))
+* **budget:** a saved fact counts only through its linked line; offers say what is not in the budget ([bf67afb](https://github.com/mgallagher56/flump/commit/bf67afb5221511c22b3c6fad7cd60e70d1846fe1))
+* **budget:** one resolved budget for web, MCP and pack; one line per linked fact ([969adb7](https://github.com/mgallagher56/flump/commit/969adb7c453eba36ede008e7ac3960ddece65865))
+* **budget:** savings rows not essential by default; link take-home and housing by category and choice, never by name ([5d44c9f](https://github.com/mgallagher56/flump/commit/5d44c9f7964e3519533cbb80e8452cf51969aac9))
+* coordinator review of slice 2: one estimate rule, CH-4 rule, e2e scoping ([34443c8](https://github.com/mgallagher56/flump/commit/34443c89ab2ef7f0dc75ade4c175b8e6bfb4c7d9))
+* **imports:** the commit error names the row reference only ([820644c](https://github.com/mgallagher56/flump/commit/820644c6c4ff58b8f3ceb39eff553f5048aed4bf))
+* independent review follow-ups (property syncs only on a real share change, hand-worked housing test, negative rate as 0%, plaintext receipt note) ([70f6d17](https://github.com/mgallagher56/flump/commit/70f6d172d551c7bf6069953c594407f784506ddc))
+* independent review follow-ups for UX Batch E ([205351f](https://github.com/mgallagher56/flump/commit/205351f5b306ee0488652256babbf1609d9405c2))
+* independent review of slice 3 ([47b7e01](https://github.com/mgallagher56/flump/commit/47b7e014ce670fc55440d122c566e71595555495))
+* **laws:** apply the independent review to the value-map check ([94bf727](https://github.com/mgallagher56/flump/commit/94bf7279140f8445505134857a64b85219948965))
+* **pension,returns,ui:** pension pounds round-trip to the penny, recorded return majority rule, shared Breathing room wording, Space arming ([8303ad6](https://github.com/mgallagher56/flump/commit/8303ad69518c8075fff85c159f3e68f4b674aa3e))
+* security review follow-ups, hand-worked mortgage and lump sum tests, plan decision status lines ([773d5fd](https://github.com/mgallagher56/flump/commit/773d5fd6b006f3d6db0fa1cdf50a93df617ca1f9))
+* system audit slice 2, wrong numbers today (E40) ([41c0d08](https://github.com/mgallagher56/flump/commit/41c0d08c74ddfe720eb31625af1a795f8bc26be7))
+
+
+### Tests 🧪
+
+* **backend:** financial picture isolation test compares amounts as values ([82c0ad7](https://github.com/mgallagher56/flump/commit/82c0ad7feb5e2c8bbfcade5129f02d2270b4dfad))
+* pension rate reload and the two migrations against a real database ([2e8f693](https://github.com/mgallagher56/flump/commit/2e8f69349d92fd09a207c9e441883bcac08b90b0))
+
+
+### Miscellaneous 🙃
+
+* rebase onto slice 1: link_kind in the registry valueMap, views regenerated, DECISIONS round 10a ([6f94a82](https://github.com/mgallagher56/flump/commit/6f94a8235472548cd2e80f65d80e466d716a20d9))
+
 ## [1.38.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.37.0...flump/backend-v1.38.0) (2026-11-17)
 
 
