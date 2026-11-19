@@ -87,7 +87,7 @@ export interface BudgetSetupWizardProps {
   /** Pre-filled monthly take-home from user profile */
   monthlyTakeHome: number | null;
   /**
-   * The saved housing payment (the picture's `housingPayment`, the person's own cost), or null
+   * The saved housing payment (the picture's `housingPayment`, already the person's own share), or null
    * when none is saved. The totals resolve linked and engine-added lines with it, as the page does.
    */
   housingPayment?: HousingPayment | null;

@@ -88,11 +88,35 @@ describe("the mortgage payment saved on the mortgage account (L13, HM-1, BU-5)",
   });
 
   it("estimates a mortgage with no saved payment, as before", () => {
-    const fig = payment(facts({ housingStatus: "mortgage", monthlyHousingCost: 1250 }), [
-      mortgage(),
-    ]);
-    expect(fig?.paymentEstimated).toBe(true);
-    expect(fig?.monthly).not.toBe(1250);
+    // 200,000 at 4.5% over 300 months: r = 0.00375, 200,000 x r / (1 - (1 + r)^-300) = 1,111.66.
+    expect(
+      payment(facts({ housingStatus: "mortgage", monthlyHousingCost: 1250 }), [mortgage()]),
+    ).toEqual({ kind: "mortgage", monthly: 1111.66, paymentEstimated: true });
+  });
+
+  it("counts a saved payment on an interest-only mortgage, and never estimates one", () => {
+    const interestOnly = facts({
+      housingStatus: "mortgage",
+      monthlyHousingCost: 750,
+      mortgageType: "interest-only",
+    });
+    expect(payment(interestOnly, [mortgage({ monthlyContribution: 700 })])?.monthly).toBe(700);
+    // No saved payment: a repayment estimate would be wrong, so the profile's £750 is used.
+    expect(payment(interestOnly, [mortgage()])).toEqual({
+      kind: "mortgage",
+      monthly: 750,
+      paymentEstimated: false,
+    });
+  });
+
+  it("falls back to the profile figure when one mortgage can be neither read nor estimated", () => {
+    // The second mortgage has no saved payment and no rate: the whole figure is the profile's £1,250.
+    expect(
+      payment(facts({ housingStatus: "mortgage", monthlyHousingCost: 1250 }), [
+        mortgage({ monthlyContribution: 1000 }),
+        mortgage({ id: "m2", interestRate: null }),
+      ])?.monthly,
+    ).toBe(1250);
   });
 
   it("adds a saved payment and an estimate when there are two mortgages on the home", () => {

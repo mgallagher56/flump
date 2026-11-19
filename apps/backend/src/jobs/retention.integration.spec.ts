@@ -152,6 +152,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [account.id],
         );
       }
+      // The slice 5 before-image: one row past 90 days and one inside it.
+      const [rentLine]: { id: string }[] = await ds.query(
+        "INSERT INTO budget_entries (user_id, category, name, amount) VALUES ($1, 'housing', 'Rent', 0) RETURNING id",
+        [OWNER_ID],
+      );
+      for (const age of ["91 days", "89 days"]) {
+        await ds.query(
+          `INSERT INTO rent_share_backfill (budget_entry_id, old_ownership, backfilled_at) VALUES ($1, 'joint', ${ago(age)})`,
+          [rentLine?.id],
+        );
+      }
       for (const [i, age] of ["24 months 1 day", "23 months"].entries()) {
         await ds.query(
           `INSERT INTO user_profiles (user_id, last_active_at) VALUES ($1, ${ago(age)})`,
@@ -199,6 +210,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           student_loan_plan_backfill: 1,
           paye_salary_record_backfill: 1,
           account_home_backfill: 1,
+          rent_share_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });
