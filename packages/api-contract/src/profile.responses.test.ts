@@ -4,6 +4,7 @@ import {
   SendPasswordResetResponse,
   UpdateChecklistResponse,
   UpdateProfileResponse,
+  UserProfileDto,
   UserProfileResponse,
 } from "./domains/profile.js";
 import { checkAgainst } from "./validate.js";
@@ -24,33 +25,19 @@ const profile = {
   monthlyTakeHome: 2750.5,
   hasSecondIncome: false,
   secondIncomeMonthly: null,
-  hasRentalIncome: false,
-  rentalIncomeMonthly: null,
   hasMortgage: true,
   mortgageType: "repayment",
   propertyOwnershipShare: 50,
-  hasBuyToLet: false,
-  buyToLetCount: 1,
-  buyToLetPropertyValue: null,
-  buyToLetMonthlyRental: null,
-  buyToLetMortgageBalance: null,
-  buyToLetMortgageRate: null,
-  buyToLetMortgageType: "interest-only",
   pensionPercent: 5,
   pensionEmployerPercent: 3,
   isSalarySacrifice: false,
   isSalarySacrificeEmployerNi: false,
-  monthlySavingsTarget: 300,
-  savingsAllocationMode: "per_account",
-  savingsDefaultInterestRate: 4.25,
   setupChecklistCompletedSteps: ["profile"],
   setupChecklistDismissed: false,
   customBudgetCategories: [],
   enabledPages: ["accounts", "budget", "savings", "pension", "mortgage"],
   dashboardWidgets: ["accounts", "budget"],
   dashboardWidgetOrder: ["accounts", "budget"],
-  dashboardWidgetSizes: { accounts: "wide" },
-  dashboardWidgetConfig: {},
   hasResetFinancialData: false,
   onboardingCompleted: true,
   taxRegion: "SCOTLAND",
@@ -73,6 +60,30 @@ describe("profile response schemas", () => {
     ["UpdateChecklistResponse", UpdateChecklistResponse],
   ])("%s accepts the formatted profile", (_name, schema) => {
     expect(checkAgainst(schema, profile)).toEqual({ ok: true });
+  });
+
+  it("carries none of the retired profile fields (system audit slice 9 part two)", () => {
+    const retired = [
+      "hasRentalIncome",
+      "rentalIncomeMonthly",
+      "hasBuyToLet",
+      "buyToLetCount",
+      "buyToLetPropertyValue",
+      "buyToLetMonthlyRental",
+      "buyToLetMortgageBalance",
+      "buyToLetMortgageRate",
+      "buyToLetMortgageType",
+      "monthlySavingsTarget",
+      "savingsAllocationMode",
+      "savingsDefaultInterestRate",
+      "dashboardWidgetSizes",
+      "dashboardWidgetConfig",
+    ];
+    const shapeKeys = Object.keys(UserProfileDto.shape);
+    expect(retired.filter((key) => shapeKeys.includes(key))).toEqual([]);
+    expect(checkAgainst(UserProfileResponse, { ...profile, monthlySavingsTarget: 300 }).ok).toBe(
+      false,
+    );
   });
 
   it("rejects a decimal column that arrives as a string (B-05)", () => {

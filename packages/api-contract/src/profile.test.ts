@@ -17,7 +17,29 @@ import {
 import { ERROR_CODES } from "./errors.js";
 import { routes } from "./manifest.js";
 
+/** System audit slice 9 part two: profile fields nothing reads any more, ahead of the column drop. */
+const RETIRED_PROFILE_FIELDS: Record<string, unknown> = {
+  hasRentalIncome: true,
+  rentalIncomeMonthly: 650,
+  hasBuyToLet: true,
+  buyToLetCount: 1,
+  buyToLetPropertyValue: 165000,
+  buyToLetMonthlyRental: 875,
+  buyToLetMortgageBalance: 92000,
+  buyToLetMortgageRate: 5.1,
+  buyToLetMortgageType: "interest-only",
+  monthlySavingsTarget: 300,
+  savingsAllocationMode: "per_account",
+  savingsDefaultInterestRate: 4.25,
+  dashboardWidgetSizes: { accounts: "wide" },
+  dashboardWidgetConfig: {},
+};
+
 describe("UpdateProfileRequest", () => {
+  it.each(Object.entries(RETIRED_PROFILE_FIELDS))("rejects the retired field %s", (key, value) => {
+    expect(UpdateProfileRequest.safeParse({ [key]: value }).success).toBe(false);
+  });
+
   it("accepts https and image data-URL avatars, rejects other schemes", () => {
     const avatar = (avatarUrl: string) => UpdateProfileRequest.safeParse({ avatarUrl }).success;
     expect(avatar("https://example.com/a.png")).toBe(true);
@@ -56,7 +78,7 @@ describe("UpdateProfileRequest", () => {
     expect(parse({ pensionPercent: 3.22064 })).toBe(false);
     expect(parse({ pensionEmployerPercent: 100.0001 })).toBe(false);
     // Other percentages keep the two-place rule.
-    expect(parse({ savingsDefaultInterestRate: 3.2206 })).toBe(false);
+    expect(parse({ propertyOwnershipShare: 33.3333 })).toBe(false);
   });
 
   it("accepts a check-in day from 1 to 31 or null, and rejects 0, 32 and fractions", () => {

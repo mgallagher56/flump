@@ -255,6 +255,17 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("PATCH /user-profile");
   });
 
+  it("PATCH /user-profile: a retired profile field is a 400, and GET carries none of them", async () => {
+    const res = await h.call("patch", "/user-profile", h.tokens.a, { monthlySavingsTarget: 300 });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("validation_failed");
+    const got = await h.call("get", "/user-profile", h.tokens.a);
+    expect(got.status).toBe(200);
+    for (const key of ["hasRentalIncome", "monthlySavingsTarget", "dashboardWidgetSizes"]) {
+      expect(got.body).not.toHaveProperty(key);
+    }
+  });
+
   it("PATCH /user-profile/checklist: steps are per user, probe body rejected", async () => {
     const a = await h.call("patch", "/user-profile/checklist", h.tokens.a, {
       step: "connect-bank",

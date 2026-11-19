@@ -78,6 +78,34 @@ describe("web payloads in enforce mode", () => {
     delete process.env.CONTRACT_ENFORCE_GROUPS;
   });
 
+  it("rejects PATCH /user-profile with a retired profile field (system audit slice 9 part two)", () => {
+    const retired: Record<string, unknown> = {
+      hasRentalIncome: true,
+      rentalIncomeMonthly: 650,
+      hasBuyToLet: true,
+      buyToLetCount: 1,
+      buyToLetPropertyValue: 165000,
+      buyToLetMonthlyRental: 875,
+      buyToLetMortgageBalance: 92000,
+      buyToLetMortgageRate: 5.1,
+      buyToLetMortgageType: "interest-only",
+      monthlySavingsTarget: 300,
+      savingsAllocationMode: "per_account",
+      savingsDefaultInterestRate: 4.25,
+      dashboardWidgetSizes: { accounts: "wide" },
+      dashboardWidgetConfig: {},
+    };
+    for (const [key, value] of Object.entries(retired)) {
+      let status: number | undefined;
+      try {
+        passes("PATCH", "/user-profile", { [key]: value });
+      } catch (err) {
+        status = (err as { getStatus?: () => number }).getStatus?.();
+      }
+      expect({ key, status }).toEqual({ key, status: 400 });
+    }
+  });
+
   it("rejects a malformed id on an enforced route", () => {
     expect(() => passes("PATCH", "/accounts/:id", { balance: 1 }, { id: "nope" })).toThrow();
   });
