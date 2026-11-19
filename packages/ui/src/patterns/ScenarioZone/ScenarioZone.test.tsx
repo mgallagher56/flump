@@ -8,6 +8,13 @@ import {
   ScenarioZone,
 } from "./ScenarioZone";
 
+/** Counts how often it mounts, to show a closed zone mounts nothing. */
+let toolMounts = 0;
+const CountedTool = () => {
+  toolMounts += 1;
+  return <input aria-label="Extra each month" defaultValue="" />;
+};
+
 describe("ScenarioZone", () => {
   it("is a section labelled by its heading, defaulting to 'Model a change'", () => {
     render(<ScenarioZone>content</ScenarioZone>);
@@ -251,6 +258,25 @@ describe("ScenarioZone", () => {
       </ScenarioZone>
     );
 
+    it("mounts its tools on first open, not before, and keeps them mounted after closing", () => {
+      toolMounts = 0;
+      render(
+        <ScenarioZone basis="Basis" collapsible showLabel="Show what-if">
+          <CountedTool />
+        </ScenarioZone>,
+      );
+      // Closed: nothing mounted, so a closed zone runs no effects.
+      expect(toolMounts).toBe(0);
+      expect(screen.queryByLabelText("Extra each month")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Show what-if" }));
+      const input = screen.getByLabelText("Extra each month") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "200" } });
+      fireEvent.click(screen.getByRole("button", { name: "Hide what-if" }));
+      fireEvent.click(screen.getByRole("button", { name: "Show what-if" }));
+      // Still the same input, with what was typed.
+      expect((screen.getByLabelText("Extra each month") as HTMLInputElement).value).toBe("200");
+    });
+
     it("is not collapsible by default: no disclosure button, content shown", () => {
       render(<ScenarioZone basis="Basis">Tool inputs</ScenarioZone>);
       expect(screen.queryByTestId("scenario-zone-toggle")).toBeNull();
@@ -287,7 +313,8 @@ describe("ScenarioZone", () => {
       const panel = document.getElementById(hide.getAttribute("aria-controls") ?? "");
       expect(panel?.hidden).toBe(false);
       fireEvent.click(hide);
-      expect(screen.queryByText("Tool inputs")).toBeNull();
+      // Closed again, the tools stay mounted but hidden, so nothing typed is lost.
+      expect(panel?.hidden).toBe(true);
       expect(screen.getByRole("button", { name: "Show what-if: change your plan" })).toBeTruthy();
     });
 

@@ -198,7 +198,7 @@ const SelfAssessmentPage: FC<{
   // Null while the salary is not known: the panels show the "add your salary" prompt, and the
   // calculation counts it as none.
   const [payeSalary, setPayeSalary] = useState<number | null>(profileSalary);
-  const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number>(profileShare);
+  const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number | null>(profileShare);
   // A saved figure that changes (a save here or elsewhere, then revalidation) replaces the field,
   // unless the user has an unsaved edit in it.
   const [seeded, setSeeded] = useState({ salary: profileSalary, share: profileShare });
@@ -241,7 +241,12 @@ const SelfAssessmentPage: FC<{
       // calculateUKTax is strict and throws for unsupported years (E22).
       if (!isSupportedUkTaxYear(year)) continue;
       const inputs = estimateInputsFor(
-        { employmentType, annualSalary: payeSalary, propertyOwnershipShare },
+        {
+          employmentType,
+          annualSalary: payeSalary,
+          // An empty share field estimates with the saved share until a new one is typed.
+          propertyOwnershipShare: propertyOwnershipShare ?? profileShare,
+        },
         initialRecords,
         year,
       );
@@ -257,7 +262,14 @@ const SelfAssessmentPage: FC<{
       }
     }
     return { calculatedTaxYearsData: results, missingByYear: missing };
-  }, [availableYears, initialRecords, payeSalary, propertyOwnershipShare, employmentType]);
+  }, [
+    availableYears,
+    initialRecords,
+    payeSalary,
+    propertyOwnershipShare,
+    profileShare,
+    employmentType,
+  ]);
 
   const activeYearData: TaxCalculationResult | undefined = calculatedTaxYearsData[selectedTaxYear];
   // The fact to add when the selected year's estimate cannot be worked out.
@@ -271,7 +283,9 @@ const SelfAssessmentPage: FC<{
         intent: "update-profile",
         // Empty saves no salary (null); a typed 0 saves 0.
         annualSalary: payeSalary === null ? "" : payeSalary.toString(),
-        propertyOwnershipShare: propertyOwnershipShare.toString(),
+        // Empty leaves the saved share as it was (never saved as 0).
+        propertyOwnershipShare:
+          propertyOwnershipShare === null ? "" : propertyOwnershipShare.toString(),
         ...versionField(userProfile, PROFILE_VERSION_FIELD),
       },
       { method: "POST" },

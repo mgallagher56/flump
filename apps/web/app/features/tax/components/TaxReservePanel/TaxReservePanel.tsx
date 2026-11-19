@@ -45,8 +45,9 @@ export interface TaxReservePanelProps {
   /** Yearly salary, 0 when that is the saved figure, null when it is not known. */
   payeSalary: number | null;
   onPayeSalaryChange: (value: number | null) => void;
-  ownershipSharePct: number;
-  onOwnershipShareChange: (value: number) => void;
+  /** The share typed, or null while the field is empty (not set, never 0). */
+  ownershipSharePct: number | null;
+  onOwnershipShareChange: (value: number | null) => void;
   onSave: () => void;
   saving: boolean;
 }
@@ -122,7 +123,7 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
                   min={0}
                   value={ownershipSharePct}
                   onValueChange={(next) =>
-                    onOwnershipShareChange(next === null ? 0 : Math.min(100, Math.max(0, next)))
+                    onOwnershipShareChange(next === null ? null : Math.min(100, Math.max(0, next)))
                   }
                 />
               )}

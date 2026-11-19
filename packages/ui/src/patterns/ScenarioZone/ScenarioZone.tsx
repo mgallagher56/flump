@@ -130,6 +130,10 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   const panelId = useId();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const isOpen = !collapsible || (open ?? uncontrolledOpen);
+  // The tools mount the first time the zone opens, not before (so a closed zone runs nothing),
+  // and stay mounted after, hidden while closed, so what was typed survives closing it.
+  const [everOpened, setEverOpened] = useState(isOpen);
+  if (isOpen && !everOpened) setEverOpened(true);
   const toggle = () => {
     const next = !isOpen;
     if (open === undefined) setUncontrolledOpen(next);
@@ -231,7 +235,7 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
       </div>
       {collapsible ? (
         <div className={slots.panel} hidden={!isOpen} id={panelId}>
-          {isOpen ? content : null}
+          {everOpened ? content : null}
         </div>
       ) : (
         content

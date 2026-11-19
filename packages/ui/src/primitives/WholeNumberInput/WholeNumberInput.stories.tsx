@@ -36,9 +36,9 @@ const play: Story["play"] = async ({ canvasElement }) => {
   await userEvent.type(input, "67");
   await expect(input).toHaveValue("67");
   await userEvent.clear(input);
+  // A digit that would go above the maximum (100) is not taken.
   await userEvent.type(input, "140");
-  await userEvent.tab();
-  await expect(input).toHaveValue("100");
+  await expect(input).toHaveValue("14");
 };
 
 export const Light: Story = { render: () => <Age />, globals: { theme: "light" }, play };

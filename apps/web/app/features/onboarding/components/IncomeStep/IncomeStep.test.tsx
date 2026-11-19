@@ -117,6 +117,15 @@ describe("<IncomeStep />", () => {
     expect(screen.queryByText(AGE_ERROR)).toBeNull();
   });
 
+  it("keeps the age bounds: a digit that would go above the maximum is not taken", () => {
+    setup();
+    const age = screen.getByRole("textbox", { name: /your age/i }) as HTMLInputElement;
+    fireEvent.change(age, { target: { value: "12" } });
+    // AGE_MAX is a two- or three-digit age, so a fourth digit always goes above it.
+    fireEvent.change(age, { target: { value: "1234" } });
+    expect(age.value).toBe("12");
+  });
+
   it("is a required step: Next only, with no skip and no Back", () => {
     const onNext = vi.fn();
     setup({ onNext });

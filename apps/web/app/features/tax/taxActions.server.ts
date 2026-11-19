@@ -49,9 +49,14 @@ export const taxAction = async (args: ActionFunctionArgs) => {
         ifMatch: ifMatchFromForm(formData, PROFILE_VERSION_FIELD),
         body: {
           annualSalary: annualSalary ? roundTo2dp(Number.parseFloat(annualSalary as string)) : null,
-          propertyOwnershipShare: propertyOwnershipShare
-            ? roundTo2dp(Number.parseFloat(propertyOwnershipShare as string))
-            : 100.0,
+          // An empty share is not sent, so the saved share stays as it was: never 0 or 100 invented.
+          ...(propertyOwnershipShare
+            ? {
+                propertyOwnershipShare: roundTo2dp(
+                  Number.parseFloat(propertyOwnershipShare as string),
+                ),
+              }
+            : {}),
         },
       });
     } else if (intent === "create-transaction") {

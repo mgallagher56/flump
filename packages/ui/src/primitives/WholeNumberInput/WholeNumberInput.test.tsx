@@ -38,14 +38,44 @@ describe("WholeNumberInput", () => {
     expect(onValueChange).not.toHaveBeenCalled();
   });
 
-  it("clamps to min and max on blur", () => {
+  it("does not take a digit that would go above max, and reports it", () => {
     const onValueChange = vi.fn();
-    render(<WholeNumberInput aria-label="Age" max={120} min={16} onValueChange={onValueChange} />);
+    const onInvalid = vi.fn();
+    render(
+      <WholeNumberInput
+        aria-label="Age"
+        max={120}
+        min={16}
+        onInvalid={onInvalid}
+        onValueChange={onValueChange}
+      />,
+    );
     const input = screen.getByLabelText("Age");
+    fireEvent.change(input, { target: { value: "15" } });
     fireEvent.change(input, { target: { value: "150" } });
+    expect((input as HTMLInputElement).value).toBe("15");
+    expect(onInvalid).toHaveBeenCalledWith("150");
+    expect(onValueChange).toHaveBeenLastCalledWith(15);
+  });
+
+  it("reports a value below min on blur and keeps what was typed", () => {
+    const onValueChange = vi.fn();
+    const onInvalid = vi.fn();
+    render(
+      <WholeNumberInput
+        aria-label="Age"
+        max={120}
+        min={16}
+        onInvalid={onInvalid}
+        onValueChange={onValueChange}
+      />,
+    );
+    const input = screen.getByLabelText("Age");
+    fireEvent.change(input, { target: { value: "12" } });
     fireEvent.blur(input);
-    expect((input as HTMLInputElement).value).toBe("120");
-    expect(onValueChange).toHaveBeenLastCalledWith(120);
+    expect((input as HTMLInputElement).value).toBe("12");
+    expect(onInvalid).toHaveBeenCalledWith("12");
+    expect(onValueChange).toHaveBeenLastCalledWith(12);
   });
 
   it("asks phones for the number keypad", () => {
