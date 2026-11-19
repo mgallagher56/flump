@@ -12,7 +12,9 @@ const [everyday, isa, mortgage, card] = CHECK_IN_ACCOUNTS.map((a) => a.id) as [
   string,
 ];
 
-const setup = (opts: { details?: AccountDetailInput[]; ok?: boolean[] } = {}) => {
+const setup = (
+  opts: { details?: AccountDetailInput[]; ok?: boolean[]; checkedIn?: boolean } = {},
+) => {
   const results = [...(opts.ok ?? [])];
   const onSave = vi.fn(async (_args: SaveSnapshotArgs) => results.shift() ?? true);
   const hook = renderHook(
@@ -23,6 +25,7 @@ const setup = (opts: { details?: AccountDetailInput[]; ok?: boolean[] } = {}) =>
         month: "2026-11",
         open,
         onSave: onSave as SaveSnapshot,
+        checkedIn: opts.checkedIn,
       }),
     { initialProps: { open: true } },
   );
@@ -108,14 +111,16 @@ describe("useCheckIn", () => {
     await waitFor(() => expect(result.current.finished).toBe(true));
   });
 
-  it("opens on the summary when every account already has a figure this month", () => {
+  it("opens on the summary only when the month is checked in, not on rows alone (slice 4, CH-3)", () => {
     const all = CHECK_IN_ACCOUNTS.map((a) => ({
       accountId: a.id,
       year: 2026,
       month: 11,
       value: 1,
     }));
-    const { result } = setup({ details: [...CHECK_IN_DETAILS, ...all] });
+    // Every account has a row this month, but no check-in was finished: the steps open.
+    expect(setup({ details: [...CHECK_IN_DETAILS, ...all] }).result.current.finished).toBe(false);
+    const { result } = setup({ details: [...CHECK_IN_DETAILS, ...all], checkedIn: true });
     expect(result.current.finished).toBe(true);
     act(() => result.current.reopen());
     expect(result.current.finished).toBe(false);

@@ -71,6 +71,8 @@ export const AlreadyRecorded: Story = {
         value: a.balance,
       })),
     ],
+    // The summary opens only for a finished check-in (snapshot_checkins), not on rows alone.
+    checkedIn: true,
   },
   play: async () => {
     const body = within(document.body);

@@ -1,16 +1,17 @@
 import { expect, test } from "@playwright/test";
 import { openAddAccount, saveAddAccount } from "../../support/add-account-dialog";
 import { AUTH_STATE } from "../../support/auth";
-import { listAccounts } from "../../support/links-api";
+import { backendCall } from "../../support/backend";
+import { accountsPageRow, listAccounts, pageApi } from "../../support/links-api";
 import { applyPersona } from "../../support/personas";
 
 test.use({ storageState: AUTH_STATE });
 
-// L10, L08, L19 and L20 (system audit slice 4) in one sequence on the renter persona, who has no
+// L10, L08, L19, L20 and L18 (system audit slice 4) in one sequence on the renter persona, who has no
 // property, so the Accounts dialog offers the value field. One persona switch and no deletes:
 // account deletes and resets share the backend's "destructive" limit of 10 an hour, and the next
 // spec's persona switch clears what this one adds. The link project runs one test at a time.
-test("L10 L08 L19 L20 mortgages added on Accounts are what the Mortgage page reads", async ({
+test("L10 L08 L19 L20 L18 mortgages added on Accounts are what the Mortgage page reads", async ({
   page,
 }) => {
   await page.goto("/app");
@@ -76,4 +77,30 @@ test("L10 L08 L19 L20 mortgages added on Accounts are what the Mortgage page rea
   await expect(saved).not.toContainText("£150,000");
   await page.getByRole("tab", { name: "Buy to let" }).click();
   await expect(saved).toContainText("£150,000");
+
+  // L18 as decision 14 option B restates it: a property and its mortgage are linked; the
+  // mortgage's share is copied to the property when the pair is set up, and either may then differ
+  // (unequal owners with a joint mortgage). Before slice 4 there was no link, and a mortgage's share
+  // overwrote its property's.
+  const pair = await backendCall<{ mortgage: { id: string }; property: { id: string } }>(
+    "/accounts/mortgage-with-property",
+    "POST",
+    {
+      mortgage: { name: "L18 mortgage", balance: 100000, ownership: "joint", sharePercent: 40 },
+      property: { name: "L18 home", balance: 200000 },
+    },
+  );
+  accounts = await listAccounts(page);
+  const pairProperty = () => accounts.find((a) => a.id === pair.property.id);
+  const pairMortgage = () => accounts.find((a) => a.id === pair.mortgage.id);
+  expect(pairMortgage()?.linkedAccountId).toBe(pair.property.id);
+  expect(pairProperty()).toMatchObject({ ownership: "joint", sharePercent: 40 });
+  await expect(await accountsPageRow(page, "L18 home")).toContainText("Joint, 40%");
+  await expect(await accountsPageRow(page, "L18 mortgage")).toContainText("Joint, 40%");
+  await pageApi(page, `/accounts/${pair.mortgage.id}`, "PATCH", { sharePercent: 50 });
+  accounts = await listAccounts(page);
+  expect(pairMortgage()?.sharePercent).toBe(50);
+  expect(pairProperty()?.sharePercent).toBe(40);
+  await expect(await accountsPageRow(page, "L18 mortgage")).toContainText("Joint, 50%");
+  await expect(await accountsPageRow(page, "L18 home")).toContainText("Joint, 40%");
 });

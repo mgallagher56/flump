@@ -1151,8 +1151,8 @@ describe("system audit slice 4: a new account records its first history row (dec
         balance: 300,
       });
       expect(details.rows.map((r) => [r.accountId, r.year, r.month, r.value, r.source])).toEqual([
-        [saver.id, 2026, 10, 5000, "manual"],
-        [card.id, 2026, 10, -300, "manual"],
+        [saver.id, 2026, 10, 5000, "backfill"],
+        [card.id, 2026, 10, -300, "backfill"],
       ]);
     } finally {
       vi.useRealTimers();

@@ -21,6 +21,11 @@ export interface UseCheckInArgs {
   month: MonthKey;
   open: boolean;
   onSave: SaveSnapshot;
+  /**
+   * Whether the month's check-in was finished (the latest `snapshot_checkins` month is this one or
+   * later). Only then does the check-in open on its summary.
+   */
+  checkedIn?: boolean;
 }
 
 export interface CheckInController {
@@ -79,6 +84,7 @@ export function useCheckIn({
   month,
   open,
   onSave,
+  checkedIn = false,
 }: UseCheckInArgs): CheckInController {
   const steps = useMemo(
     () => buildCheckInSteps(accounts, accountDetails, month),
@@ -113,16 +119,18 @@ export function useCheckIn({
     [answers, pending],
   );
 
-  // On opening: resume at the first step with nothing recorded this month, or show the summary
-  // when every account already has a figure.
+  // On opening: resume at the first step with nothing recorded this month. The summary ("November
+  // is checked in.") opens only when the month's check-in was finished (`snapshot_checkins`, system
+  // audit slice 4): a history row alone (a new account, a balance edit) is not a check-in (CH-3).
   useEffect(() => {
     if (!open) return;
     const firstOpen = steps.findIndex((s) => !hasFigure(s));
     setEditing({});
     setFailed({});
     setIndex(firstOpen === -1 ? 0 : firstOpen);
-    setFinished(steps.length > 0 && firstOpen === -1);
-    setOpenedFinished(steps.length > 0 && firstOpen === -1);
+    const done = steps.length > 0 && firstOpen === -1 && checkedIn;
+    setFinished(done);
+    setOpenedFinished(done);
   }, [open]);
 
   // Once the last open step is saved, the summary shows.

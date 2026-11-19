@@ -361,6 +361,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
           accountDetails={accountDetails}
           accounts={accounts}
           basis={basis}
+          checkedIn={currentMonthRecorded}
           currentMonth={currentMonth}
           key={sheet}
           mode={sheet}

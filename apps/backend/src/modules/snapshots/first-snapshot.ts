@@ -7,9 +7,7 @@ import { storedBalance } from "./stored-balance";
 /**
  * E30 D8: the first onboarding data is the first snapshot. Writes one `source=onboarding` row per
  * account for the current Europe/London month, only where the month has no row yet, so it never
- * replaces a value the user or a sync has already recorded. Onboarding asked for every balance, so
- * the month also counts as checked in (`snapshot_checkins`, which the reminder reads; system
- * audit slice 4). Returns the number of rows written.
+ * replaces a value the user or a sync has already recorded. Returns the number of rows written.
  */
 export async function writeOnboardingSnapshot(
   accountRepo: Repository<Account>,
@@ -40,10 +38,5 @@ export async function writeOnboardingSnapshot(
       }),
     );
   if (rows.length > 0) await detailRepo.save(rows);
-  await detailRepo.manager.query(
-    `INSERT INTO "snapshot_checkins" ("user_id", "month") VALUES ($1, $2)
-     ON CONFLICT ("user_id", "month") DO NOTHING`,
-    [userId, `${year}-${String(month).padStart(2, "0")}`],
-  );
   return rows.length;
 }

@@ -113,6 +113,24 @@ describe("buildCheckInSteps", () => {
   const steps = buildCheckInSteps(accounts, details, MONTH);
   const byId = (id: string) => steps.find((s) => s.accountId === id);
 
+  it("leaves a step open when this month holds only the balance an account was added with (slice 4, CH-3)", () => {
+    // Account created this month at 500: its first row has source "backfill". A typed answer
+    // ("manual") this month is a check-in answer and closes the step.
+    const added = [{ id: "N", name: "New saver", type: "Saving", balance: 500 }];
+    const asAdded = buildCheckInSteps(
+      added,
+      [{ accountId: "N", year: 2026, month: 11, value: 500, source: "backfill" }],
+      MONTH,
+    );
+    expect(asAdded[0]?.recorded).toBeNull();
+    const answered = buildCheckInSteps(
+      added,
+      [{ accountId: "N", year: 2026, month: 11, value: 500, source: "manual" }],
+      MONTH,
+    );
+    expect(answered[0]?.recorded).toEqual({ value: 500, source: "manual" });
+  });
+
   it("orders day-to-day money first and slow-moving balances last", () => {
     expect(steps.map((s) => s.name)).toEqual([
       "Current account",
@@ -396,11 +414,15 @@ describe("done steps", () => {
   });
 
   it("a recorded row with no known source reads as No change when it repeats the saved balance", () => {
-    const old = buildCheckInSteps(
-      accounts,
-      [row("C", 11, 3400, "backfill"), row("V", 11, 7500, "backfill")],
-      MONTH,
-    );
+    // No source at all (a row from before sources were stored). A `backfill` row this month is
+    // the balance an account was added with, and leaves the step open (see buildCheckInSteps).
+    const unknown = (id: string, value: number): AccountDetailInput => ({
+      accountId: id.toLowerCase(),
+      year: 2026,
+      month: 11,
+      value,
+    });
+    const old = buildCheckInSteps(accounts, [unknown("C", 3400), unknown("V", 7500)], MONTH);
     const c = old.find((s) => s.accountId === "c")!;
     expect(doneKind(c, stepFigure(c, null)!)).toBe("noChange");
     const v = old.find((s) => s.accountId === "v")!;

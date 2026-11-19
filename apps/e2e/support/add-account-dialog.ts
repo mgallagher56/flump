@@ -5,7 +5,8 @@ import { waitForHydration } from "./page";
 export async function openAddAccount(page: Page): Promise<Locator> {
   await page.goto("/app/accounts");
   await waitForHydration(page);
-  await page.getByRole("button", { name: "Add account", exact: true }).first().click();
+  // A link before hydration (#701), as the interaction flows open it.
+  await page.getByRole("main").getByRole("link", { name: "Add account", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Add account" });
   await expect(dialog).toBeVisible();
   return dialog;

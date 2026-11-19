@@ -24,7 +24,7 @@ test("L05 a new account has a History point for this month with no check-in", as
   const account = (await listAccounts(page)).find((a) => a.name === "L05 new saver");
   const [year, month] = thisMonth.split("-").map(Number);
   expect(account?.details).toEqual([
-    expect.objectContaining({ year, month, value: 5000, source: "manual" }),
+    expect.objectContaining({ year, month, value: 5000, source: "backfill" }),
   ]);
 
   // History has its first recorded month: this month, at the new account's £5,000. With no
