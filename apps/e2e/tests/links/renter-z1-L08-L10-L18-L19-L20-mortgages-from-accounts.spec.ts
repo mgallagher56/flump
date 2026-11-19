@@ -2,11 +2,12 @@ import { expect, test } from "@playwright/test";
 import { openAddAccount, saveAddAccount } from "../../support/add-account-dialog";
 import { AUTH_STATE } from "../../support/auth";
 import { backendCall } from "../../support/backend";
+import { linkSpecHeaders } from "../../support/client-address";
 import { accountsPageRow, accountsRowOnPage, listAccounts, pageApi } from "../../support/links-api";
 import { applyPersona } from "../../support/personas";
-import { waitOutRateWindow } from "../../support/rate-window";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 // Named "renter-z1-" so it runs last, after the other renter specs (files run in name order, one
 // at a time): the user is already the renter, so it spends no reset on a persona switch.
@@ -18,8 +19,6 @@ test.use({ storageState: AUTH_STATE });
 test("L10 L08 L19 L20 L18 mortgages added on Accounts are what the Mortgage page reads", async ({
   page,
 }) => {
-  // Many calls follow: start in a fresh minute of the request limits (see waitOutRateWindow).
-  await waitOutRateWindow();
   await page.goto("/app");
   await applyPersona(page, "renter");
 

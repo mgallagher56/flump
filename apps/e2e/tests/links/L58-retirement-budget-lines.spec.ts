@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 // L58 (PP-6): the Retirement page reads the saved budget rows, so "From budget lines" lists them
 // with no retyping. Read only: nothing is changed, so nothing needs putting back.

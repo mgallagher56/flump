@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
-import { waitOutRateWindow } from "../../support/rate-window";
 import { api, entryNamed, pounds } from "./budget-links.helpers";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 // L14 (HM-2, BU-4): once the person links their rent line to the saved rent, a rent change in
 // their details changes the budget's housing row and left over on Budget and the Dashboard.
@@ -13,9 +14,6 @@ test.use({ storageState: AUTH_STATE });
 test("L14 a rent change reaches the linked housing line, Budget and Dashboard", async ({
   page,
 }) => {
-  // Switching persona is a burst of calls after the homeowner specs: start in a fresh minute of
-  // the request limits (see waitOutRateWindow).
-  await waitOutRateWindow();
   await page.goto("/app");
   // The first renter spec: the homeowner specs ran before it, so this is the project's one persona
   // switch (one reset against the backend's 10-an-hour destructive limit). Every renter spec is

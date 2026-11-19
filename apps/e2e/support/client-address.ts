@@ -1,3 +1,6 @@
+import { readdirSync } from "node:fs";
+import { basename, join } from "node:path";
+
 /**
  * The address each smoke project's browser reports to the web server, as the Railway edge does in
  * production: the last `X-Forwarded-For` entry, which the web server trusts (`trust proxy` 1) and
@@ -51,4 +54,40 @@ export function clientAddressHeaders(
   parallelIndex: string | undefined = process.env.TEST_PARALLEL_INDEX,
 ): Record<string, string> {
   return { "x-forwarded-for": clientAddressFor(project, parallelIndex) };
+}
+
+/**
+ * Each link spec file reports its own address too (E41; the owner allowed it on 19 November 2026:
+ * "Yes, allow it", for each links spec file and nothing wider). The links project runs one file at
+ * a time as one user, and with one address every page load in the project shared the backend's
+ * 300-a-minute per-address ceiling, so the project waited out three minutes of it. Each file is
+ * one sitting on its own device. The per-user limits (reads, writes, the 10-an-hour destructive
+ * calls) still count the whole project as one user: nothing about them changes.
+ *
+ * The address is the file's place in the sorted list of link spec files, from 192.0.2.40, so two
+ * files never share one. Documentation range only (RFC 5737), never a real address.
+ */
+const LINK_SPEC_BASE = 40;
+const LINK_SPEC_SLOTS = 60; // 192.0.2.40 to .99: below the chromium workers' .100 upwards.
+export const LINK_SPEC_DIR = join(import.meta.dirname, "../tests/links");
+
+export function linkSpecFiles(dir: string = LINK_SPEC_DIR): string[] {
+  return readdirSync(dir)
+    .filter((name) => name.endsWith(".spec.ts"))
+    .sort();
+}
+
+/** The address for one link spec file, given its path (pass `import.meta.filename`). */
+export function linkSpecAddress(specPath: string, files: string[] = linkSpecFiles()): string {
+  const index = files.indexOf(basename(specPath));
+  if (index < 0) throw new Error(`${basename(specPath)} is not a link spec in tests/links`);
+  if (index >= LINK_SPEC_SLOTS) {
+    throw new Error(`More than ${LINK_SPEC_SLOTS} link spec files: widen the address range`);
+  }
+  return `192.0.2.${LINK_SPEC_BASE + index}`;
+}
+
+/** `extraHTTPHeaders` for a link spec file's browser: its own client address. */
+export function linkSpecHeaders(specPath: string): Record<string, string> {
+  return { "x-forwarded-for": linkSpecAddress(specPath) };
 }

@@ -1,13 +1,12 @@
 import { expect, type Page, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { waitForHydration } from "../../support/page";
 import { applyPersona } from "../../support/personas";
 import { api } from "./budget-links.helpers";
 
-test.use({ storageState: AUTH_STATE });
-
-// Runs after L68 (the file name sorts it there): L68 starts a fresh minute of the backend's request
-// limits, and the burst of homeowner specs before L67 has no room left for this one.
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 /** The primary bar's top-level items and whether the setup checklist shows. */
 async function firstView(page: Page) {

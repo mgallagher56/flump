@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
 import { api, entryNamed, pounds } from "./budget-links.helpers";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 // L56 (JO-4): a joint budget entry counts at its share in every budget figure, the same on the
 // Budget page and the Dashboard.

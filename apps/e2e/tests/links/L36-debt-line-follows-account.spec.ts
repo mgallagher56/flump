@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
 import { accountNamed, api, entryNamed, kpiCard } from "./budget-links.helpers";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 // L36 (BU-6, BU-7, SD-10, audit slice 5): a budget line linked to a loan reads the loan's monthly
 // payment, so changing the payment on the Debt side changes the budget's debt line too.
