@@ -1,5 +1,8 @@
+import { buttonVariants } from "@repo/ui";
+import { cx } from "@repo/ui/styled-system/css";
 import { fireEvent, screen } from "@testing-library/react";
 import { vi } from "vitest";
+import { mobileLink } from "~/components/navigation/NavMenu/NavMenu.styles";
 import customRender from "~/testUtils/customRender";
 import MobileNavDrawer, { currentFooterRow } from "./MobileNavDrawer";
 
@@ -14,6 +17,11 @@ vi.mock("react-router", async () => {
       <a aria-current={ariaCurrent} href={to} onClick={onClick}>
         {children}
       </a>
+    ),
+    Form: ({ children, action, method, className }: any) => (
+      <form action={action} className={className} method={method}>
+        {children}
+      </form>
     ),
     NavLink: ({ children, to, onClick }: any) => (
       <a href={to} onClick={onClick}>
@@ -67,6 +75,23 @@ describe("<MobileNavDrawer /> keyboard", () => {
     expect(hrefs).toContain("/app/profile");
     expect(hrefs).toContain("/app/profile?tab=ai_connections");
     expect(hrefs).toContain("/tools");
+  });
+
+  test("signed in, Sign out is a row like the links above it, with an icon, posting to /logout (P14)", () => {
+    customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
+    const signOut = screen.getByRole("button", { name: "logOut" });
+    expect(signOut.closest("form")?.getAttribute("action")).toBe("/logout");
+    expect(signOut.closest("form")?.getAttribute("method")).toBe("post");
+    expect(signOut.querySelector("svg")).not.toBeNull();
+    // The same row recipe as Settings, Connect AI and Free calculators.
+    expect(signOut.className).toBe(cx(buttonVariants({ variant: "ghost" }), mobileLink()));
+    expect(screen.queryByText("UserLogin")).toBeNull();
+  });
+
+  test("signed out, the footer keeps the sign-in links", () => {
+    customRender(<MobileNavDrawer isOpen={true} user={null} onClose={vi.fn()} />);
+    expect(screen.getByText("UserLogin")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "logOut" })).toBeNull();
   });
 
   test("signed in, leaves out the bottom bar's pages (owner ruling: no second list)", () => {

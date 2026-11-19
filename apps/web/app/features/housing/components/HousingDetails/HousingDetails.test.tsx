@@ -49,8 +49,26 @@ describe("<HousingDetails />", () => {
     fireEvent.change(await screen.findByLabelText("Rent each month"), {
       target: { value: "0" },
     });
-    expect(saveButton().disabled).toBe(true);
+    // Save stays enabled (RC-12) and says what is missing on press.
+    expect(saveButton().disabled).toBe(false);
     fireEvent.click(saveButton());
+    expect(await screen.findByText("Enter an amount more than £0.")).toBeDefined();
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("says what Save stores and offers Cancel in the one sheet footer (P64)", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(<HousingDetails housingStatus="renting" savedAmount={900} onSave={onSave} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit your rent" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("Saves your rent to your details.");
+    expect(dialog.textContent).not.toContain("This updates your details.");
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    // Cancel comes first in the DOM, so the column-reverse footer puts Save on top on a phone.
+    expect(cancel.parentElement).toBe(saveButton().parentElement);
+    expect(cancel.parentElement?.className).toContain("flex-d_column-reverse");
+    fireEvent.click(cancel);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(onSave).not.toHaveBeenCalled();
   });
 
@@ -95,12 +113,14 @@ describe("<HousingDetails />", () => {
     expect(screen.getByRole("button", { name: "Edit your rent" })).toBeDefined();
   });
 
-  it("not set: starts empty, so Save waits for an amount", async () => {
+  it("not set: starts empty, so Save asks for an amount first", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(<HousingDetails housingStatus={null} onSave={onSave} />);
     fireEvent.click(screen.getByRole("button", { name: "Add your rent" }));
     const input = await screen.findByLabelText("Rent each month");
-    expect(saveButton().disabled).toBe(true);
+    fireEvent.click(saveButton());
+    expect(await screen.findByText("Enter an amount more than £0.")).toBeDefined();
+    expect(onSave).not.toHaveBeenCalled();
     fireEvent.change(input, { target: { value: "800" } });
     fireEvent.click(saveButton());
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(800));

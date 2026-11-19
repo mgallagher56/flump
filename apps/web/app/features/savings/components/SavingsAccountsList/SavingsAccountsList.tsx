@@ -47,8 +47,8 @@ const typeLabel = (acc: Account) =>
   (acc.type === "Investment" ? "Investment" : "Savings");
 
 /**
- * "Your accounts": one figure per row, the balance (plan P1.4; left out with a single account,
- * whose balance is the hero), and one "Edit" button, the same as pension pots. The type line
+ * "Your accounts": one figure per row, the balance (plan P1.4; a single account's row shows it
+ * too, phone audit P65), and one "Edit" button, the same as pension pots. The type line
  * shows only when the list mixes savings and investments. The rate, the amount saved each month and "Delete account" live in the edit
  * dialog; deleting always asks for confirmation.
  */
@@ -62,7 +62,6 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, sa
     ? accounts.find((acc) => acc.id === confirmDeleteId)
     : undefined;
 
-  const showBalances = accounts.length > 1;
   // The type line only tells rows apart when the list mixes savings and investments.
   const showTypes = new Set(accounts.map(typeLabel)).size > 1;
 
@@ -79,13 +78,11 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, sa
             {showTypes && <span className={accountType()}>{typeLabel(acc)}</span>}
           </span>
           <span className={rowEnd()}>
-            {/* With one account the hero already shows its balance, so the row does not repeat it. */}
-            {showBalances && (
-              <span className={balance()}>
-                <VisuallyHidden>Balance </VisuallyHidden>
-                <Money size="sm" value={Math.round(Number(acc.balance) || 0)} />
-              </span>
-            )}
+            {/* Every row shows its one figure, a single account too, so no row is a bare name (P65). */}
+            <span className={balance()}>
+              <VisuallyHidden>Balance </VisuallyHidden>
+              <Money size="sm" value={Math.round(Number(acc.balance) || 0)} />
+            </span>
             <span className={actionsCell()}>
               <Button
                 aria-label={`Edit ${acc.name}`}

@@ -72,4 +72,10 @@ describe("AddCategoryModal", () => {
     const input = screen.getByTestId("new-category-name-input") as HTMLInputElement;
     expect(input.value).toBe("Pets");
   });
+
+  it("words its suggestions in sentence case with no ampersand (P67)", () => {
+    render(<AddCategoryModal open={true} onClose={vi.fn()} onAddCategory={vi.fn()} />);
+    expect(screen.getByText("Health and fitness")).toBeDefined();
+    expect(screen.queryByText(/&/)).toBeNull();
+  });
 });

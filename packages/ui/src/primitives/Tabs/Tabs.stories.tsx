@@ -126,19 +126,33 @@ const itemCountsPlay: Story["play"] = async ({ canvasElement }) => {
   );
   await expect(getComputedStyle(last).outlineStyle).toBe("solid");
 
-  // Scroll cue: a clipped edge fades; a list that fits has no fade.
   const scrollerOf = (name: string) =>
     canvas.getByRole("tablist", { name }).parentElement as HTMLElement;
   await expect(scrollerOf("Two views")).not.toHaveAttribute("data-overflow-end");
   await expect(scrollerOf("Two views")).not.toHaveAttribute("data-overflow-start");
-  await waitFor(() => expect(scrollerOf("Three tools")).toHaveAttribute("data-overflow-end"));
-  await expect(getComputedStyle(scrollerOf("Three tools")).maskImage).toContain("gradient");
-  // Scrolled to the last tab: the start edge hides tabs, the end edge does not.
-  await waitFor(() => expect(scrollerOf("Four sections")).toHaveAttribute("data-overflow-start"));
-  await expect(scrollerOf("Four sections")).not.toHaveAttribute("data-overflow-end");
+  if (window.innerWidth < 400) {
+    // Below 400px the row wraps into a grid of equal cells: no list scrolls, and every tab is in
+    // view (phone audit P06, P07).
+    for (const name of ["Three tools", "Four sections"]) {
+      await expect(scrollerOf(name)).not.toHaveAttribute("data-overflow-start");
+      await expect(scrollerOf(name)).not.toHaveAttribute("data-overflow-end");
+      for (const tab of within(canvas.getByRole("tablist", { name })).getAllByRole("tab")) {
+        const box = tab.getBoundingClientRect();
+        await expect(box.left).toBeGreaterThanOrEqual(0);
+        await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+      }
+    }
+  } else {
+    // Scroll cue: a clipped edge fades; a list that fits has no fade.
+    await waitFor(() => expect(scrollerOf("Three tools")).toHaveAttribute("data-overflow-end"));
+    await expect(getComputedStyle(scrollerOf("Three tools")).maskImage).toContain("gradient");
+    // Scrolled to the last tab: the start edge hides tabs, the end edge does not.
+    await waitFor(() => expect(scrollerOf("Four sections")).toHaveAttribute("data-overflow-start"));
+    await expect(scrollerOf("Four sections")).not.toHaveAttribute("data-overflow-end");
+  }
 
-  // No tab list widens the page on a small phone (mobile1, 320px): the track (the `tablist`) may be
-  // wider than the screen, but it scrolls inside its scroller, and the scroller stays on screen.
+  // No tab list widens the page on a small phone (mobile1, 320px): the track wraps below 400px,
+  // and wider screens scroll it inside its scroller, which stays on screen.
   for (const list of canvas.getAllByRole("tablist")) {
     const scroller = list.parentElement as HTMLElement;
     await expect(scroller).toHaveAttribute("data-tabs-scroller");

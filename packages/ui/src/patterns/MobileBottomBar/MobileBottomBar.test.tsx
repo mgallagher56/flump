@@ -30,4 +30,21 @@ describe("MobileBottomBar", () => {
     render(<MobileBottomBar items={extra} />);
     expect(screen.queryByRole("link", { name: "Extra" })).toBeNull();
   });
+
+  it("at large text wraps labels to two lines and keeps the bar compact (P19)", () => {
+    render(<MobileBottomBar items={sampleNavItems} />);
+    const q = "[@media_screen_and_(max-width:_19.99em)]";
+    const label = screen.getByText("Home");
+    expect(label.className).toContain(`${q}:white-space_normal`);
+    expect(label.className).toContain(`${q}:lc_2`);
+    const link = screen.getByRole("link", { name: "Home" });
+    expect(link.className).toContain(`${q}:min-h_touch`);
+  });
+
+  it("pads the sides by the safe-area insets (P15)", () => {
+    render(<MobileBottomBar items={sampleNavItems} />);
+    const nav = screen.getByRole("navigation", { name: "Primary mobile" }).className;
+    expect(nav).toContain("env(safe-area-inset-left)");
+    expect(nav).toContain("env(safe-area-inset-right)");
+  });
 });

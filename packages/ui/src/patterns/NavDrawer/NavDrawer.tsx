@@ -1,12 +1,15 @@
+import * as RadixDialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { focusWithoutJump } from "../../primitives/Dialog/useDialogFocusReturn";
 import { Icon } from "../../primitives/Icon/Icon";
 import {
   navDrawerBackdrop,
   navDrawerClose,
   navDrawerFooter,
   navDrawerHeader,
+  navDrawerLayer,
   navDrawerPanel,
 } from "./NavDrawer.styles";
 
@@ -32,7 +35,10 @@ const FOCUSABLE =
 /**
  * The mobile navigation drawer shared by the web app and the marketing site. It opens from the
  * `TopBar` menu button below the shared nav breakpoint. Modal: focus moves in on open, Tab wraps
- * inside, Escape and the backdrop close it, and focus returns to the opener on close.
+ * inside, Escape and the backdrop close it, and focus returns to the opener on close without
+ * scrolling the page. While open the page behind does not scroll (phone audit P11, P70): the
+ * drawer sits inside a Radix Dialog overlay, which applies the same remove-scroll lock as the
+ * `Dialog` primitive and still lets the drawer itself scroll.
  */
 export const NavDrawer: FC<NavDrawerProps> = ({
   isOpen,
@@ -63,7 +69,7 @@ export const NavDrawer: FC<NavDrawerProps> = ({
     openerRef.current = document.activeElement as HTMLElement | null;
     return () => {
       const opener = openerRef.current;
-      if (opener && typeof opener.focus === "function") opener.focus();
+      if (opener && typeof opener.focus === "function") focusWithoutJump(opener);
     };
   }, [isOpen]);
 
@@ -102,41 +108,46 @@ export const NavDrawer: FC<NavDrawerProps> = ({
   if (!isOpen) return null;
 
   const content = (
-    <>
-      <div
-        aria-hidden="true"
-        className={navDrawerBackdrop()}
-        data-testid="mobile-drawer-backdrop"
-        id="mobile-drawer-backdrop"
-        onClick={onClose}
-      />
-      <div
-        ref={drawerRef}
-        aria-label={label}
-        aria-modal="true"
-        role="dialog"
-        className={navDrawerPanel()}
-        data-testid="mobile-nav-drawer"
-        id={id}
-      >
-        <div>
-          <div className={navDrawerHeader()}>
-            {logo ?? <span />}
-            <button
-              aria-label={closeLabel}
-              className={navDrawerClose()}
-              ref={closeRef}
-              type="button"
-              onClick={onClose}
-            >
-              <Icon icon={X} />
-            </button>
+    // Root and Overlay only lend the drawer Radix's scroll lock; focus, Escape and Tab stay here.
+    <RadixDialog.Root open modal>
+      <RadixDialog.Overlay asChild forceMount>
+        <div className={navDrawerLayer()} data-testid="mobile-drawer-layer">
+          <div
+            aria-hidden="true"
+            className={navDrawerBackdrop()}
+            data-testid="mobile-drawer-backdrop"
+            id="mobile-drawer-backdrop"
+            onClick={onClose}
+          />
+          <div
+            ref={drawerRef}
+            aria-label={label}
+            aria-modal="true"
+            role="dialog"
+            className={navDrawerPanel()}
+            data-testid="mobile-nav-drawer"
+            id={id}
+          >
+            <div>
+              <div className={navDrawerHeader()}>
+                {logo ?? <span />}
+                <button
+                  aria-label={closeLabel}
+                  className={navDrawerClose()}
+                  ref={closeRef}
+                  type="button"
+                  onClick={onClose}
+                >
+                  <Icon icon={X} />
+                </button>
+              </div>
+              {children}
+            </div>
+            {footer && <div className={navDrawerFooter()}>{footer}</div>}
           </div>
-          {children}
         </div>
-        {footer && <div className={navDrawerFooter()}>{footer}</div>}
-      </div>
-    </>
+      </RadixDialog.Overlay>
+    </RadixDialog.Root>
   );
 
   if (mounted && typeof document !== "undefined") {

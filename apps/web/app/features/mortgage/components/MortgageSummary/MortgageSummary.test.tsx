@@ -30,6 +30,13 @@ describe("<MortgageSummary />", () => {
     expect(props.onEdit).toHaveBeenCalled();
   });
 
+  it("puts the header's Edit action under the text below sm (RC-11, P62)", () => {
+    render(<MortgageSummary {...base()} />);
+    const section = screen.getByTestId("mortgage-summary");
+    expect(section.className).toContain("flex-wrap_wrap");
+    expect(section.className).toContain("flex-wrap_nowrap");
+  });
+
   it("buy to let lists no account and no term", () => {
     render(
       <MortgageSummary {...base({ propertyCategory: "btl", mortgageType: "interest-only" })} />,

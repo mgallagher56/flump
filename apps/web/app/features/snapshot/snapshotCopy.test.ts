@@ -94,7 +94,7 @@ describe("check-in copy", () => {
       "Budget added.",
     );
     expect(formatWarmConfirmation({ kind: "setupComplete" })).toBe(
-      "Setup is finished. Everything on your dashboard now uses your own figures.",
+      "Everything on your dashboard now uses your own figures.",
     );
     expect(formatWarmConfirmation({ kind: "firstAccountAdded" })).toBe("Your first account is in.");
   });

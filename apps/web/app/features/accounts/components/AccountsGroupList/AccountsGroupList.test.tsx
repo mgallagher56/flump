@@ -30,6 +30,27 @@ const row = (over: Partial<AccountRow>): AccountRow => ({
 const props = { totalOwn: 0, totalOwe: 0, netWorth: 0, leftOut: [] };
 
 describe("<AccountsGroupList />", () => {
+  test("leaves the page's one section gap below the hero, as Home does (P35)", () => {
+    const { getByTestId } = customRender(
+      <AccountsGroupList {...props} afterNetWorth={<span>after</span>} rows={[row({})]} />,
+    );
+    // The hero's block holds the hero, then the links and afterNetWorth as one group, spaced by
+    // spacing.page.section (36px), the gap between PageBody sections on Home.
+    let hero: HTMLElement | null = getByTestId("accounts-net-worth");
+    while (
+      hero?.parentElement &&
+      !hero.parentElement.contains(getByTestId("accounts-view-history"))
+    )
+      hero = hero.parentElement;
+    const block = hero?.parentElement as HTMLElement;
+    expect(block.className).toContain("gap_page.section");
+    const after = hero?.nextElementSibling as HTMLElement;
+    expect(after.contains(getByTestId("accounts-view-history"))).toBe(true);
+    expect(after.textContent).toContain("after");
+    // The list's own sections (hero block, then the groups) use the same gap.
+    expect((block.parentElement as HTMLElement).className).toContain("gap_page.section");
+  });
+
   test("splits rows into what you own and what you owe, each a list with a total", () => {
     const { getByRole, getByText, getByTestId, queryByRole, queryByText } = customRender(
       <AccountsGroupList
@@ -246,5 +267,57 @@ describe("<AccountsGroupList />", () => {
     const isaAnchor = getByRole("link", { name: "See your ISA allowance" });
     expect(isaAnchor.getAttribute("href")).toBe("/app/savings");
     expect(isaAnchor.className).toContain("z_1");
+  });
+
+  test("hides the home value notice when a Property account is listed (P41)", () => {
+    const { queryByText } = customRender(
+      <AccountsGroupList
+        {...props}
+        leftOut={["homeValueMissing"]}
+        rows={[
+          row({ id: "h1", name: "Home", type: "Property", balance: 240000 }),
+          row({ id: "m1", name: "BTL mortgage", type: "Mortgage", balance: 150000 }),
+        ]}
+      />,
+    );
+    expect(queryByText(/home's value is not counted/)).toBeNull();
+  });
+
+  test("hides the home value notice when the profile has a home value (P41)", () => {
+    const { queryByText } = customRender(
+      <AccountsGroupList
+        {...props}
+        leftOut={["homeValueMissing"]}
+        profileHomeValue={240000}
+        rows={[row({ id: "m1", name: "Nationwide", type: "Mortgage", balance: 150000 })]}
+      />,
+    );
+    expect(queryByText(/home's value is not counted/)).toBeNull();
+  });
+
+  test("shows the home value notice with no Property account and no profile value (P41)", () => {
+    const { getByText } = customRender(
+      <AccountsGroupList
+        {...props}
+        leftOut={["homeValueMissing"]}
+        rows={[row({ id: "m1", name: "Nationwide", type: "Mortgage", balance: 150000 })]}
+      />,
+    );
+    expect(getByText(/home's value is not counted/)).toBeDefined();
+  });
+
+  test("gives both net worth links the same inline link style (P34)", () => {
+    const { getByRole } = customRender(
+      <AccountsGroupList
+        {...props}
+        rows={[row({ id: "h1", name: "Home", type: "Property", balance: 240000 })]}
+      />,
+    );
+    const history = getByRole("link", { name: "See how it has changed" });
+    const counts = getByRole("link", { name: "Change what counts" });
+    expect(history.className).toContain("td_underline");
+    expect(counts.className).toContain("td_underline");
+    // Not a padded Button: it starts on the text edge like its sibling.
+    expect(history.className).not.toMatch(/\bpy_/);
   });
 });

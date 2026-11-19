@@ -6,6 +6,9 @@ export const form = cva({
     flexDirection: "column",
     gap: "4",
     marginTop: "4",
+    // Never wider than the dialog, whatever a field's own width (P79).
+    minWidth: 0,
+    maxWidth: "100%",
     // No form-wide tabular-nums: Inter's tnum widens the hyphen ("Self - employed"). The amount
     // and date inputs carry their own tabular figures (R2-8).
   },
@@ -28,8 +31,12 @@ export const moreDetails = cva({
 export const fieldRow = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" },
+    // `minmax(0, 1fr)`, not `1fr`: a bare `1fr` grows to a field's min-content width (the date
+    // picker's), which pushed the dialog past a 320px screen (P79).
+    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
     gap: "4",
+    minWidth: 0,
+    "& > *": { minWidth: 0 },
   },
 });
 

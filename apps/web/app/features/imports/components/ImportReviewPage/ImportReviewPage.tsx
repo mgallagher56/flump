@@ -5,6 +5,7 @@ import {
   InlineAlert,
   KpiCard,
   KpiStrip,
+  PageBody,
   PageHeader,
   StatusBadge,
 } from "@repo/ui";
@@ -43,7 +44,7 @@ import {
 import type { ImportActions } from "../../useImportActions";
 import { AccountMappingPanel } from "../AccountMappingPanel";
 import { ImportDiffTable } from "../ImportDiffTable";
-import { actionsRow, commitBar, commitSummary, page, statusLine } from "./ImportReviewPage.styles";
+import { actionsRow, commitBar, commitSummary, statusLine } from "./ImportReviewPage.styles";
 
 export interface ImportReviewPageProps {
   batch: ImportBatch;
@@ -166,7 +167,7 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
 
   if (batch.status === "expired" || (batch.status === "staged" && !preview)) {
     return (
-      <div className={page()} data-testid="import-review" id="import-review">
+      <PageBody data-testid="import-review" id="import-review">
         <PageHeader badge={badge} title="Review import" />
         <EmptyState
           action={BACK_LINK}
@@ -174,14 +175,14 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
           id="import-expired"
           title={EXPIRED_TITLE}
         />
-      </div>
+      </PageBody>
     );
   }
 
   if (batch.status === "committed" || batch.status === "reverted") {
     const reverted = batch.status === "reverted";
     return (
-      <div className={page()} data-testid="import-review" id="import-review">
+      <PageBody data-testid="import-review" id="import-review">
         <PageHeader
           actions={BACK_LINK}
           badge={badge}
@@ -234,7 +235,7 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
           pendingLabel="Undoing…"
           title="Undo this import?"
         />
-      </div>
+      </PageBody>
     );
   }
 
@@ -242,7 +243,7 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
   const p = preview as ImportPreview;
   const writes = plan ? plan.new + plan.overwrite : 0;
   return (
-    <div className={page()} data-testid="import-review" id="import-review">
+    <PageBody data-testid="import-review" id="import-review">
       <PageHeader
         actions={BACK_LINK}
         badge={badge}
@@ -314,7 +315,7 @@ export const ImportReviewPage: FC<ImportReviewPageProps> = ({
           {committing ? "Saving…" : commitButtonLabel(writes)}
         </Button>
       </div>
-    </div>
+    </PageBody>
   );
 };
 

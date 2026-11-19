@@ -169,6 +169,41 @@ export const Icons: Story = {
   },
 };
 
+/** Disabled in dark uses the subtle fill, so it reads as inactive, not as a black button (P29). */
+export const DisabledDark: Story = {
+  ...Disabled,
+  globals: { theme: "dark" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const primary = canvas.getByRole("button", { name: "Add missing details" });
+    await expect(primary).toBeDisabled();
+  },
+};
+
+/**
+ * An inline link button keeps its text size; on a touch screen an invisible ::before gives it a
+ * 44px target (phone audit P16).
+ */
+const linkVariantPlay: Story["play"] = async ({ canvasElement, args }) => {
+  const canvas = within(canvasElement);
+  const link = canvas.getByRole("button", { name: "See how it has changed" });
+  await expect(link.getBoundingClientRect().height).toBeLessThan(44);
+  await userEvent.click(link);
+  await expect(args.onClick).toHaveBeenCalled();
+};
+
+export const LinkVariant: Story = {
+  args: { onClick: fn() },
+  render: (args) => (
+    <Button onClick={args.onClick} variant="link">
+      See how it has changed
+    </Button>
+  ),
+  play: linkVariantPlay,
+};
+
+export const LinkVariantDark: Story = { ...LinkVariant, globals: { theme: "dark" } };
+
 export const Links: Story = {
   render: () => (
     <div className={row}>

@@ -15,6 +15,17 @@ export const pictureCard = cva({
   base: { display: "flex", flexDirection: "column", gap: "3" },
 });
 
+/**
+ * Dark mode: the tint is close to the dark card (about 1.2:1), so the tile takes a `border.input`
+ * edge (4.3:1 against `surface.card`) to stay visible (P77).
+ */
+export const pictureIconTile = cva({
+  base: {
+    _dark: { borderWidth: "1px", borderStyle: "solid", borderColor: "border.input" },
+    _systemDark: { borderWidth: "1px", borderStyle: "solid", borderColor: "border.input" },
+  },
+});
+
 export const pictureTitle = cva({
   base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
 });

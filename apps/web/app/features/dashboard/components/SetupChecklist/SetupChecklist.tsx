@@ -63,6 +63,11 @@ export interface SetupChecklistProps {
   onSkipStep?: (stepKey: string) => void | Promise<void>;
   /** Gentle inline error if saving a skipped step failed. */
   skipError?: string | null;
+  /**
+   * Another notice (the monthly check-in row) is showing, so the "Setup finished" row stays away:
+   * Home shows one notice at a time (P27).
+   */
+  anotherNoticeShows?: boolean;
 }
 
 const readDismissed = (): boolean => {
@@ -185,7 +190,7 @@ export const SetupChecklist: FC<SetupChecklistProps> = (props) => {
   if (dismissed || steps.length === 0) return null;
 
   if (completedCount === steps.length) {
-    if (!startedIncomplete) return null;
+    if (!startedIncomplete || props.anotherNoticeShows) return null;
     return (
       <section
         aria-labelledby={`${panelId}-finished-title`}

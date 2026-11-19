@@ -13,6 +13,7 @@ import {
   kpiDeltaContent,
   kpiDeltaRow,
   kpiEyebrow,
+  kpiFoot,
   kpiHeroValue,
   kpiLabel,
   kpiLoadingBar,
@@ -129,7 +130,13 @@ const renderValue = (
   cardTone: KpiCardTone,
 ) => (
   // One wrapper and one text style for every kind of value, so a strip never mixes sizes (R2-2).
-  <div className={kpiHeroValue({ tone: cardTone })} data-kpi-value="">
+  <div
+    className={kpiHeroValue({
+      tone: cardTone,
+      word: typeof value === "string" && !/\d/.test(value),
+    })}
+    data-kpi-value=""
+  >
     {typeof value === "number" ? (
       <Money
         {...valueFormat}
@@ -168,11 +175,15 @@ export const KpiCard: FC<KpiCardProps> = ({
       value === undefined ||
       (typeof value === "number" && !Number.isFinite(value)));
   const cardTone = tone === "hero" && !isEmpty && !loading ? "hero" : "default";
+  const showEmptyAction = !loading && isEmpty && Boolean(emptyAction);
+  const showDelta = !loading && Boolean(delta || deltaText);
+  const hasFoot = showEmptyAction || showDelta || Boolean(subtext);
 
   return (
     <div
       aria-busy={loading || undefined}
       className={cx(kpiCardContainer({ tone: cardTone }), className)}
+      data-kpi-card=""
       data-tone={cardTone === "hero" ? "hero" : undefined}
       data-unset={isKpiCardUnset({ value, loading, unset }) || undefined}
     >
@@ -199,30 +210,34 @@ export const KpiCard: FC<KpiCardProps> = ({
         )}
       </div>
 
-      {!loading && isEmpty && emptyAction ? (
-        <div className={kpiNotSetAction()}>{emptyAction}</div>
-      ) : null}
+      {hasFoot ? (
+        // Everything under the value in one slot, so a KpiStrip can line the values up across a
+        // row (the strip gives each card three shared rows: label, value, foot).
+        <div className={kpiFoot()} data-kpi-foot="">
+          {showEmptyAction ? <div className={kpiNotSetAction()}>{emptyAction}</div> : null}
 
-      {/* The badge has its own row, so the value sits on the same baseline with or without it. */}
-      {!loading && (delta || deltaText) ? (
-        <div className={kpiDeltaRow()}>
-          {delta ? (
-            <StatusBadge size="sm" variant={deltaTone(delta.direction, delta.polarity)}>
-              <span className={kpiDeltaContent()}>
-                <Icon icon={DELTA_ICON[delta.direction]} size="sm" />
-                <VisuallyHidden>{DELTA_SPOKEN[delta.direction]}</VisuallyHidden>
-                <span>{delta.text}</span>
-              </span>
-            </StatusBadge>
-          ) : (
-            <StatusBadge size="sm" variant={deltaVariant}>
-              {deltaText}
-            </StatusBadge>
-          )}
+          {/* The badge has its own row, so the value sits on the same baseline with or without it. */}
+          {showDelta ? (
+            <div className={kpiDeltaRow()}>
+              {delta ? (
+                <StatusBadge size="sm" variant={deltaTone(delta.direction, delta.polarity)}>
+                  <span className={kpiDeltaContent()}>
+                    <Icon icon={DELTA_ICON[delta.direction]} size="sm" />
+                    <VisuallyHidden>{DELTA_SPOKEN[delta.direction]}</VisuallyHidden>
+                    <span>{delta.text}</span>
+                  </span>
+                </StatusBadge>
+              ) : (
+                <StatusBadge size="sm" variant={deltaVariant}>
+                  {deltaText}
+                </StatusBadge>
+              )}
+            </div>
+          ) : null}
+
+          {subtext && <div className={kpiSubtext({ tone: cardTone })}>{subtext}</div>}
         </div>
       ) : null}
-
-      {subtext && <div className={kpiSubtext({ tone: cardTone })}>{subtext}</div>}
     </div>
   );
 };

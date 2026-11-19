@@ -40,8 +40,18 @@ export const guideSummary = cva({
   },
 });
 
+/**
+ * The title over its count: the count is always on its own line, so "Frequently asked questions"
+ * and "Guide" read the same at 320 and 375 rather than one wrapping and one not (P75).
+ */
 export const guideTitleRow = cva({
-  base: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "2" },
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "0.5",
+    minWidth: 0,
+  },
 });
 
 export const guideTitle = cva({

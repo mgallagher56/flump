@@ -10,6 +10,7 @@ import {
   btlMeta,
   btlName,
   btlSourceRow,
+  footer,
   list,
 } from "./TaxSourcesPanel.styles";
 
@@ -31,7 +32,7 @@ export interface BtlSourceAccount {
 export interface TaxSourcesPanelProps {
   records: TaxRecord[];
   taxYear: string;
-  /** The page's one "Add income" menu, shown beside the heading. */
+  /** The page's one "Add income" menu, shown under the list of sources. */
   action?: ReactNode;
   /** Buy-to-let mortgage accounts, surfaced automatically as a rental income source. */
   btlAccounts?: readonly BtlSourceAccount[];
@@ -64,7 +65,8 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({
 
   return (
     <PageSection
-      action={action}
+      // The add menu sits under the list, not beside the heading: at phone width a header action
+      // squeezed the description to one letter a line (P25).
       description="Your income in this tax year, by where it comes from."
       domain="tax"
       headingId="tax-sources-heading"
@@ -98,6 +100,11 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({
           </li>
         ) : null}
       </ul>
+      {action ? (
+        <div className={footer()} id="tax-sources-action">
+          {action}
+        </div>
+      ) : null}
     </PageSection>
   );
 };

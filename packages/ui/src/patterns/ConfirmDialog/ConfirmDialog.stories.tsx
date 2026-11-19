@@ -80,6 +80,36 @@ export const RequireText: Story = {
   },
 };
 
+/**
+ * On a 320px phone the typed confirmation opens at its title, not scrolled to Cancel, and the
+ * field is 16px so iOS does not zoom (phone audit P09).
+ */
+const requireTextPhonePlay: Story["play"] = async () => {
+  const dialog = await screen.findByRole("alertdialog");
+  await expect(dialog.scrollTop).toBe(0);
+  const title = screen.getByRole("heading", { name: "Reset your profile?" });
+  await expect(title.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+  await expect(getComputedStyle(screen.getByRole("textbox")).fontSize).toBe("16px");
+};
+
+export const RequireTextPhone: Story = {
+  ...RequireText,
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: requireTextPhonePlay,
+};
+
+export const RequireTextPhoneDark: Story = {
+  ...RequireTextPhone,
+  globals: { theme: "dark" },
+  decorators: [
+    (Story) => (
+      <DarkRoot>
+        <Story />
+      </DarkRoot>
+    ),
+  ],
+};
+
 function Interactive(props: ConfirmDialogProps) {
   const [open, setOpen] = useState(false);
   return (

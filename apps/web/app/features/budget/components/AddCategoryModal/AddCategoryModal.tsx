@@ -21,7 +21,7 @@ const SUGGESTIONS = [
   "Transport",
   "Pets",
   "Subscriptions",
-  "Health & Fitness",
+  "Health and fitness",
   "Education",
   "Entertainment",
 ];

@@ -46,6 +46,18 @@ describe("NotFoundPage", () => {
     expect(main.querySelectorAll("a")).toHaveLength(1);
   });
 
+  it("uses the same gutters and page top as the other marketing pages (P73, P76)", () => {
+    render(
+      <HelmetProvider>
+        <MemoryRouter>
+          <NotFoundPage />
+        </MemoryRouter>
+      </HelmetProvider>,
+    );
+    const main = screen.getByRole("main");
+    for (const cls of ["px_4", "py_12", "md:py_16"]) expect(main.className).toContain(cls);
+  });
+
   it.each(["/nope", "/tools/not-a-real-tool"])("App renders it for %s", (path) => {
     renderAt(path);
     expect(

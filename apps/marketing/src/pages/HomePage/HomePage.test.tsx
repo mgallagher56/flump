@@ -64,6 +64,10 @@ describe("Marketing HomePage (E16 PR 12)", () => {
     expect(
       screen.getByRole("heading", { level: 3, name: "Ready to see where you stand?" }),
     ).toBeDefined();
+    // P74: the FAQ heading starts at the left, like every other band's heading.
+    const faqHeader = within(faq).getByRole("heading", { level: 2 }).parentElement as HTMLElement;
+    expect(faqHeader.className).toContain("ta_left");
+    expect(faqHeader.className).not.toContain("ta_center");
     // At most one sage and one apricot band (D16 b).
     expect(container.querySelectorAll('[data-tone-band="sage"]')).toHaveLength(1);
     expect(container.querySelectorAll('[data-tone-band="apricot"]')).toHaveLength(1);

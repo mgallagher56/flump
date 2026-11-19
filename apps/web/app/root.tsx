@@ -23,7 +23,9 @@ import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
 import { useIsFocusedShell } from "./features/onboarding/focusedShell";
+import { useRootUser } from "./hooks/useRootUser";
 import { useRouteFocus } from "./hooks/useRouteFocus";
+import { useScrollRestoreAfterGrowth } from "./hooks/useScrollRestoreAfterGrowth";
 import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
 import i18n from "./i18n";
@@ -141,6 +143,8 @@ function AppShell({ user, focused = false, children }: AppShellProps) {
   }, []);
   // A new page starts with focus on <main>; <ScrollRestoration> below puts it at the top.
   useRouteFocus();
+  // Back and Forward keep the saved place while a page that sizes itself late (charts) grows.
+  useScrollRestoreAfterGrowth();
   return (
     <>
       <VisuallyHidden as="a" focusable href="#main-content">
@@ -271,6 +275,7 @@ export function ErrorBoundary() {
   // Present when the root loader ran and a page below it failed; undefined when the root loader
   // itself failed, and then the header renders signed out.
   const rootData = useRouteLoaderData<typeof loader>("root");
+  const rootUser = useRootUser();
   const title =
     isRouteErrorResponse(error) && error.status === 404
       ? "We cannot find that page"
@@ -303,7 +308,8 @@ export function ErrorBoundary() {
       >
         <ThemeContext.Provider value={{ theme, preference, setPreference, toggleTheme }}>
           <ResponsiveProvider serverIsMobile={rootData?.isMobileClient}>
-            <AppShell user={rootData?.user ?? null}>
+            {/* useRootUser keeps a signed-in reader's shell when the root data was lost (P17). */}
+            <AppShell user={rootUser}>
               <RouteErrorBoundary headingLevel="h1" />
             </AppShell>
           </ResponsiveProvider>

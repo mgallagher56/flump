@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import {
   SECTION_COPY,
@@ -15,6 +16,22 @@ const base = (over: Partial<WidgetVisibilityPanelProps> = {}): WidgetVisibilityP
   error: null,
   ...over,
 });
+
+/** A page button that opens the panel, as the dashboard header does. */
+function Opener() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button id="opener" type="button" onClick={() => setOpen(true)}>
+        Choose what shows here
+      </button>
+      <WidgetVisibilityPanel
+        {...base({ open, onOpenChange: setOpen })}
+        returnFocusTo={() => document.getElementById("opener")}
+      />
+    </>
+  );
+}
 
 describe("<WidgetVisibilityPanel />", () => {
   it("lists each widget as a checkbox reflecting its visibility", () => {
@@ -94,5 +111,23 @@ describe("<WidgetVisibilityPanel />", () => {
     render(<WidgetVisibilityPanel {...base({ onOpenChange })} />);
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("has a close button (P10)", () => {
+    const onOpenChange = vi.fn();
+    render(<WidgetVisibilityPanel {...base({ onOpenChange })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("returns focus to the button that opened it when it closes (P10)", async () => {
+    render(<Opener />);
+    const opener = screen.getByRole("button", { name: "Choose what shows here" });
+    // A tap that does not focus the button (Safari): focus is on the page when the sheet opens.
+    fireEvent.click(opener);
+    expect(await screen.findByRole("dialog")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
   });
 });

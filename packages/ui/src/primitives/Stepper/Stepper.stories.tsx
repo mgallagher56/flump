@@ -93,6 +93,10 @@ export const WithOverrides: Story = {
     await expect(within(list).getByText("Skipped")).toBeInTheDocument();
     await expect(within(list).getAllByText("Complete")).toHaveLength(2);
     await expect(items[3]).toHaveAttribute("aria-current", "step");
+    // The phone progress bar fills up to the current step, the skipped one included (P56).
+    const segments = canvas.getByTestId("stepper-summary").querySelectorAll("[data-segment-state]");
+    await expect(segments[1]).toHaveAttribute("data-segment-state", "complete");
+    await expect(segments[4]).toHaveAttribute("data-segment-state", "upcoming");
   },
 };
 

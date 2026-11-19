@@ -4,7 +4,6 @@ import {
   netWorthChoicesAvailable,
 } from "@flump/finance-engine";
 import {
-  Button,
   Card,
   DataList,
   type DataListItem,
@@ -14,6 +13,7 @@ import {
   Money,
   PageSection,
 } from "@repo/ui";
+import { cx } from "@repo/ui/styled-system/css";
 import {
   CreditCard,
   EyeOff,
@@ -32,16 +32,18 @@ import { Link } from "react-router";
 import { AccountTypeEnum, isLiabilityType } from "~/containers/accounts/utils";
 import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import type { AccountRow } from "../../accountRows";
-import { NetWorthBasisLine } from "../NetWorthBasisLine";
+import { basisLink, NetWorthBasisLine } from "../NetWorthBasisLine";
 import {
   accountCell,
   accountLink,
   accountName,
   accountType,
   groupsGrid,
+  historyLink,
   isaLink,
   listInCard,
   listRoot,
+  netWorthAfter,
   netWorthBlock,
   netWorthLinks,
   note,
@@ -63,7 +65,24 @@ export interface AccountsGroupListProps {
   leftOut: readonly NetWorthLeftOut[];
   /** Rendered under the net worth figure, for example the phone's check-in button. */
   afterNetWorth?: ReactNode;
+  /** The home value saved on the profile, if any; with one, the home value notice is not shown. */
+  profileHomeValue?: number | null;
 }
+
+/**
+ * The home value notice shows only when no Property account is listed and no home value is
+ * saved on the profile (P41): a listed home must never sit beside "not counted".
+ */
+export const basisLeftOut = (
+  rows: readonly AccountRow[],
+  leftOut: readonly NetWorthLeftOut[],
+  profileHomeValue: number | null | undefined,
+): readonly NetWorthLeftOut[] => {
+  const hasHome =
+    rows.some((row) => categorizeAccountType(row.type) === "property") ||
+    (profileHomeValue ?? 0) > 0;
+  return hasHome ? leftOut.filter((item) => item !== "homeValueMissing") : leftOut;
+};
 
 export const STUDENT_LOAN_FACTS =
   "Repayments come out of your pay as you earn, and any balance left at the end of the repayment term is written off.";
@@ -266,6 +285,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
   netWorth,
   leftOut,
   afterNetWorth,
+  profileHomeValue,
 }) => {
   const counted = rows.filter((row) => !isLeftOut(row, leftOut));
   // The engine counts an overdrawn account (a current account below zero) as money owed, not as
@@ -293,21 +313,27 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
           label="Total of the accounts listed"
           value={netWorth}
         />
-        <div className={netWorthLinks()}>
-          {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
-          <NetWorthBasisLine
-            alwaysShowLink
-            choicesAvailable={choices.property || choices.studentLoan}
-            id="accounts-net-worth-basis"
-            leftOut={leftOut}
-          />
-          <Button asChild size="sm" variant="link">
-            <Link data-testid="accounts-view-history" id="accounts-view-history" to={HISTORY_HREF}>
+        <div className={netWorthAfter()}>
+          <div className={netWorthLinks()}>
+            {/* The one place the choice is always reachable from the figure, even with nothing left out. */}
+            <NetWorthBasisLine
+              alwaysShowLink
+              choicesAvailable={choices.property || choices.studentLoan}
+              id="accounts-net-worth-basis"
+              leftOut={basisLeftOut(rows, leftOut, profileHomeValue)}
+            />
+            {/* The same inline link style as "Change what counts", on the text edge (P34). */}
+            <Link
+              className={cx(basisLink(), historyLink())}
+              data-testid="accounts-view-history"
+              id="accounts-view-history"
+              to={HISTORY_HREF}
+            >
               See how it has changed
             </Link>
-          </Button>
+          </div>
+          {afterNetWorth}
         </div>
-        {afterNetWorth}
       </div>
       <div className={groupsGrid()}>
         {own.length > 0 ? (

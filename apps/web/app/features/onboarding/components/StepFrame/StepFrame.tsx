@@ -37,7 +37,10 @@ export const StepFrame: FC<StepFrameProps> = ({
 }) => {
   const classes = stepFrameRecipe();
   useEffect(() => {
-    if (focusOnMount) document.getElementById(`onboarding-step-${id}-title`)?.focus();
+    // Without scrolling: the flow puts the window at the top of the step itself (P57).
+    if (focusOnMount) {
+      document.getElementById(`onboarding-step-${id}-title`)?.focus({ preventScroll: true });
+    }
   }, []);
 
   return (

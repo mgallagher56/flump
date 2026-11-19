@@ -1,5 +1,13 @@
 import { cva } from "../../../styled-system/css";
 
+/**
+ * The Radix overlay that holds the backdrop and the panel. It lays nothing out itself; it is the
+ * scroll-lock root, so the page behind cannot scroll while the panel inside still can.
+ */
+export const navDrawerLayer = cva({
+  base: { display: "contents" },
+});
+
 export const navDrawerBackdrop = cva({
   base: {
     position: "fixed",
@@ -33,6 +41,11 @@ export const navDrawerPanel = cva({
     flexDirection: "column",
     justifyContent: "space-between",
     padding: "20px 16px",
+    // Clear the notch and the home indicator on a phone held sideways (phone audit P15).
+    paddingTop: "max(20px, env(safe-area-inset-top))",
+    paddingRight: "max(16px, env(safe-area-inset-right))",
+    paddingBottom: "max(20px, env(safe-area-inset-bottom))",
+    overscrollBehavior: "contain",
     boxShadow: "overlay",
     overflowY: "auto",
     _motionSafe: {

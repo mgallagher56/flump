@@ -5,11 +5,20 @@ import { Icon } from "../../primitives/Icon/Icon";
 import { sampleNavItems } from "../AppShell/AppShell.fixtures";
 import { MobileBottomBar } from "./MobileBottomBar";
 
+/**
+ * The bar's real labels are one short word (Home, Accounts, Budget, Pay, More), each fitting its
+ * slot at 320px. The shared manifest's "Debt and borrowing" is a top-bar label, so the bar's
+ * stories give that slot a bar-length label and check no label is cut short.
+ */
+const barItems = sampleNavItems.map((item) =>
+  item.key === "borrowing" ? { ...item, label: "Debt" } : item,
+);
+
 const meta: Meta<typeof MobileBottomBar> = {
   title: "3. Patterns/MobileBottomBar",
   component: MobileBottomBar,
   parameters: { layout: "fullscreen" },
-  args: { items: sampleNavItems, activeKey: "home" },
+  args: { items: barItems, activeKey: "home" },
 };
 
 export default meta;
@@ -19,7 +28,11 @@ const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("navigation", { name: "Primary mobile" })).toBeInTheDocument();
   await expect(canvas.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
-  await expect(canvas.getByRole("link", { name: "Debt and borrowing" })).toBeInTheDocument();
+  await expect(canvas.getByRole("link", { name: "Debt" })).toBeInTheDocument();
+  // No label is cut short (phone audit P19; at large text labels wrap to two lines instead).
+  for (const label of canvasElement.querySelectorAll<HTMLElement>("[data-nav-label]")) {
+    await expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth + 1);
+  }
 };
 
 export const Light: Story = {
@@ -73,9 +86,7 @@ export const LockedAt375: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(
-      canvas.getByRole("button", { name: "Debt and borrowing: Sign up to open" }),
-    ).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Debt: Sign up to open" })).toBeInTheDocument();
     // Every label sits on one baseline, locked or not.
     const bottoms = Array.from(canvasElement.querySelectorAll("[data-nav-label]")).map((el) =>
       Math.round(el.getBoundingClientRect().bottom),

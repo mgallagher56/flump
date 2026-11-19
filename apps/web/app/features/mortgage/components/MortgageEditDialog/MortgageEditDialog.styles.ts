@@ -14,11 +14,14 @@ export const editGrid = cva({
   },
 });
 
-/** "Years left" and "Months" side by side in one grid cell. */
+/**
+ * "Years left" and "Months" side by side in one grid cell from `sm`; one column below it, so the
+ * "Saved on your mortgage account" hint is not squeezed into a half-width column at 320px (P66).
+ */
 export const termPair = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gridTemplateColumns: { base: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
     gap: "14px",
     alignItems: "start",
     "& > *": { minWidth: 0 },

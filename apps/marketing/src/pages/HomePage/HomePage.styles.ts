@@ -19,6 +19,9 @@ export const hero = cva({
     pt: { base: "12", md: "16" },
     pb: { base: "12", md: "16" },
     backgroundColor: "surface.canvas",
+    // Less top room in a short viewport (a phone in landscape, 375px tall), so the hero card
+    // starts in the first view (P72). Written out, not a constant, so Panda extracts it.
+    "@media screen and (max-height: 30rem)": { pt: "6" },
   },
 });
 
@@ -30,6 +33,7 @@ export const heroInner = cva({
     flexDirection: "column",
     alignItems: "center",
     gap: { base: "8", md: "10" },
+    "@media screen and (max-height: 30rem)": { gap: "6" },
   },
 });
 

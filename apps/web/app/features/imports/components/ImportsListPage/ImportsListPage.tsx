@@ -3,6 +3,7 @@ import {
   Card,
   CollapsibleDrawer,
   EmptyState,
+  PageBody,
   PageHeader,
   StatusBadge,
   Table,
@@ -29,7 +30,7 @@ import {
 } from "../../importCopy";
 import type { ImportBatch } from "../../importModel";
 import { MAX_OPEN_ROWS } from "../ImportDiffTable";
-import { page, tableCard } from "./ImportsListPage.styles";
+import { tableCard } from "./ImportsListPage.styles";
 
 export interface ImportsListPageProps {
   batches: readonly ImportBatch[];
@@ -116,7 +117,7 @@ export const ImportsListPage: FC<ImportsListPageProps> = ({ batches }) => {
   );
 
   return (
-    <div className={page()} data-testid="imports-list" id="imports-list">
+    <PageBody data-testid="imports-list" id="imports-list">
       <PageHeader description={LIST_DESCRIPTION} title="Imports" />
       {batches.length === 0 ? (
         <EmptyState description={LIST_EMPTY_BODY} id="imports-empty" title={LIST_EMPTY_TITLE} />
@@ -137,7 +138,7 @@ export const ImportsListPage: FC<ImportsListPageProps> = ({ batches }) => {
           {table}
         </Card>
       )}
-    </div>
+    </PageBody>
   );
 };
 

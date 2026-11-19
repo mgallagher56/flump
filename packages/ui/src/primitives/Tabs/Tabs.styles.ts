@@ -1,5 +1,12 @@
 import { cva } from "../../../styled-system/css";
 
+/**
+ * Below 400px the tab row becomes a grid of equal cells (two a row, one at large text) instead of
+ * a row that scrolls sideways, so every label is in view (phone audit P06, P07). An odd last tab
+ * takes the full row. In px, not em: at large text the cells stack, which is what we want.
+ */
+const NARROW = "@media screen and (max-width: 399.98px)";
+
 /** The root never grows past its parent, so a long tab list scrolls instead of widening the page. */
 export const tabsRoot = cva({
   base: { minWidth: "0", maxWidth: "100%" },
@@ -48,6 +55,12 @@ export const tabsList = cva({
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",
+    [NARROW]: {
+      display: "grid",
+      width: "100%",
+      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 9rem), 1fr))",
+      "& > :last-child:nth-child(odd)": { gridColumn: "1 / -1" },
+    },
   },
   variants: {
     size: {
@@ -113,13 +126,18 @@ export const tabTrigger = cva({
     },
     // A tab focused by a mouse or touch shows no ring (see POINTER_FOCUS in Tabs.tsx).
     "&[data-pointer-focus]:focus-visible": { outline: "none" },
+    // 44px on touch screens, whatever the size (phone audit P05).
+    "@media (pointer: coarse)": { minHeight: "touch" },
+    // In the narrow grid a label may wrap inside its cell rather than be cut.
+    [NARROW]: { whiteSpace: "normal", textAlign: "center", minWidth: 0 },
   },
   variants: {
     size: {
       // Both sizes use the 14px label step: 12px is below the label floor. `sm` (the ScenarioZone
       // tools row) has tighter side padding so a three-tool row ("Overpayment", "Rate change",
       // "Overpay or save") still fits the 343px a 375px screen leaves; a longer row scrolls in
-      // `tabsScroller` with its edge fades. Targets stay touch-friendly: 32px (sm), 36px (md).
+      // `tabsScroller` with its edge fades (below 400px it wraps, see NARROW). On a fine pointer
+      // 32px (sm), 36px (md); 44px on touch.
       sm: { minHeight: "32px", paddingBlock: "1", paddingInline: "1.5", fontSize: "sm" },
       md: { minHeight: "36px", paddingBlock: "2", paddingInline: "4", fontSize: "sm" },
     },

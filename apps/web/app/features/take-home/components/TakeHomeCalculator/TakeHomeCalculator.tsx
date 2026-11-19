@@ -22,7 +22,7 @@ import { type FC, useMemo, useState } from "react";
 import { Link, useInRouterContext } from "react-router";
 import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { useUserProfile } from "~/hooks/useUserProfile";
+import { type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import { NextPoundExplorer, useNextPoundScenario } from "../NextPoundExplorer";
 import { PayRiseTool } from "../PayRiseTool";
 import { monthlyPayParts, TakeHomeBreakdown } from "../TakeHomeBreakdown";
@@ -68,6 +68,12 @@ const listWords = (words: string[]): string =>
 export interface TakeHomeCalculatorProps {
   /** Saved salary before tax, a year; 0, null or undefined when none is saved. */
   initialSalary?: number | null;
+  /**
+   * The saved profile, as the page has it on its first render (the loader's row). Without it the
+   * calculator reads the shared profile store, which the page fills only after its first render,
+   * so the strip, breakdown and zone changed size once it arrived (phone audit P61).
+   */
+  profile?: UserProfile | null;
   onApplyIncrease: (monthlyIncrease: number) => void;
 }
 
@@ -80,9 +86,11 @@ export interface TakeHomeCalculatorProps {
  */
 export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   initialSalary,
+  profile: savedProfile,
   onApplyIncrease,
 }) => {
-  const { profile } = useUserProfile();
+  const { profile: storeProfile } = useUserProfile();
+  const profile = savedProfile ?? storeProfile;
   const { formatCurrency } = useFormatCurrency();
   const inRouter = useInRouterContext();
   const savedSalary = initialSalary && initialSalary > 0 ? initialSalary : 0;

@@ -412,15 +412,28 @@ const SelfAssessmentPage: FC<{
         </p>
       ) : null}
 
-      <TaxHeadline
-        emptyAction={hasRecordsInYear ? undefined : addIncome}
-        onAddExpense={() => editor.openAdd(expenseSource, "expense")}
-        records={initialRecords}
-        result={activeYearData}
-        taxYear={selectedTaxYear}
-        unknownAction={unknownAction}
-        unknownPrompt={missingFact ? ESTIMATE_MISSING_PROMPT[missingFact].prompt : undefined}
-      />
+      {initialRecords.length === 0 ? (
+        // Nothing added in any year: the page's one empty state and its one button (P54), not a
+        // "Not set" bill card.
+        <EmptyState
+          action={addIncome}
+          description="Such as self-employment, rent, savings interest or dividends."
+          id="tax-empty"
+          size="sm"
+          tone="card"
+          title="Add income outside PAYE to see an estimated tax bill"
+        />
+      ) : (
+        <TaxHeadline
+          emptyAction={hasRecordsInYear ? undefined : addIncome}
+          onAddExpense={() => editor.openAdd(expenseSource, "expense")}
+          records={initialRecords}
+          result={activeYearData}
+          taxYear={selectedTaxYear}
+          unknownAction={unknownAction}
+          unknownPrompt={missingFact ? ESTIMATE_MISSING_PROMPT[missingFact].prompt : undefined}
+        />
+      )}
 
       {/* How the estimate is worked out sits with the estimate, before the list of sources. */}
       {/* Shown while the estimate is unknown too, so the salary can be typed in here. */}
@@ -441,7 +454,9 @@ const SelfAssessmentPage: FC<{
       ) : null}
 
       <TaxSourcesPanel
-        action={addIncome}
+        // The add menu sits in the hero or the empty state until the year has records, so it is
+        // never offered twice (P25).
+        action={hasRecordsInYear ? addIncome : undefined}
         btlAccounts={(
           accounts as Array<{
             id?: string;

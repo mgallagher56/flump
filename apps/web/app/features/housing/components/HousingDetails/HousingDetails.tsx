@@ -43,11 +43,16 @@ interface Copy {
   field?: string;
   /** Says whose cost the amount is: the person's own, which the budget counts at 100%. */
   hint?: string;
+  /** The dialog's description: what Save stores (P64). */
+  saves?: string;
   /** £0 is a real answer when living with family or friends. */
   allowZero?: boolean;
 }
 
 const OWN_SHARE_HINT = "What you pay. Your own share if you split it.";
+/** Shown on Save when the amount is missing, or £0 where £0 is not an answer. */
+export const housingAmountError = (allowZero: boolean | undefined): string =>
+  allowZero ? "Enter an amount. £0 is fine." : "Enter an amount more than £0.";
 
 function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
   switch (status) {
@@ -57,12 +62,14 @@ function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
         action: "Edit your rent",
         field: "Rent each month",
         hint: OWN_SHARE_HINT,
+        saves: "Saves your rent to your details.",
       };
     case "living_with_family":
       return {
         text: "You live with family or friends. What you pay towards the household is saved in your details.",
         action: "Edit what you pay",
         field: "What you pay each month",
+        saves: "Saves what you pay to your details.",
         allowZero: true,
       };
     // A mortgage row links to the mortgage page itself, so it opens no panel.
@@ -77,6 +84,7 @@ function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
         action: hasAmount ? "Edit your rent" : "Add your rent",
         field: "Rent each month",
         hint: OWN_SHARE_HINT,
+        saves: "Saves your rent to your details.",
       };
   }
 }
@@ -127,7 +135,11 @@ export const HousingDetails: FC<HousingDetailsProps> = ({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!valid || amount === null) return;
+    // Save stays enabled, as in every sheet (RC-12); a missing amount is explained on press.
+    if (!valid || amount === null) {
+      setError(housingAmountError(copy.allowZero));
+      return;
+    }
     setSaving(true);
     setError(undefined);
     try {
@@ -156,7 +168,7 @@ export const HousingDetails: FC<HousingDetailsProps> = ({
 
       {copy.field ? (
         <Dialog
-          description="This updates your details."
+          description={copy.saves}
           open={open}
           size="sm"
           title={copy.action ?? "Housing"}
@@ -173,8 +185,12 @@ export const HousingDetails: FC<HousingDetailsProps> = ({
                 />
               )}
             </FormField>
-            <div>
-              <Button disabled={saving || !valid} type="submit">
+            {/* The one sheet footer (RC-12): Save full width above Cancel on a phone. */}
+            <div className={slots.footer}>
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button disabled={saving} type="submit">
                 {saving ? "Saving…" : "Save"}
               </Button>
             </div>

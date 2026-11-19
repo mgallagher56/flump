@@ -24,13 +24,14 @@ export const Light: Story = { globals: { theme: "light" }, play };
 
 export const Dark: Story = { globals: { theme: "dark" }, play };
 
-/** 768px: three links, the one-button theme switch and the CTA; the rest is in the menu. */
+/** 768px: the menu button, the one-button theme switch and the CTA, with no inline links (P72). */
 export const Tablet: Story = {
   globals: { theme: "light" },
   parameters: { viewport: { defaultViewport: "tablet" } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("button", { name: /open navigation menu/i })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: /open navigation menu/i })).toBeVisible();
+    await expect(canvas.queryByRole("navigation", { name: "Primary" })).toBeNull();
   },
 };
 

@@ -107,4 +107,47 @@ describe("Sheet primitive", () => {
     );
     expect(screen.getByRole("dialog").parentElement).toBe(document.body);
   });
+
+  it("has no decorative grab handle and is sized to its content (P31)", () => {
+    render(
+      <Sheet open onOpenChange={() => {}} title="T">
+        <p>body</p>
+      </Sheet>,
+    );
+    const sheet = screen.getByRole("dialog");
+    // First child is the header (title and close), not an aria-hidden handle bar.
+    expect(sheet.querySelector(":scope > [aria-hidden='true']")).toBeNull();
+    expect(sheet.className).toContain("h_auto");
+    // The body may shrink to the height cap but never grows into an empty band.
+    expect((screen.getByText("body").parentElement as HTMLElement).className).toContain(
+      "flex_0_1_auto",
+    );
+  });
+
+  it("names its surface and side on the dialog element", () => {
+    const { rerender } = render(
+      <Sheet open onOpenChange={() => {}} title="T">
+        x
+      </Sheet>,
+    );
+    expect(screen.getByRole("dialog").getAttribute("data-sheet-side")).toBe("bottom");
+    rerender(
+      <Sheet open onOpenChange={() => {}} side="right" title="T">
+        x
+      </Sheet>,
+    );
+    expect(screen.getByRole("dialog").getAttribute("data-sheet-side")).toBe("right");
+  });
+
+  it("pads the sides and the side sheet's top by the safe-area insets (P15)", () => {
+    render(
+      <Sheet open onOpenChange={() => {}} side="right" title="T">
+        x
+      </Sheet>,
+    );
+    const cls = screen.getByRole("dialog").className;
+    expect(cls).toContain("env(safe-area-inset-left,_0px)");
+    expect(cls).toContain("env(safe-area-inset-right,_0px)");
+    expect(cls).toContain("env(safe-area-inset-top,_0px)");
+  });
 });

@@ -30,6 +30,16 @@ describe("HeroFigure", () => {
     expect(container.innerHTML).toContain("tabular-nums");
   });
 
+  it("never breaks the figure mid-number, and steps it down at large text (P43)", () => {
+    render(<HeroFigure label="Net worth" value={592700} />);
+    const value = screen.getByText("£592,700").closest("p") as HTMLElement;
+    expect(value.className).toContain("white-space_nowrap");
+    expect(value.className).not.toContain("ov-wrap_anywhere");
+    expect(value.className).toContain(
+      "[@media_screen_and_(max-width:_19.99em)]:textStyle_numeric.lg",
+    );
+  });
+
   it("reads a negative value as minus", () => {
     render(<HeroFigure label="Net worth" value={-1200} />);
     expect(screen.getByText("minus £1,200")).toBeDefined();

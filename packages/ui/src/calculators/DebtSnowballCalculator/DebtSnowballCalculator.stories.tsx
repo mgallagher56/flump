@@ -62,5 +62,15 @@ export const Mobile: Story = {
   play: async ({ canvasElement }) => {
     const tool = within(canvasElement).getByTestId("debt-snowball-tool");
     await expect(tool.scrollWidth).toBeLessThanOrEqual(tool.clientWidth);
+    // Below sm (40em) Edit and Remove sit under the debt name, which keeps the row's width (P75).
+    if (window.matchMedia("(max-width: 39.99em)").matches) {
+      const legend = canvasElement.querySelector("fieldset legend") as HTMLElement;
+      const edit = within(canvasElement).getAllByRole("button", { name: /^Edit debt/ })[0];
+      await expect(edit?.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+        legend.getBoundingClientRect().bottom - 1,
+      );
+    }
   },
 };
+
+export const MobileDark: Story = { ...Mobile, globals: { theme: "dark" } };

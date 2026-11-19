@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const navigate = vi.fn();
 const profileState: { profile: Record<string, unknown> } = { profile: {} };
 const baselineState = { annualGrossSalary: 0 };
+/** The shared profile store; null means it holds the same row as the loader. */
+const storeState: { profile: Record<string, unknown> | null } = { profile: null };
 
 const SAVED_PROFILE = {
   annualSalary: 45000,
@@ -21,7 +23,10 @@ vi.mock("react-router", async (importOriginal) => ({
   useNavigate: () => navigate,
 }));
 vi.mock("~/hooks/useUserProfile", () => ({
-  useUserProfile: () => ({ profile: profileState.profile, setProfile: vi.fn() }),
+  useUserProfile: () => ({
+    profile: storeState.profile ?? profileState.profile,
+    setProfile: vi.fn(),
+  }),
 }));
 vi.mock("~/state/baseline.store", () => ({
   useFinancialBaseline: () => ({ baseline: baselineState }),
@@ -39,7 +44,19 @@ describe("<TakeHomeContainer /> with saved figures", () => {
   beforeEach(() => {
     navigate.mockClear();
     profileState.profile = { ...SAVED_PROFILE };
+    storeState.profile = null;
     baselineState.annualGrossSalary = 0;
+  });
+
+  it("draws the full page on its first render, before the profile store is filled (P61)", () => {
+    // The store is empty until the page's effect copies the loader row in. The first render must
+    // already show what the saved row gives, so nothing changes size when the store fills: the
+    // strip of three, with the pension and student loan card (5% pension and Plan 2 are saved).
+    storeState.profile = {};
+    const { container } = render(<TakeHomeContainer />);
+    expect(container.querySelectorAll("[data-kpi-value]")).toHaveLength(3);
+    expect(screen.getByText("Pension and student loan")).toBeDefined();
+    expect(screen.queryByRole("link", { name: "Add your details" })).toBeNull();
   });
 
   it("uses the saved salary, not a stale onboarding baseline salary", () => {

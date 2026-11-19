@@ -8,6 +8,7 @@ vi.mock("react-router", async () => await vi.importActual("react-router"));
 vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
 import { jsonResponse, profileFixture } from "~/test/fixtures/contractResponses";
+import { resetRememberedRootUser, useRootUser } from "./hooks/useRootUser";
 import App, { ErrorBoundary, loader } from "./root";
 import * as splatRoute from "./routes/$";
 import { getAuthSession } from "./utils/auth.server";
@@ -27,6 +28,12 @@ function ThrowingPage(): never {
 }
 
 function RootOutlet() {
+  return <Outlet />;
+}
+
+/** Like the app shell: reads the root user on every render, so the browser remembers it. */
+function ShellOutlet() {
+  useRootUser();
   return <Outlet />;
 }
 
@@ -60,6 +67,7 @@ function renderRootBoundary(error: unknown) {
 
 describe("root ErrorBoundary", () => {
   afterEach(() => {
+    resetRememberedRootUser();
     document.documentElement.className = "";
     document.documentElement.removeAttribute("data-theme");
   });
@@ -116,6 +124,38 @@ describe("root ErrorBoundary", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     render(<Stub initialEntries={["/broken"]} />, { container: document });
     await screen.findByRole("heading", { name: "We could not load this page" });
+    expect(primaryNavHrefs()).toContain("/app/accounts");
+    expect(screen.queryByRole("link", { name: "logIn" })).toBeNull();
+    expect(screen.getByRole("button", { name: "accountMenu" })).toBeDefined();
+  });
+
+  it("keeps the signed-in shell when a later data request fails and takes the root data with it (P17)", async () => {
+    // First load: the root loader gives the user. Then a link's data request fails for every
+    // route, the root too (a dropped connection), so React Router drops the root data.
+    let rootCalls = 0;
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: () => {
+          rootCalls += 1;
+          if (rootCalls > 1) throw new TypeError("Failed to fetch");
+          return rootData(mockUser)();
+        },
+        shouldRevalidate: () => true,
+        Component: ShellOutlet,
+        ErrorBoundary,
+        HydrateFallback: NullFallback,
+        children: [
+          { index: true, Component: GoSlowLink },
+          { path: "slow", Component: SlowPage },
+        ],
+      },
+    ]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<Stub initialEntries={["/"]} />, { container: document });
+    fireEvent.click(await screen.findByRole("link", { name: "Go slow" }));
+    await screen.findByRole("heading", { name: "We could not reach Flump" });
     expect(primaryNavHrefs()).toContain("/app/accounts");
     expect(screen.queryByRole("link", { name: "logIn" })).toBeNull();
     expect(screen.getByRole("button", { name: "accountMenu" })).toBeDefined();

@@ -136,6 +136,11 @@ const AccountsContainer: FC = () => {
             }
             leftOut={netWorth.leftOut}
             netWorth={netWorth.netWorth}
+            profileHomeValue={
+              (userProfile as { homeValue?: number | string | null } | null)?.homeValue != null
+                ? Number((userProfile as { homeValue?: number | string | null }).homeValue)
+                : null
+            }
             rows={rows}
             totalOwe={netWorth.totalLiabilities}
             totalOwn={netWorth.totalAssets}

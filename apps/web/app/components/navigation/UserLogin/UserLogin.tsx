@@ -2,8 +2,8 @@ import { Button, ButtonLink } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Form, Link, useRouteLoaderData } from "react-router";
-import type { loader } from "~/root";
+import { Form, Link } from "react-router";
+import { useRootUser } from "~/hooks/useRootUser";
 import { userLoginButton, userLoginGroup, userLoginSignUp } from "./UserLogin.styles";
 
 export interface UserLoginProps {
@@ -19,9 +19,8 @@ export interface UserLoginProps {
 /** Sign-in and sign-up links for a visitor, or the sign-out button (a POST form) once signed in. */
 const UserLogin: FC<UserLoginProps> = ({ className, size = "sm", signUp = "always" }) => {
   const { t } = useTranslation();
-  // Read by route id so it works from any route and the root error boundary. Undefined only when
-  // the root loader itself failed: treat as signed out.
-  const user = useRouteLoaderData<typeof loader>("root")?.user;
+  // The root loader's user from any route and the root error boundary (see useRootUser).
+  const user = useRootUser();
 
   return (
     <div className={cx(userLoginGroup(), className)}>

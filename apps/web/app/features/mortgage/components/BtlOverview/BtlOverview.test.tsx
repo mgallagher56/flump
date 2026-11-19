@@ -36,10 +36,42 @@ describe("<BtlOverview />", () => {
     expect(screen.getByText("Your buy to let properties")).toBeDefined();
     expect(screen.getByText("2 properties")).toBeDefined();
     expect(screen.getByText("Rent left after the mortgage payment (estimate)")).toBeDefined();
-    expect(screen.getByText("+£600.00")).toBeDefined();
+    // £1,000 rent - £400 payment = £600, in whole pounds with no sign (P39).
+    expect(screen.getByText("£600")).toBeDefined();
+    expect(container.textContent).not.toContain("+£");
+    expect(container.textContent).not.toContain("£600.00");
     expect(container.textContent).not.toMatch(/Gross|net cash flow/i);
     expect(container.innerHTML).not.toMatch(/danger|positive/);
     fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0] as HTMLElement);
     expect(onConfigure).toHaveBeenCalled();
+  });
+
+  it("rounds pence to whole pounds: £950.50 - £466.25 = £484.25, shown as £484 (P39)", () => {
+    const { container } = render(
+      <BtlOverview
+        grossYield={5}
+        monthlyPayment={466.25}
+        monthlyRent={950.5}
+        propertyCount={1}
+        onConfigure={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("£484")).toBeDefined();
+    expect(container.textContent).not.toContain("+£");
+  });
+
+  it("puts the header's Edit action under the text below sm (RC-11, P62)", () => {
+    render(
+      <BtlOverview
+        grossYield={null}
+        monthlyPayment={null}
+        monthlyRent={0}
+        propertyCount={null}
+        onConfigure={vi.fn()}
+      />,
+    );
+    const section = document.getElementById("btl-overview") as HTMLElement;
+    expect(section.className).toContain("flex-wrap_wrap");
+    expect(section.className).toContain("flex-wrap_nowrap");
   });
 });

@@ -10,12 +10,13 @@ export const pageShell = cva({
   },
 });
 
+/** The same gutters and page top as pricing, security and contact (P73, P76). */
 export const mainContent = cva({
   base: {
     flex: "1",
     width: "100%",
     px: "4",
-    py: { base: "6", md: "12" },
+    py: { base: "12", md: "16" },
     _focus: { outline: "none" },
   },
 });

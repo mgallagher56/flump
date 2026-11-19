@@ -10,6 +10,13 @@ describe("AddIncomeMenu", () => {
     expect(screen.getByRole("button", { name: "Add income or expense" })).toBeDefined();
   });
 
+  it("keeps the button within its card and lets the label wrap at 320px (P48)", () => {
+    render(<AddIncomeMenu onAdd={vi.fn()} onCopyFromLastYear={vi.fn()} />);
+    const button = screen.getByRole("button", { name: "Add income or expense" });
+    expect(button.className).toContain("max-w_100%");
+    expect(button.className).not.toContain("nowrap");
+  });
+
   it("opens the dialog for the chosen source and copies last year from the same menu", async () => {
     const user = userEvent.setup();
     const onAdd = vi.fn();

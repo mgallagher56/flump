@@ -74,14 +74,9 @@ export const HomePage: FC = () => {
 
         <SecurityPrivacySection />
 
-        {/* The fifth band: FAQ, then the final call to action in the same band (R2-10). */}
-        <MarketingSection
-          align="center"
-          id="faq"
-          title="Frequently asked questions"
-          tone="sage"
-          width="narrow"
-        >
+        {/* The fifth band: FAQ, then the final call to action in the same band (R2-10). The
+            heading starts at the left like every other band's (P74). */}
+        <MarketingSection id="faq" title="Frequently asked questions" tone="sage" width="narrow">
           <HomeFAQ />
           <div className={finalCta()} data-testid="home-final-cta" id="get-started">
             <div className={finalCtaIllustration()} data-testid="home-final-cta-illustration">

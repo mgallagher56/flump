@@ -11,6 +11,11 @@ export const topBarRoot = cva({
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
     borderBottomColor: "border.subtle",
+    // Clear the notch and the rounded corners on a phone held sideways (phone audit P15). With
+    // `viewport-fit=cover` these are zero wherever the screen has no cut-outs.
+    paddingTop: "env(safe-area-inset-top)",
+    paddingLeft: "env(safe-area-inset-left)",
+    paddingRight: "env(safe-area-inset-right)",
   },
 });
 
@@ -20,7 +25,9 @@ export const topBarInner = cva({
     alignItems: "center",
     // Tablets (navInline up to navWide) get the compact desktop bar so it fits at 768px.
     gap: { base: "3", _navWide: "5" },
-    minHeight: { base: "14", _navInline: "18" },
+    // Below the nav breakpoint the 44px menu button sets the height. The floor is the px touch
+    // size, not a rem step, so at large text the bar does not grow past its content (P19).
+    minHeight: { base: "touch", _navInline: "18" },
     px: { base: "4", _navInline: "6", _navWide: "10" },
     py: "2",
     maxWidth: "1536px",
@@ -51,6 +58,14 @@ export const topBarNav = cva({
     minWidth: 0,
     marginLeft: { base: "3", _navInline: "1", _navWide: "3" },
   },
+  variants: {
+    // Where the inline links start: `wide` keeps them in the menu on tablets too (P72).
+    from: {
+      inline: {},
+      wide: { display: { base: "none", _navInline: "none", _navWide: "block" } },
+    },
+  },
+  defaultVariants: { from: "inline" },
 });
 
 export const topBarList = cva({

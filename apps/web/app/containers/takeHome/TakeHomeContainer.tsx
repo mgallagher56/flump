@@ -31,6 +31,8 @@ export const TakeHomeContainer: FC = () => {
       />
       <TakeHomeCalculator
         initialSalary={effectiveSalary}
+        // The saved row from the first render, so nothing changes size when the store fills.
+        profile={profile}
         onApplyIncrease={(monthlyIncrease) =>
           // Router state, not the URL: no money values in links or history entries.
           navigate("/app/savings#forecast", { state: { payRise: Math.round(monthlyIncrease) } })

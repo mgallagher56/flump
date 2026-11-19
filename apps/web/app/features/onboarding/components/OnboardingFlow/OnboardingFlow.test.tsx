@@ -138,6 +138,16 @@ describe("<OnboardingFlow />", () => {
     expect(screen.queryByText(MISSING_GROSS_ERROR)).toBeNull();
   });
 
+  it("opens each new step at the top of the page with focus on its heading (P57)", () => {
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    render(<OnboardingFlow />);
+    scrollTo.mockClear();
+    fireEvent.click(stepButton(/Step 3 of 4/));
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
+    expect(document.activeElement?.id).toBe("onboarding-step-savings-title");
+    scrollTo.mockRestore();
+  });
+
   it("focuses the current step heading after Review figures", () => {
     seedState.showBanner = true;
     render(<OnboardingFlow />);

@@ -36,8 +36,22 @@ export const marginalRateNote = cva({
   base: { textStyle: "body.sm", color: "text.secondary", margin: "0" },
 });
 
+/**
+ * The drawing's height is set here from the container width, not from the measured width in
+ * script, so the box is already the right height in the server HTML and nothing below it moves
+ * once the chart measures itself (phone audit P61). The values follow MarginalRateChart.tsx:
+ * H_WIDE (280) from NARROW_W (480), H_NARROW (200) below it, and under MIN_W (300) the 300x200
+ * drawing scales down with the width.
+ */
 export const marginalRateSvg = cva({
-  base: { width: "100%", height: "auto", display: "block", overflow: "visible" },
+  base: {
+    width: "100%",
+    height: "280px",
+    display: "block",
+    overflow: "visible",
+    "@container (max-width: 479.98px)": { height: "200px" },
+    "@container (max-width: 299.98px)": { height: "calc(100cqw * 2 / 3)" },
+  },
 });
 
 export const marginalRateGrid = cva({
@@ -57,7 +71,15 @@ export const marginalRateAxisTitle = cva({
 });
 
 export const marginalRateChartArea = cva({
-  base: { display: "flex", flexDirection: "column", gap: "1", width: "100%", minWidth: "0" },
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1",
+    width: "100%",
+    minWidth: "0",
+    // The drawing's height follows this box's width (see marginalRateSvg).
+    containerType: "inline-size",
+  },
 });
 
 /** Fills the tooltip's foreignObject and lines the box up with its marker. */

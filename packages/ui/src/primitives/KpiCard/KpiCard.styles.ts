@@ -58,6 +58,9 @@ export const kpiLabel = cva({
     gap: "1",
     minHeight: "6",
     textStyle: "label.sm",
+    // Tabular numerals belong on the figure only: on label text they widen the gaps around a
+    // hyphen ("Debt-free date"), even when the card sits inside a tabular table (phone audit P42).
+    fontVariantNumeric: "normal",
     color: "text.muted",
     minWidth: 0,
     overflowWrap: "anywhere",
@@ -109,6 +112,11 @@ export const kpiHeroValue = cva({
     // only a card under 7rem (a 2x2 strip at 320px holding "minus £1,234,567") steps to md.
     "@container (min-width: 7.01rem) and (max-width: 14rem)": { fontSize: "2xl" },
     "@container (max-width: 7rem)": { fontSize: "md" },
+    // On a phone a full-width card (a strip of one, or the third of three) takes the same 2xl
+    // step as the two-up cards, so a page shows one KPI figure size (phone audit P22).
+    "@media screen and (max-width: 39.99em)": {
+      "@container (min-width: 14.01rem)": { fontSize: "2xl" },
+    },
     fontVariantNumeric: "tabular-nums",
     color: "text.primary",
     margin: "0",
@@ -133,8 +141,30 @@ export const kpiHeroValue = cva({
       default: {},
       hero: { color: "text.onContrast" },
     },
+    /**
+     * A value with no digits ("Interest-only", "None") is a word, not a figure: it drops the
+     * tabular numerals so its hyphens and letters keep their normal spacing (phone audit P42).
+     */
+    word: {
+      true: { fontVariantNumeric: "normal" },
+      false: {},
+    },
   },
-  defaultVariants: { tone: "default" },
+  defaultVariants: { tone: "default", word: false },
+});
+
+/**
+ * The slot under the value: the not-set action, the delta badge and the caption. It takes the
+ * card's spare height, so the caption (pinned with `mt: auto`) sits at the bottom of the card.
+ */
+export const kpiFoot = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "density.gap",
+    flexGrow: 1,
+    minWidth: 0,
+  },
 });
 
 export const kpiSubtext = cva({

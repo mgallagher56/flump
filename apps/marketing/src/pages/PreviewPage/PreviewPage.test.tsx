@@ -20,6 +20,15 @@ describe("PreviewPage", () => {
     expect(screen.getAllByText(PREVIEW_PAGE_DESCRIPTION).length).toBeGreaterThanOrEqual(1);
   });
 
+  it("puts the section gap between the moments only, not under the page header (P73)", () => {
+    renderPage();
+    const dashboard = screen.getByTestId("preview-moment-dashboard");
+    const header = screen.getByRole("heading", { level: 1, name: PREVIEW_PAGE_TITLE });
+    // The header is not a sibling inside the gapped column, so no gap stacks on its own margin.
+    expect(dashboard.parentElement?.contains(header)).toBe(false);
+    expect(dashboard.parentElement?.className).toContain("gap_10");
+  });
+
   it("renders all three preview moments", () => {
     renderPage();
     expect(screen.getByTestId("preview-moment-dashboard")).toBeDefined();

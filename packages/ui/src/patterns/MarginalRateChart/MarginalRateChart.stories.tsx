@@ -83,8 +83,27 @@ export const Zone: Story = {
 
 export const ZoneDark: Story = { ...Zone, globals: { theme: "dark" } };
 
+/**
+ * The drawing's box height comes from CSS (200px under a 480px-wide chart, 280px from it), so it
+ * matches the drawn height once measured and nothing below the chart moves (phone audit P61).
+ */
+const reservedHeightPlay: Story["play"] = async ({ canvasElement }) => {
+  const svg = canvasElement.querySelector("[data-testid='marginal-rate-chart'] svg") as SVGElement;
+  const box = svg.getBoundingClientRect();
+  const reserved = box.width < 300 ? (box.width * 2) / 3 : box.width < 480 ? 200 : 280;
+  // The box height is set by CSS from the width alone, before and after the script measures.
+  await expect(Math.abs(box.height - reserved)).toBeLessThanOrEqual(1);
+  // Once measured, the drawing is the height of its box (from 300px wide), so it is not scaled.
+  if (box.width >= 300) {
+    await waitFor(() => expect(Number(svg.getAttribute("height"))).toBe(reserved));
+  }
+};
+
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: reservedHeightPlay,
 };
+
+export const MobileDark: Story = { ...Mobile, globals: { theme: "dark" } };
 
 export const Dark: Story = { ...Default, globals: { theme: "dark" } };

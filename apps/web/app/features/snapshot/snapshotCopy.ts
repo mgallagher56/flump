@@ -187,7 +187,8 @@ export function formatWarmConfirmation(input: WarmConfirmationInput): string {
     case "setupStepFinished":
       return WARM_SETUP_STEP_CONFIRMATIONS[input.step];
     case "setupComplete":
-      return "Setup is finished. Everything on your dashboard now uses your own figures.";
+      // Under the "Setup finished" heading, so it does not say it again (P27).
+      return "Everything on your dashboard now uses your own figures.";
     case "firstAccountAdded":
       return "Your first account is in.";
   }

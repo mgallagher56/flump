@@ -75,3 +75,19 @@ export const detailSubline = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
+
+/**
+ * RC-11 (P62): below `sm` the header's Edit action goes on its own line under the title and
+ * description, so the description keeps the row's width instead of three words a line. The
+ * header is the section's first child (tile, text, action); from `sm` it is one row again.
+ */
+export const stackedHeaderSection = cva({
+  base: {
+    "& > [id$='-header']": { flexWrap: { base: "wrap", sm: "nowrap" } },
+    "& > [id$='-header'] > :nth-child(2)": { flexBasis: { base: "0", sm: "auto" } },
+    "& > [id$='-header'] > :nth-child(3)": {
+      flexBasis: { base: "100%", sm: "auto" },
+      alignSelf: { base: "flex-start", sm: "center" },
+    },
+  },
+});

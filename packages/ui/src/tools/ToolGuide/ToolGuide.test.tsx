@@ -56,6 +56,12 @@ describe("ToolGuide", () => {
     expect(screen.getByText(`${guide.faqs.length} questions`)).toBeTruthy();
   });
 
+  it("puts each count on its own line under the title (P75)", () => {
+    render(<ToolGuide faqs={guide.faqs} guideSections={guide.guideSections} />);
+    const count = screen.getByText(`${guide.faqs.length} questions`);
+    expect(count.parentElement?.className).toContain("flex-d_column");
+  });
+
   it("renders nothing for an empty list", () => {
     const { container } = render(<ToolGuide faqs={[]} guideSections={[]} />);
     expect(panels(container)).toHaveLength(0);

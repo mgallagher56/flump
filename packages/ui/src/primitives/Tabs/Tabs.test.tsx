@@ -212,6 +212,18 @@ describe("Tabs Primitive", () => {
     expect(screen.getByRole("tab", { name: "Avalanche" }).className).not.toBe(smClass);
   });
 
+  it("gives triggers a 44px touch height and wraps the row into a grid below 400px", () => {
+    render(<Tabs items={items} size="sm" value="avalanche" onValueChange={vi.fn()} />);
+    const trigger = screen.getByRole("tab", { name: "Avalanche" }).className;
+    // P05: 44px (the `touch` size) on coarse pointers, for both sizes.
+    expect(trigger).toContain("[@media_(pointer:_coarse)]:min-h_touch");
+    // P06, P07: below 400px the labels wrap inside equal grid cells instead of scrolling.
+    expect(trigger).toContain("[@media_screen_and_(max-width:_399.98px)]:white-space_normal");
+    const list = screen.getByRole("tablist").className;
+    expect(list).toContain("[@media_screen_and_(max-width:_399.98px)]:d_grid");
+    expect(list).toContain("[@media_screen_and_(max-width:_399.98px)]:w_100%");
+  });
+
   it("warns in development when given more than four items", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const five = ["a", "b", "c", "d", "e"].map((v) => ({ value: v, label: v.toUpperCase() }));

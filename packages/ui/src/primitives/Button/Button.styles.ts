@@ -35,7 +35,9 @@ export const buttonRecipe = cva({
       _active: { transform: "scale(0.97)" },
     },
     [DISABLED]: {
-      bg: "surface.sunken",
+      // In dark, sunken is the darkest step, so a disabled primary read as a near-black button of
+      // its own; the subtle step reads as a muted, inactive fill (phone audit P29).
+      bg: { base: "surface.sunken", _dark: "surface.subtle", _systemDark: "surface.subtle" },
       color: "text.muted",
       borderColor: "border.subtle",
       cursor: "not-allowed",
@@ -84,6 +86,20 @@ export const buttonRecipe = cva({
         px: "1",
         py: "0",
         [DISABLED]: { bg: "transparent", borderColor: "transparent" },
+        // Keeps its inline text size, but a touch screen gets a 44px target through an invisible
+        // hit area, as CollapsibleDrawer's quiet button does (phone audit P16).
+        "@media (pointer: coarse)": {
+          minH: "0",
+          _before: {
+            content: '""',
+            position: "absolute",
+            insetInline: "0",
+            top: "50%",
+            transform: "translateY(-50%)",
+            height: "touch",
+            minWidth: "touch",
+          },
+        },
       },
       danger: dangerStyles,
       /**

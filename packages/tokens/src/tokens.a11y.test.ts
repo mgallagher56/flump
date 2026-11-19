@@ -736,6 +736,21 @@ describe("E16 surface tints", () => {
     }
   });
 
+  it("in dark, each tint stands off surface.card enough for an icon tile to read (P77)", () => {
+    // Before P77 the dark tints sat at 1.05 to 1.15:1 on the card. text.muted at 4.5:1 caps a
+    // lighter tint at about 1.29:1, so 1.2:1 plus 10 deltaE76 is the visible floor, and the icon
+    // (text.primary) keeps well over 3:1 on the tile.
+    for (const tint of TINTS) {
+      const ratio = getContrastRatio(
+        resolveColor(tint, "dark"),
+        resolveColor("surface.card", "dark"),
+      );
+      expect(ratio, `${tint} vs surface.card (dark)`).toBeGreaterThanOrEqual(1.2);
+      expect(deltaE(tint, "surface.card", "dark")).toBeGreaterThanOrEqual(10);
+      assertPair({ fg: "text.primary", bg: tint, themes: ["dark"], min: 3, role: "ui" });
+    }
+  });
+
   it("tints differ between themes", () => {
     for (const tint of TINTS)
       expect(resolveColor(tint, "light")).not.toBe(resolveColor(tint, "dark"));

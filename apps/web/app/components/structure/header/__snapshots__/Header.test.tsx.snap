@@ -4,10 +4,10 @@ exports[`<Header /> > renders as expected by default 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_env(safe-area-inset-left) pr_env(safe-area-inset-right)"
     >
       <div
-        class="d_flex ai_center gap_3 navWide:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
+        class="d_flex ai_center gap_3 navWide:gap_5 min-h_touch navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
       >
         <div
           class="d_inline-flex ai_center flex-sh_0"
@@ -285,10 +285,10 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_env(safe-area-inset-left) pr_env(safe-area-inset-right)"
     >
       <div
-        class="d_flex ai_center gap_3 navWide:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
+        class="d_flex ai_center gap_3 navWide:gap_5 min-h_touch navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
       >
         <div
           class="d_inline-flex ai_center flex-sh_0"
@@ -822,10 +822,10 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_env(safe-area-inset-left) pr_env(safe-area-inset-right)"
     >
       <div
-        class="d_flex ai_center gap_3 navWide:gap_5 min-h_14 navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
+        class="d_flex ai_center gap_3 navWide:gap_5 min-h_touch navInline:min-h_18 px_4 navInline:px_6 navWide:px_10 py_2 max-w_1536px mx_auto"
       >
         <div
           class="d_inline-flex ai_center flex-sh_0"

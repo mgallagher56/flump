@@ -307,8 +307,20 @@ async function measureNavigation(run: Run) {
         await run.page.waitForURL((u) => u.pathname === target.href, { timeout: 10_000 });
         await settleSafely(run.page);
         afterNav = await run.page.evaluate(() => Math.round(window.scrollY));
+        const backPath = new URL(run.page.url()).pathname;
         await run.page.goBack();
+        // Back is a client navigation: networkidle can return before its data loads, while the
+        // page being left (correctly at 0) is still on screen. Wait for the URL to change, then
+        // for the scroll position to stop moving, before reading it.
+        await run.page.waitForURL((u) => u.pathname !== backPath, { timeout: 10_000 });
         await settleSafely(run.page);
+        let previous = -1;
+        for (let i = 0; i < 20; i++) {
+          const y = await run.page.evaluate(() => Math.round(window.scrollY));
+          if (y === previous && y !== 0) break;
+          previous = y;
+          await run.page.waitForTimeout(150);
+        }
         afterBack = await run.page.evaluate(() => Math.round(window.scrollY));
       }
       record(run, "navigation", entry.name, {

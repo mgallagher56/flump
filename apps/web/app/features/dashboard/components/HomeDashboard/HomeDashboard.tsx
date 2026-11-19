@@ -16,7 +16,10 @@ import { LayoutGrid, SlidersHorizontal } from "lucide-react";
 import { type FC, type ReactNode, useMemo, useRef, useState } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { NetWorthBasisLine } from "~/features/accounts/components/NetWorthBasisLine";
-import type { MonthlyCheckInCardProps } from "~/features/snapshot/components/MonthlyCheckInCard";
+import {
+  isCheckInDue,
+  type MonthlyCheckInCardProps,
+} from "~/features/snapshot/components/MonthlyCheckInCard";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { DebtSummary } from "~/utils/debtSummary";
@@ -243,6 +246,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   };
 
   const hasAccounts = Boolean(checklistProps.hasAccounts || (accountsData?.accountsCount ?? 0) > 0);
+  // The check-in row, when due, is Home's one notice: the setup-finished row then stays away (P27).
+  const checkInShows = Boolean(checkIn && hasAccounts && isCheckInDue(checkIn));
 
   const hasData = (key: DashboardWidgetKey): boolean => {
     switch (key) {
@@ -359,12 +364,13 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         <div className={housekeepingGroup()}>
           <SetupChecklist
             {...checklistProps}
+            anotherNoticeShows={checkInShows}
             completedSteps={effectiveCompletedSteps}
             enabledPages={enabledPages}
             onSkipStep={handleSkipChecklistStep}
             skipError={checklistError}
           />
-          {checkIn && hasAccounts ? <CheckInRow {...checkIn} /> : null}
+          {checkInShows && checkIn ? <CheckInRow {...checkIn} /> : null}
         </div>
       )}
 
@@ -429,6 +435,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       <WidgetVisibilityPanel
         error={visibilityError}
+        // Back to the page header's button when the sheet opened with nothing focused (P10).
+        returnFocusTo={() => document.getElementById("dashboard-show-hide")}
         open={panelOpen}
         shownKeys={cards}
         visibleKeys={dashboardWidgets}

@@ -244,10 +244,12 @@ export const semanticTokens = {
       // page. Never around a KpiStrip, a ScenarioZone or a chart, and KPI cards are never tinted.
       // Teal: net worth, mortgage, pension. Apricot: debt. Sage: savings. text.primary, secondary
       // and muted clear 4.5:1 on each, and each is >= 2 deltaE76 from every other surface (tests).
+      // Dark (P77): as light and as saturated as text.muted at 4.5:1 allows, about 1.25:1 and
+      // 16 deltaE76 against surface.card, so an icon tile reads on a card (it was 1.05 to 1.15:1).
       tint: {
-        teal: { value: { base: "#dcede6", _dark: "#1f322d" } },
-        apricot: { value: { base: "#fae5cc", _dark: "#2e261c" } },
-        sage: { value: { base: "#e5edda", _dark: "#272f22" } },
+        teal: { value: { base: "#dcede6", _dark: "#1d3932" } },
+        apricot: { value: { base: "#fae5cc", _dark: "#42311c" } },
+        sage: { value: { base: "#e5edda", _dark: "#2b3822" } },
       },
     },
 

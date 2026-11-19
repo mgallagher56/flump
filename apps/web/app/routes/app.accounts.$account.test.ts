@@ -41,6 +41,25 @@ describe("app.accounts.$account loader", () => {
     expect((await run()).basis).toEqual({ countProperty: false, countStudentLoan: true });
   });
 
+  it.each([
+    ["client", 400],
+    ["not-found", 404],
+  ] as const)(
+    "shows a missing account as not found when the backend answers %s (%i, P18)",
+    async (kind, status) => {
+      // The account first, then the profile (the loader asks for both at once).
+      backendFetch
+        .mockRejectedValueOnce(new BackendError(kind, "/accounts/a1", status))
+        .mockResolvedValueOnce({});
+      const thrown = await loader(args).then(
+        () => null,
+        (e: unknown) => e as { init: { status: number }; data: { kind: string } },
+      );
+      expect(thrown?.init.status).toBe(404);
+      expect(thrown?.data.kind).toBe("not-found");
+    },
+  );
+
   it("leaves the basis unknown (null) when the profile cannot be read", async () => {
     respond(new Error("profile down"));
     const data = await run();

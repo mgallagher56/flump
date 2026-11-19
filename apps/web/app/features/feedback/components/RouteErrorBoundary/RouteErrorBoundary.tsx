@@ -1,11 +1,7 @@
+import { PageBody } from "@repo/ui";
 import type { ReactElement } from "react";
-import {
-  isRouteErrorResponse,
-  useLocation,
-  useRevalidator,
-  useRouteError,
-  useRouteLoaderData,
-} from "react-router";
+import { isRouteErrorResponse, useLocation, useRevalidator, useRouteError } from "react-router";
+import { useRootUser } from "../../../../hooks/useRootUser";
 import { BACKEND_ERROR_KINDS, type BackendErrorKind } from "../../../../services/backend-error";
 import { RouteErrorState, type RouteErrorStateProps } from "../RouteErrorState";
 import { boundaryRoot } from "./RouteErrorBoundary.styles";
@@ -89,13 +85,13 @@ export function RouteErrorBoundary({
   const revalidator = useRevalidator();
   const { pathname } = useLocation();
   // Signed-out visitors have no dashboard, so the home link gets a neutral label for them.
-  const rootData = useRouteLoaderData("root") as { user?: unknown } | undefined;
-  const signedIn = Boolean(rootData?.user);
+  const signedIn = Boolean(useRootUser());
   const kind = kindFromError(error);
   const onAccountDetail = ACCOUNT_DETAIL.test(pathname);
 
   return (
-    <div className={boundaryRoot()}>
+    // PageBody's gutters, the same as every page and the account-deleted card (P36, P76).
+    <PageBody className={boundaryRoot()}>
       <RouteErrorState
         kind={kind}
         status={statusFor(error, kind)}
@@ -108,6 +104,6 @@ export function RouteErrorBoundary({
           onAccountDetail ? "Back to accounts" : signedIn ? "Back to home" : "Go to the home page"
         }
       />
-    </div>
+    </PageBody>
   );
 }

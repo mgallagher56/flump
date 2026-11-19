@@ -108,4 +108,24 @@ test.describe("web app", () => {
     await expect.poll(() => scrollY(page)).toBe(0);
     await expect(page.locator("main#main-content")).toBeFocused();
   });
+
+  // Back returns to the place the reader left (P80, P13). Mortgage draws its charts after the
+  // first render, so it is shorter than the saved offset when Back first restores it: without the
+  // hold in useScrollRestoreAfterGrowth it landed near the top every time. The poll waits for
+  // Back's data to load: until then the page shown is still the one Back is leaving.
+  for (const start of ["/app/accounts", "/app/mortgage"]) {
+    test(`Back after a bottom-bar link returns to the saved place on ${start}`, async ({
+      page,
+    }) => {
+      await page.goto(start);
+      await waitForHydration(page);
+      const saved = await scrollToBottom(page);
+      await page.locator(BAR).getByRole("link", { name: "Budget" }).tap();
+      await expect(page).toHaveURL(/\/app\/budget$/);
+      await expect.poll(() => scrollY(page)).toBe(0);
+      await page.goBack();
+      await expect(page).toHaveURL(new RegExp(`${start}$`));
+      await expect.poll(() => scrollY(page)).toBe(saved);
+    });
+  }
 });

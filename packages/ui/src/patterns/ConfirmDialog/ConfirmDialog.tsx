@@ -173,8 +173,12 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
           onOpenAutoFocus={(event) => {
             focusReturn.onOpenAutoFocus();
             event.preventDefault();
-            if (bulk) cancelRef.current?.focus();
-            else confirmRef.current?.focus();
+            // Focus without scrolling to the button: on a short phone screen the dialog scrolls,
+            // and the reader must start at the title, not at the foot (phone audit P09).
+            if (bulk) cancelRef.current?.focus({ preventScroll: true });
+            else confirmRef.current?.focus({ preventScroll: true });
+            const content = event.currentTarget as HTMLElement | null;
+            if (content) content.scrollTop = 0;
           }}
           onCloseAutoFocus={focusReturn.onCloseAutoFocus}
           onKeyDown={(event) => {

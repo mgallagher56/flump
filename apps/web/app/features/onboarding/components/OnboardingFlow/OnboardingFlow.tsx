@@ -65,9 +65,13 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
   };
 
   useEffect(() => {
-    if (step === REVIEW_STEP && hasMoved) {
-      document.getElementById("onboarding-review-title")?.focus();
+    if (!hasMoved) return;
+    if (step === REVIEW_STEP) {
+      document.getElementById("onboarding-review-title")?.focus({ preventScroll: true });
     }
+    // Each step opens at the top, with "Step n of 4" and the step's heading in view; the window
+    // otherwise kept the last step's scroll position (P57). The step focuses its own heading.
+    window.scrollTo(0, 0);
   }, [step]);
 
   // On the review the finish error sits beside the Finish button instead, so it is announced once.

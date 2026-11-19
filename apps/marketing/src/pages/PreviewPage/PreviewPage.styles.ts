@@ -25,11 +25,17 @@ export const container = cva({
     maxWidth: "4xl",
     mx: "auto",
     px: { base: "4", md: "6", lg: "8" },
-    py: { base: "8", md: "12" },
-    display: "flex",
-    flexDirection: "column",
-    gap: { base: "10", md: "14" },
+    // The marketing page top, shared with pricing, security, contact and the tools index (P73).
+    py: { base: "12", md: "16" },
   },
+});
+
+/**
+ * The three moments and the closing call to action. The gap sits between them only: the page
+ * header keeps its own space below, so "Dashboard picture" is not pushed down twice (P73).
+ */
+export const sections = cva({
+  base: { display: "flex", flexDirection: "column", gap: { base: "10", md: "14" } },
 });
 
 export const previewSection = cva({

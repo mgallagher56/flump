@@ -101,10 +101,19 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
   const changed = (now: number | null, before: number | null) => !isEditing || now !== before;
 
   const canSave = name.trim().length > 0 && kind !== null;
+  // The add button stays enabled, as in every sheet (RC-12, P28): a missing field is named on press.
+  const [showErrors, setShowErrors] = useState(false);
+  const nameError =
+    showErrors && name.trim().length === 0 ? "Enter a name for the account." : undefined;
+  const kindError = showErrors && kind === null ? "Choose the kind of account." : undefined;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!canSave || !kind || saveOutcome.pending) return;
+    if (saveOutcome.pending) return;
+    if (!canSave || !kind) {
+      setShowErrors(true);
+      return;
+    }
 
     saveOutcome.begin();
     fetcher.submit(
@@ -130,19 +139,20 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
   };
 
   return (
-    <form className={accountForm()} onSubmit={submit}>
-      <FormField label="Account name" required>
+    <form className={accountForm()} noValidate onSubmit={submit}>
+      <FormField error={nameError} label="Account name" required>
         {(field) => (
           <TextInput
             {...controlProps(field)}
-            placeholder="For example, easy access savings or Cash ISA"
+            // Short enough to show whole in a 320px field (P44).
+            placeholder="For example, Cash ISA"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         )}
       </FormField>
 
-      <FormField label="Kind of account" required>
+      <FormField error={kindError} label="Kind of account" required>
         {(field) => (
           <Select
             {...controlProps(field)}
@@ -234,7 +244,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button disabled={!canSave || saveOutcome.pending} type="submit">
+        <Button disabled={saveOutcome.pending} type="submit">
           {isEditing ? "Save changes" : "Add account"}
         </Button>
       </div>

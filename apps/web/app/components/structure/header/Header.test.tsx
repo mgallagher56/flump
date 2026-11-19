@@ -1,9 +1,11 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import mockUser from "__mocks__/user";
 
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 import { AppBottomBar } from "~/components/navigation/AppBottomBar";
+import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import { ResponsiveProvider } from "~/context/ResponsiveContext";
+import { resetRememberedRootUser } from "~/hooks/useRootUser";
 import customRender from "~/testUtils/customRender";
 
 import Header from "./Header";
@@ -19,6 +21,12 @@ vi.mock("react-router", async () => {
     useRouteLoaderData: mocks.mockUseLoaderData,
     useLocation: () => ({ pathname: "/" }),
     Link: ({ children, to }: any) => <a href={to}>{children}</a>,
+    // The drawer's sign-out form; a plain form outside a data router.
+    Form: ({ children, action, method }: any) => (
+      <form action={action} method={method}>
+        {children}
+      </form>
+    ),
   };
 });
 
@@ -39,10 +47,12 @@ vi.mock("app/components/navigation/NavMenu", () => ({
 }));
 
 vi.mock("app/components/navigation/renderHomeLogoLink", () => ({
-  renderHomeLogoLink: () => <div>HomeLogo</div>,
+  renderHomeLogoLink: vi.fn(() => <div>HomeLogo</div>),
 }));
 
 describe("<Header />", () => {
+  // The header remembers the last signed-in user in the browser (P17); each test starts fresh.
+  beforeEach(() => resetRememberedRootUser());
   test("renders as expected by default", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
     const { baseElement } = customRender(<Header />);
@@ -82,6 +92,15 @@ describe("<Header />", () => {
     const hrefs = Array.from(nav.querySelectorAll("a")).map((a) => a.getAttribute("href"));
     expect(hrefs).toContain("/app/accounts");
     expect(hrefs).toContain("/app/budget");
+  });
+
+  test("signed in on Home, the logo link carries no current-page mark (P46)", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    vi.mocked(renderHomeLogoLink).mockClear();
+    customRender(<Header />);
+    const props = vi.mocked(renderHomeLogoLink).mock.calls.map(([p]) => p);
+    expect(props.length).toBeGreaterThan(0);
+    for (const p of props) expect(p).not.toHaveProperty("aria-current");
   });
 
   test("renders signed out when the root loader data is missing (root error boundary)", () => {

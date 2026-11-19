@@ -96,6 +96,34 @@ export const Default: Story = {
 
 export const SideRight: Story = { args: { side: "right" } };
 
+/** On a phone the sheet is as tall as its content, with no grab handle (phone audit P31). */
+const phoneFitPlay: Story["play"] = async ({ canvasElement }) => {
+  const body = within(canvasElement.ownerDocument.body);
+  const sheet = await body.findByRole("dialog", { name: "Adjust your plan" });
+  await expect(sheet.querySelector(":scope > [aria-hidden='true']")).toBeNull();
+  // The last row (the footer, or the body) ends at the sheet's padding: no empty band below.
+  const last = sheet.lastElementChild as HTMLElement;
+  const gap = sheet.getBoundingClientRect().bottom - last.getBoundingClientRect().bottom;
+  await expect(gap).toBeLessThan(64);
+};
+
+export const PhoneFitsContent: Story = {
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: phoneFitPlay,
+};
+
+export const PhoneFitsContentDark: Story = {
+  ...PhoneFitsContent,
+  globals: { theme: "dark" },
+  decorators: [
+    (Story) => (
+      <DarkRoot>
+        <Story />
+      </DarkRoot>
+    ),
+  ],
+};
+
 /** Portalled content escapes the side-by-side frames, so dark gets its own story. */
 export const Dark: Story = {
   ...Default,

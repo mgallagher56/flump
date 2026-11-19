@@ -43,8 +43,12 @@ type Story = StoryObj<typeof Demo>;
 const play: Story["play"] = async ({ canvasElement }) => {
   const body = within(canvasElement.ownerDocument.body);
   await expect(body.getByRole("dialog")).toBeInTheDocument();
+  // The page behind cannot scroll while the drawer is open (phone audit P11, P70).
+  const page = canvasElement.ownerDocument.body;
+  await expect(page).toHaveAttribute("data-scroll-locked");
   await userEvent.click(body.getByRole("button", { name: "Close navigation menu" }));
   await expect(body.queryByRole("dialog")).toBeNull();
+  await expect(page).not.toHaveAttribute("data-scroll-locked");
 };
 
 export const Light: Story = { globals: { theme: "light" }, play };

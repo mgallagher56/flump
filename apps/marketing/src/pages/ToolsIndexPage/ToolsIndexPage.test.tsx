@@ -57,4 +57,19 @@ describe("ToolsIndexPage (E31, E16 PR 11)", () => {
     );
     expect(domains).toEqual(TOOL_CATALOGUE.map((t) => t.domain));
   });
+
+  it("gives every tile a visible edge in dark mode (P77)", () => {
+    const { container } = renderIndex();
+    const tiles = Array.from(container.querySelectorAll("ul [data-tile-tone]"));
+    expect(tiles).toHaveLength(TOOL_CATALOGUE.length);
+    for (const tile of tiles)
+      expect(tile.getAttribute("class")).toContain("dark:bd-c_border.input");
+  });
+
+  it("starts the heading at the marketing page top, as pricing and security do (P73)", () => {
+    renderIndex();
+    const top = screen.getByRole("heading", { level: 1 }).closest("section") as HTMLElement;
+    expect(top.className).toContain("pt_12");
+    expect(top.className).toContain("md:pt_16");
+  });
 });

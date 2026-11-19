@@ -1,5 +1,8 @@
 import { sva } from "../../../styled-system/css";
 
+/** A phone at large text (narrower than 20em); see PageHeader.styles.ts. */
+const LARGE_TEXT_PHONE = "@media screen and (max-width: 19.99em)";
+
 /**
  * E16 P2: the page's one headline figure. `hero` is the single deep-teal block per page
  * (`surface.hero`, text in `text.onContrast`), with no decoration. `plain` is the
@@ -66,7 +69,11 @@ export const heroFigure = sva({
       textStyle: "numeric.hero",
       fontVariantNumeric: "tabular-nums",
       margin: "0",
-      overflowWrap: "anywhere",
+      // A figure is read whole: it never breaks mid-number ("£592,70 / 0", phone audit P43). On a
+      // phone at large text the fluid hero size steps down to the numeric.lg step so it still fits
+      // the card on one line.
+      whiteSpace: "nowrap",
+      [LARGE_TEXT_PHONE]: { textStyle: "numeric.lg" },
     },
     delta: {
       display: "inline-flex",

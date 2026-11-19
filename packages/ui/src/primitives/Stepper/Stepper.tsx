@@ -63,6 +63,16 @@ const statusWords: Record<DisplayState, string> = {
   skipped: "Skipped",
 };
 
+/**
+ * The progress bar shows how far through the flow the reader is, so every segment up to the
+ * current step fills, whether those steps were finished or skipped (P56). The named list below
+ * still says which were skipped.
+ */
+const segmentState = (index: number, currentIndex: number): StepState => {
+  if (index === currentIndex) return "current";
+  return index < currentIndex ? "complete" : "upcoming";
+};
+
 /** The recipe variant a state is drawn with. */
 const visualState = (state: DisplayState): StepState => (state === "skipped" ? "upcoming" : state);
 
@@ -93,9 +103,16 @@ export const Stepper: FC<StepperProps> = ({
         </p>
         {currentStep ? <p className={stepperCompactName()}>{currentStep.label}</p> : null}
         <ul aria-hidden="true" className={stepperSegments()}>
-          {steps.map((step, index) => (
-            <li className={stepperSegment({ state: visualState(stateOf(index)) })} key={step.id} />
-          ))}
+          {steps.map((step, index) => {
+            const position = segmentState(index, currentIndex);
+            return (
+              <li
+                className={stepperSegment({ state: position })}
+                data-segment-state={position}
+                key={step.id}
+              />
+            );
+          })}
         </ul>
       </div>
       <ol aria-label={label} className={stepperList()}>

@@ -67,6 +67,23 @@ describe("<AvatarMenu />", () => {
     expect(document.activeElement).toBe(screen.getByTestId("avatar-menu-trigger"));
   });
 
+  it("returns focus to the trigger without scrolling the page (P12)", () => {
+    customRender(<AvatarMenu user={{ id: "1" }} />);
+    const trigger = screen.getByTestId("avatar-menu-trigger");
+    const focus = vi.spyOn(trigger, "focus");
+    open();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+  });
+
+  it("gives each item a 44px touch height (P45)", () => {
+    customRender(<AvatarMenu user={{ id: "1" }} />);
+    open();
+    for (const menuItem of screen.getAllByRole("menuitem")) {
+      expect(menuItem.className).toContain("[@media_(pointer:_coarse)]:min-h_touch");
+    }
+  });
+
   it("closes on an outside click and after choosing a link", () => {
     customRender(<AvatarMenu user={{ id: "1" }} />);
     open();

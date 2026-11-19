@@ -18,7 +18,6 @@ import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useThemeContext } from "../../context/ThemeContext";
 import { signupCta } from "../../utils/site";
-import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
 import { getAppUrl } from "../../utils/url";
 import {
   belowWide,
@@ -53,6 +52,7 @@ const activeKeyFor = (pathname: string): string | undefined => {
   if (pathname === "/pricing") return "pricing";
   if (pathname === "/security") return "security";
   if (pathname === "/mcp") return "mcp";
+  if (pathname === "/contact") return "contact";
   return undefined;
 };
 
@@ -75,16 +75,16 @@ export const Header: FC = () => {
         key: "tools",
         label: "Calculators",
         href: "/tools",
-        hint: `${CANONICAL_TOOL_SLUGS.length} calculators`,
+        hint: "No sign-in needed",
       },
       { key: "pricing", label: "Pricing", href: "/pricing", hint: "Free during the beta" },
-      { key: "security", label: "Security", href: "/security", hint: "Security and privacy" },
-      // Lower priority: inline from 1024px (navWide); in the menu on tablets and phones.
+      { key: "security", label: "Security", href: "/security", hint: "What Flump can see" },
+      // Inline from 1024px (navWide) with every other link; below that all links are in the menu.
       {
         key: "mcp",
         label: "AI connection",
         href: "/mcp",
-        hint: "Claude and Cursor",
+        hint: "Use with Claude",
         wideOnly: true,
       },
       {
@@ -92,10 +92,16 @@ export const Header: FC = () => {
         wideOnly: true,
         label: "Preview",
         href: "/preview",
-        hint: "Try it without signing in",
+        hint: "Sample figures",
       },
     ],
     [],
+  );
+
+  // The phone menu also offers Contact; the top bar has no room for it, and the footer links it.
+  const drawerItems = useMemo<MarketingNavItem[]>(
+    () => [...items, { key: "contact", label: "Contact", href: "/contact", hint: "Email us" }],
+    [items],
   );
 
   useEffect(() => {
@@ -152,8 +158,9 @@ export const Header: FC = () => {
                 </Button>
               ) : (
                 <>
-                  {/* From 1024px only; on tablets and phones "Sign in" is in the menu. The wrapper
-                      owns the display swap, so it never competes with the button's own display. */}
+                  {/* From 1024px only: at 768px the bar has no room for it. On tablets "Sign in"
+                      is in the footer, on phones in the menu. The wrapper owns the display swap, so
+                      it never competes with the button's own display. */}
                   <span className={wideOnly()}>
                     <Button asChild className={headerButton()} size="sm" variant="ghost">
                       <a href={`${appUrl}/login`}>
@@ -178,6 +185,7 @@ export const Header: FC = () => {
         logo={<HomeLogo current={location.pathname === "/"} renderLink={renderHomeLogoLink} />}
         menuControls={DRAWER_ID}
         menuExpanded={mobileMenuOpen}
+        linksFrom="wide"
         menuBelow="wide"
         menuLabel="Open navigation menu"
         navLabel="Primary"
@@ -215,7 +223,7 @@ export const Header: FC = () => {
         onClose={closeMenu}
       >
         <nav aria-label="Mobile navigation" className={navDrawerBody()}>
-          {items.map((item) => {
+          {drawerItems.map((item) => {
             const className = cx(navDrawerLink(), drawerLinkRow());
             const content = (
               <>

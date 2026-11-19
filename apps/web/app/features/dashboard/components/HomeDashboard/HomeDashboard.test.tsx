@@ -358,6 +358,8 @@ describe("HomeDashboard", () => {
     mockMarkChecklistStep.mockClear();
     renderDashboard({
       ...noDebt,
+      // This month is recorded, so no check-in row competes with the finished row.
+      checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-11" },
       checklistProps: {
         ...noDebt.checklistProps,
         completedSteps: ["budget", "accounts", "pension"],
@@ -370,6 +372,24 @@ describe("HomeDashboard", () => {
     );
     await waitFor(() => expect(mockMarkChecklistStep).toHaveBeenCalledWith("savings", true));
     expect(screen.getByTestId("setup-checklist-finished")).toBeTruthy();
+  });
+
+  it("shows one notice: the check-in row replaces Setup finished once setup is done (P27)", async () => {
+    renderDashboard({
+      ...noDebt,
+      checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-10" },
+      checklistProps: {
+        ...noDebt.checklistProps,
+        completedSteps: ["budget", "accounts", "pension"],
+        hasSavings: false,
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Finish setting up/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Not for me, skip Add your savings rates" }),
+    );
+    await waitFor(() => expect(screen.queryByTestId("setup-checklist")).toBeNull());
+    expect(screen.getByText("November balances not recorded yet")).toBeTruthy();
   });
 
   it("hides the check-in row once this month is recorded", () => {

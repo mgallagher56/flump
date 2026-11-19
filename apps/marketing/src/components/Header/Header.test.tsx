@@ -3,7 +3,6 @@ import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ThemeProvider } from "../../context/ThemeContext";
-import { CANONICAL_TOOL_SLUGS } from "../../utils/toolSlugs";
 import { Header, MAIN_ID } from "./Header";
 
 describe("Header", () => {
@@ -12,7 +11,7 @@ describe("Header", () => {
     document.cookie = "flump_has_session=; path=/; max-age=0";
   });
 
-  it("starts with a skip link to the main landmark and counts every calculator", () => {
+  it("starts with a skip link to the main landmark and gives each menu item a one-line hint", () => {
     render(
       <HelmetProvider>
         <ThemeProvider>
@@ -25,7 +24,27 @@ describe("Header", () => {
     const skip = screen.getByRole("link", { name: "Skip to main content" });
     expect(skip.getAttribute("href")).toBe(`#${MAIN_ID}`);
     fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
-    expect(screen.getByText(`${CANONICAL_TOOL_SLUGS.length} calculators`)).toBeDefined();
+    const drawer = screen.getByRole("navigation", { name: "Mobile navigation" });
+    // Each hint adds meaning rather than repeating its label (P71).
+    for (const [label, hint] of [
+      ["Calculators", "No sign-in needed"],
+      ["Pricing", "Free during the beta"],
+      ["Security", "What Flump can see"],
+      ["AI connection", "Use with Claude"],
+      ["Preview", "Sample figures"],
+      ["Contact", "Email us"],
+    ]) {
+      const link = within(drawer).getByRole("link", { name: new RegExp(`^${label}`) });
+      expect(link.textContent).toBe(`${label}${hint}`);
+    }
+    // P71: the menu offers Contact; the top bar does not.
+    expect(
+      within(drawer)
+        .getByRole("link", { name: /^Contact/ })
+        .getAttribute("href"),
+    ).toBe("/contact");
+    const primary = screen.getByRole("navigation", { name: "Primary" });
+    expect(within(primary).queryByRole("link", { name: /Contact/ })).toBeNull();
   });
 
   it("renders desktop navigation links, 'Sign in', the invite CTA, and theme toggle when no session", () => {
@@ -196,11 +215,11 @@ describe("Header", () => {
       </HelmetProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
-    expect(screen.getByText("Security and privacy")).toBeDefined();
+    expect(screen.getByText("What Flump can see")).toBeDefined();
     expect(screen.queryByText("FCA AISP")).toBeNull();
   });
 
-  it("on tablets keeps lower-priority items in the menu and shows one theme button", () => {
+  it("below 1024px shows the menu button and no inline links, and one theme button", () => {
     render(
       <HelmetProvider>
         <ThemeProvider>
@@ -211,7 +230,11 @@ describe("Header", () => {
       </HelmetProvider>,
     );
     const primary = screen.getByRole("navigation", { name: "Primary" });
-    // Inline only from navWide (1024px); below that they are in the drawer.
+    // P72: one switch at navWide (1024px). Below it the bar hides its inline nav and shows the
+    // menu button; from it the reverse, so the navigation never appears twice. TopBar's
+    // linksFrom="wide" hides the nav itself below navWide.
+    expect(primary.className).toContain("navInline:d_none");
+    expect(primary.className).toContain("navWide:d_block");
     for (const name of [/AI connection/, /^Preview$/]) {
       expect(within(primary).getByRole("link", { name }).closest("li")?.className).toContain(
         "navWide:d_list-item",
@@ -220,7 +243,6 @@ describe("Header", () => {
     expect(screen.getAllByRole("link", { name: /Sign in/ })[0]?.parentElement?.className).toContain(
       "navWide:d_inline-flex",
     );
-    // The menu button stays up to navWide; the one-button theme switch shows below it.
     expect(screen.getByRole("button", { name: /open navigation menu/i }).className).toContain(
       "navWide:d_none",
     );

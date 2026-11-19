@@ -15,8 +15,9 @@ export const toastViewportRecipe = cva({
     padding: "0",
     listStyle: "none",
     pointerEvents: "none",
-    left: "4",
-    right: "4",
+    // Clear of the notch at either side on a phone held sideways (phone audit P15).
+    left: "calc(env(safe-area-inset-left, 0px) + {spacing.4})",
+    right: "calc(env(safe-area-inset-right, 0px) + {spacing.4})",
     bottom: "calc(var(--app-bottom-bar-offset, 0px) + env(safe-area-inset-bottom, 0px) + 1rem)",
     alignItems: "center",
     md: {
