@@ -443,7 +443,7 @@ describe("BudgetEditor", () => {
         "£200",
       );
       expect(screen.getByTestId("budget-editor-source-linked-savings-save").textContent).toContain(
-        "Your share of the monthly saving on Easy saver, from the Savings page.",
+        "The monthly saving on Easy saver, your share if it is joint, from the Savings page.",
       );
     });
 

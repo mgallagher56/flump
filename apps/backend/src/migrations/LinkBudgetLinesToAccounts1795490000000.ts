@@ -19,8 +19,9 @@ import { takeMigrationLock } from "../config/migration-lock";
  *      15 and later): the line stays, keeps its kind and reads "Not set" until the person types a
  *      figure or links another account. It never reads its stored £0.
  *   3. `link_kind` also allows 'savings' and 'debt'. A check keeps `link_account_id` to those two
- *      kinds. One line per account (a unique index on link_account_id, which also serves the
- *      foreign key's delete lookups); the one-line-per-fact index now covers only take_home and
+ *      kinds. One line per account (a unique index on link_account_id and user_id, scoped to
+ *      the user so a clash never says anything about another user's account; it leads with the
+ *      foreign key's first column, so the key's delete lookups use it); the one-line-per-fact index now covers only take_home and
  *      housing, since a person can link a line to each of several accounts.
  *
  * Down: first writes each account-linked line's resolved amount into `amount` (the account's
@@ -90,7 +91,7 @@ export class LinkBudgetLinesToAccounts1795490000000 implements MigrationInterfac
       `CREATE UNIQUE INDEX "${LINK_KIND_UNIQUE}" ON "budget_entries" ("user_id", "link_kind") WHERE "link_kind" IN ('take_home', 'housing')`,
     );
     await queryRunner.query(
-      `CREATE UNIQUE INDEX IF NOT EXISTS "${LINK_ACCOUNT_UNIQUE_INDEX}" ON "budget_entries" ("${LINK_ACCOUNT_COLUMN}") WHERE "${LINK_ACCOUNT_COLUMN}" IS NOT NULL`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "${LINK_ACCOUNT_UNIQUE_INDEX}" ON "budget_entries" ("${LINK_ACCOUNT_COLUMN}", "user_id") WHERE "${LINK_ACCOUNT_COLUMN}" IS NOT NULL`,
     );
   }
 
