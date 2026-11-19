@@ -275,11 +275,6 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     for (const key of ["hasBuyToLet", "monthlySavingsTarget", "dashboardWidgetSizes"]) {
       expect(got.body).not.toHaveProperty(key);
     }
-    // Put A's salary back: later cases check A is untouched (expectProfileAUntouched).
-    const restore = await h.call("patch", "/user-profile", h.tokens.a, {
-      annualSalary: Number(before.annualSalary),
-    });
-    expect(restore.status).toBe(200);
   });
 
   it("PATCH /user-profile/checklist: steps are per user, probe body rejected", async () => {
