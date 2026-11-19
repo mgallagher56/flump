@@ -1,10 +1,16 @@
 import {
+  accountFitsBudgetLink,
+  BUDGET_ACCOUNT_LINK_CATEGORY,
+  type BudgetAccountLink,
   budgetEntryFromRow,
+  budgetLinkAccountMonthly,
   budgetRowMonthly,
   defaultIsEssential,
   figureKnown,
   figureUnknown,
   type HousingPayment,
+  isBudgetAccountLink,
+  type PortfolioSnapshot,
   withLinkedBudgetRows,
 } from "@flump/finance-engine";
 import {
@@ -32,6 +38,7 @@ import { Link } from "react-router";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
+import { type LinkableAccount, linkedSourceText } from "../../linkedEntries";
 import { missingWizardCommonItems, WIZARD_COMMON_ITEMS } from "../../wizardCommonItems";
 import { WizardEntryRow } from "../WizardEntryRow";
 import {
@@ -82,6 +89,12 @@ export interface BudgetSetupWizardProps {
    * when none is saved. The totals resolve linked and engine-added lines with it, as the page does.
    */
   housingPayment?: HousingPayment | null;
+  /**
+   * The person's accounts (the page's snapshot), so savings and debt lines linked to an account
+   * resolve as the page resolves them, and the Savings and Bills steps can add a line linked to an
+   * account in place of a typed copy (audit slice 5).
+   */
+  accounts?: Pick<PortfolioSnapshot, "getResolvedAccounts"> | null;
   /**
    * "setup" (the default) is the first run: welcome, example figures, then each section. "edit"
    * changes a saved budget: it starts at Income with the saved entries and skips the first two.
@@ -179,6 +192,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   onCancel,
   monthlyTakeHome,
   housingPayment = null,
+  accounts = null,
   mode = "setup",
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -324,6 +338,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
         ? figureKnown({ monthly: monthlyTakeHome })
         : figureUnknown(["annualSalary"], "not-set"),
       housing: housingPayment,
+      accounts,
     },
   ).rows;
   const linkNotSet = resolvedRows.some((r) => r.notSet);
@@ -344,6 +359,101 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     totalIncome === null || totalExpenses === null ? null : totalIncome - totalExpenses;
 
   const stepLabel = STEP_LABELS[currentStep];
+
+  // Accounts a line can read, named for the linked lines' source text.
+  const resolvedAccounts = accounts?.getResolvedAccounts() ?? [];
+  const linkableAccounts: LinkableAccount[] = resolvedAccounts.map((a) => ({
+    id: a.id,
+    name: a.name,
+    type: a.rawType,
+  }));
+
+  /** What a linked entry shows in place of its stored £0: the resolved figure and its source. */
+  const linkedFor = (entry: BudgetEntry): { value: number | null; source: string } | undefined => {
+    if (!entry.linkKind) return undefined;
+    const line = resolvedRows.find((r) => r.linked && r.linkedRowId === entry.id);
+    if (!line) return undefined;
+    const source = isBudgetAccountLink(line.linked)
+      ? (linkedSourceText(line, linkableAccounts) ?? "")
+      : line.linked === "take_home"
+        ? "From your salary in Profile"
+        : "From your housing details";
+    return { value: line.notSet ? null : budgetRowMonthly(line), source };
+  };
+
+  // Accounts with a saved monthly amount that no entry is linked to yet: each can be added as a
+  // linked line, so the budget follows the account instead of holding a typed copy.
+  const linkedAccountIds = new Set(entries.map((e) => e.linkAccountId).filter(Boolean));
+  const accountChoices = (link: BudgetAccountLink) =>
+    resolvedAccounts.flatMap((account) => {
+      const monthly = budgetLinkAccountMonthly(account);
+      return accountFitsBudgetLink(link, account.rawType) &&
+        !linkedAccountIds.has(account.id) &&
+        monthly !== null &&
+        monthly > 0
+        ? [{ id: account.id, name: account.name, monthly }]
+        : [];
+    });
+  const [addingAccount, setAddingAccount] = useState<string | null>(null);
+  const addAccountLine = async (link: BudgetAccountLink, account: { id: string; name: string }) => {
+    if (addingAccount) return;
+    setAddingAccount(account.id);
+    try {
+      await onAddEntry({
+        category: BUDGET_ACCOUNT_LINK_CATEGORY[link],
+        name: account.name,
+        amount: 0,
+        frequency: "monthly",
+        isIncome: false,
+        isPrimaryIncome: false,
+        // A debt payment is essential; a saving starts flexible (owner item 28).
+        isEssential: link === "debt",
+        notes: null,
+        isDefault: false,
+        linkKind: link,
+        linkAccountId: account.id,
+      });
+    } catch (err) {
+      console.error("Failed to add a linked line in wizard:", err);
+    } finally {
+      setAddingAccount(null);
+    }
+  };
+
+  const renderAccountChoices = (link: BudgetAccountLink) => {
+    const choices = accountChoices(link);
+    if (choices.length === 0) return null;
+    return (
+      <div
+        className={callout()}
+        data-testid={`wizard-account-lines-${link}`}
+        id={`wizard-account-lines-${link}`}
+      >
+        <p className={calloutText()}>
+          {link === "savings"
+            ? "Savings accounts with a monthly saving. Add one and its line follows the account."
+            : "Cards and loans with a monthly payment. Add one and its line follows the account."}
+        </p>
+        <div className={addActions()}>
+          {choices.map((account) => (
+            <Button
+              key={account.id}
+              disabled={addingAccount !== null}
+              pending={addingAccount === account.id}
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => void addAccountLine(link, account)}
+            >
+              <Icon icon={Plus} size="sm" />
+              Add {account.name}, {formatCurrency(account.monthly, { maximumFractionDigits: 0 })} a
+              month
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const renderAddSection = () => {
     if (!isAdding) {
@@ -428,6 +538,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             key={e.id}
             deleting={deletingId === e.id}
             entry={e}
+            linked={linkedFor(e)}
             onDelete={setPendingDeleteId}
             onUpdate={localUpdate}
           />
@@ -605,6 +716,16 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             currentStep === "savings") && (
             <div>
               {renderEntries(currentStep, "Nothing here yet. Add an entry below.")}
+              {currentStep === "savings" && renderAccountChoices("savings")}
+              {/* Debt payments sit with the bills: the lines linked to a card or loan, then the
+                  cards and loans that can still be added. */}
+              {currentStep === "bills" && (
+                <>
+                  {getCategoryEntries(BUDGET_ACCOUNT_LINK_CATEGORY.debt).length > 0 &&
+                    renderEntries(BUDGET_ACCOUNT_LINK_CATEGORY.debt, "")}
+                  {renderAccountChoices("debt")}
+                </>
+              )}
               {renderAddSection()}
               {currentStep === "savings" && (
                 <div className={tipBox()}>

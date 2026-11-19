@@ -4,7 +4,7 @@ import { sva } from "@repo/ui/styled-system/css";
  * A quiet note under a category row: secondary text on the list's own surface, indented like the
  * opened entries so it reads as part of the row above it.
  */
-export const duplicateDebtNotice = sva({
+export const accountLinkNotice = sva({
   slots: ["root", "entry", "text", "amount", "actions"],
   base: {
     root: {

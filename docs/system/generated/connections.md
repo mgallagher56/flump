@@ -433,6 +433,12 @@ flowchart LR
   f_budget_entry_link_kind -.-> s_mcp_read
   f_budget_entry_link_kind -.-> s_context_pack
   f_budget_entry_link_kind -.-> s_export
+  f_budget_entry_link_account(["Which account a savings or debt budget line reads"])
+  s_budget --> f_budget_entry_link_account
+  f_budget_entry_link_account -.-> s_picture
+  f_budget_entry_link_account -.-> s_budget
+  f_budget_entry_link_account -.-> s_mcp_read
+  f_budget_entry_link_account -.-> s_export
   f_other_outgoings(["Other monthly outgoings as typed in onboarding"])
   s_onboarding --> f_other_outgoings
   f_savings_settings(["Monthly savings target and savings settings on the profile"])

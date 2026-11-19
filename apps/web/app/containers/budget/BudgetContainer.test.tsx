@@ -215,16 +215,21 @@ describe("BudgetContainer", () => {
     expect(h1.compareDocumentPosition(hero) & 4).toBeTruthy();
   });
 
-  it("with take-home pay unknown, the hero asks for a salary", () => {
+  // Audit slice 5 (link L34): safe to spend starts from the budget's income, as left over does,
+  // so the typed £4,000 salary line is enough with no take-home saved.
+  it("with take-home pay unknown, safe to spend starts from the typed income line", () => {
     mockLoaderData = {
       ...baseLoaderData,
       userProfile: { ...baseLoaderData.userProfile, monthlyTakeHome: null },
       budgetEntries: withBudget,
     };
     render(<BudgetContainer />);
-    // The global setup renders router links as their children, so the words are checked here.
     const hero = screen.getByTestId("hero-figure");
-    expect(hero.textContent).toMatch(/Add your salary\s+to see/);
+    // 4,000 - 1,200 mortgage (essential) = 2,800; eating out is what it is spent on.
+    expect(hero.querySelector('[data-figure="safeToSpend.monthly"]')?.textContent).toBe("£2,800");
+    // Left over: 4,000 - 1,200 - 300 = 2,500, from the same income.
+    expect(hero.querySelector('[data-figure="budget.surplus"]')?.textContent).toBe("£2,500");
+    expect(hero.textContent).not.toMatch(/Add your salary/);
   });
 
   it("with no budget, the empty state's only controls work: no hero link and no strip prompt", () => {
@@ -684,7 +689,7 @@ describe("BudgetContainer", () => {
     );
   });
 
-  describe("an entry that may already be counted with your debts", () => {
+  describe("an entry that matches an account's monthly payment (audit slice 5)", () => {
     const withDuplicate = () => ({
       ...baseLoaderData,
       accounts: [
@@ -704,79 +709,87 @@ describe("BudgetContainer", () => {
       ],
     });
 
-    beforeEach(() => {
-      window.sessionStorage.clear();
-    });
-
-    it("shows one note under the category row, without opening it", () => {
+    it("shows one note under the category row offering the link, and a row button in the editor", () => {
       mockLoaderData = withDuplicate();
       render(<BudgetContainer />);
       const note = screen.getByRole("note", { name: "About Car loan payment" });
       expect(note.textContent).toContain(
-        "This looks like your Car loan payment of £265 a month, which is already counted with your debts.",
+        "This matches the monthly payment of £265 a month on Car loan. Link it and it changes when the account does.",
       );
       expect(screen.getAllByRole("note", { name: /^About/ })).toHaveLength(1);
       expect(screen.getByTestId("budget-category-bills").getAttribute("aria-expanded")).toBe(
         "false",
       );
-      // Not in the editor.
+      // The editor offers the same link on the entry itself, not as a note.
       fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
       expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Link Car loan payment to Car loan" }),
+      ).toBeDefined();
     });
 
-    it("Move to debts saves the entry in the debt category and says Saved", async () => {
+    it("Link moves the entry to Debt, stores no amount, links the account and says Saved", async () => {
       mockLoaderData = withDuplicate();
       vi.mocked(apiFetch).mockResolvedValueOnce(
-        row({ id: "b-4", name: "Car loan payment", category: "debt", amount: 265 }) as any,
+        row({
+          id: "b-4",
+          name: "Car loan payment",
+          category: "debt",
+          amount: 0,
+          linkKind: "debt",
+          linkAccountId: "acc-3",
+        }) as any,
       );
       render(
         <ToastProvider>
           <BudgetContainer />
         </ToastProvider>,
       );
-      fireEvent.click(screen.getByRole("button", { name: "Move to debts" }));
+      fireEvent.click(screen.getByRole("button", { name: "Link to Car loan" }));
       await waitFor(() =>
         expect(apiFetch).toHaveBeenCalledWith(
           "/budget-entries/b-4",
-          expect.objectContaining({ method: "PATCH", body: { category: "debt" } }),
+          expect.objectContaining({
+            method: "PATCH",
+            body: { amount: 0, category: "debt", linkKind: "debt", linkAccountId: "acc-3" },
+          }),
         ),
       );
       expect(await screen.findByText("Saved")).toBeDefined();
       expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
-      expect(screen.getByTestId("budget-category-debt")).toBeDefined();
-      // Focus follows the entry to its new Debt row, not the page body.
       await waitFor(() =>
         expect(document.activeElement).toBe(screen.getByTestId("budget-category-debt")),
       );
+      // The linked line reads the account's £265 and says where it comes from.
+      fireEvent.click(screen.getByTestId("budget-category-debt"));
+      expect(await screen.findByText("From Car loan")).toBeDefined();
     });
 
-    it("a failed move keeps the note and shows the page error", async () => {
+    it("a failed link keeps the note and shows the page error", async () => {
       mockLoaderData = withDuplicate();
       vi.mocked(apiFetch).mockRejectedValueOnce(new Error("offline"));
       render(<BudgetContainer />);
-      fireEvent.click(screen.getByRole("button", { name: "Move to debts" }));
+      fireEvent.click(screen.getByRole("button", { name: "Link to Car loan" }));
       expect(
         await screen.findByText("We could not save your changes. Nothing has changed. Try again."),
       ).toBeDefined();
       expect(screen.getByRole("note", { name: /^About/ })).toBeDefined();
     });
 
-    it("Keep it here hides the note and remembers it for the session", async () => {
+    it("Keep my own figure hides the note for this visit only and stores nothing", async () => {
       mockLoaderData = withDuplicate();
+      window.sessionStorage.clear();
       const { unmount } = render(<BudgetContainer />);
-      fireEvent.click(screen.getByRole("button", { name: "Keep it here" }));
+      fireEvent.click(screen.getByRole("button", { name: "Keep my own figure" }));
       expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
-      // Focus moves to the category row the note sat under.
       await waitFor(() =>
         expect(document.activeElement?.getAttribute("data-testid")).toMatch(/^budget-category-/),
       );
       expect(apiFetch).not.toHaveBeenCalled();
-      expect(
-        JSON.parse(window.sessionStorage.getItem("flump.budget.keptDebtRows") ?? "[]"),
-      ).toEqual(["b-4"]);
+      expect(window.sessionStorage.length).toBe(0);
       unmount();
       render(<BudgetContainer />);
-      expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+      expect(screen.getByRole("note", { name: "About Car loan payment" })).toBeDefined();
     });
 
     it("no matching debt: no note", () => {

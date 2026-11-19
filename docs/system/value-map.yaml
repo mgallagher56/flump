@@ -1200,16 +1200,16 @@ facts:
       }
     other_stores:
       - {
-          ref: "budget_entries savings rows",
+          ref: "budget_entries savings rows typed by hand",
           status: duplicate,
           path: packages/finance-engine/src/picture/selectors/safe-to-spend.ts,
-          note: "planned savings read these, not the accounts",
+          note: "planned savings read these; a line linked to the account (link_account_id) reads the account instead, and the budget page offers a one-tap link for a typed row that matches",
         }
       - {
-          ref: "budget_entries debt rows",
+          ref: "budget_entries debt rows typed by hand",
           status: duplicate,
           path: packages/finance-engine/src/picture/selectors/commitments.ts,
-          note: "commitments take the larger of the two",
+          note: "commitments take the larger of the two; a linked debt line reads the account, so both sides are the same figure",
         }
       - {
           ref: "budget_entries housing row",
@@ -1228,6 +1228,11 @@ facts:
       - { surface: pension, path: apps/web/app/containers/pension/PensionContainer.tsx }
       - { surface: retirement, path: packages/finance-engine/src/retirement-input.ts }
       - { surface: picture, path: packages/finance-engine/src/picture/selectors/commitments.ts }
+      - {
+          surface: picture,
+          path: packages/finance-engine/src/picture/selectors/linked-budget-rows.ts,
+          note: "a savings or debt budget line linked to the account",
+        }
       - { surface: check-in, path: packages/finance-engine/src/check-in.ts }
     links: [L13, L35, L36, L37]
     verdict: duplicated
@@ -1693,19 +1698,29 @@ facts:
       {
         ref: budget_entries.link_kind,
         path: apps/backend/src/entities/budget-entry.entity.ts,
-        note: "take_home or housing, or null; a linked line's stored amount is never read",
+        note: "take_home, housing, savings or debt, or null; a linked line's stored amount is never read",
       }
     writers:
       - {
           surface: budget,
           path: apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx,
-          note: "Use your take-home pay or saved rent links a line; Type my own figure unlinks it",
+          note: "Use your take-home pay, saved rent or Link to an account links a line; Type my own figure unlinks it",
+        }
+      - {
+          surface: budget,
+          path: apps/web/app/containers/budget/BudgetContainer.tsx,
+          note: "the one-tap Link to an account note on a matching entry",
+        }
+      - {
+          surface: budget,
+          path: apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx,
+          note: "adds a savings or debt line linked to an account",
         }
     readers:
       - {
           surface: picture,
           path: packages/finance-engine/src/picture/selectors/linked-budget-rows.ts,
-          note: "resolves the line from take-home or the housing payment, or marks it Not set",
+          note: "resolves the line from take-home, the housing payment or one account's monthly amount, or marks it Not set",
         }
       - { surface: picture, path: packages/finance-engine/src/picture/selectors/budget-totals.ts }
       - { surface: budget, path: apps/web/app/features/budget/linkedEntries.ts }
@@ -1728,7 +1743,53 @@ facts:
     links: [L33, L34, L39]
     verdict: holds
     findings: [BU-1, BU-2]
-    note: "System audit decision 1 option A, the first part of PLAN slice 5. The profile holds the only stored value: a linked line that cannot resolve shows Not set and makes the budget totals unknown. Slice 5 adds savings and debt kinds and link_account_id."
+    note: "System audit decision 1 option A, PLAN slice 5. The profile or the account holds the only stored value: a linked line that cannot resolve shows Not set and makes the budget totals unknown. The savings and debt kinds name their account in link_account_id (budget-entry-link-account)."
+
+  - id: budget-entry-link-account
+    name: Which account a savings or debt budget line reads
+    area: budget
+    source_of_truth:
+      {
+        ref: budget_entries.link_account_id,
+        path: apps/backend/src/entities/budget-entry.entity.ts,
+        note: "the same user's account only (a composite foreign key); set to null when the account is deleted, and the line then shows Not set",
+      }
+    writers:
+      - {
+          surface: budget,
+          path: apps/backend/src/modules/budget/budget.service.ts,
+          note: "checks the account is the caller's own and fits the line's kind",
+        }
+      - {
+          surface: budget,
+          path: apps/web/app/containers/budget/BudgetContainer.tsx,
+          note: "Link to an account on a matching entry",
+        }
+      - {
+          surface: budget,
+          path: apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx,
+        }
+    readers:
+      - {
+          surface: picture,
+          path: packages/finance-engine/src/picture/selectors/linked-budget-rows.ts,
+          note: "reads the account's monthly amount at the person's share, once",
+        }
+      - {
+          surface: picture,
+          path: packages/finance-engine/src/picture/selectors/account-link-offers.ts,
+          note: "an account already linked is not offered again",
+        }
+      - { surface: budget, path: apps/web/app/features/budget/linkedEntries.ts }
+      - { surface: mcp-read, path: apps/backend/src/modules/agent/mcp-input.ts }
+      - {
+          surface: export,
+          path: apps/backend/src/modules/privacy/account-export.service.ts,
+          note: "exported beside the account it names",
+        }
+    links: [L35, L36]
+    verdict: holds
+    note: "System audit slice 5. A line linked to an account stores no amount; the account's monthly saving or payment is the one value."
 
   - id: other-outgoings
     name: Other monthly outgoings as typed in onboarding
@@ -2268,7 +2329,7 @@ figures:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L34, L35, L36]
     verdict: holds
-    note: One code path. It starts from take-home, so it can sit beside a left-over figure built on a different income.
+    note: "One code path. Since audit slice 5 it starts from the budget's income, the figure left over starts from: the linked take-home line, or the income lines the person typed."
 
   - id: months-of-cover
     name: Breathing room (months of cover)
@@ -2548,13 +2609,6 @@ browser_storage:
       user_data: false,
       path: apps/web/app/utils/runwayStorage.ts,
       note: "an account choice older versions saved; now only removed",
-    }
-  - {
-      key: flump.budget.keptDebtRows,
-      storage: sessionStorage,
-      user_data: false,
-      path: apps/web/app/containers/budget/BudgetContainer.tsx,
-      note: "ids of budget debt rows the person chose to keep, for this browser session",
     }
   - {
       key: flump-theme,

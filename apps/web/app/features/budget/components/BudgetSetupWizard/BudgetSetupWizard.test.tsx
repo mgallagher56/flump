@@ -1,3 +1,4 @@
+import { PortfolioSnapshot } from "@flump/finance-engine";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BudgetEntry } from "~/types/budget";
@@ -134,6 +135,127 @@ describe("BudgetSetupWizard: take-home from the profile (owner item 7)", () => {
     expect((screen.getByRole("checkbox", { name: /essential/i }) as HTMLInputElement).checked).toBe(
       false,
     );
+  });
+});
+
+describe("BudgetSetupWizard: savings and debt lines linked to an account (audit slice 5)", () => {
+  const props = {
+    onAddEntry: vi.fn().mockResolvedValue(undefined),
+    onCancel: vi.fn(),
+    onComplete: vi.fn(),
+    onDeleteEntry: vi.fn().mockResolvedValue(undefined),
+    onUpdateEntry: vi.fn().mockResolvedValue(undefined),
+  };
+  // A joint saver at 40% of £500 a month (£200 at the person's share) and a car loan at £180.
+  const accounts = new PortfolioSnapshot([
+    {
+      id: "acc-saver",
+      name: "Easy saver",
+      type: "Saving",
+      balance: 4000,
+      monthlyContribution: 500,
+      ownership: "joint",
+      sharePercent: 40,
+    },
+    { id: "acc-loan", name: "Car loan", type: "Loan", balance: -6000, monthlyContribution: 180 },
+    // No saved monthly saving: nothing to add.
+    { id: "acc-pot", name: "Pot", type: "Saving", balance: 100, monthlyContribution: null },
+  ]);
+  const stepTo = async (target: string) => {
+    for (const step of ["Income", "Housing", "Bills", "Expenses", "Savings"]) {
+      await screen.findByRole("heading", { name: new RegExp(step, "i") });
+      if (step === target) return;
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    }
+  };
+
+  afterEach(() => vi.clearAllMocks());
+
+  it("offers each savings account with a monthly saving as a linked line, at the person's share", async () => {
+    render(
+      <BudgetSetupWizard
+        {...props}
+        accounts={accounts}
+        entries={mockEntries}
+        mode="edit"
+        monthlyTakeHome={null}
+      />,
+    );
+    await stepTo("Savings");
+    const offer = await screen.findByTestId("wizard-account-lines-savings");
+    // 500 x 40% = 200. The pot has no saved amount, so it is not offered.
+    expect(offer.textContent).toContain("Add Easy saver, £200 a month");
+    expect(offer.textContent).not.toContain("Pot");
+    fireEvent.click(screen.getByRole("button", { name: "Add Easy saver, £200 a month" }));
+    await waitFor(() =>
+      expect(props.onAddEntry).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "savings",
+          name: "Easy saver",
+          amount: 0,
+          isEssential: false,
+          linkKind: "savings",
+          linkAccountId: "acc-saver",
+        }),
+      ),
+    );
+  });
+
+  it("offers each card or loan with a monthly payment on the Bills step, as an essential debt line", async () => {
+    render(
+      <BudgetSetupWizard
+        {...props}
+        accounts={accounts}
+        entries={mockEntries}
+        mode="edit"
+        monthlyTakeHome={null}
+      />,
+    );
+    await stepTo("Bills");
+    fireEvent.click(await screen.findByRole("button", { name: "Add Car loan, £180 a month" }));
+    await waitFor(() =>
+      expect(props.onAddEntry).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "debt",
+          isEssential: true,
+          linkKind: "debt",
+          linkAccountId: "acc-loan",
+        }),
+      ),
+    );
+  });
+
+  it("shows a linked line's account figure, offers that account no more, and counts it once in the summary", async () => {
+    // Salary £3,000 typed, rent £1,000 typed, and a savings line linked to the joint saver (£0
+    // stored). Total spending = 1,000 + 200 = 1,200. Left over = 3,000 - 1,200 = 1,800.
+    const linked = {
+      ...mockEntries[1],
+      id: "save",
+      category: "savings",
+      name: "Saving",
+      amount: 0,
+      isEssential: false,
+      linkKind: "savings",
+      linkAccountId: "acc-saver",
+    } as BudgetEntry;
+    render(
+      <BudgetSetupWizard
+        {...props}
+        accounts={accounts}
+        entries={[...mockEntries, linked]}
+        mode="edit"
+        monthlyTakeHome={null}
+      />,
+    );
+    await stepTo("Savings");
+    expect(screen.queryByLabelText("Amount for Saving")).toBeNull();
+    expect(screen.getByText("From Easy saver")).toBeDefined();
+    expect(screen.queryByTestId("wizard-account-lines-savings")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    expect((await screen.findByText("Total spending")).parentElement?.textContent).toContain(
+      "£1,200",
+    );
+    expect(screen.getByText("Left over each month").parentElement?.textContent).toContain("£1,800");
   });
 });
 

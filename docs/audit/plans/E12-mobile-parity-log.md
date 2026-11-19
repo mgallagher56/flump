@@ -117,3 +117,4 @@ Mobile follows the ruling. When the web PR merges, the row moves to table 1 with
 ```text
 | YYYY-MM-DD | What changed for the user on web | PR number | What the mobile app must do to match | Slice | Not started |
 ```
+| 2026-11-19 | Budget savings and debt lines can be linked to one account and read its monthly saving or payment at your share (no stored amount; Not set when the account has none, was removed or changed type); a typed entry that matches an account gets a one-tap "Link to …" note; the setup wizard adds linked lines from your accounts; safe to spend starts from the budget's income, as left over does; the duplicate-debt note, its "Keep it here" session list and the "Saved in your details" housing hint are gone | audit-slice-5 | Resolve linked savings and debt lines from the account at share, show Not set (never £0) with the same actions, offer the same one-tap link, start safe to spend from the budget's income | Budget | Not started |

@@ -5,11 +5,11 @@ import {
   DeleteBudgetEntryResponse,
 } from "@flump/api-contract";
 import {
+  BUDGET_ACCOUNT_LINK_CATEGORY,
   BUDGET_HOUSING_CATEGORY,
+  type BudgetAccountLinkOffer,
   type BudgetLinkOffer,
   budgetRowMonthly,
-  DEBT_CATEGORY,
-  findPossibleDuplicateDebtRows,
   getUkTaxYearContext,
   HOUSING_ROW_NAME,
   PortfolioSnapshot,
@@ -28,6 +28,7 @@ import {
 import { ListPlus } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useSearchParams } from "react-router";
+import { AccountLinkNotice } from "~/features/budget/components/AccountLinkNotice";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
 import { BreathingRoom } from "~/features/budget/components/BreathingRoom";
 import { BreathingRoomBasis } from "~/features/budget/components/BreathingRoomBasis";
@@ -36,15 +37,13 @@ import { BudgetEditor } from "~/features/budget/components/BudgetEditor";
 import { BudgetLinkNotice } from "~/features/budget/components/BudgetLinkNotice";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
-import { DuplicateDebtNotice } from "~/features/budget/components/DuplicateDebtNotice";
 import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
-import {
-  type DraftBudgetEntry,
-  entryFromDraft,
-  isDraftReady,
-} from "~/features/budget/exampleDrafts";
 import { INCOME_CATEGORY } from "~/features/budget/income";
-import { pageBudgetEntries } from "~/features/budget/linkedEntries";
+import {
+  type LinkableAccount,
+  linkedSourceText,
+  pageBudgetEntries,
+} from "~/features/budget/linkedEntries";
 import { missingWizardCommonItems } from "~/features/budget/wizardCommonItems";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import {
@@ -92,31 +91,6 @@ function writableEntryFields<T extends Partial<BudgetEntry>>(entry: T) {
   return fields;
 }
 
-/**
- * Entries the person chose to keep where they are, remembered for this browser session only: the
- * profile has no field for it, and a schema change is out of scope. Storage can be unavailable
- * (private windows, blocked site data), so every read and write is guarded.
- */
-const KEPT_DEBT_ROWS_KEY = "flump.budget.keptDebtRows";
-
-function readKeptDebtRows(): string[] {
-  try {
-    const raw = window.sessionStorage.getItem(KEPT_DEBT_ROWS_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((id) => typeof id === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeKeptDebtRows(ids: string[]): void {
-  try {
-    window.sessionStorage.setItem(KEPT_DEBT_ROWS_KEY, JSON.stringify(ids));
-  } catch {
-    // Kept for this page view only.
-  }
-}
-
 const BudgetContainer: FC = () => {
   const {
     accounts = [],
@@ -140,16 +114,6 @@ const BudgetContainer: FC = () => {
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  // Common entries from "Add common budget items": on the page only, saved only by "Save entries".
-  const [drafts, setDrafts] = useState<DraftBudgetEntry[]>([]);
-  // The latest drafts, so a save reads what was typed last, not the state one render ago.
-  const draftsRef = useRef<DraftBudgetEntry[]>(drafts);
-  draftsRef.current = drafts;
-  // Drafts belong to the editing view: leaving it by any path (Finish editing, the wizard, a
-  // category) drops them, so they never come back stale.
-  useEffect(() => {
-    if (view !== "editing") setDrafts((prev) => (prev.length > 0 ? [] : prev));
-  }, [view]);
 
   // Custom categories initialized from profile + any non-standard categories in entries
   const [customCategories, setCustomCategories] = useState<string[]>(() => {
@@ -172,9 +136,14 @@ const BudgetContainer: FC = () => {
     }
   }, [userProfile?.customBudgetCategories]);
 
+  // A category an entry moves into (a line linked to a debt moves to "debt") shows too, without
+  // being saved as a custom category of its own.
   const allCategories = useMemo(() => {
-    return [...STANDARD_CATEGORIES, ...customCategories];
-  }, [customCategories]);
+    const fromEntries = entries
+      .map((e) => e.category)
+      .filter((c) => !STANDARD_CATEGORIES.includes(c));
+    return Array.from(new Set([...STANDARD_CATEGORIES, ...customCategories, ...fromEntries]));
+  }, [customCategories, entries]);
 
   // Months-of-cover scenario inputs (accounts counted, severance, cuts, dropped lines) are
   // session-only: held here, cleared on reload, never saved and never read by the hero or strip.
@@ -212,6 +181,16 @@ const BudgetContainer: FC = () => {
   // Rows as saved (whole balance, ownership kept). The runway builds its own PortfolioSnapshot,
   // which applies a joint share once; rows already at share would be shared twice (JO-2).
   const accountsWithBalances = accounts;
+  // Names and types for the savings and debt lines linked to an account (audit slice 5).
+  const linkableAccounts = useMemo<LinkableAccount[]>(
+    () =>
+      accounts.map((a: { id?: unknown; name?: unknown; type?: unknown }) => ({
+        id: String(a.id ?? ""),
+        name: typeof a.name === "string" ? a.name : "",
+        type: typeof a.type === "string" ? a.type : "",
+      })),
+    [accounts],
+  );
 
   // Housing saved on this page, laid over the loader profile until the next load (E32).
   const [savedHousing, setSavedHousing] = useState<{
@@ -416,21 +395,13 @@ const BudgetContainer: FC = () => {
     return true;
   };
 
-  // Entries that may be a debt's own payment, so counted twice. Read view only; the engine only
-  // reports them and changes no total.
-  const [keptDebtRows, setKeptDebtRows] = useState<string[]>([]);
-  // Read after mount, so the server and first client render agree.
-  useEffect(() => {
-    const stored = readKeptDebtRows();
-    if (stored.length > 0) setKeptDebtRows((prev) => Array.from(new Set([...prev, ...stored])));
-  }, []);
-  const duplicateDebtRows = useMemo(
-    () =>
-      findPossibleDuplicateDebtRows(
-        entries.map((e) => ({ ...e, amount: Number(e.amount) || 0 })),
-        snapshot,
-      ).filter((c) => !keptDebtRows.includes(c.rowId)),
-    [entries, snapshot, keptDebtRows],
+  // Entries that match an account's monthly saving or payment (audit slice 5): each gets a quiet
+  // note offering a one-tap link. "Keep my own figure" hides the note for this visit only; nothing
+  // is stored, and nothing is linked unless the person taps.
+  const [keptOffers, setKeptOffers] = useState<string[]>([]);
+  const accountLinkOffers = useMemo(
+    () => picture.budgetAccountLinkOffers.filter((o) => !keptOffers.includes(o.rowId)),
+    [picture.budgetAccountLinkOffers, keptOffers],
   );
   const toastApi = useOptionalToast();
 
@@ -444,32 +415,36 @@ const BudgetContainer: FC = () => {
     requestAnimationFrame(() => document.getElementById(`budget-category-${slug}`)?.focus());
   };
 
-  const keepDebtRow = (rowId: string, category: string) => {
-    const next = keptDebtRows.includes(rowId) ? keptDebtRows : [...keptDebtRows, rowId];
-    writeKeptDebtRows(next);
-    setKeptDebtRows(next);
-    focusCategoryRow(category);
+  const keepOwnFigure = (offer: BudgetAccountLinkOffer) => {
+    setKeptOffers((prev) => (prev.includes(offer.rowId) ? prev : [...prev, offer.rowId]));
+    focusCategoryRow(offer.rowCategory);
   };
 
-  const moveRowToDebts = async (rowId: string) => {
-    await updateEntry(rowId, { category: DEBT_CATEGORY });
+  // Links the entry to the account: it moves to the line's category (Savings or Debt) and stores
+  // no amount of its own, so the account's monthly amount is the one figure, counted once.
+  const linkToAccount = async (offer: BudgetAccountLinkOffer) => {
+    const category = BUDGET_ACCOUNT_LINK_CATEGORY[offer.link];
+    await updateEntry(offer.rowId, {
+      amount: 0,
+      category,
+      linkKind: offer.link,
+      linkAccountId: offer.accountId,
+    });
     toastApi?.toast({ title: "Saved" });
-    focusCategoryRow(DEBT_CATEGORY);
+    focusCategoryRow(category);
   };
 
   // At most one quiet note per category (AGENTS.md section 3); the next shows once this one is
   // answered.
-  const renderDuplicateNotices = (category: string) => {
-    const c = duplicateDebtRows.find((d) => d.rowCategory === category);
-    if (!c) return null;
+  const renderAccountLinkNotices = (category: string) => {
+    const offer = accountLinkOffers.find((o) => o.rowCategory === category);
+    if (!offer) return null;
     return (
-      <DuplicateDebtNotice
-        debtAccountName={c.debtAccountName}
-        key={c.rowId}
-        monthlyAmount={c.monthlyAmount}
-        rowName={c.rowName}
-        onKeep={() => keepDebtRow(c.rowId, category)}
-        onMove={() => moveRowToDebts(c.rowId)}
+      <AccountLinkNotice
+        key={offer.rowId}
+        offer={offer}
+        onKeep={() => keepOwnFigure(offer)}
+        onLink={() => linkToAccount(offer)}
       />
     );
   };
@@ -477,18 +452,6 @@ const BudgetContainer: FC = () => {
   const handleWizardComplete = async () => {
     await markChecklistStep("budget", true);
     setView("budget");
-  };
-
-  const handleDraftChange = (id: string, update: Partial<DraftBudgetEntry>) => {
-    setDrafts((prev) => {
-      const next = prev.map((d) => (d.id === id ? { ...d, ...update } : d));
-      draftsRef.current = next;
-      return next;
-    });
-  };
-
-  const handleDraftRemove = (id: string) => {
-    setDrafts((prev) => prev.filter((d) => d.id !== id));
   };
 
   /**
@@ -500,59 +463,6 @@ const BudgetContainer: FC = () => {
     requestAnimationFrame(() =>
       document.getElementById("budget-editor-heading")?.focus({ preventScroll: false }),
     );
-  };
-
-  const focusEmptyStateButton = () =>
-    requestAnimationFrame(() => document.getElementById("add-suggested-defaults-btn")?.focus());
-
-  const handleRemoveDrafts = () => {
-    setDrafts([]);
-    if (isBudgetEmpty) {
-      setView("budget");
-      focusEmptyStateButton();
-    }
-  };
-
-  /**
-   * Saves the drafts that have a name and an amount above £0, one at a time, from the latest
-   * draft state. Saved drafts leave the list; blank ones stay as drafts. Rejects when a save
-   * fails, after setting one accurate message; the drafts not yet saved stay for another try.
-   */
-  const handleSaveDrafts = async () => {
-    const ready = draftsRef.current.filter(isDraftReady);
-    if (ready.length === 0) return;
-    let saved = 0;
-    let nonEmpty = !isBudgetEmpty;
-    try {
-      for (const draft of ready) {
-        const latest = draftsRef.current.find((d) => d.id === draft.id) ?? draft;
-        await addEntry(entryFromDraft(latest));
-        saved += 1;
-        nonEmpty = nonEmpty || (latest.amount ?? 0) > 0;
-        setDrafts((prev) => {
-          const next = prev.filter((d) => d.id !== draft.id);
-          draftsRef.current = next;
-          return next;
-        });
-      }
-    } catch (err) {
-      // With nothing saved, addEntry's own message stands; otherwise say exactly what was saved.
-      if (saved > 0) {
-        const noun = ready.length === 1 ? "entry" : "entries";
-        setActionError(
-          `We saved ${saved} of ${ready.length} ${noun}. The others are still here, so you can try again.`,
-        );
-      }
-      throw err;
-    }
-    toastApi?.toast({ title: `Saved ${saved} ${saved === 1 ? "entry" : "entries"}` });
-    if (nonEmpty) {
-      // The editor stays open, so focus moves to its heading (UX A3).
-      requestAnimationFrame(() => document.getElementById("budget-editor-heading")?.focus());
-    } else {
-      setView("budget");
-      focusEmptyStateButton();
-    }
   };
 
   const handleAddCategory = async (catName: string) => {
@@ -594,9 +504,6 @@ const BudgetContainer: FC = () => {
       {category === "housing" && (
         <HousingDetails
           housingStatus={housingStatus}
-          rowTotal={pageEntries
-            .filter((e) => e.category === "housing" && !e.isIncome)
-            .reduce((sum, e) => sum + Math.abs(budgetRowMonthly(e)), 0)}
           savedAmount={pictureProfile?.monthlyHousingCost ?? null}
           onSave={handleSaveHousing}
         />
@@ -606,13 +513,14 @@ const BudgetContainer: FC = () => {
         items={pageEntries
           .filter((e) => e.category === category && !e.isIncome)
           .map((e, _i, rows) =>
-            // A linked line whose saved fact is not set shows "Not set", never £0; the housing
-            // details above (or the mortgage page) are where it is added.
+            // A linked line whose saved fact is not set shows "Not set", never £0, and says why;
+            // the housing details above, the mortgage page or the account's page is where it is
+            // added.
             e.notSet
               ? {
                   id: e.id,
                   label: e.name,
-                  secondary: "Linked to your saved housing payment, which is not set",
+                  secondary: linkedSourceText(e, linkableAccounts),
                   value: null,
                   valueProps: { size: "sm" as const },
                 }
@@ -622,10 +530,11 @@ const BudgetContainer: FC = () => {
                 ? {
                     id: e.id,
                     label: e.name,
+                    secondary: linkedSourceText(e, linkableAccounts),
                     value: Math.abs(budgetRowMonthly(e)),
                     valueProps: { fractionDigits: 0, size: "sm" as const },
                   }
-                : { id: e.id, label: e.name },
+                : { id: e.id, label: e.name, secondary: linkedSourceText(e, linkableAccounts) },
           )}
         label={`${getCategoryLabel(category)} entries`}
         noun={{ one: "entry", other: "entries" }}
@@ -639,8 +548,7 @@ const BudgetContainer: FC = () => {
     <PageBody>
       <PageHeader
         actions={
-          // Shown once anything is saved; leaving clears blank common entries, as their note says.
-          view === "editing" && (drafts.length === 0 || !isBudgetEmpty) ? (
+          view === "editing" ? (
             <Button
               data-testid="finish-editing-btn"
               id="finish-editing-btn"
@@ -682,6 +590,7 @@ const BudgetContainer: FC = () => {
             picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
           }
           housingPayment={picture.housingPayment}
+          accounts={snapshot}
           onAddEntry={addOwnEntry}
           onDeleteEntry={async (id) => {
             await deleteEntry(id);
@@ -706,19 +615,14 @@ const BudgetContainer: FC = () => {
                 onDeleteCategory={handleDeleteCategory}
                 onUpdate={updateEntry}
                 removableCategories={customCategories}
-                drafts={drafts}
-                onDraftChange={handleDraftChange}
-                onDraftRemove={handleDraftRemove}
-                onRemoveDrafts={handleRemoveDrafts}
-                onSaveDrafts={handleSaveDrafts}
                 linkedEntries={linkedEntries}
+                linkableAccounts={linkableAccounts}
+                accountLinkOffers={picture.budgetAccountLinkOffers}
                 shadowedIds={picture.shadowedBudgetRowIds}
                 linkOffers={picture.budgetLinkOffers}
                 housingStatus={housingStatus}
                 onSaveHousing={handleSaveHousing}
-                onFinishEditing={
-                  drafts.length === 0 || !isBudgetEmpty ? () => setView("budget") : undefined
-                }
+                onFinishEditing={() => setView("budget")}
               />
             </>
           ) : isBudgetEmpty ? (
@@ -760,7 +664,7 @@ const BudgetContainer: FC = () => {
                   : undefined
               }
               metaFor={(cat) => (cat === "housing" ? housingTenureLabel(housingStatus) : undefined)}
-              noticeFor={renderDuplicateNotices}
+              noticeFor={renderAccountLinkNotices}
               openCategory={openCategory}
               renderEntries={renderEntries}
               onEditBudget={openEditor}

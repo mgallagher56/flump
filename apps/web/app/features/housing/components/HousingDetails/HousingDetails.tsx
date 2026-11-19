@@ -1,6 +1,5 @@
 import { Button, CurrencyInput, controlProps, Dialog, FormField } from "@repo/ui";
 import { type FC, type FormEvent, useEffect, useState } from "react";
-import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { housingDetails } from "./HousingDetails.styles";
 
 export type HousingTenure = "renting" | "mortgage" | "own_outright" | "living_with_family" | null;
@@ -9,12 +8,10 @@ export interface HousingDetailsProps {
   /** How the user pays for housing, from their saved details. Null when not said yet. */
   housingStatus: HousingTenure;
   /**
-   * The saved monthly amount, to fill the form. Shown only when it differs from `rowTotal`, so
-   * the same figure never shows twice.
+   * The saved monthly amount, to fill the form. Never shown here: the budget's linked housing line
+   * reads it, or the page offers to add it (audit slice 5 removed the "Saved in your details" hint).
    */
   savedAmount?: number | null;
-  /** The housing row's total from budget entries. */
-  rowTotal?: number;
   /** Saves the monthly amount to the profile. */
   onSave: (monthly: number) => Promise<void>;
 }
@@ -98,11 +95,9 @@ function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
 export const HousingDetails: FC<HousingDetailsProps> = ({
   housingStatus,
   savedAmount = null,
-  rowTotal = 0,
   onSave,
 }) => {
   const slots = housingDetails();
-  const { formatCurrency } = useFormatCurrency();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState<number | null>(savedAmount);
   const [saving, setSaving] = useState(false);
@@ -114,23 +109,7 @@ export const HousingDetails: FC<HousingDetailsProps> = ({
 
   const copy = copyFor(housingStatus, savedAmount !== null && savedAmount > 0);
   if (!copy) return null;
-  // The saved figure differs from the budget rows (or there are none): say what is saved.
-  const savedDiffers =
-    copy.field !== undefined &&
-    savedAmount !== null &&
-    (savedAmount > 0 || housingStatus === "living_with_family") &&
-    Math.round(savedAmount) !== Math.round(rowTotal);
-  const text = savedDiffers ? (
-    <>
-      Saved in your details:{" "}
-      <span className={slots.figure} data-testid="housing-details-saved" id="housing-details-saved">
-        {formatCurrency(savedAmount ?? 0, { maximumFractionDigits: 0 })}
-      </span>{" "}
-      a month.
-    </>
-  ) : (
-    copy.text
-  );
+  const text = copy.text;
   const valid = amount !== null && (copy.allowZero ? amount >= 0 : amount > 0);
 
   const submit = async (event: FormEvent) => {

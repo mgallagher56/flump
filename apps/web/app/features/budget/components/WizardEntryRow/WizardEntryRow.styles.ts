@@ -60,3 +60,20 @@ export const amountField = cva({
 export const frequencySelect = cva({
   base: { width: "auto", minWidth: "84px" },
 });
+
+/** Where a linked entry's figure comes from, under its name. */
+export const linkedSource = cva({
+  base: { margin: 0, textStyle: "body.sm", color: "text.secondary" },
+});
+
+/** A linked entry's figure, read from the saved fact: no field, since it is changed there. */
+export const linkedFigure = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "baseline",
+    gap: "1",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+  },
+});

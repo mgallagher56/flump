@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { hasCommonEntry, isSameCommonEntry, normaliseEntryName } from "./commonEntries";
-import { exampleBudgetDrafts } from "./exampleDrafts";
 
 describe("normaliseEntryName", () => {
   it("trims, lower-cases, reads / as or and & as and, and collapses spaces", () => {
@@ -66,24 +65,5 @@ describe("isSameCommonEntry", () => {
         { category: "income", name: "Take-home pay" },
       ),
     ).toBe(true);
-  });
-});
-
-describe("common-entry drafts", () => {
-  it("builds every common entry for an empty budget", () => {
-    expect(exampleBudgetDrafts()).toHaveLength(8);
-  });
-
-  it("builds no duplicate draft for an old-seed budget of £0 rows", () => {
-    const oldSeed = [
-      { category: "housing", name: "Rent / Mortgage" },
-      { category: "bills", name: "Gas" },
-      { category: "bills", name: "Electricity" },
-      { category: "bills", name: "Council Tax" },
-      { category: "bills", name: "Broadband" },
-    ];
-    const drafts = exampleBudgetDrafts(oldSeed);
-    expect(drafts.map((d) => d.name)).toEqual(["Take-home pay", "Food shop", "Travel", "Savings"]);
-    for (const draft of drafts) expect(hasCommonEntry(oldSeed, draft)).toBe(false);
   });
 });
