@@ -139,12 +139,16 @@ describe("<BudgetOverview />", () => {
     expect(hero?.textContent).toMatch(/Safe to spend before flexible spending: £[\d,]+ a month,/);
   });
 
-  it("asks for a salary when take-home is unknown", () => {
-    customRender(<BudgetOverview entries={entries} />);
-    // The global test setup renders links as their children.
-    expect(
-      screen.getByText(/Add your salary to see what you have each month after essential spending/),
-    ).toBeDefined();
+  // Audit slice 5 (link L34): safe to spend starts from the budget's income, as left over does,
+  // so a typed income line is enough; no salary is needed.
+  it("works out safe to spend from the typed income when no salary is saved", () => {
+    const { container } = customRender(<BudgetOverview entries={entries} />);
+    // 3,000 income - 1,000 rent (essential) - 200 ISA (savings) = 1,800; dining is what it is
+    // spent on, so it is not taken off.
+    expect(container.querySelector('[data-figure="safeToSpend.monthly"]')?.textContent).toBe(
+      "£1,800",
+    );
+    expect(screen.queryByText(/Add your salary/)).toBeNull();
   });
 
   it("shows income and left over as Not set without an income row, not £0", () => {

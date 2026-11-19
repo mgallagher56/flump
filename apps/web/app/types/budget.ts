@@ -19,15 +19,21 @@ export interface BudgetEntry {
   sharePercent?: number | null;
   contractEndDate?: string | null;
   /**
-   * Set only on a line the engine makes from a saved fact, never stored (owner items 7 and 33b):
-   * "take_home" reads the profile's salary, "housing" the housing details.
+   * Set only on a line the engine makes from a saved fact, never stored (owner items 7 and 33b,
+   * audit slice 5): "take_home" reads the profile's salary, "housing" the housing details,
+   * "savings" and "debt" one account's monthly saving or payment.
    */
-  linked?: "take_home" | "housing";
+  linked?: "take_home" | "housing" | "savings" | "debt";
   /**
-   * Stored on a row the person linked to a saved fact ("Use your take-home pay"). Its stored
-   * amount is never read: the engine reads the saved figure in its place.
+   * Stored on a row the person linked to a saved fact ("Use your take-home pay", "Link to Car
+   * loan"). Its stored amount is never read: the engine reads the saved figure in its place.
    */
-  linkKind?: "take_home" | "housing" | null;
+  linkKind?: "take_home" | "housing" | "savings" | "debt" | null;
+  /**
+   * The account a "savings" or "debt" line reads. Null once that account is deleted: the line
+   * then shows "Not set".
+   */
+  linkAccountId?: string | null;
   /** On an engine line standing in for a row the person linked: that row's stored id. */
   linkedRowId?: string;
   /** True on a linked line whose saved fact is not set: it shows "Not set", never £0. */

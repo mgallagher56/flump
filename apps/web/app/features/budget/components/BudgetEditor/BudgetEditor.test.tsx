@@ -2,7 +2,6 @@ import { ToastProvider } from "@repo/ui";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { BudgetEntry } from "~/types/budget";
-import { exampleBudgetDrafts } from "../../exampleDrafts";
 import { BudgetEditor, type BudgetEditorProps } from "./BudgetEditor";
 
 const row = (overrides: Partial<BudgetEntry>): BudgetEntry => ({
@@ -405,6 +404,138 @@ describe("BudgetEditor", () => {
     });
   });
 
+  describe("savings and debt lines linked to an account (audit slice 5)", () => {
+    const accounts = [
+      { id: "acc-saver", name: "Easy saver", type: "Saving" },
+      { id: "acc-loan", name: "Car loan", type: "Loan" },
+    ];
+    const stored = row({
+      id: "save",
+      name: "Saving each month",
+      category: "savings",
+      amount: 0,
+      isEssential: false,
+      linkKind: "savings",
+      linkAccountId: "acc-saver",
+    });
+    const line = (over: Partial<BudgetEntry> = {}) =>
+      row({
+        id: "linked:savings:save",
+        name: "Saving each month",
+        category: "savings",
+        amount: 200,
+        isEssential: false,
+        linked: "savings",
+        linkedRowId: "save",
+        linkAccountId: "acc-saver",
+        ...over,
+      });
+
+    it("shows the account's figure with where it comes from, and no amount field", () => {
+      setup({
+        entries: [stored],
+        shadowedIds: ["save"],
+        linkedEntries: [line()],
+        linkableAccounts: accounts,
+      });
+      expect(screen.queryByLabelText("Amount for Saving each month")).toBeNull();
+      expect(screen.getByTestId("budget-editor-figure-linked-savings-save").textContent).toContain(
+        "£200",
+      );
+      expect(screen.getByTestId("budget-editor-source-linked-savings-save").textContent).toContain(
+        "Your share of the monthly saving on Easy saver, from the Savings page.",
+      );
+    });
+
+    it("says Not set, with where to add the amount, when the account has none saved", () => {
+      setup({
+        entries: [stored],
+        shadowedIds: ["save"],
+        linkedEntries: [line({ amount: 0, notSet: true })],
+        linkableAccounts: accounts,
+      });
+      const figure = screen.getByTestId("budget-editor-figure-linked-savings-save");
+      expect(figure.textContent).toContain("Not set");
+      expect(figure.textContent).not.toContain("£0");
+      expect(within(figure).getByText("Add the monthly saving")).toBeDefined();
+    });
+
+    it("says the account was removed, with no link, when it is gone", () => {
+      setup({
+        entries: [{ ...stored, linkAccountId: null }],
+        shadowedIds: ["save"],
+        linkedEntries: [line({ amount: 0, notSet: true, linkAccountId: null })],
+        linkableAccounts: accounts,
+      });
+      const figure = screen.getByTestId("budget-editor-figure-linked-savings-save");
+      expect(figure.textContent).toContain("Not set");
+      expect(within(figure).queryByText("Add the monthly saving")).toBeNull();
+      expect(screen.getByTestId("budget-editor-source-linked-savings-save").textContent).toContain(
+        "The account this line used was removed or changed.",
+      );
+    });
+
+    it("unlinks with the figure it showed, dropping the account", async () => {
+      const { onUpdate } = setup({
+        entries: [stored],
+        shadowedIds: ["save"],
+        linkedEntries: [line()],
+        linkableAccounts: accounts,
+      });
+      fireEvent.click(screen.getByTestId("budget-editor-unlink-linked-savings-save"));
+      await waitFor(() =>
+        expect(onUpdate).toHaveBeenCalledWith("save", {
+          linkKind: null,
+          linkAccountId: null,
+          amount: 200,
+          frequency: "monthly",
+          ownership: "sole",
+          sharePercent: null,
+        }),
+      );
+    });
+
+    it("deletes the stored line after asking", async () => {
+      const { onDelete } = setup({
+        entries: [stored],
+        shadowedIds: ["save"],
+        linkedEntries: [line()],
+        linkableAccounts: accounts,
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Delete Saving each month" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
+      await waitFor(() => expect(onDelete).toHaveBeenCalledWith("save"));
+    });
+
+    it("offers a one-tap link on an entry that matches an account, moving it to Debt", async () => {
+      const copy = row({ id: "copy", name: "Car loan payment", category: "bills", amount: 180 });
+      const { onUpdate } = setup({
+        entries: [copy],
+        linkableAccounts: accounts,
+        accountLinkOffers: [
+          {
+            rowId: "copy",
+            rowName: "Car loan payment",
+            rowCategory: "bills",
+            link: "debt",
+            accountId: "acc-loan",
+            accountName: "Car loan",
+            monthly: 180,
+          },
+        ],
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Link Car loan payment to Car loan" }));
+      await waitFor(() =>
+        expect(onUpdate).toHaveBeenCalledWith("copy", {
+          amount: 0,
+          category: "debt",
+          linkKind: "debt",
+          linkAccountId: "acc-loan",
+        }),
+      );
+    });
+  });
+
   describe("linked lines the person chose (decision 1)", () => {
     const chosenPay = row({
       id: "pay",
@@ -461,6 +592,7 @@ describe("BudgetEditor", () => {
       await waitFor(() =>
         expect(onUpdate).toHaveBeenCalledWith("pay", {
           linkKind: null,
+          linkAccountId: null,
           amount: 2400,
           frequency: "monthly",
           ownership: "sole",
@@ -493,6 +625,7 @@ describe("BudgetEditor", () => {
       await waitFor(() =>
         expect(onUpdate).toHaveBeenCalledWith("rent", {
           linkKind: null,
+          linkAccountId: null,
           amount: 0,
           frequency: "monthly",
           ownership: "joint",
@@ -526,6 +659,7 @@ describe("BudgetEditor", () => {
       await waitFor(() =>
         expect(onUpdate).toHaveBeenCalledWith("rent", {
           linkKind: null,
+          linkAccountId: null,
           amount: 950,
           frequency: "monthly",
           ownership: "sole",
@@ -721,135 +855,5 @@ describe("BudgetEditor", () => {
     expect(removePets.id).toBe("budget-editor-remove-category-pets");
     fireEvent.click(removePets);
     expect(onDeleteCategory).toHaveBeenCalledWith("pets");
-  });
-
-  describe("common entries not saved yet", () => {
-    const draftHandlers = () => ({
-      onDraftChange: vi.fn(),
-      onDraftRemove: vi.fn(),
-      onSaveDrafts: vi.fn().mockResolvedValue(undefined),
-      onRemoveDrafts: vi.fn(),
-    });
-    const group = () => screen.getByRole("group", { name: "Common entries not saved yet" });
-    const saveButton = () => screen.getByRole("button", { name: "Save entries" });
-
-    it("shows each draft with a Common entry badge under one labelled group", () => {
-      setup({ entries: [], drafts: exampleBudgetDrafts(), ...draftHandlers() });
-      expect(screen.getAllByText("Common entry")).toHaveLength(8);
-      expect(screen.queryByRole("note")).toBeNull();
-      expect(group().textContent).toContain("Common entries not saved yet");
-      // Income rows have no essential switch; savings rows have one, off (item 28).
-      expect(screen.queryByLabelText("Essential: Take-home pay")).toBeNull();
-      expect((screen.getByLabelText("Essential: Savings") as HTMLInputElement).checked).toBe(false);
-      expect(screen.getByLabelText("Essential: Travel")).toBeDefined();
-      expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).value).toBe("");
-    });
-
-    it("changes and removes a draft on the page, with no confirm and no save", () => {
-      const handlers = draftHandlers();
-      const { onUpdate, onDelete } = setup({
-        entries: [],
-        drafts: exampleBudgetDrafts(),
-        ...handlers,
-      });
-      fireEvent.change(screen.getByLabelText("Name of Energy"), {
-        target: { value: "Gas and electricity" },
-      });
-      expect(handlers.onDraftChange).toHaveBeenCalledWith("example-4", {
-        name: "Gas and electricity",
-      });
-      fireEvent.change(screen.getByLabelText("How often for Energy"), {
-        target: { value: "annual" },
-      });
-      expect(handlers.onDraftChange).toHaveBeenCalledWith("example-4", { frequency: "annual" });
-      fireEvent.click(screen.getByRole("button", { name: "Remove Energy" }));
-      expect(handlers.onDraftRemove).toHaveBeenCalledWith("example-4");
-      expect(screen.queryByRole("dialog")).toBeNull();
-      expect(onUpdate).not.toHaveBeenCalled();
-      expect(onDelete).not.toHaveBeenCalled();
-    });
-
-    it("Save entries is disabled until a draft has a name and an amount above £0", () => {
-      const drafts = exampleBudgetDrafts();
-      const { rerender } = render(
-        <ToastProvider>
-          <BudgetEditor
-            categories={["housing"]}
-            entries={[]}
-            onAdd={vi.fn()}
-            onDelete={vi.fn()}
-            onUpdate={vi.fn()}
-            drafts={drafts}
-            {...draftHandlers()}
-          />
-        </ToastProvider>,
-      );
-      expect((saveButton() as HTMLButtonElement).disabled).toBe(true);
-      const rerenderWith = (next: typeof drafts) =>
-        rerender(
-          <ToastProvider>
-            <BudgetEditor
-              categories={["housing"]}
-              entries={[]}
-              onAdd={vi.fn()}
-              onDelete={vi.fn()}
-              onUpdate={vi.fn()}
-              drafts={next}
-              {...draftHandlers()}
-            />
-          </ToastProvider>,
-        );
-      // An amount with a blank name is not ready.
-      rerenderWith(drafts.map((d, i) => (i === 1 ? { ...d, name: "  ", amount: 900 } : d)));
-      expect((saveButton() as HTMLButtonElement).disabled).toBe(true);
-      rerenderWith(drafts.map((d, i) => (i === 1 ? { ...d, amount: 0 } : d)));
-      expect((saveButton() as HTMLButtonElement).disabled).toBe(true);
-      rerenderWith(drafts.map((d, i) => (i === 1 ? { ...d, amount: 900 } : d)));
-      expect((saveButton() as HTMLButtonElement).disabled).toBe(false);
-    });
-
-    it("disables the drafts and buttons while saving, then calls the page once", async () => {
-      const handlers = draftHandlers();
-      let finish: () => void = () => undefined;
-      handlers.onSaveDrafts.mockReturnValue(
-        new Promise<void>((resolve) => {
-          finish = resolve;
-        }),
-      );
-      const drafts = exampleBudgetDrafts().map((d, i) => (i === 1 ? { ...d, amount: 900 } : d));
-      setup({ entries: [], drafts, ...handlers });
-      fireEvent.click(saveButton());
-      fireEvent.click(saveButton());
-      expect(handlers.onSaveDrafts).toHaveBeenCalledTimes(1);
-      await waitFor(() => expect(saveButton().getAttribute("aria-disabled")).toBe("true"));
-      expect(
-        (screen.getByRole("button", { name: "Remove common entries" }) as HTMLButtonElement)
-          .disabled,
-      ).toBe(true);
-      expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).disabled).toBe(true);
-      expect((screen.getByLabelText("Name of Energy") as HTMLInputElement).disabled).toBe(true);
-      expect(
-        (screen.getByRole("button", { name: "Remove Energy" }) as HTMLButtonElement).disabled,
-      ).toBe(true);
-      finish();
-      await waitFor(() =>
-        expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).disabled).toBe(
-          false,
-        ),
-      );
-    });
-
-    it("Remove common entries calls the page", () => {
-      const handlers = draftHandlers();
-      setup({ entries: [], drafts: exampleBudgetDrafts(), ...handlers });
-      fireEvent.click(screen.getByRole("button", { name: "Remove common entries" }));
-      expect(handlers.onRemoveDrafts).toHaveBeenCalledTimes(1);
-    });
-
-    it("shows no group without drafts", () => {
-      setup();
-      expect(screen.queryByRole("group", { name: "Common entries not saved yet" })).toBeNull();
-      expect(screen.queryByText("Common entry")).toBeNull();
-    });
   });
 });

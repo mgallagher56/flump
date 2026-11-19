@@ -1,14 +1,18 @@
-import { type BudgetLinkOffer, defaultIsEssential } from "@flump/finance-engine";
+import {
+  BUDGET_ACCOUNT_LINK_CATEGORY,
+  type BudgetAccountLinkOffer,
+  type BudgetLinkOffer,
+  defaultIsEssential,
+  isBudgetAccountLink,
+} from "@flump/finance-engine";
 import {
   Button,
   Card,
   ConfirmDialog,
   CurrencyInput,
   Icon,
-  InfoTip,
   Money,
   Select,
-  StatusBadge,
   Switch,
   TextInput,
   useOptionalToast,
@@ -19,9 +23,13 @@ import { Link } from "react-router";
 import type { HousingTenure } from "~/features/housing/components/HousingDetails";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
-import { type DraftBudgetEntry, isDraftReady } from "../../exampleDrafts";
 import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
-import { isNotSetEntry, notSetActionFor } from "../../linkedEntries";
+import {
+  isNotSetEntry,
+  type LinkableAccount,
+  linkedAccountFor,
+  notSetActionFor,
+} from "../../linkedEntries";
 import { rankCategories } from "../BudgetCategoryList";
 import { EntryOwnershipField } from "../EntryOwnershipField";
 import {
@@ -29,8 +37,6 @@ import {
   addRow,
   amountField,
   budgetEditor,
-  draftName,
-  draftNote,
   editorSection,
   entryRow,
   essentialField,
@@ -69,22 +75,6 @@ export interface BudgetEditorProps {
   /** Categories that can be removed (the custom ones). */
   removableCategories?: string[];
   /**
-   * Common entries held on the page and not saved. Each shows as an entry row with a "Common
-   * entry" badge, under one labelled group that saves or removes them.
-   */
-  drafts?: DraftBudgetEntry[];
-  /** Changes one example row on the page. Nothing is saved. */
-  onDraftChange?: (id: string, update: Partial<DraftBudgetEntry>) => void;
-  /** Removes one example row from the page, with no confirm: it was never saved. */
-  onDraftRemove?: (id: string) => void;
-  /**
-   * Saves the drafts that have a name and an amount above £0. Rejects on failure (the page shows
-   * the error and keeps the drafts not yet saved). The page moves focus once it resolves.
-   */
-  onSaveDrafts?: () => Promise<void>;
-  /** Removes every common entry not yet saved. */
-  onRemoveDrafts?: () => void;
-  /**
    * Rows the engine adds from saved details (owner items 7 and 33b): take-home pay from the
    * profile's salary, the rent or mortgage payment from the housing details. Shown in their
    * sections with where the figure comes from; never stored as budget rows.
@@ -98,6 +88,16 @@ export interface BudgetEditorProps {
    * notice offers to add the figure as its own entry instead.
    */
   linkOffers?: BudgetLinkOffer[];
+  /**
+   * The person's accounts, to name the account a savings or debt line reads and say when it is
+   * gone (audit slice 5).
+   */
+  linkableAccounts?: LinkableAccount[];
+  /**
+   * Entries that match an account's monthly saving or payment: each gets a "Link to …" button that
+   * links it, moving it to Savings or Debt. Nothing is linked unless the person taps.
+   */
+  accountLinkOffers?: BudgetAccountLinkOffer[];
   /** How the person pays for housing, for the linked housing row. */
   housingStatus?: HousingTenure;
   /** Saves the rent (or household contribution) to the housing details, the one stored value. */
@@ -154,9 +154,10 @@ const HOUSING_KIND_LABEL: Record<NonNullable<BudgetLinkOffer["kind"]>, string> =
   household: "saved household contribution",
 };
 
-/** A row's offer: the button text and what it does. */
+/** A row's offer: its button text, an accessible name when the text is not enough, its action. */
 interface RowLinkOffer {
   label: string;
+  ariaLabel?: string;
   onUse: () => void;
 }
 
@@ -274,7 +275,7 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, linkOffer = null
       {linkOffer ? (
         <p className={sourceLine()}>
           <Button
-            aria-label={`${linkOffer.label} in place of ${entry.name}`}
+            aria-label={linkOffer.ariaLabel ?? `${linkOffer.label} in place of ${entry.name}`}
             data-testid={`budget-editor-use-link-${entry.id}`}
             id={`budget-editor-use-link-${entry.id}`}
             size="sm"
@@ -302,6 +303,10 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, linkOffer = null
 interface LinkedEntryRowProps {
   entry: BudgetEntry;
   housingStatus: HousingTenure;
+  /** The person's accounts, for a savings or debt line. */
+  accounts: readonly LinkableAccount[];
+  /** Deletes a savings or debt line the person linked (its stored row). */
+  onRemove?: (entry: BudgetEntry) => void;
   /** Saves the person's own pay entry in place of the take-home from the profile. */
   onOverrideTakeHome: (amount: number) => Promise<boolean>;
   onSaveHousing?: (monthly: number) => Promise<void>;
@@ -319,10 +324,17 @@ interface LinkedEntryRowProps {
  * housing details. A mortgage payment comes from the mortgage details, so it is changed there.
  * When the saved fact is not set the row shows "Not set" with where to add it, never £0, and a
  * row the person linked can be unlinked to type their own figure.
+ *
+ * A savings or debt line (audit slice 5) reads one account's monthly saving or payment at the
+ * person's share. Its figure is changed on the account, so it shows no amount field; it says
+ * which account it reads, or that the account was removed or changed, and can be unlinked or
+ * deleted like an entry.
  */
 const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
   entry,
   housingStatus,
+  accounts,
+  onRemove,
   onOverrideTakeHome,
   onSaveHousing,
   onUnlink,
@@ -338,12 +350,20 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
   }, [saved]);
 
   const isTakeHome = entry.linked === "take_home";
-  const isMortgage = !isTakeHome && housingStatus === "mortgage";
+  const isAccountLine = isBudgetAccountLink(entry.linked);
+  const isMortgage = !isTakeHome && !isAccountLine && housingStatus === "mortgage";
   const idPart = entry.id.replace(/[^a-z0-9-]/gi, "-");
   const sourceId = `budget-editor-source-${idPart}`;
-  const action = notSet ? notSetActionFor(entry, housingStatus) : null;
-  // Take-home and a mortgage payment are added on their own pages; a rent can be typed here.
-  const showsInput = !isMortgage && !(isTakeHome && notSet);
+  const action = notSet ? notSetActionFor(entry, housingStatus, accounts) : null;
+  const account = isAccountLine ? linkedAccountFor(entry, accounts) : null;
+  const accountPage =
+    entry.linked === "savings"
+      ? { to: "/app/savings", label: "Savings" }
+      : { to: "/app/debt", label: "Debt" };
+  const accountAmount = entry.linked === "savings" ? "monthly saving" : "monthly payment";
+  // Take-home, a mortgage payment and an account's amount are changed on their own pages; a rent
+  // can be typed here.
+  const showsInput = !isMortgage && !isAccountLine && !(isTakeHome && notSet);
 
   const saveAmount = async () => {
     const next = amountRef.current;
@@ -373,7 +393,23 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
     }
   };
 
-  const source = notSet ? (
+  const source = isAccountLine ? (
+    !account ? (
+      <>The account this line used was removed or changed. Type your own figure or delete it.</>
+    ) : notSet ? (
+      <>
+        Linked to {account.name}, which has no {accountAmount} saved.
+      </>
+    ) : (
+      <>
+        Your share of the {accountAmount} on {account.name}, from the{" "}
+        <Link className={sourceLink()} to={accountPage.to}>
+          {accountPage.label}
+        </Link>{" "}
+        page. Change it there.
+      </>
+    )
+  ) : notSet ? (
     isTakeHome ? (
       <>Linked to your take-home pay, which needs your salary in Profile.</>
     ) : isMortgage ? (
@@ -450,7 +486,22 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
         </div>
         <div className={essentialField()} />
       </div>
-      <span className={removeCell()} />
+      {isAccountLine && entry.linkedRowId && onRemove ? (
+        <Button
+          aria-label={`Delete ${entry.name}`}
+          className={removeCell()}
+          data-testid={`budget-editor-remove-${idPart}`}
+          id={`budget-editor-remove-${idPart}`}
+          size="sm"
+          title={`Delete ${entry.name}`}
+          variant="dangerSubtle"
+          onClick={() => onRemove(entry)}
+        >
+          <Icon icon={Trash2} size="sm" />
+        </Button>
+      ) : (
+        <span className={removeCell()} />
+      )}
       <p className={sourceLine()} data-testid={sourceId} id={sourceId}>
         {source}
       </p>
@@ -468,92 +519,6 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
           </Button>
         </div>
       ) : null}
-    </li>
-  );
-};
-
-interface DraftRowProps {
-  draft: DraftBudgetEntry;
-  onChange: (id: string, update: Partial<DraftBudgetEntry>) => void;
-  onRemove: (id: string) => void;
-  /** True while the drafts are saving: every control is disabled. */
-  disabled?: boolean;
-}
-
-/** One common entry: laid out like a saved entry, changed on the page only until it is saved. */
-const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove, disabled = false }) => {
-  const id = draft.id;
-  const label = draft.name.trim() || "common entry";
-  const showEssential = draft.category !== INCOME;
-  return (
-    <li className={entryRow()} data-testid={`budget-editor-draft-${id}`}>
-      <div className={draftName()}>
-        <TextInput
-          aria-label={`Name of ${label}`}
-          data-testid={`budget-editor-draft-name-${id}`}
-          disabled={disabled}
-          id={`budget-editor-draft-name-${id}`}
-          size="sm"
-          value={draft.name}
-          onChange={(event) => onChange(id, { name: event.target.value })}
-        />
-        <StatusBadge size="sm" variant="neutral">
-          Common entry
-        </StatusBadge>
-      </div>
-      <div className={rowControls()}>
-        <div className={amountField()}>
-          <CurrencyInput
-            aria-label={`Amount for ${label}`}
-            data-testid={`budget-editor-draft-amount-${id}`}
-            disabled={disabled}
-            id={`budget-editor-draft-amount-${id}`}
-            size="sm"
-            value={draft.amount}
-            onValueChange={(value) => onChange(id, { amount: value })}
-          />
-        </div>
-        <div className={frequencyField()}>
-          <Select
-            aria-label={`How often for ${label}`}
-            data-testid={`budget-editor-draft-frequency-${id}`}
-            disabled={disabled}
-            id={`budget-editor-draft-frequency-${id}`}
-            options={FREQUENCY_OPTIONS}
-            size="sm"
-            value={draft.frequency}
-            onChange={(event) =>
-              onChange(id, { frequency: event.target.value as BudgetEntry["frequency"] })
-            }
-          />
-        </div>
-        <div className={essentialField()}>
-          {showEssential ? (
-            <Switch
-              aria-label={`Essential: ${label}`}
-              checked={draft.isEssential}
-              data-testid={`budget-editor-draft-essential-${id}`}
-              disabled={disabled}
-              id={`budget-editor-draft-essential-${id}`}
-              label="Essential"
-              onChange={(event) => onChange(id, { isEssential: event.target.checked })}
-            />
-          ) : null}
-        </div>
-      </div>
-      <Button
-        aria-label={`Remove ${label}`}
-        className={removeCell()}
-        data-testid={`budget-editor-draft-remove-${id}`}
-        disabled={disabled}
-        id={`budget-editor-draft-remove-${id}`}
-        size="sm"
-        title={`Remove ${label}`}
-        variant="ghost"
-        onClick={() => onRemove(id)}
-      >
-        <Icon icon={Trash2} size="sm" />
-      </Button>
     </li>
   );
 };
@@ -754,22 +719,16 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   onAddCategory,
   onDeleteCategory,
   removableCategories = [],
-  drafts = [],
-  onDraftChange,
-  onDraftRemove,
-  onSaveDrafts,
-  onRemoveDrafts,
   linkedEntries = [],
   shadowedIds = [],
   linkOffers = [],
+  linkableAccounts = [],
+  accountLinkOffers = [],
   housingStatus = null,
   onSaveHousing,
   onFinishEditing,
 }) => {
   const toastApi = useOptionalToast();
-  const [savingDrafts, setSavingDrafts] = useState(false);
-  const savingRef = useRef(false);
-  const note = draftNote();
   const { formatCurrency } = useFormatCurrency();
   // One save message at a time: each new one replaces the last, so toasts never pile up.
   const lastToast = useRef<string | null>(null);
@@ -820,6 +779,22 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   // A row the saved take-home or housing figure can replace, by the person's choice: the button
   // stores the link on the row and sets its amount to £0, so the saved figure is the one value.
   const linkOfferFor = (entry: BudgetEntry): RowLinkOffer | null => {
+    // An entry that matches an account's monthly amount (audit slice 5): linking moves it to
+    // Savings or Debt and stores no amount, so the account's figure counts once.
+    const accountOffer = accountLinkOffers.find((o) => o.rowId === entry.id);
+    if (accountOffer) {
+      return {
+        label: `Link to ${accountOffer.accountName}`,
+        ariaLabel: `Link ${entry.name} to ${accountOffer.accountName}`,
+        onUse: () =>
+          void save(entry.id, {
+            amount: 0,
+            category: BUDGET_ACCOUNT_LINK_CATEGORY[accountOffer.link],
+            linkKind: accountOffer.link,
+            linkAccountId: accountOffer.accountId,
+          }),
+      };
+    }
     const offer = linkOffers.find((o) => o.rowIds.includes(entry.id));
     if (!offer) return null;
     const figureText = formatCurrency(offer.monthly, { maximumFractionDigits: 0 });
@@ -834,24 +809,6 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
       label: `Use your ${what} of ${offer.paymentEstimated ? "about " : ""}${figureText}`,
       onUse: () => void save(entry.id, { amount: 0, linkKind: offer.link }),
     };
-  };
-
-  const draftsFor = (category: string) => drafts.filter((d) => d.category === category);
-
-  const saveDrafts = async () => {
-    // The ref, not the state this render captured, stops a double click saving twice.
-    if (!onSaveDrafts || savingRef.current) return;
-    savingRef.current = true;
-    setSavingDrafts(true);
-    try {
-      // The page moves focus: to this heading, or to its empty-state button if the budget is empty.
-      await onSaveDrafts();
-    } catch {
-      // The page shows what went wrong; the rows not yet saved stay for another try.
-    } finally {
-      savingRef.current = false;
-      setSavingDrafts(false);
-    }
   };
 
   const save = async (id: string, update: Partial<BudgetEntry>) => {
@@ -914,6 +871,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     if (!rowId) return false;
     const done = await save(rowId, {
       linkKind: null,
+      linkAccountId: null,
       amount: entry.notSet ? 0 : toAmount(entry.amount),
       frequency: "monthly",
       ownership: entry.ownership === "joint" ? "joint" : "sole",
@@ -984,63 +942,15 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         <p className={editor.hint}>Changes save as you go.</p>
       </div>
 
-      {drafts.length > 0 ? (
-        // biome-ignore lint/a11y/useSemanticElements: a fieldset is for form controls with a legend; this labels a note and its two buttons.
-        <div
-          aria-label="Common entries not saved yet"
-          className={note.root}
-          data-testid="budget-editor-draft-note"
-          role="group"
-        >
-          {/* The detail sits behind the tip and stays tied to the save button (owner item 23). */}
-          <p className={note.text}>
-            Common entries not saved yet
-            <InfoTip
-              descriptionId="budget-editor-draft-note-detail"
-              label="About common entries"
-              term="Common entries"
-            >
-              Fill in the amounts that apply to you, then save. Entries left blank stay here until
-              you remove them or leave the page.
-            </InfoTip>
-          </p>
-          <div className={note.actions}>
-            <Button
-              aria-describedby="budget-editor-draft-note-detail"
-              data-testid="budget-editor-save-drafts"
-              disabled={!drafts.some(isDraftReady)}
-              id="budget-editor-save-drafts"
-              pending={savingDrafts}
-              size="sm"
-              onClick={saveDrafts}
-            >
-              Save entries
-            </Button>
-            <Button
-              data-testid="budget-editor-remove-drafts"
-              disabled={savingDrafts}
-              id="budget-editor-remove-drafts"
-              size="sm"
-              variant="ghost"
-              onClick={onRemoveDrafts}
-            >
-              Remove common entries
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
       <div className={editor.sections}>
         {sectionOrder.map((category) => {
           const label = sectionLabel(category);
           const rows = entriesFor(category);
           const linkedRows = linkedFor(category);
-          const sectionDrafts = draftsFor(category);
           const slug = categorySlug(category);
           const headingId = `budget-editor-section-${slug}`;
           // Income entries in a custom category show under Money in but still belong to it.
-          const isEmpty =
-            !entries.some((e) => e.category === category) && sectionDrafts.length === 0;
+          const isEmpty = !entries.some((e) => e.category === category);
           return (
             <section aria-labelledby={headingId} className={section.root} key={category}>
               <div className={section.headingRow}>
@@ -1059,13 +969,20 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                   </Button>
                 ) : null}
               </div>
-              {rows.length > 0 || linkedRows.length > 0 || sectionDrafts.length > 0 ? (
+              {rows.length > 0 || linkedRows.length > 0 ? (
                 <ul className={section.list}>
                   {linkedRows.map((entry) => (
                     <LinkedEntryRow
+                      accounts={linkableAccounts}
                       entry={entry}
                       housingStatus={housingStatus}
                       key={entry.id}
+                      onRemove={(line) =>
+                        // The stored row is what is deleted; the dialog names the line.
+                        line.linkedRowId
+                          ? setToRemove({ ...line, id: line.linkedRowId })
+                          : undefined
+                      }
                       onOverrideTakeHome={overrideTakeHome}
                       onSaveHousing={saveHousing}
                       onUnlink={unlink}
@@ -1078,26 +995,6 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                       linkOffer={linkOfferFor(entry)}
                       onRemove={setToRemove}
                       onSave={save}
-                    />
-                  ))}
-                  {sectionDrafts.map((draft) => (
-                    <DraftRow
-                      disabled={savingDrafts}
-                      draft={draft}
-                      key={draft.id}
-                      onChange={(id, update) => onDraftChange?.(id, update)}
-                      onRemove={(id) => {
-                        // Focus goes to the next row's name, else the previous, else the heading.
-                        const index = sectionDrafts.findIndex((d) => d.id === id);
-                        const next = sectionDrafts[index + 1] ?? sectionDrafts[index - 1];
-                        const lastSaved = rows[rows.length - 1];
-                        pendingFocus.current = next
-                          ? `budget-editor-draft-name-${next.id}`
-                          : lastSaved
-                            ? `budget-editor-name-${lastSaved.id}`
-                            : headingId;
-                        onDraftRemove?.(id);
-                      }}
                     />
                   ))}
                 </ul>
@@ -1141,7 +1038,9 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         scope="single"
         confirmLabel="Delete entry"
         description={
-          toRemove ? (
+          toRemove?.notSet ? (
+            <p>{toRemove.name} will be deleted from your budget. This cannot be undone.</p>
+          ) : toRemove ? (
             <p>
               {toRemove.name},{" "}
               <span className={figure()}>

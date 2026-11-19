@@ -38,6 +38,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Budget categories the user added](#custom-budget-categories)                                                 | fact   | budget      | Not checked                               |
 | [Budget lines](#budget-entries)                                                                               | fact   | budget      | Broken                                    |
 | [Which saved fact a budget line is linked to](#budget-entry-link-kind)                                        | fact   | budget      | Holds                                     |
+| [Which account a savings or debt budget line reads](#budget-entry-link-account)                               | fact   | budget      | Holds                                     |
 | [Other monthly outgoings as typed in onboarding](#other-outgoings)                                            | fact   | budget      | Duplicated (two stores that can disagree) |
 | [Monthly savings target and savings settings on the profile](#savings-settings)                               | fact   | budget      | Holds                                     |
 | [Self Assessment income and expense records](#tax-records)                                                    | fact   | tax         | Duplicated (two stores that can disagree) |
@@ -471,8 +472,8 @@ Read by:
 
 Other stores:
 
-- `budget_entries savings rows` [duplicate] in `packages/finance-engine/src/picture/selectors/safe-to-spend.ts` (planned savings read these, not the accounts)
-- `budget_entries debt rows` [duplicate] in `packages/finance-engine/src/picture/selectors/commitments.ts` (commitments take the larger of the two)
+- `budget_entries savings rows typed by hand` [duplicate] in `packages/finance-engine/src/picture/selectors/safe-to-spend.ts` (planned savings read these; a line linked to the account (link_account_id) reads the account instead, and the budget page offers a one-tap link for a typed row that matches)
+- `budget_entries debt rows typed by hand` [duplicate] in `packages/finance-engine/src/picture/selectors/commitments.ts` (commitments take the larger of the two; a linked debt line reads the account, so both sides are the same figure)
 - `budget_entries housing row` [duplicate] in `packages/finance-engine/src/picture/selectors/commitments.ts` (the mortgage payment as the budget knows it)
 
 Entered or changed by:
@@ -489,6 +490,7 @@ Read by:
 - Pension: `apps/web/app/containers/pension/PensionContainer.tsx`
 - Retirement plan: `packages/finance-engine/src/retirement-input.ts`
 - Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/commitments.ts`
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/linked-budget-rows.ts` (a savings or debt budget line linked to the account)
 - Monthly check-in: `packages/finance-engine/src/check-in.ts`
 
 ### Credit limit and 0% end date
@@ -1227,8 +1229,8 @@ Read by:
 
 - Id: `budget-entry-link-kind` (stored fact)
 - Verdict: Holds. Findings: BU-1, BU-2. Links: L33, L34, L39.
-- Source of truth: `budget_entries.link_kind` in `apps/backend/src/entities/budget-entry.entity.ts` (take_home or housing, or null; a linked line's stored amount is never read)
-- Note: System audit decision 1 option A, the first part of PLAN slice 5. The profile holds the only stored value: a linked line that cannot resolve shows Not set and makes the budget totals unknown. Slice 5 adds savings and debt kinds and link_account_id.
+- Source of truth: `budget_entries.link_kind` in `apps/backend/src/entities/budget-entry.entity.ts` (take_home, housing, savings or debt, or null; a linked line's stored amount is never read)
+- Note: System audit decision 1 option A, PLAN slice 5. The profile or the account holds the only stored value: a linked line that cannot resolve shows Not set and makes the budget totals unknown. The savings and debt kinds name their account in link_account_id (budget-entry-link-account).
 
 Other stores:
 
@@ -1236,17 +1238,46 @@ Other stores:
 
 Entered or changed by:
 
-- Budget: `apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx` (Use your take-home pay or saved rent links a line; Type my own figure unlinks it)
+- Budget: `apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx` (Use your take-home pay, saved rent or Link to an account links a line; Type my own figure unlinks it)
+- Budget: `apps/web/app/containers/budget/BudgetContainer.tsx` (the one-tap Link to an account note on a matching entry)
+- Budget: `apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx` (adds a savings or debt line linked to an account)
 
 Read by:
 
-- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/linked-budget-rows.ts` (resolves the line from take-home or the housing payment, or marks it Not set)
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/linked-budget-rows.ts` (resolves the line from take-home, the housing payment or one account's monthly amount, or marks it Not set)
 - Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/budget-totals.ts`
 - Budget: `apps/web/app/features/budget/linkedEntries.ts`
 - Engine picture (headline figures): `packages/finance-engine/src/picture/load.ts` (the shared loader reads the whole budget row, link kind included, for every page and the AI tools)
 - AI read tools: `packages/mcp/src/tools/read/common.ts` (lists the picture's resolved rows; not resolved a second time)
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
 - Data export and erasure: `apps/backend/src/modules/privacy/account-export.service.ts` (a linked line exports with amount null and its link kind)
+
+### Which account a savings or debt budget line reads
+
+<a id="budget-entry-link-account"></a>
+
+- Id: `budget-entry-link-account` (stored fact)
+- Verdict: Holds. Findings: none. Links: L35, L36.
+- Source of truth: `budget_entries.link_account_id` in `apps/backend/src/entities/budget-entry.entity.ts` (the same user's account only (a composite foreign key); set to null when the account is deleted, and the line then shows Not set)
+- Note: System audit slice 5. A line linked to an account stores no amount; the account's monthly saving or payment is the one value.
+
+Other stores:
+
+- none
+
+Entered or changed by:
+
+- Budget: `apps/backend/src/modules/budget/budget.service.ts` (checks the account is the caller's own and fits the line's kind)
+- Budget: `apps/web/app/containers/budget/BudgetContainer.tsx` (Link to an account on a matching entry)
+- Budget: `apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx`
+
+Read by:
+
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/linked-budget-rows.ts` (reads the account's monthly amount at the person's share, once)
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/account-link-offers.ts` (an account already linked is not offered again)
+- Budget: `apps/web/app/features/budget/linkedEntries.ts`
+- AI read tools: `apps/backend/src/modules/agent/mcp-input.ts`
+- Data export and erasure: `apps/backend/src/modules/privacy/account-export.service.ts` (exported beside the account it names)
 
 ### Other monthly outgoings as typed in onboarding
 
@@ -1322,7 +1353,7 @@ Shown on:
 - Verdict: Holds. Findings: none. Links: L34, L35, L36.
 - Computed by: `selectSafeToSpend` in `packages/finance-engine/src/picture/selectors/safe-to-spend.ts`
 - Built from: `salary`, `pension-rates`, `budget-entries`, `account-monthly-amount`
-- Note: One code path. It starts from take-home, so it can sit beside a left-over figure built on a different income.
+- Note: One code path. Since audit slice 5 it starts from the budget's income, the figure left over starts from: the linked take-home line, or the income lines the person typed.
 
 Other code paths that compute it:
 
@@ -1485,7 +1516,6 @@ Every key the browser code writes. A key that holds user data names the fact it 
 | `flump_onboarding_seed`            | cookie         | yes       | [salary](#salary)                   | `packages/finance-engine/src/persistence.ts`                                   | the same seed as a cookie, kept for one hour so sign-up can finish                                        |
 | `flump_setup_checklist_dismissed`  | localStorage   | yes       | [setup-checklist](#setup-checklist) | `apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx` | the setup checklist was dismissed in this browser                                                         |
 | `flump_runway_calculator_settings` | localStorage   | no        | none                                | `apps/web/app/utils/runwayStorage.ts`                                          | an account choice older versions saved; now only removed                                                  |
-| `flump.budget.keptDebtRows`        | sessionStorage | no        | none                                | `apps/web/app/containers/budget/BudgetContainer.tsx`                           | ids of budget debt rows the person chose to keep, for this browser session                                |
 | `flump-theme`                      | localStorage   | no        | none                                | `packages/ui/src/hooks/themeScript.ts`                                         | light, dark or system                                                                                     |
 | `flump.setup-step-count`           | sessionStorage | no        | none                                | `packages/ui/src/hooks/useSetupProgressOnce.ts`                                | how many setup steps were done when the progress animation last ran                                       |
 | `flump.scene-settled.*`            | sessionStorage | no        | none                                | `packages/ui/src/hooks/useSceneSettle.ts`                                      | which illustrations have already played their entry animation                                             |

@@ -42,4 +42,31 @@ describe("<WizardEntryRow />", () => {
     fireEvent.click(screen.getByTitle("Remove Energy"));
     expect(onDelete).toHaveBeenCalledWith("e1");
   });
+
+  it("shows a linked entry's figure from its saved fact, with no amount field", () => {
+    render(
+      <WizardEntryRow
+        entry={{ ...entry, category: "savings", name: "Saver", amount: 0, linkKind: "savings" }}
+        linked={{ value: 250, source: "From Easy access saver" }}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />,
+    );
+    expect(screen.queryByLabelText("Amount for Saver")).toBeNull();
+    expect(screen.getByText("From Easy access saver")).toBeDefined();
+    expect(screen.getByText(/£250/)).toBeDefined();
+  });
+
+  it("shows Not set, never £0, for a linked entry whose saved fact is not set", () => {
+    render(
+      <WizardEntryRow
+        entry={{ ...entry, category: "savings", name: "Saver", amount: 0, linkKind: "savings" }}
+        linked={{ value: null, source: "The account this line used was removed or changed" }}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Not set")).toBeDefined();
+    expect(screen.queryByText(/£0/)).toBeNull();
+  });
 });

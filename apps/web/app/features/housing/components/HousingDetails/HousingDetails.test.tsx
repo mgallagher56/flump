@@ -17,9 +17,7 @@ describe("housingTenureLabel", () => {
 describe("<HousingDetails />", () => {
   it("renting: no form or figure on the page, rent is edited in a dialog and saved", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
-    render(
-      <HousingDetails housingStatus="renting" rowTotal={900} savedAmount={900} onSave={onSave} />,
-    );
+    render(<HousingDetails housingStatus="renting" savedAmount={900} onSave={onSave} />);
     expect(screen.getByText(/Your rent is saved in your details/)).toBeDefined();
     expect(screen.queryByLabelText("Rent each month")).toBeNull();
     expect(screen.queryByText("£900")).toBeNull();
@@ -34,12 +32,11 @@ describe("<HousingDetails />", () => {
     await waitFor(() => expect(screen.queryByLabelText("Rent each month")).toBeNull());
   });
 
-  it("shows the saved figure only when it differs from the housing rows", () => {
-    render(
-      <HousingDetails housingStatus="renting" rowTotal={0} savedAmount={950} onSave={vi.fn()} />,
-    );
-    expect(screen.getByTestId("housing-details-saved").textContent).toBe("£950");
-    expect(screen.queryByText(/Your rent is saved in your details/)).toBeNull();
+  it("never repeats the saved figure: the budget's linked housing line or offer shows it", () => {
+    render(<HousingDetails housingStatus="renting" savedAmount={950} onSave={vi.fn()} />);
+    expect(screen.queryByText(/Saved in your details/)).toBeNull();
+    expect(screen.queryByText("£950")).toBeNull();
+    expect(screen.getByText(/Your rent is saved in your details/)).toBeDefined();
   });
 
   it("renting: rent must be more than £0", async () => {
@@ -74,14 +71,7 @@ describe("<HousingDetails />", () => {
 
   it("living with family: edits what you pay, and £0 is a real answer", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
-    render(
-      <HousingDetails
-        housingStatus="living_with_family"
-        rowTotal={200}
-        savedAmount={200}
-        onSave={onSave}
-      />,
-    );
+    render(<HousingDetails housingStatus="living_with_family" savedAmount={200} onSave={onSave} />);
     expect(screen.getByText(/You live with family or friends/)).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Edit what you pay" }));
     const input = await screen.findByLabelText("What you pay each month");

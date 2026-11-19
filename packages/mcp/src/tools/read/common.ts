@@ -237,23 +237,37 @@ export const ASK_NO_ACCOUNTS: Missing = {
     "Which accounts do you have, such as current accounts, savings and debts? They can be added in Flump.",
 };
 
-/** What a linked line that is not set is missing, for a tool's missing[]. */
+/** What each kind of linked line that is not set is missing, for a tool's missing[]. */
+const LINKED_LINE_MISSING: Record<NonNullable<BudgetEntryItem["linked"]>, Missing> = {
+  take_home: {
+    field: "salary",
+    why: "An income entry is linked to the take-home pay worked out from the saved salary, and no salary is saved. Income is left unknown rather than counted as zero.",
+    askUser: "What is your salary before tax? It can be added in Profile in Flump.",
+  },
+  housing: {
+    field: "monthlyHousingCost",
+    why: "A housing entry is linked to the saved housing payment, and none is saved. It is left out of the totals rather than counted as zero.",
+    askUser: "How much is your rent or mortgage payment each month?",
+  },
+  savings: {
+    field: "monthlySaving",
+    why: "A savings entry is linked to a savings account that has no monthly saving saved, or that was removed. The budget totals are left unknown rather than counting it as zero.",
+    askUser:
+      "How much do you put into that savings account each month? It can be added on the Savings page in Flump.",
+  },
+  debt: {
+    field: "monthlyDebtPayment",
+    why: "A debt entry is linked to a card or loan that has no monthly payment saved, or that was removed. The budget totals are left unknown rather than counting it as zero.",
+    askUser:
+      "How much do you pay on that card or loan each month? It can be added on the Debt page in Flump.",
+  },
+};
+
+/** What a linked line that is not set is missing, for a tool's missing[]. One entry per kind. */
 export function missingLinkedLines(budgetRows: readonly BudgetEntryItem[]): Missing[] {
-  const notSet = new Set<"take_home" | "housing">();
+  const notSet = new Set<NonNullable<BudgetEntryItem["linked"]>>();
   for (const row of budgetRows) if (row.notSet && row.linked) notSet.add(row.linked);
-  return [...notSet].map((kind) =>
-    kind === "take_home"
-      ? {
-          field: "salary",
-          why: "An income entry is linked to the take-home pay worked out from the saved salary, and no salary is saved. Income is left unknown rather than counted as zero.",
-          askUser: "What is your salary before tax? It can be added in Profile in Flump.",
-        }
-      : {
-          field: "monthlyHousingCost",
-          why: "A housing entry is linked to the saved housing payment, and none is saved. It is left out of the totals rather than counted as zero.",
-          askUser: "How much is your rent or mortgage payment each month?",
-        },
-  );
+  return [...notSet].map((kind) => LINKED_LINE_MISSING[kind]);
 }
 
 export const MISSING_INCOME: Missing = {
