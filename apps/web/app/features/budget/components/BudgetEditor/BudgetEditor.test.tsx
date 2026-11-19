@@ -265,10 +265,10 @@ describe("BudgetEditor", () => {
     expect(screen.getByTestId("budget-editor-remove-b-1").className).toContain("danger");
   });
 
-  it("has a Finished editing button at the foot when the page gives one (item 29)", () => {
+  it("has a Finish editing button at the foot when the page gives one (item 29)", () => {
     const onFinishEditing = vi.fn();
     setup({ onFinishEditing });
-    fireEvent.click(screen.getByRole("button", { name: "Finished editing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finish editing" }));
     expect(onFinishEditing).toHaveBeenCalled();
   });
 

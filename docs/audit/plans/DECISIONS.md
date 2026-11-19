@@ -330,7 +330,7 @@ The owner listed what they noticed while using the site (about 15 November 2026)
 3. **Essential switch on savings rows (item 28).** Owner's words: "In the budget section, savings items should have the essential toggle too, but default to off."
    - Built: savings rows have the switch, off by default. An essential savings row adds to Breathing room's monthly essentials (`commitments.essentialSavings`), so it lowers the months of cover; it does not change safe to spend (savings already come off there) or the essentials total.
    - Supersedes: the 17 November rework's "savings count as savings whatever the flag".
-4. **"Finished editing" at the foot of the budget (item 29).** Owner's words: "When editing the budget, there should be a 'Finished editing' button at the bottom of the budget too".
+4. **"Finish editing" at the foot of the budget (item 29).** Owner's words: "When editing the budget, there should be a 'Finish editing' button at the bottom of the budget too".
    - Supersedes: the rework's "one edit action per place" reading. UX-GUIDELINES H13 now allows a long edit view to repeat its exit action at its foot.
 5. **"Edit budget" on "Where your money goes" (item 30).** Owner's words: "The 'Edit budget' button should be on the 'Where your money goes' section".
    - Built on that section's heading row; the page-header copy was removed, so there is still one edit action (H13).
