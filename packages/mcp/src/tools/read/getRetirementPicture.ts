@@ -14,7 +14,14 @@ import {
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import type { ToolOutput } from "../../envelope.js";
-import { ASK_NO_ACCOUNTS, capMissing, loadReadModel, type Missing, round2 } from "./common.js";
+import {
+  ASK_NO_ACCOUNTS,
+  askSalaryForPension,
+  capMissing,
+  loadReadModel,
+  type Missing,
+  round2,
+} from "./common.js";
 
 type Assumption = NonNullable<ToolOutput<unknown>["assumptions"]>[number];
 
@@ -120,6 +127,10 @@ export async function runRetirementPlan(
   const missing: Missing[] = [];
   const assumptions: Assumption[] = [];
   if (m.accounts.length === 0) missing.push(ASK_NO_ACCOUNTS);
+  // A saved workplace rate with no salary: the contribution is left out of the estimate, and the
+  // agent is told so, never a silent £0 (system audit leftovers, item 1).
+  const salaryAsk = askSalaryForPension(m.raw);
+  if (salaryAsk) missing.push(salaryAsk);
 
   const counted = built.accounts.filter((a) => doesAccountCountTowardsRetirement(a));
   const currentCountedPotGbp = round2(counted.reduce((sum, a) => sum + a.balanceGbp, 0));

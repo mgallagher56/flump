@@ -1,4 +1,4 @@
-import { userProfileToSavedBaseline } from "@flump/finance-engine";
+import { profileFactsFromProfile, userProfileToSavedBaseline } from "@flump/finance-engine";
 import { afterEach, describe, expect, it } from "vitest";
 import { GOLDEN_TASKS } from "../../evals/golden-tasks.js";
 import { collectToolOutputViolations } from "../../policy/output-policy.js";
@@ -393,9 +393,10 @@ describe("simulate tools v2", () => {
       h = await connectTestClient({
         ...emptyUser,
         baseline: { ...emptyUser.baseline, pensionContributionPct: 5, annualGrossSalary: 0 },
+        profileFacts: { ...profileFactsFromProfile(null), pensionPercent: 5 },
       });
       const e = await call("project_net_worth", { expectedReturnPct: 5, monthlySavingGbp: 0 });
-      const ask = e.missing.find((m: { field: string }) => m.field === "annualSalary");
+      const ask = e.missing.find((m: { field: string }) => m.field === "salary");
       expect(ask?.why).toMatch(/pension contribution is not included/);
       expect(
         e.assumptions.some((a: { field: string }) => a.field === "monthlyPensionContributionGbp"),
@@ -406,18 +407,17 @@ describe("simulate tools v2", () => {
       h = await connectTestClient({
         ...emptyUser,
         baseline: { ...emptyUser.baseline, pensionContributionPct: 5, annualGrossSalary: 30000 },
+        profileFacts: { ...profileFactsFromProfile(null), pensionPercent: 5, annualSalary: 30000 },
       });
       const withSalary = await call("project_net_worth", {
         expectedReturnPct: 5,
         monthlySavingGbp: 0,
       });
-      expect(withSalary.missing.some((m: { field: string }) => m.field === "annualSalary")).toBe(
-        false,
-      );
+      expect(withSalary.missing.some((m: { field: string }) => m.field === "salary")).toBe(false);
       await h.close();
       h = await connectTestClient(emptyUser);
       const noRate = await call("project_net_worth", { expectedReturnPct: 5, monthlySavingGbp: 0 });
-      expect(noRate.missing.some((m: { field: string }) => m.field === "annualSalary")).toBe(false);
+      expect(noRate.missing.some((m: { field: string }) => m.field === "salary")).toBe(false);
     });
 
     it("starts from account balances and applies explicit event costs", async () => {

@@ -9,6 +9,7 @@ import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import {
   ASK_NO_ACCOUNTS,
+  askSalaryForPension,
   loadReadModel,
   type Missing,
   missingLinkedLines,
@@ -205,18 +206,8 @@ export const projectNetWorth = defineFlumpTool({
     const pensionFromSalary = contributionMonthlyFromPercent(base?.pensionContributionPct, {
       annualSalary: base?.annualGrossSalary,
     });
-    const notSet = base?.notSet ?? [];
-    const rateSaved =
-      !notSet.includes("pensionContributionPct") && (base?.pensionContributionPct ?? 0) > 0;
-    const hasScheme =
-      base?.employmentStatus !== "SELF_EMPLOYED" && base?.employmentStatus !== "OTHER";
-    if (pensionFromSalary === null && rateSaved && hasScheme) {
-      missing.push({
-        field: "annualSalary",
-        why: "A pension contribution rate is saved but no salary, so the pension contribution is not included.",
-        askUser: "What is your yearly salary before tax?",
-      });
-    }
+    const salaryAsk = askSalaryForPension(m.raw);
+    if (salaryAsk && !missing.some((x) => x.field === salaryAsk.field)) missing.push(salaryAsk);
     const monthlyPension = pensionFromSalary ?? 0;
     if (monthlyPension > 0) {
       assumptions.push(

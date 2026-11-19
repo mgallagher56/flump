@@ -13,6 +13,7 @@ import {
   PortfolioSnapshot,
   type ResolvedAccount,
   resolveSnapshotNetWorthScope,
+  workplaceSalaryNotSet,
 } from "@flump/finance-engine";
 import { effectiveAnonymize } from "../../auth/scopes.js";
 import type { ToolOutput } from "../../envelope.js";
@@ -236,6 +237,31 @@ export const ASK_NO_ACCOUNTS: Missing = {
   askUser:
     "Which accounts do you have, such as current accounts, savings and debts? They can be added in Flump.",
 };
+
+/**
+ * The ask when a workplace pension rate is saved but no salary is (the engine's
+ * `workplaceSalaryNotSet`): projections leave the contribution out, and the agent is told so
+ * rather than given a silent £0 (system audit leftovers, item 1). Null when it does not apply.
+ * The saved facts carry no employer rate, so the rule reads the employee rate only.
+ */
+export function askSalaryForPension(raw: McpFinancialData): Missing | null {
+  const facts = raw.profileFacts;
+  if (
+    !facts ||
+    !workplaceSalaryNotSet({
+      employmentType: facts.employmentType,
+      annualSalary: facts.annualSalary,
+      pensionPercent: facts.pensionPercent,
+    })
+  ) {
+    return null;
+  }
+  return {
+    field: "salary",
+    why: "A workplace pension rate is saved but no salary, so the pension contribution is not included.",
+    askUser: "What is your salary before tax? It can be added in Profile in Flump.",
+  };
+}
 
 /** What each kind of linked line that is not set is missing, for a tool's missing[]. */
 const LINKED_LINE_MISSING: Record<NonNullable<BudgetEntryItem["linked"]>, Missing> = {

@@ -3584,6 +3584,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await imageRows()).toBe(1);
     });
 
+    it("clears a pair a penny above the threshold: 1,047.51 x 12 = 12,570.12 > 12,570", async () => {
+      await seed();
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, annual_salary, monthly_take_home) VALUES ('f-just-above', 12570.12, 1047.51)",
+      );
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      const [row] = await ds.query(
+        "SELECT annual_salary AS salary, monthly_take_home AS take_home FROM user_profiles WHERE user_id = 'f-just-above'",
+      );
+      expect(row).toEqual({ salary: null, take_home: "1047.51" });
+      expect(await imageRows()).toBe(2);
+    });
+
     it("on or after the cutoff changes nothing, and still marks itself as run", async () => {
       await seed();
       await runUpInTransaction(withClock(TAKE_HOME_SALARY_CLEAR_BEFORE));

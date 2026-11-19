@@ -1,4 +1,4 @@
-import type { BuildContextPackInput } from "@flump/finance-engine";
+import { type BuildContextPackInput, profileFactsFromProfile } from "@flump/finance-engine";
 import { afterEach, describe, expect, it } from "vitest";
 import { collectToolOutputViolations } from "../../policy/output-policy.js";
 import { connectTestClient, TEST_TOKEN, type TestHarness } from "../../testing/client.js";
@@ -142,5 +142,35 @@ describe("retirement MCP tools read the saved plan", () => {
     expect(e.result.estimatedYearlyIncomeGbp.middle).toBe(5_000);
     const ask = e.missing.find((m) => m.field === "statePensionAge");
     expect(ask?.askUser).toContain("https://www.gov.uk/state-pension-age");
+  });
+});
+
+describe("get_retirement_picture and a pension rate with no salary (leftovers, item 1)", () => {
+  let h: TestHarness | undefined;
+  afterEach(async () => {
+    await h?.close();
+    h = undefined;
+  });
+
+  it("asks for the salary when a workplace rate is saved without one, and not otherwise", async () => {
+    const facts = (over: Record<string, unknown>) => ({
+      ...saver,
+      profileFacts: {
+        ...profileFactsFromProfile(null),
+        employmentType: "employed" as const,
+        ...over,
+      },
+    });
+    const asks = async (input: BuildContextPackInput) => {
+      h = await connectTestClient(input, { token: FULL });
+      const e = (await h.callJson("get_retirement_picture", {})) as Env;
+      await h.close();
+      h = undefined;
+      return e.missing.filter((m) => m.field === "salary");
+    };
+    const [ask] = await asks(facts({ pensionPercent: 5, annualSalary: null }));
+    expect(ask?.askUser).toMatch(/salary before tax/);
+    expect(await asks(facts({ pensionPercent: 5, annualSalary: 30000 }))).toHaveLength(0);
+    expect(await asks(facts({ pensionPercent: null, annualSalary: null }))).toHaveLength(0);
   });
 });
