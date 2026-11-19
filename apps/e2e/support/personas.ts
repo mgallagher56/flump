@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { FROZEN_NOW, SERVER_CLOCK_FROZEN } from "./clock";
 
 /**
- * Two neutral sample households for the single dev-bypass user, written through the same-origin
+ * Neutral sample households (two for the visual suite, three more for the phone audit) for the single dev-bypass user, written through the same-origin
  * `/api` proxy (the web server attaches the session token, so nothing here reads one).
  *
  * Switching is idempotent: when the stored accounts, budget and salary already match the persona,
@@ -16,7 +16,13 @@ import { FROZEN_NOW, SERVER_CLOCK_FROZEN } from "./clock";
  * the backend never sees a future month and visual runs stay deterministic.
  */
 
-export type PersonaName = "renter" | "homeowner";
+export type PersonaName =
+  | "renter"
+  | "homeowner"
+  | "debtpayer"
+  | "selfemployed"
+  | "retiree"
+  | "everything";
 
 export interface SeedAccount {
   name: string;
@@ -32,6 +38,9 @@ export interface SeedAccount {
   studentLoanPlan?: "PLAN_1" | "PLAN_2" | "PLAN_4" | "PLAN_5" | "POSTGRAD";
   /** How much the balance grew each month (negative for a debt being paid down). */
   monthlyChange: number;
+  /** Held with someone else; the user's share is `sharePercent` (accounts that allow it). */
+  ownership?: "sole" | "joint";
+  sharePercent?: number;
 }
 
 export interface SeedBudgetEntry {
@@ -40,6 +49,8 @@ export interface SeedBudgetEntry {
   amount: number;
   isIncome?: boolean;
   isEssential?: boolean;
+  ownership?: "sole" | "joint";
+  sharePercent?: number;
 }
 
 export interface Persona {
@@ -47,6 +58,24 @@ export interface Persona {
   profile: Record<string, unknown>;
   accounts: SeedAccount[];
   budget: SeedBudgetEntry[];
+  /** Data beyond accounts and budget: only the "everything" persona has it (seedExtras). */
+  extras?: PersonaExtras;
+}
+
+export interface PersonaExtras {
+  /** Self Assessment records for the current tax year, monthly from its first day. */
+  taxRecords: Array<{
+    type: "income" | "expense";
+    source: "paye" | "self-employed" | "rental" | "savings";
+    category: string;
+    name: string;
+    amount: number;
+  }>;
+  retirementPlan: Record<string, unknown>;
+  /** One AI connection (personal access token) by this name; its secret is never read. */
+  aiConnectionName: string;
+  /** One import committed onto this account, and one left staged for review. */
+  importAccountName: string;
 }
 
 /** Months of history written before the current month. */
@@ -233,7 +262,563 @@ export const HOMEOWNER: Persona = {
   ],
 };
 
-export const PERSONAS: Record<PersonaName, Persona> = { renter: RENTER, homeowner: HOMEOWNER };
+/**
+ * Age 36, renting, £41,000 salary, two credit cards, a personal loan and an overdraft being paid
+ * down (phone audit 2026-11, the debt journey).
+ */
+export const DEBT_PAYER: Persona = {
+  name: "debtpayer",
+  profile: {
+    firstName: "Jordan",
+    employmentType: "employed",
+    annualSalary: 41000,
+    monthlyTakeHome: 2610,
+    taxRegion: "SCOTLAND",
+    birthYear: birthYear(36),
+    studentLoanPlans: [],
+    housingStatus: "renting",
+    monthlyHousingCost: 850,
+    monthlyOtherOutgoings: 900,
+    hasMortgage: false,
+    pensionPercent: 5,
+    pensionEmployerPercent: 3,
+    isSalarySacrifice: false,
+    enabledPages: ["accounts", "budget", "debt", "savings", "pension"],
+    dashboardWidgets: ["accounts", "debt", "budget", "savings", "pension"],
+    dashboardWidgetOrder: ["accounts", "debt", "budget", "savings", "pension"],
+  },
+  accounts: [
+    { name: "Current account", type: "Current", balance: 640, monthlyChange: 10 },
+    {
+      name: "Rainy day pot",
+      type: "Saving",
+      balance: 500,
+      interestRate: 3.5,
+      monthlyContribution: 25,
+      monthlyChange: 25,
+    },
+    {
+      name: "Workplace pension",
+      type: "Pension",
+      balance: 21000,
+      interestRate: 5,
+      monthlyChange: 280,
+    },
+    {
+      name: "Everyday card",
+      type: "Credit Card",
+      balance: 3100,
+      interestRate: 26.9,
+      monthlyContribution: 150,
+      monthlyChange: -80,
+    },
+    {
+      name: "Balance transfer card",
+      type: "Credit Card",
+      balance: 4200,
+      interestRate: 0,
+      monthlyContribution: 175,
+      monthlyChange: -175,
+    },
+    {
+      name: "Personal loan",
+      type: "Loan",
+      balance: 6800,
+      interestRate: 9.4,
+      monthlyContribution: 230,
+      termMonths: 33,
+      monthlyChange: -180,
+    },
+    {
+      name: "Overdraft",
+      type: "Overdraft",
+      balance: 400,
+      interestRate: 39.9,
+      monthlyContribution: 50,
+      monthlyChange: -50,
+    },
+  ],
+  budget: [
+    { name: "Salary after tax", category: "income", amount: 2610, isIncome: true },
+    { name: "Rent", category: "housing", amount: 850, isEssential: true },
+    { name: "Council tax", category: "bills", amount: 120, isEssential: true },
+    { name: "Energy", category: "bills", amount: 95, isEssential: true },
+    { name: "Phone and broadband", category: "bills", amount: 45, isEssential: true },
+    { name: "Groceries", category: "expenses", amount: 300, isEssential: true },
+    { name: "Travel", category: "expenses", amount: 110, isEssential: true },
+    { name: "Everyday card payment", category: "bills", amount: 150, isEssential: true },
+    { name: "Balance transfer payment", category: "bills", amount: 175, isEssential: true },
+    { name: "Personal loan payment", category: "bills", amount: 230, isEssential: true },
+    { name: "Overdraft payment", category: "bills", amount: 50, isEssential: true },
+    { name: "Everything else", category: "expenses", amount: 140 },
+    { name: "Rainy day pot", category: "savings", amount: 25 },
+  ],
+};
+
+/**
+ * Age 47, self-employed with one rented-out flat as well as the home they own outright: Self
+ * Assessment switched on (phone audit 2026-11, the Self Assessment journey).
+ */
+export const SELF_EMPLOYED: Persona = {
+  name: "selfemployed",
+  profile: {
+    firstName: "Robin",
+    employmentType: "self-employed",
+    annualSalary: 46000,
+    monthlyTakeHome: 3050,
+    taxRegion: "WALES",
+    birthYear: birthYear(47),
+    studentLoanPlans: [],
+    housingStatus: "own_outright",
+    monthlyHousingCost: 0,
+    monthlyOtherOutgoings: 1300,
+    hasMortgage: false,
+    hasRentalIncome: true,
+    rentalIncomeMonthly: 875,
+    hasBuyToLet: true,
+    buyToLetCount: 1,
+    buyToLetPropertyValue: 165000,
+    buyToLetMonthlyRental: 875,
+    buyToLetMortgageBalance: 92000,
+    buyToLetMortgageRate: 5.1,
+    buyToLetMortgageType: "interest-only",
+    pensionPercent: 0,
+    pensionEmployerPercent: 0,
+    isSalarySacrifice: false,
+    enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "tax"],
+    dashboardWidgets: ["accounts", "tax", "budget", "savings", "pension"],
+    dashboardWidgetOrder: ["accounts", "tax", "budget", "savings", "pension"],
+  },
+  accounts: [
+    { name: "Business current account", type: "Current", balance: 6200, monthlyChange: 120 },
+    { name: "Personal current account", type: "Current", balance: 1900, monthlyChange: 30 },
+    {
+      name: "Tax pot",
+      type: "Saving",
+      balance: 7400,
+      interestRate: 4.1,
+      monthlyContribution: 650,
+      monthlyChange: 650,
+    },
+    { name: "Home", type: "Property", balance: 240000, monthlyChange: 300 },
+    { name: "Rental flat", type: "Property", balance: 165000, monthlyChange: 200 },
+    {
+      name: "Buy-to-let mortgage",
+      type: "Mortgage",
+      balance: 92000,
+      interestRate: 5.1,
+      termMonths: 180,
+      monthlyContribution: 391,
+      fixedRateEndsInMonths: 7,
+      monthlyChange: 0,
+    },
+    {
+      name: "Personal pension",
+      type: "Pension",
+      balance: 54000,
+      interestRate: 5,
+      monthlyContribution: 300,
+      monthlyChange: 520,
+    },
+  ],
+  budget: [
+    { name: "Drawings", category: "income", amount: 3050, isIncome: true },
+    { name: "Rent from the flat", category: "income", amount: 875, isIncome: true },
+    { name: "Buy-to-let mortgage", category: "housing", amount: 391, isEssential: true },
+    { name: "Council tax", category: "bills", amount: 170, isEssential: true },
+    { name: "Energy", category: "bills", amount: 120, isEssential: true },
+    { name: "Phone and broadband", category: "bills", amount: 60, isEssential: true },
+    { name: "Groceries", category: "expenses", amount: 400, isEssential: true },
+    { name: "Travel", category: "expenses", amount: 150, isEssential: true },
+    { name: "Everything else", category: "expenses", amount: 260 },
+    { name: "Tax pot", category: "savings", amount: 650 },
+    { name: "Personal pension", category: "savings", amount: 300 },
+  ],
+};
+
+/**
+ * Age 61, owns their home outright, two workplace pensions and a SIPP, Retirement plan switched
+ * on (phone audit 2026-11, the Pension and Retirement journey).
+ */
+export const NEAR_RETIREMENT: Persona = {
+  name: "retiree",
+  profile: {
+    firstName: "Morgan",
+    employmentType: "employed",
+    annualSalary: 38000,
+    monthlyTakeHome: 2480,
+    taxRegion: "NORTHERN_IRELAND",
+    birthYear: birthYear(61),
+    studentLoanPlans: [],
+    housingStatus: "own_outright",
+    monthlyHousingCost: 0,
+    monthlyOtherOutgoings: 1250,
+    hasMortgage: false,
+    pensionPercent: 10,
+    pensionEmployerPercent: 6,
+    isSalarySacrifice: true,
+    enabledPages: ["accounts", "budget", "savings", "pension", "retirement"],
+    dashboardWidgets: ["accounts", "pension", "retirement", "savings", "budget"],
+    dashboardWidgetOrder: ["accounts", "pension", "retirement", "savings", "budget"],
+  },
+  accounts: [
+    { name: "Joint current account", type: "Current", balance: 2700, monthlyChange: 20 },
+    {
+      name: "Stocks and shares ISA",
+      type: "Investment",
+      balance: 48000,
+      interestRate: 5,
+      monthlyContribution: 200,
+      monthlyChange: 400,
+    },
+    {
+      name: "Premium bonds",
+      type: "Saving",
+      balance: 15000,
+      interestRate: 3.6,
+      monthlyChange: 0,
+    },
+    { name: "Home", type: "Property", balance: 285000, monthlyChange: 350 },
+    {
+      name: "Current workplace pension",
+      type: "Pension",
+      balance: 142000,
+      interestRate: 5,
+      monthlyChange: 1100,
+    },
+    {
+      name: "Earlier workplace pension",
+      type: "Pension",
+      balance: 63000,
+      interestRate: 4,
+      monthlyChange: 210,
+    },
+    {
+      name: "SIPP",
+      type: "Pension",
+      balance: 37000,
+      interestRate: 5,
+      monthlyContribution: 150,
+      monthlyChange: 300,
+    },
+  ],
+  budget: [
+    { name: "Salary after tax", category: "income", amount: 2480, isIncome: true },
+    { name: "Rates", category: "bills", amount: 110, isEssential: true },
+    { name: "Energy", category: "bills", amount: 130, isEssential: true },
+    { name: "Phone and broadband", category: "bills", amount: 50, isEssential: true },
+    { name: "Home insurance", category: "bills", amount: 35, isEssential: true },
+    { name: "Groceries", category: "expenses", amount: 420, isEssential: true },
+    { name: "Travel", category: "expenses", amount: 160, isEssential: true },
+    { name: "Holidays", category: "expenses", amount: 200 },
+    { name: "Everything else", category: "expenses", amount: 210 },
+    { name: "Stocks and shares ISA", category: "savings", amount: 200 },
+    { name: "SIPP", category: "savings", amount: 150 },
+  ],
+};
+
+/**
+ * Age 52, one person who uses every page (phone audit 2026-11, J11): employed with self-employed
+ * work on the side, a home with a residential mortgage whose fix ends in 4 months, a let flat, a
+ * joint current account and joint bills, savings in and outside ISAs, investments, cards and
+ * loans, two pensions, a retirement plan, Self Assessment records, an AI connection and imports,
+ * with every optional page switched on. The densest household: long lists and large figures.
+ */
+export const EVERYTHING: Persona = {
+  name: "everything",
+  profile: {
+    firstName: "Charlie",
+    employmentType: "employed",
+    annualSalary: 74000,
+    monthlyTakeHome: 4310,
+    taxRegion: "ENGLAND",
+    birthYear: birthYear(52),
+    studentLoanPlans: ["PLAN_1"],
+    hasSecondIncome: true,
+    secondIncomeMonthly: 1100,
+    hasRentalIncome: true,
+    rentalIncomeMonthly: 1150,
+    housingStatus: "mortgage",
+    monthlyHousingCost: 1680,
+    monthlyOtherOutgoings: 2100,
+    hasMortgage: true,
+    mortgageType: "repayment",
+    propertyOwnershipShare: 50,
+    hasBuyToLet: true,
+    buyToLetCount: 1,
+    buyToLetPropertyValue: 230000,
+    buyToLetMonthlyRental: 1150,
+    buyToLetMortgageBalance: 138000,
+    buyToLetMortgageRate: 5.4,
+    buyToLetMortgageType: "interest-only",
+    pensionPercent: 7,
+    pensionEmployerPercent: 7,
+    isSalarySacrifice: true,
+    enabledPages: [
+      "accounts",
+      "budget",
+      "savings",
+      "debt",
+      "pension",
+      "retirement",
+      "mortgage",
+      "tax",
+    ],
+    dashboardWidgets: [
+      "accounts",
+      "budget",
+      "savings",
+      "debt",
+      "pension",
+      "retirement",
+      "mortgage",
+      "tax",
+    ],
+    dashboardWidgetOrder: [
+      "accounts",
+      "budget",
+      "savings",
+      "debt",
+      "pension",
+      "retirement",
+      "mortgage",
+      "tax",
+    ],
+  },
+  accounts: [
+    {
+      name: "Joint current account",
+      type: "Current",
+      balance: 4800,
+      monthlyChange: 60,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    { name: "Personal current account", type: "Current", balance: 2350, monthlyChange: 25 },
+    { name: "Business account", type: "Current", balance: 5600, monthlyChange: 180 },
+    {
+      name: "Easy access savings",
+      type: "Saving",
+      balance: 12400,
+      interestRate: 4.3,
+      monthlyContribution: 250,
+      monthlyChange: 290,
+    },
+    {
+      name: "Cash ISA",
+      type: "Saving",
+      balance: 20000,
+      interestRate: 4.5,
+      monthlyContribution: 300,
+      monthlyChange: 370,
+    },
+    {
+      name: "Stocks and shares ISA",
+      type: "Investment",
+      balance: 86500,
+      interestRate: 5,
+      monthlyContribution: 500,
+      monthlyChange: 860,
+    },
+    {
+      name: "General investment account",
+      type: "Investment",
+      balance: 31200,
+      interestRate: 5,
+      monthlyChange: 130,
+    },
+    {
+      name: "Home",
+      type: "Property",
+      balance: 525000,
+      monthlyChange: 900,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    {
+      // 4.2% over 240 months on £312,000 is about £1,924 a month; the user's half is £962.
+      name: "Residential mortgage",
+      type: "Mortgage",
+      balance: 312000,
+      interestRate: 4.2,
+      termMonths: 240,
+      monthlyContribution: 1924,
+      fixedRateEndsInMonths: 4,
+      monthlyChange: -820,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    { name: "Rental flat", type: "Property", balance: 230000, monthlyChange: 250 },
+    {
+      name: "Buy-to-let mortgage",
+      type: "Mortgage",
+      balance: 138000,
+      interestRate: 5.4,
+      termMonths: 204,
+      monthlyContribution: 621,
+      fixedRateEndsInMonths: 26,
+      monthlyChange: 0,
+    },
+    {
+      name: "Workplace pension",
+      type: "Pension",
+      balance: 241000,
+      interestRate: 5,
+      monthlyChange: 2100,
+    },
+    {
+      name: "Personal pension",
+      type: "Pension",
+      balance: 58700,
+      interestRate: 5,
+      monthlyContribution: 250,
+      monthlyChange: 480,
+    },
+    {
+      name: "Rewards credit card",
+      type: "Credit Card",
+      balance: 2650,
+      interestRate: 23.9,
+      monthlyContribution: 400,
+      monthlyChange: -60,
+    },
+    {
+      name: "Car finance",
+      type: "Loan",
+      balance: 14300,
+      interestRate: 6.9,
+      monthlyContribution: 395,
+      termMonths: 40,
+      monthlyChange: -310,
+    },
+    {
+      name: "Student loan",
+      type: "Student Loan",
+      balance: 6100,
+      interestRate: 4.3,
+      studentLoanPlan: "PLAN_1",
+      monthlyChange: -120,
+    },
+  ],
+  budget: [
+    { name: "Salary after tax", category: "income", amount: 4310, isIncome: true },
+    { name: "Self-employed work", category: "income", amount: 1100, isIncome: true },
+    { name: "Rent from the flat", category: "income", amount: 1150, isIncome: true },
+    {
+      name: "Mortgage payment",
+      category: "housing",
+      amount: 1924,
+      isEssential: true,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    { name: "Buy-to-let mortgage", category: "housing", amount: 621, isEssential: true },
+    {
+      name: "Council tax",
+      category: "bills",
+      amount: 260,
+      isEssential: true,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    {
+      name: "Energy",
+      category: "bills",
+      amount: 210,
+      isEssential: true,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    {
+      name: "Water",
+      category: "bills",
+      amount: 60,
+      isEssential: true,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    { name: "Phone and broadband", category: "bills", amount: 85, isEssential: true },
+    { name: "Home insurance", category: "bills", amount: 45, isEssential: true },
+    { name: "Landlord insurance", category: "bills", amount: 32, isEssential: true },
+    { name: "Car finance payment", category: "bills", amount: 395, isEssential: true },
+    { name: "Credit card payment", category: "bills", amount: 400, isEssential: true },
+    {
+      name: "Groceries",
+      category: "expenses",
+      amount: 780,
+      isEssential: true,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+    { name: "Travel", category: "expenses", amount: 240, isEssential: true },
+    { name: "Childcare and school costs", category: "expenses", amount: 520, isEssential: true },
+    { name: "Eating out", category: "expenses", amount: 180 },
+    { name: "Subscriptions", category: "expenses", amount: 65 },
+    { name: "Holidays", category: "expenses", amount: 300 },
+    { name: "Gifts and celebrations", category: "expenses", amount: 90 },
+    { name: "Everything else", category: "expenses", amount: 250 },
+    { name: "Cash ISA", category: "savings", amount: 300 },
+    { name: "Easy access savings", category: "savings", amount: 250 },
+    { name: "Stocks and shares ISA", category: "savings", amount: 500 },
+    { name: "Personal pension", category: "savings", amount: 250 },
+  ],
+  extras: {
+    taxRecords: [
+      {
+        type: "income",
+        source: "self-employed",
+        category: "Sales",
+        name: "Design work",
+        amount: 1100,
+      },
+      {
+        type: "expense",
+        source: "self-employed",
+        category: "Office costs",
+        name: "Software",
+        amount: 45,
+      },
+      {
+        type: "income",
+        source: "rental",
+        category: "Rent",
+        name: "Rent from the flat",
+        amount: 1150,
+      },
+      {
+        type: "expense",
+        source: "rental",
+        category: "Insurance",
+        name: "Landlord insurance",
+        amount: 32,
+      },
+      {
+        type: "expense",
+        source: "rental",
+        category: "Repairs",
+        name: "Letting agent fees",
+        amount: 115,
+      },
+    ],
+    retirementPlan: {
+      retirementAge: 63,
+      planToAge: 95,
+      target: { kind: "typed", yearlyAmount: 36000 },
+      statePensionAge: 67,
+    },
+    aiConnectionName: "Audit assistant",
+    importAccountName: "General investment account",
+  },
+};
+
+export const PERSONAS: Record<PersonaName, Persona> = {
+  renter: RENTER,
+  homeowner: HOMEOWNER,
+  debtpayer: DEBT_PAYER,
+  selfemployed: SELF_EMPLOYED,
+  retiree: NEAR_RETIREMENT,
+  everything: EVERYTHING,
+};
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -385,7 +970,94 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
       `Seeding the ${name} persona through /api failed: ${outcome.failures.join(", ")}`,
     );
   }
+  const extras = PERSONAS[name].extras;
+  if (extras) await seedExtras(page, extras);
   return { persona: name, unchanged: outcome.unchanged, reset: outcome.reset };
+}
+
+/** The first day of the UK tax year (6 April) that `now` falls in, as YYYY-MM-DD. */
+export function taxYearStart(now: Date): string {
+  const y = now.getUTCFullYear();
+  const beforeApril6 = now.getUTCMonth() < 3 || (now.getUTCMonth() === 3 && now.getUTCDate() < 6);
+  return `${beforeApril6 ? y - 1 : y}-04-06`;
+}
+
+/**
+ * Self Assessment records, the retirement plan, an AI connection and two imports (one committed,
+ * one staged for review). Each is written only when missing, so a re-run adds nothing. The AI
+ * connection's secret comes back in the response and is dropped unread. Throws on any failure.
+ */
+async function seedExtras(page: Page, extras: PersonaExtras): Promise<void> {
+  const now = seedNow();
+  const seed = {
+    extras,
+    taxYearStart: taxYearStart(now),
+    commitMonth: monthKey(now, HISTORY_MONTHS + 3),
+    stageMonth: monthKey(now, HISTORY_MONTHS + 2),
+  };
+  const failures = await page.evaluate(async (s) => {
+    const failures: string[] = [];
+    const call = async (path: string, method = "GET", body?: unknown, headers = {}) => {
+      const response = await fetch(`/api${path}`, {
+        method,
+        headers: { "Content-Type": "application/json", "x-flump-request": "1", ...headers },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      if (!response.ok) failures.push(`${method} ${path} ${response.status}`);
+      const json = response.ok ? ((await response.json().catch(() => null)) as unknown) : null;
+      return { json, etag: response.headers.get("etag") };
+    };
+    const rows = (json: unknown): Array<Record<string, unknown>> =>
+      Array.isArray(json)
+        ? json
+        : ((
+            json as {
+              items?: Array<Record<string, unknown>>;
+              data?: Array<Record<string, unknown>>;
+            }
+          )?.items ??
+          (json as { data?: Array<Record<string, unknown>> })?.data ??
+          []);
+
+    const records = rows((await call("/tax-records")).json);
+    for (const record of s.extras.taxRecords) {
+      if (records.some((r) => r.name === record.name)) continue;
+      await call("/tax-records", "POST", { ...record, frequency: "monthly", date: s.taxYearStart });
+    }
+
+    const plan = await call("/retirement-plan");
+    const saved = (plan.json as { plan?: { id?: string | null } } | null)?.plan;
+    if (!saved?.id) await call("/retirement-plan", "PUT", s.extras.retirementPlan);
+
+    const tokens = rows((await call("/mcp-tokens")).json);
+    if (!tokens.some((t) => t.name === s.extras.aiConnectionName)) {
+      // The response carries the new secret; it is not kept or returned.
+      await call("/mcp-tokens", "POST", { name: s.extras.aiConnectionName, expiryDays: 90 });
+    }
+
+    const batches = rows((await call("/imports")).json);
+    if (batches.length === 0) {
+      const accounts = rows((await call("/accounts")).json);
+      const target = accounts.find((a) => a.name === s.extras.importAccountName);
+      const stage = async (key: string, month: string) =>
+        (
+          await call("/imports", "POST", {
+            idempotencyKey: key,
+            accounts: [{ ref: "acc1", name: s.extras.importAccountName, type: "Investment" }],
+            balances: [{ accountRef: "acc1", month, value: 29800 }],
+          })
+        ).json as { id?: string; batch?: { id?: string } } | null;
+      const committed = await stage("phone-audit-commit", s.commitMonth);
+      const id = committed?.id ?? committed?.batch?.id;
+      if (id && target?.id)
+        await call(`/imports/${id}/commit`, "POST", { accountMap: { acc1: target.id } });
+      await stage("phone-audit-staged", s.stageMonth);
+    }
+    return failures;
+  }, seed);
+  if (failures.length > 0) {
+    throw new Error(`Seeding the persona's extra data through /api failed: ${failures.join(", ")}`);
+  }
 }
 
 /**
