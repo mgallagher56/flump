@@ -856,6 +856,11 @@ export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reas
     reason:
       "system audit slice 4 migration before-image (the kinds, links and repayment types it filled, and the accounts and history rows it added) kept so each down() can undo it; rows go with the account by ON DELETE CASCADE; not exported, as the accounts and their history are in the export",
   },
+  rent_share_backfill: {
+    parent: "budget_entries",
+    reason:
+      "system audit slice 5 migration before-image (the ownership and share of renters' linked rent lines it set to sole) kept 90 days so its down() can restore them; rows go with the budget line by ON DELETE CASCADE; not exported, as it is a rollback copy and the current lines are in the export",
+  },
   liability_sign_backfill: {
     parent: "accounts",
     reason:

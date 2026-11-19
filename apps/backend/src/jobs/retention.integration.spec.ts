@@ -159,7 +159,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       );
       for (const age of ["91 days", "89 days"]) {
         await ds.query(
-          `INSERT INTO rent_share_backfill (budget_entry_id, old_ownership, backfilled_at) VALUES ($1, 'joint', ${ago(age)})`,
+          `INSERT INTO rent_share_backfill (budget_entry_id, old_sole_or_joint, backfilled_at) VALUES ($1, 'joint', ${ago(age)})`,
           [rentLine?.id],
         );
       }
