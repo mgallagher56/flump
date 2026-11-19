@@ -44,7 +44,7 @@ import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummar
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
-import { emptyWrap, toolPanel } from "./SavingsContainer.styles";
+import { emptyWrap, toolPanel, zoneSummary } from "./SavingsContainer.styles";
 
 /**
  * Monthly pay rise handed over from Take-home pay in router state (never the URL); 0 when absent
@@ -226,11 +226,13 @@ export const SavingsContainer: FC = () => {
             isModified={isModified}
             showLabel="Show what-if: grow your savings"
             summary={
-              announcement
-                ? `Your illustration: ${announcement}`
-                : saved.monthly > 0
-                  ? `Starts from your savings of ${formatCurrency(saved.total)} and ${formatCurrency(saved.monthly)} a month going in.`
-                  : `Starts from your savings of ${formatCurrency(saved.total)}.`
+              <span className={zoneSummary()}>
+                {announcement
+                  ? `Your illustration: ${announcement}`
+                  : saved.monthly > 0
+                    ? `Starts from your savings of ${formatCurrency(saved.total)} and ${formatCurrency(saved.monthly)} a month going in.`
+                    : `Starts from your savings of ${formatCurrency(saved.total)}.`}
+              </span>
             }
             notice={<ProjectionNotice />}
             title={SCENARIO_TITLE}

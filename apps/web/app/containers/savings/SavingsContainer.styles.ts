@@ -8,3 +8,8 @@ export const toolPanel = cva({
 export const emptyWrap = cva({
   base: { display: "flex", justifyContent: "center", minWidth: 0 },
 });
+
+/** The closed zone's one-line summary: its pound figures line up like every other figure. */
+export const zoneSummary = cva({
+  base: { fontVariantNumeric: "tabular-nums" },
+});
