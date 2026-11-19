@@ -193,12 +193,14 @@ describe("computeUkTakeHome: pension caps and figures", () => {
 });
 
 describe("computeUkTakeHome: several student loan plans", () => {
-  it("charges the plan with the lowest threshold, whatever order the plans come in", () => {
+  it("charges 9% over the lowest threshold in total, whatever order the plans come in", () => {
     // GOV.UK Repaying your student loan, 2026/27 thresholds: Plan 1 26,900, Plan 2 29,385, 9%.
-    // Lowest is Plan 1: (40,000 - 26,900) x 9% = 13,100 x 0.09 = 1,179. Plan 2 shows 0.
+    // Total: (40,000 - 26,900) x 9% = 13,100 x 0.09 = 1,179.
+    // The split between the plans is not asserted: GOV.UK puts the part over the Plan 2
+    // threshold on Plan 2 ((40,000 - 29,385) x 9% = 955.35, Plan 1 223.65), while the engine
+    // puts it all on Plan 1. Reported to the coordinator as a possible bug (E41 M2).
     const b = computeUkTakeHome({ ...base, salary: 40_000, studentLoans: ["plan2", "plan1"] });
     expect(b.studentLoan).toBe(1_179);
-    expect(b.studentLoanByPlan).toEqual({ plan1: 1_179, plan2: 0 });
   });
 
   it("throws for any plan the year does not list, even when another plan is charged", () => {

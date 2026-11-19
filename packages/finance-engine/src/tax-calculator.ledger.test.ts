@@ -92,7 +92,7 @@ describe("adding up the records", () => {
     expect(r.totalGrossIncome).toBe(0);
   });
 
-  it("takes investment fees off savings interest, not from dividends", () => {
+  it("records investment fees as a savings expense, not against dividends", () => {
     const r = calculateUKTax(
       Y,
       [interest(3000), rec("savings", "investment_fees", 500, { type: "expense" })],
@@ -101,10 +101,9 @@ describe("adding up the records", () => {
     );
     expect(r.savingsExpenses).toBe(500);
     expect(r.dividendIncomeGross).toBe(0);
-    // 60,000 salary: taxable 47,430, so higher rate; PSA 500. Interest 3,000 - 500 fees = 2,500;
-    // 2,500 - 500 PSA = 2,000 at 40% = 800.
-    expect(r.taxableSavingsInterest).toBe(2000);
-    expect(r.savingsTaxDue).toBeCloseTo(800, 2);
+    // The tax on the interest is not asserted: the engine takes the fees off the interest
+    // before tax, but UK law gives an individual no deduction for investment fees against
+    // savings interest. Reported to the coordinator as a possible bug (E41 M2).
   });
 });
 
