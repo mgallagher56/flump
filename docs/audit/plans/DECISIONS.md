@@ -368,3 +368,26 @@ The fifteen decisions in [docs/audit/system-2026-11/PLAN.md](../system-2026-11/P
 
 - Decisions 5, 7 and 15 change tax figures. The owner's acceptance of the option is not the tax vector sign-off (round 1, E4: "The owner signs off the tax test vectors"). That sign-off is still the owner's to give and has not been given, so no tax change from these decisions merges until it is.
 - Supersedes: E23 D-1-B is amended by decision 10 (the endpoint waits for the mobile app). E34 slice C1's rule that a mortgage's share overwrites its property's is amended by decision 14.
+
+# Owner decisions, round 12 (2026-11-19): E41 mutation testing and faster tests
+
+The thirteen decisions in [E41-mutation-testing-and-test-speed-plan.md](./E41-mutation-testing-and-test-speed-plan.md), section 12. Shown the plan summary and asked on 19 November 2026 whether they accept the recommended option on all thirteen, the owner answered: "Accept all 13".
+
+| # | Decision | Accepted option |
+|---|---|---|
+| 1 | How far to go | C: all stages, with a stop-check after M4 using the measured cost of M2 to M4 |
+| 2 | How equivalent and not-worth-killing survivors are recorded | B: a ledger in `docs/testing/mutation-triage.md` that the tool never reads; nothing is suppressed. This is the sign-off AGENTS.md section 15 asks for |
+| 3 | Form of the ratchet | A: one score floor per package, floor(measured) - 1 |
+| 4 | Is the pull request check ever blocking | B: advisory now; decide after four weeks of results whether it blocks for `packages/finance-engine` only |
+| 5 | How often the full run happens | A: weekly per package, staggered at night, plus manual start |
+| 6 | Hosted Stryker dashboard (outside service) | A: no; HTML reports as CI artifacts only |
+| 7 | String faults | B: off in `apps/web` and `packages/ui` only; the number left out is reported |
+| 8 | Tests that assert a tax figure | A: through the existing vector sign-off. **The sign-off itself is not given by this acceptance** |
+| 9 | Speed target | B: two numbers set by the owner after the P0 baseline |
+| 10 | May a fix reduce test isolation | B: per package, with five clean shuffled runs as proof and coordinator sign-off; backend unit files and pure packages only |
+| 11 | Backend database specs in mutation runs | A: left out at first; M4 reports what they alone cover |
+| 12 | A new law | B: after M6 the coordinator adds a short AGENTS.md section |
+| 13 | How CI gets its browser | A if Chromium starts without the system package step, otherwise B; never the container image without a new decision |
+
+- No outside service is adopted. Decision 6 keeps reports inside CI.
+- Decision 8 changes no tax figure by itself; any test that asserts one waits for the owner's tax vector sign-off (round 1, E4).
