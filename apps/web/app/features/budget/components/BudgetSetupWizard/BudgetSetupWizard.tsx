@@ -1,3 +1,4 @@
+import { isTakeHomePayRow } from "@flump/finance-engine";
 import {
   Button,
   Card,
@@ -299,7 +300,14 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   };
 
   const allEffective = entries.map(getEffectiveEntry);
-  const totalIncome = allEffective.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0);
+  // The take-home the budget reads from the profile while it has no pay entry of its own (item 7).
+  const linkedTakeHome =
+    monthlyTakeHome && !allEffective.some((e) => isTakeHomePayRow(e) && toMonthly(e) > 0)
+      ? monthlyTakeHome
+      : null;
+  const totalIncome =
+    allEffective.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0) +
+    (linkedTakeHome ?? 0);
   const totalExpenses = allEffective
     .filter((e) => !e.isIncome)
     .reduce((s, e) => s + toMonthly(e), 0);
@@ -398,7 +406,6 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     );
   };
 
-  const incomeEntries = getCategoryEntries("income");
   const missingCommon = missingWizardCommonItems(entries);
   const headingTitle = isAdd && currentStep === "defaults" ? ADD_TITLE : STEP_TITLES[currentStep];
   const headingDescription =
@@ -521,32 +528,35 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
           {currentStep === "income" && (
             <div>
               {monthlyTakeHome ? (
-                <div className={callout()}>
+                // One stored value (owner item 7): the profile's salary. The budget reads the
+                // take-home worked out from it, so nothing is copied here.
+                <div
+                  className={callout()}
+                  data-testid="wizard-linked-take-home"
+                  id="wizard-linked-take-home"
+                >
                   <p className={calloutText()}>
-                    Estimate from your saved details:{" "}
-                    <strong>{formatCurrency(Math.abs(monthlyTakeHome))}</strong> take-home pay a
-                    month. Select "Use {formatCurrency(Math.abs(monthlyTakeHome))}" to copy it into
-                    the salary entry below.
+                    {linkedTakeHome !== null ? (
+                      <>
+                        Your take-home pay of{" "}
+                        <strong>{formatCurrency(Math.abs(linkedTakeHome))}</strong> a month is
+                        already in your budget, worked out from your salary in{" "}
+                        <Link className={tipLink()} to="/app/profile">
+                          Profile
+                        </Link>
+                        . To use a different figure, add a pay entry below.
+                      </>
+                    ) : (
+                      <>
+                        Your own pay entry is used in place of the take-home pay worked out from
+                        your salary in{" "}
+                        <Link className={tipLink()} to="/app/profile">
+                          Profile
+                        </Link>
+                        . Delete it to use your salary instead.
+                      </>
+                    )}
                   </p>
-                  {incomeEntries.length > 0 && (
-                    <Button
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        const primary =
-                          incomeEntries.find((e) => e.isPrimaryIncome) ?? incomeEntries[0];
-                        if (primary) {
-                          localUpdate(primary.id, {
-                            amount: monthlyTakeHome,
-                            frequency: "monthly",
-                          });
-                        }
-                      }}
-                    >
-                      Use {formatCurrency(Math.abs(monthlyTakeHome))}
-                    </Button>
-                  )}
                 </div>
               ) : null}
               {renderEntries("income", "No income yet. Add your salary or other earnings below.")}

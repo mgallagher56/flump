@@ -77,7 +77,7 @@ export const WizardEntryRow: FC<WizardEntryRowProps> = ({
         disabled={deleting}
         size="sm"
         title={`Remove ${entry.name}`}
-        variant="ghost"
+        variant="dangerSubtle"
         onClick={() => onDelete(entry.id)}
       >
         <Icon icon={Trash2} size="sm" />

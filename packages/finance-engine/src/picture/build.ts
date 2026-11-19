@@ -13,7 +13,9 @@ import {
   type HousingCost,
   selectFixedRateEnds,
   selectHousingCost,
+  selectHousingPayment,
 } from "./selectors/housing-cost.js";
+import { withLinkedBudgetRows } from "./selectors/linked-budget-rows.js";
 import { type LoanToValue, selectLoanToValue } from "./selectors/loan-to-value.js";
 import { type MonthsOfCover, selectMonthsOfCover } from "./selectors/months-of-cover.js";
 import {
@@ -31,6 +33,13 @@ import { selectTakeHome, type TakeHome } from "./selectors/take-home.js";
  */
 export interface FinancialPicture {
   takeHome: Figure<TakeHome>;
+  /**
+   * The budget rows every budget figure counts: the saved rows with the linked take-home and
+   * housing rows in place (owner items 7 and 33b). Pages list these, so a row and its figures agree.
+   */
+  budgetRows: BudgetEntryItem[];
+  /** Saved rows a linked row stands in for: kept in storage, counted nowhere. */
+  shadowedBudgetRowIds: string[];
   budget: Figure<BudgetTotals>;
   safeToSpend: Figure<SafeToSpend>;
   monthsOfCover: Figure<MonthsOfCover>;
@@ -60,11 +69,18 @@ export function buildFinancialPicture(
 ): FinancialPicture {
   const snapshot = opts.snapshot ?? new PortfolioSnapshot(input.accounts, input.details);
   const takeHome = selectTakeHome(input.profile, { taxYear: opts.taxYear });
+  const linked = withLinkedBudgetRows(input.budget, {
+    takeHome,
+    housing: selectHousingPayment(input.profile, snapshot, input.accounts),
+  });
+  const budget = linked.rows;
   return {
     takeHome,
-    budget: selectBudgetTotals(input.budget),
-    safeToSpend: selectSafeToSpend(takeHome, input.budget, snapshot),
-    monthsOfCover: selectMonthsOfCover(input.budget, snapshot),
+    budgetRows: budget,
+    shadowedBudgetRowIds: linked.shadowedRowIds,
+    budget: selectBudgetTotals(budget),
+    safeToSpend: selectSafeToSpend(takeHome, budget, snapshot),
+    monthsOfCover: selectMonthsOfCover(budget, snapshot),
     netWorth: selectNetWorth(snapshot, input.netWorthBasis),
     debt: selectDebtTotals(snapshot),
     housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts),

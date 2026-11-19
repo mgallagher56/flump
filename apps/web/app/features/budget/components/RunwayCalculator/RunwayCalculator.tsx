@@ -10,6 +10,7 @@ import {
   CollapsibleDrawer,
   CurrencyInput,
   FormField,
+  InfoTip,
   Money,
   ProjectionNotice,
   ResultBlock,
@@ -74,8 +75,6 @@ export interface RunwayCalculatorProps {
    */
   collapsible?: boolean;
 }
-
-const EXPENSE_CATEGORIES: BudgetEntry["category"][] = ["housing", "bills", "expenses"];
 
 interface OptionItem {
   id: string;
@@ -152,15 +151,14 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     [accounts, snapshot],
   );
 
+  // Take-home from the profile is the income that stops in this question, so it is never "kept".
   const nonPrimaryIncome = useMemo(
-    () => entries.filter((e) => e.isIncome && !e.isPrimaryIncome),
+    () => entries.filter((e) => e.isIncome && !e.isPrimaryIncome && !e.linked),
     [entries],
   );
 
-  const expenseEntries = useMemo(
-    () => entries.filter((e) => !e.isIncome && e.category !== "savings"),
-    [entries],
-  );
+  // Spending and savings rows: an essential savings row counts in the saved figure (item 28).
+  const expenseEntries = useMemo(() => entries.filter((e) => !e.isIncome), [entries]);
 
   const initialScenario = scenario ?? null;
 
@@ -196,10 +194,9 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     ...defaultIncome,
     ...(initialScenario?.keptIncome ?? {}),
   }));
-  const [keptExpenses, setKeptExpenses] = useState<Record<string, boolean>>(() => ({
-    ...defaultExpenses,
-    ...(initialScenario?.keptExpenses ?? {}),
-  }));
+  // Which spending counts is each entry's saved Essential flag, switched in "What Breathing room
+  // counts" beside the saved figure (owner item 32b), so this illustration follows it.
+  const keptExpenses = defaultExpenses;
   const [severanceLump, setSeveranceLump] = useState<number>(
     () => initialScenario?.severanceLump ?? 0,
   );
@@ -214,9 +211,6 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   useEffect(() => {
     setKeptIncome((prev) => ({ ...defaultIncome, ...prev }));
   }, [defaultIncome]);
-  useEffect(() => {
-    setKeptExpenses((prev) => ({ ...defaultExpenses, ...prev }));
-  }, [defaultExpenses]);
 
   // Everything here is a scenario input: it goes to the container's session memory only.
   const emit = (next: Partial<RunwayScenario>) => {
@@ -242,12 +236,6 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     emit({ keptIncome: next });
   };
 
-  const toggleExpense = (expenseId: string) => {
-    const next = { ...keptExpenses, [expenseId]: !keptExpenses[expenseId] };
-    setKeptExpenses(next);
-    emit({ keptExpenses: next });
-  };
-
   const handleSeveranceChange = (val: number) => {
     const clamped = Math.max(0, Math.min(100000, val));
     setSeveranceLump(clamped);
@@ -266,13 +254,11 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     severanceLump !== 0 ||
     extraMonthlyCut !== 0 ||
     !sameFlags(includedAccounts, defaultAccounts) ||
-    !sameFlags(keptIncome, defaultIncome) ||
-    !sameFlags(keptExpenses, defaultExpenses);
+    !sameFlags(keptIncome, defaultIncome);
 
   const handleResetScenario = () => {
     setIncludedAccounts(defaultAccounts);
     setKeptIncome(defaultIncome);
-    setKeptExpenses(defaultExpenses);
     setSeveranceLump(0);
     setExtraMonthlyCut(0);
     onScenarioChange?.({
@@ -338,23 +324,23 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   const emptyLabel = saved ? "No end date" : "Not set";
   const coverLabel = months === null ? emptyLabel : breathingRoomPhrase(months);
 
-  const groupedExpenses = useMemo(() => {
-    // Standard categories first, then debt and custom ones, so every counted row can be switched.
-    const extra = expenseEntries
-      .map((e) => e.category)
-      .filter((c, i, all) => !EXPENSE_CATEGORIES.includes(c) && all.indexOf(c) === i);
-    return [...EXPENSE_CATEGORIES, ...extra].flatMap((cat) =>
-      expenseEntries.filter((e) => e.category === cat),
-    );
-  }, [expenseEntries]);
-
   const controls = (
     <div className={controlsStack()}>
-      <FormField hint="Added to what you can draw on" label="Redundancy pay or lump sum">
+      {/* The note sits behind the tip and stays in the field's description (owner item 23). */}
+      <FormField
+        label="Redundancy pay or lump sum"
+        labelAddon={
+          <InfoTip descriptionId="runway-severance-detail" term="Redundancy pay or lump sum">
+            Added to what you can draw on.
+          </InfoTip>
+        }
+      >
         {(field) => (
           <CurrencyInput
             id={field.id}
-            aria-describedby={field.describedBy}
+            aria-describedby={[field.describedBy, "runway-severance-detail"]
+              .filter(Boolean)
+              .join(" ")}
             placeholder="0"
             value={severanceLump === 0 ? null : severanceLump}
             onValueChange={(v) => handleSeveranceChange(v ?? 0)}
@@ -376,9 +362,10 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   );
 
   // Line-by-line switches stay one tap away, so the first view holds two inputs (P1.7). They sit
-  // below the outcome, so opening them never pushes it out of view on a phone.
+  // below the outcome, so opening them never pushes it out of view on a phone. Which spending
+  // counts is set beside the saved figure, on each entry's Essential flag (owner item 32b).
   const moreOptions = (
-    <CollapsibleDrawer title="Accounts and spending to include" variant="quiet">
+    <CollapsibleDrawer title="Accounts and income in this illustration" variant="quiet">
       <div className={optionsStack()}>
         <OptionGroup
           items={poolAccounts.map((acc) => ({
@@ -401,17 +388,6 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
             onToggle: () => toggleIncome(e.id),
           }))}
           label="Income you would keep"
-        />
-        <OptionGroup
-          items={groupedExpenses.map((e) => ({
-            id: e.id,
-            name: e.name,
-            amount: toMonthly(e),
-            perMonth: true,
-            checked: !!keptExpenses[e.id],
-            onToggle: () => toggleExpense(e.id),
-          }))}
-          label="Spending you would keep"
         />
       </div>
     </CollapsibleDrawer>

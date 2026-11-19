@@ -12,6 +12,10 @@ export const budgetEditor = sva({
     sections: { display: "flex", flexDirection: "column", gap: "6" },
     foot: {
       display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "3",
       mt: "6",
       pt: "4",
       borderTopWidth: "1px",
@@ -127,36 +131,74 @@ export const ownershipCell = cva({
   },
 });
 
-/** The add row closing each section: matches entryRow columns on md so inputs align. */
+/**
+ * The add row closing each section (owner item 26): the same columns, sizes and phone ordering
+ * as a saved entry row (name, amount, how often, Essential, the delete column, sole or joint), so
+ * the new entry's fields sit exactly under the saved ones. Its Add and Cancel take the last line.
+ */
 export const addRow = cva({
   base: {
     display: { base: "flex", md: "grid" },
     flexWrap: "wrap",
-    gridTemplateColumns: { md: "minmax(0, 1fr) 140px 120px minmax(136px, auto)" },
-    columnGap: { base: "2", md: "3" },
+    gridTemplateColumns: { md: "minmax(0, 1fr) 140px 120px 136px auto" },
+    columnGap: { base: "1", md: "3" },
     rowGap: "2",
     alignItems: "center",
-    pt: "2",
+    py: "3",
+    fontVariantNumeric: "tabular-nums",
     "& > :first-child": {
-      flex: { base: "1 1 100%", md: "none" },
+      order: { base: 1, md: 0 },
+      flex: { base: "1 1 calc(100% - 108px)", md: "none" },
       minWidth: 0,
     },
-    fontVariantNumeric: "tabular-nums",
-  },
-});
-
-export const addAmount = cva({
-  base: {
-    width: { base: "104px", md: "100%" },
-    fontVariantNumeric: "tabular-nums",
   },
 });
 
 export const addActions = cva({
   base: {
+    order: { base: 7, md: 0 },
+    flex: { base: "1 1 100%", md: "none" },
+    gridColumn: { md: "1 / -1" },
     display: "flex",
     alignItems: "center",
     gap: "2",
+  },
+});
+
+/** A linked row's name: text, not a field, as it comes from a saved detail (items 7 and 33b). */
+export const linkedName = cva({
+  base: { textStyle: "body.md", color: "text.primary", minWidth: 0 },
+});
+
+/** A linked figure or its "a month", in line with the fields of the rows around it. */
+export const linkedAmount = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
+/** Where a row's figure comes from, on a line of its own under the row. */
+export const sourceLine = cva({
+  base: {
+    order: { base: 6, md: 0 },
+    flex: { base: "1 1 100%", md: "none" },
+    gridColumn: { md: "1 / -1" },
+    margin: "0",
+    textStyle: "body.sm",
+    color: "text.secondary",
+  },
+});
+
+export const sourceLink = cva({
+  base: {
+    color: "primary",
+    fontWeight: "semibold",
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
   },
 });
 
@@ -194,7 +236,14 @@ export const draftNote = sva({
       borderBottomStyle: "solid",
       borderBottomColor: "border.subtle",
     },
-    text: { margin: "0", textStyle: "body.sm", color: "text.secondary" },
+    text: {
+      display: "flex",
+      alignItems: "center",
+      gap: "1",
+      margin: "0",
+      textStyle: "label.md",
+      color: "text.primary",
+    },
     actions: { display: "flex", flexWrap: "wrap", gap: "2" },
   },
 });

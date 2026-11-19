@@ -170,6 +170,9 @@ function expectedFigures(picture: FinancialPicture): Record<string, number | nul
     "monthsOfCover.liquidCash": isFigureKnown(picture.monthsOfCover)
       ? picture.monthsOfCover.value.liquidCash
       : null,
+    "monthsOfCover.monthlyEssentials": isFigureKnown(picture.monthsOfCover)
+      ? picture.monthsOfCover.value.monthlyEssentials
+      : null,
     "tax.estimatedDue": isFigureKnown(picture.estimatedTaxDue)
       ? picture.estimatedTaxDue.value.amount
       : null,
@@ -240,7 +243,12 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
   const expected = expectedFigures(picture);
 
   it("the shared row mapper gives the same picture as the fixture input", () => {
-    expect(picture).toEqual(buildFinancialPicture(fixture));
+    // The mapper fills in ownership on each row, so the listed rows are compared by id and amount.
+    const { budgetRows, ...figures } = picture;
+    const { budgetRows: fixtureRows, ...fixtureFigures } = buildFinancialPicture(fixture);
+    expect(figures).toEqual(fixtureFigures);
+    const key = (rows: typeof budgetRows) => rows.map((r) => [r.id, r.amount, r.linked ?? null]);
+    expect(key(budgetRows)).toEqual(key(fixtureRows));
   });
 
   beforeEach(() => {

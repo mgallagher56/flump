@@ -147,7 +147,7 @@ export const CommonEntries: Story = {
     await expect(scoped.getAllByText("Common entry")).toHaveLength(8);
     await expect(
       scoped.getByRole("group", { name: "Common entries not saved yet" }),
-    ).toHaveTextContent("These common entries are not saved yet.");
+    ).toHaveTextContent("Common entries not saved yet");
     // Removing a draft asks nothing: it was never saved.
     await userEvent.click(scoped.getByRole("button", { name: "Remove Travel" }));
     await waitFor(() => expect(scoped.getAllByText("Common entry")).toHaveLength(7));
@@ -167,5 +167,47 @@ export const CommonEntries: Story = {
     await userEvent.click(scoped.getByRole("button", { name: "Remove common entries" }));
     await waitFor(() => expect(scoped.queryByText("Common entry")).toBeNull());
     await expect(scoped.queryByRole("group", { name: "Common entries not saved yet" })).toBeNull();
+  },
+};
+
+/**
+ * Rows read from saved details (owner items 7 and 33b): take-home pay from the profile's salary
+ * and the rent from the housing details, each saying where it comes from, with Finished editing
+ * at the foot (item 29).
+ */
+export const LinkedRows: Story = {
+  args: {
+    entries: sampleBudgetEntries().filter((e) => !e.isIncome && e.category !== "housing"),
+    linkedEntries: [
+      {
+        ...sampleBudgetEntries()[0],
+        id: "linked:take-home",
+        name: "Take-home pay",
+        category: "income",
+        amount: 2400,
+        isIncome: true,
+        linked: "take-home",
+      },
+      {
+        ...sampleBudgetEntries()[0],
+        id: "linked:housing",
+        name: "Rent",
+        category: "housing",
+        amount: 950,
+        isIncome: false,
+        isEssential: true,
+        linked: "housing",
+      },
+    ],
+    profileTakeHome: 2400,
+    housingStatus: "renting",
+    onSaveHousing: fn(async () => undefined),
+    onFinishEditing: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByText(/From your salary in/)[0]).toBeDefined();
+    await userEvent.click(canvas.getAllByRole("button", { name: "Finished editing" })[0]);
+    await expect(args.onFinishEditing).toHaveBeenCalled();
   },
 };

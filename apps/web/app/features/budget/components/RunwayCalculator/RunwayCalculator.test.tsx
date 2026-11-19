@@ -13,7 +13,7 @@ const supporting = (term: string) => {
   return results().getByRole("definition").textContent ?? "";
 };
 const openMoreOptions = () =>
-  fireEvent.click(screen.getByRole("button", { name: "Accounts and spending to include" }));
+  fireEvent.click(screen.getByRole("button", { name: "Accounts and income in this illustration" }));
 
 describe("RunwayCalculator", () => {
   beforeEach(() => {
@@ -60,7 +60,7 @@ describe("RunwayCalculator", () => {
     },
   ];
 
-  it("shows two inputs and one outcome figure before Accounts and spending to include is opened", () => {
+  it("shows two inputs and one outcome figure before Accounts and income in this illustration is opened", () => {
     render(<RunwayCalculator accountDetails={[]} accounts={mockAccounts} entries={mockEntries} />);
     expect(screen.getAllByRole("textbox").length).toBeLessThanOrEqual(2);
     expect(screen.getByLabelText("Redundancy pay or lump sum")).toBeDefined();
@@ -71,9 +71,9 @@ describe("RunwayCalculator", () => {
     ).toHaveLength(1);
     // The saved figure is not in the zone: it has its own section (BreathingRoom).
     expect(document.querySelector('[data-figure="monthsOfCover"]')).toBeNull();
-    // The line-by-line switches wait behind "Accounts and spending to include".
+    // The line-by-line switches wait behind "Accounts and income in this illustration".
     expect(screen.queryAllByRole("switch")).toHaveLength(0);
-    const more = screen.getByRole("button", { name: "Accounts and spending to include" });
+    const more = screen.getByRole("button", { name: "Accounts and income in this illustration" });
     expect(more.getAttribute("aria-expanded")).toBe("false");
     // No bulk buttons, no progress bar, no link away to another page.
     expect(screen.queryByRole("button", { name: /Include all|Include none/ })).toBeNull();
@@ -118,6 +118,7 @@ describe("RunwayCalculator", () => {
               budgetDebtPayments: 0,
               debtCommitment: 100,
               total: 1600,
+              essentialSavings: 0,
             },
           },
         }}
@@ -233,7 +234,7 @@ describe("RunwayCalculator", () => {
         onScenarioChange={onScenarioChange}
       />,
     );
-    fireEvent.change(screen.getByLabelText(/Redundancy pay or lump sum/i), {
+    fireEvent.change(screen.getByLabelText("Redundancy pay or lump sum"), {
       target: { value: "5000" },
     });
     fireEvent.change(screen.getByLabelText(/Spending you would cut each month/i), {
@@ -325,15 +326,39 @@ describe("RunwayCalculator untouched illustration equals the saved figure", () =
         ]}
       />,
     );
-    // £6,000 over £1,050 = 5.7 months; the debt and pets rows are counted and can be switched.
+    // £6,000 over £1,050 (900 + 100 + 50) = 5.71, shown as 5.7 months: the debt and pets rows
+    // are counted, as in the saved figure.
     expect(outcomeFigure()).toBe("5.7 months");
+    // Which spending counts is each entry's Essential flag, set beside the saved figure (item
+    // 32b), so the illustration has no spending switches of its own.
     openMoreOptions();
-    const card = screen.getByRole("switch", { name: "card" }) as HTMLInputElement;
-    const pets = screen.getByRole("switch", { name: "pets" }) as HTMLInputElement;
-    expect(card.checked).toBe(true);
-    expect(pets.checked).toBe(true);
-    fireEvent.click(pets);
-    // £6,000 over £1,000 = 6 months.
-    expect(outcomeFigure()).toBe("6 months");
+    expect(screen.queryByRole("switch", { name: "pets" })).toBeNull();
+  });
+
+  it("covers an essential savings row, as the saved figure does (owner item 28)", () => {
+    const row = (id: string, category: string, amount: number, isEssential: boolean) => ({
+      id,
+      userId: "u",
+      name: id,
+      category,
+      amount,
+      frequency: "monthly" as const,
+      isIncome: false,
+      isPrimaryIncome: false,
+      isEssential,
+      notes: null,
+      isDefault: false,
+      createdAt: "2026-01-01",
+      updatedAt: "2026-01-01",
+    });
+    render(
+      <RunwayCalculator
+        accountDetails={[]}
+        accounts={[{ id: "s", name: "Saver", type: "Saving", balance: 6000, currency: "GBP" }]}
+        entries={[row("rent", "housing", 1000, true), row("isa", "savings", 200, true)]}
+      />,
+    );
+    // £6,000 over £1,200 (rent 1,000 + essential saving 200) = 5 months.
+    expect(outcomeFigure()).toBe("5 months");
   });
 });

@@ -31,53 +31,27 @@ describe("BudgetController", () => {
     expect(budgetRepo.rows).toEqual([]);
   });
 
-  it("seedDefaultBudgetEntries twice creates each template row once", async () => {
+  it("seedDefaultBudgetEntries adds no empty suggestion rows (owner item 33a)", async () => {
     const budgetRepo = createInMemoryRepository();
     const controller = budgetController(budgetRepo, createInMemoryRepository());
-    const req = { user: { id: "user-123" } };
 
-    const first = await controller.seedDefaultBudgetEntries(req);
-    const second = await controller.seedDefaultBudgetEntries(req);
+    const result = await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
-    expect(first.length).toBeGreaterThan(0);
-    expect(second).toHaveLength(first.length);
-    expect(budgetRepo.rows).toHaveLength(first.length);
-    const names = budgetRepo.rows.map((r) => r.name);
-    expect(new Set(names).size).toBe(names.length);
+    expect(result).toEqual([]);
+    expect(budgetRepo.rows).toEqual([]);
+    expect(budgetRepo.save).not.toHaveBeenCalled();
   });
 
-  it("seedDefaultBudgetEntries keeps user entries and skips only existing default templates", async () => {
+  it("seedDefaultBudgetEntries returns the user's own entries unchanged", async () => {
     const budgetRepo = createInMemoryRepository([
       { id: "u1", userId: "user-123", name: "Gym", isDefault: false, amount: 99 },
-      { id: "d1", userId: "user-123", name: "Gas", isDefault: true, amount: 61 },
     ]);
     const controller = budgetController(budgetRepo, createInMemoryRepository());
 
-    await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
+    const result = await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
-    expect(budgetRepo.rows.filter((r) => r.name === "Gas")).toHaveLength(1);
-    expect(budgetRepo.rows.filter((r) => r.name === "Gym")).toHaveLength(2);
-  });
-
-  it("suggested defaults contain no income entry", async () => {
-    const budgetRepo = createInMemoryRepository();
-    const controller = budgetController(budgetRepo, createInMemoryRepository());
-
-    await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
-
-    expect(budgetRepo.rows).toHaveLength(14);
-    expect(budgetRepo.rows.some((r) => r.isIncome || r.isPrimaryIncome)).toBe(false);
-    expect(budgetRepo.rows.some((r) => r.name === "Salary (Take Home)")).toBe(false);
-  });
-
-  it("suggested defaults carry no invented amounts (E23)", async () => {
-    const budgetRepo = createInMemoryRepository();
-    const controller = budgetController(budgetRepo, createInMemoryRepository());
-
-    await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
-
-    expect(budgetRepo.rows.length).toBeGreaterThan(0);
-    expect(budgetRepo.rows.every((r) => Number(r.amount) === 0)).toBe(true);
+    expect(result.map((r) => r.name)).toEqual(["Gym"]);
+    expect(budgetRepo.rows).toHaveLength(1);
   });
 
   it("should add custom category to user profile and validate input", async () => {

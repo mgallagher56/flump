@@ -202,6 +202,149 @@ describe("BudgetEditor", () => {
     );
   });
 
+  it("gives the add row the same fields as a saved row: Essential and sole or joint (item 26)", async () => {
+    const { onAdd } = setup();
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
+    fireEvent.change(screen.getByTestId("budget-editor-new-name-bills"), {
+      target: { value: "Water" },
+    });
+    const essential = screen.getByTestId("budget-editor-new-essential-bills") as HTMLInputElement;
+    expect(essential.checked).toBe(true);
+    fireEvent.click(essential);
+    fireEvent.change(screen.getByTestId("budget-editor-new-bills-ownership"), {
+      target: { value: "joint" },
+    });
+    fireEvent.click(screen.getByTestId("budget-editor-add-bills"));
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "bills",
+          name: "Water",
+          isEssential: false,
+          ownership: "joint",
+          sharePercent: 50,
+        }),
+      ),
+    );
+  });
+
+  it("starts a new savings entry with Essential off, and income with no switch (item 28)", async () => {
+    const { onAdd } = setup();
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-savings"));
+    expect(
+      (screen.getByTestId("budget-editor-new-essential-savings") as HTMLInputElement).checked,
+    ).toBe(false);
+    fireEvent.change(screen.getByTestId("budget-editor-new-name-savings"), {
+      target: { value: "Holiday fund" },
+    });
+    fireEvent.click(screen.getByTestId("budget-editor-add-savings"));
+    await waitFor(() =>
+      expect(onAdd).toHaveBeenCalledWith(
+        expect.objectContaining({ category: "savings", isEssential: false, ownership: "sole" }),
+      ),
+    );
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-income"));
+    expect(screen.queryByTestId("budget-editor-new-essential-income")).toBeNull();
+  });
+
+  it("offers the Essential switch on a saved savings row (item 28)", () => {
+    const { onUpdate } = setup({
+      entries: [
+        ...entries,
+        row({ id: "s-1", name: "ISA", category: "savings", amount: 200, isEssential: false }),
+      ],
+    });
+    const toggle = screen.getByTestId("budget-editor-essential-s-1") as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    fireEvent.click(toggle);
+    expect(onUpdate).toHaveBeenCalledWith("s-1", { isEssential: true });
+  });
+
+  it("deletes with the subtle danger button (item 25)", () => {
+    setup();
+    expect(screen.getByTestId("budget-editor-remove-b-1").className).toContain("danger");
+  });
+
+  it("has a Finished editing button at the foot when the page gives one (item 29)", () => {
+    const onFinishEditing = vi.fn();
+    setup({ onFinishEditing });
+    fireEvent.click(screen.getByRole("button", { name: "Finished editing" }));
+    expect(onFinishEditing).toHaveBeenCalled();
+  });
+
+  describe("linked rows (items 7 and 33b)", () => {
+    const takeHome = row({
+      id: "linked:take-home",
+      name: "Take-home pay",
+      category: "income",
+      amount: 2400,
+      isIncome: true,
+      linked: "take-home",
+    });
+    const rent = row({ id: "linked:housing", name: "Rent", amount: 950, linked: "housing" });
+
+    it("shows the take-home from Profile, and typing over it saves the person's own entry", async () => {
+      const { onAdd } = setup({
+        entries: [row({})],
+        linkedEntries: [takeHome],
+        profileTakeHome: 2400,
+      });
+      expect(screen.getByTestId("budget-editor-source-linked-take-home").textContent).toBe(
+        "From your salary in Profile. A figure you type here is used instead.",
+      );
+      const amount = screen.getByLabelText("Amount for Take-home pay") as HTMLInputElement;
+      expect(amount.value).toBe("2,400");
+      expect(screen.queryByLabelText("Delete Take-home pay")).toBeNull();
+      fireEvent.focus(amount);
+      fireEvent.change(amount, { target: { value: "2500" } });
+      fireEvent.blur(amount);
+      await waitFor(() =>
+        expect(onAdd).toHaveBeenCalledWith(
+          expect.objectContaining({ name: "Take-home pay", amount: 2500, isIncome: true }),
+        ),
+      );
+    });
+
+    it("says when the person's own pay entry is used in place of the profile's", () => {
+      setup({ profileTakeHome: 2400 });
+      expect(screen.getByTestId("budget-editor-source-b-2").textContent).toBe(
+        "Your own figure, used in place of your salary in Profile. Delete it to use your salary.",
+      );
+    });
+
+    it("saves a rent typed on the linked housing row to the housing details", async () => {
+      const onSaveHousing = vi.fn().mockResolvedValue(undefined);
+      const { onAdd, onUpdate } = setup({
+        entries: [row({ id: "old-rent", name: "Rent", amount: 900 })],
+        linkedEntries: [rent],
+        shadowedIds: ["old-rent"],
+        housingStatus: "renting",
+        onSaveHousing,
+      });
+      // The saved row the linked one stands in for is not listed: no duplicate.
+      expect(screen.queryByTestId("budget-editor-row-old-rent")).toBeNull();
+      const amount = screen.getByLabelText("Amount for Rent");
+      fireEvent.focus(amount);
+      fireEvent.change(amount, { target: { value: "1000" } });
+      fireEvent.blur(amount);
+      await waitFor(() => expect(onSaveHousing).toHaveBeenCalledWith(1000));
+      expect(onAdd).not.toHaveBeenCalled();
+      expect(onUpdate).not.toHaveBeenCalled();
+    });
+
+    it("shows a mortgage payment as read only, from the mortgage details", () => {
+      setup({
+        entries: [],
+        linkedEntries: [{ ...rent, name: "Mortgage payment" }],
+        housingStatus: "mortgage",
+      });
+      expect(screen.queryByLabelText("Amount for Mortgage payment")).toBeNull();
+      expect(screen.getByTestId("budget-editor-source-linked-housing").textContent).toBe(
+        "From your mortgage details.",
+      );
+    });
+  });
+
   it("keeps the typed add row when adding fails", async () => {
     const onAdd = vi.fn().mockRejectedValue(new Error("no"));
     setup({ onAdd });
@@ -393,12 +536,10 @@ describe("BudgetEditor", () => {
       setup({ entries: [], drafts: exampleBudgetDrafts(), ...draftHandlers() });
       expect(screen.getAllByText("Common entry")).toHaveLength(8);
       expect(screen.queryByRole("note")).toBeNull();
-      expect(group().textContent).toContain(
-        "These common entries are not saved yet. Fill in the amounts that apply to you, then save. Entries left blank stay here until you remove them or leave the page.",
-      );
-      // Income and savings rows have no essential switch; spending rows do.
+      expect(group().textContent).toContain("Common entries not saved yet");
+      // Income rows have no essential switch; savings rows have one, off (item 28).
       expect(screen.queryByLabelText("Essential: Take-home pay")).toBeNull();
-      expect(screen.queryByLabelText("Essential: Savings")).toBeNull();
+      expect((screen.getByLabelText("Essential: Savings") as HTMLInputElement).checked).toBe(false);
       expect(screen.getByLabelText("Essential: Travel")).toBeDefined();
       expect((screen.getByLabelText("Amount for Energy") as HTMLInputElement).value).toBe("");
     });

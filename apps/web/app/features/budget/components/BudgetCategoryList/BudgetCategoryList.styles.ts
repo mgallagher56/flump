@@ -58,8 +58,8 @@ export const categoryList = sva({
       flexShrink: 0,
     },
     text: { display: "flex", alignItems: "center", gap: "3", minWidth: 0, flex: 1 },
-    // The group name carries more weight than the entries opened under it.
-    name: { display: "flex", flexDirection: "column", minWidth: 0, fontWeight: "semibold" },
+    // The group name reads as a heading, so it carries more weight than the entries under it.
+    name: { display: "flex", flexDirection: "column", minWidth: 0, textStyle: "label.md" },
     meta: { textStyle: "body.sm", color: "text.secondary", fontWeight: "normal" },
   },
 });
@@ -80,20 +80,31 @@ export const chevron = cva({
   variants: { open: { true: { transform: "rotate(180deg)" }, false: {} } },
 });
 
-/** The opened entries, clearly indented and nested under their category. */
+/**
+ * An open category's own row (owner item 33c): a tinted band, so the category reads as the
+ * heading of the entries under it. Semantic tokens, so it follows light and dark.
+ */
+export const openRow = cva({
+  base: { bg: "surface.subtle" },
+});
+
+/**
+ * The opened entries, indented under their category behind a strong left rule, in smaller,
+ * quieter text than the category, so the two never read as the same level.
+ */
 export const entriesPanel = cva({
   base: {
-    mt: "1",
+    mt: "2",
     mb: "3",
-    ml: { base: "3", md: "4" },
-    pl: { base: "4", md: "6" },
-    pr: "6",
-    py: "2",
-    borderLeftWidth: "2px",
+    ml: { base: "4", md: "6" },
+    pl: { base: "3", md: "4" },
+    pr: "2",
+    py: "1",
+    borderLeftWidth: "3px",
     borderLeftStyle: "solid",
-    borderLeftColor: "border.subtle",
-    bg: "surface.subtle",
-    borderRadius: "md",
+    borderLeftColor: "border.strong",
+    textStyle: "body.sm",
+    color: "text.secondary",
   },
 });
 
