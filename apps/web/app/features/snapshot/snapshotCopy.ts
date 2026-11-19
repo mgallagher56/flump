@@ -90,6 +90,8 @@ export const CHECK_IN_COPY = {
   showAll: "Show all",
   done: "Done",
   changeBalance: "Change a balance",
+  /** Every balance has a figure this month, but the check-in was not finished (slice 4, CH-3). */
+  finish: "Finish check-in",
   empty: "Add an account first, then its balance appears here.",
 } as const;
 

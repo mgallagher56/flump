@@ -5,6 +5,8 @@ import { monthKey, seedNow } from "../../support/personas";
 
 test.use({ storageState: AUTH_STATE });
 
+// Named "z2-" so its reset runs last among the link specs, after the persona-based ones.
+
 // L05 (CH-1, decision 8 A): a new account records its balance for the month it was added, so
 // History has the point at once and October does not change when November starts. Before slice 4
 // the account had no row until a check-in or an edit.

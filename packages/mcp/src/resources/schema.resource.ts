@@ -44,7 +44,8 @@ export const SCHEMA_DOCUMENT = {
       onboarding: "Entered while setting up Flump.",
       manual: "Entered or edited by the user.",
       connected: "Read from a connected bank.",
-      backfill: "Filled in from earlier records when history storage was introduced.",
+      backfill:
+        "The balance an account was added with, or a figure filled in from earlier records. Not a monthly check-in answer.",
     },
     changes: "Every change is current minus previous, whether the figure went up or down.",
   },

@@ -165,6 +165,15 @@ describe("CheckInSheet", () => {
       expect(screen.getByTestId("checkin-list")).toBeDefined();
     });
 
+    it("finishes such a month without writing a balance, then shows the summary", async () => {
+      const { onSave } = setup({ accountDetails: allRecorded, checkedIn: false });
+      await userEvent.click(screen.getByRole("button", { name: "Finish check-in" }));
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ month: "2026-11", payload: { values: [], complete: true } }),
+      );
+      await screen.findByRole("heading", { name: "November is checked in." });
+    });
+
     it("asks for each balance when the month holds only the rows accounts were added with", () => {
       // Accounts added this month write a first row with source "backfill": the check-in still
       // asks for every balance, as for a month with no rows.

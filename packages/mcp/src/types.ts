@@ -18,7 +18,10 @@ export interface AccountSnapshotRow {
   /** 1 to 12. */
   month: number;
   value: number;
-  /** How the row got there: `onboarding`, `manual`, `connected`, `backfill` (E30) or `agent` (a committed import). */
+  /**
+   * How the row got there: `onboarding`, `manual`, `connected`, `backfill` (the balance an account
+   * was added with, or filled in from earlier records) or `agent` (a committed import).
+   */
   source: string;
 }
 

@@ -61,6 +61,13 @@ export interface CheckInController {
   openedFinished: boolean;
   /** From the summary back to the steps. */
   reopen: () => void;
+  /** Every step has a figure this month (recorded, or answered in this check-in). */
+  allAnswered: boolean;
+  /**
+   * Finishes the month's check-in when every step already has a figure but the check-in was not
+   * finished: records it as done (`complete`) without writing any balance. Resolves true on success.
+   */
+  finish: () => Promise<boolean>;
   /** True once, after anything was saved since the last call: the caller refreshes saved data. */
   takeDirty: () => boolean;
 }
@@ -260,6 +267,26 @@ export function useCheckIn({
     nextOpen,
     finished,
     openedFinished,
+    allAnswered: steps.length > 0 && steps.every((s) => hasFigure(s, false)),
+    finish: async () => {
+      let ok = false;
+      try {
+        ok = await onSave({
+          month,
+          payload: { values: [], complete: true },
+          saved: 0,
+          skipped: 0,
+          quiet: true,
+        });
+      } catch {
+        ok = false;
+      }
+      if (ok) {
+        dirty.current = true;
+        setFinished(true);
+      }
+      return ok;
+    },
     reopen: () => {
       setFinished(false);
       setOpenedFinished(false);
