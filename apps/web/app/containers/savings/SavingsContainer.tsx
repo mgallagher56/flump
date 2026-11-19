@@ -7,7 +7,6 @@ import {
 } from "@flump/finance-engine";
 import {
   Button,
-  CollapsibleDrawer,
   EmptyState,
   Icon,
   PageBody,
@@ -42,6 +41,7 @@ import {
   type SavingsForecastValues,
 } from "~/features/savings/components/SavingsForecast";
 import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummaryCards";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { emptyWrap, toolPanel } from "./SavingsContainer.styles";
@@ -64,6 +64,7 @@ export const SCENARIO_TITLE = "Model a change to your savings";
 
 export const SavingsContainer: FC = () => {
   const loaderData = useLoaderData<any>();
+  const { formatCurrency } = useFormatCurrency();
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];
   const userProfile = loaderData?.userProfile;
@@ -214,63 +215,65 @@ export const SavingsContainer: FC = () => {
 
           <InvestmentReturns accounts={accounts} accountDetails={accountDetails} />
 
-          {/* Below saved figures, the model starts closed (one pattern for hiding a simulator:
-              CollapsibleDrawer). A pay rise handed over from Take-home pay opens it. */}
-          <CollapsibleDrawer
-            closedLabel="Show savings what-ifs"
+          {/* Below saved figures, the model starts closed and keeps a one-line summary (UX S11).
+              A pay rise handed over from Take-home pay opens it. */}
+          <ScenarioZone
+            announcement={announcement}
+            basis="Starting from your saved accounts."
+            collapsible
             defaultOpen={payRiseMonthly > 0}
-            openLabel="Hide savings what-ifs"
-            subtitle="See how your savings could grow, or how long a target could take."
+            id="savings-scenario"
+            isModified={isModified}
+            showLabel="Show what-if: grow your savings"
+            summary={
+              announcement
+                ? `Your illustration: ${announcement}`
+                : saved.monthly > 0
+                  ? `Starts from your savings of ${formatCurrency(saved.total)} and ${formatCurrency(saved.monthly)} a month going in.`
+                  : `Starts from your savings of ${formatCurrency(saved.total)}.`
+            }
+            notice={<ProjectionNotice />}
             title={SCENARIO_TITLE}
-          >
-            <ScenarioZone
-              announcement={announcement}
-              basis="Starting from your saved accounts."
-              id="savings-scenario"
-              isModified={isModified}
-              notice={<ProjectionNotice />}
-              title={SCENARIO_TITLE}
-              tools={
-                <Tabs
-                  aria-label="Ways to model your savings"
-                  items={[
-                    { value: "forecast", label: "How it could grow" },
-                    { value: "deposit", label: "Time to a target" },
-                  ]}
-                  panelClassName={toolPanel()}
-                  panels={{
-                    forecast: (
-                      <SavingsForecast
-                        payRise={
-                          payRiseMonthly > 0 ? (
-                            <PayRiseScenario
-                              monthlyIncrease={payRiseMonthly}
-                              onRemove={removePayRise}
-                            />
-                          ) : undefined
-                        }
-                        payRiseMonthly={payRiseMonthly}
-                        startingBalance={saved.total}
-                        values={forecast.values}
-                        onChange={(key, value) => forecast.set(key, value)}
-                      />
-                    ),
-                    deposit: (
-                      <DepositTimeline
-                        saved={savedDeposit}
-                        values={deposit.values}
-                        onChange={(key, value) => deposit.set(key, value)}
-                      />
-                    ),
-                  }}
-                  size="sm"
-                  value={tool}
-                  onValueChange={(value) => setTool(value as Tool)}
-                />
-              }
-              onReset={resetScenario}
-            />
-          </CollapsibleDrawer>
+            tools={
+              <Tabs
+                aria-label="Ways to model your savings"
+                items={[
+                  { value: "forecast", label: "How it could grow" },
+                  { value: "deposit", label: "Time to a target" },
+                ]}
+                panelClassName={toolPanel()}
+                panels={{
+                  forecast: (
+                    <SavingsForecast
+                      payRise={
+                        payRiseMonthly > 0 ? (
+                          <PayRiseScenario
+                            monthlyIncrease={payRiseMonthly}
+                            onRemove={removePayRise}
+                          />
+                        ) : undefined
+                      }
+                      payRiseMonthly={payRiseMonthly}
+                      startingBalance={saved.total}
+                      values={forecast.values}
+                      onChange={(key, value) => forecast.set(key, value)}
+                    />
+                  ),
+                  deposit: (
+                    <DepositTimeline
+                      saved={savedDeposit}
+                      values={deposit.values}
+                      onChange={(key, value) => deposit.set(key, value)}
+                    />
+                  ),
+                }}
+                size="sm"
+                value={tool}
+                onValueChange={(value) => setTool(value as Tool)}
+              />
+            }
+            onReset={resetScenario}
+          />
         </>
       ) : (
         <div className={emptyWrap()}>

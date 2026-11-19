@@ -319,7 +319,14 @@ export const DebtContainer: FC = () => {
                 Update your details
               </Button>
             }
+            collapsible
             isModified={scenario.isModified}
+            showLabel="Show what-if: pay more each month"
+            summary={
+              debtHeadline
+                ? `Your illustration: ${formatCurrency(extraPayment)} extra a month, ${debtHeadline}.`
+                : `Starts from your debts of ${formatCurrency(totalDebt)} and minimum payments of ${formatCurrency(totalMin)} a month.`
+            }
             title="Model a change to your debts"
             onReset={scenario.reset}
           >

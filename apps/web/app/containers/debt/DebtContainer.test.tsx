@@ -106,6 +106,10 @@ const firstView = (container: HTMLElement): HTMLElement => {
   return clone;
 };
 
+/** The what-if zone starts closed below the saved figures; open it from its named button. */
+const openZone = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Show what-if: pay more each month" }));
+
 /** Delete lives in the edit dialog: open the row's one Edit control, then "Delete debt". */
 const openDeleteFor = (name: string) => {
   fireEvent.click(screen.getByRole("button", { name: `Edit ${name}` }));
@@ -140,6 +144,8 @@ describe("DebtContainer", () => {
 
   it("meets the page rules with debts: one hero, one primary button, one notice, at most 10 first-view figures", () => {
     const { container } = render(<DebtContainer />);
+    expectPageRules(container, { maxNotSet: 0, projectionNotices: 0 });
+    openZone();
     expectPageRules(container, { maxNotSet: 0, projectionNotices: 1 });
     expectPageRules(firstView(container), { maxFigures: 10, maxNotSet: 0 });
     expect(container.querySelectorAll("[data-list-row]")).toHaveLength(2);
@@ -170,6 +176,7 @@ describe("DebtContainer", () => {
 
   it("shows the saved total as the hero and the debt-free date as the first KPI, an estimate", () => {
     render(<DebtContainer />);
+    openZone();
     const hero = document.querySelector("[data-tone='hero']");
     expect(hero?.textContent).toContain("Total you owe");
     expect(hero?.textContent).toContain("£7,500");
@@ -190,6 +197,7 @@ describe("DebtContainer", () => {
       ],
       () => {
         const { container } = render(<DebtContainer />);
+        openZone();
         expectPageRules(container, { maxNotSet: 1 });
         expect(screen.queryByText("Not set")).toBeNull();
         expect(
@@ -256,6 +264,7 @@ describe("DebtContainer", () => {
 
   it("passes what the budget leaves over, not a hard-coded fallback", () => {
     render(<DebtContainer />);
+    openZone();
     expect(screen.getByRole("button", { name: "Use the £420 left over" })).toBeDefined();
     const notice = document.querySelector("[data-notice='projection']");
     expect(notice?.textContent).not.toContain("We do not know what you have left over");
@@ -269,6 +278,7 @@ describe("DebtContainer", () => {
     };
     try {
       render(<DebtContainer />);
+      openZone();
       const prompt = screen.getByText(
         "Set up your budget to see what you have left over each month",
       );
@@ -387,7 +397,11 @@ describe("DebtContainer", () => {
     remove.focus();
     fireEvent.click(remove);
     const cancel = within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancel" });
-    await waitFor(() => expect(document.activeElement).toBe(cancel));
+    // Initial focus is on the confirm button; Cancel is one Tab away.
+    const confirm = within(screen.getByRole("alertdialog")).getByRole("button", {
+      name: "Delete debt",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(confirm));
     cancel.focus();
     fireEvent.click(cancel);
     await waitFor(() =>
@@ -497,6 +511,7 @@ describe("DebtContainer live region", () => {
     render(<DebtContainer />);
     const region = screen.getByRole("status");
     expect(region.textContent).toBe("");
+    openZone();
 
     fireEvent.change(screen.getAllByRole("slider")[0], { target: { value: "300" } });
     act(() => {
@@ -515,6 +530,7 @@ describe("DebtContainer live region", () => {
     ];
     render(<DebtContainer />);
     const region = screen.getByRole("status");
+    openZone();
     fireEvent.change(screen.getAllByRole("slider")[0], { target: { value: "300" } });
     act(() => {
       vi.advanceTimersByTime(2000);
@@ -531,8 +547,20 @@ describe("DebtContainer scenario zone", () => {
 
   const savedText = (container: HTMLElement) => firstView(container).textContent;
 
+  it("starts closed with a one-line summary, and opens from its named button", () => {
+    render(<DebtContainer />);
+    const toggle = screen.getByRole("button", { name: "Show what-if: pay more each month" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByText(/^Starts from your debts of/)).toBeDefined();
+    expect(screen.queryByRole("slider")).toBeNull();
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByRole("slider")).toHaveLength(1);
+  });
+
   it("has one tool: one slider, one payoff-order Tabs, starting at £0, with no repeated saved figures", () => {
     render(<DebtContainer />);
+    openZone();
     const zone = screen.getByRole("region", { name: "Model a change to your debts" });
     expect(zone.textContent).toContain("Illustration, not saved");
     expect(zone.textContent).not.toContain("Starting from your figures");
@@ -545,6 +573,7 @@ describe("DebtContainer scenario zone", () => {
 
   it("'Update your details' moves focus to the saved debts list", () => {
     render(<DebtContainer />);
+    openZone();
     fireEvent.click(screen.getByRole("button", { name: "Update your details" }));
     expect(document.activeElement).toBe(
       screen.getByRole("heading", { name: "Your debts", level: 2 }),
@@ -555,6 +584,7 @@ describe("DebtContainer scenario zone", () => {
   it("changing the extra payment or order leaves the hero and KPI strip unchanged and makes no request", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const { container } = render(<DebtContainer />);
+    openZone();
     const before = savedText(container);
     expect(before).toContain("Total you owe");
     expect(before).toContain("Debt-free date");
@@ -574,6 +604,7 @@ describe("DebtContainer scenario zone", () => {
 
   it("offers Reset to saved figures once modified and restores £0", () => {
     render(<DebtContainer />);
+    openZone();
     const slider = () =>
       screen.getByRole("slider", { name: /Extra payment each month/i }) as HTMLInputElement;
     fireEvent.change(slider(), { target: { value: "300" } });
@@ -584,6 +615,7 @@ describe("DebtContainer scenario zone", () => {
 
   it("keeps fact inputs out of the zone: balances and APRs are edited in Your debts only", () => {
     render(<DebtContainer />);
+    openZone();
     const zone = screen.getByRole("region", { name: "Model a change to your debts" });
     expect(within(zone).queryByRole("textbox", { name: /APR|balance|minimum/i })).toBeNull();
     expect(zone.textContent).not.toMatch(/sandbox|apply to my/i);
