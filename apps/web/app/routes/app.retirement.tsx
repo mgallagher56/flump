@@ -9,7 +9,10 @@ import {
   useLoaderData,
 } from "react-router";
 import { RetirementPlanner } from "~/features/retirement/components/RetirementPlanner";
-import { retirementArgsFromLoader } from "~/features/retirement/retirementInput";
+import {
+  retirementArgsFromLoader,
+  workplaceSalaryNotSetFromLoader,
+} from "~/features/retirement/retirementInput";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
@@ -118,6 +121,7 @@ export default function RetirementRoute(): ReactElement {
       etag={loaderData.etag}
       isSaving={fetcher.state !== "idle"}
       onSavePlan={handleSavePlan}
+      workplaceSalaryNotSet={workplaceSalaryNotSetFromLoader(loaderData.userProfile)}
     />
   );
 }

@@ -200,11 +200,24 @@ export const projectNetWorth = defineFlumpTool({
     }
 
     // Without a saved salary the pounds are not known, so no contribution is added to the
-    // projection and no assumption is reported (never an invented amount).
-    const monthlyPension =
-      contributionMonthlyFromPercent(base?.pensionContributionPct, {
-        annualSalary: base?.annualGrossSalary,
-      }) ?? 0;
+    // projection (never an invented amount). When a rate above 0% is saved, the agent is told the
+    // contribution is left out and asked for the salary (system audit leftovers, item 1).
+    const pensionFromSalary = contributionMonthlyFromPercent(base?.pensionContributionPct, {
+      annualSalary: base?.annualGrossSalary,
+    });
+    const notSet = base?.notSet ?? [];
+    const rateSaved =
+      !notSet.includes("pensionContributionPct") && (base?.pensionContributionPct ?? 0) > 0;
+    const hasScheme =
+      base?.employmentStatus !== "SELF_EMPLOYED" && base?.employmentStatus !== "OTHER";
+    if (pensionFromSalary === null && rateSaved && hasScheme) {
+      missing.push({
+        field: "annualSalary",
+        why: "A pension contribution rate is saved but no salary, so the pension contribution is not included.",
+        askUser: "What is your yearly salary before tax?",
+      });
+    }
+    const monthlyPension = pensionFromSalary ?? 0;
     if (monthlyPension > 0) {
       assumptions.push(
         fromProfile(

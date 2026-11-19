@@ -176,3 +176,25 @@ export const WorkplacePensionRatesNotSet: Story = {
     await expect(canvas.queryByText("Edited. Not saved.")).toBeNull();
   },
 };
+
+/** A rate saved with no salary: the drawer says the contributions are not included (leftovers 1). */
+export const WorkplaceSalaryNotSet: Story = {
+  args: {
+    ...baseArgs,
+    planArgs: { ...planArgs, workplacePension: null },
+    workplaceSalaryNotSet: true,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Show what-if: change your plan" }));
+    await userEvent.click(
+      canvas.getByRole("button", { name: /Assumptions, pots and year by year/ }),
+    );
+    await expect(
+      canvas.getByText(/your salary is not set, so your contributions are not included/),
+    ).toBeInTheDocument();
+    await expect(
+      canvas.getByRole("link", { name: "Add your salary on the Pension page" }),
+    ).toBeInTheDocument();
+  },
+};

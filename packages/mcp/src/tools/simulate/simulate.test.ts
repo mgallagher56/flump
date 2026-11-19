@@ -387,6 +387,39 @@ describe("simulate tools v2", () => {
   });
 
   describe("project_net_worth", () => {
+    it("asks for the salary when a pension rate is saved without one, and adds no contribution", async () => {
+      // 5% saved, no salary: the pounds cannot be worked out, so none is added and the agent is
+      // told why (system audit leftovers, item 1), never a silent £0.
+      h = await connectTestClient({
+        ...emptyUser,
+        baseline: { ...emptyUser.baseline, pensionContributionPct: 5, annualGrossSalary: 0 },
+      });
+      const e = await call("project_net_worth", { expectedReturnPct: 5, monthlySavingGbp: 0 });
+      const ask = e.missing.find((m: { field: string }) => m.field === "annualSalary");
+      expect(ask?.why).toMatch(/pension contribution is not included/);
+      expect(
+        e.assumptions.some((a: { field: string }) => a.field === "monthlyPensionContributionGbp"),
+      ).toBe(false);
+    });
+
+    it("does not ask for the salary when one is saved, or when the rate is 0%", async () => {
+      h = await connectTestClient({
+        ...emptyUser,
+        baseline: { ...emptyUser.baseline, pensionContributionPct: 5, annualGrossSalary: 30000 },
+      });
+      const withSalary = await call("project_net_worth", {
+        expectedReturnPct: 5,
+        monthlySavingGbp: 0,
+      });
+      expect(withSalary.missing.some((m: { field: string }) => m.field === "annualSalary")).toBe(
+        false,
+      );
+      await h.close();
+      h = await connectTestClient(emptyUser);
+      const noRate = await call("project_net_worth", { expectedReturnPct: 5, monthlySavingGbp: 0 });
+      expect(noRate.missing.some((m: { field: string }) => m.field === "annualSalary")).toBe(false);
+    });
+
     it("starts from account balances and applies explicit event costs", async () => {
       h = await connectTestClient(homeowner);
       const none = await call("project_net_worth", { expectedReturnPct: 5, monthlySavingGbp: 500 });

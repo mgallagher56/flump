@@ -7,6 +7,7 @@ import {
   UK_QUALIFYING_EARNINGS_LOWER,
   UK_QUALIFYING_EARNINGS_UPPER,
   workplacePensionFromProfile,
+  workplaceSalaryNotSet,
 } from "./workplace-pension.js";
 
 const base = {
@@ -204,5 +205,36 @@ describe("contributionPercentFromMonthly", () => {
     expect(
       contributionPercentFromMonthly(100, { annualSalary: 6_000, useQualifyingEarnings: true }),
     ).toBeNull();
+  });
+});
+
+describe("workplaceSalaryNotSet", () => {
+  // A saved pension rate with no salary: the pounds cannot be worked out, so the contribution is
+  // left out of projections. Pages and tools say so instead of using a silent £0 (leftovers 1).
+  it("is true when a rate is saved and no salary is", () => {
+    expect(workplaceSalaryNotSet({ pensionPercent: 5, annualSalary: null })).toBe(true);
+    expect(workplaceSalaryNotSet({ pensionEmployerPercent: 3, annualSalary: 0 })).toBe(true);
+    // Your 0% with your employer's 3%: the employer's contribution is the one left out.
+    expect(
+      workplaceSalaryNotSet({
+        pensionPercent: 0,
+        pensionEmployerPercent: 3,
+        employmentType: "employed",
+      }),
+    ).toBe(true);
+  });
+
+  it("is false with a salary, with no rate saved, or with no workplace scheme", () => {
+    expect(workplaceSalaryNotSet({ pensionPercent: 5, annualSalary: 30000 })).toBe(false);
+    expect(workplaceSalaryNotSet({ pensionPercent: null, pensionEmployerPercent: null })).toBe(
+      false,
+    );
+    expect(workplaceSalaryNotSet({})).toBe(false);
+    // Saved rates of 0% contribute nothing with or without a salary, so nothing is left out.
+    expect(workplaceSalaryNotSet({ pensionPercent: 0, pensionEmployerPercent: 0 })).toBe(false);
+    expect(workplaceSalaryNotSet(null)).toBe(false);
+    for (const employmentType of ["self-employed", "other"] as const) {
+      expect(workplaceSalaryNotSet({ pensionPercent: 5, employmentType })).toBe(false);
+    }
   });
 });
