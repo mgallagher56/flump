@@ -45,7 +45,7 @@ export const TAKE_HOME_RULES_TAX_YEAR = "2026/27";
  * engine change that drops this year's table must not stop the backend starting. Null when the
  * table is gone; up() then skips and logs.
  */
-export function takeHomePairAmbiguousUpTo(): number | null {
+function takeHomePairAmbiguousUpTo(): number | null {
   return UK_EWNI_INCOME_TAX[TAKE_HOME_RULES_TAX_YEAR]?.personalAllowance ?? null;
 }
 
