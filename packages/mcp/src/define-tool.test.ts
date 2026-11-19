@@ -475,3 +475,119 @@ describe("defineFlumpTool scopes and hooks", () => {
     expect(res.isError).toBeFalsy();
   });
 });
+
+describe("defineFlumpTool error and audit details", () => {
+  it("refuses to register on an SDK without validateToolInput, instead of silently not auditing", () => {
+    const server = new McpServer({ name: "t", version: "0" });
+    (server as unknown as { validateToolInput?: unknown }).validateToolInput = undefined;
+    expect(() =>
+      defineFlumpTool(def()).register(server, async () => {
+        throw new Error("unused");
+      }),
+    ).toThrow(/validateToolInput/);
+  });
+
+  it("gives a denied call a hint and marks it not retryable", async () => {
+    const { call } = await connect(def(), { scopes: ["mcp:simulate"] });
+    const body = JSON.parse(text(await call({ n: 0 }))).error;
+    expect(body.code).toBe("INSUFFICIENT_SCOPE");
+    expect(body.hint.length).toBeGreaterThan(0);
+    expect(body.retryable).toBe(false);
+  });
+
+  it("run() reports the schema's own message, a hint and a dotted path for a nested field", async () => {
+    const nested = def({ input: { o: z.object({ k: z.number().min(0) }) } as never });
+    const server = new McpServer({ name: "t", version: "0" });
+    const ctx: McpServerContext = {
+      token: {
+        userId: "u",
+        scopes: ["mcp:read:anonymized"] as never,
+        anonymizeInstitutions: true,
+        type: "pat",
+      },
+      dataProvider: createFakeProvider(emptyUser),
+    };
+    const registered = defineFlumpTool(nested).register(server, async () => ctx);
+    const handler = (
+      registered as unknown as {
+        handler: (a: unknown) => Promise<{ content: Array<{ text: string }> }>;
+      }
+    ).handler;
+    const body = JSON.parse((await handler({ o: { k: -1 } })).content[0]?.text ?? "").error;
+    // The path from the input root to the bad value is o then k, joined with a dot.
+    expect(body.field).toBe("o.k");
+    // zod's own message for min(0), as the SDK path shows it too.
+    expect(body.message).toMatch(/expected number to be >=0/);
+    expect(body.hint.length).toBeGreaterThan(0);
+  });
+
+  it("says the result is too large, not the metadata, when only the result cannot be shortened", async () => {
+    const { call } = await connect(
+      def({
+        result: z.object({ items: z.array(z.string()), text: z.string() }) as never,
+        maxTokens: 100,
+        handler: () => ({ result: { items: [], text: "x".repeat(2000) } as never }),
+      }),
+    );
+    const body = JSON.parse(text(await call({ n: 0 }))).error;
+    expect(body.code).toBe("INVALID_ARGUMENT");
+    expect(body.message).toMatch(/too large/);
+    expect(body.message).not.toMatch(/assumptions, missing-data and notice/);
+    expect(body.hint.length).toBeGreaterThan(0);
+    expect(body.retryable).toBe(false);
+  });
+
+  it("puts the args fingerprint on the audit row of an ok call", async () => {
+    const events: McpAuditEvent[] = [];
+    const { call } = await connect(def(), {
+      ctx: { audit: (e) => void events.push(e), fingerprintArgs: () => "fp-1" },
+    });
+    await call({ n: 1 });
+    expect(events).toHaveLength(1);
+    expect(events[0]?.argsFingerprint).toBe("fp-1");
+  });
+
+  it("counts the bytes of the error text on the audit row of a failed call", async () => {
+    const events: McpAuditEvent[] = [];
+    const { call } = await connect(
+      def({
+        handler: () => {
+          throw new FlumpToolError("NOT_FOUND", "m");
+        },
+      }),
+      { ctx: { audit: (e) => void events.push(e) } },
+    );
+    const res = await call({ n: 0 });
+    expect(events[0]?.responseBytes).toBe(Buffer.byteLength(text(res), "utf8"));
+  });
+
+  it("measures duration from the start of the call, not from the epoch", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    try {
+      const events: McpAuditEvent[] = [];
+      const { call } = await connect(def(), { ctx: { audit: (e) => void events.push(e) } });
+      await call({ n: 1 });
+      await call({ n: -1 });
+      await vi.waitFor(() => expect(events).toHaveLength(2));
+      // The clock never moves, so both the ok call and the SDK schema rejection took 0 ms.
+      expect(events.map((e) => e.durationMs)).toEqual([0, 0]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("names the correlation id in the log line, so the owner can find it", async () => {
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const { call } = await connect(
+      def({
+        handler: () => {
+          throw new Error("boom");
+        },
+      }),
+      { ctx: { logger } },
+    );
+    const body = JSON.parse(text(await call({ n: 0 }))).error;
+    expect(String(logger.error.mock.calls[0]?.[0])).toContain(body.correlationId);
+  });
+});
