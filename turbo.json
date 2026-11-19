@@ -30,7 +30,7 @@
       "dependsOn": ["^build", "^check-types", "generate", "^generate"]
     },
     "test": {
-      "dependsOn": ["^build", "^test", "generate", "^generate"],
+      "dependsOn": ["^build", "generate", "^generate"],
       "env": ["TEST_DATABASE_URL", "REQUIRE_DB_TESTS"],
       "outputs": ["coverage/**", "sonar-report.xml"]
     },
@@ -38,6 +38,11 @@
       "dependsOn": ["^build", "generate", "^generate"],
       "env": ["TEST_DATABASE_URL", "REQUIRE_DB_TESTS"],
       "outputs": ["coverage/**", "sonar-report.xml"]
+    },
+    "test:coverage:shard": {
+      "dependsOn": ["^build", "generate", "^generate"],
+      "env": ["TEST_DATABASE_URL", "REQUIRE_DB_TESTS"],
+      "outputs": [".vitest/blob/**"]
     },
     "test:storybook": {
       "dependsOn": ["^build", "generate", "^generate"],

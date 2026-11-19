@@ -86,6 +86,8 @@
     "lint": "biome check .",
     "test": "vitest run --project unit",
     "test:coverage": "vitest run --project unit --coverage",
+    "test:coverage:shard": "vitest run --project unit --coverage --coverage.thresholds.statements=0 --coverage.thresholds.branches=0 --coverage.thresholds.functions=0 --coverage.thresholds.lines=0 --reporter=blob",
+    "test:coverage:merge": "vitest run --project unit --merge-reports --coverage",
     "test:server": "REQUIRE_WEB_BUILD=1 vitest run --project unit server/server.integration.test.ts",
     "typecheck": "react-router typegen && tsc",
     "check-types": "bun run typecheck",

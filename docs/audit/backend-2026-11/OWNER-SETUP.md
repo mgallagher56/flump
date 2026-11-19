@@ -136,7 +136,7 @@ The jobs run in parallel, so a PR still finishes in about 3 minutes. Remove the 
 
 Not required, on purpose:
 
-- `⚡ Vitest web` and `⚡ Vitest backend and packages`: covered by `⚡ Vitest Tests`. Requiring the aggregate keeps the gate stable if the shards change.
+- `⚡ Vitest web 1/2`, `⚡ Vitest web 2/2`, `⚡ Vitest web coverage` and `⚡ Vitest backend and packages`: covered by `⚡ Vitest Tests`. The Storybook halves (`♿ Storybook light 1/2` and so on) are covered by `♿ Storybook a11y (light)` and `(dark)`. Requiring the aggregates keeps the gate stable if the shards change.
 - `🖼️ Visual regression`: still bedding in (`continue-on-error`; see `apps/e2e/README.md`, "Making it required").
 - `🕷️ DAST (ZAP baseline, passive)`: scheduled only.
 - `🏋️ Backend load smoke`: weekly, on demand and on pull requests that change the load smoke (BE-17). Shared runners are too noisy for it to block a merge.
