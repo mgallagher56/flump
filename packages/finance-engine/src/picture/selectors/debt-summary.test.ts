@@ -92,3 +92,33 @@ describe("selectDebtSummary", () => {
     expect(s?.totalInterest).toBeNull();
   });
 });
+
+describe("selectDebtSummary: edges", () => {
+  it("is null when the only debt account has a £0 balance", () => {
+    expect(
+      selectDebtSummary(
+        snap([{ id: "c", name: "Card", type: "Credit Card", balance: 0, interestRate: 20 }]),
+        AS_OF,
+      ),
+    ).toBeNull();
+  });
+
+  it("dates the schedule from the asOf date it is given", () => {
+    // As the first test: £100 at 12% with a £150 minimum clears in month 1. From 15 March 2031,
+    // month 1 is April 2031.
+    const s = selectDebtSummary(
+      snap([
+        {
+          id: "c",
+          name: "Card",
+          type: "Credit Card",
+          balance: -100,
+          interestRate: 12,
+          monthlyContribution: 150,
+        },
+      ]),
+      new Date("2031-03-15T12:00:00Z"),
+    );
+    expect(s?.debtFreeDate).toBe("April 2031");
+  });
+});

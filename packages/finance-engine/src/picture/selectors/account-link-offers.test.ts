@@ -182,3 +182,133 @@ describe("findBudgetAccountLinkOffers (audit slice 5)", () => {
     expect(offersFor([row("My savings", 100, { category: "savings" })], isa)).toHaveLength(1);
   });
 });
+
+describe("findBudgetAccountLinkOffers: names, categories and skipped rows", () => {
+  it.each([
+    "payments",
+    "repayment",
+    "repayments",
+    "minimum",
+    "min",
+    "monthly",
+    "bill",
+    "direct",
+    "debit",
+    "dd",
+    "my",
+    "the",
+    "for",
+    "to",
+    "into",
+    "saving",
+    "savings",
+  ])("reads '%s' as a payment word beside the debt's name in a bills row", (word) => {
+    // "Car loan <word>": the account's name plus one payment word, at the loan's £180.
+    const copy = row(`Car loan ${word}`, 180);
+    expect(offersFor([copy], [account("Car loan", "Loan", 180)]).map((o) => o.rowId)).toEqual([
+      copy.id,
+    ]);
+  });
+
+  it.each(["the", "into", "to", "for"])(
+    "reads '%s' as a plain savings word, so '%s savings' is offered for any savings account",
+    (word) => {
+      const plain = row(`${word} savings`, 100, { category: "savings" });
+      expect(offersFor([plain], [account("Cash ISA", "Saving", 100)]).map((o) => o.rowId)).toEqual([
+        plain.id,
+      ]);
+    },
+  );
+
+  it("does not offer a savings row that mixes a plain word with another pot's name", () => {
+    // "Holiday savings": "savings" is plain but "holiday" is not, and it does not name the ISA.
+    expect(
+      offersFor(
+        [row("Holiday savings", 100, { category: "savings" })],
+        [account("Cash ISA", "Saving", 100)],
+      ),
+    ).toEqual([]);
+  });
+
+  it("does not offer a bills row whose name shares only the first word of a two-word debt", () => {
+    // "Car insurance" against "Car loan": "loan" is missing, so the row does not name the account.
+    expect(offersFor([row("Car insurance", 180)], [account("Car loan", "Loan", 180)])).toEqual([]);
+  });
+
+  it("never matches an account whose name has no letters or digits", () => {
+    // The account "--" has no words, so no row names it: not "--" itself, not a bare "Payment".
+    const debt = [account("Loan", "Loan", 180, { name: "--" })];
+    expect(offersFor([row("--", 180)], debt)).toEqual([]);
+    expect(offersFor([row("Payment", 180)], debt)).toEqual([]);
+  });
+
+  it("offers a savings account only to a row in the savings category", () => {
+    // Same plain name and amount as the first test, but the row sits under bills.
+    expect(offersFor([row("Savings", 250)], [account("ISA", "Saving", 250)])).toEqual([]);
+  });
+
+  it("does not offer a debt for a savings-category row, even one that names it", () => {
+    expect(
+      offersFor(
+        [row("Car loan", 180, { category: "savings" })],
+        [account("Car loan", "Loan", 180)],
+      ),
+    ).toEqual([]);
+  });
+
+  it("never offers a pension contribution row, even a bills row that names the pension", () => {
+    // A pension is neither a savings nor a debt link, so it is never a candidate.
+    expect(offersFor([row("Pension", 200)], [account("Pension", "Pension", 200)])).toEqual([]);
+  });
+
+  it("with two equal debts, offers the one a debt row names", () => {
+    const repay = row("Car loan", 180, { category: "debt" });
+    const debts = [account("Car loan", "Loan", 180), account("Card", "Credit Card", 180)];
+    expect(offersFor([repay], debts).map((o) => o.accountId)).toEqual(["Car loan"]);
+    // A debt row that names neither has no single winner.
+    expect(offersFor([row("Debts", 180, { category: "debt" })], debts)).toEqual([]);
+  });
+
+  it("does not offer an account linked to a line to another row that would match it", () => {
+    const linked = row("Linked ISA", 250, {
+      category: "savings",
+      linkKind: "savings",
+      linkAccountId: "ISA",
+    });
+    // "Savings" at £250 would match the ISA if it were free.
+    expect(
+      offersFor(
+        [linked, row("Savings", 250, { category: "savings" })],
+        [account("ISA", "Saving", 250)],
+      ),
+    ).toEqual([]);
+  });
+
+  it("skips an income row, a linked row and a row with a link kind, each on its own", () => {
+    // Each row is a debt row at the loan's £180, so it would be offered but for its flag.
+    const loan = [account("Loan", "Loan", 180)];
+    expect(offersFor([row("Refund", 180, { category: "debt", isIncome: true })], loan)).toEqual([]);
+    expect(offersFor([row("Rent", 180, { category: "debt", linked: "housing" })], loan)).toEqual(
+      [],
+    );
+    expect(offersFor([row("Loan", 180, { category: "debt", linkKind: "debt" })], loan)).toEqual([]);
+  });
+
+  it("once an earlier row takes an account, a later row cannot", () => {
+    // Two debt rows at £180 and one loan: only the first is offered, the second finds no candidate.
+    const first = row("Loan", 180, { category: "debt" });
+    const second = row("Loan again", 180, { category: "debt" });
+    expect(offersFor([first, second], [account("Loan", "Loan", 180)]).map((o) => o.rowId)).toEqual([
+      first.id,
+    ]);
+  });
+
+  it("offers neither of two equal debts that the row names equally", () => {
+    // Two loans both called "Loan" at £180: the row names both, so there is no single winner.
+    const twins = [
+      account("Loan A", "Loan", 180, { name: "Loan" }),
+      account("Loan B", "Loan", 180, { name: "Loan" }),
+    ];
+    expect(offersFor([row("Loan", 180, { category: "debt" })], twins)).toEqual([]);
+  });
+});

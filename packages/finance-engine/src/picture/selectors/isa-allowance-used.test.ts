@@ -72,3 +72,16 @@ describe("estimateIsaUsed and selectIsaAllowanceUsed", () => {
     expect(isaAllowanceFor(today)).toBe(20000);
   });
 });
+
+describe("ISA allowance edges", () => {
+  it("leaves out a Junior ISA written with more than one space", () => {
+    expect(isAdultIsaAccount("Junior  ISA")).toBe(false);
+  });
+
+  it("starts a new month on the 6th, not the 7th", () => {
+    // 5 November: months starting 6 April to 6 October have begun, so 7.
+    expect(monthsIntoTaxYear(new Date(2026, 10, 5))).toBe(7);
+    // 6 November: the 8th month starts that day.
+    expect(monthsIntoTaxYear(new Date(2026, 10, 6))).toBe(8);
+  });
+});

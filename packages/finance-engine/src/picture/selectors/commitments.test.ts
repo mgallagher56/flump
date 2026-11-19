@@ -80,6 +80,13 @@ describe("essentialCommitments", () => {
     expect(c.minimumsEstimated).toBe(true);
     expect(c.accountMinimums).toBeGreaterThan(0);
   });
+
+  it("does not mark a stored minimum as estimated", () => {
+    // The card stores a £150 payment, so its minimum is that figure, not an estimate.
+    const c = essentialCommitments([], card(150));
+    expect(c.minimumsEstimated).toBe(false);
+    expect(c.accountMinimums).toBe(150);
+  });
 });
 
 describe("essentialCommitments: essential savings rows (owner item 28)", () => {

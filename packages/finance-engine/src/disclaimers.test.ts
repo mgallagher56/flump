@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { BETA_NOTICE, MCP_NOTICE, PROJECTION_NOTICE, REGULATORY_STATUS } from "./disclaimers.js";
+import {
+  BETA_NOTICE,
+  INVESTMENT_RISK_NOTICE,
+  MCP_NOTICE,
+  PROJECTION_NOTICE,
+  REGULATORY_STATUS,
+} from "./disclaimers.js";
 
 describe("canonical disclaimers", () => {
   it("BETA_NOTICE says guidance, not advice, and unreviewed", () => {
@@ -15,6 +21,11 @@ describe("canonical disclaimers", () => {
 
   it("PROJECTION_NOTICE frames projections as guidance, not advice", () => {
     expect(PROJECTION_NOTICE).toMatch(/^Guidance, not advice\./);
+  });
+
+  it("INVESTMENT_RISK_NOTICE keeps its fixed wording", () => {
+    // Fixed wording (copy guide 7.3): never reworded without the owner.
+    expect(INVESTMENT_RISK_NOTICE).toBe("Investment returns can go down as well as up.");
   });
 
   it("keeps FCA wording out of the canonical strings (claims guard bans it)", () => {
