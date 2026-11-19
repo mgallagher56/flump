@@ -1814,38 +1814,39 @@ facts:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
       - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
     links: [L47, L48, L49, L50]
-    verdict: duplicated
+    verdict: holds
     findings: [SA-4, SA-6, SA-7, SA-9, DB-16]
-    note: "A record can point at the account it describes (tax_records.account_id, slice 7): a rental Property or its mortgage for a rental record, a savings or investment account for a savings record. The link is optional, and buy-to-let interest and savings interest are still typed here until a figure is offered from the linked account."
+    note: "A record can point at the account it describes (tax_records.account_id, slice 7): a rental Property or its mortgage for a rental record, a savings or investment account for a savings record. The Self Assessment page offers a calculated mortgage interest and savings interest figure from the linked account for the user to add as a record (decision 5), so the figure is not typed twice. Only listed categories can be written (PR 815)."
 
   - id: rental-share-for-tax
     name: Share of a rental property, as used for tax
     area: tax
     source_of_truth:
       {
-        ref: user_profiles.property_ownership_share,
-        path: apps/backend/src/entities/user-profile.entity.ts,
-        note: "default 100; one value for every property",
+        ref: "accounts.share_percent on the rental Property and its buy-to-let mortgage",
+        path: apps/backend/src/entities/account.entity.ts,
+        note: "per property (owner decision 6, slice 7); sole is 100; a record linked to the mortgage uses the mortgage's share (decision 14)",
       }
     other_stores:
       - {
-          ref: "accounts.share_percent on the rental Property",
-          status: duplicate,
-          path: apps/backend/src/entities/account.entity.ts,
-          note: "net worth uses this one",
+          ref: user_profiles.property_ownership_share,
+          status: legacy,
+          path: apps/backend/src/entities/user-profile.entity.ts,
+          note: "no longer read or written for tax since slice 7; RentalShareOntoPropertyAccounts1795540100000 copied a value below 100 onto sole rental Property accounts; slice 9 drops the column",
         }
     writers:
-      - { surface: self-assessment, path: apps/web/app/features/tax/taxActions.server.ts }
+      - { surface: accounts, path: apps/web/app/features/accounts/accountFormBody.ts }
     readers:
-      - { surface: self-assessment, path: apps/web/app/utils/profileFirst.ts }
+      - { surface: self-assessment, path: apps/web/app/containers/tax/TaxContainer.tsx }
       - {
           surface: picture,
           path: packages/finance-engine/src/picture/selectors/estimated-tax-due.ts,
         }
       - { surface: mcp-read, path: packages/mcp/src/tools/read/getTaxYearPosition.ts }
+      - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L23]
-    verdict: duplicated
-    findings: [SA-5, JO-7, DB-8]
+    verdict: holds
+    note: rentalSharesFromAccounts in packages/finance-engine/src/tax-calculator.ts reads each rental property's and buy-to-let mortgage's share. A rental record with no linked account uses the rental properties' share when there is one, or counts in full and the page says so.
 
   # ---------- retirement ----------
   - id: retirement-plan
@@ -2453,9 +2454,9 @@ figures:
           note: "tax on rental income, entered figures only",
         }
     links: [L29, L48, L69]
-    verdict: broken
+    verdict: holds
     findings: [SA-3, SA-9]
-    note: One calculator. The callers pass the salary through payeSalaryForTax. The calculation still uses England, Wales and Northern Ireland bands for a Scottish region, and the page says so.
+    note: One calculator. Every caller goes through estimateInputsFor and calculateEstimatedTax, which pass the salary through payeSalaryForTax, the tax region (Scottish rates on non-savings income since slice 7) and each rental property's share from its account. The headline strip and the Dashboard's untaxed income both read incomeOutsidePaye.
 
   - id: finance-costs-carried-forward
     name: Mortgage interest carried forward to next year

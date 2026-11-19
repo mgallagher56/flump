@@ -3542,6 +3542,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       expect(await typeOf(copied)).toBe("interest-only");
       expect(await tables()).toEqual(ENTITY_TABLES);
+    });
+  });
+
   describe("TaxRecordAccountLink1795540000000 (audit slice 7)", () => {
     const NAME = "TaxRecordAccountLink1795540000000";
     const column = (): Promise<unknown[]> =>

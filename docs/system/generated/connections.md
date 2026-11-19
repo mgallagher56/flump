@@ -472,6 +472,7 @@ flowchart LR
 ```mermaid
 flowchart LR
   s_dashboard["Dashboard"]
+  s_accounts["Accounts"]
   s_self_assessment["Self Assessment"]
   s_picture["Engine picture (headline figures)"]
   s_mcp_read["AI read tools"]
@@ -487,10 +488,11 @@ flowchart LR
   f_tax_records -.-> s_context_pack
   f_tax_records -.-> s_export
   f_rental_share_for_tax(["Share of a rental property, as used for tax"])
-  s_self_assessment --> f_rental_share_for_tax
+  s_accounts --> f_rental_share_for_tax
   f_rental_share_for_tax -.-> s_self_assessment
   f_rental_share_for_tax -.-> s_picture
   f_rental_share_for_tax -.-> s_mcp_read
+  f_rental_share_for_tax -.-> s_context_pack
   g_estimated_tax{{"Estimated Self Assessment tax"}}
   f_tax_records ==> g_estimated_tax
   f_salary(["Salary (yearly pay before tax)"])
