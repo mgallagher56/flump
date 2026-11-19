@@ -6,6 +6,10 @@ import type { TaxRecord } from "../tax-calculator.js";
 import type { UkTaxYear } from "../types.js";
 import type { Figure } from "./figure.js";
 import { type FinancialPictureInput, profileFactsFromProfile } from "./input.js";
+import {
+  type BudgetAccountLinkOffer,
+  findBudgetAccountLinkOffers,
+} from "./selectors/account-link-offers.js";
 import { type BudgetTotals, selectBudgetTotals } from "./selectors/budget-totals.js";
 import { type DebtSummary, selectDebtSummary } from "./selectors/debt-summary.js";
 import { type EstimatedTaxDue, selectEstimatedTaxDue } from "./selectors/estimated-tax-due.js";
@@ -56,6 +60,11 @@ export interface FinancialPicture {
    */
   budgetLinkOffers: BudgetLinkOffer[];
   /**
+   * Rows that look like a copy of one account's monthly saving or payment: the budget page offers
+   * a one-tap "link this line" for each, and links nothing on its own (audit slice 5).
+   */
+  budgetAccountLinkOffers: BudgetAccountLinkOffer[];
+  /**
    * The monthly housing payment the budget's linked housing line reads (the person's own cost),
    * or null when it is not saved. The setup wizard resolves its pending rows with it.
    */
@@ -98,7 +107,11 @@ export function buildFinancialPicture(
   const snapshot = opts.snapshot ?? new PortfolioSnapshot(input.accounts, input.details);
   const takeHome = selectTakeHome(input.profile, { taxYear: opts.taxYear });
   const housingPayment = selectHousingPayment(input.profile, snapshot, input.accounts);
-  const linked = withLinkedBudgetRows(input.budget, { takeHome, housing: housingPayment });
+  const linked = withLinkedBudgetRows(input.budget, {
+    takeHome,
+    housing: housingPayment,
+    accounts: snapshot,
+  });
   const budget = linked.rows;
   const asOf = opts.asOf ?? new Date();
   return {
@@ -106,6 +119,7 @@ export function buildFinancialPicture(
     budgetRows: budget,
     shadowedBudgetRowIds: linked.shadowedRowIds,
     budgetLinkOffers: linked.offers,
+    budgetAccountLinkOffers: findBudgetAccountLinkOffers(input.budget, snapshot),
     housingPayment,
     budget: selectBudgetTotals(budget),
     safeToSpend: selectSafeToSpend(takeHome, budget, snapshot),
@@ -139,6 +153,7 @@ export function linkedBudgetRowsFor(
   return withLinkedBudgetRows(input.budget, {
     takeHome: opts.takeHome ?? selectTakeHome(input.profile, { taxYear: opts.taxYear }),
     housing: selectHousingPayment(input.profile, snapshot, input.accounts),
+    accounts: snapshot,
   });
 }
 
@@ -155,6 +170,7 @@ export interface BudgetRowLike {
   sharePercent?: unknown;
   isPrimaryIncome?: unknown;
   linkKind?: unknown;
+  linkAccountId?: unknown;
 }
 
 export interface FinancialPictureRows {
@@ -189,6 +205,10 @@ export function budgetEntryFromRow(row: BudgetRowLike, index = 0): BudgetEntryIt
     ...(row.isPrimaryIncome === true ? { isPrimaryIncome: true } : {}),
     // A linked row's stored amount is never read: the linked-rows selector resolves it.
     ...(budgetRowLinkOf(row.linkKind) ? { linkKind: budgetRowLinkOf(row.linkKind) } : {}),
+    // The account a savings or debt line reads; null once that account is deleted.
+    ...(typeof row.linkAccountId === "string" && row.linkAccountId !== ""
+      ? { linkAccountId: row.linkAccountId }
+      : {}),
   };
 }
 

@@ -418,10 +418,13 @@ export const AccountExportBudgetEntry = z.strictObject({
   ownership: z.string().optional(),
   sharePercent: NullableNumber.optional(),
   /**
-   * The saved fact the line is linked to ("take_home" or "housing"), or null. A linked line's
-   * figure is read from the profile in this same export. Optional for exports from before it.
+   * The saved fact the line is linked to ("take_home", "housing", "savings" or "debt"), or null. A
+   * linked line's figure is read from the profile, or the account, in this same export. Optional
+   * for exports from before it.
    */
   linkKind: NullableText.optional(),
+  /** The account a savings or debt line reads (an id in this export's accounts), or null. */
+  linkAccountId: NullableText.optional(),
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
 });

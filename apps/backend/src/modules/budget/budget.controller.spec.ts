@@ -10,8 +10,14 @@ import { BudgetController } from "./budget.controller";
 import { BudgetService } from "./budget.service";
 
 /** Test wiring (BE-13): the controller takes the service; the service takes the repositories. */
-const budgetController = (budgetRepo: unknown, profileRepo: unknown) =>
-  new BudgetController(new BudgetService(budgetRepo as never, profileRepo as never));
+const budgetController = (
+  budgetRepo: unknown,
+  profileRepo: unknown,
+  accountRepo: unknown = createInMemoryRepository(),
+) =>
+  new BudgetController(
+    new BudgetService(budgetRepo as never, profileRepo as never, accountRepo as never),
+  );
 
 describe("BudgetController", () => {
   it("should be defined", () => {
@@ -430,6 +436,239 @@ describe("BudgetController", () => {
         BadRequestException,
       );
       expect(budgetRepo.rows).toEqual([row]);
+    });
+  });
+
+  describe("lines linked to an account (audit slice 5)", () => {
+    const me = { user: { id: "u1" } };
+    // Ids built at runtime: sample values, never real ones.
+    const id = (label: string) => `00000000-0000-4000-8000-${label.padStart(12, "0")}`;
+    const MY_SAVER = id("1");
+    const MY_LOAN = id("2");
+    const THEIR_SAVER = id("3");
+    const MY_CURRENT = id("4");
+    const accounts = () =>
+      createInMemoryRepository([
+        { id: MY_SAVER, userId: "u1", name: "Saver", type: "Saving" },
+        { id: MY_LOAN, userId: "u1", name: "Car loan", type: "Loan" },
+        { id: MY_CURRENT, userId: "u1", name: "Bank", type: "Current" },
+        { id: THEIR_SAVER, userId: "u2", name: "Someone else's saver", type: "Saving" },
+      ]);
+    const setup = (rows: Record<string, unknown>[] = []) => {
+      const budgetRepo = createInMemoryRepository(rows);
+      return {
+        budgetRepo,
+        controller: budgetController(budgetRepo, createInMemoryRepository(), accounts()),
+      };
+    };
+    const savingsLine = { category: "savings", name: "Saving each month", amount: 250 };
+
+    it("creates a savings line linked to the caller's own account, storing no amount", async () => {
+      const { controller } = setup();
+      const line = await controller.createBudgetEntry(me, {
+        ...savingsLine,
+        linkKind: "savings",
+        linkAccountId: MY_SAVER,
+      });
+      expect(line).toMatchObject({ amount: 0, linkKind: "savings", linkAccountId: MY_SAVER });
+      const debt = await controller.createBudgetEntry(me, {
+        category: "debt",
+        name: "Car loan",
+        amount: 180,
+        linkKind: "debt",
+        linkAccountId: MY_LOAN,
+      });
+      expect(debt).toMatchObject({ amount: 0, linkKind: "debt", linkAccountId: MY_LOAN });
+    });
+
+    it("refuses another user's account on create, as not found, and stores nothing", async () => {
+      const { budgetRepo, controller } = setup();
+      const attempt = controller.createBudgetEntry(me, {
+        ...savingsLine,
+        linkKind: "savings",
+        linkAccountId: THEIR_SAVER,
+      });
+      await expect(attempt).rejects.toBeInstanceOf(NotFoundException);
+      await expect(attempt).rejects.toThrow("Account not found");
+      expect(budgetRepo.rows).toEqual([]);
+    });
+
+    it("refuses another user's account when linking an existing line, and leaves it as saved", async () => {
+      const { budgetRepo, controller } = setup();
+      const line = await controller.createBudgetEntry(me, savingsLine);
+      await expect(
+        controller.updateBudgetEntry(me, line.id, {
+          linkKind: "savings",
+          linkAccountId: THEIR_SAVER,
+        }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(budgetRepo.rows[0]).toMatchObject({
+        amount: 250,
+        linkKind: null,
+        linkAccountId: null,
+      });
+    });
+
+    it("refuses moving a linked line onto another user's account, and keeps its own link", async () => {
+      const { budgetRepo, controller } = setup();
+      const line = await controller.createBudgetEntry(me, {
+        ...savingsLine,
+        linkKind: "savings",
+        linkAccountId: MY_SAVER,
+      });
+      await expect(
+        controller.updateBudgetEntry(me, line.id, { linkAccountId: THEIR_SAVER }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(budgetRepo.rows[0]).toMatchObject({ linkKind: "savings", linkAccountId: MY_SAVER });
+    });
+
+    it("refuses an account id that does not exist at all, the same way", async () => {
+      const { controller } = setup();
+      await expect(
+        controller.createBudgetEntry(me, {
+          ...savingsLine,
+          linkKind: "savings",
+          linkAccountId: id("99"),
+        }),
+      ).rejects.toThrow("Account not found");
+    });
+
+    it("refuses a link that does not fit: no account, the wrong account type or the wrong line", async () => {
+      const { controller } = setup();
+      await expect(
+        controller.createBudgetEntry(me, { ...savingsLine, linkKind: "savings" }),
+      ).rejects.toThrow("Choose the account this line uses");
+      await expect(
+        controller.createBudgetEntry(me, {
+          ...savingsLine,
+          linkKind: "savings",
+          linkAccountId: MY_LOAN,
+        }),
+      ).rejects.toThrow("Only a savings or investment account can be used for a savings line");
+      await expect(
+        controller.createBudgetEntry(me, {
+          category: "debt",
+          name: "Bank",
+          amount: 0,
+          linkKind: "debt",
+          linkAccountId: MY_CURRENT,
+        }),
+      ).rejects.toThrow("Only a card, loan or overdraft can be used for a debt line");
+      await expect(
+        controller.createBudgetEntry(me, {
+          category: "bills",
+          name: "Saver",
+          amount: 0,
+          linkKind: "savings",
+          linkAccountId: MY_SAVER,
+        }),
+      ).rejects.toThrow("Only a line in Savings can use an account's monthly saving");
+      await expect(
+        controller.createBudgetEntry(me, {
+          category: "savings",
+          name: "Pay",
+          amount: 0,
+          isIncome: true,
+          linkKind: "savings",
+          linkAccountId: MY_SAVER,
+        }),
+      ).rejects.toThrow("Only a line in Savings can use an account's monthly saving");
+    });
+
+    it("refuses an account on a line that is not a savings or debt line", async () => {
+      const { controller } = setup();
+      await expect(
+        controller.createBudgetEntry(me, { ...savingsLine, linkAccountId: MY_SAVER }),
+      ).rejects.toThrow("Only a savings or debt line can be linked to an account");
+      await expect(
+        controller.createBudgetEntry(me, {
+          category: "income",
+          name: "Pay",
+          amount: 0,
+          isIncome: true,
+          linkKind: "take_home",
+          linkAccountId: MY_SAVER,
+        }),
+      ).rejects.toThrow("Only a savings or debt line can be linked to an account");
+    });
+
+    it("refuses a second line on the same account", async () => {
+      const { controller } = setup();
+      await controller.createBudgetEntry(me, {
+        ...savingsLine,
+        linkKind: "savings",
+        linkAccountId: MY_SAVER,
+      });
+      const other = await controller.createBudgetEntry(me, { ...savingsLine, name: "Again" });
+      await expect(
+        controller.updateBudgetEntry(me, other.id, {
+          linkKind: "savings",
+          linkAccountId: MY_SAVER,
+        }),
+      ).rejects.toThrow("Another line already uses this account");
+    });
+
+    it("unlinks with the figure the line keeps, dropping the account", async () => {
+      const { controller } = setup();
+      const line = await controller.createBudgetEntry(me, {
+        ...savingsLine,
+        linkKind: "savings",
+        linkAccountId: MY_SAVER,
+      });
+      const unlinked = await controller.updateBudgetEntry(me, line.id, {
+        linkKind: null,
+        amount: 250,
+      });
+      expect(unlinked).toMatchObject({ amount: 250, linkKind: null, linkAccountId: null });
+    });
+
+    it("still renames a line whose account was deleted, leaving it linked and Not set", async () => {
+      // The foreign key set link_account_id to null when the account went.
+      const { controller } = setup([
+        {
+          id: id("50"),
+          userId: "u1",
+          category: "savings",
+          name: "Old saver",
+          amount: 0,
+          linkKind: "savings",
+          linkAccountId: null,
+          ownership: "sole",
+          sharePercent: null,
+        },
+      ]);
+      const renamed = await controller.updateBudgetEntry(me, id("50"), { name: "Holiday saver" });
+      expect(renamed).toMatchObject({
+        name: "Holiday saver",
+        linkKind: "savings",
+        linkAccountId: null,
+      });
+      // Re-linking it checks the account as any link does.
+      await expect(
+        controller.updateBudgetEntry(me, id("50"), { linkAccountId: THEIR_SAVER }),
+      ).rejects.toThrow("Account not found");
+    });
+
+    it("reads a racing write that hits the database guards as the plain errors", async () => {
+      const { budgetRepo, controller } = setup();
+      const line = await controller.createBudgetEntry(me, savingsLine);
+      budgetRepo.save.mockRejectedValueOnce(
+        Object.assign(new Error("duplicate key"), {
+          driverError: { code: "23505", constraint: "UQ_budget_entries_link_account" },
+        }),
+      );
+      await expect(
+        controller.updateBudgetEntry(me, line.id, { linkKind: "savings", linkAccountId: MY_SAVER }),
+      ).rejects.toThrow("Another line already uses this account");
+      // The account was deleted between the check and the write: the composite foreign key fires.
+      budgetRepo.save.mockRejectedValueOnce(
+        Object.assign(new Error("foreign key"), {
+          driverError: { code: "23503", constraint: "FK_budget_entries_link_account" },
+        }),
+      );
+      await expect(
+        controller.updateBudgetEntry(me, line.id, { linkKind: "savings", linkAccountId: MY_SAVER }),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 

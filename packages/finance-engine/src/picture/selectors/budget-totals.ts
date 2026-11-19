@@ -47,10 +47,15 @@ export function budgetRowMonthly(
   return entry.ownership === "joint" ? applyBudgetEntryShare(monthly, entry) : monthly;
 }
 
-/** What a linked line that cannot resolve is missing: the salary, or the housing payment. */
-const NOT_SET_LINK_MISSING: Record<"take_home" | "housing", MissingKey> = {
+/**
+ * What a linked line that cannot resolve is missing: the salary, the housing payment, or the
+ * linked account's monthly amount (or the account itself, deleted or changed type).
+ */
+const NOT_SET_LINK_MISSING: Record<NonNullable<BudgetEntryItem["linked"]>, MissingKey> = {
   take_home: "annualSalary",
   housing: "monthlyHousingCost",
+  savings: "linkedAccountMonthly",
+  debt: "linkedAccountMonthly",
 };
 
 /**

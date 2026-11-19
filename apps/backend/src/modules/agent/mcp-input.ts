@@ -2,6 +2,7 @@ import type { McpInputResponse } from "@flump/api-contract";
 import {
   anonymiseContextPackInput,
   type BuildContextPackInput,
+  budgetRowLinkOf,
   DEFAULT_RETIREMENT_GROWTH_CASES,
   DEFAULT_RETIREMENT_INFLATION_RATE,
   type RetirementSavedPlanInput,
@@ -125,7 +126,12 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
         sharePercent: e.sharePercent === undefined ? undefined : numOrNull(e.sharePercent),
       }),
       // A row replaced with a saved detail, so the remote tools read the same budget as the web.
-      ...(e.linkKind === "take_home" || e.linkKind === "housing" ? { linkKind: e.linkKind } : {}),
+      ...(budgetRowLinkOf(e.linkKind) ? { linkKind: budgetRowLinkOf(e.linkKind) } : {}),
+      // The account a savings or debt line reads, kept only when it is one of this user's own
+      // accounts in this input (the database already guarantees it; this guards the mapping).
+      ...(typeof e.linkAccountId === "string" && owned.has(e.linkAccountId)
+        ? { linkAccountId: e.linkAccountId }
+        : {}),
       // Present only for a token that may read names; the anonymised input has none.
       ...(e.notes === undefined ? {} : { notes: e.notes }),
     })),

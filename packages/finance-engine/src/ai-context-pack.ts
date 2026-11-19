@@ -91,15 +91,21 @@ export interface BudgetEntryItem {
   /** True when the person marked this row as their own main pay. Read by the take-home link. */
   isPrimaryIncome?: boolean;
   /**
-   * Set only on a line the engine makes from a saved fact (owner items 7 and 33b): "take_home"
-   * from the profile's salary, "housing" from the housing details. Never stored.
+   * Set only on a line the engine makes from a saved fact (owner items 7 and 33b, audit slice 5):
+   * "take_home" from the profile's salary, "housing" from the housing details, "savings" and
+   * "debt" from one account's monthly amount. Never stored.
    */
-  linked?: "take_home" | "housing";
+  linked?: "take_home" | "housing" | "savings" | "debt";
   /**
-   * Stored on a row the person linked to a saved fact ("Use your take-home pay"). Its stored
-   * amount is never read: the linked figure stands in for it, keeping its ownership and share.
+   * Stored on a row the person linked to a saved fact ("Use your take-home pay", "Link this line
+   * to your ISA"). Its stored amount is never read: the linked figure stands in for it.
    */
-  linkKind?: "take_home" | "housing" | null;
+  linkKind?: "take_home" | "housing" | "savings" | "debt" | null;
+  /**
+   * The account a "savings" or "debt" line reads (`budget_entries.link_account_id`). Null when the
+   * account was deleted: the line is then "Not set", never £0.
+   */
+  linkAccountId?: string | null;
   /** On an engine line standing in for a row the person linked: that row's stored id. */
   linkedRowId?: string;
   /**

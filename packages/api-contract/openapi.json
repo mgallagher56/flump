@@ -4143,10 +4143,23 @@
                       "isPrimaryIncome": {
                         "type": "boolean"
                       },
+                      "linkAccountId": {
+                        "anyOf": [
+                          {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "default": null
+                      },
                       "linkKind": {
                         "anyOf": [
                           {
-                            "enum": ["take_home", "housing"],
+                            "enum": ["take_home", "housing", "savings", "debt"],
                             "type": "string"
                           },
                           {
@@ -4201,6 +4214,7 @@
                       "ownership",
                       "sharePercent",
                       "linkKind",
+                      "linkAccountId",
                       "createdAt",
                       "updatedAt"
                     ],
@@ -4329,10 +4343,22 @@
                   "isIncome": {
                     "type": "boolean"
                   },
+                  "linkAccountId": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "linkKind": {
                     "anyOf": [
                       {
-                        "enum": ["take_home", "housing"],
+                        "enum": ["take_home", "housing", "savings", "debt"],
                         "type": "string"
                       },
                       {
@@ -4423,10 +4449,23 @@
                     "isPrimaryIncome": {
                       "type": "boolean"
                     },
+                    "linkAccountId": {
+                      "anyOf": [
+                        {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null
+                    },
                     "linkKind": {
                       "anyOf": [
                         {
-                          "enum": ["take_home", "housing"],
+                          "enum": ["take_home", "housing", "savings", "debt"],
                           "type": "string"
                         },
                         {
@@ -4481,6 +4520,7 @@
                     "ownership",
                     "sharePercent",
                     "linkKind",
+                    "linkAccountId",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -4807,10 +4847,23 @@
                       "isPrimaryIncome": {
                         "type": "boolean"
                       },
+                      "linkAccountId": {
+                        "anyOf": [
+                          {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "default": null
+                      },
                       "linkKind": {
                         "anyOf": [
                           {
-                            "enum": ["take_home", "housing"],
+                            "enum": ["take_home", "housing", "savings", "debt"],
                             "type": "string"
                           },
                           {
@@ -4865,6 +4918,7 @@
                       "ownership",
                       "sharePercent",
                       "linkKind",
+                      "linkAccountId",
                       "createdAt",
                       "updatedAt"
                     ],
@@ -5095,10 +5149,22 @@
                   "isIncome": {
                     "type": "boolean"
                   },
+                  "linkAccountId": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "linkKind": {
                     "anyOf": [
                       {
-                        "enum": ["take_home", "housing"],
+                        "enum": ["take_home", "housing", "savings", "debt"],
                         "type": "string"
                       },
                       {
@@ -5188,10 +5254,23 @@
                     "isPrimaryIncome": {
                       "type": "boolean"
                     },
+                    "linkAccountId": {
+                      "anyOf": [
+                        {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null
+                    },
                     "linkKind": {
                       "anyOf": [
                         {
-                          "enum": ["take_home", "housing"],
+                          "enum": ["take_home", "housing", "savings", "debt"],
                           "type": "string"
                         },
                         {
@@ -5246,6 +5325,7 @@
                     "ownership",
                     "sharePercent",
                     "linkKind",
+                    "linkAccountId",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -7976,10 +8056,13 @@
                                   "isIncome": {
                                     "type": "boolean"
                                   },
+                                  "linkAccountId": {
+                                    "type": ["string", "null"]
+                                  },
                                   "linkKind": {
                                     "anyOf": [
                                       {
-                                        "enum": ["take_home", "housing"],
+                                        "enum": ["take_home", "housing", "savings", "debt"],
                                         "type": "string"
                                       },
                                       {
@@ -8042,10 +8125,13 @@
                                   "isIncome": {
                                     "type": "boolean"
                                   },
+                                  "linkAccountId": {
+                                    "type": ["string", "null"]
+                                  },
                                   "linkKind": {
                                     "anyOf": [
                                       {
-                                        "enum": ["take_home", "housing"],
+                                        "enum": ["take_home", "housing", "savings", "debt"],
                                         "type": "string"
                                       },
                                       {
@@ -8152,7 +8238,7 @@
                                     ]
                                   },
                                   "link": {
-                                    "enum": ["take_home", "housing"],
+                                    "enum": ["take_home", "housing", "savings", "debt"],
                                     "type": "string"
                                   },
                                   "monthly": {
@@ -9244,10 +9330,13 @@
                               "isIncome": {
                                 "type": "boolean"
                               },
+                              "linkAccountId": {
+                                "type": ["string", "null"]
+                              },
                               "linkKind": {
                                 "anyOf": [
                                   {
-                                    "enum": ["take_home", "housing"],
+                                    "enum": ["take_home", "housing", "savings", "debt"],
                                     "type": "string"
                                   },
                                   {

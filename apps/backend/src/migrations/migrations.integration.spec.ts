@@ -40,6 +40,7 @@ import {
   PENSION_DEFAULTS_CLEAR_BEFORE,
 } from "./ClearDefaultPensionRates1795480100000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
+import { LinkBudgetLinesToAccounts1795490000000 } from "./LinkBudgetLinesToAccounts1795490000000";
 import { MoveBuyToLetProfileIntoAccounts1795470200000 } from "./MoveBuyToLetProfileIntoAccounts1795470200000";
 import { PensionAnswersNullable1795480000000 } from "./PensionAnswersNullable1795480000000";
 import { RemovePayeSalaryRecords1795480300000 } from "./RemovePayeSalaryRecords1795480300000";
@@ -2743,6 +2744,147 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         "SELECT account_id FROM account_details ORDER BY account_id",
       );
       expect(left.map((r) => r.account_id).sort()).toEqual([added, recorded].sort());
+    });
+  });
+  describe("LinkBudgetLinesToAccounts1795490000000 (audit slice 5)", () => {
+    const NAME = "LinkBudgetLinesToAccounts1795490000000";
+    const account = async (
+      userId: string,
+      type: string,
+      monthly: number | null,
+      share: { ownership: string; sharePercent: number | null } = {
+        ownership: "sole",
+        sharePercent: null,
+      },
+    ): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, monthly_contribution, currency, ownership, share_percent)
+         VALUES ($1, 'Account', $2, $3, $4, 'GBP', $5, $6) RETURNING id`,
+        // Liabilities are stored as negative balances (LiabilitySignRule).
+        [
+          userId,
+          type,
+          type === "Saving" ? 1000 : -1000,
+          monthly,
+          share.ownership,
+          share.sharePercent,
+        ],
+      );
+      return at(rows, 0).id;
+    };
+    const line = async (
+      userId: string,
+      kind: string | null,
+      accountId: string | null,
+      category = kind === "debt" ? "debt" : "savings",
+    ): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO budget_entries (user_id, category, name, amount, is_income, is_essential, link_kind, link_account_id)
+         VALUES ($1, $2, 'Line', 0, false, false, $3, $4) RETURNING id`,
+        [userId, category, kind, accountId],
+      );
+      return at(rows, 0).id;
+    };
+    const lineRow = async (id: string): Promise<Record<string, unknown>> =>
+      at(
+        await ds.query(
+          "SELECT amount::text AS amount, frequency, ownership, link_kind FROM budget_entries WHERE id = $1",
+          [id],
+        ),
+        0,
+      );
+
+    it("links a line to the same user's account only, one line per account, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      const saver = await account("u1", "Saving", 500);
+      const loan = await account("u1", "Loan", 180);
+      const theirs = await account("u2", "Saving", 300);
+      await line("u1", "savings", saver);
+      await line("u1", "debt", loan);
+      await ds.query(
+        `INSERT INTO budget_entries (user_id, category, name, amount, is_income, is_essential, link_kind)
+         VALUES ('u1', 'income', 'Take-home pay', 0, true, true, 'take_home')`,
+      );
+      // Another user's account: the composite foreign key refuses it whatever the service does,
+      // even when that user has linked it, so the refusal never reads as "already in use".
+      await line("u2", "savings", theirs);
+      await expect(line("u1", "savings", theirs)).rejects.toThrow(/foreign key/i);
+      // One line per account.
+      await expect(line("u1", "savings", saver)).rejects.toThrow(/unique|duplicate/i);
+      // Only a savings or debt line names an account.
+      const spare = await account("u1", "Saving", 20);
+      await expect(line("u1", "take_home", spare, "income")).rejects.toThrow(/check constraint/i);
+      await expect(line("u1", null, spare)).rejects.toThrow(/check constraint/i);
+      await runUpInTransaction(new LinkBudgetLinesToAccounts1795490000000());
+      const rows: { n: string }[] = await ds.query(
+        "SELECT count(*)::text AS n FROM budget_entries WHERE link_kind IS NOT NULL",
+      );
+      expect(rows[0]?.n).toBe("4");
+    });
+
+    it("keeps the line, linked and with no account, when its account is deleted", async () => {
+      await ds.runMigrations();
+      const saver = await account("u1", "Saving", 500);
+      const id = await line("u1", "savings", saver);
+      await ds.query("DELETE FROM accounts WHERE id = $1", [saver]);
+      const rows: { link_kind: string; link_account_id: string | null; user_id: string }[] =
+        await ds.query(
+          "SELECT link_kind, link_account_id, user_id FROM budget_entries WHERE id = $1",
+          [id],
+        );
+      // Only link_account_id is cleared: the engine then reads the line as Not set.
+      expect(rows).toEqual([{ link_kind: "savings", link_account_id: null, user_id: "u1" }]);
+    });
+
+    it("writes each resolvable line's figure into amount before dropping the column", async () => {
+      await ds.runMigrations();
+      const sole = await line("u1", "savings", await account("u1", "Saving", 500));
+      const joint = await line(
+        "u1",
+        "savings",
+        await account("u1", "Saving", 500, { ownership: "joint", sharePercent: 40 }),
+      );
+      const jointNoShare = await line(
+        "u1",
+        "debt",
+        await account("u1", "Credit Card", 300, { ownership: "joint", sharePercent: null }),
+      );
+      const noAmount = await line("u1", "debt", await account("u1", "Loan", null));
+      const changedType = await line("u1", "savings", await account("u1", "Saving", 75));
+      await ds.query("UPDATE accounts SET type = 'Current' WHERE monthly_contribution = 75");
+      const deleted = await line("u1", "savings", await account("u1", "Saving", 60));
+      await ds.query("DELETE FROM accounts WHERE monthly_contribution = 60");
+
+      await undoThrough(NAME);
+
+      // 500 sole = 500. 500 x 40% = 200. A joint account with no share counts at 50%: 300 x 50% = 150.
+      expect(await lineRow(sole)).toEqual({
+        amount: "500.00",
+        frequency: "monthly",
+        ownership: "sole",
+        link_kind: null,
+      });
+      expect(await lineRow(joint)).toMatchObject({
+        amount: "200.00",
+        ownership: "sole",
+        link_kind: null,
+      });
+      expect(await lineRow(jointNoShare)).toMatchObject({ amount: "150.00", link_kind: null });
+      // Not set before (no saved amount, type changed, account deleted): nothing to write.
+      for (const id of [noAmount, changedType, deleted]) {
+        expect(await lineRow(id)).toMatchObject({ amount: "0.00", link_kind: null });
+      }
+      const cols: unknown[] = await ds.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = 'budget_entries' AND column_name = 'link_account_id'",
+      );
+      expect(cols).toEqual([]);
+      // The earlier check is back: only the two profile kinds.
+      await expect(
+        ds.query(
+          `INSERT INTO budget_entries (user_id, category, name, amount, link_kind) VALUES ('u1', 'savings', 'Line', 0, 'savings')`,
+        ),
+      ).rejects.toThrow(/check constraint/i);
     });
   });
 });

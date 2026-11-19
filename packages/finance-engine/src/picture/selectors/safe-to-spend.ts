@@ -12,9 +12,14 @@ export interface SafeToSpend {
   daily: number;
   /** Monthly amount free to spend, never below 0. */
   monthly: number;
-  /** How far commitments and planned savings go past take-home each month; 0 when they fit. */
+  /** How far commitments and planned savings go past income each month; 0 when they fit. */
   monthlyShortfall: number;
-  takeHomeMonthly: number;
+  /**
+   * The income safe to spend starts from: the budget's income, the same figure "left over each
+   * month" starts from (the linked take-home line when the person has it, or the income lines they
+   * typed). Pounds a month.
+   */
+  incomeMonthly: number;
   plannedSavings: number;
   commitments: EssentialCommitments;
 }
@@ -27,8 +32,12 @@ function round2(n: number): number {
 }
 
 /**
- * Safe to spend (owner decision D-6-A): take-home less essentials, debt minimums and planned
- * savings, per week. Take-home comes from the profile, never from a guessed share of salary.
+ * Safe to spend (owner decision D-6-A): income less essentials, debt minimums and planned savings,
+ * per week. The income is the budget's income (system audit slice 5, link L34): the linked
+ * take-home line when the person chose it (or the engine added it to a budget with no income
+ * lines), or the income lines the person typed. So safe to spend and "left over each month" start
+ * from the same figure, and a typed take-home stays the person's own. With no income in the
+ * budget it is unknown: never a guessed share of salary.
  */
 export function selectSafeToSpend(
   takeHome: Figure<TakeHome>,
@@ -36,28 +45,36 @@ export function selectSafeToSpend(
   snapshot: PortfolioSnapshot,
 ): Figure<SafeToSpend> {
   const totals = selectBudgetTotals(budget);
-  const missing: MissingKey[] = [];
-  if (!isFigureKnown(takeHome)) {
-    if (takeHome.reason === "unsupported-year") return figureUnknown([], "unsupported-year");
-    missing.push(...takeHome.missing);
+  if (!isFigureKnown(totals) || !totals.value.hasIncome) {
+    // The budget has no income to start from. Without a salary the take-home line cannot fill it.
+    if (!isFigureKnown(takeHome) && takeHome.reason === "unsupported-year") {
+      return figureUnknown([], "unsupported-year");
+    }
+    const missing = new Set<MissingKey>(isFigureKnown(takeHome) ? [] : takeHome.missing);
+    if (!isFigureKnown(totals)) {
+      for (const key of totals.missing) missing.add(key);
+    } else {
+      missing.add("budgetIncome");
+      if (!totals.value.hasEssentials) missing.add("budgetEssentials");
+    }
+    return figureUnknown([...missing], "not-set");
   }
-  if (!isFigureKnown(totals)) missing.push("budget");
-  else if (!totals.value.hasEssentials) missing.push("budgetEssentials");
-  if (missing.length > 0 || !isFigureKnown(takeHome) || !isFigureKnown(totals)) {
-    return figureUnknown(missing, "not-set");
-  }
+  if (!totals.value.hasEssentials) return figureUnknown(["budgetEssentials"], "not-set");
 
   const commitments = essentialCommitments(budget, snapshot);
   const plannedSavings = totals.value.savings;
-  const takeHomeMonthly = takeHome.value.monthly;
+  const incomeMonthly = totals.value.income;
   const result = calculateSafeToSpend(
-    takeHomeMonthly,
+    incomeMonthly,
     commitments.essentialsExcludingDebt + plannedSavings,
     commitments.debtCommitment,
     0,
   );
-  const gap = takeHomeMonthly - commitments.total - plannedSavings;
-  const assumptions = [...(takeHome.assumptions ?? [])];
+  const gap = incomeMonthly - commitments.total - plannedSavings;
+  // The take-home's own assumptions apply only when its linked line is part of the income.
+  const takeHomeCounted = budget.some((row) => row.linked === "take_home" && !row.notSet);
+  const assumptions =
+    takeHomeCounted && isFigureKnown(takeHome) ? [...(takeHome.assumptions ?? [])] : [];
   if (commitments.minimumsEstimated && commitments.debtCommitment === commitments.accountMinimums) {
     assumptions.push(ESTIMATED_MINIMUMS_NOTE);
   }
@@ -68,7 +85,7 @@ export function selectSafeToSpend(
       daily: result.dailyAllowance,
       monthly: result.monthlyDiscretionary,
       monthlyShortfall: gap < 0 ? round2(-gap) : 0,
-      takeHomeMonthly,
+      incomeMonthly,
       plannedSavings,
       commitments,
     },

@@ -10,10 +10,12 @@ export const BudgetCategory = z.string().trim().min(1).max(64);
 
 /**
  * The saved fact a budget line is linked to (`budget_entries.link_kind`, system audit decision 1):
- * "take_home" (the profile's take-home pay) or "housing" (the saved rent, mortgage payment or
- * household contribution). A linked line's stored amount is never read. Slice 5 adds more kinds.
+ * "take_home" (the profile's take-home pay), "housing" (the saved rent, mortgage payment or
+ * household contribution), "savings" (one savings or investment account's monthly saving) or
+ * "debt" (one card, loan or overdraft's monthly payment). A linked line's stored amount is never
+ * read. "savings" and "debt" name their account in `linkAccountId`.
  */
-export const BUDGET_ENTRY_LINK_KINDS = ["take_home", "housing"] as const;
+export const BUDGET_ENTRY_LINK_KINDS = ["take_home", "housing", "savings", "debt"] as const;
 export const BudgetEntryLinkKind = z.enum(BUDGET_ENTRY_LINK_KINDS);
 export type BudgetEntryLinkKind = z.infer<typeof BudgetEntryLinkKind>;
 
@@ -35,6 +37,11 @@ export const CreateBudgetEntryRequest = z.strictObject({
    * 0 and never read. Null or omitted for an ordinary line.
    */
   linkKind: BudgetEntryLinkKind.nullable().optional(),
+  /**
+   * The caller's own account a "savings" or "debt" line reads. Required with those kinds and
+   * refused with any other; another user's account id is refused as not found.
+   */
+  linkAccountId: Uuid.nullable().optional(),
 });
 export type CreateBudgetEntryRequest = z.infer<typeof CreateBudgetEntryRequest>;
 
@@ -55,6 +62,11 @@ export const UpdateBudgetEntryRequest = z.strictObject({
    * unlink it: send the figure the row keeps as `amount` with the null.
    */
   linkKind: BudgetEntryLinkKind.nullable().optional(),
+  /**
+   * The account a "savings" or "debt" line reads; null (with `linkKind: null`) to unlink. Only the
+   * caller's own savings or debt account is accepted.
+   */
+  linkAccountId: Uuid.nullable().optional(),
 });
 export type UpdateBudgetEntryRequest = z.infer<typeof UpdateBudgetEntryRequest>;
 
@@ -96,6 +108,11 @@ export const BudgetEntryDto = z.strictObject({
    * `amount` is a stored 0 that is never read: the engine resolves the line.
    */
   linkKind: BudgetEntryLinkKind.nullable().default(null),
+  /**
+   * The account a "savings" or "debt" line reads, or null (also once that account is deleted, when
+   * the line reads "Not set"). Rows from before the column read null.
+   */
+  linkAccountId: Uuid.nullable().default(null),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });

@@ -30,6 +30,9 @@ import { numericTransformer } from "./numeric.transformer";
   `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 100)`,
 )
 // BE-12 (audit H4): one row per synced bank account (migration BankSyncIntegrity1794358400000).
+// System audit slice 5 (LinkBudgetLinesToAccounts1795490000000): the key a budget line's
+// (link_account_id, user_id) foreign key references, so a line can only read its own user's account.
+@Index("UQ_accounts_id_user_id", ["id", "userId"], { unique: true })
 @Index("UQ_accounts_user_connection_external", ["userId", "connectionId", "externalAccountId"], {
   unique: true,
   where: '"connection_id" IS NOT NULL AND "external_account_id" IS NOT NULL',

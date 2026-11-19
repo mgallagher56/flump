@@ -47,6 +47,11 @@ export type MissingKey =
   | "budget"
   | "budgetIncome"
   | "budgetEssentials"
+  /**
+   * A budget line linked to an account whose monthly amount is not saved, or whose account was
+   * deleted or is no longer a savings or debt account (audit slice 5).
+   */
+  | "linkedAccountMonthly"
   /** A stored mortgage balance, rate and term (E32 housing cost). */
   | "mortgageDetails"
   /** A mortgage account with a balance (loan to value). */
