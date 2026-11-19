@@ -60,10 +60,10 @@ CI runs the full suite on every PR in a few minutes, and nothing merges unless i
 
 1. `bun run lint` (zero Biome lint/format errors)
 2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
-3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, number inputs, judgement colours, dependency versions, copy, the unsigned tax vector ratchet and the one tax engine guard)
+3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, number inputs, judgement colours, dependency versions, copy, the unsigned tax vector ratchet, the one tax engine guard and the value map)
 4. The tests for what you changed only: `bunx vitest run <paths>` or `bun run test --filter=<package>` for each package the change touches. Do not run the whole monorepo suite locally.
 
-When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline`, `bun scripts/check-style-literals.ts --write-baseline` and `bun scripts/check-copy.ts --write-baseline`, then commit the updated baseline files. The number-input and judgement checks (`scripts/check-input-types.ts`, `scripts/check-judgement-tokens.ts`) fail only when a count rises; a fall prints `IMPROVED` and passes, so regenerating their baselines is optional.
+When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline`, `bun scripts/check-style-literals.ts --write-baseline`, `bun scripts/check-copy.ts --write-baseline` and `bun scripts/check-value-map.ts --write-baseline`, then commit the updated baseline files. The number-input and judgement checks (`scripts/check-input-types.ts`, `scripts/check-judgement-tokens.ts`) fail only when a count rises; a fall prints `IMPROVED` and passes, so regenerating their baselines is optional.
 
 **Leave to CI:** the full `bun run test`, `bun run build`, Storybook a11y (light and dark), the E2E smoke test and the Docker images. Run one of these locally only to reproduce or debug a CI failure.
 
@@ -182,3 +182,12 @@ Every plan document carries a status line near the top: `Decisions: open` or `De
 ## 15. GUARD CHANGES LAW
 
 Changing an allow-list, a numeric limit in a test or law, a scanner suppression, a required check or a security exception needs sign-off before the change is made: from the owner for security exceptions and scanner suppressions, from the coordinator or owner for the rest. The PR description lists every such change under a heading "Guard changes", or says "None". Sample tokens and ids in tests are built at runtime, never suppressed. Lowering a ratchet baseline after removing violations (section 5) needs no sign-off; raising one does.
+
+## 16. ONE HOME PER VALUE LAW
+
+> **Detailed Reference**: Before adding, moving or removing a stored value, a browser storage or cookie key, or a figure shown in more than one place, read [`docs/system/README.md`](./docs/system/README.md).
+
+- **One source of truth per fact.** Every stored fact about a user has one entry in `docs/system/value-map.yaml`, naming the one table and column that holds it. Do not add a second store for a fact that already has a home: read it from its home. A copy is allowed only when the map lists it with its status (`cache`, `derived` and so on) and says what keeps it equal.
+- **One engine function per shared figure.** A figure shown in more than one place is computed by one function in `packages/finance-engine/src`, named in its map entry. Pages, backend services and AI tools read the figure from there. They do not sum balances, apply shares or convert amounts themselves.
+- **Update the map in the same PR.** A PR that adds, moves or removes a database column, a profile field, a browser storage or cookie key, or a shared figure updates the map in the same PR. A new column also goes in its table's `valueMap` in `apps/backend/src/modules/privacy/user-data-registry.ts`. Then run `bun scripts/generate-value-map.ts`.
+- **Guard.** `bun scripts/check-value-map.ts` (part of `check:laws`) fails on a column or browser key with no entry, a path, function, table or column that no longer exists, a malformed entry, a fact with no source of truth, a figure outside the engine, and stale generated views. Known problems are in `scripts/value-map-baseline.json`, each tied to an audit finding. The baseline only shrinks; raising it falls under section 15. Arithmetic that may be a second formula prints as a warning and does not fail the run.
