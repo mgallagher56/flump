@@ -70,9 +70,11 @@ test.describe("marketing site", () => {
     const link = page.locator('footer a[href="/contact#beta"]').first();
     await link.click();
     await expect(page).toHaveURL(/\/contact#beta$/);
-    const target = page.locator("#beta");
-    await expect(target).toBeInViewport();
-    expect(await scrollY(page)).toBeGreaterThan(0);
+    // The target starts near the top of the screen (its scroll margin clears the header), not
+    // wherever the old page's offset happened to leave it.
+    const top = await page.locator("#beta").evaluate((el) => el.getBoundingClientRect().top);
+    expect(top).toBeGreaterThanOrEqual(0);
+    expect(top).toBeLessThanOrEqual(160);
   });
 });
 
