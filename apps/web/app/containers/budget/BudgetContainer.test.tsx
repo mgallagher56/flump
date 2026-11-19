@@ -1008,6 +1008,30 @@ describe("BudgetContainer", () => {
       row({ id: "g", name: "Groceries", category: "expenses", amount: 300, isEssential: true }),
     ];
 
+    it("is not empty when every row is a linked line (stored £0, read from saved facts)", () => {
+      // Salary and rent saved, and the budget is only the two linked rows, each storing £0. The
+      // resolved budget has take-home and rent in it, so the page shows it, never "No budget yet".
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: [
+          row({
+            id: "lt",
+            name: "Take-home pay",
+            category: "income",
+            isIncome: true,
+            amount: 0,
+            linkKind: "take_home",
+          }),
+          row({ id: "lh", name: "Rent", category: "housing", amount: 0, linkKind: "housing" }),
+        ],
+        userProfile: { ...salaryProfile, housingStatus: "renting", monthlyHousingCost: 900 },
+      };
+      render(<BudgetContainer />);
+      expect(screen.getByTestId("budget-category-housing").textContent).toContain("£900");
+      expect(screen.getByRole("region", { name: "Breathing room" })).toBeDefined();
+      expect(screen.queryByText("No budget yet")).toBeNull();
+    });
+
     it("puts Edit budget on Where your money goes, and not in the page header", () => {
       mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
       render(<BudgetContainer />);
@@ -1066,9 +1090,9 @@ describe("BudgetContainer", () => {
     });
 
     // Each POST answers with the row it was sent, so the page holds what was saved.
-    // Only the next two requests, so later tests keep the pass-through.
-    const echoCreates = () => {
-      for (const id of ["new-1", "new-2"]) {
+    // Only the next `count` requests, so later tests keep the pass-through.
+    const echoCreates = (count = 2) => {
+      for (const id of ["new-1", "new-2"].slice(0, count)) {
         vi.mocked(apiFetch).mockImplementationOnce((async (
           _url: string,
           init?: { body?: unknown },
@@ -1110,6 +1134,31 @@ describe("BudgetContainer", () => {
       expect(posted()[1]?.linkKind).toBeUndefined();
       expect(screen.getByTestId("budget-editor-name-linked-take-home")).toBeDefined();
       expect(screen.queryByTestId("budget-link-notice")).toBeNull();
+    });
+
+    it("counts a take-home typed over the added line once, as the person's own figure", async () => {
+      // Salary saved, Groceries £300 only: the engine adds the take-home line, whose field says a
+      // typed figure is used instead. Typing £2,500 saves one unlinked £2,500 income row and
+      // nothing linked, so money in is 2,500, never 2,500 plus the salary's take-home.
+      echoCreates(1);
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: spendingOnly,
+        userProfile: salaryProfile,
+      };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      const field = screen.getByLabelText("Amount for Take-home pay");
+      fireEvent.focus(field);
+      fireEvent.change(field, { target: { value: "2500" } });
+      fireEvent.blur(field);
+      await waitFor(() => expect(posted()).toHaveLength(1));
+      expect(posted()[0]).toMatchObject({ isIncome: true, amount: 2500 });
+      expect(posted()[0]?.linkKind).toBeUndefined();
+      const label = screen.getByText("Money in each month");
+      let card: HTMLElement | null = label;
+      while (card && !card.textContent?.includes("£")) card = card.parentElement;
+      expect(card?.textContent).toContain("£2,500");
     });
 
     it("keeps the rent it added when the person adds their own housing entry", async () => {

@@ -52,8 +52,12 @@ export interface BudgetEditorProps {
   entries: BudgetEntry[];
   /** The page's categories in order; "income" is shown first as "Money in" whatever its place. */
   categories: string[];
-  /** Saves a new entry. Rejects on failure (the page shows the error). */
-  onAdd: (entry: NewBudgetEntry) => Promise<void>;
+  /**
+   * Saves a new entry. Rejects on failure (the page shows the error). `replacesLinkedLine` marks a
+   * figure typed over a linked line: it stands in for that line, so the page must not also keep
+   * the line.
+   */
+  onAdd: (entry: NewBudgetEntry, options?: { replacesLinkedLine?: boolean }) => Promise<void>;
   /** Saves a change to one entry. Rejects on failure (the page shows the error). */
   onUpdate: (id: string, update: Partial<BudgetEntry>) => Promise<void>;
   /** Deletes one entry. Resolves `false` (or rejects) when the delete failed. */
@@ -861,35 +865,38 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     }
   };
 
-  const add = (category: string) => async (fields: NewEntryFields) => {
-    const isIncome = category === INCOME;
-    try {
-      await onAdd({
-        category,
-        name: fields.name,
-        amount: fields.amount,
-        frequency: fields.frequency,
-        isIncome,
-        isPrimaryIncome: false,
-        isEssential: isIncome ? true : fields.isEssential,
-        ownership: fields.ownership,
-        sharePercent: fields.sharePercent,
-        notes: null,
-        isDefault: false,
-      });
-      // The new row on the page is the confirmation, so no message.
-      return true;
-    } catch {
-      return false;
-    }
-  };
+  const add =
+    (category: string, options?: { replacesLinkedLine?: boolean }) =>
+    async (fields: NewEntryFields) => {
+      const isIncome = category === INCOME;
+      try {
+        const entry: NewBudgetEntry = {
+          category,
+          name: fields.name,
+          amount: fields.amount,
+          frequency: fields.frequency,
+          isIncome,
+          isPrimaryIncome: false,
+          isEssential: isIncome ? true : fields.isEssential,
+          ownership: fields.ownership,
+          sharePercent: fields.sharePercent,
+          notes: null,
+          isDefault: false,
+        };
+        await (options ? onAdd(entry, options) : onAdd(entry));
+        // The new row on the page is the confirmation, so no message.
+        return true;
+      } catch {
+        return false;
+      }
+    };
 
   // Typing over the linked take-home saves the person's own pay (owner item 7): back on the row it
   // replaced, unlinked, when there is one, else as a new entry. Either way it is then their figure.
   const overrideTakeHome = (amount: number) => {
     const replaced = entries.find((e) => shadowedIds.includes(e.id) && e.linkKind === "take_home");
     if (replaced) return save(replaced.id, { amount, linkKind: null });
-    return add(INCOME)({
+    return add(INCOME, { replacesLinkedLine: true })({
       name: "Take-home pay",
       amount,
       frequency: "monthly",
