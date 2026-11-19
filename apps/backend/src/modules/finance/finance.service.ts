@@ -1,7 +1,4 @@
-import type {
-  AccountDetailsOption,
-  CreateTransactionRequest as CreateTransactionDto,
-} from "@flump/api-contract";
+import type { AccountDetailsOption } from "@flump/api-contract";
 import { BankSyncOrchestrator, isBankProviderError } from "@flump/banking/server";
 import {
   BadRequestException,
@@ -17,16 +14,10 @@ import { Repository } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
 import { grantConsentOnce, withdrawConsent } from "../../audit/consents";
 import { safeErrorSummary } from "../../common/log-safe";
-import {
-  type KeysetOrder,
-  keysetPage,
-  type Page,
-  type PageRequest,
-} from "../../contract/pagination";
+import { type KeysetOrder, keysetPage, type PageRequest } from "../../contract/pagination";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
-import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import { toPublicConnection } from "../banking/bank-connection.public";
 import { revokeConnectionConsent } from "../banking/bank-connection-consent";
@@ -47,17 +38,6 @@ import {
   type UpdateAccountDto,
 } from "./account-intake.service";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** GET /transactions order: newest first, id as tiebreak (keyset pagination). */
-const TRANSACTION_ORDER: KeysetOrder = {
-  keys: [
-    { column: '"t"."timestamp"', kind: "timestamp" },
-    { column: '"t"."id"', kind: "uuid" },
-  ],
-  direction: "DESC",
-};
-
 /** GET /bank-connections order: newest first, id as tiebreak (keyset pagination). */
 const CONNECTION_ORDER: KeysetOrder = {
   keys: [
@@ -71,16 +51,11 @@ const CONNECTION_ORDER: KeysetOrder = {
 export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
   constructor(
-    @InjectRepository(Account)
-    private readonly accountRepository: Repository<Account>,
-    @InjectRepository(Transaction)
-    private readonly transactionRepository: Repository<Transaction>,
-    @InjectRepository(AccountDetail)
-    private readonly accountDetailRepository: Repository<AccountDetail>,
+    @InjectRepository(Account) readonly _accountRepository: Repository<Account>,
+    @InjectRepository(AccountDetail) readonly _accountDetailRepository: Repository<AccountDetail>,
     @InjectRepository(BankConnection)
     private readonly bankConnectionRepository: Repository<BankConnection>,
-    @InjectRepository(UserProfile)
-    private readonly userProfileRepository: Repository<UserProfile>,
+    @InjectRepository(UserProfile) readonly _userProfileRepository: Repository<UserProfile>,
     private readonly providerRegistry: BankProviderRegistry,
     private readonly configService: ConfigService,
     private readonly accountIntakeService: AccountIntakeService,
@@ -124,77 +99,6 @@ export class FinanceService {
    */
   async deleteAccount(userId: string, id: string) {
     return this.accountIntakeService.deleteAccount(userId, id);
-  }
-
-  /**
-   * One page of the user's transactions, newest first (BE-09 keyset paging, M-API1). The page size
-   * comes from PAGE_LIMITS.transactions, which carries BE-08's DEFAULT_TRANSACTION_PAGE and
-   * MAX_TRANSACTION_PAGE; `offset` (BE-08) skips rows when no cursor is sent. The id breaks
-   * timestamp ties so pages never overlap.
-   */
-  async listTransactions(
-    userId: string,
-    page: PageRequest & { offset?: number },
-    accountId?: string,
-  ): Promise<Page<Transaction>> {
-    // account_id is a uuid column: no account has a malformed id, so there is nothing to list
-    // (and casting it would be a database error). Re-checked so it holds with CONTRACT_MODE=off.
-    if (accountId !== undefined && !UUID.test(accountId)) return { items: [], nextCursor: null };
-    const qb = this.transactionRepository
-      .createQueryBuilder("t")
-      .where("t.userId = :userId", { userId });
-    if (accountId) qb.andWhere("t.accountId = :accountId", { accountId });
-    if (page.offset) qb.offset(page.offset);
-    return keysetPage(qb, TRANSACTION_ORDER, page);
-  }
-
-  /**
-   * Allow-list of client-writable transaction fields. `id` and `userId` are
-   * never copied from a request body.
-   */
-  private pickTransactionFields(body: CreateTransactionDto): Partial<Transaction> {
-    const fields = {
-      accountId: body.accountId,
-      amount: body.amount,
-      description: body.description,
-      category: body.category,
-      timestamp: this.parseTimestamp(body.timestamp),
-    };
-    return Object.fromEntries(
-      Object.entries(fields).filter(([, value]) => value !== undefined),
-    ) as Partial<Transaction>;
-  }
-
-  /**
-   * A client timestamp is stored as a Date, so the response carries the normalised ISO string
-   * rather than echoing whatever string was sent. Unparseable input is a 400, not a DB error.
-   */
-  private parseTimestamp(value: string | Date | undefined): Date | undefined {
-    if (value === undefined || value === null) return undefined;
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      throw new BadRequestException("timestamp must be a valid ISO date-time");
-    }
-    return date;
-  }
-
-  async createTransaction(userId: string, body: CreateTransactionDto) {
-    // accountId is a non-nullable column; an undefined id in a TypeORM where
-    // clause would match any row, so reject it before querying.
-    if (!body.accountId) {
-      throw new BadRequestException("accountId is required");
-    }
-    const account = await this.accountRepository.findOne({
-      where: { id: body.accountId, userId },
-    });
-    if (!account) {
-      throw new NotFoundException("Account not found");
-    }
-    const transaction = this.transactionRepository.create({
-      ...this.pickTransactionFields(body),
-      userId,
-    });
-    return this.transactionRepository.save(transaction);
   }
 
   async getBankConnections(userId: string) {

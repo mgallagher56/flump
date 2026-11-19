@@ -14,7 +14,6 @@ const profile = {
   id: "6f1c2b9e-3d4a-4b5c-8d6e-7f8091a2b3c4",
   userId: "user_01JABCDEF",
   email: "sam@example.com",
-  displayName: null,
   firstName: "Sam",
   lastName: null,
   avatarUrl: null,
@@ -23,7 +22,6 @@ const profile = {
   employmentType: "employed",
   annualSalary: 42000,
   monthlyTakeHome: 2750.5,
-  hasSecondIncome: false,
   secondIncomeMonthly: null,
   hasRentalIncome: false,
   rentalIncomeMonthly: null,
@@ -84,6 +82,19 @@ describe("profile response schemas", () => {
     expect(checkAgainst(UserProfileResponse, { ...profile, monthlySavingsTarget: 300 }).ok).toBe(
       false,
     );
+  });
+
+  it("carries neither displayName nor hasSecondIncome (system audit slice 9 part three)", () => {
+    // Their only reader was the deleted apps/mobile-companion. PATCH still accepts them for one
+    // release and stores nothing (profile.test.ts, user-profile.service.spec.ts).
+    const shapeKeys = Object.keys(UserProfileDto.shape);
+    expect(["displayName", "hasSecondIncome"].filter((key) => shapeKeys.includes(key))).toEqual([]);
+    expect(shapeKeys).toContain("secondIncomeMonthly");
+    for (const extra of [{ displayName: null }, { hasSecondIncome: false }]) {
+      expect(checkAgainst(UserProfileResponse, { ...profile, ...extra }).ok).toBe(false);
+      expect(checkAgainst(UpdateProfileResponse, { ...profile, ...extra }).ok).toBe(false);
+      expect(checkAgainst(UpdateChecklistResponse, { ...profile, ...extra }).ok).toBe(false);
+    }
   });
 
   it("rejects a decimal column that arrives as a string (B-05)", () => {

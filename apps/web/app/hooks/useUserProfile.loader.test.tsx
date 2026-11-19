@@ -69,15 +69,15 @@ describe("useUserProfile reads the root loader's saved profile (slice 8)", () =>
   });
 
   it("reloads saved data after a save, so the page shows it (L63)", async () => {
-    const api = backend({ updatedAt: V1, displayName: "Before" });
+    const api = backend({ updatedAt: V1, firstName: "Before" });
     vi.stubGlobal("fetch", api.fetchMock);
     const { result } = renderHook(() => useUserProfile(), {
       wrapper: withRootLoader(() => ({ userProfile: api.state.saved })),
     });
     await act(async () => {
-      await result.current.updateProfile({ displayName: "After" });
+      await result.current.updateProfile({ firstName: "After" });
     });
-    await waitFor(() => expect(result.current.profile.displayName).toBe("After"));
+    await waitFor(() => expect(result.current.profile.firstName).toBe("After"));
     expect(result.current.profile.updatedAt).toBe(V2);
   });
 
@@ -89,8 +89,8 @@ describe("useUserProfile reads the root loader's saved profile (slice 8)", () =>
     });
     await act(async () => {
       await Promise.all([
-        result.current.updateProfile({ displayName: "One" }),
-        result.current.updateProfile({ displayName: "Two" }),
+        result.current.updateProfile({ firstName: "One" }),
+        result.current.updateProfile({ firstName: "Two" }),
       ]);
     });
     expect(api.ifMatch).toEqual([`"${V1}"`, `"${V2}"`]);
@@ -127,7 +127,7 @@ describe("useUserProfile reads the root loader's saved profile (slice 8)", () =>
   });
 
   it("a save made just before leaving the page can skip its own reload", async () => {
-    const api = backend({ updatedAt: V1, displayName: "Before" });
+    const api = backend({ updatedAt: V1, firstName: "Before" });
     vi.stubGlobal("fetch", api.fetchMock);
     let loads = 0;
     const { result } = renderHook(() => useUserProfile(), {
@@ -138,9 +138,9 @@ describe("useUserProfile reads the root loader's saved profile (slice 8)", () =>
     });
     const before = loads;
     await act(async () => {
-      await result.current.updateProfile({ displayName: "After" }, { reload: false });
+      await result.current.updateProfile({ firstName: "After" }, { reload: false });
     });
-    expect(api.bodies).toEqual([{ displayName: "After" }]);
+    expect(api.bodies).toEqual([{ firstName: "After" }]);
     expect(loads).toBe(before);
   });
 

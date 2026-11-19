@@ -2,11 +2,9 @@ import type {
   ConnectBankRequest,
   CreateAccountRequest,
   CreateMortgageWithPropertyRequest,
-  CreateTransactionRequest,
-  TransactionListQuery,
   UpdateAccountRequest,
 } from "@flump/api-contract";
-import { AccountDetailsOption, MAX_TRANSACTION_OFFSET } from "@flump/api-contract";
+import { AccountDetailsOption } from "@flump/api-contract";
 import {
   BadRequestException,
   Body,
@@ -27,7 +25,7 @@ import type { Response } from "express";
 import { AuthGuard } from "../../auth/auth.guard";
 import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { expectedVersion, setEtag } from "../../contract/etag";
-import { resolveOffset, resolvePage, sendPage } from "../../contract/pagination";
+import { resolvePage, sendPage } from "../../contract/pagination";
 import { RateLimit } from "../../security/rate-limit.decorator";
 import {
   BankConnectionsEnabledGuard,
@@ -173,30 +171,6 @@ export class FinanceController {
   @RateLimit("destructive")
   async deleteAccount(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.deleteAccount(req.user.id, id);
-  }
-
-  @Get("transactions")
-  @HttpCode(200)
-  async getTransactions(
-    @Req() req: AuthenticatedRequest,
-    @Query() query?: Partial<TransactionListQuery>,
-    @Res({ passthrough: true }) res?: Response,
-  ) {
-    const page = await this.financeService.listTransactions(
-      req.user.id,
-      { ...resolvePage(query, "transactions"), ...resolveOffset(query, MAX_TRANSACTION_OFFSET) },
-      typeof query?.accountId === "string" ? query.accountId : undefined,
-    );
-    return sendPage(res, page);
-  }
-
-  @Post("transactions")
-  @HttpCode(201)
-  async createTransaction(
-    @Req() req: AuthenticatedRequest,
-    @Body() body: CreateTransactionRequest,
-  ) {
-    return this.financeService.createTransaction(req.user.id, body);
   }
 
   @Get("bank-connections")

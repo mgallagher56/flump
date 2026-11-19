@@ -438,7 +438,7 @@ describe("Architecture & Design System Laws", () => {
       const ALLOWED: Record<string, string> = {};
       const repoRoot = path.resolve(__dirname, "../../../..");
       const roots = [path.join(repoRoot, "packages/ui/src")];
-      for (const app of ["web", "marketing", "mobile-companion"]) {
+      for (const app of ["web", "marketing"]) {
         for (const sub of ["src", "app"]) roots.push(path.join(repoRoot, "apps", app, sub));
       }
       const files: string[] = [];

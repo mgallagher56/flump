@@ -44,7 +44,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 type KeyValue = string | number;
 
 /** A 400 `validation_failed` naming the query field, like the contract interceptor's. */
-const invalidQuery = (field: "limit" | "cursor" | "offset", message: string): BadRequestException =>
+const invalidQuery = (field: "limit" | "cursor", message: string): BadRequestException =>
   new BadRequestException({
     code: "validation_failed",
     message: "Request failed validation",
@@ -74,24 +74,6 @@ export function resolvePage(query: unknown, kind: PageKind): PageRequest {
     limit: parsed.data.limit ?? PAGE_LIMITS[kind].default,
     ...(parsed.data.cursor !== undefined ? { cursor: parsed.data.cursor } : {}),
   };
-}
-
-/**
- * The `offset` of a list that also pages by position (GET /transactions, BE-08): a whole number
- * from 0 to `max`, never combined with a cursor. Parsed here so the rule holds in shadow or off mode.
- */
-export function resolveOffset(query: unknown, max: number): { offset?: number } {
-  const raw = (query ?? {}) as Record<string, unknown>;
-  if (raw.offset === undefined || raw.offset === "") return {};
-  const n =
-    typeof raw.offset === "number" || typeof raw.offset === "string" ? Number(raw.offset) : NaN;
-  if (!Number.isInteger(n) || n < 0 || n > max) {
-    throw invalidQuery("offset", `must be a whole number from 0 to ${max}`);
-  }
-  if (raw.cursor !== undefined) {
-    throw invalidQuery("offset", "cannot be combined with cursor");
-  }
-  return n === 0 ? {} : { offset: n };
 }
 
 export function encodeCursor(values: readonly KeyValue[]): string {

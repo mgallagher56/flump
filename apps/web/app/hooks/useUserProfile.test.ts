@@ -55,12 +55,12 @@ describe("useUserProfile", () => {
 
   test("normalizeProfile handles partial data correctly", () => {
     const profile = normalizeProfile({
-      displayName: "Jane Doe",
+      firstName: "Jane Doe",
       annualSalary: 60000,
       hasMortgage: true,
     });
 
-    expect(profile.displayName).toBe("Jane Doe");
+    expect(profile.firstName).toBe("Jane Doe");
     expect(profile.annualSalary).toBe(60000);
     expect(profile.hasMortgage).toBe(true);
     expect(profile.currency).toBe("GBP");
@@ -71,7 +71,7 @@ describe("useUserProfile", () => {
     api.answer(profileFixture);
 
     await act(async () => {
-      await result.current.updateProfile({ displayName: "X" });
+      await result.current.updateProfile({ firstName: "X" });
     });
     const [url, init] = api.fetchMock.mock.calls[0];
     expect(url).toBe("/api/user-profile");
@@ -81,35 +81,35 @@ describe("useUserProfile", () => {
   test("updateProfile rejects with an unavailable BackendError on 503", async () => {
     const { result } = renderProfileHook();
     api.answer(undefined, 503);
-    await expect(result.current.updateProfile({ displayName: "X" })).rejects.toMatchObject({
+    await expect(result.current.updateProfile({ firstName: "X" })).rejects.toMatchObject({
       name: "BackendError",
       kind: "server",
     });
     api.answerWith(() => {
       throw new TypeError("Failed to fetch");
     });
-    await expect(result.current.updateProfile({ displayName: "X" })).rejects.toMatchObject({
+    await expect(result.current.updateProfile({ firstName: "X" })).rejects.toMatchObject({
       kind: "unavailable",
     });
   });
 
   test("updateProfile sends a PATCH request, then shows the reloaded saved profile", async () => {
     const { result } = renderProfileHook();
-    api.answer({ ...profileFixture, displayName: "Updated User", annualSalary: 80000 });
+    api.answer({ ...profileFixture, firstName: "Updated User", annualSalary: 80000 });
 
     await act(async () => {
-      await result.current.updateProfile({ displayName: "Updated User" });
+      await result.current.updateProfile({ firstName: "Updated User" });
     });
 
     expect(api.fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/user-profile"),
       expect.objectContaining({
         method: "PATCH",
-        body: JSON.stringify({ displayName: "Updated User" }),
+        body: JSON.stringify({ firstName: "Updated User" }),
       }),
     );
     // Slice 8: the hook reloads saved data rather than storing the response.
-    await waitFor(() => expect(result.current.profile.displayName).toBe("Updated User"));
+    await waitFor(() => expect(result.current.profile.firstName).toBe("Updated User"));
   });
 
   test("markChecklistStep sends checklist update", async () => {

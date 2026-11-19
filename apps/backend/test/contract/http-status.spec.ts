@@ -83,7 +83,6 @@ describe("HTTP success status", () => {
         "mcpTokens.create",
         "tax.bulkCreate",
         "tax.create",
-        "transactions.create",
       ].sort(),
     );
     for (const route of allRoutes.filter((r) => successStatusOf(r) === 201)) {

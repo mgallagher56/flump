@@ -8,7 +8,6 @@ import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
-import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
@@ -90,7 +89,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       // The provider registry and config are only used by bank sync, which load() never calls.
       const finance = new FinanceService(
         repo(Account),
-        repo(Transaction),
         repo(AccountDetail),
         repo(BankConnection),
         repo(UserProfile),

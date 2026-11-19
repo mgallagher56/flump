@@ -38,7 +38,6 @@ export const DEFAULT_FINANCIAL_BASELINE: FinancialBaseline = {
 export interface UserProfileData {
   id?: string;
   userId?: string;
-  displayName?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
@@ -56,7 +55,6 @@ export interface UserProfileData {
   annualSalary?: number | null;
   monthlyTakeHome?: number | null;
   studentLoanPlan?: string | null;
-  hasSecondIncome?: boolean;
   secondIncomeMonthly?: number | null;
   hasRentalIncome?: boolean;
   rentalIncomeMonthly?: number | null;

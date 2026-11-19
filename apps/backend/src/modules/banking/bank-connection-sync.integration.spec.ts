@@ -14,7 +14,6 @@ import { typeOrmOptionsFromEnv } from "../../config/typeorm.options";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
-import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../testing/dbTestMode";
@@ -123,7 +122,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
   const financeWith = (provider: BankProvider | undefined) =>
     financeServiceWithIntake(
       ds.getRepository(Account),
-      ds.getRepository(Transaction),
       ds.getRepository(AccountDetail),
       ds.getRepository(BankConnection),
       ds.getRepository(UserProfile),

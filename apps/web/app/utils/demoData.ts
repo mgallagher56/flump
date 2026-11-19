@@ -178,7 +178,6 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     ];
 
     const userProfile: Partial<UserProfile> = {
-      displayName: "Sam Jordan",
       firstName: "Sam",
       lastName: "Jordan",
       annualSalary: 34000,
@@ -339,7 +338,6 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     ];
 
     const userProfile: Partial<UserProfile> = {
-      displayName: "Jordan Taylor",
       firstName: "Jordan",
       lastName: "Taylor",
       annualSalary: 39000,
@@ -562,13 +560,11 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
   ];
 
   const userProfile: Partial<UserProfile> = {
-    displayName: "Morgan Vance",
     firstName: "Morgan",
     lastName: "Vance",
     annualSalary: 100000,
     employmentType: "employed",
     monthlyTakeHome: 5326,
-    hasSecondIncome: false,
     hasRentalIncome: true,
     rentalIncomeMonthly: 1200,
     hasMortgage: true,

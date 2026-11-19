@@ -50,8 +50,6 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "POST /accounts/mortgage-with-property": finance,
   "PATCH /accounts/:id": finance,
   "DELETE /accounts/:id": finance,
-  "GET /transactions": finance,
-  "POST /transactions": finance,
   "GET /bank-connections": finance,
   "GET /bank-connections/capability": finance,
   "POST /bank-connections": finance,

@@ -80,12 +80,19 @@ export function moneyOrNull(value: unknown, field: string): number | null {
 /** The profile row as it goes on the wire (E21 contract): every key present, decimals as numbers. */
 export function formatProfileRow(profile: UserProfile) {
   // last_active_at is retention bookkeeping (BE-06), not part of the profile contract.
-  const { lastActiveAt: _lastActiveAt, ...rest } = profile;
+  // displayName and hasSecondIncome (system audit slice 9 part three): their only reader was the
+  // deleted mobile app. The columns stay (and stay in the export) until the column-drop PR; the
+  // API no longer returns them.
+  const {
+    lastActiveAt: _lastActiveAt,
+    displayName: _displayName,
+    hasSecondIncome: _hasSecondIncome,
+    ...rest
+  } = profile;
   return {
     ...rest,
     // Nullable columns with no DB default are absent from a just-inserted entity; pin them to
     // null so every response has the same keys (E21 contract).
-    displayName: profile.displayName ?? null,
     avatarUrl: profile.avatarUrl ?? null,
     employmentType: profile.employmentType ?? null,
     firstName: profile.firstName ?? null,

@@ -36,7 +36,36 @@ const RETIRED_PROFILE_FIELDS: Record<string, unknown> = {
   dashboardWidgetConfig: {},
 };
 
+/**
+ * System audit slice 9 part three: profile fields whose only reader was the deleted mobile app.
+ * The responses no longer carry them; PATCH accepts and ignores them for one release.
+ */
+const RETIRED_PART_THREE_FIELDS: Record<string, unknown> = {
+  displayName: "Sam Taylor",
+  hasSecondIncome: true,
+};
+
 describe("UpdateProfileRequest", () => {
+  it.each(Object.entries(RETIRED_PART_THREE_FIELDS))(
+    "still accepts %s for one release (system audit slice 9 part three)",
+    (key, value) => {
+      expect(UpdateProfileRequest.safeParse({ [key]: value }).success).toBe(true);
+    },
+  );
+
+  it("accepts an old-shaped payload with displayName, hasSecondIncome and current fields", () => {
+    const parsed = UpdateProfileRequest.safeParse({
+      ...RETIRED_PART_THREE_FIELDS,
+      displayName: null,
+      secondIncomeMonthly: 400,
+      annualSalary: 41000,
+    });
+    expect(parsed.success).toBe(true);
+    expect(
+      UpdateProfileRequest.safeParse({ ...RETIRED_PART_THREE_FIELDS, annualSalary: 41000 }).success,
+    ).toBe(true);
+  });
+
   it.each(Object.entries(RETIRED_PROFILE_FIELDS))(
     "refuses the retired field %s as an unknown key",
     (key, value) => {

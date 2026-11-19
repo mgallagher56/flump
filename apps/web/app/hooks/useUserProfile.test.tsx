@@ -68,15 +68,15 @@ describe("useUserProfile", () => {
     const { result } = renderProfileHook();
 
     // updateProfile success: slice 8 reloads saved data rather than storing the response.
-    api.answer({ ...profileFixture, displayName: "Updated User" });
+    api.answer({ ...profileFixture, firstName: "Updated User" });
     await act(async () => {
-      await result.current.updateProfile({ displayName: "Updated User" });
+      await result.current.updateProfile({ firstName: "Updated User" });
     });
-    await waitFor(() => expect(result.current.profile.displayName).toBe("Updated User"));
+    await waitFor(() => expect(result.current.profile.firstName).toBe("Updated User"));
 
     // updateProfile error
     api.answer(undefined, 503);
-    await expect(result.current.updateProfile({ displayName: "Fail" })).rejects.toThrow(/server/);
+    await expect(result.current.updateProfile({ firstName: "Fail" })).rejects.toThrow(/server/);
 
     // markChecklistStep success & failure
     api.answer({ ...profileFixture, setupChecklistCompletedSteps: ["budget"] });
@@ -138,7 +138,7 @@ describe("useUserProfile", () => {
     const { result } = renderProfileHook();
     const before = result.current.profile;
     api.answer(undefined, 204);
-    await expect(result.current.updateProfile({ displayName: "X" })).rejects.toMatchObject({
+    await expect(result.current.updateProfile({ firstName: "X" })).rejects.toMatchObject({
       kind: "bad-response",
     });
     api.answerWith(() => new Response("", { status: 200 }));

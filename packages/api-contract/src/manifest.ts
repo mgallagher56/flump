@@ -33,7 +33,6 @@ import {
   CreateTaxRecordRequest,
   UpdateTaxRecordRequest,
 } from "./domains/tax.js";
-import { CreateTransactionRequest, TransactionListQuery } from "./domains/transactions.js";
 import { type PageKind, pageQuery } from "./pagination.js";
 import { Uuid } from "./primitives.js";
 import {
@@ -52,7 +51,6 @@ import {
   CreateAccountResponse,
   CreateMcpTokenResponse,
   CreateMortgageWithPropertyResponse,
-  CreateTransactionResponse,
   DeleteAccountResponse,
   DeleteBankConnectionResponse,
   DeleteBudgetEntryResponse,
@@ -74,7 +72,6 @@ import {
   SyncBankConnectionResponse,
   TaxRecordListResponse,
   TaxRecordResponse,
-  TransactionListResponse,
   UpdateAccountResponse,
   UpdateChecklistResponse,
   UpdateProfileResponse,
@@ -166,7 +163,6 @@ export const CONTRACT_GROUPS = [
   "tax",
   "profile",
   "bank-connections",
-  "transactions",
   "snapshots",
   "imports",
   "mcp-tokens",
@@ -359,30 +355,6 @@ export const routes = {
       body: RevertImportRequest,
       group: "imports",
       response: ImportBatchResponse,
-    }),
-  },
-  transactions: {
-    list: defineRoute({
-      id: "transactions.list",
-      method: "GET",
-      path: "transactions",
-      auth: "user",
-      ownership: "user",
-      query: TransactionListQuery,
-      group: "transactions",
-      response: TransactionListResponse,
-      page: "transactions",
-    }),
-    create: defineRoute({
-      id: "transactions.create",
-      method: "POST",
-      status: 201,
-      path: "transactions",
-      auth: "user",
-      ownership: "user",
-      body: CreateTransactionRequest,
-      group: "transactions",
-      response: CreateTransactionResponse,
     }),
   },
   bankConnections: {

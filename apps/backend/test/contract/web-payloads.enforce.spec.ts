@@ -100,6 +100,21 @@ describe("web payloads in enforce mode", () => {
     expect(() => passes("PATCH", "/user-profile", { annualSalary: 41000 })).not.toThrow();
   });
 
+  it("still accepts PATCH /user-profile with displayName or hasSecondIncome for one release (system audit slice 9 part three)", () => {
+    // Their only reader was the deleted mobile app; the backend stores nothing for them.
+    const retired: Record<string, unknown> = { displayName: "Sam Taylor", hasSecondIncome: true };
+    for (const [key, value] of Object.entries(retired)) {
+      expect(() => passes("PATCH", "/user-profile", { [key]: value })).not.toThrow();
+    }
+    expect(() =>
+      passes("PATCH", "/user-profile", {
+        ...retired,
+        secondIncomeMonthly: 400,
+        annualSalary: 41000,
+      }),
+    ).not.toThrow();
+  });
+
   it("rejects a malformed id on an enforced route", () => {
     expect(() => passes("PATCH", "/accounts/:id", { balance: 1 }, { id: "nope" })).toThrow();
   });

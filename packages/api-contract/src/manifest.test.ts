@@ -3,10 +3,15 @@ import { allRoutes, CONTRACT_GROUPS, findRoute, NON_JSON_RESPONSE_ROUTES } from 
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 59 routes (57 prior routes, plus the E33 retirement-plan get and upsert routes, plus the slice 4 mortgage-with-property create and check-ins read, less GET /portfolio-snapshot removed by audit slice 3 and PATCH /accounts/balances removed by slice 4) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(58);
+  it("has 56 routes (58 before system audit slice 9 removed GET and POST /transactions) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(56);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
+  });
+
+  it("has no transactions routes (system audit slice 9: only the deleted mobile app called them)", () => {
+    expect(allRoutes.filter((r) => r.id.startsWith("transactions."))).toEqual([]);
+    expect(allRoutes.filter((r) => r.path === "transactions")).toEqual([]);
   });
 
   it("only uses declared groups and resolves alias targets", () => {
@@ -87,7 +92,7 @@ describe("request schemas", () => {
     expect(checkAgainst(body("accounts.update"), { accountSubtype: "rental" }).ok).toBe(true);
   });
 
-  it("validates mortgage term fields and the transactions accountId filter", () => {
+  it("validates mortgage term fields", () => {
     const create = { name: "Home", type: "Mortgage", balance: -200000 };
     expect(
       checkAgainst(body("accounts.create"), {
@@ -102,13 +107,6 @@ describe("request schemas", () => {
       false,
     );
     expect(checkAgainst(body("accounts.update"), { termMonths: null }).ok).toBe(true);
-
-    const query = allRoutes.find((r) => r.id === "transactions.list")?.query as never;
-    expect(checkAgainst(query, {}).ok).toBe(true);
-    expect(checkAgainst(query, { accountId: "6f1c6a4e-5b0e-4a63-9d0a-3f2f2a9d1c11" }).ok).toBe(
-      true,
-    );
-    expect(checkAgainst(query, { accountId: "1 OR 1=1" }).ok).toBe(false);
   });
 
   it("never puts values in issues", () => {

@@ -1,10 +1,4 @@
-import {
-  type CreateAccountRequest,
-  type CreateTransactionRequest,
-  DEFAULT_TRANSACTION_PAGE,
-  MAX_TRANSACTION_OFFSET,
-  MAX_TRANSACTION_PAGE,
-} from "@flump/api-contract";
+import type { CreateAccountRequest } from "@flump/api-contract";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { financeServiceWithIntake } from "../../testing/finance-service";
@@ -12,8 +6,6 @@ import { createInMemoryRepository, fakeListQueryBuilder } from "../../testing/in
 import { withManager } from "../../testing/with-manager";
 import { FinanceController } from "./finance.controller";
 import type { FinanceService } from "./finance.service";
-
-const ACC_1 = "00000000-0000-4000-8000-000000000001";
 
 describe("FinanceController & FinanceService", () => {
   const createMocks = () => {
@@ -101,7 +93,6 @@ describe("FinanceController & FinanceService", () => {
     });
     const service = financeServiceWithIntake(
       mockAccountRepo,
-      mockTransactionRepo,
       mockAccountDetailRepo,
       mockBankConnRepo,
       mockProfileRepo,
@@ -201,68 +192,9 @@ describe("FinanceController & FinanceService", () => {
     ).rejects.toThrow(BadRequestException);
   });
 
-  it("bounds GET /transactions: limit and offset page it, and anything out of range is a 400", async () => {
-    const { controller, mockTransactionRepo } = createMocks();
+  it("handles bank connections listing", async () => {
+    const { controller, mockBankConnRepo } = createMocks();
     const req = { user: { id: "u1" } };
-    const rows = Array.from({ length: 80 }, (_, i) => ({ id: `tx-${i}`, userId: "u1" }));
-    mockTransactionRepo.createQueryBuilder.mockImplementation(() =>
-      fakeListQueryBuilder(() => rows),
-    );
-
-    const page = await controller.getTransactions(req, { limit: "25", offset: "50" } as never);
-    expect(page.map((t) => t.id)).toEqual(rows.slice(50, 75).map((r) => r.id));
-    expect(await controller.getTransactions(req)).toHaveLength(
-      Math.min(80, DEFAULT_TRANSACTION_PAGE),
-    );
-    for (const query of [
-      { limit: "0" },
-      { limit: String(MAX_TRANSACTION_PAGE + 1) },
-      { limit: "2.5" },
-      { limit: "abc" },
-      { offset: "-1" },
-      { offset: String(MAX_TRANSACTION_OFFSET + 1) },
-      { offset: "10", cursor: "abc" },
-    ]) {
-      await expect(controller.getTransactions(req, query as never)).rejects.toThrow(
-        BadRequestException,
-      );
-    }
-  });
-
-  it("lists no transactions for an accountId that is not a uuid, without querying", async () => {
-    const { controller, mockTransactionRepo } = createMocks();
-    mockTransactionRepo.createQueryBuilder.mockClear();
-    expect(
-      await controller.getTransactions({ user: { id: "u1" } }, { accountId: "acc-1" }),
-    ).toEqual([]);
-    expect(mockTransactionRepo.createQueryBuilder).not.toHaveBeenCalled();
-  });
-
-  it("handles transactions and bank connections listing", async () => {
-    const { controller, mockTransactionRepo, mockBankConnRepo } = createMocks();
-    const req = { user: { id: "u1" } };
-
-    const rows = [
-      { id: "tx-1", userId: "u1", accountId: ACC_1 },
-      { id: "tx-2", userId: "u1", accountId: "acc-2" },
-      { id: "tx-3", userId: "u2", accountId: ACC_1 },
-    ];
-    mockTransactionRepo.createQueryBuilder.mockImplementation(() =>
-      fakeListQueryBuilder(() => rows),
-    );
-    expect((await controller.getTransactions(req)).map((t) => t.id)).toEqual(["tx-1", "tx-2"]);
-    expect((await controller.getTransactions(req, { accountId: ACC_1 })).map((t) => t.id)).toEqual([
-      "tx-1",
-    ]);
-    // A page of one sets X-Next-Cursor (from Postgres in real use; empty keys here).
-    const res = { setHeader: vi.fn() };
-    expect(
-      await controller.getTransactions(req, { limit: "1" } as never, res as never),
-    ).toHaveLength(1);
-    expect(res.setHeader).toHaveBeenCalledWith("X-Next-Cursor", expect.any(String));
-    await expect(
-      controller.getTransactions(req, { limit: String(MAX_TRANSACTION_PAGE + 1) } as never),
-    ).rejects.toThrow(BadRequestException);
 
     await controller.getBankConnections(req);
     expect(mockBankConnRepo.createQueryBuilder).toHaveBeenCalled();
@@ -362,7 +294,6 @@ describe("FinanceController & FinanceService", () => {
       });
       const service = financeServiceWithIntake(
         accountRepo,
-        transactionRepo,
         accountDetailRepo,
         bankConnRepo,
         profileRepo,
@@ -372,8 +303,8 @@ describe("FinanceController & FinanceService", () => {
       return {
         controller: new FinanceController(service),
         accountRepo,
-        transactionRepo,
         accountDetailRepo,
+        transactionRepo,
         bankConnRepo,
       };
     };
@@ -414,29 +345,6 @@ describe("FinanceController & FinanceService", () => {
         name: "Savings",
       });
       expect(accountRepo.rows.filter((r) => r.userId === "userB")).toHaveLength(1);
-    });
-
-    it("transaction: B sees none of A's transactions and cannot write into or against A's", async () => {
-      const { controller, transactionRepo } = createScopedController();
-
-      expect(await controller.getTransactions(userB)).toEqual([]);
-      expect(await controller.getTransactions(userB, { accountId: "acc-A" })).toEqual([]);
-
-      await expect(
-        controller.createTransaction(userB, {
-          id: "tx-A",
-          userId: "userA",
-          accountId: "acc-A",
-          amount: 999,
-          description: "Forged",
-          category: "Other",
-        } as unknown as CreateTransactionRequest),
-      ).rejects.toThrow(NotFoundException);
-
-      expect(transactionRepo.rows).toEqual([
-        { id: "tx-A", userId: "userA", accountId: "acc-A", amount: -5, description: "Coffee" },
-      ]);
-      expect(await controller.getTransactions(userA)).toHaveLength(1);
     });
 
     it("bank connection: B gets not-found on sync and delete of A's connection, which is unchanged", async () => {

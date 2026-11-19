@@ -16,8 +16,6 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - ORM: **TypeORM** connecting to PostgreSQL.
   - Testing: **Vitest**.
 - **`apps/marketing`**: An Express + Vite SSR React application for marketing pages.
-- **`apps/mobile-companion`**: A mobile app built using **Expo / React Native**.
-  - Styling: **TailwindCSS v4 / NativeWind v4**.
 
 ### Packages
 
@@ -115,7 +113,6 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 - **Feature Synchronization**: When introducing a new feature, ensure all parts of the monorepo are updated in sync:
   - **Backend (`apps/backend`)**: Keep the NestJS backend up to date, adding necessary API endpoints, database entities, and validation schemas to support the new capability.
   - **Web Client (`apps/web`)**: Implement the corresponding user interface and state flows in the web application.
-  - **Mobile Companion (`apps/mobile-companion`)**: Guarantee that feature parity exists on the mobile application, matching the web app's functionality.
   - **Marketing Website (`apps/marketing`)**: Update marketing pages, documentation, or landing layouts with appropriate feature descriptions, copy, or visual highlights showcasing the new capability.
 
 ### 11. Documentation Maintenance & Feature Cataloging
