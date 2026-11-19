@@ -5,6 +5,7 @@ import AccountDetails from "./AccountDetails";
 const mocks = vi.hoisted(() => ({
   mockFetcherSubmit: vi.fn(),
   fetcherData: { current: null as unknown },
+  account: { current: { id: "123456", name: "Monzo Current" } as Record<string, unknown> },
   mockAccountDetails: [
     {
       month: 1,
@@ -135,7 +136,7 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: () => ({
       accountDetails: mocks.mockAccountDetails,
-      account: { id: "123456", name: "Monzo Current" },
+      account: mocks.account.current,
     }),
     useRevalidator: () => ({ revalidate: vi.fn() }),
     useFetcher: () => ({
@@ -168,6 +169,37 @@ describe("<AccountDetails />", () => {
     expect(container.querySelector("input")).toBeNull();
     expect(queryByTitle("Delete 2023")).toBeNull();
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+  });
+});
+
+describe("estimated return from recorded balances", () => {
+  test("shows for an investment account, beside its assumed return", () => {
+    mocks.account.current = {
+      id: "123456",
+      name: "Stocks and Shares ISA",
+      type: "Investment",
+      interestRate: 5,
+      monthlyContribution: null,
+    };
+    try {
+      const { getByRole } = customRender(<AccountDetails />);
+      const region = getByRole("region", {
+        name: "Estimated return from your recorded balances",
+      });
+      // Every recorded month is £1,000 with nothing paid in: 0% each month, 0.0% overall.
+      expect(region.textContent).toContain("Overall, a year on average");
+      expect(region.textContent).toContain("0.0%");
+      expect(region.textContent).toContain("Your estimated annual return");
+    } finally {
+      mocks.account.current = { id: "123456", name: "Monzo Current" };
+    }
+  });
+
+  test("does not show for other accounts", () => {
+    const { queryByRole } = customRender(<AccountDetails />);
+    expect(
+      queryByRole("region", { name: "Estimated return from your recorded balances" }),
+    ).toBeNull();
   });
 });
 
