@@ -54,7 +54,22 @@ export interface UserDataTable<E extends ObjectLiteral = ObjectLiteral> {
     batchSize: number;
   };
   reset: ResetHandling;
+  /**
+   * Where each column sits in the value map (docs/system/value-map.yaml), for the "One home per
+   * value" check (scripts/check-value-map.ts). Either every column is tied to the id of the fact it
+   * holds or listed as holding no fact, with the reason; or the whole table holds no fact about the
+   * user. user-data-registry.spec.ts checks that every column is covered exactly once.
+   */
+  valueMap: ValueMapTie<E>;
 }
+
+/** A column's place in the value map: the id of the fact it holds, or why it holds none. */
+type ValueMapTie<E> =
+  | {
+      facts: Partial<Record<keyof E & string, string>>;
+      notFacts: Partial<Record<keyof E & string, string>>;
+    }
+  | { noUserFacts: string };
 
 /** Checks an entry against its own entity's columns, then widens it for the shared list. */
 const table = <E extends ObjectLiteral>(t: UserDataTable<E>): UserDataTable =>
@@ -63,6 +78,11 @@ const table = <E extends ObjectLiteral>(t: UserDataTable<E>): UserDataTable =>
 // a description of the userId field, not a credential
 // nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
 const USER_ID_IN_ENVELOPE = "the same for every row; given once as the document's userId";
+
+/** Reasons for columns that hold no fact about the user, shared by the valueMap entries. */
+const ROW_ID = "the row's own id";
+const OWNER = "the owner of the row";
+const WRITTEN_AT = "when the row was written, kept by the database";
 
 /**
  * Every entity that carries a user id, with its delete, export and reset handling. The order is the
@@ -85,6 +105,10 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       batchSize: 500,
     },
     reset: { kind: "financial-clear", reason: "account movements are financial data" },
+    valueMap: {
+      noUserFacts:
+        "holds no rows: nothing writes it while bank sync is deferred (system audit decision 12). Tie its columns to facts when bank sync returns",
+    },
   }),
   table({
     entity: AccountDetail,
@@ -108,6 +132,22 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       batchSize: 500,
     },
     reset: { kind: "financial-clear", reason: "monthly balance history is financial data" },
+    valueMap: {
+      facts: {
+        value: "balance-history",
+        year: "balance-history",
+        month: "balance-history",
+        asOfDate: "balance-history",
+        source: "balance-history",
+      },
+      notFacts: {
+        id: ROW_ID,
+        accountId: "the account the month belongs to",
+        userId: OWNER,
+        importBatchId: "the import that wrote the row, kept so the import can be undone",
+        updatedAt: WRITTEN_AT,
+      },
+    },
   }),
   table({
     entity: SnapshotCheckin,
@@ -121,6 +161,10 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       batchSize: 500,
     },
     reset: { kind: "financial-clear", reason: "check-ins confirm balances that reset removes" },
+    valueMap: {
+      facts: { month: "check-in-done", completedAt: "check-in-done" },
+      notFacts: { userId: OWNER },
+    },
   }),
   table({
     entity: ImportBatch,
@@ -149,6 +193,22 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       batchSize: 20,
     },
     reset: { kind: "financial-clear", reason: "staged imports hold account names and values" },
+    valueMap: {
+      facts: { payload: "balance-history", revertData: "balance-history" },
+      notFacts: {
+        id: ROW_ID,
+        userId: OWNER,
+        status: "where the import is in its staged, committed or reverted steps",
+        idempotencyKey: "a random retry key made by the browser",
+        counts: "how many rows the import holds, for the review screen",
+        validationErrors: "problems found in the file, for the review screen",
+        createdAt: WRITTEN_AT,
+        updatedAt: WRITTEN_AT,
+        committedAt: "when the import was committed",
+        revertedAt: "when the import was undone",
+        expiresAt: "when an uncommitted import is cleared",
+      },
+    },
   }),
   table({
     entity: Account,
@@ -184,6 +244,33 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       batchSize: 500,
     },
     reset: { kind: "financial-clear", reason: "accounts and balances are financial data" },
+    valueMap: {
+      facts: {
+        name: "account-name",
+        type: "account-type",
+        accountSubtype: "account-type",
+        isCurrent: "account-type",
+        balance: "account-balance",
+        interestRate: "account-rate",
+        monthlyContribution: "account-monthly-amount",
+        creditLimit: "card-limit-and-zero-percent-end",
+        promoZeroPercentUntil: "card-limit-and-zero-percent-end",
+        termMonths: "mortgage-term-and-fix-end",
+        fixedRateEndDate: "mortgage-term-and-fix-end",
+        currency: "currency-and-country",
+        studentLoanPlan: "student-loan-plan",
+        ownership: "ownership-share",
+        sharePercent: "ownership-share",
+      },
+      notFacts: {
+        id: ROW_ID,
+        userId: OWNER,
+        connectionId: "the bank link for the deferred bank sync; empty today",
+        externalAccountId: "the bank's own id for the deferred bank sync; empty today",
+        createdAt: WRITTEN_AT,
+        updatedAt: WRITTEN_AT,
+      },
+    },
   }),
   table({
     entity: BankConnection,
@@ -215,6 +302,10 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       kind: "financial-clear",
       reason: "bank links carry credentials to financial data; consent is revoked first",
     },
+    valueMap: {
+      noUserFacts:
+        "credentials and status of a bank link for the deferred bank sync; no fact about the person's money",
+    },
   }),
   table({
     entity: BankOAuthState,
@@ -235,6 +326,9 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     reset: {
       kind: "revoke",
       reason: "a pending bank consent could link a bank after the reset; it is cancelled",
+    },
+    valueMap: {
+      noUserFacts: "a pending bank consent, kept for minutes while the bank redirects back",
     },
   }),
   table({
@@ -264,6 +358,22 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       batchSize: 500,
     },
     reset: { kind: "financial-clear", reason: "income and outgoings are financial data" },
+    valueMap: {
+      facts: {
+        category: "budget-entries",
+        name: "budget-entries",
+        amount: "budget-entries",
+        frequency: "budget-entries",
+        isIncome: "budget-entries",
+        isPrimaryIncome: "budget-entries",
+        isEssential: "budget-entries",
+        notes: "budget-entries",
+        isDefault: "budget-entries",
+        ownership: "budget-entries",
+        sharePercent: "budget-entries",
+      },
+      notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
+    },
   }),
   table({
     entity: TaxRecord,
@@ -294,6 +404,23 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       batchSize: 5,
     },
     reset: { kind: "financial-clear", reason: "tax records and receipts are financial data" },
+    valueMap: {
+      facts: {
+        type: "tax-records",
+        source: "tax-records",
+        category: "tax-records",
+        name: "tax-records",
+        amount: "tax-records",
+        frequency: "tax-records",
+        date: "tax-records",
+        endDate: "tax-records",
+        notes: "tax-records",
+        receiptFilename: "tax-records",
+        receiptMimeType: "tax-records",
+        receiptData: "tax-records",
+      },
+      notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
+    },
   }),
   table({
     entity: AgentAuditEvent,
@@ -325,6 +452,9 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       reason:
         "security log of what agents did (tool names, timings, no amounts); kept 13 months so the person can still see past agent access",
     },
+    valueMap: {
+      noUserFacts: "a security log of what agents did: tool names and timings, no amounts",
+    },
   }),
   table({
     entity: AuditEvent,
@@ -342,6 +472,9 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       reason:
         "security record of sensitive actions (BE-06, H12), the reset itself among them; kept 13 months by the retention job",
     },
+    valueMap: {
+      noUserFacts: "a security record of sensitive actions, not a fact about the person's money",
+    },
   }),
   table({
     entity: Consent,
@@ -358,6 +491,9 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       kind: "keep",
       reason:
         "record of what the person agreed to and when; the reset withdraws the AI and bank consents rather than deleting them",
+    },
+    valueMap: {
+      noUserFacts: "a record of what the person agreed to and when, not a fact about their money",
     },
   }),
   table({
@@ -389,6 +525,9 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       kind: "revoke",
       reason: "an agent token reads financial data; a reset must not leave a working one behind",
     },
+    valueMap: {
+      noUserFacts: "an agent access token and its settings, not a fact about the person's money",
+    },
   }),
   table({
     entity: IdempotencyKey,
@@ -412,6 +551,10 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       kind: "financial-clear",
       reason:
         "stored create responses (BE-09 Idempotency-Key) echo the accounts and amounts a reset removes",
+    },
+    valueMap: {
+      noUserFacts:
+        "a stored create response kept so a retried request is not applied twice; the rows it describes are the facts",
     },
   }),
   table({
@@ -444,6 +587,23 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     reset: {
       kind: "financial-clear",
       reason: "retirement plan targets and assumptions are financial data",
+    },
+    valueMap: {
+      facts: {
+        retirementAge: "retirement-plan",
+        planToAge: "retirement-plan",
+        target: "retirement-plan",
+        housingOverride: "retirement-plan",
+        statePensionAge: "retirement-plan",
+        statePensionAnnualForecastGbp: "retirement-plan",
+        statePensionQualifyingYears: "retirement-plan",
+        growthRates: "investment-return",
+        inflationRate: "retirement-plan",
+        cashSavingsNominalRate: "retirement-plan",
+        realRentGrowthRate: "retirement-plan",
+        excludedAccountIds: "retirement-plan",
+      },
+      notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
     },
   }),
   table({
@@ -514,6 +674,66 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       kind: "financial-clear",
       reason:
         "the row stays (name, avatar and preferences are not financial); every financial field is set back to its default",
+    },
+    valueMap: {
+      facts: {
+        displayName: "name-and-avatar",
+        firstName: "name-and-avatar",
+        lastName: "name-and-avatar",
+        avatarUrl: "name-and-avatar",
+        currency: "currency-and-country",
+        country: "currency-and-country",
+        employmentType: "employment-type",
+        annualSalary: "salary",
+        monthlyTakeHome: "typed-take-home",
+        hasSecondIncome: "second-and-rental-income",
+        secondIncomeMonthly: "second-and-rental-income",
+        hasRentalIncome: "second-and-rental-income",
+        rentalIncomeMonthly: "second-and-rental-income",
+        hasMortgage: "housing-status",
+        mortgageType: "housing-status",
+        propertyOwnershipShare: "rental-share-for-tax",
+        hasBuyToLet: "buy-to-let-mortgage",
+        buyToLetCount: "buy-to-let-mortgage",
+        buyToLetPropertyValue: "home-value",
+        buyToLetMonthlyRental: "buy-to-let-rent",
+        buyToLetMortgageBalance: "buy-to-let-mortgage",
+        buyToLetMortgageRate: "buy-to-let-mortgage",
+        buyToLetMortgageType: "buy-to-let-mortgage",
+        pensionPercent: "pension-rates",
+        pensionEmployerPercent: "pension-rates",
+        isSalarySacrifice: "pension-rates",
+        isSalarySacrificeEmployerNi: "pension-rates",
+        monthlySavingsTarget: "savings-settings",
+        savingsAllocationMode: "savings-settings",
+        savingsDefaultInterestRate: "savings-settings",
+        setupChecklistCompletedSteps: "setup-checklist",
+        customBudgetCategories: "custom-budget-categories",
+        enabledPages: "enabled-pages-and-widgets",
+        dashboardWidgets: "enabled-pages-and-widgets",
+        dashboardWidgetOrder: "enabled-pages-and-widgets",
+        dashboardWidgetSizes: "enabled-pages-and-widgets",
+        dashboardWidgetConfig: "enabled-pages-and-widgets",
+        taxRegion: "tax-region",
+        birthYear: "birth-year",
+        checkInDay: "check-in-day",
+        studentLoanPlans: "student-loan-plan",
+        housingStatus: "housing-status",
+        monthlyHousingCost: "housing-cost",
+        monthlyOtherOutgoings: "other-outgoings",
+        netWorthCountsProperty: "net-worth-choices",
+        netWorthCountsStudentLoan: "net-worth-choices",
+      },
+      notFacts: {
+        id: ROW_ID,
+        userId: OWNER,
+        hasResetFinancialData:
+          "app state: the person has used reset; profile-view.ts then shows unset pension rates as 0",
+        onboardingCompleted: "app state: onboarding has finished, used to route the first visit",
+        lastActiveAt: "when the person last used the app, for the inactive-account policy",
+        createdAt: WRITTEN_AT,
+        updatedAt: WRITTEN_AT,
+      },
     },
   }),
 ];

@@ -1039,6 +1039,13 @@ facts:
         ref: "account_details (account, year, month)",
         path: apps/backend/src/entities/account-detail.entity.ts,
       }
+    other_stores:
+      - {
+          ref: "import_batches.payload, revert_data",
+          status: cache,
+          path: apps/backend/src/entities/import-batch.entity.ts,
+          note: "a staged import and the rows it replaced, kept until the import is committed, undone or expires",
+        }
     writers:
       - { surface: check-in, path: apps/backend/src/modules/snapshots/snapshots.service.ts }
       - {
@@ -1297,7 +1304,7 @@ facts:
       }
     other_stores:
       - {
-          ref: "user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type",
+          ref: "user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type, has_buy_to_let, buy_to_let_count",
           status: duplicate,
           path: apps/backend/src/entities/user-profile.entity.ts,
           note: "the Mortgage page's buy-to-let tab reads and writes these",
@@ -1793,6 +1800,37 @@ facts:
     links: [L64, L65, L66]
     verdict: duplicated
     findings: [CS-2, CS-3, CS-6]
+
+  - id: account-name
+    name: Account name
+    area: accounts
+    source_of_truth: { ref: accounts.name, path: apps/backend/src/entities/account.entity.ts }
+    writers:
+      - { surface: accounts, path: apps/web/app/features/accounts/accountFormBody.ts }
+      - { surface: imports, path: apps/backend/src/modules/imports/imports.service.ts }
+    readers:
+      - { surface: accounts, path: apps/web/app/routes/app.accounts._index.tsx }
+      - { surface: mcp-read, path: packages/mcp/src/tools/read/listAccounts.ts }
+    verdict: not-checked
+    note: "Added by slice 1 so every accounts column has an entry. The audit did not check it."
+
+  - id: currency-and-country
+    name: Currency and country
+    area: preferences
+    source_of_truth:
+      {
+        ref: "user_profiles.currency, country",
+        path: apps/backend/src/entities/user-profile.entity.ts,
+      }
+    other_stores:
+      - {
+          ref: accounts.currency,
+          status: default,
+          path: apps/backend/src/entities/account.entity.ts,
+          note: "a currency on each account as well as on the profile",
+        }
+    verdict: not-checked
+    note: "Added by slice 1 so every column has an entry. The audit did not check who reads it."
 
 figures:
   - id: net-worth
@@ -2320,3 +2358,117 @@ figures:
       - { surface: check-in, path: packages/finance-engine/src/check-in.ts }
     links: [L54]
     verdict: holds
+
+# Every browser storage and cookie key the code writes, user data or not. A key that holds a copy of
+# a fact names it under fact:. A trailing * means every key with that prefix.
+browser_storage:
+  - {
+      key: flump_financial_baseline_v2,
+      storage: localStorage,
+      user_data: true,
+      fact: salary,
+      path: apps/web/app/state/baseline.store.ts,
+      note: "the calculator baseline (salary, region and more); the signed-out seed, also read on some signed-in pages",
+    }
+  - {
+      key: flump_financial_baseline_v1,
+      storage: localStorage,
+      user_data: true,
+      fact: salary,
+      path: apps/web/app/state/baseline.store.ts,
+      note: "the older baseline key; read once, copied to v2 and removed",
+    }
+  - {
+      key: flump_onboarding_seed,
+      storage: localStorage,
+      user_data: true,
+      fact: salary,
+      path: packages/finance-engine/src/persistence.ts,
+      note: "the marketing calculators' answers (salary, debts, savings) carried into sign-up",
+    }
+  - {
+      key: flump_onboarding_seed,
+      storage: cookie,
+      user_data: true,
+      fact: salary,
+      path: packages/finance-engine/src/persistence.ts,
+      note: "the same seed as a cookie, kept for one hour so sign-up can finish",
+    }
+  - {
+      key: flump_setup_checklist_dismissed,
+      storage: localStorage,
+      user_data: true,
+      fact: setup-checklist,
+      path: apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx,
+      note: "the setup checklist was dismissed in this browser",
+    }
+  - {
+      key: flump_runway_calculator_settings,
+      storage: localStorage,
+      user_data: false,
+      path: apps/web/app/utils/runwayStorage.ts,
+      note: "an account choice older versions saved; now only removed",
+    }
+  - {
+      key: flump.budget.keptDebtRows,
+      storage: sessionStorage,
+      user_data: false,
+      path: apps/web/app/containers/budget/BudgetContainer.tsx,
+      note: "ids of budget debt rows the person chose to keep, for this browser session",
+    }
+  - {
+      key: flump-theme,
+      storage: localStorage,
+      user_data: false,
+      path: packages/ui/src/hooks/themeScript.ts,
+      note: "light, dark or system",
+    }
+  - {
+      key: flump.setup-step-count,
+      storage: sessionStorage,
+      user_data: false,
+      path: packages/ui/src/hooks/useSetupProgressOnce.ts,
+      note: "how many setup steps were done when the progress animation last ran",
+    }
+  - {
+      key: flump.scene-settled.*,
+      storage: sessionStorage,
+      user_data: false,
+      path: packages/ui/src/hooks/useSceneSettle.ts,
+      note: "which illustrations have already played their entry animation",
+    }
+  - {
+      key: flump-marketing-scroll,
+      storage: sessionStorage,
+      user_data: false,
+      path: apps/marketing/src/app-shell/ScrollManager.tsx,
+      note: "scroll position of each marketing page in history",
+    }
+  - {
+      key: flump_has_session,
+      storage: cookie,
+      user_data: false,
+      path: apps/web/app/security/session-cookies.server.ts,
+      note: "a marker the browser code reads to know a session may exist; no session data",
+    }
+  - {
+      key: flump_dev_session,
+      storage: cookie,
+      user_data: false,
+      path: apps/web/app/utils/devSession.server.ts,
+      note: "test-only session for the end-to-end suite",
+    }
+  - {
+      key: __Host-wos-session,
+      storage: cookie,
+      user_data: false,
+      path: apps/web/app/utils/sessionPolicy.server.ts,
+      note: "the sealed sign-in session in production",
+    }
+  - {
+      key: wos-session,
+      storage: cookie,
+      user_data: false,
+      path: apps/web/app/utils/sessionPolicy.server.ts,
+      note: "the sealed sign-in session in development, and the old production name that is cleared",
+    }

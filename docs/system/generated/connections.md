@@ -195,6 +195,11 @@ flowchart LR
   f_investment_return(["Estimated yearly return on an investment account"])
   s_savings --> f_investment_return
   f_investment_return -.-> s_savings
+  f_account_name(["Account name"])
+  s_accounts --> f_account_name
+  s_imports --> f_account_name
+  f_account_name -.-> s_accounts
+  f_account_name -.-> s_mcp_read
   g_net_worth{{"Net worth today"}}
   f_account_balance ==> g_net_worth
   f_ownership_share ==> g_net_worth
@@ -376,6 +381,7 @@ flowchart LR
   s_pension --> f_setup_checklist
   s_budget --> f_setup_checklist
   f_setup_checklist -.-> s_dashboard
+  f_currency_and_country(["Currency and country"])
 ```
 
 ## budget

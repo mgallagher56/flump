@@ -118,6 +118,32 @@ describe("user-data registry coverage", () => {
     }
   });
 
+  it.each(USER_DATA_REGISTRY.map((t) => [t.entity.name, t] as const))(
+    "%s: every column is tied to a value-map fact or marked as no fact, exactly once",
+    (_name, t) => {
+      // The same rule scripts/check-value-map.ts applies from the source text, here against
+      // TypeORM's real metadata, so a gap in the check's parser cannot hide a column. That script
+      // also checks each fact id against docs/system/value-map.yaml.
+      const tie = t.valueMap;
+      if ("noUserFacts" in tie) {
+        expect(tie.noUserFacts.length, t.entity.name).toBeGreaterThan(20);
+        return;
+      }
+      const all = columnsOf(t.entity)
+        .map((c) => c.propertyName)
+        .sort();
+      const facts = Object.keys(tie.facts);
+      const notFacts = Object.keys(tie.notFacts);
+      expect([...facts, ...notFacts].sort()).toEqual(all);
+      expect(facts.filter((c) => notFacts.includes(c))).toEqual([]);
+      for (const id of Object.values(tie.facts))
+        expect(String(id)).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      for (const reason of Object.values(tie.notFacts)) {
+        expect(String(reason).length).toBeGreaterThan(10);
+      }
+    },
+  );
+
   it("every table has a reset decision with a reason", () => {
     for (const t of USER_DATA_REGISTRY) {
       expect(["financial-clear", "revoke", "keep"]).toContain(t.reset.kind);
