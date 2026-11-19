@@ -1,3 +1,4 @@
+import { ALL_TAX_CATEGORIES } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import {
   broughtForwardRuleError,
@@ -80,7 +81,19 @@ describe("known tax record categories", () => {
     date: "2026-04-06",
   };
 
-  it("are the engine's lists, one per source, without the legacy salary", () => {
+  it("are exactly the engine's lists, one per source, without the legacy salary", () => {
+    // The contract holds its own copy of the ids (scripts load the contract before anything is
+    // built); this is what keeps the two equal.
+    for (const source of TAX_RECORD_SOURCES) {
+      expect(TAX_RECORD_CATEGORIES[source]).toEqual(
+        ALL_TAX_CATEGORIES.filter((c) => c.source === source && c.id !== "paye_salary").map(
+          (c) => c.id,
+        ),
+      );
+    }
+  });
+
+  it("list the rental ids by name", () => {
     expect(TAX_RECORD_CATEGORIES.rental).toEqual([
       "rental_income",
       "rent_rates_insurance",
