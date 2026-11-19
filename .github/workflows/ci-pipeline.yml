@@ -12,6 +12,8 @@ on:
     - cron: "17 6 * * 1"
 
 env:
+  # TEMP E41 P5 measurement: every task runs, no Turbo cache replay. Dropped before merge.
+  TURBO_FORCE: "true"
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
