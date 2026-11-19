@@ -49,8 +49,9 @@ export interface ConfirmDialogProps {
  * button so the focus ring shows what Enter will do. It stays safe by design: Enter acts once per
  * opening, a held or repeating key never fires it, and a key still held from the press that
  * opened the dialog is ignored until it has been released. Escape and Cancel cancel, and Enter on
- * a focused Cancel cancels. With `requireText`, focus starts on Cancel and Enter confirms only
- * from the field once the typed text matches. Focus returns to whatever opened it. Outside clicks
+ * a focused Cancel cancels; any other control in the dialog keeps its own Enter. With
+ * `requireText`, focus starts on Cancel and Enter confirms from the field or the confirm button
+ * only once the typed text matches. Focus returns to whatever opened it. Outside clicks
  * never dismiss it.
  */
 export const ConfirmDialog: FC<ConfirmDialogProps> = ({
@@ -72,6 +73,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const focusReturn = useDialogFocusReturn();
   const [typed, setTyped] = useState("");
   const inputId = useId();
@@ -116,7 +118,13 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
     enterFired.current = false;
   }, [open]);
 
-  // A failed attempt can be tried again with Enter.
+  // A failed attempt can be tried again with Enter: once an attempt settles (pending ends, so a
+  // second failure with the same text re-arms it too) or reports a new error.
+  const wasPending = useRef(pending);
+  useEffect(() => {
+    if (wasPending.current && !pending) enterFired.current = false;
+    wasPending.current = pending;
+  }, [pending]);
   useEffect(() => {
     if (error) enterFired.current = false;
   }, [error]);
@@ -147,16 +155,23 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
           onCloseAutoFocus={focusReturn.onCloseAutoFocus}
           onKeyDown={(event) => {
             if (event.key !== "Enter" || event.defaultPrevented) return;
-            const target = event.target as HTMLElement | null;
-            // Every Enter is handled here, never by a button's own click, so a held or repeating
-            // key cannot fire twice.
+            const target = event.target;
+            const onCancel = target === cancelRef.current;
+            const onConfirmButton = target === confirmRef.current;
+            const onField = inputRef.current !== null && target === inputRef.current;
+            const onDialog = target === event.currentTarget;
+            // Any other control (a link in the description, "Sign in again") keeps its own Enter.
+            if (!onCancel && !onConfirmButton && !onField && !onDialog) return;
+            // These Enters are handled here, never by a button's own click, so a held or
+            // repeating key cannot fire twice.
             event.preventDefault();
             if (event.repeat || !enterArmed.current || pending) return;
-            if (target === cancelRef.current) {
+            if (onCancel) {
               handleOpenChange(false);
               return;
             }
-            if (requireText !== undefined && target?.tagName !== "INPUT") return;
+            // A type-to-confirm dialog confirms from its field or its (enabled) confirm button.
+            if (requireText !== undefined && onDialog) return;
             if (!textMatches || enterFired.current) return;
             enterFired.current = true;
             void onConfirm();
@@ -180,6 +195,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
                 Type <strong>{requireText}</strong> to confirm
               </span>
               <input
+                ref={inputRef}
                 id={inputId}
                 type="text"
                 autoComplete="off"
