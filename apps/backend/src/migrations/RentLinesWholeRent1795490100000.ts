@@ -34,7 +34,7 @@ export class RentLinesWholeRent1795490100000 implements MigrationInterface {
       `CREATE TABLE "${RENT_SHARE_BACKFILL_TABLE}" (
          "id" serial PRIMARY KEY,
          "budget_entry_id" uuid NOT NULL REFERENCES "budget_entries"("id") ON DELETE CASCADE,
-         "old_ownership" varchar NOT NULL,
+         "old_sole_or_joint" varchar NOT NULL,
          "old_share_percent" smallint,
          "backfilled_at" timestamptz NOT NULL DEFAULT now()
        )`,
@@ -51,7 +51,7 @@ export class RentLinesWholeRent1795490100000 implements MigrationInterface {
          WHERE b."link_kind" = 'housing' AND b."ownership" = 'joint' AND u."housing_status" = 'renting'
        ),
        img AS (
-         INSERT INTO "${RENT_SHARE_BACKFILL_TABLE}" ("budget_entry_id", "old_ownership", "old_share_percent")
+         INSERT INTO "${RENT_SHARE_BACKFILL_TABLE}" ("budget_entry_id", "old_sole_or_joint", "old_share_percent")
          SELECT "id", "ownership", "share_percent" FROM t
        )
        UPDATE "budget_entries" b SET "ownership" = 'sole', "share_percent" = NULL
@@ -68,7 +68,7 @@ export class RentLinesWholeRent1795490100000 implements MigrationInterface {
     if (existing.length === 0) return;
     await queryRunner.query(`LOCK TABLE "budget_entries" IN SHARE ROW EXCLUSIVE MODE`);
     await queryRunner.query(
-      `UPDATE "budget_entries" b SET "ownership" = r."old_ownership", "share_percent" = r."old_share_percent"
+      `UPDATE "budget_entries" b SET "ownership" = r."old_sole_or_joint", "share_percent" = r."old_share_percent"
        FROM "${RENT_SHARE_BACKFILL_TABLE}" r WHERE r."budget_entry_id" = b."id"`,
     );
     await queryRunner.query(`DROP TABLE "${RENT_SHARE_BACKFILL_TABLE}"`);

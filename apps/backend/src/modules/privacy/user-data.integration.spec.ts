@@ -447,6 +447,25 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(rows.map((r) => r.account_id)).toEqual([accountB]);
   });
 
+  it("erases the slice 5 before-image (rent_share_backfill) with the user's budget lines", async () => {
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const lineOf = async (userId: string) =>
+      at(await ds.getRepository(BudgetEntry).findBy({ userId }), 0).id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        "INSERT INTO rent_share_backfill (budget_entry_id, old_sole_or_joint, old_share_percent) VALUES ($1, 'joint', 50)",
+        [await lineOf(userId)],
+      );
+    }
+    const lineB = await lineOf(USER_B);
+    await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    const rows: { budget_entry_id: string }[] = await ds.query(
+      "SELECT budget_entry_id FROM rent_share_backfill",
+    );
+    expect(rows.map((r) => r.budget_entry_id)).toEqual([lineB]);
+  });
+
   it("also removes history and transactions keyed to the user's accounts under another user_id", async () => {
     await seed(USER_A, "A");
     const account = at(await ds.getRepository(Account).findBy({ userId: USER_A }), 0);
