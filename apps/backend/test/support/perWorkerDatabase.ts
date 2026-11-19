@@ -20,7 +20,10 @@ export function workerDatabaseName(baseName: string, poolId: string): string {
     throw new Error("TEST_DATABASE_URL database name must be letters, digits, _ or -");
   }
   if (!/^\d+$/.test(poolId)) throw new Error("VITEST_POOL_ID must be a whole number");
-  return `${baseName}_w${poolId}`;
+  const name = `${baseName}_w${poolId}`;
+  // Postgres cuts names at 63 bytes; two cut names could be the same database.
+  if (Buffer.byteLength(name) > 63) throw new Error("TEST_DATABASE_URL database name is too long");
+  return name;
 }
 
 export function workerDatabaseUrl(baseUrl: string, poolId: string): string {
@@ -61,7 +64,8 @@ async function ensureDatabase(baseUrl: string, name: string): Promise<void> {
  * without a database URL (the specs then skip, or fail at collection under REQUIRE_DB_TESTS=1).
  */
 export async function setUpWorkerDatabase(env: NodeJS.ProcessEnv = process.env): Promise<void> {
-  const base = env.TEST_DATABASE_URL;
+  // The URL as first given, so a worker that runs several files never derives from a derived name.
+  const base = env.TEST_DATABASE_URL_BEFORE_WORKER ?? env.TEST_DATABASE_URL;
   const poolId = env.VITEST_POOL_ID;
   if (!base) return;
   // Without a worker id every worker would share the one database: refuse rather than race.
@@ -70,5 +74,6 @@ export async function setUpWorkerDatabase(env: NodeJS.ProcessEnv = process.env):
   assertSafeTestDatabase(base, env);
   const derived = workerDatabaseUrl(base, poolId);
   await ensureDatabase(base, decodeURIComponent(new URL(derived).pathname.slice(1)));
+  env.TEST_DATABASE_URL_BEFORE_WORKER = base;
   env.TEST_DATABASE_URL = derived;
 }

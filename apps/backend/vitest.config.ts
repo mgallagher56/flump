@@ -13,10 +13,14 @@ const INCLUDE = ["src/**/*.spec.ts", "test/**/*.spec.ts"];
  * project, with no database (E41 P2, owner decision 10).
  *
  * The split is found from the files, not from a hand-kept list, so a new database spec lands in
- * "db" without anyone remembering to add it. A database spec that slipped into "unit" anyway would
- * still fail loudly: "unit" runs with TEST_DATABASE_URL emptied, so in CI (REQUIRE_DB_TESTS=1)
- * resolveDbTestMode throws at collection, and a spec that read the URL directly would find none.
+ * "db" without anyone remembering to add it. A spec counts as a database spec if it calls
+ * resolveDbTestMode, boots the authz harness (test/authz/support.ts) or reads
+ * process.env.TEST_DATABASE_URL. One that slipped into "unit" anyway would run with
+ * TEST_DATABASE_URL emptied: resolveDbTestMode then throws at collection in CI
+ * (REQUIRE_DB_TESTS=1), and anything else would find no database.
  */
+const DB_MARKERS = /resolveDbTestMode\(|bootAuthzHarness\(|process\.env\.TEST_DATABASE_URL/;
+
 function findDbSpecs(): string[] {
   const found: string[] = [];
   const walk = (dir: string): void => {
@@ -24,10 +28,7 @@ function findDbSpecs(): string[] {
       const path = join(dir, entry.name);
       if (entry.isDirectory()) {
         if (entry.name !== "node_modules") walk(path);
-      } else if (
-        entry.name.endsWith(".spec.ts") &&
-        readFileSync(path, "utf8").includes("resolveDbTestMode(")
-      ) {
+      } else if (entry.name.endsWith(".spec.ts") && DB_MARKERS.test(readFileSync(path, "utf8"))) {
         found.push(relative(ROOT, path));
       }
     }
