@@ -122,6 +122,8 @@ const ContextPackBudgetEntry = z.strictObject({
    * the line from the profile or housing details.
    */
   linkKind: BudgetEntryLinkKind.nullable().optional(),
+  /** The account a savings or debt line reads (an id in the same input's accounts), or null. */
+  linkAccountId: z.string().nullable().optional(),
 });
 
 /**

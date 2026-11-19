@@ -1,18 +1,70 @@
+import { categorizeAccountType } from "../../account-category.js";
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
 import { BUDGET_HOUSING_CATEGORY } from "../../budget-entry-names.js";
+import type { PortfolioSnapshot, ResolvedAccount } from "../../portfolio.js";
 import type { Figure } from "../figure.js";
+import { DEBT_CATEGORY, SAVINGS_CATEGORY } from "./budget-totals.js";
 import type { HousingPayment } from "./housing-cost.js";
 import type { TakeHome } from "./take-home.js";
 
 /** Which saved detail a linked row reads. */
-export type BudgetRowLink = "take_home" | "housing";
+export type BudgetRowLink = "take_home" | "housing" | "savings" | "debt";
+
+/** The link kinds that read one account (`budget_entries.link_account_id`), audit slice 5. */
+export type BudgetAccountLink = "savings" | "debt";
 
 /** The stored link kinds, in the order the CHECK on `budget_entries.link_kind` lists them. */
-export const BUDGET_ROW_LINKS: readonly BudgetRowLink[] = ["take_home", "housing"];
+export const BUDGET_ROW_LINKS: readonly BudgetRowLink[] = [
+  "take_home",
+  "housing",
+  "savings",
+  "debt",
+];
+
+/** The stored link kinds that read an account. */
+export const BUDGET_ACCOUNT_LINKS: readonly BudgetAccountLink[] = ["savings", "debt"];
 
 /** A stored `linkKind`, or null for anything else. */
 export function budgetRowLinkOf(value: unknown): BudgetRowLink | null {
-  return value === "take_home" || value === "housing" ? value : null;
+  return (BUDGET_ROW_LINKS as readonly unknown[]).includes(value) ? (value as BudgetRowLink) : null;
+}
+
+/** True for a link kind that reads an account's monthly amount. */
+export function isBudgetAccountLink(value: unknown): value is BudgetAccountLink {
+  return value === "savings" || value === "debt";
+}
+
+/** The budget category a line linked to an account lives in: "savings" or "debt". */
+export const BUDGET_ACCOUNT_LINK_CATEGORY: Record<BudgetAccountLink, string> = {
+  savings: SAVINGS_CATEGORY,
+  debt: DEBT_CATEGORY,
+};
+
+/**
+ * Whether an account of this stored type can back a line of this kind: a savings line reads a
+ * savings or investment account (the accounts the Savings page lists), a debt line a card, loan
+ * or overdraft (the accounts the Debt page lists). Mortgages belong to the housing line and
+ * student loans are paid through pay, so neither can back a debt line. The backend refuses a link
+ * that does not fit, and the engine reads a line whose account no longer fits as "Not set".
+ */
+export function accountFitsBudgetLink(
+  link: BudgetAccountLink,
+  accountType: string | null | undefined,
+): boolean {
+  const category = categorizeAccountType(accountType);
+  return link === "savings"
+    ? category === "savings" || category === "investments"
+    : category === "debt";
+}
+
+/**
+ * The monthly amount a line linked to this account reads: the saved monthly saving (savings) or
+ * monthly payment (debt), at the person's share of a joint account, or null when none is saved.
+ * The snapshot has already applied the share once (`applyAccountShare`), so the line counts at
+ * 100% and no second share is applied. A saved £0 is a real £0.
+ */
+export function budgetLinkAccountMonthly(account: ResolvedAccount): number | null {
+  return account.monthlyContributionKnown ? account.monthlyContribution : null;
 }
 
 export const LINKED_TAKE_HOME_ID = "linked:take-home";
@@ -88,10 +140,24 @@ const isHousingRow = (row: BudgetEntryItem): boolean =>
  * mortgage accounts' estimate, already at the person's share), so no second share is applied.
  * A saved £0 (a household contribution of nothing) is a real £0, not "Not set". Nothing is
  * written: the rows exist only in the figures and on screen.
+ *
+ * Savings and debt lines (audit slice 5) are linked to one account each (`linkAccountId`) and
+ * only ever by the person: the engine never adds one or offers to replace a row on its own
+ * (`findBudgetAccountLinkOffers` offers a one-tap link for a row that matches an account). A
+ * linked line reads the account's monthly amount at the person's share (`budgetLinkAccountMonthly`)
+ * and counts it at 100%, so a joint account's share is applied exactly once. It keeps the row's
+ * own name, category and essential flag. It reads "Not set" when the account has no saved monthly
+ * amount, was deleted (the foreign key clears `linkAccountId`), or is no longer a savings or debt
+ * account (its type changed): never the stored £0. Pass `accounts` whenever the budget may hold
+ * such lines; without it they all read "Not set".
  */
 export function withLinkedBudgetRows(
   budget: readonly BudgetEntryItem[],
-  sources: { takeHome: Figure<Pick<TakeHome, "monthly">>; housing: HousingPayment | null },
+  sources: {
+    takeHome: Figure<Pick<TakeHome, "monthly">>;
+    housing: HousingPayment | null;
+    accounts?: Pick<PortfolioSnapshot, "getResolvedAccounts"> | null;
+  },
 ): LinkedBudgetRows {
   // No budget yet stays no budget (unknown, never £0): linked rows join a budget once it is started.
   if (budget.length === 0) return { rows: [...budget], shadowedRowIds: [], offers: [] };
@@ -180,11 +246,47 @@ export function withLinkedBudgetRows(
     }
   }
 
+  // Savings and debt lines, each reading its own account. One line per account (the database
+  // holds one; a second line on the same account reads Not set, as a second take-home line does).
+  const accountsById = new Map(
+    (sources.accounts?.getResolvedAccounts() ?? []).map((account) => [account.id, account]),
+  );
+  const readAccountIds = new Set<string>();
+  for (const row of budget) {
+    const kind = row.linkKind;
+    if (!isBudgetAccountLink(kind)) continue;
+    const accountId = row.linkAccountId ?? null;
+    const firstOnAccount = accountId !== null && !readAccountIds.has(accountId);
+    if (accountId !== null) readAccountIds.add(accountId);
+    const account = firstOnAccount ? accountsById.get(accountId) : undefined;
+    const monthly =
+      account && row.isIncome !== true && accountFitsBudgetLink(kind, account.rawType)
+        ? budgetLinkAccountMonthly(account)
+        : null;
+    const base: BudgetEntryItem = {
+      id: `linked:${kind}:${row.id}`,
+      category: row.category,
+      name: row.name,
+      amount: monthly ?? 0,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: row.isEssential,
+      ownership: "sole",
+      sharePercent: null,
+      linked: kind,
+      linkAccountId: accountId,
+    };
+    replaced.set(
+      row.id,
+      monthly !== null ? { ...base, linkedRowId: row.id } : notSetLine(base, row),
+    );
+  }
+
   // Only one row per kind can read a saved fact (the database holds one; this guards older data).
   // Any further row linked to the same fact is Not set, never its stored £0.
   for (const extra of budget) {
     const kind = extra.linkKind;
-    if (!kind || replaced.has(extra.id)) continue;
+    if (!kind || isBudgetAccountLink(kind) || replaced.has(extra.id)) continue;
     const chosen = kind === "take_home" ? chosenTakeHome : chosenHousing;
     if (chosen?.id === extra.id) continue;
     replaced.set(

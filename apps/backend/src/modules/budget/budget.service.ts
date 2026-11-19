@@ -7,7 +7,13 @@ import {
   MAX_CUSTOM_BUDGET_CATEGORIES,
   type UpdateBudgetEntryRequest,
 } from "@flump/api-contract";
-import { BUDGET_HOUSING_CATEGORY, defaultIsEssential } from "@flump/finance-engine";
+import {
+  accountFitsBudgetLink,
+  BUDGET_ACCOUNT_LINK_CATEGORY,
+  BUDGET_HOUSING_CATEGORY,
+  defaultIsEssential,
+  isBudgetAccountLink,
+} from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -18,9 +24,14 @@ import {
   type Page,
   type PageRequest,
 } from "../../contract/pagination";
+import { Account } from "../../entities/account.entity";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import { LINK_KIND_UNIQUE_INDEX } from "../../migrations/AddBudgetEntryLinkKind1795440000000";
+import {
+  LINK_ACCOUNT_FOREIGN_KEY,
+  LINK_ACCOUNT_UNIQUE_INDEX,
+} from "../../migrations/LinkBudgetLinesToAccounts1795490000000";
 
 /** GET /budget-entries order: oldest first, id as tiebreak (keyset pagination, BE-09). */
 const BUDGET_ORDER: KeysetOrder = {
@@ -79,6 +90,8 @@ export class BudgetService {
     private readonly budgetEntryRepository: Repository<BudgetEntry>,
     @InjectRepository(UserProfile)
     private readonly userProfileRepository: Repository<UserProfile>,
+    @InjectRepository(Account)
+    private readonly accountRepository: Repository<Account>,
   ) {}
 
   /** One keyset page of the user's entries; the entity's numeric transformer returns `amount` as a number. */
@@ -165,19 +178,18 @@ export class BudgetService {
       notes: body.notes ?? null,
       isDefault: false,
       linkKind: body.linkKind ?? null,
+      linkAccountId: body.linkAccountId ?? null,
       ...share,
     });
+    await assertLinkable(this.budgetEntryRepository, this.accountRepository, userId, entry);
     if (entry.linkKind) {
-      await assertLinkable(this.budgetEntryRepository, userId, entry);
       // A linked line stores no amount of its own: the stored 0 is never read.
       entry.amount = 0;
     }
     try {
       return await this.budgetEntryRepository.save(entry);
     } catch (err) {
-      // Two writes raced past the check above: the unique index keeps one line per fact.
-      if (isLinkKindUniqueViolation(err)) throw new BadRequestException(LINK_TAKEN_MESSAGE);
-      throw err;
+      throw linkWriteError(err);
     }
   }
 
@@ -223,9 +235,27 @@ export class BudgetService {
     if (body.isIncome !== undefined) entry.isIncome = body.isIncome;
     if (body.isEssential !== undefined) entry.isEssential = body.isEssential;
     if (body.notes !== undefined) entry.notes = body.notes ?? null;
-    if (body.linkKind !== undefined) entry.linkKind = body.linkKind;
+    if (body.linkKind !== undefined) {
+      entry.linkKind = body.linkKind;
+      // Unlinking, or linking to a profile fact, drops the account unless the body names one
+      // (which assertLinkable then refuses): only a savings or debt line reads an account.
+      if (!isBudgetAccountLink(body.linkKind) && body.linkAccountId === undefined) {
+        entry.linkAccountId = null;
+      }
+    }
+    if (body.linkAccountId !== undefined) entry.linkAccountId = body.linkAccountId;
+    // A savings or debt line whose account was deleted or changed type reads "Not set". Editing
+    // its name, notes or essential flag leaves the link as it is, so the account is checked only
+    // when the link, the category or the income flag changes.
+    const linkTouched =
+      body.linkKind !== undefined ||
+      body.linkAccountId !== undefined ||
+      body.category !== undefined ||
+      body.isIncome !== undefined;
+    if (linkTouched || !isBudgetAccountLink(entry.linkKind)) {
+      await assertLinkable(repository, this.accountRepository, userId, entry);
+    }
     if (entry.linkKind) {
-      await assertLinkable(repository, userId, entry);
       // A linked line stores no amount of its own: the stored 0 is never read.
       entry.amount = 0;
     }
@@ -238,9 +268,7 @@ export class BudgetService {
     try {
       return await repository.save(entry);
     } catch (err) {
-      // Two writes raced past the check above: the unique index keeps one line per fact.
-      if (isLinkKindUniqueViolation(err)) throw new BadRequestException(LINK_TAKEN_MESSAGE);
-      throw err;
+      throw linkWriteError(err);
     }
   }
 
@@ -258,45 +286,114 @@ export class BudgetService {
 
 /**
  * A line may be linked only to a fact of its own kind (take-home pay on an income line, housing on
- * a spending line in the housing category), and to a fact no other line of the user's is linked to:
- * the engine resolves one line per kind.
+ * a spending line in the housing category, an account's monthly saving on a savings line, its
+ * monthly payment on a debt line), and to a fact no other line of the user's is linked to: the
+ * engine resolves one line per profile fact and one per account.
+ *
+ * A savings or debt line must name one of the caller's own accounts (audit slice 5). Another
+ * user's account id is refused exactly as a missing one is (404), so the reply never says whether
+ * the id exists. The account must be a savings or investment account for a savings line, and a
+ * card, loan or overdraft for a debt line. No other line may name an account.
  */
 async function assertLinkable(
   repository: Repository<BudgetEntry>,
+  accounts: Repository<Account>,
   userId: string,
   entry: BudgetEntry,
 ): Promise<void> {
-  const fits =
-    entry.linkKind === "take_home"
-      ? entry.isIncome
-      : !entry.isIncome && entry.category === BUDGET_HOUSING_CATEGORY;
-  if (!fits) {
+  const kind = entry.linkKind;
+  if (!isBudgetAccountLink(kind)) {
+    if (entry.linkAccountId !== null && entry.linkAccountId !== undefined) {
+      throw new BadRequestException("Only a savings or debt line can be linked to an account");
+    }
+    entry.linkAccountId = null;
+    if (!kind) return;
+    const fits =
+      kind === "take_home"
+        ? entry.isIncome
+        : !entry.isIncome && entry.category === BUDGET_HOUSING_CATEGORY;
+    if (!fits) {
+      throw new BadRequestException(
+        kind === "take_home"
+          ? "Only an income line can use your take-home pay"
+          : "Only a housing line can use your saved housing payment",
+      );
+    }
+    const others = await repository.find({
+      where: { userId, linkKind: kind },
+      select: { id: true },
+    });
+    if (others.some((other) => other.id !== entry.id)) {
+      throw new BadRequestException(LINK_TAKEN_MESSAGE);
+    }
+    return;
+  }
+
+  if (entry.isIncome || entry.category !== BUDGET_ACCOUNT_LINK_CATEGORY[kind]) {
     throw new BadRequestException(
-      entry.linkKind === "take_home"
-        ? "Only an income line can use your take-home pay"
-        : "Only a housing line can use your saved housing payment",
+      kind === "savings"
+        ? "Only a line in Savings can use an account's monthly saving"
+        : "Only a line in Debt can use an account's monthly payment",
+    );
+  }
+  if (!entry.linkAccountId) {
+    throw new BadRequestException("Choose the account this line uses");
+  }
+  // Scoped to the caller: another user's account is not found, never linked.
+  const account = await accounts.findOne({
+    where: { id: entry.linkAccountId, userId },
+    select: { id: true, type: true },
+  });
+  if (!account) throw new NotFoundException("Account not found");
+  if (!accountFitsBudgetLink(kind, account.type)) {
+    throw new BadRequestException(
+      kind === "savings"
+        ? "Only a savings or investment account can be used for a savings line"
+        : "Only a card, loan or overdraft can be used for a debt line",
     );
   }
   const others = await repository.find({
-    where: { userId, linkKind: entry.linkKind ?? undefined },
+    where: { userId, linkAccountId: entry.linkAccountId },
     select: { id: true },
   });
   if (others.some((other) => other.id !== entry.id)) {
-    throw new BadRequestException(LINK_TAKEN_MESSAGE);
+    throw new BadRequestException(LINK_ACCOUNT_TAKEN_MESSAGE);
   }
 }
 
 const LINK_TAKEN_MESSAGE = "Another line already uses this saved figure";
+const LINK_ACCOUNT_TAKEN_MESSAGE = "Another line already uses this account";
 
-/** The one-line-per-fact unique index firing (AddBudgetEntryLinkKind1795440000000). */
-function isLinkKindUniqueViolation(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
+/** The Postgres error code and constraint of a failed write, from TypeORM's wrapper or the driver. */
+function pgError(err: unknown): { code?: string; constraint?: string } {
+  if (!err || typeof err !== "object") return {};
   const e = err as {
     code?: string;
     constraint?: string;
     driverError?: { code?: string; constraint?: string };
   };
-  const code = e.code ?? e.driverError?.code;
-  const constraint = e.constraint ?? e.driverError?.constraint;
-  return code === "23505" && constraint === LINK_KIND_UNIQUE_INDEX;
+  return {
+    code: e.code ?? e.driverError?.code,
+    constraint: e.constraint ?? e.driverError?.constraint,
+  };
+}
+
+/**
+ * A write that raced past `assertLinkable` and hit the database's own guard: the one-line-per-fact
+ * or one-line-per-account index (400), or the account foreign key, which fires when the account
+ * was deleted in between or (never through the checks above) belongs to someone else (404, as
+ * for any account the caller does not have). Any other error is returned unchanged.
+ */
+function linkWriteError(err: unknown): unknown {
+  const { code, constraint } = pgError(err);
+  if (code === "23505" && constraint === LINK_KIND_UNIQUE_INDEX) {
+    return new BadRequestException(LINK_TAKEN_MESSAGE);
+  }
+  if (code === "23505" && constraint === LINK_ACCOUNT_UNIQUE_INDEX) {
+    return new BadRequestException(LINK_ACCOUNT_TAKEN_MESSAGE);
+  }
+  if (code === "23503" && constraint === LINK_ACCOUNT_FOREIGN_KEY) {
+    return new NotFoundException("Account not found");
+  }
+  return err;
 }

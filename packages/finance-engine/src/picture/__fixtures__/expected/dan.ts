@@ -32,7 +32,8 @@ export const danExpected: PersonaExpected = {
   cover: {
     monthsOfCover: 5.2, // 11,400 / 2,202.5
     essentialCommitments: 2202.5,
-    safeToSpendMonthly: 447.5, // 2,900 PAYE take-home - 2,202.5 - 250; rental income is not take-home
+    // Audit slice 5: from the budget's income, as left over is: 4,000 - 2,202.5 - 250 = 1,547.5.
+    safeToSpendMonthly: 1547.5,
   },
 };
 

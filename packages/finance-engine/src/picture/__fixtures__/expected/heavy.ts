@@ -38,7 +38,8 @@ export const heavyExpected: PersonaExpected = {
   cover: {
     monthsOfCover: 7.7, // 27,050 / (3,245 - 120 budgeted debt + max(410 minimums, 120))
     essentialCommitments: 3535,
-    safeToSpendMonthly: 955, // 5,390 - 3,535 - 900
+    // Audit slice 5: from the budget's income, as left over is: 6,990 - 3,535 - 900 = 2,555.
+    safeToSpendMonthly: 2555,
   },
 };
 

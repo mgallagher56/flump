@@ -17,15 +17,27 @@ import {
   "CHK_budget_entries_share_percent",
   `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 100)`,
 )
-// System audit decision 1 (migration AddBudgetEntryLinkKind1795440000000).
+// System audit decision 1 (migrations AddBudgetEntryLinkKind1795440000000 and, for the savings
+// and debt kinds, LinkBudgetLinesToAccounts1795490000000).
 @Check(
   "CHK_budget_entries_link_kind",
-  `"link_kind" IS NULL OR "link_kind" IN ('take_home', 'housing')`,
+  `"link_kind" IS NULL OR "link_kind" IN ('take_home', 'housing', 'savings', 'debt')`,
 )
-// One line per user per fact (same migration), partial over linked lines only.
+// Only a savings or debt line names an account.
+@Check(
+  "CHK_budget_entries_link_account",
+  `"link_account_id" IS NULL OR ("link_kind" IS NOT NULL AND "link_kind" IN ('savings', 'debt'))`,
+)
+// One line per user per profile fact, partial over those two kinds only.
 @Index("UQ_budget_entries_user_link_kind", ["userId", "linkKind"], {
   unique: true,
-  where: `"link_kind" IS NOT NULL`,
+  where: `"link_kind" IN ('take_home', 'housing')`,
+})
+// One line per account. The (link_account_id, user_id) foreign key to accounts (id, user_id),
+// ON DELETE SET NULL (link_account_id), lives in the migration only.
+@Index("UQ_budget_entries_link_account", ["linkAccountId"], {
+  unique: true,
+  where: `"link_account_id" IS NOT NULL`,
 })
 @Entity("budget_entries")
 export class BudgetEntry {
@@ -76,12 +88,21 @@ export class BudgetEntry {
   sharePercent: number | null;
 
   /**
-   * The saved fact this line is linked to ("take_home" or "housing"), or null. Set when the person
-   * chooses "Use your take-home pay" or "Use your saved rent" for a row. Its amount is then stored
-   * as 0 and never read: the profile holds the only stored value and the engine resolves the line.
+   * The saved fact this line is linked to ("take_home", "housing", "savings" or "debt"), or null.
+   * Set when the person chooses "Use your take-home pay", "Use your saved rent" or "Link this line"
+   * for a row. Its amount is then stored as 0 and never read: the profile or the account holds the
+   * only stored value and the engine resolves the line.
    */
   @Column({ name: "link_kind", type: "varchar", length: 16, nullable: true })
-  linkKind: "take_home" | "housing" | null;
+  linkKind: "take_home" | "housing" | "savings" | "debt" | null;
+
+  /**
+   * The account a "savings" or "debt" line reads: its monthly saving or payment at the person's
+   * share. Always one of the same user's accounts (the service checks it; a composite foreign key
+   * enforces it). Set to null when that account is deleted: the line then reads "Not set".
+   */
+  @Column({ name: "link_account_id", type: "uuid", nullable: true })
+  linkAccountId: string | null;
 
   @Column({ name: "is_default", default: false })
   isDefault: boolean;
