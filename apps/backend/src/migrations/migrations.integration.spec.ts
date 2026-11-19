@@ -55,6 +55,11 @@ import {
   ClearDefaultPensionRates1795480100000,
   PENSION_DEFAULTS_CLEAR_BEFORE,
 } from "./ClearDefaultPensionRates1795480100000";
+import { ClearResetPensionZeros1795530200000 } from "./ClearResetPensionZeros1795530200000";
+import {
+  ClearTakeHomeSalaries1795530100000,
+  TAKE_HOME_SALARY_CLEAR_BEFORE,
+} from "./ClearTakeHomeSalaries1795530100000";
 import { ClearUnchosenSectionOrder1795500000000 } from "./ClearUnchosenSectionOrder1795500000000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
 import { LinkBudgetLinesToAccounts1795490000000 } from "./LinkBudgetLinesToAccounts1795490000000";
@@ -94,10 +99,11 @@ let MIGRATIONS: MigrationClass[] = [];
 // before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile, RemovePayeSalaryRecords) and
 // the slice 4 before-image (account_home_backfill, BackfillPropertyKindAndMortgageLink1795470100000)
 // and its later repeat for repayment types (mortgage_repayment_type_backfill,
-// BackfillMortgageRepaymentType1795530000000), and the slice 9 column-drop before-image
-// (profile_column_drop_backfill, profile-column-drop.ts).
+// BackfillMortgageRepaymentType1795530000000), the slice 9 column-drop before-image
+// (profile_column_drop_backfill, profile-column-drop.ts), and the profile before-images of
+// ClearTakeHomeSalaries1795530100000 and ClearResetPensionZeros1795530200000.
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -3525,6 +3531,202 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       expect(await typeOf(copied)).toBe("interest-only");
       expect(await tables()).toEqual(ENTITY_TABLES);
+    });
+  });
+
+  describe("ClearTakeHomeSalaries1795530100000 (old onboarding wrote take-home x 12 as salary)", () => {
+    const NAME = "ClearTakeHomeSalaries1795530100000";
+    const BEFORE_CUTOFF = "2026-12-31T23:59:59Z";
+    const pay = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT user_id, annual_salary::text AS salary, monthly_take_home::text AS take_home
+         FROM user_profiles ORDER BY user_id`,
+      );
+    const imageRows = async (): Promise<number> =>
+      (await ds.query("SELECT count(*)::int AS n FROM take_home_salary_backfill"))[0].n;
+    const imageExists = async (): Promise<boolean> =>
+      (await ds.query("SELECT to_regclass('public.take_home_salary_backfill') IS NOT NULL AS t"))[0]
+        .t;
+    const withClock = (now: string): ClearTakeHomeSalaries1795530100000 => {
+      const migration = new ClearTakeHomeSalaries1795530100000();
+      migration.now = new Date(now);
+      return migration;
+    };
+    // Worked by hand: 2,500 x 12 = 30,000 (> 12,570, cleared); 1,000 x 12 = 12,000 and
+    // 1,047.50 x 12 = 12,570 (at or below the personal allowance, ambiguous, kept); 30,000 with
+    // take-home 1,993.00 is a gross salary (1,993 x 12 = 23,916, not 30,000), kept.
+    const seed = async (): Promise<void> => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      expect(await imageExists()).toBe(false);
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, annual_salary, monthly_take_home)
+         VALUES ('a-take-home', 30000, 2500), ('b-low', 12000, 1000), ('c-allowance', 12570, 1047.50),
+                ('d-gross', 30000, 1993.00), ('e-no-take-home', 30000, NULL)`,
+      );
+    };
+    const UNTOUCHED = [
+      { user_id: "a-take-home", salary: "30000.00", take_home: "2500.00" },
+      { user_id: "b-low", salary: "12000.00", take_home: "1000.00" },
+      { user_id: "c-allowance", salary: "12570.00", take_home: "1047.50" },
+      { user_id: "d-gross", salary: "30000.00", take_home: "1993.00" },
+      { user_id: "e-no-take-home", salary: "30000.00", take_home: null },
+    ];
+    const CLEARED = [
+      { user_id: "a-take-home", salary: null, take_home: "2500.00" },
+      ...UNTOUCHED.slice(1),
+    ];
+
+    it("clears a salary that is take-home x 12 above 12,570 and keeps the take-home", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await pay()).toEqual(CLEARED);
+      expect(await imageRows()).toBe(1);
+    });
+
+    it("on or after the cutoff changes nothing, and still marks itself as run", async () => {
+      await seed();
+      await runUpInTransaction(withClock(TAKE_HOME_SALARY_CLEAR_BEFORE));
+      expect(await pay()).toEqual(UNTOUCHED);
+      expect(await imageExists()).toBe(true);
+      expect(await imageRows()).toBe(0);
+    });
+
+    it("runs once: a second run changes nothing", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, annual_salary, monthly_take_home) VALUES ('f-later', 36000, 3000)",
+      );
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await pay()).toEqual([
+        ...CLEARED,
+        { user_id: "f-later", salary: "36000.00", take_home: "3000.00" },
+      ]);
+      expect(await imageRows()).toBe(1);
+    });
+
+    it("down restores the salary where it is still null with the same take-home, keeps one saved since, and drops the image", async () => {
+      await seed();
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, annual_salary, monthly_take_home)
+         VALUES ('g-resaved', 24000, 2000), ('h-new-take-home', 18000, 1500)`,
+      );
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await imageRows()).toBe(3);
+      // g saves a gross salary after the clear; h changes take-home: both answers are kept.
+      await ds.query("UPDATE user_profiles SET annual_salary = 40000 WHERE user_id = 'g-resaved'");
+      await ds.query(
+        "UPDATE user_profiles SET monthly_take_home = 1600 WHERE user_id = 'h-new-take-home'",
+      );
+      await runMigrationDown(new ClearTakeHomeSalaries1795530100000());
+      expect(await pay()).toEqual([
+        ...UNTOUCHED.slice(0, 5),
+        { user_id: "g-resaved", salary: "40000.00", take_home: "2000.00" },
+        { user_id: "h-new-take-home", salary: null, take_home: "1600.00" },
+      ]);
+      expect(await imageExists()).toBe(false);
+      // Down after a skipped run (no image) also works.
+      await runMigrationDown(new ClearTakeHomeSalaries1795530100000());
+    });
+
+    it("its image rows go with the profile", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      await ds.query("DELETE FROM user_profiles WHERE user_id = 'a-take-home'");
+      expect(await imageRows()).toBe(0);
+    });
+  });
+
+  describe("ClearResetPensionZeros1795530200000 (old financial data reset wrote 0/0/false)", () => {
+    const NAME = "ClearResetPensionZeros1795530200000";
+    const BEFORE_CUTOFF = "2026-12-31T23:59:59Z";
+    const answers = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT user_id, pension_percent::text AS own, pension_employer_percent::text AS employer,
+                is_salary_sacrifice AS sacrifice
+         FROM user_profiles ORDER BY user_id`,
+      );
+    const imageRows = async (): Promise<number> =>
+      (await ds.query("SELECT count(*)::int AS n FROM reset_pension_zeros_backfill"))[0].n;
+    const imageExists = async (): Promise<boolean> =>
+      (
+        await ds.query("SELECT to_regclass('public.reset_pension_zeros_backfill') IS NOT NULL AS t")
+      )[0].t;
+    const withClock = (now: string): ClearResetPensionZeros1795530200000 => {
+      const migration = new ClearResetPensionZeros1795530200000();
+      migration.now = new Date(now);
+      return migration;
+    };
+    const seed = async (): Promise<void> => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      expect(await imageExists()).toBe(false);
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, has_reset_financial_data, pension_percent, pension_employer_percent, is_salary_sacrifice)
+         VALUES ('a-reset', true, 0, 0, false), ('b-no-flag', false, 0, 0, false),
+                ('c-five', true, 5, 0, false)`,
+      );
+    };
+    const UNTOUCHED = [
+      { user_id: "a-reset", own: "0.0000", employer: "0.0000", sacrifice: false },
+      { user_id: "b-no-flag", own: "0.0000", employer: "0.0000", sacrifice: false },
+      { user_id: "c-five", own: "5.0000", employer: "0.0000", sacrifice: false },
+    ];
+    const CLEARED = [
+      { user_id: "a-reset", own: null, employer: null, sacrifice: null },
+      ...UNTOUCHED.slice(1),
+    ];
+
+    it("clears 0/0/false on a profile flagged as reset, and keeps the rest", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await answers()).toEqual(CLEARED);
+      expect(await imageRows()).toBe(1);
+    });
+
+    it("on or after the cutoff changes nothing, and still marks itself as run", async () => {
+      await seed();
+      await runUpInTransaction(withClock(PENSION_DEFAULTS_CLEAR_BEFORE));
+      expect(await answers()).toEqual(UNTOUCHED);
+      expect(await imageExists()).toBe(true);
+      expect(await imageRows()).toBe(0);
+    });
+
+    it("runs once: a second run keeps a 0/0/false answer saved since", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      await ds.query(
+        "UPDATE user_profiles SET pension_percent = 0, pension_employer_percent = 0, is_salary_sacrifice = false WHERE user_id = 'a-reset'",
+      );
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await answers()).toEqual(UNTOUCHED);
+      expect(await imageRows()).toBe(1);
+    });
+
+    it("down restores where all three are still null, keeps an answer saved since, and drops the image", async () => {
+      await seed();
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, has_reset_financial_data, pension_percent, pension_employer_percent, is_salary_sacrifice)
+         VALUES ('d-answered', true, 0, 0, false)`,
+      );
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await imageRows()).toBe(2);
+      await ds.query("UPDATE user_profiles SET pension_percent = 4 WHERE user_id = 'd-answered'");
+      await runMigrationDown(new ClearResetPensionZeros1795530200000());
+      expect(await answers()).toEqual([
+        ...UNTOUCHED,
+        { user_id: "d-answered", own: "4.0000", employer: null, sacrifice: null },
+      ]);
+      expect(await imageExists()).toBe(false);
+      await runMigrationDown(new ClearResetPensionZeros1795530200000());
+    });
+
+    it("its image rows go with the profile", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      await ds.query("DELETE FROM user_profiles WHERE user_id = 'a-reset'");
+      expect(await imageRows()).toBe(0);
     });
   });
 });

@@ -66,6 +66,10 @@ export const USER_DATA_TABLES = [
   "paye_salary_record_backfill",
   // System audit slice 9 column-drop before-image (child of user_profiles, ON DELETE CASCADE).
   "profile_column_drop_backfill",
+  // Profile before-images of ClearTakeHomeSalaries and ClearResetPensionZeros (children of
+  // user_profiles by profile_id, ON DELETE CASCADE).
+  "take_home_salary_backfill",
+  "reset_pension_zeros_backfill",
   "user_profiles",
   // BE-04 deletion proofs: cleared too, so a persona id erased during staging testing can be seeded
   // again (a tombstone would otherwise refuse every request for that id).

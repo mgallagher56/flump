@@ -869,6 +869,16 @@ export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reas
     reason:
       "slice 6 migration before-image holding the legacy PAYE salary records removed from tax_records (their own fields, never a receipt) kept 90 days so its down() can restore them; rows go with the profile by ON DELETE CASCADE; not exported, as it is a rollback copy and the salary is in the export",
   },
+  take_home_salary_backfill: {
+    parent: "user_profiles",
+    reason:
+      "migration before-image (the salaries ClearTakeHomeSalaries cleared, written by the old onboarding as take-home x 12, with the take-home beside them) kept 90 days so its down() can restore them; rows go with the profile by ON DELETE CASCADE; not exported, as it is a rollback copy and the current salary and take-home are in the export",
+  },
+  reset_pension_zeros_backfill: {
+    parent: "user_profiles",
+    reason:
+      "migration before-image (the 0/0/false pension answers the old financial data reset wrote, cleared by ClearResetPensionZeros) kept 90 days so its down() can restore them; rows go with the profile by ON DELETE CASCADE; not exported, as it is a rollback copy and the current answers are in the export",
+  },
 };
 
 /**
