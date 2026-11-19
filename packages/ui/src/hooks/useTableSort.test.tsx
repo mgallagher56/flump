@@ -25,6 +25,31 @@ const columns = {
 const names = (rows: Row[]) => rows.map((r) => r.name);
 
 describe("useTableSort", () => {
+  it("does not re-sort on a re-render that passes a new columns object", () => {
+    const rows = [{ n: 2 }, { n: 1 }];
+    let reads = 0;
+    const { result, rerender } = renderHook(() =>
+      useTableSort({
+        rows,
+        columns: {
+          n: {
+            value: (r: { n: number }) => {
+              reads += 1;
+              return r.n;
+            },
+          },
+        },
+        initial: { key: "n", direction: "asc" },
+      }),
+    );
+    expect(result.current.sortedRows.map((r) => r.n)).toEqual([1, 2]);
+    const after = reads;
+    rerender();
+    rerender();
+    // Same rows, same sort: no column value read again.
+    expect(reads).toBe(after);
+  });
+
   it("keeps the given order when there is no initial sort", () => {
     const { result } = renderHook(() => useTableSort({ rows: ROWS, columns }));
     expect(names(result.current.sortedRows)).toEqual(["item 10", "Item 2", "apple", "Banana"]);

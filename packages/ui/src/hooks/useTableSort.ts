@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 /** A value a column sorts by. `null`, `undefined` and `NaN` mean "Not set" and always sort last. */
 export type SortValue = number | string | Date | null | undefined;
@@ -82,24 +82,28 @@ export function useTableSort<T, K extends string>({
 }: UseTableSortOptions<T, K>): UseTableSortResult<T, K> {
   const [sort, setSort] = useState<TableSortState<K> | null>(initial);
   const naturalOrder = initial === null;
+  // Callers usually build `columns` inline, a new object each render. Read the latest from a ref
+  // so sorting reruns only when the rows or the sort change, not on every render.
+  const columnsRef = useRef(columns);
+  columnsRef.current = columns;
 
   const toggleSort = useCallback(
     (key: K) => {
       setSort((prev) => {
-        const first = columns[key]?.firstDirection ?? "asc";
+        const first = columnsRef.current[key]?.firstDirection ?? "asc";
         if (!prev || prev.key !== key) return { key, direction: first };
         // A table with a natural order goes first, reversed, then back to natural.
         if (naturalOrder && prev.direction !== first) return null;
         return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
       });
     },
-    [columns, naturalOrder],
+    [naturalOrder],
   );
 
   const sortedRows = useMemo(() => {
     const indexed = rows.map((row, index) => ({ row, index }));
     if (!sort) return indexed.map((r) => r.row);
-    const column = columns[sort.key];
+    const column = columnsRef.current[sort.key];
     if (!column) return indexed.map((r) => r.row);
     const factor = sort.direction === "asc" ? 1 : -1;
     return indexed
@@ -117,7 +121,7 @@ export function useTableSort<T, K extends string>({
         );
       })
       .map((r) => r.row);
-  }, [rows, columns, sort]);
+  }, [rows, sort]);
 
   const getSortProps = useCallback(
     (key: K): TableSortProps => ({

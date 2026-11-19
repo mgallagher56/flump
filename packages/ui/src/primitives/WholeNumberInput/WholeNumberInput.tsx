@@ -21,9 +21,9 @@ export interface WholeNumberInputProps
   onValueChange?: (value: number | null) => void;
   /** Raw text that failed to parse; show a FormField error and clear it on the next change. */
   onInvalid?: (raw: string) => void;
-  /** Optional lower bound applied on blur. */
+  /** Optional lower bound: a value below it is reported through `onInvalid` on blur, not raised. */
   min?: number;
-  /** Optional upper bound applied on blur. */
+  /** Optional upper bound: a keystroke that would go above it is not taken, and is reported. */
   max?: number;
 }
 
@@ -55,6 +55,10 @@ export const WholeNumberInput: FC<WholeNumberInputProps> = ({
     max,
     allowed: WHOLE_NUMBER_CHARS,
     symbol: "",
+    // Bounds hold as you type: a digit that would go above `max` is not taken, and a value below
+    // `min` is reported on blur rather than raised, so the field never changes what was typed.
+    rejectAboveMax: true,
+    belowMin: "report",
   });
 
   return (

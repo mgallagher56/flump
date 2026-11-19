@@ -53,6 +53,13 @@ describe("TaxReservePanel", () => {
     expect(onSave).toHaveBeenCalled();
   });
 
+  it("passes an empty ownership share on as not set, never 0", () => {
+    const { onOwnershipShareChange } = setup();
+    const share = screen.getByLabelText(/Your share of the rental property/);
+    fireEvent.change(share, { target: { value: "" } });
+    expect(onOwnershipShareChange).toHaveBeenLastCalledWith(null);
+  });
+
   it("shows the taper line only near the £100,000 band, never as a banner", () => {
     setup(110_000);
     expect(screen.getByText(/in the £100,000 to £125,140 band/)).toBeDefined();

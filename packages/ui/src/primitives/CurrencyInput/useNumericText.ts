@@ -24,6 +24,16 @@ export interface NumericTextOptions {
   symbol: string;
   /** Regroup thousands while typing ("1234" shows "1,234"), keeping the caret in place. */
   groupWhileTyping?: boolean;
+  /**
+   * Reject a keystroke that would take the value above `max`, reporting it through `onInvalid`,
+   * rather than accepting it and clamping on blur.
+   */
+  rejectAboveMax?: boolean;
+  /**
+   * What blur does with a value below `min`: "clamp" raises it (the default), "report" keeps what
+   * was typed and reports it through `onInvalid`, so the field never changes it silently.
+   */
+  belowMin?: "clamp" | "report";
 }
 
 const TYPED_NUMBER = /^(\s*[£]?\s*-?)([\d,]*)(\.\d*)?(\s*)$/;
@@ -120,6 +130,8 @@ export const useNumericText = ({
   allowed,
   symbol,
   groupWhileTyping = false,
+  rejectAboveMax = false,
+  belowMin = "clamp",
 }: NumericTextOptions) => {
   const toText = (v: number | null | undefined): string =>
     v === null || v === undefined ? "" : format(v);
@@ -196,8 +208,13 @@ export const useNumericText = ({
         }
       }
     }
-    setText(next);
     const parsed = parseEnGbNumber(next, symbol);
+    if (rejectAboveMax && max !== undefined && parsed !== null && parsed > max) {
+      pendingCaret.current = null;
+      onInvalid?.(raw);
+      return;
+    }
+    setText(next);
     if (parsed === null && raw.trim() !== "") onInvalid?.(raw);
     onValueChange?.(parsed);
   };
@@ -205,6 +222,10 @@ export const useNumericText = ({
   const handleBlur = (_event: FocusEvent<HTMLInputElement>) => {
     const parsed = parseEnGbNumber(text, symbol);
     if (parsed === null) return;
+    if (belowMin === "report" && min !== undefined && round(parsed) < min) {
+      onInvalid?.(text);
+      return;
+    }
     const settled = clamp(round(parsed), min, max);
     setText(format(settled));
     if (settled !== parsed) onValueChange?.(settled);

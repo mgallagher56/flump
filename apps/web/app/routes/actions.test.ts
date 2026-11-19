@@ -279,10 +279,11 @@ const cases: Case[] = [
     route: "tax",
     action: taxAction,
     intent: "update-profile",
+    // No share typed: it is not sent, so the saved share stays as it was (never 0 or 100 invented).
     fields: { annualSalary: "50000.5" },
     method: "PATCH",
     path: "/user-profile",
-    body: { annualSalary: 50000.5, propertyOwnershipShare: 100 },
+    body: { annualSalary: 50000.5 },
   },
   {
     route: "tax",
