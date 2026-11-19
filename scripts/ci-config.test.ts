@@ -213,6 +213,45 @@ describe("merge gate (BE-01)", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
+  // E41 P5: the split jobs report through aggregates with the required names. Dropping a need
+  // here would quietly stop the required check covering that part of the suite.
+  test("the Vitest and Storybook aggregates need every part of their suite and check each result", () => {
+    const ci = readWorkflow("ci-pipeline.yml");
+    const needsOf = (id: string) => {
+      const needs = (ci.jobs[id] as Job & { needs?: string | string[] }).needs;
+      return Array.isArray(needs) ? needs : [needs];
+    };
+    const stepText = (id: string) =>
+      JSON.stringify((ci.jobs[id] as Job & { steps?: unknown[] }).steps ?? []);
+
+    expect(needsOf("vitest").sort()).toEqual([
+      "vitest-backend",
+      "vitest-shard",
+      "vitest-web-merge",
+    ]);
+    for (const part of ["vitest-shard", "vitest-web-merge", "vitest-backend"])
+      expect(stepText("vitest")).toContain(`needs.${part}.result`);
+    expect(needsOf("vitest-web-merge")).toEqual(["vitest-shard"]);
+
+    expect(needsOf("storybook-a11y").sort()).toEqual(["storybook-dark", "storybook-light"]);
+    expect(ci.jobs["storybook-a11y"]?.strategy?.matrix?.include).toEqual([
+      { name: "a11y (light)", legs: "storybook-light" },
+      { name: "a11y (dark)", legs: "storybook-dark" },
+    ]);
+    expect(stepText("storybook-a11y")).toContain("needs[matrix.legs].result");
+
+    // Both halves of each split suite are in the matrix.
+    const shards = (id: string) =>
+      (ci.jobs[id]?.strategy?.matrix as { shard?: unknown[]; include?: { shard?: string }[] }) ??
+      {};
+    expect(shards("vitest-shard").shard).toEqual([1, 2]);
+    for (const id of ["storybook-light", "storybook-dark"])
+      expect((shards(id).include ?? []).map((leg) => leg.shard).filter(Boolean)).toEqual([
+        "1/2",
+        "2/2",
+      ]);
+  });
+
   test("no two jobs across workflows render the same check name", () => {
     const seen = new Map<string, string>();
     for (const file of [
