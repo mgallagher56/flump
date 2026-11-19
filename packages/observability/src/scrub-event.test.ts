@@ -251,3 +251,106 @@ describe("userinfo in URLs without a scheme", () => {
     expect(out?.data?.url).toBe("/p");
   });
 });
+
+describe("scrubEvent field checks", () => {
+  it("keeps the event type, environment and a numeric timestamp", () => {
+    expect(
+      scrubEvent({ type: "transaction", environment: "staging", timestamp: 1_763_546_400 }),
+    ).toEqual({
+      type: "transaction",
+      environment: "staging",
+      timestamp: 1_763_546_400,
+    });
+  });
+
+  it("keeps message and logentry text after redacting it", () => {
+    // The email and the pound amount are redacted; the rest of each string stays.
+    const out = scrubEvent({
+      message: "failed for a1@example.com",
+      logentry: { message: "hit a1@example.com", formatted: "hit £5" },
+    });
+    expect(out?.message).toBe("failed for [redacted]");
+    expect(out?.logentry).toEqual({ message: "hit [redacted]", formatted: "hit [redacted]" });
+  });
+
+  it("drops frame and mechanism fields of the wrong type", () => {
+    // lineno and colno must be numbers and in_app and handled booleans; anything else could
+    // carry free text, so it is dropped rather than copied.
+    const out = scrubEvent({
+      exception: {
+        values: [
+          {
+            mechanism: { type: "generic", handled: "yes" },
+            stacktrace: {
+              frames: [{ function: "f", lineno: "12", colno: { a: 1 }, in_app: "true" }],
+            },
+          },
+        ],
+      },
+    });
+    expect(out?.exception?.values).toEqual([
+      { mechanism: { type: "generic" }, stacktrace: { frames: [{ function: "f" }] } },
+    ]);
+  });
+
+  it("keeps a scoped package folder in a stack frame path", () => {
+    // A literal @ in a path segment is not an email; only the home directory goes.
+    const out = scrubEvent({
+      exception: {
+        values: [
+          {
+            stacktrace: {
+              frames: [
+                { filename: "/Users/someone/proj/node_modules/@sentry/core/build/index.js" },
+              ],
+            },
+          },
+        ],
+      },
+    });
+    const values = out?.exception?.values as { stacktrace: { frames: unknown[] } }[];
+    expect(values[0]?.stacktrace.frames).toEqual([
+      { filename: "node_modules/@sentry/core/build/index.js" },
+    ]);
+  });
+
+  it("strips a file:// prefix from a frame path", () => {
+    const out = scrubEvent({
+      exception: {
+        values: [{ stacktrace: { frames: [{ filename: "file:///app/dist/main.js" }] } }],
+      },
+    });
+    const values = out?.exception?.values as { stacktrace: { frames: unknown[] } }[];
+    expect(values[0]?.stacktrace.frames).toEqual([{ filename: "/app/dist/main.js" }]);
+  });
+
+  it("redacts a path segment holding a percent-encoded @", () => {
+    // person%40localhost decodes to person@localhost: any encoded @ redacts the segment, even
+    // without a dotted domain.
+    expect(scrubEvent({ request: { url: "/u/person%40localhost/x" } })?.request?.url).toBe(
+      "/u/[redacted]/x",
+    );
+  });
+
+  it("drops a URL that only appears in a relative path's query", () => {
+    expect(
+      scrubEvent({ request: { url: "/callback?redirect=https://other.example/x" } })?.request?.url,
+    ).toBe("/callback");
+  });
+
+  it("redacts a long token with a slash in a transaction name as one value", () => {
+    // The token does not start with a scheme or a slash, so it is plain text, and 33 characters
+    // of the base64 alphabet (the slash included) are one long-token match.
+    const token = `${"abcdefghijklmnop"}/${"qrstuvwxyzABCDEF"}`;
+    expect(scrubEvent({ transaction: `job ${token}` })?.transaction).toBe("job [redacted]");
+  });
+});
+
+describe("scrubBreadcrumb method check", () => {
+  it("drops a method that is not one upper-case word", () => {
+    // "GET /x?token=ABC" starts and ends with capitals but is not only capitals.
+    expect(
+      scrubBreadcrumb({ category: "http", data: { method: "GET /x?token=ABC" } })?.data,
+    ).toEqual({});
+  });
+});

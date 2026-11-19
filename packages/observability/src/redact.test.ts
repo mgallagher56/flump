@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { redactDeep, redactString } from "./redact.js";
+import {
+  isSensitiveKey,
+  MAX_STRING_LENGTH,
+  redactCredentials,
+  redactDeep,
+  redactString,
+} from "./redact.js";
 
 const jwt = `${"eyJ"}${"a".repeat(10)}.${"b".repeat(10)}.${"c".repeat(10)}`;
 
@@ -83,5 +89,105 @@ describe("redactString on long credentials inside the length limit", () => {
   it("drops everything after a Cookie header longer than 2,048 characters", () => {
     const text = `Cookie: ${"a=b; ".repeat(600)}TAIL=${secret(2)}`; // 3,000 characters of pairs first
     expect(redactString(text)).not.toContain("Pw!z9");
+  });
+});
+
+describe("isSensitiveKey", () => {
+  it("matches camelCase forms with no separator", () => {
+    // The key list allows an optional separator in `api.?key` and `account.?number`, so the
+    // camelCase spellings (no separator at all) must still count as sensitive.
+    expect(isSensitiveKey("apiKey")).toBe(true);
+    expect(isSensitiveKey("accountNumber")).toBe(true);
+  });
+});
+
+describe("redactCredentials exact shapes", () => {
+  it("redacts a whole Cookie header line, however it is spaced", () => {
+    // Header text runs to the end of the line, so every pair after the colon goes, not just the
+    // first one; zero spaces after the colon, and a space before it, are both header forms.
+    expect(redactCredentials("Cookie: sid=abc; theme=dark")).toBe("Cookie: [redacted]");
+    expect(redactCredentials("Set-Cookie:sid=abc; Path=/; HttpOnly")).toBe("Set-Cookie:[redacted]");
+    expect(redactCredentials("Cookie : sid=abc; theme=dark")).toBe("Cookie : [redacted]");
+  });
+
+  it("drops the whole Bearer value, even after several spaces", () => {
+    // The scheme word and the full value are replaced by one marker; text after it stays.
+    expect(redactCredentials("Bearer tok123 next")).toBe("[redacted] next");
+    expect(redactCredentials("Bearer  tok123 next")).toBe("[redacted] next");
+  });
+
+  it("redacts a Basic value that is not a plain English word", () => {
+    // "abcd1234efgh" mixes letters and digits, so it is not word-like (a capital or small letter
+    // followed only by small letters) even though it starts and ends with letters.
+    expect(redactCredentials("hdr Basic abcd1234efgh")).toBe("hdr [redacted]");
+    expect(redactCredentials("hdr Basic  abcd1234efgh")).toBe("hdr [redacted]");
+  });
+
+  it("redacts all three parts of a JWT", () => {
+    expect(redactCredentials(`x ${jwt} y`)).toBe("x [redacted] y");
+  });
+
+  it("redacts every password-like value in any case, spaces included", () => {
+    // Both keys are strong keys, matched without regard to case; each value runs to the `&`.
+    expect(redactCredentials("password=one two&PWD=three four")).toBe(
+      "password=[redacted]&PWD=[redacted]",
+    );
+  });
+
+  it("does not truncate input of exactly the maximum length", () => {
+    const atLimit = "a".repeat(MAX_STRING_LENGTH);
+    expect(redactCredentials(atLimit)).toBe(atLimit);
+  });
+});
+
+describe("redactString exact shapes", () => {
+  it("redacts every email address, not only the first", () => {
+    expect(redactString("a1@example.com and b2@example.org")).toBe("[redacted] and [redacted]");
+  });
+
+  it("redacts a Bearer value glued to a preceding word", () => {
+    // An escaped newline leaves the letter n right before "Bearer", so there is no word
+    // boundary; the catch-all Bearer rule still removes the value, however many spaces follow.
+    expect(redactString("line1\\nBearer  tok123")).toBe("line1\\n[redacted]");
+  });
+
+  it("redacts a whole Stripe-style key", () => {
+    expect(redactString(`k ${"sk_"}${"live_"}abcdef`)).toBe("k [redacted]");
+  });
+
+  it("redacts spaced IBANs as one value", () => {
+    // GB: GB82 then four groups of four and a group of two. AT: AT61 then exactly four groups,
+    // ended by a full stop so no short trailing group follows.
+    expect(redactString("iban GB82 WEST 1234 5698 7654 32 ok")).toBe("iban [redacted] ok");
+    expect(redactString("iban AT61 1904 3002 3457 3201.")).toBe("iban [redacted].");
+  });
+
+  it("redacts an unspaced IBAN as one value", () => {
+    expect(redactString("iban GB82WEST12345698765432 ok")).toBe("iban [redacted] ok");
+  });
+
+  it("keeps a code identifier that has only one digit after two letters", () => {
+    // An IBAN has two digits after its two-letter country code; "Ui5C..." has one, so it stays.
+    expect(redactString("at Ui5ComponentLoader.load")).toBe("at Ui5ComponentLoader.load");
+  });
+
+  it("redacts a card number as one value", () => {
+    expect(redactString("card 4111-1111-1111-1111 ok")).toBe("card [redacted] ok");
+  });
+
+  it("redacts the whole query string and fragment", () => {
+    expect(redactString("GET /p?code=zzz#frag done")).toBe("GET /p[redacted] done");
+  });
+
+  it("redacts a whole pound amount", () => {
+    expect(redactString("paid £1,234.56 today")).toBe("paid [redacted] today");
+  });
+});
+
+describe("redactDeep arrays", () => {
+  it("applies the depth limit to nested arrays as to objects", () => {
+    let deep: unknown = "leaf";
+    for (let i = 0; i < 20; i++) deep = [deep];
+    expect(JSON.stringify(redactDeep(deep))).not.toContain("leaf");
   });
 });

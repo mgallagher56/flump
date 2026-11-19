@@ -315,3 +315,77 @@ describe("receipt encryption (SEC-D, finding L4)", () => {
     expect(ring.keys.get(1)).toBe(KEY_A);
   });
 });
+
+describe("token format edges", () => {
+  it("round trips under a multi-digit key version", () => {
+    const ring = keyringFromSecret(KEY_A, 10);
+    const enc = encryptBankingToken("secret-value", { keyring: ring });
+    expect(enc.startsWith("v10:")).toBe(true);
+    expect(isEncryptedToken(enc)).toBe(true);
+    expect(decryptBankingToken(enc, { keyring: ring })).toBe("secret-value");
+  });
+
+  it("does not treat a token with text before or after it as encrypted", () => {
+    const enc = encryptBankingToken("secret-value", { keyring: RING_A });
+    expect(isEncryptedToken(`x${enc}`)).toBe(false);
+    expect(isEncryptedToken(`${enc}zz`)).toBe(false);
+    expect(() => decryptBankingToken(`${enc}zz`, { keyring: RING_A })).toThrow(/format/);
+  });
+});
+
+describe("keyringFromSecret version check", () => {
+  it.each([0, -1, 1.5])("rejects version %s", (version) => {
+    expect(() => keyringFromSecret(KEY_A, version)).toThrow(/positive integer/);
+  });
+});
+
+describe("resolveBankingKeyring entry parsing", () => {
+  it("rejects an entry with no separator even when it is all digits", () => {
+    expect(() =>
+      resolveBankingKeyring({ NODE_ENV: "test", BANKING_TOKEN_ENCRYPTION_KEYS: "12345" }),
+    ).toThrow(/BANKING_TOKEN_ENCRYPTION_KEYS/);
+  });
+
+  it("names the 1-based position of the bad entry", () => {
+    const message = messageOf(() =>
+      resolveBankingKeyring({
+        NODE_ENV: "test",
+        BANKING_TOKEN_ENCRYPTION_KEYS: `1:${KEY_A},x:${KEY_B}`,
+      }),
+    );
+    expect(message).toMatch(/entry 2\b/);
+  });
+
+  it("accepts multi-digit versions and spaces around the separator", () => {
+    const ring = resolveBankingKeyring({
+      NODE_ENV: "production",
+      BANKING_TOKEN_ENCRYPTION_KEYS: `12 : ${KEY_B},1:${KEY_A}`,
+    });
+    expect(ring.activeVersion).toBe(12);
+    expect(ring.keys.get(12)).toBe(KEY_B);
+  });
+
+  it("rejects a version too large to be an exact integer", () => {
+    // 10^20 is above Number.MAX_SAFE_INTEGER (about 9.007 x 10^15).
+    expect(() =>
+      resolveBankingKeyring({
+        NODE_ENV: "test",
+        BANKING_TOKEN_ENCRYPTION_KEYS: `100000000000000000000:${KEY_A}`,
+      }),
+    ).toThrow(/too large/);
+  });
+});
+
+describe("development receipt key", () => {
+  it("falls back to a committed receipt key of full length, separate from the banking key", () => {
+    const receipt = resolveReceiptKey({ NODE_ENV: "development" });
+    expect(receipt.length).toBeGreaterThanOrEqual(32);
+    expect(receipt).not.toBe(resolveBankingKey({ NODE_ENV: "development" }));
+  });
+});
+
+describe("decryptReceiptData empty input", () => {
+  it("returns empty input unchanged without needing a record id", () => {
+    expect(decryptReceiptData("", "", RING_A)).toBe("");
+  });
+});

@@ -202,3 +202,16 @@ describe("assertSafeOptions", () => {
     expect(() => assertSafeOptions({ ...safe, beforeBreadcrumb: "x" })).toThrow(/beforeBreadcrumb/);
   });
 });
+
+describe("assertSafeOptions integration lists", () => {
+  it("ignores empty slots in the integrations list", () => {
+    // null and undefined are not integrations, so they name nothing forbidden.
+    expect(() => assertSafeOptions({ ...safe, integrations: [null, undefined] })).not.toThrow();
+  });
+
+  it("rejects a forbidden integration listed among allowed ones", () => {
+    expect(() =>
+      assertSafeOptions({ ...safe, integrations: ["Dedupe", { name: "BrowserTracing" }] }),
+    ).toThrow(/integrations/);
+  });
+});

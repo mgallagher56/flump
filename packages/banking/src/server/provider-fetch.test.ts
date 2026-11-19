@@ -408,3 +408,156 @@ describe("BankProviderError", () => {
     expect(isBankProviderError(new Error("x"))).toBe(false);
   });
 });
+
+describe("providerFetch details", () => {
+  beforeEach(() => vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] }));
+  afterEach(() => vi.useRealTimers());
+
+  it("sends GET when no method is given", async () => {
+    const { impl, calls } = scripted([{ status: 200 }]);
+    await settle(providerFetch("https://bank/x", {}, { ...ctx, fetchImpl: impl }));
+    expect(calls[0]?.init?.method).toBe("GET");
+  });
+
+  it("names the provider, operation and status on a rejected request", async () => {
+    const { impl } = scripted([{ status: 422 }]);
+    const out = await settle(providerFetch("https://bank/x", {}, { ...ctx, fetchImpl: impl }));
+    expect((out as { error: BankRequestRejectedError }).error).toMatchObject({
+      provider: "testbank",
+      operation: "fetch thing",
+      status: 422,
+    });
+  });
+
+  it("gives up on a second 5xx as a server error with its status", async () => {
+    const { impl, calls } = scripted([{ status: 503 }]);
+    const out = await settle(providerFetch("https://bank/x", {}, { ...ctx, fetchImpl: impl }));
+    expect(calls).toHaveLength(2);
+    expect((out as { error: BankUnavailableError }).error).toMatchObject({
+      provider: "testbank",
+      operation: "fetch thing",
+      status: 503,
+      reason: "server_error",
+    });
+  });
+
+  it("treats a 300 answer as a refused request, not a success", async () => {
+    const { impl } = scripted([{ status: 300 }]);
+    const out = await settle(providerFetch("https://bank/x", {}, { ...ctx, fetchImpl: impl }));
+    expect((out as { error: unknown }).error).toBeInstanceOf(BankRequestRejectedError);
+  });
+
+  it("leaves the wait unset on a 429 without Retry-After", async () => {
+    const { impl, calls } = scripted([{ status: 429 }]);
+    const out = await settle(providerFetch("https://bank/x", {}, { ...ctx, fetchImpl: impl }));
+    const error = (out as { error: BankRateLimitedError }).error;
+    expect(error).toBeInstanceOf(BankRateLimitedError);
+    expect(error.retryAfterSeconds).toBeUndefined();
+    expect(calls).toHaveLength(1);
+  });
+
+  it("never retries a 429 sooner than its Retry-After", async () => {
+    // Retry-After: 1 means wait at least 1000 ms, whatever the jitter.
+    const { impl } = scripted([{ status: 429, headers: { "Retry-After": "1" } }, { status: 200 }]);
+    const started = Date.now();
+    const out = await settle(
+      providerFetch("https://bank/x", {}, { ...ctx, fetchImpl: impl, random: () => 1 }),
+    );
+    expect(out.ok).toBe(true);
+    expect(Date.now() - started).toBeGreaterThanOrEqual(1000);
+  });
+
+  it("maps a failed answer with no body to its status", async () => {
+    const impl = (() =>
+      Promise.resolve({
+        ok: false,
+        status: 404,
+        headers: new Headers(),
+        body: null,
+        text: vi.fn(),
+      })) as unknown as typeof fetch;
+    const out = await settle(providerFetch("https://bank/x", {}, { ...ctx, fetchImpl: impl }));
+    expect((out as { error: unknown }).error).toBeInstanceOf(BankRequestRejectedError);
+  });
+});
+
+describe("providerFetchJson malformed details", () => {
+  it("names the provider, the status and the body as the bad field", async () => {
+    const { impl } = scripted([{ status: 200, body: "<html>" }]);
+    const error = await providerFetchJson("https://bank/x", {}, { ...ctx, fetchImpl: impl }).catch(
+      (e: unknown) => e as BankMalformedResponseError,
+    );
+    expect(error).toMatchObject({ provider: "testbank", operation: "fetch thing", status: 200 });
+    expect((error as Error).message).toContain("(body)");
+  });
+});
+
+describe("parseRetryAfterMs edges", () => {
+  it("reads delta-seconds with surrounding spaces", () => {
+    expect(parseRetryAfterMs(" 5 ")).toBe(5000);
+  });
+
+  it("treats values that are not delta-seconds or an HTTP date as junk", () => {
+    // An HTTP date names a weekday or month in letters; these do not.
+    expect(parseRetryAfterMs("5 seconds")).toBeUndefined();
+    expect(parseRetryAfterMs("1.5")).toBeUndefined();
+    expect(parseRetryAfterMs("2026-11-14T10:00:30Z")).toBeUndefined();
+  });
+});
+
+describe("body readers, more shapes", () => {
+  it("asRecord and asString reject other primitive types", () => {
+    expect(() => asRecord("x", "f", ctx)).toThrow(BankMalformedResponseError);
+    expect(() => asString(5, "f", ctx)).toThrow(BankMalformedResponseError);
+  });
+
+  it("asFiniteNumber reads whole and decimal numeric strings, spaces trimmed", () => {
+    expect(asFiniteNumber("12", "f", ctx)).toBe(12);
+    expect(asFiniteNumber("12.50", "f", ctx)).toBe(12.5);
+    expect(asFiniteNumber(" 12.50 ", "f", ctx)).toBe(12.5);
+  });
+});
+
+describe("BankProviderError codes", () => {
+  it("gives each error class its code and names provider and operation in the message", () => {
+    const cases: [BankProviderError, string][] = [
+      [new BankAuthExpiredError({ ...ctx, status: 401 }), "AUTH_EXPIRED"],
+      [new BankRateLimitedError(ctx), "RATE_LIMITED"],
+      [new BankUnavailableError({ ...ctx, reason: "network" }), "UNAVAILABLE"],
+      [new BankMalformedResponseError(ctx), "MALFORMED_RESPONSE"],
+      [new BankRequestRejectedError({ ...ctx, status: 400 }), "REQUEST_REJECTED"],
+    ];
+    for (const [error, code] of cases) {
+      expect(error.code).toBe(code);
+      expect(error.message).toContain("testbank");
+      expect(error.message).toContain("fetch thing");
+    }
+  });
+});
+
+describe("providerFetch retry limit", () => {
+  beforeEach(() => vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] }));
+  afterEach(() => vi.useRealTimers());
+
+  // A third call would succeed, so only the one-retry limit can make these fail.
+  it.each<[string, Step[], unknown]>([
+    ["5xx", [{ status: 503 }, { status: 503 }, { status: 200 }], BankUnavailableError],
+    ["network failure", ["network", "network", { status: 200 }], BankUnavailableError],
+    [
+      "short 429",
+      [
+        { status: 429, headers: { "Retry-After": "1" } },
+        { status: 429, headers: { "Retry-After": "1" } },
+        { status: 200 },
+      ],
+      BankRateLimitedError,
+    ],
+  ])("makes at most two calls for a GET after a %s", async (_label, steps, errorClass) => {
+    const { impl, calls } = scripted(steps);
+    const out = await settle(
+      providerFetch("https://bank/x", {}, { ...ctx, fetchImpl: impl, random: () => 0 }),
+    );
+    expect((out as { error: unknown }).error).toBeInstanceOf(errorClass);
+    expect(calls).toHaveLength(2);
+  });
+});

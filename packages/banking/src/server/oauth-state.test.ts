@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { keyringFromSecret } from "./crypto.js";
+import { encryptBankingToken, keyringFromSecret } from "./crypto.js";
 import {
   createOAuthStateRecord,
   hashOAuthState,
@@ -254,5 +254,63 @@ describe("OAuth state & PKCE (M4, database-free)", () => {
     expect(parsed.searchParams.get("state")).toBe("st-1");
     expect(parsed.searchParams.get("code_challenge")).toBe("challenge-xyz");
     expect(parsed.searchParams.get("code_challenge_method")).toBe("S256");
+  });
+});
+
+describe("verifyOAuthStateRecord input checks", () => {
+  const now = new Date("2026-11-16T00:00:00.000Z");
+
+  /** A record that matches `state` in every way, so only the input checks can refuse it. */
+  function recordFor(state: string, encryptedCodeVerifier?: string) {
+    const stateHash = hashOAuthState(state);
+    return {
+      userId: "user-1",
+      institutionId: "monzo",
+      stateHash,
+      encryptedCodeVerifier:
+        encryptedCodeVerifier ??
+        encryptBankingToken("verifier-value", { aad: stateHash, keyring: RING_A }),
+      redirectUri: "https://api.flump.test/cb",
+      expiresAt: new Date(now.getTime() + OAUTH_STATE_TTL_MS),
+    };
+  }
+
+  const verify = (record: ReturnType<typeof recordFor>, state: unknown) =>
+    verifyOAuthStateRecord(record, {
+      state: state as string,
+      institutionId: "monzo",
+      now,
+      keyring: RING_A,
+    });
+
+  it("accepts a state of exactly the maximum length", () => {
+    const state = "s".repeat(MAX_OAUTH_STATE_LENGTH);
+    expect(verify(recordFor(state), state)?.codeVerifier).toBe("verifier-value");
+  });
+
+  it("refuses a state one character over the maximum, even with a matching record", () => {
+    const state = "s".repeat(MAX_OAUTH_STATE_LENGTH + 1);
+    expect(verify(recordFor(state), state)).toBeNull();
+  });
+
+  it("refuses an empty state, even with a matching record", () => {
+    expect(verify(recordFor(""), "")).toBeNull();
+  });
+
+  it("returns null, without throwing, for a state that is not a string", () => {
+    // A repeated query parameter can arrive as an array.
+    const record = recordFor("abc");
+    expect(verify(record, ["abc"])).toBeNull();
+  });
+
+  it("returns null, without throwing, when the stored hash has another length", () => {
+    // The verifier is bound to the stored hash, so only the hash comparison can refuse it.
+    const verifier = encryptBankingToken("verifier-value", { aad: "ab", keyring: RING_A });
+    const record = { ...recordFor("abc", verifier), stateHash: "ab" };
+    expect(verify(record, "abc")).toBeNull();
+  });
+
+  it("refuses a record whose code verifier is empty", () => {
+    expect(verify(recordFor("abc", ""), "abc")).toBeNull();
   });
 });
