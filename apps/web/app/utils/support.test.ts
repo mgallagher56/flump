@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { BUSINESS_DETAILS } from "@flump/business-details";
 import { describe, expect, it } from "vitest";
 import { feedbackMailto, SUPPORT_EMAIL } from "./support";

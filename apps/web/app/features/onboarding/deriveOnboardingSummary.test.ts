@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { deriveOnboardingSummary } from "./deriveOnboardingSummary";
 import { INITIAL_VALUES, type OnboardingValues } from "./types";

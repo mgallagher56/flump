@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { PortfolioSnapshot } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import { buildDebtSummary } from "./debtSummary";

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { buildAccountRows, lastUpdatedLabel, summariseAccountBalance } from "./accountRows";
 

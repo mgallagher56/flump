@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { isPageEnabled } from "~/utils/pageConfig";
 import { AUTH_NAV_ROUTES, filterNavRoutes } from "./navConfig";

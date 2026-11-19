@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The slice 3 contract (owner decision 10, option B): one assembler, two surfaces. It has two
  * halves, and together they say the AI and the web pages cannot drift apart.

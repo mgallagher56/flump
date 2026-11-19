@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { BackendError } from "@flump/api-client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {

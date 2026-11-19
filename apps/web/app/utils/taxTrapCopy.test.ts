@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { calculateTaxTrapRelief } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import { formatTrapRate, getKnownTrapRegion, getTaxTrapCopy } from "./taxTrapCopy";

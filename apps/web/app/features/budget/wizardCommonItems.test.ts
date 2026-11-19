@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { buildOnboardingSeedJobs } from "~/services/onboarding-seed";
 import { missingWizardCommonItems, WIZARD_COMMON_ITEMS } from "./wizardCommonItems";

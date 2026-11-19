@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { calculateRealRate, DEFAULT_RETIREMENT_INFLATION_RATE } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import {

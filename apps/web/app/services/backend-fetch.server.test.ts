@@ -1,3 +1,4 @@
+// @vitest-environment node
 import type { ContractSchema } from "@flump/api-client";
 import { DeleteBudgetEntryResponse } from "@flump/api-contract";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import type { BudgetEntry } from "~/types/budget";
 import { buildDebtInputs } from "./debtInputs";

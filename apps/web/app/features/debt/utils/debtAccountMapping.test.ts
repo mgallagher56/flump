@@ -1,3 +1,4 @@
+// @vitest-environment node
 import type { DebtItem } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import { debtItemToAccountPayload, debtTypeToAccountSubtype } from "./debtAccountMapping";

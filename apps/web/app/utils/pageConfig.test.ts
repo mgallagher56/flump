@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import {
   ALL_DASHBOARD_WIDGET_KEYS,

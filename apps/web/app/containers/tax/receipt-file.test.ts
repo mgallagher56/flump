@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { isAcceptableReceiptFile, RECEIPT_ACCEPT, RECEIPT_MAX_BYTES } from "./receipt-file";
 

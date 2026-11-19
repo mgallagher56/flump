@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { isFutureMonth, monthYearSort } from "./accounts";
 
 describe("monthYearSort", () => {

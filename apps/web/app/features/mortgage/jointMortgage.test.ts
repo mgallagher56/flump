@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { PortfolioSnapshot, selectLoanToValue } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import { isJointAccount, withWholeBalances } from "./jointMortgage";

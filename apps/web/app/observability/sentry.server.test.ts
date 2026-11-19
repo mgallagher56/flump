@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { assertSafeOptions, PRIVATE_DATA_COLLECTION } from "@flump/observability";
 import * as Sentry from "@sentry/node";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

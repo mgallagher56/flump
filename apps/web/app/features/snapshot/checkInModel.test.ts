@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { buildCheckInSteps, type CheckInAccountInput } from "@flump/finance-engine";
 import { describe, expect, test } from "vitest";
 import { CHECK_IN_SENDS_SOURCE, calculatedExplain, statementPromptText } from "./checkInModel";
