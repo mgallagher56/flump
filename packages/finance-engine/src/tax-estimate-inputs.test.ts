@@ -67,14 +67,33 @@ describe("estimateInputsFor (one rule for every Self Assessment surface)", () =>
     expect(out).toEqual({ status: "unknown", missing: ["annualSalary"] });
   });
 
-  it("employee with no saved salary but a logged PAYE salary record: known, PAYE pay 0", () => {
-    // The logged record carries the salary, so the profile salary passes as 0.
+  it("employee with no saved salary and only a legacy salary record: unknown annualSalary", () => {
+    // Slice 6: the record no longer stands in for the salary (before the migration copies it).
     const out = estimateInputsFor(
       { employmentType: "employed", annualSalary: null },
       [rent(12000), annual("paye", "income", "paye_salary", 30000)],
       Y,
     );
-    expect(out).toMatchObject({ status: "known", payeSalary: 0 });
+    expect(out).toEqual({ status: "unknown", missing: ["annualSalary"] });
+  });
+
+  it("after the migration copies it: known, the salary 30,000 is the PAYE pay, no record", () => {
+    const out = estimateInputsFor(
+      { employmentType: "employed", annualSalary: 30000 },
+      [rent(12000)],
+      Y,
+    );
+    expect(out).toMatchObject({ status: "known", payeSalary: 30000 });
+  });
+
+  it("a legacy salary record left in the data is dropped from the records passed on", () => {
+    const legacy = annual("paye", "income", "paye_salary", 40000);
+    const out = estimateInputsFor(
+      { employmentType: "employed", annualSalary: 58000 },
+      [rent(10000), legacy],
+      Y,
+    );
+    expect(out.status === "known" && out.records.map((r) => r.category)).toEqual(["rental_income"]);
   });
 
   it("self-employed, salary 40,000 kept, rent but no self-employed record: unknown", () => {

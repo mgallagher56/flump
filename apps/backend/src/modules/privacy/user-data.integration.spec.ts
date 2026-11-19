@@ -365,10 +365,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
          VALUES ($1, NULL, 'PLAN_2')`,
         [profileId],
       );
+      await ds.query(
+        `INSERT INTO paye_salary_record_backfill (profile_id, tax_record_id, record, salary_copied)
+         VALUES ($1, $2, $3::jsonb, 40000)`,
+        [profileId, crypto.randomUUID(), JSON.stringify({ user_id: userId, amount: 40000 })],
+      );
     }
     const profileB = await profileOf(USER_B);
     await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
-    for (const table of ["pension_rates_backfill", "student_loan_plan_backfill"]) {
+    for (const table of [
+      "pension_rates_backfill",
+      "student_loan_plan_backfill",
+      "paye_salary_record_backfill",
+    ]) {
       const rows: { profile_id: string }[] = await ds.query(`SELECT profile_id FROM "${table}"`);
       expect(
         rows.map((r) => r.profile_id),
@@ -391,6 +400,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
          VALUES ($1, 5, 3, true)`,
         [profileId],
       );
+      await ds.query(
+        `INSERT INTO paye_salary_record_backfill (profile_id, tax_record_id, record, salary_copied)
+         VALUES ($1, $2, $3::jsonb, 40000)`,
+        [profileId, crypto.randomUUID(), JSON.stringify({ amount: 40000 })],
+      );
     }
     const profileB = await profileOf(USER_B);
     const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
@@ -404,7 +418,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       new LoggingBankConsentRevoker(),
       deletion,
     ).resetFinancialData(USER_A);
-    for (const table of ["pension_rates_backfill"]) {
+    for (const table of ["pension_rates_backfill", "paye_salary_record_backfill"]) {
       const rows: { profile_id: string }[] = await ds.query(`SELECT profile_id FROM "${table}"`);
       expect(
         rows.map((r) => r.profile_id),

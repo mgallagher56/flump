@@ -759,8 +759,8 @@ facts:
       - {
           ref: "tax_records category paye_salary",
           status: legacy,
-          path: packages/finance-engine/src/tax-calculator.ts,
-          note: "an old record replaces the profile salary in tax figures only",
+          path: packages/finance-engine/src/tax-estimate-inputs.ts,
+          note: "slice 6: never replaces the salary (estimateInputsFor leaves them out, the API refuses new ones); migration RemovePayeSalaryRecords copied the latest into an empty salary and removed them",
         }
       - {
           ref: "localStorage flump_financial_baseline_v2",
@@ -808,7 +808,7 @@ facts:
         }
     links: [L24, L25, L26, L33, L47, L69]
     verdict: duplicated
-    findings: [BU-1, SA-6, DB-5]
+    findings: [BU-1, DB-5]
 
   - id: typed-take-home
     name: Monthly take-home pay as typed in onboarding

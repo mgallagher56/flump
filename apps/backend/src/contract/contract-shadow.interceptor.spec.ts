@@ -274,6 +274,61 @@ describe("log volume limits", () => {
       return { error: undefined, next };
     };
 
+    it("rejects a tax record written as the legacy paye_salary category (slice 6)", () => {
+      process.env.CONTRACT_MODE = "enforce";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const record = {
+        type: "income",
+        source: "paye",
+        category: "paye_salary",
+        name: "Pay",
+        amount: 1000,
+        date: "2026-05-01",
+      };
+      const created = rejectionOf({
+        method: "POST",
+        route: { path: "/tax-records" },
+        params: {},
+        query: {},
+        body: record,
+      });
+      expect(created.error?.getStatus()).toBe(400);
+      expect(created.error?.getResponse().issues).toEqual([
+        { path: "body.category", code: "custom", message: expect.any(String) },
+      ]);
+      expect(created.next.handle).not.toHaveBeenCalled();
+
+      const patched = rejectionOf({
+        method: "PATCH",
+        route: { path: "/tax-records/:id" },
+        params: { id: crypto.randomUUID() },
+        query: {},
+        body: { category: "paye_salary" },
+      });
+      expect(patched.error?.getStatus()).toBe(400);
+      expect(patched.next.handle).not.toHaveBeenCalled();
+
+      const bulk = rejectionOf({
+        method: "POST",
+        route: { path: "/tax-records/bulk" },
+        params: {},
+        query: {},
+        body: { records: [record] },
+      });
+      expect(bulk.error?.getStatus()).toBe(400);
+
+      // Any other category still passes.
+      const allowed = rejectionOf({
+        method: "POST",
+        route: { path: "/tax-records" },
+        params: {},
+        query: {},
+        body: { ...record, category: "salary_bonus" },
+      });
+      expect(allowed.error).toBeUndefined();
+      expect(allowed.next.handle).toHaveBeenCalled();
+    });
+
     it("rejects unknown keys in the body, params and query (BE-09: strict schemas)", () => {
       process.env.CONTRACT_MODE = "enforce";
       vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);

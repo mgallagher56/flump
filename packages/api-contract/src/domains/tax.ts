@@ -12,10 +12,24 @@ export const RECEIPT_MIME_TYPES = [
   "application/pdf",
 ] as const;
 
+/**
+ * The legacy PAYE salary category. The saved profile salary is the one salary figure (slice 6),
+ * so a record can no longer be written as salary; migration RemovePayeSalaryRecords copied the
+ * latest old one into an empty profile salary and removed them.
+ */
+export const LEGACY_PAYE_SALARY_CATEGORY = "paye_salary";
+
 const taxRecordFields = {
   type: z.enum(TAX_RECORD_TYPES),
   source: z.enum(TAX_RECORD_SOURCES),
-  category: z.string().trim().min(1).max(64),
+  category: z
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .refine((category) => category !== LEGACY_PAYE_SALARY_CATEGORY, {
+      message: "Salary is saved on your profile, not as a tax record",
+    }),
   name: z.string().trim().min(1).max(120),
   amount: Money,
   frequency: z.enum(TAX_RECORD_FREQUENCIES),

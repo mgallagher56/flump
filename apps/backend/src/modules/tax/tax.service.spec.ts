@@ -44,6 +44,20 @@ describe("TaxService.createBulk (audit M3)", () => {
     expect(outside.rows).toHaveLength(0);
   });
 
+  it("refuses a salary record with a 400 even with the contract check off (slice 6)", async () => {
+    const { outside, transaction } = withManager();
+    const service = new TaxService(outside as never);
+    await expect(
+      service.createBulk("u1", {
+        records: [{ ...base, source: "paye", category: "paye_salary", date: "2026-05-01" }],
+      } as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(transaction).not.toHaveBeenCalled();
+    await expect(
+      service.createRecord("u1", { ...base, source: "paye", category: "paye_salary" } as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it("rejects a cap id that is not a uuid with a 400 before opening a transaction", async () => {
     const { outside, transaction } = withManager();
     const service = new TaxService(outside as never);

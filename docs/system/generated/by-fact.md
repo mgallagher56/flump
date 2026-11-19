@@ -74,13 +74,13 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 <a id="salary"></a>
 
 - Id: `salary` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: BU-1, SA-6, DB-5. Links: L24, L25, L26, L33, L47, L69.
+- Verdict: Duplicated (two stores that can disagree). Findings: BU-1, DB-5. Links: L24, L25, L26, L33, L47, L69.
 - Source of truth: `user_profiles.annual_salary` in `apps/backend/src/entities/user-profile.entity.ts`
 
 Other stores:
 
 - `budget_entries income row` [duplicate] in `apps/web/app/services/onboarding-seed.ts` (a one-off copy of take-home; left over reads this, not the salary)
-- `tax_records category paye_salary` [legacy] in `packages/finance-engine/src/tax-calculator.ts` (an old record replaces the profile salary in tax figures only)
+- `tax_records category paye_salary` [legacy] in `packages/finance-engine/src/tax-estimate-inputs.ts` (slice 6: never replaces the salary (estimateInputsFor leaves them out, the API refuses new ones); migration RemovePayeSalaryRecords copied the latest into an empty salary and removed them)
 - `localStorage flump_financial_baseline_v2` [cache] in `apps/web/app/state/baseline.store.ts` (used only when no profile row exists)
 - `cookie and localStorage flump_onboarding_seed` [legacy] in `packages/finance-engine/src/persistence.ts` (numbers typed into public calculators before sign-up)
 - `engine default 45,000` [default] in `packages/finance-engine/src/profile.ts` (display default only; AI output and MCP read saved facts and report no salary as not set)

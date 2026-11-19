@@ -123,14 +123,40 @@ describe("selectEstimatedTaxDue (C-11)", () => {
     expect(selectEstimatedTaxDue(employee(30000), [old], { taxYear: Y }).status).toBe("unknown");
   });
 
-  it("is unknown for an employee with no saved or logged salary (the band depends on it)", () => {
+  it("is unknown for an employee with no saved salary (the band depends on it)", () => {
     expect(selectEstimatedTaxDue(employee(null), [rent(12000)], { taxYear: Y })).toEqual({
       status: "unknown",
       missing: ["annualSalary"],
       reason: "not-set",
     });
+  });
+
+  // Slice 6: a legacy PAYE salary record never stands in for the saved salary. The migration
+  // copies the latest yearly record into an empty profile salary and removes the records.
+  it("an employee with only a legacy salary record: unknown before the migration", () => {
+    // Profile salary empty, one yearly paye_salary record of 30,000. The record is left out, so
+    // the salary is not set and the estimate names it (it used to be worked from the record).
     const logged = annual("paye", "income", "paye_salary", 30000);
-    expect(amount(employee(null), [logged, rent(12000), repairs(2000)])).toBe(2000);
+    expect(
+      selectEstimatedTaxDue(employee(null), [logged, rent(12000), repairs(2000)], { taxYear: Y }),
+    ).toEqual({ status: "unknown", missing: ["annualSalary"], reason: "not-set" });
+  });
+
+  it("the same employee after the migration: 30,000 copied to the salary, the same £2,000", () => {
+    // Rental profit 12,000 - 2,000 = 10,000. Salary 30,000 uses the 12,570 allowance, so the
+    // basic band runs to 50,270 and 30,000 + 10,000 = 40,000 sits inside it: 10,000 x 20% = £2,000.
+    // That is the figure the record gave before, so this employee sees no change.
+    expect(amount(employee(30000), [rent(12000), repairs(2000)])).toBe(2000);
+  });
+
+  it("a legacy record no longer replaces a saved salary (SA-6)", () => {
+    // Saved 58,000 and a yearly record of 40,000; rent 12,000 less repairs 2,000 is a profit of
+    // 10,000 (the costs beat the 1,000 property allowance). Before: 40,000 + 10,000 = 50,000 <
+    // 50,270, so 10,000 x 20% = £2,000. Now the saved 58,000 counts: all 10,000 is above 50,270,
+    // so 10,000 x 40% = £4,000.
+    const logged = annual("paye", "income", "paye_salary", 40000);
+    expect(amount(employee(58000), [logged, rent(12000), repairs(2000)])).toBe(4000);
+    expect(amount(employee(40000), [rent(12000), repairs(2000)])).toBe(2000);
   });
 
   it("applies the rental ownership share", () => {

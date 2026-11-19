@@ -773,6 +773,31 @@ describe("query reads (re-plan PR B)", () => {
       }
     });
 
+    it("a legacy PAYE salary record never replaces the saved salary (slice 6, SA-6)", async () => {
+      // Saved 58,000; rent 12,000 less repairs 2,000 is a profit of 10,000, all above the 50,270
+      // basic-rate limit: 10,000 x 40% = £4,000. With the old £40,000 record standing in for the
+      // salary the tool gave 40,000 + 10,000 = 50,000, all basic rate: £2,000.
+      const rec = (id: string, source: string, category: string, amount: number, type = "income") =>
+        taxRecord({ id, type, source, category, amount, frequency: "annual", date: "2026-05-01" });
+      const legacy = await connectTestClient({
+        ...emptyUser,
+        baseline: { ...emptyUser.baseline, employmentStatus: "PAYE", annualGrossSalary: 58000 },
+        profileFacts: facts({ annualSalary: 58000, employmentType: "employed" }),
+        taxRecords: [
+          rec("p1", "paye", "paye_salary", 40000),
+          rec("r1", "rental", "rental_income", 12000),
+          rec("r2", "rental", "repairs_maintenance", 2000, "expense"),
+        ] as never,
+      });
+      try {
+        const e = (await legacy.callJson("get_tax_year_position", { taxYear: "2026/27" })) as Env;
+        expect(e.result.income.payeSalaryGbp).toBe(58000);
+        expect(e.result.estimate.selfAssessmentGbp).toBe(4000);
+      } finally {
+        await legacy.close();
+      }
+    });
+
     it("self-employed, salary kept, rent but no self-employed record: no estimate (PR 785)", async () => {
       // Before: the estimate was worked from £0 PAYE pay on 10,000 rent alone, (10,000 - 1,000
       // property allowance) = 9,000, under the 12,570 allowance: a known 0. The trading income
