@@ -36,8 +36,22 @@ const RETIRED_PROFILE_FIELDS: Record<string, unknown> = {
 };
 
 describe("UpdateProfileRequest", () => {
-  it.each(Object.entries(RETIRED_PROFILE_FIELDS))("rejects the retired field %s", (key, value) => {
-    expect(UpdateProfileRequest.safeParse({ [key]: value }).success).toBe(false);
+  // Accepted and ignored on write for one release, so a tab still running the previous web
+  // bundle can save; the backend stores nothing for them (user-profile.service.spec.ts).
+  it.each(Object.entries(RETIRED_PROFILE_FIELDS))(
+    "still accepts the retired field %s",
+    (key, value) => {
+      expect(UpdateProfileRequest.safeParse({ [key]: value }).success).toBe(true);
+    },
+  );
+
+  it("accepts an old-shaped payload that mixes retired and current fields", () => {
+    const parsed = UpdateProfileRequest.safeParse({
+      ...RETIRED_PROFILE_FIELDS,
+      annualSalary: 41000,
+      housingStatus: "renting",
+    });
+    expect(parsed.success).toBe(true);
   });
 
   it("accepts https and image data-URL avatars, rejects other schemes", () => {
