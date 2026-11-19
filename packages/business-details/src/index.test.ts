@@ -37,6 +37,36 @@ describe("BUSINESS_DETAILS", () => {
   });
 });
 
+describe("BUSINESS_DETAILS shape for the launch guard", () => {
+  const stringKeys = (Object.keys(BUSINESS_DETAILS) as (keyof BusinessDetails)[]).filter(
+    (key) => key !== "price",
+  );
+
+  it("gives every text field a non-empty value and a placeholder flag", () => {
+    // Holds before and after launch: the guard reads `isPlaceholder`, and an empty or missing
+    // value would print as blank text in every footer.
+    for (const key of stringKeys) {
+      const field = BUSINESS_DETAILS[key];
+      expect(typeof field.value, key).toBe("string");
+      expect((field.value as string).length, key).toBeGreaterThan(0);
+      expect(typeof field.isPlaceholder, key).toBe("boolean");
+    }
+    expect(typeof BUSINESS_DETAILS.price.isPlaceholder).toBe("boolean");
+  });
+
+  it("flags any value that is still a stand-in as a placeholder", () => {
+    // The documented stand-ins: an all-zero company number, an RFC 2606 `.invalid` mailbox, and
+    // "to be confirmed" wording. A field holding one must be flagged, or the launch guard would
+    // let it through. Once the owner replaces a value, its check simply no longer applies.
+    const isStandIn = (value: string) =>
+      /^0+$/.test(value) || value.endsWith(".invalid") || /to be confirmed/i.test(value);
+    for (const key of stringKeys) {
+      const field = BUSINESS_DETAILS[key];
+      if (isStandIn(field.value as string)) expect(field.isPlaceholder, key).toBe(true);
+    }
+  });
+});
+
 describe("formatPrice and companyLine", () => {
   it("formats en-GB", () => {
     expect(formatPrice(4.99)).toBe("£4.99");
@@ -58,6 +88,13 @@ describe("placeholderFields", () => {
     expect(placeholderFields().find((f) => f.key === "price")?.strings).toEqual([
       "Example figure only. No price is set.",
     ]);
+  });
+  it("reports a text field's own value as the text that would leak", () => {
+    // Only the company number is still a stand-in here, so it is the one field listed, and the
+    // leaking text is its own value, not the price label.
+    const details = realDetails();
+    details.companyNumber = { value: "12345678", isPlaceholder: true };
+    expect(placeholderFields(details)).toEqual([{ key: "companyNumber", strings: ["12345678"] }]);
   });
   it("is empty once every field is real", () => {
     expect(placeholderFields(realDetails())).toEqual([]);

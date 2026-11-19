@@ -385,7 +385,7 @@ describe("the committed files", () => {
       {
         "continue-on-error"?: boolean;
         env?: Record<string, string | number>;
-        strategy?: { matrix?: { shard?: number[] } };
+        strategy?: { matrix?: Record<string, unknown> };
         steps: Step[];
       }
     >;
@@ -441,12 +441,45 @@ describe("the committed files", () => {
     expect(stryker?.run).toContain("run $FORCE");
   });
 
-  test("the shard count is the same in the matrix, the shard step and the score job", () => {
+  /** The targets the "Pick packages" step defines, read from its JSON literals. */
+  const targets = [...pick.matchAll(/'(\{"package":[^']+\})'/g)].map(
+    (m) => JSON.parse(m[1] ?? "") as { package: string; slug: string; shards: number },
+  );
+
+  test("each package sets its own shard count, and the shards and score job read it", () => {
+    expect(targets.length).toBeGreaterThan(0);
+    for (const t of targets) {
+      expect(Number.isInteger(t.shards) && t.shards >= 1, t.package).toBe(true);
+      expect(t.slug, t.package).toBe(t.package.replace("packages/", ""));
+    }
     const full = workflow.jobs.full;
-    const shards = full?.strategy?.matrix?.shard ?? [];
-    expect(shards).toEqual(Array.from({ length: shards.length }, (_, i) => i + 1));
-    expect(Number(full?.env?.SHARDS)).toBe(shards.length);
-    expect(runs("score")).toContain(`for i in ${shards.join(" ")}; do`);
+    expect(full?.strategy?.matrix).toEqual({
+      include: expr("fromJSON(needs.plan.outputs.shards)"),
+    });
+    expect(full?.env?.SHARDS).toBe(expr("matrix.target.shards"));
+    expect(workflow.jobs.score?.env?.SHARDS).toBe(expr("matrix.target.shards"));
+    expect(runs("score")).toContain('for i in $(seq 1 "$SHARDS"); do');
+    // One matrix entry per shard, each carrying its target.
+    expect(pick).toContain("range(1; $t.shards + 1) | {target: $t, shard: .}");
+  });
+
+  test("every package with a Stryker config is picked, watched on pull requests and floored", () => {
+    const baseline = readBaseline(join(root, "scripts/mutation-baseline.json"));
+    const configured = [...new Bun.Glob("packages/*/stryker.config.json").scanSync({ cwd: root })]
+      .map((p) => p.replace("/stryker.config.json", ""))
+      .sort();
+    expect(targets.map((t) => t.package).sort()).toEqual(configured);
+    expect(
+      String(workflow.jobs.changed?.env?.PACKAGES).split(/\s+/).filter(Boolean).sort(),
+    ).toEqual(configured);
+    for (const pkg of configured) {
+      expect(baseline.packages[pkg], pkg).toBeDefined();
+      expect(workflow.on.pull_request.paths).toContain(`${pkg}/src/**`);
+      expect(workflow.on.pull_request.paths).toContain(`${pkg}/stryker.config.json`);
+      expect(workflow.on.pull_request.paths).toContain(`${pkg}/vitest.config.ts`);
+      // A manual start can pick the package by its folder.
+      expect(pick).toContain(`${pkg}) targets=`);
+    }
   });
 
   test("the pull request job is advisory and only the weekly score job checks the floor", () => {
