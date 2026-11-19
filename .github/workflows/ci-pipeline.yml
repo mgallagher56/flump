@@ -322,9 +322,12 @@ jobs:
 
       - name: 🌐 Install Chromium
         working-directory: apps/web
-        env:
-          CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
-        run: bash "$GITHUB_WORKSPACE/.github/scripts/install-chromium.sh" "$CACHE_HIT"
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            bunx playwright install-deps chromium
+          else
+            bunx playwright install --with-deps chromium
+          fi
 
       # turbo.json makes these tasks depend on ^build and generate, so the workspace packages
       # the stories import (e.g. @flump/finance-engine) are built (or replayed) first.
@@ -390,9 +393,12 @@ jobs:
 
       - name: 🌐 Install Chromium
         working-directory: apps/e2e
-        env:
-          CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
-        run: bash "$GITHUB_WORKSPACE/.github/scripts/install-chromium.sh" "$CACHE_HIT"
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            bunx playwright install-deps chromium
+          else
+            bunx playwright install --with-deps chromium
+          fi
 
       - name: 🏗️ Build all packages
         run: bun run build
