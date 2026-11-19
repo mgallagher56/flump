@@ -9,7 +9,7 @@ import { join, relative, resolve } from "node:path";
 import { checkFile, type OneTaxEngineViolation } from "./lib/one-tax-engine";
 
 const repoRoot = resolve(import.meta.dir, "..");
-/** Source the product ships. The parked mobile app is rebuilt from scratch (E12) and left out. */
+/** Source the product ships. */
 const ROOTS = [
   "packages/finance-engine/src",
   "packages/mcp/src",
