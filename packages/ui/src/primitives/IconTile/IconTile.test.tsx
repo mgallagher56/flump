@@ -26,11 +26,20 @@ describe("IconTile", () => {
   });
 
   it("uses a neutral surface when no domain or tone is given", () => {
-    const { container, rerender } = render(<IconTile icon={Landmark} />);
+    const { container } = render(<IconTile icon={Landmark} />);
     expect(container.firstElementChild?.className).toContain("surface.subtle");
     expect(container.firstElementChild?.className).toContain("bd-c_border");
-    rerender(<IconTile icon={Landmark} />);
     expect(container.firstElementChild?.getAttribute("data-tile-tone")).toBe("neutral");
+  });
+
+  it.each([
+    ["pension", "sky"],
+    ["tax", "violet"],
+    ["budget", "rose"],
+    ["accounts", "accent"],
+  ] as const)("paints the %s domain in %s on the rendered tile", (domain, tone) => {
+    const { container } = render(<IconTile domain={domain} icon={Landmark} />);
+    expect(container.firstElementChild?.getAttribute("data-tile-tone")).toBe(tone);
   });
 
   it("lets an explicit tone override the domain", () => {

@@ -351,7 +351,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         {owe.length > 0 ? (
           <Group
             description="Your debts, from your saved balances."
-            domain="accounts"
+            domain="debt"
             footnote={countedStudentLoan ? studentLoanFootnote(true) : undefined}
             icon={CreditCard}
             id="accounts-owe-heading"
