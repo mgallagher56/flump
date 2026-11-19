@@ -216,17 +216,67 @@ describe("estimateRecordedReturn: unreliable history", () => {
     expect(result.overall.annualised).toBe(false);
   });
 
-  it("passes a contribution run when one month rises", () => {
-    // 10,000 -> 10,100 -> 10,050 with 100 a month: the first month rises, so the check passes.
-    // r1 = (10100 - 10000 - 100) / 10050 = 0; r2 = (10050 - 10100 - 100) / 10150 = -150 / 10150
-    // = -0.0147783... Overall: 1 * (1 - 0.0147783) - 1 = -0.0147783.
-    const result = okResult(
+  it("flags a contribution run where the balance rose in only half the months", () => {
+    // 10,000 -> 10,100 -> 10,050 with 100 a month: 1 of 2 months rises. Half is not a clear
+    // majority, so no figure. (It would read r1 = 0, r2 = -150 / 10150 = -1.48%.)
+    expect(
       estimateRecordedReturn({
         balances: [bal(2026, 1, 10000), bal(2026, 2, 10100), bal(2026, 3, 10050)],
         monthlyContribution: 100,
       }),
+    ).toEqual({
+      status: "unreliable",
+      reason: "contribution-not-reflected",
+      monthlyContribution: 100,
+    });
+  });
+
+  it("flags a large stale balance with one rising month", () => {
+    // Jan 2025 20,000, then 20,500 from Feb 2025 to Jan 2026, with 500 a month set: 12 measured
+    // months, of which only Feb rises (1 of 12, far from more than half).
+    // Without the check: Feb r = (20500 - 20000 - 500) / 20250 = 0; each of the 11 flat months
+    // r = -500 / (20500 + 250) = -500 / 20750. Chained over 12 months:
+    // (20250 / 20750)^11 - 1 = 0.9759036^11 - 1 = exp(11 × -0.0243914) - 1 = -0.2353, about -24%
+    // a year, a figure about the records, not the investments.
+    const balances: RecordedBalance[] = [bal(2025, 1, 20000)];
+    for (let i = 1; i <= 12; i++) {
+      balances.push(bal(2025 + Math.floor(i / 12), (i % 12) + 1, 20500));
+    }
+    expect(estimateRecordedReturn({ balances, monthlyContribution: 500 })).toEqual({
+      status: "unreliable",
+      reason: "contribution-not-reflected",
+      monthlyContribution: 500,
+    });
+  });
+
+  it("still gives a figure for a contribution run that rose in most months", () => {
+    // 500 a month set. 10,000 -> 10,700 -> 11,400 -> 11,300 -> 12,050 -> 12,800 -> 13,550:
+    // 5 of 6 months rise, more than half, so the check passes.
+    // r1 = (10700 - 10000 - 500) / (10000 + 250) = 200 / 10250 = 0.0195122
+    // r2 = (11400 - 10700 - 500) / (10700 + 250) = 200 / 10950 = 0.0182648
+    // r3 = (11300 - 11400 - 500) / (11400 + 250) = -600 / 11650 = -0.0515021
+    // r4 = (12050 - 11300 - 500) / (11300 + 250) = 250 / 11550 = 0.0216450
+    // r5 = (12800 - 12050 - 500) / (12050 + 250) = 250 / 12300 = 0.0203252
+    // r6 = (13550 - 12800 - 500) / (12800 + 250) = 250 / 13050 = 0.0191571
+    // Chained: 1.0195122 × 1.0182648 × 0.9484979 × 1.0216450 × 1.0203252 × 1.0191571 - 1
+    //   = 0.04609 over 6 months, not annualised.
+    const result = okResult(
+      estimateRecordedReturn({
+        balances: [
+          bal(2026, 1, 10000),
+          bal(2026, 2, 10700),
+          bal(2026, 3, 11400),
+          bal(2026, 4, 11300),
+          bal(2026, 5, 12050),
+          bal(2026, 6, 12800),
+          bal(2026, 7, 13550),
+        ],
+        monthlyContribution: 500,
+      }),
     );
-    expect(result.overall.return).toBeCloseTo(-150 / 10150, 12);
+    expect(result.overall.months).toBe(6);
+    expect(result.overall.annualised).toBe(false);
+    expect(result.overall.return).toBeCloseTo(0.04609, 5);
   });
 
   it("flags a month above 25% and names it", () => {

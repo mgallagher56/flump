@@ -171,8 +171,9 @@ export class UserProfile {
   @Column({
     name: "pension_percent",
     type: "decimal",
-    precision: 5,
-    scale: 2,
+    // Four places so a rate worked out from pounds a month round-trips to the penny.
+    precision: 7,
+    scale: 4,
     default: 5.0,
     transformer: numericTransformer,
   })
@@ -181,8 +182,9 @@ export class UserProfile {
   @Column({
     name: "pension_employer_percent",
     type: "decimal",
-    precision: 5,
-    scale: 2,
+    // Four places so a rate worked out from pounds a month round-trips to the penny.
+    precision: 7,
+    scale: 4,
     default: 3.0,
     transformer: numericTransformer,
   })

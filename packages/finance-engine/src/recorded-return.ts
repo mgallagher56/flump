@@ -55,14 +55,16 @@
  * `{ status: "unreliable" }` with a reason, and no figure, because the figure would describe the
  * records rather than the investments:
  *
- * - `contribution-not-reflected`: a monthly contribution is set, yet the balance did not rise in
- *   any measured month (every month ends at or below where it started). With money paid in every
- *   month, a balance that never rises means the investments fell by more than the payment in every
- *   single month. That can happen in a long fall, but far more often the payments are not being
- *   made or not being recorded. A flat 1,000 with 500 a month set would otherwise read as -40% a
- *   month: (1000 - 1000 - 500) / (1000 + 250) = -0.4. One month that rises is enough to pass, and
- *   with no contribution set the check does not apply, so a genuine fall still shows as a
- *   negative figure.
+ * - `contribution-not-reflected`: a monthly contribution is set, yet the balance rose in no more
+ *   than half of the measured months (a month that ends at or below where it started has not
+ *   risen). With money paid in every month, a balance that mostly fails to rise means the
+ *   investments fell by more than the payment in most months. That can happen in a long fall, but
+ *   far more often the payments are not being made or not being recorded. A flat 1,000 with 500 a
+ *   month set would otherwise read as -40% a month: (1000 - 1000 - 500) / (1000 + 250) = -0.4. A
+ *   large stale balance with one rising month is caught the same way: 20,000 left flat for a year
+ *   with 500 a month set reads as about -23% to -26% a year. The balance must rise in a clear
+ *   majority, more than half, of the measured months to pass. With no contribution set the check
+ *   does not apply, so a genuine fall still shows as a negative figure.
  * - `implausible-month`: any one month's return is beyond `MAX_PLAUSIBLE_MONTHLY_RETURN` (25%) up
  *   or down. Broad stock market indices have rarely moved more than about 20% in a calendar month,
  *   even in the worst crashes, so 25% leaves room for a real crash while catching what a mistyped
@@ -196,7 +198,8 @@ export function estimateRecordedReturn(input: RecordedReturnInput): RecordedRetu
     return { status: "not-enough-history", minimumMonths: MIN_RECORDED_RETURN_MONTHS };
   }
 
-  if (paidIn > 0 && !monthly.some((m) => m.rose)) {
+  const risingMonths = monthly.filter((m) => m.rose).length;
+  if (paidIn > 0 && risingMonths * 2 <= monthly.length) {
     return {
       status: "unreliable",
       reason: "contribution-not-reflected",

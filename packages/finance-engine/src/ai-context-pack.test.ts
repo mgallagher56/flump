@@ -372,10 +372,34 @@ describe("buildFlumpAiContextPack budget summary comes from the financial pictur
     expect(pack.budgetSummary.essentialBillsMonthly).toBe(1000);
     expect(pack.budgetSummary.emergencyRunwayMonths).toBe(3);
     expect(pack.budgetSummary.safeToSpend?.weeklyAllowance).toBeGreaterThan(0);
+    // £3,000 saved ÷ £1,000 essentials a month = 3 months, worded as Breathing room is everywhere.
     expect(pack.observations).toEqual([
-      "Cash covers 3.0 months of essential spending.",
+      "Cash covers 3 months of essential spending.",
       "£1,400 a month is left over after the spending and saving in the budget.",
     ]);
+  });
+
+  it("words the months of cover with the shared Breathing room figure", () => {
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline,
+      accounts: [{ id: "s", name: "Saver", type: "Saving", balance: 18000 }],
+      budgetEntries: [
+        {
+          id: "r",
+          category: "housing",
+          name: "Rent",
+          amount: 1000,
+          frequency: "monthly",
+          isIncome: false,
+          isEssential: true,
+        },
+      ],
+    });
+    // £18,000 saved ÷ £1,000 essentials a month = 18 months, which reads "1 year 6 months", not
+    // "18.0 months".
+    expect(pack.budgetSummary.emergencyRunwayMonths).toBe(18);
+    expect(pack.observations).toContain("Cash covers 1 year 6 months of essential spending.");
   });
 });
 

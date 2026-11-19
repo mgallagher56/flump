@@ -43,6 +43,23 @@ export const Percent = z
   .max(100)
   .refine(hasAtMostTwoDecimals, "at most 2 decimal places");
 
+/** True when `v` has at most 4 decimal places, with the same magnitude-scaled float tolerance. */
+export const hasAtMostFourDecimals = (v: number): boolean => {
+  const scaled = v * 10_000;
+  return Math.abs(scaled - Math.round(scaled)) <= Math.max(1e-6, Math.abs(scaled) * 1e-12);
+};
+
+/**
+ * A workplace pension rate where 4.5 means 4.5%. Columns are numeric(7,4): four places, so a rate
+ * worked out from pounds a month round-trips to the penny (£100 a month on £37,260 is 3.2206%).
+ */
+export const PensionPercent = z
+  .number()
+  .finite()
+  .min(0)
+  .max(100)
+  .refine(hasAtMostFourDecimals, "at most 4 decimal places");
+
 export const Uuid = z.uuid();
 
 /** YYYY-MM-DD with a calendar check (rejects 2026-02-30). */

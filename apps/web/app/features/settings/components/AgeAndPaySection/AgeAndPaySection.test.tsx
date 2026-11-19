@@ -216,11 +216,33 @@ describe("<AgeAndPaySection />", () => {
     const own = screen.getByLabelText("Your pension contribution (£ a month)");
     fireEvent.change(own, { target: { value: "300" } });
     fireEvent.blur(own);
-    // £300 a month on £52,000: 3,600 ÷ 52,000 = 6.923%, stored to two places as 6.92%. Only the
-    // percentage is saved; the employer's 4% is unchanged.
+    // £300 a month on £52,000: 3,600 ÷ 52,000 = 6.923076...%, stored to four places as 6.9231%.
+    // Only the percentage is saved; the employer's 4% is unchanged.
     await waitFor(() =>
-      expect(onSave).toHaveBeenCalledWith({ pensionPercent: 6.92, pensionEmployerPercent: 4 }),
+      expect(onSave).toHaveBeenCalledWith({ pensionPercent: 6.9231, pensionEmployerPercent: 4 }),
     );
+  });
+
+  it("round-trips a typed £100 a month to the penny, showing the rate to two places", async () => {
+    const { onSave } = setup({ ...SAVED, annualSalary: 37260 });
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "£ a month" }));
+    fireEvent.click(screen.getByRole("tab", { name: "£ a month" }));
+    const own = screen.getByLabelText("Your pension contribution (£ a month)") as HTMLInputElement;
+    fireEvent.change(own, { target: { value: "100" } });
+    fireEvent.blur(own);
+    // £100 a month on £37,260: 1,200 ÷ 37,260 = 3.22061...%, stored as 3.2206%.
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith({ pensionPercent: 3.2206, pensionEmployerPercent: 4 }),
+    );
+    // Back from the stored rate: 37,260 × 0.032206 ÷ 12 = £99.9996, shown as £100.
+    await waitFor(() => expect(own.value).toBe("100"));
+    // The rate itself shows to at most two places.
+    expect(screen.getByText("3.22% of salary")).toBeDefined();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "% of salary" }));
+    fireEvent.click(screen.getByRole("tab", { name: "% of salary" }));
+    expect(
+      (screen.getByLabelText("Your pension contribution (% of salary)") as HTMLInputElement).value,
+    ).toBe("3.22");
   });
 
   it("turns off pounds a month without a saved salary and says why", () => {

@@ -14,6 +14,7 @@ import { USER_DATA_REGISTRY, type UserDataTable } from "./user-data-registry";
 const EXPORT_NOTES: readonly string[] = [
   "This file holds every record Flump stores about you, one section per table.",
   "Money is in pounds as a number; dates are YYYY-MM-DD; times are ISO 8601 in UTC.",
+  "Percentages are numbers where 5 means 5%. Pension contribution rates keep up to four decimal places, so a rate worked out from pounds a month is exact to the penny.",
   "Left out on purpose: secrets (bank access and refresh tokens, AI connection token hashes), browser retry keys and keyed hashes that mean nothing outside Flump.",
   "Your login details, such as your email address, are held by our sign-in provider, WorkOS, and are not in this file.",
 ];

@@ -155,9 +155,23 @@ describe("contributionPercentFromMonthly", () => {
     expect(contributionPercentFromMonthly(175, { annualSalary: 42_000 })).toBe(5);
   });
 
-  it("rounds to two decimal places, what the profile stores", () => {
-    // £101.10 a month on £30,000: 1,213.20 ÷ 30,000 = 0.04044 = 4.044%, stored as 4.04%.
-    expect(contributionPercentFromMonthly(101.1, { annualSalary: 30_000 })).toBe(4.04);
+  it("rounds to four decimal places, what the profile stores", () => {
+    // £101.10 a month on £30,000: 1,213.20 ÷ 30,000 = 0.04044 = 4.044%, kept as 4.044%.
+    expect(contributionPercentFromMonthly(101.1, { annualSalary: 30_000 })).toBe(4.044);
+    // £100 a month on £37,260: 1,200 ÷ 37,260 = 0.0322061... = 3.22061...%, stored as 3.2206%.
+    expect(contributionPercentFromMonthly(100, { annualSalary: 37_260 })).toBe(3.2206);
+  });
+
+  it("round-trips pounds a month to the penny through the stored percentage", () => {
+    // 3.2206% of £37,260 = £1,199.99556 a year; ÷ 12 = £99.9996 a month, £100.00 to the penny.
+    // At two places it was 3.22%: 37,260 × 0.0322 ÷ 12 = £99.981, which misses the penny.
+    const stored = contributionPercentFromMonthly(100, { annualSalary: 37_260 });
+    const back = contributionMonthlyFromPercent(stored, { annualSalary: 37_260 }) ?? 0;
+    expect(back).toBeCloseTo(99.9996, 4);
+    expect(Math.round(back * 100) / 100).toBe(100);
+    // £175 a month on £42,000: 2,100 ÷ 42,000 = 5.0000%; 42,000 × 5% ÷ 12 = £175.00 exactly.
+    expect(contributionPercentFromMonthly(175, { annualSalary: 42_000 })).toBe(5);
+    expect(contributionMonthlyFromPercent(5, { annualSalary: 42_000 })).toBe(175);
   });
 
   it("honours the qualifying earnings basis", () => {

@@ -104,6 +104,9 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   // When the dialog last opened, for the arming delay on a single-item confirm.
   const openedAt = useRef(0);
   const armingWait = () => !bulk && Date.now() - openedAt.current < CONFIRM_ARMING_DELAY_MS;
+  // True while a Space press on Confirm that began inside the arming delay is still down, so
+  // releasing it after the delay does not click Confirm either.
+  const spaceBeganArming = useRef(false);
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
@@ -181,7 +184,9 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
             // Space on Confirm is the button's own click: hold it back while arming, and never
             // from a held key.
             if (event.key === " ") {
-              if (onConfirmButton && (event.repeat || armingWait())) event.preventDefault();
+              if (!onConfirmButton) return;
+              if (!event.repeat) spaceBeganArming.current = armingWait();
+              if (event.repeat || armingWait()) event.preventDefault();
               return;
             }
             if (event.key !== "Enter") return;
@@ -206,10 +211,12 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
             void onConfirm();
           }}
           onKeyUp={(event) => {
-            // Some browsers click a button on Space's keyup: hold that back while arming too.
-            if (event.key === " " && event.target === confirmRef.current && armingWait()) {
-              event.preventDefault();
-            }
+            // Some browsers click a button on Space's keyup: hold that back while arming too, and
+            // for a press that began while arming, even when it is released after the delay.
+            if (event.key !== " " || event.target !== confirmRef.current) return;
+            const beganArming = spaceBeganArming.current;
+            spaceBeganArming.current = false;
+            if (beganArming || armingWait()) event.preventDefault();
           }}
           onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}

@@ -229,6 +229,19 @@ describe("ConfirmDialog", () => {
     expect(fireEvent.keyDown(confirm, { key: " ", repeat: true })).toBe(false);
   });
 
+  it("single: a Space press begun while arming and released after it does not confirm", () => {
+    const { onConfirm } = setup();
+    const confirm = screen.getByRole("button", { name: "Delete year" });
+    expect(fireEvent.keyDown(confirm, { key: " " })).toBe(false);
+    arm();
+    // Released after the delay: still held back, because the press began inside it.
+    expect(fireEvent.keyUp(confirm, { key: " " })).toBe(false);
+    expect(onConfirm).not.toHaveBeenCalled();
+    // The next press, begun after the delay, is the button's own again.
+    expect(fireEvent.keyDown(confirm, { key: " " })).toBe(true);
+    expect(fireEvent.keyUp(confirm, { key: " " })).toBe(true);
+  });
+
   it("leaves Enter on any other control alone, such as Sign in again", () => {
     const { onConfirm } = setup({
       error: "Your session has ended.",

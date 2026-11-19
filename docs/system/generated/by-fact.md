@@ -154,6 +154,7 @@ Read by:
 - Id: `pension-rates` (stored fact)
 - Verdict: Broken. Findings: PP-2, PP-3, PP-4, PP-11, DB-4, AI-12. Links: L27, L31, L37.
 - Source of truth: `user_profiles.pension_percent, pension_employer_percent, is_salary_sacrifice, is_salary_sacrifice_employer_ni` in `apps/backend/src/entities/user-profile.entity.ts` (the columns default to 5, 3 and false, so an unanswered question looks answered)
+- Note: pension_percent and pension_employer_percent are numeric(7,4). Pounds a month typed on the Profile tab become the stored rate to four places (finance-engine contributionPercentFromMonthly), so they round-trip to the penny; screens show at most two places.
 
 Other stores:
 
