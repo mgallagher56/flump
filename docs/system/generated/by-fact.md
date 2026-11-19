@@ -40,8 +40,8 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Which saved fact a budget line is linked to](#budget-entry-link-kind)                                        | fact   | budget      | Holds                                     |
 | [Which account a savings or debt budget line reads](#budget-entry-link-account)                               | fact   | budget      | Holds                                     |
 | [Other monthly outgoings as typed in onboarding](#other-outgoings)                                            | fact   | budget      | Duplicated (two stores that can disagree) |
-| [Self Assessment income and expense records](#tax-records)                                                    | fact   | tax         | Duplicated (two stores that can disagree) |
-| [Share of a rental property, as used for tax](#rental-share-for-tax)                                          | fact   | tax         | Duplicated (two stores that can disagree) |
+| [Self Assessment income and expense records](#tax-records)                                                    | fact   | tax         | Holds                                     |
+| [Share of a rental property, as used for tax](#rental-share-for-tax)                                          | fact   | tax         | Holds                                     |
 | [Retirement plan (ages, target, State Pension inputs, growth cases, excluded accounts)](#retirement-plan)     | fact   | retirement  | Holds                                     |
 | [Net worth choices (count the home, count the student loan)](#net-worth-choices)                              | fact   | preferences | Broken                                    |
 | [Check-in day of the month](#check-in-day)                                                                    | fact   | preferences | Holds                                     |
@@ -64,7 +64,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Savings total and saved each month](#savings-total)                                                          | figure | accounts    | Duplicated (two stores that can disagree) |
 | [Savings interest over the next 12 months](#savings-interest)                                                 | figure | accounts    | Holds                                     |
 | [ISA allowance used this tax year](#isa-allowance-used)                                                       | figure | accounts    | Holds                                     |
-| [Estimated Self Assessment tax](#estimated-tax)                                                               | figure | tax         | Broken                                    |
+| [Estimated Self Assessment tax](#estimated-tax)                                                               | figure | tax         | Holds                                     |
 | [Mortgage interest carried forward to next year](#finance-costs-carried-forward)                              | figure | tax         | Holds                                     |
 | [Paid into pensions each month](#pension-going-in)                                                            | figure | pay         | Duplicated (two stores that can disagree) |
 | [Estimated income in retirement](#retirement-income)                                                          | figure | retirement  | Broken                                    |
@@ -1368,9 +1368,9 @@ Shown on:
 <a id="tax-records"></a>
 
 - Id: `tax-records` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: SA-4, SA-6, SA-7, SA-9, DB-16. Links: L47, L48, L49, L50.
+- Verdict: Holds. Findings: SA-4, SA-6, SA-7, SA-9, DB-16. Links: L47, L48, L49, L50.
 - Source of truth: `tax_records` in `apps/backend/src/entities/tax-record.entity.ts`
-- Note: A record can point at the account it describes (tax_records.account_id, slice 7): a rental Property or its mortgage for a rental record, a savings or investment account for a savings record. The link is optional, and buy-to-let interest and savings interest are still typed here until a figure is offered from the linked account.
+- Note: A record can point at the account it describes (tax_records.account_id, slice 7): a rental Property or its mortgage for a rental record, a savings or investment account for a savings record. The Self Assessment page offers a calculated mortgage interest and savings interest figure from the linked account for the user to add as a record (decision 5), so the figure is not typed twice. Only listed categories can be written (PR 815).
 
 Other stores:
 
@@ -1394,32 +1394,34 @@ Read by:
 <a id="rental-share-for-tax"></a>
 
 - Id: `rental-share-for-tax` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: SA-5, JO-7, DB-8. Links: L23.
-- Source of truth: `user_profiles.property_ownership_share` in `apps/backend/src/entities/user-profile.entity.ts` (default 100; one value for every property)
+- Verdict: Holds. Findings: none. Links: L23.
+- Source of truth: `accounts.share_percent on the rental Property and its buy-to-let mortgage` in `apps/backend/src/entities/account.entity.ts` (per property (owner decision 6, slice 7); sole is 100; a record linked to the mortgage uses the mortgage's share (decision 14))
+- Note: rentalSharesFromAccounts in packages/finance-engine/src/tax-calculator.ts reads each rental property's and buy-to-let mortgage's share. A rental record with no linked account uses the rental properties' share when there is one, or counts in full and the page says so.
 
 Other stores:
 
-- `accounts.share_percent on the rental Property` [duplicate] in `apps/backend/src/entities/account.entity.ts` (net worth uses this one)
+- `user_profiles.property_ownership_share` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (no longer read or written for tax since slice 7; RentalShareOntoPropertyAccounts1795540100000 copied a value below 100 onto sole rental Property accounts; slice 9 drops the column)
 
 Entered or changed by:
 
-- Self Assessment: `apps/web/app/features/tax/taxActions.server.ts`
+- Accounts: `apps/web/app/features/accounts/accountFormBody.ts`
 
 Read by:
 
-- Self Assessment: `apps/web/app/utils/profileFirst.ts`
+- Self Assessment: `apps/web/app/containers/tax/TaxContainer.tsx`
 - Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/estimated-tax-due.ts`
 - AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
+- AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
 
 ### Estimated Self Assessment tax
 
 <a id="estimated-tax"></a>
 
 - Id: `estimated-tax` (derived figure)
-- Verdict: Broken. Findings: SA-3, SA-9. Links: L29, L48, L69.
+- Verdict: Holds. Findings: SA-3, SA-9. Links: L29, L48, L69.
 - Computed by: `calculateUKTax` in `packages/finance-engine/src/tax-calculator.ts`
 - Built from: `tax-records`, `salary`, `employment-type`, `tax-region`, `rental-share-for-tax`
-- Note: One calculator. The callers pass the salary through payeSalaryForTax. The calculation still uses England, Wales and Northern Ireland bands for a Scottish region, and the page says so.
+- Note: One calculator. Every caller goes through estimateInputsFor and calculateEstimatedTax, which pass the salary through payeSalaryForTax, the tax region (Scottish rates on non-savings income since slice 7) and each rental property's share from its account. The headline strip and the Dashboard's untaxed income both read incomeOutsidePaye.
 
 Other code paths that compute it:
 
