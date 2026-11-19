@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.40.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.39.0...flump/backend-v1.40.0) (2026-11-19)
+
+
+### Features ✨
+
+* accounts hold the home and loans (audit slice 4) ([946450c](https://github.com/mgallagher56/flump/commit/946450c96e4956a2c6761aeedc0fec5dc87158cc))
+* **budget:** savings and debt lines linked to one account (audit slice 5, engine and backend) ([274b53a](https://github.com/mgallagher56/flump/commit/274b53a4a62514fb3219f76f3eb36a1f5e7ac7df))
+* legacy PAYE salary records no longer replace the salary (audit slice 6, item 6) ([4fbcfc6](https://github.com/mgallagher56/flump/commit/4fbcfc6802c0c248904f1b516c99e7274be40e05))
+* pay and pension answers (audit slice 6) ([057a6f7](https://github.com/mgallagher56/flump/commit/057a6f78eb92a9580c4018d506ca1866af0d6a17))
+
+
+### Bug Fixes 🪲
+
+* a month is checked in only when its check-in was finished (audit slice 4, CH-3) ([f165c99](https://github.com/mgallagher56/flump/commit/f165c99ba641812a6fc5d59eefb2536db7ab7f75))
+* **budget:** review findings for slice 5 ([ba1ae58](https://github.com/mgallagher56/flump/commit/ba1ae58ac2df4e355f8eae359ab47709fc7f45b1))
+* CI after the rebase (audit slice 4) ([f8f48f0](https://github.com/mgallagher56/flump/commit/f8f48f0d24d263f0c89f7839b1c06229cedecb8c))
+* CI findings on slice 5: a constant name Semgrep read as a username; MCP wording the advice guard caught ([e5832d0](https://github.com/mgallagher56/flump/commit/e5832d0e55ad44cd69b247ec12b5e5aed0579988))
+
+
+### Tests 🧪
+
+* **e2e:** fit the link tests inside the backend's request limits; lint ([54b1a6f](https://github.com/mgallagher56/flump/commit/54b1a6f4cfdb2ca54615ea00b699e3aa3e14bbcc))
+* expectations after the rebase onto slice 3 (audit slice 4) ([d8ee28b](https://github.com/mgallagher56/flump/commit/d8ee28b0df2ce7523117a6bd4751c2f0dd1bff67))
+
 ## [1.39.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.38.0...flump/backend-v1.39.0) (2026-11-19)
 
 
