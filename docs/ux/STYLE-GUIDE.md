@@ -459,7 +459,11 @@ The dashboard's "Finish setting up" row is a progress ring with the next step na
 | Label          | Breathing room                                    |
 | Description    | How long your savings would cover the essentials. |
 | Value          | About 1.5 months                                  |
+| From a year    | About 1 year, About 1 year 1 month                |
+| Above 10 years | More than 10 years                                |
 | Dashboard line | Breathing room: about 1.5 months                  |
+
+From 12 months the value reads in whole years and months (owner ruling, 18 November 2026): one decimal place under a year, and once that rounds to 12 or more, whole months rounded half up (11.96 is "About 1 year", 12.5 is "About 1 year 1 month"), with no "0 months". One formatter, `breathing-room-wording.ts` in the finance engine, words it for the app, the marketing previews and AI text.
 
 The detail goes behind the info tip, not in the description: "savings" means the accounts the person can draw on, and "the essentials" means essential spending and minimum debt payments.
 

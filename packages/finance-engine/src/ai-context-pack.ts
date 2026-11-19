@@ -6,6 +6,7 @@ import {
   createTaxRecordAnonymiser,
   genericAccountLabel,
 } from "./anonymise.js";
+import { formatBreathingRoomFigure } from "./breathing-room-wording.js";
 import {
   calculateDebtSchedule,
   compareAvalancheAndSnowball,
@@ -647,7 +648,7 @@ ${
 ## 4. Budget
 - **Income in your budget, a month:** ${gbpOrNotSet(bg.monthlyIncome)}
 - **Essential spending, a month:** ${gbpOrNotSet(bg.essentialBillsMonthly)}
-- **Breathing room:** ${bg.emergencyRunwayMonths === null ? "Not set" : `${bg.emergencyRunwayMonths.toFixed(1)} months`}
+- **Breathing room:** ${formatBreathingRoomFigure(bg.emergencyRunwayMonths)}
 - **Safe to spend:** ${bg.safeToSpend ? `${formatSignedGbp(bg.safeToSpend.weeklyAllowance)} a week` : "Not set"}
 - **Income minus spending, a month:** ${gbpOrNotSet(bg.monthlySurplus)}
 

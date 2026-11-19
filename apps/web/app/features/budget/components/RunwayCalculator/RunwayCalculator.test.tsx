@@ -176,7 +176,7 @@ describe("RunwayCalculator", () => {
     fireEvent.click(isa);
     expect(isa.checked).toBe(true);
     // £25,000 over £1,500 = 16.7 months.
-    expect(outcomeFigure()).toBe("16.7 months");
+    expect(outcomeFigure()).toBe("1 year 5 months");
     expect(supporting("Money to draw on")).toBe("£25,000");
     expect(onScenarioChange).toHaveBeenCalledWith(
       expect.objectContaining({ includedAccounts: expect.objectContaining({ "acc-3": true }) }),
@@ -248,7 +248,7 @@ describe("RunwayCalculator", () => {
     );
     // £15,000 over £1,250 = 12 months.
     expect(supporting("Money to draw on")).toBe("£15,000");
-    expect(outcomeFigure()).toBe("12 months");
+    expect(outcomeFigure()).toBe("1 year");
     expect(localStorage.getItem("flump_runway_calculator_settings")).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
