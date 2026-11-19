@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 import { expect, userEvent, within } from "storybook/test";
 import type { DashboardWidgetKey } from "~/utils/pageConfig";
+import { moveSection, SECTION_PRIORITY } from "../../sectionOrder";
 import { WidgetVisibilityPanel } from "./WidgetVisibilityPanel";
 
 const meta: Meta<typeof WidgetVisibilityPanel> = {
@@ -47,4 +48,35 @@ export const ToggleVisibility: Story = {
 
 export const WithError: Story = {
   args: { error: "We could not save that change. Try again." },
+};
+
+/** Move up and move down on every row, a reset, and a status line that says where a row went. */
+export const Reorder: Story = {
+  render: () => {
+    const [order, setOrder] = useState<DashboardWidgetKey[]>([...SECTION_PRIORITY]);
+    return (
+      <WidgetVisibilityPanel
+        open
+        orderIsDefault={order.join() === SECTION_PRIORITY.join()}
+        shownKeys={order.slice(0, 4)}
+        visibleKeys={order.slice(0, 5)}
+        widgetKeys={order}
+        onMove={(key, offset) => setOrder((o) => moveSection(o, key, offset))}
+        onOpenChange={() => undefined}
+        onResetOrder={() => setOrder([...SECTION_PRIORITY])}
+        onToggle={() => undefined}
+      />
+    );
+  },
+  play: async () => {
+    const body = within(document.body);
+    const [up] = await body.findAllByRole("button", { name: "Move Budget up" });
+    if (!up) throw new Error("Move Budget up missing");
+    await userEvent.click(up);
+    const rows = body
+      .getAllByRole("checkbox")
+      .map((box) => box.id.replace(/^widget-visibility-/, ""));
+    await expect(rows.indexOf("budget")).toBeLessThan(rows.indexOf("tax"));
+    await expect(document.activeElement).toBe(up);
+  },
 };

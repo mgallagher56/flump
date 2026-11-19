@@ -57,7 +57,8 @@ describe("WidgetCard", () => {
     const card = screen.getByTestId("widget-card-savings");
     expect(card.getAttribute("data-section-colour")).toBe("sage");
     expect(card.className).toContain("bd-t-c_chart.series2");
-    expect(card.querySelector('[data-tile-tone="sage"]')).toBeTruthy();
+    const tile = card.querySelector('[data-tile-tone="sage"]') as HTMLElement;
+    expect(tile.className).toContain("c_chart.series2");
     expect(card.className).toContain("cursor_pointer");
     const link = screen.getByTestId("widget-card-savings-link");
     expect(link.className).toContain("inset_0");

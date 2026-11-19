@@ -66,6 +66,17 @@ export const panelMoveGroup = cva({
   base: { display: "flex", flexShrink: 0, gap: "2px" },
 });
 
+/** A move or reset button that has nothing to do: still focusable, visibly inert. */
+export const panelInert = cva({
+  base: {
+    "&[aria-disabled=true]": {
+      opacity: 0.4,
+      cursor: "not-allowed",
+      _hover: { backgroundColor: "transparent" },
+    },
+  },
+});
+
 /** The reset button, at the end of the list. */
 export const panelOrderFooter = cva({
   base: { display: "flex", justifyContent: "flex-end" },

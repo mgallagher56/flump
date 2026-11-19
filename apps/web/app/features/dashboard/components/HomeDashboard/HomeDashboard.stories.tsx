@@ -55,6 +55,9 @@ export const Populated: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByRole("heading", { level: 1, name: "Your money" })[0]).toBeDefined();
     await expect(canvas.getAllByText("£320 since October")[0]).toBeDefined();
+    // "Choose what shows here" sits in the Your sections heading, beside the cards it changes.
+    const [button] = canvas.getAllByRole("button", { name: "Choose what shows here" });
+    await expect(button?.closest("#dashboard-sections-header")).not.toBeNull();
   },
 };
 

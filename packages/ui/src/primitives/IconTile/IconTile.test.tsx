@@ -43,6 +43,15 @@ describe("IconTile", () => {
     expect(tile.className).toContain(`bg-c_surface.tint.${tone}`);
   });
 
+  it("colours the glyph in its tone's series colour when asked, and in text.primary by default", () => {
+    const { container, rerender } = render(<IconTile icon={Landmark} tone="gold" />);
+    expect((container.firstElementChild as HTMLElement).className).toContain("c_text.primary");
+    rerender(<IconTile colouredIcon icon={Landmark} tone="gold" />);
+    const tile = container.firstElementChild as HTMLElement;
+    expect(tile.className).toContain("c_chart.series7");
+    expect(tile.className).not.toContain("c_text.primary");
+  });
+
   it("is decorative by default and named when given a label", () => {
     const { container, rerender } = render(<IconTile domain="pension" icon={PiggyBank} />);
     expect(container.firstElementChild?.getAttribute("aria-hidden")).toBe("true");

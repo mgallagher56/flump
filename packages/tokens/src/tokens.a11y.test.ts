@@ -751,6 +751,18 @@ describe("E16 surface tints", () => {
     }
   });
 
+  it("each tint's chart series reads at 3:1 as an icon on that tint (home section tiles)", () => {
+    const PAIRS: [string, string][] = [
+      ["chart.series1", "surface.tint.teal"],
+      ["chart.series2", "surface.tint.sage"],
+      ["chart.series3", "surface.tint.apricot"],
+      ["chart.series4", "surface.tint.violet"],
+      ["chart.series6", "surface.tint.sky"],
+      ["chart.series7", "surface.tint.gold"],
+    ];
+    for (const [fg, bg] of PAIRS) assertPair({ fg, bg, themes: BOTH, min: 3, role: "ui" });
+  });
+
   it("tints differ between themes", () => {
     for (const tint of TINTS)
       expect(resolveColor(tint, "light")).not.toBe(resolveColor(tint, "dark"));

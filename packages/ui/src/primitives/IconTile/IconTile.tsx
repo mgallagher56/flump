@@ -51,15 +51,24 @@ export interface IconTileProps {
    * usual case): the tile is then decorative and hidden from assistive technology.
    */
   label?: string;
+  /** Draw the glyph in the tone's colour rather than text.primary (the home section cards). */
+  colouredIcon?: boolean;
   className?: string;
 }
 
 /** A 40px tinted tile behind an icon, one colour per domain. */
-export const IconTile: FC<IconTileProps> = ({ icon, domain, tone, label, className }) => {
+export const IconTile: FC<IconTileProps> = ({
+  icon,
+  domain,
+  tone,
+  label,
+  colouredIcon = false,
+  className,
+}) => {
   const resolvedTone = tone ?? (domain ? ICON_TILE_DOMAIN_TONE[domain] : "neutral");
   return (
     <span
-      className={cx(iconTile({ tone: resolvedTone }), className)}
+      className={cx(iconTile({ tone: resolvedTone, colouredIcon }), className)}
       data-domain={domain}
       data-tile-tone={resolvedTone}
       {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}

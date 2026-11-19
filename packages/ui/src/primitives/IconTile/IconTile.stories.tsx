@@ -88,11 +88,11 @@ export const Labelled: Story = {
 
 const TONES = ["teal", "sage", "apricot", "sky", "gold", "violet", "accent", "neutral"] as const;
 
-const ToneList = () => (
+const ToneList = ({ coloured = false }: { coloured?: boolean }) => (
   <ul className={list}>
     {TONES.map((tone) => (
       <li className={row} key={tone}>
-        <IconTile icon={Landmark} tone={tone} />
+        <IconTile colouredIcon={coloured} icon={Landmark} tone={tone} />
         <span className={name}>{tone}</span>
       </li>
     ))}
@@ -111,6 +111,15 @@ export const Tones: Story = { render: () => <ToneList />, play: tonesPlay };
 
 export const TonesDark: Story = {
   render: () => <ToneList />,
+  globals: { theme: "dark" },
+  play: tonesPlay,
+};
+
+/** The glyph in each tone's own colour (`colouredIcon`), as on the home section cards. */
+export const TonesColoured: Story = { render: () => <ToneList coloured />, play: tonesPlay };
+
+export const TonesColouredDark: Story = {
+  render: () => <ToneList coloured />,
   globals: { theme: "dark" },
   play: tonesPlay,
 };

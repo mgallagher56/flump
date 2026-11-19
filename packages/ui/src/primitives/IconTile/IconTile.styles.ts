@@ -34,6 +34,19 @@ export const iconTile = cva({
         borderColor: "border",
       },
     },
+    /** The glyph in the tone's colour instead of text.primary (accent is coloured already). */
+    colouredIcon: { true: {}, false: {} },
   },
-  defaultVariants: { tone: "neutral" },
+  compoundVariants: [
+    // A coloured glyph: the tone's chart series, at least 3:1 on its tint in both themes
+    // (tokens.a11y.test.ts). The tile is decorative beside a visible name.
+    // Written out, not mapped: Panda only extracts literal recipe objects.
+    { tone: "teal", colouredIcon: true, css: { color: "chart.series1" } },
+    { tone: "sage", colouredIcon: true, css: { color: "chart.series2" } },
+    { tone: "apricot", colouredIcon: true, css: { color: "chart.series3" } },
+    { tone: "violet", colouredIcon: true, css: { color: "chart.series4" } },
+    { tone: "sky", colouredIcon: true, css: { color: "chart.series6" } },
+    { tone: "gold", colouredIcon: true, css: { color: "chart.series7" } },
+  ],
+  defaultVariants: { tone: "neutral", colouredIcon: false },
 });
