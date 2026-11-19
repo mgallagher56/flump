@@ -103,6 +103,11 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
   // The button to focus once the rows are drawn in their new order: React may move the pressed
   // row's node, which drops focus.
   const refocusId = useRef<string | null>(null);
+  // A failed save puts the order back, and a closed panel starts afresh: neither keeps saying a
+  // section moved.
+  useEffect(() => {
+    if (error || !open) setOrderStatus("");
+  }, [error, open]);
   useEffect(() => {
     if (!refocusId.current) return;
     document.getElementById(refocusId.current)?.focus();
@@ -152,7 +157,11 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
       <div className={panelBody()}>
         {/* The rule, said once; a disabled box points to it (aria-describedby). */}
         <p className={panelDescription()} id="widget-visibility-rule">
-          {canReorder ? ORDER_RULE : SECTION_RULE(maxVisible)}
+          {canReorder
+            ? maxVisible === undefined
+              ? ORDER_RULE
+              : `${SECTION_RULE(maxVisible)} Move a section up or down to change where it appears.`
+            : SECTION_RULE(maxVisible)}
         </p>
         {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
         <ul className={panelList()}>
@@ -206,6 +215,7 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
                     <IconButton
                       aria-disabled={first}
                       className={panelInert()}
+                      data-testid={`widget-order-${key}-up`}
                       id={`widget-order-${key}-up`}
                       label={moveLabel(copy.label, -1)}
                       size="sm"
@@ -216,6 +226,7 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
                     <IconButton
                       aria-disabled={last}
                       className={panelInert()}
+                      data-testid={`widget-order-${key}-down`}
                       id={`widget-order-${key}-down`}
                       label={moveLabel(copy.label, 1)}
                       size="sm"
@@ -234,6 +245,7 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
             <Button
               aria-disabled={orderIsDefault}
               className={panelInert()}
+              data-testid="widget-order-reset"
               id="widget-order-reset"
               size="sm"
               variant="ghost"

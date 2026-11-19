@@ -16,7 +16,7 @@ describe("SECTION_COLOURS", () => {
 
   it("never uses a status colour, so no colour reads as good or bad", () => {
     for (const key of SECTION_PRIORITY) {
-      expect(SECTION_COLOURS[key]).not.toMatch(/danger|positive|warning|red|green/);
+      expect(SECTION_COLOURS[key]).not.toMatch(/danger|positive|warning|red|green|gold/);
     }
   });
 });

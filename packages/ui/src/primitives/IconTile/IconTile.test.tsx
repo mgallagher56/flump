@@ -36,7 +36,7 @@ describe("IconTile", () => {
     expect(container.firstElementChild?.getAttribute("data-tile-tone")).toBe("teal");
   });
 
-  it.each(["sky", "gold", "violet"] as const)("draws the %s tone on its own tint", (tone) => {
+  it.each(["sky", "rose", "violet"] as const)("draws the %s tone on its own tint", (tone) => {
     const { container } = render(<IconTile icon={Landmark} tone={tone} />);
     const tile = container.firstElementChild as HTMLElement;
     expect(tile.getAttribute("data-tile-tone")).toBe(tone);
@@ -44,11 +44,11 @@ describe("IconTile", () => {
   });
 
   it("colours the glyph in its tone's series colour when asked, and in text.primary by default", () => {
-    const { container, rerender } = render(<IconTile icon={Landmark} tone="gold" />);
+    const { container, rerender } = render(<IconTile icon={Landmark} tone="rose" />);
     expect((container.firstElementChild as HTMLElement).className).toContain("c_text.primary");
-    rerender(<IconTile colouredIcon icon={Landmark} tone="gold" />);
+    rerender(<IconTile colouredIcon icon={Landmark} tone="rose" />);
     const tile = container.firstElementChild as HTMLElement;
-    expect(tile.className).toContain("c_chart.series7");
+    expect(tile.className).toContain("c_chart.series5");
     expect(tile.className).not.toContain("c_text.primary");
   });
 

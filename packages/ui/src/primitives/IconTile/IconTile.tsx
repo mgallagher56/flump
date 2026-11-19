@@ -5,7 +5,7 @@ import { Icon } from "../Icon/Icon";
 import { iconTile } from "./IconTile.styles";
 
 /**
- * Teal, sage and apricot are the money domains (E16 P9.3). Sky, gold and violet give the home
+ * Teal, sage and apricot are the money domains (E16 P9.3). Sky, rose and violet give the home
  * section cards one colour each (owner request, 19 Nov 2026); they are not domain colours.
  */
 export type IconTileTone =
@@ -13,7 +13,7 @@ export type IconTileTone =
   | "sage"
   | "apricot"
   | "sky"
-  | "gold"
+  | "rose"
   | "violet"
   | "accent"
   | "neutral";

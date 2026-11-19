@@ -175,7 +175,7 @@ Whole pounds everywhere a figure is read. Pence only where a user types or recon
 
 1. About 60% sand canvas, 30% cards and at most one tinted section, 10% accent (teal hero and buttons, apricot for debt).
 2. Cards separate from the canvas by a visible edge (section 4.1), not by tint. KPI cards are never tinted and there is no coloured header band (round 5).
-3. Each domain has one colour, used on its icon tile and its chart series everywhere (data-viz rule 5): teal for net worth, mortgage and pension, sage for savings, apricot for debt, neutral for pay and tax.
+3. Each domain has one colour, used on its icon tile and its chart series everywhere (data-viz rule 5): teal for net worth, mortgage and pension, sage for savings, apricot for debt, neutral for pay and tax. Exception (owner request, 19 Nov 2026): the home "Your sections" cards give every section its own colour; see STYLE-GUIDE section 2, "Home section cards".
 4. At most one tinted section per page (`surface.tint.*`), never around a `KpiStrip`, a `ScenarioZone` or a chart.
 5. Dark mode keeps Direction C as it is; the only dark change is removing the indigo slab.
 

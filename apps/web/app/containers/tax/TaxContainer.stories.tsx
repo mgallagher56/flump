@@ -157,7 +157,6 @@ const loaderData = {
     country: "GB",
     enabledPages: ["accounts", "budget", "tax"],
     dashboardWidgets: ["accounts", "budget", "tax"],
-    dashboardWidgetOrder: ["accounts", "budget", "tax"],
   },
   accounts: [],
 };
@@ -171,7 +170,6 @@ const optedOutLoaderData = {
     country: "GB",
     enabledPages: ["accounts", "budget", "savings", "pension"],
     dashboardWidgets: ["accounts", "budget"],
-    dashboardWidgetOrder: ["accounts", "budget"],
   },
   accounts: [],
 };

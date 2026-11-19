@@ -561,6 +561,26 @@ describe("HomeDashboard", () => {
     expect(order.slice(0, 2)).toEqual(["mortgage", "debt"]);
   });
 
+  it("moves past a switched-off page in one step and keeps that page's place", async () => {
+    // Mortgage page off: the panel shows debt, savings, ... Savings up swaps with debt; mortgage,
+    // between them in the full order, stays second.
+    mockEnabledPages.current = ["accounts", "budget", "savings", "pension", "tax", "debt"];
+    try {
+      renderDashboard(withDebt);
+      fireEvent.click(screen.getByRole("button", { name: /Choose what shows here/ }));
+      const dialog = screen.getByRole("dialog", { name: "Choose what shows here" });
+      fireEvent.click(within(dialog).getByRole("button", { name: "Move Savings up" }));
+      await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalledTimes(1));
+      expect(mockUpdateProfile.mock.calls[0]?.[0].dashboardWidgetOrder.slice(0, 3)).toEqual([
+        "savings",
+        "mortgage",
+        "debt",
+      ]);
+    } finally {
+      mockEnabledPages.current = null;
+    }
+  });
+
   it("puts the default order back and saves it", async () => {
     mockSavedOrder.current = ["accounts"];
     try {

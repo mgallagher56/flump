@@ -86,7 +86,7 @@ export const Labelled: Story = {
   },
 };
 
-const TONES = ["teal", "sage", "apricot", "sky", "gold", "violet", "accent", "neutral"] as const;
+const TONES = ["teal", "sage", "apricot", "sky", "rose", "violet", "accent", "neutral"] as const;
 
 const ToneList = ({ coloured = false }: { coloured?: boolean }) => (
   <ul className={list}>
@@ -106,7 +106,7 @@ const tonesPlay: Story["play"] = async ({ canvasElement }) => {
   await expect(tones).toEqual([...TONES]);
 };
 
-/** Every tone, including sky, gold and violet for the home section cards. */
+/** Every tone, including sky, rose and violet for the home section cards. */
 export const Tones: Story = { render: () => <ToneList />, play: tonesPlay };
 
 export const TonesDark: Story = {

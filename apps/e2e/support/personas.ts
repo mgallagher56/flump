@@ -109,7 +109,6 @@ export const RENTER: Persona = {
     isSalarySacrifice: false,
     enabledPages: ["accounts", "budget", "savings", "debt", "pension"],
     dashboardWidgets: ["accounts", "budget", "savings", "debt", "pension"],
-    dashboardWidgetOrder: ["accounts", "budget", "savings", "debt", "pension"],
   },
   accounts: [
     { name: "Current account", type: "Current", balance: 1300, monthlyChange: 20 },
@@ -185,7 +184,6 @@ export const HOMEOWNER: Persona = {
     isSalarySacrifice: false,
     enabledPages: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
     dashboardWidgets: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
-    dashboardWidgetOrder: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
   },
   accounts: [
     { name: "Current account", type: "Current", balance: 3400, monthlyChange: 40 },
@@ -286,7 +284,6 @@ export const DEBT_PAYER: Persona = {
     isSalarySacrifice: false,
     enabledPages: ["accounts", "budget", "debt", "savings", "pension"],
     dashboardWidgets: ["accounts", "debt", "budget", "savings", "pension"],
-    dashboardWidgetOrder: ["accounts", "debt", "budget", "savings", "pension"],
   },
   accounts: [
     { name: "Current account", type: "Current", balance: 640, monthlyChange: 10 },
@@ -388,7 +385,6 @@ export const SELF_EMPLOYED: Persona = {
     isSalarySacrifice: false,
     enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "tax"],
     dashboardWidgets: ["accounts", "tax", "budget", "savings", "pension"],
-    dashboardWidgetOrder: ["accounts", "tax", "budget", "savings", "pension"],
   },
   accounts: [
     { name: "Business current account", type: "Current", balance: 6200, monthlyChange: 120 },
@@ -460,7 +456,6 @@ export const NEAR_RETIREMENT: Persona = {
     isSalarySacrifice: true,
     enabledPages: ["accounts", "budget", "savings", "pension", "retirement"],
     dashboardWidgets: ["accounts", "pension", "retirement", "savings", "budget"],
-    dashboardWidgetOrder: ["accounts", "pension", "retirement", "savings", "budget"],
   },
   accounts: [
     { name: "Joint current account", type: "Current", balance: 2700, monthlyChange: 20 },
@@ -566,16 +561,6 @@ export const EVERYTHING: Persona = {
       "tax",
     ],
     dashboardWidgets: [
-      "accounts",
-      "budget",
-      "savings",
-      "debt",
-      "pension",
-      "retirement",
-      "mortgage",
-      "tax",
-    ],
-    dashboardWidgetOrder: [
       "accounts",
       "budget",
       "savings",

@@ -83,7 +83,7 @@ export const profileFixture = {
   customBudgetCategories: [],
   enabledPages: ["accounts", "budget", "savings", "pension", "mortgage"],
   dashboardWidgets: ["accounts", "budget"],
-  dashboardWidgetOrder: ["accounts", "budget"],
+  dashboardWidgetOrder: [],
   dashboardWidgetSizes: { accounts: "wide" },
   dashboardWidgetConfig: {},
   hasResetFinancialData: false,

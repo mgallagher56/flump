@@ -196,7 +196,6 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         budget: "normal",
         debt: "normal",
       },
-      dashboardWidgetOrder: ["accounts", "budget", "debt"],
     };
 
     const figures = demoFigures(debtAccounts, budgetEntries, userProfile);
@@ -365,7 +364,6 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         savings: "normal",
         pension: "normal",
       },
-      dashboardWidgetOrder: ["accounts", "budget", "savings", "pension"],
     };
 
     const figures = demoFigures(mediumAccounts, budgetEntries, userProfile);
@@ -607,7 +605,6 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       pension: "normal",
       mortgage: "normal",
     },
-    dashboardWidgetOrder: ["accounts", "budget", "tax", "pension", "mortgage"],
   };
 
   const figures = demoFigures(highAccounts, highBudgetEntries, userProfile);

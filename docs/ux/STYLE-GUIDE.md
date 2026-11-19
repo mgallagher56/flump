@@ -49,6 +49,7 @@ The semantic namespaces are fixed: `surface`, `text`, `border`, `primary`, `acce
 | `surface.contrast`                                  | `#22302c`                                     | `#3a352f`                                     | Rare inverted blocks                                                            |
 | `surface.hero`                                      | `#12483f`                                     | `#1b5448`                                     | The one headline block on a page                                                |
 | `surface.tint.teal` / `apricot` / `sage` **[PR 1]** | `#dcede6` / `#fae5cc` / `#e5edda`             | `#1d3932` / `#42311c` / `#2b3822`             | Icon tiles; at most one tinted section per page                                 |
+| `surface.tint.sky` / `rose` / `violet`              | `#dceaf3` / `#fadbe3` / `#e3e0f4`             | `#1d3846` / `#4d2939` / `#353050`             | Home section card icon tiles only (see "Home section cards" below)              |
 | `surface.scrim`                                     | `rgba(43,38,32,.4)`                           | `rgba(8,6,4,.6)`                              | Backdrop behind dialogs and sheets; never behind text                           |
 | `text.primary` / `secondary` / `muted`              | `#2b2620` / `#564f46` / `#6a6258`             | `#f4efe7` / `#cbc3b7` / `#a59d90`             | Body, supporting, quiet                                                         |
 | `text.onContrast`                                   | `#f6f1e8`                                     | `#fffdf9`                                     | Text on `surface.hero` and `surface.contrast`                                   |
@@ -92,6 +93,8 @@ Light mode had only two colours in practice (sand and teal). The polish plan add
 | Savings                      | Sage    | `chart.wealth`, `surface.tint.sage`  |
 | Debt                         | Apricot | `chart.debt`, `surface.tint.apricot` |
 | Pay and tax                  | Neutral | `text.secondary`, `surface.subtle`   |
+
+- **Home section cards (owner request, 19 Nov 2026).** On the home page "Your sections" each card has a colour of its own, a 4px top edge and an icon tile with the glyph in that colour. The owner's request outranks the domain table above there only: debt, savings and mortgage keep their domain colours; pension is sky (`chart.series6`, `surface.tint.sky`), Self Assessment violet (`chart.series4`, `surface.tint.violet`), budget rose (`chart.series5`, `surface.tint.rose`) and accounts damson (the accent tile, so the "Your sections" header is neutral, rule C7). No section uses `series7`, the warning colour, or a status colour (rule C8). Other pages keep the domain table. Contrast and separation **Enforced by** `tokens.a11y.test.ts` ("E16 surface tints"); the card colours by `WidgetCard.test.tsx` and `sectionColours.test.ts`.
 
 - At most one tinted section per page, never around a `KpiStrip`, a `ScenarioZone` or a chart. KPI cards are never tinted. The marketing site may use sage and apricot section bands (owner decision D16).
 - Dark mode keeps Direction C as it is. Surfaces step lighter as they rise; the teal accent is the brighter `#6fd0ba` for text and icons while buttons stay deep teal. Apricot is a quiet `#2e261c` in dark, not a heavy brown **[R2-2]**.

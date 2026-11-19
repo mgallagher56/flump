@@ -71,7 +71,7 @@ export type ColorKey =
   | "surface.subtle"
   | "surface.sunken"
   | "surface.tint.apricot"
-  | "surface.tint.gold"
+  | "surface.tint.rose"
   | "surface.tint.sage"
   | "surface.tint.sky"
   | "surface.tint.teal"
@@ -154,11 +154,11 @@ export const light: NativeTheme = {
     "surface.subtle": "#f0ebe2",
     "surface.sunken": "#eae3d8",
     "surface.tint.apricot": "#fae5cc",
-    "surface.tint.gold": "#f3ebc8",
+    "surface.tint.rose": "#fadbe3",
     "surface.tint.sage": "#e5edda",
     "surface.tint.sky": "#dceaf3",
     "surface.tint.teal": "#dcede6",
-    "surface.tint.violet": "#e4e3f6",
+    "surface.tint.violet": "#e3e0f4",
     "text.muted": "#6a6258",
     "text.onContrast": "#f6f1e8",
     "text.primary": "#2b2620",
@@ -239,7 +239,7 @@ export const dark: NativeTheme = {
     "surface.subtle": "#2e2a26",
     "surface.sunken": "#171412",
     "surface.tint.apricot": "#42311c",
-    "surface.tint.gold": "#3b3519",
+    "surface.tint.rose": "#4d2939",
     "surface.tint.sage": "#2b3822",
     "surface.tint.sky": "#1d3846",
     "surface.tint.teal": "#1d3932",

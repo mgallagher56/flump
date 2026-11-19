@@ -426,7 +426,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         icon={LayoutGrid}
         id="dashboard-sections"
         title="Your sections"
-        tone="accent"
+        // Neutral: the accounts card's damson tile is the page's one accent tile (STYLE-GUIDE C7).
+        tone="neutral"
         action={
           // Beside the cards it changes (owner request, 19 Nov 2026). An icon button below md, so
           // the heading keeps its row at 375; the words return from md. Same name at every width.

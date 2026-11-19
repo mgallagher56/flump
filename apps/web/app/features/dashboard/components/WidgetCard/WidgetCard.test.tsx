@@ -70,6 +70,8 @@ describe("WidgetCard", () => {
       const card = screen.getByTestId(`widget-card-${id}`);
       expect(card.className).toContain("bd-t-w_4px");
       expect(card.className).not.toMatch(/bd-t-c_(surface|border)/);
+      // series7 is the same colour as chart.warning: no card may look like a warning (C8).
+      expect(card.className).not.toMatch(/chart\.(series7|warning)|status\./);
       unmount();
     }
   });
