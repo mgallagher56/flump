@@ -126,8 +126,8 @@ describe("request schemas", () => {
     const record = {
       type: "income",
       source: "paye",
-      category: "salary",
-      name: "Pay",
+      category: "paye_bonus",
+      name: "Bonus",
       amount: 100,
       date: "2026-02-30",
     };

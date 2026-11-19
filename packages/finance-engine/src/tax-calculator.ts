@@ -450,7 +450,13 @@ export interface TaxCalculationResult {
 
   // Tax breakdowns
   payeTaxDue: number; // Base tax on PAYE salary alone
+  /** Tax with the self-employed profit minus the tax without it (the salary's PAYE tax). */
   seTaxDue: number;
+  /**
+   * Income Tax on the salary from the Personal Allowance that savings interest and dividends take
+   * away above £100,000 (ITA 2007 s.35). Part of the bill still to pay: PAYE sees only the salary.
+   */
+  allowanceTaperTaxDue: number;
   seClass4NIDue: number;
   rentalPropertyTaxDueBeforeCredit: number;
   rentalPropertyTaxCredit: number; // Section 24 credit
@@ -776,7 +782,20 @@ export function calculateUKTax(
     );
     const incomeTaxExclRental = incomeTaxOn(totalTaxableExclRental);
 
-    const seTaxDue = Math.max(0, incomeTaxExclRental - payeTaxDue);
+    // Income Tax on self-employed profit: the tax on the salary and the profit, with the
+    // allowance tapered by those two only, minus the PAYE tax. The profit is non-savings income
+    // and comes before savings and dividends (ITA 2007 s.16), so the allowance it takes away is
+    // its own. The allowance savings and dividends take away (s.35, adjusted net income s.58) is
+    // still taxed on the salary, because the allowance goes against non-savings income first; it
+    // has its own line, so no tax is shown as self-employed when there is no self-employment.
+    const taxOnSalaryAndProfit = incomeTaxOn(
+      Math.max(
+        0,
+        effectivePayeSalary + seProfit - taperedAllowance(effectivePayeSalary + seProfit),
+      ),
+    );
+    const seTaxDue = Math.max(0, taxOnSalaryAndProfit - payeTaxDue);
+    const allowanceTaperTaxDue = Math.max(0, incomeTaxExclRental - taxOnSalaryAndProfit);
 
     // Class 4 National Insurance on self-employed profit: the main rate between the lower and
     // upper profits limits, the upper rate above.
@@ -887,6 +906,7 @@ export function calculateUKTax(
       totalTaxableIncome: totalTaxable,
       payeTaxDue,
       seTaxDue,
+      allowanceTaperTaxDue,
       seClass4NIDue,
       rentalPropertyTaxDueBeforeCredit,
       rentalPropertyTaxCredit,

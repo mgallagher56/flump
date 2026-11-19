@@ -85,7 +85,7 @@ const cases: Case[] = [
       name: "Invoice",
       source: "self-employed",
       type: "income",
-      category: "sales",
+      category: "self_employed_income",
       amount: "1200",
       date: "2026-05-01",
       frequency: "one-off",

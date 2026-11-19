@@ -374,7 +374,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     describe("tax bulk write runs in one transaction (audit M3)", () => {
-      const base = { type: "income", source: "paye", category: "salary", amount: 100 } as const;
+      const base = { type: "income", source: "paye", category: "paye_bonus", amount: 100 } as const;
 
       it("a failed bulk write leaves no rows and applies no caps", async () => {
         await ds.runMigrations();

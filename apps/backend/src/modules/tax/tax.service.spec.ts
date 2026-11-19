@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
 import { annualRecordEndDate, TaxService } from "./tax.service";
 
-const base = { type: "income", source: "paye", category: "salary", name: "Pay", amount: 1000 };
+const base = {
+  type: "income",
+  source: "paye",
+  category: "paye_bonus",
+  name: "Bonus",
+  amount: 1000,
+};
 
 /** An in-memory repository whose manager runs `work` against a separate transactional copy. */
 const withManager = () => {
@@ -227,5 +233,94 @@ describe("TaxService finance costs brought forward records", () => {
     await expect(
       service.updateRecord("u1", created.id, { amount: 1000 } as never, undefined),
     ).resolves.toMatchObject({ amount: 1000 });
+  });
+});
+
+describe("TaxService known categories (one list per source, from the engine)", () => {
+  const rent = {
+    type: "income",
+    source: "rental",
+    category: "rental_income",
+    name: "Rent from the flat",
+    amount: 1150,
+    frequency: "monthly",
+    date: "2026-04-06",
+  };
+  const categoryIssue = async (work: Promise<unknown>) => {
+    const error = await work.then(
+      () => null,
+      (e: unknown) => e,
+    );
+    expect(error).toBeInstanceOf(BadRequestException);
+    return (error as BadRequestException).getResponse();
+  };
+  /** A row saved before the list existed, with a category no list holds. */
+  const legacyRow = async (service: TaxService, repository: { save: (r: object) => unknown }) => {
+    await repository.save({ ...rent, id: "legacy-1", userId: "u1", category: "Rent" });
+    return service;
+  };
+
+  it("refuses an unknown category on create with a 400 on the category field, contract check off", async () => {
+    const service = new TaxService(createInMemoryRepository() as never);
+    const response = await categoryIssue(
+      service.createRecord("u1", { ...rent, category: "Rent" } as never),
+    );
+    expect(response).toMatchObject({
+      code: "validation_failed",
+      issues: [{ path: "body.category", code: "custom" }],
+    });
+  });
+
+  it("refuses a known category under the wrong source", async () => {
+    const service = new TaxService(createInMemoryRepository() as never);
+    await categoryIssue(service.createRecord("u1", { ...rent, source: "savings" } as never));
+  });
+
+  it("refuses a bulk request with one unknown category before opening a transaction", async () => {
+    const { outside, transaction } = withManager();
+    const service = new TaxService(outside as never);
+    await categoryIssue(
+      service.createBulk("u1", { records: [rent, { ...rent, category: "Repairs" }] } as never),
+    );
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it("keeps a stored row with an unlisted category readable, editable and deletable", async () => {
+    const repository = createInMemoryRepository();
+    const service = await legacyRow(new TaxService(repository as never), repository as never);
+    await expect(service.getRecord("u1", "legacy-1")).resolves.toMatchObject({ category: "Rent" });
+    // A change that does not touch the category or source is saved; the category is kept.
+    await expect(
+      service.updateRecord("u1", "legacy-1", { name: "Flat rent" } as never, undefined),
+    ).resolves.toMatchObject({ name: "Flat rent", category: "Rent" });
+    await expect(service.deleteRecord("u1", "legacy-1")).resolves.toEqual({ success: true });
+  });
+
+  it("fails an edit of that row only on the category field while it stays unlisted", async () => {
+    const repository = createInMemoryRepository();
+    const service = await legacyRow(new TaxService(repository as never), repository as never);
+    // The edit form sends the whole record back, category included.
+    const response = await categoryIssue(
+      service.updateRecord(
+        "u1",
+        "legacy-1",
+        { ...rent, category: "Rent", name: "Flat rent" } as never,
+        undefined,
+      ),
+    );
+    expect(response).toMatchObject({ issues: [{ path: "body.category" }] });
+    // Choosing a listed category fixes it.
+    await expect(
+      service.updateRecord("u1", "legacy-1", { ...rent, name: "Flat rent" } as never, undefined),
+    ).resolves.toMatchObject({ category: "rental_income" });
+  });
+
+  it("checks a source change against the stored category, on the merged record", async () => {
+    const service = new TaxService(createInMemoryRepository() as never);
+    const created = await service.createRecord("u1", rent as never);
+    const response = await categoryIssue(
+      service.updateRecord("u1", created.id, { source: "savings" } as never, undefined),
+    );
+    expect(response).toMatchObject({ issues: [{ path: "body.category" }] });
   });
 });

@@ -42,7 +42,7 @@ describe("<CopyTaxYearModal />", () => {
       frequency: "monthly",
       date: "2024-04-06",
       endDate: null,
-      category: "rental",
+      category: "rental_income",
       notes: null,
       receiptFilename: null,
       receiptMimeType: null,
@@ -137,6 +137,26 @@ describe("<CopyTaxYearModal />", () => {
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 
+  test("leaves records with a category no list holds out of the copy, and says so", () => {
+    mockSubmit.mockClear();
+    const legacy: TaxRecord = {
+      ...mockRecords[0],
+      id: "rec-legacy",
+      name: "Old rent",
+      category: "Rent",
+    };
+    customRender(<CopyTaxYearModal {...defaultProps} records={[...mockRecords, legacy]} />);
+    expect(screen.queryByDisplayValue("Old rent")).toBeNull();
+    expect(
+      screen.getByText(
+        "Records without a category from the list are not copied. Edit them to choose one.",
+      ),
+    ).toBeDefined();
+    fireEvent.click(screen.getByText("Copy records"));
+    const copied = JSON.parse(String(mockSubmit.mock.calls[0][0].records)) as TaxRecord[];
+    expect(copied.map((r) => r.category)).toEqual(["rental_income"]);
+  });
+
   test("leaves salary records out of the copy and says so once", () => {
     mockSubmit.mockClear();
     const salary: TaxRecord = {
@@ -155,7 +175,7 @@ describe("<CopyTaxYearModal />", () => {
     ).toHaveLength(1);
     fireEvent.click(screen.getByText("Copy records"));
     const copied = JSON.parse(String(mockSubmit.mock.calls[0][0].records)) as TaxRecord[];
-    expect(copied.map((r) => r.category)).toEqual(["rental"]);
+    expect(copied.map((r) => r.category)).toEqual(["rental_income"]);
   });
 
   test("says nothing about salary records when there are none", () => {

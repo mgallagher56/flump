@@ -200,7 +200,7 @@ describe.skipIf(dbMode === "skip")("write conventions (real Postgres)", () => {
         const res = await h.call("post", "/tax-records", h.tokens.a, {
           type: "income",
           source: "paye",
-          category: "salary",
+          category: "paye_bonus",
           name,
           amount: 1000,
           frequency: "monthly",
@@ -375,7 +375,7 @@ describe.skipIf(dbMode === "skip")("write conventions (real Postgres)", () => {
       const tax = await h.call("post", "/tax-records", h.tokens.a, {
         type: "income",
         source: "paye",
-        category: "salary",
+        category: "paye_bonus",
         name: "Pay",
         amount: 1000,
         frequency: "monthly",

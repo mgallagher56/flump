@@ -66,6 +66,41 @@ describe("TaxReservePanel", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("shows the allowance savings take away on its own line, not as self-employed tax", () => {
+    // Salary 120,000, savings 2,000. The savings take away 1,000 of Personal Allowance, taxed at
+    // 40% on the salary: 400 (worked in tax-calculator.taper-attribution.test.ts).
+    const result = calculateUKTax(
+      "2026/27",
+      [
+        {
+          id: "s",
+          type: "income",
+          source: "savings",
+          category: "savings_interest",
+          name: "Interest",
+          amount: 2000,
+          frequency: "annual",
+          date: "2026-06-06",
+          endDate: null,
+          notes: null,
+        },
+      ],
+      120000,
+      100,
+    );
+    setup(122_000, 120000, result);
+    const value = (label: string) =>
+      Array.from(document.querySelectorAll("dt")).find((d) => d.textContent === label)
+        ?.nextElementSibling?.textContent;
+    expect(value("Income Tax on self-employed profit")).toBe("£0");
+    expect(value("Income Tax from Personal Allowance lost to savings and dividends")).toBe("£400");
+  });
+
+  it("leaves the allowance line out when savings take no allowance away", () => {
+    setup();
+    expect(screen.queryByText(/Personal Allowance lost to savings/)).toBeNull();
+  });
+
   it("says how much mortgage interest carries forward (ITTOIA 2005 s.274AA(4))", () => {
     // No salary; rent 18,000, costs 2,000, interest 5,000. Only 3,430 (income above the 12,570
     // allowance) can be used, so 5,000 - 3,430 = 1,570 carries forward.

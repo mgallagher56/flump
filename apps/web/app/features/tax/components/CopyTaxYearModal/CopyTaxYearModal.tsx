@@ -1,5 +1,6 @@
 import {
   buildCopiedRecordForTaxYear,
+  getCategoriesForSource,
   getCurrentUKTaxYear,
   getNextTaxYear,
   getPreviousTaxYear,
@@ -86,18 +87,24 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
   }, [open, initialTargetYear, initialSourceYear, initialSourceSection]);
 
   // Records from the source year that match the choices. Salary records are never copied: the
-  // salary comes from the profile, so they are counted only to say they were left out.
-  const { candidateRecords, skippedSalaryCount } = useMemo(() => {
+  // salary comes from the profile, so they are counted only to say they were left out. A record
+  // whose category no list holds (saved before categories were checked) would be refused, so it
+  // is left out too and the person is told to edit it.
+  const { candidateRecords, skippedSalaryCount, skippedUnlistedCount } = useMemo(() => {
     const matching = records.filter((r) => {
       if (!isRecordActiveInTaxYear(r, sourceYear)) return false;
       if (sectionFilter !== "all" && r.source !== sectionFilter) return false;
       if (recurringOnly && r.frequency === "one-off") return false;
       return true;
     });
-    const candidates = matching.filter((r) => r.category !== PAYE_SALARY_CATEGORY);
+    const notSalary = matching.filter((r) => r.category !== PAYE_SALARY_CATEGORY);
+    const candidates = notSalary.filter((r) =>
+      getCategoriesForSource(r.source).some((c) => c.id === r.category),
+    );
     return {
       candidateRecords: candidates,
-      skippedSalaryCount: matching.length - candidates.length,
+      skippedSalaryCount: matching.length - notSalary.length,
+      skippedUnlistedCount: notSalary.length - candidates.length,
     };
   }, [records, sourceYear, sectionFilter, recurringOnly]);
 
@@ -464,6 +471,11 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
         {skippedSalaryCount > 0 ? (
           <p className={s.mutedText()} data-testid="copy-salary-skipped">
             Salary records are not copied. Your salary comes from your profile.
+          </p>
+        ) : null}
+        {skippedUnlistedCount > 0 ? (
+          <p className={s.mutedText()} data-testid="copy-unlisted-skipped">
+            Records without a category from the list are not copied. Edit them to choose one.
           </p>
         ) : null}
 

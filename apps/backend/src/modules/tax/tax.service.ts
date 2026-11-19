@@ -5,6 +5,7 @@ import {
   type CreateTaxRecordRequest,
   LEGACY_PAYE_SALARY_CATEGORY,
   type TaxRecordCap,
+  taxCategoryError,
   type UpdateTaxRecordRequest,
 } from "@flump/api-contract";
 import { decryptReceiptData, encryptReceiptData, isEncryptedToken } from "@flump/banking/server";
@@ -71,6 +72,23 @@ const assertBroughtForwardRules = (record: Partial<TaxRecord>): void => {
   if (error) throw new BadRequestException(error.message);
 };
 
+/**
+ * A record is written only with a category its source lists (the engine's lists, through the
+ * contract), so the engine never silently leaves it out. The contract refuses it too; this holds
+ * with CONTRACT_MODE off or in shadow mode, and checks an update on the merged record. The 400 has
+ * the contract's shape, naming only the category field. Stored rows with other categories are
+ * still read and deleted as they are.
+ */
+const assertKnownCategory = (record: Partial<TaxRecord>): void => {
+  const error = taxCategoryError(record);
+  if (!error) return;
+  throw new BadRequestException({
+    code: "validation_failed",
+    message: "Request failed validation",
+    issues: [{ path: `body.${error.path}`, code: "custom", message: error.message }],
+  });
+};
+
 const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxRecord> => {
   const picked: Record<string, unknown> = {};
   for (const key of TAX_RECORD_FIELDS) {
@@ -82,6 +100,7 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
     throw new BadRequestException("Salary is saved on your profile, not as a tax record");
   }
   assertBroughtForwardRules(picked);
+  assertKnownCategory(picked);
   const mime = validateReceipt(picked);
   // Receipt metadata only changes together with the data: a bare filename or MIME type from the
   // client is ignored, so metadata can never disagree with the stored bytes.
@@ -348,6 +367,9 @@ export class TaxService {
         Object.assign(record, picked);
         // Checked on the merged record: a change to one field can break the rules on its own.
         assertBroughtForwardRules(record);
+        if (picked.category !== undefined || picked.source !== undefined) {
+          assertKnownCategory(record);
+        }
         withAnnualEndDate(record);
         return repository.save(record);
       },
