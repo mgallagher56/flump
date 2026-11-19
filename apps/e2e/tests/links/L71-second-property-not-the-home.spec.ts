@@ -63,12 +63,11 @@ test("L71 a property saved as a rental is not the home", async ({ page }) => {
     accountSubtype: "rental",
     balance: 200000,
   })) as { id: string };
-  try {
-    await page.goto("/app/mortgage");
-    const saved = page.locator("#mortgage-saved");
-    await expect(saved).toContainText("60%");
-    await expect(saved).not.toContainText("more than one property");
-  } finally {
-    await backendCall(`/accounts/${rental.id}`, "DELETE");
-  }
+  // The last link spec: no delete, since the new-user project that follows clears the user, and
+  // deletes share the backend's "destructive" limit of 10 an hour.
+  expect(rental.id).toBeTruthy();
+  await page.goto("/app/mortgage");
+  const saved = page.locator("#mortgage-saved");
+  await expect(saved).toContainText("60%");
+  await expect(saved).not.toContainText("more than one property");
 });

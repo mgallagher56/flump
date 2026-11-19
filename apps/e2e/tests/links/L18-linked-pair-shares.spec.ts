@@ -21,7 +21,9 @@ test("L18 a linked property takes its mortgage's share once, then keeps its own"
       property: { name: "L18 home", balance: 200000 },
     },
   );
-  try {
+  // No deletes afterwards: deletes share the backend's "destructive" limit of 10 an hour, and the
+  // next link spec's persona switch clears the pair.
+  {
     let accounts = await listAccounts(page);
     const property = () => accounts.find((a) => a.id === pair.property.id);
     const mortgage = () => accounts.find((a) => a.id === pair.mortgage.id);
@@ -38,8 +40,5 @@ test("L18 a linked property takes its mortgage's share once, then keeps its own"
     // Changing the mortgage's share leaves the property's as it was, on the page too.
     await expect(await accountsPageRow(page, "L18 mortgage")).toContainText("Joint, 50%");
     await expect(await accountsPageRow(page, "L18 home")).toContainText("Joint, 40%");
-  } finally {
-    await backendCall(`/accounts/${pair.mortgage.id}`, "DELETE");
-    await backendCall(`/accounts/${pair.property.id}`, "DELETE");
   }
 });
