@@ -7,6 +7,7 @@ import {
 import type { AccountDetail } from "~/containers/accounts/types";
 import { isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { isFutureMonth, monthYearSort } from "~/utils/accounts";
+import { londonMonthParts } from "~/utils/londonMonth";
 
 export interface AccountRowSource {
   id?: string;
@@ -76,8 +77,7 @@ export const summariseAccountBalance = (
 ): AccountBalanceSummary => {
   const id = account.id ?? "";
   const type = account.type ?? "";
-  const currentM = now.getMonth() + 1;
-  const currentY = now.getFullYear();
+  const { month: currentM, year: currentY } = londonMonthParts(now);
   const history = accountDetails
     .filter((detail) => {
       const detailId = detail.account_id || detail.accountId;

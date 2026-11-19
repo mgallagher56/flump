@@ -32,24 +32,13 @@ export {
   toSnapshotRows,
 } from "@flump/finance-engine";
 
-/** "YYYY-MM". */
-export type MonthKey = string;
+import type { MonthKey } from "~/utils/londonMonth";
+
+export { londonMonth, type MonthKey } from "~/utils/londonMonth";
 
 const MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;
 
 export const isMonthKey: (value: unknown) => value is MonthKey = isCheckInMonth;
-
-/** The Europe/London calendar month of `now`, matching the backend's month key (E30 D3). */
-export function londonMonth(now: Date = new Date()): MonthKey {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London",
-    year: "numeric",
-    month: "2-digit",
-  }).formatToParts(now);
-  const year = parts.find((p) => p.type === "year")?.value ?? "1970";
-  const month = parts.find((p) => p.type === "month")?.value ?? "01";
-  return `${year}-${month}`;
-}
 
 export const addMonths: (month: MonthKey, n: number) => MonthKey = addCheckInMonths;
 
