@@ -3,13 +3,15 @@
 Status: audit, phase 1 (no product code changed). Decisions: none needed (see the end).
 
 What was run: the journeys in `JOURNEYS.md`, driven by `apps/e2e/sweep/phone.spec.ts` against a
-local build of `main` at `f5631d4f0` (19 November 2026, after PRs 777 and 779 merged; a first pass on `974072a9b` was re-checked row by row against it), at 320x568, 375x812, 390x844 and
+local build of `main` at `c2e14680b` (19 November 2026, after PRs 777, 779 and 781 merged; earlier passes on `974072a9b` and `f5631d4f0` were re-checked row by row against it; the debt, self-employed, retirement and settings sets last ran on `f5631d4f0`, and nothing PR 781 changed is specific to them), at 320x568, 375x812, 390x844 and
 430x932 in light and dark with Chromium touch and mobile emulation, plus 812x375 landscape on the
 main pages. Every page records measured checks (`apps/e2e/sweep/phoneChecks.ts`); every overlay
 records its edge, height, close control, focus, scroll lock and scroll after closing; persona
 sets also record scroll after bottom-bar navigation and Back, axe at 375 in both themes and a
 200% text pass. The screenshots were then reviewed by eye. Screenshots and JSON are outside the
 repository (the path is in the coordinator report).
+
+Counts: 80 findings. None blocks a task, 42 get in the way and 38 are cosmetic.
 
 Severity: **blocks** a task, **gets in the way**, or **cosmetic**. "Owner's eye" marks a
 judgement rather than a written rule. Rules cite `docs/ux/UX-GUIDELINES.md` (H, N, F, D, C, E, T,
@@ -19,9 +21,10 @@ A, R, M ids), `docs/ux/STYLE-GUIDE.md` (SG section) and WCAG 2.2.
 
 Measured at every width and theme unless stated, so these need no fix:
 
-- No horizontal scrolling on any page at 320 to 430 wide, portrait or landscape (A6, R1).
+- No horizontal scrolling on any page at 320 to 430 wide, portrait or landscape (A6, R1), except
+  Self Assessment at 320 (P48) and its record dialog (P79).
 - The h1 and headline figure are in the first view on every page at every width (H3).
-- No layout shift after load (CLS 0 on every page).
+- No layout shift after load, except Take-home and Mortgage (P61).
 - Axe (WCAG 2.0, 2.1, 2.2 A and AA) is clean at 375 in light and dark on every persona page.
 - No content ends under the bottom bar; `AppShell` pads for it and the safe-area bottom inset.
 - At most one illustration in view on every page.
@@ -31,19 +34,20 @@ Measured at every width and theme unless stated, so these need no fix:
   email fields in the web app (sign-in is hosted).
 - Buttons, InfoTips, account rows and dashboard card links meet 44px on touch (Button's coarse
   `minH: touch`, InfoTip's coarse box, and stretched `::after` hit areas on rows and cards).
-- Bottom-bar navigation leaves the next page at the top (scroll 0 after every navigation) and Back
-  restores the previous position on every page but Mortgage (P13). This is local Chromium; the
-  owner's report from a real phone stands and is owned by phone-nav-fixes.
+- Bottom-bar navigation leaves the next page at the top (scroll 0 after every one of 135
+  navigations). Back is not a pass: see P80.
 
 ## The owner's five named problems
 
-| Id  | Problem                                                                       | Status                       | What the sweep saw                                                              |
-| --- | ----------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------- |
-| O-1 | Pages open scrolled down after navigation                                     | owned by phone-nav-fixes     | Not reproduced in Chromium (scroll 0 after every navigation); verify on device after the merge |
-| O-2 | Web footer too tall                                                           | owned by phone-nav-fixes     | Footer is about 1.3 screens at 320 (seen on every page)                         |
-| O-3 | Screen jumps when the keyboard opens on successive inputs (onboarding, add account) | owned by phone-nav-fixes | Desktop emulation has no on-screen keyboard; the field walk found no script-driven jumps |
-| O-4 | Menu button on the left, drawer opens on the right                            | owned by phone-nav-fixes     | Confirmed at every width: trigger x=38, panel attached to the right edge        |
-| O-5 | "More" in the bottom bar spaced differently                                   | owned by phone-nav-fixes     | Confirmed: "More pages" is 30px wide against 62 to 84px for its siblings         |
+PR 781 (phone-nav-fixes) merged before the final run. Status on `c2e14680b`:
+
+| Id  | Problem | Status | What the sweep saw |
+| --- | ------- | ------ | ------------------ |
+| O-1 | Pages open scrolled down after navigation | Fixed in Chromium | Scroll 0 after all 135 bottom-bar navigations at every width. But Back now lands at the top on 22 of 135 tries (P80), which it did not do before PR 781 |
+| O-2 | Web footer too tall | Fixed | One line, logo and links, about 70px at every width |
+| O-3 | Screen jumps when the keyboard opens on successive inputs (onboarding, add account) | Cannot be confirmed here | No real phone keyboard and no iOS Simulator on this machine. The field walk in every sheet and onboarding step found focus scrolling only, no jumps caused by scripts. PR 781's visual-viewport inset is covered by its own emulated test, not by a real keyboard |
+| O-4 | Menu button on the left, drawer opens on the right | Fixed | Menu button now at x=337 on the right, drawer attached right, at every width; the marketing menu matches |
+| O-5 | "More" in the bottom bar spaced differently | Fixed | All five bar items share equal slots (62, 73, 76 and 84px at 320, 375, 390 and 430) |
 
 ## Shared root causes (fix once)
 
@@ -76,9 +80,9 @@ Measured at every width and theme unless stated, so these need no fix:
 | P08 | J2 4, J3, J4, J5 | `SliderField` value pill on Debt, Mortgage, Savings, Pension, Take-home | all | The editable value input is 14px, so iOS Safari zooms the page when it is tapped | R7, F5, owner's eye | gets in the way | RC-3: `sliderPillInput` inherits `label.md` (0.875rem) | RC-3: `fontSize: "md"` (16px) on the input |
 | P09 | J8 2, J11 | `ConfirmDialog` typed confirmation (Delete all data, Delete account), `packages/ui/src/patterns/ConfirmDialog/ConfirmDialog.tsx:129` | all | The "type to confirm" input is 14px, so iOS zooms on tap; at 320 the dialog opens scrolled to its foot with the title off screen | R7, D1 | gets in the way | The native input uses a small text style; focus moves to the input at the foot | 16px input text; open with the title in view (focus the title or keep the input above the buttons) |
 | P10 | J2 1 | Choose what shows here, `apps/web/app/features/dashboard/components/WidgetVisibilityPanel/WidgetVisibilityPanel.tsx:76-139` | all | On a phone it is a centred box with no close button, its list runs behind the bottom bar, and closing it drops focus to the page body | R4, A3, WCAG 2.4.3 | gets in the way | RC-5: raw Radix, opened by a plain button with no `Dialog.Trigger`, so focus has nowhere to return | RC-5: rebuild on the `@repo/ui` Sheet (bottom sheet, close button, `useDialogFocusReturn`) |
-| P11 | J2 2, J10 | Nav drawer, `packages/ui/src/patterns/NavDrawer/NavDrawer.tsx` | all | The page behind the open drawer is not scroll-locked (no overflow lock on body or html) | R4, owner's eye | gets in the way | The drawer does not use the Dialog primitive's scroll lock | Lock body scroll while open (the Dialog primitive's remove-scroll), as the sheets do |
+| P11 | J2 2, J10, J11 | Nav drawer, `packages/ui/src/patterns/NavDrawer/NavDrawer.tsx` | all | Still on `c2e14680b`: the page behind the open drawer (web and marketing) is not scroll-locked (no overflow lock on body or html) | R4, owner's eye | gets in the way | The drawer does not use the Dialog primitive's scroll lock | Lock body scroll while open (the Dialog primitive's remove-scroll), as the sheets do |
 | P12 | J2 2, J7 1 | Dialog, Sheet and ConfirmDialog close, `useDialogFocusReturn.ts:64,69`; also `NavDrawer.tsx:66`, `AvatarMenu.tsx:30` | all | Closing a dialog opened from a header action returns focus with a plain `focus()`, which scrolls the page to the opener (measured 240px to 0) | owner's eye (same class as O-1) | gets in the way | RC-4: `focus()` without `preventScroll` | RC-4: `focus({ preventScroll: true })`, then `scrollIntoView({ block: "nearest" })` only if the opener is off screen. Confirm on a device: the sweep's own tap scrolls the opener into view first |
-| P13 | J3 6 | Mortgage, `apps/web/app/containers/mortgage/MortgageContainer.tsx` | 320 to 430; light | Back to Mortgage after scrolling it lands at the wrong place (1,799px became 236px at 375; 1,877 became 2,561 at 320) | owner's eye (same class as O-1) | gets in the way | The page height changes after the restore (charts and scenario zone sized after hydration) | Re-check after phone-nav-fixes merges; if it stays, restore after the charts have their size, or give chart regions a fixed min-height |
+| P13 | J3 6 | Mortgage, `apps/web/app/containers/mortgage/MortgageContainer.tsx` | 320 to 430; light | Back to Mortgage after scrolling it lands at the wrong place (1,799px became 236px at 375; 1,877 became 2,561 at 320) | owner's eye (same class as O-1) | gets in the way | The page height changes after the restore (charts and scenario zone sized after hydration) | Still present after PR 781; fix with P80: restore after the charts have their size, or give chart regions a fixed min-height |
 | P14 | J2 2 | Nav drawer "Sign out", `apps/web/app/components/structure/header/MobileNavDrawer/MobileNavDrawer.tsx:117-119` | all | "Sign out" has no icon, a different weight and indent from the items above it, and the gap above the footer group differs a lot between 320 and 375 | owner's eye (one item spaced differently) | cosmetic | The footer renders `UserLogin` (a centred ghost Button) instead of a row like its siblings | Render the sign-out form with the row style `footerLinkClass(false)` and a log-out icon |
 | P15 | J10 | `TopBar`, `NavDrawer`, `MobileBottomBar`, right `Sheet`, `Toast` | landscape on notched phones | Only the bottom safe-area inset is padded; with `viewport-fit=cover` (`apps/web/app/root.tsx:226`) the header, drawer, bottom bar and toasts can sit under the notch at the sides in landscape | R5 | gets in the way (device to confirm) | RC-6: no `safe-area-inset-left/right/top` anywhere | RC-6: pad TopBar top and sides, NavDrawer top and side, bottom bars and toasts left and right |
 | P16 | J2 2, J7 2 | "See how it has changed" (`AccountsGroupList.tsx:304`), "Add earlier months" (`SnapshotHistoryPage.tsx:298-308`) | all | These link-style buttons are about 20px tall on touch | A5, WCAG 2.5.8 | gets in the way | RC-7: the `link` variant forces `minH: 0, py: 0` | RC-7: a coarse-pointer `::before` hit area of 44px on the `link` variant, as `CollapsibleDrawer` does |
@@ -122,11 +126,11 @@ Measured at every width and theme unless stated, so these need no fix:
 | P54 | J9 1 | Empty Self Assessment | all | No `EmptyState`: a "Not set" bill card with an oversized button, unlike every other empty page | E4 | gets in the way | `TaxContainer` renders its full layout when empty | The page's `EmptyState` with one button |
 | P55 | J9 1 | Empty Budget and Debt | all | The MoneyHelper notice shows under the empty state | E4 | cosmetic | Notice rendered unconditionally | Leave the notice out of the empty page (fixed wording itself unchanged) |
 | P56 | J1 5 | Onboarding progress | all | The progress bar fills only visited steps, so after "Skip this step" step 4 shows segments 1 and 4 filled and 2 and 3 empty | owner's eye | gets in the way | Progress counts visited, not reached | Fill every step up to the current one |
-| P57 | J1 5 | Onboarding step change, `apps/web/app/features/onboarding/components/OnboardingFlow` | 375; both | Step 3 opens scrolled down with "Step 3 of 4" cut at the top | owner's eye (same class as O-1) | gets in the way | The window keeps its scroll position across steps | Scroll to the step heading and focus it on each step change; check with phone-nav-fixes, whose scroll fix may cover this |
+| P57 | J1 5 | Onboarding step change, `apps/web/app/features/onboarding/components/OnboardingFlow` | 375; both | Step 3 opens scrolled down with "Step 3 of 4" cut at the top | owner's eye (same class as O-1) | gets in the way | The window keeps its scroll position across steps | Still present after PR 781 (the step title is cut at the top at 375). Scroll to the top of the step and focus its heading on each step change |
 | P58 | J1 5 | Onboarding header and salary chips | 320 | "Set up Flump" wraps beside "Save and exit"; the example-salary chips wrap unevenly (one chip, then two) | owner's eye | cosmetic | Header and chip row widths | Shorter header row; chips in an even grid |
 | P59 | J6 2 | Retirement plan, `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx` | all | All ten inputs are 14px (iOS zoom) and 40px tall, set out as one long plain form with the headline "Not set" above it | R7, A5, R2 | gets in the way | Own inputs, not `CurrencyInput`, `PercentInput` or `SliderField` | Use the shared inputs (16px, 44px on touch); layout is ux-batch-g's shared number inputs work |
 | P60 | J1, J9 | Calculators on marketing and `/tools` (pay rise, balance transfer, overdraft, mortgage, 100k, section 24) | all | The calculators' value inputs are 14px (iOS zoom), and at 320 slider labels wrap to two or three lines beside the value pill | R7, owner's eye | gets in the way | RC-3 (`SliderField`) | RC-3 |
-| P61 | J2 4 | Take-home "The next £1,000" tab | 375 light | Opening the tab shifts the layout after it renders (CLS 0.2) | WCAG 2.2 2.4.11 related, owner's eye | gets in the way | Content sized after the tab's data or chart renders | Reserve the chart and result heights |
+| P61 | J2 4, J3 2, J11 | Take-home (both tabs) and Mortgage (page and its scenario tabs) | 320 to 430; both | The layout shifts after it renders (CLS 0.13 to 0.19 on every persona) | WCAG 2.2 2.4.11 related, owner's eye | gets in the way | Content sized after the tab's data or chart renders | Reserve the chart and result heights |
 | P62 | J3 2, J5 4 | Mortgage "Your details" and "Let properties" headers | 320, 375 | An Edit button beside the description squeezes it to three or four words a line | owner's eye | cosmetic | RC-11 | RC-11: below `sm` the action goes under the text |
 | P63 | J2 4, J6 2 | "What could your savings do?" and the retirement accounts card | 320, 375 | Text squeezed beside its button, as P24 | owner's eye | cosmetic | RC-11 | RC-11 (overlaps ux-batch-g, collapsible what-if zones) |
 | P64 | J2 3 | Housing (edit rent) sheet | all | A third footer pattern: a small left-aligned Save with no Cancel; its description "This updates your details." says little | SG 12, owner's eye | cosmetic | RC-12 | RC-12: one sheet footer; say what is saved ("Saves your rent to your details") |
@@ -135,7 +139,7 @@ Measured at every width and theme unless stated, so these need no fix:
 | P67 | J2 3 | Budget suggested categories | all | The chip "Health & Fitness" uses an ampersand and title case | copy guide | cosmetic | Suggestion list text | "Health and fitness" |
 | P68 | J2 2 | "Connect AI" icon | all | A sparkle icon in the drawer and a robot icon in the account menu | SG 7, owner's eye | cosmetic | Two icon choices | One icon in `navConfig.ts` and `AvatarMenu` |
 | P69 | J2 3 | Budget bill-move notice | all | "Keep it here" is a borderless text button beside the outlined "Move to debts" | owner's eye (siblings uneven) | cosmetic | Mixed button variants | Both secondary, or a text pair |
-| P70 | J1 2 | Marketing menu, `apps/marketing/src/components/Header/Header.tsx` | all | The menu opens from the right while its button is top left (the same fault as O-4), and the page behind it is not scroll-locked | owner's eye (same class as O-4), R4 | gets in the way | Shares `NavDrawer` | Fix with O-4 in the shared drawer; check the phone-nav-fixes PR covers marketing |
+| P70 | J1 2 | Marketing menu, `apps/marketing/src/components/Header/Header.tsx` | all | The side is fixed by PR 781, but the page behind the open menu is still not scroll-locked | R4 | gets in the way | Shares `NavDrawer` | Fix with P11 in the shared drawer |
 | P71 | J1 2 | Marketing menu items | 320 | "AI connection" wraps to two lines so that item is taller than the others; each subtitle repeats its label; no Contact link | owner's eye (one item spaced differently), N8 | cosmetic | Item copy and list | Shorter subtitles that add meaning; add Contact |
 | P72 | J1 1 | Marketing header, landscape | 812x375 | The hamburger shows beside the inline links, so the navigation appears twice; the hero card is fully below the first screen | owner's eye | cosmetic | Header breakpoints | Hide the menu button once inline links show; reduce hero top padding in short viewports |
 | P73 | J1 3 | Marketing page tops (Tools index against Pricing, Security, Contact); Preview section gap | 320 to 430 | The Tools heading starts about 90px down where others start at 115 to 130px; Preview has an extra-large gap before "Dashboard picture" | owner's eye (inconsistent padding) | cosmetic | Page-level spacing | One `MarketingSection` top spacing |
@@ -145,17 +149,24 @@ Measured at every width and theme unless stated, so these need no fix:
 | P77 | J1 3 | Tool card icon tiles and the 404 sun, dark | 375 dark | Dark brown tiles on a dark card barely show | A1 (non-text contrast 3:1 for meaningful icons) | cosmetic | Tint token in dark | Dark `tint.apricot` with more contrast against `surface.card` |
 | P78 | J10 | Accounts and Budget, landscape | 812x375 | In landscape the hero figure starts at 245px of 375, so the h1 and the headline are not both in the first view | H3 | cosmetic | Header 67px plus page header in a short viewport | Compact page header below 480px tall |
 
+| P79 | J11 5 | Self Assessment "Add a record" dialog, `apps/web/app/containers/tax/` record dialog | 320; both | The dialog is wider than the screen: no left inset, fields and the close button run past the right edge, and the page scrolls sideways | A6, R1, WCAG 1.4.10 | gets in the way | A fixed or min width on the dialog content above 320px | Fit the dialog to the viewport (`maxWidth: 100%`, the Sheet's phone layout) |
+| P80 | J2, J3, J11 (Back) | Web scroll restoration, `apps/web/app/root.tsx` `ScrollRestoration getKey`, `apps/web/app/utils/scrollRestorationKey.ts` | 320 to 430; both | Back after bottom-bar navigation lands at the top of the page on 22 of 135 tries, on any page; before PR 781 it was 0 of 72 | owner's eye (same class as O-1) | gets in the way | New with PR 781 (the `getKey` guard, or the restore running before the page reaches its height); to diagnose before fixing | Find the cause first; restore once the page has its height, and add a Back case to `scroll-restoration.spec.ts` |
+
 ## Overlaps with other lanes
 
-- **phone-nav-fixes** owns O-1 to O-5. Same class, to check once it merges: P12 and P13 (scroll
-  after closing an overlay and after Back), P57 (onboarding step opens scrolled down), P70 (the
-  marketing menu opens on the opposite side, as O-4), P14 (one drawer item styled differently, as
-  O-5) and P11 (drawer scroll lock).
-- **ux-batch-g** (sortable tables, shared number inputs, date pickers, chart tooltips, collapsible
-  what-if zones, budget page changes, info text behind info icons). Recorded here, not planned for
-  phase 2 unless that lane leaves them: P08, P59 and P60 (shared number inputs: the 16px input text
-  is the phone part), P26 (chart axes and readout), P24 and P63 (collapsible what-if zones), P23,
-  P33, P51 and P52 (budget page), P32 (info tips).
+- **phone-nav-fixes** (PR 781, merged) owned O-1 to O-5; their status is above. Left after it:
+  P11 and P70 (drawer scroll lock), P12, P13 and P80 (scroll after closing an overlay and after
+  Back, P80 new with PR 781), P14 and P57. Phase 2 takes these.
+- **ux-batch-g** (PR 783, open). Listed for that lane, not fixed in phase 2:
+  - Shared number inputs: P08, P59, P60 (the 16px input text is the phone part).
+  - Date pickers: the add-debt date field (`type=date`, no input mode) seen in J11.
+  - Chart tooltips and axes: P26.
+  - Collapsible what-if zones: P24, P63.
+  - Budget page sections: P23, P33, P51, P52, P55 (budget part), P69.
+  - Info text behind info icons: P32 (Breathing room tip) and Breathing room wording.
+  - Delete button colour: P30.
+  - Pension contribution fields: the 14px "Your contribution" input on Pension (part of P08).
+  - Sortable tables: no phone finding.
 
 ## Out of scope, noted in passing
 
@@ -178,7 +189,11 @@ Measured at every width and theme unless stated, so these need no fix:
   open (O-3, F-rules, R4). The field walk only rules out jumps caused by scripts.
 - **iOS Safari zoom** (P08, P09) is inferred from the 16px rule, not seen.
 - **Safe areas** (P15) need a notched phone in landscape; Chromium reports zero insets.
-- **Scroll after navigation** (O-1) did not reproduce in Chromium; it needs the owner's phone.
+- **Scroll after navigation** (O-1) is fixed in Chromium; the owner's phone is the final check.
+- **J11 overlays the sweep could not open** with the densest data: edit account (11 accounts sit
+  behind "Show all"), the housing-mortgage sheet, the mortgage tip, Self Assessment row actions,
+  the year menu and delete record (records collapsed under "Records"), and import undo. Each was
+  opened by the smaller personas on earlier runs and is recorded there.
 - **Receipts** (`/app/tax/receipts/:id`, O17) need an uploaded file; the seed writes none.
 - **Retirement plan** is a friends-beta page: the backend answers 404 unless the user is listed
   in `RETIREMENT_ALLOWED_USER_IDS`. The first run hit that 404; the second run listed the local

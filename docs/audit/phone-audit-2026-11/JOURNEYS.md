@@ -249,6 +249,8 @@ tables and the largest figures.
    confirm (O14 to O18), Undo import from the import review (O19, and the review page itself),
    disconnect AI (O22), delete all data (O20) and delete account (O21). Nothing is confirmed.
 4. Navigation checks, loading and error states, axe and 200% text as J2.
+5. A mistyped signed-in URL and a mistyped marketing URL (`/nope-404` on each), so one person
+   also meets both not-found pages.
 
 ### J10. One-handed reach and landscape
 
