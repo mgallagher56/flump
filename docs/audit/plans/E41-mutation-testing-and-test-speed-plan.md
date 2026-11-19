@@ -310,6 +310,7 @@ Each has options and a recommendation. A flag says when it names an outside serv
    - B. Two numbers set by the owner after P0: the time for a typical pull request's required checks, and the time for a local web test run.
    - Recommendation: B. For reference, pull request runs took 2 to 9 minutes today; 5 minutes is a suggestion, not a measured promise.
    - **Accepted on 19 November 2026: option B (the owner sets the two numbers after P0)**.
+   - **Targets set on 19 November 2026.** Asked "Accept the two proposed test speed targets?", the owner answered "Yes, accept both". (1) A pull request's required checks: typical 3 min 30 s, worst 6 min (the slowest required job in a run, median and maximum). (2) A local web unit run (`apps/web`, `vitest run --project unit`): 2 min on a quiet machine. They are targets to report against, not CI gates; a failing check for them needs the coordinator first.
 
 10. **May a fix reduce test isolation?** Flag: guard design (could hide a leaking test).
     - A. Never.
