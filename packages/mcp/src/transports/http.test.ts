@@ -825,3 +825,396 @@ describe("isToolAvailable per verified caller", () => {
     expect(await listTools(handlerFor("friend", onlyFriends))).toContain('"simulate_retirement"');
   });
 });
+
+describe("HttpMcpHandler responses and limiter wiring", () => {
+  // Built at run time so no token-shaped literal sits in the file.
+  const pat = ["flump", "pat", "b".repeat(32)].join("_");
+  const tokenRecord = (scopes: string[] = ["mcp:read:anonymized"], userId = "user-1") => ({
+    id: "tok-1",
+    userId,
+    tokenHash: hashPatToken(pat),
+    scopes,
+    anonymizeInstitutions: true,
+    expiresAt: new Date(Date.now() + 86_400_000),
+    revokedAt: null,
+  });
+  const spyLimiter = (blocked = false) => ({
+    attempt: vi.fn(async () => ({ blocked, retryAfterSeconds: blocked ? 30 : 0 })),
+    forgive: vi.fn(async () => undefined),
+    recordSuccess: vi.fn(async () => undefined),
+  });
+  const refusingRateLimiter = {
+    checkLimit: async () => ({
+      allowed: false,
+      limit: 60,
+      remaining: 0,
+      resetSeconds: 12,
+      message: "slow",
+    }),
+  };
+  const throwingRateLimiter = {
+    checkLimit: async () => {
+      throw new Error("limiter broke");
+    },
+  };
+  const quietLogger = () => ({ warn: vi.fn(), error: vi.fn() });
+  const post = (headers: Record<string, string> = {}, body?: BodyInit) =>
+    new Request("http://localhost/mcp", {
+      method: "POST",
+      headers: { authorization: `Bearer ${pat}`, ...headers },
+      ...(body === undefined ? {} : { body }),
+    });
+  const expectJson = async (res: Response, status: number, error: string) => {
+    expect(res.status).toBe(status);
+    expect(res.headers.get("content-type")).toBe("application/json");
+    const body = await res.json();
+    expect(body.error).toBe(error);
+    return body;
+  };
+
+  it("normalises origins: trimmed, lower-cased, with every trailing slash removed", async () => {
+    const { normalizeOrigin } = await import("./http.js");
+    expect(normalizeOrigin("  HTTPS://App.Example.TEST//  ")).toBe("https://app.example.test");
+  });
+
+  it("serves the protected resource metadata of its verifier", () => {
+    const h = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      expectedAudience: "https://mcp.example.test",
+    });
+    expect(h.getOAuthMetadata()).toMatchObject({ resource: "https://mcp.example.test" });
+  });
+
+  it("web: every refusal is JSON with a machine-readable error code", async () => {
+    const dp = {} as McpUserDataProvider;
+    await expectJson(
+      await new HttpMcpHandler({ dataProvider: dp, isEnabled: () => false }).handleWebRequest(
+        post(),
+      ),
+      503,
+      "mcp_disabled",
+    );
+    await expectJson(
+      await new HttpMcpHandler({ dataProvider: dp }).handleWebRequest(
+        post({ origin: "https://evil.example.test" }),
+      ),
+      403,
+      "origin_not_allowed",
+    );
+    const blocked = await expectJson(
+      await new HttpMcpHandler({
+        dataProvider: dp,
+        failedAuthLimiter: spyLimiter(true) as never,
+      }).handleWebRequest(post()),
+      429,
+      "rate_limit_exceeded",
+    );
+    expect(blocked.retryAfter).toBe(30);
+    const unauthorised = await expectJson(
+      await new HttpMcpHandler({ dataProvider: dp }).handleWebRequest(post()),
+      401,
+      "mcp_auth_error",
+    );
+    expect(unauthorised.message).toMatch(/not recognised/);
+    const limited = await expectJson(
+      await new HttpMcpHandler({
+        dataProvider: dp,
+        tokenStore: { findTokenByHash: async () => tokenRecord() },
+        rateLimiter: refusingRateLimiter as never,
+      }).handleWebRequest(post()),
+      429,
+      "rate_limit_exceeded",
+    );
+    expect(limited.retryAfter).toBe(12);
+    await expectJson(
+      await new HttpMcpHandler({
+        dataProvider: dp,
+        logger: quietLogger(),
+        tokenStore: {
+          findTokenByHash: async () => {
+            throw new Error("db down");
+          },
+        },
+      }).handleWebRequest(post()),
+      400,
+      "bad_request",
+    );
+    await expectJson(
+      await new HttpMcpHandler({
+        dataProvider: dp,
+        tokenStore: { findTokenByHash: async () => tokenRecord(), recordRequest: async () => {} },
+      }).handleWebRequest(post({ "content-length": String(MAX_BODY_BYTES + 1) }, "{}")),
+      413,
+      "payload_too_large",
+    );
+  });
+
+  it("web: keys the failed-attempt limiter on the trimmed rightmost forwarded address", async () => {
+    const limiter = spyLimiter();
+    await new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      failedAuthLimiter: limiter as never,
+    }).handleWebRequest(post({ "x-forwarded-for": "1.1.1.1,  2.2.2.2 " }));
+    expect(limiter.attempt).toHaveBeenCalledWith("2.2.2.2");
+  });
+
+  it("web: forgives the attempt when the verifier fails for another reason, but not after a verified token", async () => {
+    const dp = {} as McpUserDataProvider;
+    const beforeVerify = spyLimiter();
+    await new HttpMcpHandler({
+      dataProvider: dp,
+      logger: quietLogger(),
+      failedAuthLimiter: beforeVerify as never,
+      tokenStore: {
+        findTokenByHash: async () => {
+          throw new Error("db down");
+        },
+      },
+    }).handleWebRequest(post());
+    expect(beforeVerify.forgive).toHaveBeenCalledTimes(1);
+
+    // Verified, then a later step fails: the attempt was already given back by recordSuccess,
+    // so forgiving it again would erase one of the IP's real failures.
+    const afterVerify = spyLimiter();
+    const res = await new HttpMcpHandler({
+      dataProvider: dp,
+      logger: quietLogger(),
+      failedAuthLimiter: afterVerify as never,
+      rateLimiter: throwingRateLimiter as never,
+      tokenStore: { findTokenByHash: async () => tokenRecord() },
+    }).handleWebRequest(post());
+    expect(res.status).toBe(400);
+    expect(afterVerify.recordSuccess).toHaveBeenCalledTimes(1);
+    expect(afterVerify.forgive).not.toHaveBeenCalled();
+  });
+
+  it("web: a body-less request still records one use, with no tool calls", async () => {
+    const recordRequest = vi.fn(async () => undefined);
+    await new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      tokenStore: { findTokenByHash: async () => tokenRecord(), recordRequest },
+    }).handleWebRequest(post({ accept: "application/json, text/event-stream" }));
+    expect(recordRequest).toHaveBeenCalledWith("tok-1", 0);
+  });
+
+  it("web: accepts a body of exactly the size limit and counts its tool call", async () => {
+    const recordRequest = vi.fn(async () => undefined);
+    const head =
+      '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list_accounts","arguments":{}},"pad":"';
+    const tail = '"}';
+    // Pad with ASCII so characters and bytes agree: head + pad + tail = MAX_BODY_BYTES bytes.
+    const body = head + "x".repeat(MAX_BODY_BYTES - head.length - tail.length) + tail;
+    expect(Buffer.byteLength(body)).toBe(MAX_BODY_BYTES);
+    const res = await new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      logger: quietLogger(),
+      tokenStore: { findTokenByHash: async () => tokenRecord(), recordRequest },
+    }).handleWebRequest(
+      post(
+        {
+          "content-type": "application/json",
+          accept: "application/json, text/event-stream",
+          "content-length": String(MAX_BODY_BYTES),
+        },
+        body,
+      ),
+    );
+    expect(res.status).not.toBe(413);
+    expect(recordRequest).toHaveBeenCalledWith("tok-1", 1);
+  });
+
+  it("web: hands the staging provider and the argument fingerprint to tool calls, and no client name without a User-Agent", async () => {
+    const events: Array<{ caller: object; tool: string; outcome: string; fp?: string }> = [];
+    const res = await new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      tokenStore: {
+        findTokenByHash: async () =>
+          tokenRecord(["mcp:read:anonymized", "write:stage"], "user_test"),
+      },
+      imports: createFakeImports(),
+      fingerprintArgs: () => "f".repeat(64),
+      audit: (caller, event) => {
+        events.push({
+          caller,
+          tool: event.tool,
+          outcome: event.outcome,
+          fp: event.argsFingerprint,
+        });
+      },
+    }).handleWebRequest(
+      post(
+        { "content-type": "application/json", accept: "application/json, text/event-stream" },
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "get_import_status", arguments: { batchId: SEEDED_BATCH_ID } },
+        }),
+      ),
+    );
+    await res.text();
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      tool: "get_import_status",
+      outcome: "ok",
+      fp: "f".repeat(64),
+    });
+    expect(events[0]?.caller).not.toHaveProperty("clientName");
+  });
+
+  describe("express", () => {
+    const req = (extra: object = {}) =>
+      ({ ip: "5.5.5.5", headers: { authorization: `Bearer ${pat}` }, ...extra }) as never;
+
+    it("refusals carry machine-readable error codes", async () => {
+      const dp = {} as McpUserDataProvider;
+      const blocked = await new HttpMcpHandler({
+        dataProvider: dp,
+        failedAuthLimiter: spyLimiter(true) as never,
+      }).authenticateExpress(req());
+      expect(blocked).toMatchObject({
+        ok: false,
+        status: 429,
+        body: { error: "rate_limit_exceeded", retryAfter: 30 },
+      });
+      const limited = await new HttpMcpHandler({
+        dataProvider: dp,
+        tokenStore: { findTokenByHash: async () => tokenRecord() },
+        rateLimiter: refusingRateLimiter as never,
+      }).authenticateExpress(req());
+      expect(limited).toMatchObject({
+        ok: false,
+        status: 429,
+        body: { error: "rate_limit_exceeded", retryAfter: 12 },
+      });
+      const unauthorised = await new HttpMcpHandler({ dataProvider: dp }).authenticateExpress(
+        req(),
+      );
+      expect(unauthorised).toMatchObject({
+        ok: false,
+        status: 401,
+        body: { error: "mcp_auth_error" },
+      });
+      expect((unauthorised as { body: { message: string } }).body.message).toMatch(
+        /not recognised/,
+      );
+    });
+
+    it("forgives the attempt when the verifier fails for another reason, but not after a verified token", async () => {
+      const dp = {} as McpUserDataProvider;
+      const beforeVerify = spyLimiter();
+      const failed = await new HttpMcpHandler({
+        dataProvider: dp,
+        logger: quietLogger(),
+        failedAuthLimiter: beforeVerify as never,
+        tokenStore: {
+          findTokenByHash: async () => {
+            throw new Error("db down");
+          },
+        },
+      }).authenticateExpress(req());
+      expect(failed).toEqual({
+        ok: false,
+        status: 400,
+        body: expect.objectContaining({ error: "bad_request" }),
+      });
+      expect(beforeVerify.forgive).toHaveBeenCalledTimes(1);
+
+      const afterVerify = spyLimiter();
+      const later = await new HttpMcpHandler({
+        dataProvider: dp,
+        logger: quietLogger(),
+        failedAuthLimiter: afterVerify as never,
+        rateLimiter: throwingRateLimiter as never,
+        tokenStore: { findTokenByHash: async () => tokenRecord() },
+      }).authenticateExpress(req());
+      expect(later).toMatchObject({ ok: false, status: 400 });
+      expect(afterVerify.forgive).not.toHaveBeenCalled();
+    });
+
+    it("answers a generic 400 when the request fails after authentication", async () => {
+      let status = 0;
+      let sent: unknown;
+      const res: any = {
+        status(code: number) {
+          status = code;
+          return this;
+        },
+        setHeader() {
+          return this;
+        },
+        json(b: unknown) {
+          sent = b;
+          return this;
+        },
+      };
+      await new HttpMcpHandler({
+        dataProvider: {} as McpUserDataProvider,
+        logger: quietLogger(),
+        tokenStore: { findTokenByHash: async () => tokenRecord(), recordRequest: async () => {} },
+        isToolAvailable: () => {
+          throw new Error("flag service down");
+        },
+      }).handleExpressRequest(req(), res);
+      expect(status).toBe(400);
+      expect(sent).toMatchObject({ error: "bad_request" });
+    });
+  });
+});
+
+describe("express: the client name reaches the audit sink", () => {
+  it("passes the User-Agent of an Express request as the caller's client name", async () => {
+    const { createServer } = await import("node:http");
+    const pat = ["flump", "pat", "c".repeat(32)].join("_");
+    const callers: Array<{ clientName?: string }> = [];
+    const handler = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      tokenStore: {
+        findTokenByHash: async () => ({
+          id: "tok-1",
+          userId: "user-1",
+          tokenHash: hashPatToken(pat),
+          scopes: ["mcp:read:anonymized"],
+          anonymizeInstitutions: true,
+          expiresAt: new Date(Date.now() + 86_400_000),
+          revokedAt: null,
+        }),
+        recordRequest: async () => {},
+      },
+      audit: (caller) => {
+        callers.push(caller);
+      },
+    });
+    const server = createServer((req, res) => {
+      const chunks: Buffer[] = [];
+      req.on("data", (c: Buffer) => chunks.push(c));
+      req.on("end", () => {
+        const parsed = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+        void handler.handleExpressRequest(req as never, res as never, parsed);
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const { port } = server.address() as { port: number };
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/mcp`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${pat}`,
+          "content-type": "application/json",
+          accept: "application/json, text/event-stream",
+          "user-agent": "express-client/2.0",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "get_import_status", arguments: { batchId: SEEDED_BATCH_ID } },
+        }),
+      });
+      await res.text();
+      expect(callers).toEqual([expect.objectContaining({ clientName: "express-client/2.0" })]);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+});
