@@ -78,7 +78,7 @@ describe("useUserProfile conditional saves", () => {
     await act(async () => {
       await Promise.all([
         result.current.updateProfile({ displayName: "One" }),
-        result.current.updateProfile({ monthlySavingsTarget: 200 }),
+        result.current.updateProfile({ annualSalary: 41000 }),
       ]);
     });
     expect(api.sentIfMatch(0)).toBe(`"${V1}"`);

@@ -188,7 +188,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     hasAccounts: Array.isArray(accounts) && accounts.length > 0,
     hasBudget:
       completedSteps.includes("budget") ||
-      (Array.isArray(budgetEntries) && budgetEntries.some((e: any) => !e.isDefault)),
+      (Array.isArray(budgetEntries) && budgetEntries.length > 0),
     hasSavings: savingsAccounts.length > 0,
     hasPension: pensionAccounts.length > 0 || completedSteps.includes("pension"),
     hasMortgageAccount: mortgageAccounts.length > 0,

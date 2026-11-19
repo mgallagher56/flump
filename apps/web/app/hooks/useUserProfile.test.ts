@@ -39,15 +39,11 @@ describe("useUserProfile", () => {
       enabledPages: ["accounts", "forecast", "tax"],
       dashboardWidgets: ["accounts", "forecast"],
       dashboardWidgetOrder: ["forecast", "accounts"],
-      dashboardWidgetSizes: { accounts: "wide", forecast: "normal" },
-      dashboardWidgetConfig: { forecast: { forecastYears: 20 }, accounts: {} },
     });
 
     expect(profile.enabledPages).toEqual(["accounts", "tax"]);
     expect(profile.dashboardWidgets).toEqual(["accounts"]);
     expect(profile.dashboardWidgetOrder).toEqual(["accounts"]);
-    expect(profile.dashboardWidgetSizes).toEqual({ accounts: "wide" });
-    expect(profile.dashboardWidgetConfig).toEqual({ accounts: {} });
     expect(DEFAULT_PROFILE.enabledPages).not.toContain("forecast");
   });
 
@@ -55,11 +51,6 @@ describe("useUserProfile", () => {
     // An empty order means the dashboard's default order; it is never filled in for the user.
     expect(normalizeProfile({}).dashboardWidgetOrder).toEqual([]);
     expect(DEFAULT_PROFILE.dashboardWidgetOrder).toEqual([]);
-  });
-
-  test("normalizeProfile falls back to default sizes when only forecast was stored", () => {
-    const profile = normalizeProfile({ dashboardWidgetSizes: { forecast: "normal" } });
-    expect(profile.dashboardWidgetSizes).toEqual(DEFAULT_PROFILE.dashboardWidgetSizes);
   });
 
   test("normalizeProfile handles partial data correctly", () => {

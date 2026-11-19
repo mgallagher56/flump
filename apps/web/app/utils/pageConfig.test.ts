@@ -9,7 +9,6 @@ import {
   isPageEnabled,
   OPT_IN_PAGE_KEYS,
   stripRetiredKeys,
-  stripRetiredRecordKeys,
 } from "./pageConfig";
 
 describe("opt-in modules (Self Assessment)", () => {
@@ -34,12 +33,8 @@ describe("retired module keys", () => {
     expect(DEFAULT_ENABLED_PAGES as string[]).not.toContain("forecast");
   });
 
-  it("strips forecast from stored lists and keyed records", () => {
+  it("strips forecast from stored lists", () => {
     expect(stripRetiredKeys(["accounts", "forecast", "tax"])).toEqual(["accounts", "tax"]);
-    expect(stripRetiredRecordKeys({ accounts: "wide", forecast: "normal" })).toEqual({
-      accounts: "wide",
-    });
-    expect(stripRetiredRecordKeys(null)).toBeUndefined();
   });
 });
 

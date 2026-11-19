@@ -4,7 +4,7 @@
   "packages/finance-engine/src/persistence.ts": 4,
   "packages/finance-engine/src/portfolio.ts": 2,
   "packages/finance-engine/src/profile.test.ts": 1,
-  "packages/finance-engine/src/profile.ts": 8,
+  "packages/finance-engine/src/profile.ts": 7,
   "packages/mcp/src/tools/read/query-tools.test.ts": 14,
   "packages/mcp/src/tools/read/read-tools.test.ts": 1,
   "packages/mcp/src/tools/simulate/simulate.test.ts": 1,

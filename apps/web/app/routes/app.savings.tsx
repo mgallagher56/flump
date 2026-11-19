@@ -103,22 +103,6 @@ export const action = async (args: ActionFunctionArgs) => {
         accessToken: token,
         method: "DELETE",
       });
-    } else if (intent === "updateSavingsSettings") {
-      const savingsAllocationMode = formData.get("savingsAllocationMode");
-      const monthlySavingsTarget = formData.get("monthlySavingsTarget");
-
-      await backendFetch(`/user-profile`, {
-        schema: UpdateProfileResponse,
-        accessToken: token,
-        method: "PATCH",
-        ifMatch: ifMatchFromForm(formData, PROFILE_VERSION_FIELD),
-        body: {
-          ...(savingsAllocationMode ? { savingsAllocationMode } : {}),
-          ...(monthlySavingsTarget !== null
-            ? { monthlySavingsTarget: roundTo2dp(Number(monthlySavingsTarget)) }
-            : {}),
-        },
-      });
     }
 
     return data({ success: true });
