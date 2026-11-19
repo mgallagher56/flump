@@ -297,6 +297,55 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       }
     });
 
+    it("GET /accounts?details=latest: each account gets its own newest month, page by page", async () => {
+      const second = await h.call("post", "/accounts", h.tokens.a, {
+        name: "A Loan",
+        type: "Loan",
+        balance: -500,
+      });
+      expect(second.status).toBe(201);
+      const loanId: string = second.body.id;
+      // Only the rows below, so each account's newest month is known: the saver's is 2024-06 and
+      // the loan's 2023-11, older than the saver's oldest.
+      await h.dataSource.query("DELETE FROM account_details WHERE account_id = ANY($1::uuid[])", [
+        [accountId, loanId],
+      ]);
+      for (const [id, year, month, value] of [
+        [accountId, 2024, 1, 1000],
+        [accountId, 2024, 6, 1100],
+        [loanId, 2023, 3, -700],
+        [loanId, 2023, 11, -600],
+      ] as const) {
+        await h.dataSource.query(
+          `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+           VALUES ($1, $2, $3, $4, $5, make_date($3, $4, 1), 'manual')`,
+          [id, USER_A, year, month, value],
+        );
+      }
+      const newest = (
+        body: Array<{ id: string; details: Array<{ year: number; month: number; value: number }> }>,
+      ) => body.map((a) => [a.id, a.details.map((d) => `${d.year}-${d.month}:${d.value}`)]);
+
+      const both = await h.call("get", "/accounts?details=latest", h.tokens.a);
+      expect(both.status).toBe(200);
+      expect(newest(both.body)).toEqual([
+        [accountId, ["2024-6:1100"]],
+        [loanId, ["2023-11:-600"]],
+      ]);
+
+      // One account per page: the history query only sees that page's accounts.
+      const first = await h.call("get", "/accounts?details=latest&limit=1", h.tokens.a);
+      expect(newest(first.body)).toEqual([[accountId, ["2024-6:1100"]]]);
+      const cursor = first.headers["x-next-cursor"];
+      expect(cursor).toBeTruthy();
+      const next = await h.call(
+        "get",
+        `/accounts?details=latest&limit=1&cursor=${encodeURIComponent(String(cursor))}`,
+        h.tokens.a,
+      );
+      expect(newest(next.body)).toEqual([[loanId, ["2023-11:-600"]]]);
+    });
+
     it("GET /accounts/:id: A 200, B 404 identical to not-found", async () => {
       const a = await h.call("get", `/accounts/${accountId}`, h.tokens.a);
       expect(a.status).toBe(200);

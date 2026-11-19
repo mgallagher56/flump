@@ -587,8 +587,8 @@ export class AccountIntakeService implements IAccountIntake {
 
   /**
    * One page of monthly values: every account of the user's, or one account's (404 when it is
-   * not theirs). The user filter is on the detail row's own user id and, for one account, on the
-   * account's owner as well.
+   * not theirs). The user filter is on the account's owner (joined), never on the detail row's own
+   * user id alone.
    */
   async listAccountDetails(
     userId: string,
