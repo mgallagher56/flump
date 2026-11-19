@@ -632,6 +632,35 @@ describe("evaluateFinancialStage figures", () => {
     expect(at(999)).toBe(false);
   });
 
+  it("does not report the starter buffer as met at stage 3 when savings are under £1,000", () => {
+    // Essentials £100 a month, savings £300: 300 / 100 = 3.0 months, so stage 3,
+    // but £300 is below the £1,000 starter buffer, so the buffer is not met.
+    const small = evaluateFinancialStage({
+      debts: [],
+      monthlySurplus: 100,
+      liquidSavings: 300,
+      monthlyEssentialExpenses: 100,
+    });
+    expect(small.stage).toBe("optimize");
+    expect(small.starterBufferMet).toBe(false);
+    // £1,000 against £100 a month is 10 months: stage 3 with the buffer met.
+    const met = evaluateFinancialStage({
+      debts: [],
+      monthlySurplus: 100,
+      liquidSavings: 1000,
+      monthlyEssentialExpenses: 100,
+    });
+    expect(met.stage).toBe("optimize");
+    expect(met.starterBufferMet).toBe(true);
+    const justUnder = evaluateFinancialStage({
+      debts: [],
+      monthlySurplus: 100,
+      liquidSavings: 999,
+      monthlyEssentialExpenses: 100,
+    });
+    expect(justUnder.starterBufferMet).toBe(false);
+  });
+
   it("reports no runway when there are no essential expenses", () => {
     const res = evaluateFinancialStage({
       debts: [],

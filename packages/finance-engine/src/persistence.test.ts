@@ -290,6 +290,31 @@ describe("BrowserStorageDriver cookies", () => {
     ]);
   });
 
+  it("reads a cookie with broken percent-encoding as no cookie", () => {
+    Object.defineProperty((globalThis as unknown as { document: object }).document, "cookie", {
+      get: () => "seed=%E0%A4%A",
+      configurable: true,
+    });
+    expect(new BrowserStorageDriver().getCookie("seed")).toBeNull();
+  });
+
+  it("still decodes a well-formed cookie in the browser", () => {
+    Object.defineProperty((globalThis as unknown as { document: object }).document, "cookie", {
+      get: () => "other=1; seed=a%20b",
+      configurable: true,
+    });
+    expect(new BrowserStorageDriver().getCookie("seed")).toBe("a b");
+  });
+
+  it("reads the onboarding seed as null when the browser cookie is broken", () => {
+    Object.defineProperty((globalThis as unknown as { document: object }).document, "cookie", {
+      get: () => `${ONBOARDING_SEED_STORAGE_KEY}=%E0%A4%A`,
+      configurable: true,
+    });
+    setStorageDriver(new BrowserStorageDriver());
+    expect(readOnboardingSeed()).toBeNull();
+  });
+
   it("removes a cookie by expiring it now", () => {
     new BrowserStorageDriver().removeCookie("seed");
     expect(writes).toEqual(["seed=; path=/; max-age=0; SameSite=Lax"]);

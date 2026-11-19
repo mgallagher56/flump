@@ -320,7 +320,7 @@ export function evaluateFinancialStage(params: {
     highInterestDebt: 0,
     monthlySurplus: Math.round(monthlySurplus),
     emergencyRunwayMonths,
-    starterBufferMet: true,
+    starterBufferMet,
     primaryHeroMetric: "net_worth",
     headline: "Breathing room",
     subline:
