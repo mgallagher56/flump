@@ -590,7 +590,108 @@ describe("isBelowMin", () => {
     ["1.2.3-beta.1", "1.2.3", false],
     ["1.2.x", "1.2.0", false],
     ["1.0.0", "", false],
+    // The leading "v" is dropped: v2.0.0 is 2.0.0, which is not below 1.0.0.
+    ["v2.0.0", "1.0.0", false],
+    // Surrounding spaces are ignored before the "v" is dropped: 2.0.0 is not below 1.0.0.
+    [" v2.0.0 ", "1.0.0", false],
   ])("%s vs min %s is %s", (version, minVersion, expected) => {
     expect(isBelowMin(version, min(minVersion))).toBe(expected);
+  });
+});
+
+describe("policy body checks", () => {
+  it("is a bad-response when either version is missing", async () => {
+    for (const body of [{ minVersion: "1.0.0" }, { recommendedVersion: "1.5.0" }]) {
+      const { client, fetchMock } = setup();
+      fetchMock.mockResolvedValue(respond(200, JSON.stringify(body)));
+      const result = await client.getClientPolicy();
+      expect(!result.ok && result.error.kind).toBe("bad-response");
+    }
+  });
+
+  it("reads a flat policy when no client info is configured", async () => {
+    const { client, fetchMock } = setup();
+    fetchMock.mockResolvedValue(
+      respond(200, JSON.stringify({ minVersion: "1.0.0", recommendedVersion: "1.5.0" })),
+    );
+    await expect(client.getClientPolicy()).resolves.toEqual({
+      ok: true,
+      policy: { minVersion: "1.0.0", recommendedVersion: "1.5.0" },
+    });
+  });
+
+  it("is a bad-response, not a crash, when the body is not an object", async () => {
+    for (const body of ["5", '"1.0.0"']) {
+      const { client, fetchMock } = setup({ client: { version: "1.2.3", platform: "ios" } });
+      fetchMock.mockResolvedValue(respond(200, body));
+      const result = await client.getClientPolicy();
+      expect(!result.ok && result.error.kind).toBe("bad-response");
+    }
+  });
+});
+
+describe("request headers and retries", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("leaves the X-Flump-Client key out entirely without client info", async () => {
+    const { client, fetchMock } = setup();
+    fetchMock.mockResolvedValue(respond(200, "{}"));
+    await call(client, "/a");
+    // A key with an undefined value would reach the wire as the text "undefined".
+    expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty("X-Flump-Client");
+  });
+
+  it("does not retry without a token when a refresh leaves none", async () => {
+    let calls = 0;
+    const { client, fetchMock } = setup({
+      getAccessToken: () => (calls++ < 2 ? "old" : null),
+      onUnauthorised: async () => "refreshed",
+    });
+    fetchMock.mockResolvedValue(respond(401));
+    await expect(call(client, "/x")).rejects.toMatchObject({ kind: "unauthorised", status: 401 });
+    // Only the first request goes out; a tokenless retry would be a second.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the token store error as the cause", async () => {
+    const keychain = new Error("keychain");
+    const { client } = setup({
+      getAccessToken: () => {
+        throw keychain;
+      },
+    });
+    const err = (await call(client, "/x").catch((e) => e)) as BackendError;
+    expect(err.kind).toBe("unavailable");
+    expect(err.cause).toBe(keychain);
+  });
+
+  it("does not start a refresh when the caller aborted during the first attempt", async () => {
+    const controller = new AbortController();
+    const reason = new Error("caller-abort");
+    const onUnauthorised = vi.fn(async () => "refreshed" as const);
+    const { client, fetchMock } = setup({ onUnauthorised });
+    // The caller aborts while the request is out; the server still answers 401.
+    fetchMock.mockImplementation(async () => {
+      controller.abort(reason);
+      return respond(401);
+    });
+    expect(await call(client, "/x", { signal: controller.signal }).catch((e) => e)).toBe(reason);
+    expect(onUnauthorised).not.toHaveBeenCalled();
+  });
+
+  it("leaves no timer running once a refreshed request has finished", async () => {
+    vi.useFakeTimers();
+    let token = "old";
+    const { client, fetchMock } = setup({
+      getAccessToken: () => token,
+      onUnauthorised: async () => {
+        token = "new";
+        return "refreshed";
+      },
+    });
+    fetchMock.mockResolvedValueOnce(respond(401)).mockResolvedValueOnce(respond(200, "{}"));
+    await expect(call(client, "/x")).resolves.toEqual({});
+    // The wait for the refresh is bounded by a timer; a forgotten one keeps the process alive.
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
