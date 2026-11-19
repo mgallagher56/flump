@@ -1,0 +1,144 @@
+# Phone audit: findings (November 2026)
+
+Status: audit, phase 1 (no product code changed). Decisions: none needed (see the end).
+
+What was run: the journeys in `JOURNEYS.md`, driven by `apps/e2e/sweep/phone.spec.ts` against a
+local build of `main` at `974072a9b` (18 November 2026), at 320x568, 375x812, 390x844 and
+430x932 in light and dark with Chromium touch and mobile emulation, plus 812x375 landscape on the
+main pages. Every page records measured checks (`apps/e2e/sweep/phoneChecks.ts`); every overlay
+records its edge, height, close control, focus, scroll lock and scroll after closing; persona
+sets also record scroll after bottom-bar navigation and Back, axe at 375 in both themes and a
+200% text pass. The screenshots were then reviewed by eye. Screenshots and JSON are outside the
+repository (the path is in the coordinator report).
+
+Severity: **blocks** a task, **gets in the way**, or **cosmetic**. "Owner's eye" marks a
+judgement rather than a written rule. Rules cite `docs/ux/UX-GUIDELINES.md` (H, N, F, D, C, E, T,
+A, R, M ids), `docs/ux/STYLE-GUIDE.md` (SG section) and WCAG 2.2.
+
+## What passed
+
+Measured at every width and theme unless stated, so these need no fix:
+
+- No horizontal scrolling on any page at 320 to 430 wide, portrait or landscape (A6, R1).
+- The h1 and headline figure are in the first view on every page at every width (H3).
+- No layout shift after load (CLS 0 on every page).
+- Axe (WCAG 2.0, 2.1, 2.2 A and AA) is clean at 375 in light and dark on every persona page.
+- No content ends under the bottom bar; `AppShell` pads for it and the safe-area bottom inset.
+- At most one illustration in view on every page.
+- No hover-only rules (every `:hover` rule that reveals something is inside a hover media query
+  or has a focus twin).
+- Money and percentage fields use `CurrencyInput` and `PercentInput` with a decimal keypad; no
+  email fields in the web app (sign-in is hosted).
+- Buttons, InfoTips, account rows and dashboard card links meet 44px on touch (Button's coarse
+  `minH: touch`, InfoTip's coarse box, and stretched `::after` hit areas on rows and cards).
+- Bottom-bar navigation leaves the next page at the top (scroll 0 after every navigation) and Back
+  restores the previous position on every page but Mortgage (P13). This is local Chromium; the
+  owner's report from a real phone stands and is owned by phone-nav-fixes.
+
+## The owner's five named problems
+
+| Id  | Problem                                                                       | Status                       | What the sweep saw                                                              |
+| --- | ----------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------- |
+| O-1 | Pages open scrolled down after navigation                                     | owned by phone-nav-fixes     | Not reproduced in Chromium (scroll 0 after every navigation); verify on device after the merge |
+| O-2 | Web footer too tall                                                           | owned by phone-nav-fixes     | Footer is about 1.3 screens at 320 (seen on every page)                         |
+| O-3 | Screen jumps when the keyboard opens on successive inputs (onboarding, add account) | owned by phone-nav-fixes | Desktop emulation has no on-screen keyboard; the field walk found no script-driven jumps |
+| O-4 | Menu button on the left, drawer opens on the right                            | owned by phone-nav-fixes     | Confirmed at every width: trigger x=38, panel attached to the right edge        |
+| O-5 | "More" in the bottom bar spaced differently                                   | owned by phone-nav-fixes     | Confirmed: "More pages" is 30px wide against 62 to 84px for its siblings         |
+
+## Shared root causes (fix once)
+
+| Root  | Component                                                                    | Findings it fixes                      |
+| ----- | ---------------------------------------------------------------------------- | -------------------------------------- |
+| RC-1  | `PageHeader` below `md` (`packages/ui/src/patterns/PageHeader/PageHeader.styles.ts:11-12`) | P01, P02, P03, P04             |
+| RC-2  | `Tabs` trigger heights and the scrolling tab row (`packages/ui/src/primitives/Tabs/Tabs.styles.ts`) | P05, P06, P07                 |
+| RC-3  | `SliderField` value pill at 14px (`packages/ui/src/primitives/SliderField/SliderField.styles.ts:41,62-70`) | P08                       |
+| RC-4  | Overlay focus return without `preventScroll` (`packages/ui/src/primitives/Dialog/useDialogFocusReturn.ts:64,69`) | P12                       |
+| RC-5  | `WidgetVisibilityPanel` built on raw Radix, not the `@repo/ui` Dialog or Sheet | P10                                   |
+| RC-6  | Safe-area insets handled for the bottom edge only                            | P15                                    |
+| RC-7  | Button `variant="link"` drops the touch minimum (`packages/ui/src/primitives/Button/Button.styles.ts:83-85,101-106`) | P16         |
+| RC-8  | Route error boundary renders the signed-out shell                            | P17, P18                               |
+| RC-9  | `KpiStrip` and `KpiCard` on a phone                                          | P20, P21, P22                          |
+| RC-10 | Fixed chrome sized in rem at large text                                      | P19                                    |
+
+## Findings
+
+| Id  | Journey, step | Page or component (file) | Widths, themes | What is wrong | Rule | Severity | Likely cause | Proposed fix |
+| --- | ------------- | ------------------------ | -------------- | ------------- | ---- | -------- | ------------ | ------------ |
+| P01 | J5 1 | Self Assessment header, `apps/web/app/containers/tax/TaxContainer.tsx` with RC-1 | 320, 375; both | The tax-year picker sits on top of the "Self Assessment" title and the first line of its description | A6, owner's eye | gets in the way | RC-1: the grid's `minmax(min-content, 1fr) auto` lets the action overlap a long h1 | RC-1: below `md` use a wrapping flex row; the action drops under the h1 when it does not fit |
+| P02 | J2 9, J3, J4, J5, J6 (200% text) | `PageHeader`, Accounts, Budget, Pension | 375 light | At 200% text the description and action row stick out past the screen and the page scrolls sideways | A6, WCAG 1.4.4, 1.4.10 | gets in the way | RC-1: `md` is em-based so never applies; min-content of h1 plus a nowrap aside exceeds the width | RC-1 as P01; column `minmax(0, 1fr)` at least |
+| P03 | J2, J7 | `PageHeader` on Budget, Debt, History, Accounts | 320, 375; both | The h1 wraps to two or three lines beside the action ("Net worth history" takes three) | owner's eye | cosmetic | RC-1 by design (comment at `PageHeader.styles.ts:4-6`) | RC-1: let the action drop under the h1 instead of squeezing it |
+| P04 | J2 to J6 | Page "Add" actions (`SavingsContainer.tsx`, `PensionContainer.tsx` against Accounts, Debt) | all | Some "Add" header buttons have a "+" icon and some do not | SG 12, owner's eye | cosmetic | Each page passes its own button | One rule in `PageHeader` actions: icon or none, everywhere |
+| P05 | J2 to J6 | `Tabs` triggers on Debt, Mortgage, Savings, Take-home, Pension, Settings | all | Tab triggers are 32 to 38px tall on touch | A5, WCAG 2.5.5 | gets in the way | RC-2: `tabTrigger` sizes `sm` 32px and `md` 36px have no coarse rule | RC-2: `"@media (pointer: coarse)": { minHeight: "touch" }` on `tabTrigger`, or a 44px `::before` hit area |
+| P06 | J3 2, J4 1, J5 4 | Scenario tab rows on Debt ("Highest rate first") and Mortgage ("Overpay or save") | 320, 375; both | The tab row scrolls sideways: a label is always cut and the first tab clips at the left when the last is chosen | R8, A6, owner's eye | gets in the way | RC-2: one non-wrapping row inside a fade | RC-2: below 400px let the row wrap to a 2x2 grid of equal cells (N5 allows 4 tabs), or shorter labels |
+| P07 | J8 1 (200% text) | Settings tabs | 375 light | At 200% text "Data" is off screen and reachable only by sideways scrolling | A6 | gets in the way | RC-2 | RC-2 as P06 |
+| P08 | J2 4, J3, J4, J5 | `SliderField` value pill on Debt, Mortgage, Savings, Pension, Take-home | all | The editable value input is 14px, so iOS Safari zooms the page when it is tapped | R7, F5, owner's eye | gets in the way | RC-3: `sliderPillInput` inherits `label.md` (0.875rem) | RC-3: `fontSize: "md"` (16px) on the input |
+| P09 | J8 2, J11 | `ConfirmDialog` typed confirmation (Delete all data, Delete account), `packages/ui/src/patterns/ConfirmDialog/ConfirmDialog.tsx:129` | all | The "type to confirm" input is 14px, so iOS zooms on tap; at 320 the dialog opens scrolled to its foot with the title off screen | R7, D1 | gets in the way | The native input uses a small text style; focus moves to the input at the foot | 16px input text; open with the title in view (focus the title or keep the input above the buttons) |
+| P10 | J2 1 | Choose what shows here, `apps/web/app/features/dashboard/components/WidgetVisibilityPanel/WidgetVisibilityPanel.tsx:76-139` | all | On a phone it is a centred box with no close button, its list runs behind the bottom bar, and closing it drops focus to the page body | R4, A3, WCAG 2.4.3 | gets in the way | RC-5: raw Radix, opened by a plain button with no `Dialog.Trigger`, so focus has nowhere to return | RC-5: rebuild on the `@repo/ui` Sheet (bottom sheet, close button, `useDialogFocusReturn`) |
+| P11 | J2 2, J10 | Nav drawer, `packages/ui/src/patterns/NavDrawer/NavDrawer.tsx` | all | The page behind the open drawer is not scroll-locked (no overflow lock on body or html) | R4, owner's eye | gets in the way | The drawer does not use the Dialog primitive's scroll lock | Lock body scroll while open (the Dialog primitive's remove-scroll), as the sheets do |
+| P12 | J2 2, J7 1 | Dialog, Sheet and ConfirmDialog close, `useDialogFocusReturn.ts:64,69`; also `NavDrawer.tsx:66`, `AvatarMenu.tsx:30` | all | Closing a dialog opened from a header action returns focus with a plain `focus()`, which scrolls the page to the opener (measured 240px to 0) | owner's eye (same class as O-1) | gets in the way | RC-4: `focus()` without `preventScroll` | RC-4: `focus({ preventScroll: true })`, then `scrollIntoView({ block: "nearest" })` only if the opener is off screen. Confirm on a device: the sweep's own tap scrolls the opener into view first |
+| P13 | J3 6 | Mortgage, `apps/web/app/containers/mortgage/MortgageContainer.tsx` | 320 to 430; light | Back to Mortgage after scrolling it lands at the wrong place (1,799px became 236px at 375; 1,877 became 2,561 at 320) | owner's eye (same class as O-1) | gets in the way | The page height changes after the restore (charts and scenario zone sized after hydration) | Re-check after phone-nav-fixes merges; if it stays, restore after the charts have their size, or give chart regions a fixed min-height |
+| P14 | J2 2 | Nav drawer "Sign out", `apps/web/app/components/structure/header/MobileNavDrawer/MobileNavDrawer.tsx:117-119` | all | "Sign out" has no icon, a different weight and indent from the items above it, and the gap above the footer group differs a lot between 320 and 375 | owner's eye (one item spaced differently) | cosmetic | The footer renders `UserLogin` (a centred ghost Button) instead of a row like its siblings | Render the sign-out form with the row style `footerLinkClass(false)` and a log-out icon |
+| P15 | J10 | `TopBar`, `NavDrawer`, `MobileBottomBar`, right `Sheet`, `Toast` | landscape on notched phones | Only the bottom safe-area inset is padded; with `viewport-fit=cover` (`apps/web/app/root.tsx:226`) the header, drawer, bottom bar and toasts can sit under the notch at the sides in landscape | R5 | gets in the way (device to confirm) | RC-6: no `safe-area-inset-left/right/top` anywhere | RC-6: pad TopBar top and sides, NavDrawer top and side, bottom bars and toasts left and right |
+| P16 | J2 2, J7 2 | "See how it has changed" (`AccountsGroupList.tsx:304`), "Add earlier months" (`SnapshotHistoryPage.tsx:298-308`) | all | These link-style buttons are about 20px tall on touch | A5, WCAG 2.5.8 | gets in the way | RC-7: the `link` variant forces `minH: 0, py: 0` | RC-7: a coarse-pointer `::before` hit area of 44px on the `link` variant, as `CollapsibleDrawer` does |
+| P17 | J2 8 | Error state, `apps/web/app/features/feedback/components/RouteErrorState/RouteErrorState.tsx`, `apps/web/app/root.tsx:263` | all | When a page's data fails to load, a signed-in user sees a header with "Sign in" and no bottom bar | N6, E6 | gets in the way | RC-8: the root error boundary renders without the loader's user | RC-8: keep the signed-in shell (read the session in the boundary or render the boundary inside the app layout) |
+| P18 | J8 3 | Missing account (`/app/accounts/does-not-exist`), not-found page header | all | A missing account shows "a problem on our side" with "Try again" instead of not-found with a way back to Accounts; the not-found shell shows the session's initials ("DE") instead of the user's | E6, N6 | gets in the way | The loader passes a 400 from the backend through; the shell reads the dev session name | Map 400 and 404 for an account id to the not-found state with "Back to accounts"; take initials from the profile |
+| P19 | J2 9 (200% text) | `AppBottomBar`, `MobileBottomBar`, `TopBar` | 375 light | At 200% text the header and bottom bar take 228 of 812px (28%) and the bar labels truncate to "Acc…" and "Bud…" | A6, owner's eye (oversized chrome) | gets in the way | RC-10: bar and header heights scale with text | RC-10: let the bar labels wrap or switch to two lines, cap the bar height, compact the header at large text |
+| P20 | J3 2, J5 4 | Mortgage `KpiStrip` | 320 to 430 | Three KPI cards stack as full-width cards, a whole screen tall | R3 | gets in the way | RC-9: three cards fall back to one column | RC-9: two columns with the third full width, or a list (R3) |
+| P21 | J2 to J6 | `KpiCard` pairs on Home, Debt, Budget | 320, 375 | When one card's label wraps, the two figures sit at different heights | owner's eye (siblings uneven) | cosmetic | RC-9: no shared label height in a row | RC-9: align the figure row across a strip (grid rows or `align-items: end` on the value) |
+| P22 | J2 4, J2 5 | Pension and Take-home `KpiStrip` | 320, 375 | A single full-width KPI card with a much larger figure than the two-up cards on other pages | owner's eye | cosmetic | RC-9 | RC-9: one size of KPI figure on a phone |
+| P23 | J2 3, J4 4 | Budget hero, `apps/web/app/containers/budget/BudgetContainer.tsx` | all | The headline says "£125 left over" while its own sub-line gives a different figure (£262; £320 against £0 for the debt payer) | H11, owner's eye | gets in the way | The caption describes a different quantity in one sentence | Name the second figure for what it is, or move it out of the hero (wording is this lane's to set in phase 2) |
+| P24 | J2 3, J4 4 | Budget "Model a change to your budget" card | 320, 375 | The card's text is squeezed into a narrow column beside its button, about seven lines | owner's eye | cosmetic | Text and button share one row at every width | Stack the button under the text below `sm` |
+| P25 | J5 1 | Self Assessment "Income sources" header | 320, 375 | A second "Add income" button beside the heading squeezes the description to one word a line and splits a word at 320 | H13, owner's eye | gets in the way | `SectionHeader` with an action at phone width | Drop the duplicate action (the page has one primary) or stack it below the heading |
+| P26 | J2 7 | History chart | all | The net worth chart has no month labels on the x-axis | C7 | gets in the way | Ticks hidden at phone width | Show at most 4 short month ticks on a phone |
+| P27 | J2 1 | Home | all | Two notices show together ("Setup finished" with an illustration, and "November balances not recorded yet"), and the setup body repeats its heading | E8, O4 | gets in the way | Both rows render when both are true | Show one: the check-in row replaces the setup row once setup is finished |
+| P28 | J2 2, J4 2 | Add account and Add savings sheets | all | The two sheets lay out their buttons differently (stacked and enabled when empty, against side by side and disabled) | SG 12, owner's eye | cosmetic | Separate form footers | One sheet footer: primary full width above Cancel, same enabled rule |
+| P29 | J2 4, J8 | Disabled primary button in dark | 375 dark | A disabled primary is a near-black pill on a dark panel that reads as another button style, not as disabled | A1, owner's eye | gets in the way | Dark disabled token for the primary fill | Use the muted surface and muted text tokens for disabled in dark |
+| P30 | J4 3 | Edit debt sheet | all | "Delete debt" is a plain outlined button under Cancel, with nothing marking it as destructive | D3 | gets in the way | Shared footer without a danger tone | Separate it from the primary and give it the danger text style (the confirm stays as is) |
+| P31 | J2 7, J7 1 | Check-in sheet, `packages/ui/src/primitives/Sheet/Sheet.tsx:82` | all | The sheet shows a drag handle that does nothing, and a large empty area below the buttons with the illustration clipped at 320 | R9, owner's eye | cosmetic | The handle is decorative (`aria-hidden`, no gesture) | Remove the handle (no fake native chrome, R9); size the sheet to its content |
+| P32 | J2 3 | Breathing room info tip | 320 | The popover opens over the header edge and its trigger's highlight covers the end of the heading | owner's eye | cosmetic | Popover side and collision padding | Collision padding of the header height; place below on a phone |
+| P33 | J2 3 | Edit budget at 320 | 320 | After "Edit budget" nothing in the first screen changes but the button label | owner's eye | gets in the way | The wizard starts below the fold | Scroll the wizard's first step into view, or put a step heading at the top |
+| P34 | J2 2 | Accounts header links | all | "See how it has changed" is indented about 5px from the text around it and styled differently from "Change what counts" beside it | owner's eye (siblings uneven) | cosmetic | Link-variant Button padding against an inline link | Use one link style for both, aligned to the text edge |
+| P35 | J2 1, J2 2 | Home against Accounts below the hero | all | The gap below the hero is about 45px on Home and 10px on Accounts | owner's eye (inconsistent padding) | cosmetic | Page-specific spacing | `PageBody` gap tokens on both |
+| P36 | J8 | Imports, the missing-import and missing-account pages | all | These pages use a 28px side gutter where every other page uses 16px | SG 4, owner's eye | cosmetic | Not wrapped in `PageBody` | Wrap in `PageBody` |
+| P37 | J8 1 | Settings | all | A large gap above the tabs and a tight one below; "Download your data" sits alone in an oversized card | owner's eye | cosmetic | Settings layout spacing | Even the tab spacing; size the card to its content |
+| P38 | J2 2 | Nav drawer and Debt page | all | The drawer says "Debt and borrowing" but the page it opens is titled "Cards and loans" | N1, N4 | cosmetic | Two labels for one section | One label in `navConfig.ts` and the page h1 |
+| P39 | J5 4 | Mortgage rental card | all | "Rent left after the mortgage payment" shows "+£484.00", with a sign and pence, where every other figure is whole pounds | H8 | cosmetic | Its own formatter | `useFormatCurrency` whole pounds, no sign |
+| P40 | J5 4 | Mortgage scenario empty state for the buy-to-let | all | The overpay tool asks to "Add your balance, interest rate and years left" while the saved balance and rate show above it | F8, S7 | gets in the way | The zone reads the residential mortgage fields only | Start from the selected mortgage's saved figures |
+| P41 | J5 5 | Home value notice | all | "Your home's value is not counted until you add an estimate" shows while Accounts lists the home at £240,000 in the total (`NetWorthBasisLine.tsx:13`) | T7 | gets in the way | The notice reads the profile's home value, not the property account | Show it only when no property account and no profile value exist |
+| P42 | J4 1, J5, J6 | Hyphenated labels in KPI and detail rows ("Debt-free date", "Interest-only") | all | Hyphens render with wide gaps, as if tabular numbers were applied to the label text | SG 3.3 | cosmetic | `tabular-nums` on the whole card | Apply `tabular-nums` to the figure only |
+| P43 | J6 (200% text) | `HeroFigure` | 375 light | At 200% text the hero figure breaks mid-number ("£592,70 / 0") | A6, owner's eye | gets in the way | The figure may wrap | `white-space: nowrap` on the figure with a fluid size that fits the card |
+| P44 | J4 2 | Add debt and add savings name placeholders, info icon placement | 320 | Placeholders are cut ("car lo", "easy access saving"); the info icon follows the APR label but sits far right on the wrapped "Minimum payment" label | F1, owner's eye | cosmetic | Long placeholder text; label flex layout | Shorter placeholders; keep the icon after the label text |
+| P45 | J8 1 | Settings name fields, account menu items | all | First and last name inputs are 42px tall; account menu items are 40px (`AvatarMenu.styles.ts:52-58`) | A5 | cosmetic | `TextInput` md height; `AvatarMenu` has no min-height | `minHeight: "touch"` on coarse pointers for both, or build the account menu on `@repo/ui` Menu |
+| P46 | J2 1 | Home logo link | 320 | Only on Home, an underline sits under the logo like a current-page marker | owner's eye | cosmetic | Active link style on the logo | No current-page style on the logo |
+| P47 | J1 | `ConnectBankWizard`, `BankConnectionsList` | n/a | Imported by no page: dead code | owner's eye | cosmetic | Left from an earlier plan | Remove in phase 2 (no user effect) |
+
+## Could not reach, and what needs a real device
+
+- **The on-screen keyboard.** The iOS Simulator is not available on this machine (only the Xcode
+  command line tools are installed, so `simctl` is missing). Desktop emulation shows no
+  keyboard, so nothing here confirms how fields move when the keyboard opens, whether the focused
+  field and its label stay visible, or whether the submit button is reachable with the keyboard
+  open (O-3, F-rules, R4). The field walk only rules out jumps caused by scripts.
+- **iOS Safari zoom** (P08, P09) is inferred from the 16px rule, not seen.
+- **Safe areas** (P15) need a notched phone in landscape; Chromium reports zero insets.
+- **Scroll after navigation** (O-1) did not reproduce in Chromium; it needs the owner's phone.
+- **Receipts** (`/app/tax/receipts/:id`, O17) need an uploaded file; the seed writes none.
+- **Retirement plan** is a friends-beta page: the backend answers 404 unless the user is listed
+  in `RETIREMENT_ALLOWED_USER_IDS`. The first run hit that 404; the second run listed the local
+  dev user on the local test backend only.
+- **Copy from last year** with records to copy needs an earlier tax year with records.
+- **Disconnect AI** needs a connected client; J11 seeds one.
+
+## Decisions
+
+None needed from the owner. Choices this lane makes and states in phase 2:
+
+- Tab rows on a phone (P06): wrap to a grid of equal cells below 400px rather than shorten the
+  approved labels.
+- The budget hero's second figure (P23): reworded or moved out of the hero, within the copy guide.
+- Not a finding: debt shown in apricot (`chart.debt`, `surface.tint.apricot`) was checked against
+  STYLE-GUIDE rule C2. Apricot is the approved colour for what you owe and is not a warning.
+
+Nothing here changes stored user data, names an outside service or needs a security exception.
+The sweep's local backend lists the dev user in `RETIREMENT_ALLOWED_USER_IDS` for the run only; no
+repository or deployed setting changes.

@@ -200,6 +200,33 @@ plus `heroes`, `notices`, `notSet` and `primaryButtons`. Anything that could not
 listed in `after/unreachable-<set>.json`. `SWEEP_SETS=renter,dialogs` runs a subset. Build first,
 and use free ports and a database whose name contains `e2e`, as for the other suites.
 
+## Phone audit sweep
+
+`sweep/phone.spec.ts` (config `playwright.phone.config.ts`, `bun run e2e:phone` here) is a
+**local tool, not a CI job**, written for the phone audit in `docs/audit/phone-audit-2026-11`.
+It drives the journeys in `sweep/phoneSets.ts` (J1 to J10 in `JOURNEYS.md`) at 320x568, 375x812,
+390x844 and 430x932 in light and dark with touch and mobile emulation, and the main pages again
+at 812x375 landscape. At each step it records the measured checks in `sweep/phoneChecks.ts`:
+horizontal overflow, targets under 44px and cramped targets, inputs under 16px, keyboard types,
+`autocomplete`, clipped text, fixed chrome heights, content under the bottom bar, the headline's
+position, illustrations in the first view and layout shift. Overlays also record their edge,
+height, close control, focus and background scroll lock, focus return and scroll after closing,
+and a focus walk through their fields. Persona sets add scroll position after bottom-bar
+navigation and Back, the loading and error states, axe at 375 in both themes and a 200% text pass.
+
+Screenshots and JSON go **outside the repository** (`PHONE_OUT`, default
+`<tmpdir>/flump-phone-audit`), because the repository is public. `PHONE_SETS=renter,mkt` runs a
+subset and `PHONE_WIDTHS=375` narrows the widths. The sets re-seed the single dev user (the
+renter, homeowner, debt payer, self-employed and near-retirement personas in
+`support/personas.ts`), and the `newuser` set clears it, so it always runs last; a full run spends
+about seven of the ten data resets allowed an hour. Build first, and use free ports and a database
+whose name contains `e2e`, as for the other suites. Desktop emulation shows no on-screen keyboard:
+the field walk catches script-driven jumps only.
+
+Retirement plan is a friends-beta page: the backend answers 404 unless the user is listed in
+`RETIREMENT_ALLOWED_USER_IDS`. To sweep it, run with `RETIREMENT_ALLOWED_USER_IDS=dev_user_123`
+in the environment (the dev-bypass user; the web servers inherit it, local test backend only).
+
 ## Accessibility gate
 
 `a11y/pages.spec.ts` (config `playwright.a11y.config.ts`, root script `bun run test:a11y`) runs

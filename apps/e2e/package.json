@@ -11,6 +11,7 @@
     "e2e:a11y": "playwright test -c playwright.a11y.config.ts",
     "e2e:sweep": "playwright test -c playwright.sweep.config.ts",
     "e2e:interaction": "playwright test -c playwright.interaction.config.ts",
+    "e2e:phone": "playwright test -c playwright.phone.config.ts",
     "lint": "biome check .",
     "format": "biome check --write .",
     "check-types": "tsc --noEmit"
