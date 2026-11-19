@@ -21,7 +21,8 @@ import {
   getUkTaxYearRules,
 } from "./uk-tax-year.js";
 
-const RUNS = { numRuns: 200 };
+// A fixed seed keeps the generated cases the same on every run (E41 M2), so mutation scores repeat.
+const RUNS = { seed: 20261119, numRuns: 200 };
 const PENNY = 0.011;
 
 const year = fc.constantFrom<UkTaxYear>(...SUPPORTED_UK_TAX_YEARS);
