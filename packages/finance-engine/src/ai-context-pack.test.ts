@@ -9,8 +9,8 @@ import {
   isUkTaxCalculated,
 } from "./ai-context-pack.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
-import { profileFactsFromProfile } from "./picture/input.js";
 import { buildFinancialPicture, financialPictureInputFromRows } from "./picture/build.js";
+import { profileFactsFromProfile } from "./picture/input.js";
 import { DEFAULT_FINANCIAL_BASELINE, userProfileToSavedBaseline } from "./profile.js";
 
 describe("FlumpAiContextPack Builder & Markdown Formatter", () => {

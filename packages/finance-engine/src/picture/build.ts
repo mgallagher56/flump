@@ -17,13 +17,13 @@ import {
   selectHousingCost,
   selectHousingPayment,
 } from "./selectors/housing-cost.js";
+import { selectIsaAllowanceUsed } from "./selectors/isa-allowance-used.js";
 import {
   type BudgetLinkOffer,
   budgetRowLinkOf,
   type LinkedBudgetRows,
   withLinkedBudgetRows,
 } from "./selectors/linked-budget-rows.js";
-import { selectIsaAllowanceUsed } from "./selectors/isa-allowance-used.js";
 import { type LoanToValue, selectLoanToValue } from "./selectors/loan-to-value.js";
 import { type MonthsOfCover, selectMonthsOfCover } from "./selectors/months-of-cover.js";
 import { selectPensionContributionMonthly } from "./selectors/pension-contribution.js";
