@@ -127,6 +127,8 @@ const mockRecords: TaxRecord[] = [
 let mockLoaderRecords: TaxRecord[] = mockRecords;
 let mockProfileSalary: number | null = 60000;
 let mockProfileId: string | undefined;
+let mockEmploymentType: string | null = "employed";
+let mockTaxRegion: string | null = "ENGLAND";
 let mockEnabledPages: string[] | null = ["accounts", "budget", "tax"];
 let mockDashboardWidgets: string[] | null = ["accounts"];
 let mockDashboardWidgetOrder: string[] | null = ["accounts"];
@@ -149,6 +151,8 @@ vi.mock("react-router", () => ({
     userProfile: {
       id: mockProfileId,
       annualSalary: mockProfileSalary,
+      employmentType: mockEmploymentType,
+      taxRegion: mockTaxRegion,
       propertyOwnershipShare: 100,
       country: "GB",
       enabledPages: mockEnabledPages,
@@ -170,6 +174,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => ({
 }));
 
 import { expectPageRules } from "@repo/ui/testing";
+import { SCOTTISH_BANDS_NOTE } from "~/features/tax/tax-labels";
 import TaxContainer, { TAX_UNVERIFIED_LEAD } from "./TaxContainer";
 
 const openDrawer = (name: RegExp) => fireEvent.click(screen.getByRole("button", { name }));
@@ -770,5 +775,51 @@ describe("Tax helpers", () => {
       expect(result.taxableDividends).toBe(100); // 600 - 500
       expect(result.netAdditionalTaxToPay).toBeGreaterThan(0);
     });
+  });
+});
+
+describe("TaxContainer, employment type and region (SA-1, SA-3)", () => {
+  const trading: TaxRecord = {
+    ...mockRecords[3],
+    id: "se-2026",
+    name: "Trading income",
+    amount: 40000,
+    frequency: "annual",
+    date: `${getCurrentUKTaxYear().slice(0, 4)}-05-01`,
+    endDate: null,
+  };
+
+  it("does not pass a self-employed person's profile salary as PAYE pay (same as the Dashboard)", () => {
+    // 2026/27: trading income 40,000 less the 1,000 trading allowance = 39,000 profit.
+    // Income Tax (39,000 - 12,570) x 20% = 5,286; Class 4 26,430 x 6% = 1,585.80. Total £6,872.
+    // With the salary passed as PAYE pay the page showed £15,132.
+    mockLoaderRecords = [trading];
+    mockEmploymentType = "self-employed";
+    mockProfileSalary = 40000;
+    try {
+      render(<TaxContainer />);
+      const summary = screen.getByRole("region", { name: "Summary" });
+      expect(summary.textContent).toContain("£6,872");
+      expect(summary.textContent).not.toContain("£15,132");
+    } finally {
+      mockLoaderRecords = mockRecords;
+      mockEmploymentType = "employed";
+      mockProfileSalary = 60000;
+    }
+  });
+
+  it("says once that the estimate uses England, Wales and Northern Ireland bands for a Scottish taxpayer", () => {
+    mockTaxRegion = "SCOTLAND";
+    try {
+      render(<TaxContainer />);
+      expect(screen.getAllByText(SCOTTISH_BANDS_NOTE)).toHaveLength(1);
+    } finally {
+      mockTaxRegion = "ENGLAND";
+    }
+  });
+
+  it("shows no bands note outside Scotland", () => {
+    render(<TaxContainer />);
+    expect(screen.queryByText(SCOTTISH_BANDS_NOTE)).toBeNull();
   });
 });

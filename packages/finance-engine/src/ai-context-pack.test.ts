@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ANONYMOUS_USER_ID,
   anonymiseContextPackInput,
@@ -6,7 +6,7 @@ import {
   formatAiContextPackMarkdown,
 } from "./ai-context-pack.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
-import { DEFAULT_FINANCIAL_BASELINE } from "./profile.js";
+import { DEFAULT_FINANCIAL_BASELINE, userProfileToSavedBaseline } from "./profile.js";
 
 describe("FlumpAiContextPack Builder & Markdown Formatter", () => {
   it("generates an anonymized context pack stripping PII and provider names", () => {
@@ -661,5 +661,143 @@ describe("ruling 7: no user-typed budget or tax name survives anonymisation", ()
     for (const sentinel of ["Barclays Joint 4471", "Mum's loan", "Marc Gallagher ISA"]) {
       expect(text).toContain(sentinel);
     }
+  });
+});
+
+describe("audit slice 2: the pack states saved facts and today's tax year", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("uses the tax year that applies today, even from an old baseline (AI-3, SA-8)", () => {
+    // 19 November 2026 is in the tax year 6 April 2026 to 5 April 2027: 2026/27.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-19T12:00:00Z"));
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: { ...DEFAULT_FINANCIAL_BASELINE, taxYear: "2025/26", annualGrossSalary: 40000 },
+    });
+    expect(pack.taxSummary.currentTaxYear).toBe("2026/27");
+    expect(formatAiContextPackMarkdown(pack)).toContain("## 5. Tax, 2026/27");
+  });
+
+  it("uses no extra payment for the debt-free date, as the Debt page (AI-5)", () => {
+    // One 0% loan of 1,200 with a 100 minimum: 1,200 / 100 = 12 months and no interest.
+    // With the old hidden 50 extra it was 1,200 / 150 = 8 months.
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({ annualSalary: 30000 }),
+      accounts: [
+        {
+          id: "l1",
+          name: "Loan",
+          type: "Loan",
+          balance: 1200,
+          interestRate: 0,
+          monthlyContribution: 100,
+        },
+      ],
+    });
+    expect(pack.debtSummary.avalancheVsSnowballComparison.avalanche.months).toBe(12);
+    expect(pack.debtSummary.avalancheVsSnowballComparison.snowball.months).toBe(12);
+    expect(pack.debtSummary.avalancheVsSnowballComparison.avalanche.totalInterest).toBe(0);
+  });
+
+  it("prints no salary or salary-based tax figures when no salary is saved (AI-1)", () => {
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({ studentLoanPlans: ["PLAN_2"] }),
+    });
+    expect(pack.baseline.annualGrossSalary).toBeUndefined();
+    expect(pack.baseline.age).toBeUndefined();
+    expect(pack.baseline.totalCashSavings).toBeUndefined();
+    expect(pack.debtSummary.studentLoanEvaluation).toBeUndefined();
+    const md = formatAiContextPackMarkdown(pack);
+    expect(md).toContain("- **Salary before tax:** Not set");
+    expect(md).not.toContain("45,000");
+    expect(md).not.toContain("Adjusted net income");
+    expect(md).not.toContain("Personal Savings Allowance");
+  });
+
+  it("leaves unsaved salary and pension rates out of the JSON, never 0 (AI-1)", () => {
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({
+        annualSalary: null,
+        pensionPercent: null,
+        pensionEmployerPercent: null,
+      }),
+    });
+    expect(pack.baseline).not.toHaveProperty("annualGrossSalary");
+    expect(pack.baseline).not.toHaveProperty("pensionContributionPct");
+    expect(pack.baseline).not.toHaveProperty("employerPensionMatchPct");
+    expect(pack.baseline).not.toHaveProperty("notSet");
+    // No tax worked out from a salary nobody saved: only the list of what is missing.
+    expect(pack.taxSummary.ukTaxCalculation).toEqual({ notSet: ["annualSalary"] });
+    const json = JSON.stringify(pack);
+    expect(json).not.toContain("adjustedNetIncomeGbp");
+    expect(json).not.toContain("isaAllowanceRemainingGbp");
+  });
+
+  it("keeps a saved 0% pension rate: saved zero is a fact (AI-1)", () => {
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({
+        annualSalary: 30000,
+        pensionPercent: 0,
+        pensionEmployerPercent: 0,
+      }),
+    });
+    expect(pack.baseline.annualGrossSalary).toBe(30000);
+    expect(pack.baseline.pensionContributionPct).toBe(0);
+    expect(pack.baseline.employerPensionMatchPct).toBe(0);
+    expect(pack.taxSummary.ukTaxCalculation).toHaveProperty("adjustedNetIncomeGbp");
+  });
+
+  it("leaves the student loan check out without a saved balance, never a guessed 15,000", () => {
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({ annualSalary: 40000, studentLoanPlans: ["PLAN_2"] }),
+    });
+    expect(pack.debtSummary.studentLoanEvaluation).toBeUndefined();
+    expect(JSON.stringify(pack)).not.toContain("15,000");
+  });
+
+  it("checks the student loan against the saved balance", () => {
+    // One saved student loan account of 20,000: the check states that balance, not 15,000.
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({ annualSalary: 40000, studentLoanPlans: ["PLAN_2"] }),
+      accounts: [{ id: "sl1", name: "Student loan", type: "Student Loan", balance: 20000 }],
+    });
+    expect(pack.debtSummary.studentLoanEvaluation?.reasoning).toContain("£20,000 balance");
+    expect(pack.debtSummary.studentLoanEvaluation?.reasoning).not.toContain("15,000");
+  });
+
+  it("does not pass a self-employed person's salary as PAYE pay in the ledger (SA-1)", () => {
+    // 2026/27: trading income 40,000 less the 1,000 trading allowance = 39,000 profit.
+    // (39,000 - 12,570) x 20% = 5,286, plus Class 4 26,430 x 6% = 1,585.80: 6,871.80.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-19T12:00:00Z"));
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({
+        employmentType: "self-employed",
+        annualSalary: 40000,
+      }),
+      taxRecords: [
+        {
+          id: "se1",
+          type: "income",
+          source: "self-employed",
+          category: "self_employed_income",
+          name: "Trading income",
+          amount: 40000,
+          frequency: "annual",
+          date: "2026-05-01",
+        },
+      ],
+    });
+    const ledger = pack.taxSummary.selfAssessmentLedgerSummary;
+    expect(ledger?.effectivePayeSalary).toBe(0);
+    expect(Math.round(ledger?.netAdditionalTaxToPay ?? 0)).toBe(6872);
   });
 });

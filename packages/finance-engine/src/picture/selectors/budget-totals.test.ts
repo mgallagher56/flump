@@ -127,3 +127,29 @@ describe("selectBudgetTotals essentials flag", () => {
     expect(fig.value.hasEssentials).toBe(false);
   });
 });
+
+describe("selectBudgetTotals income flag (BU-8)", () => {
+  it("does not count a £0 income row as income entered", () => {
+    // Wizard saves "Salary" with no amount as £0, plus rent £900.
+    // Income is not known, so hasIncome must be false (like hasEssentials),
+    // and the page shows left over as unknown rather than "short by £900".
+    const fig = selectBudgetTotals([
+      row({ category: "income", name: "Salary", amount: 0, isIncome: true }),
+      row({ category: "housing", name: "Rent", amount: 900, isEssential: true }),
+    ]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value.hasIncome).toBe(false);
+    expect(fig.value.essentials).toBe(900);
+  });
+
+  it("counts income once one row has an amount above £0", () => {
+    // £0 Salary plus £1,500 Freelance: income 0 + 1,500 = 1,500; hasIncome true.
+    const fig = selectBudgetTotals([
+      row({ category: "income", name: "Salary", amount: 0, isIncome: true }),
+      row({ category: "income", name: "Freelance", amount: 1500, isIncome: true }),
+    ]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value.hasIncome).toBe(true);
+    expect(fig.value.income).toBe(1500);
+  });
+});

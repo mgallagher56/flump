@@ -1,3 +1,4 @@
+import { userProfileToSavedBaseline } from "@flump/finance-engine";
 import { afterEach, describe, expect, it } from "vitest";
 import { GOLDEN_TASKS } from "../../evals/golden-tasks.js";
 import { collectToolOutputViolations } from "../../policy/output-policy.js";
@@ -334,6 +335,15 @@ describe("simulate tools v2", () => {
       });
       expect(e.result.points).toHaveLength(4);
       expect(e.result.points[1].investmentsGbp).toBeGreaterThan(0);
+    });
+
+    it("adds no pension contribution when no salary is saved (AI-2)", async () => {
+      // The backend builds the baseline with userProfileToSavedBaseline. A profile with no salary
+      // and no pension rate once became 45,000 x 5% / 12 = 187.50 a month "from profile".
+      h = await connectTestClient({ baseline: userProfileToSavedBaseline({}, "persona") });
+      const e = await call("project_net_worth", { expectedReturnPct: 5, monthlySavingGbp: 0 });
+      expect(e.assumptions.map((a) => a.field)).not.toContain("monthlyPensionContributionGbp");
+      expect(JSON.stringify(e)).not.toContain("187.5");
     });
 
     it("states every rate it used and reports missing saving", async () => {

@@ -206,7 +206,10 @@ export const SavingsContainer: FC = () => {
             totalSavingsBalance={saved.total}
           />
 
-          <SavingsAccountsList accounts={savingsAccounts} />
+          <SavingsAccountsList
+            accounts={savingsAccounts}
+            savedAccounts={accounts.filter(isSavingsType)}
+          />
 
           {/* Below saved figures, the model starts closed (one pattern for hiding a simulator:
               CollapsibleDrawer). A pay rise handed over from Take-home pay opens it. */}

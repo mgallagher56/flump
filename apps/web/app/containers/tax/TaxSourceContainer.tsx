@@ -4,6 +4,7 @@ import {
   getCurrentUKTaxYear,
   getRecordAnnualTotalForTaxYear,
   isRecordActiveInTaxYear,
+  payeSalaryForTax,
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
@@ -85,7 +86,11 @@ const TaxSourceContainer: FC = () => {
 
   // The estimate uses the saved profile salary and share, as the list page does.
   // An unknown salary (null) counts as none in the calculation; this page shows no salary.
-  const payeSalary = salaryProfileFirst(userProfile, baseline.annualGrossSalary) ?? 0;
+  // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
+  const payeSalary = payeSalaryForTax({
+    employmentType: userProfile?.employmentType ?? null,
+    annualSalary: salaryProfileFirst(userProfile, baseline.annualGrossSalary),
+  });
   const ownershipShare = propertyShareProfileFirst(userProfile, baseline.propertyOwnershipSharePct);
   const result = useMemo(
     () => calculateUKTax(taxYear, records, payeSalary, ownershipShare),

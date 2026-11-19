@@ -61,7 +61,7 @@ export function selectBudgetTotals(budget: readonly BudgetEntryItem[]): Figure<B
   for (const row of budget) {
     const monthly = budgetRowMonthly(row);
     if (row.isIncome) {
-      hasIncome = true;
+      if (monthly > 0) hasIncome = true;
       income += monthly;
       continue;
     }

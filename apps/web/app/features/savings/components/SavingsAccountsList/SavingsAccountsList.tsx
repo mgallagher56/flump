@@ -30,7 +30,13 @@ import {
 } from "./SavingsAccountsList.styles";
 
 export interface SavingsAccountsListProps {
+  /** Rows to show, with each balance at the user's share. */
   accounts: Account[];
+  /**
+   * The same accounts as saved, with the whole balance. The edit form starts from these, so a
+   * joint account's share is never saved back as its whole balance (SD-1, JO-1).
+   */
+  savedAccounts?: Account[];
 }
 
 /** Law 3: a table over eight rows keeps the rest behind a drawer. */
@@ -46,7 +52,7 @@ const typeLabel = (acc: Account) =>
  * shows only when the list mixes savings and investments. The rate, the amount saved each month and "Delete account" live in the edit
  * dialog; deleting always asks for confirmation.
  */
-export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) => {
+export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, savedAccounts }) => {
   const fetcher = useFetcher();
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -153,7 +159,11 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts }) 
       {editingAccount && (
         <AddSavingsAccountDialog
           // The saved account as loaded now, so a save after a reload sends its latest version.
-          accountToEdit={accounts.find((a) => a.id === editingAccount.id) ?? editingAccount}
+          accountToEdit={
+            savedAccounts?.find((a) => a.id === editingAccount.id) ??
+            accounts.find((a) => a.id === editingAccount.id) ??
+            editingAccount
+          }
           isOpen={true}
           onClose={() => setEditingAccount(null)}
           onDeleteRequest={() => {

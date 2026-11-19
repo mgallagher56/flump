@@ -589,3 +589,39 @@ describe("DebtContainer scenario zone", () => {
     expect(zone.textContent).not.toMatch(/sandbox|apply to my/i);
   });
 });
+
+describe("DebtContainer editing a joint loan (SD-7)", () => {
+  beforeEach(() => fetcherState.submit.mockClear());
+
+  it("edits the whole stored payment and saves the typed figure whole", () => {
+    // £300 a month stored, joint at 50%: the page shows the share, 300 x 0.5 = £150, but the
+    // form starts from £300 and a typed £320 is stored as 320.
+    withAccounts(
+      [
+        {
+          id: "acc-joint",
+          name: "Joint loan",
+          type: "Loan",
+          balance: 6000,
+          interestRate: 6,
+          monthlyContribution: 300,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+      ],
+      () => {
+        render(<DebtContainer />);
+        fireEvent.click(screen.getByRole("button", { name: "Edit Joint loan" }));
+        const minimum = screen.getByLabelText(/^Minimum payment each month/) as HTMLInputElement;
+        expect(minimum.value.replace(/[^0-9.]/g, "")).toBe("300");
+        fireEvent.change(minimum, { target: { value: "320" } });
+        fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+        expect(fetcherState.submit.mock.calls[0]?.[0]).toMatchObject({
+          intent: "updateDebt",
+          accountId: "acc-joint",
+          monthlyContribution: "320",
+        });
+      },
+    );
+  });
+});

@@ -4,7 +4,7 @@
  * holds no formula of its own.
  */
 import { categorizeAccountType } from "./account-category.js";
-import { isBuyToLetAccount } from "./picture/selectors/loan-to-value.js";
+import { isBuyToLetAccount } from "./buy-to-let.js";
 
 export interface HomeEquityInput {
   /** The user's own estimate of what the whole home is worth. */
@@ -63,4 +63,25 @@ export function isResidentialHomeAccount(account: {
   accountSubtype?: string | null;
 }): boolean {
   return categorizeAccountType(account.type) === "property" && !isBuyToLetAccount(account);
+}
+
+/** Which account is the home: none, exactly one, or more than one that could each be it. */
+export type HomeProperty<T> =
+  | { status: "none" }
+  | { status: "one"; account: T }
+  | { status: "ambiguous"; accounts: T[] };
+
+/**
+ * Picks the home from a user's accounts: the Property accounts that are not buy to let
+ * (`isResidentialHomeAccount`). Exactly one is the home. None means no home. More than one is
+ * ambiguous: with no property kind stored there is no way to tell which is the home, so callers
+ * leave home figures (loan to value, home equity, the mortgage page's home value) out.
+ */
+export function pickHomeProperty<
+  T extends { type?: string | null; name?: string | null; accountSubtype?: string | null },
+>(accounts: readonly T[]): HomeProperty<T> {
+  const homes = accounts.filter(isResidentialHomeAccount);
+  if (homes.length === 0) return { status: "none" };
+  if (homes.length === 1) return { status: "one", account: homes[0] as T };
+  return { status: "ambiguous", accounts: homes };
 }

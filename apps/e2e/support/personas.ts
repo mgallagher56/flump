@@ -329,9 +329,14 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
 
     const sameSet = (a: string[], b: string[]) =>
       a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+    // The browser proxy allows no GET of the profile (services/api-proxy.server.ts), so the
+    // profile reads as null here; then only the accounts and budget decide. Without this, every
+    // call reset the user and wrote the persona again, which hits the backend's rate limits.
+    const profileMatches =
+      profile === null ||
+      (profile.onboardingCompleted === true && profile.annualSalary === seed.profile.annualSalary);
     const matches =
-      profile?.onboardingCompleted === true &&
-      profile.annualSalary === seed.profile.annualSalary &&
+      profileMatches &&
       sameSet(
         accounts.map((a) => `${a.name}:${Math.abs(a.balance)}`),
         seed.accounts.map((a) => `${a.name}:${Math.abs(Number(a.balance))}`),

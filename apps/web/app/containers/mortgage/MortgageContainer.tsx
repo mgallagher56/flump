@@ -4,11 +4,11 @@ import {
   UpdateAccountResponse,
 } from "@flump/api-contract";
 import {
-  categorizeAccountType,
   HOME_ESTIMATE_LABEL,
   isBuyToLetAccount,
   isFigureKnown,
   PortfolioSnapshot,
+  pickHomeProperty,
   resolveAccountSharePercent,
   selectLoanToValue,
 } from "@flump/finance-engine";
@@ -98,6 +98,10 @@ const formatList = (items: string[]): string =>
 /** Shown when the mortgage figures were stored but the home value was not. */
 export const HOME_VALUE_NOT_SAVED =
   "We saved your mortgage details but could not save your home value. Try again.";
+
+/** Why loan to value is left out when more than one property could be the home (HM-3). */
+const AMBIGUOUS_HOME_TEXT =
+  "You have more than one property on Accounts, so we cannot tell which is your home.";
 
 /** The account row fields the home value save reads. */
 interface PropertyRow {
@@ -242,24 +246,20 @@ const MortgageContainer: FC = () => {
     return storedMonthlyPayment(pictureAccounts, selectedAccountId);
   }, [pictureAccounts, selectedAccountId, propertyCategory]);
 
-  // Residential Property accounts (the onboarding home estimate is one): where the home value the
-  // edit form offers is stored. Buy-to-let property is left out, as loan to value does.
-  const residentialProperties = useMemo(
-    () =>
-      (pictureAccounts as PropertyRow[]).filter(
-        (a) => !!a.id && categorizeAccountType(a.type) === "property" && !isBuyToLetAccount(a),
-      ),
+  // The home (`pickHomeProperty`, as loan to value uses): where the home value the edit form offers
+  // is stored. With more than one possible home it is ambiguous, so nothing is offered or written.
+  const homeChoice = useMemo(
+    () => pickHomeProperty((pictureAccounts as PropertyRow[]).filter((a) => !!a.id)),
     [pictureAccounts],
   );
-  // Their saved value, from the same rows as the picture, so a value saved here shows at once.
+  const homeRow = homeChoice.status === "one" ? homeChoice.account : null;
+  const homeAmbiguous = homeChoice.status === "ambiguous";
+  // Its saved value, from the same rows as the picture, so a value saved here shows at once.
   const residentialHomeValue = useMemo(() => {
-    if (residentialProperties.length === 0) return 0;
+    if (!homeRow) return 0;
     const snapshot = new PortfolioSnapshot(withWholeBalances(pictureAccounts), accountDetails);
-    return residentialProperties.reduce(
-      (sum, a) => sum + Math.max(0, snapshot.getLatestBalance(String(a.id))),
-      0,
-    );
-  }, [residentialProperties, pictureAccounts, accountDetails]);
+    return Math.max(0, snapshot.getLatestBalance(String(homeRow.id)));
+  }, [homeRow, pictureAccounts, accountDetails]);
   const btlStoredValue = profileFacts.buyToLetPropertyValue ?? 0;
   // The user's share of the selected mortgage when it is joint, else null (held solely).
   const selectedMortgageRow = selectedAccountId
@@ -272,7 +272,6 @@ const MortgageContainer: FC = () => {
   // The user's share of the one home, for equity: its own share when it is joint. With no home
   // yet, a typed value is saved at the mortgage's share, so the equity line uses that. Buy to let
   // reads the profile, which holds no share.
-  const homeRow = residentialProperties.length === 1 ? residentialProperties[0] : null;
   const homeSharePercent =
     propertyCategory !== "residential"
       ? null
@@ -435,27 +434,21 @@ const MortgageContainer: FC = () => {
         mortgageStored = true;
         // The home value is stored as a Property account, so no separate property step is needed.
         // With two or more homes the form does not offer it (no way to tell which to change).
-        if (
-          residentialProperties.length <= 1 &&
-          typedHome !== null &&
-          typedHome !== residentialHomeValue
-        ) {
-          const property = residentialProperties[0];
-          if (property?.id) {
-            await patchProperty({ ...property, id: property.id }, typedHome);
+        if (!homeAmbiguous && typedHome !== null && typedHome !== residentialHomeValue) {
+          if (homeRow?.id) {
+            await patchProperty({ ...homeRow, id: homeRow.id }, typedHome);
+            propertySaved = true;
           } else {
             // Ask the backend first: a home added since this page loaded (another tab, or this
             // dialog reopened before the reload) is updated rather than added a second time.
             const current = (await apiFetchAll("/accounts", {
               schema: AccountListResponse,
             })) as PropertyRow[];
-            const existing = current.find(
-              (a) =>
-                !!a.id && categorizeAccountType(a.type) === "property" && !isBuyToLetAccount(a),
-            );
-            if (existing?.id) {
-              await patchProperty({ ...existing, id: existing.id }, typedHome);
-            } else {
+            const existing = pickHomeProperty(current.filter((a) => !!a.id));
+            if (existing.status === "one" && existing.account.id) {
+              await patchProperty({ ...existing.account, id: existing.account.id }, typedHome);
+              propertySaved = true;
+            } else if (existing.status === "none") {
               // A new home estimate takes the selected mortgage's ownership and share, so net
               // worth never counts a whole home against half a mortgage.
               const joint = mortgageSharePercent !== null;
@@ -470,10 +463,11 @@ const MortgageContainer: FC = () => {
                 },
                 schema: CreateAccountResponse,
               });
+              propertySaved = true;
             }
           }
-          propertySaved = true;
-          saved.push("home value");
+          // Two possible homes found at save time: neither is written.
+          if (propertySaved) saved.push("home value");
         }
       }
       // Reload the saved rows so loan to value and equity read the stored home value.
@@ -610,10 +604,11 @@ const MortgageContainer: FC = () => {
 
   // Read the stored figures for one residential account. Unset values stay empty (0). The balance
   // is the whole loan (E34), so the payment, the simulator and a save all work on what is owed.
+  // Read from the patched rows, so a figure saved on this page shows (CS-1).
   const accountFigures = (id: string) => {
-    const account = accounts.find((a: any) => a.id === id);
+    const account = (pictureAccounts as any[]).find((a: any) => a.id === id);
     const balance = new PortfolioSnapshot(
-      withWholeBalances(accounts),
+      withWholeBalances(pictureAccounts),
       accountDetails,
     ).getLatestBalance(id);
     const rate = Number(account?.interestRate);
@@ -632,30 +627,31 @@ const MortgageContainer: FC = () => {
     }
   }, [mortgageAccounts, selectedAccountId, propertyCategory]);
 
-  // Handle account selection
+  // Handle account selection. Reads the patched rows, so a figure saved on this page is never
+  // replaced by the loader copy from before the save (CS-1).
   useEffect(() => {
     if (selectedAccountId && propertyCategory === "residential") {
-      const snapshot = new PortfolioSnapshot(withWholeBalances(accounts), accountDetails);
+      const snapshot = new PortfolioSnapshot(withWholeBalances(pictureAccounts), accountDetails);
       const bal = snapshot.getLatestBalance(selectedAccountId);
       if (bal > 0) {
         setLoanAmount(bal);
       }
       // A stored account rate is real data; an unset rate stays empty.
       const storedRate = Number(
-        accounts.find((a: any) => a.id === selectedAccountId)?.interestRate,
+        (pictureAccounts as any[]).find((a: any) => a.id === selectedAccountId)?.interestRate,
       );
       if (storedRate > 0) {
         setInterestRate(storedRate);
       }
       // A stored term (months) is real data; an unset term stays empty.
       const storedTermMonths = Number(
-        accounts.find((a: any) => a.id === selectedAccountId)?.termMonths,
+        (pictureAccounts as any[]).find((a: any) => a.id === selectedAccountId)?.termMonths,
       );
       if (storedTermMonths > 0) {
         setRemainingTerm(storedTermMonths / 12);
       }
     }
-  }, [selectedAccountId, accounts, accountDetails, propertyCategory]);
+  }, [selectedAccountId, pictureAccounts, accountDetails, propertyCategory]);
 
   // Choosing the account in the edit dialog reads that account's stored figures into the page
   // and the form. The choice itself is not stored.
@@ -743,9 +739,7 @@ const MortgageContainer: FC = () => {
     const fromSave = longDate(savedAt);
     if (fromSave) return `Last updated ${fromSave}`;
     if (propertyCategory === "residential" && selectedAccountId) {
-      const rows = accountDetails.filter(
-        (row: any) => String(row.account_id) === selectedAccountId,
-      );
+      const rows = accountDetails.filter((row: any) => String(row.accountId) === selectedAccountId);
       const latest = rows.reduce(
         (best: any, row: any) =>
           !best || row.year * 12 + row.month > best.year * 12 + best.month ? row : best,
@@ -794,7 +788,7 @@ const MortgageContainer: FC = () => {
     !isBtl && isJointAccount(selectedAccount) ? "Whole loan, held jointly" : undefined;
 
   // Two or more homes: the value comes from Accounts, where each one is kept.
-  const homeFromAccounts = !isBtl && residentialProperties.length >= 2;
+  const homeFromAccounts = !isBtl && homeAmbiguous;
   // Saved home value for the equity row in "Your details": shown only when one is known.
   const savedHomeValue = isBtl ? btlStoredValue : residentialHomeValue;
 
@@ -821,7 +815,7 @@ const MortgageContainer: FC = () => {
       }}
       onEditInterestRateChange={setEditInterestRate}
       editMonthlyPayment={editMonthlyPayment}
-      editHomeValue={homeFromAccounts ? residentialHomeValue : editHomeValue}
+      editHomeValue={homeFromAccounts ? null : editHomeValue}
       homeSharePercent={homeSharePercent}
       mortgageSharePercent={mortgageSharePercent}
       homeValueMode={homeFromAccounts ? "fromAccounts" : "input"}
@@ -1062,13 +1056,17 @@ const MortgageContainer: FC = () => {
           />
           <KpiCard
             emptyAction={
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate(isBtl ? "/app/profile" : "/app/accounts")}
-              >
-                {isBtl ? "Add the property value" : "Add your home's value"}
-              </Button>
+              homeFromAccounts ? (
+                AMBIGUOUS_HOME_TEXT
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => navigate(isBtl ? "/app/profile" : "/app/accounts")}
+                >
+                  {isBtl ? "Add the property value" : "Add your home's value"}
+                </Button>
+              )
             }
             explain={
               isBtl

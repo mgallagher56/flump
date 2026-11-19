@@ -1,7 +1,12 @@
 import type { MissingKey } from "./input.js";
 
 export type FigureProvenance = "user" | "derived" | "assumption";
-export type FigureUnknownReason = "not-set" | "source-failed" | "unsupported-year";
+/** "ambiguous-home": more than one property could be the home, so a home figure is left out. */
+export type FigureUnknownReason =
+  | "not-set"
+  | "source-failed"
+  | "unsupported-year"
+  | "ambiguous-home";
 
 /**
  * A value the engine either knows or explicitly does not. An unknown figure names the facts

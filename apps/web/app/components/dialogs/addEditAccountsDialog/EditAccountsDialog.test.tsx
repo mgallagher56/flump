@@ -182,7 +182,7 @@ describe("<EditAccountDialogBtn", () => {
       mocks.mockFetcherSubmit.mockClear();
     });
 
-    test("open edit and save without changes sends the same stored balance", async () => {
+    test("open edit and save without changes sends no balance (CH-3)", async () => {
       const { getByText, getByLabelText, queryByLabelText, user } = customRender(
         <AddEditAccountsDialogBtn isEditAccount accountId="sl1" />,
       );
@@ -198,8 +198,22 @@ describe("<EditAccountDialogBtn", () => {
         intent: "update",
         accountId: "sl1",
         type: "Student Loan",
-        balance: "-38500",
       });
+      // An untouched balance is not re-posted, so no history row is written for this month.
+      expect(lastSubmit()).not.toHaveProperty("balance");
+    });
+
+    test("a rename only sends the new name and no balance (CH-3)", async () => {
+      const { getByText, getByLabelText, user } = customRender(
+        <AddEditAccountsDialogBtn isEditAccount accountId="sl1" />,
+      );
+      await user.click(getByText("edit"));
+      const name = getByLabelText("Name");
+      await user.clear(name);
+      await user.type(name, "SLC loan");
+      await user.click(getByText("save"));
+      expect(lastSubmit()).toMatchObject({ intent: "update", name: "SLC loan" });
+      expect(lastSubmit()).not.toHaveProperty("balance");
     });
 
     test("a new amount owed is sent as minus that amount", async () => {
@@ -223,9 +237,13 @@ describe("<EditAccountDialogBtn", () => {
         <AddEditAccountsDialogBtn isEditAccount accountId="c1" />,
       );
       await user.click(getByText("edit"));
-      expect((getByLabelText("Balance") as HTMLInputElement).value).toContain("120");
+      const balance = getByLabelText("Balance") as HTMLInputElement;
+      expect(balance.value).toContain("120");
+      await user.clear(balance);
+      await user.type(balance, "-150");
+      await user.tab();
       await user.click(getByText("save"));
-      expect(lastSubmit()).toMatchObject({ balance: "-120" });
+      expect(lastSubmit()).toMatchObject({ balance: "-150" });
     });
   });
 

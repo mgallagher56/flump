@@ -1,6 +1,11 @@
+import { isBuyToLetAccount } from "../../buy-to-let.js";
+import { pickHomeProperty } from "../../home-equity.js";
 import type { PortfolioSnapshot } from "../../portfolio.js";
 import { type Figure, figureKnown, figureUnknown } from "../figure.js";
 import type { MissingKey } from "../input.js";
+
+// The buy-to-let rule moved to buy-to-let.ts (so home-equity.ts can use it without a cycle).
+export { isBuyToLetAccount, isBuyToLetAccountName } from "../../buy-to-let.js";
 
 export interface LoanToValue {
   /** Residential mortgage balance over residential property value, in percent, to 1 dp. */
@@ -15,54 +20,30 @@ export interface SelectLoanToValueOptions {
 }
 
 /**
- * A buy-to-let row by its name ("Buy to let", "Buy-to-let", "BTL"), the names the accounts page
- * and demo data save them with. The fallback for accounts without a chosen subtype: callers use
- * `isBuyToLetAccount`, which puts a chosen mortgage subtype first.
- */
-export function isBuyToLetAccountName(name: string): boolean {
-  return /\bbuy[\s-]*to[\s-]*let\b|\bbtl\b/i.test(name);
-}
-
-/**
- * True when an account is a buy-to-let property or mortgage. A chosen mortgage subtype decides it
- * (`btl_mortgage` yes, `residential_mortgage` no, whatever the name says); without one (property
- * rows, older mortgages) the name decides (`isBuyToLetAccountName`).
- */
-export function isBuyToLetAccount(account: {
-  name?: string | null;
-  accountSubtype?: string | null;
-}): boolean {
-  if (account.accountSubtype === "btl_mortgage") return true;
-  if (account.accountSubtype === "residential_mortgage") return false;
-  return isBuyToLetAccountName(account.name ?? "");
-}
-
-/**
- * Residential loan to value, from saved account rows only: residential mortgage balances over
- * residential Property account values (the onboarding home estimate is one of them). Buy-to-let
- * property and mortgages are left out. With `mortgageAccountId`, only that mortgage is measured.
- * Unknown, never 0%, when either side is missing or 0.
+ * Residential loan to value, from saved account rows only: residential mortgage balances over the
+ * home's value (`pickHomeProperty`; the onboarding home estimate is one). Buy-to-let property and
+ * mortgages are left out. With `mortgageAccountId`, only that mortgage is measured. Unknown, never
+ * 0%, when either side is missing or 0, and unknown with reason "ambiguous-home" when more than
+ * one property could be the home.
  */
 export function selectLoanToValue(
   snapshot: PortfolioSnapshot,
   opts: SelectLoanToValueOptions = {},
 ): Figure<LoanToValue> {
-  const residential = <T extends { id: string; name: string }>(rows: T[]) =>
-    rows.filter(
-      (a) => !isBuyToLetAccount({ name: a.name, accountSubtype: snapshot.getAccountSubtype(a.id) }),
-    );
-  const homeValue = residential(snapshot.getAccountsByCategory("property")).reduce(
-    (sum, a) => sum + a.nominalBalance,
-    0,
-  );
-  const mortgages = residential(snapshot.getAccountsByCategory("mortgages")).filter(
-    (a) => !opts.mortgageAccountId || a.id === opts.mortgageAccountId,
+  const withSubtype = <T extends { id: string; name: string; rawType: string }>(rows: T[]) =>
+    rows.map((a) => ({ ...a, type: a.rawType, accountSubtype: snapshot.getAccountSubtype(a.id) }));
+  const home = pickHomeProperty(withSubtype(snapshot.getAccountsByCategory("property")));
+  const homeValue = home.status === "one" ? home.account.nominalBalance : 0;
+  const mortgages = withSubtype(snapshot.getAccountsByCategory("mortgages")).filter(
+    (a) => !isBuyToLetAccount(a) && (!opts.mortgageAccountId || a.id === opts.mortgageAccountId),
   );
   const mortgageBalance = mortgages.reduce((sum, a) => sum + a.nominalBalance, 0);
 
   const missing: MissingKey[] = [];
   if (!(homeValue > 0)) missing.push("homeValue");
   if (!(mortgageBalance > 0)) missing.push("mortgageBalance");
+  // Two or more properties that could each be the home: no way to tell which, so left out.
+  if (home.status === "ambiguous") return figureUnknown(missing, "ambiguous-home");
   if (missing.length > 0) return figureUnknown(missing, "not-set");
 
   return figureKnown<LoanToValue>({

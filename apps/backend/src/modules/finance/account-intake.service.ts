@@ -34,7 +34,7 @@ import { BankConnection } from "../../entities/bank-connection.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import { londonDate } from "../snapshots/london-date";
-import { resignHistoryForType, storedBalance } from "../snapshots/stored-balance";
+import { debtBecomesAsset, resignHistoryForType, storedBalance } from "../snapshots/stored-balance";
 
 type AccountType = (typeof ACCOUNT_TYPES)[number];
 type AccountSubtype = (typeof ACCOUNT_SUBTYPES)[number];
@@ -400,6 +400,83 @@ async function deleteOwnedAccount(
   return { success: true };
 }
 
+/**
+ * Allow-list of client-writable account fields. `id`, `userId` and
+ * `connectionId` are never copied from a request body.
+ */
+function pickAccountFields(
+  body: CreateAccountDto | UpdateAccountDto,
+  isCreate = false,
+): Partial<Account> {
+  // The repayment plan only applies to Student Loans. Any other type stores null: an update
+  // that sets a different type clears it, and a create ignores a supplied plan.
+  const validatedPlan = validateStudentLoanPlan(body.studentLoanPlan);
+  let studentLoanPlan = validatedPlan;
+  if (body.type !== undefined && body.type !== "Student Loan") {
+    studentLoanPlan = isCreate && validatedPlan === undefined ? undefined : null;
+  }
+  const ownership = validateOwnership(body.ownership);
+  const sharePercent = validateSharePercent(body.sharePercent);
+  const fields = {
+    name: body.name,
+    type: validateAccountType(body.type),
+    accountSubtype: validateAccountSubtype(body.accountSubtype),
+    balance: validateBalance(body.balance),
+    currency: body.currency,
+    interestRate: body.interestRate,
+    monthlyContribution: body.monthlyContribution,
+    creditLimit: validateCreditLimit(body.creditLimit),
+    promoZeroPercentUntil: validateIsoDate(body.promoZeroPercentUntil, "promoZeroPercentUntil"),
+    termMonths: validateTermMonths(body.termMonths),
+    fixedRateEndDate: validateIsoDate(body.fixedRateEndDate, "fixedRateEndDate"),
+    studentLoanPlan,
+    ownership,
+    sharePercent,
+    isCurrent: body.isCurrent,
+    externalAccountId: body.externalAccountId,
+  };
+  // currency is NOT NULL: null or "" means "not provided" (create defaults it, update keeps it).
+  return Object.fromEntries(
+    Object.entries(fields).filter(
+      ([key, value]) =>
+        value !== undefined && !(key === "currency" && (value === null || value === "")),
+    ),
+  ) as Partial<Account>;
+}
+
+/**
+ * The fields a new account is stored with, before its owner and any bank connection are added:
+ * the form's field checks, the sign rule (BE-05, audit H6), the joint check, the ownership and
+ * share defaults and the currency default. `createAccount` and the import commit (AI-9) both
+ * build new accounts here, so the two create paths follow the same rules.
+ */
+export function newAccountFields(body: CreateAccountDto): Partial<Account> {
+  const fields = pickAccountFields(body, true);
+  assertTypeScopedFields(fields.type, fields);
+  if (fields.balance !== undefined) {
+    fields.balance = storedBalance(fields.type, Number(fields.balance));
+  }
+  const ownership: AccountOwnership = fields.ownership ?? "sole";
+  if (
+    ownership === "joint" &&
+    !canAccountBeJoint({
+      name: fields.name,
+      type: fields.type,
+      accountSubtype: fields.accountSubtype,
+    })
+  ) {
+    throw new BadRequestException("ISAs and pensions cannot be held jointly");
+  }
+  return {
+    ...fields,
+    ownership,
+    sharePercent:
+      ownership === "joint" ? (fields.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT) : null,
+    // accounts.currency is NOT NULL and the DTO leaves it optional, so default it here.
+    currency: fields.currency || DEFAULT_ACCOUNT_CURRENCY,
+  };
+}
+
 interface IAccountIntake {
   getAccounts(userId: string): Promise<AccountWithDetails[]>;
   getAccount(userId: string, id: string): Promise<AccountWithDetails>;
@@ -429,48 +506,11 @@ export class AccountIntakeService implements IAccountIntake {
     private readonly bankConnectionRepository: Repository<BankConnection>,
   ) {}
 
-  /**
-   * Allow-list of client-writable account fields. `id`, `userId` and
-   * `connectionId` are never copied from a request body.
-   */
   private pickAccountFields(
     body: CreateAccountDto | UpdateAccountDto,
     isCreate = false,
   ): Partial<Account> {
-    // The repayment plan only applies to Student Loans. Any other type stores null: an update
-    // that sets a different type clears it, and a create ignores a supplied plan.
-    const validatedPlan = validateStudentLoanPlan(body.studentLoanPlan);
-    let studentLoanPlan = validatedPlan;
-    if (body.type !== undefined && body.type !== "Student Loan") {
-      studentLoanPlan = isCreate && validatedPlan === undefined ? undefined : null;
-    }
-    const ownership = validateOwnership(body.ownership);
-    const sharePercent = validateSharePercent(body.sharePercent);
-    const fields = {
-      name: body.name,
-      type: validateAccountType(body.type),
-      accountSubtype: validateAccountSubtype(body.accountSubtype),
-      balance: validateBalance(body.balance),
-      currency: body.currency,
-      interestRate: body.interestRate,
-      monthlyContribution: body.monthlyContribution,
-      creditLimit: validateCreditLimit(body.creditLimit),
-      promoZeroPercentUntil: validateIsoDate(body.promoZeroPercentUntil, "promoZeroPercentUntil"),
-      termMonths: validateTermMonths(body.termMonths),
-      fixedRateEndDate: validateIsoDate(body.fixedRateEndDate, "fixedRateEndDate"),
-      studentLoanPlan,
-      ownership,
-      sharePercent,
-      isCurrent: body.isCurrent,
-      externalAccountId: body.externalAccountId,
-    };
-    // currency is NOT NULL: null or "" means "not provided" (create defaults it, update keeps it).
-    return Object.fromEntries(
-      Object.entries(fields).filter(
-        ([key, value]) =>
-          value !== undefined && !(key === "currency" && (value === null || value === "")),
-      ),
-    ) as Partial<Account>;
+    return pickAccountFields(body, isCreate);
   }
 
   async getAccounts(userId: string): Promise<AccountWithDetails[]> {
@@ -594,8 +634,8 @@ export class AccountIntakeService implements IAccountIntake {
   }
 
   async createAccount(userId: string, body: CreateAccountDto): Promise<Account> {
-    const fields = this.pickAccountFields(body, true);
-    assertTypeScopedFields(fields.type, fields);
+    // The field checks, sign rule (BE-05, audit H6) and defaults, shared with the import commit.
+    const fields = newAccountFields(body);
     if (body.connectionId) {
       const connection = await this.bankConnectionRepository.findOne({
         where: { id: body.connectionId, userId },
@@ -605,35 +645,11 @@ export class AccountIntakeService implements IAccountIntake {
       }
       fields.connectionId = connection.id;
     }
-    if (fields.balance !== undefined) {
-      // BE-05 (audit H6): creation follows the same sign rule as every other write path.
-      fields.balance = storedBalance(fields.type, Number(fields.balance));
-    }
-    const effectiveOwnership: AccountOwnership = fields.ownership ?? "sole";
-    if (
-      effectiveOwnership === "joint" &&
-      !canAccountBeJoint({
-        name: fields.name,
-        type: fields.type,
-        accountSubtype: fields.accountSubtype,
-      })
-    ) {
-      throw new BadRequestException("ISAs and pensions cannot be held jointly");
-    }
-    const effectiveSharePercent =
-      effectiveOwnership === "joint" ? (fields.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT) : null;
-    const account: Account = this.accountRepository.create({
-      ...fields,
-      ownership: effectiveOwnership,
-      sharePercent: effectiveSharePercent,
-      // accounts.currency is NOT NULL and the DTO leaves it optional, so default it here.
-      currency: fields.currency || DEFAULT_ACCOUNT_CURRENCY,
-      userId,
-    });
+    const account: Account = this.accountRepository.create({ ...fields, userId });
     // A new mortgage moves its property only when it is joint: a default "sole" on a new mortgage
     // must not undo a share the user already set on their home. The two writes share one
     // transaction, so a failed property write leaves no half-made mortgage behind.
-    if (effectiveOwnership !== "joint") {
+    if (account.ownership !== "joint") {
       return toAccountResponse(await this.accountRepository.save(account));
     }
     return this.runInTransaction(async (accounts) => {
@@ -761,12 +777,16 @@ export class AccountIntakeService implements IAccountIntake {
         // Same sign rule as every other write path (liabilities negative).
         account.balance = storedBalance(account.type, Number(body.balance));
       } else if (typeChanged && Number.isFinite(Number(account.balance))) {
-        // A type change alone re-signs the stored balance too (BE-05, audit H6).
-        account.balance = storedBalance(account.type, Number(account.balance));
+        // A type change alone re-signs the stored balance too (BE-05, audit H6). A debt that
+        // becomes an asset turns the amount owed positive, as its history does (CH-4).
+        const current = Number(account.balance);
+        account.balance = debtBecomesAsset(previousType, account.type)
+          ? Math.abs(current)
+          : storedBalance(account.type, current);
       }
       if (typeChanged) {
         // History first, while the row is still the old type (see resignHistoryForType).
-        await resignHistoryForType(details, account.id, account.type);
+        await resignHistoryForType(details, account.id, account.type, previousType);
       }
       const saved = await accounts.save(account);
       if (body.balance !== undefined && body.balance !== null) {

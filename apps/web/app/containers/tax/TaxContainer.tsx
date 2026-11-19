@@ -8,6 +8,7 @@ import {
   isBuyToLetAccount,
   isRecordActiveInTaxYear,
   isSupportedUkTaxYear,
+  payeSalaryForTax,
   type TaxCalculationResult,
   type TaxRecord,
   type TaxSource,
@@ -41,7 +42,7 @@ import { TaxYearComparison } from "~/features/tax/components/TaxYearComparison";
 import { availableTaxYears, resolveSelectedTaxYear } from "~/features/tax/hooks/taxYears";
 import { useTaxRecordEditor } from "~/features/tax/hooks/useTaxRecordEditor";
 import { SOURCE_PAGE_ORDER, taxYearFromParam } from "~/features/tax/source-pages";
-import { SOURCE_LABEL } from "~/features/tax/tax-labels";
+import { SCOTTISH_BANDS_NOTE, SOURCE_LABEL } from "~/features/tax/tax-labels";
 import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.self-assessment";
 import { PROFILE_VERSION_FIELD, versionField } from "~/services/conflict";
@@ -222,15 +223,18 @@ const SelfAssessmentPage: FC<{
     onSuccess: () => setTaxYearToDelete(null),
   });
 
+  // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
+  const employmentType = userProfile?.employmentType ?? null;
   const calculatedTaxYearsData = useMemo(() => {
+    const salary = payeSalaryForTax({ employmentType, annualSalary: payeSalary });
     const results: Record<string, TaxCalculationResult> = {};
     for (const year of availableYears) {
       // calculateUKTax is strict and throws for unsupported years (E22).
       if (!isSupportedUkTaxYear(year)) continue;
-      results[year] = calculateUKTax(year, initialRecords, payeSalary ?? 0, propertyOwnershipShare);
+      results[year] = calculateUKTax(year, initialRecords, salary, propertyOwnershipShare);
     }
     return results;
-  }, [availableYears, initialRecords, payeSalary, propertyOwnershipShare]);
+  }, [availableYears, initialRecords, payeSalary, propertyOwnershipShare, employmentType]);
 
   const activeYearData: TaxCalculationResult | undefined =
     calculatedTaxYearsData[selectedTaxYear] ?? Object.values(calculatedTaxYearsData)[0];
@@ -472,7 +476,19 @@ const SelfAssessmentPage: FC<{
       </div>
 
       {/* The page's one notice, at its foot, under everything it covers. */}
-      {showEstimate ? <ProjectionNotice lead={TAX_UNVERIFIED_LEAD} /> : null}
+      {showEstimate ? (
+        <ProjectionNotice
+          lead={
+            userProfile?.taxRegion === "SCOTLAND" ? (
+              <>
+                {TAX_UNVERIFIED_LEAD} <span>{SCOTTISH_BANDS_NOTE}</span>
+              </>
+            ) : (
+              TAX_UNVERIFIED_LEAD
+            )
+          }
+        />
+      ) : null}
 
       {editor.dialogs}
 

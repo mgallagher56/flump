@@ -4,7 +4,9 @@ import {
   calculateUKTax,
   getTaxYearVerification,
   getUkTaxYearRules,
+  isSelfEmployedType,
   MCP_NOTICE,
+  payeSalaryForTax,
 } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
@@ -84,7 +86,12 @@ export const getTaxYearPosition = defineFlumpTool({
     const { taxYear, assumptions } = resolveTaxYear(input.taxYear);
     const baseline = await ctx.dataProvider.getBaseline(ctx.token.userId);
     const { records } = await loadTaxYearRecords(ctx, taxYear);
-    const salary = Math.max(0, Number(baseline.annualGrossSalary) || 0);
+    // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
+    const selfEmployed = isSelfEmployedType(baseline.employmentStatus);
+    const salary = payeSalaryForTax({
+      employmentType: baseline.employmentStatus,
+      annualSalary: Number(baseline.annualGrossSalary),
+    });
     const share = Number(baseline.propertyOwnershipSharePct);
     // As on the Tax page, a stored 0 is kept (no share of the rent); only a missing value means 100.
     const ownershipShare = Number.isFinite(share) && share >= 0 && share <= 100 ? share : 100;
@@ -123,6 +130,12 @@ export const getTaxYearPosition = defineFlumpTool({
         why: "No salary is saved and no tax records fall in this tax year, so every figure is zero.",
         askUser:
           "What is your yearly salary before tax, and do you have other income such as rent or self-employment?",
+      });
+    } else if (salary === 0 && !selfEmployed) {
+      missing.push({
+        field: "annualSalary",
+        why: "No salary is saved, so the figures count only the income in the tax records.",
+        askUser: "What is your yearly salary before tax?",
       });
     }
     missing.push({

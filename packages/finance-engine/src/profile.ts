@@ -7,6 +7,7 @@ import type {
   UkEmploymentStatus,
   UkStudentLoanPlan,
 } from "./types.js";
+import { resolveUkTaxYear } from "./uk-tax-year.js";
 
 export const DEFAULT_FINANCIAL_BASELINE: FinancialBaseline = {
   userId: "",
@@ -210,6 +211,8 @@ export function userProfileToFinancialBaseline(
 
   return {
     ...DEFAULT_FINANCIAL_BASELINE,
+    // The tax year that applies today (AI-3, SA-8), never the default's fixed year.
+    taxYear: resolveUkTaxYear(),
     userId: profile.userId ?? profile.id ?? fallbackUserId,
     ukRegion: profile.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
     ukRegionAssumed: !profile.taxRegion,
@@ -271,6 +274,65 @@ export function userProfileToFinancialBaseline(
     financialStage,
     enabledModules:
       enabledModules.length > 0 ? enabledModules : DEFAULT_FINANCIAL_BASELINE.enabledModules,
+  };
+}
+
+const isSaved = (value: unknown) => value !== null && value !== undefined;
+
+/** Baseline figures that hold a stand-in 0 when the person never saved them (AI-1). */
+export type UnsavedBaselineField =
+  | "annualGrossSalary"
+  | "pensionContributionPct"
+  | "employerPensionMatchPct";
+
+/**
+ * A baseline from saved facts, with the list of figures that are a stand-in 0 rather than a saved
+ * value. Consumers that pass figures on as fact (the AI context pack) leave those out.
+ */
+export type SavedFinancialBaseline = FinancialBaseline & {
+  notSet?: UnsavedBaselineField[];
+};
+
+/**
+ * The baseline from saved facts only (SA-2, AI-1, AI-2), for the backend, MCP and the AI context
+ * pack, which pass it on as fact. userProfileToFinancialBaseline fills an unsaved figure with a
+ * display default (a 45,000 salary, age 32, 5% and 3% pension, 5,000 cash, a 15,000 pension pot,
+ * 1,100 outgoings, 900 rent). This clears each of those, as the web baseline clears the salary
+ * (apps/web profileToBaseline):
+ * - salary 0, the baseline's "no salary known", so tools report it as not set;
+ * - pension rates 0, so no contribution is assumed;
+ * - age, cash, pension pot, outgoings and an unknown rent or mortgage cost left out.
+ * `notSet` names the stand-in zeros (salary and pension rates), so the pack can leave them out.
+ */
+export function userProfileToSavedBaseline(
+  profile: Partial<UserProfileData>,
+  fallbackUserId = "",
+): SavedFinancialBaseline {
+  const baseline = userProfileToFinancialBaseline(profile, fallbackUserId);
+  const salary = Number(profile.annualSalary);
+  const salarySaved = isSaved(profile.annualSalary) && Number.isFinite(salary) && salary > 0;
+  const pensionSaved = isSaved(profile.pensionPercent);
+  const employerSaved = isSaved(profile.pensionEmployerPercent);
+  const notSet: UnsavedBaselineField[] = [];
+  if (!salarySaved) notSet.push("annualGrossSalary");
+  if (!pensionSaved) notSet.push("pensionContributionPct");
+  if (!employerSaved) notSet.push("employerPensionMatchPct");
+  return {
+    ...baseline,
+    annualGrossSalary: salarySaved ? salary : 0,
+    age: isSaved(profile.birthYear) || isSaved(profile.age) ? baseline.age : undefined,
+    pensionContributionPct: pensionSaved ? baseline.pensionContributionPct : 0,
+    employerPensionMatchPct: employerSaved ? baseline.employerPensionMatchPct : 0,
+    ...(notSet.length > 0 ? { notSet } : {}),
+    totalCashSavings: isSaved(profile.totalCashSavings) ? baseline.totalCashSavings : undefined,
+    totalPensionPot: isSaved(profile.totalPensionPot) ? baseline.totalPensionPot : undefined,
+    monthlyOtherOutgoings: isSaved(profile.monthlyOtherOutgoings)
+      ? baseline.monthlyOtherOutgoings
+      : undefined,
+    monthlyHousingCost:
+      isSaved(profile.monthlyHousingCost) || noRentOrMortgage(baseline.housingStatus)
+        ? baseline.monthlyHousingCost
+        : undefined,
   };
 }
 

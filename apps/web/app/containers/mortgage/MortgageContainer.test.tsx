@@ -1,5 +1,5 @@
 import { countFigures, countNotSet, expectPageRules } from "@repo/ui/testing";
-import { act, fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { accountWithDetailsFixture, contractFetch } from "~/test/fixtures/contractResponses";
 import customRender from "~/testUtils/customRender";
@@ -30,7 +30,7 @@ const account = (overrides: Record<string, unknown> = {}) => ({
 // Balance only: the partial state.
 const defaultLoaderData = () => ({
   accounts: [account()],
-  accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
+  accountDetails: [{ accountId: "m1", month: 6, year: 2026, value: -135400 }],
 });
 
 // Balance, rate, term and a home value: the complete state.
@@ -39,7 +39,7 @@ const loaded = (overrides: Record<string, unknown> = {}) => ({
     account({ interestRate: 4.5, termMonths: 240, ...overrides }),
     { id: "home", name: "Home", type: "Property", balance: 350000 },
   ],
-  accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
+  accountDetails: [{ accountId: "m1", month: 6, year: 2026, value: -135400 }],
   userProfile: {},
 });
 
@@ -539,6 +539,39 @@ describe("<MortgageContainer />", () => {
       });
       expect(patches(fetchSpy).some(([url]) => String(url).includes("/accounts/"))).toBe(false);
     });
+
+    test("a saved rate stays after choosing the account again, and is not sent back (CS-1)", async () => {
+      setApiEnv();
+      loaderData = {
+        ...loaded(),
+        accounts: [
+          ...loaded().accounts,
+          account({ id: "m2", name: "Second charge", balance: -20000 }),
+        ],
+      };
+      const fetchSpy = okFetch();
+      const { container, findByText, getByLabelText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^Interest rate/), { target: { value: "4.1" } });
+      save();
+      await findByText(/Saved repayment type, interest rate/);
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      // Choose the other account, then this one again: the loader still holds 4.5%.
+      openEdit();
+      const select = getByLabelText("Mortgage account") as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: "m2" } });
+      fireEvent.change(select, { target: { value: "m1" } });
+      expect(field(/^Interest rate/).value).toBe("4.1");
+      // A later save must not send the old rate back.
+      save();
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(savedText(container)).toContain("4.1%");
+      expect(savedText(container)).not.toContain("4.5%");
+      const rates = patches(fetchSpy)
+        .filter(([url]) => String(url).endsWith("/accounts/m1"))
+        .map(([, init]) => JSON.parse(String((init as RequestInit).body)).interestRate);
+      expect(rates).not.toContain(4.5);
+    });
   });
 
   describe("editing saved details", () => {
@@ -859,6 +892,21 @@ describe("<MortgageContainer />", () => {
       expect(savedText(container)).not.toContain("£90,000");
     });
 
+    test("last updated is the month of the latest mortgage balance, not the profile date (CH-6)", () => {
+      loaderData = {
+        ...loaded(),
+        accountDetails: [
+          { accountId: "m1", month: 2, year: 2026, value: -137000 },
+          { accountId: "m1", month: 3, year: 2026, value: -135400 },
+        ],
+        userProfile: { updatedAt: "2026-10-01T09:00:00.000Z" },
+      };
+      const { container } = customRender(<MortgageContainer />);
+      const summary = container.querySelector("#mortgage-summary")?.textContent ?? "";
+      expect(summary).toContain("Last updated March 2026");
+      expect(summary).not.toContain("October 2026");
+    });
+
     test("saved details say when they were last updated", () => {
       loaderData = loaded();
       const { container } = customRender(<MortgageContainer />);
@@ -1010,6 +1058,29 @@ describe("<MortgageContainer />", () => {
       expect(ltvStrip(container)).not.toContain("held jointly");
     });
 
+    test("a second property not named buy to let leaves loan to value out and says why (HM-3)", () => {
+      // Was 186,000 / (310,000 + 200,000) = 36.47%, shown as 36.5%. With two properties that could
+      // each be the home there is no way to tell which, so the figure is not shown.
+      loaderData = {
+        accounts: [
+          ...homeownerAccounts,
+          home,
+          { id: "rental", name: "Rental flat", type: "Property", balance: 200000 },
+        ],
+        accountDetails: [],
+        userProfile: { housingStatus: "mortgage" },
+      };
+      const { container, getByText } = customRender(<MortgageContainer />);
+      expect(ltvStrip(container)).not.toContain("36.5%");
+      expect(ltvStrip(container)).not.toContain("60%");
+      expect(
+        getByText(
+          "You have more than one property on Accounts, so we cannot tell which is your home.",
+        ),
+      ).toBeDefined();
+      expect(screen.queryByRole("button", { name: "Add your home's value" })).toBeNull();
+    });
+
     test("stays not set, never 0%, without a home value", () => {
       loaderData = {
         accounts: homeownerAccounts,
@@ -1028,7 +1099,7 @@ describe("<MortgageContainer />", () => {
     const bodyOf = (call: unknown[]) => JSON.parse(String((call[1] as RequestInit).body));
     const noHome = (overrides: Record<string, unknown> = {}) => ({
       accounts: [account({ interestRate: 4.5, termMonths: 240, ...overrides })],
-      accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
+      accountDetails: [{ accountId: "m1", month: 6, year: 2026, value: -135400 }],
       userProfile: {},
     });
 
@@ -1249,6 +1320,41 @@ describe("<MortgageContainer />", () => {
       );
       if (!call) throw new Error("expected a PATCH of the home added elsewhere");
       expect(bodyOf(call)).toEqual({ balance: 300000 });
+      expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
+    });
+
+    test("two properties found at save time: neither is written and none is added (HM-3)", async () => {
+      setApiEnv();
+      loaderData = noHome();
+      const ok = contractFetch();
+      const property = (id: string, name: string, balance: number) => ({
+        ...accountWithDetailsFixture,
+        id,
+        name,
+        type: "Property",
+        balance,
+      });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+        const url = new URL(String(input), "http://web.test");
+        if (url.pathname === "/api/accounts" && (init?.method ?? "GET") === "GET") {
+          return new Response(
+            JSON.stringify([
+              property("7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c41", "Home (your estimate)", 290000),
+              property("7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c42", "Rental flat", 200000),
+            ]),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+        return ok(input, init);
+      });
+      const { findAllByText } = customRender(<MortgageContainer />);
+      openEdit();
+      fireEvent.change(field(/^What your home is worth/), { target: { value: "300000" } });
+      save();
+      await findAllByText(/Saved repayment type/);
+      expect(patches(fetchSpy).some(([url]) => /\/accounts\/7a1b2c3d/.test(String(url)))).toBe(
+        false,
+      );
       expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
     });
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_FINANCIAL_BASELINE,
   decodeSeedPayload,
@@ -11,6 +11,7 @@ import {
   normalizeStudentLoanPlan,
   scrambleSeedLegacy,
   userProfileToFinancialBaseline,
+  userProfileToSavedBaseline,
 } from "./profile.js";
 import type { FinancialBaseline, OnboardingSeedPayload } from "./types.js";
 
@@ -289,5 +290,73 @@ describe("profile domain module", () => {
         "PLAN_1",
       );
     });
+  });
+});
+
+describe("userProfileToFinancialBaseline tax year (AI-3, SA-8)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("uses the tax year that applies today, never the 2025/26 default", () => {
+    // 19 November 2026 falls between 6 April 2026 and 5 April 2027: tax year 2026/27.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-19T12:00:00Z"));
+    expect(userProfileToFinancialBaseline({}).taxYear).toBe("2026/27");
+    expect(userProfileToSavedBaseline({}).taxYear).toBe("2026/27");
+  });
+});
+
+describe("userProfileToSavedBaseline (SA-2, AI-1, AI-2)", () => {
+  it("invents no salary, age, pension rates, savings, pension pot or outgoings", () => {
+    const baseline = userProfileToSavedBaseline({ userId: "u1", housingStatus: "renting" });
+    // 0 is the baseline's "no salary known" (the web baseline uses the same), never 45,000.
+    expect(baseline.annualGrossSalary).toBe(0);
+    expect(baseline.age).toBeUndefined();
+    // No contribution is assumed when none is saved, so nothing is added from an unsaved rate.
+    expect(baseline.pensionContributionPct).toBe(0);
+    expect(baseline.employerPensionMatchPct).toBe(0);
+    expect(baseline.totalCashSavings).toBeUndefined();
+    expect(baseline.totalPensionPot).toBeUndefined();
+    expect(baseline.monthlyOtherOutgoings).toBeUndefined();
+    // A renter with no saved housing cost: not known, not the 900 default.
+    expect(baseline.monthlyHousingCost).toBeUndefined();
+    expect(baseline.userId).toBe("u1");
+    // The stand-in zeros are named, so the AI context pack can leave them out.
+    expect(baseline.notSet).toEqual([
+      "annualGrossSalary",
+      "pensionContributionPct",
+      "employerPensionMatchPct",
+    ]);
+  });
+
+  it("keeps every saved figure, a saved 0 included", () => {
+    const year = new Date().getFullYear();
+    const baseline = userProfileToSavedBaseline({
+      annualSalary: 52000,
+      birthYear: year - 40,
+      pensionPercent: 0,
+      pensionEmployerPercent: 4,
+      totalCashSavings: 0,
+      totalPensionPot: 22000,
+      monthlyOtherOutgoings: 600,
+      housingStatus: "renting",
+      monthlyHousingCost: 1200,
+    });
+    expect(baseline).toMatchObject({
+      annualGrossSalary: 52000,
+      age: 40,
+      pensionContributionPct: 0,
+      employerPensionMatchPct: 4,
+      totalCashSavings: 0,
+      totalPensionPot: 22000,
+      monthlyOtherOutgoings: 600,
+      monthlyHousingCost: 1200,
+    });
+    expect(baseline).not.toHaveProperty("notSet");
+  });
+
+  it("keeps 0 housing cost for someone who neither rents nor pays a mortgage", () => {
+    expect(userProfileToSavedBaseline({ housingStatus: "own_outright" }).monthlyHousingCost).toBe(
+      0,
+    );
   });
 });

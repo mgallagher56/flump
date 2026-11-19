@@ -160,3 +160,23 @@ describe("<SavingsAccountsList />", () => {
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+describe("<SavingsAccountsList /> editing a joint account (SD-1, JO-1)", () => {
+  // £7,600 stored, joint at 40%: the page row shows the share, 7,600 x 0.4 = £3,040.
+  const saved: Account = {
+    id: "ea1",
+    name: "Easy access savings",
+    type: "Saving",
+    balance: 7600,
+    ownership: "joint",
+    sharePercent: 40,
+  } as Account;
+  const shareRow: Account = { ...saved, balance: 3040 };
+
+  test("the edit form starts from the whole stored balance, not the share on the row", () => {
+    customRender(<SavingsAccountsList accounts={[shareRow]} savedAccounts={[saved]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit Easy access savings" }));
+    const balance = screen.getByLabelText("Current balance") as HTMLInputElement;
+    expect(balance.value.replace(/[^0-9.]/g, "")).toBe("7600");
+  });
+});

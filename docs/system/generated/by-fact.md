@@ -10,7 +10,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | ------------------------------------------------------------------------------------------------------------- | ------ | ----------- | ----------------------------------------- |
 | [Salary (yearly pay before tax)](#salary)                                                                     | fact   | pay         | Duplicated (two stores that can disagree) |
 | [Monthly take-home pay as typed in onboarding](#typed-take-home)                                              | fact   | pay         | Broken                                    |
-| [Employment type](#employment-type)                                                                           | fact   | pay         | Broken                                    |
+| [Employment type](#employment-type)                                                                           | fact   | pay         | Holds                                     |
 | [Workplace pension rates and how the pension is paid](#pension-rates)                                         | fact   | pay         | Broken                                    |
 | [Year of birth](#birth-year)                                                                                  | fact   | pay         | Holds                                     |
 | [Tax region](#tax-region)                                                                                     | fact   | pay         | Broken                                    |
@@ -73,7 +73,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 <a id="salary"></a>
 
 - Id: `salary` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: PP-1, BU-1, BU-2, SA-1, SA-2, SA-6, AI-1, DB-5. Links: L24, L25, L26, L33, L47, L69.
+- Verdict: Duplicated (two stores that can disagree). Findings: PP-1, BU-1, BU-2, SA-6, DB-5. Links: L24, L25, L26, L33, L47, L69.
 - Source of truth: `user_profiles.annual_salary` in `apps/backend/src/entities/user-profile.entity.ts`
 
 Other stores:
@@ -82,7 +82,7 @@ Other stores:
 - `tax_records category paye_salary` [legacy] in `packages/finance-engine/src/tax-calculator.ts` (an old record replaces the profile salary in tax figures only)
 - `localStorage flump_financial_baseline_v2` [cache] in `apps/web/app/state/baseline.store.ts` (used only when no profile row exists)
 - `cookie and localStorage flump_onboarding_seed` [legacy] in `packages/finance-engine/src/persistence.ts` (numbers typed into public calculators before sign-up)
-- `engine default 45,000` [default] in `packages/finance-engine/src/profile.ts` (stands in for a missing salary in AI output)
+- `engine default 45,000` [default] in `packages/finance-engine/src/profile.ts` (display default only; AI output and MCP read saved facts and report no salary as not set)
 
 Entered or changed by:
 
@@ -101,6 +101,7 @@ Read by:
 - Dashboard: `apps/web/app/routes/_index.tsx`
 - AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
+- Self Assessment: `packages/finance-engine/src/paye-salary-for-tax.ts` (payeSalaryForTax, the one rule for the salary passed as PAYE pay)
 
 ### Monthly take-home pay as typed in onboarding
 
@@ -128,9 +129,9 @@ Read by:
 <a id="employment-type"></a>
 
 - Id: `employment-type` (stored fact)
-- Verdict: Broken. Findings: SA-1. Links: L48.
+- Verdict: Holds. Findings: none. Links: L48.
 - Source of truth: `user_profiles.employment_type` in `apps/backend/src/entities/user-profile.entity.ts`
-- Note: The Self Assessment page and the AI tax tool do not read it.
+- Note: The Dashboard, the Self Assessment page and the AI tax tool all read it through payeSalaryForTax.
 
 Other stores:
 
@@ -143,7 +144,7 @@ Entered or changed by:
 
 Read by:
 
-- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/estimated-tax-due.ts` (a self-employed person's salary is not treated as PAYE pay here only)
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/estimated-tax-due.ts` (a self-employed person's salary is not treated as PAYE pay, by the one rule in payeSalaryForTax)
 
 ### Workplace pension rates and how the pension is paid
 
@@ -273,7 +274,7 @@ Read by:
 
 Other code paths that compute it:
 
-- `context pack take-home from the baseline` [duplicate] in `packages/finance-engine/src/ai-context-pack.ts` (defaults and a fixed 2025/26 year)
+- `context pack take-home from the baseline` [duplicate] in `packages/finance-engine/src/ai-context-pack.ts` (saved facts only, the tax year that applies today, no extra debt payment)
 - `onboarding take-home facts` [wrapper] in `apps/web/app/features/onboarding/deriveOnboardingSummary.ts` (same function, blank pension read as 0%)
 - `pension take-home facts` [wrapper] in `apps/web/app/containers/pension/PensionContainer.tsx` (same function, 5% read as unknown)
 
@@ -314,7 +315,7 @@ Shown on:
 <a id="account-balance"></a>
 
 - Id: `account-balance` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: SD-1, JO-1, CH-2, CH-4, DB-13. Links: L01, L02, L03, L04, L06, L51, L67, L68.
+- Verdict: Duplicated (two stores that can disagree). Findings: CH-2, DB-13. Links: L01, L02, L03, L04, L06, L51, L67, L68.
 - Source of truth: `accounts.balance` in `apps/backend/src/entities/account.entity.ts` (debts are stored negative)
 
 Other stores:
@@ -325,7 +326,7 @@ Entered or changed by:
 
 - Accounts: `apps/web/app/routes/app.accounts._index.tsx`
 - Account page: `apps/web/app/routes/app.accounts.$account.tsx`
-- Savings: `apps/web/app/routes/app.savings.tsx` (the edit form sends the user's share as the whole balance for a joint account)
+- Savings: `apps/web/app/routes/app.savings.tsx` (the edit form sends the whole balance for a joint account)
 - Debt: `apps/web/app/routes/app.debt.tsx` (on create only)
 - Pension: `apps/web/app/routes/app.pension.tsx`
 - Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx`
@@ -353,7 +354,7 @@ Read by:
 <a id="balance-history"></a>
 
 - Id: `balance-history` (stored fact)
-- Verdict: Broken. Findings: CH-1, CH-2, CH-3, CH-5. Links: L04, L05, L68, L70.
+- Verdict: Broken. Findings: CH-1, CH-2, CH-5. Links: L04, L05, L68, L70.
 - Source of truth: `account_details (account, year, month)` in `apps/backend/src/entities/account-detail.entity.ts`
 
 Other stores:
@@ -381,7 +382,7 @@ Read by:
 <a id="check-in-done"></a>
 
 - Id: `check-in-done` (stored fact)
-- Verdict: Broken. Findings: CH-3, CH-7, DB-10. Links: L70.
+- Verdict: Broken. Findings: CH-7, DB-10. Links: L70.
 - Source of truth: `snapshot_checkins` in `apps/backend/src/entities/snapshot-checkin.entity.ts`
 
 Other stores:
@@ -401,9 +402,9 @@ Read by:
 <a id="ownership-share"></a>
 
 - Id: `ownership-share` (stored fact)
-- Verdict: Broken. Findings: JO-1, JO-2, JO-3, JO-5, JO-6, JO-9, JO-10, SA-5. Links: L18, L23, L55, L67.
+- Verdict: Broken. Findings: JO-5, JO-6, JO-9, JO-10, SA-5. Links: L18, L23, L55, L67.
 - Source of truth: `accounts.ownership, accounts.share_percent` in `apps/backend/src/entities/account.entity.ts`
-- Note: Imports always create sole accounts. The Dashboard savings card ignores the share.
+- Note: Imports always create sole accounts.
 
 Other stores:
 
@@ -455,7 +456,7 @@ Read by:
 <a id="account-monthly-amount"></a>
 
 - Id: `account-monthly-amount` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: HM-1, BU-5, BU-6, BU-7, SD-7, SD-10, PP-11, DB-6. Links: L13, L35, L36, L37.
+- Verdict: Duplicated (two stores that can disagree). Findings: HM-1, BU-5, BU-6, BU-7, SD-10, PP-11, DB-6. Links: L13, L35, L36, L37.
 - Source of truth: `accounts.monthly_contribution` in `apps/backend/src/entities/account.entity.ts` (one column with four meanings, by account type)
 
 Other stores:
@@ -507,7 +508,7 @@ Read by:
 <a id="account-type"></a>
 
 - Id: `account-type` (stored fact)
-- Verdict: Broken. Findings: CH-4, SD-12, DB-6, JO-11. Links: L01, L44, L71.
+- Verdict: Broken. Findings: SD-12, DB-6, JO-11. Links: L01, L44, L71.
 - Source of truth: `accounts.type, accounts.account_subtype, accounts.is_current` in `apps/backend/src/entities/account.entity.ts` (type sets the sign, the category and every figure the account counts in; no database check limits its values)
 
 Other stores:
@@ -662,7 +663,7 @@ Shown on:
 <a id="debt-free-date"></a>
 
 - Id: `debt-free-date` (derived figure)
-- Verdict: Duplicated (two stores that can disagree). Findings: SD-4, SD-6, SD-10, AI-5. Links: L46, L72.
+- Verdict: Duplicated (two stores that can disagree). Findings: SD-4, SD-6, SD-10. Links: L46, L72.
 - Computed by: `compareAvalancheAndSnowball` in `packages/finance-engine/src/debt-payoff.ts`
 - Built from: `account-balance`, `account-rate`, `account-monthly-amount`, `card-limit-and-zero-percent-end`
 
@@ -684,14 +685,14 @@ Shown on:
 <a id="savings-total"></a>
 
 - Id: `savings-total` (derived figure)
-- Verdict: Broken. Findings: SD-2, JO-3. Links: L42, L55.
+- Verdict: Broken. Findings: none. Links: L42, L55.
 - Computed by: `PortfolioSnapshot balances at share, summed on the Savings page` in `packages/finance-engine/src/portfolio.ts`
 - Built from: `account-balance`, `account-monthly-amount`, `ownership-share`
-- Note: No engine selector owns this total.
+- Note: No engine selector owns this total; the Dashboard and Savings page both sum at the share.
 
 Other code paths that compute it:
 
-- `Dashboard sum of raw balances` [duplicate] in `apps/web/app/routes/_index.tsx` (whole balances, no share)
+- `Dashboard sum` [duplicate] in `apps/web/app/routes/_index.tsx` (at the share, from the portfolio snapshot)
 - `Savings page sum` [duplicate] in `apps/web/app/containers/savings/SavingsContainer.tsx`
 
 Shown on:
@@ -800,7 +801,7 @@ Entered or changed by:
 Read by:
 
 - Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/loan-to-value.ts`
-- Mortgage: `packages/finance-engine/src/home-equity.ts`
+- Mortgage: `packages/finance-engine/src/home-equity.ts` (pickHomeProperty leaves the home out when there is more than one property that is not buy to let)
 - Dashboard: `apps/web/app/routes/_index.tsx`
 - Accounts: `apps/web/app/features/accounts/accountRows.ts`
 
@@ -809,7 +810,7 @@ Read by:
 <a id="property-kind"></a>
 
 - Id: `property-kind` (stored fact)
-- Verdict: Broken. Findings: HM-3, HM-8, DB-6. Links: L71, L18.
+- Verdict: Broken. Findings: HM-3, DB-6. Links: L71, L18.
 - Source of truth: `not stored: inferred from the account name` in `packages/finance-engine/src/picture/selectors/loan-to-value.ts` (accounts.account_subtype exists and holds a kind for mortgages, savings and investments; no kind is defined for properties)
 
 Other stores:
@@ -952,6 +953,7 @@ Shown on:
 
 Other code paths that compute it:
 
+- `pickHomeProperty` [wrapper] in `packages/finance-engine/src/home-equity.ts` (the one choice of the home; none when more than one property is not buy to let)
 - `buy-to-let and fallback loan to value` [duplicate] in `apps/web/app/containers/mortgage/MortgageContainer.tsx`
 
 Shown on:
@@ -1075,12 +1077,12 @@ Read by:
 <a id="setup-checklist"></a>
 
 - Id: `setup-checklist` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: CS-2, CS-3, CS-6. Links: L64, L65, L66.
+- Verdict: Duplicated (two stores that can disagree). Findings: CS-2, CS-6. Links: L64, L65, L66.
 - Source of truth: `user_profiles.setup_checklist_completed_steps` in `apps/backend/src/entities/user-profile.entity.ts`
 
 Other stores:
 
-- `localStorage flump_setup_checklist_dismissed` [duplicate] in `apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx` (per browser; survives a reset)
+- `localStorage flump_setup_checklist_dismissed` [duplicate] in `apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx` (per browser; cleared on a reset and on sign-out)
 
 Entered or changed by:
 
@@ -1142,9 +1144,9 @@ Read by:
 <a id="budget-entries"></a>
 
 - Id: `budget-entries` (stored fact)
-- Verdict: Broken. Findings: BU-1, BU-3, BU-7, BU-8, BU-10, PP-6, JO-4. Links: L33, L34, L35, L36, L39, L56, L58.
+- Verdict: Broken. Findings: BU-1, BU-3, BU-7, BU-10, JO-4. Links: L33, L34, L35, L36, L39, L56, L58.
 - Source of truth: `budget_entries` in `apps/backend/src/entities/budget-entry.entity.ts`
-- Note: The Retirement page should read these and does not load them.
+- Note: The Retirement page loads these rows.
 
 Other stores:
 
@@ -1211,7 +1213,7 @@ Read by:
 <a id="left-over"></a>
 
 - Id: `left-over` (derived figure)
-- Verdict: Broken. Findings: BU-1, BU-3, BU-6, BU-8, AI-4. Links: L33, L34, L39.
+- Verdict: Broken. Findings: BU-1, BU-3, BU-6, AI-4. Links: L33, L34, L39.
 - Computed by: `selectBudgetTotals` in `packages/finance-engine/src/picture/selectors/budget-totals.ts`
 - Built from: `budget-entries`
 - Note: Income here is the budget income row, not take-home from the saved salary.
@@ -1257,7 +1259,7 @@ Shown on:
 <a id="months-of-cover"></a>
 
 - Id: `months-of-cover` (derived figure)
-- Verdict: Broken. Findings: BU-3, BU-7, JO-2, AI-4. Links: L34, L55.
+- Verdict: Broken. Findings: BU-3, BU-7, AI-4. Links: L34, L55.
 - Computed by: `selectMonthsOfCover` in `packages/finance-engine/src/picture/selectors/months-of-cover.ts`
 - Built from: `budget-entries`, `account-balance`, `account-monthly-amount`, `ownership-share`
 
@@ -1327,16 +1329,17 @@ Read by:
 <a id="estimated-tax"></a>
 
 - Id: `estimated-tax` (derived figure)
-- Verdict: Broken. Findings: SA-1, SA-2, SA-3, SA-8, SA-9. Links: L29, L48, L69.
+- Verdict: Broken. Findings: SA-3, SA-9. Links: L29, L48, L69.
 - Computed by: `calculateUKTax` in `packages/finance-engine/src/tax-calculator.ts`
 - Built from: `tax-records`, `salary`, `employment-type`, `tax-region`, `rental-share-for-tax`
-- Note: One calculator, four callers that prepare its inputs differently.
+- Note: One calculator. The callers pass the salary through payeSalaryForTax. The calculation still uses England, Wales and Northern Ireland bands for a Scottish region, and the page says so.
 
 Other code paths that compute it:
 
-- `selectEstimatedTaxDue` [wrapper] in `packages/finance-engine/src/picture/selectors/estimated-tax-due.ts` (the Dashboard's inputs: salary 0 for self-employed)
-- `direct call from the page` [wrapper] in `apps/web/app/containers/tax/TaxContainer.tsx` (salary passed for every employment type)
-- `get_tax_year_position` [wrapper] in `packages/mcp/src/tools/read/getTaxYearPosition.ts` (uses the baseline salary, 45,000 when none is saved)
+- `selectEstimatedTaxDue` [wrapper] in `packages/finance-engine/src/picture/selectors/estimated-tax-due.ts` (the Dashboard's inputs: salary through payeSalaryForTax)
+- `direct call from the page` [wrapper] in `apps/web/app/containers/tax/TaxContainer.tsx` (salary through payeSalaryForTax)
+- `get_tax_year_position` [wrapper] in `packages/mcp/src/tools/read/getTaxYearPosition.ts` (salary through payeSalaryForTax; no salary saved is reported as not set)
+- `payeSalaryForTax` [wrapper] in `packages/finance-engine/src/paye-salary-for-tax.ts` (the one rule for the salary passed as PAYE pay)
 - `headline strip sums` [duplicate] in `apps/web/app/features/tax/components/TaxHeadline/TaxHeadline.tsx`
 
 Shown on:
@@ -1376,10 +1379,10 @@ Read by:
 <a id="retirement-income"></a>
 
 - Id: `retirement-income` (derived figure)
-- Verdict: Broken. Findings: PP-6, HM-6, HM-8, JO-4. Links: L58, L59.
+- Verdict: Broken. Findings: HM-6, JO-4. Links: L58, L59.
 - Computed by: `calculateRetirementPlan` in `packages/finance-engine/src/retirement.ts`
 - Built from: `retirement-plan`, `account-balance`, `balance-history`, `salary`, `pension-rates`, `birth-year`, `housing-cost`, `housing-status`, `budget-entries`, `mortgage-term-and-fix-end`
-- Note: One calculation. The web page feeds it no budget rows, and it can pick the buy-to-let mortgage as the home loan.
+- Note: One calculation. The web page feeds it the saved budget rows. A single rental with an ordinary name can still be taken as the home loan.
 
 Other code paths that compute it:
 

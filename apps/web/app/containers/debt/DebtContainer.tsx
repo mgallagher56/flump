@@ -15,7 +15,7 @@ import {
 import type { ToolSlug } from "@repo/ui/tools";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
-import { AddDebtDialog } from "~/features/debt/components/AddDebtDialog";
+import { AddDebtDialog, type DebtEditSource } from "~/features/debt/components/AddDebtDialog";
 import { DebtAccountsList } from "~/features/debt/components/DebtAccountsList";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import { DebtSummary } from "~/features/debt/components/DebtSummary";
@@ -55,8 +55,26 @@ export const DebtContainer: FC = () => {
   // liabilities are stored negative (#665), so every figure below uses the absolute value.
   const accounts = loaderData?.accounts;
   const accountDetails = loaderData?.accountDetails;
-  const debts = useMemo<DebtItem[]>(
-    () => new PortfolioSnapshot(accounts ?? [], accountDetails ?? []).toDebtItems(),
+  // Each row's minimum is at the user's share. The edit form also gets the whole stored payment
+  // and the ownership, so a joint debt is edited and saved whole (SD-7).
+  const debts = useMemo<(DebtItem & DebtEditSource)[]>(
+    () =>
+      new PortfolioSnapshot(accounts ?? [], accountDetails ?? []).toDebtItems().map((item) => {
+        const saved = accounts?.find((a) => String(a.id) === item.id);
+        if (!saved) return item;
+        const stored = Number(saved.monthlyContribution);
+        return {
+          ...item,
+          ownership: saved.ownership ?? null,
+          sharePercent: saved.sharePercent ?? null,
+          ...(saved.monthlyContribution !== null &&
+          saved.monthlyContribution !== undefined &&
+          Number.isFinite(stored) &&
+          stored > 0
+            ? { wholeMinimumPayment: stored }
+            : {}),
+        };
+      }),
     [accounts, accountDetails],
   );
 

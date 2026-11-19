@@ -94,6 +94,10 @@ const toStoredBalance = (type: AccountType | undefined, shown: string): string =
   return owed === 0 ? "0" : String(-owed);
 };
 
+/** Two typed figures are the same when both are empty or both are the same number. */
+const sameFigure = (a: string, b: string): boolean =>
+  a === "" || b === "" ? a === b : Number(a) === Number(b);
+
 /**
  * A fresh id for one opening of the dialog (the idempotency key's prefix). Always from the Web
  * Crypto random source: `randomUUID` where the page is a secure context, else 16 bytes from
@@ -259,6 +263,12 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     sharePercent: selectedAccount.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT,
   });
 
+  // The balance as the form opened, so an edit sends it only when the user changed it (CH-3): a
+  // re-posted balance writes a current-month history row, which counts as a recorded month.
+  const [openedBalance, setOpenedBalance] = useState<string>(() =>
+    isEditAccount ? toFormBalance(selectedAccount.type, selectedAccount.balance) : "",
+  );
+
   // The latest prefill, read when a new open request arrives. The effect is keyed on the request
   // alone, so a parent re-render with new props never reopens or resets the dialog.
   const reopenWith = useRef({
@@ -277,6 +287,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       setRequestId(newRequestId());
       latest.dismissSave();
       latest.dismissDelete();
+      setOpenedBalance("");
       setFormInput({
         name: latest.initialName ?? "",
         type: [latest.initialType ?? accountTypeArray[0]],
@@ -300,6 +311,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       setRequestId(newRequestId());
       dismissSave();
       dismissDelete();
+      setOpenedBalance(
+        isEditAccount ? toFormBalance(selectedAccount.type, selectedAccount.balance) : "",
+      );
       setFormInput({
         name: isEditAccount ? selectedAccount.name || "" : (initialName ?? ""),
         type: [
@@ -427,6 +441,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       return;
     }
     const stored = toStoredBalance(accountType, balance);
+    const balanceChanged = !isEditAccount || !sameFigure(balance, openedBalance);
     const supportsSubtype =
       accountType === SAVING || accountType === INVESTMENT || accountType === MORTGAGE;
     const supportsCreditFields = accountType === CREDIT_CARD || accountType === OVERDRAFT;
@@ -446,7 +461,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         ...(resolvedShare !== null ? { sharePercent: String(resolvedShare) } : {}),
         ...(supportsSubtype ? { accountSubtype } : isEditAccount ? { accountSubtype: "" } : {}),
         ...(accountType === STUDENT_LOAN ? { studentLoanPlan: studentLoanPlan[0] ?? "" } : {}),
-        ...(stored !== "" ? { balance: stored } : {}),
+        ...(stored !== "" && balanceChanged ? { balance: stored } : {}),
         ...(supportsCreditFields
           ? { creditLimit, promoZeroPercentUntil }
           : isEditAccount
@@ -468,6 +483,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     homeValue,
     isEditAccount,
     formInput,
+    openedBalance,
     fetcher,
     requestId,
     saveOutcome.begin,

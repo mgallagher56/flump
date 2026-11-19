@@ -200,16 +200,9 @@ const BudgetContainer: FC = () => {
     [accounts, accountDetails],
   );
 
-  // Sync current balance for all accounts from latest accountDetails or direct balance
-  const accountsWithBalances = useMemo(() => {
-    return accounts.map((acc: any) => {
-      const resolved = snapshot.getAccount(acc.id);
-      return {
-        ...acc,
-        balance: resolved?.nominalBalance ?? (Number(acc.balance) || 0),
-      };
-    });
-  }, [accounts, snapshot]);
+  // Rows as saved (whole balance, ownership kept). The runway builds its own PortfolioSnapshot,
+  // which applies a joint share once; rows already at share would be shared twice (JO-2).
+  const accountsWithBalances = accounts;
 
   // Housing saved on this page, laid over the loader profile until the next load (E32).
   const [savedHousing, setSavedHousing] = useState<{

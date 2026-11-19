@@ -6,7 +6,7 @@ import {
   netWorthBasisFromProfile,
   profileFactsFromProfile,
   type RawAccount,
-  userProfileToFinancialBaseline,
+  userProfileToSavedBaseline,
   workplacePensionFromProfile,
 } from "@flump/finance-engine";
 import {
@@ -203,7 +203,7 @@ export class AgentDataService implements McpUserDataProvider {
 
   async getBaseline(userId: string): Promise<FinancialBaseline> {
     const profile = wireProfile(await this.userProfileService.getProfile(userId));
-    return userProfileToFinancialBaseline(profile, userId);
+    return userProfileToSavedBaseline(profile, userId);
   }
 
   async getNetWorthBasis(userId: string): Promise<NetWorthBasis> {
@@ -333,7 +333,7 @@ export class AgentDataService implements McpUserDataProvider {
     _options: { anonymizeInstitutions?: boolean } = {},
   ): Promise<BuildContextPackInput> {
     const profile = wireProfile(await this.userProfileService.getProfile(userId));
-    const baseline = userProfileToFinancialBaseline(profile, userId);
+    const baseline = userProfileToSavedBaseline(profile, userId);
 
     const accounts = await this.financeService.getAccounts(userId);
     const accountDetails = await this.financeService.getAccountDetails(userId);

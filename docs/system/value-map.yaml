@@ -207,17 +207,17 @@ links:
   - {
       id: L07,
       group: A. Accounts and balances,
-      verdict: broken,
+      verdict: holds,
       checked: code,
-      findings: [AI-9, AI-10],
+      findings: [],
       statement: "An account or balance brought in by a staged import behaves exactly like one typed into a form.",
     }
   - {
       id: L67,
       group: A. Accounts and balances,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
-      findings: [SD-1, JO-1, SD-7],
+      findings: [],
       statement: "Editing one field of an account on any page leaves its other saved values unchanged.",
     }
   - {
@@ -231,9 +231,9 @@ links:
   - {
       id: L70,
       group: A. Accounts and balances,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
-      findings: [CH-3],
+      findings: [],
       statement: "The check-in reminder shows until this month's check-in is finished, and an unrelated edit does not hide it.",
     }
   # B. Home and mortgage
@@ -443,7 +443,7 @@ links:
       group: "D. Profile, pay and pension",
       verdict: broken,
       checked: code,
-      findings: [SA-2, AI-1, AI-2, DB-5],
+      findings: [DB-5],
       statement: "When a fact is not saved, no page or tool invents a value for it.",
     }
   # E. Budget
@@ -498,9 +498,9 @@ links:
   - {
       id: L39,
       group: E. Budget,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
-      findings: [BU-8],
+      findings: [],
       statement: "Seeded or empty budget rows never change a figure.",
     }
   # F. Savings, ISAs, investments
@@ -522,9 +522,9 @@ links:
   - {
       id: L42,
       group: "F. Savings, ISAs and investments",
-      verdict: broken,
+      verdict: holds,
       checked: browser,
-      findings: [SD-2, JO-3],
+      findings: [],
       statement: "Savings totals are the same on the Dashboard, Savings and Accounts.",
     }
   - {
@@ -557,7 +557,7 @@ links:
       group: G. Cards and loans,
       verdict: duplicated,
       checked: code,
-      findings: [SD-6, AI-5],
+      findings: [SD-6],
       statement: "The debt-free date and interest are the same on the Dashboard, Debt and in AI output.",
     }
   - {
@@ -580,9 +580,9 @@ links:
   - {
       id: L48,
       group: H. Self Assessment,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
-      findings: [SA-1, SA-2, SA-3],
+      findings: [SA-3],
       statement: "Estimated tax is the same on the Dashboard, the Self Assessment page and in AI output.",
     }
   - {
@@ -637,7 +637,7 @@ links:
       group: J. Joint ownership,
       verdict: broken,
       checked: browser,
-      findings: [JO-1, JO-2, JO-3, JO-5, JO-9],
+      findings: [JO-5, JO-9],
       statement: "Marking an account joint at 40% changes every figure that counts it in the same way.",
     }
   - {
@@ -660,9 +660,9 @@ links:
   - {
       id: L58,
       group: K. Retirement,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
-      findings: [PP-6, HM-8],
+      findings: [],
       statement: "The retirement plan uses the saved pots, salary, pension rates, year of birth, housing details and budget rows, with no retyping.",
     }
   - {
@@ -693,15 +693,15 @@ links:
       group: "L. AI tools, export and reset",
       verdict: broken,
       checked: code,
-      findings: [AI-1, AI-3, AI-4, AI-5, AI-6, AI-7],
+      findings: [AI-4, AI-6, AI-7],
       statement: "AI output equals the page figures for net worth, left over, months of cover, debts, take-home and tax.",
     }
   - {
       id: L62,
       group: "L. AI tools, export and reset",
-      verdict: broken,
+      verdict: holds,
       checked: code,
-      findings: [CS-3, AI-11],
+      findings: [],
       statement: "The export holds every stored fact, and reset and erasure clear every store, including browser storage.",
     }
   # M. Browser state
@@ -710,7 +710,7 @@ links:
       group: M. Browser state,
       verdict: broken,
       checked: code,
-      findings: [CS-1, CS-5],
+      findings: [CS-5],
       statement: "After any save, every figure on the current page and on the next page reflects it without a manual reload.",
     }
   - {
@@ -724,9 +724,9 @@ links:
   - {
       id: L65,
       group: M. Browser state,
-      verdict: broken,
+      verdict: holds,
       checked: code,
-      findings: [CS-3],
+      findings: [],
       statement: "Sign-out and reset leave no user figures in the browser.",
     }
   # N. Preferences
@@ -735,7 +735,7 @@ links:
       group: N. Preferences,
       verdict: duplicated,
       checked: code,
-      findings: [CS-2, CS-3],
+      findings: [CS-2],
       statement: "Enabled pages, dashboard widgets and the setup checklist each have one store.",
     }
 
@@ -775,7 +775,7 @@ facts:
           ref: "engine default 45,000",
           status: default,
           path: packages/finance-engine/src/profile.ts,
-          note: "stands in for a missing salary in AI output",
+          note: "display default only; AI output and MCP read saved facts and report no salary as not set",
         }
     writers:
       - {
@@ -798,9 +798,14 @@ facts:
       - { surface: dashboard, path: apps/web/app/routes/_index.tsx }
       - { surface: mcp-read, path: packages/mcp/src/tools/read/getTaxYearPosition.ts }
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
+      - {
+          surface: self-assessment,
+          path: packages/finance-engine/src/paye-salary-for-tax.ts,
+          note: "payeSalaryForTax, the one rule for the salary passed as PAYE pay",
+        }
     links: [L24, L25, L26, L33, L47, L69]
     verdict: duplicated
-    findings: [PP-1, BU-1, BU-2, SA-1, SA-2, SA-6, AI-1, DB-5]
+    findings: [PP-1, BU-1, BU-2, SA-6, DB-5]
 
   - id: typed-take-home
     name: Monthly take-home pay as typed in onboarding
@@ -838,12 +843,12 @@ facts:
       - {
           surface: picture,
           path: packages/finance-engine/src/picture/selectors/estimated-tax-due.ts,
-          note: "a self-employed person's salary is not treated as PAYE pay here only",
+          note: "a self-employed person's salary is not treated as PAYE pay, by the one rule in payeSalaryForTax",
         }
     links: [L48]
-    verdict: broken
-    findings: [SA-1]
-    note: The Self Assessment page and the AI tax tool do not read it.
+    verdict: holds
+    findings: []
+    note: The Dashboard, the Self Assessment page and the AI tax tool all read it through payeSalaryForTax.
 
   - id: pension-rates
     name: Workplace pension rates and how the pension is paid
@@ -1002,7 +1007,7 @@ facts:
       - {
           surface: savings,
           path: apps/web/app/routes/app.savings.tsx,
-          note: "the edit form sends the user's share as the whole balance for a joint account",
+          note: "the edit form sends the whole balance for a joint account",
         }
       - { surface: debt, path: apps/web/app/routes/app.debt.tsx, note: "on create only" }
       - { surface: pension, path: apps/web/app/routes/app.pension.tsx }
@@ -1029,7 +1034,7 @@ facts:
       - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
     links: [L01, L02, L03, L04, L06, L51, L67, L68]
     verdict: duplicated
-    findings: [SD-1, JO-1, CH-2, CH-4, DB-13]
+    findings: [CH-2, DB-13]
 
   - id: balance-history
     name: Balance for each past month
@@ -1064,7 +1069,7 @@ facts:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L04, L05, L68, L70]
     verdict: broken
-    findings: [CH-1, CH-2, CH-3, CH-5]
+    findings: [CH-1, CH-2, CH-5]
 
   - id: check-in-done
     name: Whether a month's check-in was finished
@@ -1088,7 +1093,7 @@ facts:
         }
     links: [L70]
     verdict: broken
-    findings: [CH-3, CH-7, DB-10]
+    findings: [CH-7, DB-10]
 
   - id: ownership-share
     name: Joint ownership and the user's share of an account
@@ -1124,8 +1129,8 @@ facts:
       - { surface: mcp-read, path: apps/backend/src/modules/agent/agent-data.service.ts }
     links: [L18, L23, L55, L67]
     verdict: broken
-    findings: [JO-1, JO-2, JO-3, JO-5, JO-6, JO-9, JO-10, SA-5]
-    note: Imports always create sole accounts. The Dashboard savings card ignores the share.
+    findings: [JO-5, JO-6, JO-9, JO-10, SA-5]
+    note: Imports always create sole accounts.
 
   - id: account-rate
     name: Interest rate on an account
@@ -1197,7 +1202,7 @@ facts:
       - { surface: check-in, path: packages/finance-engine/src/check-in.ts }
     links: [L13, L35, L36, L37]
     verdict: duplicated
-    findings: [HM-1, BU-5, BU-6, BU-7, SD-7, SD-10, PP-11, DB-6]
+    findings: [HM-1, BU-5, BU-6, BU-7, SD-10, PP-11, DB-6]
 
   - id: card-limit-and-zero-percent-end
     name: Credit limit and 0% end date
@@ -1267,7 +1272,11 @@ facts:
       - { surface: check-in, path: apps/web/app/features/snapshot/useSaveSnapshot.ts }
     readers:
       - { surface: picture, path: packages/finance-engine/src/picture/selectors/loan-to-value.ts }
-      - { surface: mortgage, path: packages/finance-engine/src/home-equity.ts }
+      - {
+          surface: mortgage,
+          path: packages/finance-engine/src/home-equity.ts,
+          note: "pickHomeProperty leaves the home out when there is more than one property that is not buy to let",
+        }
       - { surface: dashboard, path: apps/web/app/routes/_index.tsx }
       - { surface: accounts, path: apps/web/app/features/accounts/accountRows.ts }
     links: [L10, L11, L20, L71]
@@ -1292,7 +1301,7 @@ facts:
         }
     links: [L71, L18]
     verdict: broken
-    findings: [HM-3, HM-8, DB-6]
+    findings: [HM-3, DB-6]
 
   - id: buy-to-let-mortgage
     name: Buy-to-let mortgage balance, rate and type
@@ -1492,7 +1501,7 @@ facts:
       - { surface: mcp-read, path: packages/mcp/src/tools/read/listAccounts.ts }
     links: [L01, L44, L71]
     verdict: broken
-    findings: [CH-4, SD-12, DB-6, JO-11]
+    findings: [SD-12, DB-6, JO-11]
 
   - id: investment-return
     name: Estimated yearly return on an investment account
@@ -1590,8 +1599,8 @@ facts:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L33, L34, L35, L36, L39, L56, L58]
     verdict: broken
-    findings: [BU-1, BU-3, BU-7, BU-8, BU-10, PP-6, JO-4]
-    note: The Retirement page should read these and does not load them.
+    findings: [BU-1, BU-3, BU-7, BU-10, JO-4]
+    note: The Retirement page loads these rows.
 
   - id: other-outgoings
     name: Other monthly outgoings as typed in onboarding
@@ -1774,7 +1783,7 @@ facts:
           ref: "localStorage flump_setup_checklist_dismissed",
           status: duplicate,
           path: apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx,
-          note: "per browser; survives a reset",
+          note: "per browser; cleared on a reset and on sign-out",
         }
     writers:
       - {
@@ -1799,7 +1808,7 @@ facts:
         }
     links: [L64, L65, L66]
     verdict: duplicated
-    findings: [CS-2, CS-3, CS-6]
+    findings: [CS-2, CS-6]
 
   - id: account-name
     name: Account name
@@ -1959,7 +1968,7 @@ figures:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L46, L72]
     verdict: duplicated
-    findings: [SD-4, SD-6, SD-10, AI-5]
+    findings: [SD-4, SD-6, SD-10]
 
   - id: home-equity
     name: Home equity
@@ -1995,6 +2004,12 @@ figures:
         path: packages/finance-engine/src/picture/selectors/loan-to-value.ts,
       }
     other_paths:
+      - {
+          function: pickHomeProperty,
+          status: wrapper,
+          path: packages/finance-engine/src/home-equity.ts,
+          note: "the one choice of the home; none when more than one property is not buy to let",
+        }
       - {
           function: "buy-to-let and fallback loan to value",
           status: duplicate,
@@ -2046,7 +2061,7 @@ figures:
           function: "context pack take-home from the baseline",
           status: duplicate,
           path: packages/finance-engine/src/ai-context-pack.ts,
-          note: "defaults and a fixed 2025/26 year",
+          note: "saved facts only, the tax year that applies today, no extra debt payment",
         }
       - {
           function: "onboarding take-home facts",
@@ -2120,7 +2135,7 @@ figures:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L33, L34, L39]
     verdict: broken
-    findings: [BU-1, BU-3, BU-6, BU-8, AI-4]
+    findings: [BU-1, BU-3, BU-6, AI-4]
     note: Income here is the budget income row, not take-home from the saved salary.
 
   - id: safe-to-spend
@@ -2171,7 +2186,7 @@ figures:
       - { surface: mcp-read, path: packages/mcp/src/tools/read/getFinancialSnapshot.ts }
     links: [L34, L55]
     verdict: broken
-    findings: [BU-3, BU-7, JO-2, AI-4]
+    findings: [BU-3, BU-7, AI-4]
 
   - id: savings-total
     name: Savings total and saved each month
@@ -2183,10 +2198,10 @@ figures:
       }
     other_paths:
       - {
-          function: "Dashboard sum of raw balances",
+          function: "Dashboard sum",
           status: duplicate,
           path: apps/web/app/routes/_index.tsx,
-          note: "whole balances, no share",
+          note: "at the share, from the portfolio snapshot",
         }
       - {
           function: "Savings page sum",
@@ -2202,8 +2217,8 @@ figures:
       - { surface: savings, path: apps/web/app/containers/savings/SavingsContainer.tsx }
     links: [L42, L55]
     verdict: broken
-    findings: [SD-2, JO-3]
-    note: No engine selector owns this total.
+    findings: []
+    note: No engine selector owns this total; the Dashboard and Savings page both sum at the share.
 
   - id: savings-interest
     name: Savings interest over the next 12 months
@@ -2263,19 +2278,25 @@ figures:
           function: selectEstimatedTaxDue,
           status: wrapper,
           path: packages/finance-engine/src/picture/selectors/estimated-tax-due.ts,
-          note: "the Dashboard's inputs: salary 0 for self-employed",
+          note: "the Dashboard's inputs: salary through payeSalaryForTax",
         }
       - {
           function: "direct call from the page",
           status: wrapper,
           path: apps/web/app/containers/tax/TaxContainer.tsx,
-          note: "salary passed for every employment type",
+          note: "salary through payeSalaryForTax",
         }
       - {
           function: get_tax_year_position,
           status: wrapper,
           path: packages/mcp/src/tools/read/getTaxYearPosition.ts,
-          note: "uses the baseline salary, 45,000 when none is saved",
+          note: "salary through payeSalaryForTax; no salary saved is reported as not set",
+        }
+      - {
+          function: payeSalaryForTax,
+          status: wrapper,
+          path: packages/finance-engine/src/paye-salary-for-tax.ts,
+          note: "the one rule for the salary passed as PAYE pay",
         }
       - {
           function: "headline strip sums",
@@ -2290,8 +2311,8 @@ figures:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L29, L48, L69]
     verdict: broken
-    findings: [SA-1, SA-2, SA-3, SA-8, SA-9]
-    note: One calculator, four callers that prepare its inputs differently.
+    findings: [SA-3, SA-9]
+    note: One calculator. The callers pass the salary through payeSalaryForTax. The calculation still uses England, Wales and Northern Ireland bands for a Scottish region, and the page says so.
 
   - id: pension-going-in
     name: Paid into pensions each month
@@ -2352,8 +2373,8 @@ figures:
       - { surface: mcp-simulate, path: packages/mcp/src/tools/simulate/simulateRetirement.ts }
     links: [L58, L59]
     verdict: broken
-    findings: [PP-6, HM-6, HM-8, JO-4]
-    note: One calculation. The web page feeds it no budget rows, and it can pick the buy-to-let mortgage as the home loan.
+    findings: [HM-6, JO-4]
+    note: One calculation. The web page feeds it the saved budget rows. A single rental with an ordinary name can still be taken as the home loan.
 
   - id: check-in-calculated-balance
     name: Calculated balance offered in the check-in

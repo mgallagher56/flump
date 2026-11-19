@@ -93,8 +93,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const savingsAccounts = Array.isArray(accounts)
     ? accounts.filter((a: any) => a.type === "Saving" || a.type === "Investment")
     : [];
+  // At the user's share, from the engine, as the Savings page and net worth read it (SD-2).
   const totalSavingsBalance = savingsAccounts.reduce(
-    (sum: number, a: any) => sum + (Number(a.balance) || 0),
+    (sum: number, a: any) =>
+      sum +
+      (portfolioSnapshot.getAccount(String(a.id))?.nominalBalance ?? (Number(a.balance) || 0)),
     0,
   );
   const totalMonthlyContributions = savingsAccounts.reduce(
