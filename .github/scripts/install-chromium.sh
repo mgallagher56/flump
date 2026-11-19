@@ -29,9 +29,9 @@ retry() {
   done
 }
 
-# Prints the browser executables Playwright cached (full Chromium and the headless shell).
+# Prints the browser executables Playwright cached (full Chromium and the headless shell, under either name Playwright has used).
 browser_binaries() {
-  find "$BROWSER_DIR" -type f \( -name chrome -o -name headless_shell \) -perm -u+x 2>/dev/null
+  find "$BROWSER_DIR" -type f \( -name chrome -o -name headless_shell -o -name chrome-headless-shell \) -perm -u+x 2>/dev/null
 }
 
 # True when at least one browser is cached and every shared library it needs resolves.
@@ -39,6 +39,7 @@ browsers_ready() {
   local found=0 bin missing
   while IFS= read -r bin; do
     found=1
+    echo "Checking libraries for $bin"
     missing="$(ldd "$bin" 2>&1 | grep 'not found' || true)"
     if [ -n "$missing" ]; then
       echo "Missing libraries for $bin:"
