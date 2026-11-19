@@ -134,10 +134,10 @@ const isHousingRow = (row: BudgetEntryItem): boolean =>
  *   until the person adds it as its own line or picks a row for it to replace.
  * - A second row linked to the same fact reads "Not set" (the database allows one per kind).
  *
- * A linked line is always the person's own figure at 100% (sole), whatever the row it stands in
- * for says: take-home pay is the person's own, and the housing figure is exactly what
- * `selectHousingCost` counts (the saved amount, asked for as the person's own cost, or the
- * mortgage accounts' estimate, already at the person's share), so no second share is applied.
+ * A linked line is always the person's own figure at 100% (sole): take-home pay is the person's
+ * own, and the housing figure is exactly what `selectHousingCost` counts, already the person's own
+ * (a mortgage's saved payment or estimate at the account's share; a whole rent taken at the stored
+ * rent line's share, once, in `housingPayment`), so no second share is applied here.
  * A saved £0 (a household contribution of nothing) is a real £0, not "Not set". Nothing is
  * written: the rows exist only in the figures and on screen.
  *

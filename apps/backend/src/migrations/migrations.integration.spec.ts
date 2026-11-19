@@ -50,6 +50,7 @@ import {
   SEEDED_BUDGET_ENTRIES,
   TAX_FINGERPRINT_SQL,
 } from "./RemoveSeededExampleData1794355400000";
+import { RentLinesWholeRent1795490100000 } from "./RentLinesWholeRent1795490100000";
 import { SavingsRowsNotEssential1795450000000 } from "./SavingsRowsNotEssential1795450000000";
 import { StudentLoanPlanToProfile1795480200000 } from "./StudentLoanPlanToProfile1795480200000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
@@ -75,7 +76,7 @@ let MIGRATIONS: MigrationClass[] = [];
 // before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile, RemovePayeSalaryRecords) and
 // the slice 4 before-image (account_home_backfill, BackfillPropertyKindAndMortgageLink1795470100000).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -2885,6 +2886,73 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
           `INSERT INTO budget_entries (user_id, category, name, amount, link_kind) VALUES ('u1', 'savings', 'Line', 0, 'savings')`,
         ),
       ).rejects.toThrow(/check constraint/i);
+    });
+  });
+  describe("RentLinesWholeRent1795490100000 (audit slice 5, the housing line)", () => {
+    const NAME = "RentLinesWholeRent1795490100000";
+    const profile = (userId: string, status: string) =>
+      ds.query("INSERT INTO user_profiles (user_id, housing_status) VALUES ($1, $2)", [
+        userId,
+        status,
+      ]);
+    const line = async (
+      userId: string,
+      linkKind: string | null,
+      ownership: string,
+      share: number | null,
+    ) => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO budget_entries (user_id, category, name, amount, link_kind, ownership, share_percent)
+         VALUES ($1, 'housing', 'Rent', 0, $2, $3, $4) RETURNING id`,
+        [userId, linkKind, ownership, share],
+      );
+      return at(rows, 0).id;
+    };
+    const share = async (id: string) =>
+      at(
+        await ds.query("SELECT ownership, share_percent FROM budget_entries WHERE id = $1", [id]),
+        0,
+      );
+
+    it("sets a renter's joint linked rent line to sole, keeps the rest, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await profile("renter", "renting");
+      await profile("owner", "mortgage");
+      // Before this change the saved rent was the person's own share and the line's share was
+      // ignored, so £600 saved on a joint 50% line counted £600. Now the line's share applies, so
+      // the line is made sole to keep £600.
+      const renterLinked = await line("renter", "housing", "joint", 50);
+      const renterTyped = await line("renter", null, "joint", 50);
+      const ownerLinked = await line("owner", "housing", "joint", 50);
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      expect(await share(renterLinked)).toEqual({ ownership: "sole", share_percent: null });
+      // A typed row's share always counted, and a mortgage line's share is never read: unchanged.
+      expect(await share(renterTyped)).toEqual({ ownership: "joint", share_percent: 50 });
+      expect(await share(ownerLinked)).toEqual({ ownership: "joint", share_percent: 50 });
+      // A share set after the migration is the person's choice: a second run leaves it.
+      await ds.query(
+        "UPDATE budget_entries SET ownership = 'joint', share_percent = 40 WHERE id = $1",
+        [renterLinked],
+      );
+      await runUpInTransaction(new RentLinesWholeRent1795490100000());
+      expect(await share(renterLinked)).toEqual({ ownership: "joint", share_percent: 40 });
+    });
+
+    it("puts each changed line's share back on revert", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await profile("renter", "renting");
+      const renterLinked = await line("renter", "housing", "joint", 30);
+      await ds.runMigrations();
+      expect(await share(renterLinked)).toEqual({ ownership: "sole", share_percent: null });
+      await undoThrough(NAME);
+      expect(await share(renterLinked)).toEqual({ ownership: "joint", share_percent: 30 });
+      const tables: unknown[] = await ds.query(
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'rent_share_backfill'",
+      );
+      expect(tables).toEqual([]);
     });
   });
 });

@@ -428,6 +428,46 @@ describe("BudgetEditor", () => {
     );
   });
 
+  it("says what a joint rent row will count when it takes the whole saved rent", () => {
+    // Saved rent £1,500 (the whole rent) on a row joint at 50%: the line will count £750.
+    setup({
+      entries: [
+        row({ id: "rent", name: "Our rent", amount: 700, ownership: "joint", sharePercent: 50 }),
+      ],
+      linkOffers: [
+        { link: "housing", monthly: 1500, kind: "rent", paymentEstimated: false, rowIds: ["rent"] },
+      ],
+      housingStatus: "renting",
+    });
+    expect(
+      screen.getByRole("button", {
+        name: "Use your saved rent of £1,500 (£750 at your share) in place of Our rent",
+      }),
+    ).toBeDefined();
+  });
+
+  it("calls a household contribution line what it is, not rent", () => {
+    setup({
+      entries: [row({ id: "home", name: "Household", amount: 0, linkKind: "housing" })],
+      shadowedIds: ["home"],
+      linkedEntries: [
+        row({
+          id: "linked:housing",
+          name: "Household contribution",
+          category: "housing",
+          amount: 200,
+          linked: "housing",
+          linkedRowId: "home",
+        }),
+      ],
+      housingStatus: "living_with_family",
+    });
+    expect(screen.getByTestId("budget-editor-source-linked-housing").textContent).toContain(
+      "Your household contribution, from your housing details.",
+    );
+    expect(screen.queryByLabelText("Ownership of Household contribution")).toBeNull();
+  });
+
   it("offers no share on a mortgage line: the mortgage account's share is the one that counts", () => {
     setup({
       entries: [row({ id: "home", name: "Mortgage", amount: 0, linkKind: "housing" })],

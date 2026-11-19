@@ -1,4 +1,5 @@
 import {
+  applyBudgetEntryShare,
   BUDGET_ACCOUNT_LINK_CATEGORY,
   type BudgetAccountLinkOffer,
   type BudgetLinkOffer,
@@ -373,9 +374,12 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
   const accountAmount = entry.linked === "savings" ? "monthly saving" : "monthly payment";
   // A shared rent shows the person's share; the whole rent is what the housing details hold.
   const rentShared = sharedRent?.stored.ownership === "joint";
+  const isHousehold = entry.linked === "housing" && housingStatus === "living_with_family";
   // Take-home, a mortgage payment and an account's amount are changed on their own pages; a rent
-  // can be typed here, unless it is shared (the figure shown is a share, the field would be whole).
-  const showsInput = !isMortgage && !isAccountLine && !rentShared && !(isTakeHome && notSet);
+  // can be typed here, unless it is shared and set (the figure shown is a share, the field would
+  // be the whole rent). A shared rent that is not set keeps the field, so the rent can be added.
+  const showsInput =
+    !isMortgage && !isAccountLine && !(rentShared && !notSet) && !(isTakeHome && notSet);
 
   const saveAmount = async () => {
     const next = amountRef.current;
@@ -429,7 +433,7 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
     ) : (
       <>
         Linked to your housing details, which have no payment saved. A figure you type here saves
-        there.
+        there{rentShared ? " as the whole rent" : ""}.
       </>
     )
   ) : isTakeHome ? (
@@ -448,8 +452,16 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
       </Link>
       .
     </>
+  ) : isHousehold ? (
+    <>
+      Your household contribution, from your housing details. A change here updates them across
+      Flump.
+    </>
   ) : rentShared ? (
-    <>Your share of the whole rent in your housing details. Change the rent there.</>
+    <>
+      Your share of the whole rent in your housing details. To change the rent, finish editing and
+      use Edit your rent under Housing.
+    </>
   ) : (
     <>The whole rent, from your housing details. A change here updates them across Flump.</>
   );
@@ -709,12 +721,12 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
       <div className={addActions()}>
         <Button
           aria-label={`Add to ${label}`}
-          // Focus race (slice 6): while it saves the button stays focusable and says it is busy
-          // (aria-disabled), so keyboard focus never drops to the page; submit ignores presses.
-          aria-disabled={adding || undefined}
           data-testid={`budget-editor-add-${slug}`}
+          // Focus race (slice 6): while it saves the button is pending (aria-busy, aria-disabled),
+          // not disabled, so keyboard focus never drops to the page; it and submit ignore presses.
           disabled={!name.trim()}
           id={`budget-editor-add-${slug}`}
+          pending={adding}
           size="sm"
           type="submit"
           variant="outline"
@@ -836,8 +848,13 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         : offer.paymentEstimated
           ? "mortgage payment"
           : HOUSING_KIND_LABEL[offer.kind ?? "rent"];
+    // A joint row linked to the whole rent counts the person's share (JO-8), so the label says so.
+    const shareText =
+      offer.link === "housing" && offer.kind === "rent" && entry.ownership === "joint"
+        ? ` (${formatCurrency(applyBudgetEntryShare(offer.monthly, entry), { maximumFractionDigits: 0 })} at your share)`
+        : "";
     return {
-      label: `Use your ${what} of ${offer.paymentEstimated ? "about " : ""}${figureText}`,
+      label: `Use your ${what} of ${offer.paymentEstimated ? "about " : ""}${figureText}${shareText}`,
       onUse: () => void save(entry.id, { amount: 0, linkKind: offer.link }),
     };
   };
