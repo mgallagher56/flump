@@ -39,7 +39,7 @@ Three rules follow.
 
 | Fact | Source of truth | Who may write | How readers get it | Other stores |
 |---|---|---|---|---|
-| Balance today (decision 8) | `accounts.balance`, which must always equal the newest `account_details` value for that account | One backend function, used by create, edit, check-in, back-fill and import | `PortfolioSnapshot` | The current-month history row is written in the same transaction. Creating an account writes its first row. A write to the newest recorded month moves the balance when no newer row exists |
+| Balance today (decision 8) | `accounts.balance`, which must always equal the newest `account_details` value for that account | One backend function, used by create, edit, check-in, back-fill and import | `PortfolioSnapshot` | The current-month history row is written in the same transaction. Creating an account writes its first row. A write to the newest recorded month moves the balance when no newer row exists. A mortgage or loan with a calculated balance is calculated forward from that newest row |
 | Balance for a past month | `account_details` | Check-in, back-fill, import | `selectNetWorthSeries` only | `PortfolioSnapshot.getMonthlyHistory` is retired, so the context pack reads the same series |
 | Check-in finished for a month | `snapshot_checkins` | The check-in, on its last step | The reminder on the Dashboard and History | "Any row this month" stops meaning "recorded" |
 | Share of a joint account | `accounts.ownership` and `accounts.share_percent` | The one account form, on every page that edits accounts | `applyAccountShare` inside the engine | `user_profiles.property_ownership_share` is dropped (decision 6) |
@@ -48,14 +48,14 @@ Three rules follow.
 
 The one account form: Accounts, Savings, Debt, Pension and Mortgage use the same field set for an account type, and send only the fields the user changed. That closes the halved balance (SD-1), the hidden check-in reminder after a rename (CH-3) and the "two pages to set up one card" friction (SD-8) with one change.
 
-Joint accounts on screen (decision 9): every page shows the user's share as the main figure and the whole as a secondary line. Every form edits the whole and says so beside the field.
+Joint accounts on screen (decision 9): totals and headline figures show the user's share. A single account's own view shows the whole first, with the share beside it. Every form edits the whole and says so beside the field.
 
 ### Home, mortgage and buy to let
 
 | Fact | Source of truth | Who may write | How readers get it | Other stores |
 |---|---|---|---|---|
 | Kind of property | New: `accounts.account_subtype` on Property rows, `home` or `rental` | The account form | `isBuyToLetAccount` reads the subtype | The name test stays only as the back-fill rule in the migration |
-| Which mortgage belongs to which property | New: `accounts.linked_account_id` on the mortgage, a nullable foreign key to the property | The account form and the Mortgage page, through the account service | Equity, loan to value, share copying, retirement housing | The "exactly one of each" rule is removed |
+| Which mortgage belongs to which property | New: `accounts.linked_account_id` on the mortgage, a nullable foreign key to the property | The account form and the Mortgage page, through the account service | Equity, loan to value, retirement housing. Whether the pair's shares are kept equal is decision 14 | The "exactly one of each" rule is removed |
 | Value of a property | The Property account's balance | Accounts, Mortgage page, check-in | The engine | `user_profiles.buy_to_let_property_value` is migrated into a rental Property account and dropped (decision 4) |
 | Buy-to-let mortgage balance, rate, type | The Mortgage account with subtype `btl_mortgage` | Accounts and the Mortgage page's buy-to-let tab, both writing the account | The Mortgage page reads the account | The three `buy_to_let_mortgage_*` profile columns, `has_buy_to_let` and `buy_to_let_count` are dropped |
 | Repayment type | New: per mortgage, on the account | The account form | The engine | `user_profiles.mortgage_type` is migrated to the residential mortgage and dropped |
@@ -69,12 +69,12 @@ A budget line gains one optional field, `linked_to`, with a kind and a target:
 
 | Linked line | Its amount is | Source |
 |---|---|---|
-| Take-home pay | The engine's take-home | Salary and pension rates |
+| Take-home pay, when the user chooses to link it | The engine's take-home, or the take-home the user typed in onboarding | Salary and pension rates |
 | Housing | The housing cost selector | Mortgage account or rent |
 | Saving into an account | That account's monthly saving at share | Savings account |
 | Payment on a debt | That account's payment at share, or the estimate when none is saved | Card or loan account |
 
-A linked line stores no amount. Its amount is worked out when the budget is read, so it cannot go stale. The user can unlink a line and type their own figure; the line is then an ordinary plan line and the page says it differs from the saved fact. This keeps the owner's "plan-only budget" decision: the plan follows saved facts unless the user chooses otherwise.
+A linked line stores no amount. Its amount is worked out when the budget is read, so it cannot go stale. Housing, savings and debt lines are linked by default. An income figure the user typed is left alone unless they choose to link it, because an estimate should not replace a payslip. The user can unlink a line and type their own figure; the line is then an ordinary plan line and the page says it differs from the saved fact. This keeps the owner's "plan-only budget" decision: the plan follows saved facts unless the user chooses otherwise.
 
 What goes away: the one-off copies made by onboarding and the wizard, the duplicate debt row check and its name matching (BU-7), the "Saved in your details" hint, `user_profiles.monthly_other_outgoings`, and the removed sync never needs to return.
 
@@ -104,7 +104,8 @@ The picture in `packages/finance-engine/src/picture` is the only code that turns
 - The rule that decides whether a salary counts as PAYE pay moves into one tax input builder. The Dashboard, the Self Assessment page and the AI tax tool all call it.
 - The AI tools stop using `userProfileToFinancialBaseline`. They read `ProfileFacts` and return `missing[]` for anything not saved.
 - The context pack takes the current tax year from the same resolver as the pages.
-- Decision 10 settles whether this is delivered as the `GET /financial-picture` endpoint the owner already chose (E23 D-1-B), or as one shared server function first.
+- Decision 10 settles whether this is delivered as the `GET /financial-picture` endpoint the owner already chose (E23 D-1-B), or as one shared server function first. Either way the function loads the rows itself, so a page cannot forget some of them.
+- Decision 15 settles the salary rule for self-employed people before the tax input builder is written.
 
 ## Keeping it true
 
@@ -127,13 +128,15 @@ One script, `scripts/check-value-map.ts`, added to `check:laws`. It builds on wh
 
 | Part | What fails the check | Built on |
 |---|---|---|
-| Columns | A column of an entity in `USER_DATA_REGISTRY` that no map entry names, unless the registry marks it as not a user fact | `apps/backend/src/modules/privacy/user-data-registry.ts` already forces every column to be classified. Each registry column gains one field, `value`, holding a map id. The registry stays the legal source for export and erasure; the map does not absorb it |
+| Columns | A column of an entity in `USER_DATA_REGISTRY` that no map entry names, unless the registry marks it as not a user fact | `apps/backend/src/modules/privacy/user-data-registry.ts` already forces every column to be classified. Each registry table names a default map id, and a column names its own only where it differs. The registry stays the legal source for export and erasure; the map does not absorb it |
 | Browser storage | A `localStorage`, `sessionStorage` or cookie key written in `apps/web` or `packages/ui` that the map does not list | A scanner in the style of `scripts/check-style-literals.ts` |
 | Paths | A map entry that points at a file that no longer exists, or generated views that are stale | `bun scripts/generate-value-map.ts --check`, which exists today |
 | Figures | Money arithmetic on saved rows outside `packages/finance-engine`: sums over `balance`, `amount` or `monthlyContribution`, use of `sharePercent`, and monthly or yearly conversion | `scripts/check-one-tax-engine.ts` is extended into a general one-engine guard with the same ratchet idea: a baseline per file that can only fall. The tax guard becomes one rule set inside it, and `apps/mobile-companion` is either brought inside it or deleted |
 | Figure entry points | A page or tool that imports a figure's function directly when the map says it must come from the picture | An import allow-list per figure, read from the map |
 
-The ratchet starts at today's counts, so slice 1 changes no product code. Each later slice lowers the baseline.
+The ratchet starts at today's counts, so slice 1 changes no product code. Each later slice lowers the baseline. The "Figures" rule starts as a warning, because scenario tools must do sums on what-if inputs and the pattern needs tuning.
+
+The check guards structure. It cannot see behaviour: a form that sends a share back as a whole, a loader that forgets to ask for rows, or a calculator called with the wrong argument. Those are most of what this audit found, and only the contract test below catches them.
 
 ### The contract test
 

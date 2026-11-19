@@ -34,7 +34,7 @@ Many findings are the same problem seen from different pages. Ten root causes co
 | R4. More than one piece of code assembles the same figure | BU-3, SD-3, SD-6, SA-1, SA-9, AI-4, AI-5, AI-6, AI-7, AI-8, CH-5, CH-9, PP-4, SA-11 |
 | R5. Defaults stored or used as if they were the user's answers | PP-2, PP-3, PP-5, SA-2, SA-8, AI-1, AI-2, AI-3, AI-12, BU-8, BU-10, DB-4, DB-5 |
 | R6. Today's balance and the monthly history are two stores with gaps | CH-1, CH-2, CH-3, CH-4, CH-7, DB-13 |
-| R7. Account kinds and links between records are missing | HM-3, HM-7, HM-8, SA-4, SA-7, SD-4, SD-8, SD-12, JO-6, JO-11, AI-9, DB-6, DB-16, PP-8, SA-3 |
+| R7. Account kinds and links between records are missing | LD-4, HM-3, HM-7, HM-8, SA-4, SA-7, SD-4, SD-8, SD-12, JO-6, JO-11, AI-9, DB-6, DB-16, PP-8, SA-3 |
 | R8. The browser keeps its own copies of saved data | CS-1, CS-2, CS-3, CS-4, CS-5, CS-7, CS-8, PP-9, AI-11, HM-9, CH-8 |
 | R9. Dead weight: unused columns, endpoints, tables and repeated reads | HM-10, PP-10, BU-11, SD-5, SD-11, SA-12, CH-7, CS-6, AI-10, DB-9, DB-10, DB-11, DB-12, DB-14, DB-15, DB-17 |
 | R10. Nothing stops a second store or a second formula being added | SA-11, and every finding above |
@@ -69,6 +69,15 @@ The same defect is sometimes listed in two areas, because two reviewers reached 
 - Severity: wasteful but invisible.
 - Root cause: the clean step removes the output and keeps the cache that describes it.
 - Confidence: seen once; not confirmed in CI, which builds from a clean checkout.
+
+### LD-4 An investment's own return is not what Retirement uses
+- Fact or figure: the yearly return saved on an investment account, and the growth the retirement projection applies to it.
+- What is wrong: the account form saves an "Estimated annual return" in `accounts.interest_rate`, and Retirement ignores it and applies the plan's three growth cases to every counted account.
+- What the user experiences: a return typed on an investment changes the Savings page and nothing on Retirement. The same column means AER on a savings account and expected return on an investment.
+- Evidence: `apps/web/app/features/savings/components/AddSavingsAccountDialog/AddSavingsAccountDialog.tsx:156`; `packages/finance-engine/src/retirement-input.ts:292`. Raised by the independent reviewer.
+- Severity: user must enter something twice.
+- Root cause: one column with two meanings, and a second store for growth on the plan.
+- Confidence: confirmed in code by the reviewer; not run. Whether Retirement should use an account's own return is a product choice, so the plan lists no fix for it.
 
 ## Home, mortgage, buy to let and housing (HM)
 
@@ -201,6 +210,8 @@ The same defect is sometimes listed in two areas, because two reviewers reached 
 - Confidence: confirmed in code.
 
 ### PP-3 A real 5% and 3% choice can never count as chosen
+- Confirmed in a browser: yes, check B19 in [BROWSER-EVIDENCE.md](./BROWSER-EVIDENCE.md).
+- Review note: the "Not set" reading of a chosen 5% and 3% is on the Pension page and in Settings. The engine keeps a chosen 5% as set and treats only the salary sacrifice flag as unanswered when the rates are exactly 5 and 3. The Budget page then says "Add your salary", because it reads any missing pay fact as a missing salary (`BudgetOverview.tsx:47-49`).
 - Fact or figure: pension rates and salary sacrifice flag.
 - What is wrong: rates exactly 5/3 are always read as untouched defaults, so a user who chose them (the auto-enrolment minimum) is told "Not set", and a 5/3 salary sacrifice choice is read as null.
 - What the user experiences: saving 5% and 3% on Pension or Settings still shows "Not set". With salary sacrifice also chosen, the dashboard and safe to spend stay at "Add pension method" for good. Onboarding answer "5%" also ends as assumed (employer stays 3).
@@ -231,6 +242,7 @@ The same defect is sometimes listed in two areas, because two reviewers reached 
 - Confidence: confirmed in code.
 
 ### PP-6 Retirement never sees budget rows
+- Review note: Retirement is a friends-beta page (`apps/backend/src/modules/retirement/retirement.access.ts`), so only allow-listed users can reach this today.
 - Confirmed in a browser: yes, check B17 in [BROWSER-EVIDENCE.md](./BROWSER-EVIDENCE.md).
 - Fact or figure: retirement spending target built from budget lines.
 - What is wrong: the Retirement loader calls `loadWorkspaceSnapshot(args)` without `includeBudget: true`, so `budgetEntries` is always `[]`.
@@ -374,6 +386,7 @@ The same defect is sometimes listed in two areas, because two reviewers reached 
 - Confidence: confirmed in code. That users do this is inferred.
 
 ### BU-8 A £0 income row makes left over negative
+- Confirmed in a browser: yes, check B21 in [BROWSER-EVIDENCE.md](./BROWSER-EVIDENCE.md).
 - Fact or figure: left over and "Short each month".
 - What is wrong: The wizard saves an income entry with only a name as £0, and `hasIncome` is then true.
 - What the user experiences: The Dashboard and Budget show "Short each month £1,500" when the user simply has not typed an amount yet. The wizard's own hint suggests adding a salary row and then pressing "Use £X", which makes this likely.
@@ -539,7 +552,7 @@ The same defect is sometimes listed in two areas, because two reviewers reached 
 
 ### SA-1 Self-employed profile income counted as PAYE salary on the page and in MCP
 - Confirmed in a browser: yes, check B12 in [BROWSER-EVIDENCE.md](./BROWSER-EVIDENCE.md).
-- Fact or figure: self-employed, profile `annualSalary` 40,000, self-employed income records 40,000 in 2026/27. Page: PAYE 40,000 + trading 40,000 = 80,000 total, income tax 19,432 + Class 4 1,645.80 − "PAYE tax" 5,486 = **£15,592**. Dashboard passes salary 0: 5,486 + 1,645.80 = **£7,132**. MCP: same as page, **£15,591.80**.
+- Fact or figure: self-employed, profile `annualSalary` 40,000, one self-employed income record of 40,000 in 2026/27, no expenses. The trading allowance of 1,000 leaves 39,000 profit. Dashboard (salary passed as 0): income tax on 39,000 − 12,570 = 26,430 at 20% is 5,286, plus Class 4 at 6% on the same 26,430 is 1,585.80, total **£6,872**. Page (salary passed as PAYE pay): total income 79,000; income tax 7,540 + 11,492 = 19,032; plus Class 4 1,585.80; less tax already paid through PAYE on 40,000 of 5,486; total **£15,132**. MCP passes the same inputs as the page. Both figures were seen in the browser (check B12). An earlier version of this finding left out the trading allowance and gave £15,592 and £7,132.
 - What is wrong: the page and MCP pass the profile salary as PAYE pay whatever the employment type; only the Dashboard selector zeroes it for self-employed.
 - What the user experiences: two different "estimated bill" figures, more than double on the page; the drawer shows "Salary through PAYE £40,000" for someone with no employer.
 - Evidence: TaxContainer.tsx:186,230 (no `employmentType` read anywhere in containers/tax or features/tax); TaxSourceContainer.tsx:88-91; estimated-tax-due.ts:66,85; getTaxYearPosition.ts:87,93.
@@ -682,6 +695,7 @@ The same defect is sometimes listed in two areas, because two reviewers reached 
 - Confidence: confirmed in code.
 
 ### CH-4 Debt changed to an asset keeps negative history
+- Confirmed in a browser: yes, check B20 in [BROWSER-EVIDENCE.md](./BROWSER-EVIDENCE.md).
 - Fact or figure: `resignHistoryForType` only re-signs towards a debt (stored-balance.ts:39-47). The edit dialog shows a debt's amount as positive and re-posts it (AddEditAccountsDialog.tsx:250, 429, 449).
 - What is wrong: Today's balance turns +£500 but every past month stays −£500.
 - What the user experiences: A credit card owing £500 is changed to Saving. History shows a £1,000 rise this month. The Accounts list change compares £500 with −£500 and gives about "-200%" (WEB/features/accounts/accountRows.ts:121-124).
@@ -750,6 +764,7 @@ How to check: homeowner. Accounts, edit "Easy access savings", Joint, share 40, 
 Confidence: confirmed in code.
 
 ### JO-2 Runway illustration applies the share twice
+- Confirmed in a browser: yes, check B18 in [BROWSER-EVIDENCE.md](./BROWSER-EVIDENCE.md).
 Fact or figure: "Accounts to draw on" amounts and the illustrated months of cover.
 What is wrong: the Budget page passes rows whose balance is already shared but still carry ownership, and the runway builds a new snapshot that shares them again.
 What the user experiences: a joint account shows at 16% of its balance in the list; switching it off or investments on moves the illustration by the wrong amount.
@@ -1156,6 +1171,7 @@ Reset leaves these profile fields: names, avatar, currency, country, enabled pag
 - Recommendation: stop exposing in the contract (mark deprecated, keep accepting writes for one release), remove readers/types, then drop columns in one migration; down() re-adds with the old defaults. Update user-data-registry export lists in the same PR. Confidence: confirmed in code.
 
 ### DB-10 transactions and snapshot_checkins are dead stores
+- Review note: `apps/mobile-companion` calls `GET /transactions` (`apps/mobile-companion/src/api/client.ts:352`) and reads `displayName`. That app is parked until the E12 rebuild, so "no client" means no client in the web app or the AI tools.
 - What is wrong: transactions has POST/GET endpoints and an unused `AgentDataService.queryTransactions`, but no web, MCP or bank-sync caller; snapshot_checkins is inserted on check-in and read only by the export.
 - What the user experiences: nothing visible.
 - Evidence: be/modules/finance/finance.controller.ts:152-174; finance.service.ts:136-198; agent-data.service.ts:395-417 (no caller in packages/mcp); snapshots.service.ts:166; user-data-registry.ts:113.

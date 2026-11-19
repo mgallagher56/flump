@@ -7,6 +7,7 @@ Everything here was observed on a local build of `origin/main` at `f5631d4f0`, o
 - The browser was Chromium, driven by Playwright from a signed-in session.
 - Each check changed a value in one place and then read the rendered text of the other pages.
 - Most writes used the same `/api` request the page itself sends. Check B5 used the Savings page form. Checks B7 and B12 posted the Self Assessment form.
+- Checks B1 to B17 were run by the lead. Checks B18 to B21 were run by the independent reviewer on the same local build.
 - No screenshots are kept, because the repository is public.
 
 ## Checks
@@ -77,8 +78,24 @@ AI context pack. The pack preview returned baseline.taxYear "2025/26" on 19 Nove
 
 ### B17
 
-Retirement target from budget lines. With 15 budget rows saved (11 of them spending outside housing and savings), Retirement, "From budget lines" showed "No spending lines other than housing saved yet."
+Retirement target from budget lines. With 15 budget rows saved (11 of them spending outside housing and savings), Retirement, "From budget lines" showed "No spending lines other than housing saved yet." For this check the local backend was restarted with `BETA_OPEN=true`, which opens the Retirement page to the test user.
 
+
+### B18
+
+Run by the independent reviewer. Runway what-if with a joint account (JO-2). Marked "Easy access savings" (7,600) joint at 40%. Budget headline "About 5.5 months" and "Money to draw on £16,440". In the what-if list the account showed £1,216, which is 16% of the balance; 40% is £3,040. Switching it off gave "5.1 months" and £15,224; the right result is 4.5 months and £13,400.
+
+### B19
+
+Run by the independent reviewer. A chosen 5% and 3% with salary sacrifice (PP-3). Saved pension 5%, employer 3% and salary sacrifice on the profile. Pension page: "Assumed rates. Edit to match your payslip." Take-home page: "Not set" with a prompt to add the pension method. After B21, the Budget page said "Add your salary" although a salary of 58,000 was saved.
+
+### B20
+
+Run by the independent reviewer. A debt changed to an asset (CH-4). Changed "Credit card" (owing 1,200) to type Saving with balance 1,200. History "Net worth change" went from +£2,443 to +£4,843, a jump of twice the balance. The account page showed past months still negative.
+
+### B21
+
+Run by the independent reviewer. A £0 income line (BU-8). Set the budget income line to 0. Budget showed "Short each month £3,315" and "Money in each month £0". The Dashboard showed "Short each month" with the same figure.
 
 ## Not checked in a browser
 
@@ -88,6 +105,7 @@ Retirement target from budget lines. With 15 budget rows saved (11 of them spend
 - Rent edited in housing details (HM-2, BU-4). Only the mortgage half of that link was run (B1).
 - The staged import path (AI-9, AI-10).
 - A 0% end date and the debt-free date (SD-4).
+- Check B6 read "Going in each month £758" on the Pension page after the salary change. The reviewer could not reproduce how that figure is made up, so it is recorded as seen and not relied on.
 - Anything on a phone-sized screen.
 
 ## Queries per page
@@ -111,7 +129,7 @@ Measured with Postgres statement logging while each page loaded once in the brow
 
 What the counts show:
 
-- There is no N+1 read on any main page. Each table is read once per page.
+- There is no N+1 read on any main page: no read repeats for each row. Savings and Pension read the profile three times.
 - Every page reads all accounts and their full history, including Take-home and Settings, which show neither.
 - Between a third and a half of all queries are the deleted-account lookup (finding LD-1).
 - The slowest statement was the `account_details` read on most pages. With six months of history for eight accounts it is tiny. It grows with every month recorded.

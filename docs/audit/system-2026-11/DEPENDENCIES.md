@@ -7,7 +7,7 @@ Three things live here: the matrix of pages against facts, the list of figures s
 | [By page and tool](../../system/generated/by-page.md) | What does the Mortgage page read and write? Includes the full matrix of facts against pages |
 | [By fact and figure](../../system/generated/by-fact.md) | Where is this value stored, entered and used? Which function computes this figure? |
 | [Connections](../../system/generated/connections.md) | One diagram per area |
-| [Expected links](../../system/generated/links.md) | The 72 testable statements with their verdicts |
+| [Expected links](../../system/generated/links.md) | The 73 testable statements with their verdicts |
 
 ## Pages that write facts owned by another area
 
@@ -48,6 +48,8 @@ Three things live here: the matrix of pages against facts, the list of figures s
 
 The pattern: where a figure is wrong, the formula is usually right and the inputs differ. Five figures have no single owner in the engine at all: savings totals, ISA used, pension paid in, the debt summary as the pages show it, and the tax inputs.
 
+Two spending figures are shown under different names and are not the same sum: the Dashboard's "Spending each month" leaves out savings lines, and the Budget's "Going out each month" includes them. Both come from `selectBudgetTotals`. They were £3,015 and £3,315 for the seeded persona.
+
 ## What the existing guards cover
 
 | Guard | Covers | Does not cover |
@@ -60,13 +62,13 @@ Nothing scans for sums over balances, share arithmetic or budget conversion outs
 
 ## Expected links
 
-The 72 statements, grouped by fact, with verdicts and finding ids, are in [the generated links view](../../system/generated/links.md). The counts on 19 November 2026:
+The 73 statements, grouped by fact, with verdicts and finding ids, are in [the generated links view](../../system/generated/links.md). The counts on 19 November 2026:
 
 | Verdict | Links |
 |---|---|
 | Holds | 19 |
 | Holds with a manual step or a delay | 8 |
 | Duplicated (two stores that can disagree) | 14 |
-| Broken | 31 |
+| Broken | 32 |
 
-Seventeen of the 72 were checked in a browser as well as in code. The "Checked in" column of the view says which.
+Nineteen of the 73 were checked in a browser as well as in code. The "Checked in" column of the view says which.

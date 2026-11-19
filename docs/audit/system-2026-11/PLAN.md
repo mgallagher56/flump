@@ -15,28 +15,33 @@ This plan turns the audit's findings into nine slices. Each slice is one pull re
 | Slice | Name | Depends on | Decisions | Effort | Quick win |
 |---|---|---|---|---|---|
 | 1 | The value map and its checks | none | 11 | M | yes |
-| 2 | Wrong numbers today | none | 7 (note only), 9 | M | yes |
+| 2 | Wrong numbers today | none | 7 (note only), 9, 15 | M | yes |
 | 3 | One assembler | 1 | 10 | L | no |
-| 4 | Accounts as the home for homes and loans | 2 | 4, 8, 9 | L | no |
+| 4 | Accounts as the home for homes and loans | 2 | 4, 8, 9, 14 | L | no |
 | 5 | Budget lines linked to saved facts | 3, 4 | 1 | L | no |
-| 6 | Pay and pension answers | 3 | 2, 3 | M | no |
+| 6 | Pay and pension answers | 3, 4 | 2, 3 | M | no |
 | 7 | Self Assessment joined up | 4, 6 | 5, 6, 7 | L | no |
-| 8 | Browser state | 3 | 13 | M | no |
+| 8 | Browser state | 3, 4, 5 | 13 | M | no |
 | 9 | Database housekeeping | 4, 5, 6, 7 | 12 | M | no |
 
-Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 8 can run alongside 4 and 5.
+Slices 1 and 2 touch different files and can run at the same time. After that the slices run one at a time: 4, 6 and 8 all edit the account dialog, onboarding and the page containers, so they cannot share a week. In slice 5 only the housing line needs slice 4; the income, savings and debt lines need slice 3 alone.
+
+Tax gate: the owner signs the vectors for any change to a tax figure before it merges (DECISIONS.md, E4). That applies to three rows of slice 2 (the salary rule, the invented salary and the tax year) and to slice 7. If sign-off is slow, those three rows leave slice 2 and merge as their own pull request.
 
 ## Slice 1. The value map and its checks
 
 **Scope.** Make the map a maintained rule. No product code changes.
 
 - Add `scripts/check-value-map.ts` to `check:laws`, with the five parts in TARGET-MODEL.md, "The automated check".
-- Add a `value` field to each column in `apps/backend/src/modules/privacy/user-data-registry.ts`, holding a map id, and extend `user-data-registry.spec.ts` to require it.
-- Extend `scripts/check-one-tax-engine.ts` and `scripts/lib/one-tax-engine.ts` into a general one-engine guard. The tax rule set stays as it is. A new rule set counts money arithmetic on saved rows in `apps/web`, `apps/backend` and `packages/mcp`, with a per-file baseline that can only fall.
+- Tie the registry in `apps/backend/src/modules/privacy/user-data-registry.ts` to the map: each table entry names a default map id, and a column names its own only where it differs. Tables that hold no user fact (tokens, audit, idempotency) are marked as such once. Extend `user-data-registry.spec.ts` to require one or the other.
+- Extend `scripts/check-one-tax-engine.ts` and `scripts/lib/one-tax-engine.ts` into a general one-engine guard. The tax rule set stays as it is. A new rule set counts money arithmetic on saved rows in `apps/web`, `apps/backend` and `packages/mcp`, with a per-file baseline. It starts as a warning, not a failure: scenario tools must do sums on what-if inputs, and the pattern needs a few weeks of tuning before it can block a merge.
 - Add the "One home per value" section to `AGENTS.md` and the map to its section 5 pre-flight list.
 - Add the link test harness: four personas (joint account at 40%, buy-to-let owner, self-employed in Scotland, no salary saved) in `apps/e2e/support/personas.ts` and in `packages/finance-engine/src/picture/__fixtures__/personas`, and one example link test.
 - Fix persona P5's invalid tax records in `scripts/ops/synthetic-personas.ts` (SA-7).
 - Add a "Test" column to the generated links view.
+- List every browser storage key in the map, including the ones that hold no user fact (`flump-theme`, `flump.setup-step-count`, `flump.scene-settled.*`, `flump.budget.keptDebtRows`), so the storage scanner passes on its first run.
+
+What the check will and will not catch: it catches a new store with no entry, a dead path and, later, a raw sum outside the engine. It would not have caught most of slice 2. A form that sends a share back, a loader that forgets to ask for rows and a calculator called with the wrong argument are behaviour, and only the link tests catch behaviour. The link tests are the larger part of this slice.
 
 **Files.** `scripts/check-value-map.ts`, `scripts/lib/`, `scripts/generate-value-map.ts`, `docs/system/`, `AGENTS.md`, `package.json`, `user-data-registry.ts` and its spec, `apps/e2e/support/personas.ts`, `apps/e2e/tests/links/`.
 
@@ -44,7 +49,7 @@ Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 
 
 **Tests.** Unit tests for the checker with fixtures for each failure. The registry spec. One browser link test (L09) as the pattern.
 
-**Risk.** Low. The ratchet starts at today's counts, so nothing fails on day one. The risk is a noisy pattern; keep the arithmetic patterns narrow and list each file's count.
+**Risk.** Low. The arithmetic rule only warns at first. The risk is a noisy pattern; keep it narrow, skip tests and stories, and list each file's count.
 
 **What the user will notice.** Nothing.
 
@@ -59,7 +64,7 @@ Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 
 | The Savings and Debt edit forms send only changed fields, and never a share as a whole | SD-1, JO-1, SD-7 | `SavingsContainer.tsx`, `AddSavingsAccountDialog.tsx`, `AddDebtDialog.tsx`, `app.savings.tsx`, `app.debt.tsx` |
 | The account edit dialog sends the balance only when it changed | CH-3 | `AddEditAccountsDialog.tsx` |
 | The Retirement loader asks for budget lines | PP-6 | `app.retirement.tsx` |
-| One rule for when a salary counts as PAYE pay, used by the page and the AI tax tool | SA-1 | `packages/finance-engine/src/picture/selectors/estimated-tax-due.ts`, `TaxContainer.tsx`, `TaxSourceContainer.tsx`, `getTaxYearPosition.ts` |
+| One rule for when a salary counts as PAYE pay, used by the Dashboard, the page and the AI tax tool. Which rule is decision 15; until it is made, this row waits | SA-1 | `packages/finance-engine/src/picture/selectors/estimated-tax-due.ts`, `TaxContainer.tsx`, `TaxSourceContainer.tsx`, `getTaxYearPosition.ts` |
 | The AI paths stop inventing a salary, and report it as missing | SA-2, AI-1, AI-2 | `packages/finance-engine/src/profile.ts`, `agent-data.service.ts`, `ai-context-pack.ts`, `projectNetWorth.ts` |
 | The context pack uses the current tax year | AI-3, SA-8 | `profile.ts`, `ai-context-pack.ts` |
 | The context pack's debt-free date uses no hidden extra payment | AI-5 | `ai-context-pack.ts` |
@@ -82,7 +87,7 @@ Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 
 
 **What the user will notice.** Joint savings no longer shrink on edit. The Self Assessment page and the Dashboard agree. Retirement can build a target from budget lines. The AI stops quoting a salary nobody entered.
 
-**Decisions.** 9 for the on-screen wording of share and whole. 7 only for the note's wording.
+**Decisions.** 9 for the on-screen wording of share and whole. 7 only for the note's wording. 15 for the salary rule. The three tax rows wait for the owner's vector sign-off.
 
 ## Slice 3. One assembler
 
@@ -113,7 +118,7 @@ Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 
 **Scope.**
 
 - Property kind: `account_subtype` `home` or `rental` on Property rows. Loan kinds for car finance, buy now pay later and other.
-- `accounts.linked_account_id` from a mortgage to its property. The account service keeps the pair's share in step in both directions.
+- `accounts.linked_account_id` from a mortgage to its property. What happens to the pair's shares is decision 14.
 - Repayment type on the mortgage account.
 - One backend call creates a mortgage with its property in one transaction. The Accounts page and onboarding use it.
 - The Mortgage page's buy-to-let tab reads and writes the buy-to-let accounts.
@@ -132,13 +137,13 @@ Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 
 4. Back-fill a first history row for accounts that have none, with source `backfill`. Rollback: delete rows with that source and migration marker.
 5. The profile columns are dropped in slice 9, a release later.
 
-**Tests.** Hand-worked loan to value and equity with a home and a rental. Backend integration tests for the pair's share in both directions and for the balance rule. Browser link tests for L05, L08, L10, L18, L19, L20, L68, L70 and L71.
+**Tests.** Hand-worked loan to value and equity with a home and a rental. Backend integration tests for the linked pair's shares (as decision 14 settles) and for the balance rule, including a mortgage with a calculated balance. Browser link tests for L05, L08, L10, L18, L19, L20, L68, L70 and L71.
 
 **Risk.** High. It changes the account form on five pages and the most used write path. Mitigation: land the backend and migrations behind the existing forms first inside the same pull request's commits, and keep the old profile columns readable until slice 9.
 
 **What the user will notice.** A buy-to-let mortgage added in Accounts shows on the Mortgage page. A rental is not counted as the home. A card can be set up fully from one form. A new account appears in History at once.
 
-**Decisions.** 4, 8, 9.
+**Decisions.** 4, 8, 9, 14.
 
 ## Slice 5. Budget lines linked to saved facts
 
@@ -146,9 +151,10 @@ Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 
 
 - `budget_entries` gains `link_kind` and `link_account_id`. A linked line stores no amount.
 - `selectBudgetTotals`, `essentialCommitments` and the Budget page resolve linked lines from take-home, the housing cost selector, and account monthly amounts at share.
-- Onboarding and the wizard create linked lines in place of copies. Existing copied lines are offered a one-tap "link this line" when they match a saved fact.
+- Onboarding and the wizard create linked housing, savings and debt lines in place of copies. Existing copied lines are offered a one-tap "link this line" when they match a saved fact.
+- The income line is linked only when the user chooses "use my take-home". A take-home figure the user typed stays theirs.
 - `selectHousingCost` becomes the one housing figure for the budget, commitments and Retirement. Rent rows gain ownership and share.
-- Left over uses the same income as safe to spend when the income line is linked.
+- Left over and safe to spend start from the same income: the linked take-home, or the typed income line when the user has one.
 - Remove `findPossibleDuplicateDebtRows`, the session-stored "keep it here" list and the "Saved in your details" hint.
 
 **Files.** `apps/backend/src/entities/budget-entry.entity.ts`, `budget.service.ts`, `packages/api-contract`, `packages/finance-engine/src/picture/selectors/`, `apps/web/app/containers/budget/`, `features/budget/`, `features/housing/`, `services/onboarding-seed.ts`, `packages/finance-engine/src/retirement.ts`.
@@ -207,9 +213,9 @@ Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 
 
 **Migrations.** Add `account_id uuid NULL` with a foreign key (`ON DELETE SET NULL`) and an index on `(user_id, account_id)`. Rollback: drop it. Copy `property_ownership_share` onto a rental Property account's share where the account is sole and the profile share is under 100, with a before-image table.
 
-**Tests.** Hand-worked vectors for the calculated interest (150,000 at 4.5% for a full year is 6,750, and the credit at 20% is 1,350), for a 50% share, and for a Scottish taxpayer. The owner signs the tax vectors before merge. Browser link tests for L21, L22, L23, L29 and L48.
+**Tests.** Hand-worked vectors for the calculated interest. The simplest: an interest-only loan of 150,000 at 4.5% held for the whole tax year gives 6,750 of interest and a credit of 1,350 at 20%. Further vectors, each worked by hand: a repayment loan, where the balance falls each month and only the interest part counts; a loan held for part of the tax year; a 50% share, where the credit is 675; a case where the property allowance beats claiming costs, so no credit applies; and a case where the cap on the credit bites. Plus a Scottish taxpayer. The owner signs the tax vectors before merge. Browser link tests for L21, L22, L23, L29 and L48.
 
-**Risk.** High for correctness, because it changes tax figures. It is gated by the E4 sign-off rule and the advice boundary policy.
+**Risk.** High for correctness, because it changes tax figures. It is gated by the E4 sign-off rule and the advice boundary policy. Known limits to state on the page: the figure is an estimate; borrowing used for anything other than the let property does not count, and an account balance cannot show that; finance costs carried forward from earlier years are not modelled. Not confirmed: whether the engine caps the credit on the same income measure HMRC uses. The reviewer believes HMRC uses adjusted total income and the engine uses non-savings taxable income. Check this against GOV.UK before the vectors are signed.
 
 **What the user will notice.** A buy-to-let mortgage in Accounts brings its interest into Self Assessment as a figure to confirm. The share is entered once.
 
@@ -241,8 +247,8 @@ Slices 1 and 2 touch different files and can run at the same time. Slices 6 and 
 
 **Scope.** Only what the earlier slices have stopped reading.
 
-- Drop dead profile columns: `display_name`, `monthly_savings_target`, `savings_allocation_mode`, `savings_default_interest_rate`, `dashboard_widget_sizes`, `dashboard_widget_config`, the second and rental income columns, `monthly_other_outgoings`, the seven `buy_to_let_*` columns, `has_mortgage`, `mortgage_type`, `property_ownership_share`. Drop `accounts.student_loan_plan`, `budget_entries.is_primary_income` and `is_default`.
-- Remove unused endpoints: the transactions endpoints, `POST /budget-entries/seed-defaults`, and the dead route intents on Pension and Savings.
+- Drop dead profile columns: `display_name`, `monthly_savings_target`, `savings_allocation_mode`, `savings_default_interest_rate`, `dashboard_widget_sizes`, `dashboard_widget_config`, the second and rental income columns, `monthly_other_outgoings`, `has_buy_to_let` and the six `buy_to_let_*` columns, `has_mortgage`, `mortgage_type`, `property_ownership_share`. Drop `accounts.student_loan_plan`, `budget_entries.is_primary_income` and `is_default`.
+- Remove unused endpoints: `POST /budget-entries/seed-defaults`, the dead route intents on Pension and Savings, and the two transactions endpoints. The parked `apps/mobile-companion` still calls `GET /transactions`, so that app is deleted or cut loose first (it is replaced by E12).
 - Loaders ask for what they show: `GET /accounts` gains a `details` option (none, latest, all). Take-home and Settings stop loading accounts.
 - One statement for the balance update in `snapshot-write.ts`.
 - A database check that an `account_details` row's `user_id` matches its account's.
@@ -303,7 +309,7 @@ Each decision has options and a recommendation. A flag says when it changes wher
    - A. Linked lines: a line can point at a saved fact and takes its amount from it. The user can unlink and type their own.
    - B. Sync on write: keep copies and update them whenever the fact changes.
    - C. Keep copies and show a notice when they differ.
-   - Recommendation: A. B was built and removed once. C leaves the double entry in place.
+   - Recommendation: A for housing, savings and debt lines. For the income line, link only when the user asks: an estimated take-home should not replace a payslip figure they typed. B was built and removed once. C leaves the double entry in place.
 
 2. **Take-home pay typed in onboarding.** Flag: changes how user data is stored.
    - A. Store it as net pay and leave the salary empty. Figures that need pay before tax show "Not set".
@@ -314,7 +320,7 @@ Each decision has options and a recommendation. A flag says when it changes wher
 3. **Pension rates that are still the 5% and 3% row defaults.** Flag: changes stored user data, and reverses an earlier choice not to back-fill.
    - A. Make the columns empty by default, and set existing rows that hold exactly the defaults to "not set".
    - B. Leave existing rows, and add a "set by the user" marker for new answers.
-   - Recommendation: A, now, while all data is test data.
+   - Recommendation: A, now, while all data is test data. 5% and 3% is also the legal minimum, so it is the most common real answer. The migration must therefore run before the friends beta and carry a guard that stops it running later.
 
 4. **Where buy-to-let details live.** Flag: changes how user data is stored, and drops columns.
    - A. Accounts only. Copy any profile values into accounts, then drop the profile fields.
@@ -325,7 +331,7 @@ Each decision has options and a recommendation. A flag says when it changes wher
    - A. Offer a "Calculated" figure from the linked mortgage for the user to confirm into a record.
    - B. Work it out silently and use it with no record.
    - C. Leave it as a figure the user types.
-   - Recommendation: A. It matches the check-in's "Calculated" rule and keeps the user in charge of their return.
+   - Recommendation: A, labelled as an estimate. It matches the check-in's "Calculated" rule and keeps the user in charge of their return. The rules have edges the figure cannot see, listed under slice 7.
 
 6. **The share of a rental property used for tax.** Flag: changes how user data is stored.
    - A. Per property, from the property account's share.
@@ -338,25 +344,25 @@ Each decision has options and a recommendation. A flag says when it changes wher
    - Recommendation: A.
 
 8. **What "today's balance" is.** Flag: changes how user data is stored.
-   - A. Always the newest recorded figure. Creating an account records it. Correcting the newest month moves today's balance.
+   - A. Always the newest recorded figure. Creating an account records it. Correcting the newest month moves today's balance. For a mortgage or loan with a calculated balance, today's figure is calculated forward from that newest record, as the check-in already does.
    - B. Keep today's balance separate from history, as now.
    - Recommendation: A.
 
 9. **How a joint account reads on screen.**
-   - A. Every page shows your share as the main figure with the whole as a second line. Every form edits the whole and says so.
-   - B. Every page shows the whole, with your share as a second line.
+   - A. Totals and headline figures show your share. A single account's own view (its page, the Mortgage page, a statement-style figure) shows the whole first with your share beside it. Every form edits the whole and says so.
+   - B. Everything shows your share first, including a single account's own view.
    - C. Leave each page to choose, with a label.
-   - Recommendation: A. It fits the E34 rule that joint items count at the person's share.
+   - Recommendation: A. Totals follow the E34 rule that joint items count at the person's share. A single loan or account matches the lender's statement, which is how the Mortgage page works today.
 
 10. **How the picture reaches its callers.** This confirms or amends E23 D-1-B.
     - A. Build `GET /financial-picture` now and move the web loaders and the AI tools to it.
-    - B. One shared server-side builder for the web and the AI tools now; add the endpoint when the mobile app needs it.
-    - Recommendation: B. It gives one assembler without a new network hop, and leaves A open.
+    - B. One shared server-side function for the web and the AI tools now, which loads the rows and builds the picture. Add the endpoint when the mobile app needs it.
+    - Recommendation: B, on one condition: the shared function must load the rows itself. Today each loader chooses which rows to fetch, and the Retirement page forgot the budget lines (PP-6). A builder that is handed rows cannot prevent that.
 
 11. **Adopt the "One home per value" law and its CI check.** Flag: a guard change under AGENTS.md section 15 (a new required check and a new law).
     - A. Adopt both in slice 1.
     - B. Keep the map as a document with no check.
-    - Recommendation: A. Without the check the map goes stale within weeks.
+    - Recommendation: A, with the arithmetic rule as a warning at first. Without the check the map goes stale within weeks.
 
 12. **Drop dead columns, endpoints and the unused parts of tables.** Flag: changes how user data is stored (deletes stored values after a before-image copy).
     - A. Drop them in slice 9, a release after their last reader goes. Keep the `transactions` table empty until the bank plan returns, and remove its endpoints.
@@ -367,3 +373,14 @@ Each decision has options and a recommendation. A flag says when it changes wher
     - A. On the profile.
     - B. In the browser, cleared on reset.
     - Recommendation: A.
+
+14. **Whether a property and its mortgage must have the same share.** This amends how E34 slice C1 works today.
+    - A. Keep them in step in both directions once they are linked.
+    - B. Link them, copy the share across as a suggestion when one is first set, and allow them to differ.
+    - Recommendation: B. The share on the deeds and the share of the loan can differ, for example unequal owners with a joint mortgage. Today a mortgage's share overwrites its property's.
+
+15. **What the salary field means for a self-employed person.** Flag: changes a tax figure; needs vector sign-off.
+    - A. The salary field is pay from an employer only. A self-employed person's income comes from their Self Assessment records, and onboarding asks them for it in those words.
+    - B. For a self-employed person the salary field is their expected yearly income, used until records exist and never added to them.
+    - C. Keep both and let the Self Assessment page ask which applies.
+    - Recommendation: A. Today the Dashboard follows A and the Self Assessment page and the AI tax tool add the two together. Someone with a job and a business on the side needs both, which A allows.
