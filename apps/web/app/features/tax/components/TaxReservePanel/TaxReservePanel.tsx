@@ -179,6 +179,12 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
                 <Line label="Personal Allowance" value={gbp(result.personalAllowance)} />
                 <Line label="Taxable income" value={gbp(result.totalTaxableIncome)} />
                 <Line label="Income Tax on self-employed profit" value={gbp(result.seTaxDue)} />
+                {result.allowanceTaperTaxDue > 0 ? (
+                  <Line
+                    label="Income Tax from Personal Allowance lost to savings and dividends"
+                    value={gbp(result.allowanceTaperTaxDue)}
+                  />
+                ) : null}
                 <Line
                   label="National Insurance on self-employed profit (Class 4)"
                   value={gbp(result.seClass4NIDue)}

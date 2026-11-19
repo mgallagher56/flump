@@ -65,7 +65,10 @@ export interface TaxRecordDialogProps {
   saveError?: string | null;
 }
 
-type Errors = Partial<Record<"name" | "amount" | "date" | "receipt", string>>;
+type Errors = Partial<Record<"name" | "amount" | "date" | "receipt" | "category", string>>;
+
+/** A saved record whose category no list holds (saved before categories were checked). */
+export const UNLISTED_CATEGORY_ERROR = "Choose a category from the list.";
 
 // The page lists records by tax year and offers only the years the engine supports, so a record
 // dated outside them could be saved and then never shown. Its date must fall inside them.
@@ -155,6 +158,7 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const found = validate(draft);
+    if (!categories.some((c) => c.id === draft.category)) found.category = UNLISTED_CATEGORY_ERROR;
     setErrors(found);
     if (Object.keys(found).length > 0) return;
     onSave(draft);
@@ -162,7 +166,12 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
 
   const isPdf = draft.receiptMimeType?.includes("pdf");
   // Open "Category and notes" when editing a record that already has notes, so they are never hidden.
-  const hasDetails = initial.notes.trim() !== "";
+  // Also open it when the saved category is not on the list, so its error is never hidden.
+  const initialUnlisted = !selectableCategories(initial.source, initial.type, keptCategory).some(
+    (c) => c.id === initial.category,
+  );
+  const hasDetails = initial.notes.trim() !== "" || initialUnlisted;
+  const draftUnlisted = !categories.some((c) => c.id === draft.category);
 
   return (
     <Dialog
@@ -333,7 +342,11 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
         ) : null}
         <CollapsibleDrawer title="Category and notes" variant="quiet" defaultOpen={hasDetails}>
           <div className={moreDetails()}>
-            <FormField label="Category" hint={CATEGORY_HINT[draft.category]}>
+            <FormField
+              label="Category"
+              hint={CATEGORY_HINT[draft.category]}
+              error={errors.category}
+            >
               {(field) => (
                 <Select
                   id={field.id}
@@ -341,6 +354,11 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
                   value={draft.category}
                   onChange={(e) => set("category", e.target.value)}
                 >
+                  {draftUnlisted ? (
+                    <option value={draft.category} disabled>
+                      Choose a category
+                    </option>
+                  ) : null}
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {categoryShortLabel(c)}

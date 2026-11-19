@@ -126,7 +126,7 @@ describe("loadFinancialPicture: rows and the date it builds for", () => {
         userId: "u",
         type: "expense",
         source: "rental",
-        category: "repairs",
+        category: "repairs_maintenance",
         name: "Boiler repair",
         amount: 300,
         frequency: "one-off",

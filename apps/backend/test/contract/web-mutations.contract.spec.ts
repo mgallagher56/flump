@@ -190,7 +190,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         const tax = await send("post", "/tax-records", {
           type: "income",
           source: "paye",
-          category: "salary",
+          category: "paye_bonus",
           name: "Pay",
           amount: 2500.75,
           date: "2026-04-30",

@@ -128,7 +128,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         await h.call("post", "/tax-records", token, {
           type: "income",
           source: "paye",
-          category: "salary",
+          category: "paye_bonus",
           name: `${label} pay`,
           amount: 5,
           frequency: "one-off",

@@ -1,3 +1,4 @@
+import { ALL_TAX_CATEGORIES } from "@flump/finance-engine";
 import { z } from "zod";
 import { IsoDate, IsoDateTime, Money, Notes, ResponseMoney, Uuid } from "../primitives.js";
 
@@ -54,8 +55,48 @@ export const broughtForwardRuleError = (
   return null;
 };
 
-const broughtForwardIsRentalExpense = (record: RecordShape, ctx: z.RefinementCtx) => {
-  const error = broughtForwardRuleError(record);
+/**
+ * The categories a record can be written with, one list per source. The finance engine's
+ * category lists are the one home for them (AGENTS.md law 16): the engine leaves out any category
+ * it does not list, so the contract accepts only those. The legacy PAYE salary is not writable.
+ * Stored rows with other categories stay readable and deletable (`TaxRecordDto` is not checked).
+ */
+export const TAX_RECORD_CATEGORIES: Readonly<
+  Record<(typeof TAX_RECORD_SOURCES)[number], readonly string[]>
+> = Object.fromEntries(
+  TAX_RECORD_SOURCES.map((source) => [
+    source,
+    ALL_TAX_CATEGORIES.filter(
+      (c) => c.source === source && c.id !== LEGACY_PAYE_SALARY_CATEGORY,
+    ).map((c) => c.id),
+  ]),
+) as unknown as Record<(typeof TAX_RECORD_SOURCES)[number], readonly string[]>;
+
+const UNKNOWN_CATEGORY_MESSAGE = "Choose a category from the list for this income source";
+
+const isListedCategory = (source: string | undefined, category: string): boolean =>
+  source === undefined
+    ? Object.values(TAX_RECORD_CATEGORIES).some((list) => list.includes(category))
+    : (TAX_RECORD_CATEGORIES[source as keyof typeof TAX_RECORD_CATEGORIES] ?? []).includes(
+        category,
+      );
+
+/**
+ * Why a record's category is not one it can be written with, or null. With no source (a partial
+ * update) the category only has to be on some list; the backend checks the merged record.
+ */
+export const taxCategoryError = (
+  record: RecordShape,
+): { path: "category"; message: string } | null => {
+  const category = record.category?.trim();
+  if (category === undefined || category === LEGACY_PAYE_SALARY_CATEGORY) return null;
+  return isListedCategory(record.source, category)
+    ? null
+    : { path: "category", message: UNKNOWN_CATEGORY_MESSAGE };
+};
+
+const recordRules = (record: RecordShape, ctx: z.RefinementCtx) => {
+  const error = broughtForwardRuleError(record) ?? taxCategoryError(record);
   if (error) ctx.addIssue({ code: "custom", path: [error.path], message: error.message });
 };
 
@@ -93,13 +134,9 @@ const CreateTaxRecordFields = z.strictObject({
   receiptData: taxRecordFields.receiptData.optional(),
 });
 
-export const CreateTaxRecordRequest = CreateTaxRecordFields.superRefine(
-  broughtForwardIsRentalExpense,
-);
+export const CreateTaxRecordRequest = CreateTaxRecordFields.superRefine(recordRules);
 
-export const UpdateTaxRecordRequest = CreateTaxRecordFields.partial().superRefine(
-  broughtForwardIsRentalExpense,
-);
+export const UpdateTaxRecordRequest = CreateTaxRecordFields.partial().superRefine(recordRules);
 
 /** Most records (and most caps) one `POST tax-records/bulk` accepts; the backend handler enforces it too. */
 export const MAX_BULK_TAX_RECORDS = 500;

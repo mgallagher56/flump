@@ -268,7 +268,7 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
       {
         type: "income",
         source: "rental",
-        category: "rent",
+        category: "rental_income",
         name: "Synthetic P5 rental income",
         amount: 650,
         frequency: "monthly",
@@ -276,8 +276,8 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
       },
       {
         type: "expense",
-        source: "self-employment",
-        category: "software",
+        source: "self-employed",
+        category: "office_costs",
         name: "Synthetic P5 software costs",
         amount: 720,
         frequency: "annual",

@@ -233,7 +233,7 @@ describe("TaxController annual record end date (E23 D16)", () => {
   const base = {
     type: "income",
     source: "paye",
-    category: "salary",
+    category: "paye_bonus",
     name: "Pay",
     amount: 1000,
   } as const;
@@ -352,7 +352,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
     date: "2025-04-01",
     type: "income" as const,
     source: "paye" as const,
-    category: "c",
+    category: "paye_bonus",
   };
   const html = `data:text/html;base64,${Buffer.from("<script>").toString("base64")}`;
 
@@ -631,7 +631,7 @@ describe("TaxController receipt validation (E20-N14)", () => {
         name: "Tools",
         type: "expense",
         source: "self-employed",
-        category: "equipment",
+        category: "office_costs",
         amount: 42,
         frequency: "one-off",
         date: "2026-04-10",
@@ -681,7 +681,7 @@ describe("TaxController response shape (E21)", () => {
     date: "2025-04-06",
     type: "income" as const,
     source: "paye" as const,
-    category: "salary",
+    category: "paye_bonus",
   };
   /** Mimics an insert: generated columns filled, unset nullable columns left undefined. */
   const saveLikeInsert = (r: Record<string, unknown>) => ({

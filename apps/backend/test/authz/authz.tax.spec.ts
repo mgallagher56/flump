@@ -35,7 +35,7 @@ const RECEIPT_DATA = `data:application/pdf;base64,${PDF_BYTES.toString("base64")
 const recordBody = (name: string, extra: object = {}) => ({
   type: "income",
   source: "paye",
-  category: "salary",
+  category: "paye_bonus",
   name,
   amount: 1000,
   frequency: "monthly",

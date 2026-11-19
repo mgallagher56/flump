@@ -231,3 +231,32 @@ describe("TaxRecordDialog", () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ category: "paye_salary" }));
   });
 });
+
+describe("TaxRecordDialog with a category no list holds", () => {
+  // A row saved before the contract checked categories, for example "Rent".
+  const legacy: TaxRecordDraft = { ...draft, name: "Flat rent", amount: 1150, category: "Rent" };
+
+  it("opens Category and notes and asks for a category, without picking one silently", () => {
+    const { dialog } = setup(legacy, "edit");
+    const category = within(dialog).getByLabelText("Category") as HTMLSelectElement;
+    expect(category.value).toBe("Rent");
+    expect(within(dialog).getByRole("option", { name: "Choose a category" })).toBeDefined();
+  });
+
+  it("blocks saving with the error on the category field only", () => {
+    const { dialog, onSave } = setup(legacy, "edit");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(within(dialog).getByText("Choose a category from the list.")).toBeDefined();
+    expect(within(dialog).queryByText("Enter a name for this record.")).toBeNull();
+  });
+
+  it("saves once a listed category is chosen", () => {
+    const { dialog, onSave } = setup(legacy, "edit");
+    fireEvent.change(within(dialog).getByLabelText("Category"), {
+      target: { value: "rental_income" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ category: "rental_income" }));
+  });
+});

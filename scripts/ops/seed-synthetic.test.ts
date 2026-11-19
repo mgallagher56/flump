@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Client } from "pg";
 import { discoverMigrations } from "../../apps/backend/src/testing/discoverMigrations";
+import { CreateTaxRecordRequest } from "../../packages/api-contract/src/domains/tax";
 import { DB_TESTS_ENABLED, resetSchema, runInTransaction, withClient } from "./db-test-support";
 import {
   parseArgs,
@@ -18,6 +19,14 @@ const P5_ID = "user_SYNTHETICP5TEST05";
 const REAL_LOOKING = "user_01REALPERSONNOTSYNTH";
 
 describe("argument and persona validation (no database)", () => {
+  test("every persona tax record is one the API accepts (SA-7: known source and category)", () => {
+    for (const persona of Object.values(SYNTHETIC_PERSONAS)) {
+      for (const record of persona.tax) {
+        expect(CreateTaxRecordRequest.safeParse(record).success).toBe(true);
+      }
+    }
+  });
+
   test("parseArgs reads --persona KEY=id pairs and rejects anything else", () => {
     expect(parseArgs(["--persona", `P1=${P1_ID}`, "--persona", `P2=${P2_ID}`])).toEqual({
       P1: P1_ID,
