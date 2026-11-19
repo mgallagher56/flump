@@ -4,7 +4,11 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DELTA_PANEL_COPY } from "../../patterns/TakeHomeDeltaPanel/copy";
 import { drawerQuietButton } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer.styles";
-import { SECTION24_COPY, Section24Calculator } from "./Section24Calculator";
+import {
+  SECTION24_COPY,
+  Section24Calculator,
+  section24CarriedForward,
+} from "./Section24Calculator";
 
 const slider = (label: string) => screen.getByLabelText(label);
 const pill = (label: string) => screen.getByLabelText(`${label} input`);
@@ -79,6 +83,45 @@ describe("Section24Calculator", () => {
     expect(outcomes().getByText("£0")).toBeDefined();
     expect(outcomes().getByText("£800")).toBeDefined();
     expect(toolText()).not.toContain("£160");
+  });
+
+  it("says how much interest carries forward when it cannot all be used (ITTOIA 2005 s.274AA(4))", () => {
+    // No other income; £18,000 rent, £2,000 costs, £5,000 interest. Only £3,430 (income above
+    // the £12,570 allowance) can be used, so £1,570 carries forward.
+    render(
+      <Section24Calculator
+        initialAllowableExpenses={2000}
+        initialMortgageInterest={5000}
+        initialOtherIncome={0}
+        initialRentalIncome={18_000}
+      />,
+    );
+    expect(screen.getByText(section24CarriedForward("£1,570"))).toBeDefined();
+  });
+
+  it("shows no carry-forward sentence when all the interest is used", () => {
+    render(<Section24Calculator />);
+    expect(toolText()).not.toContain("carries forward");
+  });
+
+  it("uses unused interest from earlier years, entered in its own drawer", () => {
+    // £50,000 other income; £10,000 rent, £2,000 costs, £6,000 interest; £4,000 brought in.
+    // Interest to use: £10,000, limited to the £8,000 profit: credit £1,600. Tax on the rent
+    // (£7,486 to £10,632) is £3,146 - £1,600 = £1,546, and £2,000 carries forward.
+    render(
+      <Section24Calculator
+        initialAllowableExpenses={2000}
+        initialMortgageInterest={6000}
+        initialOtherIncome={50_000}
+        initialRentalIncome={10_000}
+      />,
+    );
+    // Before: £6,000 interest, credit £1,200, tax £1,946; nothing carries forward.
+    expect(outcomes().getByText("£1,946")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: SECTION24_COPY.broughtForwardDrawer }));
+    fireEvent.change(slider(SECTION24_COPY.broughtForward), { target: { value: "4000" } });
+    expect(outcomes().getByText("£1,546")).toBeDefined();
+    expect(screen.getByText(section24CarriedForward("£2,000"))).toBeDefined();
   });
 
   it("says in the working how tax on rental income is measured", () => {

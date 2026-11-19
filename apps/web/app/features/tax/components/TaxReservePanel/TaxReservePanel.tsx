@@ -11,6 +11,7 @@ import {
   FormField,
   Money,
   PercentInput,
+  section24CarriedForward,
 } from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import { NotSet } from "~/features/feedback/components/NotSet";
@@ -201,6 +202,11 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
                   value={gbp(result.netAdditionalTaxToPay)}
                 />
               </dl>
+              {result.financeCostsCarriedForward > 0 ? (
+                <p className={taperLine()}>
+                  {section24CarriedForward(pounds.format(result.financeCostsCarriedForward))}
+                </p>
+              ) : null}
               {taperNote ? <p className={taperLine()}>{taperNote}</p> : null}
             </div>
           </Card>

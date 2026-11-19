@@ -343,6 +343,11 @@ export function buildCopiedRecordForTaxYear(
   };
 }
 
+export interface UkTaxCalculationOptions {
+  /** Residential finance costs not relieved in earlier years (ITTOIA 2005 s.274AA(4)). */
+  financeCostsBroughtForward?: number;
+}
+
 export interface TaxCalculationResult {
   taxYear: string;
   payeSalary: number;
@@ -391,7 +396,12 @@ export interface TaxCalculationResult {
   dividendAllowance: number;
   taxableSavingsInterest: number;
   taxableDividends: number;
+  /**
+   * Tax on savings interest as it would be without the rent. Extra savings tax the rent causes
+   * (a higher band, a smaller allowance) is in `rentalPropertyTaxDueBeforeCredit`.
+   */
   savingsTaxDue: number;
+  /** Tax on dividends as it would be without the rent, on the same rule as `savingsTaxDue`. */
   dividendTaxDue: number;
 
   // Combined taxable income
@@ -406,6 +416,13 @@ export interface TaxCalculationResult {
   rentalPropertyTaxDueBeforeCredit: number;
   rentalPropertyTaxCredit: number; // Section 24 credit
   rentalPropertyTaxDueAfterCredit: number;
+  /** Finance costs not relieved in earlier years, brought into this year. */
+  financeCostsBroughtForward: number;
+  /**
+   * Finance costs not relieved this year, which carry forward to the next (ITTOIA 2005
+   * s.274AA(4)): the finance costs and the amount brought forward, less the amount used.
+   */
+  financeCostsCarriedForward: number;
 
   totalIncomeTaxDue: number;
   totalNIDue: number;
@@ -423,6 +440,7 @@ export function calculateUKTax(
   records: TaxRecordFields[],
   payeSalary: number,
   propertyOwnershipShare: number,
+  options: UkTaxCalculationOptions = {},
 ): TaxCalculationResult {
   // Strict (E22): an unsupported year throws UnsupportedUkTaxYearError instead of
   // silently using 2024/25. Callers should check classifyUkTaxYear() first.
@@ -585,9 +603,12 @@ export function calculateUKTax(
   // Section 24 credit. With the property allowance, neither the costs nor the finance cost credit
   // can be claimed. A return can use either, so the estimate works out both and keeps the one with
   // the lower total. With no rental income both routes are the same.
+  // Finance costs not relieved in earlier years join this year's (ITTOIA 2005 s.274A(3)(c)). The
+  // amount is already the person's own, so the ownership share is not applied to it.
+  const financeCostsBroughtForward = Math.max(0, options.financeCostsBroughtForward ?? 0);
   const withCosts = assess({
     rentalProfitBeforeInterestShare: rentalProfitBeforeInterest * shareFactor,
-    creditableFinanceCosts: rentalMortgageInterestShare,
+    creditableFinanceCosts: rentalMortgageInterestShare + financeCostsBroughtForward,
     propertyAllowanceUsed: 0,
   });
   const allowanceRoute = calculatePropertyProfit(rentalIncomeGrossShare, 0, yearRules);
@@ -605,9 +626,11 @@ export function calculateUKTax(
 
   function assess(property: {
     rentalProfitBeforeInterestShare: number;
-    /** Finance costs that earn the Section 24 credit on this route. */
+    /** Finance costs that earn the Section 24 credit on this route, brought-forward included. */
     creditableFinanceCosts: number;
     propertyAllowanceUsed: number;
+    /** The same year without the rent, used only to split the bill. */
+    isWithoutRental?: boolean;
   }): TaxCalculationResult {
     const { rentalProfitBeforeInterestShare, creditableFinanceCosts } = property;
 
@@ -680,13 +703,17 @@ export function calculateUKTax(
       nonSavingsTaxable,
     );
     const rentalPropertyTaxCredit = Math.max(0, maxCreditBase * 0.2);
+    // What is not relieved this year carries forward to the next (ITTOIA 2005 s.274AA(4)). On the
+    // property allowance route no finance costs are relieved, so only the amount brought in
+    // carries on: this year's costs are not deductible at all on that route.
+    const financeCostsCarriedForward =
+      property.propertyAllowanceUsed > 0
+        ? financeCostsBroughtForward
+        : Math.max(0, creditableFinanceCosts - maxCreditBase);
 
-    // Allocate Income Tax components. The tax on rent is the non-savings tax with the rent minus
-    // the non-savings tax without it. Without the rent the allowance is tapered by the other
+    // Non-savings tax without the rent. Without the rent the allowance is tapered by the other
     // income only, so the allowance the rent takes away (ITA 2007 s.35) counts against the rent,
-    // not the salary or self-employment. Extra savings or dividend tax the rent causes (a higher
-    // band, a smaller savings allowance) stays under savings and dividends. The parts still add
-    // up to the same total.
+    // not the salary or self-employment.
     const allowanceWithoutRental = taperedAllowance(
       totalGrossIncome - rentalProfitBeforeInterestShare,
     );
@@ -695,15 +722,6 @@ export function calculateUKTax(
       effectivePayeSalary + seProfit - allowanceWithoutRental,
     );
     const incomeTaxExclRental = incomeTaxOn(totalTaxableExclRental);
-
-    const rentalPropertyTaxDueBeforeCredit = Math.max(
-      0,
-      nonSavingsIncomeTaxBeforeCredit - incomeTaxExclRental,
-    );
-    const rentalPropertyTaxDueAfterCredit = Math.max(
-      0,
-      rentalPropertyTaxDueBeforeCredit - rentalPropertyTaxCredit,
-    );
 
     const seTaxDue = Math.max(0, incomeTaxExclRental - payeTaxDue);
 
@@ -732,6 +750,35 @@ export function calculateUKTax(
         yearRules,
       );
     }
+
+    // The tax on rent is the tax with the rent minus the tax without it. The rent is non-savings
+    // income, and savings and dividends stack above it (ITA 2007 s.16), so the rent can also push
+    // them into a higher band, shrink the starting rate for savings (s.12) and lower the Personal
+    // Savings Allowance (s.12B). That extra tax counts against the rent too, so the savings and
+    // dividend lines show what they would be without the rent. The parts add up to the same
+    // total. "Tax on rent" has no statutory definition: this split is a chosen convention.
+    const withoutRental =
+      property.rentalProfitBeforeInterestShare > 0 && !property.isWithoutRental
+        ? assess({
+            rentalProfitBeforeInterestShare: 0,
+            creditableFinanceCosts: 0,
+            propertyAllowanceUsed: 0,
+            isWithoutRental: true,
+          })
+        : null;
+    const savingsTaxShown = withoutRental ? withoutRental.savingsTaxDue : savingsTaxDue;
+    const dividendTaxShown = withoutRental ? withoutRental.dividendTaxDue : dividendTaxDue;
+    const rentalPropertyTaxDueBeforeCredit = Math.max(
+      0,
+      nonSavingsIncomeTaxBeforeCredit -
+        incomeTaxExclRental +
+        (savingsTaxDue - savingsTaxShown) +
+        (dividendTaxDue - dividendTaxShown),
+    );
+    const rentalPropertyTaxDueAfterCredit = Math.max(
+      0,
+      rentalPropertyTaxDueBeforeCredit - rentalPropertyTaxCredit,
+    );
 
     const totalNonSavingsIncomeTax = Math.max(
       0,
@@ -779,8 +826,8 @@ export function calculateUKTax(
       dividendAllowance,
       taxableSavingsInterest,
       taxableDividends,
-      savingsTaxDue,
-      dividendTaxDue,
+      savingsTaxDue: savingsTaxShown,
+      dividendTaxDue: dividendTaxShown,
 
       totalGrossIncome,
       personalAllowance,
@@ -791,6 +838,8 @@ export function calculateUKTax(
       rentalPropertyTaxDueBeforeCredit,
       rentalPropertyTaxCredit,
       rentalPropertyTaxDueAfterCredit,
+      financeCostsBroughtForward,
+      financeCostsCarriedForward,
       totalIncomeTaxDue,
       totalNIDue,
       totalTaxDue,

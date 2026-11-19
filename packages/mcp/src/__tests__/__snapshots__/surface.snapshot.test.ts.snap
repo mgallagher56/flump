@@ -2552,6 +2552,9 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "section24": {
               "additionalProperties": false,
               "properties": {
+                "financeCostsCarriedForwardGbp": {
+                  "type": "number",
+                },
                 "financeCostsShareGbp": {
                   "type": "number",
                 },
@@ -2570,6 +2573,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "taxCreditGbp",
                 "rentalTaxBeforeCreditGbp",
                 "rentalTaxAfterCreditGbp",
+                "financeCostsCarriedForwardGbp",
               ],
               "type": "object",
             },

@@ -453,6 +453,8 @@ export interface Section24Input {
   otherTaxableIncomeGbp: number; // PAYE salary, self-employment, etc.
   ownershipSharePct?: number; // default 100
   taxYear?: UkTaxYear;
+  /** This owner's finance costs not relieved in earlier years (ITTOIA 2005 s.274AA(4)). */
+  financeCostsBroughtForwardGbp?: number;
 }
 
 export interface Section24Result {
@@ -466,6 +468,10 @@ export interface Section24Result {
   /** Property allowance used in place of the costs and the finance cost credit (0 if not). */
   propertyAllowanceUsedGbp: number;
   section24TaxCreditGbp: number; // 20% basic rate reducer
+  /** Finance costs brought in from earlier years. */
+  financeCostsBroughtForwardGbp: number;
+  /** Finance costs not used this year, which carry forward to the next. */
+  financeCostsCarriedForwardGbp: number;
   netRentalTaxLiabilityGbp: number;
   effectiveRentalTaxRatePct: number;
   balancingPayment31JanGbp: number;

@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "@storybook/test";
-import { SECTION24_COPY, Section24Calculator } from "./Section24Calculator";
+import {
+  SECTION24_COPY,
+  Section24Calculator,
+  section24CarriedForward,
+} from "./Section24Calculator";
 
 const meta: Meta<typeof Section24Calculator> = {
   title: "5. Calculators/Section24Calculator",
@@ -66,6 +70,48 @@ export const CashLoss: Story = {
     await expect(outcomes.getByText("-£800")).toBeInTheDocument();
   },
 };
+
+/** Rent within the £1,000 property allowance: no tax (ITTOIA 2005 s.783B). */
+export const SmallRent: Story = {
+  args: {
+    initialRentalIncome: 900,
+    initialAllowableExpenses: 100,
+    initialMortgageInterest: 0,
+    initialOtherIncome: 30_000,
+  },
+  play: async ({ canvasElement }) => {
+    const outcomes = within(within(canvasElement).getByTestId("section-24-outcomes"));
+    await expect(outcomes.getByText("£0")).toBeInTheDocument();
+    await expect(outcomes.getByText("£800")).toBeInTheDocument();
+  },
+};
+
+/**
+ * Interest that cannot all be used: no other income, so only £3,430 counts and £1,570 carries
+ * forward. Adding £1,000 brought in from earlier years carries £2,570 forward.
+ */
+export const CarriedForward: Story = {
+  args: {
+    initialRentalIncome: 18_000,
+    initialAllowableExpenses: 2_000,
+    initialMortgageInterest: 5_000,
+    initialOtherIncome: 0,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(section24CarriedForward("£1,570"))).toBeInTheDocument();
+    await userEvent.click(
+      canvas.getByRole("button", { name: SECTION24_COPY.broughtForwardDrawer }),
+    );
+    const input = canvas.getByLabelText(`${SECTION24_COPY.broughtForward} input`);
+    await userEvent.clear(input);
+    await userEvent.type(input, "1000");
+    await userEvent.tab();
+    await expect(await canvas.findByText(section24CarriedForward("£2,570"))).toBeInTheDocument();
+  },
+};
+
+export const CarriedForwardDark: Story = { ...CarriedForward, globals: { theme: "dark" } };
 
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },

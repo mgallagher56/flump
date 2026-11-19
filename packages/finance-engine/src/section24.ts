@@ -44,6 +44,7 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
     ],
     otherIncome,
     sharePct,
+    { financeCostsBroughtForward: Math.max(0, input.financeCostsBroughtForwardGbp ?? 0) },
   );
 
   const shareRentalIncome = round2(ledger.rentalIncomeGrossShare);
@@ -84,6 +85,8 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
     taxableRentalProfitGbp: taxableRentalProfit,
     propertyAllowanceUsedGbp: round2(ledger.propertyAllowanceUsed),
     section24TaxCreditGbp: section24TaxCredit,
+    financeCostsBroughtForwardGbp: round2(ledger.financeCostsBroughtForward),
+    financeCostsCarriedForwardGbp: round2(ledger.financeCostsCarriedForward),
     netRentalTaxLiabilityGbp: netRentalTaxLiability,
     effectiveRentalTaxRatePct: effectiveRentalTaxRate,
     balancingPayment31JanGbp: round2(payments.balancingPayment),
@@ -115,6 +118,7 @@ export function calculateSection24LandlordTax(
   allowableExpenses: number,
   ownershipSharePct = 100,
   taxYear?: UkTaxYear,
+  financeCostsBroughtForward = 0,
 ): Section24Result {
   return calculateSection24Tax({
     grossRentalIncomeGbp: rentalIncome,
@@ -123,5 +127,6 @@ export function calculateSection24LandlordTax(
     otherTaxableIncomeGbp: employmentIncome,
     ownershipSharePct,
     taxYear,
+    financeCostsBroughtForwardGbp: financeCostsBroughtForward,
   });
 }

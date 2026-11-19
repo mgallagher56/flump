@@ -66,6 +66,45 @@ describe("TaxReservePanel", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("says how much mortgage interest carries forward (ITTOIA 2005 s.274AA(4))", () => {
+    // No salary; rent 18,000, costs 2,000, interest 5,000. Only 3,430 (income above the 12,570
+    // allowance) can be used, so 5,000 - 3,430 = 1,570 carries forward.
+    const year = "2026/27";
+    const rec = (category: string, amount: number) => ({
+      id: category,
+      type: category === "rental_income" ? ("income" as const) : ("expense" as const),
+      source: "rental" as const,
+      category,
+      name: category,
+      amount,
+      frequency: "annual" as const,
+      date: "2026-06-06",
+      endDate: null,
+      notes: null,
+    });
+    const result = calculateUKTax(
+      year,
+      [
+        rec("rental_income", 18000),
+        rec("repairs_maintenance", 2000),
+        rec("mortgage_interest", 5000),
+      ],
+      0,
+      100,
+    );
+    setup(16_000, 0, result);
+    expect(
+      screen.getByText(
+        "£1,570 of mortgage interest could not be used this year. It carries forward to next year.",
+      ),
+    ).toBeDefined();
+  });
+
+  it("says nothing about carrying interest forward when it is all used", () => {
+    setup();
+    expect(screen.queryByText(/carries forward/)).toBeNull();
+  });
+
   it("says nothing about the taper well below it", () => {
     setup(40_000);
     expect(screen.queryByText(/Personal Allowance reduces/)).toBeNull();
