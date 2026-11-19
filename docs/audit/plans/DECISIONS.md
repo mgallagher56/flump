@@ -316,3 +316,28 @@ The owner gave these rulings on 14 November 2026. They are numbered R1 to R6 in 
 7. **Loading (R5).** Nothing for the first 200ms or so; once shown, loading stays at least 400ms or so; no generic full-page skeleton between screens that have already loaded; safe with reduced motion.
    - Source: plan R5; built in #704 (`useDelayedPending`, `PendingReveal`, `durations.pendingDelay`, `pendingMinimum`, `reveal`). Recorded in UX-GUIDELINES E2.
    - Supersedes: the page skeleton after 200ms shown on every navigation (#688).
+
+# Owner decisions, round 11 (2026-11-19): system data audit
+
+The fifteen decisions in [docs/audit/system-2026-11/PLAN.md](../system-2026-11/PLAN.md), "Owner decisions". Asked on 19 November 2026 whether they accept the recommended option on all fifteen, the owner answered: "everything else is accepted". Each is accepted with the plan's recommended option. The plan's status line now reads "Decisions: accepted on 19 November 2026".
+
+| # | Decision | Accepted option |
+|---|---|---|
+| 1 | How budget lines relate to saved facts | A: linked lines for housing, savings and debt; the income line is linked only when the user asks |
+| 2 | Take-home pay typed in onboarding | A: stored as net pay, salary left empty, figures that need pay before tax show "Not set" |
+| 3 | Pension rates still at the 5% and 3% row defaults | A: columns empty by default, rows holding exactly the defaults set to "not set", before the friends beta, with a guard that stops it running later |
+| 4 | Where buy-to-let details live | A: accounts only; profile values copied into accounts, then the profile fields dropped |
+| 5 | Mortgage interest for the Self Assessment finance-cost credit | A: a "Calculated" figure from the linked mortgage for the user to confirm into a record, labelled as an estimate. **Needs the owner's tax vector sign-off, not yet given** |
+| 6 | Share of a rental property used for tax | A: per property, from the property account's share |
+| 7 | Scottish taxpayers in Self Assessment | A: a plain note now (slice 2), Scottish bands in the calculation later (slice 7). **Needs the owner's tax vector sign-off, not yet given** |
+| 8 | What "today's balance" is | A: always the newest recorded figure |
+| 9 | How a joint account reads on screen | A: totals show the share; a single account's own view shows the whole first with the share beside it; forms edit the whole and say so |
+| 10 | How the picture reaches its callers (confirms or amends E23 D-1-B) | B: one shared server-side function that loads the rows itself; the endpoint when the mobile app needs it |
+| 11 | Adopt the "One home per value" law and its CI check | A: both, in slice 1, with the arithmetic rule as a warning at first. This is the sign-off AGENTS.md section 15 asks for |
+| 12 | Drop dead columns, endpoints and unused parts of tables | A: dropped in slice 9, a release after their last reader goes; `transactions` kept empty until the bank plan returns |
+| 13 | Where "setup checklist dismissed" is stored | A: on the profile |
+| 14 | Whether a property and its mortgage must have the same share | B: linked, the share copied across as a suggestion when one is first set, and allowed to differ |
+| 15 | What the salary field means for a self-employed person | A: pay from an employer only; self-employed income comes from Self Assessment records. **Needs the owner's tax vector sign-off, not yet given** |
+
+- Decisions 5, 7 and 15 change tax figures. The owner's acceptance of the option is not the tax vector sign-off (round 1, E4: "The owner signs off the tax test vectors"). That sign-off is still the owner's to give and has not been given, so no tax change from these decisions merges until it is.
+- Supersedes: E23 D-1-B is amended by decision 10 (the endpoint waits for the mobile app). E34 slice C1's rule that a mortgage's share overwrites its property's is amended by decision 14.

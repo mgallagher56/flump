@@ -44,6 +44,8 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Check-in day of the month](#check-in-day)                                                                    | fact   | preferences | Holds                                     |
 | [Enabled pages and dashboard widgets](#enabled-pages-and-widgets)                                             | fact   | preferences | Holds                                     |
 | [Setup checklist progress](#setup-checklist)                                                                  | fact   | preferences | Duplicated (two stores that can disagree) |
+| [Account name](#account-name)                                                                                 | fact   | accounts    | Not checked                               |
+| [Currency and country](#currency-and-country)                                                                 | fact   | preferences | Not checked                               |
 | [Net worth today](#net-worth)                                                                                 | figure | accounts    | Holds                                     |
 | [Net worth over time](#net-worth-over-time)                                                                   | figure | accounts    | Broken                                    |
 | [Total debts](#total-debts)                                                                                   | figure | accounts    | Duplicated (two stores that can disagree) |
@@ -355,7 +357,7 @@ Read by:
 
 Other stores:
 
-- none
+- `import_batches.payload, revert_data` [cache] in `apps/backend/src/entities/import-batch.entity.ts` (a staged import and the rows it replaced, kept until the import is committed, undone or expires)
 
 Entered or changed by:
 
@@ -544,6 +546,29 @@ Entered or changed by:
 Read by:
 
 - Savings: `packages/finance-engine/src/savings-interest.ts`
+
+### Account name
+
+<a id="account-name"></a>
+
+- Id: `account-name` (stored fact)
+- Verdict: Not checked. Findings: none. Links: none.
+- Source of truth: `accounts.name` in `apps/backend/src/entities/account.entity.ts`
+- Note: Added by slice 1 so every accounts column has an entry. The audit did not check it.
+
+Other stores:
+
+- none
+
+Entered or changed by:
+
+- Accounts: `apps/web/app/features/accounts/accountFormBody.ts`
+- Staged import: `apps/backend/src/modules/imports/imports.service.ts`
+
+Read by:
+
+- Accounts: `apps/web/app/routes/app.accounts._index.tsx`
+- AI read tools: `packages/mcp/src/tools/read/listAccounts.ts`
 
 ### Net worth today
 
@@ -789,7 +814,7 @@ Read by:
 
 Other stores:
 
-- `user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type` [duplicate] in `apps/backend/src/entities/user-profile.entity.ts` (the Mortgage page's buy-to-let tab reads and writes these)
+- `user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type, has_buy_to_let, buy_to_let_count` [duplicate] in `apps/backend/src/entities/user-profile.entity.ts` (the Mortgage page's buy-to-let tab reads and writes these)
 
 Entered or changed by:
 
@@ -1045,6 +1070,27 @@ Entered or changed by:
 Read by:
 
 - Dashboard: `apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx`
+
+### Currency and country
+
+<a id="currency-and-country"></a>
+
+- Id: `currency-and-country` (stored fact)
+- Verdict: Not checked. Findings: none. Links: none.
+- Source of truth: `user_profiles.currency, country` in `apps/backend/src/entities/user-profile.entity.ts`
+- Note: Added by slice 1 so every column has an entry. The audit did not check who reads it.
+
+Other stores:
+
+- `accounts.currency` [default] in `apps/backend/src/entities/account.entity.ts` (a currency on each account as well as on the profile)
+
+Entered or changed by:
+
+- none
+
+Read by:
+
+- none
 
 ## Area: budget
 
@@ -1322,3 +1368,25 @@ Shown on:
 - Retirement plan: `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`
 - AI read tools: `packages/mcp/src/tools/read/getRetirementPicture.ts`
 - AI simulate tools: `packages/mcp/src/tools/simulate/simulateRetirement.ts`
+
+## Browser storage and cookies
+
+Every key the browser code writes. A key that holds user data names the fact it copies; the fact's home is still the database.
+
+| Key                                | Storage        | User data | Copies                              | Code                                                                           | Note                                                                                                      |
+| ---------------------------------- | -------------- | --------- | ----------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `flump_financial_baseline_v2`      | localStorage   | yes       | [salary](#salary)                   | `apps/web/app/state/baseline.store.ts`                                         | the calculator baseline (salary, region and more); the signed-out seed, also read on some signed-in pages |
+| `flump_financial_baseline_v1`      | localStorage   | yes       | [salary](#salary)                   | `apps/web/app/state/baseline.store.ts`                                         | the older baseline key; read once, copied to v2 and removed                                               |
+| `flump_onboarding_seed`            | localStorage   | yes       | [salary](#salary)                   | `packages/finance-engine/src/persistence.ts`                                   | the marketing calculators' answers (salary, debts, savings) carried into sign-up                          |
+| `flump_onboarding_seed`            | cookie         | yes       | [salary](#salary)                   | `packages/finance-engine/src/persistence.ts`                                   | the same seed as a cookie, kept for one hour so sign-up can finish                                        |
+| `flump_setup_checklist_dismissed`  | localStorage   | yes       | [setup-checklist](#setup-checklist) | `apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx` | the setup checklist was dismissed in this browser                                                         |
+| `flump_runway_calculator_settings` | localStorage   | no        | none                                | `apps/web/app/utils/runwayStorage.ts`                                          | an account choice older versions saved; now only removed                                                  |
+| `flump.budget.keptDebtRows`        | sessionStorage | no        | none                                | `apps/web/app/containers/budget/BudgetContainer.tsx`                           | ids of budget debt rows the person chose to keep, for this browser session                                |
+| `flump-theme`                      | localStorage   | no        | none                                | `packages/ui/src/hooks/themeScript.ts`                                         | light, dark or system                                                                                     |
+| `flump.setup-step-count`           | sessionStorage | no        | none                                | `packages/ui/src/hooks/useSetupProgressOnce.ts`                                | how many setup steps were done when the progress animation last ran                                       |
+| `flump.scene-settled.*`            | sessionStorage | no        | none                                | `packages/ui/src/hooks/useSceneSettle.ts`                                      | which illustrations have already played their entry animation                                             |
+| `flump-marketing-scroll`           | sessionStorage | no        | none                                | `apps/marketing/src/app-shell/ScrollManager.tsx`                               | scroll position of each marketing page in history                                                         |
+| `flump_has_session`                | cookie         | no        | none                                | `apps/web/app/security/session-cookies.server.ts`                              | a marker the browser code reads to know a session may exist; no session data                              |
+| `flump_dev_session`                | cookie         | no        | none                                | `apps/web/app/utils/devSession.server.ts`                                      | test-only session for the end-to-end suite                                                                |
+| `__Host-wos-session`               | cookie         | no        | none                                | `apps/web/app/utils/sessionPolicy.server.ts`                                   | the sealed sign-in session in production                                                                  |
+| `wos-session`                      | cookie         | no        | none                                | `apps/web/app/utils/sessionPolicy.server.ts`                                   | the sealed sign-in session in development, and the old production name that is cleared                    |

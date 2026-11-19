@@ -1,0 +1,59 @@
+# Fixture map for scripts/check-value-map.test.ts. Paths are virtual: the test serves them from the
+# files next to this one. This map passes every rule; each test breaks one thing.
+version: 1
+
+surfaces:
+  - { id: dashboard, name: Dashboard, kind: page, path: apps/web/app/routes/dashboard.tsx }
+
+links:
+  - { id: L01, group: A. Accounts, statement: "A balance shows on the Dashboard", verdict: holds }
+
+facts:
+  - id: account-balance
+    name: Balance today
+    area: accounts
+    source_of_truth: { ref: accounts.balance, path: apps/backend/src/entities/account.entity.ts }
+    other_stores:
+      - {
+          ref: "localStorage flump_fixture_baseline",
+          status: duplicate,
+          path: apps/web/app/state/storage.ts,
+        }
+    readers:
+      - { surface: dashboard, path: apps/web/app/routes/dashboard.tsx }
+    links: [L01]
+    verdict: holds
+
+  - id: account-name
+    name: Account name
+    area: accounts
+    source_of_truth: { ref: accounts.name, path: apps/backend/src/entities/account.entity.ts }
+    verdict: not-checked
+
+figures:
+  - id: net-worth
+    name: Net worth today
+    area: accounts
+    computed_by:
+      { function: selectNetWorth, path: packages/finance-engine/src/picture/selectors/net-worth.ts }
+    inputs: [account-balance]
+    shown_on:
+      - { surface: dashboard, path: apps/web/app/routes/dashboard.tsx }
+    verdict: holds
+
+browser_storage:
+  - {
+      key: flump_fixture_baseline,
+      storage: localStorage,
+      user_data: true,
+      fact: account-balance,
+      path: apps/web/app/state/storage.ts,
+      note: "a copy of the balance for signed-out calculators",
+    }
+  - {
+      key: flump.fixture-seen.*,
+      storage: sessionStorage,
+      user_data: false,
+      path: apps/web/app/state/storage.ts,
+      note: "which panels have been seen",
+    }

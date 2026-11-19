@@ -36,7 +36,7 @@
     "check:launch": "bun scripts/check-launch-readiness.ts",
     "tax:signoff": "bun scripts/tax-signoff.ts",
     "value-map": "bun scripts/generate-value-map.ts",
-    "check:laws": "bun scripts/check-design-tokens.ts && bun scripts/check-tabular-nums.ts && bun scripts/check-react-icons.ts && bun scripts/check-style-literals.ts && bun scripts/check-input-types.ts && bun scripts/check-judgement-tokens.ts && bun scripts/check-dependency-versions.ts && bun scripts/check-workspace-deps.ts && bun scripts/check-copy.ts && bun scripts/check-tax-signoff.ts && bun scripts/check-one-tax-engine.ts && bun scripts/check-backend-laws.ts",
+    "check:laws": "bun scripts/check-design-tokens.ts && bun scripts/check-tabular-nums.ts && bun scripts/check-react-icons.ts && bun scripts/check-style-literals.ts && bun scripts/check-input-types.ts && bun scripts/check-judgement-tokens.ts && bun scripts/check-dependency-versions.ts && bun scripts/check-workspace-deps.ts && bun scripts/check-copy.ts && bun scripts/check-tax-signoff.ts && bun scripts/check-one-tax-engine.ts && bun scripts/check-value-map.ts && bun scripts/check-backend-laws.ts",
     "verify": "turbo run verify",
     "prepare": "husky"
   },

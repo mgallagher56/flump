@@ -1,4 +1,4 @@
-Decisions: open
+Decisions: accepted on 19 November 2026
 
 # System audit, November 2026: plan
 
@@ -303,6 +303,8 @@ A fair middle course, if the owner prefers it: slices 1 to 3 now, slice 4 next, 
 
 ## Owner decisions
 
+All fifteen were accepted on 19 November 2026 with the recommended option. Asked whether they accept the recommended option on all fifteen, the owner answered: "everything else is accepted". The record is in [docs/audit/plans/DECISIONS.md](../plans/DECISIONS.md), round 11. Decisions 5, 7 and 15 still need the owner's tax vector sign-off, which has not been given.
+
 Each decision has options and a recommendation. A flag says when it changes where or how user data is stored, names an outside service, or touches security. No decision names an outside service.
 
 1. **How budget lines relate to saved facts.** Flag: changes how user data is stored.
@@ -310,77 +312,95 @@ Each decision has options and a recommendation. A flag says when it changes wher
    - B. Sync on write: keep copies and update them whenever the fact changes.
    - C. Keep copies and show a notice when they differ.
    - Recommendation: A for housing, savings and debt lines. For the income line, link only when the user asks: an estimated take-home should not replace a payslip figure they typed. B was built and removed once. C leaves the double entry in place.
+   - **Accepted on 19 November 2026: option A** for housing, savings and debt lines; the income line is linked only when the user asks.
 
 2. **Take-home pay typed in onboarding.** Flag: changes how user data is stored.
    - A. Store it as net pay and leave the salary empty. Figures that need pay before tax show "Not set".
    - B. Estimate the salary before tax from it, store that, and mark it as an estimate.
    - C. Remove the take-home option and always ask for pay before tax.
    - Recommendation: A. It never stores a figure the user did not give.
+   - **Accepted on 19 November 2026: option A**.
 
 3. **Pension rates that are still the 5% and 3% row defaults.** Flag: changes stored user data, and reverses an earlier choice not to back-fill.
    - A. Make the columns empty by default, and set existing rows that hold exactly the defaults to "not set".
    - B. Leave existing rows, and add a "set by the user" marker for new answers.
    - Recommendation: A, now, while all data is test data. 5% and 3% is also the legal minimum, so it is the most common real answer. The migration must therefore run before the friends beta and carry a guard that stops it running later.
+   - **Accepted on 19 November 2026: option A**.
 
 4. **Where buy-to-let details live.** Flag: changes how user data is stored, and drops columns.
    - A. Accounts only. Copy any profile values into accounts, then drop the profile fields.
    - B. Keep the profile fields as a quick buy-to-let entry that needs no accounts.
    - Recommendation: A.
+   - **Accepted on 19 November 2026: option A**.
 
 5. **Mortgage interest for the Self Assessment finance-cost credit.** Flag: changes a tax figure, so it needs the owner's vector sign-off; no storage change beyond slice 7's link.
    - A. Offer a "Calculated" figure from the linked mortgage for the user to confirm into a record.
    - B. Work it out silently and use it with no record.
    - C. Leave it as a figure the user types.
    - Recommendation: A, labelled as an estimate. It matches the check-in's "Calculated" rule and keeps the user in charge of their return. The rules have edges the figure cannot see, listed under slice 7.
+   - **Accepted on 19 November 2026: option A**.
+   - The tax vector sign-off this decision needs is still the owner's to give. It has not been given, so no change to a tax figure from this decision merges until it is.
 
 6. **The share of a rental property used for tax.** Flag: changes how user data is stored.
    - A. Per property, from the property account's share.
    - B. Keep one share on the profile for all properties.
    - Recommendation: A.
+   - **Accepted on 19 November 2026: option A**.
 
 7. **Scottish taxpayers in Self Assessment.** Flag: changes a tax figure; needs vector sign-off.
    - A. A plain note on the page now (slice 2), then Scottish bands in the calculation (slice 7).
    - B. The note only.
    - Recommendation: A.
+   - **Accepted on 19 November 2026: option A**.
+   - The tax vector sign-off this decision needs is still the owner's to give. It has not been given, so no change to a tax figure from this decision merges until it is.
 
 8. **What "today's balance" is.** Flag: changes how user data is stored.
    - A. Always the newest recorded figure. Creating an account records it. Correcting the newest month moves today's balance. For a mortgage or loan with a calculated balance, today's figure is calculated forward from that newest record, as the check-in already does.
    - B. Keep today's balance separate from history, as now.
    - Recommendation: A.
+   - **Accepted on 19 November 2026: option A**.
 
 9. **How a joint account reads on screen.**
    - A. Totals and headline figures show your share. A single account's own view (its page, the Mortgage page, a statement-style figure) shows the whole first with your share beside it. Every form edits the whole and says so.
    - B. Everything shows your share first, including a single account's own view.
    - C. Leave each page to choose, with a label.
    - Recommendation: A. Totals follow the E34 rule that joint items count at the person's share. A single loan or account matches the lender's statement, which is how the Mortgage page works today.
+   - **Accepted on 19 November 2026: option A**.
 
 10. **How the picture reaches its callers.** This confirms or amends E23 D-1-B.
     - A. Build `GET /financial-picture` now and move the web loaders and the AI tools to it.
     - B. One shared server-side function for the web and the AI tools now, which loads the rows and builds the picture. Add the endpoint when the mobile app needs it.
     - Recommendation: B, on one condition: the shared function must load the rows itself. Today each loader chooses which rows to fetch, and the Retirement page forgot the budget lines (PP-6). A builder that is handed rows cannot prevent that.
+    - **Accepted on 19 November 2026: option B**, on its condition: the shared function loads the rows itself.
 
 11. **Adopt the "One home per value" law and its CI check.** Flag: a guard change under AGENTS.md section 15 (a new required check and a new law).
     - A. Adopt both in slice 1.
     - B. Keep the map as a document with no check.
     - Recommendation: A, with the arithmetic rule as a warning at first. Without the check the map goes stale within weeks.
+    - **Accepted on 19 November 2026: option A**, with the arithmetic rule as a warning at first.
 
 12. **Drop dead columns, endpoints and the unused parts of tables.** Flag: changes how user data is stored (deletes stored values after a before-image copy).
     - A. Drop them in slice 9, a release after their last reader goes. Keep the `transactions` table empty until the bank plan returns, and remove its endpoints.
     - B. Leave them in place and mark them deprecated.
     - Recommendation: A.
+    - **Accepted on 19 November 2026: option A**.
 
 13. **Where "setup checklist dismissed" is stored.** Flag: changes where user data is stored (browser to database).
     - A. On the profile.
     - B. In the browser, cleared on reset.
     - Recommendation: A.
+    - **Accepted on 19 November 2026: option A**.
 
 14. **Whether a property and its mortgage must have the same share.** This amends how E34 slice C1 works today.
     - A. Keep them in step in both directions once they are linked.
     - B. Link them, copy the share across as a suggestion when one is first set, and allow them to differ.
     - Recommendation: B. The share on the deeds and the share of the loan can differ, for example unequal owners with a joint mortgage. Today a mortgage's share overwrites its property's.
+    - **Accepted on 19 November 2026: option B**.
 
 15. **What the salary field means for a self-employed person.** Flag: changes a tax figure; needs vector sign-off.
     - A. The salary field is pay from an employer only. A self-employed person's income comes from their Self Assessment records, and onboarding asks them for it in those words.
     - B. For a self-employed person the salary field is their expected yearly income, used until records exist and never added to them.
     - C. Keep both and let the Self Assessment page ask which applies.
     - Recommendation: A. Today the Dashboard follows A and the Self Assessment page and the AI tax tool add the two together. Someone with a job and a business on the side needs both, which A allows.
+    - **Accepted on 19 November 2026: option A**.
+    - The tax vector sign-off this decision needs is still the owner's to give. It has not been given, so no change to a tax figure from this decision merges until it is.

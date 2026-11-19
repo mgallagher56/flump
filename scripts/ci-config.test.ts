@@ -407,6 +407,11 @@ describe("backend type safety (BE-01 M21)", () => {
     expect(scripts["check:laws"]).toContain("bun scripts/check-workspace-deps.ts");
   });
 
+  test("check:laws runs the one home per value check (system audit decision 11)", () => {
+    const { scripts } = readJson("package.json");
+    expect(scripts["check:laws"]).toContain("bun scripts/check-value-map.ts");
+  });
+
   test("CI generates CycloneDX SBOMs and fails audit on high/critical advisories on every event (E36 H2)", () => {
     const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
     expect(ci).toContain("bun scripts/generate-sbom.ts --app workspace");
