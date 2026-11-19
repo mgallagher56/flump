@@ -22,7 +22,6 @@ export const DEFAULT_FINANCIAL_BASELINE: FinancialBaseline = {
   monthlyHousingCost: 900,
   propertyValue: 0,
   mortgageBalance: 0,
-  monthlyOtherOutgoings: 1100,
   totalCashSavings: 5000,
   totalPensionPot: 15000,
   totalUnsecuredDebt: 0,
@@ -229,10 +228,10 @@ export function userProfileToFinancialBaseline(
     propertyValue:
       profile.homeValue !== null && profile.homeValue !== undefined ? Number(profile.homeValue) : 0,
     mortgageBalance,
-    monthlyOtherOutgoings:
-      profile.monthlyOtherOutgoings !== null && profile.monthlyOtherOutgoings !== undefined
-        ? Number(profile.monthlyOtherOutgoings)
-        : DEFAULT_FINANCIAL_BASELINE.monthlyOtherOutgoings,
+    // Other outgoings are not read from the profile (system audit leftovers, item 4): onboarding
+    // saved them twice, once here and once as the budget line the figures read, so this copy went
+    // stale as soon as the budget changed. The budget is their one home; the context pack carries
+    // it as budgetSummary.
     totalCashSavings:
       profile.totalCashSavings !== null && profile.totalCashSavings !== undefined
         ? Number(profile.totalCashSavings)
@@ -320,9 +319,6 @@ export function userProfileToSavedBaseline(
     ...(notSet.length > 0 ? { notSet } : {}),
     totalCashSavings: isSaved(profile.totalCashSavings) ? baseline.totalCashSavings : undefined,
     totalPensionPot: isSaved(profile.totalPensionPot) ? baseline.totalPensionPot : undefined,
-    monthlyOtherOutgoings: isSaved(profile.monthlyOtherOutgoings)
-      ? baseline.monthlyOtherOutgoings
-      : undefined,
     monthlyHousingCost:
       isSaved(profile.monthlyHousingCost) || noRentOrMortgage(baseline.housingStatus)
         ? baseline.monthlyHousingCost

@@ -26,7 +26,6 @@ const salaried: ProfileFacts = {
   isSalarySacrifice: false,
   housingStatus: null,
   monthlyHousingCost: null,
-  mortgageType: null,
 };
 
 const noFacts = financialPictureInputFromRows({}).profile;
@@ -163,9 +162,8 @@ describe("budgetEntryFromRow", () => {
     }
   });
 
-  it("sets the primary income flag only when it is true", () => {
-    expect(budgetEntryFromRow({ isPrimaryIncome: true }).isPrimaryIncome).toBe(true);
-    for (const flag of [false, undefined, "true"]) {
+  it("never carries the stored primary income flag (system audit leftovers, item 5)", () => {
+    for (const flag of [true, false, undefined, "true"]) {
       expect(budgetEntryFromRow({ isPrimaryIncome: flag })).not.toHaveProperty("isPrimaryIncome");
     }
   });

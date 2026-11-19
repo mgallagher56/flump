@@ -3460,7 +3460,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Models paying off the user's recorded debts (up to 20) with an optional extra monthly amount, with highest rate first (avalanche) and smallest balance first (snowball), beside minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an APR is never guessed. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.",
+    "description": "Models paying off the user's recorded debts (up to 20) with an optional extra monthly amount, with highest rate first (avalanche) and smallest balance first (snowball), beside minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an unrecorded APR is never guessed. After a 0% deal ends with no rate saved for after it, 24.9% APR is assumed and listed in assumptions[]. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.",
     "execution": {
       "taskSupport": "forbidden",
     },

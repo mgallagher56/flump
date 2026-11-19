@@ -31,7 +31,6 @@ export interface ProfileFacts {
   housingStatus?: "renting" | "mortgage" | "own_outright" | "living_with_family" | null;
   /** Saved monthly rent (renters) or mortgage payment (owners), as the user entered it. */
   monthlyHousingCost?: number | null;
-  mortgageType?: "repayment" | "interest-only" | null;
   /** Share of rental property the user owns, in percent (self assessment). null means 100%. */
   propertyOwnershipShare?: number | null;
 }
@@ -94,7 +93,6 @@ const positiveOrNull = (n: number | null): number | null => (n !== null && n > 0
 const REGIONS = ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"] as const;
 const EMPLOYMENT = ["employed", "self-employed", "other"] as const;
 const HOUSING = ["renting", "mortgage", "own_outright", "living_with_family"] as const;
-const MORTGAGE_TYPES = ["repayment", "interest-only"] as const;
 
 /**
  * The stored salary sacrifice flag, or null when it was never answered. The column is nullable
@@ -133,7 +131,6 @@ export function profileFactsFromProfile(
     monthlyTakeHome: positiveOrNull(toNumber(p.monthlyTakeHome)),
     housingStatus: HOUSING.find((h) => h === p.housingStatus) ?? null,
     monthlyHousingCost: toNumber(p.monthlyHousingCost),
-    mortgageType: MORTGAGE_TYPES.find((t) => t === p.mortgageType) ?? null,
     propertyOwnershipShare: toNumber(p.propertyOwnershipShare),
   };
 }

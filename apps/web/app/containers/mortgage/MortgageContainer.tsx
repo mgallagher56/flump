@@ -305,8 +305,9 @@ const MortgageContainer: FC = () => {
   };
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Seeded from the selected account's repayment type when the dialog opens (startEditing).
   const [editMortgageType, setEditMortgageType] = useState<"repayment" | "interest-only">(
-    userProfile?.mortgageType || "repayment",
+    "repayment",
   );
   const [editFixEndDate, setEditFixEndDate] = useState("");
   // Only a date the user changed in this form is sent, so switching accounts or reseeding the form
@@ -342,13 +343,11 @@ const MortgageContainer: FC = () => {
   const picture = useMemo(
     () =>
       buildWorkspacePicture({
-        userProfile: userProfile
-          ? { ...userProfile, mortgageType: profile.mortgageType ?? userProfile.mortgageType }
-          : userProfile,
+        userProfile,
         accounts: pictureAccounts,
         accountDetails,
       }),
-    [userProfile, profile.mortgageType, pictureAccounts, accountDetails],
+    [userProfile, pictureAccounts, accountDetails],
   );
   const selectedFixEnd = selectedAccountId
     ? (picture.fixedRateEnds.find((fact) => fact.accountId === selectedAccountId) ?? null)
@@ -421,12 +420,12 @@ const MortgageContainer: FC = () => {
       : null
     : mortgageSharePercent;
 
-  // How the selected mortgage is repaid: saved on the account. Only when the account has none
-  // saved does a residential mortgage show the older profile answer; buy to let shows
-  // interest-only, as before.
+  // How the selected mortgage is repaid: saved on the account only (system audit leftovers, item
+  // 3: the profile's old answer was copied onto the sole residential mortgage and is not read).
+  // None saved: a residential mortgage shows repayment, as the engine estimates it, and buy to
+  // let shows interest-only, as before.
   const mortgageType: RepaymentType =
-    selectedMortgageRow?.repaymentType ??
-    (isBtl ? "interest-only" : (profileFacts.mortgageType ?? "repayment"));
+    selectedMortgageRow?.repaymentType ?? (isBtl ? "interest-only" : "repayment");
 
   // What can be stored: a mortgage account holds balance and rate, and a residential one also
   // its term, fixed rate end and payment. Anything else would only be held in memory, so the
@@ -533,9 +532,7 @@ const MortgageContainer: FC = () => {
       }));
     };
     try {
-      // Housing cost still reads the profile's repayment type, so the residential view keeps it
-      // in step with the account until the engine reads the account's own.
-      if (!isBtl) await updateProfile({ hasMortgage: true, mortgageType: editMortgageType });
+      if (!isBtl) await updateProfile({ hasMortgage: true });
       if (selectedAccountId) {
         // The proxy adds the session; the browser never holds a token. Term is stored in
         // months, and the balance on a liability account is stored as a negative figure. Only

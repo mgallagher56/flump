@@ -20,7 +20,6 @@ const facts = (over: Partial<ProfileFacts> = {}): ProfileFacts => ({
   isSalarySacrifice: false,
   housingStatus: null,
   monthlyHousingCost: null,
-  mortgageType: null,
   ...over,
 });
 
@@ -139,11 +138,9 @@ describe("selectHousingCost: mortgage", () => {
   });
 
   it("uses the saved monthly cost for an interest-only mortgage, never the repayment estimate", () => {
-    const fig = run(
-      facts({ housingStatus: "mortgage", mortgageType: "interest-only", monthlyHousingCost: 750 }),
-      takeHome(3000),
-      [mortgage()],
-    );
+    const fig = run(facts({ housingStatus: "mortgage", monthlyHousingCost: 750 }), takeHome(3000), [
+      mortgage({ repaymentType: "interest-only" }),
+    ]);
     expect(fig).toMatchObject({
       status: "known",
       value: { monthly: 750, paymentEstimated: false },
@@ -155,12 +152,35 @@ describe("selectHousingCost: mortgage", () => {
       mortgage({ interestRate: null }),
     ]);
     expect(fig).toEqual(figureUnknown(["mortgageDetails"], "not-set"));
-    const interestOnly = run(
-      facts({ housingStatus: "mortgage", mortgageType: "interest-only" }),
-      takeHome(3000),
-      [mortgage()],
-    );
+    const interestOnly = run(facts({ housingStatus: "mortgage" }), takeHome(3000), [
+      mortgage({ repaymentType: "interest-only" }),
+    ]);
     expect(interestOnly).toEqual(figureUnknown(["mortgageDetails"], "not-set"));
+  });
+
+  it("reads each account's own repayment type; an account with none set is estimated as repayment", () => {
+    // The profile's old mortgage answer is no longer read (system audit leftovers, item 3), so a
+    // profile that once said interest-only does not stop the estimate for an account with no type.
+    const legacy = { ...facts({ housingStatus: "mortgage" }), mortgageType: "interest-only" };
+    const fig = run(legacy as ProfileFacts, takeHome(3000), [mortgage({ repaymentType: null })]);
+    // Worked by hand: 200,000 at 4.5% over 300 months is 200,000 x 0.00555832478 = 1,111.66
+    // (the payment per pound borrowed is worked in the joint-share test above).
+    expect(fig).toMatchObject({
+      status: "known",
+      value: { kind: "mortgage", monthly: 1111.66, paymentEstimated: true },
+    });
+  });
+
+  it("estimates a repayment account and keeps an interest-only account's saved payment", () => {
+    const fig = run(facts({ housingStatus: "mortgage" }), takeHome(4000), [
+      mortgage({ repaymentType: "repayment" }),
+      mortgage({ id: "m2", repaymentType: "interest-only", monthlyContribution: 250 }),
+    ]);
+    // Worked by hand: 1,111.66 estimated for m1 (as above) + 250 saved for m2 = 1,361.66.
+    expect(fig).toMatchObject({
+      status: "known",
+      value: { monthly: 1361.66, paymentEstimated: true },
+    });
   });
 });
 

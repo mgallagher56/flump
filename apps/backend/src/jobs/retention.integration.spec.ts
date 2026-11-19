@@ -152,6 +152,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [account.id],
         );
       }
+      for (const age of ["91 days", "89 days"]) {
+        await ds.query(
+          `INSERT INTO mortgage_repayment_type_backfill (account_id, new_repayment_type, backfilled_at)
+           VALUES ($1, 'repayment', ${ago(age)})`,
+          [account.id],
+        );
+      }
       // The slice 5 before-image: one row past 90 days and one inside it.
       const [rentLine]: { id: string }[] = await ds.query(
         "INSERT INTO budget_entries (user_id, category, name, amount) VALUES ($1, 'housing', 'Rent', 0) RETURNING id",
@@ -211,6 +218,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           paye_salary_record_backfill: 1,
           account_home_backfill: 1,
           rent_share_backfill: 1,
+          mortgage_repayment_type_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });
@@ -225,6 +233,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("pension_rates_backfill")).toBe(1);
       expect(await count("student_loan_plan_backfill")).toBe(1);
       expect(await count("paye_salary_record_backfill")).toBe(1);
+      expect(await count("mortgage_repayment_type_backfill")).toBe(1);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
     });

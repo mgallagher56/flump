@@ -294,6 +294,7 @@ export const DebtContainer: FC = () => {
             missingAprCount={missingApr.length}
             monthlyMinimumTotal={totalMin}
             payoffAchievable={savedComparison.minimumOnly.payoffAchievable !== false}
+            promoRevertAssumed={(savedComparison.minimumOnly.promoRevertAssumed?.length ?? 0) > 0}
             totalDebt={totalDebt}
             onAddRate={() => setEditingId(missingApr[0]?.id ?? null)}
           />

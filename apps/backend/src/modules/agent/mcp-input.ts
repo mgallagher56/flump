@@ -79,7 +79,9 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
       monthlyTakeHome: facts?.monthlyTakeHome ?? null,
       housingStatus: facts?.housingStatus ?? null,
       monthlyHousingCost: facts?.monthlyHousingCost ?? null,
-      mortgageType: facts?.mortgageType ?? null,
+      // Not read since the engine reads each mortgage account's own repayment type (system audit
+      // leftovers, item 3); kept as null until the column drop removes it from the contract.
+      mortgageType: null,
       propertyOwnershipShare: facts?.propertyOwnershipShare ?? null,
     },
     netWorthBasis: {
@@ -101,6 +103,15 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
         // A joint account counts at the user's share, as the remote tools count it.
         ownership: ownershipOf(a.ownership),
         sharePercent: a.sharePercent === undefined ? undefined : numOrNull(a.sharePercent),
+        // The 0% deal end, so the payoff tools switch rate on that date as the Debt page does.
+        promoZeroPercentUntil:
+          a.promoZeroPercentUntil === undefined ? undefined : textOrNull(a.promoZeroPercentUntil),
+        // How a mortgage is repaid, so the housing figure never estimates an interest-only one
+        // as repayment (system audit leftovers, item 3: the profile's answer is no longer read).
+        repaymentType:
+          a.repaymentType === "repayment" || a.repaymentType === "interest-only"
+            ? a.repaymentType
+            : undefined,
       }),
     ),
     accountDetails: (input.accountDetails ?? [])

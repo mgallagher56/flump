@@ -69,4 +69,17 @@ describe("<DebtSummary />", () => {
     const { container } = customRender(<DebtSummary {...props} minimumEstimated />);
     expect(container.textContent).toContain("Minimum payments, some are estimates");
   });
+  test("says once, quietly, when a 0% deal's rate for after it is assumed", () => {
+    const line =
+      "After a 0% deal ends we assume 24.9% APR, as no rate for after the deal is saved.";
+    const { container, getByText } = customRender(<DebtSummary {...props} promoRevertAssumed />);
+    expect(getByText(line)).toBeDefined();
+    expect(container.textContent?.split(line)).toHaveLength(2);
+    // Not shown when nothing is assumed, or when no date is shown because an APR is missing.
+    expect(customRender(<DebtSummary {...props} />).container.textContent).not.toContain(line);
+    expect(
+      customRender(<DebtSummary {...props} missingAprCount={1} promoRevertAssumed />).container
+        .textContent,
+    ).not.toContain(line);
+  });
 });

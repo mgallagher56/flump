@@ -36,14 +36,16 @@ function positive(value: unknown): number | null {
  * has neither a saved payment nor a balance, rate and term to estimate it from (audit slice 5,
  * HM-1): the payment saved on the mortgage account (the Mortgage page writes it) comes first, so
  * changing it there changes the budget's housing line, commitments and Retirement. A mortgage
- * with no saved payment is estimated as before, unless `estimate` is false (interest only). A
- * buy-to-let mortgage is the rental's cost, not housing, so it is left out (system audit slice 4):
+ * with no saved payment is estimated as a repayment mortgage, unless the account's own repayment
+ * type is interest-only (no repayment formula fits it). An account with no type set is read as
+ * repayment, the type every account form starts on; the profile's old mortgage answer is no longer
+ * read (system audit leftovers, item 3: a migration copied it onto the sole residential mortgage
+ * account). A buy-to-let mortgage is the rental's cost, not housing, so it is left out (system audit slice 4):
  * it neither adds to the figure nor makes it unknown.
  */
 function homeMortgagePayments(
   snapshot: PortfolioSnapshot,
   rawAccounts: readonly RawAccount[],
-  estimate: boolean,
 ): { monthly: number; estimated: boolean } | null {
   const mortgages = rawAccounts.filter((a) => a.type === "Mortgage" && !isBuyToLetAccount(a));
   if (mortgages.length === 0) return null;
@@ -57,7 +59,7 @@ function homeMortgagePayments(
       total += saved.monthlyContribution;
       continue;
     }
-    if (!estimate) return null;
+    if (account.repaymentType === "interest-only") return null;
     estimated = true;
     const balance = account.id ? snapshot.getLatestBalance(account.id) : 0;
     const rate = positive(account.interestRate);
@@ -195,11 +197,7 @@ function housingPayment(
   } else if (profile.housingStatus === "mortgage") {
     kind = "mortgage";
     // An interest-only payment cannot be estimated from a repayment formula, but a saved one counts.
-    const accounts = homeMortgagePayments(
-      snapshot,
-      rawAccounts,
-      profile.mortgageType !== "interest-only",
-    );
+    const accounts = homeMortgagePayments(snapshot, rawAccounts);
     if (accounts !== null) {
       monthly = accounts.monthly;
       paymentEstimated = accounts.estimated;

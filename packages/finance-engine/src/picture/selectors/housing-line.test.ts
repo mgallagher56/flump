@@ -21,7 +21,6 @@ const facts = (over: Partial<ProfileFacts> = {}): ProfileFacts => ({
   isSalarySacrifice: false,
   housingStatus: null,
   monthlyHousingCost: null,
-  mortgageType: null,
   ...over,
 });
 
@@ -95,14 +94,13 @@ describe("the mortgage payment saved on the mortgage account (L13, HM-1, BU-5)",
   });
 
   it("counts a saved payment on an interest-only mortgage, and never estimates one", () => {
-    const interestOnly = facts({
-      housingStatus: "mortgage",
-      monthlyHousingCost: 750,
-      mortgageType: "interest-only",
-    });
-    expect(payment(interestOnly, [mortgage({ monthlyContribution: 700 })])?.monthly).toBe(700);
+    const interestOnly = facts({ housingStatus: "mortgage", monthlyHousingCost: 750 });
+    const io = { repaymentType: "interest-only" as const };
+    expect(payment(interestOnly, [mortgage({ ...io, monthlyContribution: 700 })])?.monthly).toBe(
+      700,
+    );
     // No saved payment: a repayment estimate would be wrong, so the profile's £750 is used.
-    expect(payment(interestOnly, [mortgage()])).toEqual({
+    expect(payment(interestOnly, [mortgage(io)])).toEqual({
       kind: "mortgage",
       monthly: 750,
       paymentEstimated: false,

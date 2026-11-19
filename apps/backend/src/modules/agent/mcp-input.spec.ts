@@ -363,6 +363,46 @@ describe("toMcpInputWire: joint shares and the saved retirement plan", () => {
     );
     expect(wire.accounts[0]).toMatchObject({ ownership: "sole", sharePercent: null });
   });
+
+  it("sends a saved 0% deal end date, a null one as null, and leaves it out when absent", () => {
+    const card = { ...raw.accounts?.[0], type: "Credit Card" };
+    const withDate = toMcpInputWire(
+      { ...raw, accounts: [{ ...card, promoZeroPercentUntil: "2027-02-01" }] },
+      true,
+    );
+    expect(withDate.accounts[0]?.promoZeroPercentUntil).toBe("2027-02-01");
+    const parsed = McpInputResponse.safeParse({
+      token: { id: TOKEN_ID, scopes: ["mcp:read:anonymized"], anonymizeInstitutions: true },
+      input: JSON.parse(JSON.stringify(withDate)),
+    });
+    expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+    const cleared = toMcpInputWire(
+      { ...raw, accounts: [{ ...card, promoZeroPercentUntil: null }] },
+      true,
+    );
+    expect(cleared.accounts[0]?.promoZeroPercentUntil).toBeNull();
+    expect(toMcpInputWire(raw, true).accounts[0]).not.toHaveProperty("promoZeroPercentUntil");
+  });
+
+  it("sends a mortgage's saved repayment type and leaves out one not set or unknown", () => {
+    const home = { ...raw.accounts?.[0], type: "Mortgage" };
+    const wire = (repaymentType: string | null | undefined) =>
+      toMcpInputWire({ ...raw, accounts: [{ ...home, repaymentType } as never] }, true).accounts[0];
+    expect(wire("interest-only")?.repaymentType).toBe("interest-only");
+    expect(wire("repayment")?.repaymentType).toBe("repayment");
+    for (const unset of [null, undefined, "Interest only"]) {
+      expect(wire(unset)).not.toHaveProperty("repaymentType");
+    }
+    const parsed = McpInputResponse.safeParse({
+      token: { id: TOKEN_ID, scopes: ["mcp:read:anonymized"], anonymizeInstitutions: true },
+      input: JSON.parse(
+        JSON.stringify(
+          toMcpInputWire({ ...raw, accounts: [{ ...home, repaymentType: "interest-only" }] }, true),
+        ),
+      ),
+    });
+    expect(parsed.success, JSON.stringify(parsed.error?.issues)).toBe(true);
+  });
 });
 
 describe("toMcpInputToken", () => {

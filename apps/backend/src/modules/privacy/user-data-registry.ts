@@ -858,6 +858,11 @@ export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reas
     reason:
       "system audit slice 4 migration before-image (the kinds, links and repayment types it filled, and the accounts and history rows it added) kept so each down() can undo it; rows go with the account by ON DELETE CASCADE; not exported, as the accounts and their history are in the export",
   },
+  mortgage_repayment_type_backfill: {
+    parent: "accounts",
+    reason:
+      "migration before-image (the repayment types BackfillMortgageRepaymentType copied from the profile to sole residential mortgages) kept 90 days so its down() can undo it; rows go with the account by ON DELETE CASCADE; not exported, as it is a rollback copy and the current repayment types are in the export",
+  },
   rent_share_backfill: {
     parent: "budget_entries",
     reason:

@@ -134,8 +134,9 @@ describe("userProfileToFinancialBaseline: saved values and display defaults", ()
     });
     const fromAbsent = toBaseline({});
     for (const baseline of [fromNull, fromAbsent]) {
-      // Defaults: 1,100 outgoings, 5,000 cash, 15,000 pension pot, 5% and 3% pension.
-      expect(baseline.monthlyOtherOutgoings).toBe(1100);
+      // Defaults: 5,000 cash, 15,000 pension pot, 5% and 3% pension. Other outgoings are never
+      // read from the profile (item 4), so there is no stand-in for them either.
+      expect(baseline.monthlyOtherOutgoings).toBeUndefined();
       expect(baseline.totalCashSavings).toBe(5000);
       expect(baseline.totalPensionPot).toBe(15000);
       expect(baseline.pensionContributionPct).toBe(5);

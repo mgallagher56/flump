@@ -463,6 +463,58 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(rows.map((r) => r.account_id)).toEqual([accountB]);
   });
 
+  it("erases the repayment type before-image (mortgage_repayment_type_backfill) with the user's accounts", async () => {
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const accountOf = async (userId: string) =>
+      at(await ds.getRepository(Account).findBy({ userId }), 0).id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        `INSERT INTO mortgage_repayment_type_backfill (account_id, old_repayment_type, new_repayment_type)
+         VALUES ($1, NULL, 'interest-only')`,
+        [await accountOf(userId)],
+      );
+    }
+    const accountB = await accountOf(USER_B);
+    await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    const rows: { account_id: string }[] = await ds.query(
+      "SELECT account_id FROM mortgage_repayment_type_backfill",
+    );
+    expect(rows.map((r) => r.account_id)).toEqual([accountB]);
+  });
+
+  it("a financial data reset removes the user's repayment type before-image, and no other user's", async () => {
+    // The reset deletes the user's accounts, and the before-image goes with them by ON DELETE
+    // CASCADE, so no down() can bring a reset account's repayment type back.
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const accountOf = async (userId: string) =>
+      at(await ds.getRepository(Account).findBy({ userId }), 0).id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        `INSERT INTO mortgage_repayment_type_backfill (account_id, old_repayment_type, new_repayment_type)
+         VALUES ($1, NULL, 'interest-only')`,
+        [await accountOf(userId)],
+      );
+    }
+    const accountB = await accountOf(USER_B);
+    const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
+    await new UserProfileService(
+      repo(UserProfile),
+      repo(Account),
+      repo(AccountDetail),
+      repo(BankConnection),
+      identity,
+      ds,
+      new LoggingBankConsentRevoker(),
+      deletion,
+    ).resetFinancialData(USER_A);
+    const rows: { account_id: string }[] = await ds.query(
+      "SELECT account_id FROM mortgage_repayment_type_backfill",
+    );
+    expect(rows.map((r) => r.account_id)).toEqual([accountB]);
+  });
+
   it("a financial data reset removes the user's slice 5 rent before-image, and no other user's", async () => {
     // The reset deletes the user's budget lines, and the before-image goes with them by ON DELETE
     // CASCADE, so no down() can bring a reset line's share back.

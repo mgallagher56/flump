@@ -86,7 +86,6 @@ function wirePersona(p: PersonaFixture): PersonaFixture {
     ...f,
     pensionPercent: f.pensionPercent ?? PROFILE_COLUMN_DEFAULTS.pensionPercent,
     isSalarySacrifice: f.isSalarySacrifice ?? PROFILE_COLUMN_DEFAULTS.isSalarySacrifice,
-    mortgageType: f.mortgageType ?? PROFILE_COLUMN_DEFAULTS.mortgageType,
     propertyOwnershipShare:
       f.propertyOwnershipShare ?? PROFILE_COLUMN_DEFAULTS.propertyOwnershipShare,
   };
@@ -173,7 +172,7 @@ function toContractProfile(p: PersonaFixture) {
     hasRentalIncome: false,
     rentalIncomeMonthly: null,
     hasMortgage: false,
-    mortgageType: f.mortgageType,
+    mortgageType: PROFILE_COLUMN_DEFAULTS.mortgageType,
     propertyOwnershipShare: f.propertyOwnershipShare,
     pensionPercent: f.pensionPercent,
     // Not a persona fact, so never answered: null (owner decision 3, the column has no default).
@@ -212,7 +211,7 @@ function toContractBudget(p: PersonaFixture) {
     amount: b.amount,
     frequency: b.frequency,
     isIncome: b.isIncome,
-    isPrimaryIncome: b.isPrimaryIncome === true,
+    isPrimaryIncome: false,
     isEssential: b.isEssential,
     notes: b.notes ?? null,
     isDefault: false,

@@ -154,11 +154,11 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     [accounts, snapshot],
   );
 
-  // Take-home from the profile is the income that stops in this question, so it is never "kept".
-  const nonPrimaryIncome = useMemo(
-    () => entries.filter((e) => e.isIncome && !e.isPrimaryIncome && !e.linked),
-    [entries],
-  );
+  // Take-home pay is the income that stops in this question, so it is never "kept". It is the
+  // engine's linked take-home line (owner item 7); every linked line is left out, as its figure
+  // belongs to a saved detail. The stored primary-income flag is no longer read (system audit
+  // leftovers, item 5), so an old flagged row is offered like any other income line.
+  const nonPrimaryIncome = useMemo(() => entries.filter((e) => e.isIncome && !e.linked), [entries]);
 
   // Spending and savings rows: an essential savings row counts in the saved figure (item 28).
   const expenseEntries = useMemo(() => entries.filter((e) => !e.isIncome), [entries]);

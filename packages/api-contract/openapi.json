@@ -8947,6 +8947,20 @@
                                 "enum": ["sole", "joint"],
                                 "type": "string"
                               },
+                              "promoZeroPercentUntil": {
+                                "type": ["string", "null"]
+                              },
+                              "repaymentType": {
+                                "anyOf": [
+                                  {
+                                    "enum": ["repayment", "interest-only"],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
                               "sharePercent": {
                                 "type": ["number", "null"]
                               },
