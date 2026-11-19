@@ -51,7 +51,18 @@ const records: TaxRecord[] = [
 ];
 
 let mockSource = "self-employed";
-const baseProfile = { annualSalary: 40000, propertyOwnershipShare: 50, enabledPages: ["tax"] };
+// The profile's share is no longer read for tax (owner decision 6): the rental property's is.
+const baseProfile = { annualSalary: 40000, propertyOwnershipShare: 100, enabledPages: ["tax"] };
+const mockAccounts = [
+  {
+    id: "flat",
+    name: "Flat 2",
+    type: "Property",
+    accountSubtype: "rental",
+    ownership: "joint",
+    sharePercent: 50,
+  },
+];
 let mockProfile: Record<string, unknown> = baseProfile;
 let mockRecords: TaxRecord[] = records;
 let mockSearch = "";
@@ -70,6 +81,7 @@ vi.mock("react-router", () => ({
     source: mockSource,
     records: mockRecords,
     userProfile: mockProfile,
+    accounts: mockAccounts,
   }),
   useFetcher: () => ({ submit: mockSubmit, state: "idle", data: null }),
 }));
@@ -141,7 +153,7 @@ describe("TaxSourceContainer", () => {
     expect(allowance.nextElementSibling?.contains(screen.getByRole("note"))).toBe(true);
   });
 
-  it("uses the owner's share for the property allowance", () => {
+  it("uses the rental property's share from Accounts for the property allowance", () => {
     mockSource = "rental";
     const { container } = render(<TaxSourceContainer />);
     expect(screen.getByRole("heading", { level: 1, name: "Rental property" })).toBeDefined();

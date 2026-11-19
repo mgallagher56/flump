@@ -1,4 +1,5 @@
 import {
+  calculateEstimatedTax,
   calculateUKTax,
   compareExpensesWithAllowance,
   estimateInputsFor,
@@ -6,13 +7,13 @@ import {
   isLegacySalaryRecord,
   isRecordActiveInTaxYear,
   recordedTotalsForTaxYear,
+  rentalSharesFromAccounts,
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
 import {
   Button,
   CollapsibleDrawer,
-  DELTA_PANEL_COPY,
   EmptyState,
   Icon,
   Illustration,
@@ -27,10 +28,17 @@ import { ArrowLeft, List, Plus } from "lucide-react";
 import { type FC, useMemo } from "react";
 import { Link, useLoaderData, useSearchParams } from "react-router";
 import { AllowanceComparison } from "~/features/tax/components/AllowanceComparison";
+import { CalculatedFigures } from "~/features/tax/components/CalculatedFigures";
 import { TaxRecordsTable } from "~/features/tax/components/TaxRecordsTable";
 import { TaxYearBar } from "~/features/tax/components/TaxYearBar";
 import { availableTaxYears, resolveSelectedTaxYear } from "~/features/tax/hooks/taxYears";
 import { useTaxRecordEditor } from "~/features/tax/hooks/useTaxRecordEditor";
+import {
+  calculatedInterestOffers,
+  rentalShareNotice,
+  type TaxAccount,
+  uniformRentalShare,
+} from "~/features/tax/linkedAccounts";
 import {
   selfAssessmentPath,
   sourcePagePath,
@@ -41,11 +49,11 @@ import {
   addableEstimateFact,
   ESTIMATE_MISSING_PROMPT,
   SALARY_SETTINGS_PATH,
-  SCOTTISH_BANDS_NOTE,
   SOURCE_LABEL,
 } from "~/features/tax/tax-labels";
 import type { loader } from "~/routes/app.self-assessment_.$source";
-import { propertyShareProfileFirst, salaryProfileFirst } from "~/utils/profileFirst";
+import { salaryProfileFirst } from "~/utils/profileFirst";
+import { EstimateNoticeLead } from "./TaxContainer";
 import { addActions, backLink, errorText, pageRoot } from "./TaxSourceContainer.styles";
 
 /** What each page says under its title: one sentence, no figures. */
@@ -67,7 +75,8 @@ const sourceTotals = (records: TaxRecord[], source: TaxSource, taxYear: string) 
  * default; changing it keeps the page and updates the link.
  */
 const TaxSourceContainer: FC = () => {
-  const { source, records = [], userProfile } = useLoaderData<typeof loader>();
+  const { source, records = [], userProfile, accounts = [] } = useLoaderData<typeof loader>();
+  const taxAccounts = accounts as readonly TaxAccount[];
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTaxYear = getCurrentUKTaxYear();
 
@@ -83,36 +92,49 @@ const TaxSourceContainer: FC = () => {
   const selectYear = (year: string) =>
     setSearchParams({ year: taxYearToParam(year) }, { replace: true, preventScrollReset: true });
 
-  const editor = useTaxRecordEditor({ records, taxYear });
+  const editor = useTaxRecordEditor({ records, taxYear, accounts: taxAccounts });
 
-  // The estimate uses the saved profile salary and share, as the list page does, through the
-  // engine's one rule (estimateInputsFor): a self-employed person's salary is not PAYE pay, and an
-  // estimate that depends on a fact not set is unknown, as on the Dashboard.
+  // The estimate uses the saved profile salary and region, and each rental property's share from
+  // Accounts, as the list page does, through the engine's one rule (estimateInputsFor): a
+  // self-employed person's salary is not PAYE pay, and an estimate that depends on a fact not set
+  // is unknown, as on the Dashboard.
   const employmentType = userProfile?.employmentType ?? null;
+  const taxRegion = userProfile?.taxRegion ?? null;
   const annualSalary = salaryProfileFirst(userProfile);
-  const ownershipShare = propertyShareProfileFirst(userProfile);
   const inputs = useMemo(
     () =>
       estimateInputsFor(
-        { employmentType, annualSalary, propertyOwnershipShare: ownershipShare },
+        { employmentType, annualSalary, taxRegion, accounts: taxAccounts },
         records,
         taxYear,
       ),
-    [employmentType, annualSalary, ownershipShare, records, taxYear],
+    [employmentType, annualSalary, taxRegion, taxAccounts, records, taxYear],
   );
   // The source's gross income and expenses do not depend on the salary, so they are read from
   // the ledger either way. What the estimate used (the allowance, a tie) is read only when known.
   const result = useMemo(
     () =>
-      calculateUKTax(
-        taxYear,
-        // A legacy PAYE salary record never stands in for the saved salary (slice 6).
-        records.filter((r) => !isLegacySalaryRecord(r)),
-        inputs.status === "known" ? inputs.payeSalary : 0,
-        ownershipShare,
-      ),
-    [taxYear, records, inputs, ownershipShare],
+      inputs.status === "known"
+        ? calculateEstimatedTax(inputs)
+        : calculateUKTax(
+            taxYear,
+            // A legacy PAYE salary record never stands in for the saved salary (slice 6).
+            records.filter((r) => !isLegacySalaryRecord(r)),
+            0,
+            100,
+            { rentalShares: rentalSharesFromAccounts(taxAccounts) },
+          ),
+    [taxYear, records, inputs, taxAccounts],
   );
+  // One share for every rental record in the year, when they share one, for the comparison's note.
+  const rentalShare = uniformRentalShare(taxAccounts, records, taxYear);
+  const offers =
+    source === "rental" || source === "savings"
+      ? calculatedInterestOffers({ accounts: taxAccounts, records, taxYear }).filter((o) =>
+          source === "rental" ? o.kind === "mortgage_interest" : o.kind === "savings_interest",
+        )
+      : [];
+  const shareNotice = source === "rental" ? rentalShareNotice(taxAccounts, records, taxYear) : null;
   const estimate = inputs.status === "known" ? result : undefined;
   const missingFact = inputs.status === "known" ? null : addableEstimateFact(inputs.missing);
 
@@ -135,13 +157,14 @@ const TaxSourceContainer: FC = () => {
         }
       : source === "rental" && (income > 0 || expenses > 0)
         ? {
+            // The person's share of each record, from its account (owner decision 6).
             value: compareExpensesWithAllowance({
               source,
               taxYear,
-              grossIncome: result.rentalIncomeGross,
-              recordedExpenses: result.rentalExpensesExclInterest,
-              financeCosts: result.rentalMortgageInterest,
-              ownershipSharePct: ownershipShare,
+              grossIncome: result.rentalIncomeGrossShare,
+              recordedExpenses: result.rentalExpensesExclInterestShare,
+              financeCosts: result.rentalMortgageInterestShare,
+              ownershipSharePct: 100,
             }),
             used: estimate ? estimate.propertyAllowanceUsed : null,
           }
@@ -212,7 +235,7 @@ const TaxSourceContainer: FC = () => {
         <AllowanceComparison
           allowanceUsedInEstimate={comparison.used}
           comparison={comparison.value}
-          ownershipSharePct={source === "rental" ? ownershipShare : undefined}
+          ownershipSharePct={source === "rental" ? (rentalShare ?? undefined) : undefined}
           routesTie={source === "rental" ? estimate?.propertyRoutesTie : undefined}
           unknownEstimate={
             missingFact ? (
@@ -238,16 +261,17 @@ const TaxSourceContainer: FC = () => {
       {comparison && estimate ? (
         <ProjectionNotice
           lead={
-            userProfile?.taxRegion === "SCOTLAND" ? (
-              <>
-                {DELTA_PANEL_COPY.unverifiedBanner} <span>{SCOTTISH_BANDS_NOTE}</span>
-              </>
-            ) : (
-              DELTA_PANEL_COPY.unverifiedBanner
-            )
+            <EstimateNoticeLead scottish={taxRegion === "SCOTLAND"} shareNotice={shareNotice} />
           }
         />
       ) : null}
+
+      <CalculatedFigures
+        offers={offers}
+        pending={editor.saving}
+        taxYear={taxYear}
+        onAdd={editor.addCalculated}
+      />
 
       <PageSection
         action={recordCount > 0 ? addButtons : undefined}

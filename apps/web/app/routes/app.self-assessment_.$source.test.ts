@@ -27,7 +27,7 @@ const snapshot = (enabledPages: string[] | null) => ({
   user: { id: "u1" },
   taxRecords: [{ id: "t1", source: "rental" }],
   userProfile: { enabledPages },
-  accounts: [],
+  accounts: [{ id: "p1", type: "Property", accountSubtype: "rental" }],
 });
 
 describe("app.self-assessment_.$source", () => {
@@ -45,6 +45,8 @@ describe("app.self-assessment_.$source", () => {
     };
     expect(res.data.source).toBe(source);
     expect(res.data.records).toEqual([{ id: "t1", source: "rental" }]);
+    // The accounts give each rental property's share and the calculated figures (slice 7).
+    expect(res.data.accounts).toEqual([{ id: "p1", type: "Property", accountSubtype: "rental" }]);
     expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(expect.anything(), { includeTax: true });
   });
 
@@ -69,6 +71,7 @@ describe("app.self-assessment_.$source", () => {
     // Nothing from the records or profile goes to a page that only redirects.
     expect(result.data.records).toEqual([]);
     expect(result.data.userProfile).toBeNull();
+    expect((result.data as { accounts?: unknown[] }).accounts).toEqual([]);
   });
 
   it("titles the page with the source", () => {

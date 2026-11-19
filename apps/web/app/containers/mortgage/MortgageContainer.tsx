@@ -6,6 +6,7 @@ import {
 import {
   BUY_TO_LET_PROPERTY_LABEL,
   categorizeAccountType,
+  getCurrentUKTaxYear,
   HOME_ESTIMATE_LABEL,
   type HomeProperty,
   isBuyToLetAccount,
@@ -33,6 +34,7 @@ import {
 } from "@repo/ui";
 import { type FC, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useNavigate, useRevalidator, useSearchParams } from "react-router";
+import { btlPropertyYields } from "~/features/mortgage/btlYield";
 import { BtlOverview } from "~/features/mortgage/components/BtlOverview";
 import { MortgageAlerts } from "~/features/mortgage/components/MortgageAlerts";
 import { MortgageEditDialog } from "~/features/mortgage/components/MortgageEditDialog";
@@ -126,6 +128,8 @@ interface PropertyRow {
   repaymentType?: RepaymentType | null;
   interestRate?: unknown;
   termMonths?: unknown;
+  /** The saved balance: a property's value. */
+  balance?: number | string | null;
   updatedAt?: unknown;
 }
 
@@ -261,7 +265,12 @@ export const firstResidentialFigures = (
 };
 
 const MortgageContainer: FC = () => {
-  const { accounts = [], accountDetails = [], userProfile } = useLoaderData<typeof loader>();
+  const {
+    accounts = [],
+    accountDetails = [],
+    userProfile,
+    taxRecords = [],
+  } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { profile, updateProfile } = useUserProfile();
@@ -869,11 +878,17 @@ const MortgageContainer: FC = () => {
       ? `Monthly mortgage payment ${formatCurrency(storedPayment > 0 ? storedPayment : currentMonthlyPayment)}`
       : "";
 
-  // The rental properties listed in the buy to let overview, by name.
-  const btlProperties = rentalProperties.map((row) => ({
-    id: String(row.id),
-    name: row.name?.trim() ? row.name : BUY_TO_LET_PROPERTY_LABEL,
-  }));
+  // The rental properties listed in the buy to let overview, by name, each with its gross yield
+  // for the current tax year from the rent linked to it in Self Assessment (L22).
+  const btlProperties = btlPropertyYields(
+    rentalProperties.map((row) => ({
+      id: String(row.id),
+      name: row.name?.trim() ? row.name : BUY_TO_LET_PROPERTY_LABEL,
+      balance: row.balance,
+    })),
+    taxRecords,
+    getCurrentUKTaxYear(),
+  );
 
   const editTermTotal = typedTermMonths(editTermYears, editTermMonths);
   const editPayment =

@@ -1,5 +1,5 @@
 import {
-  calculateUKTax,
+  calculateEstimatedTax,
   categorizeAccountType,
   estimateInputsFor,
   getCurrentUKTaxYear,
@@ -34,8 +34,9 @@ import { Link, useLoaderData, useRevalidator, useSearchParams } from "react-rout
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddIncomeMenu } from "~/features/tax/components/AddIncomeMenu";
+import { CalculatedFigures } from "~/features/tax/components/CalculatedFigures";
 import { CopyTaxYearModal } from "~/features/tax/components/CopyTaxYearModal";
-import { nonPayeIncome, TaxHeadline } from "~/features/tax/components/TaxHeadline";
+import { TaxHeadline } from "~/features/tax/components/TaxHeadline";
 import { TaxRecordsTable } from "~/features/tax/components/TaxRecordsTable";
 import { TaxReservePanel } from "~/features/tax/components/TaxReservePanel";
 import { TaxSourcesPanel } from "~/features/tax/components/TaxSourcesPanel";
@@ -43,10 +44,18 @@ import { TaxYearBar } from "~/features/tax/components/TaxYearBar";
 import { TaxYearComparison } from "~/features/tax/components/TaxYearComparison";
 import { availableTaxYears, resolveSelectedTaxYear } from "~/features/tax/hooks/taxYears";
 import { useTaxRecordEditor } from "~/features/tax/hooks/useTaxRecordEditor";
+import {
+  calculatedInterestOffers,
+  rentalShareLines,
+  rentalShareNotice,
+  type TaxAccount,
+} from "~/features/tax/linkedAccounts";
 import { SOURCE_PAGE_ORDER, taxYearFromParam } from "~/features/tax/source-pages";
 import {
+  ACCOUNTS_PATH,
   addableEstimateFact,
   ESTIMATE_MISSING_PROMPT,
+  RENTAL_SHARE_NOTICE,
   SALARY_SETTINGS_PATH,
   SCOTTISH_BANDS_NOTE,
   SOURCE_LABEL,
@@ -55,7 +64,7 @@ import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.self-assessment";
 import { PROFILE_VERSION_FIELD, versionField } from "~/services/conflict";
 import { isPageEnabled } from "~/utils/pageConfig";
-import { propertyShareProfileFirst, salaryProfileFirst } from "~/utils/profileFirst";
+import { salaryProfileFirst } from "~/utils/profileFirst";
 import {
   drawers,
   errorText,
@@ -144,6 +153,33 @@ const SelfAssessmentOff: FC<{
   );
 };
 
+/**
+ * The lead of the page's one notice: the standard tax caveat, then a Scottish taxpayer's rates
+ * note (SA-3) and why unlinked rental records are counted in full (owner decision 6), when either
+ * applies. One notice per surface (UX P4), so these fold into it.
+ */
+export const EstimateNoticeLead: FC<{
+  scottish: boolean;
+  shareNotice: keyof typeof RENTAL_SHARE_NOTICE | null;
+}> = ({ scottish, shareNotice }) => {
+  const share = shareNotice ? RENTAL_SHARE_NOTICE[shareNotice] : null;
+  if (!scottish && !share) return <>{TAX_UNVERIFIED_LEAD}</>;
+  return (
+    <>
+      {TAX_UNVERIFIED_LEAD}
+      {scottish ? <span> {SCOTTISH_BANDS_NOTE}</span> : null}
+      {share ? (
+        <span data-testid="rental-share-notice" id="rental-share-notice">
+          {" "}
+          {share.before}
+          {share.link ? <Link to={ACCOUNTS_PATH}>{share.link}</Link> : null}
+          {share.after}
+        </span>
+      ) : null}
+    </>
+  );
+};
+
 const TaxContainer: FC = () => {
   const { userProfile, ...loaderData } = useLoaderData<typeof loader>();
   const revalidator = useRevalidator();
@@ -189,19 +225,18 @@ const SelfAssessmentPage: FC<{
 
   // Saved figures only (audit slice 8): no browser baseline stands in for them.
   const profileSalary = salaryProfileFirst(userProfile);
-  const profileShare = propertyShareProfileFirst(userProfile);
+  // The share of each rental property comes from its account (owner decision 6), never a field.
+  const taxAccounts = accounts as readonly TaxAccount[];
 
   // Null while the salary is not known: the panels show the "add your salary" prompt, and the
   // calculation counts it as none.
   const [payeSalary, setPayeSalary] = useState<number | null>(profileSalary);
-  const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number | null>(profileShare);
   // A saved figure that changes (a save here or elsewhere, then revalidation) replaces the field,
   // unless the user has an unsaved edit in it.
-  const [seeded, setSeeded] = useState({ salary: profileSalary, share: profileShare });
-  if (seeded.salary !== profileSalary || seeded.share !== profileShare) {
-    setSeeded({ salary: profileSalary, share: profileShare });
-    if (payeSalary === seeded.salary) setPayeSalary(profileSalary);
-    if (propertyOwnershipShare === seeded.share) setPropertyOwnershipShare(profileShare);
+  const [seededSalary, setSeededSalary] = useState(profileSalary);
+  if (seededSalary !== profileSalary) {
+    setSeededSalary(profileSalary);
+    if (payeSalary === seededSalary) setPayeSalary(profileSalary);
   }
   const [isProfileSaving, setIsProfileSaving] = useState<boolean>(false);
 
@@ -219,7 +254,11 @@ const SelfAssessmentPage: FC<{
 
   const [isCopyModalOpen, setIsCopyModalOpen] = useState<boolean>(false);
 
-  const editor = useTaxRecordEditor({ records: initialRecords, taxYear: selectedTaxYear });
+  const editor = useTaxRecordEditor({
+    records: initialRecords,
+    taxYear: selectedTaxYear,
+    accounts: taxAccounts,
+  });
   const { fetcher, saveOutcome } = editor;
 
   const [taxYearToDelete, setTaxYearToDelete] = useState<string | null>(null);
@@ -230,6 +269,7 @@ const SelfAssessmentPage: FC<{
   // The engine's one rule (estimateInputsFor), as the Dashboard: a self-employed person's salary
   // is not PAYE pay, and a year whose estimate depends on a fact not set has no figure.
   const employmentType = userProfile?.employmentType ?? null;
+  const taxRegion = userProfile?.taxRegion ?? null;
   const { calculatedTaxYearsData, missingByYear } = useMemo(() => {
     const results: Record<string, TaxCalculationResult> = {};
     const missing: Record<string, TaxEstimateMissingFact[]> = {};
@@ -237,35 +277,18 @@ const SelfAssessmentPage: FC<{
       // calculateUKTax is strict and throws for unsupported years (E22).
       if (!isSupportedUkTaxYear(year)) continue;
       const inputs = estimateInputsFor(
-        {
-          employmentType,
-          annualSalary: payeSalary,
-          // An empty share field estimates with the saved share until a new one is typed.
-          propertyOwnershipShare: propertyOwnershipShare ?? profileShare,
-        },
+        { employmentType, annualSalary: payeSalary, taxRegion, accounts: taxAccounts },
         initialRecords,
         year,
       );
       if (inputs.status === "known") {
-        results[year] = calculateUKTax(
-          year,
-          inputs.records,
-          inputs.payeSalary,
-          inputs.ownershipShare,
-        );
+        results[year] = calculateEstimatedTax(inputs);
       } else {
         missing[year] = inputs.missing;
       }
     }
     return { calculatedTaxYearsData: results, missingByYear: missing };
-  }, [
-    availableYears,
-    initialRecords,
-    payeSalary,
-    propertyOwnershipShare,
-    profileShare,
-    employmentType,
-  ]);
+  }, [availableYears, initialRecords, payeSalary, employmentType, taxRegion, taxAccounts]);
 
   const activeYearData: TaxCalculationResult | undefined = calculatedTaxYearsData[selectedTaxYear];
   // The fact to add when the selected year's estimate cannot be worked out.
@@ -279,15 +302,12 @@ const SelfAssessmentPage: FC<{
         intent: "update-profile",
         // Empty saves no salary (null); a typed 0 saves 0.
         annualSalary: payeSalary === null ? "" : payeSalary.toString(),
-        // Empty leaves the saved share as it was (never saved as 0).
-        propertyOwnershipShare:
-          propertyOwnershipShare === null ? "" : propertyOwnershipShare.toString(),
         ...versionField(userProfile, PROFILE_VERSION_FIELD),
       },
       { method: "POST" },
     );
     setTimeout(() => setIsProfileSaving(false), 800);
-  }, [payeSalary, propertyOwnershipShare, fetcher, userProfile, saveOutcome.begin]);
+  }, [payeSalary, fetcher, userProfile, saveOutcome.begin]);
 
   const recordsInSelectedTaxYear = useMemo(
     () => initialRecords.filter((r) => getTaxYearForRecordDate(r.date) === selectedTaxYear),
@@ -340,9 +360,19 @@ const SelfAssessmentPage: FC<{
     <AddIncomeMenu onAdd={editor.openAdd} onCopyFromLastYear={() => setIsCopyModalOpen(true)} />
   );
   // The one "Unverified estimate" notice goes only where an estimate is shown: a year with
-  // income outside PAYE. A year with expenses only has no estimate, so no notice.
-  const hasNonPayeIncome = nonPayeIncome(initialRecords, selectedTaxYear) > 0;
-  const showEstimate = activeYearData !== undefined && hasNonPayeIncome;
+  // untaxed income outside PAYE, which the engine says by giving an estimate or naming the fact it
+  // is missing. A year with expenses only, or ISA interest only, has no estimate, so no notice.
+  const hasNonPayeIncome = activeYearData !== undefined || missingFact !== null;
+  const showEstimate = activeYearData !== undefined;
+  // Rental records counted in full until they are linked (owner decision 6), and the share each
+  // linked property gives, read from Accounts.
+  const shareNotice = rentalShareNotice(taxAccounts, initialRecords, selectedTaxYear);
+  const shareLines = rentalShareLines(taxAccounts, initialRecords, selectedTaxYear);
+  const offers = calculatedInterestOffers({
+    accounts: taxAccounts,
+    records: initialRecords,
+    taxYear: selectedTaxYear,
+  });
   const unknownAction =
     missingFact === "selfEmploymentRecords" ? (
       <Button
@@ -423,7 +453,6 @@ const SelfAssessmentPage: FC<{
         <TaxHeadline
           emptyAction={hasRecordsInYear ? undefined : addIncome}
           onAddExpense={() => editor.openAdd(expenseSource, "expense")}
-          records={initialRecords}
           result={activeYearData}
           taxYear={selectedTaxYear}
           unknownAction={unknownAction}
@@ -441,8 +470,7 @@ const SelfAssessmentPage: FC<{
             totalIncome={activeYearData?.totalGrossIncome || (payeSalary ?? 0)}
             payeSalary={payeSalary}
             onPayeSalaryChange={setPayeSalary}
-            ownershipSharePct={propertyOwnershipShare}
-            onOwnershipShareChange={setPropertyOwnershipShare}
+            rentalShares={shareLines}
             onSave={handleSaveProfile}
             saving={isProfileSaving}
           />
@@ -465,6 +493,13 @@ const SelfAssessmentPage: FC<{
           .map((a) => ({ id: String(a.id ?? ""), name: String(a.name ?? "Buy-to-let mortgage") }))}
         records={initialRecords}
         taxYear={selectedTaxYear}
+      />
+
+      <CalculatedFigures
+        offers={offers}
+        pending={editor.saving}
+        taxYear={selectedTaxYear}
+        onAdd={editor.addCalculated}
       />
 
       <div className={drawers()}>
@@ -546,13 +581,7 @@ const SelfAssessmentPage: FC<{
       {showEstimate ? (
         <ProjectionNotice
           lead={
-            userProfile?.taxRegion === "SCOTLAND" ? (
-              <>
-                {TAX_UNVERIFIED_LEAD} <span>{SCOTTISH_BANDS_NOTE}</span>
-              </>
-            ) : (
-              TAX_UNVERIFIED_LEAD
-            )
+            <EstimateNoticeLead scottish={taxRegion === "SCOTLAND"} shareNotice={shareNotice} />
           }
         />
       ) : null}

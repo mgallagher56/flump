@@ -1,12 +1,32 @@
 import { getCategoriesForSource, type TaxRecord, type TaxSource } from "@flump/finance-engine";
 
 /**
- * SA-3: a plain fact for a Scottish taxpayer, folded into the page's one notice (audit slice 2).
- * The estimate itself is unchanged: it uses England, Wales and Northern Ireland bands. Whether
- * Scottish bands enter the calculation is owner decision 7, still open.
+ * SA-3: a plain fact for a Scottish taxpayer, folded into the page's one notice. Since owner
+ * decision 7 (audit slice 7) the estimate uses Scottish rates on non-savings income only.
  */
 export const SCOTTISH_BANDS_NOTE =
-  "Your tax region is Scotland. This estimate uses England, Wales and Northern Ireland Income Tax bands, so your bill may differ.";
+  "Uses Scottish rates on salary, self-employed profit and rent. Savings and dividends use UK rates.";
+
+/** Where accounts, and so each rental property's share, are kept. */
+export const ACCOUNTS_PATH = "/app/accounts";
+
+/**
+ * Why unlinked rental records are counted in full (owner decision 6), folded into the page's one
+ * notice. `link` is the part of the sentence that opens Accounts.
+ */
+export const RENTAL_SHARE_NOTICE = {
+  "no-rental-property": {
+    before: "Rental records are counted in full. ",
+    link: "Add the property in Accounts",
+    after: " to set your share.",
+  },
+  "shares-differ": {
+    before:
+      "Your rental properties have different shares. Link each rental record to its property so the right share is used.",
+    link: null,
+    after: "",
+  },
+} as const;
 
 /** The Self Assessment estimate's missing facts that a person can add (estimateInputsFor). */
 export type EstimateMissingFact = "annualSalary" | "selfEmploymentRecords";

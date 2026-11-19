@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { propertyShareProfileFirst, salaryProfileFirst } from "./profileFirst";
+import { salaryProfileFirst } from "./profileFirst";
 
 const saved = (fields: Record<string, unknown>) => ({ id: "profile-1", ...fields });
 
@@ -19,17 +19,5 @@ describe("salaryProfileFirst", () => {
     expect(salaryProfileFirst(saved({}))).toBeNull();
     expect(salaryProfileFirst(null)).toBeNull();
     expect(salaryProfileFirst(undefined)).toBeNull();
-  });
-});
-
-describe("propertyShareProfileFirst", () => {
-  it("reads the saved share", () => {
-    expect(propertyShareProfileFirst(saved({ propertyOwnershipShare: 100 }))).toBe(100);
-    expect(propertyShareProfileFirst(saved({ propertyOwnershipShare: "40" }))).toBe(40);
-  });
-
-  it("reads a whole property (100) when no share is saved", () => {
-    expect(propertyShareProfileFirst(saved({ propertyOwnershipShare: null }))).toBe(100);
-    expect(propertyShareProfileFirst(null)).toBe(100);
   });
 });

@@ -129,6 +129,7 @@ let mockProfileSalary: number | null = 60000;
 let mockProfileId: string | undefined;
 let mockEmploymentType: string | null = "employed";
 let mockTaxRegion: string | null = "ENGLAND";
+let mockAccounts: Record<string, unknown>[] = [];
 let mockEnabledPages: string[] | null = ["accounts", "budget", "tax"];
 let mockDashboardWidgets: string[] | null = ["accounts"];
 let mockDashboardWidgetOrder: string[] | null = ["accounts"];
@@ -159,7 +160,7 @@ vi.mock("react-router", () => ({
       dashboardWidgets: mockDashboardWidgets,
       dashboardWidgetOrder: mockDashboardWidgetOrder,
     },
-    accounts: [],
+    accounts: mockAccounts,
   }),
   useFetcher: () => ({
     submit: mockSubmit,
@@ -274,12 +275,11 @@ describe("TaxContainer, opted in", () => {
     render(<TaxContainer />);
     openDrawer(/How the estimate is worked out/);
     expect(screen.getByRole("heading", { name: "Your figures" })).toBeDefined();
-    fireEvent.change(screen.getByLabelText(/Your share of the rental property/), {
-      target: { value: "50" },
-    });
+    // The share of a rental property comes from Accounts (owner decision 6): no field, none sent.
+    expect(screen.queryByLabelText(/Your share of the rental property/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));
     expect(mockSubmit).toHaveBeenCalledWith(
-      { intent: "update-profile", annualSalary: "60000", propertyOwnershipShare: "50" },
+      { intent: "update-profile", annualSalary: "60000" },
       { method: "POST" },
     );
   });
@@ -299,7 +299,7 @@ describe("TaxContainer, opted in", () => {
       );
       fireEvent.click(screen.getByRole("button", { name: "Save details" }));
       expect(mockSubmit).toHaveBeenCalledWith(
-        { intent: "update-profile", annualSalary: "", propertyOwnershipShare: "100" },
+        { intent: "update-profile", annualSalary: "" },
         { method: "POST" },
       );
     } finally {
@@ -816,11 +816,15 @@ describe("TaxContainer, employment type and region (SA-1, SA-3)", () => {
     }
   });
 
-  it("says once that the estimate uses England, Wales and Northern Ireland bands for a Scottish taxpayer", () => {
+  it("says once that the estimate uses Scottish rates on non-savings income for a Scottish taxpayer", () => {
     mockTaxRegion = "SCOTLAND";
     try {
       render(<TaxContainer />);
+      expect(SCOTTISH_BANDS_NOTE).toBe(
+        "Uses Scottish rates on salary, self-employed profit and rent. Savings and dividends use UK rates.",
+      );
       expect(screen.getAllByText(SCOTTISH_BANDS_NOTE)).toHaveLength(1);
+      expect(screen.getAllByRole("note")).toHaveLength(1);
     } finally {
       mockTaxRegion = "ENGLAND";
     }
@@ -829,6 +833,122 @@ describe("TaxContainer, employment type and region (SA-1, SA-3)", () => {
   it("shows no bands note outside Scotland", () => {
     render(<TaxContainer />);
     expect(screen.queryByText(SCOTTISH_BANDS_NOTE)).toBeNull();
+  });
+});
+
+describe("TaxContainer, rental shares and calculated figures (slice 7)", () => {
+  const year = getCurrentUKTaxYear();
+  const start = year.slice(0, 4);
+  const rent: TaxRecord = {
+    ...mockRecords[0],
+    id: "rent-now",
+    name: "Flat rent",
+    amount: 12000,
+    frequency: "annual",
+    date: `${start}-04-06`,
+    endDate: null,
+  };
+  const flat = {
+    id: "p1",
+    name: "Flat 2",
+    type: "Property",
+    accountSubtype: "rental",
+    ownership: "joint",
+    sharePercent: 50,
+    balance: 230000,
+  };
+  const withState = (
+    records: TaxRecord[],
+    accounts: Record<string, unknown>[],
+    run: () => void,
+  ) => {
+    mockLoaderRecords = records;
+    mockAccounts = accounts;
+    try {
+      run();
+    } finally {
+      mockLoaderRecords = mockRecords;
+      mockAccounts = [];
+    }
+  };
+
+  it("says unlinked rent counts in full when no rental property is saved, in the one notice", () => {
+    withState([rent], [], () => {
+      render(<TaxContainer />);
+      const notes = screen.getAllByRole("note");
+      expect(notes).toHaveLength(1);
+      expect(notes[0].textContent).toContain(
+        "Rental records are counted in full. Add the property in Accounts to set your share.",
+      );
+      expect(
+        within(notes[0]).getByRole("link", { name: "Add the property in Accounts" }),
+      ).toHaveProperty("href", expect.stringContaining("/app/accounts"));
+    });
+  });
+
+  it("asks for links when rental properties have different shares", () => {
+    const other = {
+      ...flat,
+      id: "p2",
+      name: "Harbour Street",
+      ownership: "sole",
+      sharePercent: 100,
+    };
+    withState([rent], [flat, other], () => {
+      render(<TaxContainer />);
+      expect(screen.getByRole("note").textContent).toContain(
+        "Your rental properties have different shares. Link each rental record to its property so the right share is used.",
+      );
+    });
+  });
+
+  it("says nothing about shares with one rental property, and shows the share it uses", () => {
+    withState([rent], [flat], () => {
+      render(<TaxContainer />);
+      expect(screen.queryByTestId("rental-share-notice")).toBeNull();
+      openDrawer(/How the estimate is worked out/);
+      expect(screen.getByText("Flat 2. Your share: 50%, from Accounts")).toBeDefined();
+    });
+  });
+
+  it("offers the calculated buy-to-let interest and adds it as a linked record", () => {
+    // 150,000 held all year at 4.5%: 150,000 x 4.5% / 12 x 12 = 6,750.00.
+    const balances = Array.from({ length: 12 }, (_, i) => ({
+      year: Number(start) + (i < 9 ? 0 : 1),
+      month: ((i + 3) % 12) + 1,
+      value: -150000,
+    }));
+    const mortgage = {
+      id: "m1",
+      name: "Flat 2 mortgage",
+      type: "Mortgage",
+      accountSubtype: "btl_mortgage",
+      interestRate: 4.5,
+      balance: -150000,
+      details: balances,
+    };
+    withState([rent], [flat, mortgage], () => {
+      mockSubmit.mockClear();
+      render(<TaxContainer />);
+      const card = screen.getByTestId("calculated-figure-m1");
+      expect(card.textContent).toContain(`Calculated mortgage interest for ${year}: £6,750.00`);
+      fireEvent.click(within(card).getByRole("button", { name: /^Add as a record/ }));
+      expect(mockSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          intent: "create-transaction",
+          source: "rental",
+          type: "expense",
+          category: "mortgage_interest",
+          frequency: "annual",
+          date: `${start}-04-06`,
+          amount: "6750",
+          accountId: "m1",
+          name: "Flat 2 mortgage interest (calculated)",
+          notes: "Calculated from monthly balances",
+        }),
+        { method: "POST" },
+      );
+    });
   });
 });
 

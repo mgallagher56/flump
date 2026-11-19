@@ -32,7 +32,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   if (!isSourcePageSource(source)) {
     throwRouteError(new BackendError("not-found", "/tax-records"));
   }
-  const { taxRecords, userProfile, user } = await loadWorkspaceSnapshot(args, {
+  const { taxRecords, userProfile, accounts, user } = await loadWorkspaceSnapshot(args, {
     includeTax: true,
   });
   // Self Assessment is opt-in: someone who has not turned it on is sent to the list page's offer.
@@ -44,6 +44,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     source,
     records: optedIn ? taxRecords : [],
     userProfile: optedIn ? userProfile : null,
+    // Each rental property's share and the calculated interest figures (slice 7).
+    accounts: optedIn ? accounts : [],
     user,
     optedIn,
   });

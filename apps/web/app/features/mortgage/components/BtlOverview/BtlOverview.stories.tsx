@@ -8,8 +8,8 @@ const meta: Meta<typeof BtlOverview> = {
   parameters: { layout: "padded" },
   args: {
     properties: [
-      { id: "r1", name: "Flat 2" },
-      { id: "r2", name: "Harbour Street" },
+      { id: "r1", name: "Flat 2", yieldPct: 6 },
+      { id: "r2", name: "Harbour Street", yieldPct: null },
     ],
     onManage: fn(),
   },
@@ -20,6 +20,7 @@ type Story = StoryObj<typeof BtlOverview>;
 
 export const Populated: Story = {
   play: async ({ canvasElement, args }) => {
+    await expect(within(canvasElement).getByText("Gross yield 6.0%")).toBeTruthy();
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Edit on Accounts" }));
     await expect(args.onManage).toHaveBeenCalled();
   },

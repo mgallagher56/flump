@@ -139,7 +139,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // C-11: the engine's self assessment estimate (tax on income outside PAYE) for the current tax
   // year, from the picture. Unknown (no income outside PAYE) stays null, never £0.
   const estimatedTaxDue: number | null = knownOrNull(picture.estimatedTaxDue)?.amount ?? null;
-  // Its assumption notes (the England, Wales and NI bands for a Scottish taxpayer) go with it.
+  // Any assumption notes the engine gives go with it.
   const estimatedTaxDueNotes: string[] = isFigureKnown(picture.estimatedTaxDue)
     ? [...(picture.estimatedTaxDue.assumptions ?? [])]
     : [];

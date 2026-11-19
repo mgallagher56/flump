@@ -32,6 +32,16 @@ const chunk = <T>(items: T[], size: number): T[][] => {
   return out;
 };
 
+/**
+ * The account a record describes (slice 7): an id, or null when the posted field is empty. A form
+ * that posts no field gives undefined, which the JSON body leaves out, so the saved link stays.
+ */
+const accountIdFrom = (formData: FormData): string | null | undefined => {
+  const accountId = formData.get("accountId");
+  if (accountId === null) return undefined;
+  return typeof accountId === "string" && accountId !== "" ? accountId : null;
+};
+
 export const taxAction = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const token = requireAccessToken({ accessToken });
@@ -40,8 +50,8 @@ export const taxAction = async (args: ActionFunctionArgs) => {
 
   try {
     if (intent === "update-profile") {
+      // The salary only: the share of a rental property comes from Accounts (owner decision 6).
       const annualSalary = formData.get("annualSalary");
-      const propertyOwnershipShare = formData.get("propertyOwnershipShare");
       await backendFetch(`/user-profile`, {
         schema: UpdateProfileResponse,
         accessToken: token,
@@ -49,14 +59,6 @@ export const taxAction = async (args: ActionFunctionArgs) => {
         ifMatch: ifMatchFromForm(formData, PROFILE_VERSION_FIELD),
         body: {
           annualSalary: annualSalary ? roundTo2dp(Number.parseFloat(annualSalary as string)) : null,
-          // An empty share is not sent, so the saved share stays as it was: never 0 or 100 invented.
-          ...(propertyOwnershipShare
-            ? {
-                propertyOwnershipShare: roundTo2dp(
-                  Number.parseFloat(propertyOwnershipShare as string),
-                ),
-              }
-            : {}),
         },
       });
     } else if (intent === "create-transaction") {
@@ -72,6 +74,7 @@ export const taxAction = async (args: ActionFunctionArgs) => {
       const receiptFilename = formData.get("receiptFilename") || null;
       const receiptMimeType = formData.get("receiptMimeType") || null;
       const receiptData = formData.get("receiptData") || null;
+      const accountId = accountIdFrom(formData);
 
       await backendFetch(`/tax-records`, {
         schema: TaxRecordResponse,
@@ -90,6 +93,7 @@ export const taxAction = async (args: ActionFunctionArgs) => {
           receiptFilename,
           receiptMimeType,
           receiptData,
+          accountId,
         },
       });
     } else if (intent === "update-transaction") {
@@ -107,6 +111,7 @@ export const taxAction = async (args: ActionFunctionArgs) => {
       const receiptMimeType = formData.get("receiptMimeType") || null;
       const receiptData = formData.get("receiptData") || null;
       const receiptClear = formData.get("receiptClear") === "1";
+      const accountId = accountIdFrom(formData);
 
       await backendFetch(`/tax-records/${encodeURIComponent(String(id ?? ""))}`, {
         schema: TaxRecordResponse,
@@ -127,6 +132,7 @@ export const taxAction = async (args: ActionFunctionArgs) => {
           receiptMimeType,
           // Omitting receiptData keeps the stored receipt (E20-N15); null clears it.
           ...(receiptData ? { receiptData } : receiptClear ? { receiptData: null } : {}),
+          accountId,
         },
       });
     } else if (intent === "delete-transaction") {

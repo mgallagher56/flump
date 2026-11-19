@@ -10,7 +10,6 @@ import {
   controlProps,
   FormField,
   Money,
-  PercentInput,
   section24CarriedForward,
 } from "@repo/ui";
 import type { FC, ReactNode } from "react";
@@ -25,6 +24,7 @@ import {
   root,
   row,
   saveRow,
+  shareLine,
   taperLine,
 } from "./TaxReservePanel.styles";
 
@@ -50,9 +50,11 @@ export interface TaxReservePanelProps {
   /** Yearly salary, 0 when that is the saved figure, null when it is not known. */
   payeSalary: number | null;
   onPayeSalaryChange: (value: number | null) => void;
-  /** The share typed, or null while the field is empty (not set, never 0). */
-  ownershipSharePct: number | null;
-  onOwnershipShareChange: (value: number | null) => void;
+  /**
+   * The share each rental property gives the rental records, read from Accounts (owner decision
+   * 6). Shown read-only under the rental line; the share is changed on Accounts only.
+   */
+  rentalShares?: readonly { accountId: string; name: string; sharePercent: number }[];
   onSave: () => void;
   saving: boolean;
 }
@@ -75,6 +77,8 @@ const pounds = new Intl.NumberFormat("en-GB", {
   maximumFractionDigits: 0,
 });
 
+const percent = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+
 /**
  * "How the estimate is worked out": the figures the estimate uses (editable, saved only on
  * "Save details"), the workings line by line, one quiet line about the Personal Allowance taper
@@ -86,8 +90,7 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
   totalIncome,
   payeSalary,
   onPayeSalaryChange,
-  ownershipSharePct,
-  onOwnershipShareChange,
+  rentalShares = [],
   onSave,
   saving,
 }) => {
@@ -117,19 +120,6 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
                   {...controlProps(field)}
                   value={payeSalary}
                   onValueChange={onPayeSalaryChange}
-                />
-              )}
-            </FormField>
-            <FormField label="Your share of the rental property (%)">
-              {(field) => (
-                <PercentInput
-                  {...controlProps(field)}
-                  max={100}
-                  min={0}
-                  value={ownershipSharePct}
-                  onValueChange={(next) =>
-                    onOwnershipShareChange(next === null ? null : Math.min(100, Math.max(0, next)))
-                  }
                 />
               )}
             </FormField>
@@ -212,6 +202,12 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
                   value={gbp(result.netAdditionalTaxToPay)}
                 />
               </dl>
+              {/* The share each rental property gives, read from Accounts: never typed here. */}
+              {rentalShares.map((share) => (
+                <p className={shareLine()} key={share.accountId}>
+                  {`${share.name}. Your share: ${percent.format(share.sharePercent)}%, from Accounts`}
+                </p>
+              ))}
               {result.propertyAllowanceUsed > 0 && result.financeCostsBroughtForward > 0 ? (
                 <p className={taperLine()}>{ALLOWANCE_IGNORES_BROUGHT_FORWARD}</p>
               ) : null}

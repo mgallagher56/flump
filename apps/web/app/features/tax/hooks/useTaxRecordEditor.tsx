@@ -6,6 +6,7 @@ import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { versionField } from "~/services/conflict";
 import { TaxReceiptDialog } from "../components/TaxReceiptDialog";
 import { TaxRecordDialog, type TaxRecordDraft } from "../components/TaxRecordDialog";
+import type { CalculatedInterestOffer, TaxAccount } from "../linkedAccounts";
 import { recordAmount, selectableCategories } from "../tax-labels";
 
 export const emptyTaxRecordDraft = (
@@ -27,6 +28,7 @@ export const emptyTaxRecordDraft = (
   receiptMimeType: null,
   receiptData: null,
   receiptCleared: false,
+  accountId: null,
 });
 
 export const draftFromTaxRecord = (record: TaxRecord): TaxRecordDraft => ({
@@ -43,17 +45,44 @@ export const draftFromTaxRecord = (record: TaxRecord): TaxRecordDraft => ({
   receiptMimeType: record.receiptMimeType,
   receiptData: null,
   receiptCleared: false,
+  accountId: record.accountId ?? null,
 });
 
 /** The first day of a tax year ("2026/27" is 6 April 2026), where new records start. */
 const firstDayOf = (taxYear: string): string =>
   `${taxYear.split("/")[0] || new Date().getFullYear().toString()}-04-06`;
 
+/**
+ * The record a confirmed "Calculated" figure becomes (owner decision 5): one yearly record dated
+ * the tax year's 6 April, linked to the account it was worked out from.
+ */
+export const draftFromCalculatedOffer = (
+  offer: CalculatedInterestOffer,
+  taxYear: string,
+): TaxRecordDraft => {
+  const mortgage = offer.kind === "mortgage_interest";
+  return {
+    ...emptyTaxRecordDraft(
+      mortgage ? "rental" : "savings",
+      mortgage ? "expense" : "income",
+      firstDayOf(taxYear),
+    ),
+    name: `${offer.accountName} interest (calculated)`,
+    category: offer.kind,
+    amount: offer.amount,
+    frequency: "annual",
+    notes: "Calculated from monthly balances",
+    accountId: offer.accountId,
+  };
+};
+
 export interface UseTaxRecordEditorOptions {
   /** The saved records, so an edit sends the latest saved version. */
   records: TaxRecord[];
   /** The page's tax year: new records start on its first day. */
   taxYear: string;
+  /** The user's accounts, for linking a rental or savings record to the account it describes. */
+  accounts?: readonly TaxAccount[];
 }
 
 /**
@@ -61,7 +90,7 @@ export interface UseTaxRecordEditorOptions {
  * Assessment page and each income source's page. It owns the page's fetcher, which posts to the
  * route the page is on, and returns the dialogs to render once at the foot of the page.
  */
-export function useTaxRecordEditor({ records, taxYear }: UseTaxRecordEditorOptions) {
+export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRecordEditorOptions) {
   const fetcher = useFetcher();
   const [isRecordDialogOpen, setIsRecordDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<TaxRecord | null>(null);
@@ -93,12 +122,12 @@ export function useTaxRecordEditor({ records, taxYear }: UseTaxRecordEditorOptio
 
   const requestDelete = (id: string) => setRecordToDelete(records.find((r) => r.id === id) ?? null);
 
-  const save = (values: TaxRecordDraft) => {
+  const submit = (values: TaxRecordDraft, editing: TaxRecord | null) => {
     const payload = {
-      intent: editingRecord ? "update-transaction" : "create-transaction",
-      id: editingRecord?.id || "",
+      intent: editing ? "update-transaction" : "create-transaction",
+      id: editing?.id || "",
       // The saved record's version, so a change made elsewhere is not overwritten.
-      ...versionField(records.find((r) => r.id === editingRecord?.id) ?? editingRecord),
+      ...versionField(records.find((r) => r.id === editing?.id) ?? editing),
       name: values.name,
       source: values.source,
       type: values.type,
@@ -113,6 +142,8 @@ export function useTaxRecordEditor({ records, taxYear }: UseTaxRecordEditorOptio
       receiptData: values.receiptData || undefined,
       // An omitted receipt keeps the stored one; clearing must be said explicitly.
       receiptClear: values.receiptCleared && !values.receiptData ? "1" : undefined,
+      // Empty clears the link; the action sends null.
+      accountId: values.accountId ?? "",
     };
     // fetcher.submit turns an undefined value into the text "undefined", which the backend
     // rejects (an end date of "undefined"), so absent fields are left out of the form data.
@@ -121,6 +152,14 @@ export function useTaxRecordEditor({ records, taxYear }: UseTaxRecordEditorOptio
     );
     saveOutcome.begin();
     fetcher.submit(formData, { method: "POST" });
+  };
+
+  const save = (values: TaxRecordDraft) => submit(values, editingRecord);
+
+  /** Adds a confirmed "Calculated" figure as a record, with no dialog (owner decision 5). */
+  const addCalculated = (offer: CalculatedInterestOffer) => {
+    setIsRecordDialogOpen(false);
+    submit(draftFromCalculatedOffer(offer, taxYear), null);
   };
 
   const confirmDelete = () => {
@@ -139,6 +178,7 @@ export function useTaxRecordEditor({ records, taxYear }: UseTaxRecordEditorOptio
         }}
         mode={editingRecord ? "edit" : "add"}
         initial={draft}
+        accounts={accounts}
         onSave={save}
         saveError={saveOutcome.error}
       />
@@ -171,6 +211,9 @@ export function useTaxRecordEditor({ records, taxYear }: UseTaxRecordEditorOptio
     openEdit,
     requestDelete,
     viewReceipt: setReceiptRecord,
+    addCalculated,
+    /** True while a save (an added "Calculated" figure included) is on its way. */
+    saving: saveOutcome.pending,
     dialogs,
   };
 }

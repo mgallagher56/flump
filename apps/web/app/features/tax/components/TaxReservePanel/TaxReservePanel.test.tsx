@@ -12,7 +12,6 @@ const setup = (
 ) => {
   const props = {
     onPayeSalaryChange: vi.fn(),
-    onOwnershipShareChange: vi.fn(),
     onSave: vi.fn(),
   };
   const view = render(
@@ -22,7 +21,6 @@ const setup = (
         result={records}
         totalIncome={totalIncome}
         payeSalary={payeSalary}
-        ownershipSharePct={50}
         saving={false}
         {...props}
       />
@@ -42,22 +40,39 @@ describe("TaxReservePanel", () => {
   });
 
   it("uses no number inputs and saves only on Save details", () => {
-    const { onOwnershipShareChange, onSave, container } = setup();
+    const { onPayeSalaryChange, onSave, container } = setup();
     expect(container.querySelector('input[type="number"]')).toBeNull();
-    fireEvent.change(screen.getByLabelText(/Your share of the rental property/), {
-      target: { value: "75" },
+    fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), {
+      target: { value: "60000" },
     });
-    expect(onOwnershipShareChange).toHaveBeenCalledWith(75);
+    expect(onPayeSalaryChange).toHaveBeenCalled();
     expect(onSave).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));
     expect(onSave).toHaveBeenCalled();
   });
 
-  it("passes an empty ownership share on as not set, never 0", () => {
-    const { onOwnershipShareChange } = setup();
-    const share = screen.getByLabelText(/Your share of the rental property/);
-    fireEvent.change(share, { target: { value: "" } });
-    expect(onOwnershipShareChange).toHaveBeenLastCalledWith(null);
+  it("has no share field: the share comes from Accounts (owner decision 6)", () => {
+    setup();
+    expect(screen.queryByLabelText(/Your share of the rental property/)).toBeNull();
+  });
+
+  it("shows the share each rental property gives, read-only, from Accounts", () => {
+    render(
+      <MemoryRouter>
+        <TaxReservePanel
+          taxYear="2026/27"
+          result={taxResultFixture}
+          totalIncome={60_000}
+          payeSalary={52000}
+          rentalShares={[{ accountId: "p1", name: "Flat 2", sharePercent: 50 }]}
+          saving={false}
+          onPayeSalaryChange={vi.fn()}
+          onSave={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Flat 2. Your share: 50%, from Accounts")).toBeDefined();
+    expect(screen.queryByRole("textbox", { name: /share/i })).toBeNull();
   });
 
   it("shows the taper line only near the £100,000 band, never as a banner", () => {

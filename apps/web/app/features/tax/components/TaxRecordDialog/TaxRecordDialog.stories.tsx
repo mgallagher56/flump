@@ -60,3 +60,40 @@ const play: Story["play"] = async () => {
 export const AddOnPhone: Story = { globals: { theme: "light" }, play };
 
 export const AddOnPhoneDark: Story = { globals: { theme: "dark" }, play };
+
+/** A rental record linked to the property it is for (slice 7). */
+const linkedPlay: Story["play"] = async ({ args }) => {
+  const scope = within(within(document.body).getByRole("dialog"));
+  const select = scope.getByLabelText("Linked account") as HTMLSelectElement;
+  await userEvent.selectOptions(select, "p1");
+  await expect(select.value).toBe("p1");
+  await userEvent.type(scope.getByLabelText(/^Name/), "Flat rent");
+  await userEvent.type(scope.getByLabelText(/^Amount/), "1150");
+  await userEvent.click(scope.getByRole("button", { name: "Add record" }));
+  await expect(args.onSave).toHaveBeenCalledWith(expect.objectContaining({ accountId: "p1" }));
+};
+
+const linkedArgs = {
+  initial: {
+    ...draft,
+    source: "rental" as const,
+    type: "income" as const,
+    category: "rental_income",
+  },
+  accounts: [
+    { id: "p1", name: "Flat 2", type: "Property", accountSubtype: "rental" },
+    { id: "m1", name: "Flat 2 mortgage", type: "Mortgage", accountSubtype: "btl_mortgage" },
+  ],
+};
+
+export const LinkedAccount: Story = {
+  args: linkedArgs,
+  globals: { theme: "light" },
+  play: linkedPlay,
+};
+
+export const LinkedAccountDark: Story = {
+  args: linkedArgs,
+  globals: { theme: "dark" },
+  play: linkedPlay,
+};

@@ -1,3 +1,4 @@
+import { getCurrentUKTaxYear } from "@flump/finance-engine";
 import { countFigures, countNotSet, expectPageRules } from "@repo/ui/testing";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
@@ -582,12 +583,54 @@ describe("<MortgageContainer />", () => {
       expect(getByText("1 property")).toBeDefined();
       expect(getByText("Flat 2")).toBeDefined();
       expect(container.textContent).not.toMatch(/999,999|111,111|1,200/);
-      expect(container.textContent).not.toMatch(/rental yield|Section 24/i);
+      expect(container.textContent).not.toMatch(/Section 24/i);
       expect(container.querySelector("#mortgage-summary")?.textContent).toContain("Interest-only");
       // The what-if zone is closed, so its notice is not on the page yet.
       expectPageRules(container, { projectionNotices: 0 });
       openZone();
       expectPageRules(container, { projectionNotices: 1 });
+    });
+
+    test("each rental property's gross yield reads the rent linked to it in Self Assessment (L22)", () => {
+      const start = getCurrentUKTaxYear().slice(0, 4);
+      const accounts = btlAccounts().map((a) => (a.id === "r1" ? { ...a, balance: 230000 } : a));
+      loaderData = {
+        accounts,
+        accountDetails: [],
+        userProfile: OLD_BTL_PROFILE,
+        taxRecords: [
+          {
+            id: "t1",
+            userId: "u",
+            type: "income",
+            source: "rental",
+            category: "rental_income",
+            name: "Flat rent",
+            amount: 1150,
+            frequency: "monthly",
+            date: `${start}-04-06`,
+            endDate: null,
+            notes: null,
+            receiptFilename: null,
+            receiptMimeType: null,
+            accountId: "r1",
+          },
+        ],
+      };
+      const { container } = customRender(<MortgageContainer />);
+      // 1,150 a month for the tax year = 13,800; 13,800 / 230,000 = 6.0%.
+      const overview = container.querySelector("#btl-overview")?.textContent ?? "";
+      expect(overview).toContain("Gross yield 6.0%");
+      // The profile's old monthly rental (1,200) is never read.
+      expect(overview).not.toContain("1,200");
+    });
+
+    test("a rental property with no linked rent says how to see its yield", () => {
+      loaderData = { accounts: btlAccounts(), accountDetails: [], userProfile: OLD_BTL_PROFILE };
+      const { container } = customRender(<MortgageContainer />);
+      expect(container.querySelector("#btl-overview")?.textContent).toContain(
+        "Add rent in Self Assessment, linked to this property, to see its yield.",
+      );
     });
 
     test("the what-if tools start from the buy-to-let account's saved term, saving nothing (P40)", () => {
