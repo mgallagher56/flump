@@ -1,0 +1,10 @@
+{
+  "$comment": "E41 decision 3: one mutation score floor per package, floor(measured) - 1, checked by scripts/check-mutation-score.ts in the weekly mutation workflow. Raising a floor needs no sign-off; lowering one is a guard change (AGENTS.md section 15). Survivors recorded in the triage ledger stay in the count. 'measured' is the score the floor was set from; see docs/testing/mutation-testing.md.",
+  "packages": {
+    "packages/finance-engine": {
+      "floor": 68,
+      "measured": 69.91,
+      "measuredOn": "2026-11-19"
+    }
+  }
+}

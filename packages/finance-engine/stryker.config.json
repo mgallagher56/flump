@@ -7,10 +7,21 @@
     "related": true
   },
   "inPlace": true,
-  "mutate": ["src/mortgage.ts"],
+  "mutate": [
+    "src/**/*.ts",
+    "!src/**/*.{test,spec}.ts",
+    "!src/**/*.d.ts",
+    "!src/**/__fixtures__/**",
+    "!src/test-vectors/**",
+    "!src/**/index.ts"
+  ],
   "reporters": ["clear-text", "progress", "html", "json"],
-  "htmlReporter": { "fileName": "reports/mutation/mutation.html" },
-  "jsonReporter": { "fileName": "reports/mutation/mutation.json" },
+  "htmlReporter": {
+    "fileName": "reports/mutation/mutation.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
   "incremental": true,
   "incrementalFile": "reports/mutation/stryker-incremental.json",
   "tempDirName": ".stryker-tmp",

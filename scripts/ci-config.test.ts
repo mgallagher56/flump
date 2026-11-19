@@ -456,6 +456,7 @@ describe("CI hardening (SEC-E)", () => {
       "ci-pipeline.yml",
       "interaction-cost.yml",
       "load-smoke.yml",
+      "mutation.yml",
       "release-please.yml",
       "security-scan.yml",
       "visual-regression.yml",

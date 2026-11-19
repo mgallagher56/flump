@@ -1,0 +1,267 @@
+name: 🧬 Mutation testing
+
+# E41 M1 (docs/audit/plans/E41-mutation-testing-and-test-speed-plan.md, decisions 3 to 6).
+# Stryker makes one small fault at a time in a package's source and runs its tests; a fault no
+# test fails on has "survived". See docs/testing/mutation-testing.md.
+#
+# - Full run: weekly per package at night, staggered by cron, plus a manual start. It fails its
+#   own job when the score is under the package's floor in scripts/mutation-baseline.json. It is
+#   not a merge gate and is not listed in .github/required-checks.json.
+# - Changed files: on pull requests that touch a covered package. Advisory (decision 4): it lists
+#   faults no test caught in the changed files and never blocks a merge.
+#
+# Reports are HTML and JSON artifacts only, no hosted dashboard (decision 6). No secrets.
+on:
+  schedule:
+    # Sunday 02:17 UTC: packages/finance-engine. A new package gets its own cron, an entry in the
+    # "Pick packages" step below and a floor in scripts/mutation-baseline.json.
+    - cron: "17 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package to mutation-test (a folder such as packages/finance-engine), or all"
+        type: string
+        default: packages/finance-engine
+      force:
+        description: "Ignore the saved incremental results and rerun every fault (the weekly run always does)"
+        type: boolean
+        default: false
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "packages/finance-engine/src/**"
+      - "packages/finance-engine/stryker.config.json"
+      - "packages/finance-engine/vitest.config.ts"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: 🧬 Mutation testing (pick packages)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      targets: ${{ steps.pick.outputs.targets }}
+    steps:
+      # Each target is a package folder and a short name for artifact and cache keys.
+      - name: 🗂️ Pick packages
+        id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          INPUT: ${{ inputs.package }}
+        run: |
+          engine='{"package":"packages/finance-engine","slug":"finance-engine"}'
+          all="[$engine]"
+          if [ "$EVENT" = "schedule" ]; then
+            case "$SCHEDULE" in
+              "17 2 * * 0") targets="[$engine]" ;;
+              *) echo "::error::No package is set for the schedule '$SCHEDULE'"; exit 1 ;;
+            esac
+          else
+            case "$INPUT" in
+              all) targets="$all" ;;
+              packages/finance-engine) targets="[$engine]" ;;
+              *) echo "::error::'$INPUT' has no mutation config. Use all or a package folder from: $all"; exit 1 ;;
+            esac
+          fi
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
+  # Each package is split into shards of similar size that run side by side. The engine's first run
+  # took 4 to 18 minutes per shard, 19 minutes in all (docs/testing/mutation-testing.md); the
+  # timeout leaves room for a slower runner. Keep SHARDS equal to the length of the shard list.
+  full:
+    name: 🧬 Mutation testing (${{ matrix.target.slug }}, shard ${{ matrix.shard }})
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.plan.outputs.targets) }}
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      PACKAGE: ${{ matrix.target.package }}
+      SHARD: ${{ matrix.shard }}
+      SHARDS: 8
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Stryker 10 needs Node 22 or later. Pinned so a runner image change cannot move it.
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+
+      # Picked before Stryker runs: the run writes faults into the source files (inPlace).
+      - name: 🗂️ Files in this shard
+        id: shard
+        shell: bash # -eo pipefail
+        run: |
+          files=$(bun scripts/check-mutation-score.ts shard "$PACKAGE" "$SHARD" "$SHARDS")
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+          echo "Shard $SHARD of $SHARDS: $(tr ',' '\n' <<<"$files" | grep -c .) files"
+
+      # The incremental file lets a manual start reuse a fault's result when neither its file nor
+      # the test files changed. It does not see changes to other source files a test imports, so
+      # the weekly run always reruns every fault (--force) and saves fresh results for later
+      # manual starts. Each run saves a new entry; the newest one is restored.
+      - name: 🗃️ Restore incremental results
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ matrix.target.package }}/reports/mutation/stryker-incremental.json
+          key: mutation-incremental-${{ matrix.target.slug }}-shard${{ matrix.shard }}-${{ github.run_id }}
+          restore-keys: mutation-incremental-${{ matrix.target.slug }}-shard${{ matrix.shard }}-
+
+      - name: 🧬 Run Stryker
+        if: steps.shard.outputs.files != ''
+        working-directory: ${{ matrix.target.package }}
+        env:
+          FILES: ${{ steps.shard.outputs.files }}
+          FORCE: ${{ (github.event_name == 'schedule' || inputs.force) && '--force' || '' }}
+        run: |
+          node --version
+          # shellcheck disable=SC2086 # FORCE is empty or one flag
+          node ../../node_modules/@stryker-mutator/core/bin/stryker.js run $FORCE \
+            --mutate "$FILES" --concurrency 4 \
+            --reporters clear-text,html,json,progress-append-only
+
+      - name: 🗃️ Save incremental results
+        if: always() && hashFiles(format('{0}/reports/mutation/stryker-incremental.json', matrix.target.package)) != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ matrix.target.package }}/reports/mutation/stryker-incremental.json
+          key: mutation-incremental-${{ matrix.target.slug }}-shard${{ matrix.shard }}-${{ github.run_id }}
+
+      - name: 📎 Upload shard report
+        if: always()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: mutation-report-${{ matrix.target.slug }}-shard${{ matrix.shard }}
+          path: |
+            ${{ matrix.target.package }}/reports/mutation/mutation.html
+            ${{ matrix.target.package }}/reports/mutation/mutation.json
+          retention-days: 30
+          if-no-files-found: error
+
+  # The ratchet (decision 3): cuts each shard report to that shard's files (a report can carry a
+  # file over from an earlier run), joins them and compares the score with the floor.
+  score:
+    name: 🧬 Mutation testing (${{ matrix.target.slug }}, score)
+    needs: [plan, full]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.plan.outputs.targets) }}
+    env:
+      PACKAGE: ${{ matrix.target.package }}
+      SLUG: ${{ matrix.target.slug }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+
+      - name: 📥 Download shard reports
+        # actions/download-artifact v8.0.2
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          pattern: mutation-report-${{ matrix.target.slug }}-shard*
+          path: shard-reports
+
+      # Fails when a shard report is missing, so a shard that broke cannot pass as a high score.
+      - name: 📏 Check the score against the floor
+        shell: bash # -eo pipefail, so the check's exit code is kept through tee
+        run: |
+          reports=()
+          for i in 1 2 3 4 5 6 7 8; do
+            report="shard-reports/mutation-report-$SLUG-shard$i/mutation.json"
+            [ -f "$report" ] || { echo "::error::No report from shard $i"; exit 1; }
+            reports+=("$report")
+          done
+          bun scripts/check-mutation-score.ts check "$PACKAGE" "${reports[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  changed:
+    name: 🧬 Mutation testing (changed files)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Advisory (decision 4): after four weeks of results the owner decides whether it blocks for
+    # packages/finance-engine. Until then it never fails the workflow.
+    continue-on-error: true
+    env:
+      PACKAGE: packages/finance-engine
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+
+      - name: 🗂️ Changed source files
+        id: targets
+        shell: bash # -eo pipefail, so a failing git diff or script stops the job
+        run: |
+          # HEAD is GitHub's merge commit; its first parent is main as it was at that merge, so
+          # changes that reached main after the pull request opened are not counted as its own.
+          targets=$(git diff --name-only HEAD^1 HEAD | bun scripts/check-mutation-score.ts targets "$PACKAGE")
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+          if [ -z "$targets" ]; then
+            echo "No changed source file in $PACKAGE to mutate (tests, fixtures and barrels are left out)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # No incremental cache here: each weekly shard's file covers only its own files, and test ids
+      # are numbered per run, so shard files cannot be joined. Only the changed files are mutated.
+      - name: 🧬 Run Stryker on the changed files
+        if: steps.targets.outputs.targets != ''
+        working-directory: ${{ env.PACKAGE }}
+        env:
+          TARGETS: ${{ steps.targets.outputs.targets }}
+        run: |
+          node --version
+          node ../../node_modules/@stryker-mutator/core/bin/stryker.js run --mutate "$TARGETS" \
+            --reporters clear-text,html,json,progress-append-only
+
+      - name: 📋 List the faults no test caught
+        if: steps.targets.outputs.targets != ''
+        run: bun scripts/check-mutation-score.ts survivors "$PACKAGE" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 📎 Upload report
+        if: always() && steps.targets.outputs.targets != ''
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: mutation-report-changed
+          path: |
+            ${{ env.PACKAGE }}/reports/mutation/mutation.html
+            ${{ env.PACKAGE }}/reports/mutation/mutation.json
+          retention-days: 14
+          if-no-files-found: warn
