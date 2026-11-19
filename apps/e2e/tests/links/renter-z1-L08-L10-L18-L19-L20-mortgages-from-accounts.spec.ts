@@ -8,8 +8,8 @@ import { waitOutRateWindow } from "../../support/rate-window";
 
 test.use({ storageState: AUTH_STATE });
 
-// Named "z1-" so it runs after the homeowner link specs (files run in name order, one at a
-// time): its persona switch and seeding then do not crowd their minute of the write limit.
+// Named "renter-z1-" so it runs last, after the other renter specs (files run in name order, one
+// at a time): the user is already the renter, so it spends no reset on a persona switch.
 
 // L10, L08, L19, L20 and L18 (system audit slice 4) in one sequence on the renter persona, who has no
 // property, so the Accounts dialog offers the value field. One persona switch and no deletes:

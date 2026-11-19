@@ -7,7 +7,9 @@ import { webServers } from "./support/servers";
 const isCI = Boolean(process.env.CI);
 const NEW_USER_SPEC = /new-user-journey\.spec\.ts$/;
 // Cross-page link tests (docs/system/generated/links.md). They change the one user's saved data
-// and put it back, so they run one at a time, after the read-only persona specs.
+// and put it back, so they run one at a time, after the read-only persona specs. Files run in name
+// order: the homeowner specs ("L…", the persona global setup leaves) first, then the renter specs
+// ("renter-…"), so the project switches persona, and spends a reset, once.
 const LINK_SPECS = /tests\/links\/.*\.spec\.ts$/;
 
 // Known-flaky tests (quarantine.ts) are left out of the gating run and named in the CI summary.

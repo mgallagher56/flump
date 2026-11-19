@@ -63,8 +63,8 @@ test("L71 a property saved as a rental is not the home", async ({ page }) => {
     accountSubtype: "rental",
     balance: 200000,
   })) as { id: string };
-  // The last link spec: no delete, since the new-user project that follows clears the user, and
-  // deletes share the backend's "destructive" limit of 10 an hour.
+  // The last homeowner spec: no delete, since the renter specs after it start with a reset that
+  // clears it, and deletes share the backend's "destructive" limit of 10 an hour.
   expect(rental.id).toBeTruthy();
   await page.goto("/app/mortgage");
   const saved = page.locator("#mortgage-saved");
