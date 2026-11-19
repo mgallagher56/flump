@@ -250,6 +250,12 @@ export const semanticTokens = {
         teal: { value: { base: "#dcede6", _dark: "#1d3932" } },
         apricot: { value: { base: "#fae5cc", _dark: "#42311c" } },
         sage: { value: { base: "#e5edda", _dark: "#2b3822" } },
+        // Home section cards (owner request, 19 Nov 2026): one colour per section, so pension, Self
+        // Assessment and budget each have a tint of their own beside teal, apricot and sage. Paired
+        // with chart.series6 (sky), series7 (gold) and series4 (violet). Same rules and tests.
+        sky: { value: { base: "#dceaf3", _dark: "#1d3846" } },
+        gold: { value: { base: "#f3ebc8", _dark: "#3b3519" } },
+        violet: { value: { base: "#e4e3f6", _dark: "#353050" } },
       },
     },
 

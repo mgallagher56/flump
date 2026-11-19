@@ -20,7 +20,6 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({ data }) => {
   const known = Boolean(data && data.accountsCount > 0 && finite(data.totalSavingsBalance));
   return (
     <WidgetCard
-      domain="savings"
       figure={
         known && data ? (
           <Money fractionDigits={0} size="lg" value={data.totalSavingsBalance} />

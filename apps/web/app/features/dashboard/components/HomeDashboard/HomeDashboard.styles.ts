@@ -42,21 +42,12 @@ export const showHideButton = cva({
   },
 });
 
-/**
- * Below md the h1 and the icon button share one row: PageHeader's text column has a 280px flex
- * basis, which with the button does not fit at 375 and pushed the button onto its own row. From md
- * PageHeader's own layout applies unchanged.
- */
+/** The page header: the h1 alone, since "Choose what shows here" moved to the sections heading. */
 export const dashboardHeader = cva({
   base: {
     // The page's section gap (spacing.page.section) is the only space before the hero; PageHeader's
     // own bottom margin doubled it to about 56px at 1280. `:is(header)` outranks that margin.
     "&:is(header)": { marginBottom: "0" },
-    mdDown: {
-      flexWrap: "nowrap",
-      alignItems: "center",
-      "& > :first-child": { flexBasis: "0", flexGrow: 1 },
-    },
   },
 });
 

@@ -692,7 +692,6 @@ describe("OnboardingRoute (4-step flow)", () => {
       isSalarySacrifice: false,
       enabledPages: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
       dashboardWidgets: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
-      dashboardWidgetOrder: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
     });
     expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
   });

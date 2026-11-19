@@ -179,9 +179,10 @@ export function formatProfileRow(profile: UserProfile) {
     dashboardWidgets: Array.isArray(profile.dashboardWidgets)
       ? withoutRetiredModules(profile.dashboardWidgets)
       : ["accounts", "budget", "savings", "pension", "mortgage"],
+    // Empty means the dashboard's default section order; only the user's own moves fill it.
     dashboardWidgetOrder: Array.isArray(profile.dashboardWidgetOrder)
       ? withoutRetiredModules(profile.dashboardWidgetOrder)
-      : ["accounts", "budget", "savings", "pension", "mortgage"],
+      : [],
     dashboardWidgetSizes: nonEmptyRecord(
       withoutRetiredModuleKeys(profile.dashboardWidgetSizes),
     ) || {

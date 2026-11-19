@@ -1,7 +1,11 @@
+import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
 import { PiggyBank } from "lucide-react";
 import { expect, within } from "storybook/test";
 import { SampleModeProvider } from "~/context/SampleModeContext";
+import { SECTION_PRIORITY } from "../../sectionOrder";
+import { WIDGET_ICONS } from "../../widgetIcons";
+import { SECTION_COPY } from "../WidgetVisibilityPanel";
 import { WidgetCard } from "./WidgetCard";
 
 const meta: Meta<typeof WidgetCard> = {
@@ -12,7 +16,6 @@ const meta: Meta<typeof WidgetCard> = {
     id: "savings",
     title: "Savings",
     icon: PiggyBank,
-    domain: "savings",
     label: "Savings and investments",
     figure: "£12,000",
     line: "Across your savings and investment accounts.",
@@ -51,5 +54,39 @@ export const LockedInSandbox: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.queryAllByRole("link")).toHaveLength(0);
     await expect(canvas.getAllByRole("img", { name: "Locked in this example" })[0]).toBeDefined();
+  },
+};
+
+const grid = css({
+  display: "grid",
+  gap: "4",
+  gridTemplateColumns: { base: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
+  maxWidth: "56rem",
+});
+
+/** Each section in its own colour: a top edge and an icon tile, never a status colour. */
+export const EverySection: Story = {
+  render: () => (
+    <div className={grid}>
+      {SECTION_PRIORITY.map((key) => (
+        <WidgetCard
+          figure="£12,000"
+          icon={WIDGET_ICONS[key]}
+          id={key}
+          key={key}
+          label="A saved figure"
+          line="One line about the figure."
+          link={{ to: `/app/${key}`, label: `Open ${SECTION_COPY[key].label.toLowerCase()}` }}
+          title={SECTION_COPY[key].label}
+        />
+      ))}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const colours = Array.from(canvasElement.querySelectorAll("[data-section-colour]")).map((el) =>
+      el.getAttribute("data-section-colour"),
+    );
+    // The decorator draws light and dark side by side: seven distinct colours in each.
+    await expect(new Set(colours).size).toBe(SECTION_PRIORITY.length);
   },
 };

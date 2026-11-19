@@ -232,7 +232,7 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
       await updateProfile({
         enabledPages: withTax(profile.enabledPages),
         dashboardWidgets: withTax(profile.dashboardWidgets),
-        dashboardWidgetOrder: withTax(profile.dashboardWidgetOrder),
+        // No dashboardWidgetOrder: the dashboard puts a newly shown section at the end.
       });
       toast?.({ title: PROFILE_SAVED_MESSAGE, tone: "positive" });
     } catch {

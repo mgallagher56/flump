@@ -276,6 +276,22 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.dashboardWidgetSizes).toEqual({ accounts: "wide" });
   });
 
+  it("has no saved section order for a new profile or a stored null, so the dashboard uses its default", async () => {
+    mockUserProfileRepo.findOne.mockResolvedValue(null);
+    const created = await service.getProfile("user-123");
+    expect(mockUserProfileRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardWidgetOrder: [] }),
+    );
+    expect(created.dashboardWidgetOrder).toEqual([]);
+
+    mockUserProfileRepo.findOne.mockResolvedValue({
+      id: "profile-1",
+      userId: "user-123",
+      dashboardWidgetOrder: null,
+    });
+    expect((await service.getProfile("user-123")).dashboardWidgetOrder).toEqual([]);
+  });
+
   describe("pension answers are never assumed (owner decision 3)", () => {
     const UNANSWERED = {
       pensionPercent: null,

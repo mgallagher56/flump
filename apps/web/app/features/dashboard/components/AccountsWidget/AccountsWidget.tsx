@@ -18,7 +18,6 @@ export const AccountsWidget: FC<AccountsWidgetProps> = ({ data }) => {
   const count = data?.accountsCount ?? 0;
   return (
     <WidgetCard
-      domain="net-worth"
       figure={count > 0 ? `${count} ${count === 1 ? "account" : "accounts"}` : null}
       icon={WIDGET_ICONS.accounts}
       id="accounts"

@@ -4,7 +4,19 @@ import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon/Icon";
 import { iconTile } from "./IconTile.styles";
 
-export type IconTileTone = "teal" | "sage" | "apricot" | "accent" | "neutral";
+/**
+ * Teal, sage and apricot are the money domains (E16 P9.3). Sky, gold and violet give the home
+ * section cards one colour each (owner request, 19 Nov 2026); they are not domain colours.
+ */
+export type IconTileTone =
+  | "teal"
+  | "sage"
+  | "apricot"
+  | "sky"
+  | "gold"
+  | "violet"
+  | "accent"
+  | "neutral";
 
 /** The money domains, each with one colour everywhere (E16 P9.3). */
 export type IconTileDomain =

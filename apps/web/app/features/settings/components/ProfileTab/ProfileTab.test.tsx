@@ -228,10 +228,11 @@ describe("<ProfileTab />", () => {
         expect.objectContaining({
           enabledPages: expect.arrayContaining(["tax"]),
           dashboardWidgets: expect.arrayContaining(["tax"]),
-          dashboardWidgetOrder: expect.arrayContaining(["tax"]),
         }),
       ),
     );
+    // The section order is the user's own, set on the dashboard; a new section goes at the end.
+    expect(mockUpdateProfile.mock.calls.at(-1)?.[0]).not.toHaveProperty("dashboardWidgetOrder");
   });
 
   it("tells the user when the Self Assessment module could not be updated", async () => {

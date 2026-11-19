@@ -6,7 +6,7 @@ export const widgetCard = cva({
     backgroundColor: "surface.card",
     borderRadius: "card",
     borderWidth: "1px",
-    borderTopWidth: "3px",
+    borderTopWidth: "4px",
     borderStyle: "solid",
     borderColor: "border",
     boxShadow: "card",
@@ -22,17 +22,27 @@ export const widgetCard = cva({
     },
   },
   variants: {
-    tone: {
-      teal: { borderTopColor: "primary" },
-      sage: { borderTopColor: "chart.wealth" },
-      apricot: { borderTopColor: "surface.tint.apricot" },
-      neutral: { borderTopColor: "border.strong" },
+    // Every card has the same 4px top edge in its section's colour, so none looks unfinished.
+    // Before, the edge came from the domain map: teal and sage were solid, apricot used its pale
+    // tint (so the debt card looked edgeless) and pay and tax fell back to grey. These are the
+    // chart series colours (at least 3:1 on the card in both themes) and the damson accent.
+    colour: {
+      teal: { borderTopColor: "chart.series1" },
+      sage: { borderTopColor: "chart.series2" },
+      apricot: { borderTopColor: "chart.series3" },
+      violet: { borderTopColor: "chart.series4" },
+      sky: { borderTopColor: "chart.series6" },
+      gold: { borderTopColor: "chart.series7" },
+      damson: { borderTopColor: "accent" },
     },
     interactive: {
       true: {
         cursor: "pointer",
+        // The top edge keeps its section colour on hover.
         _hover: {
-          borderColor: "border.strong",
+          borderLeftColor: "border.strong",
+          borderRightColor: "border.strong",
+          borderBottomColor: "border.strong",
           boxShadow: "raised",
         },
         // One ring, on the card, and only for keyboard focus on its stretched link.
@@ -47,7 +57,7 @@ export const widgetCard = cva({
     },
   },
   defaultVariants: {
-    tone: "neutral",
+    colour: "teal",
     interactive: false,
   },
 });

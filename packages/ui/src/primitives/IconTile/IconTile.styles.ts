@@ -22,6 +22,9 @@ export const iconTile = cva({
       teal: { backgroundColor: "surface.tint.teal" },
       sage: { backgroundColor: "surface.tint.sage" },
       apricot: { backgroundColor: "surface.tint.apricot" },
+      sky: { backgroundColor: "surface.tint.sky" },
+      gold: { backgroundColor: "surface.tint.gold" },
+      violet: { backgroundColor: "surface.tint.violet" },
       /** E17 Damson: wayfinding outside the money domains (STYLE-GUIDE C7). Never beside a status. */
       accent: { backgroundColor: "accent.subtle", color: "accent" },
       neutral: {
