@@ -195,17 +195,17 @@ const EVERYTHING_OVERLAYS: PhoneOverlay[] = [
     open: button(/^Add pension pot$/),
     walkFields: true,
   },
-  { name: "sa-add-income-menu", url: "/app/self-assessment", open: button(/^Add income$/) },
+  { name: "sa-add-income-menu", url: "/app/self-assessment", open: button(/^Add income/) },
   {
     name: "sa-record-dialog",
     url: "/app/self-assessment",
-    open: menuItem(/^Add income$/, /^Rental income$/),
+    open: menuItem(/^Add income/, /^Rental income$/),
     walkFields: true,
   },
   {
     name: "sa-copy-last-year",
     url: "/app/self-assessment",
-    open: menuItem(/^Add income$/, /^Copy from last year$/),
+    open: menuItem(/^Add income/, /^Copy from last year$/),
   },
   { name: "sa-row-actions", url: "/app/self-assessment", open: button(/^Actions for /) },
   { name: "sa-year-menu", url: "/app/self-assessment", open: button(/^More for /) },
@@ -341,14 +341,14 @@ export const PHONE_SETS: PhoneSet[] = [
     a11y: true,
     pages: [HOME, SELF_ASSESSMENT, MORTGAGE, ACCOUNTS, PROFILE],
     overlays: [
-      { name: "sa-add-income-menu", url: "/app/self-assessment", open: button(/^Add income$/) },
+      { name: "sa-add-income-menu", url: "/app/self-assessment", open: button(/^Add income/) },
       {
         name: "sa-record-dialog",
         url: "/app/self-assessment",
         walkFields: true,
         open: async (page) => {
           await page
-            .getByRole("button", { name: /^Add income$/ })
+            .getByRole("button", { name: /^Add income/ })
             .first()
             .click();
           await page.getByRole("menuitem").first().click();

@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { FROZEN_NOW, SERVER_CLOCK_FROZEN } from "./clock";
+import { BACKEND_URL } from "./env";
 
 /**
  * Neutral sample households (two for the visual suite, three more for the phone audit) for the single dev-bypass user, written through the same-origin
@@ -971,7 +972,7 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
     );
   }
   const extras = PERSONAS[name].extras;
-  if (extras) await seedExtras(page, extras);
+  if (extras) await seedExtras(extras);
   return { persona: name, unchanged: outcome.unchanged, reset: outcome.reset };
 }
 
@@ -987,7 +988,7 @@ export function taxYearStart(now: Date): string {
  * one staged for review). Each is written only when missing, so a re-run adds nothing. The AI
  * connection's secret comes back in the response and is dropped unread. Throws on any failure.
  */
-async function seedExtras(page: Page, extras: PersonaExtras): Promise<void> {
+async function seedExtras(extras: PersonaExtras): Promise<void> {
   const now = seedNow();
   const seed = {
     extras,
@@ -995,12 +996,17 @@ async function seedExtras(page: Page, extras: PersonaExtras): Promise<void> {
     commitMonth: monthKey(now, HISTORY_MONTHS + 3),
     stageMonth: monthKey(now, HISTORY_MONTHS + 2),
   };
-  const failures = await page.evaluate(async (s) => {
+  // Tax records, the retirement plan and imports are not on the web app's /api allow-list (the
+  // app writes them through its own server routes), so these go straight to the local test
+  // backend as the dev-bypass user, with the public dev constant the web server itself uses
+  // (apps/web/app/utils/auth.server.ts DEV_ACCESS_TOKEN). Only a dev-bypass backend accepts it.
+  const auth = { Authorization: `Bearer ${["mock", "session", "token"].join("-")}` };
+  const failures = await (async (s: typeof seed) => {
     const failures: string[] = [];
     const call = async (path: string, method = "GET", body?: unknown, headers = {}) => {
-      const response = await fetch(`/api${path}`, {
+      const response = await fetch(`${BACKEND_URL}${path}`, {
         method,
-        headers: { "Content-Type": "application/json", "x-flump-request": "1", ...headers },
+        headers: { "Content-Type": "application/json", ...auth, ...headers },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
       if (!response.ok) failures.push(`${method} ${path} ${response.status}`);
@@ -1054,7 +1060,7 @@ async function seedExtras(page: Page, extras: PersonaExtras): Promise<void> {
       await stage("phone-audit-staged", s.stageMonth);
     }
     return failures;
-  }, seed);
+  })(seed);
   if (failures.length > 0) {
     throw new Error(`Seeding the persona's extra data through /api failed: ${failures.join(", ")}`);
   }
