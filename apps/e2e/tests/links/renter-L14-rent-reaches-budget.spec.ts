@@ -13,8 +13,9 @@ test("L14 a rent change reaches the linked housing line, Budget and Dashboard", 
   page,
 }) => {
   await page.goto("/app");
-  // The renter persona, as the L27 to L31 specs after it use, so no extra persona switch (each
-  // switch is one reset against the backend's 10-an-hour destructive limit).
+  // The first renter spec: the homeowner specs ran before it, so this is the project's one persona
+  // switch (one reset against the backend's 10-an-hour destructive limit). Every renter spec is
+  // named "renter-" so they all run after the homeowner ones, in name order, with no switch back.
   await applyPersona(page, "renter");
 
   const row = await entryNamed(page, "Rent");

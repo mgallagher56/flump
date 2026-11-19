@@ -404,7 +404,7 @@ links:
       group: "D. Profile, pay and pension",
       verdict: holds,
       checked: browser,
-      note: "Slice 6: the rate columns have no default; L27-pension-rates-agree.spec.ts checks Pension and the Dashboard agree, including a chosen 5% and 3% and not set.",
+      note: "Slice 6: the rate columns have no default; renter-L27-pension-rates-agree.spec.ts checks Pension and the Dashboard agree, including a chosen 5% and 3% and not set.",
       statement: "Pension rates saved on Profile are the rates on Pension, Take-home, Retirement and the Dashboard; the 5% and 3% row defaults are never shown as the user's choice.",
     }
   - {
@@ -428,7 +428,7 @@ links:
       verdict: duplicated,
       checked: browser,
       findings: [PP-7, SD-9, DB-7],
-      note: "Slice 6: StudentLoanPlanToProfile copied account plans into unanswered profiles; L30-student-loan-plan-agrees.spec.ts checks they agree. Saving a Student Loan account now writes its plan to a profile with none. Still two stores until slice 9 drops the account column.",
+      note: "Slice 6: StudentLoanPlanToProfile copied account plans into unanswered profiles; renter-L30-student-loan-plan-agrees.spec.ts checks they agree. Saving a Student Loan account now writes its plan to a profile with none. Still two stores until slice 9 drops the account column.",
       statement: "Student loan plan has one store: the plan on a student loan account and the plans on the profile agree, and take-home uses it.",
     }
   - {
@@ -437,7 +437,7 @@ links:
       verdict: duplicated,
       checked: browser,
       findings: [BU-1, PP-5],
-      note: "Slice 6: L31-take-home-agrees.spec.ts checks the Dashboard and Take-home page agree, worked out and typed. The Budget income row (slice 5) and the context pack remain apart.",
+      note: "Slice 6: renter-L31-take-home-agrees.spec.ts checks the Dashboard and Take-home page agree, worked out and typed. The Budget income row (slice 5) and the context pack remain apart.",
       statement: "Take-home pay is the same figure on the Dashboard, Take-home, Budget, Pension, safe to spend and in AI output.",
     }
   - {
