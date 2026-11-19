@@ -93,7 +93,7 @@ describe("comparedMonthsText", () => {
   });
 
   it("words the prompt with the month alone", () => {
-    expect(notRecordedPrompt("November")).toBe("November not recorded yet");
+    expect(notRecordedPrompt("November")).toBe("November check-in not done yet");
   });
 });
 
@@ -187,7 +187,7 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByText("Net worth recorded for October 2026: -£148,000.")).toBeDefined();
     expect(screen.getByText(fewMonthsPrompt(1))).toBeDefined();
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
-    // November is not recorded yet, so no next check-in date beside "not recorded yet".
+    // November's check-in is not done yet, so no next check-in date beside the prompt.
     expect(screen.queryByText(/Next check-in/)).toBeNull();
     // Breathing room moved to Budget; no projection, so no notice.
     expect(screen.queryByText(/Months of cover/)).toBeNull();
@@ -214,7 +214,7 @@ describe("SnapshotHistoryPage", () => {
       lastCheckInMonth: "2026-11",
     });
     expect(screen.getByText("Next check-in: 1 December 2026")).toBeDefined();
-    expect(screen.queryByText(/not recorded yet/)).toBeNull();
+    expect(screen.queryByText(/check-in not done yet/)).toBeNull();
     // This month is recorded: compared with the month before, named, and no prompt or link.
     const hero = screen.getByTestId("hero-figure");
     expect(hero.textContent).toContain("+£100");
@@ -245,7 +245,7 @@ describe("SnapshotHistoryPage", () => {
       accountDetails: [row(CURRENT, 2026, 10, 2000), row(CURRENT, 2026, 11, 2100)],
       lastCheckInMonth: "2026-10",
     });
-    expect(screen.getByRole("link", { name: "November not recorded yet" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "November check-in not done yet" })).toBeDefined();
     expect(screen.queryByText(/Next check-in/)).toBeNull();
   });
 
@@ -257,7 +257,7 @@ describe("SnapshotHistoryPage", () => {
 
   it("the not recorded prompt opens the monthly check-in", async () => {
     renderPage({ accountDetails: [row(CURRENT, 2026, 9, 2000), row(CURRENT, 2026, 10, 2100)] });
-    const link = screen.getByRole("link", { name: "November not recorded yet" });
+    const link = screen.getByRole("link", { name: "November check-in not done yet" });
     // A real link to the check-in before hydration, the same as the dashboard's check-in row.
     expect(link.getAttribute("href")).toBe("/app/accounts/history?checkIn=1");
     expect(within(screen.getByTestId("hero-figure")).getByRole("link")).toBe(link);
@@ -280,7 +280,9 @@ describe("SnapshotHistoryPage", () => {
     // The change is October against September; November has no check-in yet.
     expect(hero.textContent).toContain("Net worth change");
     expect(hero.textContent).not.toContain("since last month");
-    expect(hero.textContent).toContain("September to October 2026. November not recorded yet.");
+    expect(hero.textContent).toContain(
+      "September to October 2026. November check-in not done yet.",
+    );
     expect(screen.getByText(fewMonthsPrompt(2))).toBeDefined();
     expect(screen.queryByTestId("net-worth-history-chart")).toBeNull();
     expect(screen.queryByText(/Next check-in/)).toBeNull();
@@ -299,7 +301,7 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByTestId("hero-figure").textContent).toContain("-£200");
     // October against August: the carried September is skipped.
     expect(screen.getByTestId("hero-figure").textContent).toContain(
-      "August to October 2026. November not recorded yet.",
+      "August to October 2026. November check-in not done yet.",
     );
     expect(screen.getByTestId("net-worth-history-chart")).toBeDefined();
     // The takeaway, then the dashed months in words (no legend): September has no check-in, and
@@ -372,7 +374,7 @@ describe("SnapshotHistoryPage", () => {
         basis: { countProperty: false, countStudentLoan: false },
       });
       expect(screen.getByTestId("hero-figure").textContent).toContain(
-        "September to October 2026. November not recorded yet. Not counting your mortgage.",
+        "September to October 2026. November check-in not done yet. Not counting your mortgage.",
       );
       expect(screen.queryByTestId("snapshot-net-worth-basis")).toBeNull();
       expect(screen.queryByRole("link", { name: "Change what counts" })).toBeNull();

@@ -11,8 +11,10 @@ test.use({ storageState: AUTH_STATE });
 // the account had no row until a check-in or an edit.
 test("L05 a new account has a History point for this month with no check-in", async ({ page }) => {
   await page.goto("/app");
-  // Start from no accounts, so the new account is the only one History can show. Each later link
-  // spec applies its persona again, so nothing else depends on the accounts removed here.
+  // Start from no accounts, so the new account is the only one History can show. This is safe
+  // because the `links` project runs one test at a time (one worker, playwright.config.ts) and
+  // every later link spec applies its persona again, so nothing depends on the accounts removed
+  // here.
   for (const existing of await listAccounts(page)) {
     await backendCall(`/accounts/${existing.id}`, "DELETE");
   }

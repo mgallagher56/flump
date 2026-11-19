@@ -50,7 +50,7 @@ export const TwoMonths: Story = {
     const hero = canvas.getByTestId("hero-figure");
     await expect(hero).toHaveTextContent("September to October 2026.");
     await expect(
-      within(hero).getByRole("link", { name: "November not recorded yet" }),
+      within(hero).getByRole("link", { name: "November check-in not done yet" }),
     ).toBeDefined();
   },
 };
