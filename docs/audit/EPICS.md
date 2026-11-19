@@ -1017,11 +1017,11 @@ This section captures work that was scoped, planned, or partially shipped as of 
 ## E41. Mutation testing and faster tests
 
 - **Severity:** P2 (owner request, 2026-11-19).
-- **Blocked by:** owner decisions 1 to 13 in the plan, each for the slice that names it. Slices M0, P0 and P1 need none. The kill-test slices wait for the E40 slices that rewrite the same files.
+- **Blocked by:** nothing for the first slices: the owner accepted all 13 decisions on 2026-11-19 (DECISIONS round 12). Tests that assert a tax figure still need the owner's tax vector sign-off. The kill-test slices wait for the E40 slices that rewrite the same files.
 - **Done when:** Stryker (a tool that makes small deliberate faults in the code and checks that a test fails) runs on a schedule against `packages/finance-engine`, `packages/api-contract`, `packages/mcp`, the small packages, the backend's authorisation and validation code, and the logic in `apps/web` and `packages/ui`; each of those has a mutation score floor in a baseline file that may rise freely and is lowered only with sign-off; every surviving fault in the money code is either killed by a test with a hand-worked expected value or recorded with a reason; pull requests get an advisory report on the files they change; the suites that cannot be mutation-tested (stories, Playwright suites, migrations, style recipes, generated code) are listed with what covers them instead; a test-speed baseline is recorded and each speed fix shows a before and after figure with no test weakened.
 - **Notes:** two workstreams. Mutation: M0 proof on one engine module, M1 scheduled run and ratchet, M2 engine kill tests, M3 contract, MCP and small packages, M4 backend guards and services, M5 web and UI logic, M6 close-out. Speed: P0 baseline, P1 browser install in CI, P2 backend files in parallel, P3 web and UI environment and setup, P4 slow files and isolation, P5 Turbo and CI shape. Measured on 2026-11-19: pull request CI took 2 to 9 minutes over six runs; the backend suite is the slowest Vitest run (281 seconds, files run one at a time); the "Install Chromium" step varied from 9 to 328 seconds. No outside service is used; the hosted Stryker dashboard is decision 6. Plan: [E41-mutation-testing-and-test-speed-plan.md](plans/E41-mutation-testing-and-test-speed-plan.md).
-- **Status (2026-11-19):** plan only; nothing built.
-- **Labels:** needs-triage
+- **Status (2026-11-19):** plan accepted; nothing built.
+- **Labels:** ready
 
 ## 1. Check / finish the open merge-queue PRs first
 

@@ -1,8 +1,8 @@
 # E41. Mutation testing and faster tests
 
-Decisions: open
+Decisions: accepted on 19 November 2026
 
-> Status: plan for owner approval. No code. Written 2026-11-19 against `origin/main` at `6c2022fc`. Paths are relative to the repository root. Figures are marked "measured" or "estimate".
+> Status: plan accepted by the owner on 19 November 2026. No code yet. Written 2026-11-19 against `origin/main` at `6c2022fc`. Paths are relative to the repository root. Figures are marked "measured" or "estimate".
 
 ## 1. Summary and why it matters
 
@@ -247,6 +247,8 @@ Can run now with no collision: M0, M1, P0, P1, P2, P5 (config, scripts and workf
 
 ## 12. Owner decisions
 
+All thirteen were accepted on 19 November 2026 with the recommended option. Shown the plan and asked whether they accept the recommended option on all thirteen, the owner answered: "Accept all 13". The record is in [DECISIONS.md](./DECISIONS.md), round 12. Decision 8 means tests that assert a tax figure still need the owner's tax vector sign-off, which is separate and has not been given.
+
 Each has options and a recommendation. A flag says when it names an outside service, touches security or a guard, or changes where user data is stored. No decision changes where user data is stored.
 
 1. **How far to go.**
@@ -254,72 +256,85 @@ Each has options and a recommendation. A flag says when it names an outside serv
    - B. Engine, contract, MCP, small packages, backend guards and services.
    - C. B plus web and UI logic.
    - Recommendation: C in stages, with a stop-check after M4 using the measured cost of M2 to M4.
+   - **Accepted on 19 November 2026: option C, in stages, with a stop-check after M4**.
 
 2. **How equivalent and not-worth-killing survivors are recorded.** Flag: guard design (section 15).
    - A. `// Stryker disable` comments in the source, each with a reason.
    - B. A ledger in `docs/testing/mutation-triage.md` that the tool never reads. Survivors stay in the count; the floor allows for them.
    - C. An ignore list in the Stryker config.
    - Recommendation: B. A and C are suppressions by another name and would each need owner sign-off.
+   - **Accepted on 19 November 2026: option B**.
 
 3. **Form of the ratchet.** Flag: guard design.
    - A. One score floor per package, floor(measured) - 1, as the coverage floors are.
    - B. Survivor counts per file, like the law baselines.
    - C. Report only, no floor.
    - Recommendation: A. Move to B for the engine later if the floor proves too coarse.
+   - **Accepted on 19 November 2026: option A**.
 
 4. **Is the pull request check ever blocking?** Flag: changes a required check (section 15).
    - A. Never. Advisory for good.
    - B. Advisory now. After four weeks of results, decide whether it blocks for `packages/finance-engine` only.
    - C. Blocking from the start.
    - Recommendation: B. It adds minutes to every engine PR, so decide with data.
+   - **Accepted on 19 November 2026: option B**.
 
 5. **How often the full run happens.**
    - A. Weekly per package, staggered at night, plus manual start.
    - B. Nightly.
    - C. Manual only.
    - Recommendation: A.
+   - **Accepted on 19 November 2026: option A**.
 
 6. **Hosted Stryker dashboard.** Flag: outside service; needs a secret token; the repo is public, so reports would be public on a third-party site.
    - A. No. HTML reports as CI artifacts only.
    - B. Yes, with a badge.
    - Recommendation: A.
+   - **Accepted on 19 November 2026: option A**.
 
 7. **String faults.** Flag: guard design (narrows what is checked).
    - A. All fault types on everywhere.
    - B. String faults off in `apps/web` and `packages/ui` only, where strings are mostly copy already covered by `check-copy`.
    - C. Off everywhere.
    - Recommendation: B, and report the number left out.
+   - **Accepted on 19 November 2026: option B**.
 
 8. **Tests that assert a tax figure.** Flag: financial correctness.
    - A. They go through the existing vector sign-off (`bun run tax:signoff`, E4).
    - B. Ordinary tests, no sign-off.
    - Recommendation: A. Until sign-off is given, tax survivors are logged, not tested.
+   - **Accepted on 19 November 2026: option A**.
 
 9. **Speed target.**
    - A. No number. Keep each fix that shows a gain.
    - B. Two numbers set by the owner after P0: the time for a typical pull request's required checks, and the time for a local web test run.
    - Recommendation: B. For reference, pull request runs took 2 to 9 minutes today; 5 minutes is a suggestion, not a measured promise.
+   - **Accepted on 19 November 2026: option B (the owner sets the two numbers after P0)**.
 
 10. **May a fix reduce test isolation?** Flag: guard design (could hide a leaking test).
     - A. Never.
     - B. Per package, with five clean shuffled runs as proof and coordinator sign-off.
     - Recommendation: B, for the backend unit files (P2) and pure packages only.
+    - **Accepted on 19 November 2026: option B**.
 
 11. **Backend database specs in mutation runs.**
     - A. Left out at first; report what they alone cover.
     - B. Included in the scheduled run.
     - Recommendation: A, then decide from M4's figures.
+    - **Accepted on 19 November 2026: option A**.
 
 12. **A new law.** Flag: `AGENTS.md` edit, made by the coordinator, not a lane.
     - A. None. The how-to document is enough.
     - B. After M6, the coordinator adds a short section: the mutation floors are a ratchet, and the triage ledger is the only place survivors are recorded.
     - Recommendation: B.
+    - **Accepted on 19 November 2026: option B**.
 
 13. **How CI gets its browser (P1).** Flag for C: a new outside image source.
     - A. Keep the cached browser; skip the system package step when the runner already has what Chromium needs.
     - B. Cache the system packages as well.
     - C. Run the jobs in the official Playwright container image.
     - Recommendation: A if P1 shows Chromium starts without the step; otherwise B.
+    - **Accepted on 19 November 2026: option A if P1 shows Chromium starts without the step, otherwise B**.
 
 ## 13. The strongest argument against
 
