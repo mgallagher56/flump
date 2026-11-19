@@ -61,7 +61,9 @@ export function readRetries(file: string = RETRY_LOG): RetryRecord[] {
 
 /** How long to wait for a Retry-After value, or null when it should not be waited out. */
 export function retryWaitMs(retryAfter: string | null, windowMs: number = RETRY_WINDOW_MS) {
-  if (retryAfter === null || !/^\d{1,6}$/.test(retryAfter)) return null;
-  const waitMs = Number(retryAfter) * 1000 + 500;
+  // Whole seconds only (the backend sends an integer); parsed without a regex.
+  const seconds = retryAfter === null || retryAfter.trim() === "" ? Number.NaN : Number(retryAfter);
+  if (!Number.isInteger(seconds) || seconds < 0) return null;
+  const waitMs = seconds * 1000 + 500;
   return waitMs <= windowMs ? waitMs : null;
 }
