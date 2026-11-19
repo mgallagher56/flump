@@ -41,4 +41,22 @@ describe("per-worker test database", () => {
       }),
     ).rejects.toThrow("not local");
   });
+
+  it("refuses a name Postgres would cut short, where two workers could share one database", () => {
+    // 60 characters + "_w12" = 64 bytes, one past Postgres's 63.
+    expect(() => workerDatabaseName("a".repeat(60), "12")).toThrow("too long");
+    expect(workerDatabaseName("a".repeat(59), "12")).toHaveLength(63);
+  });
+
+  it("derives from the URL first given, not from one it already rewrote", async () => {
+    // The first URL is not local, so the call is refused before anything is created: proof that
+    // it, not the already-derived local URL, is the one being used.
+    await expect(
+      setUpWorkerDatabase({
+        TEST_DATABASE_URL: "postgres://u:p@localhost:5432/flump_ci_test_w1",
+        TEST_DATABASE_URL_BEFORE_WORKER: "postgres://u:p@db.example.com:5432/flump_ci_test",
+        VITEST_POOL_ID: "1",
+      }),
+    ).rejects.toThrow("not local");
+  });
 });
