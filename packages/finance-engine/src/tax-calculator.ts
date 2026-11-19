@@ -450,7 +450,11 @@ export interface TaxCalculationResult {
 
   // Tax breakdowns
   payeTaxDue: number; // Base tax on PAYE salary alone
-  /** Tax with the self-employed profit minus the tax without it (the salary's PAYE tax). */
+  /**
+   * Tax on the salary and the self-employed profit together, with the allowance tapered by those two
+   * only, minus the PAYE tax. The profit is non-savings income, so it comes before savings and
+   * dividends (ITA 2007 s.16): the allowance savings and dividends take away is not counted here.
+   */
   seTaxDue: number;
   /**
    * Income Tax on the salary from the Personal Allowance that savings interest and dividends take
