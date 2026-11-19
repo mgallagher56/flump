@@ -327,6 +327,18 @@ The owner listed what they noticed while using the site (about 15 November 2026)
 2. **Delete buttons in a subtle danger style (item 25).** Owner's words: "delete debt should be a subtle danger colour, like other delete/destructive buttons, and there should be no info words under each field".
    - Built as `Button variant="dangerSubtle"` (danger text and border, no fill) on every delete, remove and disconnect control outside the confirmation; the confirmation keeps the solid danger button; menu items that delete use the danger tone. The edit debt dialog's notes moved behind info icons.
    - Supersedes: UX-GUIDELINES D3 "uses `danger` styling only inside the confirmation" (D3 now states the ruling).
+3. **Essential switch on savings rows (item 28).** Owner's words: "In the budget section, savings items should have the essential toggle too, but default to off."
+   - Built: savings rows have the switch, off by default. An essential savings row adds to Breathing room's monthly essentials (`commitments.essentialSavings`), so it lowers the months of cover; it does not change safe to spend (savings already come off there) or the essentials total.
+   - Supersedes: the 17 November rework's "savings count as savings whatever the flag".
+4. **"Finished editing" at the foot of the budget (item 29).** Owner's words: "When editing the budget, there should be a 'Finished editing' button at the bottom of the budget too".
+   - Supersedes: the rework's "one edit action per place" reading. UX-GUIDELINES H13 now allows a long edit view to repeat its exit action at its foot.
+5. **"Edit budget" on "Where your money goes" (item 30).** Owner's words: "The 'Edit budget' button should be on the 'Where your money goes' section".
+   - Built on that section's heading row; the page-header copy was removed, so there is still one edit action (H13).
+6. **No empty seeded budget rows; housing and take-home read from one stored value (items 33 and 7).** Owner's words: "In 'where your money goes' the isa/investments item is empty; in housing when I edit my rent/mortgage payment, it's not added to my budget" and "My salary and pension contribution doesn't seem to be synced across the site, e.g. it should already be in my budget".
+   - Built: new budgets are not seeded with £0 rows, and a category with no amount is hidden from the read list (H9). The profile's salary and pension rate are the one stored source for take-home pay, and the housing details (saved rent, or the mortgage payment) for housing: the budget derives a linked row from each at read time (`withLinkedBudgetRows` in the engine) and stores no copy. A typed pay entry above £0 wins over the profile figure. Typing rent in the budget editor saves it to the housing details.
+   - Supersedes: the rework's removal of the housing sync (which wrote into budget rows). Existing £0 seeded rows are left in place; a cleanup is proposed, not done.
+7. **Informational text behind info icons (item 23).** Owner's words: "Move any informational bits of text to an i icon with a tooltip to display the info".
+   - Built with `InfoTip descriptionId`, named in the field's `aria-describedby`. Kept visible: validation errors, the fixed legal and projection notices and the "can go down as well as up" line. UX-GUIDELINES F14 states the rule.
 
 # Owner decisions, round 11 (2026-11-19): system data audit
 
