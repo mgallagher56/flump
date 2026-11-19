@@ -22,6 +22,8 @@ export default defineConfig({
   testDir: process.env.E2E_DIR ?? "./tests",
   outputDir: "./test-results",
   globalSetup: "./support/global-setup.ts",
+  // Counts the seeding calls retried after a 429 and fails above the allowance (rate-limit-retry.ts).
+  globalTeardown: "./support/rate-limit-teardown.ts",
   fullyParallel: true,
   forbidOnly: isCI,
   // No retries (finding L10): a pass on retry hides a flaky spec. A spec that cannot be fixed

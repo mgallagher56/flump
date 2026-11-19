@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { FROZEN_NOW, SERVER_CLOCK_FROZEN } from "./clock";
 import { BACKEND_URL } from "./env";
+import { allowRateLimitRetry, RATE_LIMIT_BINDING, RETRY_WINDOW_MS } from "./rate-limit-retry";
 
 /**
  * Neutral sample households (two for the visual suite, three more for the phone audit) for the single dev-bypass user, written through the same-origin
@@ -853,88 +854,110 @@ export interface PersonaResult {
  */
 export async function applyPersona(page: Page, name: PersonaName): Promise<PersonaResult> {
   const plan = planFor(PERSONAS[name], seedNow());
-  const outcome = await page.evaluate(async (seed) => {
-    const failures: string[] = [];
-    const call = async (path: string, method = "GET", body?: unknown, allow404 = false) => {
-      const response = await fetch(`/api${path}`, {
-        method,
-        headers: { "Content-Type": "application/json", "x-flump-request": "1" },
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-      if (!response.ok && !(allow404 && response.status === 404)) {
-        failures.push(`${method} ${path} ${response.status}`);
+  await allowRateLimitRetry(page);
+  const outcome = await page.evaluate(
+    async ({ seed, windowMs, binding }) => {
+      const failures: string[] = [];
+      // One retry after a 429 whose Retry-After is within one window (rate-limit-retry.ts).
+      const send = async (path: string, init: RequestInit): Promise<Response> => {
+        const response = await fetch(`/api${path}`, init);
+        if (response.status !== 429) return response;
+        const retryAfter = response.headers.get("Retry-After");
+        const waitMs =
+          retryAfter && /^\d{1,6}$/.test(retryAfter) ? Number(retryAfter) * 1000 + 500 : 0;
+        if (waitMs === 0 || waitMs > windowMs) return response;
+        const report = (window as unknown as Record<string, unknown>)[binding] as (
+          method: string,
+          path: string,
+          waitMs: number,
+        ) => Promise<void>;
+        await report(init.method ?? "GET", path, waitMs);
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+        return fetch(`/api${path}`, init);
+      };
+      const call = async (path: string, method = "GET", body?: unknown, allow404 = false) => {
+        const response = await send(path, {
+          method,
+          headers: { "Content-Type": "application/json", "x-flump-request": "1" },
+          body: body === undefined ? undefined : JSON.stringify(body),
+        });
+        if (!response.ok && !(allow404 && response.status === 404)) {
+          failures.push(`${method} ${path} ${response.status}`);
+        }
+        return response.ok ? ((await response.json()) as unknown) : null;
+      };
+
+      type Row = {
+        id: string;
+        name: string;
+        balance: number;
+        amount?: number;
+        isEssential?: boolean;
+      };
+      // A brand-new user has no profile row yet (404); the first PATCH creates it.
+      const profile = (await call("/user-profile", "GET", undefined, true)) as Record<
+        string,
+        unknown
+      > | null;
+      const accounts = ((await call("/accounts")) as Row[] | null) ?? [];
+      const entries = ((await call("/budget-entries")) as Row[] | null) ?? [];
+      if (failures.length > 0) return { failures, unchanged: false, reset: false };
+
+      const sameSet = (a: string[], b: string[]) =>
+        a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+      // The browser proxy allows no GET of the profile (services/api-proxy.server.ts), so the
+      // profile reads as null here; then only the accounts and budget decide. Without this, every
+      // call reset the user and wrote the persona again, which hits the backend's rate limits.
+      const profileMatches =
+        profile === null ||
+        (profile.onboardingCompleted === true &&
+          profile.annualSalary === seed.profile.annualSalary);
+      const matches =
+        profileMatches &&
+        sameSet(
+          accounts.map((a) => `${a.name}:${Math.abs(a.balance)}`),
+          seed.accounts.map((a) => `${a.name}:${Math.abs(Number(a.balance))}`),
+        ) &&
+        sameSet(
+          entries.map((e) => `${e.name}:${e.amount}:${Boolean(e.isEssential)}`),
+          seed.budget.map((e) => `${e.name}:${e.amount}:${Boolean(e.isEssential)}`),
+        );
+      if (matches) return { failures, unchanged: true, reset: false };
+
+      const hasData = accounts.length > 0 || entries.length > 0 || profile?.annualSalary != null;
+      if (hasData)
+        await call("/user-profile/reset-financial-data", "POST", { confirmation: "RESET" });
+      if (failures.length > 0) return { failures, unchanged: false, reset: hasData };
+
+      // Onboarded first: finishing onboarding after the accounts exist would record this month's
+      // snapshot (E30 D8), and the persona is a returning user whose check-in is still due.
+      await call("/user-profile", "PATCH", { ...seed.profile, onboardingCompleted: true });
+      const ids: string[] = [];
+      for (const account of seed.accounts) {
+        const created = (await call("/accounts", "POST", account)) as { id: string } | null;
+        ids.push(created?.id ?? "");
       }
-      return response.ok ? ((await response.json()) as unknown) : null;
-    };
-
-    type Row = {
-      id: string;
-      name: string;
-      balance: number;
-      amount?: number;
-      isEssential?: boolean;
-    };
-    // A brand-new user has no profile row yet (404); the first PATCH creates it.
-    const profile = (await call("/user-profile", "GET", undefined, true)) as Record<
-      string,
-      unknown
-    > | null;
-    const accounts = ((await call("/accounts")) as Row[] | null) ?? [];
-    const entries = ((await call("/budget-entries")) as Row[] | null) ?? [];
-    if (failures.length > 0) return { failures, unchanged: false, reset: false };
-
-    const sameSet = (a: string[], b: string[]) =>
-      a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
-    // The browser proxy allows no GET of the profile (services/api-proxy.server.ts), so the
-    // profile reads as null here; then only the accounts and budget decide. Without this, every
-    // call reset the user and wrote the persona again, which hits the backend's rate limits.
-    const profileMatches =
-      profile === null ||
-      (profile.onboardingCompleted === true && profile.annualSalary === seed.profile.annualSalary);
-    const matches =
-      profileMatches &&
-      sameSet(
-        accounts.map((a) => `${a.name}:${Math.abs(a.balance)}`),
-        seed.accounts.map((a) => `${a.name}:${Math.abs(Number(a.balance))}`),
-      ) &&
-      sameSet(
-        entries.map((e) => `${e.name}:${e.amount}:${Boolean(e.isEssential)}`),
-        seed.budget.map((e) => `${e.name}:${e.amount}:${Boolean(e.isEssential)}`),
-      );
-    if (matches) return { failures, unchanged: true, reset: false };
-
-    const hasData = accounts.length > 0 || entries.length > 0 || profile?.annualSalary != null;
-    if (hasData)
-      await call("/user-profile/reset-financial-data", "POST", { confirmation: "RESET" });
-    if (failures.length > 0) return { failures, unchanged: false, reset: hasData };
-
-    // Onboarded first: finishing onboarding after the accounts exist would record this month's
-    // snapshot (E30 D8), and the persona is a returning user whose check-in is still due.
-    await call("/user-profile", "PATCH", { ...seed.profile, onboardingCompleted: true });
-    const ids: string[] = [];
-    for (const account of seed.accounts) {
-      const created = (await call("/accounts", "POST", account)) as { id: string } | null;
-      ids.push(created?.id ?? "");
-    }
-    for (const entry of seed.budget) {
-      // The backend stores a row as essential unless told otherwise.
-      await call("/budget-entries", "POST", {
-        frequency: "monthly",
-        isIncome: false,
-        isEssential: false,
-        ...entry,
-      });
-    }
-    if (failures.length === 0) {
-      for (const { month, values } of seed.history) {
-        await call(`/snapshots/${month}`, "PUT", {
-          values: values.map((value, i) => ({ accountId: ids[i], value })),
-          complete: true,
+      for (const entry of seed.budget) {
+        // The backend stores a row as essential unless told otherwise.
+        await call("/budget-entries", "POST", {
+          frequency: "monthly",
+          isIncome: false,
+          isEssential: false,
+          ...entry,
         });
       }
-    }
-    return { failures, unchanged: false, reset: hasData };
-  }, plan);
+      if (failures.length === 0) {
+        for (const { month, values } of seed.history) {
+          await call(`/snapshots/${month}`, "PUT", {
+            values: values.map((value, i) => ({ accountId: ids[i], value })),
+            complete: true,
+          });
+        }
+      }
+      return { failures, unchanged: false, reset: hasData };
+    },
+    { seed: plan, windowMs: RETRY_WINDOW_MS, binding: RATE_LIMIT_BINDING },
+  );
 
   if (outcome.failures.length > 0) {
     throw new Error(
