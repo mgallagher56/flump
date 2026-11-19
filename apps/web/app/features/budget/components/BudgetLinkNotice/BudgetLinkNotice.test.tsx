@@ -81,4 +81,24 @@ describe("BudgetLinkNotice", () => {
       "Or use the button on one of your entries to replace it with the saved figure.",
     );
   });
+
+  it("says a saved mortgage payment comes from your saved details", () => {
+    render(
+      <BudgetLinkNotice
+        offers={[
+          {
+            link: "housing",
+            monthly: 1250,
+            kind: "mortgage",
+            paymentEstimated: false,
+            rowIds: ["m"],
+          },
+        ]}
+        onAdd={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+    expect(screen.getByRole("note").textContent).toContain(
+      "Your mortgage payment of £1,250 from your saved details is not in this budget yet.",
+    );
+  });
 });
