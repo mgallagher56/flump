@@ -56,6 +56,8 @@ export interface SyntheticPersona {
     pensionPercent?: number;
     pensionEmployerPercent?: number;
     isSalarySacrifice?: boolean;
+    hasRentalIncome?: boolean;
+    rentalIncomeMonthly?: number;
     enabledPages: string[];
   };
   accounts: SyntheticAccount[];
@@ -235,6 +237,8 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
       employmentType: "self-employed",
       annualSalary: 72000,
       monthlyTakeHome: 4300,
+      hasRentalIncome: true,
+      rentalIncomeMonthly: 650,
       enabledPages: [...ALL_PAGES, "tax"],
     },
     accounts: [

@@ -257,8 +257,6 @@ describe("UserProfileService (Deep Module)", () => {
   describe("retired profile fields (system audit slice 9 part two)", () => {
     // The columns stay until the drop PR; nothing reads or writes them through the API.
     const RETIRED = {
-      hasRentalIncome: true,
-      rentalIncomeMonthly: "650.00",
       hasBuyToLet: true,
       buyToLetCount: 2,
       buyToLetPropertyValue: "165000.00",
@@ -283,8 +281,6 @@ describe("UserProfileService (Deep Module)", () => {
       const row = { id: "p1", userId: "user-123", ...RETIRED };
       mockUserProfileRepo.findOne.mockResolvedValue(row);
       const changed = {
-        hasRentalIncome: false,
-        rentalIncomeMonthly: 1,
         hasBuyToLet: false,
         buyToLetCount: 0,
         buyToLetPropertyValue: 1,

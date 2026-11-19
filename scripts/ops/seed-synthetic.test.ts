@@ -45,24 +45,6 @@ describe("argument and persona validation (no database)", () => {
     }
   });
 
-  test("never writes the retired profile columns (system audit slice 9 part two)", async () => {
-    const statements: string[] = [];
-    const fake: SeedClient = {
-      query: async (sql: string) => {
-        statements.push(sql);
-        // One row answers every query: the staging marker, the known-tables check, new ids.
-        const row = { comment: "flump-staging", table_name: "migrations", id: "acc-1", n: 0 };
-        return { rows: [row] };
-      },
-    };
-    await seedSynthetic(fake, { P5: P5_ID }).catch(() => undefined);
-    const profileInsert = statements.find((sql) => sql.includes("INSERT INTO user_profiles"));
-    expect(profileInsert).toBeDefined();
-    for (const column of ["has_rental_income", "rental_income_monthly"]) {
-      expect(profileInsert).not.toContain(column);
-    }
-  });
-
   test("refuses when the database comment query reports anything but flump-staging", async () => {
     const calls: string[] = [];
     const fake: SeedClient = {

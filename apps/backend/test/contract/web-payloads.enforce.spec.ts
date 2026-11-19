@@ -80,8 +80,6 @@ describe("web payloads in enforce mode", () => {
 
   it("still accepts PATCH /user-profile with a retired profile field for one release (system audit slice 9 part two)", () => {
     const retired: Record<string, unknown> = {
-      hasRentalIncome: true,
-      rentalIncomeMonthly: 650,
       hasBuyToLet: true,
       buyToLetCount: 1,
       buyToLetPropertyValue: 165000,

@@ -13457,6 +13457,9 @@
                     "hasMortgage": {
                       "type": "boolean"
                     },
+                    "hasRentalIncome": {
+                      "type": "boolean"
+                    },
                     "hasResetFinancialData": {
                       "type": "boolean"
                     },
@@ -13543,6 +13546,17 @@
                     "propertyOwnershipShare": {
                       "type": "number"
                     },
+                    "rentalIncomeMonthly": {
+                      "anyOf": [
+                        {
+                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "secondIncomeMonthly": {
                       "anyOf": [
                         {
@@ -13611,6 +13625,8 @@
                     "monthlyTakeHome",
                     "hasSecondIncome",
                     "secondIncomeMonthly",
+                    "hasRentalIncome",
+                    "rentalIncomeMonthly",
                     "hasMortgage",
                     "mortgageType",
                     "propertyOwnershipShare",
@@ -14216,6 +14232,9 @@
                     "hasMortgage": {
                       "type": "boolean"
                     },
+                    "hasRentalIncome": {
+                      "type": "boolean"
+                    },
                     "hasResetFinancialData": {
                       "type": "boolean"
                     },
@@ -14302,6 +14321,17 @@
                     "propertyOwnershipShare": {
                       "type": "number"
                     },
+                    "rentalIncomeMonthly": {
+                      "anyOf": [
+                        {
+                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "secondIncomeMonthly": {
                       "anyOf": [
                         {
@@ -14370,6 +14400,8 @@
                     "monthlyTakeHome",
                     "hasSecondIncome",
                     "secondIncomeMonthly",
+                    "hasRentalIncome",
+                    "rentalIncomeMonthly",
                     "hasMortgage",
                     "mortgageType",
                     "propertyOwnershipShare",
@@ -14638,6 +14670,9 @@
                     "hasMortgage": {
                       "type": "boolean"
                     },
+                    "hasRentalIncome": {
+                      "type": "boolean"
+                    },
                     "hasResetFinancialData": {
                       "type": "boolean"
                     },
@@ -14724,6 +14759,17 @@
                     "propertyOwnershipShare": {
                       "type": "number"
                     },
+                    "rentalIncomeMonthly": {
+                      "anyOf": [
+                        {
+                          "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "secondIncomeMonthly": {
                       "anyOf": [
                         {
@@ -14792,6 +14838,8 @@
                     "monthlyTakeHome",
                     "hasSecondIncome",
                     "secondIncomeMonthly",
+                    "hasRentalIncome",
+                    "rentalIncomeMonthly",
                     "hasMortgage",
                     "mortgageType",
                     "propertyOwnershipShare",
@@ -15174,6 +15222,9 @@
                         "hasMortgage": {
                           "type": "boolean"
                         },
+                        "hasRentalIncome": {
+                          "type": "boolean"
+                        },
                         "hasResetFinancialData": {
                           "type": "boolean"
                         },
@@ -15260,6 +15311,17 @@
                         "propertyOwnershipShare": {
                           "type": "number"
                         },
+                        "rentalIncomeMonthly": {
+                          "anyOf": [
+                            {
+                              "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
                         "secondIncomeMonthly": {
                           "anyOf": [
                             {
@@ -15328,6 +15390,8 @@
                         "monthlyTakeHome",
                         "hasSecondIncome",
                         "secondIncomeMonthly",
+                        "hasRentalIncome",
+                        "rentalIncomeMonthly",
                         "hasMortgage",
                         "mortgageType",
                         "propertyOwnershipShare",
