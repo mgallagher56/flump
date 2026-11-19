@@ -59,4 +59,13 @@ describe("per-worker test database", () => {
       }),
     ).rejects.toThrow("not local");
   });
+
+  it("refuses a local database that is not a test database before creating anything", async () => {
+    await expect(
+      setUpWorkerDatabase({
+        TEST_DATABASE_URL: "postgres://u:p@localhost:5432/flump",
+        VITEST_POOL_ID: "1",
+      }),
+    ).rejects.toThrow("does not look like a test database");
+  });
 });
