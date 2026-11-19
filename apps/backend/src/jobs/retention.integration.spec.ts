@@ -173,8 +173,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       // The slice 7 before-image: one row past 90 days and one inside it.
       for (const age of ["91 days", "89 days"]) {
         await ds.query(
-          `INSERT INTO rental_share_onto_property_backfill (account_id, user_id, old_ownership, backfilled_at) VALUES ($1, $2, 'sole', ${ago(age)})`,
-          [account.id, OWNER_ID],
+          `INSERT INTO rental_share_onto_property_backfill (account_id, old_ownership, new_share_percent, backfilled_at) VALUES ($1, 'sole', 50, ${ago(age)})`,
+          [account.id],
         );
       }
       for (const [i, age] of ["24 months 1 day", "23 months"].entries()) {
