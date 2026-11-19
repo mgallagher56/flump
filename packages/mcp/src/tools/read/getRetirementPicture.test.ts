@@ -1,5 +1,5 @@
 import { type BuildContextPackInput, MCP_NOTICE } from "@flump/finance-engine";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { connectTestClient, TEST_TOKEN } from "../../testing/client.js";
 import { createFakeProvider } from "../../testing/fake-provider.js";
 import { emptyUser } from "../../testing/personas.js";
@@ -130,6 +130,13 @@ describe("get_retirement_picture: the saved plan", () => {
 });
 
 describe("get_retirement_picture: monthly series", () => {
+  // A fixed mid-month clock (only Date is faked), so the months below and the tool's own idea of
+  // "this month" cannot fall either side of a month boundary.
+  beforeEach(() =>
+    vi.useFakeTimers({ now: new Date("2026-11-15T12:00:00.000Z"), toFake: ["Date"] }),
+  );
+  afterEach(() => vi.useRealTimers());
+
   /** "YYYY-MM" year and month, `back` months before this month. */
   const monthsAgo = (back: number) => {
     const d = new Date();
