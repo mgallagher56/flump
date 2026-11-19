@@ -1,88 +1,119 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerSavedDataReload } from "~/services/conflict";
 import { profileFixture } from "~/test/fixtures/contractResponses";
+import { withRootLoader } from "~/test/rootLoaderRouter";
+
+// The real router: the profile is the root loader's, and a save reloads it (audit slice 8).
+vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const toast = vi.fn();
 vi.mock("@repo/ui", () => ({ useOptionalToast: () => ({ toast }) }));
 
-const { useUserProfile } = await import("./useUserProfile");
+const { forgetWrittenProfileVersion, useUserProfile } = await import("./useUserProfile");
 
 const V1 = "2026-11-14T09:30:00.123Z";
 const V2 = "2026-11-15T10:00:00.000Z";
 const V3 = "2026-11-15T10:05:00.000Z";
 
-const saved = (updatedAt: string, extra: Record<string, unknown> = {}) =>
-  new Response(JSON.stringify({ ...profileFixture, ...extra, updatedAt }), { status: 200 });
+const savedBody = (updatedAt: string, extra: Record<string, unknown> = {}) => ({
+  ...profileFixture,
+  ...extra,
+  updatedAt,
+});
 const refused = () => new Response(JSON.stringify({ kind: "client" }), { status: 412 });
 
-const sentIfMatch = (call: number): string | undefined =>
-  (((global.fetch as any).mock.calls[call]?.[1].headers ?? {}) as Record<string, string>)[
-    "If-Match"
-  ];
+/**
+ * A stand-in backend: the root loader reads `state.saved`; each queued answer is returned in turn,
+ * and a 200 answer becomes the saved profile the next reload reads.
+ */
+function backend(updatedAt: string) {
+  const state = { saved: savedBody(updatedAt) as Record<string, unknown> };
+  const answers: (() => Response)[] = [];
+  const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => {
+    const answer = answers.shift();
+    if (!answer) throw new Error("no answer queued");
+    const res = answer();
+    if (res.status === 200) state.saved = await res.clone().json();
+    return res;
+  });
+  const answerSaved = (v: string, extra: Record<string, unknown> = {}) =>
+    answers.push(() => new Response(JSON.stringify(savedBody(v, extra)), { status: 200 }));
+  const answerWith = (res: () => Response) => answers.push(res);
+  const sentIfMatch = (call: number): string | undefined =>
+    (fetchMock.mock.calls[call]?.[1]?.headers as Record<string, string> | undefined)?.["If-Match"];
+  return { state, fetchMock, answerSaved, answerWith, sentIfMatch };
+}
 
 /** Profile saves send the version they read and never overwrite a change made elsewhere (BE-16). */
 describe("useUserProfile conditional saves", () => {
-  const originalFetch = global.fetch;
   const reload = vi.fn();
 
   beforeEach(() => {
-    global.fetch = vi.fn();
+    vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
+    forgetWrittenProfileVersion();
     toast.mockReset();
     reload.mockReset();
     registerSavedDataReload(reload);
   });
 
   afterEach(() => {
-    global.fetch = originalFetch;
+    vi.unstubAllGlobals();
     registerSavedDataReload(null);
   });
 
   const withProfile = (updatedAt: string) => {
-    const hook = renderHook(() => useUserProfile());
-    act(() => hook.result.current.setProfile({ ...profileFixture, updatedAt } as never));
-    return hook;
+    const api = backend(updatedAt);
+    vi.stubGlobal("fetch", api.fetchMock);
+    const hook = renderHook(() => useUserProfile(), {
+      wrapper: withRootLoader(() => ({ userProfile: api.state.saved })),
+    });
+    return { ...hook, api };
   };
 
   it("sends the version it read, then the version each save returned", async () => {
-    const { result } = withProfile(V1);
-    (global.fetch as any).mockResolvedValueOnce(saved(V2)).mockResolvedValueOnce(saved(V3));
+    const { result, api } = withProfile(V1);
+    api.answerSaved(V2);
+    api.answerSaved(V3);
     await act(async () => {
       await result.current.updateProfile({ displayName: "One" });
       await result.current.updateProfile({ displayName: "Two" });
     });
-    expect(sentIfMatch(0)).toBe(`"${V1}"`);
-    expect(sentIfMatch(1)).toBe(`"${V2}"`);
-    expect(result.current.profile.updatedAt).toBe(V3);
+    expect(api.sentIfMatch(0)).toBe(`"${V1}"`);
+    expect(api.sentIfMatch(1)).toBe(`"${V2}"`);
+    // Slice 8: the hook reloads saved data rather than storing the response.
+    await waitFor(() => expect(result.current.profile.updatedAt).toBe(V3));
   });
 
   it("runs saves started together one after the other, so this tab never conflicts with itself", async () => {
-    const { result } = withProfile(V1);
-    (global.fetch as any).mockResolvedValueOnce(saved(V2)).mockResolvedValueOnce(saved(V3));
+    const { result, api } = withProfile(V1);
+    api.answerSaved(V2);
+    api.answerSaved(V3);
     await act(async () => {
       await Promise.all([
         result.current.updateProfile({ displayName: "One" }),
         result.current.updateProfile({ monthlySavingsTarget: 200 }),
       ]);
     });
-    expect(sentIfMatch(0)).toBe(`"${V1}"`);
-    expect(sentIfMatch(1)).toBe(`"${V2}"`);
+    expect(api.sentIfMatch(0)).toBe(`"${V1}"`);
+    expect(api.sentIfMatch(1)).toBe(`"${V2}"`);
   });
 
   it("a checklist tick moves the version the next save sends, and sends none itself", async () => {
-    const { result } = withProfile(V1);
-    (global.fetch as any).mockResolvedValueOnce(saved(V2)).mockResolvedValueOnce(saved(V3));
+    const { result, api } = withProfile(V1);
+    api.answerSaved(V2, { setupChecklistCompletedSteps: ["profile", "budget"] });
+    api.answerSaved(V3);
     await act(async () => {
       await result.current.markChecklistStep("budget", true);
       await result.current.updateProfile({ displayName: "One" });
     });
-    expect(sentIfMatch(0)).toBeUndefined();
-    expect(sentIfMatch(1)).toBe(`"${V2}"`);
+    expect(api.sentIfMatch(0)).toBeUndefined();
+    expect(api.sentIfMatch(1)).toBe(`"${V2}"`);
   });
 
   it("a 412 says so, reloads the saved profile and rejects, so the form keeps what was typed", async () => {
-    const { result } = withProfile(V1);
-    (global.fetch as any).mockResolvedValueOnce(refused());
+    const { result, api } = withProfile(V1);
+    api.answerWith(refused);
     let error: unknown;
     await act(async () => {
       error = await result.current.updateProfile({ displayName: "Lost update" }).catch((e) => e);
@@ -99,16 +130,16 @@ describe("useUserProfile conditional saves", () => {
     expect(result.current.profile.displayName).toBe(profileFixture.displayName);
 
     // A later save is not blocked by the failed one.
-    (global.fetch as any).mockResolvedValueOnce(saved(V3));
+    api.answerSaved(V3);
     await act(async () => {
       await result.current.updateProfile({ displayName: "Again" });
     });
-    expect(result.current.profile.updatedAt).toBe(V3);
+    await waitFor(() => expect(result.current.profile.updatedAt).toBe(V3));
   });
 
   it("any other failure raises no conflict message and reloads nothing", async () => {
-    const { result } = withProfile(V1);
-    (global.fetch as any).mockResolvedValueOnce(new Response(null, { status: 503 }));
+    const { result, api } = withProfile(V1);
+    api.answerWith(() => new Response(null, { status: 503 }));
     await act(async () => {
       await result.current.updateProfile({ displayName: "x" }).catch(() => undefined);
     });
@@ -117,12 +148,11 @@ describe("useUserProfile conditional saves", () => {
   });
 
   it("sends no If-Match before a profile has been read", async () => {
-    const { result } = renderHook(() => useUserProfile());
-    act(() => result.current.setProfile({ ...profileFixture, updatedAt: "" } as never));
-    (global.fetch as any).mockResolvedValueOnce(saved(V2));
+    const { result, api } = withProfile("");
+    api.answerSaved(V2);
     await act(async () => {
       await result.current.updateProfile({ displayName: "First" });
     });
-    expect(sentIfMatch(0)).toBeUndefined();
+    expect(api.sentIfMatch(0)).toBeUndefined();
   });
 });

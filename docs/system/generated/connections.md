@@ -367,8 +367,6 @@ flowchart LR
   s_dashboard["Dashboard"]
   s_history["History"]
   s_budget["Budget"]
-  s_savings["Savings"]
-  s_pension["Pension"]
   s_self_assessment["Self Assessment"]
   s_settings["Settings"]
   s_picture["Engine picture (headline figures)"]
@@ -395,8 +393,6 @@ flowchart LR
   f_enabled_pages_and_widgets -.-> s_dashboard
   f_setup_checklist(["Setup checklist progress"])
   s_dashboard --> f_setup_checklist
-  s_savings --> f_setup_checklist
-  s_pension --> f_setup_checklist
   s_budget --> f_setup_checklist
   f_setup_checklist -.-> s_dashboard
   f_currency_and_country(["Currency and country"])
