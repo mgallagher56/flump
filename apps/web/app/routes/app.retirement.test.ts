@@ -4,10 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const backendFetch = vi.fn();
-const loadWorkspacePicture = vi.fn();
+const loadWorkspaceSnapshot = vi.fn();
 vi.mock("~/services/backend-client.server", () => ({
   backendFetch: (...a: unknown[]) => backendFetch(...a),
-  loadWorkspacePicture: (...a: unknown[]) => loadWorkspacePicture(...a),
+  loadWorkspaceSnapshot: (...a: unknown[]) => loadWorkspaceSnapshot(...a),
 }));
 vi.mock("~/utils/auth.server", () => ({
   getAuthSession: async () => ({ user: { id: "u1" }, accessToken: "tok" }),
@@ -47,7 +47,7 @@ const notFound = () => new BackendError("not-found", "/retirement-plan", 404);
 describe("app.retirement friends-beta gate (RD9)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    loadWorkspacePicture.mockResolvedValue({
+    loadWorkspaceSnapshot.mockResolvedValue({
       userProfile: null,
       accounts: [],
       accountDetails: [],
@@ -61,19 +61,23 @@ describe("app.retirement friends-beta gate (RD9)", () => {
     expect(result.retirementPlan).toEqual(retirementPlanFixture);
   });
 
-  it("loader: uses the shared loader, so budget lines reach 'From budget lines' (PP-6)", async () => {
+  it("loader: asks for budget lines so 'From budget lines' can use them (PP-6)", async () => {
     const food = { id: "b1", name: "Food", category: "food", amount: 400, frequency: "monthly" };
-    // The shared loader always reads budget rows: a caller cannot leave them out.
-    loadWorkspacePicture.mockResolvedValue({
-      userProfile: null,
-      accounts: [],
-      accountDetails: [],
-      budgetEntries: [food],
-      picture: null,
-    });
+    // Like the real loader: budget rows come back only when asked for.
+    loadWorkspaceSnapshot.mockImplementation(
+      async (_args: unknown, options?: { includeBudget?: boolean }) => ({
+        userProfile: null,
+        accounts: [],
+        accountDetails: [],
+        budgetEntries: options?.includeBudget ? [food] : [],
+      }),
+    );
     backendFetch.mockResolvedValue({ plan: retirementPlanFixture });
     const result = (await loader(loaderArgs())) as { budgetEntries: unknown[] };
-    expect(loadWorkspacePicture).toHaveBeenCalledTimes(1);
+    expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ includeBudget: true }),
+    );
     expect(result.budgetEntries).toEqual([food]);
   });
 

@@ -247,7 +247,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     bankConnectionsEnabled,
     user,
     userProfile,
-    picture,
+    // Net worth from the shared picture (audit slice 3); only this part leaves the server.
+    netWorth: picture?.netWorth ?? null,
   });
 };
 

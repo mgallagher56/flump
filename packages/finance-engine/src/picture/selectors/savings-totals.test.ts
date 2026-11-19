@@ -7,7 +7,7 @@ describe("selectSavingsTotals", () => {
     // Saver £4,000 sole (£200 a month), joint ISA-free investment £10,000 at 50% = £5,000
     // (£300 a month stored, £150 at 50%). Current account and pension are not savings.
     // Balance 4,000 + 5,000 = 9,000. Monthly 200 + 150 = 350. Two accounts.
-    // Rate: getWeightedSavingsRate weights savings and investments by balance:
+    // Rate: both accounts have a saved rate (0 is a saved rate), weighted by balance:
     // (4,000 x 4 + 5,000 x 0) / 9,000 = 1.777..., rounded to 1.78.
     const totals = selectSavingsTotals(
       new PortfolioSnapshot([
@@ -48,6 +48,40 @@ describe("selectSavingsTotals", () => {
         new PortfolioSnapshot([{ id: "s", name: "Saver", type: "Saving", balance: 0 }]),
       ),
     ).toEqual({ balance: 0, monthlyContributions: 0, accountCount: 1, weightedRate: null });
+  });
+
+  it("has no rate (null, not 0%) when the only account has no saved rate", () => {
+    // £10,000 saver with no interest rate stored. An unknown rate is not 0%, so no average.
+    expect(
+      selectSavingsTotals(
+        new PortfolioSnapshot([{ id: "s", name: "Saver", type: "Saving", balance: 10000 }]),
+      ).weightedRate,
+    ).toBeNull();
+  });
+
+  it("weights saved rates by balance", () => {
+    // £6,000 at 4% and £4,000 at 2%: (6,000 x 4 + 4,000 x 2) / 10,000 = 32,000 / 10,000 = 3.2.
+    expect(
+      selectSavingsTotals(
+        new PortfolioSnapshot([
+          { id: "a", name: "Saver A", type: "Saving", balance: 6000, interestRate: 4 },
+          { id: "b", name: "Saver B", type: "Investment", balance: 4000, interestRate: 2 },
+        ]),
+      ).weightedRate,
+    ).toBe(3.2);
+  });
+
+  it("has no rate when one account has a saved rate and another does not", () => {
+    // £6,000 at 4% and £4,000 with no saved rate: counting the second as 0% would give 2.4,
+    // which no account pays, so the average is not set.
+    expect(
+      selectSavingsTotals(
+        new PortfolioSnapshot([
+          { id: "a", name: "Saver A", type: "Saving", balance: 6000, interestRate: 4 },
+          { id: "b", name: "Saver B", type: "Saving", balance: 4000 },
+        ]),
+      ).weightedRate,
+    ).toBeNull();
   });
 
   it("is all zero with no accounts", () => {

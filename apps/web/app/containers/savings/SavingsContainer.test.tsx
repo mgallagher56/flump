@@ -30,23 +30,35 @@ const FILLED = [
 
 const loader = vi.hoisted(() => ({ accounts: [] as unknown[] }));
 
-vi.mock("react-router", () => ({
-  useInRouterContext: () => false,
-  useLoaderData: () => ({
-    accounts: loader.accounts,
-    accountDetails: [],
-    budgetEntries: [],
-    userProfile: { setupChecklistCompletedSteps: [] },
-  }),
-  useNavigate: () => mockNavigate,
-  useLocation: () => mockLocation.current,
-  useFetcher: () => ({ submit: mockSubmit, state: "idle", data: null }),
-  Link: ({ to, children, ...rest }: any) => (
-    <a href={to} {...rest}>
-      {children}
-    </a>
-  ),
-}));
+vi.mock("react-router", async () => {
+  // The loader sends the shared picture's savings figures (audit slice 3); built here the same
+  // way from the same accounts.
+  const { buildWorkspacePicture } = await vi.importActual<
+    typeof import("~/utils/financialPicture")
+  >("~/utils/financialPicture");
+  return {
+    useInRouterContext: () => false,
+    useLoaderData: () => {
+      const picture = buildWorkspacePicture({ accounts: loader.accounts as never });
+      return {
+        accounts: loader.accounts,
+        accountDetails: [],
+        budgetEntries: [],
+        userProfile: { setupChecklistCompletedSteps: [] },
+        savingsBalance: picture.savings.balance,
+        isaAllowanceUsed: picture.isaAllowanceUsed,
+      };
+    },
+    useNavigate: () => mockNavigate,
+    useLocation: () => mockLocation.current,
+    useFetcher: () => ({ submit: mockSubmit, state: "idle", data: null }),
+    Link: ({ to, children, ...rest }: any) => (
+      <a href={to} {...rest}>
+        {children}
+      </a>
+    ),
+  };
+});
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
   const actual = await importOriginal<typeof import("~/hooks/useUserProfile")>();

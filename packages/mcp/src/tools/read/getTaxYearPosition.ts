@@ -5,6 +5,7 @@ import {
   estimateInputsFor,
   getTaxYearVerification,
   getUkTaxYearRules,
+  isSelfEmployedType,
   MCP_NOTICE,
   payeSalaryForTax,
   type TaxEstimateMissingFact,
@@ -94,7 +95,7 @@ export const getTaxYearPosition = defineFlumpTool({
     const facts = await ctx.dataProvider.getProfileFacts(ctx.token.userId);
     const { records } = await loadTaxYearRecords(ctx, taxYear);
     // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
-    const selfEmployed = facts.employmentType === "self-employed";
+    const selfEmployed = isSelfEmployedType(facts.employmentType);
     const share = facts.propertyOwnershipShare;
     // As on the Tax page, a saved 0 is kept (no share of the rent); only no saved value means 100.
     const ownershipShare =

@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import TaxContainer from "~/containers/tax/TaxContainer";
 import { taxAction } from "~/features/tax/taxActions.server";
-import { loadWorkspacePicture } from "~/services/backend-client.server";
+import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { revalidateOnConflict } from "~/services/conflict";
 
 /** Shared with each income source's page (`app.self-assessment_.$source`). */
@@ -15,8 +15,10 @@ export const meta: MetaFunction = () => [{ title: "Self Assessment | Flump" }];
 export const shouldRevalidate = revalidateOnConflict;
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { taxRecords, userProfile, accounts, user, picture } = await loadWorkspacePicture(args);
-  return data({ records: taxRecords, userProfile, accounts, user, picture });
+  const { taxRecords, userProfile, accounts, user } = await loadWorkspaceSnapshot(args, {
+    includeTax: true,
+  });
+  return data({ records: taxRecords, userProfile, accounts, user });
 };
 
 const TaxRoute = (): ReactElement => {

@@ -425,21 +425,36 @@ export interface WorkspacePicture extends WorkspaceSnapshot {
  * details come from the same response and the accounts are fetched once.
  */
 function backendPictureSource(accessToken: string, signal: AbortSignal): PictureRowSource {
-  let accounts: Promise<any[]> | undefined;
+  let accounts: Promise<AccountListResponse> | undefined;
   const loadAccounts = () => {
     accounts ??= backendFetchAll("/accounts", { accessToken, signal, schema: AccountListResponse });
     return accounts;
   };
-  return {
+  const source: PictureRowSource = {
     profile: () =>
       backendFetch("/user-profile", { accessToken, signal, schema: UserProfileResponse }),
     accounts: loadAccounts,
     accountDetails: async () => (await loadAccounts()).flatMap((a) => a.details || []),
     budgetEntries: () =>
       backendFetchAll("/budget-entries", { accessToken, signal, schema: BudgetEntryListResponse }),
-    taxRecords: () =>
-      backendFetchAll("/tax-records", { accessToken, signal, schema: TaxRecordListResponse }),
-  } as PictureRowSource;
+    // The contract infers its nullable fields as optional; the engine row holds null for each.
+    taxRecords: async () =>
+      (
+        await backendFetchAll("/tax-records", {
+          accessToken,
+          signal,
+          schema: TaxRecordListResponse,
+        })
+      ).map((record) => ({
+        ...record,
+        endDate: record.endDate ?? null,
+        notes: record.notes ?? null,
+        receiptFilename: record.receiptFilename ?? null,
+        receiptMimeType: record.receiptMimeType ?? null,
+      })),
+  };
+  // No cast: if a contract type stops fitting the engine's row types, check-types fails here.
+  return source;
 }
 
 /**

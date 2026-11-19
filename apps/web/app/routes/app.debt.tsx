@@ -114,8 +114,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     accounts,
     accountDetails,
     userProfile,
-    picture,
-    // The shared loader's picture: nothing is rebuilt. Null only with nobody signed in (no rows).
+    // From the shared loader's picture: nothing is rebuilt, and the picture itself stays on the
+    // server. Null only with nobody signed in (no rows).
     debtInputs: picture ? debtInputsFromPicture(picture) : buildDebtInputs([], [], []),
     user,
   });

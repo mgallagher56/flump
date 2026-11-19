@@ -341,8 +341,9 @@ describe.each(NAMES)("persona %s: AI read tools match the loaded picture", (name
       isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value.months : null,
     );
     expect(pack.portfolio.netWorth).toBe(picture.netWorth.netWorth);
+    // All consumer debt, overdrawn current accounts included, as get_debt_overview gives it.
     expect(pack.debtSummary.totalStartingDebtGbp).toBe(
-      Math.round((picture.debtSummary?.totalDebt ?? 0) * 100) / 100,
+      Math.round(picture.debt.consumerDebt * 100) / 100,
     );
     expect(pack.debtSummary.debtFreeDate).toBe(picture.debtSummary?.debtFreeDate ?? null);
     expect(pack.isaAllowance.usedGbp).toBe(picture.isaAllowanceUsed);
@@ -377,6 +378,32 @@ describe.each(NAMES)("persona %s: AI read tools match the loaded picture", (name
       const fields = (e.missing ?? []).map((m) => m.field);
       for (const key of due.missing) expect(fields).toContain(key);
     }
+  });
+});
+
+describe("overdrawn current account only: the pack and get_debt_overview agree", () => {
+  // One current account at -£500 and no debt accounts. The overdrawn £500 is consumer debt
+  // (portfolio.totalConsumerDebt), so both surfaces give 500, never 0.
+  const input = {
+    baseline: BASELINE,
+    profileFacts: PERSONAS[NAMES[0] as PersonaName].fixture.profile,
+    netWorthBasis: { countProperty: true, countStudentLoan: false },
+    accounts: [{ id: "cur", name: "Current", type: "Current", balance: -500 }],
+    accountDetails: [],
+    budgetEntries: [],
+    taxRecords: [],
+  };
+  let h: TestHarness;
+  beforeAll(async () => {
+    h = await connectTestClient(input);
+  });
+  afterAll(async () => h.close());
+
+  it("both give £500", async () => {
+    const pack = buildFlumpAiContextPack(input, { asOf: new Date() });
+    expect(pack.debtSummary.totalStartingDebtGbp).toBe(500);
+    const d = ((await h.callJson("get_debt_overview")) as Envelope<DebtResult>).result;
+    expect(d.totalConsumerDebtGbp).toBe(500);
   });
 });
 

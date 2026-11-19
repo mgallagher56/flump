@@ -1,4 +1,4 @@
-import type { PortfolioSnapshot } from "../../portfolio.js";
+import type { PortfolioSnapshot, ResolvedAccount } from "../../portfolio.js";
 
 /** Saving and Investment accounts in total. Pounds, plain numbers (not a Figure). */
 export interface SavingsTotals {
@@ -8,7 +8,10 @@ export interface SavingsTotals {
   monthlyContributions: number;
   /** How many Saving and Investment accounts there are. */
   accountCount: number;
-  /** Balance-weighted interest rate, or null when the balance is not above 0 (never a default). */
+  /**
+   * Balance-weighted interest rate, or null (never a default) when the balance is not above 0 or
+   * any counted account has no saved rate: an unknown rate is not 0%.
+   */
   weightedRate: number | null;
 }
 
@@ -32,7 +35,18 @@ export function selectSavingsTotals(snapshot: PortfolioSnapshot): SavingsTotals 
     balance,
     monthlyContributions,
     accountCount: accounts.length,
-    // The Dashboard's rule: no balance means no rate, never a substituted default.
-    weightedRate: balance > 0 ? snapshot.getWeightedSavingsRate(0) : null,
+    weightedRate: weightedRateOf(accounts, balance),
   };
+}
+
+/**
+ * Weights each account's saved rate by its balance, over the same accounts the balance counts.
+ * No balance, or any account with no saved rate, means no rate: never a substituted default.
+ * Rounded to 2 decimal places, as PortfolioSnapshot.getWeightedSavingsRate rounds.
+ */
+function weightedRateOf(accounts: readonly ResolvedAccount[], balance: number): number | null {
+  if (balance <= 0) return null;
+  if (accounts.some((a) => !a.interestRateKnown)) return null;
+  const weightedSum = accounts.reduce((sum, a) => sum + a.nominalBalance * a.interestRate, 0);
+  return Math.round((weightedSum / balance) * 100) / 100;
 }

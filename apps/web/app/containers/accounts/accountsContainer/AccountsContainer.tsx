@@ -28,7 +28,7 @@ const AccountsContainer: FC = () => {
     accounts = [],
     accountDetails = [],
     userProfile = null,
-    picture,
+    netWorth = null,
   } = useLoaderData<typeof loader>();
   // Before hydration the buttons are plain links (#701): "?add=1" and "?checkIn=1" open the add
   // dialog or the check-in on arrival, then the parameter is removed so a reload does not reopen.
@@ -61,8 +61,7 @@ const AccountsContainer: FC = () => {
   // Net worth and its parts come from the one financial picture the shared loader built (E23,
   // audit slice 3), so the seeded "Home (your estimate)" Property account (D3) counts here exactly
   // as on the Dashboard, under the user's net worth choices. Nothing is rebuilt on the page. The
-  // loader requires sign-in, so the picture is there whenever accounts are.
-  const netWorth = picture?.netWorth ?? null;
+  // loader requires sign-in, so net worth is there whenever accounts are.
 
   const rows = useMemo(
     () => buildAccountRows(accounts as never[], accountDetails as never[]),

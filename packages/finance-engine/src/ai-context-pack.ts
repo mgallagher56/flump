@@ -331,6 +331,7 @@ export interface FlumpAiContextPack {
   /** From picture.debtSummary: consumer debt on minimum payments only (no assumed extra). */
   debtSummary: {
     consumerDebts: NormalizedDebtItem[];
+    /** All consumer debt, overdrawn current accounts included (picture.debt.consumerDebt). */
     totalStartingDebtGbp: number;
     /** Minimum payments a month, or null with no consumer debt. */
     monthlyMinimumsGbp: number | null;
@@ -552,7 +553,7 @@ export function buildFlumpAiContextPack(
   }
 
   const observations = buildObservations({
-    consumerDebtGbp: debt?.totalDebt ?? 0,
+    consumerDebtGbp: picture.debt.consumerDebt,
     monthsOfCover: pictureCover?.months ?? null,
     leftOverMonthly: pictureBudget?.hasIncome ? pictureBudget.surplus : null,
   });
@@ -579,8 +580,9 @@ export function buildFlumpAiContextPack(
   };
 
   // 7. UK Tax Calculation & Self-Assessment Ledger
-  // The tax year that applies today (AI-3, SA-8), never a stored or default baseline year.
-  const currentTaxYear = resolveUkTaxYear();
+  // The tax year that applies on asOf (AI-3, SA-8), as the ISA allowance reads it, never a
+  // stored or default baseline year.
+  const currentTaxYear = resolveUkTaxYear(undefined, asOf);
   // The facts the tax figures depend on: the saved profile when the caller has it, else the
   // saved baseline (a salary of 0 there is "not saved").
   const facts = input.profileFacts;
@@ -661,7 +663,9 @@ export function buildFlumpAiContextPack(
     },
     debtSummary: {
       consumerDebts,
-      totalStartingDebtGbp: round2(debt?.totalDebt ?? 0),
+      // All consumer debt, overdrawn current accounts included, as portfolio.totalConsumerDebt
+      // and get_debt_overview give it. The schedule fields below come from debt accounts only.
+      totalStartingDebtGbp: round2(picture.debt.consumerDebt),
       monthlyMinimumsGbp: debt === null ? null : round2(debt.monthlyMinimumTotal),
       monthlyMinimumsEstimated: debt?.monthlyMinimumEstimated ?? false,
       debtFreeDate: debt?.debtFreeDate ?? null,
