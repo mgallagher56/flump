@@ -273,8 +273,12 @@ const BudgetContainer: FC = () => {
       linkKind: offer.link,
     });
 
+  // A linked row stores £0 and reads its figure from a saved fact, so it is a budget line whatever
+  // its stored amount. With no saved rows at all the budget is empty, saved facts or not, so a new
+  // person still gets the setup wizard.
   const isBudgetEmpty = useMemo(() => {
     if (entries.length === 0) return true;
+    if (entries.some((e) => e.linkKind)) return false;
     const total = entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
     return total === 0;
   }, [entries]);
@@ -340,12 +344,14 @@ const BudgetContainer: FC = () => {
   // engine added on its own counts only while the budget has no row of that kind, so adding one
   // ("Child benefit") would drop the figure they were looking at. Before that first row of the
   // kind is added, the line is saved as a stored row linked to the saved figure (amount £0, the
-  // link checks apply), so it stays in the budget and the link rule holds from then on.
+  // link checks apply), so it stays in the budget and the link rule holds from then on. A figure
+  // typed over that line replaces it, so it is saved alone and the line is not kept.
   const addOwnEntry = async (
     entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">,
+    options?: { replacesLinkedLine?: boolean },
   ) => {
     const current = savedEntriesRef.current;
-    if (!entry.linkKind && current.length > 0) {
+    if (!entry.linkKind && !options?.replacesLinkedLine && current.length > 0) {
       const isHousing = !entry.isIncome && entry.category === BUDGET_HOUSING_CATEGORY;
       if (
         entry.isIncome &&

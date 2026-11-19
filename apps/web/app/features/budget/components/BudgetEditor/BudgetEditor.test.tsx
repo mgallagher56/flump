@@ -300,6 +300,8 @@ describe("BudgetEditor", () => {
       await waitFor(() =>
         expect(onAdd).toHaveBeenCalledWith(
           expect.objectContaining({ name: "Take-home pay", amount: 2500, isIncome: true }),
+          // It stands in for the linked line, so the page must not also keep that line.
+          { replacesLinkedLine: true },
         ),
       );
     });
