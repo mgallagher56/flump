@@ -390,11 +390,10 @@ export class ImportsService {
           });
         } catch (err) {
           // Name the failing row (AI-9): the whole commit still rolls back, but the 400 says which
-          // staged account broke which rule. Only this user's own staged name and ref are shown.
+          // staged row broke which rule. Only the row's ref is shown: import responses carry no
+          // account names or values (api-contract imports.ts).
           if (err instanceof BadRequestException) {
-            throw new BadRequestException(
-              `Imported account "${staged.name}" (row ${staged.ref}): ${err.message}`,
-            );
+            throw new BadRequestException(`Imported account in row ${staged.ref}: ${err.message}`);
           }
           throw err;
         }
