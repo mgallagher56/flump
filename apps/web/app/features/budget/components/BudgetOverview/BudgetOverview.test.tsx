@@ -135,6 +135,8 @@ describe("<BudgetOverview />", () => {
       `£${Math.round(picture.safeToSpend.value.monthly).toLocaleString("en-GB")}`,
     );
     expect(hero?.textContent).not.toMatch(/a day/);
+    // The second figure is named before it is given, so it never reads as "left over" (P23).
+    expect(hero?.textContent).toMatch(/Safe to spend before flexible spending: £[\d,]+ a month,/);
   });
 
   it("asks for a salary when take-home is unknown", () => {

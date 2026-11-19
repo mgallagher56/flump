@@ -52,7 +52,7 @@ export const WithTakeHome: Story = {
   play: async ({ canvasElement }) => {
     await expect(
       within(canvasElement).getAllByText(
-        /a month after essential spending, debt payments and savings, before flexible spending/,
+        /a month, after essential spending, debt payments and savings/,
       )[0],
     ).toBeDefined();
   },

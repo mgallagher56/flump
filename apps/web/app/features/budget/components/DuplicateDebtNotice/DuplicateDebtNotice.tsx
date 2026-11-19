@@ -56,7 +56,7 @@ export const DuplicateDebtNotice: FC<DuplicateDebtNoticeProps> = ({
         <Button pending={moving} size="sm" variant="outline" onClick={handleMove}>
           Move to debts
         </Button>
-        <Button disabled={moving} size="sm" variant="ghost" onClick={onKeep}>
+        <Button disabled={moving} size="sm" variant="outline" onClick={onKeep}>
           Keep it here
         </Button>
       </div>

@@ -140,15 +140,18 @@ describe("BudgetContainer", () => {
     ) as any;
   });
 
-  it("with no budget: one Set up your budget button, one prompt, no hero and no notice", () => {
+  it("with no budget: one Add common budget items button, one prompt, no hero and no notice", () => {
     const { container } = render(<BudgetContainer />);
     expect(screen.getByRole("heading", { level: 1, name: "Your budget" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Set up your budget" })).toBeDefined();
+    // One call to action, named as on the filled page; no header action (P52).
+    const buttons = screen.getAllByRole("button", { name: /budget|common/i });
+    expect(buttons.map((b) => b.textContent)).toEqual(["Add common budget items"]);
+    expect(screen.queryByTestId("setup-wizard-btn")).toBeNull();
     expect(screen.getByText("No budget yet")).toBeDefined();
     expect(container.querySelector('[data-tone="hero"]')).toBeNull();
     expect(screen.queryByTestId("budget-tab-subscriptions")).toBeNull();
-    // Debt help is the same line for every user.
-    expect(screen.getByRole("link", { name: /MoneyHelper/ })).toBeDefined();
+    // The empty state stands alone: the debt-help line is left out of the empty page (P55).
+    expect(screen.queryByRole("link", { name: /MoneyHelper/ })).toBeNull();
     expectPageRules(container, { maxFigures: 4, maxNotSet: 1, projectionNotices: 0 });
   });
 
@@ -212,7 +215,7 @@ describe("BudgetContainer", () => {
     expect(h1.compareDocumentPosition(hero) & 4).toBeTruthy();
   });
 
-  describe("Add common entries", () => {
+  describe("Add common budget items", () => {
     const SAVED_ID = "11111111-1111-4111-8111-111111111111";
     const SAVED_ID_2 = "22222222-2222-4222-8222-222222222222";
     const EXAMPLES = [
@@ -261,7 +264,7 @@ describe("BudgetContainer", () => {
     it("opens the editor with the common entries, each badged, and sends no request", () => {
       render(<BudgetContainer />);
       const button = screen.getByTestId("add-suggested-defaults-btn");
-      expect(button.textContent).toBe("Add common entries");
+      expect(button.textContent).toBe("Add common budget items");
       fireEvent.click(button);
 
       const editor = screen.getByTestId("budget-editor");
@@ -407,7 +410,7 @@ describe("BudgetContainer", () => {
       fireEvent.click(screen.getByRole("button", { name: "Remove common entries" }));
       expect(screen.queryByTestId("budget-editor")).toBeNull();
       expect(screen.getByText("No budget yet")).toBeDefined();
-      expect(screen.getByRole("button", { name: "Set up your budget" })).toBeDefined();
+      expect(screen.queryByTestId("setup-wizard-btn")).toBeNull();
       await waitFor(() => expect(document.activeElement?.id).toBe("add-suggested-defaults-btn"));
       expect(apiFetch).not.toHaveBeenCalled();
       expect(global.fetch).not.toHaveBeenCalled();
@@ -455,12 +458,12 @@ describe("BudgetContainer", () => {
 
   it("with no budget, the empty state's only controls work: no hero link and no strip prompt", () => {
     render(<BudgetContainer />);
-    // Neither the hero nor the strip shows before there is a budget, so the header button and
-    // the empty state's button are the page's only ways in.
+    // Neither the hero nor the strip shows before there is a budget, so the empty state's button
+    // is the page's one way in (P52).
     expect(screen.queryByTestId("hero-figure")).toBeNull();
     expect(screen.queryByText(/Add your income and spending/)).toBeNull();
-    expect(screen.getByRole("button", { name: "Set up your budget" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Add common entries" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Set up your budget" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Add common budget items" })).toBeDefined();
   });
 
   it("opens Add Category modal and allows adding a new category", async () => {
@@ -605,7 +608,8 @@ describe("BudgetContainer", () => {
       unmount();
       mockLoaderData = baseLoaderData;
       render(<BudgetContainer />);
-      expect(screen.queryByRole("button", { name: "Add common budget items" })).toBeNull();
+      // The empty page has no header action; its one button is the empty state's (P52).
+      expect(screen.queryByTestId("add-common-items-btn")).toBeNull();
     });
 
     it("?setup=common opens the add wizard on load for a saved budget", () => {
@@ -662,12 +666,14 @@ describe("BudgetContainer", () => {
     });
   });
 
-  it("with no budget, Set up your budget still opens the wizard", () => {
+  it("Edit budget moves focus to the editor heading and scrolls it into view (P33)", async () => {
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByRole("button", { name: "Set up your budget" }));
-    expect(screen.queryByTestId("budget-editor")).toBeNull();
-    expect(screen.queryByTestId("setup-wizard-btn")).toBeNull();
-    expect(screen.getByText(/Step 1 of/)).toBeDefined();
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    await waitFor(() => expect(document.activeElement?.id).toBe("budget-editor-heading"));
+    expect(focus).toHaveBeenCalledWith({ preventScroll: false });
+    focus.mockRestore();
   });
 
   it("keeps breathing room inputs for the visit only: not saved, not requested, not in the hero", async () => {

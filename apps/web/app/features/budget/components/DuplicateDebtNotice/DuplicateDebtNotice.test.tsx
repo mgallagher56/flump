@@ -25,6 +25,13 @@ describe("DuplicateDebtNotice", () => {
     expect(note.textContent).toContain("Move it to debts so it is counted once?");
   });
 
+  it("gives its two choices equal weight (P69)", () => {
+    renderNotice();
+    const move = screen.getByRole("button", { name: "Move to debts" });
+    const keep = screen.getByRole("button", { name: "Keep it here" });
+    expect(keep.className).toBe(move.className);
+  });
+
   it("Move to debts calls onMove", async () => {
     const { onMove } = renderNotice();
     fireEvent.click(screen.getByRole("button", { name: "Move to debts" }));

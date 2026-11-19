@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { Popover } from "./Popover";
+import { Popover, STICKY_HEADER_ATTRIBUTE, stickyHeaderInset } from "./Popover";
 
 beforeAll(() => {
   globalThis.ResizeObserver ??= class {
@@ -96,5 +96,44 @@ describe("Popover", () => {
     );
     expect(await screen.findByRole("dialog", { name: "Quick help" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
+  });
+
+  describe("sticky header inset (P32)", () => {
+    const addHeader = (rect: Partial<DOMRect>) => {
+      const header = document.createElement("header");
+      header.setAttribute(STICKY_HEADER_ATTRIBUTE, "");
+      header.getBoundingClientRect = () => ({ top: 0, bottom: 0, height: 0, ...rect }) as DOMRect;
+      document.body.append(header);
+      return header;
+    };
+
+    it("is 0 when the page has no sticky header", () => {
+      expect(stickyHeaderInset()).toBe(0);
+    });
+
+    it("is the bottom edge of a sticky header pinned to the top", () => {
+      // A 61px bar under a 47px notch inset reaches 108px down the viewport.
+      const header = addHeader({ top: 0, bottom: 108, height: 108 });
+      expect(stickyHeaderInset()).toBe(108);
+      header.remove();
+    });
+
+    it("ignores a hidden header", () => {
+      const header = addHeader({ top: 0, bottom: 0, height: 0 });
+      expect(stickyHeaderInset()).toBe(0);
+      header.remove();
+    });
+
+    it("still opens the panel when a sticky header is on the page", async () => {
+      const header = addHeader({ top: 0, bottom: 61, height: 61 });
+      render(
+        <Popover title="Breathing room" trigger={<button type="button">About</button>} side="top">
+          Money set aside.
+        </Popover>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "About" }));
+      expect(await screen.findByRole("dialog", { name: "Breathing room" })).toBeTruthy();
+      header.remove();
+    });
   });
 });

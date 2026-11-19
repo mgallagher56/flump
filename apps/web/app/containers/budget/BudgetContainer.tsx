@@ -24,7 +24,7 @@ import {
   TaxRatesStatusBanner,
   useOptionalToast,
 } from "@repo/ui";
-import { ListChecks, ListPlus } from "lucide-react";
+import { ListPlus } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useSearchParams } from "react-router";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
@@ -140,7 +140,7 @@ const BudgetContainer: FC = () => {
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  // Common entries from "Add common entries": on the page only, saved only by "Save entries".
+  // Common entries from "Add common budget items": on the page only, saved only by "Save entries".
   const [drafts, setDrafts] = useState<DraftBudgetEntry[]>([]);
   // The latest drafts, so a save reads what was typed last, not the state one render ago.
   const draftsRef = useRef<DraftBudgetEntry[]>(drafts);
@@ -499,6 +499,17 @@ const BudgetContainer: FC = () => {
     setDrafts((prev) => prev.filter((d) => d.id !== id));
   };
 
+  /**
+   * "Edit budget" opens the editor in place, below the hero, so on a phone it starts below the
+   * fold. Focus moves to its heading and scrolls it into view (phone audit P33, UX A3).
+   */
+  const openEditor = () => {
+    setView("editing");
+    requestAnimationFrame(() =>
+      document.getElementById("budget-editor-heading")?.focus({ preventScroll: false }),
+    );
+  };
+
   const focusEmptyStateButton = () =>
     requestAnimationFrame(() => document.getElementById("add-suggested-defaults-btn")?.focus());
 
@@ -645,31 +656,20 @@ const BudgetContainer: FC = () => {
             >
               Finish editing
             </Button>
-          ) : view === "budget" ? (
-            // An empty budget opens first-time setup. A saved budget is edited from "Where your
-            // money goes" (owner item 30), the page's one edit action; the wizard adds the common
-            // items it does not have yet (never touching saved entries).
-            isBudgetEmpty ? (
-              <Button
-                data-testid="setup-wizard-btn"
-                id="setup-wizard-btn"
-                variant="primary"
-                onClick={openWizard}
-              >
-                <Icon icon={ListChecks} size="sm" />
-                Set up your budget
-              </Button>
-            ) : hasMissingCommonItems ? (
-              <Button
-                data-testid="add-common-items-btn"
-                id="add-common-items-btn"
-                variant="outline"
-                onClick={openWizard}
-              >
-                <Icon icon={ListPlus} size="sm" />
-                Add common budget items
-              </Button>
-            ) : undefined
+          ) : view === "budget" && !isBudgetEmpty && hasMissingCommonItems ? (
+            // A saved budget is edited from "Where your money goes" (owner item 30), the page's
+            // one edit action; the wizard adds the common items it does not have yet (never
+            // touching saved entries). An empty page has no header action: its empty state holds
+            // the one way in (phone audit P52).
+            <Button
+              data-testid="add-common-items-btn"
+              id="add-common-items-btn"
+              variant="outline"
+              onClick={openWizard}
+            >
+              <Icon icon={ListPlus} size="sm" />
+              Add common budget items
+            </Button>
           ) : undefined
         }
         // The page icon, empty or filled in; the empty state has none, so one is in view.
@@ -735,10 +735,10 @@ const BudgetContainer: FC = () => {
                 <Button
                   data-testid="add-suggested-defaults-btn"
                   id="add-suggested-defaults-btn"
-                  variant="outline"
+                  variant="primary"
                   onClick={handleAddExampleRows}
                 >
-                  Add common entries
+                  Add common budget items
                 </Button>
               }
               description="Add your income and what you spend each month to see what is left over and how long your money lasts."
@@ -769,7 +769,7 @@ const BudgetContainer: FC = () => {
               noticeFor={renderDuplicateNotices}
               openCategory={openCategory}
               renderEntries={renderEntries}
-              onEditBudget={() => setView("editing")}
+              onEditBudget={openEditor}
               onToggleCategory={(cat) => setOpenCategory((prev) => (prev === cat ? null : cat))}
             />
           )}
@@ -804,8 +804,9 @@ const BudgetContainer: FC = () => {
             />
           )}
 
-          {/* The same line for every user, never triggered by their figures (ruling 1, R3, R4). */}
-          <DebtHelpLink />
+          {/* The same line for every user, never triggered by their figures (ruling 1, R3, R4). Left
+              out of the empty page, so the empty state stands alone (phone audit P52, P55). */}
+          {!(view === "budget" && isBudgetEmpty) && <DebtHelpLink />}
         </>
       )}
 
