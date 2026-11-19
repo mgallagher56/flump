@@ -1,7 +1,8 @@
 import { css } from "../../../styled-system/css";
 
 /** Same query as PageHeader's SHORT_VIEWPORT (kept literal so Panda extracts it statically). */
-const SHORT_VIEWPORT = "@media screen and (max-height: 479.98px)";
+const SHORT_VIEWPORT =
+  "@media screen and (max-height: 479.98px) and (orientation: landscape) and (pointer: coarse)";
 
 /** The canvas and `main` landmark a template renders on; `PageBody` inside it sets the layout. */
 export const page = css({

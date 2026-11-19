@@ -12,7 +12,8 @@ const LARGE_TEXT_PHONE = "@media screen and (max-width: 19.99em)";
  * header there push the headline figure below the first view, so the header goes compact: no page
  * icon or description, a smaller h1 and less space below (P78). Also used by PageBody.
  */
-export const SHORT_VIEWPORT = "@media screen and (max-height: 479.98px)";
+export const SHORT_VIEWPORT =
+  "@media screen and (max-height: 479.98px) and (orientation: landscape) and (pointer: coarse)";
 
 /**
  * Below md: a wrapping flex row. The h1 takes the first line and the actions sit beside it when

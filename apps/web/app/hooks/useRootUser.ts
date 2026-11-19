@@ -1,4 +1,4 @@
-import { useRouteLoaderData } from "react-router";
+import { isRouteErrorResponse, useRouteLoaderData } from "react-router";
 
 /**
  * Browser only: the user the root loader last gave. Never set on the server, where module state
@@ -21,6 +21,16 @@ export function useRootUser(): unknown {
   if (typeof document === "undefined") return rootData?.user ?? null;
   if (rootData) lastBrowserUser = rootData.user ?? null;
   return rootData ? (rootData.user ?? null) : lastBrowserUser;
+}
+
+/**
+ * An error page for a lost or refused session (401 or 403) must not keep the remembered user's
+ * chrome, so the boundaries call this before `useRootUser` when the error says so.
+ */
+export function forgetRootUserOnAuthError(error: unknown): void {
+  if (isRouteErrorResponse(error) && (error.status === 401 || error.status === 403)) {
+    lastBrowserUser = null;
+  }
 }
 
 /** Test seam: forget the remembered user between tests. */
