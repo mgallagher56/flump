@@ -2,8 +2,9 @@ import { expect, test } from "@playwright/test";
 import { openAddAccount, saveAddAccount } from "../../support/add-account-dialog";
 import { AUTH_STATE } from "../../support/auth";
 import { backendCall } from "../../support/backend";
-import { accountsPageRow, listAccounts, pageApi } from "../../support/links-api";
+import { accountsPageRow, accountsRowOnPage, listAccounts, pageApi } from "../../support/links-api";
 import { applyPersona } from "../../support/personas";
+import { waitOutRateWindow } from "../../support/rate-window";
 
 test.use({ storageState: AUTH_STATE });
 
@@ -17,6 +18,8 @@ test.use({ storageState: AUTH_STATE });
 test("L10 L08 L19 L20 L18 mortgages added on Accounts are what the Mortgage page reads", async ({
   page,
 }) => {
+  // Many calls follow: start in a fresh minute of the request limits (see waitOutRateWindow).
+  await waitOutRateWindow();
   await page.goto("/app");
   await applyPersona(page, "renter");
 
@@ -102,11 +105,11 @@ test("L10 L08 L19 L20 L18 mortgages added on Accounts are what the Mortgage page
   expect(pairMortgage()?.linkedAccountId).toBe(pair.property.id);
   expect(pairProperty()).toMatchObject({ ownership: "joint", sharePercent: 40 });
   await expect(await accountsPageRow(page, "L18 home")).toContainText("Joint, 40%");
-  await expect(await accountsPageRow(page, "L18 mortgage")).toContainText("Joint, 40%");
+  await expect(await accountsRowOnPage(page, "L18 mortgage")).toContainText("Joint, 40%");
   await pageApi(page, `/accounts/${pair.mortgage.id}`, "PATCH", { sharePercent: 50 });
   accounts = await listAccounts(page);
   expect(pairMortgage()?.sharePercent).toBe(50);
   expect(pairProperty()?.sharePercent).toBe(40);
   await expect(await accountsPageRow(page, "L18 mortgage")).toContainText("Joint, 50%");
-  await expect(await accountsPageRow(page, "L18 home")).toContainText("Joint, 40%");
+  await expect(await accountsRowOnPage(page, "L18 home")).toContainText("Joint, 40%");
 });

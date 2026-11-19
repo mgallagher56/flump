@@ -49,6 +49,11 @@ export const monthLabel = (month: string): string => {
  */
 export async function accountsPageRow(page: Page, name: string): Promise<Locator> {
   await page.goto("/app/accounts");
+  return accountsRowOnPage(page, name);
+}
+
+/** The row on the Accounts page already open (no reload), with every group expanded. */
+export async function accountsRowOnPage(page: Page, name: string): Promise<Locator> {
   const showAll = page.getByRole("button", { name: /^Show all \d/ });
   while ((await showAll.count()) > 0) await showAll.first().click();
   return page.getByRole("listitem").filter({ has: page.getByRole("link", { name, exact: true }) });

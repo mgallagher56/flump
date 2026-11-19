@@ -114,6 +114,23 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
     await expect(row).toContainText(ACCOUNT.shown);
   });
 
+  // L05 (CH-1, decision 8 A, system audit slice 4): the new account records its balance for the
+  // month it was added, so History has its first point at once, with no check-in. Before slice 4
+  // the account had no row and History said "No monthly balances yet". This user starts with no
+  // accounts, so the point is this account's alone. (Here, not in the links project, because this
+  // journey already starts from an empty user and costs no reset.)
+  await test.step("L05 the new account is this month's first History point", async () => {
+    await open(page, "/app/accounts/history");
+    const history = page.getByTestId("snapshot-history");
+    const month = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      month: "long",
+      year: "numeric",
+    }).format(new Date());
+    await expect(history).toContainText(`Net worth recorded for ${month}: ${ACCOUNT.shown}.`);
+    await expect(history).not.toContainText("No monthly balances yet");
+  });
+
   await test.step("add a first budget entry", async () => {
     await open(page, "/app/budget");
     // Setup saved the take-home estimate as the budget's income, shown once as money in (R2-6).

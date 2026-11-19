@@ -40,9 +40,9 @@ import {
   PENSION_DEFAULTS_CLEAR_BEFORE,
 } from "./ClearDefaultPensionRates1795480100000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
+import { MoveBuyToLetProfileIntoAccounts1795470200000 } from "./MoveBuyToLetProfileIntoAccounts1795470200000";
 import { PensionAnswersNullable1795480000000 } from "./PensionAnswersNullable1795480000000";
 import { RemovePayeSalaryRecords1795480300000 } from "./RemovePayeSalaryRecords1795480300000";
-import { MoveBuyToLetProfileIntoAccounts1795470200000 } from "./MoveBuyToLetProfileIntoAccounts1795470200000";
 import {
   RemoveSeededExampleData1794355400000,
   SEEDED_ACCOUNTS,

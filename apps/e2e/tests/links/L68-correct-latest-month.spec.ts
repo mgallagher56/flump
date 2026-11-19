@@ -3,6 +3,7 @@ import { AUTH_STATE } from "../../support/auth";
 import { backendCall } from "../../support/backend";
 import { accountsPageRow, listAccounts, monthLabel, pageApi } from "../../support/links-api";
 import { applyPersona, monthKey, seedNow } from "../../support/personas";
+import { waitOutRateWindow } from "../../support/rate-window";
 
 test.use({ storageState: AUTH_STATE });
 
@@ -10,6 +11,8 @@ test.use({ storageState: AUTH_STATE });
 // month's figure gives one) takes a correction of that month as today's balance. Before slice 4
 // only a current-month write moved the balance, so it stayed at the old figure.
 test("L68 correcting the latest recorded month also corrects today's balance", async ({ page }) => {
+  // Many calls follow: start in a fresh minute of the request limits (see waitOutRateWindow).
+  await waitOutRateWindow();
   await page.goto("/app");
   // A persona with this month and the months before it recorded, so History compares last month
   // with this month. The homeowner, as the spec before this one uses, so no reset is spent.
