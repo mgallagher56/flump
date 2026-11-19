@@ -69,8 +69,8 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
     });
     expect(created.status).toBe(201);
     accountId = created.body.id;
-    // GET and POST /transactions are gone (system audit slice 9); bank sync and imports still
-    // store rows, so one is seeded directly to check account deletes and lists leave it alone.
+    // GET and POST /transactions are gone (system audit slice 9) and nothing writes new rows, but
+    // rows written earlier stay, so one is seeded directly to check account deletes and lists.
     await transactions().save(
       transactions().create({
         accountId,

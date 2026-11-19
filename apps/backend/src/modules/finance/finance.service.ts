@@ -15,10 +15,7 @@ import { recordAuditEvent } from "../../audit/audit-events";
 import { grantConsentOnce, withdrawConsent } from "../../audit/consents";
 import { safeErrorSummary } from "../../common/log-safe";
 import { type KeysetOrder, keysetPage, type PageRequest } from "../../contract/pagination";
-import { Account } from "../../entities/account.entity";
-import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
-import { UserProfile } from "../../entities/user-profile.entity";
 import { toPublicConnection } from "../banking/bank-connection.public";
 import { revokeConnectionConsent } from "../banking/bank-connection-consent";
 import { issueOAuthState, withPkceChallenge } from "../banking/bank-connection-oauth";
@@ -51,11 +48,8 @@ const CONNECTION_ORDER: KeysetOrder = {
 export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
   constructor(
-    @InjectRepository(Account) readonly _accountRepository: Repository<Account>,
-    @InjectRepository(AccountDetail) readonly _accountDetailRepository: Repository<AccountDetail>,
     @InjectRepository(BankConnection)
     private readonly bankConnectionRepository: Repository<BankConnection>,
-    @InjectRepository(UserProfile) readonly _userProfileRepository: Repository<UserProfile>,
     private readonly providerRegistry: BankProviderRegistry,
     private readonly configService: ConfigService,
     private readonly accountIntakeService: AccountIntakeService,

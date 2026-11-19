@@ -427,7 +427,7 @@ jobs:
   # A change must never silently break the Railway images (E12 T2.23, BE-01 L10). The job is a
   # required check, so it always runs and reports; the build steps run whenever anything that
   # goes into an image changes (any app or package source, a manifest, the lockfile, a
-  # Dockerfile or this workflow). Docs-only and mobile-only PRs pass in seconds.
+  # Dockerfile or this workflow). Docs-only PRs pass in seconds.
   docker-build:
     name: 🐳 Docker images
     if: github.event_name == 'pull_request'

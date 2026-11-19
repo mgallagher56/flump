@@ -88,10 +88,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       );
       // The provider registry and config are only used by bank sync, which load() never calls.
       const finance = new FinanceService(
-        repo(Account),
-        repo(AccountDetail),
         repo(BankConnection),
-        repo(UserProfile),
         {} as BankProviderRegistry,
         {} as ConfigService,
         intake,

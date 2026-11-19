@@ -202,46 +202,46 @@
   {
     "kind": "removed-path",
     "where": "/v1/transactions",
-    "reason": "System audit slice 9 part three: GET and POST /transactions are removed; their only caller was the parked apps/mobile-companion, deleted in the same PR (owner approved). No client in this repository calls them (web app, web proxy, MCP server, e2e, scripts or CI). The transactions table, bank sync and imports stay. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: GET and POST /transactions are removed; their only caller was the parked apps/mobile-companion, deleted in the same PR (owner approved). No client in this repository calls them (web app, web proxy, MCP server, e2e, scripts or CI). The transactions table and the rows already in it stay. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
     "where": "GET /v1/user-profile 200 response.displayName",
-    "reason": "System audit slice 9 part three: displayName is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: displayName is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
     "where": "PATCH /v1/user-profile 200 response.displayName",
-    "reason": "System audit slice 9 part three: displayName is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: displayName is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
     "where": "PATCH /v1/user-profile/checklist 200 response.displayName",
-    "reason": "System audit slice 9 part three: displayName is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: displayName is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
     "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.displayName",
-    "reason": "System audit slice 9 part three: displayName is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: displayName is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
     "where": "GET /v1/user-profile 200 response.hasSecondIncome",
-    "reason": "System audit slice 9 part three: hasSecondIncome is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: hasSecondIncome is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
     "where": "PATCH /v1/user-profile 200 response.hasSecondIncome",
-    "reason": "System audit slice 9 part three: hasSecondIncome is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: hasSecondIncome is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
     "where": "PATCH /v1/user-profile/checklist 200 response.hasSecondIncome",
-    "reason": "System audit slice 9 part three: hasSecondIncome is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: hasSecondIncome is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
     "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.hasSecondIncome",
-    "reason": "System audit slice 9 part three: hasSecondIncome is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Scope agreed with the coordinator 19 November 2026."
+    "reason": "System audit slice 9 part three: hasSecondIncome is a profile field whose only reader was the parked apps/mobile-companion, deleted in the same PR (owner approved), so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The stored column stays in the account export until then. Coordinator sign-off 19 November 2026."
   }
 ]
