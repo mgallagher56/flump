@@ -279,7 +279,7 @@ describe("UserProfileService (Deep Module)", () => {
       expect(Object.keys(RETIRED).filter((key) => key in result)).toEqual([]);
     });
 
-    it("leaves the stored columns untouched when a request carries them", async () => {
+    it("saves the other fields of an old-shaped request and leaves the retired columns untouched", async () => {
       const row = { id: "p1", userId: "user-123", ...RETIRED };
       mockUserProfileRepo.findOne.mockResolvedValue(row);
       const changed = {
@@ -298,9 +298,10 @@ describe("UserProfileService (Deep Module)", () => {
         dashboardWidgetSizes: {},
         dashboardWidgetConfig: {},
       };
-      await service.updateProfile("user-123", changed as never);
+      await service.updateProfile("user-123", { ...changed, annualSalary: 41000 } as never);
       const saved = at(mockUserProfileRepo.save.mock.calls, -1)[0];
       expect(saved).toMatchObject(RETIRED);
+      expect(saved).toMatchObject({ annualSalary: 41000 });
     });
   });
 

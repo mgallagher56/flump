@@ -91,6 +91,23 @@ export const UpdateProfileRequest = z.strictObject({
   /** Net worth choices: count property less its mortgage; count student loans as a debt. */
   netWorthCountsProperty: z.boolean().optional(),
   netWorthCountsStudentLoan: z.boolean().optional(),
+  // Retired (system audit slice 9 part two): accepted and ignored on write for one release, so a
+  // browser tab still running the previous web bundle can save. Nothing stores or returns them;
+  // the column-drop PR removes them here too.
+  hasRentalIncome: z.boolean().optional(),
+  rentalIncomeMonthly: Money.nullish(),
+  hasBuyToLet: z.boolean().optional(),
+  buyToLetCount: z.number().int().min(0).max(1000).optional(),
+  buyToLetPropertyValue: Money.nullish(),
+  buyToLetMonthlyRental: Money.nullish(),
+  buyToLetMortgageBalance: Money.nullish(),
+  buyToLetMortgageRate: Percent.nullish(),
+  buyToLetMortgageType: z.enum(["repayment", "interest-only"]).optional(),
+  monthlySavingsTarget: Money.nullish(),
+  savingsAllocationMode: z.enum(["total", "per_account"]).optional(),
+  savingsDefaultInterestRate: Percent.optional(),
+  dashboardWidgetSizes: z.record(z.string(), z.enum(["normal", "wide"])).optional(),
+  dashboardWidgetConfig: z.record(z.string(), z.unknown()).optional(),
 });
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
 

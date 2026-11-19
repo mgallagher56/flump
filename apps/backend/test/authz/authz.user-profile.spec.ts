@@ -255,15 +255,31 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("PATCH /user-profile");
   });
 
-  it("PATCH /user-profile: a retired profile field is a 400, and GET carries none of them", async () => {
-    const res = await h.call("patch", "/user-profile", h.tokens.a, { monthlySavingsTarget: 300 });
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe("validation_failed");
+  it("PATCH /user-profile: an old-shaped payload saves, stores nothing for retired fields, and GET carries none of them", async () => {
+    const before = await profiles().findOneByOrFail({ userId: USER_A });
+    const res = await h.call("patch", "/user-profile", h.tokens.a, {
+      monthlySavingsTarget: 300,
+      hasBuyToLet: true,
+      dashboardWidgetSizes: { accounts: "normal" },
+      annualSalary: 41000,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.annualSalary).toBe(41000);
+    const after = await profiles().findOneByOrFail({ userId: USER_A });
+    expect(Number(after.annualSalary)).toBe(41000);
+    expect(after.monthlySavingsTarget).toEqual(before.monthlySavingsTarget);
+    expect(after.hasBuyToLet).toEqual(before.hasBuyToLet);
+    expect(after.dashboardWidgetSizes).toEqual(before.dashboardWidgetSizes);
     const got = await h.call("get", "/user-profile", h.tokens.a);
     expect(got.status).toBe(200);
     for (const key of ["hasRentalIncome", "monthlySavingsTarget", "dashboardWidgetSizes"]) {
       expect(got.body).not.toHaveProperty(key);
     }
+    // Put A's salary back: later cases check A is untouched (expectProfileAUntouched).
+    const restore = await h.call("patch", "/user-profile", h.tokens.a, {
+      annualSalary: Number(before.annualSalary),
+    });
+    expect(restore.status).toBe(200);
   });
 
   it("PATCH /user-profile/checklist: steps are per user, probe body rejected", async () => {
