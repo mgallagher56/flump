@@ -270,12 +270,22 @@ describe("DebtSnowballCalculator", () => {
     expect(classes.some((c) => /^grid-tc_repeat\(3/.test(c))).toBe(false);
   });
 
-  it("keeps the name and actions on one line with the balance below at every width", () => {
-    // No breakpoint moves the balance beside the name, where the name would wrap.
-    for (const classes of [debtRow(), debtRowFields(), debtRowActions()]) {
-      expect(classes.split(" ").some((c) => /^(sm|md|lg):/.test(c))).toBe(false);
-    }
-    expect(debtRowFields()).toContain("grid-c_1_/_-1");
+  it("puts Edit and Remove under the debt name below sm, beside it from sm (P75)", () => {
+    const actions = debtRowActions().split(" ");
+    // Below sm: their own full-width line (row 2), so the name keeps the row's width.
+    expect(actions).toContain("grid-c_1_/_-1");
+    expect(actions).toContain("grid-r_2");
+    expect(actions).toContain("justify-self_start");
+    // From sm: beside the name, at the end of row 1.
+    expect(actions).toContain("sm:grid-c_2");
+    expect(actions).toContain("sm:grid-r_1");
+    expect(actions).toContain("sm:justify-self_end");
+    // The fields follow on the next line at both widths, full width; never beside the name.
+    const fields = debtRowFields().split(" ");
+    expect(fields).toContain("grid-c_1_/_-1");
+    expect(fields).toContain("grid-r_3");
+    expect(fields).toContain("sm:grid-r_2");
+    expect(debtRow()).not.toMatch(/(^|\s)(sm|md|lg):/);
   });
 
   it("formats payoff durations over 24 months as years and months", () => {

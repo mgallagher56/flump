@@ -2,6 +2,7 @@ import { ChevronDown, Menu } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { Button } from "../../primitives/Button/Button";
+import { focusWithoutJump } from "../../primitives/Dialog/useDialogFocusReturn";
 import { Icon } from "../../primitives/Icon/Icon";
 import {
   type AppNavChild,
@@ -52,6 +53,12 @@ export interface TopBarProps {
    * `NAV_WIDE_BREAKPOINT` (`wide`), for a bar whose `wideOnly` links live in the menu on tablets.
    */
   menuBelow?: "inline" | "wide";
+  /**
+   * Where the inline links start showing: from `NAV_BREAKPOINT` (`inline`, default) or from
+   * `NAV_WIDE_BREAKPOINT` (`wide`). With `menuBelow="wide"` and `linksFrom="wide"` the bar shows
+   * the menu button or the links, never both (marketing, P72).
+   */
+  linksFrom?: "inline" | "wide";
   menuLabel?: string;
   /** Whether the menu the button opens is showing; sets `aria-expanded` on the menu button. */
   menuExpanded?: boolean;
@@ -106,7 +113,7 @@ const FlyoutGroup: FC<FlyoutGroupProps> = ({ item, active, activeKey, renderLink
         if (event.key === "Escape" && open) {
           event.stopPropagation();
           setOpen(false);
-          triggerRef.current?.focus();
+          if (triggerRef.current) focusWithoutJump(triggerRef.current);
         }
       }}
       ref={rootRef}
@@ -160,6 +167,7 @@ export const TopBar: FC<TopBarProps> = ({
   renderLink = defaultRenderLink,
   onMenuClick,
   menuBelow = "inline",
+  linksFrom = "inline",
   menuLabel = "Open menu",
   menuExpanded,
   menuControls,
@@ -169,7 +177,7 @@ export const TopBar: FC<TopBarProps> = ({
   <header className={cx(topBarRoot(), className)}>
     <div className={topBarInner()}>
       {logo && <div className={topBarLogo()}>{logo}</div>}
-      <nav aria-label={navLabel} className={topBarNav()}>
+      <nav aria-label={navLabel} className={topBarNav({ from: linksFrom })}>
         <ul className={topBarList()}>
           {items.map((item) => {
             const active = isActiveItem(item, activeKey);

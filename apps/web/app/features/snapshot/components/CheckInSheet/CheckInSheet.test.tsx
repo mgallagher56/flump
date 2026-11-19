@@ -142,8 +142,8 @@ describe("CheckInSheet", () => {
       { accountId: MORTGAGE, year: 2026, month: 11, value: -180000 },
     ];
     // The side sheet carries a drag handle as its first child; a centred dialog does not.
-    const isSheet = (el: HTMLElement) =>
-      el.firstElementChild?.getAttribute("aria-hidden") === "true";
+    // The Sheet names its surface; the centred Dialog does not.
+    const isSheet = (el: HTMLElement) => el.hasAttribute("data-sheet-side");
 
     it("shows the summary in a dialog from md when every account is already recorded", async () => {
       setup({ accountDetails: allRecorded });

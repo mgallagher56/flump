@@ -1,4 +1,4 @@
-import { Card, IconTile, type IconTileDomain, Illustration } from "@repo/ui";
+import { Card, IconTile, Illustration } from "@repo/ui";
 import { CalendarCheck, House, type LucideIcon, Wallet } from "lucide-react";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
@@ -9,6 +9,7 @@ import {
   pictureFooter,
   pictureFooterRow,
   pictureGrid,
+  pictureIconTile,
   pictureIllustration,
   pictureLink,
   pictureTitle,
@@ -19,12 +20,12 @@ export interface MonthlyPictureItem {
   title: string;
   body: string;
   icon: LucideIcon;
-  domain: IconTileDomain;
 }
 
 /**
  * "What you can see" (E16 PR 12): three cards, one per part of the product, with no figures.
- * Renting and paying a mortgage sit side by side with equal weight (owner rule).
+ * Renting and paying a mortgage sit side by side with equal weight (owner rule). The three icon
+ * tiles share one tint (P74): each card spans several money domains, so none takes a domain colour.
  */
 export const MONTHLY_PICTURE_ITEMS: MonthlyPictureItem[] = [
   {
@@ -32,21 +33,18 @@ export const MONTHLY_PICTURE_ITEMS: MonthlyPictureItem[] = [
     title: "Where you stand each month",
     body: "Your breathing room and what is left over each month, from a few rough figures, whether you rent or pay a mortgage.",
     icon: CalendarCheck,
-    domain: "savings",
   },
   {
     id: "home-and-debts",
     title: "What a change would do",
     body: "See an estimate for a new fixed rate or an overpayment, or for paying debts highest rate first or smallest balance first.",
     icon: House,
-    domain: "mortgage",
   },
   {
     id: "pay-and-pension",
     title: "Your pay and pension",
     body: "See how a pay rise or salary sacrifice changes your take-home pay, and add your pension to see an estimate beside the rest.",
     icon: Wallet,
-    domain: "pay",
   },
 ];
 
@@ -66,7 +64,7 @@ export const MonthlyPictureSection: FC = () => (
           key={item.id}
           padding="lg"
         >
-          <IconTile domain={item.domain} icon={item.icon} />
+          <IconTile className={pictureIconTile()} icon={item.icon} tone="teal" />
           <h3 className={pictureTitle()} id={`picture-${item.id}`}>
             {item.title}
           </h3>

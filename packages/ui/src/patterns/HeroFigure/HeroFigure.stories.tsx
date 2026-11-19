@@ -99,8 +99,14 @@ export const Phone: Story = {
     const group = within(canvasElement).getByRole("group", { name: "Net worth" });
     await expect(group.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
     await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+    // The figure sits on one line: never "£1,234,56 / 7" (phone audit P43).
+    const figure = group.querySelector("[class*='numeric.hero']") as HTMLElement;
+    const lineHeight = Number.parseFloat(getComputedStyle(figure).lineHeight);
+    await expect(figure.getBoundingClientRect().height).toBeLessThan(lineHeight * 1.5);
   },
 };
+
+export const PhoneDark: Story = { ...Phone, globals: { theme: "dark" } };
 
 /**
  * A page whose answer is an estimate (take-home pay, an estimated tax bill) names it inside the

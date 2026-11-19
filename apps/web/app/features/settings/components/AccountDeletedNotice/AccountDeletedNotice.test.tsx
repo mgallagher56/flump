@@ -9,9 +9,9 @@ describe("<AccountDeletedNotice />", () => {
   it("confirms the deletion and links home", () => {
     render(<AccountDeletedNotice homeUrl="https://flump.example" />);
     expect(screen.getByRole("heading", { name: "Your account has been deleted" })).toBeDefined();
-    expect(
-      screen.getByRole("link", { name: "Go to the Flump homepage" }).getAttribute("href"),
-    ).toBe("https://flump.example");
+    expect(screen.getByRole("link", { name: "Go to the home page" }).getAttribute("href")).toBe(
+      "https://flump.example",
+    );
   });
 
   it("clears this browser's per-user storage but keeps device preferences", () => {

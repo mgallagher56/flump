@@ -3,7 +3,10 @@ import { act, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, vi } from "vitest";
 import { accountWithDetailsFixture, contractFetch } from "~/test/fixtures/contractResponses";
 import customRender from "~/testUtils/customRender";
-import MortgageContainer, { HOME_VALUE_NOT_SAVED } from "./MortgageContainer";
+import MortgageContainer, {
+  firstResidentialFigures,
+  HOME_VALUE_NOT_SAVED,
+} from "./MortgageContainer";
 
 // Mock sub-components to keep container unit test focused
 vi.mock("~/features/mortgage/components/MortgageTracker", () => ({
@@ -556,6 +559,36 @@ describe("<MortgageContainer />", () => {
       expectPageRules(container, { projectionNotices: 0 });
       openZone();
       expectPageRules(container, { projectionNotices: 1 });
+    });
+
+    test("the what-if tools start from the buy-to-let account's saved term, saving nothing (P40)", () => {
+      setApiEnv();
+      const fetchSpy = okFetch();
+      loaderData = {
+        accounts: [
+          {
+            id: "btl-m",
+            name: "BTL mortgage",
+            type: "Mortgage",
+            accountSubtype: "btl_mortgage",
+            balance: -200000,
+            // 180 months saved on the account = 15 years.
+            termMonths: 180,
+          },
+        ],
+        accountDetails: [],
+        userProfile: {
+          hasBuyToLet: true,
+          buyToLetMortgageBalance: 200000,
+          buyToLetMortgageRate: 5,
+          buyToLetMortgageType: "interest-only",
+        },
+      };
+      customRender(<MortgageContainer />);
+      fireEvent.click(screen.getByRole("button", { name: /Starting figures/ }));
+      const years = screen.getAllByLabelText(/^Years left to try/) as HTMLInputElement[];
+      expect(years.map((el) => el.value)).toContain("15");
+      expect(patches(fetchSpy)).toHaveLength(0);
     });
 
     test("buy to let saves balance and rate on the profile and offers no term", async () => {
@@ -1514,6 +1547,28 @@ describe("<MortgageContainer />", () => {
       if (!profilePatch) throw new Error("expected a profile PATCH");
       expect(bodyOf(profilePatch)).toMatchObject({ buyToLetPropertyValue: 320000 });
       expect(posts(fetchSpy).some(([url]) => String(url) === "/api/accounts")).toBe(false);
+    });
+  });
+});
+
+describe("firstResidentialFigures (P61)", () => {
+  test("reads the first residential account's saved figures for the first render", () => {
+    const { accounts, accountDetails } = loaded();
+    // Balance -£135,400 is read as £135,400 owed; 240 months = 20 years; rate 4.5% as saved.
+    expect(firstResidentialFigures(accounts as never, accountDetails as never, 0)).toEqual({
+      accountId: "m1",
+      loanAmount: 135400,
+      interestRate: 4.5,
+      remainingTerm: 20,
+    });
+  });
+
+  test("keeps the profile balance and leaves rate and term empty with no account", () => {
+    expect(firstResidentialFigures([] as never, [] as never, 90000)).toEqual({
+      accountId: null,
+      loanAmount: 90000,
+      interestRate: 0,
+      remainingTerm: 0,
     });
   });
 });

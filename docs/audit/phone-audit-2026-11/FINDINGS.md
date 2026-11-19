@@ -35,7 +35,7 @@ Measured at every width and theme unless stated, so these need no fix:
 - Buttons, InfoTips, account rows and dashboard card links meet 44px on touch (Button's coarse
   `minH: touch`, InfoTip's coarse box, and stretched `::after` hit areas on rows and cards).
 - Bottom-bar navigation leaves the next page at the top (scroll 0 after every one of 135
-  navigations). Back is not a pass: see P80.
+  navigations). Back restores the place on every page but Mortgage (P13, P80).
 
 ## The owner's five named problems
 
@@ -43,7 +43,7 @@ PR 781 (phone-nav-fixes) merged before the final run. Status on `c2e14680b`:
 
 | Id  | Problem | Status | What the sweep saw |
 | --- | ------- | ------ | ------------------ |
-| O-1 | Pages open scrolled down after navigation | Fixed in Chromium | Scroll 0 after all 135 bottom-bar navigations at every width. But Back now lands at the top on 22 of 135 tries (P80), which it did not do before PR 781 |
+| O-1 | Pages open scrolled down after navigation | Fixed in Chromium | Scroll 0 after all 135 bottom-bar navigations at every width. But Back read as landing at the top on 22 of 135 tries (P80), which phase 2 traced to the sweep's timing; only Mortgage (P13) was real |
 | O-2 | Web footer too tall | Fixed | One line, logo and links, about 70px at every width |
 | O-3 | Screen jumps when the keyboard opens on successive inputs (onboarding, add account) | Cannot be confirmed here | No real phone keyboard and no iOS Simulator on this machine. The field walk in every sheet and onboarding step found focus scrolling only, no jumps caused by scripts. PR 781's visual-viewport inset is covered by its own emulated test, not by a real keyboard |
 | O-4 | Menu button on the left, drawer opens on the right | Fixed | Menu button now at x=337 on the right, drawer attached right, at every width; the marketing menu matches |
@@ -150,13 +150,13 @@ PR 781 (phone-nav-fixes) merged before the final run. Status on `c2e14680b`:
 | P78 | J10 | Accounts and Budget, landscape | 812x375 | In landscape the hero figure starts at 245px of 375, so the h1 and the headline are not both in the first view | H3 | cosmetic | Header 67px plus page header in a short viewport | Compact page header below 480px tall |
 
 | P79 | J11 5 | Self Assessment "Add a record" dialog, `apps/web/app/containers/tax/` record dialog | 320; both | The dialog is wider than the screen: no left inset, fields and the close button run past the right edge, and the page scrolls sideways | A6, R1, WCAG 1.4.10 | gets in the way | A fixed or min width on the dialog content above 320px | Fit the dialog to the viewport (`maxWidth: 100%`, the Sheet's phone layout) |
-| P80 | J2, J3, J11 (Back) | Web scroll restoration, `apps/web/app/root.tsx` `ScrollRestoration getKey`, `apps/web/app/utils/scrollRestorationKey.ts` | 320 to 430; both | Back after bottom-bar navigation lands at the top of the page on 22 of 135 tries, on any page; before PR 781 it was 0 of 72 | owner's eye (same class as O-1) | gets in the way | New with PR 781 (the `getKey` guard, or the restore running before the page reaches its height); to diagnose before fixing | Find the cause first; restore once the page has its height, and add a Back case to `scroll-restoration.spec.ts` |
+| P80 | J2, J3, J11 (Back) | Web scroll restoration, `apps/web/app/root.tsx` | 320 to 430; both | First read: Back landed at the top on 22 of 135 tries. Phase 2 diagnosis: all but Mortgage were the sweep reading the position before Back's data loaded (0 misses in 84 tries once it waits); the real fault is P13 | owner's eye (same class as O-1) | gets in the way | The sweep's timing, plus P13 | Sweep now waits for the URL and a still scroll position; P13 fixed in phase 2 |
 
 ## Overlaps with other lanes
 
 - **phone-nav-fixes** (PR 781, merged) owned O-1 to O-5; their status is above. Left after it:
   P11 and P70 (drawer scroll lock), P12, P13 and P80 (scroll after closing an overlay and after
-  Back, P80 new with PR 781), P14 and P57. Phase 2 takes these.
+  Back; P80 was traced to the sweep), P14 and P57. Phase 2 takes these.
 - **ux-batch-g** (PR 783, open). Listed for that lane, not fixed in phase 2:
   - Shared number inputs: P08, P59, P60 (the 16px input text is the phone part).
   - Date pickers: the add-debt date field (`type=date`, no input mode) seen in J11.

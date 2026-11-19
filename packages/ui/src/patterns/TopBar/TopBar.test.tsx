@@ -166,4 +166,26 @@ describe("TopBar", () => {
     expect(button().className).toContain("navWide:d_none");
     expect(button().className).not.toContain("navInline:d_none");
   });
+
+  it("keeps the inline links hidden until navWide when linksFrom is wide (P72)", () => {
+    const { rerender } = render(<TopBar items={sampleNavItems} />);
+    const nav = () => screen.getByRole("navigation", { name: "Primary" });
+    expect(nav().className).toContain("navInline:d_block");
+    expect(nav().className).not.toContain("navWide:d_block");
+    rerender(<TopBar items={sampleNavItems} linksFrom="wide" menuBelow="wide" />);
+    expect(nav().className).toContain("navWide:d_block");
+    expect(nav().className).toContain("navInline:d_none");
+  });
+
+  it("pads the notch sides and top, and keeps a 44px floor at large text (P15, P19)", () => {
+    const { container } = render(<TopBar items={sampleNavItems} />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toContain("env(safe-area-inset-top)");
+    expect(root.className).toContain("env(safe-area-inset-left)");
+    expect(root.className).toContain("env(safe-area-inset-right)");
+    const inner = root.firstElementChild as HTMLElement;
+    // A px floor (44px), not 3.5rem, so the phone bar does not double in height at 200% text.
+    expect(inner.className).toMatch(/(^|\s)min-h_touch(\s|$)/);
+    expect(inner.className).not.toMatch(/(^|\s)min-h_14(\s|$)/);
+  });
 });

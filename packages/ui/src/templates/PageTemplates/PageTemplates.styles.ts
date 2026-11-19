@@ -1,5 +1,8 @@
 import { css } from "../../../styled-system/css";
 
+/** Same query as PageHeader's SHORT_VIEWPORT (kept literal so Panda extracts it statically). */
+const SHORT_VIEWPORT = "@media screen and (max-height: 479.98px)";
+
 /** The canvas and `main` landmark a template renders on; `PageBody` inside it sets the layout. */
 export const page = css({
   width: "100%",
@@ -191,6 +194,9 @@ export const pageBody = css({
   pt: { base: "page.top.sm", lg: "page.top.lg" },
   pb: { base: "12", lg: "16" },
   color: "text.primary",
+  // Under 480px tall (a phone in landscape) the sections close up so the h1 and the headline
+  // figure share the first view; PageHeader goes compact at the same height (P78).
+  [SHORT_VIEWPORT]: { gap: "4" },
   // Inside a shell that already pads its content, only the difference to the P13 tokens is added,
   // so gutters and top space apply exactly once (see the PageBody JSDoc). The two values never
   // match the same element, so neither rule depends on CSS order.

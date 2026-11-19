@@ -374,6 +374,13 @@ describe("TaxContainer, opted in", () => {
   it("with no records shows one prompt to add income, no strip and no £0", () => {
     mockLoaderRecords = [];
     const { container, unmount } = render(<TaxContainer />);
+    // P54: the page's empty state with its one button, not a "Not set" bill card.
+    const empty = screen.getByTestId("tax-empty");
+    expect(empty.contains(screen.getByRole("button", { name: "Add income or expense" }))).toBe(
+      true,
+    );
+    expect(container.querySelector('[data-testid="hero-figure"]')).toBeNull();
+    expect(screen.queryByText("Not set")).toBeNull();
     expect(container.textContent).not.toContain("£0");
     expect(container.querySelector('[data-tone="hero"]')).toBeNull();
     expect(screen.queryByRole("note")).toBeNull();

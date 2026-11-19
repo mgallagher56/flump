@@ -101,6 +101,28 @@ export interface OverpaymentSimulatorProps {
 export const OVERPAYMENT_ERC_NOTE =
   "Many fixed-rate deals allow overpayments of up to 10% of the balance a year with no charge. Above that, an early repayment charge (ERC) may apply. Your lender's terms set out the limit.";
 
+/**
+ * The empty prompt names only the figures still missing (P40): a buy to let with its balance and
+ * rate saved is asked for the years left alone, which "Starting figures" below takes.
+ */
+export const overpayEmptyPrompt = (
+  loanAmount: number,
+  interestRate: number,
+  remainingTerm: number,
+): string => {
+  const missing = [
+    loanAmount > 0 ? null : "balance",
+    interestRate > 0 ? null : "interest rate",
+    remainingTerm > 0 ? null : "years left",
+  ].filter((x): x is string => x !== null);
+  if (missing.length === 1 && missing[0] === "years left") {
+    return "Add the years left under Starting figures to see what overpaying would change.";
+  }
+  const list =
+    missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing.at(-1)}` : missing[0];
+  return `Add your ${list} to see what overpaying would change.`;
+};
+
 /** The overpayment slider range, shared with the overpay or save tool so both tabs agree. */
 export const OVERPAYMENT_RANGE = { min: 0, max: 2500, step: 20 } as const;
 
@@ -346,7 +368,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       <SimulatorSplitLayout
         content={
           <ResultBlock
-            emptyPrompt="Add your balance, interest rate and years left to see what overpaying would change."
+            emptyPrompt={overpayEmptyPrompt(loanAmount, interestRate, remainingTerm)}
             figure={null}
             hideLabel
             id="overpayment-empty"

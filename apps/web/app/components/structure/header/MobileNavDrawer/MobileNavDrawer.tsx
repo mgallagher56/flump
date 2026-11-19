@@ -1,9 +1,9 @@
 import { buttonVariants, HomeLogo, Icon, NavDrawer } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
-import { Calculator, Settings, Sparkles } from "lucide-react";
+import { Bot, Calculator, LogOut, Settings } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation } from "react-router";
+import { Form, Link, useLocation } from "react-router";
 import NavMenu from "~/components/navigation/NavMenu";
 import { mobileLink } from "~/components/navigation/NavMenu/NavMenu.styles";
 import {
@@ -18,7 +18,7 @@ import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import UserLogin from "~/components/navigation/UserLogin";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { isPageEnabled } from "~/utils/pageConfig";
-import { footerRow, signUpLink } from "./MobileNavDrawer.styles";
+import { footerRow, signOutForm, signUpLink } from "./MobileNavDrawer.styles";
 
 export interface MobileNavDrawerProps {
   isOpen: boolean;
@@ -103,7 +103,8 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
                 <span>{t("settings", "Settings")}</span>
               </Link>
               <Link {...rowProps("connectAi")} to={CONNECT_AI_ROUTE} onClick={onClose}>
-                <Icon icon={Sparkles} size="sm" />
+                {/* The same icon as the account menu's "Connect AI" (P68). */}
+                <Icon icon={Bot} size="sm" />
                 <span>{t("connectAi", "Connect AI")}</span>
               </Link>
               <Link {...rowProps("tools")} to="/tools" onClick={onClose}>
@@ -113,9 +114,19 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
             </>
           )}
           {/* The theme switch lives in the top bar at every width, so the drawer leaves it out. */}
-          <div className={footerRow()}>
-            <UserLogin />
-          </div>
+          {user ? (
+            // Signed in, "Sign out" is one more row like those above it, with its own icon (P14).
+            <Form action="/logout" className={signOutForm()} method="post">
+              <button className={footerLinkClass(false)} type="submit">
+                <Icon icon={LogOut} size="sm" />
+                <span>{t("logOut", "Sign out")}</span>
+              </button>
+            </Form>
+          ) : (
+            <div className={footerRow()}>
+              <UserLogin />
+            </div>
+          )}
         </>
       }
     >

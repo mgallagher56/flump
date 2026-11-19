@@ -44,6 +44,29 @@ describe("Stepper", () => {
     expect(within(list).getAllByRole("listitem")[2]?.getAttribute("aria-current")).toBe("step");
   });
 
+  it("fills every progress segment up to the current step, skipped ones too (P56)", () => {
+    // Four steps, step 2 and 3 skipped, now on step 4: segments 1 to 4 fill, none stay empty.
+    const four = [...steps, { id: "done", label: "Finish" }];
+    render(<Stepper current={4} states={{ home: "skipped", save: "skipped" }} steps={four} />);
+    const segments = screen.getByTestId("stepper-summary").querySelectorAll("[data-segment-state]");
+    expect([...segments].map((s) => s.getAttribute("data-segment-state"))).toEqual([
+      "complete",
+      "complete",
+      "complete",
+      "current",
+    ]);
+  });
+
+  it("leaves segments after the current step empty, even for a step completed earlier", () => {
+    render(<Stepper current={1} states={{ save: "complete" }} steps={steps} />);
+    const segments = screen.getByTestId("stepper-summary").querySelectorAll("[data-segment-state]");
+    expect([...segments].map((s) => s.getAttribute("data-segment-state"))).toEqual([
+      "current",
+      "upcoming",
+      "upcoming",
+    ]);
+  });
+
   it("keeps the default states when no overrides are given", () => {
     render(<Stepper current={3} steps={steps} />);
     expect(screen.getAllByText("Complete")).toHaveLength(2);

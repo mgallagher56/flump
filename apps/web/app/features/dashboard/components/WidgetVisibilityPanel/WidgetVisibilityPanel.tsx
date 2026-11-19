@@ -1,21 +1,17 @@
-import * as Dialog from "@radix-ui/react-dialog";
-import { Button, Icon, InlineAlert } from "@repo/ui";
+import { Button, Icon, InlineAlert, Sheet } from "@repo/ui";
 import type { FC } from "react";
 import type { DashboardWidgetKey } from "~/utils/pageConfig";
 import { WIDGET_ICONS } from "../../widgetIcons";
 import {
+  panelBody,
   panelCheckbox,
-  panelContent,
   panelDescription,
-  panelFooter,
   panelList,
-  panelOverlay,
   panelRow,
   panelRowHint,
   panelRowLabel,
   panelRowStatus,
   panelRowText,
-  panelTitle,
 } from "./WidgetVisibilityPanel.styles";
 
 export interface WidgetVisibilityPanelProps {
@@ -35,6 +31,8 @@ export interface WidgetVisibilityPanelProps {
    * section can be left out when the cap is reached or it has nothing to show yet.
    */
   shownKeys?: readonly DashboardWidgetKey[];
+  /** Where focus goes on close when the sheet opened with nothing focused (see `Sheet`). */
+  returnFocusTo?: () => HTMLElement | null;
 }
 
 /** The panel's one rule, said once. */
@@ -68,74 +66,82 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
   error,
   maxVisible,
   shownKeys,
+  returnFocusTo,
 }) => {
   const atCap =
     maxVisible !== undefined &&
     widgetKeys.filter((k) => visibleKeys.includes(k)).length >= maxVisible;
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className={panelOverlay()} />
-        <Dialog.Content className={panelContent()} data-focus-managed id="widget-visibility-panel">
-          <Dialog.Title className={panelTitle()}>Choose what shows here</Dialog.Title>
-          {/* Radix owns the Description id (aria-describedby); ours sits on an inner span. */}
-          <Dialog.Description className={panelDescription()}>
-            <span id="widget-visibility-rule">{SECTION_RULE(maxVisible)}</span>
-          </Dialog.Description>
-          {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
-          <ul className={panelList()}>
-            {widgetKeys.map((key) => {
-              const copy = SECTION_COPY[key];
-              const inputId = `widget-visibility-${key}`;
-              const checked = visibleKeys.includes(key);
-              const disabled = atCap && !checked;
-              const status =
-                shownKeys && checked
-                  ? shownKeys.includes(key)
-                    ? SHOWING_LABEL
-                    : NOT_SHOWING_LABEL
-                  : null;
-              return (
-                <li key={key}>
-                  <label className={panelRow()} htmlFor={inputId}>
-                    <input
-                      aria-describedby={disabled ? "widget-visibility-rule" : undefined}
-                      checked={checked}
-                      disabled={disabled}
-                      className={panelCheckbox()}
-                      data-testid={inputId}
-                      id={inputId}
-                      type="checkbox"
-                      onChange={() => onToggle(key)}
-                    />
-                    <Icon icon={WIDGET_ICONS[key]} size="md" />
-                    <span className={panelRowText()}>
-                      <span className={panelRowLabel()}>{copy.label}</span>
-                      <span className={panelRowHint()}>{copy.description}</span>
+    // The shared bottom sheet (P10, RC-5): a bottom sheet on a phone that sits above the bottom
+    // bar, a close button, and focus back on the button that opened it.
+    <Sheet
+      footer={
+        <Button
+          id="widget-visibility-done"
+          size="sm"
+          variant="primary"
+          onClick={() => onOpenChange(false)}
+        >
+          Done
+        </Button>
+      }
+      id="widget-visibility-panel"
+      open={open}
+      returnFocusTo={returnFocusTo}
+      title="Choose what shows here"
+      onOpenChange={onOpenChange}
+    >
+      <div className={panelBody()}>
+        {/* The rule, said once; a disabled box points to it (aria-describedby). */}
+        <p className={panelDescription()} id="widget-visibility-rule">
+          {SECTION_RULE(maxVisible)}
+        </p>
+        {error ? <InlineAlert tone="danger">{error}</InlineAlert> : null}
+        <ul className={panelList()}>
+          {widgetKeys.map((key) => {
+            const copy = SECTION_COPY[key];
+            const inputId = `widget-visibility-${key}`;
+            const checked = visibleKeys.includes(key);
+            const disabled = atCap && !checked;
+            const status =
+              shownKeys && checked
+                ? shownKeys.includes(key)
+                  ? SHOWING_LABEL
+                  : NOT_SHOWING_LABEL
+                : null;
+            return (
+              <li key={key}>
+                <label className={panelRow()} htmlFor={inputId}>
+                  <input
+                    aria-describedby={disabled ? "widget-visibility-rule" : undefined}
+                    checked={checked}
+                    disabled={disabled}
+                    className={panelCheckbox()}
+                    data-testid={inputId}
+                    id={inputId}
+                    type="checkbox"
+                    onChange={() => onToggle(key)}
+                  />
+                  <Icon icon={WIDGET_ICONS[key]} size="md" />
+                  <span className={panelRowText()}>
+                    <span className={panelRowLabel()}>{copy.label}</span>
+                    <span className={panelRowHint()}>{copy.description}</span>
+                  </span>
+                  {status ? (
+                    <span
+                      className={panelRowStatus({ shown: status === SHOWING_LABEL })}
+                      data-testid={`${inputId}-status`}
+                      id={`${inputId}-status`}
+                    >
+                      {status}
                     </span>
-                    {status ? (
-                      <span
-                        className={panelRowStatus({ shown: status === SHOWING_LABEL })}
-                        data-testid={`${inputId}-status`}
-                        id={`${inputId}-status`}
-                      >
-                        {status}
-                      </span>
-                    ) : null}
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
-          <div className={panelFooter()}>
-            <Dialog.Close asChild>
-              <Button id="widget-visibility-done" size="sm" variant="primary">
-                Done
-              </Button>
-            </Dialog.Close>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+                  ) : null}
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </Sheet>
   );
 };

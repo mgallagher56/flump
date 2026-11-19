@@ -4,14 +4,18 @@ export const pageStyle = css({ minHeight: "100vh", display: "flex", flexDirectio
 
 export const mainStyle = css({ flex: "1" });
 
-/** Same width and top spacing as the web `/tools` index (`SignedOutPage width="wide"`). */
+/**
+ * Same width as the web `/tools` index (`SignedOutPage width="wide"`). The top spacing is the
+ * marketing one (`MarketingSection`, pricing, security and contact), so every marketing page's
+ * heading starts at the same height (P73).
+ */
 export const containerStyle = css({
   maxWidth: "6xl",
   mx: "auto",
   display: "flex",
   flexDirection: "column",
   gap: "4",
-  pt: { base: "page.top.sm", lg: "page.top.lg" },
+  pt: { base: "12", md: "16" },
   pb: "12",
   px: { base: "page.gutter.sm", md: "page.gutter.md" },
 });
@@ -38,6 +42,15 @@ export const toolCardStyle = css({
   transitionTimingFunction: "standard",
   _hover: { borderColor: "primary", boxShadow: "cardHover" },
   _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+});
+
+/**
+ * Dark mode: the domain tints sit close to the dark card (1.05:1 for apricot), so the tile takes a
+ * `border.input` edge (4.3:1 against `surface.card`) to stay visible (P77).
+ */
+export const toolIconTileStyle = css({
+  _dark: { borderWidth: "1px", borderStyle: "solid", borderColor: "border.input" },
+  _systemDark: { borderWidth: "1px", borderStyle: "solid", borderColor: "border.input" },
 });
 
 /** One wrap rule for card titles in both apps: natural breaks, no orphaned last word. */

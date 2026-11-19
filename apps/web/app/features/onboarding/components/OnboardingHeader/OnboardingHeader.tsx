@@ -20,7 +20,7 @@ export const OnboardingHeader: FC<OnboardingHeaderProps> = ({
     <header className={classes.root}>
       <HomeLogo renderLink={renderHomeLogoLink} />
       <div className={classes.text}>
-        <Heading as="h1" size="md">
+        <Heading as="h1" className={classes.title} size="md">
           Set up Flump
         </Heading>
         <Text className={classes.lead} color="secondary" textStyle="body.sm">

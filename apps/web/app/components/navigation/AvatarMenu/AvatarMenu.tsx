@@ -1,4 +1,4 @@
-import { Icon } from "@repo/ui";
+import { focusWithoutJump, Icon } from "@repo/ui";
 import { Bot, Calculator, ChevronDown, LogOut, MessageSquare, Settings } from "lucide-react";
 import { type FC, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,7 +29,8 @@ const AvatarMenu: FC<AvatarMenuProps> = ({ user }) => {
 
   const close = (restoreFocus: boolean) => {
     setOpen(false);
-    if (restoreFocus) triggerRef.current?.focus();
+    // Back to the trigger without scrolling the page to it (phone audit P12).
+    if (restoreFocus && triggerRef.current) focusWithoutJump(triggerRef.current);
   };
 
   useEffect(() => {

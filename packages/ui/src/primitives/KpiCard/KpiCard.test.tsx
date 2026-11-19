@@ -179,6 +179,45 @@ describe("KpiCard value size (R2-2)", () => {
     expect(values[0]?.className).toContain("textStyle_numeric.kpi");
   });
 
+  it("keeps tabular numerals on the figure only, not on label text or a word (P42)", () => {
+    const { container } = render(
+      <>
+        <KpiCard label="Debt-free date" value="March 2031" />
+        <KpiCard label="Repayment type" value="Interest-only" />
+      </>,
+    );
+    const labels = [...container.querySelectorAll("[data-kpi-eyebrow] > span")];
+    for (const label of labels) expect(label.className).toContain("fv-num_normal");
+    const [date, word] = [...container.querySelectorAll("[data-kpi-value]")];
+    // A date is a figure: it keeps tabular numerals and no override.
+    expect(date?.className).toContain("fv-num_tabular-nums");
+    expect(date?.className).not.toContain("fv-num_normal");
+    // A word has no digits, so its hyphen keeps normal spacing.
+    expect(word?.className).toContain("fv-num_normal");
+  });
+
+  it("puts everything under the value in one foot slot, so a strip can align rows (P21)", () => {
+    const { container } = render(
+      <KpiCard deltaText="+2%" label="Savings" subtext="Since last month" value={4000} />,
+    );
+    const card = container.querySelector("[data-kpi-card]") as HTMLElement;
+    // Label row, value row, foot: three items, whatever the card holds.
+    expect(card.children).toHaveLength(3);
+    const foot = card.querySelector("[data-kpi-foot]") as HTMLElement;
+    expect(foot.textContent).toBe("+2%Since last month");
+    const bare = render(<KpiCard label="Savings" value={4000} />).container;
+    expect(bare.querySelector("[data-kpi-foot]")).toBeNull();
+  });
+
+  it("uses the 2xl figure on a phone in a full-width card, as in two-up cards (P22)", () => {
+    const { container } = render(<KpiCard label="Take-home pay" value={2400} />);
+    const value = container.querySelector("[data-kpi-value]") as HTMLElement;
+    // Two-up phone cards (7 to 14rem wide) already use 2xl; a wider card on a phone matches.
+    expect(value.className).toContain(
+      "[@media_screen_and_(max-width:_39.99em)]:[@container_(min-width:_14.01rem)]:fs_2xl",
+    );
+  });
+
   it("lets a long text value wrap at words, and never splits a money figure", () => {
     const { container } = render(<KpiCard label="Date" value="December 2029" />);
     expect(container.querySelector("[data-kpi-value]")?.className).toContain("ov-wrap_break-word");

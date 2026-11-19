@@ -4,6 +4,11 @@ export const footerRow = cva({
   base: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "3" },
 });
 
+/** The sign-out form fills the drawer's width, so its button lines up with the rows above. */
+export const signOutForm = cva({
+  base: { display: "flex", width: "100%", margin: "0" },
+});
+
 export const signUpLink = cva({
   base: {
     display: "flex",

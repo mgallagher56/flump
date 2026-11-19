@@ -1,43 +1,8 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const panelOverlay = cva({
-  base: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "surface.scrim",
-    zIndex: 50,
-  },
-});
-
-export const panelContent = cva({
-  base: {
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    width: "calc(100vw - 32px)",
-    maxWidth: "480px",
-    maxHeight: "calc(100vh - 32px)",
-    overflowY: "auto",
-    p: { base: "20px", md: "24px" },
-    backgroundColor: "surface.card",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border",
-    boxShadow: "overlay",
-    color: "text.primary",
-    zIndex: 60,
-    outline: "none",
-    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
-  },
-});
-
-export const panelTitle = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
+/** The sheet body: the rule, any save error, then the list. */
+export const panelBody = cva({
+  base: { display: "flex", flexDirection: "column", gap: "3" },
 });
 
 export const panelDescription = cva({
@@ -90,10 +55,6 @@ export const panelRowLabel = cva({
 
 export const panelRowHint = cva({
   base: { textStyle: "body.sm", color: "text.muted" },
-});
-
-export const panelFooter = cva({
-  base: { display: "flex", justifyContent: "flex-end", marginTop: "8px" },
 });
 
 /** Whether a ticked section shows now; quiet text, pushed to the row's end. */

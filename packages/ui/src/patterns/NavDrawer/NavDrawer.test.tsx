@@ -101,4 +101,39 @@ describe("NavDrawer", () => {
     );
     expect(document.activeElement).toBe(action);
   });
+
+  it("locks page scroll while open and releases it on close (P11, P70)", () => {
+    const { rerender } = render(
+      <NavDrawer isOpen onClose={vi.fn()}>
+        <span />
+      </NavDrawer>,
+    );
+    // Radix's remove-scroll (the Dialog primitive's lock) marks the body while it holds the page.
+    expect(document.body.hasAttribute("data-scroll-locked")).toBe(true);
+    rerender(
+      <NavDrawer isOpen={false} onClose={vi.fn()}>
+        <span />
+      </NavDrawer>,
+    );
+    expect(document.body.hasAttribute("data-scroll-locked")).toBe(false);
+  });
+
+  it("returns focus without scrolling the page to the opener (P12)", () => {
+    const onClose = vi.fn();
+    const tree = (isOpen: boolean) => (
+      <>
+        <button type="button">Opener</button>
+        <NavDrawer isOpen={isOpen} onClose={onClose}>
+          <span />
+        </NavDrawer>
+      </>
+    );
+    const { rerender } = render(tree(false));
+    const opener = screen.getByRole("button", { name: "Opener" });
+    opener.focus();
+    const focusSpy = vi.spyOn(opener, "focus");
+    rerender(tree(true));
+    rerender(tree(false));
+    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+  });
 });

@@ -1,4 +1,5 @@
 import { Button, Card, PageSection } from "@repo/ui";
+import { cx } from "@repo/ui/styled-system/css";
 import { Download } from "lucide-react";
 import { type FC, useRef, useState } from "react";
 import {
@@ -6,7 +7,7 @@ import {
   downloadAccountExport as defaultDownload,
 } from "~/features/settings/accountExport";
 import { sectionCard, statusText } from "~/features/settings/settings.styles";
-import { exportRow } from "./DataExportSection.styles";
+import { exportCard, exportRow } from "./DataExportSection.styles";
 
 type ExportState = "idle" | "pending" | "done" | "rate_limited" | "failed";
 
@@ -56,7 +57,7 @@ export const DataExportSection: FC<DataExportSectionProps> = ({ download = defau
       title="Download your data"
       tone="neutral"
     >
-      <Card className={sectionCard()}>
+      <Card className={cx(sectionCard(), exportCard())}>
         <div className={exportRow()}>
           <Button
             id="export-data-button"

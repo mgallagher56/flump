@@ -123,6 +123,36 @@ export const LongBritishLabel: Story = {
   globals: { theme: "light" },
 };
 
+/**
+ * Tabular numerals sit on the figure only: the hyphens in "Mortgage-free date" and
+ * "Interest-only" keep their normal spacing (phone audit P42).
+ */
+const wordValueArgs = {
+  label: "Repayment type",
+  value: "Interest-only",
+  deltaText: undefined,
+  subtext: "Mortgage-free date not set",
+};
+
+const wordValuePlay: Story["play"] = async ({ canvasElement }) => {
+  const value = canvasElement.querySelector("[data-kpi-value]") as HTMLElement;
+  await expect(getComputedStyle(value).fontVariantNumeric).toBe("normal");
+  const label = within(canvasElement).getByText("Repayment type").parentElement as HTMLElement;
+  await expect(getComputedStyle(label).fontVariantNumeric).toBe("normal");
+};
+
+export const WordValue: Story = {
+  args: wordValueArgs,
+  globals: { theme: "light" },
+  play: wordValuePlay,
+};
+
+export const WordValueDark: Story = {
+  args: wordValueArgs,
+  globals: { theme: "dark" },
+  play: wordValuePlay,
+};
+
 const heroArgs = {
   label: "Net worth",
   value: <Money size="lg" tone="onContrast" value={184250} />,

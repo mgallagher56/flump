@@ -12,6 +12,7 @@ import {
   detailValue,
   savedLine,
   saveMessage,
+  stackedHeaderSection,
   summaryActions,
   summaryCard,
 } from "./MortgageSummary.styles";
@@ -83,6 +84,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
           </Button>
         </div>
       }
+      className={stackedHeaderSection()}
       description="The saved details behind your mortgage figures."
       domain="mortgage"
       headingId="mortgage-summary-title"

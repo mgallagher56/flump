@@ -55,10 +55,11 @@ export const PageHeader: FC<PageHeaderProps> = ({
 }) => {
   const text = description ?? subtitle;
   const withIcon = Boolean(illustration);
+  const withText = Boolean(text);
   return (
-    <header className={cx(pageHeaderContainer(), className)}>
+    <header className={cx(pageHeaderContainer({ iconRow: withIcon && withText }), className)}>
       {illustration ? (
-        <div className={pageHeaderIcon()} data-testid="page-header-illustration">
+        <div className={pageHeaderIcon({ withText })} data-testid="page-header-illustration">
           <Illustration scene={illustration} settle={false} size="sm" />
         </div>
       ) : null}

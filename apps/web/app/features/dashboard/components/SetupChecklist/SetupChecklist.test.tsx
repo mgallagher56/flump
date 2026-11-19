@@ -86,12 +86,23 @@ describe("SetupChecklist", () => {
     expect(screen.getByTestId("setup-checklist-finished")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Setup finished" })).toBeTruthy();
     expect(
-      screen.getByText(
-        "Setup is finished. Everything on your dashboard now uses your own figures.",
-      ),
+      screen.getByText("Everything on your dashboard now uses your own figures."),
     ).toBeTruthy();
     expect(document.querySelector("[data-setup-finished]")).not.toBeNull();
     expect(document.querySelector('[data-scene-part="sprout"]')).not.toBeNull();
+  });
+
+  it("leaves the Setup finished row out while the check-in row is Home's notice (P27)", () => {
+    renderChecklist({
+      completedSteps: ["budget", "accounts", "savings", "pension"],
+      anotherNoticeShows: true,
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Finish setting up/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Not for me, skip Add your mortgage details" }),
+    );
+    expect(screen.queryByTestId("setup-checklist-finished")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Setup finished" })).toBeNull();
   });
 
   it("only lists app housekeeping: no forecasts or scenarios", () => {

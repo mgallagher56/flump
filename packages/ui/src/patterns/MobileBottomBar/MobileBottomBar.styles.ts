@@ -1,5 +1,11 @@
 import { cva } from "../../../styled-system/css";
 
+/**
+ * A phone at large text: narrower than 20em (375px at 200% text is about 11.7em; 320px at default
+ * text is exactly 20em, so it does not match). See PageHeader.styles.ts.
+ */
+const LARGE_TEXT_PHONE = "@media screen and (max-width: 19.99em)";
+
 export const mobileBottomBarRoot = cva({
   base: {
     // Phones only: from the shared nav breakpoint (768px) the desktop navigation shows instead.
@@ -17,7 +23,9 @@ export const mobileBottomBarRoot = cva({
     paddingTop: "1.5",
     // Tight sides and no slot gap so every label fits whole at 320px (about 62px a slot); labels
     // are never truncated (owner ruling 2026-11-14).
-    paddingX: "1",
+    // The side insets keep the end items clear of the notch on a phone held sideways (P15).
+    paddingLeft: "max(token(spacing.1), env(safe-area-inset-left))",
+    paddingRight: "max(token(spacing.1), env(safe-area-inset-right))",
     paddingBottom: "calc(6px + env(safe-area-inset-bottom))",
   },
 });
@@ -86,9 +94,29 @@ export const mobileBottomBarLink = cva({
       insetInlineStart: "calc(50% + 0.75rem)",
       color: "text.muted",
     },
+    // At large text the label alone names the page: the icon goes and the item keeps to the 44px
+    // touch height, so the bar does not take a quarter of the screen (phone audit P19).
+    [LARGE_TEXT_PHONE]: {
+      minH: "touch",
+      "& > :first-child:not([data-nav-label])": { display: "none" },
+    },
   },
 });
 
 export const mobileBottomBarLabel = cva({
-  base: { maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  base: {
+    maxWidth: "100%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    // At large text a label wraps to two lines (hyphenated where a word is too long for its slot)
+    // instead of being cut to "Acc…" (phone audit P19).
+    [LARGE_TEXT_PHONE]: {
+      whiteSpace: "normal",
+      hyphens: "auto",
+      overflowWrap: "anywhere",
+      lineClamp: "2",
+      lineHeight: "tight",
+    },
+  },
 });

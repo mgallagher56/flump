@@ -138,13 +138,24 @@ const phonePlay: Story["play"] = async ({ canvasElement }) => {
   await expect(centre > titleBox.top && centre < titleBox.bottom + 8).toBe(true);
 };
 
+/**
+ * 375px wide. At 320 "Your budget" and a 44px-tall "Edit budget" button need about 296px and the
+ * row has 288, so there the action drops under the h1 instead (see PhoneLongTitle, P01 to P03).
+ */
+const phone375 = {
+  viewports: {
+    phone375: { name: "Phone 375", styles: { width: "375px", height: "812px" }, type: "mobile" },
+  },
+  defaultViewport: "phone375",
+};
+
 export const PhoneTitleAndAction: Story = {
   args: {
     title: "Your budget",
     description: "Your income, spending and how long your money lasts.",
     actions: <Button variant="outline">Edit budget</Button>,
   },
-  parameters: { viewport: { defaultViewport: "mobile1" } },
+  parameters: { viewport: phone375 },
   play: phonePlay,
 };
 
@@ -153,7 +164,20 @@ export const PhoneTitleAndActionDark: Story = {
   globals: { theme: "dark" },
 };
 
-/** Round 4: a long title on a phone wraps inside the screen, and the action moves below it. */
+/**
+ * A long title on a phone keeps the full width and the action drops under it, so the two never
+ * overlap and the h1 is not squeezed into a narrow column (phone audit P01, P03).
+ */
+const phoneLongTitlePlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const header = canvasElement.querySelector("header") as HTMLElement;
+  // Nothing runs off the side: the header is no wider than its container.
+  await expect(header.scrollWidth <= header.clientWidth + 1).toBe(true);
+  const title = canvas.getByRole("heading", { level: 1 }).getBoundingClientRect();
+  const action = canvas.getByRole("button", { name: "Edit details" }).getBoundingClientRect();
+  await expect(action.top >= title.bottom - 1).toBe(true);
+};
+
 export const PhoneLongTitle: Story = {
   args: {
     title: "Pension contributions and income above £100,000",
@@ -161,9 +185,76 @@ export const PhoneLongTitle: Story = {
     actions: <Button variant="outline">Edit details</Button>,
   },
   parameters: { viewport: { defaultViewport: "mobile1" } },
-  play: async ({ canvasElement }) => {
-    const header = canvasElement.querySelector("header") as HTMLElement;
-    // Nothing runs off the side: the header is no wider than its container.
-    await expect(header.scrollWidth <= header.clientWidth + 1).toBe(true);
+  play: phoneLongTitlePlay,
+};
+
+export const PhoneLongTitleDark: Story = {
+  ...PhoneLongTitle,
+  globals: { theme: "dark" },
+};
+
+/** With no description the icon sits before the h1, not alone on a row of its own (P50). */
+const phoneNoDescriptionPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const title = canvas.getByRole("heading", { level: 1 }).getBoundingClientRect();
+  const art = canvas.getByTestId("page-header-illustration").getBoundingClientRect();
+  await expect(art.top < title.bottom && art.bottom > title.top).toBe(true);
+};
+
+export const PhoneIllustrationNoDescription: Story = {
+  args: {
+    title: "Debt",
+    description: undefined,
+    illustration: "empty-savings",
+    actions: <Button size="sm">Add debt</Button>,
   },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: phoneNoDescriptionPlay,
+};
+
+export const PhoneIllustrationNoDescriptionDark: Story = {
+  ...PhoneIllustrationNoDescription,
+  globals: { theme: "dark" },
+};
+
+/**
+ * A phone in landscape (812x375): under 480px tall the header goes compact, with no icon or
+ * description and a smaller h1, so the h1 and the headline figure share the first view (P78).
+ * The play checks the rule against the viewport it runs in, so it holds at any size.
+ */
+const landscapePlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const short = window.matchMedia("(max-height: 479.98px)").matches;
+  const description = canvas.getByText("Everything you own and owe, in one place.");
+  const art = canvas.getByTestId("page-header-illustration");
+  await expect(getComputedStyle(description).display === "none").toBe(short);
+  await expect(getComputedStyle(art).display === "none").toBe(short);
+  await expect(canvas.getByRole("heading", { level: 1, name: "Your accounts" })).toBeVisible();
+};
+
+export const PhoneLandscape: Story = {
+  args: {
+    title: "Your accounts",
+    description: "Everything you own and owe, in one place.",
+    illustration: "empty-accounts",
+    actions: <Button size="sm">Add account</Button>,
+  },
+  parameters: {
+    viewport: {
+      viewports: {
+        phoneLandscape: {
+          name: "Phone landscape",
+          styles: { width: "812px", height: "375px" },
+          type: "mobile",
+        },
+      },
+      defaultViewport: "phoneLandscape",
+    },
+  },
+  play: landscapePlay,
+};
+
+export const PhoneLandscapeDark: Story = {
+  ...PhoneLandscape,
+  globals: { theme: "dark" },
 };

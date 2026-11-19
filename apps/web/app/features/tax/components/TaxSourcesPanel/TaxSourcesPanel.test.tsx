@@ -20,6 +20,21 @@ describe("TaxSourcesPanel", () => {
     expect(screen.getAllByRole("button")).toHaveLength(1);
   });
 
+  it("puts the add action under the list, not in the heading row (P25)", () => {
+    render(
+      <TaxSourcesPanel
+        action={<button type="button">Add income</button>}
+        records={taxRecordsFixture}
+        taxYear="2026/27"
+      />,
+    );
+    const footer = screen.getByTestId("tax-sources-action");
+    expect(footer.contains(screen.getByRole("button", { name: "Add income" }))).toBe(true);
+    // The footer follows the list, so the heading's description keeps the full width.
+    const list = screen.getByRole("list");
+    expect(list.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("shows each row's income less costs when there are several sources outside PAYE", () => {
     render(<TaxSourcesPanel records={taxRecordsFixture} taxYear="2026/27" />);
     expect(screen.getAllByText("a year, after expenses").length).toBeGreaterThan(1);

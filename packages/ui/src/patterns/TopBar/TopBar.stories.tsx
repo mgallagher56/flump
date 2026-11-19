@@ -65,3 +65,22 @@ export const Tablet: Story = {
 };
 
 export const TabletDark: Story = { ...Tablet, globals: { theme: "dark" } };
+
+/**
+ * Tablet with `linksFrom="wide"` as well: the menu button and no inline links, so the navigation
+ * never shows twice (marketing, P72). From 1024px the links show and the button goes.
+ */
+export const TabletMenuOnly: Story = {
+  args: { menuBelow: "wide", linksFrom: "wide", onMenuClick: () => undefined },
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "tablet" } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const wide = window.matchMedia("(min-width: 64rem)").matches;
+    const nav = canvasElement.querySelector('nav[aria-label="Primary"]') as HTMLElement;
+    await expect(getComputedStyle(nav).display === "none").toBe(!wide);
+    if (!wide) await expect(canvas.getByRole("button", { name: "Open menu" })).toBeVisible();
+  },
+};
+
+export const TabletMenuOnlyDark: Story = { ...TabletMenuOnly, globals: { theme: "dark" } };

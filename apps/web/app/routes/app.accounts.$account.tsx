@@ -85,6 +85,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
     const basis = userProfile === null ? null : netWorthBasisFromProfile(userProfile);
     return data({ account, accountDetails, basis, user });
   } catch (error) {
+    // The backend refuses an id it cannot read with a 400: to the reader that account does not
+    // exist, so it gets the not-found page with "Back to accounts", not "Try again" (P18).
+    if (error instanceof BackendError && error.kind === "client") {
+      throwRouteError(new BackendError("not-found", `/accounts/${accountId}`, 404));
+    }
     throwRouteError(error);
   }
 };

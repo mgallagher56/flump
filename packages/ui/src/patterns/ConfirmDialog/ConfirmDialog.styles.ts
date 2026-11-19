@@ -68,8 +68,10 @@ export const confirmField = cva({
 export const confirmInput = cva({
   base: {
     height: "control.md",
+    "@media (pointer: coarse)": { height: "touch" },
     px: "3",
-    fontSize: "sm",
+    // 16px, so iOS does not zoom the page when the field takes focus (phone audit P09).
+    fontSize: "md",
     fontVariantNumeric: "tabular-nums",
     color: "text.primary",
     backgroundColor: "surface.sunken",

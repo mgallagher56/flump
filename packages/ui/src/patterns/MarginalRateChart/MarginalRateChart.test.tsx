@@ -277,4 +277,15 @@ describe("MarginalRateChart", () => {
     ).toBeDefined();
     expect(screen.getByRole("rowheader", { name: "£50,000" })).toBeDefined();
   });
+
+  it("reserves the drawing's height in CSS from the chart's width, so nothing moves (P61)", () => {
+    renderChart();
+    const area = screen.getByTestId("marginal-rate-chart");
+    const svg = area.querySelector("svg") as SVGElement;
+    expect(area.className).toContain("cq-t_inline-size");
+    const cls = svg.getAttribute("class") ?? "";
+    expect(cls).toContain("h_280px");
+    expect(cls).toContain("[@container_(max-width:_479.98px)]:h_200px");
+    expect(cls).not.toContain("h_auto");
+  });
 });

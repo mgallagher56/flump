@@ -4,9 +4,10 @@ export const incomeStepRecipe = sva({
   slots: ["pair", "presets", "presetLabel", "presetButton"],
   base: {
     pair: { display: "grid", gap: "4", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" } },
+    // The three example salaries share one even row at every width, under their label (P58).
     presets: {
-      display: "flex",
-      flexWrap: "wrap",
+      display: "grid",
+      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
       gap: "2",
       alignItems: "center",
       border: "none",
@@ -14,7 +15,19 @@ export const incomeStepRecipe = sva({
       padding: 0,
       minWidth: 0,
     },
-    presetLabel: { textStyle: "body.sm", color: "text.secondary", float: "left", marginRight: "2" },
-    presetButton: { fontVariantNumeric: "tabular-nums" },
+    // Floated, a legend lays out like any grid item, so it can take the whole first row.
+    presetLabel: {
+      textStyle: "body.sm",
+      color: "text.secondary",
+      float: "left",
+      gridColumn: "1 / -1",
+    },
+    presetButton: {
+      fontVariantNumeric: "tabular-nums",
+      width: "100%",
+      minWidth: 0,
+      paddingX: "2",
+      whiteSpace: "nowrap",
+    },
   },
 });

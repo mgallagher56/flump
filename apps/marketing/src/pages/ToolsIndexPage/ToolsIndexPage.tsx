@@ -15,6 +15,7 @@ import {
   mainStyle,
   pageStyle,
   toolCardStyle,
+  toolIconTileStyle,
   toolItemStyle,
   toolListStyle,
   toolTitleStyle,
@@ -39,7 +40,11 @@ export const ToolsIndexPage: FC = () => (
           {TOOL_CATALOGUE.map((tool) => (
             <li key={tool.slug} className={toolItemStyle}>
               <Link to={`/tools/${tool.slug}`} className={toolCardStyle}>
-                <IconTile domain={tool.domain} icon={TOOL_ICONS[tool.icon]} />
+                <IconTile
+                  className={toolIconTileStyle}
+                  domain={tool.domain}
+                  icon={TOOL_ICONS[tool.icon]}
+                />
                 <Heading as="h2" className={toolTitleStyle} size="md">
                   {tool.title}
                 </Heading>

@@ -29,6 +29,24 @@ const resolveOpener = (): HTMLElement | null => {
   return null;
 };
 
+/**
+ * Return focus to an opener without jumping the page (phone audit P12). A plain `focus()` scrolls
+ * the page so the element is in view, even when the reader had scrolled on; here the page stays
+ * still, and only an opener that is now out of view is brought back, by the least scroll that
+ * shows it. Use it for every focus return in `@repo/ui` (dialogs, sheets, drawers, menus).
+ */
+export const focusWithoutJump = (element: HTMLElement) => {
+  element.focus({ preventScroll: true });
+  if (typeof window === "undefined" || typeof element.scrollIntoView !== "function") return;
+  const box = element.getBoundingClientRect();
+  // Not laid out (hidden, or a test DOM): there is nothing to scroll to.
+  if (box.width === 0 && box.height === 0) return;
+  const height = window.innerHeight || document.documentElement.clientHeight;
+  const width = window.innerWidth || document.documentElement.clientWidth;
+  const inView = box.top >= 0 && box.left >= 0 && box.bottom <= height && box.right <= width;
+  if (!inView) element.scrollIntoView({ block: "nearest", inline: "nearest" });
+};
+
 /** Opener is gone (for example it unmounted): land on the main landmark rather than `body`. */
 const focusMainLandmark = () => {
   const main = document.querySelector<HTMLElement>("main");
@@ -61,12 +79,12 @@ export const useDialogFocusReturn = (returnFocusTo?: () => HTMLElement | null) =
       if (active && active !== document.body) return;
       event.preventDefault();
       if (target?.isConnected) {
-        target.focus();
+        focusWithoutJump(target);
         return;
       }
       // Opened with nothing focused (for example from a URL): the page names its own control.
       const fallback = returnFocusTo?.();
-      if (fallback?.isConnected) fallback.focus();
+      if (fallback?.isConnected) focusWithoutJump(fallback);
       else if (target) focusMainLandmark();
     },
   };

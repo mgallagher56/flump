@@ -46,7 +46,7 @@ describe("AddDebtDialog", () => {
     expect(type.value).toBe("credit_card");
     expect(
       (screen.getByLabelText(/^Name of the debt/) as HTMLInputElement).getAttribute("placeholder"),
-    ).toBe("For example, credit card or car loan");
+    ).toBe("For example, car loan");
     expect(screen.queryByRole("button", { name: "Delete debt" })).toBeNull();
     for (const label of ["Balance you owe", "Minimum payment each month"]) {
       expect(

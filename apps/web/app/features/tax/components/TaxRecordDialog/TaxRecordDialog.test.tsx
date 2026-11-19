@@ -171,6 +171,16 @@ describe("TaxRecordDialog", () => {
     expect(footer?.className).toContain("pos_sticky");
   });
 
+  it("lets each field row shrink to the dialog, so it fits a 320px screen (P79)", () => {
+    const { dialog } = setup();
+    const form = dialog.querySelector("form") as HTMLFormElement;
+    expect(form.className).toContain("min-w_0");
+    const row = within(dialog)
+      .getByLabelText(/^Amount/)
+      .closest('[class*="grid-tc"]');
+    expect(row?.className).toContain("grid-tc_minmax(0,_1fr)");
+  });
+
   it("offers no salary category on a new PAYE record, and calls the type Expense", () => {
     const { dialog } = setup({ ...draft, source: "paye", category: "paye_bonus" });
     fireEvent.click(within(dialog).getByRole("button", { name: "Category and notes" }));

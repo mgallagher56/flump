@@ -30,8 +30,9 @@ export const drawerLinkLabel = cva({
   base: { display: "inline-flex", alignItems: "center", gap: "1.5" },
 });
 
+/** One line at every width, so every row is the same height at 320px (P71). */
 export const drawerLinkHint = cva({
-  base: { textStyle: "label.sm", fontWeight: "normal", color: "text.muted" },
+  base: { textStyle: "label.sm", fontWeight: "normal", color: "text.muted", whiteSpace: "nowrap" },
 });
 
 /** Full-width CTAs at the bottom of the drawer. */

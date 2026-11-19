@@ -4,6 +4,11 @@ export const list = cva({
   base: { listStyle: "none", margin: 0, padding: 0 },
 });
 
+/** The add menu under the list: its own row, so the heading's description keeps the full width. */
+export const footer = cva({
+  base: { display: "flex", justifyContent: "flex-start", paddingTop: "3", minWidth: 0 },
+});
+
 export const btlSourceRow = cva({
   base: {
     display: "flex",

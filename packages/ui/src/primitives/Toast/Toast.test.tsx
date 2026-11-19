@@ -332,4 +332,12 @@ describe("useOptionalToast", () => {
     });
     expect(screen.getByRole("list", { name: "Notifications" }).textContent).toContain("Saved");
   });
+
+  it("keeps the toast list clear of the side safe-area insets (P15)", () => {
+    setup("Saved");
+    show();
+    const cls = screen.getByRole("list", { name: "Notifications" }).className;
+    expect(cls).toContain("env(safe-area-inset-left,_0px)");
+    expect(cls).toContain("env(safe-area-inset-right,_0px)");
+  });
 });

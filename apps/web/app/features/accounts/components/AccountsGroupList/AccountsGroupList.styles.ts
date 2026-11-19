@@ -4,7 +4,8 @@ export const listRoot = cva({
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: { base: "24px", md: "32px" },
+    // The PageBody section gap, so every block on the page sits the same distance apart (P35).
+    gap: "page.section",
     minWidth: 0,
   },
 });
@@ -140,6 +141,20 @@ export const isaLink = cva({
 });
 
 /** Net worth and the one line under it about what counts. */
+/**
+ * The hero and what follows it. The space below the hero is the page's one section gap, the same
+ * as on Home where the next block is a PageBody section (P35).
+ */
 export const netWorthBlock = cva({
+  base: { display: "flex", flexDirection: "column", gap: "page.section", minWidth: 0 },
+});
+
+/** The basis line, the history link and the phone check-in button, close together. */
+export const netWorthAfter = cva({
   base: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
+});
+
+/** "See how it has changed": the basis line's size, so both links read as one style (P34). */
+export const historyLink = cva({
+  base: { textStyle: "body.sm" },
 });

@@ -38,8 +38,12 @@ export const sheetContentRecipe = cva({
     borderTopLeftRadius: "tray",
     borderTopRightRadius: "tray",
     borderBottomWidth: "0",
-    paddingTop: "3",
-    paddingX: "5",
+    // As tall as its content (up to the cap), with no fake grab handle (phone audit P31).
+    height: "auto",
+    paddingTop: "5",
+    // Clear the notch at the sides on a phone held sideways (phone audit P15).
+    paddingLeft: "max({spacing.5}, env(safe-area-inset-left, 0px))",
+    paddingRight: "max({spacing.5}, env(safe-area-inset-right, 0px))",
     paddingBottom: "calc({spacing.5} + env(safe-area-inset-bottom, 0px))",
     "@supports (height: 1dvh)": {
       maxHeight: "min(90dvh, calc(var(--visual-viewport-height, 100dvh) * 0.9))",
@@ -61,7 +65,8 @@ export const sheetContentRecipe = cva({
           marginX: "auto",
           width: "100%",
           maxWidth: "640px",
-          paddingX: "7",
+          paddingLeft: "7",
+          paddingRight: "7",
         },
       },
       // Bottom sheet under md, side sheet from md.
@@ -78,33 +83,16 @@ export const sheetContentRecipe = cva({
           borderTopLeftRadius: "tray",
           borderBottomLeftRadius: "tray",
           borderBottomWidth: "1px",
-          paddingTop: "7",
-          paddingX: "7",
+          // Below the notch and clear of it at the right edge, held sideways (phone audit P15).
+          paddingTop: "max({spacing.7}, env(safe-area-inset-top, 0px))",
+          paddingLeft: "7",
+          paddingRight: "max({spacing.7}, env(safe-area-inset-right, 0px))",
           paddingBottom: "calc({spacing.7} + env(safe-area-inset-bottom, 0px))",
           _motionSafe: {
             animationName: "slideInRight",
           },
         },
       },
-    },
-  },
-  defaultVariants: { side: "bottom" },
-});
-
-/** Grab handle: decorative, shown for the bottom-sheet presentation only. */
-export const sheetHandleRecipe = cva({
-  base: {
-    alignSelf: "center",
-    width: "10",
-    height: "1",
-    borderRadius: "full",
-    backgroundColor: "border.strong",
-    flexShrink: 0,
-  },
-  variants: {
-    side: {
-      bottom: {},
-      right: { md: { display: "none" } },
     },
   },
   defaultVariants: { side: "bottom" },
@@ -128,10 +116,13 @@ export const sheetDescriptionRecipe = cva({
   base: { textStyle: "body.sm", color: "text.muted", marginTop: "1", marginBottom: 0 },
 });
 
-/** The only scrolling region, so the header and footer stay put. */
+/**
+ * The only scrolling region, so the header and footer stay put. It shrinks to fit the height cap
+ * but never grows past its content, so there is no empty band under the buttons.
+ */
 export const sheetBodyRecipe = cva({
   base: {
-    flex: "1 1 auto",
+    flex: "0 1 auto",
     minHeight: 0,
     overflowY: "auto",
     overscrollBehavior: "contain",

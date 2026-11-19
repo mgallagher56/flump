@@ -12,7 +12,6 @@ import {
   sheetContentRecipe,
   sheetDescriptionRecipe,
   sheetFooterRecipe,
-  sheetHandleRecipe,
   sheetHeaderRecipe,
   sheetOverlayRecipe,
   sheetTitleRecipe,
@@ -48,8 +47,8 @@ export interface SheetProps {
 
 /**
  * Sheet on Radix Dialog (role="dialog", aria-modal, labelled by its title, Escape and scrim
- * dismiss, focus trapped and restored). Slides up from the bottom under `md` with a grab handle,
- * safe-area inset padding and an internally scrolling body. Shape-compatible with
+ * dismiss, focus trapped and restored). Slides up from the bottom under `md`, sized to its content, with
+ * safe-area inset padding and an internally scrolling body (no grab handle: it would do nothing). Shape-compatible with
  * SimulatorSplitLayout's `renderControlsContainer({ open, onOpenChange, id, label, children })`:
  * `<Sheet open onOpenChange id title={label}>{children}</Sheet>`.
  */
@@ -77,12 +76,13 @@ export const Sheet: FC<SheetProps> = ({
         <RadixDialog.Content
           id={id}
           data-testid={id}
+          // Names the surface, so a caller that swaps a Dialog for a Sheet can tell them apart.
+          data-sheet-side={side}
           aria-modal="true"
           {...focusReturn}
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cx(sheetContentRecipe({ side }), className)}
         >
-          <div aria-hidden="true" className={sheetHandleRecipe({ side })} />
           <div className={sheetHeaderRecipe()}>
             <div>
               <RadixDialog.Title

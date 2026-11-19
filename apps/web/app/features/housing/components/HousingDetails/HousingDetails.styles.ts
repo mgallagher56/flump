@@ -1,7 +1,7 @@
 import { sva } from "@repo/ui/styled-system/css";
 
 export const housingDetails = sva({
-  slots: ["root", "text", "figure", "form"],
+  slots: ["root", "text", "figure", "form", "footer"],
   base: {
     root: {
       display: "flex",
@@ -14,5 +14,13 @@ export const housingDetails = sva({
     text: { margin: "0", textStyle: "body.sm", color: "text.secondary", flex: "1 1 16rem" },
     figure: { fontVariantNumeric: "tabular-nums", fontWeight: "semibold", color: "text.primary" },
     form: { display: "flex", flexDirection: "column", gap: "4" },
+    /** The one sheet footer (RC-12): primary full width above Cancel on a phone, in a row from sm. */
+    footer: {
+      display: "flex",
+      flexDirection: { base: "column-reverse", sm: "row" },
+      justifyContent: "flex-end",
+      gap: "3",
+      "& > *": { width: { base: "100%", sm: "auto" } },
+    },
   },
 });

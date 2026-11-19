@@ -1,10 +1,9 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** Gives the error state breathing room inside the page, whichever route it replaces. */
+/**
+ * The error state sits in `PageBody`, which gives it the page gutters and top space (P36, P76);
+ * this only adds room below it, so the card never sits on the footer.
+ */
 export const boundaryRoot = cva({
-  base: {
-    width: "100%",
-    paddingX: "16px",
-    paddingY: { base: "24px", md: "48px" },
-  },
+  base: { paddingBottom: { base: "6", md: "12" } },
 });

@@ -156,6 +156,13 @@ describe("<MortgageEditDialog />", () => {
     expect(screen.queryByText(/^That is /)).toBeNull();
   });
 
+  it("stacks years and months in one column below sm (P66)", () => {
+    customRender(<MortgageEditDialog {...baseProps()} />);
+    const pair = screen.getByLabelText(/^Years left/).closest('[class*="grid-tc"]');
+    expect(pair?.className).toContain("grid-tc_minmax(0,_1fr)");
+    expect(pair?.className).toContain("sm:grid-tc_repeat(2,_minmax(0,_1fr))");
+  });
+
   it("shows the estimate in whole pounds only while no payment is entered", () => {
     const { unmount } = customRender(<MortgageEditDialog {...baseProps()} editPayment={1250.32} />);
     expect(screen.queryByText("Monthly payment (estimate)")).toBeNull();

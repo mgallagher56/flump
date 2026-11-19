@@ -1,7 +1,11 @@
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-import { OVERPAYMENT_ERC_NOTE, OverpaymentSimulator } from "./OverpaymentSimulator";
+import {
+  OVERPAYMENT_ERC_NOTE,
+  OverpaymentSimulator,
+  overpayEmptyPrompt,
+} from "./OverpaymentSimulator";
 
 const props = {
   loanAmount: 200000,
@@ -135,6 +139,25 @@ describe("<OverpaymentSimulator />", () => {
     );
     expect(getByText(/Add your balance, interest rate and years left/)).toBeDefined();
     expect(container.textContent).not.toMatch(/NaN|Infinity|Not set|\b0 months?\b/);
+  });
+
+  test("a buy to let with balance and rate saved is asked for the years left only (P40)", () => {
+    const { getByText, queryByText } = customRender(
+      <OverpaymentSimulator {...props} mortgageType="interest-only" remainingTerm={0} />,
+    );
+    expect(
+      getByText("Add the years left under Starting figures to see what overpaying would change."),
+    ).toBeDefined();
+    expect(queryByText(/balance, interest rate/)).toBeNull();
+  });
+
+  test("names only the figures that are missing", () => {
+    expect(overpayEmptyPrompt(0, 5, 20)).toBe(
+      "Add your balance to see what overpaying would change.",
+    );
+    expect(overpayEmptyPrompt(0, 0, 20)).toBe(
+      "Add your balance and interest rate to see what overpaying would change.",
+    );
   });
 
   test("names the chart and describes the illustration in one sentence", () => {

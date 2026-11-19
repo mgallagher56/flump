@@ -66,7 +66,7 @@ export const debtRow = cva({
 export const debtRowLegend = cva({
   base: {
     float: "left",
-    gridColumn: "1",
+    gridColumn: { base: "1 / -1", sm: "1" },
     gridRow: "1",
     alignSelf: "center",
     padding: "0",
@@ -75,8 +75,20 @@ export const debtRowLegend = cva({
   },
 });
 
+/**
+ * Below `sm` the actions sit on their own line under the debt name, so the name keeps the full
+ * width instead of wrapping to three lines beside them (phone audit P75). From `sm` they sit
+ * beside the name.
+ */
 export const debtRowActions = cva({
-  base: { display: "flex", gap: "1", justifySelf: "end", gridColumn: "2", gridRow: "1" },
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "1",
+    justifySelf: { base: "start", sm: "end" },
+    gridColumn: { base: "1 / -1", sm: "2" },
+    gridRow: { base: "2", sm: "1" },
+  },
 });
 
 /**
@@ -91,7 +103,7 @@ export const debtRowFields = cva({
     minWidth: "0",
     alignItems: "end",
     gridColumn: "1 / -1",
-    gridRow: "2",
+    gridRow: { base: "3", sm: "2" },
   },
 });
 

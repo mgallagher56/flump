@@ -191,7 +191,7 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
         {(field) => (
           <TextInput
             {...controlProps(field)}
-            placeholder="For example, credit card or car loan"
+            placeholder="For example, car loan"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />

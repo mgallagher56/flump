@@ -1,7 +1,7 @@
 import { Button, KpiCard, KpiStrip, Money, Num, PageSection } from "@repo/ui";
 import { Building2 } from "lucide-react";
 import type { FC } from "react";
-import { btlCard, btlSubtitle } from "./BtlOverview.styles";
+import { btlCard, btlSubtitle, stackedHeaderSection } from "./BtlOverview.styles";
 
 export interface BtlOverviewProps {
   /** `null` when the user has not said how many properties they let. */
@@ -38,6 +38,7 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
   return (
     <PageSection
       action={edit}
+      className={stackedHeaderSection()}
       description="Rent and rental yield for the properties you let."
       domain="mortgage"
       headingId="btl-overview-title"
@@ -75,7 +76,8 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
             label="Rent left after the mortgage payment (estimate)"
             value={
               rentLeft === null ? null : (
-                <Money fractionDigits={2} signDisplay="always" size="lg" value={rentLeft} />
+                // Whole pounds and no sign, as every other figure on the page (P39).
+                <Money size="lg" value={rentLeft} />
               )
             }
           />

@@ -179,7 +179,7 @@ describe("KpiStrip Pattern", () => {
     expect(ids[2]).toBe("mine");
   });
 
-  it("stacks 3 cards in one column at phone width, so none is orphaned (2 + 1)", () => {
+  it("sets 3 cards as two columns with the third full width at phone width (P20)", () => {
     const { container } = render(
       <KpiStrip columns={3}>
         <div>A</div>
@@ -188,9 +188,27 @@ describe("KpiStrip Pattern", () => {
       </KpiStrip>,
     );
     const cls = container.firstElementChild?.className ?? "";
-    expect(cls).toContain("grid-tc_minmax(0,_1fr)");
+    expect(cls).toContain("grid-tc_repeat(2,_minmax(0,_1fr))");
     expect(cls).toContain("sm:grid-tc_repeat(3,_minmax(0,_1fr))");
-    expect(cls).not.toContain("grid-tc_repeat(2");
+    // The third card spans both columns below sm, and takes its own column from sm.
+    expect(cls).toContain("[&_>_:nth-child(3):last-child]:grid-c_1_/_-1");
+    expect(cls).toContain("[&_>_:nth-child(3):last-child]:sm:grid-c_auto");
+  });
+
+  it("gives each card three shared rows, so values line up when a label wraps (P21)", () => {
+    const { container } = render(
+      <KpiStrip columns={2}>
+        <KpiCard label="Total you owe across every debt" value={12000} />
+        <KpiCard label="Rate" value="19.9%" />
+      </KpiStrip>,
+    );
+    const cls = container.firstElementChild?.className ?? "";
+    expect(cls).toContain("[&_>_[data-kpi-card]]:grid-tr_subgrid");
+    expect(cls).toContain("[&_>_[data-kpi-card]]:grid-r_span_3");
+    // Each card has exactly three row items for the subgrid: label, value and (here, none) foot.
+    for (const card of container.querySelectorAll("[data-kpi-card]")) {
+      expect(card.children.length).toBeLessThanOrEqual(3);
+    }
   });
 
   it("splits two cards into equal halves of the full width, so the strip lines up with the hero", () => {

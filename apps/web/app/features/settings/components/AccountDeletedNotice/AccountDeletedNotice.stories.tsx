@@ -18,7 +18,7 @@ export const Default: Story = {
     await expect(
       canvas.getByRole("heading", { name: "Your account has been deleted" }),
     ).toBeDefined();
-    const home = canvas.getByRole("link", { name: "Go to the Flump homepage" });
+    const home = canvas.getByRole("link", { name: "Go to the home page" });
     await expect(home.getAttribute("href")).toBe("https://example.com");
   },
 };

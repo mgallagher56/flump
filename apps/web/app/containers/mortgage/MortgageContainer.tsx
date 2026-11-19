@@ -147,6 +147,48 @@ const longDate = (iso: string | null | undefined): string | null => {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 };
 
+/**
+ * The first residential mortgage account and its saved figures, read the same way as the account
+ * effects in the page: a balance, rate or term that is not saved stays at its fallback (the
+ * profile balance, or 0 for empty). Nothing is assumed and nothing is written.
+ */
+export const firstResidentialFigures = (
+  accounts: ConstructorParameters<typeof PortfolioSnapshot>[0],
+  accountDetails: ConstructorParameters<typeof PortfolioSnapshot>[1],
+  profileBalance: number,
+): {
+  accountId: string | null;
+  loanAmount: number;
+  interestRate: number;
+  remainingTerm: number;
+} => {
+  const rows = accounts as unknown as ReadonlyArray<{
+    id?: unknown;
+    type?: string;
+    name?: string | null;
+    accountSubtype?: string | null;
+    interestRate?: unknown;
+    termMonths?: unknown;
+  }>;
+  const first = rows.find((a) => a.type === "Mortgage" && !isBuyToLetAccount(a) && !!a.id);
+  if (!first) {
+    return { accountId: null, loanAmount: profileBalance, interestRate: 0, remainingTerm: 0 };
+  }
+  const id = String(first.id);
+  const balance = new PortfolioSnapshot(
+    withWholeBalances(accounts),
+    accountDetails,
+  ).getLatestBalance(id);
+  const rate = Number(first.interestRate);
+  const termMonths = Number(first.termMonths);
+  return {
+    accountId: id,
+    loanAmount: balance > 0 ? balance : profileBalance,
+    interestRate: rate > 0 ? rate : 0,
+    remainingTerm: termMonths > 0 ? termMonths / 12 : 0,
+  };
+};
+
 const MortgageContainer: FC = () => {
   const { accounts = [], accountDetails = [], userProfile } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
@@ -174,9 +216,15 @@ const MortgageContainer: FC = () => {
   const [mortgageType, setMortgageType] = useState<"repayment" | "interest-only">(
     userProfile?.mortgageType || "repayment",
   );
-  const [loanAmount, setLoanAmount] = useState<number>(userProfile?.mortgageBalance ?? 0);
-  const [interestRate, setInterestRate] = useState<number>(0);
-  const [remainingTerm, setRemainingTerm] = useState<number>(0);
+  // The first residential mortgage account's saved figures are read in the first render, as the
+  // account effects below would read them a render later, so the hero, chart and scenario zone do
+  // not appear after the page has drawn (P61, layout shift). Read only.
+  const [initialFigures] = useState(() =>
+    firstResidentialFigures(accounts, accountDetails, userProfile?.mortgageBalance ?? 0),
+  );
+  const [loanAmount, setLoanAmount] = useState<number>(initialFigures.loanAmount);
+  const [interestRate, setInterestRate] = useState<number>(initialFigures.interestRate);
+  const [remainingTerm, setRemainingTerm] = useState<number>(initialFigures.remainingTerm);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -212,7 +260,9 @@ const MortgageContainer: FC = () => {
   const savingRef = useRef(false);
 
   // Synced account state
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    initialFigures.accountId,
+  );
 
   // The one financial picture (E23/E32): fix-end dates are read from it, never recomputed here.
   // Built from saved rows plus what this page has just saved.
@@ -292,9 +342,29 @@ const MortgageContainer: FC = () => {
 
   // Scenario state: seeded from the saved figures above, in memory only (no storage, no network,
   // no money in the URL).
+  // Buy to let keeps no term on the profile, so the what-if tools start from the term saved on the
+  // one buy-to-let mortgage account when there is exactly one (P40). Read only: nothing is written.
+  const btlAccountTerm = useMemo(() => {
+    const btlMortgages = (
+      accounts as Array<{
+        type?: string;
+        name?: string | null;
+        accountSubtype?: string | null;
+        termMonths?: unknown;
+      }>
+    ).filter((a) => a.type === "Mortgage" && isBuyToLetAccount(a));
+    const termMonths = btlMortgages.length === 1 ? Number(btlMortgages[0]?.termMonths) : 0;
+    return termMonths > 0 ? termMonths / 12 : 0;
+  }, [accounts]);
   const savedFigures = useMemo(
-    () => ({ loanAmount, interestRate, remainingTerm, overpayment: 0 }),
-    [loanAmount, interestRate, remainingTerm],
+    () => ({
+      loanAmount,
+      interestRate,
+      remainingTerm:
+        propertyCategory === "btl" && remainingTerm <= 0 ? btlAccountTerm : remainingTerm,
+      overpayment: 0,
+    }),
+    [loanAmount, interestRate, remainingTerm, propertyCategory, btlAccountTerm],
   );
   const scenario = useScenarioState(savedFigures);
   const [scenarioTool, setScenarioTool] = useState<ScenarioTool>("overpayment");

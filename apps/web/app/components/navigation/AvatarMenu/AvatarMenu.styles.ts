@@ -56,6 +56,8 @@ export const item = cva({
     gap: "3",
     width: "100%",
     padding: "10px 12px",
+    // 44px on touch screens (phone audit P45).
+    "@media (pointer: coarse)": { minHeight: "touch" },
     borderRadius: "lg",
     borderWidth: "0",
     textAlign: "left",

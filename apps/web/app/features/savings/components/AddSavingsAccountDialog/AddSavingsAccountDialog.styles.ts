@@ -12,11 +12,21 @@ export const fieldRow = cva({
   },
 });
 
+/**
+ * The one sheet footer (RC-12, P28): on a phone the primary is full width above Cancel (the DOM
+ * keeps Cancel first, so `column-reverse` puts the primary on top); from `sm` one row, right-aligned.
+ */
 export const formActions = cva({
-  base: { display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" },
+  base: {
+    display: "flex",
+    flexDirection: { base: "column-reverse", sm: "row" },
+    justifyContent: "flex-end",
+    gap: "3",
+    "& > *": { width: { base: "100%", sm: "auto" } },
+  },
 });
 
 /** "Delete account" sits at the start of the action row, apart from Cancel and Save. */
 export const deleteAction = cva({
-  base: { marginInlineEnd: "auto", display: "flex" },
+  base: { marginInlineEnd: { base: "0", sm: "auto" }, display: "flex" },
 });

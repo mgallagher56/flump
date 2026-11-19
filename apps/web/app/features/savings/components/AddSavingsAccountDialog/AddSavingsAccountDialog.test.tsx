@@ -62,16 +62,37 @@ describe("AddSavingsAccountDialog", () => {
     ).toBe("dangerSubtle");
   });
 
-  it("keeps Add account disabled until the account has a name and a kind", () => {
+  it("keeps Add account enabled and names what is missing on press (RC-12, P28)", () => {
     render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
     const add = screen.getByRole("button", { name: "Add account" }) as HTMLButtonElement;
-    expect(add.disabled).toBe(true);
+    expect(add.disabled).toBe(false);
+    fireEvent.click(add);
+    expect(screen.getByText("Enter a name for the account.")).toBeDefined();
+    expect(screen.getByText("Choose the kind of account.")).toBeDefined();
+    expect(mockSubmit).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText(/Account name/), { target: { value: "Marcus" } });
-    expect(add.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(/Kind of account/), {
       target: { value: "Saving:easy_access" },
     });
-    expect(add.disabled).toBe(false);
+    fireEvent.click(add);
+    expect(mockSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("puts Add account full width above Cancel on a phone (RC-12)", () => {
+    render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    const add = screen.getByRole("button", { name: "Add account" });
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    expect(add.parentElement).toBe(cancel.parentElement);
+    expect(add.parentElement?.className).toContain("flex-d_column-reverse");
+    // Cancel first in the DOM, so column-reverse puts the primary on top.
+    expect(cancel.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("uses a placeholder short enough for a 320px field (P44)", () => {
+    render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByLabelText(/Account name/).getAttribute("placeholder")).toBe(
+      "For example, Cash ISA",
+    );
   });
 
   it("names each kind once, grouped as savings, ISAs and investments", () => {

@@ -1,7 +1,7 @@
 import { HomeLogo, ThemeToggle, TopBar } from "@repo/ui";
 import { type FC, type ReactElement, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation, useRouteLoaderData } from "react-router";
+import { useLocation } from "react-router";
 import AvatarMenu from "~/components/navigation/AvatarMenu";
 import { buildNavManifest, findActiveNavKey } from "~/components/navigation/buildNavManifest";
 import { isSandboxPath } from "~/components/navigation/navConfig";
@@ -9,8 +9,8 @@ import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import { createRenderNavLink } from "~/components/navigation/renderNavLink";
 import UserLogin from "~/components/navigation/UserLogin";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { useRootUser } from "~/hooks/useRootUser";
 import { useUserProfile } from "~/hooks/useUserProfile";
-import type { loader } from "~/root";
 import { useThemeContext } from "~/ThemeContext";
 import { isPageEnabled } from "~/utils/pageConfig";
 
@@ -24,10 +24,9 @@ export interface HeaderProps {
 }
 
 const Header: FC<HeaderProps> = (): ReactElement<FC> => {
-  // Read by route id so the header sees the root loader's user from any route, including the root
-  // error boundary after a page below it failed. Undefined only when the root loader itself
-  // failed, and then the header renders signed out.
-  const user = useRouteLoaderData<typeof loader>("root")?.user ?? null;
+  // The root loader's user from any route, including the root error boundary; in the browser it
+  // keeps the last known user when a failed data request dropped the root data (P17).
+  const user = useRootUser();
   const { profile } = useUserProfile();
   const { pathname } = useLocation();
   const sandbox = !user && isSandboxPath(pathname);
@@ -88,15 +87,9 @@ const Header: FC<HeaderProps> = (): ReactElement<FC> => {
         }
         activeKey={activeKey}
         items={items}
-        // A real link beside the inline "Home": the logo marks the home page as current only on
-        // phones, where no inline "Home" shows (the bottom bar marks it there too).
-        logo={
-          <HomeLogo
-            current={activeKey === "home" && !!user}
-            markBelowInlineOnly
-            renderLink={renderHomeLogoLink}
-          />
-        }
+        // The logo never marks the current page: the inline "Home" or the phone's bottom bar
+        // already does, and a second mark under the logo read as an underline (P46).
+        logo={<HomeLogo renderLink={renderHomeLogoLink} />}
         menuControls="mobile-nav-drawer"
         menuExpanded={drawerOpen}
         // Tablets keep the menu button: the groups live in the drawer until navWide.

@@ -20,7 +20,16 @@ describe("MonthlyPictureSection (What you can see)", () => {
       "listitem",
     );
     expect(items).toHaveLength(3);
-    expect(container.querySelectorAll("[data-tile-tone]")).toHaveLength(3);
+    const tiles = Array.from(container.querySelectorAll("[data-tile-tone]"));
+    expect(tiles).toHaveLength(3);
+    // P74: all three tiles take the same tint. P77: each has a visible edge in dark mode.
+    expect(tiles.map((tile) => tile.getAttribute("data-tile-tone"))).toEqual([
+      "teal",
+      "teal",
+      "teal",
+    ]);
+    for (const tile of tiles)
+      expect(tile.getAttribute("class")).toContain("dark:bd-c_border.input");
     expect(items.map((li) => li.querySelector("h3")?.textContent)).toEqual(
       MONTHLY_PICTURE_ITEMS.map((item) => item.title),
     );

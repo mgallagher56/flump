@@ -74,6 +74,25 @@ describe("Button Primitive", () => {
     }
   });
 
+  it("link variant gives touch screens a 44px hit area without growing (P16)", () => {
+    render(<Button variant="link">See how it has changed</Button>);
+    const cls = screen.getByRole("button", { name: "See how it has changed" }).className;
+    const coarse = "[@media_(pointer:_coarse)]";
+    // The visible box stays inline (no min height); an invisible ::before takes the touch.
+    expect(cls).toContain(`${coarse}:min-h_0`);
+    expect(cls).toContain(`${coarse}:before:h_touch`);
+    expect(cls).toContain(`${coarse}:before:pos_absolute`);
+    expect(cls).toContain("pos_relative");
+  });
+
+  it("a disabled button uses the subtle fill in dark, not the darkest step (P29)", () => {
+    render(<Button disabled>Save</Button>);
+    const cls = screen.getByRole("button", { name: "Save" }).className;
+    expect(cls).toContain("bg_surface.sunken");
+    expect(cls).toMatch(/dark:bg_surface\.subtle/);
+    expect(cls).toMatch(/systemDark:bg_surface\.subtle/);
+  });
+
   it("renders no wrapper span unless pending", () => {
     render(<Button>Save</Button>);
     expect(screen.getByRole("button").querySelector("span")).toBeNull();

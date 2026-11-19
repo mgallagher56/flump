@@ -377,4 +377,21 @@ describe("ConfirmDialog", () => {
     expect(screen.getByRole("alertdialog").closest("body")).toBe(document.body);
     expect(document.body.querySelector('[role="alertdialog"]')?.parentElement).toBe(document.body);
   });
+
+  it("opens at its title: Cancel takes focus without scrolling the dialog (P09)", () => {
+    const focus = vi.spyOn(HTMLButtonElement.prototype, "focus");
+    setup({ requireText: "delete" });
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(screen.getByRole("alertdialog").scrollTop).toBe(0);
+    focus.mockRestore();
+  });
+
+  it("sets the type-to-confirm field at 16px so iOS does not zoom (P09)", () => {
+    setup({ requireText: "delete" });
+    const input = screen.getByRole("textbox");
+    // fontSizes.md is the 16px step; sm (14px) made iOS zoom on focus.
+    expect(input.className).toContain("fs_md");
+    expect(input.className).not.toContain("fs_sm");
+    expect(input.className).toContain("[@media_(pointer:_coarse)]:h_touch");
+  });
 });

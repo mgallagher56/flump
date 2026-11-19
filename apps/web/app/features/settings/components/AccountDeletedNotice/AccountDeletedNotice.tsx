@@ -1,4 +1,4 @@
-import { ButtonLink, Card } from "@repo/ui";
+import { ButtonLink, Card, PageBody } from "@repo/ui";
 import { type FC, useEffect } from "react";
 import { FinishDeletionPanel } from "~/features/settings/components/FinishDeletionPanel";
 import { useDeleteAccount } from "~/features/settings/hooks/useDeleteAccount";
@@ -34,32 +34,41 @@ export const AccountDeletedNotice: FC<AccountDeletedNoticeProps> = ({
 
   if (pending) {
     return (
+      <PageBody>
+        <div
+          className={noticeWrap()}
+          id="account-deleted-notice"
+          data-testid="account-deleted-notice"
+        >
+          <FinishDeletion />
+        </div>
+      </PageBody>
+    );
+  }
+
+  return (
+    // PageBody's gutters, the same as the not-found card (P76).
+    <PageBody>
       <div
         className={noticeWrap()}
         id="account-deleted-notice"
         data-testid="account-deleted-notice"
       >
-        <FinishDeletion />
+        <Card as="section" aria-labelledby="account-deleted-heading" className={noticeCard()}>
+          <h1 className={noticeHeading()} id="account-deleted-heading">
+            Your account has been deleted
+          </h1>
+          <p className={noticeCopy()}>
+            Your data and your login have been removed, and you have been signed out.
+          </p>
+          <p className={noticeCopy()}>Thank you for using Flump.</p>
+          <div>
+            <ButtonLink href={homeUrl} variant="outline">
+              Go to the home page
+            </ButtonLink>
+          </div>
+        </Card>
       </div>
-    );
-  }
-
-  return (
-    <div className={noticeWrap()} id="account-deleted-notice" data-testid="account-deleted-notice">
-      <Card as="section" aria-labelledby="account-deleted-heading" className={noticeCard()}>
-        <h1 className={noticeHeading()} id="account-deleted-heading">
-          Your account has been deleted
-        </h1>
-        <p className={noticeCopy()}>
-          Your data and your login have been removed, and you have been signed out.
-        </p>
-        <p className={noticeCopy()}>Thank you for using Flump.</p>
-        <div>
-          <ButtonLink href={homeUrl} variant="outline">
-            Go to the Flump homepage
-          </ButtonLink>
-        </div>
-      </Card>
-    </div>
+    </PageBody>
   );
 };

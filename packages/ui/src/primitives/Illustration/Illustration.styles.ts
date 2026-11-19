@@ -57,12 +57,13 @@ export const sceneClasses = {
     fill: { base: "surface.sunken", _dark: "surface.subtle", _systemDark: "surface.subtle" },
   }),
   // The apricot sun is the brightest shape in a scene, so it is muted to a tint: about half
-  // strength in light and less than a fifth in dark, where even a quarter read as a loud brown
-  // disc on the canvas (R2-8).
+  // strength in light and under a third in dark. A quarter read as a loud brown disc on the
+  // canvas (R2-8), but 0.15 all but vanished on a dark card (1.35:1, the halo 1.12:1); 0.3 gives
+  // the disc about 1.9:1 and the halo 1.25:1 on the card and the canvas (P77).
   // fill-opacity, not opacity, so the halo's own opacity attribute still applies on top.
   apricot: css({
     fill: "chart.debt",
-    fillOpacity: { base: "0.5", _dark: "0.15", _systemDark: "0.15" },
+    fillOpacity: { base: "0.5", _dark: "0.3", _systemDark: "0.3" },
   }),
   sage: css({ fill: "chart.wealth" }),
   tealSoft: css({ fill: "primary.border" }),

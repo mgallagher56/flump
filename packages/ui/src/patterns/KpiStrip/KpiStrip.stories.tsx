@@ -171,6 +171,41 @@ export const ThreeColumns: Story = {
   globals: { theme: "light" },
 };
 
+/**
+ * Phone audit P20, P21, P22: on a phone three cards sit as two columns with the third full width,
+ * the two figures on the first row share a line although one label wraps, and every figure has
+ * the same size.
+ */
+const ThreeOnPhoneStrip = () => (
+  <KpiStrip>
+    <KpiCard label="Monthly payment" value={1150} />
+    <KpiCard label="Interest you pay over the whole term" value={98400} />
+    <KpiCard label="Mortgage-free date" value="March 2051" />
+  </KpiStrip>
+);
+
+const threeOnPhonePlay: Story["play"] = async ({ canvasElement }) => {
+  const values = Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-kpi-value]"));
+  await expect(values).toHaveLength(3);
+  const [first, second, third] = values.map((v) => v.getBoundingClientRect());
+  if (!first || !second || !third) return;
+  // First row: side by side, figures on one line whatever the labels do.
+  await expect(Math.abs(first.top - second.top)).toBeLessThanOrEqual(1);
+  // Third card: under them, full width (below `sm`, 40em).
+  if (window.innerWidth < 640) await expect(third.top).toBeGreaterThan(first.bottom);
+  const [a, , c] = values.map((v) => getComputedStyle(v).fontSize);
+  await expect(c).toBe(a);
+};
+
+export const ThreeOnPhone: Story = {
+  render: () => <ThreeOnPhoneStrip />,
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: threeOnPhonePlay,
+};
+
+export const ThreeOnPhoneDark: Story = { ...ThreeOnPhone, globals: { theme: "dark" } };
+
 export const WithEmptyAndLoading: Story = {
   render: () => (
     <KpiStrip columns={4}>
