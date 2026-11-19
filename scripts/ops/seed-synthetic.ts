@@ -37,6 +37,9 @@ export const USER_DATA_TABLES = [
   "import_batches",
   // BE-05 before-image of re-signed liability rows (child of accounts, ON DELETE CASCADE).
   "liability_sign_backfill",
+  // System audit slice 4 before-image (kinds, links and repayment types its migrations filled, and
+  // the accounts and history rows they added; child of accounts, ON DELETE CASCADE).
+  "account_home_backfill",
   "accounts",
   "bank_connections",
   // BE-12 pending bank OAuth consents (random state hash and PKCE verifier, ten minutes).
