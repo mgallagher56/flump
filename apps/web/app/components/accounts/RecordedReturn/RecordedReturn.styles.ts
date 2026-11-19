@@ -1,5 +1,10 @@
 import { cva } from "@repo/ui/styled-system/css";
 
+/** The recorded block, with the user's own assumption as a separate line below it. */
+export const recordedReturnWrap = cva({
+  base: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
+});
+
 export const recordedReturnRoot = cva({
   base: {
     display: "flex",
@@ -67,6 +72,17 @@ export const recordedReturnNote = cva({
     textStyle: "body.sm",
     color: "text.muted",
     margin: 0,
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
+/** The user's own assumed return: outside the recorded block, never in its list. */
+export const recordedReturnAssumption = cva({
+  base: {
+    textStyle: "body.sm",
+    color: "text.secondary",
+    margin: 0,
+    paddingInline: { base: "16px", md: "20px" },
     fontVariantNumeric: "tabular-nums",
   },
 });

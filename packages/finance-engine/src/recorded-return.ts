@@ -49,6 +49,28 @@
  * At least `MIN_RECORDED_RETURN_MONTHS` (3) months in a row are needed, which is two monthly
  * returns. Below that the result is `{ status: "not-enough-history" }`.
  *
+ * ## Unreliable history
+ *
+ * Two checks run on the measured months before any figure is given. Either one gives
+ * `{ status: "unreliable" }` with a reason, and no figure, because the figure would describe the
+ * records rather than the investments:
+ *
+ * - `contribution-not-reflected`: a monthly contribution is set, yet the balance did not rise in
+ *   any measured month (every month ends at or below where it started). With money paid in every
+ *   month, a balance that never rises means the investments fell by more than the payment in every
+ *   single month. That can happen in a long fall, but far more often the payments are not being
+ *   made or not being recorded. A flat 1,000 with 500 a month set would otherwise read as -40% a
+ *   month: (1000 - 1000 - 500) / (1000 + 250) = -0.4. One month that rises is enough to pass, and
+ *   with no contribution set the check does not apply, so a genuine fall still shows as a
+ *   negative figure.
+ * - `implausible-month`: any one month's return is beyond `MAX_PLAUSIBLE_MONTHLY_RETURN` (25%) up
+ *   or down. Broad stock market indices have rarely moved more than about 20% in a calendar month,
+ *   even in the worst crashes, so 25% leaves room for a real crash while catching what a mistyped
+ *   balance (a missing or extra digit) or a missing payment usually gives, which is far more. The
+ *   first such month is returned so the screen can name it.
+ *
+ * The contribution check runs first, as its cause is more specific.
+ *
  * Negative returns are returned as negative numbers. Returns are fractions (0.01 is 1%), unrounded.
  * Pure: no clock, no formatting.
  */
@@ -76,8 +98,18 @@ export interface RecordedYearReturn {
   return: number;
 }
 
+export type RecordedReturnUnreliableReason = "contribution-not-reflected" | "implausible-month";
+
 export type RecordedReturnResult =
   | { status: "not-enough-history"; minimumMonths: number }
+  | {
+      status: "unreliable";
+      reason: RecordedReturnUnreliableReason;
+      /** The monthly payment assumed in every month measured. */
+      monthlyContribution: number;
+      /** For `implausible-month`: the first month beyond the bound, and the month before it. */
+      month?: { from: { year: number; month: number }; to: { year: number; month: number } };
+    }
   | {
       status: "ok";
       /** Oldest first. */
@@ -99,6 +131,9 @@ export const MIN_RECORDED_RETURN_MONTHS = 3;
 
 /** Months measured before the overall figure is given as a yearly rate. */
 const ANNUALISE_FROM_MONTHS = 12;
+
+/** Largest one-month return, up or down, taken as a real move rather than a record to check. */
+export const MAX_PLAUSIBLE_MONTHLY_RETURN = 0.25;
 
 const MID_MONTH_WEIGHT = 0.5;
 
@@ -135,7 +170,13 @@ export function estimateRecordedReturn(input: RecordedReturnInput): RecordedRetu
   }
   const ordered = [...byMonth.entries()].sort(([a], [b]) => a - b);
 
-  const monthly: { year: number; r: number }[] = [];
+  const monthly: {
+    year: number;
+    r: number;
+    rose: boolean;
+    from: RecordedBalance;
+    to: RecordedBalance;
+  }[] = [];
   let run = 1;
   let longestRun = ordered.length > 0 ? 1 : 0;
   for (let i = 1; i < ordered.length; i++) {
@@ -146,13 +187,33 @@ export function estimateRecordedReturn(input: RecordedReturnInput): RecordedRetu
       run = 1;
       continue;
     }
-    monthly.push({ year: cur.year, r });
+    monthly.push({ year: cur.year, r, rose: cur.value > prev.value, from: prev, to: cur });
     run += 1;
     longestRun = Math.max(longestRun, run);
   }
 
   if (longestRun < MIN_RECORDED_RETURN_MONTHS) {
     return { status: "not-enough-history", minimumMonths: MIN_RECORDED_RETURN_MONTHS };
+  }
+
+  if (paidIn > 0 && !monthly.some((m) => m.rose)) {
+    return {
+      status: "unreliable",
+      reason: "contribution-not-reflected",
+      monthlyContribution: paidIn,
+    };
+  }
+  const implausible = monthly.find((m) => Math.abs(m.r) > MAX_PLAUSIBLE_MONTHLY_RETURN);
+  if (implausible) {
+    return {
+      status: "unreliable",
+      reason: "implausible-month",
+      monthlyContribution: paidIn,
+      month: {
+        from: { year: implausible.from.year, month: implausible.from.month },
+        to: { year: implausible.to.year, month: implausible.to.month },
+      },
+    };
   }
 
   const yearMap = new Map<number, number[]>();

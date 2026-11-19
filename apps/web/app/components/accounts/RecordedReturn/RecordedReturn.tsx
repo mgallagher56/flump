@@ -1,12 +1,16 @@
 import {
   estimateRecordedReturn,
+  INVESTMENT_RISK_NOTICE,
+  MAX_PLAUSIBLE_MONTHLY_RETURN,
   MIN_RECORDED_RETURN_MONTHS,
   type RecordedBalance,
+  type RecordedReturnResult,
 } from "@flump/finance-engine";
 import { type FC, useMemo } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { isFutureMonth } from "~/utils/accounts";
 import {
+  recordedReturnAssumption,
   recordedReturnFigure,
   recordedReturnHeading,
   recordedReturnList,
@@ -14,6 +18,7 @@ import {
   recordedReturnRoot,
   recordedReturnRow,
   recordedReturnTerm,
+  recordedReturnWrap,
 } from "./RecordedReturn.styles";
 
 export interface RecordedReturnProps {
@@ -21,7 +26,10 @@ export interface RecordedReturnProps {
   balances: readonly RecordedBalance[];
   /** The account's monthly contribution setting, assumed paid in every month. */
   monthlyContribution?: number | null;
-  /** The user's own "Estimated annual return" (5 means 5%), shown beside the figures if set. */
+  /**
+   * The user's own "Estimated annual return" (5 means 5%). When set it shows as its own line
+   * below the recorded block, outside it, never in a row beside the recorded figures.
+   */
   assumedAnnualReturn?: number | null;
   /** Heading text; defaults to `RECORDED_RETURN_HEADING`. */
   heading?: string;
@@ -70,15 +78,44 @@ const formatTypedRate = (percent: number): string =>
 export const yearLabel = (year: number, months: number): string =>
   months >= 12 ? String(year) : `${year} (${months} ${months === 1 ? "month" : "months"})`;
 
+const monthYear = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** "March 2026" for year 2026, month 3. */
+export const monthYearLabel = (m: { year: number; month: number }): string =>
+  monthYear.format(new Date(Date.UTC(m.year, m.month - 1, 1)));
+
+export const UNRELIABLE_LEAD = "Not enough reliable history.";
+
+/** Why the recorded balances give no figure, in plain words: a fact and what to check. */
+export const unreliableReason = (
+  result: Extract<RecordedReturnResult, { status: "unreliable" }>,
+  formatMoney: (n: number) => string,
+): string => {
+  if (result.reason === "contribution-not-reflected") {
+    return `The balances recorded do not show the ${formatMoney(result.monthlyContribution)} paid in each month. Check the monthly contribution on this account.`;
+  }
+  const bound = Math.round(MAX_PLAUSIBLE_MONTHLY_RETURN * 100);
+  const span = result.month
+    ? ` between ${monthYearLabel(result.month.from)} and ${monthYearLabel(result.month.to)}`
+    : "";
+  return `The balance changes by more than ${bound}% in one month${span}. Check the balances recorded for those months.`;
+};
+
 export const overallLabel = (months: number, annualised: boolean): string =>
   annualised ? "Overall, a year on average" : `Overall, over ${months} months`;
 
 /**
  * The return an investment account made, estimated from its recorded monthly balances (owner item
  * 10b): one figure per calendar year and one overall, worked out by `estimateRecordedReturn` in
- * the finance engine. A past figure, never a prediction. The user's own assumed return sits beside
- * it as a plain fact, with no comparison in words or colour; a fall shows with a minus sign in the
- * usual text colour.
+ * the finance engine. A past figure, never a prediction, in its own labelled block with its own
+ * notes and the standard investment line. The user's own assumed return, when set, is a separate
+ * line outside that block, never in the same row or list, so the two are not compared by placement.
+ * A fall shows with a minus sign in the usual text colour. Records that cannot give a reliable
+ * figure (a contribution the balances do not show, or a month beyond the plausible bound) say why.
  */
 const RecordedReturn: FC<RecordedReturnProps> = ({
   balances,
@@ -98,47 +135,58 @@ const RecordedReturn: FC<RecordedReturnProps> = ({
   const hasAssumption =
     typeof assumedAnnualReturn === "number" && Number.isFinite(assumedAnnualReturn);
 
+  const formatMoney = (n: number) => formatCurrency(n, { maximumFractionDigits: 0 });
+
   return (
-    <section aria-labelledby={headingId} className={recordedReturnRoot()} data-testid={id} id={id}>
-      <Heading className={recordedReturnHeading()} id={headingId}>
-        {heading}
-      </Heading>
-      {result.status === "not-enough-history" ? (
-        <p className={recordedReturnNote()}>
-          {`Not enough history yet: this needs at least ${MIN_RECORDED_RETURN_MONTHS} months of balances in a row.`}
-        </p>
-      ) : (
-        <>
-          <dl className={recordedReturnList()}>
-            {result.years.map((y) => (
-              <div className={recordedReturnRow()} key={y.year}>
-                <dt className={recordedReturnTerm()}>{yearLabel(y.year, y.months)}</dt>
-                <dd className={recordedReturnFigure()}>{formatReturn(y.return)}</dd>
-              </div>
-            ))}
-            <div className={recordedReturnRow({ emphasis: true })}>
-              <dt className={recordedReturnTerm()}>
-                {overallLabel(result.overall.months, result.overall.annualised)}
-              </dt>
-              <dd className={recordedReturnFigure()}>{formatReturn(result.overall.return)}</dd>
-            </div>
-          </dl>
+    <div className={recordedReturnWrap()}>
+      <section
+        aria-labelledby={headingId}
+        className={recordedReturnRoot()}
+        data-testid={id}
+        id={id}
+      >
+        <Heading className={recordedReturnHeading()} id={headingId}>
+          {heading}
+        </Heading>
+        {result.status === "not-enough-history" ? (
           <p className={recordedReturnNote()}>
-            {result.monthlyContribution > 0
-              ? `Assumes ${formatCurrency(result.monthlyContribution, { maximumFractionDigits: 0 })} paid in each month, your monthly contribution.`
-              : "Assumes nothing paid in, as no monthly contribution is set."}
+            {`Not enough history yet: this needs at least ${MIN_RECORDED_RETURN_MONTHS} months of balances in a row.`}
           </p>
-        </>
-      )}
+        ) : result.status === "unreliable" ? (
+          <p className={recordedReturnNote()}>
+            {`${UNRELIABLE_LEAD} ${unreliableReason(result, formatMoney)}`}
+          </p>
+        ) : (
+          <>
+            <dl className={recordedReturnList()}>
+              {result.years.map((y) => (
+                <div className={recordedReturnRow()} key={y.year}>
+                  <dt className={recordedReturnTerm()}>{yearLabel(y.year, y.months)}</dt>
+                  <dd className={recordedReturnFigure()}>{formatReturn(y.return)}</dd>
+                </div>
+              ))}
+              <div className={recordedReturnRow({ emphasis: true })}>
+                <dt className={recordedReturnTerm()}>
+                  {overallLabel(result.overall.months, result.overall.annualised)}
+                </dt>
+                <dd className={recordedReturnFigure()}>{formatReturn(result.overall.return)}</dd>
+              </div>
+            </dl>
+            <p className={recordedReturnNote()}>
+              {result.monthlyContribution > 0
+                ? `Assumes ${formatMoney(result.monthlyContribution)} paid in each month, your monthly contribution.`
+                : "Assumes nothing paid in, as no monthly contribution is set."}
+            </p>
+            <p className={recordedReturnNote()}>{INVESTMENT_RISK_NOTICE}</p>
+          </>
+        )}
+      </section>
       {hasAssumption ? (
-        <dl className={recordedReturnList()}>
-          <div className={recordedReturnRow()}>
-            <dt className={recordedReturnTerm()}>Your estimated annual return</dt>
-            <dd className={recordedReturnFigure()}>{formatTypedRate(assumedAnnualReturn)}</dd>
-          </div>
-        </dl>
+        <p className={recordedReturnAssumption()}>
+          {`The estimated annual return you set for this account is ${formatTypedRate(assumedAnnualReturn)}.`}
+        </p>
       ) : null}
-    </section>
+    </div>
   );
 };
 

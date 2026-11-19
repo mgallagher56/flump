@@ -61,9 +61,11 @@ describe("RecordedReturn", () => {
       ),
     ).toBeDefined();
     expect(within(region).queryByText(/^Overall/)).toBeNull();
-    // The user's own assumption still shows, as a plain fact.
-    expect(within(region).getByText("Your estimated annual return")).toBeDefined();
-    expect(within(region).getByText("5%")).toBeDefined();
+    // The user's own assumption still shows, as a plain fact outside the recorded block.
+    expect(within(region).queryByText(/you set for this account/)).toBeNull();
+    expect(
+      screen.getByText("The estimated annual return you set for this account is 5%."),
+    ).toBeDefined();
   });
 
   it("shows one figure per year and an overall figure, with the payment assumed", () => {
@@ -97,7 +99,8 @@ describe("RecordedReturn", () => {
     expect(
       within(region).getByText("Assumes £100 paid in each month, your monthly contribution."),
     ).toBeDefined();
-    expect(within(region).queryByText("Your estimated annual return")).toBeNull();
+    expect(within(region).getByText("Investment returns can go down as well as up.")).toBeDefined();
+    expect(screen.queryByText(/you set for this account/)).toBeNull();
   });
 
   it("says when nothing is assumed paid in", () => {
@@ -113,6 +116,71 @@ describe("RecordedReturn", () => {
     );
     expect(
       screen.getByText("Assumes nothing paid in, as no monthly contribution is set."),
+    ).toBeDefined();
+  });
+
+  it("keeps the assumption out of the recorded figures' list", () => {
+    // 1,000 -> 1,010 -> 1,020.10, nothing paid in: +1% twice.
+    customRender(
+      <RecordedReturn
+        assumedAnnualReturn={5}
+        balances={[
+          { year: 2026, month: 1, value: 1000 },
+          { year: 2026, month: 2, value: 1010 },
+          { year: 2026, month: 3, value: 1020.1 },
+        ]}
+        id="recorded-return"
+      />,
+    );
+    const region = screen.getByRole("region", { name: HEADING });
+    const terms = within(region)
+      .getAllByRole("term")
+      .map((t) => t.textContent);
+    expect(terms).toEqual(["2026 (2 months)", "Overall, over 2 months"]);
+    const line = screen.getByText("The estimated annual return you set for this account is 5%.");
+    expect(region.contains(line)).toBe(false);
+  });
+
+  it("says when the balances do not show the monthly contribution", () => {
+    // 1,000 flat with 500 a month set: (1000 - 1000 - 500) / (1000 + 250) = -40% a month, which
+    // describes the records, not the investments. No figure, the reason instead.
+    customRender(
+      <RecordedReturn
+        balances={[
+          { year: 2026, month: 1, value: 1000 },
+          { year: 2026, month: 2, value: 1000 },
+          { year: 2026, month: 3, value: 1000 },
+        ]}
+        id="recorded-return"
+        monthlyContribution={500}
+      />,
+    );
+    const region = screen.getByRole("region", { name: HEADING });
+    expect(
+      within(region).getByText(
+        "Not enough reliable history. The balances recorded do not show the £500 paid in each month. Check the monthly contribution on this account.",
+      ),
+    ).toBeDefined();
+    expect(within(region).queryByRole("definition")).toBeNull();
+    expect(within(region).queryByText(/-40/)).toBeNull();
+  });
+
+  it("names the month that moves by more than 25%", () => {
+    // 1,000 -> 1,010 -> 1,313, nothing paid in: February to March is 303 / 1010 = +30%.
+    customRender(
+      <RecordedReturn
+        balances={[
+          { year: 2026, month: 1, value: 1000 },
+          { year: 2026, month: 2, value: 1010 },
+          { year: 2026, month: 3, value: 1313 },
+        ]}
+        id="recorded-return"
+      />,
+    );
+    expect(
+      screen.getByText(
+        "Not enough reliable history. The balance changes by more than 25% in one month between February 2026 and March 2026. Check the balances recorded for those months.",
+      ),
     ).toBeDefined();
   });
 });

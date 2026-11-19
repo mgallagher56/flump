@@ -1,4 +1,4 @@
-import { describeJointWholeValue, isIsaAccount } from "@flump/finance-engine";
+import { describeJointWholeValue, INVESTMENT_RISK_NOTICE, isIsaAccount } from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
@@ -167,7 +167,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         </FormField>
         <FormField
           // The risk line stays visible (fixed wording); only the explanation moves to the "i".
-          hint={isInvestment ? "Investment returns can go down as well as up." : undefined}
+          hint={isInvestment ? INVESTMENT_RISK_NOTICE : undefined}
           label={isInvestment ? "Estimated annual return (%)" : "Interest rate (AER)"}
           labelAddon={
             isInvestment ? (
