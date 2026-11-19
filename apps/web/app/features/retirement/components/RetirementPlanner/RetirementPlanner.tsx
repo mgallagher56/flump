@@ -42,6 +42,8 @@ import {
   ScenarioZone,
   SimulatorSplitLayout,
   SliderField,
+  Th,
+  useTableSort,
   WholeNumberInput,
 } from "@repo/ui";
 import { Calendar, ClipboardList } from "lucide-react";
@@ -107,6 +109,106 @@ const pct = (rate: number) => `${pctFormatter.format(rate * 100)}%`;
 /** An exact nothing is a fact, not an estimate: "£0", never "~£0". */
 const formatEstimateOrNil = (amount: number): string =>
   Math.round(amount) === 0 ? formatWholeGbp(0) : formatEstimate(amount);
+
+const GROWTH_CASES = ["lower", "middle", "higher"] as const;
+
+/** The three growth cases side by side. Sorting only: three rows whose order (lower, middle, higher) carries meaning. */
+const CaseTable: FC<{
+  plan: RetirementPlanResult;
+  caseLabel: (c: RetirementGrowthCase) => string;
+}> = ({ plan, caseLabel }) => {
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: GROWTH_CASES,
+    columns: {
+      income: { value: (c) => plan.estimatedYearlyIncomeGbp[c], firstDirection: "desc" },
+      pot: { value: (c) => plan.projectedPotAtRetirementGbp[c], firstDirection: "desc" },
+    },
+  });
+  return (
+    <table className={scheduleTable()}>
+      <thead>
+        <tr>
+          <th className={scheduleHeaderCell()}>Case</th>
+          <Th bare className={scheduleHeaderCell()} {...getSortProps("income")}>
+            Yearly income
+          </Th>
+          <Th bare className={scheduleHeaderCell()} {...getSortProps("pot")}>
+            Pots at retirement
+          </Th>
+        </tr>
+      </thead>
+      <tbody>
+        {sortedRows.map((c) => (
+          <tr key={c}>
+            <td className={scheduleCell()}>{caseLabel(c)}</td>
+            <td className={scheduleCell()}>{formatEstimate(plan.estimatedYearlyIncomeGbp[c])}</td>
+            <td className={scheduleCell()}>
+              {formatEstimate(plan.projectedPotAtRetirementGbp[c])}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+/** Income by age for the chosen case. A schedule: age order until a header sorts it, no filter. */
+const YearScheduleTable: FC<{
+  plan: RetirementPlanResult;
+  selectedCase: RetirementGrowthCase;
+}> = ({ plan, selectedCase }) => {
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: plan.yearlySchedule,
+    columns: {
+      age: { value: (r) => r.age },
+      pots: { value: (r) => r.potDrawdownYearly[selectedCase], firstDirection: "desc" },
+      statePension: { value: (r) => r.statePensionYearlyGbp, firstDirection: "desc" },
+      housing: { value: (r) => r.housingCostYearlyGbp, firstDirection: "desc" },
+      afterHousing: {
+        value: (r) => r.yearlyIncomeAfterHousing[selectedCase],
+        firstDirection: "desc",
+      },
+    },
+  });
+  return (
+    <table className={scheduleTable()}>
+      <thead>
+        <tr>
+          <Th bare className={scheduleHeaderCell()} {...getSortProps("age")}>
+            Age
+          </Th>
+          <Th bare className={scheduleHeaderCell()} {...getSortProps("pots")}>
+            From pots
+          </Th>
+          <Th bare className={scheduleHeaderCell()} {...getSortProps("statePension")}>
+            State Pension
+          </Th>
+          <Th bare className={scheduleHeaderCell()} {...getSortProps("housing")}>
+            Housing
+          </Th>
+          <Th bare className={scheduleHeaderCell()} {...getSortProps("afterHousing")}>
+            After housing
+          </Th>
+        </tr>
+      </thead>
+      <tbody>
+        {sortedRows.map((row) => (
+          <tr key={row.age}>
+            <td className={scheduleCell()}>{row.age}</td>
+            <td className={scheduleCell()}>
+              {formatEstimate(row.potDrawdownYearly[selectedCase])}
+            </td>
+            <td className={scheduleCell()}>{formatWholeGbp(row.statePensionYearlyGbp)}</td>
+            <td className={scheduleCell()}>{formatEstimateOrNil(row.housingCostYearlyGbp)}</td>
+            <td className={scheduleCell()}>
+              {formatEstimate(row.yearlyIncomeAfterHousing[selectedCase])}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 
 const monthFormatter = new Intl.DateTimeFormat("en-GB", {
   month: "long",
@@ -680,58 +782,8 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                             </Link>
                           </p>
                         )}
-                        <table className={scheduleTable()}>
-                          <thead>
-                            <tr>
-                              <th className={scheduleHeaderCell()}>Case</th>
-                              <th className={scheduleHeaderCell()}>Yearly income</th>
-                              <th className={scheduleHeaderCell()}>Pots at retirement</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(["lower", "middle", "higher"] as const).map((c) => (
-                              <tr key={c}>
-                                <td className={scheduleCell()}>{caseLabel(c)}</td>
-                                <td className={scheduleCell()}>
-                                  {formatEstimate(scenarioResult.estimatedYearlyIncomeGbp[c])}
-                                </td>
-                                <td className={scheduleCell()}>
-                                  {formatEstimate(scenarioResult.projectedPotAtRetirementGbp[c])}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                        <table className={scheduleTable()}>
-                          <thead>
-                            <tr>
-                              <th className={scheduleHeaderCell()}>Age</th>
-                              <th className={scheduleHeaderCell()}>From pots</th>
-                              <th className={scheduleHeaderCell()}>State Pension</th>
-                              <th className={scheduleHeaderCell()}>Housing</th>
-                              <th className={scheduleHeaderCell()}>After housing</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {scenarioResult.yearlySchedule.map((row) => (
-                              <tr key={row.age}>
-                                <td className={scheduleCell()}>{row.age}</td>
-                                <td className={scheduleCell()}>
-                                  {formatEstimate(row.potDrawdownYearly[selectedCase])}
-                                </td>
-                                <td className={scheduleCell()}>
-                                  {formatWholeGbp(row.statePensionYearlyGbp)}
-                                </td>
-                                <td className={scheduleCell()}>
-                                  {formatEstimateOrNil(row.housingCostYearlyGbp)}
-                                </td>
-                                <td className={scheduleCell()}>
-                                  {formatEstimate(row.yearlyIncomeAfterHousing[selectedCase])}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        <CaseTable caseLabel={caseLabel} plan={scenarioResult} />
+                        <YearScheduleTable plan={scenarioResult} selectedCase={selectedCase} />
                       </div>
                     </CollapsibleDrawer>
                   )}

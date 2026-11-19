@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import { FormField } from "../FormField";
+import { Select } from "../Select";
 import { TextInput } from "../TextInput";
 import { tableSearchField, tableToolbar } from "./TableToolbar.styles";
 
@@ -45,6 +46,44 @@ export const TableToolbar: FC<TableToolbarProps> = ({
     ) : null}
     {children}
   </div>
+);
+
+export interface TableFilterOption {
+  value: string;
+  label: string;
+}
+
+export interface TableFilterSelectProps {
+  /** The select's visible label, naming the category ("Type", "Account"). */
+  label: string;
+  /** The chosen value; "all" (`TABLE_FILTER_ALL`) for every row. */
+  value: string;
+  onChange: (value: string) => void;
+  /** The first option, which shows every row ("All accounts"). */
+  allLabel: string;
+  options: readonly TableFilterOption[];
+}
+
+/** A category filter for a `TableToolbar`: a labelled select whose first option shows every row. */
+export const TableFilterSelect: FC<TableFilterSelectProps> = ({
+  label,
+  value,
+  onChange,
+  allLabel,
+  options,
+}) => (
+  <FormField label={label}>
+    {(field) => (
+      <Select id={field.id} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="all">{allLabel}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </Select>
+    )}
+  </FormField>
 );
 
 export default TableToolbar;

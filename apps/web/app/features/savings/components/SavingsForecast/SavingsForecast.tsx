@@ -18,6 +18,7 @@ import {
   Td,
   THead,
   Th,
+  useTableSort,
   xTickAnchor,
 } from "@repo/ui";
 import { type FC, type ReactNode, useMemo } from "react";
@@ -119,6 +120,41 @@ export function forecastOutcomeText(
   if (result.flat) return FORECAST_PROMPT;
   return `${formatEstimate(result.final)} in ${formatYears(values.years)}`;
 }
+
+/** The year-by-year balances, in year order until a header sorts them. A schedule: no filter. */
+const BalanceByYearTable: FC<{ rows: readonly { label: string; balance: number }[] }> = ({
+  rows,
+}) => {
+  const { sortedRows, getSortProps } = useTableSort({
+    rows,
+    columns: {
+      year: { value: (r) => Number(r.label) },
+      balance: { value: (r) => r.balance, firstDirection: "desc" },
+    },
+  });
+  return (
+    <Table caption="Estimated savings balance by year">
+      <THead>
+        <tr>
+          <Th {...getSortProps("year")}>Year</Th>
+          <Th numeric {...getSortProps("balance")}>
+            Estimated balance
+          </Th>
+        </tr>
+      </THead>
+      <TBody>
+        {sortedRows.map((row) => (
+          <tr key={row.label}>
+            <Td>{row.label}</Td>
+            <Td numeric>
+              <Money size="sm" value={row.balance} />
+            </Td>
+          </tr>
+        ))}
+      </TBody>
+    </Table>
+  );
+};
 
 /**
  * How savings could grow (E16 PR 7): monthly amount, rate and years ahead, with today's money and
@@ -265,24 +301,7 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
                 <dd>{formatEstimate(result.interest)}</dd>
               </div>
             </dl>
-            <Table caption="Estimated savings balance by year">
-              <THead>
-                <tr>
-                  <Th>Year</Th>
-                  <Th numeric>Estimated balance</Th>
-                </tr>
-              </THead>
-              <TBody>
-                {chartData.map((row) => (
-                  <tr key={row.label}>
-                    <Td>{row.label}</Td>
-                    <Td numeric>
-                      <Money size="sm" value={row.balance} />
-                    </Td>
-                  </tr>
-                ))}
-              </TBody>
-            </Table>
+            <BalanceByYearTable rows={chartData} />
           </>
         }
         notEnoughDataText={FORECAST_PROMPT}

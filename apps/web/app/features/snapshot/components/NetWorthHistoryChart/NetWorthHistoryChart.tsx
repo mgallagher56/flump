@@ -1,4 +1,15 @@
-import { ChartFigure, Table, TBody, Td, THead, Th } from "@repo/ui";
+import {
+  ChartFigure,
+  Table,
+  TableFilterSelect,
+  TableToolbar,
+  TBody,
+  Td,
+  THead,
+  Th,
+  useTableFilter,
+  useTableSort,
+} from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import { ChartDataRow } from "~/components/charts/ChartDataRow";
 import { MonthLinePlot } from "~/components/charts/MonthLinePlot";
@@ -25,6 +36,71 @@ export interface NetWorthHistoryChartProps {
   /** One line of quiet text under that row ("Next check-in: 1 December 2026"). */
   dataNote?: ReactNode;
 }
+
+const sourceLabel = (p: HistoryChartPoint) =>
+  p.recorded !== null ? "Recorded" : "Carried forward";
+
+const SOURCE_OPTIONS = [
+  { value: "Recorded", label: "Recorded" },
+  { value: "Carried forward", label: "Carried forward" },
+];
+
+/**
+ * The "Show data" table: every month oldest first until a header sorts it, with a filter for
+ * recorded or carried-forward months.
+ */
+const NetWorthMonthTable: FC<{
+  points: readonly HistoryChartPoint[];
+  formatCurrency: (value: number) => string;
+}> = ({ points, formatCurrency }) => {
+  const { filteredRows, filterValues, setFilter } = useTableFilter({
+    rows: points,
+    filters: { source: sourceLabel },
+  });
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: filteredRows,
+    columns: {
+      month: { value: (p) => p.month },
+      netWorth: { value: (p) => p.netWorth, firstDirection: "desc" },
+      source: { value: sourceLabel },
+    },
+  });
+  return (
+    <>
+      <TableToolbar>
+        <TableFilterSelect
+          allLabel="All months"
+          label="Source"
+          options={SOURCE_OPTIONS}
+          value={filterValues.source}
+          onChange={(v) => setFilter("source", v)}
+        />
+      </TableToolbar>
+      <Table caption="Net worth by month">
+        <THead>
+          <tr>
+            <Th {...getSortProps("month")}>Month</Th>
+            <Th numeric {...getSortProps("netWorth")}>
+              Net worth
+            </Th>
+            <Th text {...getSortProps("source")}>
+              Source
+            </Th>
+          </tr>
+        </THead>
+        <TBody>
+          {sortedRows.map((p) => (
+            <tr key={p.month}>
+              <Th scope="row">{formatMonth(p.month)}</Th>
+              <Td numeric>{formatCurrency(p.netWorth)}</Td>
+              <Td text>{sourceLabel(p)}</Td>
+            </tr>
+          ))}
+        </TBody>
+      </Table>
+    </>
+  );
+};
 
 /**
  * Net worth over time from saved monthly snapshots. Recorded months are a solid line; a month with
@@ -65,26 +141,7 @@ export const NetWorthHistoryChart: FC<NetWorthHistoryChartProps> = ({
         actions={dataActions}
         note={dataNote}
         table={
-          drawn ? (
-            <Table caption="Net worth by month">
-              <THead>
-                <tr>
-                  <Th>Month</Th>
-                  <Th numeric>Net worth</Th>
-                  <Th>Source</Th>
-                </tr>
-              </THead>
-              <TBody>
-                {points.map((p) => (
-                  <tr key={p.month}>
-                    <Th scope="row">{formatMonth(p.month)}</Th>
-                    <Td numeric>{formatCurrency(p.netWorth)}</Td>
-                    <Td>{p.recorded !== null ? "Recorded" : "Carried forward"}</Td>
-                  </tr>
-                ))}
-              </TBody>
-            </Table>
-          ) : undefined
+          drawn ? <NetWorthMonthTable formatCurrency={formatCurrency} points={points} /> : undefined
         }
       />
     </div>

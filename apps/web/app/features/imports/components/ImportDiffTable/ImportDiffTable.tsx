@@ -4,11 +4,15 @@ import {
   CollapsibleDrawer,
   StatusBadge,
   Table,
+  TableFilterSelect,
+  TableToolbar,
   TBody,
   Td,
   THead,
   Th,
   Tr,
+  useTableFilter,
+  useTableSort,
 } from "@repo/ui";
 import { type FC, type ReactNode, useId } from "react";
 import { formatMonth } from "~/features/snapshot/snapshotModel";
@@ -46,6 +50,22 @@ export const ImportDiffTable: FC<ImportDiffTableProps> = ({
   const names = new Map(accounts.map((a) => [a.ref, a.name]));
   const flagged = rows.filter((r) => r.needsTick);
   const groups = groupByMonth(rows, accounts);
+  const ordered = groups.flatMap((g) => g.rows);
+  const { filteredRows, filterValues, setFilter } = useTableFilter({
+    rows: ordered,
+    filters: { account: (r) => r.ref, status: (r) => r.status },
+  });
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: filteredRows,
+    columns: {
+      month: { value: (r) => r.month, firstDirection: "desc" },
+      account: { value: (r) => names.get(r.ref) ?? r.ref },
+      value: { value: (r) => r.value, firstDirection: "desc" },
+      // No saved value yet ("None") sorts last.
+      prior: { value: (r) => r.prior, firstDirection: "desc" },
+      status: { value: (r) => rowStatusLabel(r) },
+    },
+  });
 
   const statusCell = (r: PreviewRow): ReactNode => {
     if (r.needsTick) {
@@ -63,22 +83,52 @@ export const ImportDiffTable: FC<ImportDiffTableProps> = ({
   };
 
   const table = (
-    <Table caption="Changes by month and account" stacked>
-      <THead>
-        <Tr>
-          <Th>Month</Th>
-          <Th>Account</Th>
-          <Th numeric>In the import</Th>
-          <Th numeric>Saved now</Th>
-          <Th>What happens</Th>
-        </Tr>
-      </THead>
-      <TBody>
-        {groups.flatMap((g) =>
-          g.rows.map((r) => (
+    <>
+      <TableToolbar>
+        <TableFilterSelect
+          allLabel="All accounts"
+          label="Account"
+          options={accounts.map((a) => ({ value: a.ref, label: a.name }))}
+          value={filterValues.account}
+          onChange={(v) => setFilter("account", v)}
+        />
+        <TableFilterSelect
+          allLabel="All rows"
+          label="What happens"
+          options={[
+            { value: "new", label: "New" },
+            { value: "overwrite", label: "Replaces" },
+            { value: "unchanged", label: "No change" },
+          ]}
+          value={filterValues.status}
+          onChange={(v) => setFilter("status", v)}
+        />
+      </TableToolbar>
+      <Table caption="Changes by month and account" stacked>
+        <THead>
+          <Tr>
+            <Th {...getSortProps("month")}>Month</Th>
+            <Th text {...getSortProps("account")}>
+              Account
+            </Th>
+            <Th numeric {...getSortProps("value")}>
+              In the import
+            </Th>
+            <Th numeric {...getSortProps("prior")}>
+              Saved now
+            </Th>
+            <Th text {...getSortProps("status")}>
+              What happens
+            </Th>
+          </Tr>
+        </THead>
+        <TBody>
+          {sortedRows.map((r) => (
             <Tr key={r.key}>
-              <Th scope="row">{formatMonth(g.month)}</Th>
-              <Td label="Account">{names.get(r.ref) ?? r.ref}</Td>
+              <Th scope="row">{formatMonth(r.month)}</Th>
+              <Td label="Account" text>
+                {names.get(r.ref) ?? r.ref}
+              </Td>
               <Td label="In the import" numeric>
                 {formatCurrency(r.value)}
               </Td>
@@ -87,10 +137,10 @@ export const ImportDiffTable: FC<ImportDiffTableProps> = ({
               </Td>
               <Td label="What happens">{statusCell(r)}</Td>
             </Tr>
-          )),
-        )}
-      </TBody>
-    </Table>
+          ))}
+        </TBody>
+      </Table>
+    </>
   );
 
   return (

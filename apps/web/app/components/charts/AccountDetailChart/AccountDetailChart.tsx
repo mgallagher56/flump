@@ -1,4 +1,15 @@
-import { ChartFigure, Table, TBody, Td, THead, Th } from "@repo/ui";
+import {
+  ChartFigure,
+  Table,
+  TableFilterSelect,
+  TableToolbar,
+  TBody,
+  Td,
+  THead,
+  Th,
+  useTableFilter,
+  useTableSort,
+} from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { ChartDataRow } from "~/components/charts/ChartDataRow";
 import { MonthLinePlot } from "~/components/charts/MonthLinePlot";
@@ -58,6 +69,69 @@ export const accountChartSummary = (
     .join(" ");
 };
 
+const SOURCE_FILTER_OPTIONS = ["Recorded", "Confirmed", "Calculated", "Saved balance"].map(
+  (label) => ({ value: label, label }),
+);
+
+/**
+ * The "Show data" table: every month in order, oldest first, until a header sorts it. The source
+ * filter narrows it to the months given one way (recorded, confirmed, calculated).
+ */
+const AccountMonthTable: FC<{
+  rows: readonly AccountChartRow[];
+  title: string;
+  formatCurrency: (value: number) => string;
+}> = ({ rows, title, formatCurrency }) => {
+  const { filteredRows, filterValues, setFilter } = useTableFilter({
+    rows,
+    filters: { source: accountSourceLabel },
+  });
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: filteredRows,
+    columns: {
+      month: { value: monthKey },
+      balance: { value: (r) => r.value, firstDirection: "desc" },
+      source: { value: accountSourceLabel },
+    },
+  });
+  const present = new Set(rows.map(accountSourceLabel));
+  return (
+    <>
+      <TableToolbar>
+        <TableFilterSelect
+          allLabel="All sources"
+          label="Source"
+          options={SOURCE_FILTER_OPTIONS.filter((o) => present.has(o.value))}
+          value={filterValues.source}
+          onChange={(v) => setFilter("source", v)}
+        />
+      </TableToolbar>
+      <Table caption={`${title} by month`}>
+        <THead>
+          <tr>
+            <Th {...getSortProps("month")}>Month</Th>
+            <Th numeric {...getSortProps("balance")}>
+              Balance
+            </Th>
+            <Th text {...getSortProps("source")}>
+              Source
+            </Th>
+          </tr>
+        </THead>
+        <TBody>
+          {sortedRows.map((r) => (
+            <tr key={monthKey(r)}>
+              <Th scope="row">{formatMonth(monthKey(r))}</Th>
+              <Td numeric>{formatCurrency(r.value)}</Td>
+              <Td text>{accountSourceLabel(r)}</Td>
+            </tr>
+          ))}
+        </TBody>
+      </Table>
+    </>
+  );
+};
+
 /**
  * One account's balance over time, drawn exactly like net worth history (the shared
  * `MonthLinePlot`): evenly spaced month ticks, round £k ticks, the end point labelled with the
@@ -101,24 +175,11 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
       <ChartDataRow
         table={
           accountDetails.length > 0 ? (
-            <Table caption={`${title} by month`}>
-              <THead>
-                <tr>
-                  <Th>Month</Th>
-                  <Th numeric>Balance</Th>
-                  <Th>Source</Th>
-                </tr>
-              </THead>
-              <TBody>
-                {accountDetails.map((r) => (
-                  <tr key={monthKey(r)}>
-                    <Th scope="row">{formatMonth(monthKey(r))}</Th>
-                    <Td numeric>{formatCurrency(r.value)}</Td>
-                    <Td>{accountSourceLabel(r)}</Td>
-                  </tr>
-                ))}
-              </TBody>
-            </Table>
+            <AccountMonthTable
+              formatCurrency={formatCurrency}
+              rows={accountDetails}
+              title={title}
+            />
           ) : undefined
         }
       />

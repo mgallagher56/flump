@@ -8,7 +8,17 @@ import {
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
-import { Button, CurrencyInput, Dialog, FormField, Icon, StatusBadge, TextInput } from "@repo/ui";
+import {
+  Button,
+  CurrencyInput,
+  Dialog,
+  FormField,
+  Icon,
+  StatusBadge,
+  TextInput,
+  Th,
+  useTableSort,
+} from "@repo/ui";
 import { ArrowRight, Copy, Filter } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
@@ -198,6 +208,20 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
     return Array.from(set).sort();
   }, [availableYears, records, sourceYear, targetYear]);
 
+  // Sorted by the record as saved (not the name being typed), so a row never moves while it is edited.
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: candidateRecords,
+    columns: {
+      name: { value: (r) => r.name },
+      section: { value: (r) => SOURCE_LABEL[r.source] },
+      frequency: { value: (r) => FREQUENCY_LABEL[r.frequency] },
+      amount: {
+        value: (r) => (r.type === "income" ? 1 : -1) * (Number(r.amount) || 0),
+        firstDirection: "desc",
+      },
+    },
+  });
+
   const yearOptions = allYearOptions.map((y) => (
     <option key={y} value={y}>
       {y}
@@ -347,15 +371,28 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                       aria-label="Select all records"
                     />
                   </th>
-                  <th className={s.th()}>New name ({targetYear})</th>
-                  <th className={s.th()}>Section</th>
-                  <th className={s.th()}>Frequency</th>
-                  <th className={s.th({ align: "end" })}>Amount in {sourceYear}</th>
+                  <Th bare className={s.th()} {...getSortProps("name")}>
+                    New name ({targetYear})
+                  </Th>
+                  <Th bare className={s.th()} {...getSortProps("section")}>
+                    Section
+                  </Th>
+                  <Th bare className={s.th()} {...getSortProps("frequency")}>
+                    Frequency
+                  </Th>
+                  <Th
+                    align="end"
+                    bare
+                    className={s.th({ align: "end" })}
+                    {...getSortProps("amount")}
+                  >
+                    Amount in {sourceYear}
+                  </Th>
                   <th className={s.th({ align: "end", amount: true })}>New amount (£)</th>
                 </tr>
               </thead>
               <tbody>
-                {candidateRecords.map((record) => {
+                {sortedRows.map((record) => {
                   const st = rowStates[record.id] || {
                     selected: false,
                     name: record.name,

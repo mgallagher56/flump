@@ -12,6 +12,7 @@ import {
   Td,
   THead,
   Th,
+  useTableSort,
   xTickAnchor,
 } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
@@ -138,6 +139,16 @@ export const RetirementPotChart: FC<RetirementPotChartProps> = ({ points, growth
     maxTicks,
   );
   const last = rows[rows.length - 1];
+  // A projection by age: the table keeps age order until a header sorts it, and has no filter.
+  const { sortedRows: tableRows, getSortProps } = useTableSort({
+    rows,
+    columns: {
+      age: { value: (r) => r.age },
+      pot: { value: (r) => r.pot, firstDirection: "desc" },
+      paidIn: { value: (r) => r.paidIn, firstDirection: "desc" },
+      growth: { value: (r) => r.growth, firstDirection: "desc" },
+    },
+  });
   const yAxis = useMemo(
     () => zeroBasedAxis(Math.max(0, ...rows.map((r) => r.paidIn + r.growth))),
     [rows],
@@ -150,14 +161,20 @@ export const RetirementPotChart: FC<RetirementPotChartProps> = ({ points, growth
         <Table caption={RETIREMENT_POT_CHART_COPY.caption}>
           <THead>
             <tr>
-              <Th>{RETIREMENT_POT_CHART_COPY.ageColumn}</Th>
-              <Th numeric>{RETIREMENT_POT_CHART_COPY.potColumn}</Th>
-              <Th numeric>{RETIREMENT_POT_CHART_COPY.paidIn}</Th>
-              <Th numeric>{RETIREMENT_POT_CHART_COPY.growth}</Th>
+              <Th {...getSortProps("age")}>{RETIREMENT_POT_CHART_COPY.ageColumn}</Th>
+              <Th numeric {...getSortProps("pot")}>
+                {RETIREMENT_POT_CHART_COPY.potColumn}
+              </Th>
+              <Th numeric {...getSortProps("paidIn")}>
+                {RETIREMENT_POT_CHART_COPY.paidIn}
+              </Th>
+              <Th numeric {...getSortProps("growth")}>
+                {RETIREMENT_POT_CHART_COPY.growth}
+              </Th>
             </tr>
           </THead>
           <TBody>
-            {rows.map((row) => (
+            {tableRows.map((row) => (
               <tr key={row.age}>
                 <Th scope="row">{row.age}</Th>
                 <Td numeric>{yearFigure(row.pot, row.yearIndex)}</Td>

@@ -42,20 +42,24 @@ describe("TaxRecordsTable", () => {
     expect(within(screen.getByRole("table")).getAllByText(/£12\.50/).length).toBeGreaterThan(0);
   });
 
-  it("has no filters, count line or tax-year filter for a handful of records", () => {
+  it("always shows the search and filters, but no count line until they narrow the list", () => {
     setup();
-    expect(screen.queryByLabelText("Income source")).toBeNull();
+    expect(screen.getByLabelText("Search records")).toBeDefined();
+    expect(screen.getByLabelText("Income source")).toBeDefined();
+    expect(screen.getByLabelText("Type")).toBeDefined();
     expect(screen.queryByLabelText("Tax year")).toBeNull();
     expect(screen.queryByText(/^Showing/)).toBeNull();
   });
 
-  it("hides the source column when the year has one source", () => {
+  it("hides the source column and filter when the year has one source", () => {
     setup(taxRecordsFixture.filter((r) => r.source === "rental"));
     expect(screen.queryByRole("columnheader", { name: "Source" })).toBeNull();
+    expect(screen.queryByLabelText("Income source")).toBeNull();
+    expect(screen.getByLabelText("Type")).toBeDefined();
   });
 
-  it("filters by source and type past eight records", () => {
-    setup([...taxRecordsFixture, ...manyRecords(5)]);
+  it("filters by source and type", () => {
+    setup();
     fireEvent.change(screen.getByLabelText("Income source"), { target: { value: "rental" } });
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "expense" } });
     expect(screen.getByText("Showing 1 to 1 of 1 records")).toBeDefined();
@@ -94,6 +98,30 @@ describe("TaxRecordsTable", () => {
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "r1" }));
   });
 
+  it("opens a record for editing when the row is clicked", async () => {
+    const user = userEvent.setup();
+    const { onEdit } = setup();
+    const laptopRow = screen.getByRole("button", { name: "Laptop" }).closest("tr");
+    if (!laptopRow) throw new Error("no row");
+    const amountCell = within(laptopRow).getAllByRole("cell")[3];
+    if (!amountCell) throw new Error("no amount cell");
+    await user.click(amountCell);
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "r4" }));
+  });
+
+  it("edits from the row's menu, with Edit above Delete", async () => {
+    const user = userEvent.setup();
+    const { onEdit } = setup();
+    await user.click(screen.getByRole("button", { name: "Actions for Laptop" }));
+    const items = await screen.findAllByRole("menuitem");
+    expect(items.map((i) => i.textContent)).toEqual(["Edit", "View receipt", "Delete"]);
+    await user.click(screen.getByRole("menuitem", { name: "Edit" }));
+    // Once, from the menu: the click does not also reach the row.
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "r4" }));
+  });
+
   it("deletes and views receipts from the row's menu", async () => {
     const user = userEvent.setup();
     const { onDelete, onViewReceipt, onEdit } = setup();
@@ -115,7 +143,10 @@ describe("TaxRecordsTable", () => {
   it("sorts columns ascending and descending when headers are clicked", () => {
     setup();
     const recordHeader = screen.getByRole("columnheader", { name: "Record" });
-    expect(recordHeader.hasAttribute("aria-sort")).toBe(false);
+    expect(recordHeader.getAttribute("aria-sort")).toBe("none");
+    expect(screen.getByRole("columnheader", { name: "Date" }).getAttribute("aria-sort")).toBe(
+      "descending",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Record" }));
     expect(recordHeader.getAttribute("aria-sort")).toBe("ascending");
     const ascRows = within(screen.getByRole("table")).getAllByRole("row");
@@ -127,8 +158,8 @@ describe("TaxRecordsTable", () => {
     expect(descRows[1].textContent).toContain("Saver interest");
   });
 
-  it("filters by search text past eight records", () => {
-    setup([...taxRecordsFixture, ...manyRecords(5)]);
+  it("filters by search text", () => {
+    setup();
     fireEvent.change(screen.getByLabelText("Search records"), { target: { value: "mortgage" } });
     expect(screen.getByText("Showing 1 to 1 of 1 records")).toBeDefined();
     expect(screen.getByRole("button", { name: "Mortgage interest" })).toBeDefined();

@@ -1,5 +1,16 @@
 import type { TaxCalculationResult } from "@flump/finance-engine";
-import { Card, Money, Table, TBody, Td, THead, Th } from "@repo/ui";
+import {
+  Card,
+  Money,
+  Table,
+  TableFilterSelect,
+  TableToolbar,
+  TBody,
+  Td,
+  THead,
+  Th,
+  useTableFilter,
+} from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { type FC, Fragment, type ReactNode } from "react";
 import { NotSet } from "~/features/feedback/components/NotSet";
@@ -91,7 +102,13 @@ export interface TaxYearComparisonProps {
   salaryKnown?: boolean;
 }
 
-/** "Year by year" tab: the main lines of the calculation side by side for every tax year. */
+const SECTION_OPTIONS = GROUPS.map((g) => ({ value: g.heading, label: g.heading }));
+
+/**
+ * "Year by year" tab: the main lines of the calculation side by side for every tax year. A filter
+ * narrows it to one section. The rows do not sort: each total follows the lines it adds up, and
+ * the columns are already the tax years in order.
+ */
 export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
   years,
   selectedYear,
@@ -99,6 +116,14 @@ export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
   salaryKnown = true,
 }) => {
   const col = (year: string) => (year === selectedYear ? selectedCol() : undefined);
+  const {
+    filteredRows: groups,
+    filterValues,
+    setFilter,
+  } = useTableFilter({
+    rows: GROUPS,
+    filters: { section: (g) => g.heading },
+  });
   return (
     <Card padding="lg">
       <div className={root()}>
@@ -109,6 +134,15 @@ export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
             the year selected above.
           </p>
         </div>
+        <TableToolbar>
+          <TableFilterSelect
+            allLabel="All sections"
+            label="Section"
+            options={SECTION_OPTIONS}
+            value={filterValues.section}
+            onChange={(v) => setFilter("section", v)}
+          />
+        </TableToolbar>
         <Table caption="Income and tax by tax year">
           <THead>
             <tr>
@@ -121,7 +155,7 @@ export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
             </tr>
           </THead>
           <TBody>
-            {GROUPS.map((group) => (
+            {groups.map((group) => (
               <Fragment key={group.heading}>
                 <tr className={groupRow()}>
                   <Th scope="colgroup" colSpan={years.length + 1}>

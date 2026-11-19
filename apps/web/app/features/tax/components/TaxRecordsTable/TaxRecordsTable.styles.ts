@@ -7,7 +7,11 @@ export const root = cva({
 export const filters = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+    gridTemplateColumns: {
+      base: "1fr",
+      sm: "repeat(2, minmax(0, 1fr))",
+      lg: "repeat(3, minmax(0, 1fr))",
+    },
     gap: "3",
     alignItems: "end",
   },
@@ -85,6 +89,14 @@ export const amountCell = cva({
 
 export const amountUnit = cva({
   base: { textStyle: "body.sm", color: "text.muted" },
+});
+
+/** A row a mouse can click anywhere to open the record; the name button is the keyboard way in. */
+export const clickableRow = cva({
+  base: {
+    cursor: "pointer",
+    _hover: { backgroundColor: "surface.subtle" },
+  },
 });
 
 export const pager = cva({

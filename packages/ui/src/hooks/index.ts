@@ -6,4 +6,6 @@ export * from "./useSavedFigureChange";
 export * from "./useSceneSettle";
 export * from "./useSetupProgressOnce";
 export * from "./useStepTransition";
+export * from "./useTableFilter";
+export * from "./useTableSort";
 export * from "./useThemePreference";

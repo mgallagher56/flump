@@ -355,12 +355,30 @@ describe("Table Primitive", () => {
     fireEvent.click(screen.getByRole("button", { name: "Record" }));
     expect(onSort).toHaveBeenCalledTimes(1);
 
-    // Only the sorted column carries aria-sort; the sort control is a native button, so Enter and
+    // An unsorted sortable column says "none"; the sort control is a native button, so Enter and
     // Space work from the keyboard.
     const amountHeader = screen.getByRole("columnheader", { name: /Amount/ });
-    expect(amountHeader.hasAttribute("aria-sort")).toBe(false);
+    expect(amountHeader.getAttribute("aria-sort")).toBe("none");
     const amountButton = screen.getByRole("button", { name: "Amount" });
     expect(amountButton.tagName).toBe("BUTTON");
     expect(amountButton.getAttribute("type")).toBe("button");
+  });
+
+  it("keeps only the caller's class on a bare header, with the sort button and aria-sort", () => {
+    render(
+      <table>
+        <thead>
+          <tr>
+            <Th bare className="feature-header" sortDirection="desc" onSort={vi.fn()}>
+              Age
+            </Th>
+          </tr>
+        </thead>
+      </table>,
+    );
+    const header = screen.getByRole("columnheader", { name: /Age/ });
+    expect(header.className).toBe("feature-header");
+    expect(header.getAttribute("aria-sort")).toBe("descending");
+    expect(screen.getByRole("button", { name: "Age" })).toBeDefined();
   });
 });

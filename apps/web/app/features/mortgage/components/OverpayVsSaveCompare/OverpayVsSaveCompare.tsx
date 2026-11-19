@@ -10,6 +10,8 @@ import {
   Select,
   SimulatorSplitLayout,
   SliderField,
+  Th,
+  useTableSort,
 } from "@repo/ui";
 import { type FC, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -137,6 +139,19 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
     },
   ];
 
+  // Two options side by side: sorting only, in the order shown until a header sorts them.
+  const interestOf = (row: (typeof chartData)[number]) =>
+    "Interest saved" in row ? row["Interest saved"] : row["Interest earned after tax"];
+  const { sortedRows, getSortProps } = useTableSort({
+    rows: chartData,
+    columns: {
+      option: { value: (r) => r.name },
+      paidIn: { value: (r) => r["Money paid in"], firstDirection: "desc" },
+      interest: { value: interestOf, firstDirection: "desc" },
+      total: { value: (r) => r.Total, firstDirection: "desc" },
+    },
+  });
+
   const years = `${actualHorizon} ${actualHorizon === 1 ? "year" : "years"}`;
   const outcomeText =
     difference < 1
@@ -240,24 +255,26 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                 <caption>Overpaying the mortgage compared with saving</caption>
                 <thead>
                   <tr>
-                    <th scope="col">Option</th>
-                    <th scope="col">Money paid in</th>
-                    <th scope="col">Interest saved or earned after tax</th>
-                    <th scope="col">Total</th>
+                    <Th bare scope="col" {...getSortProps("option")}>
+                      Option
+                    </Th>
+                    <Th bare scope="col" {...getSortProps("paidIn")}>
+                      Money paid in
+                    </Th>
+                    <Th bare scope="col" {...getSortProps("interest")}>
+                      Interest saved or earned after tax
+                    </Th>
+                    <Th bare scope="col" {...getSortProps("total")}>
+                      Total
+                    </Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {chartData.map((row) => (
+                  {sortedRows.map((row) => (
                     <tr key={row.name}>
                       <th scope="row">{row.name}</th>
                       <td className={dataCell}>{formatCurrency(row["Money paid in"])}</td>
-                      <td className={dataCell}>
-                        {formatCurrency(
-                          "Interest saved" in row
-                            ? row["Interest saved"]
-                            : row["Interest earned after tax"],
-                        )}
-                      </td>
+                      <td className={dataCell}>{formatCurrency(interestOf(row))}</td>
                       <td className={dataCell}>{formatCurrency(row.Total)}</td>
                     </tr>
                   ))}
