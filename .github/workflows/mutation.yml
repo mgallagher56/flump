@@ -93,7 +93,7 @@ jobs:
         run: |
           engine='{"package":"packages/finance-engine","slug":"finance-engine","shards":8}'
           mcp='{"package":"packages/mcp","slug":"mcp","shards":4}'
-          contract='{"package":"packages/api-contract","slug":"api-contract","shards":2}'
+          contract='{"package":"packages/api-contract","slug":"api-contract","shards":1}'
           banking='{"package":"packages/banking","slug":"banking","shards":1}'
           observability='{"package":"packages/observability","slug":"observability","shards":1}'
           format='{"package":"packages/format","slug":"format","shards":1}'
@@ -258,6 +258,9 @@ jobs:
           reports=()
           for i in $(seq 1 "$SHARDS"); do
             report="shard-reports/mutation-report-$SLUG-shard$i/mutation.json"
+            # A pattern that matches one artifact only is unpacked straight into the path, with no
+            # folder named after the artifact (seen on the first single-shard runs).
+            if [ "$SHARDS" = 1 ] && [ ! -f "$report" ]; then report="shard-reports/mutation.json"; fi
             [ -f "$report" ] || { echo "::error::No report from shard $i"; exit 1; }
             reports+=("$report")
           done
