@@ -7,6 +7,7 @@ import {
   panelBody,
   panelCheckbox,
   panelDescription,
+  panelInert,
   panelItem,
   panelList,
   panelMoveGroup,
@@ -204,6 +205,7 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
                         never lost when a section reaches the top or the bottom. */}
                     <IconButton
                       aria-disabled={first}
+                      className={panelInert()}
                       id={`widget-order-${key}-up`}
                       label={moveLabel(copy.label, -1)}
                       size="sm"
@@ -213,6 +215,7 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
                     </IconButton>
                     <IconButton
                       aria-disabled={last}
+                      className={panelInert()}
                       id={`widget-order-${key}-down`}
                       label={moveLabel(copy.label, 1)}
                       size="sm"
@@ -230,6 +233,7 @@ export const WidgetVisibilityPanel: FC<WidgetVisibilityPanelProps> = ({
           <div className={panelOrderFooter()}>
             <Button
               aria-disabled={orderIsDefault}
+              className={panelInert()}
               id="widget-order-reset"
               size="sm"
               variant="ghost"

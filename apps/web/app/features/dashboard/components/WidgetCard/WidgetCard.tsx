@@ -63,7 +63,7 @@ export const WidgetCard: FC<WidgetCardProps> = ({ id, title, icon, label, figure
       id={cardId}
     >
       <header className={widgetHeader()}>
-        <IconTile icon={icon} tone={SECTION_TILE_TONE[colour]} />
+        <IconTile colouredIcon icon={icon} tone={SECTION_TILE_TONE[colour]} />
         <h3 className={widgetTitle()} data-testid={titleId} id={titleId}>
           {title}
         </h3>
