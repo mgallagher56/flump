@@ -30,7 +30,7 @@ export async function seedHotQueryData(ds: DataSource, scale: SeedScale): Promis
   const users = `SELECT u, 'user_' || lpad(u::text, 5, '0') AS user_id FROM generate_series(1, ${scale.users}) u`;
   await ds.query(
     `INSERT INTO accounts (user_id, name, type, balance, currency, created_at)
-     SELECT us.user_id, 'Account ' || a, 'Current Account', 100, 'GBP', now() - (a || ' days')::interval
+     SELECT us.user_id, 'Account ' || a, 'Current', 100, 'GBP', now() - (a || ' days')::interval
      FROM (${users}) us, generate_series(1, ${scale.accountsPerUser}) a`,
   );
   await ds.query(

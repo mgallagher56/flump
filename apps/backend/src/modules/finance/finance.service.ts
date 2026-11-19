@@ -1,4 +1,7 @@
-import type { CreateTransactionRequest as CreateTransactionDto } from "@flump/api-contract";
+import type {
+  AccountDetailsOption,
+  CreateTransactionRequest as CreateTransactionDto,
+} from "@flump/api-contract";
 import { BankSyncOrchestrator, isBankProviderError } from "@flump/banking/server";
 import {
   BadRequestException,
@@ -87,8 +90,8 @@ export class FinanceService {
     return this.accountIntakeService.getAccounts(userId);
   }
 
-  listAccounts(userId: string, page: PageRequest) {
-    return this.accountIntakeService.listAccounts(userId, page);
+  listAccounts(userId: string, page: PageRequest, details?: AccountDetailsOption) {
+    return this.accountIntakeService.listAccounts(userId, page, details);
   }
 
   listAccountDetails(userId: string, page: PageRequest, accountId?: string) {

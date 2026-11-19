@@ -102,20 +102,6 @@ export class BudgetService {
     return keysetPage(qb, BUDGET_ORDER, page);
   }
 
-  /**
-   * POST budget-entries/seed-defaults, kept so older clients still get the list back. It creates
-   * nothing: the £0 suggestion rows it used to add ("Rent / Mortgage", "Emergency Fund", "ISA /
-   * Investments") showed as empty lines in the budget (owner item 33a), and the wizard's common
-   * entries now cover the same ground with the person's own amounts. Returns every entry, oldest
-   * first.
-   */
-  async seedDefaults(userId: string): Promise<BudgetEntry[]> {
-    return this.budgetEntryRepository.find({
-      where: { userId },
-      order: { createdAt: "ASC" },
-    });
-  }
-
   async addCustomCategory(
     userId: string,
     body: AddBudgetCategoryRequest,

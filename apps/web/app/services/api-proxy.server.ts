@@ -55,7 +55,6 @@ export const API_ALLOW_LIST: readonly ProxyRule[] = [
   { methods: ["POST"], pattern: "/user-profile/reset-financial-data" },
   { methods: ["GET", "POST"], pattern: "/budget-entries" },
   { methods: ["PATCH", "DELETE"], pattern: `/budget-entries/${UUID}` },
-  { methods: ["POST"], pattern: "/budget-entries/seed-defaults" },
   { methods: ["POST"], pattern: "/budget-entries/categories" },
   { methods: ["GET", "POST"], pattern: "/accounts" },
   { methods: ["PATCH"], pattern: `/accounts/${UUID}` },

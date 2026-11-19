@@ -60,7 +60,6 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
 
   // Budget controller.
   "GET /budget-entries": budget,
-  "POST /budget-entries/seed-defaults": budget,
   "POST /budget-entries/categories": budget,
   "POST /budget-entries": budget,
   "PATCH /budget-entries/:id": budget,

@@ -1,13 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { FlumpAccountCategory, FlumpBudgetBucket, NormalizedAccount } from "../core/types.js";
-import {
-  calculateNetWorth,
-  getAccountCategoryMetadata,
-  getBudgetBucketMetadata,
-  getConsentStatus,
-} from "./index.js";
+import type { FlumpAccountCategory, FlumpBudgetBucket } from "../core/types.js";
+import * as client from "./index.js";
+import { getAccountCategoryMetadata, getBudgetBucketMetadata, getConsentStatus } from "./index.js";
 
 describe("banking client: helpers & bundle boundary verification", () => {
   it("checks UK Open Banking consent expiration status", () => {
@@ -73,73 +69,8 @@ describe("banking client: helpers & bundle boundary verification", () => {
     }
   });
 
-  it("calculates net worth and weighted average savings yield across accounts", () => {
-    const accounts: NormalizedAccount[] = [
-      {
-        externalAccountId: "1",
-        provider: "manual",
-        institutionName: "Monzo",
-        name: "Current",
-        category: "CURRENT",
-        currency: "GBP",
-        netWorthImpactGbp: 2000,
-        principalOwedGbp: 0,
-        interestRateApr: 0,
-        isTaxFreeIsaWrapper: false,
-        lastSyncedAt: "",
-      },
-      {
-        externalAccountId: "2",
-        provider: "manual",
-        institutionName: "Chip",
-        name: "Instant Access Savings",
-        category: "SAVINGS",
-        currency: "GBP",
-        netWorthImpactGbp: 8000,
-        principalOwedGbp: 0,
-        interestRateApr: 4.8,
-        isTaxFreeIsaWrapper: false,
-        lastSyncedAt: "",
-      },
-      {
-        externalAccountId: "3",
-        provider: "manual",
-        institutionName: "Barclaycard",
-        name: "Credit Card",
-        category: "CREDIT_CARD",
-        currency: "GBP",
-        netWorthImpactGbp: -2500,
-        principalOwedGbp: 2500,
-        interestRateApr: 24.9,
-        isTaxFreeIsaWrapper: false,
-        lastSyncedAt: "",
-      },
-      {
-        externalAccountId: "4",
-        provider: "manual",
-        institutionName: "Halifax",
-        name: "Cash ISA",
-        category: "CASH_ISA",
-        currency: "GBP",
-        netWorthImpactGbp: 5000,
-        principalOwedGbp: 0,
-        interestRateApr: 5.0,
-        isTaxFreeIsaWrapper: true,
-        lastSyncedAt: "",
-      },
-    ];
-
-    const result = calculateNetWorth(accounts);
-    expect(result.totalAssetsGbp).toBe(15000);
-    expect(result.totalLiabilitiesGbp).toBe(2500);
-    expect(result.totalNetWorthGbp).toBe(12500);
-    expect(result.liquidCashGbp).toBe(15000);
-    expect(result.weightedAverageSavingsYieldApr).toBeGreaterThan(0);
-
-    // Empty accounts
-    const emptyResult = calculateNetWorth([]);
-    expect(emptyResult.totalNetWorthGbp).toBe(0);
-    expect(emptyResult.weightedAverageSavingsYieldApr).toBe(0);
+  it("has no net worth sum of its own: net worth is the engine's selectNetWorth (system audit slice 9)", () => {
+    expect("calculateNetWorth" in client).toBe(false);
   });
 
   it("VERIFICATION GATE: client source file must NEVER import from server or node built-ins", () => {

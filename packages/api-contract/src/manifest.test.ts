@@ -4,7 +4,7 @@ import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
   it("has 59 routes (57 prior routes, plus the E33 retirement-plan get and upsert routes, plus the slice 4 mortgage-with-property create and check-ins read, less GET /portfolio-snapshot removed by audit slice 3 and PATCH /accounts/balances removed by slice 4) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(59);
+    expect(allRoutes).toHaveLength(58);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });
@@ -22,12 +22,7 @@ describe("route manifest", () => {
       .filter((r) => ["POST", "PATCH", "PUT"].includes(r.method) && !r.body)
       .map((r) => r.id)
       .sort();
-    expect(bodyless).toEqual([
-      "bankConnections.refresh",
-      "budget.seedDefaults",
-      "mcp.post",
-      "profile.sendPasswordReset",
-    ]);
+    expect(bodyless).toEqual(["bankConnections.refresh", "mcp.post", "profile.sendPasswordReset"]);
   });
 
   it("every route declares a response schema, except the non-JSON ones (E21)", () => {

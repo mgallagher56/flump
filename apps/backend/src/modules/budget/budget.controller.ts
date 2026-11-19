@@ -43,12 +43,6 @@ export class BudgetController {
     return sendPage(res, await this.budget.listEntries(req.user.id, resolvePage(query, "budget")));
   }
 
-  @Post("budget-entries/seed-defaults")
-  @HttpCode(200)
-  async seedDefaultBudgetEntries(@Req() req: AuthenticatedRequest): Promise<BudgetEntry[]> {
-    return this.budget.seedDefaults(req.user.id);
-  }
-
   @Post("budget-entries/categories")
   @HttpCode(201)
   async addCustomCategory(

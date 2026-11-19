@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pageQueryShape } from "../pagination.js";
 import {
   Currency,
   IsoDate,
@@ -272,6 +273,23 @@ export type AccountWithDetailsDto = z.infer<typeof AccountWithDetailsDto>;
 /** GET /accounts */
 export const AccountListResponse = z.array(AccountWithDetailsDto);
 export type AccountListResponse = z.infer<typeof AccountListResponse>;
+
+/**
+ * How much monthly history `GET /accounts` returns with each account (system audit slice 9,
+ * DB-12): `none` an empty list, `latest` the newest recorded month only, `all` every month oldest
+ * first. Leaving it out means `all`, the answer before the option existed, so no caller changes.
+ * `details` is always present in the response; only its length changes.
+ */
+export const ACCOUNT_DETAILS_OPTIONS = ["none", "latest", "all"] as const;
+export const AccountDetailsOption = z.enum(ACCOUNT_DETAILS_OPTIONS);
+export type AccountDetailsOption = z.infer<typeof AccountDetailsOption>;
+
+/** GET /accounts query: the paging fields and the `details` option. */
+export const AccountListQuery = z.strictObject({
+  ...pageQueryShape("accounts"),
+  details: AccountDetailsOption.optional(),
+});
+export type AccountListQuery = z.infer<typeof AccountListQuery>;
 
 /** GET /accounts/:id */
 export const AccountResponse = AccountWithDetailsDto;
