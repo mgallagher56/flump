@@ -3,6 +3,7 @@ import { PiggyBank } from "lucide-react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { SampleModeProvider } from "~/context/SampleModeContext";
+import { SECTION_PRIORITY } from "../../sectionOrder";
 import { WidgetCard, type WidgetCardProps } from "./WidgetCard";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
@@ -12,7 +13,6 @@ const props: WidgetCardProps = {
   id: "savings",
   title: "Savings",
   icon: PiggyBank,
-  domain: "savings",
   label: "Savings and investments",
   figure: "£12,000",
   line: "Across your savings and investment accounts.",
@@ -52,12 +52,24 @@ describe("WidgetCard", () => {
     expect(screen.getByRole("img", { name: "Locked in this example" })).toBeTruthy();
   });
 
-  it("applies domain colour accent and stretched-link interactive styling when not in sandbox", () => {
-    renderCard({ domain: "savings" }, false);
+  it("draws its section's colour on the top edge and the icon tile, with stretched-link styling", () => {
+    renderCard({}, false);
     const card = screen.getByTestId("widget-card-savings");
-    expect(card.className).toContain("bd-t-c_chart.wealth");
+    expect(card.getAttribute("data-section-colour")).toBe("sage");
+    expect(card.className).toContain("bd-t-c_chart.series2");
+    expect(card.querySelector('[data-tile-tone="sage"]')).toBeTruthy();
     expect(card.className).toContain("cursor_pointer");
     const link = screen.getByTestId("widget-card-savings-link");
     expect(link.className).toContain("inset_0");
+  });
+
+  it("gives every section a top edge of the same weight, so none looks missing", () => {
+    for (const id of SECTION_PRIORITY) {
+      const { unmount } = renderCard({ id });
+      const card = screen.getByTestId(`widget-card-${id}`);
+      expect(card.className).toContain("bd-t-w_4px");
+      expect(card.className).not.toMatch(/bd-t-c_(surface|border)/);
+      unmount();
+    }
   });
 });

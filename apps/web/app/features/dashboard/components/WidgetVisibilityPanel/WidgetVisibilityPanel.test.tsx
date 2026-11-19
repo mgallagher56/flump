@@ -1,7 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+import type { DashboardWidgetKey } from "~/utils/pageConfig";
+import { moveSection } from "../../sectionOrder";
 import {
+  ORDER_RULE,
   SECTION_COPY,
   WidgetVisibilityPanel,
   type WidgetVisibilityPanelProps,
@@ -129,5 +132,90 @@ describe("<WidgetVisibilityPanel />", () => {
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+});
+
+/** The panel with a working order, as the dashboard drives it. */
+function Reorderable({ initial }: { initial: DashboardWidgetKey[] }) {
+  const [order, setOrder] = useState(initial);
+  return (
+    <WidgetVisibilityPanel
+      {...base({
+        widgetKeys: order,
+        visibleKeys: order,
+        orderIsDefault: order.join() === initial.join(),
+      })}
+      onMove={(key, offset) => setOrder((o) => moveSection(o, key, offset))}
+      onResetOrder={() => setOrder(initial)}
+    />
+  );
+}
+
+describe("<WidgetVisibilityPanel /> order", () => {
+  const rowIds = () =>
+    screen.getAllByRole("checkbox").map((box) => box.id.replace(/^widget-visibility-/, ""));
+
+  it("says how to change the order when the order can be changed", () => {
+    render(<WidgetVisibilityPanel {...base()} onMove={vi.fn()} onResetOrder={vi.fn()} />);
+    expect(screen.getAllByText(ORDER_RULE)).toHaveLength(1);
+  });
+
+  it("has no order controls when the order cannot be changed", () => {
+    render(<WidgetVisibilityPanel {...base()} />);
+    expect(screen.queryByRole("button", { name: /^Move / })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reset to default order" })).toBeNull();
+  });
+
+  it("gives each row a move up and a move down button, named after the section", () => {
+    const onMove = vi.fn();
+    render(<WidgetVisibilityPanel {...base()} onMove={onMove} onResetOrder={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Move Budget up" }));
+    expect(onMove).toHaveBeenCalledWith("budget", -1);
+    fireEvent.click(screen.getByRole("button", { name: "Move Budget down" }));
+    expect(onMove).toHaveBeenCalledWith("budget", 1);
+  });
+
+  it("keeps the end buttons focusable but inert", () => {
+    const onMove = vi.fn();
+    render(<WidgetVisibilityPanel {...base()} onMove={onMove} onResetOrder={vi.fn()} />);
+    const firstUp = screen.getByRole("button", { name: "Move Accounts up" });
+    const lastDown = screen.getByRole("button", { name: "Move Cards and loans down" });
+    expect(firstUp.getAttribute("aria-disabled")).toBe("true");
+    expect(lastDown.getAttribute("aria-disabled")).toBe("true");
+    expect((firstUp as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(firstUp);
+    fireEvent.click(lastDown);
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it("moves a row, keeps focus on its button and says where it went", async () => {
+    render(<Reorderable initial={["accounts", "budget", "debt"]} />);
+    const down = screen.getByRole("button", { name: "Move Accounts down" });
+    down.focus();
+    fireEvent.click(down);
+    expect(rowIds()).toEqual(["budget", "accounts", "debt"]);
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Move Accounts down" }),
+      ),
+    );
+    expect(screen.getByTestId("widget-order-status").textContent).toBe(
+      "Accounts moved to position 2 of 3.",
+    );
+    expect(screen.getByTestId("widget-order-status").getAttribute("aria-live")).toBe("polite");
+  });
+
+  it("puts the default order back", async () => {
+    render(<Reorderable initial={["accounts", "budget", "debt"]} />);
+    const reset = screen.getByRole("button", { name: "Reset to default order" });
+    expect(reset.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Move Cards and loans up" }));
+    expect(rowIds()).toEqual(["accounts", "debt", "budget"]);
+    expect(reset.getAttribute("aria-disabled")).toBe("false");
+    fireEvent.click(reset);
+    expect(rowIds()).toEqual(["accounts", "budget", "debt"]);
+    expect(screen.getByTestId("widget-order-status").textContent).toBe(
+      "Sections are back in the default order.",
+    );
   });
 });
