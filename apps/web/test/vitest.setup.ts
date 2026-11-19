@@ -43,6 +43,16 @@ vi.mock("react-router", async () => {
     }),
     useLoaderData: () => ({}),
     useRevalidator: () => ({ revalidate: vi.fn() }),
+    // The profile comes from the root loader's data (audit slice 8). A component rendered on its
+    // own, outside a data router, reads no root data (signed out) instead of throwing; tests that
+    // need a saved profile render inside `withRootLoader` (app/test/rootLoaderRouter.tsx).
+    useRouteLoaderData: (routeId: string) => {
+      try {
+        return (actual.useRouteLoaderData as (id: string) => unknown)(routeId);
+      } catch {
+        return undefined;
+      }
+    },
   };
 });
 

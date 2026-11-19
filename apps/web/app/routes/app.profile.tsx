@@ -1,7 +1,6 @@
 import { AccountListResponse, UserProfileResponse } from "@flump/api-contract";
 import { type NetWorthChoicesAvailable, netWorthChoicesAvailable } from "@flump/finance-engine";
 import type { ReactElement } from "react";
-import { useEffect } from "react";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -14,7 +13,6 @@ import { DELETE_ACCOUNT_INTENT } from "~/features/settings/account";
 import { deleteAccountAction } from "~/features/settings/account.server";
 import { SettingsPage } from "~/features/settings/components/SettingsPage";
 import type { UserProfile } from "~/hooks/useUserProfile";
-import { useUserProfile } from "~/hooks/useUserProfile";
 import { backendFetch, backendFetchAll } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { throwRouteError } from "~/services/route-error.server";
@@ -72,12 +70,6 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 const ProfileRoute = (): ReactElement => {
   const { userProfile, user, aiGuideUrl, mcpServerUrl, netWorthChoices } =
     useLoaderData<typeof loader>();
-  const { setProfile } = useUserProfile();
-
-  // Seed the Jotai atom so other features get the current profile
-  useEffect(() => {
-    if (userProfile) setProfile(userProfile);
-  }, [userProfile, setProfile]);
 
   return (
     <SettingsPage

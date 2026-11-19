@@ -192,6 +192,7 @@ function toContractProfile(p: PersonaFixture) {
     savingsAllocationMode: "per_account",
     savingsDefaultInterestRate: 0,
     setupChecklistCompletedSteps: [],
+    setupChecklistDismissed: false,
     customBudgetCategories: [],
     enabledPages: [],
     dashboardWidgets: [],

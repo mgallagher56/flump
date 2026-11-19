@@ -45,7 +45,6 @@ import {
   SOURCE_LABEL,
 } from "~/features/tax/tax-labels";
 import type { loader } from "~/routes/app.self-assessment_.$source";
-import { useFinancialBaseline } from "~/state/baseline.store";
 import { propertyShareProfileFirst, salaryProfileFirst } from "~/utils/profileFirst";
 import { addActions, backLink, errorText, pageRoot } from "./TaxSourceContainer.styles";
 
@@ -80,7 +79,6 @@ const TaxSourceContainer: FC = () => {
   const { source, records = [], userProfile } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTaxYear = getCurrentUKTaxYear();
-  const { baseline } = useFinancialBaseline();
 
   const years = useMemo(
     () => availableTaxYears(records, currentTaxYear),
@@ -100,8 +98,8 @@ const TaxSourceContainer: FC = () => {
   // engine's one rule (estimateInputsFor): a self-employed person's salary is not PAYE pay, and an
   // estimate that depends on a fact not set is unknown, as on the Dashboard.
   const employmentType = userProfile?.employmentType ?? null;
-  const annualSalary = salaryProfileFirst(userProfile, baseline.annualGrossSalary);
-  const ownershipShare = propertyShareProfileFirst(userProfile, baseline.propertyOwnershipSharePct);
+  const annualSalary = salaryProfileFirst(userProfile);
+  const ownershipShare = propertyShareProfileFirst(userProfile);
   const inputs = useMemo(
     () =>
       estimateInputsFor(

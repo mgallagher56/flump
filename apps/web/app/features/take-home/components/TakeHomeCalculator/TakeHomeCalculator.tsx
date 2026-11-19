@@ -22,7 +22,7 @@ import { type FC, useMemo, useState } from "react";
 import { Link, useInRouterContext } from "react-router";
 import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { DEFAULT_PROFILE, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
+import { type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import { NextPoundExplorer, useNextPoundScenario } from "../NextPoundExplorer";
 import { PayRiseTool } from "../PayRiseTool";
 import { monthlyPayParts, TakeHomeBreakdown } from "../TakeHomeBreakdown";
@@ -89,10 +89,10 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   profile: savedProfile,
   onApplyIncrease,
 }) => {
-  const { profile: storeProfile } = useUserProfile();
-  // The store starts as DEFAULT_PROFILE until the loader fills it: read the saved row until then
-  // (no layout shift on the first render, P61), and the live store after (fresh after edits).
-  const profile = storeProfile !== DEFAULT_PROFILE ? storeProfile : (savedProfile ?? storeProfile);
+  const { profile: rootProfile } = useUserProfile();
+  // Loader data only (audit slice 8): the page's saved row, else the root loader's. Both reload
+  // after a save, so the first render and later ones read the same figures (P61).
+  const profile = savedProfile ?? rootProfile;
   const { formatCurrency } = useFormatCurrency();
   const inRouter = useInRouterContext();
   const savedSalary = initialSalary && initialSalary > 0 ? initialSalary : 0;

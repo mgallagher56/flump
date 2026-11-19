@@ -6,7 +6,6 @@ import OnboardingRoute, { handle } from "./app.onboarding";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
 const mockNavigate = vi.fn();
-const mockUpdateBaseline = vi.fn();
 const mockNotify = vi.fn();
 
 let mockActionData: unknown;
@@ -41,13 +40,6 @@ vi.mock("~/hooks/useUserProfile", () => ({
 
 vi.mock("~/features/onboarding/notify", () => ({
   useOnboardingNotify: () => mockNotify,
-}));
-
-vi.mock("~/state/baseline.store", () => ({
-  useFinancialBaseline: () => ({
-    baseline: {},
-    updateBaseline: mockUpdateBaseline,
-  }),
 }));
 
 const typeInto = (label: RegExp, value: string) =>
@@ -217,8 +209,6 @@ describe("OnboardingRoute (4-step flow)", () => {
         expect.objectContaining({ enabledPages: expect.any(Array) }),
       );
       expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
-      // D31: the server profile is the only store; onboarding writes no client baseline.
-      expect(mockUpdateBaseline).not.toHaveBeenCalled();
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
     expect(mockNotify).toHaveBeenCalledWith("Details saved");

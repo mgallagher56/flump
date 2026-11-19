@@ -1,12 +1,10 @@
 /**
- * The saved profile is the one source of truth for salary and property share. The pre-sign-in
- * baseline (a browser cache from onboarding, possibly stale) is used only when there is no saved
- * profile row at all. Once the profile exists (it has an id), the stale baseline is never used:
- * an empty share reads as a whole property (100), and an empty salary is not known (null), never
- * shown as £0. A saved salary of 0 is a real value.
+ * The saved profile is the one source of truth for salary and property share (audit slice 8: no
+ * browser copy stands in for it). An empty share reads as a whole property (100), and an empty
+ * salary is not known (null), never shown as £0. A saved salary of 0 is a real value.
  */
 
-/** The profile fields these helpers read; `id` is empty or missing before the profile exists. */
+/** The profile fields these helpers read. */
 export interface ProfileFigures {
   id?: string | null;
   annualSalary?: unknown;
@@ -19,44 +17,13 @@ const toFinite = (value: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-const profileExists = (profile: ProfileFigures | null | undefined): boolean => Boolean(profile?.id);
-
 /**
- * Saved salary, including a saved 0; the baseline only with no profile row. Null when the salary
- * is not known (a profile row without one, or no profile and no baseline), so pages show their
- * "add your salary" prompt rather than £0.
+ * Saved salary, including a saved 0. Null when it is not known, so pages show their "add your
+ * salary" prompt rather than £0.
  */
-export const salaryProfileFirst = (
-  profile: ProfileFigures | null | undefined,
-  baselineSalary?: number | null,
-): number | null => {
-  const saved = toFinite(profile?.annualSalary);
-  if (saved !== null) return saved;
-  if (profileExists(profile)) return null;
-  return baselineSalary && baselineSalary > 0 ? baselineSalary : null;
-};
+export const salaryProfileFirst = (profile: ProfileFigures | null | undefined): number | null =>
+  toFinite(profile?.annualSalary);
 
-/** Saved share; 100 when the profile exists without one; the baseline only with no profile. */
-export const propertyShareProfileFirst = (
-  profile: ProfileFigures | null | undefined,
-  baselineShare?: number | null,
-): number => {
-  const saved = toFinite(profile?.propertyOwnershipShare);
-  if (saved !== null) return saved;
-  if (profileExists(profile)) return 100;
-  return typeof baselineShare === "number" && Number.isFinite(baselineShare) ? baselineShare : 100;
-};
-
-/**
- * The client profile atom only once it holds this user's saved profile, otherwise the loader's.
- * The atom starts as DEFAULT_PROFILE (empty id, the 5% and 3% creation rates), so on the server
- * render and the first client render, before the seeding effect runs, it must not stand in for
- * the saved figures.
- */
-export function seededProfile<A extends { id?: string | null }, L extends { id?: string | null }>(
-  atomProfile: A,
-  loaderProfile: L | null | undefined,
-): A | L {
-  if (!loaderProfile) return atomProfile;
-  return atomProfile.id && atomProfile.id === loaderProfile.id ? atomProfile : loaderProfile;
-}
+/** Saved share; 100 when none is saved. */
+export const propertyShareProfileFirst = (profile: ProfileFigures | null | undefined): number =>
+  toFinite(profile?.propertyOwnershipShare) ?? 100;
