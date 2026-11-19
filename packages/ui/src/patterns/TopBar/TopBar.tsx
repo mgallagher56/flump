@@ -97,7 +97,7 @@ const FlyoutGroup: FC<FlyoutGroupProps> = ({ item, active, activeKey, renderLink
 
   return (
     <li
-      className={topBarNavItem()}
+      className={topBarNavItem({ wideOnly: item.wideOnly })}
       onBlur={(event) => {
         const next = event.relatedTarget as Node | null;
         if (open && next && !event.currentTarget.contains(next)) setOpen(false);

@@ -1,10 +1,13 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { AUTH_STATE } from "../support/auth";
+import { MARKETING_URL } from "../support/env";
 import { waitForHydration } from "../support/page";
 
 /**
  * "Debt and borrowing" (owner ruling 2026-11-15) fits the navigation without truncation or
- * wrapping: the desktop top bar at 768 and 1024 wide, and the phone drawer at 320 wide.
+ * wrapping: the desktop top bar at 1024 and 1280 wide, the tablet menu at 768 and the phone drawer
+ * at 320 wide. Every top bar link has at least 12px each side of its text (owner report
+ * 2026-11-18), and "Home" is a nav item at every width (owner ruling).
  */
 const LABEL = "Debt and borrowing";
 /** The page inside the group is "Cards and loans" (owner wording, 18 November 2026). */
@@ -68,7 +71,7 @@ const expectNoPageOverflow = async (page: Page) => {
 test.describe("the Debt and borrowing nav label fits", () => {
   test.use({ storageState: AUTH_STATE });
 
-  for (const width of [768, 1024]) {
+  for (const width of [1024, 1280]) {
     test(`top bar at ${width} wide: one line, not cut off, inside the header`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto("/app/debt");
@@ -116,6 +119,57 @@ test.describe("the Debt and borrowing nav label fits", () => {
       await expect(page.getByRole("heading", { level: 1, name: PAGE_TITLE })).toBeVisible();
     });
   }
+
+  for (const width of [768, 1023, 1024, 1280]) {
+    test(`top bar at ${width} wide: Home is a nav item and every link has room inside its fill`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/");
+      await waitForHydration(page);
+      const nav = page.locator("header").first().locator('nav[aria-label="Primary"]');
+      const home = nav.getByRole("link", { name: "Home", exact: true });
+      await expect(home).toBeVisible();
+      await expect(home).toHaveAttribute("aria-current", "page");
+      const paddings = await nav.locator(":scope li > :is(a, button)").evaluateAll((els) =>
+        els
+          .filter((el) => el.getBoundingClientRect().width > 0)
+          .map((el) => {
+            const style = getComputedStyle(el);
+            return Math.min(
+              Number.parseFloat(style.paddingLeft),
+              Number.parseFloat(style.paddingRight),
+            );
+          }),
+      );
+      expect(paddings.length).toBeGreaterThan(0);
+      expect(Math.min(...paddings), "link padding each side").toBeGreaterThanOrEqual(12);
+      // Nothing spills out of the nav into the controls at the end of the bar.
+      const spill = await nav.evaluate((el) => {
+        const last = el.querySelector("ul")?.lastElementChild?.getBoundingClientRect();
+        return (last?.right ?? 0) - el.getBoundingClientRect().right;
+      });
+      expect(spill, "nav list spills past the nav").toBeLessThanOrEqual(0.5);
+      await expectNoPageOverflow(page);
+    });
+  }
+
+  test("tablet at 768 wide: Debt and borrowing sits in the menu, one line, not cut off", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 768, height: 800 });
+    await page.goto("/app/debt");
+    await waitForHydration(page);
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+    const drawer = page.locator('[data-testid="mobile-nav-drawer"]');
+    await expect(drawer).toBeVisible();
+    const row = drawer.getByText(LABEL, { exact: true }).first();
+    await expect(row).toBeVisible();
+    const fit = await measure(row);
+    expect(fit.lines).toBe(1);
+    expect(fit.clipped).toBe(false);
+    expect(fit.ellipsis).toBe(false);
+  });
 
   test.describe("phone", () => {
     test.use({ viewport: { width: 320, height: 640 }, hasTouch: true, isMobile: true });
@@ -210,6 +264,45 @@ test.describe("the Debt and borrowing nav label fits", () => {
         }
         await expectNoPageOverflow(page);
       });
+    });
+  }
+});
+
+test.describe("marketing top bar", () => {
+  for (const width of [768, 1023, 1024, 1280]) {
+    test(`at ${width} wide every link has room inside its fill and the bar fits`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto(`${MARKETING_URL}/`);
+      const nav = page.locator("header").first().locator('nav[aria-label="Primary"]');
+      await expect(nav).toBeVisible();
+      const links = await nav.locator(":scope li > :is(a, button)").evaluateAll((els) =>
+        els
+          .filter((el) => el.getBoundingClientRect().width > 0)
+          .map((el) => {
+            const style = getComputedStyle(el);
+            return {
+              padding: Math.min(
+                Number.parseFloat(style.paddingLeft),
+                Number.parseFloat(style.paddingRight),
+              ),
+              clipped: el.scrollWidth > el.clientWidth + 1,
+            };
+          }),
+      );
+      expect(links.length).toBeGreaterThan(0);
+      expect(Math.min(...links.map((l) => l.padding))).toBeGreaterThanOrEqual(12);
+      expect(
+        links.some((l) => l.clipped),
+        "a label is cut off",
+      ).toBe(false);
+      const spill = await nav.evaluate((el) => {
+        const last = el.querySelector("ul")?.lastElementChild?.getBoundingClientRect();
+        return (last?.right ?? 0) - el.getBoundingClientRect().right;
+      });
+      expect(spill, "nav list spills past the nav").toBeLessThanOrEqual(0.5);
+      await expectNoPageOverflow(page);
     });
   }
 });

@@ -23,11 +23,11 @@ export interface HomeLogoProps {
   label?: string;
   /**
    * The home page is the current page: sets `aria-current="page"` and a visible mark below the
-   * logo (at every width unless `markBelowWideOnly`).
+   * logo (at every width unless `markBelowInlineOnly`).
    */
   current?: boolean;
-  /** Hide the current mark from `NAV_WIDE_BREAKPOINT`, where an inline "Home" link shows it. */
-  markBelowWideOnly?: boolean;
+  /** Hide the current mark from `NAV_BREAKPOINT`, where an inline "Home" link shows it. */
+  markBelowInlineOnly?: boolean;
   /**
    * Link slot, so the ui package needs no router. Render a link to the site's home page and spread
    * the props onto it. Defaults to a plain anchor to "/".
@@ -44,7 +44,7 @@ const defaultRenderLink = (props: HomeLogoLinkProps) => <a href="/" {...props} /
 export const HomeLogo: FC<HomeLogoProps> = ({
   decorative = false,
   current = false,
-  markBelowWideOnly = false,
+  markBelowInlineOnly = false,
   label = "Flump home",
   renderLink = defaultRenderLink,
 }) => (
@@ -58,7 +58,7 @@ export const HomeLogo: FC<HomeLogoProps> = ({
             children: <FlumpLogo size="md" />,
           }
         : {
-            className: homeLogoLink({ markBelowWideOnly }),
+            className: homeLogoLink({ markBelowInlineOnly }),
             "aria-label": label,
             ...(current ? { "aria-current": "page" as const } : {}),
             children: <FlumpLogo size="md" />,

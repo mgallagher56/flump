@@ -69,7 +69,8 @@ export function applyScroll(
 /**
  * Scroll restoration for the marketing site's `BrowserRouter`, which (unlike a data router) has no
  * `<ScrollRestoration>`: without this a new page kept the old page's scroll position, so it opened
- * part way down. Renders nothing. The first page load is left to the browser.
+ * part way down. Renders nothing. On the first load (a reload, or coming back from another site)
+ * it returns to the position saved for that history entry, if any; otherwise the browser decides.
  */
 export function ScrollManager(): null {
   const location = useLocation();
@@ -79,7 +80,6 @@ export function ScrollManager(): null {
   const firstRender = useRef(true);
 
   useEffect(() => {
-    positions.current = readPositions();
     const previous = window.history.scrollRestoration;
     window.history.scrollRestoration = "manual";
     return () => {
@@ -117,6 +117,12 @@ export function ScrollManager(): null {
     currentKey.current = key;
     if (firstRender.current) {
       firstRender.current = false;
+      positions.current = readPositions();
+      const saved = positions.current[key];
+      // History is manual from here on, so the browser no longer restores a reload itself.
+      if (navigationType === NavigationType.Pop && !hash && saved !== undefined) {
+        window.scrollTo(0, saved);
+      }
       return;
     }
     applyScroll({ key, hash }, navigationType, positions.current);

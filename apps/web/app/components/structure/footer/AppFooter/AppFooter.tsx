@@ -1,13 +1,11 @@
-import { BUSINESS_DETAILS } from "@flump/business-details";
+import { shortCompanyLine } from "@flump/business-details";
 import { HomeLogo, SiteFooter } from "@repo/ui";
 import type { FC } from "react";
 import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import { appFooterSpacing } from "./AppFooter.styles";
 
 /** "© 2026 Flump Finance Ltd": short enough to stay on one line at 320px beside the logo. */
-export function appFooterLine(year: number): string {
-  return `© ${year} ${BUSINESS_DETAILS.legalName.value}`;
-}
+export const appFooterLine = shortCompanyLine;
 
 /**
  * Signed-in web app footer: one line that marks the bottom of the page, the logo and the company

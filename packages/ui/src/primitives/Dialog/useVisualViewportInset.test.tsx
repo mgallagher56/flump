@@ -38,6 +38,14 @@ describe("measureKeyboard", () => {
     });
   });
 
+  it("ignores pinch zoom, which shrinks the visual viewport without a keyboard", () => {
+    // Zoomed to 2x: 406 of the 812 visible, but nothing covers the page, so 0 and the full 812.
+    expect(measureKeyboard(812, { height: 406, offsetTop: 200, scale: 2 })).toEqual({
+      height: 812,
+      inset: 0,
+    });
+  });
+
   it("never goes below zero", () => {
     // Rounding or a toolbar can make the visible part a pixel taller than the page.
     expect(measureKeyboard(812, { height: 813, offsetTop: 0 }).inset).toBe(0);

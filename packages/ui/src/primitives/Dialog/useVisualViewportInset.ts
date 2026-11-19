@@ -16,8 +16,10 @@ let stop: (() => void) | null = null;
  */
 export function measureKeyboard(
   layoutHeight: number,
-  viewport: { height: number; offsetTop: number },
+  viewport: { height: number; offsetTop: number; scale?: number },
 ): { height: number; inset: number } {
+  // Pinch zoom shrinks the visual viewport too; that is not a keyboard, so keep the full height.
+  if ((viewport.scale ?? 1) > 1) return { height: Math.round(layoutHeight), inset: 0 };
   const inset = Math.max(0, Math.round(layoutHeight - viewport.height - viewport.offsetTop));
   return { height: Math.round(viewport.height), inset };
 }

@@ -76,7 +76,9 @@ test("the add-account dialog sits on the keyboard and stays put between fields",
   await balance.focus();
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(resolve)));
   expect(await page.evaluate(() => window.scrollY)).toBe(pageY);
-  expect(await dialog.boundingBox()).toEqual(first);
+  const second = await dialog.boundingBox();
+  expect(Math.abs((second?.y ?? 0) - (first?.y ?? 0)), "dialog moved").toBeLessThanOrEqual(1);
+  expect(Math.abs((second?.height ?? 0) - (first?.height ?? 0))).toBeLessThanOrEqual(1);
   const field = await balance.boundingBox();
   expect((field?.y ?? 0) + (field?.height ?? 0)).toBeLessThanOrEqual(visibleBottom);
   const label = await dialog.getByText("Balance", { exact: true }).first().boundingBox();

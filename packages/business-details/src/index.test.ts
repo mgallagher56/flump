@@ -7,6 +7,7 @@ import {
   formatPrice,
   isPublicLaunch,
   placeholderFields,
+  shortCompanyLine,
 } from "./index";
 
 const realDetails = (): BusinessDetails => {
@@ -79,5 +80,13 @@ describe("launch guard", () => {
   });
   it("allows a launch once every placeholder is replaced", () => {
     expect(() => assertLaunchReady({ ALLOW_INDEXING: "true" }, realDetails())).not.toThrow();
+  });
+});
+
+describe("shortCompanyLine", () => {
+  it("is the copyright year and the legal name only", () => {
+    // "© " + 2026 + " " + the legal name, nothing else.
+    expect(shortCompanyLine(2026)).toBe(`© 2026 ${BUSINESS_DETAILS.legalName.value}`);
+    expect(shortCompanyLine(2026)).not.toContain("Company number");
   });
 });

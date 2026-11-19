@@ -39,8 +39,8 @@ describe("HomeLogo", () => {
     rerender(<HomeLogo current />);
     const link = screen.getByRole("link", { name: "Flump home" });
     expect(link.getAttribute("aria-current")).toBe("page");
-    expect(link.className).not.toContain("navWide:");
-    rerender(<HomeLogo current markBelowWideOnly />);
-    expect(screen.getByRole("link", { name: "Flump home" }).className).toContain("navWide:");
+    expect(link.className).not.toContain("navInline:");
+    rerender(<HomeLogo current markBelowInlineOnly />);
+    expect(screen.getByRole("link", { name: "Flump home" }).className).toContain("navInline:");
   });
 });

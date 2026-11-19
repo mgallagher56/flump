@@ -69,7 +69,7 @@ function Nav() {
 }
 
 describe("ScrollManager", () => {
-  it("leaves the first load to the browser, then resets on a link and restores on back", async () => {
+  it("leaves a first load with nothing saved to the browser, then resets on a link and restores on back", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <ScrollManager />
@@ -99,5 +99,16 @@ describe("ScrollManager", () => {
 
     await act(async () => screen.getByRole("button", { name: "Back" }).click());
     expect(scrollTo).toHaveBeenLastCalledWith(0, 1200);
+  });
+
+  it("returns to the saved position when the page is reloaded", () => {
+    // MemoryRouter's first entry has the key "default" and loads as a POP, like a reload.
+    window.sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify({ default: 640 }));
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ScrollManager />
+      </MemoryRouter>,
+    );
+    expect(scrollTo).toHaveBeenCalledWith(0, 640);
   });
 });
