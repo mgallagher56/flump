@@ -2,6 +2,7 @@ import {
   type AccountCategory,
   anonymiseDescription,
   type BudgetEntryItem,
+  type BudgetLinkOffer,
   type BuildContextPackInput,
   budgetRowMonthly,
   createBudgetCategoryAnonymiser,
@@ -96,6 +97,11 @@ export interface ReadModel extends AccountIndex {
    * Budget tools read these, never `raw.budgetEntries`, so their totals match the web.
    */
   budgetEntries: BudgetEntryItem[];
+  /**
+   * Saved facts (take-home pay, the housing payment) not in the budget: the budget has rows of that
+   * kind of its own and the user has not added the fact or picked a row to replace. Counted nowhere.
+   */
+  budgetLinkOffers: BudgetLinkOffer[];
 }
 
 /** The engine's closed account category for a stored account type (never the free-text type). */
@@ -159,7 +165,7 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
   const entries = raw.budgetEntries ?? [];
   // The engine's resolved budget, the one the web page and the context pack list: rows the person
   // linked, the take-home and housing lines it adds or fills on its own, shadowed rows left out.
-  const resolved = linkedBudgetRowsFor(
+  const linked = linkedBudgetRowsFor(
     {
       profile: raw.profileFacts ?? profileFactsFromProfile(null),
       accounts: raw.accounts ?? [],
@@ -167,12 +173,13 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
       budget: entries,
     },
     { snapshot },
-  ).rows;
+  );
   return {
     raw,
     snapshot,
     basis,
-    budgetEntries: listedBudgetEntries(entries, resolved),
+    budgetEntries: listedBudgetEntries(entries, linked.rows),
+    budgetLinkOffers: linked.offers,
     netWorthLeavesOut: resolveSnapshotNetWorthScope(snapshot, basis).leftOut,
     ...indexAccounts(ctx, snapshot.getResolvedAccounts()),
   };

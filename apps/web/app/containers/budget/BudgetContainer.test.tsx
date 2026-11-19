@@ -1061,7 +1061,35 @@ describe("BudgetContainer", () => {
       expect(housing.textContent).not.toContain("£900");
     });
 
-    it("lists the saved rent in Housing in place of the budget's empty rent row", () => {
+    it("lists the saved rent in Housing through the rent row linked to it", () => {
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: [
+          ...spendingOnly,
+          row({
+            id: "old-rent",
+            name: "Rent",
+            category: "housing",
+            amount: 0,
+            linkKind: "housing",
+          }),
+        ],
+        userProfile: {
+          ...baseLoaderData.userProfile,
+          housingStatus: "renting",
+          monthlyHousingCost: 900,
+        },
+      };
+      render(<BudgetContainer />);
+      const housing = screen.getByTestId("budget-category-housing");
+      expect(housing.textContent).toContain("£900");
+      expect(screen.queryByTestId("budget-link-notice")).toBeNull();
+    });
+
+    it("says the saved rent is not in the budget beside an unlinked rent row, and adds it on request", async () => {
+      vi.mocked(apiFetch).mockResolvedValueOnce(
+        row({ id: "new-rent", name: "Rent", category: "housing", amount: 0, linkKind: "housing" }),
+      );
       mockLoaderData = {
         ...baseLoaderData,
         budgetEntries: [
@@ -1075,8 +1103,26 @@ describe("BudgetContainer", () => {
         },
       };
       render(<BudgetContainer />);
-      const housing = screen.getByTestId("budget-category-housing");
-      expect(housing.textContent).toContain("£900");
+      // The £0 row is not filled on its own: the saved £900 is counted nowhere until chosen.
+      expect(screen.getByTestId("budget-link-notice").textContent).toContain(
+        "Your rent of £900 from your housing details is not in this budget yet.",
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Add your rent of £900" }));
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith(
+          "/budget-entries",
+          expect.objectContaining({
+            method: "POST",
+            body: expect.objectContaining({
+              category: "housing",
+              name: "Rent",
+              amount: 0,
+              linkKind: "housing",
+            }),
+          }),
+        ),
+      );
+      await waitFor(() => expect(screen.queryByTestId("budget-link-notice")).toBeNull());
     });
 
     it("shows where Breathing room comes from, with links to Savings", () => {

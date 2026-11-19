@@ -64,9 +64,9 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
     expect(offers).toEqual([]);
   });
 
-  it("counts only the person's own pay when they have an income row, and offers the link", () => {
+  it("counts only the person's own pay when they have an income row, and offers the take-home", () => {
     // Salary saved (take-home £2,500) and a "Paycheck" row of £2,000. Only the £2,000 counts:
-    // income = 2,000, not 2,000 + 2,500 = 4,500. The take-home is offered for that row.
+    // income = 2,000, not 2,000 + 2,500 = 4,500. The take-home is offered, not counted.
     const { rows, shadowedRowIds, offers } = withLinkedBudgetRows(
       [row({ id: "p", category: "income", name: "Paycheck", amount: 2000, isIncome: true })],
       { takeHome: takeHome(2500), housing: null },
@@ -74,7 +74,21 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
     expect(rows.map((r) => r.id)).toEqual(["p"]);
     expect(shadowedRowIds).toEqual([]);
     expect(totalsOf(rows).income).toBe(2000);
-    expect(offers).toEqual([{ link: "take_home", monthly: 2500, kind: null, rowIds: ["p"] }]);
+    expect(offers).toEqual([
+      { link: "take_home", monthly: 2500, kind: null, paymentEstimated: false, rowIds: ["p"] },
+    ]);
+  });
+
+  it("does not let Child Benefit stand in for the salary: the take-home is offered", () => {
+    // "Child benefit" £100 is the only income row; take-home £2,500 saved. Income = 100 (the
+    // salary is not in the budget yet), and the offer says so with the row it could replace.
+    const { rows, offers } = withLinkedBudgetRows(
+      [row({ id: "cb", category: "income", name: "Child benefit", amount: 100, isIncome: true })],
+      { takeHome: takeHome(2500), housing: null },
+    );
+    expect(rows.map((r) => r.id)).toEqual(["cb"]);
+    expect(totalsOf(rows).income).toBe(100);
+    expect(offers.map((o) => [o.link, o.monthly, o.rowIds])).toEqual([["take_home", 2500, ["cb"]]]);
   });
 
   it.each(["Acme Ltd", "Main job", "Salary", "Partner's salary", "Child Benefit"])(
@@ -90,15 +104,16 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
     },
   );
 
-  it("adds the take-home row beside a £0 income row, which stays listed", () => {
-    // A £0 "Salary" row is no figure: the linked £2,500 is added. Income = 2,500 + 0 = 2,500.
-    const { rows, shadowedRowIds } = withLinkedBudgetRows(
+  it("offers the take-home beside a £0 income row, adding nothing on its own", () => {
+    // A £0 "Salary" row is still a row of the person's: nothing is added. Income = 0; offered.
+    const { rows, shadowedRowIds, offers } = withLinkedBudgetRows(
       [row({ id: "s", category: "income", name: "Salary", amount: 0, isIncome: true })],
       { takeHome: takeHome(2500), housing: null },
     );
-    expect(rows.map((r) => r.id)).toEqual([LINKED_TAKE_HOME_ID, "s"]);
+    expect(rows.map((r) => r.id)).toEqual(["s"]);
     expect(shadowedRowIds).toEqual([]);
-    expect(totalsOf(rows).income).toBe(2500);
+    expect(totalsOf(rows).income).toBe(0);
+    expect(offers.map((o) => o.rowIds)).toEqual([["s"]]);
   });
 
   it("reads the take-home in place of the row the person chose, keeping their other income", () => {
@@ -133,65 +148,105 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
 });
 
 describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
-  it("a sole renter: the saved rent fills the one empty housing row, carrying its id", () => {
-    // Saved rent £950; one housing row "Rent or mortgage" at £0, sole. Nothing was typed, so the
-    // saved figure stands in for it: essentials = 950. The line carries the row's id so the
-    // editor can turn it back into an ordinary row ("Type my own figure").
+  it("a sole renter: £1,200 saved is £1,200 in the budget once the row is linked", () => {
+    // Saved rent £1,200, the person's own cost. The "Rent" row is linked (stored £0, sole).
+    // Essentials = 1,200.
     const { rows, shadowedRowIds, offers } = withLinkedBudgetRows(
-      [row({ id: "h", category: "housing", name: "Rent or mortgage", amount: 0 })],
-      { takeHome: noTakeHome, housing: rent(950) },
+      [row({ id: "h", category: "housing", name: "Rent", amount: 0, linkKind: "housing" })],
+      { takeHome: noTakeHome, housing: rent(1200) },
     );
     expect(rows.map((r) => r.id)).toEqual([LINKED_HOUSING_ID]);
     expect(rows[0]).toMatchObject({
       name: "Rent",
-      amount: 950,
+      amount: 1200,
       ownership: "sole",
       linkedRowId: "h",
     });
     expect(shadowedRowIds).toEqual(["h"]);
     expect(offers).toEqual([]);
-    expect(totalsOf(rows).essentials).toBe(950);
+    expect(totalsOf(rows).essentials).toBe(1200);
   });
 
-  it("a single housing row with a typed figure is kept and the link offered, whatever its name", () => {
-    // Saved rent £1,000; the one housing row is "Mortgage" £900 (or "Home insurance" £20). A typed
-    // figure never leaves the totals unasked: essentials = 900, and "Use your saved rent" is offered.
-    for (const [name, amount] of [
-      ["Mortgage", 900],
-      ["Home insurance", 20],
-    ] as const) {
-      const { rows, shadowedRowIds, offers } = withLinkedBudgetRows(
-        [row({ id: "h", category: "housing", name, amount })],
-        { takeHome: noTakeHome, housing: rent(1000) },
-      );
-      expect(rows.map((r) => r.id)).toEqual(["h"]);
-      expect(shadowedRowIds).toEqual([]);
-      expect(totalsOf(rows).essentials).toBe(amount);
-      expect(offers).toEqual([{ link: "housing", monthly: 1000, kind: "rent", rowIds: ["h"] }]);
-    }
-  });
-
-  it("a 50% joint renter: the linked row keeps the row's share", () => {
-    // Saved rent £1,200 (the whole rent, as onboarding asks it). The one housing row,
-    // "Rent (my share)", is empty and joint at 50%. Linked row counts 1,200 x 50% = 600, never 1,200.
+  it("a 50% joint renter who saved their own £600: £600 counts, not £300", () => {
+    // The saved figure is asked for as the person's own cost ("Your own share if you split it"),
+    // so it is £600 already. The linked row is joint at 50%, but no second share is taken:
+    // essentials = 600 (not 600 x 50% = 300).
     const { rows } = withLinkedBudgetRows(
       [
         row({
           id: "h",
           category: "housing",
-          name: "Rent (my share)",
+          name: "Rent",
           amount: 0,
           ownership: "joint",
           sharePercent: 50,
+          linkKind: "housing",
         }),
       ],
-      { takeHome: noTakeHome, housing: rent(1200) },
+      { takeHome: noTakeHome, housing: rent(600) },
     );
-    expect(rows[0]).toMatchObject({ id: LINKED_HOUSING_ID, ownership: "joint", sharePercent: 50 });
+    expect(rows[0]).toMatchObject({ id: LINKED_HOUSING_ID, ownership: "sole", sharePercent: null });
     expect(totalsOf(rows).essentials).toBe(600);
   });
 
-  it("two housing rows: changes nothing and offers the link", () => {
+  it("a joint mortgage at 50%: the payment at the person's share, with no second share", () => {
+    // Estimate £1,234.56, worked out from the share-scaled balance (50% of the loan), so already
+    // the person's share. The linked row is joint at 50%: essentials = 300 + 1,234.56 = 1,534.56,
+    // not 300 + 617.28.
+    const { rows, shadowedRowIds } = withLinkedBudgetRows(
+      [
+        row({ id: "g", category: "expenses", name: "Groceries", amount: 300 }),
+        row({
+          id: "m",
+          category: "housing",
+          name: "Mortgage",
+          amount: 0,
+          ownership: "joint",
+          sharePercent: 50,
+          linkKind: "housing",
+        }),
+      ],
+      {
+        takeHome: noTakeHome,
+        housing: { kind: "mortgage", monthly: 1234.56, paymentEstimated: true },
+      },
+    );
+    expect(rows.map((r) => r.id)).toEqual(["g", LINKED_HOUSING_ID]);
+    expect(rows[1]).toMatchObject({ ownership: "sole", sharePercent: null });
+    expect(shadowedRowIds).toEqual(["m"]);
+    expect(totalsOf(rows).essentials).toBeCloseTo(1534.56, 2);
+  });
+
+  it("does not fill a single empty housing row: the rent is offered, not counted", () => {
+    // Saved rent £950; one £0 housing row, not linked. Nothing changes until the person picks:
+    // essentials = 0, and the offer lists that row.
+    const { rows, shadowedRowIds, offers } = withLinkedBudgetRows(
+      [row({ id: "h", category: "housing", name: "Rent or mortgage", amount: 0 })],
+      { takeHome: noTakeHome, housing: rent(950) },
+    );
+    expect(rows.map((r) => r.id)).toEqual(["h"]);
+    expect(shadowedRowIds).toEqual([]);
+    expect(totalsOf(rows).essentials).toBe(0);
+    expect(offers).toEqual([
+      { link: "housing", monthly: 950, kind: "rent", paymentEstimated: false, rowIds: ["h"] },
+    ]);
+  });
+
+  it("does not let Home insurance stand in for the rent: the rent is offered", () => {
+    // Saved rent £1,000; the one housing row is "Home insurance" £30. Essentials = 30 (the rent
+    // is not in the budget yet), and the rent is offered.
+    const { rows, offers } = withLinkedBudgetRows(
+      [row({ id: "hi", category: "housing", name: "Home insurance", amount: 30 })],
+      { takeHome: noTakeHome, housing: rent(1000) },
+    );
+    expect(rows.map((r) => r.id)).toEqual(["hi"]);
+    expect(totalsOf(rows).essentials).toBe(30);
+    expect(offers.map((o) => [o.link, o.monthly, o.kind, o.rowIds])).toEqual([
+      ["housing", 1000, "rent", ["hi"]],
+    ]);
+  });
+
+  it("two housing rows: changes nothing and offers the saved payment", () => {
     // Saved mortgage £950; rows "Mortgage" £900 and "Service charge" £80 stay as typed:
     // essentials = 900 + 80 = 980.
     const { rows, shadowedRowIds, offers } = withLinkedBudgetRows(
@@ -208,13 +263,19 @@ describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
     expect(shadowedRowIds).toEqual([]);
     expect(totalsOf(rows).essentials).toBe(980);
     expect(offers).toEqual([
-      { link: "housing", monthly: 950, kind: "mortgage", rowIds: ["m", "sc"] },
+      {
+        link: "housing",
+        monthly: 950,
+        kind: "mortgage",
+        paymentEstimated: false,
+        rowIds: ["m", "sc"],
+      },
     ]);
   });
 
-  it("two housing rows, one chosen: the saved figure stands in for it with its share", () => {
+  it("two housing rows, one chosen: the saved figure stands in for it at 100%", () => {
     // "Mortgage" chosen (stored £0, joint 50%, linkKind housing) and "Service charge" £80.
-    // Essentials = 950 x 50% + 80 = 475 + 80 = 555.
+    // The saved £950 is the person's own cost: essentials = 950 + 80 = 1,030.
     const { rows, offers } = withLinkedBudgetRows(
       [
         row({
@@ -234,7 +295,7 @@ describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
       },
     );
     expect(rows.map((r) => r.id)).toEqual([LINKED_HOUSING_ID, "sc"]);
-    expect(totalsOf(rows).essentials).toBe(555);
+    expect(totalsOf(rows).essentials).toBe(1030);
     expect(offers).toEqual([]);
   });
 
@@ -255,9 +316,9 @@ describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
     expect(selectBudgetTotals(linked.rows).status).toBe("unknown");
   });
 
-  it("lets a typed housing row win over the mortgage estimate, adding no linked row", () => {
+  it("offers the mortgage estimate beside a typed row instead of dropping it silently", () => {
     // Estimate £1,234.56. Typed "Mortgage" £600, joint at 50%: it counts 600 x 50% = 300.
-    // No linked row and no offer, so essentials = 300 (not 300 + 1,234.56).
+    // The estimate is not counted (essentials = 300) but is offered, marked as an estimate.
     const { rows, shadowedRowIds, offers } = withLinkedBudgetRows(
       [
         row({
@@ -276,35 +337,16 @@ describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
     );
     expect(rows.map((r) => r.id)).toEqual(["m"]);
     expect(shadowedRowIds).toEqual([]);
-    expect(offers).toEqual([]);
-    expect(totalsOf(rows).essentials).toBe(300);
-  });
-
-  it("the estimate stands in for a £0 housing row as the person's share already", () => {
-    // Estimate £1,234.56, worked out from a share-scaled balance, so already the person's share.
-    // The £0 "Mortgage" row is marked joint at 50%; the share is not taken twice:
-    // essentials = 300 + 1,234.56 = 1,534.56 (not 300 + 617.28).
-    const { rows, shadowedRowIds } = withLinkedBudgetRows(
-      [
-        row({ id: "g", category: "expenses", name: "Groceries", amount: 300 }),
-        row({
-          id: "m",
-          category: "housing",
-          name: "Mortgage",
-          amount: 0,
-          ownership: "joint",
-          sharePercent: 50,
-        }),
-      ],
+    expect(offers).toEqual([
       {
-        takeHome: noTakeHome,
-        housing: { kind: "mortgage", monthly: 1234.56, paymentEstimated: true, isOwnShare: true },
+        link: "housing",
+        monthly: 1234.56,
+        kind: "mortgage",
+        paymentEstimated: true,
+        rowIds: ["m"],
       },
-    );
-    expect(rows.map((r) => r.id)).toEqual(["g", LINKED_HOUSING_ID]);
-    expect(rows[1]).toMatchObject({ ownership: "sole", sharePercent: null });
-    expect(shadowedRowIds).toEqual(["m"]);
-    expect(totalsOf(rows).essentials).toBeCloseTo(1534.56, 2);
+    ]);
+    expect(totalsOf(rows).essentials).toBe(300);
   });
 
   it("keeps the budget's own housing row while no housing payment is saved", () => {
@@ -312,6 +354,61 @@ describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
     expect(withLinkedBudgetRows(budget, { takeHome: noTakeHome, housing: null }).rows).toEqual(
       budget,
     );
+  });
+});
+
+describe("withLinkedBudgetRows: a saved £0 is a real £0 (item 3)", () => {
+  const household0 = { kind: "household" as const, monthly: 0, paymentEstimated: false };
+  const food = row({ id: "food", category: "expenses", name: "Food", amount: 300 });
+
+  it("resolves a linked line to a household contribution of £0, never Not set", () => {
+    // Living with family, paying £0 saved. The linked row reads £0: essentials = 0 + 300 = 300,
+    // and the totals stay known (so Breathing room stays known).
+    const { rows } = withLinkedBudgetRows(
+      [row({ id: "h", category: "housing", name: "Board", linkKind: "housing" }), food],
+      { takeHome: noTakeHome, housing: household0 },
+    );
+    expect(rows[0]).toMatchObject({ id: LINKED_HOUSING_ID, amount: 0, linkedRowId: "h" });
+    expect(rows[0]?.notSet).toBeUndefined();
+    expect(totalsOf(rows).essentials).toBe(300);
+  });
+
+  it("adds a £0 household line when there are no housing rows, and offers nothing beside one", () => {
+    const added = withLinkedBudgetRows([food], { takeHome: noTakeHome, housing: household0 });
+    expect(added.rows.map((r) => [r.id, r.amount])).toEqual([
+      ["food", 300],
+      [LINKED_HOUSING_ID, 0],
+    ]);
+    // A £0 left out changes no figure, so beside a housing row it is not offered.
+    const beside = withLinkedBudgetRows(
+      [row({ id: "hi", category: "housing", name: "Home insurance", amount: 20 })],
+      { takeHome: noTakeHome, housing: household0 },
+    );
+    expect(beside.offers).toEqual([]);
+  });
+
+  it("builds Breathing room from a saved £0 household contribution", () => {
+    // Living with family at £0; "Board" linked; Food £300 essential; cash £900.
+    // Essentials = 0 + 300 = 300. Months of cover = 900 / 300 = 3.
+    const picture = buildFinancialPicture(
+      financialPictureInputFromRows({
+        profile: { housingStatus: "living_with_family", monthlyHousingCost: 0 },
+        accounts: [{ id: "cur", name: "Current", type: "Current", balance: 900 }],
+        budgetEntries: [
+          {
+            id: "h",
+            category: "housing",
+            name: "Board",
+            amount: 0,
+            isEssential: true,
+            linkKind: "housing",
+          },
+          { id: "f", category: "expenses", name: "Food", amount: 300, isEssential: true },
+        ],
+      }),
+    );
+    if (!isFigureKnown(picture.monthsOfCover)) throw new Error("expected known");
+    expect(picture.monthsOfCover.value.months).toBe(3);
   });
 });
 
@@ -334,14 +431,21 @@ describe("selectHousingPayment", () => {
 
 describe("buildFinancialPicture with linked rows", () => {
   it("counts the saved rent once and lists the rows it counts", () => {
-    // Renting at £800 saved; budget has an empty "Rent" row (£0) and Groceries £300 (essential).
-    // The saved rent fills the empty row: essentials = 800 + 300 = 1,100. Cash £3,300 / 1,100 = 3.0.
+    // Renting at £800 saved; budget has a "Rent" row linked to it (£0 stored) and Groceries £300
+    // (essential). Essentials = 800 + 300 = 1,100. Cash £3,300 / 1,100 = 3.0.
     const picture = buildFinancialPicture(
       financialPictureInputFromRows({
         profile: { housingStatus: "renting", monthlyHousingCost: 800 },
         accounts: [{ id: "cur", name: "Current", type: "Current", balance: 3300 }],
         budgetEntries: [
-          { id: "rent", category: "housing", name: "Rent", amount: 0, isEssential: true },
+          {
+            id: "rent",
+            category: "housing",
+            name: "Rent",
+            amount: 0,
+            isEssential: true,
+            linkKind: "housing",
+          },
           { id: "g", category: "expenses", name: "Groceries", amount: 300, isEssential: true },
         ],
       }),
@@ -401,7 +505,7 @@ describe("selectHousingPayment: the estimate is the person's share", () => {
         new PortfolioSnapshot(accounts, []),
         accounts,
       ),
-    ).toEqual({ kind: "mortgage", monthly: 4303.32, paymentEstimated: true, isOwnShare: true });
+    ).toEqual({ kind: "mortgage", monthly: 4303.32, paymentEstimated: true });
   });
 });
 
@@ -441,7 +545,7 @@ describe("withLinkedBudgetRows: a linked line's stored amount is never read (dec
     expect(selectBudgetTotals(rows)).toEqual(figureUnknown(["annualSalary"], "not-set"));
   });
 
-  it("marks a linked housing line Not set when no housing payment is saved, keeping its name and share", () => {
+  it("marks a linked housing line Not set when no housing payment is saved, keeping its name", () => {
     const { rows } = withLinkedBudgetRows([rentRow, food], { takeHome: noTakeHome, housing: null });
     expect(rows[0]).toMatchObject({
       id: LINKED_HOUSING_ID,
@@ -449,21 +553,20 @@ describe("withLinkedBudgetRows: a linked line's stored amount is never read (dec
       linked: "housing",
       linkedRowId: "rent",
       notSet: true,
-      ownership: "joint",
-      sharePercent: 50,
     });
     expect(selectBudgetTotals(rows)).toEqual(figureUnknown(["monthlyHousingCost"], "not-set"));
   });
 
-  it("resolves a joint linked rent at the person's share", () => {
-    // Rent £1,000 saved, the row joint at 50%: £500 counts. Essentials = 500 + 300 = 800.
+  it("resolves a joint linked rent at 100%: the saved rent is the person's own cost", () => {
+    // Rent £1,000 saved as the person's own cost, the row joint at 50%: £1,000 counts.
+    // Essentials = 1,000 + 300 = 1,300.
     const { rows } = withLinkedBudgetRows([rentRow, food], {
       takeHome: noTakeHome,
       housing: rent(1000),
     });
-    expect(rows[0]).toMatchObject({ amount: 1000, linkedRowId: "rent", ownership: "joint" });
+    expect(rows[0]).toMatchObject({ amount: 1000, linkedRowId: "rent", ownership: "sole" });
     expect(rows[0]?.notSet).toBeUndefined();
-    expect(totalsOf(rows).essentials).toBe(800);
+    expect(totalsOf(rows).essentials).toBe(1300);
   });
 
   it("does not read a stored amount left on a linked row", () => {
@@ -506,9 +609,17 @@ describe("listedBudgetEntries", () => {
   });
 
   it("lists the lines the engine adds and replaces, and keeps the caller's (anonymised) names", () => {
-    // No income rows, take-home £2,500: "Take-home pay" is added. Saved rent £1,000 fills the one
-    // empty housing row, shown under the caller's name for it ("Bills 1"). Income 2,500, housing 1,000.
-    const entries = [row({ id: "h", name: "Landlord J Smith", category: "housing", amount: 0 })];
+    // No income rows, take-home £2,500: "Take-home pay" is added. Saved rent £1,000 reads into the
+    // linked housing row, shown under the caller's name for it ("Bills 1"). Income 2,500, housing 1,000.
+    const entries = [
+      row({
+        id: "h",
+        name: "Landlord J Smith",
+        category: "housing",
+        amount: 0,
+        linkKind: "housing",
+      }),
+    ];
     const { rows } = withLinkedBudgetRows(entries, {
       takeHome: takeHome(2500),
       housing: rent(1000),

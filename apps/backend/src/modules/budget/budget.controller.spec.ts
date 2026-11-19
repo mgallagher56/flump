@@ -239,6 +239,33 @@ describe("BudgetController", () => {
       expect(still).toMatchObject({ amount: 0, linkKind: "take_home" });
     });
 
+    it("creates a line linked to a saved fact, storing no amount, and refuses a second", async () => {
+      const { controller } = entryController();
+      const added = await controller.createBudgetEntry(req, {
+        category: "housing",
+        name: "Rent",
+        amount: 950,
+        linkKind: "housing",
+      });
+      expect(added).toMatchObject({ amount: 0, linkKind: "housing" });
+      await expect(
+        controller.createBudgetEntry(req, {
+          category: "housing",
+          name: "Rent again",
+          amount: 0,
+          linkKind: "housing",
+        }),
+      ).rejects.toThrow("Another line already uses this saved figure");
+      await expect(
+        controller.createBudgetEntry(req, {
+          category: "expenses",
+          name: "Food",
+          amount: 0,
+          linkKind: "take_home",
+        }),
+      ).rejects.toThrow("Only an income line can use your take-home pay");
+    });
+
     it("refuses a link that does not fit the line, or a second line for the same fact", async () => {
       const { controller } = entryController();
       const food = await controller.createBudgetEntry(req, {

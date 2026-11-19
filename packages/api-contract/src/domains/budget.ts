@@ -30,6 +30,11 @@ export const CreateBudgetEntryRequest = z.strictObject({
   /** E34 C1: as on accounts. Joint without a share stores 50; sole stores no share. */
   ownership: AccountOwnership.optional(),
   sharePercent: SharePercent.nullish(),
+  /**
+   * Create the line linked to a saved fact ("Add your take-home pay"): its stored amount is set to
+   * 0 and never read. Null or omitted for an ordinary line.
+   */
+  linkKind: BudgetEntryLinkKind.nullable().optional(),
 });
 export type CreateBudgetEntryRequest = z.infer<typeof CreateBudgetEntryRequest>;
 

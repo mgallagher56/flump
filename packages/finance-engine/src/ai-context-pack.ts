@@ -22,7 +22,10 @@ import { isSelfEmployedType, payeSalaryForTax } from "./paye-salary-for-tax.js";
 import { buildFinancialPicture } from "./picture/build.js";
 import { isFigureKnown } from "./picture/figure.js";
 import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
-import { listedBudgetEntries } from "./picture/selectors/linked-budget-rows.js";
+import {
+  type BudgetLinkOffer,
+  listedBudgetEntries,
+} from "./picture/selectors/linked-budget-rows.js";
 import {
   type MonthlyPortfolioHistoryPoint,
   PortfolioSnapshot,
@@ -327,6 +330,12 @@ export interface FlumpAiContextPack {
     entries: BudgetEntryItem[];
     /** Linked entries whose saved fact is not set: listed apart, with no amount. */
     entriesNotSet: ContextPackBudgetLineNotSet[];
+    /**
+     * Saved facts (take-home pay, the housing payment) that are not in this budget: the budget has
+     * rows of that kind of its own and the user has not added the fact or picked a row for it to
+     * replace. Not counted in any figure above. `rowIds` are left out.
+     */
+    savedFactsNotInBudget: Omit<BudgetLinkOffer, "rowIds">[];
   };
   taxSummary: {
     currentTaxYear: string;
@@ -573,6 +582,7 @@ export function buildFlumpAiContextPack(
         : null,
       emergencyRunwayMonths: pictureCover?.months ?? null,
       ...contextPackLines(budgetEntries, picture.budgetRows),
+      savedFactsNotInBudget: picture.budgetLinkOffers.map(({ rowIds: _ids, ...fact }) => fact),
     },
     taxSummary: {
       currentTaxYear,

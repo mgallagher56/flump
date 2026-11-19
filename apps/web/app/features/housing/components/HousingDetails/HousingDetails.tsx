@@ -41,9 +41,13 @@ interface Copy {
   text: string;
   action?: string;
   field?: string;
+  /** Says whose cost the amount is: the person's own, which the budget counts at 100%. */
+  hint?: string;
   /** £0 is a real answer when living with family or friends. */
   allowZero?: boolean;
 }
+
+const OWN_SHARE_HINT = "What you pay. Your own share if you split it.";
 
 function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
   switch (status) {
@@ -52,6 +56,7 @@ function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
         text: "Your rent is saved in your details and used across Flump.",
         action: "Edit your rent",
         field: "Rent each month",
+        hint: OWN_SHARE_HINT,
       };
     case "living_with_family":
       return {
@@ -71,6 +76,7 @@ function copyFor(status: HousingTenure, hasAmount: boolean): Copy | null {
           : "Add your rent to your details so Flump can use it across the app.",
         action: hasAmount ? "Edit your rent" : "Add your rent",
         field: "Rent each month",
+        hint: OWN_SHARE_HINT,
       };
   }
 }
@@ -157,7 +163,7 @@ export const HousingDetails: FC<HousingDetailsProps> = ({
           onOpenChange={setOpen}
         >
           <form className={slots.form} onSubmit={submit}>
-            <FormField error={error} label={copy.field}>
+            <FormField error={error} hint={copy.hint} label={copy.field}>
               {(field) => (
                 <CurrencyInput
                   {...controlProps(field)}

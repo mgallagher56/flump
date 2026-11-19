@@ -89,8 +89,9 @@ export interface BudgetEditorProps {
   /** Saved rows a linked row stands in for. Not counted anywhere, so not listed. */
   shadowedIds?: string[];
   /**
-   * Links the engine offers instead of making them (an income or housing row of the person's own
-   * is already there): each listed row gets a button that replaces it with the saved figure.
+   * Saved figures not in the budget yet (an income or housing row of the person's own is already
+   * there): each listed row gets a button that replaces it with the saved figure. The page's
+   * notice offers to add the figure as its own entry instead.
    */
   linkOffers?: BudgetLinkOffer[];
   /** How the person pays for housing, for the linked housing row. */
@@ -389,14 +390,14 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
     </>
   ) : isMortgage ? (
     <>
-      From your{" "}
+      Your own cost, from your{" "}
       <Link className={sourceLink()} to="/app/mortgage">
         mortgage details
       </Link>
       .
     </>
   ) : (
-    <>From your housing details. A change here updates them across Flump.</>
+    <>Your own cost, from your housing details. A change here updates them across Flump.</>
   );
 
   return (
@@ -818,10 +819,15 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     const offer = linkOffers.find((o) => o.rowIds.includes(entry.id));
     if (!offer) return null;
     const figureText = formatCurrency(offer.monthly, { maximumFractionDigits: 0 });
+    // The mortgage accounts' estimate is not a saved figure: it reads "about".
     const what =
-      offer.link === "take_home" ? "take-home pay" : HOUSING_KIND_LABEL[offer.kind ?? "rent"];
+      offer.link === "take_home"
+        ? "take-home pay"
+        : offer.paymentEstimated
+          ? "mortgage payment"
+          : HOUSING_KIND_LABEL[offer.kind ?? "rent"];
     return {
-      label: `Use your ${what} of ${figureText}`,
+      label: `Use your ${what} of ${offer.paymentEstimated ? "about " : ""}${figureText}`,
       onUse: () => void save(entry.id, { amount: 0, linkKind: offer.link }),
     };
   };

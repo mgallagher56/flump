@@ -1,4 +1,12 @@
-import { defaultIsEssential } from "@flump/finance-engine";
+import {
+  budgetEntryFromRow,
+  budgetRowMonthly,
+  defaultIsEssential,
+  figureKnown,
+  figureUnknown,
+  type HousingPayment,
+  withLinkedBudgetRows,
+} from "@flump/finance-engine";
 import {
   Button,
   Card,
@@ -24,7 +32,6 @@ import { Link } from "react-router";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
-import { toMonthly } from "~/types/budget";
 import { missingWizardCommonItems, WIZARD_COMMON_ITEMS } from "../../wizardCommonItems";
 import { WizardEntryRow } from "../WizardEntryRow";
 import {
@@ -71,10 +78,10 @@ export interface BudgetSetupWizardProps {
   /** Pre-filled monthly take-home from user profile */
   monthlyTakeHome: number | null;
   /**
-   * The saved housing payment a housing entry the person linked reads, a month at their share,
-   * or null when none is saved (that entry is then "Not set" and the totals are unknown).
+   * The saved housing payment (the picture's `housingPayment`, the person's own cost), or null
+   * when none is saved. The totals resolve linked and engine-added lines with it, as the page does.
    */
-  linkedHousingMonthly?: number | null;
+  housingPayment?: HousingPayment | null;
   /**
    * "setup" (the default) is the first run: welcome, example figures, then each section. "edit"
    * changes a saved budget: it starts at Income with the saved entries and skips the first two.
@@ -171,7 +178,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   onComplete,
   onCancel,
   monthlyTakeHome,
-  linkedHousingMonthly = null,
+  housingPayment = null,
   mode = "setup",
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -306,25 +313,33 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   };
 
   const allEffective = entries.map(getEffectiveEntry);
-  // A linked entry's stored amount is never read (decision 1): it reads the saved take-home or
-  // housing payment, and while that is not set the totals are unknown, never short by it.
-  const ownMonthly = (e: BudgetEntry): number => (e.linkKind ? 0 : toMonthly(e));
-  // The take-home the budget reads from the profile (item 7): in place of an income entry the
-  // person chose to replace with it, or while no income entry has an amount. Names decide nothing.
-  const takeHomeChosen = allEffective.some((e) => e.isIncome && e.linkKind === "take_home");
-  const housingChosen = allEffective.some((e) => !e.isIncome && e.linkKind === "housing");
-  const ownIncome = allEffective.some((e) => e.isIncome && ownMonthly(e) > 0);
-  const linkedTakeHome = monthlyTakeHome && (takeHomeChosen || !ownIncome) ? monthlyTakeHome : null;
-  const linkNotSet =
-    (takeHomeChosen && !monthlyTakeHome) || (housingChosen && linkedHousingMonthly === null);
+  // The totals count what the page counts: the entries as they stand, resolved by the engine's
+  // linked-lines selector (owner items 7 and 33b), so a take-home or housing line the engine adds,
+  // or a line linked to a saved figure, is in them. A linked line whose figure is not set makes
+  // them unknown, never short by it (decision 1).
+  const resolvedRows = withLinkedBudgetRows(
+    allEffective.map((e, i) => budgetEntryFromRow(e, i)),
+    {
+      takeHome: monthlyTakeHome
+        ? figureKnown({ monthly: monthlyTakeHome })
+        : figureUnknown(["annualSalary"], "not-set"),
+      housing: housingPayment,
+    },
+  ).rows;
+  const linkNotSet = resolvedRows.some((r) => r.notSet);
+  // The take-home is in the budget through its linked line, or (with no income entries yet) it is
+  // added as soon as the budget has an entry. Otherwise it is left out until the person chooses.
+  // A take-home line standing in for an entry the person linked (not one the engine added).
+  const takeHomeLinked = resolvedRows.some(
+    (r) => r.linked === "take_home" && r.linkedRowId !== undefined && !r.notSet,
+  );
+  const takeHomeInBudget = takeHomeLinked || !allEffective.some((e) => e.isIncome);
   const totalIncome = linkNotSet
     ? null
-    : allEffective.filter((e) => e.isIncome).reduce((s, e) => s + ownMonthly(e), 0) +
-      (linkedTakeHome ?? 0);
+    : resolvedRows.filter((r) => r.isIncome).reduce((s, r) => s + budgetRowMonthly(r), 0);
   const totalExpenses = linkNotSet
     ? null
-    : allEffective.filter((e) => !e.isIncome).reduce((s, e) => s + ownMonthly(e), 0) +
-      (housingChosen ? (linkedHousingMonthly ?? 0) : 0);
+    : resolvedRows.filter((r) => !r.isIncome).reduce((s, r) => s + budgetRowMonthly(r), 0);
   const surplus =
     totalIncome === null || totalExpenses === null ? null : totalIncome - totalExpenses;
 
@@ -552,25 +567,28 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                   id="wizard-linked-take-home"
                 >
                   <p className={calloutText()}>
-                    {linkedTakeHome !== null ? (
+                    {takeHomeInBudget ? (
                       <>
                         Your take-home pay of{" "}
-                        <strong>{formatCurrency(Math.abs(linkedTakeHome))}</strong> a month is
-                        already in your budget, worked out from your salary in{" "}
+                        <strong>{formatCurrency(Math.abs(monthlyTakeHome))}</strong> a month is in
+                        your budget, worked out from your salary in{" "}
                         <Link className={tipLink()} to="/app/profile">
                           Profile
                         </Link>
-                        . If you add an income entry with an amount, your entries are used instead.
+                        .{" "}
+                        {takeHomeLinked
+                          ? "Income entries you add count beside it."
+                          : "If you add income entries of your own, you choose whether to keep it too."}
                       </>
                     ) : (
                       <>
-                        Your own income entries are used in place of the take-home pay worked out
-                        from your salary in{" "}
+                        Your take-home pay of{" "}
+                        <strong>{formatCurrency(Math.abs(monthlyTakeHome))}</strong> from{" "}
                         <Link className={tipLink()} to="/app/profile">
                           Profile
-                        </Link>
-                        . To use your take-home pay instead, choose it for an entry when you edit
-                        your budget.
+                        </Link>{" "}
+                        is not in this budget yet. You can add it, or use it for one of your
+                        entries, when you edit your budget.
                       </>
                     )}
                   </p>

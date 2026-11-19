@@ -244,9 +244,9 @@ describe("linked budget lines in the context pack (decision 1)", () => {
   });
 
   it("lists the lines the engine adds or fills, as the web counts them, with names anonymised", () => {
-    // Salary £36,000 saved, no income rows: the take-home row is added. Rent £1,000 saved fills the
-    // one empty housing row "Landlord J Smith" (£0). The pack lists both resolved lines, the
-    // housing one under its anonymised label, and no stored £0.
+    // Salary £36,000 saved, no income rows: the take-home row is added. Rent £1,000 saved reads
+    // into the housing row "Landlord J Smith" linked to it (£0 stored). The pack lists both
+    // resolved lines, the housing one under its anonymised label, and no stored £0.
     const pack = buildFlumpAiContextPack(
       {
         netWorthBasis: DEFAULT_NET_WORTH_BASIS,
@@ -260,7 +260,9 @@ describe("linked budget lines in the context pack (decision 1)", () => {
           housingStatus: "renting",
           monthlyHousingCost: 1000,
         },
-        budgetEntries: [line({ id: "h", category: "housing", name: "Landlord J Smith" })],
+        budgetEntries: [
+          line({ id: "h", category: "housing", name: "Landlord J Smith", linkKind: "housing" }),
+        ],
       },
       { anonymizeInstitutions: true },
     );
@@ -270,6 +272,31 @@ describe("linked budget lines in the context pack (decision 1)", () => {
     expect(entries[0]?.amount).toBe(pack.budgetSummary.monthlyIncome);
     expect(JSON.stringify(pack)).not.toContain("Landlord");
     expect(JSON.stringify(pack)).not.toContain("linkedRowId");
+    expect(pack.budgetSummary.savedFactsNotInBudget).toEqual([]);
+  });
+
+  it("says a saved rent is not in the budget when an unlinked housing row is there", () => {
+    // Rent £1,000 saved; the budget's one housing row "Home insurance" £30 is not linked. The rent
+    // is not counted (essentials 30) and is listed as a saved fact not in the budget.
+    const pack = buildFlumpAiContextPack(
+      {
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+        baseline: DEFAULT_FINANCIAL_BASELINE,
+        profileFacts: {
+          ...profileFactsFromProfile(null),
+          housingStatus: "renting",
+          monthlyHousingCost: 1000,
+        },
+        budgetEntries: [
+          line({ id: "hi", category: "housing", name: "Home insurance", amount: 30 }),
+        ],
+      },
+      { anonymizeInstitutions: true },
+    );
+    expect(pack.budgetSummary.savedFactsNotInBudget).toEqual([
+      { link: "housing", monthly: 1000, kind: "rent", paymentEstimated: false },
+    ]);
+    expect(pack.budgetSummary.entries.map((e) => e.id)).toEqual(["hi"]);
   });
 });
 
