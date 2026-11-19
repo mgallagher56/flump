@@ -154,6 +154,25 @@ describe("mcp-tokens response schemas", () => {
     expect(checkAgainst(ContextPackResponse, { pack, markdown: "# FLUMP" })).toEqual({ ok: true });
   });
 
+  it("ContextPackResponse accepts saved facts not in the budget, without the row ids", () => {
+    const fact = { link: "housing", monthly: 950, kind: "rent", paymentEstimated: false };
+    const withFacts = (facts: unknown[]) => ({
+      pack: { ...pack, budgetSummary: { ...pack.budgetSummary, savedFactsNotInBudget: facts } },
+      markdown: "",
+    });
+    expect(checkAgainst(ContextPackResponse, withFacts([fact]))).toEqual({ ok: true });
+    expect(
+      checkAgainst(
+        ContextPackResponse,
+        withFacts([{ link: "take_home", monthly: 2750, kind: null, paymentEstimated: false }]),
+      ),
+    ).toEqual({ ok: true });
+    // Row ids are page wiring and stay out of the pack.
+    expect(checkAgainst(ContextPackResponse, withFacts([{ ...fact, rowIds: ["b1"] }])).ok).toBe(
+      false,
+    );
+  });
+
   it("ContextPackResponse rejects a health score, grade or stage (figures only, ruling 2)", () => {
     for (const extra of [
       { healthScore: { overallScore: 62, grade: "C" } },

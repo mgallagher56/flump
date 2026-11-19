@@ -722,8 +722,12 @@ describe("BudgetContainer", () => {
       budgetEntries: withBudget,
     };
     render(<BudgetContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /^Model a change to your budget/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Accounts and spending to include/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show what-if: redundancy pay, a spending cut" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Accounts and income in this illustration/ }),
+    );
     const group = screen.getByRole("group", { name: "Accounts to draw on" });
     expect(group.textContent).toContain("£3,040");
     expect(group.textContent).not.toContain("£1,216");

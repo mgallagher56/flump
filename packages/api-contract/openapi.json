@@ -7544,6 +7544,37 @@
                                   "type": "null"
                                 }
                               ]
+                            },
+                            "savedFactsNotInBudget": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "kind": {
+                                    "anyOf": [
+                                      {
+                                        "enum": ["rent", "mortgage", "household"],
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "link": {
+                                    "enum": ["take_home", "housing"],
+                                    "type": "string"
+                                  },
+                                  "monthly": {
+                                    "type": "number"
+                                  },
+                                  "paymentEstimated": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": ["link", "monthly", "kind", "paymentEstimated"],
+                                "type": "object"
+                              },
+                              "type": "array"
                             }
                           },
                           "required": [

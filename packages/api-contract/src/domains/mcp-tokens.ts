@@ -132,6 +132,17 @@ const ContextPackBudgetLineNotSet = ContextPackBudgetEntry.omit({ amount: true }
   notSet: z.literal(true),
 });
 
+/** A saved fact that is not in the budget yet (finance-engine `BudgetLinkOffer`, less its row ids). */
+const ContextPackSavedFactNotInBudget = z.strictObject({
+  link: BudgetEntryLinkKind,
+  /** The saved figure the line would read, pounds a month. */
+  monthly: z.number(),
+  /** For housing: rent, mortgage payment or household contribution. Null for take-home pay. */
+  kind: z.enum(["rent", "mortgage", "household"]).nullable(),
+  /** True when the figure is the mortgage accounts' estimate. */
+  paymentEstimated: z.boolean(),
+});
+
 /** `FlumpAiContextPack` from `@flump/finance-engine`, after JSON serialisation. */
 export const AiContextPackDto = z.strictObject({
   metadata: z.strictObject({
@@ -190,6 +201,8 @@ export const AiContextPackDto = z.strictObject({
     entries: z.array(ContextPackBudgetEntry),
     /** Linked entries whose saved fact is not set. Absent from packs built before it. */
     entriesNotSet: z.array(ContextPackBudgetLineNotSet).optional(),
+    /** Saved facts not counted in the budget yet. Absent from packs built before it. */
+    savedFactsNotInBudget: z.array(ContextPackSavedFactNotInBudget).optional(),
   }),
   taxSummary: z.strictObject({
     currentTaxYear: z.string(),

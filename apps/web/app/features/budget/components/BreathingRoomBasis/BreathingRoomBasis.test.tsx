@@ -114,4 +114,30 @@ describe("BreathingRoomBasis", () => {
     const rent = screen.getByRole("switch", { name: /Rent/ }) as HTMLInputElement;
     expect(rent.disabled).toBe(true);
   });
+
+  it("shows a joint account at the person's share once, from the saved whole balance (JO-2)", () => {
+    // Saved whole balance £7,600 at a 40% share: 7,600 × 0.40 = £3,040. Rows already at the share
+    // would show 3,040 × 0.40 = £1,216.
+    render(
+      <BreathingRoomBasis
+        accountDetails={[]}
+        accounts={[
+          {
+            id: "joint",
+            name: "Joint saver",
+            type: "Saving" as const,
+            balance: 7600,
+            ownership: "joint",
+            sharePercent: 40,
+          },
+        ]}
+        entries={[entry({})]}
+        onSetEssential={vi.fn()}
+      />,
+    );
+    open();
+    const accountsCard = screen.getByRole("region", { name: "Accounts it draws on" });
+    expect(accountsCard.textContent).toContain("£3,040");
+    expect(accountsCard.textContent).not.toContain("£1,216");
+  });
 });
