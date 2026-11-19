@@ -93,10 +93,16 @@ export interface RegistryValueMap {
   entity: string;
   /** Property -> fact id. */
   facts: Map<string, string>;
-  /** Properties that hold no fact (ids, timestamps, operational columns). */
-  notFacts: Set<string>;
+  /**
+   * Properties that hold no fact (ids, timestamps, operational columns), with the reason when it
+   * is a string literal or a string constant in the registry file. For a `noUserFacts` table these
+   * are its listed `columns`, with the table's reason.
+   */
+  notFacts: Map<string, string | undefined>;
   /** Set when the whole table holds no fact about the user, with the reason. */
   noUserFacts?: string;
+  /** False for a `noUserFacts` table that does not list its columns. */
+  listsColumns: boolean;
   /** False when the entry has no `valueMap` at all. */
   present: boolean;
 }
@@ -119,6 +125,19 @@ export function readRegistry(file: string, source: string): RegistryValueMap[] {
         constants.set(decl.name.text, init);
     }
   }
+  const strings = new Map<string, string>();
+  for (const stmt of sf.statements) {
+    if (!ts.isVariableStatement(stmt)) continue;
+    for (const decl of stmt.declarationList.declarations)
+      if (
+        ts.isIdentifier(decl.name) &&
+        decl.initializer &&
+        ts.isStringLiteralLike(decl.initializer)
+      )
+        strings.set(decl.name.text, decl.initializer.text);
+  }
+  const stringValue = (e: ts.Expression): string | undefined =>
+    ts.isStringLiteralLike(e) ? e.text : ts.isIdentifier(e) ? strings.get(e.text) : undefined;
   const keysOf = (obj: ts.ObjectLiteralExpression, into: Map<string, string | undefined>) => {
     for (const p of obj.properties) {
       if (ts.isSpreadAssignment(p) && ts.isIdentifier(p.expression)) {
@@ -126,8 +145,7 @@ export function readRegistry(file: string, source: string): RegistryValueMap[] {
         if (target) keysOf(target, into);
       } else if (ts.isPropertyAssignment(p)) {
         const key = propName(p.name);
-        if (key)
-          into.set(key, ts.isStringLiteralLike(p.initializer) ? p.initializer.text : undefined);
+        if (key) into.set(key, stringValue(p.initializer));
       } else if (ts.isShorthandPropertyAssignment(p)) {
         into.set(p.name.text, undefined);
       }
@@ -157,14 +175,18 @@ export function readRegistry(file: string, source: string): RegistryValueMap[] {
         const entry: RegistryValueMap = {
           entity,
           facts: new Map(),
-          notFacts: new Set(),
+          notFacts: new Map(),
           present: valueMap !== undefined,
+          listsColumns: true,
         };
+        let columns: string[] | undefined;
         for (const p of valueMap?.properties ?? []) {
           if (!ts.isPropertyAssignment(p)) continue;
           const key = propName(p.name);
           if (key === "noUserFacts" && ts.isStringLiteralLike(p.initializer))
             entry.noUserFacts = p.initializer.text;
+          if (key === "columns" && ts.isArrayLiteralExpression(p.initializer))
+            columns = p.initializer.elements.filter(ts.isStringLiteralLike).map((e) => e.text);
           if (
             (key === "facts" || key === "notFacts") &&
             ts.isObjectLiteralExpression(p.initializer)
@@ -172,10 +194,14 @@ export function readRegistry(file: string, source: string): RegistryValueMap[] {
             const keys = new Map<string, string | undefined>();
             keysOf(p.initializer, keys);
             for (const [prop, value] of keys) {
-              if (key === "notFacts") entry.notFacts.add(prop);
+              if (key === "notFacts") entry.notFacts.set(prop, value);
               else entry.facts.set(prop, value ?? "");
             }
           }
+        }
+        if (entry.noUserFacts !== undefined) {
+          entry.listsColumns = columns !== undefined;
+          for (const column of columns ?? []) entry.notFacts.set(column, entry.noUserFacts);
         }
         out.push(entry);
       }
@@ -238,22 +264,68 @@ export interface FoundKey {
   line: number;
 }
 
-/** The storage and cookie keys in one file, or none when the file touches no storage API. */
-export function findStorageKeys(file: string, source: string): FoundKey[] {
+/** `const NAME = "literal"` (exported or not) in one file: the names a storage call may use. */
+export function stringConstants(source: string): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const m of source.matchAll(
+    /\bconst\s+([A-Za-z_$][\w$]*)\s*(?::\s*string\s*)?=\s*(["'`])([^"'`$\\\n]*)\2/g,
+  ))
+    out.set(m[1], [...(out.get(m[1]) ?? []), m[3]]);
+  return out;
+}
+
+/** The first argument of a Storage call: a literal, a template with a literal start, or a name. */
+const STORAGE_CALL =
+  /\b(?:getItem|setItem|removeItem)\(\s*(?:`\$\{\s*([A-Za-z_$][\w$]*)\s*\}|(["'`])([^"'`$\\\n]*)(\$\{)?|([A-Za-z_$][\w$]*)\s*(\+)?)/g;
+
+/**
+ * The storage and cookie keys in one file, or none when the file touches no storage API. Two
+ * signals:
+ *
+ * - any whole string literal named as Flump names its keys (`flump` or the WorkOS cookie `wos`,
+ *   then `-`, `_` or `.`, optionally behind `__Host-` or `__Secure-`), wherever it is defined;
+ * - the first argument of every `getItem`, `setItem` and `removeItem` call, whatever its name: a
+ *   literal, a template that starts with a literal (`flump-draft-${id}` is the prefix
+ *   `flump-draft-*`), or a constant defined in this file or exported from another file under the
+ *   same roots (`shared`). `PREFIX + id` is the prefix `PREFIX*`.
+ *
+ * A key built at run time from a parameter (`setItem(key, ...)` with `key` passed in) cannot be
+ * followed; its caller's literal or constant is what gets found.
+ */
+export function findStorageKeys(
+  file: string,
+  source: string,
+  shared: ReadonlyMap<string, string[]> = new Map(),
+): FoundKey[] {
   if (!STORAGE_API.test(source)) return [];
   const code = blankComments(file, source);
   if (!STORAGE_API.test(code)) return [];
-  const found: FoundKey[] = [];
-  for (const m of code.matchAll(KEY_LITERAL))
-    found.push({ key: m[2], file, line: lineAt(code, m.index ?? 0) });
-  return found;
+  const local = stringConstants(code);
+  const found = new Map<string, FoundKey>();
+  const add = (key: string, offset: number) => {
+    if (!key || key === "*") return;
+    const line = lineAt(code, offset);
+    found.set(`${key}\u0000${line}`, { key, file, line });
+  };
+  for (const m of code.matchAll(KEY_LITERAL)) add(m[2], m.index ?? 0);
+  for (const m of code.matchAll(STORAGE_CALL)) {
+    const at = m.index ?? 0;
+    if (m[2] !== undefined) add(m[4] ? `${m[3]}*` : m[3], at);
+    const name = m[1] ?? m[5];
+    if (!name) continue;
+    const prefix = m[1] !== undefined || m[6] !== undefined;
+    for (const value of local.get(name) ?? shared.get(name) ?? [])
+      add(prefix ? `${value}*` : value, at);
+  }
+  return [...found.values()];
 }
 
 /** True when a key listed in the map (a trailing `*` is a prefix) covers a key found in code. */
-export const keyCovers = (listed: string, found: string): boolean =>
-  listed.endsWith("*")
-    ? found === listed.slice(0, -1) || found.startsWith(listed.slice(0, -1))
-    : listed === found;
+export const keyCovers = (listed: string, found: string): boolean => {
+  const bare = (key: string) => (key.endsWith("*") ? key.slice(0, -1) : key);
+  if (listed.endsWith("*")) return bare(found).startsWith(bare(listed));
+  return listed === found;
+};
 
 // ---------------------------------------------------------------------------------------------
 // Second formulas (warning only)

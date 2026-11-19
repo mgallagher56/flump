@@ -200,6 +200,7 @@ flowchart LR
   s_imports --> f_account_name
   f_account_name -.-> s_accounts
   f_account_name -.-> s_mcp_read
+  f_transactions(["Account transactions"])
   g_net_worth{{"Net worth today"}}
   f_account_balance ==> g_net_worth
   f_ownership_share ==> g_net_worth

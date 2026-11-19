@@ -45,6 +45,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Enabled pages and dashboard widgets](#enabled-pages-and-widgets)                                             | fact   | preferences | Holds                                     |
 | [Setup checklist progress](#setup-checklist)                                                                  | fact   | preferences | Duplicated (two stores that can disagree) |
 | [Account name](#account-name)                                                                                 | fact   | accounts    | Not checked                               |
+| [Account transactions](#transactions)                                                                         | fact   | accounts    | Not checked                               |
 | [Currency and country](#currency-and-country)                                                                 | fact   | preferences | Not checked                               |
 | [Net worth today](#net-worth)                                                                                 | figure | accounts    | Holds                                     |
 | [Net worth over time](#net-worth-over-time)                                                                   | figure | accounts    | Broken                                    |
@@ -569,6 +570,27 @@ Read by:
 
 - Accounts: `apps/web/app/routes/app.accounts._index.tsx`
 - AI read tools: `packages/mcp/src/tools/read/listAccounts.ts`
+
+### Account transactions
+
+<a id="transactions"></a>
+
+- Id: `transactions` (stored fact)
+- Verdict: Not checked. Findings: none. Links: none.
+- Source of truth: `transactions` in `apps/backend/src/entities/transaction.entity.ts`
+- Note: Added by slice 1 so every column has an entry. Nothing writes the table while bank sync is deferred; decision 12 keeps it empty until the bank plan returns.
+
+Other stores:
+
+- none
+
+Entered or changed by:
+
+- none
+
+Read by:
+
+- none
 
 ### Net worth today
 

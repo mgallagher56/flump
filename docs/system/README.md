@@ -79,10 +79,22 @@ valueMap: {
   notFacts: { id: ROW_ID, createdAt: WRITTEN_AT },              // column -> why it holds no fact
 }
 // or, for a table with no fact about the user at all (tokens, audit, idempotency):
-valueMap: { noUserFacts: "an agent access token and its settings, not a fact about money" }
+valueMap: {
+  noUserFacts: "an agent access token and its settings, not a fact about money",
+  columns: ["id", "userId", "name", "tokenHash"], // every column, so a new one has to be placed
+}
 ```
 
-Every column is listed once, by its property name. There is no default for a whole table, so a new column cannot pass unseen.
+Every column is listed once, by its property name, even on a `noUserFacts` table. There is no default for a whole table, so a new column cannot pass unseen. `user-data-registry.spec.ts` checks the same lists against TypeORM's real metadata.
+
+### How browser keys are found
+
+The check reads `apps/web/app`, `packages/ui/src`, `apps/marketing/src` and `packages/finance-engine/src`, in files that touch `localStorage`, `sessionStorage` or cookies. It finds:
+
+- the first argument of every `getItem`, `setItem` and `removeItem` call: a literal, a template that starts with a literal (`` `draft-${id}` `` is the prefix `draft-*`), or a constant defined in the same file or exported from another file in those folders (`PREFIX + id` is the prefix `PREFIX*`);
+- any whole string named as Flump names its keys and cookies: `flump` or `wos`, then `-`, `_` or `.`, optionally behind `__Host-` or `__Secure-`. This is how cookie names are found.
+
+It cannot follow a key passed in as a parameter (`setItem(key, ...)`); the caller's literal or constant is what it finds. A cookie whose name does not start with `flump` or `wos` is found only when it goes through a storage call. Name new keys and cookies `flump...` so the check sees them.
 
 ## Add, move or remove a value
 
@@ -102,7 +114,7 @@ Each message names the entry and says what to do. This table says the same at mo
 | `unmapped-storage-key`  | The browser code writes a storage or cookie key the map does not list.                                                                                                                                                      | Add it under `browser_storage:` with its storage, `user_data`, the fact it copies (if any), path and note.                                                                 |
 | `dead-storage-key`      | The map lists a browser key no code writes any more.                                                                                                                                                                        | Remove the entry, or fix the key to how the code spells it now.                                                                                                            |
 | `dead-path`             | An entry points at a file that no longer exists.                                                                                                                                                                            | Change the path to where the code lives now, or remove the entry if the code is gone.                                                                                      |
-| `dead-symbol`           | A figure's function (`computed_by` or `other_paths`) is no longer in the file named.                                                                                                                                        | Point the entry at the file that defines it now, or rename it to match the code.                                                                                           |
+| `dead-symbol`           | A figure's function (`computed_by` or `other_paths`) is no longer declared in the file named. A mention in a comment or an import does not count.                                                                           | Point the entry at the file that defines it now, or rename it to match the code.                                                                                           |
 | `dead-column`           | A `ref` names a table or column that does not exist, or a registry `valueMap` names a column the entity does not have.                                                                                                      | Fix the ref to the database name in the entity, or remove the store.                                                                                                       |
 | `malformed`             | An unknown verdict or status, a duplicate id, a missing name, area, path or note, an unknown surface, link or input fact, a browser key that holds user data and names no fact, or a column in both `facts` and `notFacts`. | Do what the message says. Allowed values are listed in it.                                                                                                                 |
 | `no-source-of-truth`    | A fact names no source of truth, or says it is not stored.                                                                                                                                                                  | Store the fact in one column and name it under `source_of_truth`.                                                                                                          |
@@ -133,4 +145,4 @@ For the rule to become a failure, all of these should be true: the engine has a 
 
 ## Where it came from
 
-The first version was written by the November 2026 system audit at commit `f5631d4f0`. The verdicts and finding ids point at [docs/audit/system-2026-11](../audit/system-2026-11/README.md). Slice 1 of that audit's plan added the check, the registry tie, the browser keys and two facts (`account-name`, `currency-and-country`) so every column has an entry.
+The first version was written by the November 2026 system audit at commit `f5631d4f0`. The verdicts and finding ids point at [docs/audit/system-2026-11](../audit/system-2026-11/README.md). Slice 1 of that audit's plan added the check, the registry tie, the browser keys and three facts (`account-name`, `currency-and-country`, `transactions`) so every column has an entry.

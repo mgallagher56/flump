@@ -44,19 +44,33 @@ export function checkCoverage(input: {
       problems.push({
         rule: RULES.unmappedColumn,
         subject: table,
-        message: `${table} (${entity.className}) has no valueMap in ${REGISTRY}. Add valueMap: { facts: { column: "fact-id" }, notFacts: { column: "reason" } }, or valueMap: { noUserFacts: "reason" } if no column holds a fact about the user`,
+        message: `${table} (${entity.className}) has no valueMap in ${REGISTRY}. Add valueMap: { facts: { column: "fact-id" }, notFacts: { column: "reason" } }, or valueMap: { noUserFacts: "reason", columns: [every column] } if no column holds a fact about the user`,
       });
       continue;
     }
     if (entry.noUserFacts !== undefined) {
-      if (entry.noUserFacts.trim().length < 10)
+      if (entry.noUserFacts.trim().length <= 20)
         problems.push({
           rule: RULES.malformed,
-          subject: table,
-          message: `${table}: valueMap.noUserFacts needs a reason of at least 10 characters in ${REGISTRY}`,
+          subject: `${table} noUserFacts reason`,
+          message: `${table}: valueMap.noUserFacts needs a reason of more than 20 characters in ${REGISTRY}. Say why no column holds a fact about the user`,
         });
-      continue;
+      if (!entry.listsColumns)
+        problems.push({
+          rule: RULES.malformed,
+          subject: `${table} noUserFacts columns`,
+          message: `${table}: valueMap.noUserFacts must list every column under columns: [...] in ${REGISTRY}, so a new column still has to be placed`,
+        });
     }
+    // A no-user-facts table's columns carry the table's reason, checked once above.
+    if (entry.noUserFacts === undefined)
+      for (const [property, reason] of entry.notFacts)
+        if (reason !== undefined && reason.trim().length <= 10)
+          problems.push({
+            rule: RULES.malformed,
+            subject: `${table}.${property} reason`,
+            message: `${table}.${property}: the valueMap.notFacts reason "${reason}" is too short in ${REGISTRY}. Say in more than 10 characters why it holds no fact`,
+          });
     const properties = new Set(entity.columns.map((c) => c.property));
     for (const { property, column } of entity.columns) {
       const fact = entry.facts.get(property);
@@ -77,11 +91,14 @@ export function checkCoverage(input: {
         problems.push({
           rule: RULES.unmappedColumn,
           subject,
-          message: `${subject} (${entity.className}.${property}) is not in the value map. In ${REGISTRY}, add it to valueMap.facts with the id of the fact it holds (add the fact to docs/system/value-map.yaml if it is new), or to valueMap.notFacts with the reason it holds no fact`,
+          message:
+            entry.noUserFacts !== undefined
+              ? `${subject} (${entity.className}.${property}) is not in the value map. ${table} is marked noUserFacts in ${REGISTRY}: add the column to its columns list if it holds no fact about the user, or replace noUserFacts with facts and notFacts if it does`
+              : `${subject} (${entity.className}.${property}) is not in the value map. In ${REGISTRY}, add it to valueMap.facts with the id of the fact it holds (add the fact to docs/system/value-map.yaml if it is new), or to valueMap.notFacts with the reason it holds no fact`,
         });
       }
     }
-    for (const property of [...entry.facts.keys(), ...entry.notFacts]) {
+    for (const property of [...entry.facts.keys(), ...entry.notFacts.keys()]) {
       if (!properties.has(property))
         problems.push({
           rule: RULES.deadColumn,

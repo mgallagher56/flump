@@ -69,7 +69,11 @@ type ValueMapTie<E> =
       facts: Partial<Record<keyof E & string, string>>;
       notFacts: Partial<Record<keyof E & string, string>>;
     }
-  | { noUserFacts: string };
+  | {
+      noUserFacts: string;
+      /** Every column, listed so that a new column on the table still has to be placed. */
+      columns: readonly (keyof E & string)[];
+    };
 
 /** Checks an entry against its own entity's columns, then widens it for the shared list. */
 const table = <E extends ObjectLiteral>(t: UserDataTable<E>): UserDataTable =>
@@ -106,8 +110,14 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     },
     reset: { kind: "financial-clear", reason: "account movements are financial data" },
     valueMap: {
-      noUserFacts:
-        "holds no rows: nothing writes it while bank sync is deferred (system audit decision 12). Tie its columns to facts when bank sync returns",
+      facts: {
+        accountId: "transactions",
+        amount: "transactions",
+        description: "transactions",
+        category: "transactions",
+        timestamp: "transactions",
+      },
+      notFacts: { id: ROW_ID, userId: OWNER },
     },
   }),
   table({
@@ -305,6 +315,21 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     valueMap: {
       noUserFacts:
         "credentials and status of a bank link for the deferred bank sync; no fact about the person's money",
+      columns: [
+        "id",
+        "userId",
+        "institutionId",
+        "institutionName",
+        "status",
+        "accessToken",
+        "refreshToken",
+        "expiresAt",
+        "authType",
+        "lastSyncedAt",
+        "syncStartedAt",
+        "createdAt",
+        "updatedAt",
+      ],
     },
   }),
   table({
@@ -329,6 +354,16 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     },
     valueMap: {
       noUserFacts: "a pending bank consent, kept for minutes while the bank redirects back",
+      columns: [
+        "id",
+        "userId",
+        "institutionId",
+        "stateHash",
+        "codeVerifier",
+        "redirectUri",
+        "expiresAt",
+        "createdAt",
+      ],
     },
   }),
   table({
@@ -454,6 +489,20 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     },
     valueMap: {
       noUserFacts: "a security log of what agents did: tool names and timings, no amounts",
+      columns: [
+        "id",
+        "userId",
+        "tokenId",
+        "clientName",
+        "toolName",
+        "scopesUsed",
+        "outcome",
+        "errorCode",
+        "latencyMs",
+        "responseBytes",
+        "argsFingerprint",
+        "createdAt",
+      ],
     },
   }),
   table({
@@ -474,6 +523,16 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     },
     valueMap: {
       noUserFacts: "a security record of sensitive actions, not a fact about the person's money",
+      columns: [
+        "id",
+        "userId",
+        "action",
+        "actorType",
+        "targetId",
+        "requestId",
+        "metadata",
+        "createdAt",
+      ],
     },
   }),
   table({
@@ -494,6 +553,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     },
     valueMap: {
       noUserFacts: "a record of what the person agreed to and when, not a fact about their money",
+      columns: ["id", "userId", "kind", "version", "targetId", "grantedAt", "withdrawnAt"],
     },
   }),
   table({
@@ -527,6 +587,20 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     },
     valueMap: {
       noUserFacts: "an agent access token and its settings, not a fact about the person's money",
+      columns: [
+        "id",
+        "userId",
+        "name",
+        "tokenHash",
+        "tokenPrefix",
+        "scopes",
+        "anonymizeInstitutions",
+        "expiresAt",
+        "lastUsedAt",
+        "totalToolCalls",
+        "revokedAt",
+        "createdAt",
+      ],
     },
   }),
   table({
@@ -555,6 +629,17 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     valueMap: {
       noUserFacts:
         "a stored create response kept so a retried request is not applied twice; the rows it describes are the facts",
+      columns: [
+        "id",
+        "userId",
+        "routeId",
+        "key",
+        "requestHash",
+        "statusCode",
+        "responseBody",
+        "responseHeaders",
+        "createdAt",
+      ],
     },
   }),
   table({

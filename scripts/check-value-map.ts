@@ -47,6 +47,7 @@ import {
   readEntities,
   readRegistry,
   type SecondFormulaHit,
+  stringConstants,
 } from "./lib/value-map-sources";
 
 const repoRoot = resolve(import.meta.dir, "..");
@@ -113,10 +114,18 @@ const repo: RepoView = {
   tables,
 };
 
+const storageFiles = STORAGE_ROOTS.flatMap((root) => [...sourceFiles(resolve(repoRoot, root))]);
+/** Exported string constants, so a key defined in one file and used in another is followed. */
+const sharedConstants = new Map<string, string[]>();
+for (const path of storageFiles) {
+  const text = readFileSync(path, "utf8");
+  if (!/\bexport\s+const\b/.test(text)) continue;
+  for (const [name, values] of stringConstants(text.replace(/^(?!\s*export\s+const\b).*$/gm, "")))
+    sharedConstants.set(name, [...(sharedConstants.get(name) ?? []), ...values]);
+}
 const foundKeys: FoundKey[] = [];
-for (const root of STORAGE_ROOTS)
-  for (const path of sourceFiles(resolve(repoRoot, root)))
-    foundKeys.push(...findStorageKeys(rel(path), readFileSync(path, "utf8")));
+for (const path of storageFiles)
+  foundKeys.push(...findStorageKeys(rel(path), readFileSync(path, "utf8"), sharedConstants));
 
 const hits: SecondFormulaHit[] = [];
 for (const root of FORMULA_ROOTS)
