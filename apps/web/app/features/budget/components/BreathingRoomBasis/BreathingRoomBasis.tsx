@@ -89,7 +89,7 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
       <div className={slots.cards}>
         <section aria-labelledby="breathing-basis-accounts-heading" className={slots.card}>
           <div className={slots.cardHead}>
-            <IconTile domain="savings" icon={Landmark} />
+            <IconTile domain="budget" icon={Landmark} />
             <h3 className={slots.cardTitle} id="breathing-basis-accounts-heading">
               Accounts it draws on
             </h3>

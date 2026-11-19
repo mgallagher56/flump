@@ -156,7 +156,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
         ) : undefined
       }
       description="Your regular monthly spending, by category (not one-off purchases). Open one to see its entries."
-      domain="pay"
+      domain="budget"
       icon={ChartPie}
       id="budget-categories"
       title="Where your money goes"
