@@ -24,6 +24,9 @@ test("L10 L08 L19 L20 L18 mortgages added on Accounts are what the Mortgage page
   await dialog.getByLabel("Name").fill("L10 mortgage");
   await dialog.getByLabel("Account type").selectOption("Mortgage");
   await dialog.getByLabel("Amount owed").fill("186000");
+  // A rate and years left, so the Mortgage page shows its saved figures rather than asking for them.
+  await dialog.getByLabel("Interest rate (optional)").fill("4.5");
+  await dialog.getByLabel("Years left (optional)").fill("25");
   await dialog.getByLabel("What your home is worth (optional)").fill("310000");
   await saveAddAccount(dialog);
   let accounts = await listAccounts(page);
