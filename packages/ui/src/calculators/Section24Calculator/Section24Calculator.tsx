@@ -49,7 +49,9 @@ export const SECTION24_COPY = {
   kpiRateSubtext: "Rent less costs, before interest.",
   explainerTitle: "How Section 24 works",
   explainer:
-    "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest. The reduction is at most 20% of the rental profit, or of your income above the Personal Allowance if that is lower. Rent of £1,000 or less is not taxed. Above that, the estimate takes off the £1,000 property allowance instead of your costs when that gives less tax, and then there is no reduction for interest. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
+    "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest. The reduction is at most 20% of the rental profit, or of your income above the Personal Allowance if that is lower. Rent of £1,000 or less is not taxed. Above that, the estimate takes off the £1,000 property allowance instead of your costs when that gives less tax. Then there is no reduction for interest. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
+  explainerMethod:
+    "No law sets out the tax on rental income on its own. The estimate is your tax with the rent minus your tax without it.",
   explainerLoss:
     "Tax is worked out before mortgage interest is taken off. So the tax can be more than the cash the property makes, and the cash left can be below zero.",
   controlsLabel: "Rental figures",
@@ -222,6 +224,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       <CollapsibleDrawer title={SECTION24_COPY.explainerTitle} variant="quiet">
         <div className={section24Explainer()}>
           <p>{SECTION24_COPY.explainer}</p>
+          <p>{SECTION24_COPY.explainerMethod}</p>
           <p>{SECTION24_COPY.explainerLoss}</p>
         </div>
       </CollapsibleDrawer>
