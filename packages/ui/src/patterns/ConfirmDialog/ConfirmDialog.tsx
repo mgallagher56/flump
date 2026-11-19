@@ -43,9 +43,15 @@ export interface ConfirmDialogProps {
 }
 
 /**
- * Modal confirmation for destructive actions. Built on Radix Dialog with
- * role="alertdialog". Initial focus lands on Cancel so Enter never confirms by accident, and
- * focus returns to whatever opened it. Outside clicks never dismiss it.
+ * Modal confirmation for destructive actions. Built on Radix Dialog with role="alertdialog".
+ *
+ * Enter confirms (owner ruling, 18 November 2026, UX D1): initial focus lands on the confirm
+ * button so the focus ring shows what Enter will do. It stays safe by design: Enter acts once per
+ * opening, a held or repeating key never fires it, and a key still held from the press that
+ * opened the dialog is ignored until it has been released. Escape and Cancel cancel, and Enter on
+ * a focused Cancel cancels. With `requireText`, focus starts on Cancel and Enter confirms only
+ * from the field once the typed text matches. Focus returns to whatever opened it. Outside clicks
+ * never dismiss it.
  */
 export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   open,
@@ -65,14 +71,55 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   id = "confirm-dialog",
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
   const focusReturn = useDialogFocusReturn();
   const [typed, setTyped] = useState("");
   const inputId = useId();
+  // Whether Enter is down anywhere on the page right now, so a press that opened the dialog is
+  // not read as a confirmation.
+  const enterHeld = useRef(false);
+  // False from opening until an Enter that was already held has been released.
+  const enterArmed = useRef(true);
+  // True once Enter has confirmed for this opening (or this attempt, after an error).
+  const enterFired = useRef(false);
+
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => {
+      if (event.key === "Enter") enterHeld.current = true;
+    };
+    const up = (event: KeyboardEvent) => {
+      if (event.key !== "Enter") return;
+      enterHeld.current = false;
+      enterArmed.current = true;
+    };
+    const reset = () => {
+      enterHeld.current = false;
+      enterArmed.current = true;
+    };
+    document.addEventListener("keydown", down, true);
+    document.addEventListener("keyup", up, true);
+    window.addEventListener("blur", reset);
+    return () => {
+      document.removeEventListener("keydown", down, true);
+      document.removeEventListener("keyup", up, true);
+      window.removeEventListener("blur", reset);
+    };
+  }, []);
 
   // Parent-driven closes (e.g. after onConfirm resolves) keep this component mounted.
   useEffect(() => {
-    if (!open) setTyped("");
+    if (!open) {
+      setTyped("");
+      return;
+    }
+    enterArmed.current = !enterHeld.current;
+    enterFired.current = false;
   }, [open]);
+
+  // A failed attempt can be tried again with Enter.
+  useEffect(() => {
+    if (error) enterFired.current = false;
+  }, [error]);
 
   const textMatches =
     requireText === undefined || typed.trim().toLowerCase() === requireText.trim().toLowerCase();
@@ -94,18 +141,24 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
           onOpenAutoFocus={(event) => {
             focusReturn.onOpenAutoFocus();
             event.preventDefault();
-            cancelRef.current?.focus();
+            if (requireText === undefined) confirmRef.current?.focus();
+            else cancelRef.current?.focus();
           }}
           onCloseAutoFocus={focusReturn.onCloseAutoFocus}
           onKeyDown={(event) => {
             if (event.key !== "Enter" || event.defaultPrevented) return;
-            // Enter on any button (Cancel included) does only that button's own click, so the
-            // default focus on Cancel can never confirm (UX D1). Enter submits only from the
-            // type-to-confirm field.
             const target = event.target as HTMLElement | null;
-            if (target?.tagName !== "INPUT") return;
+            // Every Enter is handled here, never by a button's own click, so a held or repeating
+            // key cannot fire twice.
             event.preventDefault();
-            if (pending || !textMatches) return;
+            if (event.repeat || !enterArmed.current || pending) return;
+            if (target === cancelRef.current) {
+              handleOpenChange(false);
+              return;
+            }
+            if (requireText !== undefined && target?.tagName !== "INPUT") return;
+            if (!textMatches || enterFired.current) return;
+            enterFired.current = true;
             void onConfirm();
           }}
           onPointerDownOutside={(event) => event.preventDefault()}
@@ -149,6 +202,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
               {cancelLabel}
             </Button>
             <Button
+              ref={confirmRef}
               type="button"
               id={`${id}-confirm`}
               variant={tone === "danger" ? "destructive" : "primary"}

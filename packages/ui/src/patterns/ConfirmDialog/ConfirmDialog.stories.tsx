@@ -104,6 +104,20 @@ export const OpenCancelConfirm: Story = {
   },
 };
 
+/** Owner item 27: Enter confirms an ordinary delete, once. */
+export const EnterConfirms: Story = {
+  args: { tone: "danger", open: false },
+  render: (args) => <Interactive {...args} />,
+  play: async ({ args, canvasElement }) => {
+    const open = canvasElement.querySelector<HTMLButtonElement>("#open-confirm");
+    if (!open) throw new Error("open button missing");
+    await userEvent.click(open);
+    await screen.findByRole("alertdialog");
+    await userEvent.keyboard("{Enter}");
+    await expect(args.onConfirm).toHaveBeenCalledTimes(1);
+  },
+};
+
 /** Separate from the others so the a11y check still runs against an open dialog. */
 export const EscapeClosesAndReturnsFocus: Story = {
   args: { tone: "danger", open: false },
@@ -112,8 +126,8 @@ export const EscapeClosesAndReturnsFocus: Story = {
     const open = canvasElement.querySelector<HTMLButtonElement>("#open-confirm");
     if (!open) throw new Error("open button missing");
     await userEvent.click(open);
-    const cancel = await screen.findByRole("button", { name: "Cancel" });
-    await expect(cancel).toHaveFocus();
+    const confirm = await screen.findByRole("button", { name: "Delete year" });
+    await expect(confirm).toHaveFocus();
     const dialog = await screen.findByRole("alertdialog");
     for (let i = 0; i < 4; i += 1) {
       await userEvent.tab();

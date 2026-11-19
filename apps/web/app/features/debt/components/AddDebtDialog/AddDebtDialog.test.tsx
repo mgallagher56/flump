@@ -122,7 +122,13 @@ describe("AddDebtDialog", () => {
     fill("Name of the debt", "0% Balance Transfer");
     fill("Balance you owe", "0");
     fill("Credit limit", "5000");
-    fill("0% interest period ends", "2027-06-30");
+    // The shared, themed date picker (owner item 20): open it and pick 30 June 2027.
+    fireEvent.click(screen.getByRole("button", { name: /^0% interest period ends/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Choose year/ }));
+    fireEvent.click(screen.getByRole("button", { name: "2027" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Choose month/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Jun" }));
+    fireEvent.click(screen.getByRole("button", { name: "30 Jun 2027" }));
     submit();
     expect(onAddDebt).toHaveBeenCalledWith(
       expect.objectContaining({
