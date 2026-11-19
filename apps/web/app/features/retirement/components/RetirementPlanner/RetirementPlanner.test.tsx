@@ -396,6 +396,34 @@ describe("RetirementPlanner", () => {
       ).toBe("/app/pension#pension-details");
     });
 
+    it("says the contributions are left out when a rate is saved but no salary is", async () => {
+      const user = userEvent.setup();
+      // No salary: no workplace pension can be worked out (workplacePension null), and the
+      // projection leaves the contribution out. It says so, never a silent £0 (leftovers, item 1).
+      renderPlanner({
+        planArgs: { ...planArgs, workplacePension: null },
+        workplaceSalaryNotSet: true,
+      });
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(
+        screen.getByText(
+          /Workplace pension: your salary is not set, so your contributions are not included\./,
+        ),
+      ).toBeTruthy();
+      expect(
+        screen
+          .getByRole("link", { name: "Add your salary on the Pension page" })
+          .getAttribute("href"),
+      ).toBe("/app/pension#pension-details");
+    });
+
+    it("shows no salary line when no rate is saved either", async () => {
+      const user = userEvent.setup();
+      renderPlanner({ planArgs: { ...planArgs, workplacePension: null } });
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(screen.queryByText(/your salary is not set/)).toBeNull();
+    });
+
     it("says both rates are not set, with no stand-in figure", async () => {
       const user = userEvent.setup();
       renderPlanner({

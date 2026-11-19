@@ -5,6 +5,7 @@ import {
   type RetirementSavedPlanInput,
   type WorkplacePensionInput,
   workplacePensionFromProfile,
+  workplaceSalaryNotSet,
 } from "@flump/finance-engine";
 
 /** The saved data the retirement route loads, as plain values. */
@@ -45,6 +46,20 @@ export function workplacePensionFromLoader(
     pensionEmployerPercent: profile.pensionEmployerPercent ?? undefined,
     isSalarySacrifice: profile.isSalarySacrifice ?? undefined,
     isSalarySacrificeEmployerNi: profile.isSalarySacrificeEmployerNi ?? undefined,
+  });
+}
+
+/** True when a workplace pension rate is saved but no salary is (the engine's one rule). */
+export function workplaceSalaryNotSetFromLoader(
+  profile: RetirementLoaderData["userProfile"],
+): boolean {
+  if (!profile) return false;
+  const employmentType = EMPLOYMENT_TYPES.find((type) => type === profile.employmentType) ?? null;
+  return workplaceSalaryNotSet({
+    employmentType,
+    annualSalary: profile.annualSalary ?? null,
+    pensionPercent: profile.pensionPercent ?? null,
+    pensionEmployerPercent: profile.pensionEmployerPercent ?? null,
   });
 }
 

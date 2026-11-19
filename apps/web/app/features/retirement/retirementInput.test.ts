@@ -8,7 +8,7 @@ import {
   workplacePensionFromProfile,
 } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
-import { retirementArgsFromLoader } from "./retirementInput";
+import { retirementArgsFromLoader, workplaceSalaryNotSetFromLoader } from "./retirementInput";
 
 const NOW = new Date("2026-11-17T12:00:00Z");
 
@@ -188,5 +188,19 @@ describe("retirement input parity: web page and MCP tools", () => {
       );
       expect(args.workplacePension, employmentType).toBeNull();
     }
+  });
+});
+
+describe("workplaceSalaryNotSetFromLoader", () => {
+  it("is true for a saved rate with no salary, false otherwise", () => {
+    expect(workplaceSalaryNotSetFromLoader({ pensionPercent: 5, annualSalary: null })).toBe(true);
+    expect(workplaceSalaryNotSetFromLoader({ pensionPercent: 5, annualSalary: 30000 })).toBe(false);
+    expect(workplaceSalaryNotSetFromLoader({ pensionPercent: null, annualSalary: null })).toBe(
+      false,
+    );
+    expect(
+      workplaceSalaryNotSetFromLoader({ pensionPercent: 5, employmentType: "self-employed" }),
+    ).toBe(false);
+    expect(workplaceSalaryNotSetFromLoader(null)).toBe(false);
   });
 });

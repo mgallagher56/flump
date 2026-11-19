@@ -89,6 +89,24 @@ export function calculateWorkplacePensionContributions(
 }
 
 /**
+ * True when a positive workplace pension rate is saved but no salary is (and the employment type allows a
+ * workplace scheme): the contribution in pounds cannot be worked out, so projections leave it out.
+ * Pages and tools use this to say so, never a silent £0 contribution (system audit leftovers,
+ * item 1: profiles whose old take-home salary was cleared land here).
+ */
+export function workplaceSalaryNotSet(
+  profile: Partial<UserProfileData> | null | undefined,
+): boolean {
+  if (!profile) return false;
+  if (profile.employmentType === "self-employed" || profile.employmentType === "other") {
+    return false;
+  }
+  if (nonNegative(profile.annualSalary) > 0) return false;
+  // A saved 0% contributes nothing either way, so only a positive rate is left out.
+  return nonNegative(profile.pensionPercent) > 0 || nonNegative(profile.pensionEmployerPercent) > 0;
+}
+
+/**
  * The saved workplace pension from a stored profile, or null when no salary is saved or the
  * saved employment type is self-employed or other (no workplace scheme). The rates are the stored
  * ones; a rate never saved is listed in `notSet` and counts as no contribution. A chosen 5% and

@@ -60,6 +60,7 @@ import { useScenarioState } from "~/hooks/useScenarioState";
 import { formatEstimate, roundEstimate } from "~/utils/roundEstimate";
 import { MoneyHelperGuidance } from "../MoneyHelperGuidance";
 import { RetirementPotChart } from "../RetirementPotChart";
+import { WorkplaceSalaryNotSet } from "../WorkplaceSalaryNotSet";
 import {
   budgetLineAmount,
   budgetLineItem,
@@ -87,6 +88,11 @@ export interface RetirementPlannerProps {
   etag?: string | null;
   isSaving?: boolean;
   onSavePlan?: (payload: UpsertRetirementPlanRequest, etag: string | null) => void;
+  /**
+   * A workplace pension rate is saved but no salary is (`workplaceSalaryNotSet`): the projection
+   * leaves the contribution out, and the assumptions say so.
+   */
+  workplaceSalaryNotSet?: boolean;
 }
 
 /** Year of birth lives in the age and pay section of the Profile tab. */
@@ -351,6 +357,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
   etag = null,
   isSaving = false,
   onSavePlan,
+  workplaceSalaryNotSet = false,
 }) => {
   const savedPlan = planArgs.plan;
   const budgetEntries = planArgs.budgetEntries ?? [];
@@ -825,6 +832,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                             </Link>
                           </p>
                         )}
+                        {!workplace && workplaceSalaryNotSet ? <WorkplaceSalaryNotSet /> : null}
                         <CaseTable caseLabel={caseLabel} plan={scenarioResult} />
                         <YearScheduleTable plan={scenarioResult} selectedCase={selectedCase} />
                       </div>
