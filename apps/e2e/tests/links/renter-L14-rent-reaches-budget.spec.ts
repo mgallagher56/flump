@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
 import { applyPersona } from "../../support/personas";
+import { waitOutRateWindow } from "../../support/rate-window";
 import { api, entryNamed, pounds } from "./budget-links.helpers";
 
 test.use({ storageState: AUTH_STATE });
@@ -12,6 +13,9 @@ test.use({ storageState: AUTH_STATE });
 test("L14 a rent change reaches the linked housing line, Budget and Dashboard", async ({
   page,
 }) => {
+  // Switching persona is a burst of calls after the homeowner specs: start in a fresh minute of
+  // the request limits (see waitOutRateWindow).
+  await waitOutRateWindow();
   await page.goto("/app");
   // The first renter spec: the homeowner specs ran before it, so this is the project's one persona
   // switch (one reset against the backend's 10-an-hour destructive limit). Every renter spec is
