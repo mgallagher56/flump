@@ -86,6 +86,14 @@ vi.mock("react-router", () => ({
   useFetcher: () => ({ submit: mockSubmit, state: "idle", data: null }),
 }));
 
+// A spy over the real calculateUKTax, to see what the fallback calculation passes it.
+const calculateSpy = vi.hoisted(() => ({ fn: undefined as undefined | ReturnType<typeof vi.fn> }));
+vi.mock("@flump/finance-engine", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@flump/finance-engine")>();
+  calculateSpy.fn = vi.fn(actual.calculateUKTax);
+  return { ...actual, calculateUKTax: calculateSpy.fn };
+});
+
 import { SCOTTISH_BANDS_NOTE } from "~/features/tax/tax-labels";
 import TaxSourceContainer from "./TaxSourceContainer";
 
@@ -227,6 +235,21 @@ describe("TaxSourceContainer", () => {
     expect(
       screen.getByRole("link", { name: "Add self-employed income" }).getAttribute("href"),
     ).toBe(`/app/self-assessment/self-employed?year=${current.replace("/", "-")}`);
+  });
+
+  it("passes the region and shares to the fallback calculation when the estimate is unknown", () => {
+    // Self-employed with rent but no self-employed record: the estimate's inputs are unknown, so
+    // the page works the ledger figures out without a salary. It still passes the saved region.
+    mockSource = "rental";
+    mockProfile = { ...baseProfile, employmentType: "self-employed", taxRegion: "SCOTLAND" };
+    mockRecords = records.filter((r) => r.source === "rental");
+    calculateSpy.fn?.mockClear();
+    render(<TaxSourceContainer />);
+    const calls = calculateSpy.fn?.mock.calls ?? [];
+    expect(calls.length).toBeGreaterThan(0);
+    for (const call of calls) {
+      expect(call[4]).toEqual({ region: "SCOTLAND", rentalShares: expect.anything() });
+    }
   });
 
   it("folds the Scottish bands note into the page's one notice for a Scottish taxpayer", () => {

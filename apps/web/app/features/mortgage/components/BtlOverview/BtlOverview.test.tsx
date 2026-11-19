@@ -45,9 +45,31 @@ describe("<BtlOverview />", () => {
     );
     expect(screen.getByText("1 property")).toBeDefined();
     expect(container.textContent).toContain(
-      "Add rent in Self Assessment, linked to this property, to see its yield.",
+      "Add rent in Self Assessment, linked to a property, to see that property's yield.",
     );
     expect(container.textContent).not.toMatch(/Section 24/);
+  });
+
+  it("shows the rent prompt once below the list, however many properties have no rent", () => {
+    const { container } = render(
+      <BtlOverview
+        properties={[
+          { id: "r1", name: "Flat 2", yieldPct: null },
+          { id: "r2", name: "Harbour Street" },
+          { id: "r3", name: "Mill Lane", yieldPct: 5 },
+        ]}
+        onManage={vi.fn()}
+      />,
+    );
+    const prompt = "Add rent in Self Assessment, linked to a property, to see that property's yield.";
+    expect(container.textContent?.split(prompt).length).toBe(2);
+    const list = screen.getByRole("list", { name: "Rental properties" });
+    expect(list.textContent).not.toContain(prompt);
+    expect(list.textContent).toContain("Gross yield 5.0%");
+    const promptNode = screen.getByText(prompt);
+    expect(
+      list.compareDocumentPosition(promptNode) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("says when no rental property is saved yet", () => {

@@ -116,6 +116,46 @@ describe("TaxReservePanel", () => {
     expect(screen.queryByText(/Personal Allowance lost to savings/)).toBeNull();
   });
 
+  it("says when the interest credit means PAYE tax is repaid, and keeps the bill at £0", () => {
+    // Scottish, 2026/27: salary 13,000; rent 3,000 with no costs; mortgage interest 3,000.
+    // PAYE: taxable 430 at the 19% starter rate = 81.70. With the rent, taxable 3,430, all at
+    // 19% = 651.70. Credit 20% x 3,000 = 600 comes off the whole bill: 51.70. PAYE took 81.70,
+    // so 81.70 - 51.70 = 30 is repaid and nothing is left to pay.
+    const rec = (category: string, amount: number) => ({
+      id: category,
+      type: category === "rental_income" ? ("income" as const) : ("expense" as const),
+      source: "rental" as const,
+      category,
+      name: category,
+      amount,
+      frequency: "annual" as const,
+      date: "2026-06-06",
+      endDate: null,
+      notes: null,
+    });
+    const result = calculateUKTax(
+      "2026/27",
+      [rec("rental_income", 3000), rec("mortgage_interest", 3000)],
+      13000,
+      100,
+      { region: "SCOTLAND" },
+    );
+    const { container } = setup(16_000, 13000, result);
+    expect(
+      screen.getByText(
+        "The mortgage interest credit is more than the tax on your rent, so this estimate expects £30 of PAYE tax to be repaid.",
+      ),
+    ).toBeDefined();
+    const bill = screen.getByText("Estimated tax bill").closest("div");
+    expect(bill?.textContent).toContain("£0");
+    expect(container.querySelector('[role="alert"], [role="status"]')).toBeNull();
+  });
+
+  it("says nothing about a repayment when there is none", () => {
+    setup();
+    expect(screen.queryByText(/expects .* of PAYE tax to be repaid/)).toBeNull();
+  });
+
   it("says how much mortgage interest carries forward (ITTOIA 2005 s.274AA(4))", () => {
     // No salary; rent 18,000, costs 2,000, interest 5,000. Only 3,430 (income above the 12,570
     // allowance) can be used, so 5,000 - 3,430 = 1,570 carries forward.

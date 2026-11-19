@@ -931,8 +931,8 @@ describe("TaxContainer, rental shares and calculated figures (slice 7)", () => {
       mockSubmit.mockClear();
       render(<TaxContainer />);
       const card = screen.getByTestId("calculated-figure-m1");
-      expect(card.textContent).toContain(`Calculated mortgage interest for ${year}: £6,750.00`);
-      fireEvent.click(within(card).getByRole("button", { name: /^Add as a record/ }));
+      expect(card.textContent).toContain(`Estimated mortgage interest for ${year}: £6,750.00`);
+      fireEvent.click(within(card).getByRole("button", { name: /^Add this estimate as a record/ }));
       expect(mockSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           intent: "create-transaction",
@@ -943,8 +943,8 @@ describe("TaxContainer, rental shares and calculated figures (slice 7)", () => {
           date: `${start}-04-06`,
           amount: "6750",
           accountId: "m1",
-          name: "Flat 2 mortgage interest (calculated)",
-          notes: "Calculated from monthly balances",
+          name: "Flat 2 mortgage interest (estimate)",
+          notes: "Estimated from monthly balances",
         }),
         { method: "POST" },
       );
