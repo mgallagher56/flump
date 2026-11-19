@@ -98,7 +98,12 @@ export class BrowserStorageDriver implements SeedStorageDriver {
 
   getCookie(name: string): string | null {
     if (typeof document === "undefined") return null;
-    return parseCookieValue(document.cookie, name);
+    try {
+      return parseCookieValue(document.cookie, name);
+    } catch {
+      // Broken percent-encoding reads as no cookie, as on the header path.
+      return null;
+    }
   }
 
   setCookie(name: string, value: string, maxAgeSeconds: number, domain?: string): void {
