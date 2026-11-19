@@ -33,6 +33,7 @@ on:
       - "packages/finance-engine/src/**"
       - "packages/finance-engine/stryker.config.json"
       - "packages/finance-engine/vitest.config.ts"
+      - "packages/finance-engine/vitest.stryker.config.ts"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
