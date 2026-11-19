@@ -26,6 +26,21 @@ describe("student loan repayments with Plan 1 and Plan 2", () => {
     expect(b.studentLoanByPlan.plan2).toBeCloseTo(1_037.7, 2);
   });
 
+  it("uses the year's own thresholds for the cap (2026/27)", () => {
+    // GOV.UK 2026/27 thresholds: Plan 1 £26,900, Plan 2 £29,385. Salary £40,000.
+    // Total: 9% x (40,000 - 26,900) = 9% x 13,100 = 1,179.
+    // Plan 1 cap: 9% x (29,385 - 26,900) = 9% x 2,485 = 223.65. Plan 2: 1,179 - 223.65 = 955.35.
+    const b = computeUkTakeHome({
+      taxYear: "2026/27",
+      region: "ENGLAND_NI_WALES",
+      salary: 40_000,
+      studentLoans: ["plan2", "plan1"],
+    });
+    expect(b.studentLoan).toBe(1_179);
+    expect(b.studentLoanByPlan.plan1).toBeCloseTo(223.65, 2);
+    expect(b.studentLoanByPlan.plan2).toBeCloseTo(955.35, 2);
+  });
+
   it("gives the whole repayment to Plan 1 while income is between the two thresholds", () => {
     // Salary £27,000. Total: 9% x (27,000 - 26,065) = 9% x 935 = 84.15, under the 216.45 cap,
     // so all of it goes to Plan 1 and none to Plan 2.
