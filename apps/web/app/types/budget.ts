@@ -19,6 +19,11 @@ export interface BudgetEntry {
   ownership?: "sole" | "joint";
   sharePercent?: number | null;
   contractEndDate?: string | null;
+  /**
+   * Set only on a row the engine adds from a saved detail, never stored (owner items 7 and 33b):
+   * "take-home" reads the profile's salary, "housing" the housing details.
+   */
+  linked?: "take-home" | "housing";
   createdAt: string;
   updatedAt: string;
 }

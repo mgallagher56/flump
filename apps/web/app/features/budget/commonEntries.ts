@@ -1,3 +1,4 @@
+import { BUDGET_SYNONYM_GROUPS, normaliseEntryName } from "@flump/finance-engine";
 import { INCOME_CATEGORY } from "./income";
 
 /** The fields two entries are matched on. `isIncome` puts an entry under income, whatever its category. */
@@ -8,56 +9,13 @@ export interface CommonEntryKey {
 }
 
 /**
- * Names that mean the same common entry within a category, after normalising. One rule for the
- * wizard's "Add common entries" and the page's, so neither adds a second copy of an entry the
- * budget already has under another name (old seed rows included).
+ * Synonym groups and the name normaliser live in the engine (PR 779's groups), so the wizard's
+ * "Add common entries", the page's, and the engine's linked take-home and housing rows read one
+ * list and never add a second copy of an entry the budget already has under another name.
  */
-const SYNONYM_GROUPS: ReadonlyArray<{ category: string; names: ReadonlyArray<string> }> = [
-  // The onboarding seed names its housing row "Rent Payment", "Mortgage Payment" or "Household
-  // contribution" (services/onboarding-seed.ts): each is the person's monthly housing cost.
-  {
-    category: "housing",
-    names: [
-      "rent or mortgage",
-      "rent",
-      "mortgage",
-      "rent payment",
-      "mortgage payment",
-      "household contribution",
-    ],
-  },
-  // Everyday names for the same bill. Matching stays exact on the normalised name, so "Rent for
-  // parking" or "Water softener" is never read as one of these.
-  {
-    category: "bills",
-    names: ["gas and electricity", "gas", "electricity", "energy", "energy bill"],
-  },
-  {
-    category: "bills",
-    names: ["broadband", "phone and broadband", "broadband and phone", "internet", "wi-fi", "wifi"],
-  },
-  {
-    category: "expenses",
-    names: ["groceries", "food shop", "food", "food shopping", "supermarket"],
-  },
-  { category: "bills", names: ["council tax", "council tax bill"] },
-  { category: "bills", names: ["water", "water bill", "water rates"] },
-  { category: "savings", names: ["savings", "emergency fund", "isa or investments"] },
-  {
-    category: INCOME_CATEGORY,
-    names: ["take-home pay", "salary", "salary after tax", "wages", "monthly take-home income"],
-  },
-];
+const SYNONYM_GROUPS = BUDGET_SYNONYM_GROUPS;
 
-/** Lower case, trimmed, "/" read as "or", "&" as "and", and runs of spaces collapsed. */
-export const normaliseEntryName = (name: string): string =>
-  name
-    .trim()
-    .toLowerCase()
-    .replace(/\//g, " or ")
-    .replace(/&/g, " and ")
-    .replace(/\s+/g, " ")
-    .trim();
+export { normaliseEntryName };
 
 const categoryOf = (entry: CommonEntryKey): string =>
   entry.isIncome ? INCOME_CATEGORY : entry.category.trim().toLowerCase();

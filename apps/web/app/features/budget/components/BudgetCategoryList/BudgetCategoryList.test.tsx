@@ -42,19 +42,32 @@ const entries = [
 const categories = ["housing", "bills", "expenses", "savings", "income", "pets"];
 
 describe("rankCategories", () => {
-  it("ranks by monthly amount, largest first, empty categories at the foot, income left out", () => {
+  it("ranks by monthly amount, largest first, leaving out income and categories with no amount", () => {
+    // Owner item 33a: savings and pets hold nothing, so they are not shown as empty lines.
     expect(rankCategories(categories, entries).map((r) => r.category)).toEqual([
       "housing",
       "expenses",
       "bills",
-      "savings",
-      "pets",
     ]);
+  });
+
+  it("leaves out a category whose only entries are £0, such as an old ISA suggestion", () => {
+    const rows = rankCategories(
+      ["housing", "savings"],
+      [entry({}), entry({ id: "isa", category: "savings", name: "ISA / Investments", amount: 0 })],
+    );
+    expect(rows.map((r) => r.category)).toEqual(["housing"]);
+  });
+
+  it("keeps empty categories at the foot for the editor", () => {
+    expect(rankCategories(categories, entries, { keepEmpty: true }).map((r) => r.category)).toEqual(
+      ["housing", "expenses", "bills", "savings", "pets"],
+    );
   });
 
   it("adds a category that only exists on an entry", () => {
     const rows = rankCategories(["housing"], [entry({ category: "travel", amount: 50 })]);
-    expect(rows.map((r) => r.category)).toEqual(["travel", "housing"]);
+    expect(rows.map((r) => r.category)).toEqual(["travel"]);
   });
 
   it("leaves out a custom category whose entries are all income", () => {
@@ -105,8 +118,10 @@ describe("<BudgetCategoryList />", () => {
   it("shows one figure per row, leaves income out and marks rows as list rows", () => {
     const { container } = customRender(<BudgetCategoryList {...props} />);
     const rows = container.querySelectorAll("[data-list-row]");
-    expect(rows).toHaveLength(5);
+    expect(rows).toHaveLength(3);
     expect(screen.queryByTestId("budget-category-income")).toBeNull();
+    // A category with no amount is not listed (owner item 33a).
+    expect(screen.queryByTestId("budget-category-savings")).toBeNull();
     expect(screen.queryByText("£3,000")).toBeNull();
     expect(within(rows[0] as HTMLElement).getByText("£1,000")).toBeDefined();
     expect(within(rows[2] as HTMLElement).getByText("£40")).toBeDefined();
@@ -166,6 +181,21 @@ describe("<BudgetCategoryList />", () => {
       "true",
     );
     expect(screen.getByText("Entries for housing")).toBeDefined();
+  });
+
+  it("marks the open category's row so it reads as the heading of its entries", () => {
+    customRender(<BudgetCategoryList {...props} openCategory="housing" />);
+    const open = screen.getByTestId("budget-category-housing").className;
+    const closed = screen.getByTestId("budget-category-expenses").className;
+    expect(open).not.toBe(closed);
+  });
+
+  it("puts Edit budget on the section's heading row when given", () => {
+    const onEditBudget = vi.fn();
+    customRender(<BudgetCategoryList {...props} onEditBudget={onEditBudget} />);
+    const header = screen.getByTestId("budget-categories-header");
+    fireEvent.click(within(header).getByRole("button", { name: "Edit budget" }));
+    expect(onEditBudget).toHaveBeenCalled();
   });
 
   it("has one Add category button at the foot", () => {

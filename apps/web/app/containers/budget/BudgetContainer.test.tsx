@@ -271,9 +271,7 @@ describe("BudgetContainer", () => {
         expect(input.value).toBe("");
       }
       const group = within(editor).getByRole("group", GROUP);
-      expect(group.textContent).toContain(
-        "These common entries are not saved yet. Fill in the amounts that apply to you, then save. Entries left blank stay here until you remove them or leave the page.",
-      );
+      expect(group.textContent).toContain("Common entries not saved yet");
       expect(
         (within(group).getByRole("button", { name: "Save entries" }) as HTMLButtonElement).disabled,
       ).toBe(true);
@@ -484,7 +482,8 @@ describe("BudgetContainer", () => {
   it("opens a category's entries from its row, read only: editing lives in Edit budget", () => {
     mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
     render(<BudgetContainer />);
-    expect(screen.getByTestId("budget-category-subscriptions")).toBeDefined();
+    // A category with no amount is not listed (owner item 33a).
+    expect(screen.queryByTestId("budget-category-subscriptions")).toBeNull();
     fireEvent.click(screen.getByTestId("budget-category-housing"));
     const list = screen.getByRole("list", { name: "Housing entries" });
     expect(within(list).getByText("Mortgage")).toBeDefined();
@@ -678,7 +677,7 @@ describe("BudgetContainer", () => {
     const requestsBefore = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length;
 
     fireEvent.click(screen.getByRole("button", { name: /^Model a change to your budget/ }));
-    fireEvent.change(screen.getByLabelText(/Redundancy pay or lump sum/i), {
+    fireEvent.change(screen.getByLabelText("Redundancy pay or lump sum"), {
       target: { value: "9000" },
     });
     expect(saved()).toBe(savedHero);
@@ -691,7 +690,7 @@ describe("BudgetContainer", () => {
     unmount();
     render(<BudgetContainer />);
     fireEvent.click(screen.getByRole("button", { name: /^Model a change to your budget/ }));
-    expect((screen.getByLabelText(/Redundancy pay or lump sum/i) as HTMLInputElement).value).toBe(
+    expect((screen.getByLabelText("Redundancy pay or lump sum") as HTMLInputElement).value).toBe(
       "",
     );
   });
@@ -980,6 +979,111 @@ describe("BudgetContainer", () => {
       render(<BudgetContainer />);
       expect(screen.queryByRole("note", { name: /About/ })).toBeNull();
       expect(screen.queryByRole("note", { name: /^About/ })).toBeNull();
+    });
+  });
+
+  describe("owner items 7, 29, 30, 31, 32b and 33b", () => {
+    const salaryProfile = {
+      ...baseLoaderData.userProfile,
+      annualSalary: 30000,
+      employmentType: "employed",
+      pensionPercent: 5,
+      isSalarySacrifice: false,
+      taxRegion: "ENGLAND",
+      studentLoanPlans: [],
+    };
+    const spendingOnly = [
+      row({ id: "g", name: "Groceries", category: "expenses", amount: 300, isEssential: true }),
+    ];
+
+    it("puts Edit budget on Where your money goes, and not in the page header", () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+      render(<BudgetContainer />);
+      const header = screen.getByTestId("budget-categories-header");
+      expect(within(header).getByRole("button", { name: "Edit budget" })).toBeDefined();
+      expect(screen.getAllByRole("button", { name: "Edit budget" })).toHaveLength(1);
+    });
+
+    it("has Finished editing at the foot of the editor, which returns to the budget", () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      fireEvent.click(screen.getByRole("button", { name: "Finished editing" }));
+      expect(screen.queryByTestId("budget-editor")).toBeNull();
+      expect(screen.getByTestId("budget-category-expenses")).toBeDefined();
+    });
+
+    it("reads take-home pay from the profile's salary, with no budget row copied", () => {
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: spendingOnly,
+        userProfile: salaryProfile,
+      };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      const amount = screen.getByLabelText("Amount for Take-home pay") as HTMLInputElement;
+      expect(Number(amount.value.replace(/,/g, ""))).toBeGreaterThan(0);
+      expect(screen.getByTestId("budget-editor-source-linked-take-home").textContent).toContain(
+        "From your salary in Profile",
+      );
+      // Nothing was written: the figure is read, not copied.
+      expect(apiFetch).not.toHaveBeenCalled();
+    });
+
+    it("lists the saved rent in Housing in place of the budget's own rent row", () => {
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: [
+          ...spendingOnly,
+          row({ id: "old-rent", name: "Rent", category: "housing", amount: 700 }),
+        ],
+        userProfile: {
+          ...baseLoaderData.userProfile,
+          housingStatus: "renting",
+          monthlyHousingCost: 900,
+        },
+      };
+      render(<BudgetContainer />);
+      const housing = screen.getByTestId("budget-category-housing");
+      expect(housing.textContent).toContain("£900");
+      expect(housing.textContent).not.toContain("£700");
+    });
+
+    it("shows where Breathing room comes from, with links to Savings", () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+      render(<BudgetContainer />);
+      // Monzo £4,500 over the £1,200 essential mortgage row = 3.8 months.
+      expect(screen.getByTestId("breathing-room-source").textContent).toContain(
+        "From your savings of £4,500 and essentials of £1,200 a month.",
+      );
+    });
+
+    it("switches an entry's Essential flag from What Breathing room counts", async () => {
+      vi.mocked(apiFetch).mockResolvedValueOnce(
+        row({
+          id: "b-3",
+          name: "Eating out",
+          category: "expenses",
+          amount: 300,
+          isEssential: true,
+        }),
+      );
+      mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: /What Breathing room counts/ }));
+      fireEvent.click(screen.getByRole("switch", { name: /Eating out/ }));
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith(
+          "/budget-entries/b-3",
+          expect.objectContaining({ method: "PATCH", body: { isEssential: true } }),
+        ),
+      );
+      // £4,500 over £1,500 (1,200 + 300) = 3.0 months.
+      await waitFor(() =>
+        expect(screen.getByTestId("breathing-room-source").textContent).toContain(
+          "essentials of £1,500 a month",
+        ),
+      );
     });
   });
 

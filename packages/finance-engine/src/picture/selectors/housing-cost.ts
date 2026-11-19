@@ -60,6 +60,74 @@ export function selectHousingCost(
   snapshot: PortfolioSnapshot,
   rawAccounts: readonly RawAccount[],
 ): Figure<HousingCost> {
+  const { kind, monthly, paymentEstimated, missing } = housingPayment(
+    profile,
+    snapshot,
+    rawAccounts,
+  );
+
+  if (takeHome.status === "unknown") {
+    for (const key of takeHome.missing) if (!missing.includes(key)) missing.push(key);
+    return figureUnknown(missing, takeHome.reason ?? "not-set");
+  }
+  if (missing.length > 0 || monthly === null) return figureUnknown(missing, "not-set");
+  const takeHomeMonthly = takeHome.value.monthly;
+  if (!(takeHomeMonthly > 0)) return figureUnknown(["annualSalary"], "not-set");
+
+  const assumptions = [...(takeHome.assumptions ?? [])];
+  if (paymentEstimated) assumptions.push(MORTGAGE_ESTIMATE_NOTE);
+  const provenance: FigureProvenance = assumptions.length > 0 ? "assumption" : "user";
+
+  return figureKnown<HousingCost>(
+    {
+      kind,
+      monthly,
+      takeHomeMonthly,
+      sharePct: Math.round((monthly / takeHomeMonthly) * 1000) / 10,
+      paymentEstimated,
+    },
+    provenance,
+    assumptions,
+  );
+}
+
+/** One month of housing from saved facts, with no take-home share. */
+export interface HousingPayment {
+  kind: HousingCost["kind"];
+  /** Pounds a month. */
+  monthly: number;
+  paymentEstimated: boolean;
+}
+
+/**
+ * The monthly housing payment alone, from saved facts (housing status, the saved amount, or the
+ * mortgage accounts' estimate). Null when it is not known. The budget's housing line reads this,
+ * so the rent or mortgage payment is stored once (owner item 33b).
+ */
+export function selectHousingPayment(
+  profile: ProfileFacts,
+  snapshot: PortfolioSnapshot,
+  rawAccounts: readonly RawAccount[],
+): HousingPayment | null {
+  const { kind, monthly, paymentEstimated, missing } = housingPayment(
+    profile,
+    snapshot,
+    rawAccounts,
+  );
+  if (missing.length > 0 || monthly === null) return null;
+  return { kind, monthly, paymentEstimated };
+}
+
+function housingPayment(
+  profile: ProfileFacts,
+  snapshot: PortfolioSnapshot,
+  rawAccounts: readonly RawAccount[],
+): {
+  kind: HousingCost["kind"];
+  monthly: number | null;
+  paymentEstimated: boolean;
+  missing: MissingKey[];
+} {
   const missing: MissingKey[] = [];
   const saved = positive(profile.monthlyHousingCost);
   let kind: HousingCost["kind"] = "rent";
@@ -89,30 +157,7 @@ export function selectHousingCost(
   } else {
     missing.push("housingStatus");
   }
-
-  if (takeHome.status === "unknown") {
-    for (const key of takeHome.missing) if (!missing.includes(key)) missing.push(key);
-    return figureUnknown(missing, takeHome.reason ?? "not-set");
-  }
-  if (missing.length > 0 || monthly === null) return figureUnknown(missing, "not-set");
-  const takeHomeMonthly = takeHome.value.monthly;
-  if (!(takeHomeMonthly > 0)) return figureUnknown(["annualSalary"], "not-set");
-
-  const assumptions = [...(takeHome.assumptions ?? [])];
-  if (paymentEstimated) assumptions.push(MORTGAGE_ESTIMATE_NOTE);
-  const provenance: FigureProvenance = assumptions.length > 0 ? "assumption" : "user";
-
-  return figureKnown<HousingCost>(
-    {
-      kind,
-      monthly,
-      takeHomeMonthly,
-      sharePct: Math.round((monthly / takeHomeMonthly) * 1000) / 10,
-      paymentEstimated,
-    },
-    provenance,
-    assumptions,
-  );
+  return { kind, monthly, paymentEstimated, missing };
 }
 
 export interface FixedRateEndFact {

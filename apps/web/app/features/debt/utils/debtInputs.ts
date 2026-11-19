@@ -18,8 +18,10 @@ export function buildDebtInputs(
   accounts: RawAccount[] | null | undefined,
   accountDetails: RawAccountDetail[] | null | undefined,
   budgetEntries: BudgetEntry[] | null | undefined,
+  // The profile, so the budget's linked take-home and housing rows count here as on every page.
+  userProfile?: unknown,
 ): DebtInputs {
-  const picture = buildWorkspacePicture({ accounts, accountDetails, budgetEntries });
+  const picture = buildWorkspacePicture({ userProfile, accounts, accountDetails, budgetEntries });
   const budget = knownOrNull(picture.budget);
   return {
     monthlySurplus: budget?.hasIncome ? budget.surplus : null,

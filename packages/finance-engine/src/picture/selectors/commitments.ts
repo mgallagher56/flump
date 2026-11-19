@@ -17,8 +17,14 @@ export interface EssentialCommitments {
    * places is counted once.
    */
   debtCommitment: number;
-  /** essentialsExcludingDebt + debtCommitment. */
+  /** essentialsExcludingDebt + debtCommitment. Savings rows are never in it. */
   total: number;
+  /**
+   * Savings rows flagged essential (owner item 28): a regular saving the person would keep paying
+   * if income stopped. Breathing room counts it with the essentials; safe to spend already takes
+   * every savings row off as planned savings, so it is kept out of `total`.
+   */
+  essentialSavings: number;
 }
 
 function round2(n: number): number {
@@ -35,9 +41,14 @@ export function essentialCommitments(
 ): EssentialCommitments {
   let essentialsExcludingDebt = 0;
   let budgetDebtPayments = 0;
+  let essentialSavings = 0;
   for (const row of budget) {
-    if (row.isIncome || row.category === SAVINGS_CATEGORY) continue;
+    if (row.isIncome) continue;
     const monthly = budgetRowMonthly(row);
+    if (row.category === SAVINGS_CATEGORY) {
+      if (row.isEssential) essentialSavings += monthly;
+      continue;
+    }
     if (row.category === DEBT_CATEGORY) budgetDebtPayments += monthly;
     else if (row.isEssential) essentialsExcludingDebt += monthly;
   }
@@ -52,5 +63,6 @@ export function essentialCommitments(
     budgetDebtPayments: round2(budgetDebtPayments),
     debtCommitment: round2(debtCommitment),
     total: round2(essentialsExcludingDebt + debtCommitment),
+    essentialSavings: round2(essentialSavings),
   };
 }

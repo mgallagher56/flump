@@ -6,6 +6,7 @@ export * from "./selectors/commitments.js";
 export * from "./selectors/duplicate-debt-rows.js";
 export * from "./selectors/estimated-tax-due.js";
 export * from "./selectors/housing-cost.js";
+export * from "./selectors/linked-budget-rows.js";
 export * from "./selectors/loan-to-value.js";
 export * from "./selectors/marginal-rate.js";
 export * from "./selectors/months-of-cover.js";

@@ -70,6 +70,11 @@ export interface BudgetEntryItem {
   /** E34 C1: "joint" counts the entry at `sharePercent` (50 when unset); absent means sole. */
   ownership?: "sole" | "joint" | string | null;
   sharePercent?: number | null;
+  /**
+   * Set only on a row the engine adds from a saved detail (owner items 7 and 33b): "take-home"
+   * from the profile's salary, "housing" from the housing details. Never stored.
+   */
+  linked?: "take-home" | "housing";
 }
 
 export interface BuildContextPackInput {
@@ -396,14 +401,15 @@ export function buildFlumpAiContextPack(
   const taxRecords =
     isAnonymized && input.taxRecords ? anonymiseTaxRecords(input.taxRecords) : input.taxRecords;
 
-  // The budget summary comes from the one financial picture, so MCP and web agree (E23).
+  // The budget summary comes from the one financial picture, so MCP and web agree (E23). It reads
+  // the typed names (never sent anywhere) so the linked take-home and housing rows match the web.
   const picture = buildFinancialPicture(
     {
       profile: input.profileFacts ?? profileFactsFromProfile(null),
       netWorthBasis: input.netWorthBasis,
       accounts: sanitizedRawAccounts,
       details: rawDetails,
-      budget: budgetEntries,
+      budget: rawBudgetEntries.map((entry, idx) => ({ ...entry, id: entry.id || `b_${idx}` })),
     },
     { snapshot },
   );

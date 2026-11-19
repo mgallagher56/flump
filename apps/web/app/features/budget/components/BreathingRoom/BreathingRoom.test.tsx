@@ -22,7 +22,7 @@ describe("BreathingRoom", () => {
     expect(section.closest('[data-testid="scenario-zone"]')).toBeNull();
   });
 
-  it("shows the engine's figure in one result card, with the money to draw on", () => {
+  it("shows the engine's figure in one result card", () => {
     const { container } = render(<BreathingRoom figure={known(1.5, 4200)} />);
     const cards = screen.getAllByRole("group", { name: "Breathing room" });
     expect(cards).toHaveLength(1);
@@ -30,8 +30,23 @@ describe("BreathingRoom", () => {
     expect(container.querySelector('[data-figure="monthsOfCover"]')?.textContent).toBe(
       "1.5 months",
     );
-    expect(screen.getByRole("term").textContent).toBe("Money to draw on");
-    expect(screen.getByRole("definition").textContent).toBe("£4,200");
+  });
+
+  it("says plainly where the figure comes from, with a link to Savings (owner item 31)", () => {
+    const { container } = render(<BreathingRoom figure={known(1.5, 4200)} />);
+    const source = screen.getByTestId("breathing-room-source");
+    // 4,200 / 2,800 = 1.5 months: the two figures the engine divided.
+    expect(source.textContent).toBe(
+      "From your savings of £4,200 and essentials of £2,800 a month. View your savings accounts",
+    );
+    expect(
+      container.querySelector('[data-figure="monthsOfCover.monthlyEssentials"]')?.textContent,
+    ).toBe("£2,800");
+  });
+
+  it("shows what it counts beside the result card", () => {
+    render(<BreathingRoom basis={<div id="basis">Basis</div>} figure={known(1.5, 4200)} />);
+    expect(screen.getByTestId("basis")).toBeDefined();
   });
 
   it("shows no scene of its own: the page icon is the budget page's one illustration", () => {
@@ -52,7 +67,7 @@ describe("BreathingRoom", () => {
     );
     expect(screen.getByText("Add your essential spending to see this.")).toBeDefined();
     expect(container.querySelector("[data-figure]")).toBeNull();
-    expect(screen.queryByRole("term")).toBeNull();
+    expect(screen.queryByTestId("breathing-room-source")).toBeNull();
   });
 
   it("keeps the detail behind the info tip", () => {

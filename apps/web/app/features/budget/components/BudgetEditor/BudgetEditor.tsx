@@ -1,9 +1,12 @@
+import { isTakeHomePayRow } from "@flump/finance-engine";
 import {
   Button,
   Card,
   ConfirmDialog,
   CurrencyInput,
   Icon,
+  InfoTip,
+  Money,
   Select,
   StatusBadge,
   Switch,
@@ -12,6 +15,8 @@ import {
 } from "@repo/ui";
 import { Plus, Trash2 } from "lucide-react";
 import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
+import type { HousingTenure } from "~/features/housing/components/HousingDetails";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
 import { type DraftBudgetEntry, isDraftReady } from "../../exampleDrafts";
@@ -20,7 +25,6 @@ import { rankCategories } from "../BudgetCategoryList";
 import { EntryOwnershipField } from "../EntryOwnershipField";
 import {
   addActions,
-  addAmount,
   addRow,
   amountField,
   budgetEditor,
@@ -31,9 +35,13 @@ import {
   essentialField,
   figure,
   frequencyField,
+  linkedAmount,
+  linkedName,
   ownershipCell,
   removeCell,
   rowControls,
+  sourceLine,
+  sourceLink,
 } from "./BudgetEditor.styles";
 
 export type NewBudgetEntry = Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">;
@@ -71,6 +79,22 @@ export interface BudgetEditorProps {
   onSaveDrafts?: () => Promise<void>;
   /** Removes every common entry not yet saved. */
   onRemoveDrafts?: () => void;
+  /**
+   * Rows the engine adds from saved details (owner items 7 and 33b): take-home pay from the
+   * profile's salary, the rent or mortgage payment from the housing details. Shown in their
+   * sections with where the figure comes from; never stored as budget rows.
+   */
+  linkedEntries?: BudgetEntry[];
+  /** Saved rows a linked row stands in for. Not counted anywhere, so not listed. */
+  shadowedIds?: string[];
+  /** The take-home worked out from the profile, monthly, or null when the profile has no salary. */
+  profileTakeHome?: number | null;
+  /** How the person pays for housing, for the linked housing row. */
+  housingStatus?: HousingTenure;
+  /** Saves the rent (or household contribution) to the housing details, the one stored value. */
+  onSaveHousing?: (monthly: number) => Promise<void>;
+  /** Leaves edit mode. Shown as "Finished editing" at the foot (owner item 29). */
+  onFinishEditing?: () => void;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -103,14 +127,27 @@ const toAmount = (value: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
+/** Savings rows offer Essential too, off by default (owner item 28); only money in has none. */
+const hasEssentialSwitch = (entry: Pick<BudgetEntry, "isIncome" | "category">) =>
+  !isIncomeEntry(entry);
+
+/**
+ * The add row's Essential default: spending is essential except everyday expenses, and savings
+ * start off (owner item 28). Income is always counted, so it has no switch.
+ */
+export const defaultEssential = (category: string): boolean =>
+  category === INCOME ? true : category !== "expenses" && category !== "savings";
+
 interface EntryRowProps {
   entry: BudgetEntry;
   onSave: (id: string, update: Partial<BudgetEntry>) => Promise<boolean>;
   onRemove: (entry: BudgetEntry) => void;
+  /** Set on a pay row the person typed while the profile also gives a take-home: it wins. */
+  overridesProfile?: boolean;
 }
 
 /** One saved entry, editable where it sits. Text fields save on blur, choices save on change. */
-const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
+const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, overridesProfile = false }) => {
   const [name, setName] = useState(entry.name);
   const [amount, setAmount] = useState<number | null>(toAmount(entry.amount));
   // The latest typed amount, read on blur after CurrencyInput's own rounding has run.
@@ -186,9 +223,9 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
             }
           />
         </div>
-        {/* Savings count as savings whatever the flag, so only spending rows offer it. */}
+        {/* Spending and savings rows offer it; an essential saving counts in Breathing room. */}
         <div className={essentialField()}>
-          {isIncomeEntry(entry) || entry.category === "savings" ? null : (
+          {!hasEssentialSwitch(entry) ? null : (
             <Switch
               aria-label={`Essential: ${entry.name}`}
               checked={entry.isEssential}
@@ -207,11 +244,24 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
         id={`budget-editor-remove-${entry.id}`}
         size="sm"
         title={`Delete ${entry.name}`}
-        variant="ghost"
+        variant="dangerSubtle"
         onClick={() => onRemove(entry)}
       >
         <Icon icon={Trash2} size="sm" />
       </Button>
+      {overridesProfile ? (
+        <p
+          className={sourceLine()}
+          data-testid={`budget-editor-source-${entry.id}`}
+          id={`budget-editor-source-${entry.id}`}
+        >
+          Your own figure, used in place of your salary in{" "}
+          <Link className={sourceLink()} to="/app/profile">
+            Profile
+          </Link>
+          . Delete it to use your salary.
+        </p>
+      ) : null}
       {/* E34 C1: sole or joint, and the share a joint entry counts at in the figures. */}
       <div className={ownershipCell()}>
         <EntryOwnershipField
@@ -222,6 +272,117 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove }) => {
           onChange={(ownership, sharePercent) => void onSave(entry.id, { ownership, sharePercent })}
         />
       </div>
+    </li>
+  );
+};
+
+interface LinkedEntryRowProps {
+  entry: BudgetEntry;
+  housingStatus: HousingTenure;
+  /** Saves the person's own pay entry in place of the take-home from the profile. */
+  onOverrideTakeHome: (amount: number) => Promise<boolean>;
+  onSaveHousing?: (monthly: number) => Promise<void>;
+}
+
+/**
+ * A row read from a saved detail (owner items 7 and 33b). It is laid out like a saved entry and
+ * says where its figure comes from, with a link there. One stored value: typing a take-home figure
+ * saves the person's own pay entry, which then wins; typing a rent saves it to the housing details.
+ * A mortgage payment comes from the mortgage details, so it is changed there.
+ */
+const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
+  entry,
+  housingStatus,
+  onOverrideTakeHome,
+  onSaveHousing,
+}) => {
+  const saved = toAmount(entry.amount);
+  const [amount, setAmount] = useState<number | null>(saved);
+  const amountRef = useRef<number | null>(saved);
+  useEffect(() => {
+    amountRef.current = saved;
+    setAmount(saved);
+  }, [saved]);
+
+  const isTakeHome = entry.linked === "take-home";
+  const isMortgage = !isTakeHome && housingStatus === "mortgage";
+  const idPart = entry.id.replace(/[^a-z0-9-]/gi, "-");
+  const sourceId = `budget-editor-source-${idPart}`;
+
+  const saveAmount = async () => {
+    const next = amountRef.current;
+    if (next === null || Math.round(next * 100) === Math.round(saved * 100)) {
+      amountRef.current = saved;
+      setAmount(saved);
+      return;
+    }
+    if (isTakeHome) {
+      await onOverrideTakeHome(next);
+      return;
+    }
+    try {
+      await onSaveHousing?.(next);
+    } catch {
+      // The page shows what went wrong; the field keeps what was typed.
+    }
+  };
+
+  const source = isTakeHome ? (
+    <>
+      From your salary in{" "}
+      <Link className={sourceLink()} to="/app/profile">
+        Profile
+      </Link>
+      . A figure you type here is used instead.
+    </>
+  ) : isMortgage ? (
+    <>
+      From your{" "}
+      <Link className={sourceLink()} to="/app/mortgage">
+        mortgage details
+      </Link>
+      .
+    </>
+  ) : (
+    <>From your housing details. A change here updates them across Flump.</>
+  );
+
+  return (
+    <li className={entryRow()} data-testid={`budget-editor-row-${idPart}`}>
+      <span className={linkedName()} id={`budget-editor-name-${idPart}`}>
+        {entry.name}
+      </span>
+      <div className={rowControls()}>
+        <div className={amountField()}>
+          {isMortgage ? (
+            <span className={linkedAmount()}>
+              <Money size="sm" value={saved} />
+            </span>
+          ) : (
+            <CurrencyInput
+              aria-describedby={sourceId}
+              aria-label={`Amount for ${entry.name}`}
+              data-testid={`budget-editor-amount-${idPart}`}
+              id={`budget-editor-amount-${idPart}`}
+              size="sm"
+              value={amount}
+              onBlur={() => void saveAmount()}
+              onValueChange={(value) => {
+                amountRef.current = value;
+                setAmount(value);
+              }}
+            />
+          )}
+        </div>
+        <div className={frequencyField()}>
+          <span className={linkedAmount()}>a month</span>
+        </div>
+        <div className={essentialField()} />
+      </div>
+      <span className={removeCell()} />
+      <p className={sourceLine()} data-testid={sourceId} id={sourceId}>
+        {source}
+      </p>
     </li>
   );
 };
@@ -238,7 +399,7 @@ interface DraftRowProps {
 const DraftRow: FC<DraftRowProps> = ({ draft, onChange, onRemove, disabled = false }) => {
   const id = draft.id;
   const label = draft.name.trim() || "common entry";
-  const showEssential = draft.category !== INCOME && draft.category !== "savings";
+  const showEssential = draft.category !== INCOME;
   return (
     <li className={entryRow()} data-testid={`budget-editor-draft-${id}`}>
       <div className={draftName()}>
@@ -317,12 +478,23 @@ interface AddEntryRowProps {
   /** The id fragment for this section's controls. */
   slug: string;
   label: string;
-  onAdd: (name: string, amount: number, frequency: BudgetEntry["frequency"]) => Promise<boolean>;
+  onAdd: (entry: NewEntryFields) => Promise<boolean>;
+}
+
+/** What the add row collects: the same fields a saved row shows (owner item 26). */
+export interface NewEntryFields {
+  name: string;
+  amount: number;
+  frequency: BudgetEntry["frequency"];
+  isEssential: boolean;
+  ownership: "sole" | "joint";
+  sharePercent: number | null;
 }
 
 /**
- * The add row that closes each section: a quiet "Add to …" button that opens a name, amount and
- * frequency row in place, so the editor does not show an empty form under every section.
+ * The add row that closes each section: a quiet "Add to …" button that opens a row in place, so
+ * the editor does not show an empty form under every section. It holds the same fields, in the
+ * same sizes and columns, as a saved row: name, amount, how often, Essential and sole or joint.
  */
 const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => {
   const [open, setOpen] = useState(false);
@@ -333,14 +505,26 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState<number | null>(null);
   const [frequency, setFrequency] = useState<BudgetEntry["frequency"]>("monthly");
+  const [isEssential, setIsEssential] = useState(() => defaultEssential(category));
+  const [ownership, setOwnership] = useState<"sole" | "joint">("sole");
+  const [sharePercent, setSharePercent] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
+  const showEssential = category !== INCOME;
+  const newLabel = name.trim() || `new entry in ${label}`;
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const trimmed = name.trim();
     if (!trimmed || adding) return;
     setAdding(true);
-    const added = await onAdd(trimmed, amount ?? 0, frequency);
+    const added = await onAdd({
+      name: trimmed,
+      amount: amount ?? 0,
+      frequency,
+      isEssential: showEssential ? isEssential : true,
+      ownership,
+      sharePercent: ownership === "joint" ? sharePercent : null,
+    });
     setAdding(false);
     // Keep what was typed when the save failed, so it can be tried again.
     if (added) close();
@@ -351,6 +535,9 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
     setName("");
     setAmount(null);
     setFrequency("monthly");
+    setIsEssential(defaultEssential(category));
+    setOwnership("sole");
+    setSharePercent(null);
     setOpen(false);
   };
 
@@ -393,25 +580,52 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
         value={name}
         onChange={(event) => setName(event.target.value)}
       />
-      <div className={addAmount()}>
-        <CurrencyInput
-          aria-label={`New entry amount in ${label}`}
-          data-testid={`budget-editor-new-amount-${slug}`}
-          id={`budget-editor-new-amount-${slug}`}
-          size="sm"
-          value={amount}
-          onValueChange={setAmount}
-        />
+      <div className={rowControls()}>
+        <div className={amountField()}>
+          <CurrencyInput
+            aria-label={`New entry amount in ${label}`}
+            data-testid={`budget-editor-new-amount-${slug}`}
+            id={`budget-editor-new-amount-${slug}`}
+            size="sm"
+            value={amount}
+            onValueChange={setAmount}
+          />
+        </div>
+        <div className={frequencyField()}>
+          <Select
+            aria-label={`How often for new entry in ${label}`}
+            data-testid={`budget-editor-new-frequency-${slug}`}
+            id={`budget-editor-new-frequency-${slug}`}
+            options={FREQUENCY_OPTIONS}
+            size="sm"
+            value={frequency}
+            onChange={(event) => setFrequency(event.target.value as BudgetEntry["frequency"])}
+          />
+        </div>
+        <div className={essentialField()}>
+          {showEssential ? (
+            <Switch
+              aria-label={`Essential: ${newLabel}`}
+              checked={isEssential}
+              data-testid={`budget-editor-new-essential-${slug}`}
+              id={`budget-editor-new-essential-${slug}`}
+              label="Essential"
+              onChange={(event) => setIsEssential(event.target.checked)}
+            />
+          ) : null}
+        </div>
       </div>
-      <div className={frequencyField()}>
-        <Select
-          aria-label={`How often for new entry in ${label}`}
-          data-testid={`budget-editor-new-frequency-${slug}`}
-          id={`budget-editor-new-frequency-${slug}`}
-          options={FREQUENCY_OPTIONS}
-          size="sm"
-          value={frequency}
-          onChange={(event) => setFrequency(event.target.value as BudgetEntry["frequency"])}
+      <span className={removeCell()} />
+      <div className={ownershipCell()}>
+        <EntryOwnershipField
+          entryName={newLabel}
+          idPrefix={`budget-editor-new-${slug}`}
+          ownership={ownership}
+          sharePercent={sharePercent}
+          onChange={(nextOwnership, nextShare) => {
+            setOwnership(nextOwnership);
+            setSharePercent(nextShare);
+          }}
         />
       </div>
       <div className={addActions()}>
@@ -460,6 +674,12 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   onDraftRemove,
   onSaveDrafts,
   onRemoveDrafts,
+  linkedEntries = [],
+  shadowedIds = [],
+  profileTakeHome = null,
+  housingStatus = null,
+  onSaveHousing,
+  onFinishEditing,
 }) => {
   const toastApi = useOptionalToast();
   const [savingDrafts, setSavingDrafts] = useState(false);
@@ -492,16 +712,32 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
 
   // The read view's order: money in first, then spending ranked by amount, empty categories at the
   // foot. Taken once on opening, so a section never jumps while its amount is being typed; a
-  // category added while editing joins the foot.
-  const [rankedOrder] = useState(() => rankCategories(categories, entries).map((r) => r.category));
+  // category added while editing joins the foot. Empty categories stay here so they can be filled.
+  const [rankedOrder] = useState(() =>
+    rankCategories(categories, [...entries, ...linkedEntries], { keepEmpty: true }).map(
+      (r) => r.category,
+    ),
+  );
   const sectionOrder = Array.from(
     new Set([INCOME, ...rankedOrder.filter((c) => categories.includes(c)), ...categories]),
   );
 
+  // Saved rows a linked row stands in for count nowhere, so they are not listed.
+  const listed = entries.filter((e) => !shadowedIds.includes(e.id));
   const entriesFor = (category: string) =>
     category === INCOME
-      ? entries.filter(isIncomeEntry)
-      : entries.filter((e) => e.category === category && !isIncomeEntry(e));
+      ? listed.filter(isIncomeEntry)
+      : listed.filter((e) => e.category === category && !isIncomeEntry(e));
+  const linkedFor = (category: string) =>
+    linkedEntries.filter((e) =>
+      category === INCOME ? isIncomeEntry(e) : e.category === category && !isIncomeEntry(e),
+    );
+  // A pay row the person typed wins over the profile's take-home: it says so (owner item 7).
+  const overridesProfile = (entry: BudgetEntry) =>
+    profileTakeHome !== null &&
+    profileTakeHome > 0 &&
+    isTakeHomePayRow(entry) &&
+    toAmount(entry.amount) > 0;
 
   const draftsFor = (category: string) => drafts.filter((d) => d.category === category);
 
@@ -532,29 +768,45 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     }
   };
 
-  const add =
-    (category: string) =>
-    async (name: string, amount: number, frequency: BudgetEntry["frequency"] = "monthly") => {
-      const isIncome = category === INCOME;
-      try {
-        await onAdd({
-          category,
-          name,
-          amount,
-          frequency,
-          isIncome,
-          isPrimaryIncome: false,
-          // The wizard's defaults: spending is essential except everyday expenses.
-          isEssential: isIncome ? true : category !== "expenses",
-          notes: null,
-          isDefault: false,
-        });
-        // The new row on the page is the confirmation, so no message.
-        return true;
-      } catch {
-        return false;
-      }
-    };
+  const add = (category: string) => async (fields: NewEntryFields) => {
+    const isIncome = category === INCOME;
+    try {
+      await onAdd({
+        category,
+        name: fields.name,
+        amount: fields.amount,
+        frequency: fields.frequency,
+        isIncome,
+        isPrimaryIncome: false,
+        isEssential: isIncome ? true : fields.isEssential,
+        ownership: fields.ownership,
+        sharePercent: fields.sharePercent,
+        notes: null,
+        isDefault: false,
+      });
+      // The new row on the page is the confirmation, so no message.
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Typing over the linked take-home saves the person's own pay entry, which then wins (item 7).
+  const overrideTakeHome = (amount: number) =>
+    add(INCOME)({
+      name: "Take-home pay",
+      amount,
+      frequency: "monthly",
+      isEssential: true,
+      ownership: "sole",
+      sharePercent: null,
+    });
+
+  const saveHousing = async (monthly: number) => {
+    if (!onSaveHousing) return;
+    await onSaveHousing(monthly);
+    toast?.toast({ title: "Saved" });
+  };
 
   /** The next row's name field in the deleted entry's section, else that section's heading. */
   const focusTargetAfterDelete = (entry: BudgetEntry) => {
@@ -619,12 +871,21 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
           data-testid="budget-editor-draft-note"
           role="group"
         >
+          {/* The detail sits behind the tip and stays tied to the save button (owner item 23). */}
           <p className={note.text}>
-            These common entries are not saved yet. Fill in the amounts that apply to you, then
-            save. Entries left blank stay here until you remove them or leave the page.
+            Common entries not saved yet
+            <InfoTip
+              descriptionId="budget-editor-draft-note-detail"
+              label="About common entries"
+              term="Common entries"
+            >
+              Fill in the amounts that apply to you, then save. Entries left blank stay here until
+              you remove them or leave the page.
+            </InfoTip>
           </p>
           <div className={note.actions}>
             <Button
+              aria-describedby="budget-editor-draft-note-detail"
               data-testid="budget-editor-save-drafts"
               disabled={!drafts.some(isDraftReady)}
               id="budget-editor-save-drafts"
@@ -652,6 +913,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         {sectionOrder.map((category) => {
           const label = sectionLabel(category);
           const rows = entriesFor(category);
+          const linkedRows = linkedFor(category);
           const sectionDrafts = draftsFor(category);
           const slug = categorySlug(category);
           const headingId = `budget-editor-section-${slug}`;
@@ -676,10 +938,25 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                   </Button>
                 ) : null}
               </div>
-              {rows.length > 0 || sectionDrafts.length > 0 ? (
+              {rows.length > 0 || linkedRows.length > 0 || sectionDrafts.length > 0 ? (
                 <ul className={section.list}>
+                  {linkedRows.map((entry) => (
+                    <LinkedEntryRow
+                      entry={entry}
+                      housingStatus={housingStatus}
+                      key={entry.id}
+                      onOverrideTakeHome={overrideTakeHome}
+                      onSaveHousing={saveHousing}
+                    />
+                  ))}
                   {rows.map((entry) => (
-                    <EntryRow entry={entry} key={entry.id} onRemove={setToRemove} onSave={save} />
+                    <EntryRow
+                      entry={entry}
+                      key={entry.id}
+                      overridesProfile={overridesProfile(entry)}
+                      onRemove={setToRemove}
+                      onSave={save}
+                    />
                   ))}
                   {sectionDrafts.map((draft) => (
                     <DraftRow
@@ -711,18 +988,30 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
         })}
       </div>
 
-      {onAddCategory ? (
+      {onAddCategory || onFinishEditing ? (
         <div className={editor.foot}>
-          <Button
-            data-testid="budget-editor-add-category-btn"
-            id="budget-editor-add-category-btn"
-            size="sm"
-            variant="outline"
-            onClick={onAddCategory}
-          >
-            <Icon icon={Plus} size="sm" />
-            Add category
-          </Button>
+          {onAddCategory ? (
+            <Button
+              data-testid="budget-editor-add-category-btn"
+              id="budget-editor-add-category-btn"
+              size="sm"
+              variant="outline"
+              onClick={onAddCategory}
+            >
+              <Icon icon={Plus} size="sm" />
+              Add category
+            </Button>
+          ) : null}
+          {/* Owner item 29: the way out at the foot too, so a long budget needs no scroll back. */}
+          {onFinishEditing ? (
+            <Button
+              data-testid="budget-editor-finish-editing-btn"
+              id="budget-editor-finish-editing-btn"
+              onClick={onFinishEditing}
+            >
+              Finished editing
+            </Button>
+          ) : null}
         </div>
       ) : null}
 

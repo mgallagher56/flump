@@ -81,3 +81,20 @@ describe("essentialCommitments", () => {
     expect(c.accountMinimums).toBeGreaterThan(0);
   });
 });
+
+describe("essentialCommitments: essential savings rows (owner item 28)", () => {
+  it("keeps essential savings out of the total and reports them on their own", () => {
+    // Essential bills £600, an essential savings row £200, a non-essential savings row £50.
+    // essentialsExcludingDebt = 600 (savings are never in it), total = 600 + 0 debt = 600,
+    // essentialSavings = 200 (the £50 row is not essential).
+    const c = essentialCommitments(
+      [
+        row({ id: "b", amount: 600 }),
+        row({ id: "s1", category: "savings", amount: 200, isEssential: true }),
+        row({ id: "s2", category: "savings", amount: 50, isEssential: false }),
+      ],
+      new PortfolioSnapshot([]),
+    );
+    expect(c).toMatchObject({ essentialsExcludingDebt: 600, total: 600, essentialSavings: 200 });
+  });
+});

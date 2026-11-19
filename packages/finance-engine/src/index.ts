@@ -2,6 +2,7 @@ export * from "./account-category.js";
 export * from "./account-type-change.js";
 export * from "./ai-context-pack.js";
 export * from "./anonymise.js";
+export * from "./budget-entry-names.js";
 export * from "./budget-entry-share.js";
 export * from "./check-in.js";
 export * from "./check-in-day.js";

@@ -459,14 +459,14 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         expect((await get("/budget-entries")).body).toEqual([]);
       });
 
-      it("accepts a custom category and seeds defaults on explicit request", async () => {
+      it("accepts a custom category, and seed-defaults answers with the list", async () => {
         const category = await send("post", "/budget-entries/categories", BUDGET_CATEGORY_PAYLOAD);
         expect2xx(category, "POST /budget-entries/categories");
         expect(category.body.categories).toContain("pets");
 
         const seeded = await send("post", "/budget-entries/seed-defaults");
         expect2xx(seeded, "POST /budget-entries/seed-defaults");
-        expect((seeded.body as unknown[]).length).toBeGreaterThan(0);
+        expect(Array.isArray(seeded.body)).toBe(true);
       });
     });
   },

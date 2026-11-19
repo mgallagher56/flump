@@ -36,6 +36,38 @@ const mockEntries: BudgetEntry[] = [
   },
 ];
 
+describe("BudgetSetupWizard: take-home from the profile (owner item 7)", () => {
+  const goToIncome = () => {
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(screen.getByRole("button", { name: /start blank/i }));
+  };
+  const props = {
+    onAddEntry: vi.fn().mockResolvedValue(undefined),
+    onCancel: vi.fn(),
+    onComplete: vi.fn(),
+    onDeleteEntry: vi.fn().mockResolvedValue(undefined),
+    onUpdateEntry: vi.fn().mockResolvedValue(undefined),
+  };
+
+  it("says the take-home is already in the budget, with no copy button", async () => {
+    render(<BudgetSetupWizard {...props} entries={[mockEntries[1]]} monthlyTakeHome={2400} />);
+    goToIncome();
+    const note = await screen.findByTestId("wizard-linked-take-home");
+    expect(note.textContent).toBe(
+      "Your take-home pay of £2,400 a month is already in your budget, worked out from your salary in Profile. To use a different figure, add a pay entry below.",
+    );
+    expect(screen.queryByRole("button", { name: /^Use / })).toBeNull();
+  });
+
+  it("says when the person's own pay entry is used instead", async () => {
+    render(<BudgetSetupWizard {...props} entries={mockEntries} monthlyTakeHome={2400} />);
+    goToIncome();
+    expect((await screen.findByTestId("wizard-linked-take-home")).textContent).toContain(
+      "Your own pay entry is used in place of the take-home pay",
+    );
+  });
+});
+
 describe("BudgetSetupWizard", () => {
   it("renders the welcome step and advances to income step", async () => {
     const onUpdateEntry = vi.fn().mockResolvedValue(undefined);

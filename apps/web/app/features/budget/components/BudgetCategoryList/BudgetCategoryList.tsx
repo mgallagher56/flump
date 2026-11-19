@@ -1,12 +1,20 @@
 import { Button, Card, Icon, Money, PageSection, VisuallyHidden } from "@repo/ui";
-import { ArrowRight, ChartPie, ChevronDown, Plus } from "lucide-react";
+import { cx } from "@repo/ui/styled-system/css";
+import { ArrowRight, ChartPie, ChevronDown, Pencil, Plus } from "lucide-react";
 import { type FC, type ReactNode, useMemo } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_LABELS, toMonthly } from "~/types/budget";
 import { categoryIcon } from "../../categoryIcons";
 import { INCOME_CATEGORY, isIncomeEntry } from "../../income";
-import { categoryList, chevron, entriesPanel, listFoot, rowEnd } from "./BudgetCategoryList.styles";
+import {
+  categoryList,
+  chevron,
+  entriesPanel,
+  listFoot,
+  openRow,
+  rowEnd,
+} from "./BudgetCategoryList.styles";
 
 /** A safe id fragment from a category name (custom names may hold spaces or symbols). */
 function categorySlug(category: string): string {
@@ -45,6 +53,11 @@ export interface BudgetCategoryListProps {
    * the category (e.g. an entry that may already be counted with your debts).
    */
   noticeFor?: (category: string) => ReactNode;
+  /**
+   * Opens the in-place budget editor. Shown as "Edit budget" on this section's heading row, the
+   * page's one edit action (owner item 30).
+   */
+  onEditBudget?: () => void;
 }
 
 export interface CategoryRow {
@@ -64,14 +77,20 @@ const isIncomeCategory = (category: string, entries: BudgetEntry[]): boolean => 
 };
 
 /**
- * Where the money goes: categories ranked by their monthly amount, largest first; empty ones keep
- * their order at the foot. Income categories are left out (E16 R2-6).
+ * Where the money goes: categories ranked by their monthly amount, largest first. Income
+ * categories are left out (E16 R2-6). A category with no amount (no entries, or only £0 ones such
+ * as an old "ISA / Investments" suggestion) is left out too, owner item 33a; the editor keeps
+ * them (`keepEmpty`), at the foot in their order, so they can be filled in.
  */
-export function rankCategories(categories: string[], entries: BudgetEntry[]): CategoryRow[] {
+export function rankCategories(
+  categories: string[],
+  entries: BudgetEntry[],
+  options: { keepEmpty?: boolean } = {},
+): CategoryRow[] {
   const all = Array.from(new Set([...categories, ...entries.map((e) => e.category)])).filter(
     (category) => !isIncomeCategory(category, entries),
   );
-  return all
+  const ranked = all
     .map((category, index) => {
       const inCategory = entries.filter((e) => e.category === category && !isIncomeEntry(e));
       const total = inCategory.reduce((s, e) => s + Math.abs(toMonthly(e)), 0);
@@ -87,6 +106,7 @@ export function rankCategories(categories: string[], entries: BudgetEntry[]): Ca
     })
     .sort((a, b) => b.row.total - a.row.total || a.index - b.index)
     .map(({ row }) => row);
+  return options.keepEmpty ? ranked : ranked.filter((row) => Math.round(row.total) > 0);
 }
 
 /**
@@ -103,12 +123,27 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
   metaFor,
   hrefFor,
   noticeFor,
+  onEditBudget,
 }) => {
   const slots = categoryList();
   const rows = useMemo(() => rankCategories(categories, entries), [categories, entries]);
 
   return (
     <PageSection
+      action={
+        onEditBudget ? (
+          <Button
+            data-testid="where-money-goes-edit-btn"
+            id="where-money-goes-edit-btn"
+            size="sm"
+            variant="outline"
+            onClick={onEditBudget}
+          >
+            <Icon icon={Pencil} size="sm" />
+            Edit budget
+          </Button>
+        ) : undefined
+      }
       description="Your regular monthly spending, by category (not one-off purchases). Open one to see its entries."
       domain="pay"
       icon={ChartPie}
@@ -171,7 +206,7 @@ export const BudgetCategoryList: FC<BudgetCategoryListProps> = ({
                 <button
                   aria-controls={panelId}
                   aria-expanded={open}
-                  className={slots.row}
+                  className={cx(slots.row, open ? openRow() : undefined)}
                   data-testid={`budget-category-${row.category}`}
                   id={`budget-category-${slug}`}
                   type="button"

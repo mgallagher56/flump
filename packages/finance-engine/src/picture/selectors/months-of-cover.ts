@@ -9,7 +9,10 @@ export interface MonthsOfCover {
   months: number;
   /** Current and savings balances, each at least 0 (an overdraft is debt, not netted here). */
   liquidCash: number;
-  /** Monthly essential commitments, the same ones safe to spend uses. */
+  /**
+   * Monthly essential commitments (the ones safe to spend uses) plus essential savings rows
+   * (owner item 28).
+   */
   monthlyEssentials: number;
   commitments: EssentialCommitments;
 }
@@ -39,10 +42,13 @@ export function selectMonthsOfCover(
   if (!totals.value.hasEssentials) return figureUnknown(["budgetEssentials"], "not-set");
   const commitments = essentialCommitments(budget, snapshot);
   const liquidCash = snapshot.getTotalLiquidCash();
+  // An essential savings row is a saving the person would keep paying, so it is covered too.
+  const monthlyEssentials =
+    Math.round((commitments.total + commitments.essentialSavings) * 100) / 100;
   return figureKnown<MonthsOfCover>({
-    months: monthsOfCoverFor(liquidCash, commitments.total) ?? 0,
+    months: monthsOfCoverFor(liquidCash, monthlyEssentials) ?? 0,
     liquidCash,
-    monthlyEssentials: commitments.total,
+    monthlyEssentials,
     commitments,
   });
 }

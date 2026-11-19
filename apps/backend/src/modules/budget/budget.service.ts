@@ -29,167 +29,6 @@ const BUDGET_ORDER: KeysetOrder = {
   direction: "ASC",
 };
 
-type BudgetCategory = "housing" | "bills" | "expenses" | "savings" | "income" | string;
-type BudgetFrequency = "monthly" | "annual" | "weekly";
-
-interface DefaultSeed {
-  category: BudgetCategory;
-  name: string;
-  amount: number;
-  frequency: BudgetFrequency;
-  isIncome: boolean;
-  isPrimaryIncome: boolean;
-  isEssential: boolean;
-  isDefault: boolean;
-}
-
-/**
- * Suggested rows are names only. Amounts start at 0 so no invented figure ever reaches the
- * budget totals, safe to spend or months of cover (E23); the person fills in their own.
- */
-const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
-  {
-    category: "housing",
-    name: "Rent / Mortgage",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "housing",
-    name: "Home Insurance",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "bills",
-    name: "Electricity",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "bills",
-    name: "Gas",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "bills",
-    name: "Water",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "bills",
-    name: "Council Tax",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "bills",
-    name: "Broadband",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "expenses",
-    name: "Mobile Phone",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "expenses",
-    name: "Gym",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: false,
-    isDefault: true,
-  },
-  {
-    category: "expenses",
-    name: "Netflix",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: false,
-    isDefault: true,
-  },
-  {
-    category: "expenses",
-    name: "Spotify",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: false,
-    isDefault: true,
-  },
-  {
-    category: "expenses",
-    name: "Car Insurance",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "savings",
-    name: "Emergency Fund",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-  {
-    category: "savings",
-    name: "ISA / Investments",
-    amount: 0,
-    frequency: "monthly",
-    isIncome: false,
-    isPrimaryIncome: false,
-    isEssential: true,
-    isDefault: true,
-  },
-];
-
 /** The entry name from `name`, or its `title` alias; undefined when neither is a non-blank string. */
 function resolveEntryName(body: { name?: unknown; title?: unknown }): string | undefined {
   for (const candidate of [body.name, body.title]) {
@@ -249,16 +88,13 @@ export class BudgetService {
   }
 
   /**
-   * Explicit opt-in only (POST budget-entries/seed-defaults). Idempotent: a template the user
-   * already has (same name, isDefault true) is skipped. Returns every entry, oldest first.
+   * POST budget-entries/seed-defaults, kept so older clients still get the list back. It creates
+   * nothing: the £0 suggestion rows it used to add ("Rent / Mortgage", "Emergency Fund", "ISA /
+   * Investments") showed as empty lines in the budget (owner item 33a), and the wizard's common
+   * entries now cover the same ground with the person's own amounts. Returns every entry, oldest
+   * first.
    */
   async seedDefaults(userId: string): Promise<BudgetEntry[]> {
-    const existing = await this.budgetEntryRepository.find({ where: { userId } });
-    const haveDefault = new Set(existing.filter((e) => e.isDefault).map((e) => e.name));
-    const toCreate = DEFAULT_BUDGET_SEEDS.filter((seed) => !haveDefault.has(seed.name)).map(
-      (seed) => this.budgetEntryRepository.create({ ...seed, userId }),
-    );
-    if (toCreate.length > 0) await this.budgetEntryRepository.save(toCreate);
     return this.budgetEntryRepository.find({
       where: { userId },
       order: { createdAt: "ASC" },

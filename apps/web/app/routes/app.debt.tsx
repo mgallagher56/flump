@@ -115,7 +115,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     accounts,
     accountDetails,
     userProfile,
-    debtInputs: buildDebtInputs(accounts, accountDetails, budgetEntries),
+    debtInputs: buildDebtInputs(accounts, accountDetails, budgetEntries, userProfile),
     user,
   });
 };

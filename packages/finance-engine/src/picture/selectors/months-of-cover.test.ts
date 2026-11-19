@@ -136,3 +136,38 @@ describe("monthsOfCoverFor", () => {
     expect(monthsOfCoverFor(-100, 500)).toBe(0);
   });
 });
+
+describe("selectMonthsOfCover: essential savings rows (owner item 28)", () => {
+  const cash = new PortfolioSnapshot([{ id: "sav", name: "Saver", type: "Saving", balance: 4000 }]);
+
+  it("covers an essential savings row with the essentials", () => {
+    // Essentials £800 + essential savings £200 = £1,000 a month. 4,000 / 1,000 = 4.0 months.
+    const fig = selectMonthsOfCover(
+      [row({ amount: 800 }), row({ id: "s", category: "savings", amount: 200, isEssential: true })],
+      cash,
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value).toMatchObject({ months: 4, monthlyEssentials: 1000 });
+  });
+
+  it("leaves a savings row out while it is not essential (the default)", () => {
+    // Essentials £800 only. 4,000 / 800 = 5.0 months.
+    const fig = selectMonthsOfCover(
+      [
+        row({ amount: 800 }),
+        row({ id: "s", category: "savings", amount: 200, isEssential: false }),
+      ],
+      cash,
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value).toMatchObject({ months: 5, monthlyEssentials: 800 });
+  });
+
+  it("needs essential spending: an essential savings row alone leaves it unknown", () => {
+    const fig = selectMonthsOfCover(
+      [row({ id: "s", category: "savings", amount: 200, isEssential: true })],
+      cash,
+    );
+    expect(fig.status).toBe("unknown");
+  });
+});

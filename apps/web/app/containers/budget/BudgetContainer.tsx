@@ -21,11 +21,12 @@ import {
   TaxRatesStatusBanner,
   useOptionalToast,
 } from "@repo/ui";
-import { ListChecks, ListPlus, Pencil } from "lucide-react";
+import { ListChecks, ListPlus } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useSearchParams } from "react-router";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
 import { BreathingRoom } from "~/features/budget/components/BreathingRoom";
+import { BreathingRoomBasis } from "~/features/budget/components/BreathingRoomBasis";
 import { BudgetCategoryList } from "~/features/budget/components/BudgetCategoryList";
 import { BudgetEditor } from "~/features/budget/components/BudgetEditor";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
@@ -38,6 +39,7 @@ import {
   exampleBudgetDrafts,
   isDraftReady,
 } from "~/features/budget/exampleDrafts";
+import { pageBudgetEntries } from "~/features/budget/linkedEntries";
 import { missingWizardCommonItems } from "~/features/budget/wizardCommonItems";
 import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import {
@@ -226,6 +228,12 @@ const BudgetContainer: FC = () => {
       }),
     [pictureProfile, accounts, accountDetails, entries],
   );
+  // The rows the page lists: saved rows with the linked take-home and housing rows in place, so a
+  // row and the figures it adds to agree (owner items 7 and 33b).
+  const pageEntries = useMemo(() => pageBudgetEntries(entries, picture), [entries, picture]);
+  const linkedEntries = useMemo(() => pageEntries.filter((e) => e.linked), [pageEntries]);
+  const profileTakeHome =
+    picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null;
 
   // Housing cost shows once: as the housing row in "Where your money goes". The row names the
   // tenure, and opening it says where the saved figure lives, or links to the mortgage page
@@ -255,8 +263,8 @@ const BudgetContainer: FC = () => {
 
   // Common items the wizard can still add: none, and the "add" entry point is not offered.
   const hasMissingCommonItems = useMemo(
-    () => missingWizardCommonItems(entries).length > 0,
-    [entries],
+    () => missingWizardCommonItems(pageEntries).length > 0,
+    [pageEntries],
   );
 
   // ?setup=common opens the wizard once per visit, like the mortgage page's ?tool=, then is taken
@@ -413,7 +421,7 @@ const BudgetContainer: FC = () => {
   // Only the ones the budget does not already have become drafts, so a saved row (old £0 seed rows
   // included) is never shown twice.
   const handleAddExampleRows = () => {
-    setDrafts(exampleBudgetDrafts(entries));
+    setDrafts(exampleBudgetDrafts(pageEntries));
     setView("editing");
   };
 
@@ -521,7 +529,7 @@ const BudgetContainer: FC = () => {
       {category === "housing" && (
         <HousingDetails
           housingStatus={housingStatus}
-          rowTotal={entries
+          rowTotal={pageEntries
             .filter((e) => e.category === "housing" && !e.isIncome)
             .reduce((sum, e) => sum + Math.abs(toMonthly(e)), 0)}
           savedAmount={pictureProfile?.monthlyHousingCost ?? null}
@@ -530,7 +538,7 @@ const BudgetContainer: FC = () => {
       )}
       {/* Read only: entries are edited in place with "Edit budget" (E16 round 3). */}
       <DataList
-        items={entries
+        items={pageEntries
           .filter((e) => e.category === category && !e.isIncome)
           .map((e, _i, rows) =>
             // One line per entry. A single entry is the row's own total, so it shows its name
@@ -566,30 +574,30 @@ const BudgetContainer: FC = () => {
               Finish editing
             </Button>
           ) : view === "budget" ? (
-            // An empty budget opens first-time setup; a saved budget is edited in place, and the
-            // wizard adds the common items it does not have yet (never touching saved entries).
-            <>
-              {!isBudgetEmpty && hasMissingCommonItems && (
-                <Button
-                  data-testid="add-common-items-btn"
-                  id="add-common-items-btn"
-                  variant="outline"
-                  onClick={openWizard}
-                >
-                  <Icon icon={ListPlus} size="sm" />
-                  Add common budget items
-                </Button>
-              )}
+            // An empty budget opens first-time setup. A saved budget is edited from "Where your
+            // money goes" (owner item 30), the page's one edit action; the wizard adds the common
+            // items it does not have yet (never touching saved entries).
+            isBudgetEmpty ? (
               <Button
                 data-testid="setup-wizard-btn"
                 id="setup-wizard-btn"
-                variant={isBudgetEmpty ? "primary" : "outline"}
-                onClick={isBudgetEmpty ? openWizard : () => setView("editing")}
+                variant="primary"
+                onClick={openWizard}
               >
-                <Icon icon={isBudgetEmpty ? ListChecks : Pencil} size="sm" />
-                {isBudgetEmpty ? "Set up your budget" : "Edit budget"}
+                <Icon icon={ListChecks} size="sm" />
+                Set up your budget
               </Button>
-            </>
+            ) : hasMissingCommonItems ? (
+              <Button
+                data-testid="add-common-items-btn"
+                id="add-common-items-btn"
+                variant="outline"
+                onClick={openWizard}
+              >
+                <Icon icon={ListPlus} size="sm" />
+                Add common budget items
+              </Button>
+            ) : undefined
           ) : undefined
         }
         // The page icon, empty or filled in; the empty state has none, so one is in view.
@@ -637,6 +645,14 @@ const BudgetContainer: FC = () => {
                 onDraftRemove={handleDraftRemove}
                 onRemoveDrafts={handleRemoveDrafts}
                 onSaveDrafts={handleSaveDrafts}
+                linkedEntries={linkedEntries}
+                shadowedIds={picture.shadowedBudgetRowIds}
+                profileTakeHome={profileTakeHome}
+                housingStatus={housingStatus}
+                onSaveHousing={handleSaveHousing}
+                onFinishEditing={
+                  drafts.length === 0 || !isBudgetEmpty ? () => setView("budget") : undefined
+                }
               />
             </>
           ) : isBudgetEmpty ? (
@@ -661,7 +677,7 @@ const BudgetContainer: FC = () => {
           {view === "budget" && !isBudgetEmpty && (
             <BudgetCategoryList
               categories={allCategories}
-              entries={entries}
+              entries={pageEntries}
               hrefFor={(cat) =>
                 // A mortgage holder's housing row opens the mortgage page, where its details live.
                 cat === "housing" && housingStatus === "mortgage"
@@ -672,12 +688,28 @@ const BudgetContainer: FC = () => {
               noticeFor={renderDuplicateNotices}
               openCategory={openCategory}
               renderEntries={renderEntries}
+              onEditBudget={() => setView("editing")}
               onToggleCategory={(cat) => setOpenCategory((prev) => (prev === cat ? null : cat))}
             />
           )}
 
           {/* The saved figure, in a section of its own; the zone below only illustrates changes. */}
-          {view === "budget" && !isBudgetEmpty && <BreathingRoom figure={picture.monthsOfCover} />}
+          {view === "budget" && !isBudgetEmpty && (
+            <BreathingRoom
+              basis={
+                <BreathingRoomBasis
+                  accountDetails={normalizedAccountDetails}
+                  accounts={accountsWithBalances}
+                  entries={pageEntries}
+                  onSetEssential={async (id, isEssential) => {
+                    await updateEntry(id, { isEssential });
+                    toastApi?.toast({ title: "Saved" });
+                  }}
+                />
+              }
+              figure={picture.monthsOfCover}
+            />
+          )}
 
           {view === "budget" && !isBudgetEmpty && (
             <RunwayCalculator
@@ -685,7 +717,7 @@ const BudgetContainer: FC = () => {
               accounts={accountsWithBalances}
               baseline={picture.monthsOfCover}
               collapsible
-              entries={entries}
+              entries={pageEntries}
               scenario={runwayScenario}
               onScenarioChange={handleScenarioChange}
             />

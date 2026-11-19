@@ -72,3 +72,13 @@ export const WithHousingLink: Story = {
 export const FewCategories: Story = {
   args: { entries: sampleBudgetEntries().slice(0, 4), categories: ["housing", "income"] },
 };
+
+/** "Edit budget" on the section's heading row, the page's one edit action (owner item 30). */
+export const WithEditBudget: Story = {
+  args: { onEditBudget: fn() },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getAllByRole("button", { name: "Edit budget" })[0]);
+    await expect(args.onEditBudget).toHaveBeenCalled();
+  },
+};
