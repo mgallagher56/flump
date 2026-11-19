@@ -18,7 +18,7 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["primary", "secondary", "outline", "ghost", "link", "danger"],
+      options: ["primary", "secondary", "outline", "ghost", "link", "danger", "dangerSubtle"],
     },
     size: {
       control: "select",
@@ -56,6 +56,7 @@ export const Variants: Story = {
       <Button variant="ghost">Skip</Button>
       <Button variant="link">Learn how this works</Button>
       <Button variant="danger">Delete this goal</Button>
+      <Button variant="dangerSubtle">Delete debt</Button>
     </div>
   ),
 };

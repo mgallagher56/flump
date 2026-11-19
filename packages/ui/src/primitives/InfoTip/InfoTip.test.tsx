@@ -50,4 +50,17 @@ describe("InfoTip", () => {
     );
     expect(screen.getByRole("button", { name: "What does APR mean?" })).toBeDefined();
   });
+
+  it("can tie its definition to a field with aria-describedby, while closed", () => {
+    render(
+      <>
+        <input aria-describedby="limit-help" aria-label="Credit limit" />
+        <InfoTip descriptionId="limit-help" term="Credit limit">
+          The most you can borrow on the card.
+        </InfoTip>
+      </>,
+    );
+    const described = document.getElementById("limit-help");
+    expect(described?.textContent).toBe("The most you can borrow on the card.");
+  });
 });

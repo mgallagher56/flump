@@ -4,6 +4,7 @@ import { cx } from "../../../styled-system/css";
 import { IconButton } from "../Button";
 import { Icon } from "../Icon";
 import { Popover, type PopoverProps } from "../Popover";
+import { VisuallyHidden } from "../VisuallyHidden";
 import { infoTipDefinitionRecipe, infoTipTriggerRecipe } from "./InfoTip.styles";
 
 export interface InfoTipProps {
@@ -20,6 +21,11 @@ export interface InfoTipProps {
   onOpenChange?: (open: boolean) => void;
   /** Id for the popover body (also data-testid). */
   id?: string;
+  /**
+   * When set, the definition is also rendered visually hidden with this id, so a field can name it
+   * in `aria-describedby` and a screen reader reads it with the field, closed or open.
+   */
+  descriptionId?: string;
   className?: string;
 }
 
@@ -38,31 +44,35 @@ export const InfoTip: FC<InfoTipProps> = ({
   defaultOpen,
   onOpenChange,
   id,
+  descriptionId,
   className,
 }) => (
-  <Popover
-    title={term}
-    size="sm"
-    showClose={false}
-    side={side}
-    align={align}
-    open={open}
-    defaultOpen={defaultOpen}
-    onOpenChange={onOpenChange}
-    id={id}
-    trigger={
-      <IconButton
-        label={label ?? `About ${term}`}
-        size="sm"
-        variant="ghost"
-        className={cx(infoTipTriggerRecipe(), className)}
-      >
-        <Icon icon={Info} size="sm" />
-      </IconButton>
-    }
-  >
-    <p className={infoTipDefinitionRecipe()}>{children}</p>
-  </Popover>
+  <>
+    {descriptionId ? <VisuallyHidden id={descriptionId}>{children}</VisuallyHidden> : null}
+    <Popover
+      title={term}
+      size="sm"
+      showClose={false}
+      side={side}
+      align={align}
+      open={open}
+      defaultOpen={defaultOpen}
+      onOpenChange={onOpenChange}
+      id={id}
+      trigger={
+        <IconButton
+          label={label ?? `About ${term}`}
+          size="sm"
+          variant="ghost"
+          className={cx(infoTipTriggerRecipe(), className)}
+        >
+          <Icon icon={Info} size="sm" />
+        </IconButton>
+      }
+    >
+      <p className={infoTipDefinitionRecipe()}>{children}</p>
+    </Popover>
+  </>
 );
 
 export default InfoTip;

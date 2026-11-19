@@ -86,6 +86,16 @@ export const buttonRecipe = cva({
         [DISABLED]: { bg: "transparent", borderColor: "transparent" },
       },
       danger: dangerStyles,
+      /**
+       * A delete or other destructive control outside the confirmation (owner ruling, item 25,
+       * UX D3): danger text and border on no fill, so it reads as destructive without shouting.
+       */
+      dangerSubtle: {
+        bg: "transparent",
+        color: "status.danger.text",
+        borderColor: "status.danger.border",
+        _hover: { bg: "status.danger.bg" },
+      },
       /** @deprecated Use `danger`. Kept so existing screens keep working until they migrate. */
       destructive: dangerStyles,
     },

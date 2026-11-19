@@ -256,4 +256,11 @@ describe("ButtonLink", () => {
     const link = screen.getByRole("link", { name: "Go to debt" });
     expect(link.className).toContain("bg_surface.subtle");
   });
+
+  it("dangerSubtle is an unfilled danger control (owner item 25)", () => {
+    render(<Button variant="dangerSubtle">Delete debt</Button>);
+    expect(screen.getByRole("button", { name: "Delete debt" }).dataset.variant).toBe(
+      "dangerSubtle",
+    );
+  });
 });
