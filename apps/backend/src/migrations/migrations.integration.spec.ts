@@ -82,8 +82,8 @@ import { SetupChecklistDismissed1795500100000 } from "./SetupChecklistDismissed1
 import { StudentLoanPlanToProfile1795480200000 } from "./StudentLoanPlanToProfile1795480200000";
 import {
   TAX_RECORD_ACCOUNT_FOREIGN_KEY,
-  TAX_RECORD_ACCOUNT_USER_INDEX,
-  TAX_RECORD_USER_ACCOUNT_INDEX,
+  TAX_RECORD_ACCOUNT_OWNER_INDEX,
+  TAX_RECORD_OWNER_ACCOUNT_INDEX,
   TaxRecordAccountLink1795550000000,
 } from "./TaxRecordAccountLink1795550000000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
@@ -3557,7 +3557,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       (
         (await ds.query(
           `SELECT indexname FROM pg_indexes WHERE tablename = 'tax_records' AND indexname IN ($1, $2) ORDER BY indexname`,
-          [TAX_RECORD_ACCOUNT_USER_INDEX, TAX_RECORD_USER_ACCOUNT_INDEX],
+          [TAX_RECORD_ACCOUNT_OWNER_INDEX, TAX_RECORD_OWNER_ACCOUNT_INDEX],
         )) as { indexname: string }[]
       ).map((r) => r.indexname);
     const account = async (userId: string): Promise<string> =>
@@ -3590,8 +3590,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await column()).toHaveLength(1);
       expect(await key()).toHaveLength(1);
       expect(await indexes()).toEqual([
-        TAX_RECORD_ACCOUNT_USER_INDEX,
-        TAX_RECORD_USER_ACCOUNT_INDEX,
+        TAX_RECORD_ACCOUNT_OWNER_INDEX,
+        TAX_RECORD_OWNER_ACCOUNT_INDEX,
       ]);
       const mine = await account("u1");
       const linked = await record("u1", mine);
