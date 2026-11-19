@@ -199,7 +199,6 @@ export const LinkedRows: Story = {
         linked: "housing",
       },
     ],
-    profileTakeHome: 2400,
     housingStatus: "renting",
     onSaveHousing: fn(async () => undefined),
     onFinishEditing: fn(),

@@ -8,6 +8,14 @@ export const BudgetFrequency = z.enum(BUDGET_FREQUENCIES);
 /** Budget categories stay open: web sends "living" and custom categories. */
 export const BudgetCategory = z.string().trim().min(1).max(64);
 
+/**
+ * The saved detail a budget row is replaced with: "take-home" (the profile's salary after tax) or
+ * "housing" (the saved rent, mortgage payment or household contribution).
+ */
+export const BUDGET_ENTRY_LINKS = ["take-home", "housing"] as const;
+export const BudgetEntryLink = z.enum(BUDGET_ENTRY_LINKS);
+export type BudgetEntryLink = z.infer<typeof BudgetEntryLink>;
+
 export const CreateBudgetEntryRequest = z.strictObject({
   category: BudgetCategory,
   name: z.string().trim().min(1).max(120).optional(),
@@ -36,6 +44,8 @@ export const UpdateBudgetEntryRequest = z.strictObject({
   /** Omitted ownership and share stay as saved. */
   ownership: AccountOwnership.optional(),
   sharePercent: SharePercent.nullish(),
+  /** Replace the row with a saved detail (send amount 0 with it), or null to unlink it. */
+  linksTo: BudgetEntryLink.nullable().optional(),
 });
 export type UpdateBudgetEntryRequest = z.infer<typeof UpdateBudgetEntryRequest>;
 
@@ -72,6 +82,8 @@ export const BudgetEntryDto = z.strictObject({
   ownership: AccountOwnership.default("sole"),
   /** The user's share (1-100) of a joint entry; null when sole. */
   sharePercent: SharePercent.nullable().default(null),
+  /** The saved detail the row is replaced with, or null; rows from before the column read null. */
+  linksTo: BudgetEntryLink.nullable().default(null),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });

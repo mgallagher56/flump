@@ -232,8 +232,6 @@ const BudgetContainer: FC = () => {
   // row and the figures it adds to agree (owner items 7 and 33b).
   const pageEntries = useMemo(() => pageBudgetEntries(entries, picture), [entries, picture]);
   const linkedEntries = useMemo(() => pageEntries.filter((e) => e.linked), [pageEntries]);
-  const profileTakeHome =
-    picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null;
 
   // Housing cost shows once: as the housing row in "Where your money goes". The row names the
   // tenure, and opening it says where the saved figure lives, or links to the mortgage page
@@ -647,7 +645,7 @@ const BudgetContainer: FC = () => {
                 onSaveDrafts={handleSaveDrafts}
                 linkedEntries={linkedEntries}
                 shadowedIds={picture.shadowedBudgetRowIds}
-                profileTakeHome={profileTakeHome}
+                linkOffers={picture.budgetLinkOffers}
                 housingStatus={housingStatus}
                 onSaveHousing={handleSaveHousing}
                 onFinishEditing={

@@ -97,6 +97,14 @@ export interface HousingPayment {
   /** Pounds a month. */
   monthly: number;
   paymentEstimated: boolean;
+  /**
+   * True when the figure is already the person's share: the mortgage accounts' estimate, worked
+   * out from the snapshot balance, which counts a joint mortgage at the person's share
+   * (portfolio.ts applies the account share to the balance). Absent or false for the saved
+   * amount, which onboarding and the budget page ask for with no share ("Monthly rent"), so a
+   * linked row standing in for a saved row keeps that row's share.
+   */
+  isOwnShare?: boolean;
 }
 
 /**
@@ -115,7 +123,9 @@ export function selectHousingPayment(
     rawAccounts,
   );
   if (missing.length > 0 || monthly === null) return null;
-  return { kind, monthly, paymentEstimated };
+  return paymentEstimated
+    ? { kind, monthly, paymentEstimated, isOwnShare: true }
+    : { kind, monthly, paymentEstimated };
 }
 
 function housingPayment(

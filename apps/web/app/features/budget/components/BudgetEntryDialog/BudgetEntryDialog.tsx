@@ -1,3 +1,4 @@
+import { defaultIsEssential } from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
@@ -36,6 +37,12 @@ export const EMPTY_ENTRY_VALUES: EntryFormValues = {
   isEssential: true,
   contractEndDate: "",
 };
+
+/** Empty values for a new entry in `category`: a savings entry starts not essential (item 28). */
+export const emptyEntryValues = (category: string): EntryFormValues => ({
+  ...EMPTY_ENTRY_VALUES,
+  isEssential: defaultIsEssential(category),
+});
 
 export interface BudgetEntryDialogProps {
   mode: "add" | "edit";

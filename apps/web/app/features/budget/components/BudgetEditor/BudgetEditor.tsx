@@ -1,4 +1,4 @@
-import { isTakeHomePayRow } from "@flump/finance-engine";
+import { type BudgetLinkOffer, defaultIsEssential } from "@flump/finance-engine";
 import {
   Button,
   Card,
@@ -87,8 +87,11 @@ export interface BudgetEditorProps {
   linkedEntries?: BudgetEntry[];
   /** Saved rows a linked row stands in for. Not counted anywhere, so not listed. */
   shadowedIds?: string[];
-  /** The take-home worked out from the profile, monthly, or null when the profile has no salary. */
-  profileTakeHome?: number | null;
+  /**
+   * Links the engine offers instead of making them (an income or housing row of the person's own
+   * is already there): each listed row gets a button that replaces it with the saved figure.
+   */
+  linkOffers?: BudgetLinkOffer[];
   /** How the person pays for housing, for the linked housing row. */
   housingStatus?: HousingTenure;
   /** Saves the rent (or household contribution) to the housing details, the one stored value. */
@@ -136,18 +139,31 @@ const hasEssentialSwitch = (entry: Pick<BudgetEntry, "isIncome" | "category">) =
  * start off (owner item 28). Income is always counted, so it has no switch.
  */
 export const defaultEssential = (category: string): boolean =>
-  category === INCOME ? true : category !== "expenses" && category !== "savings";
+  category === INCOME ? true : category !== "expenses" && defaultIsEssential(category);
+
+/** What the saved housing figure is called in a button, by how the person pays for housing. */
+const HOUSING_KIND_LABEL: Record<NonNullable<BudgetLinkOffer["kind"]>, string> = {
+  rent: "saved rent",
+  mortgage: "saved mortgage payment",
+  household: "saved household contribution",
+};
+
+/** A row's offer: the button text and what it does. */
+interface RowLinkOffer {
+  label: string;
+  onUse: () => void;
+}
 
 interface EntryRowProps {
   entry: BudgetEntry;
   onSave: (id: string, update: Partial<BudgetEntry>) => Promise<boolean>;
   onRemove: (entry: BudgetEntry) => void;
-  /** Set on a pay row the person typed while the profile also gives a take-home: it wins. */
-  overridesProfile?: boolean;
+  /** Set on a row the saved take-home or housing figure can replace (the person chooses). */
+  linkOffer?: RowLinkOffer | null;
 }
 
 /** One saved entry, editable where it sits. Text fields save on blur, choices save on change. */
-const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, overridesProfile = false }) => {
+const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, linkOffer = null }) => {
   const [name, setName] = useState(entry.name);
   const [amount, setAmount] = useState<number | null>(toAmount(entry.amount));
   // The latest typed amount, read on blur after CurrencyInput's own rounding has run.
@@ -249,17 +265,18 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, overridesProfile
       >
         <Icon icon={Trash2} size="sm" />
       </Button>
-      {overridesProfile ? (
-        <p
-          className={sourceLine()}
-          data-testid={`budget-editor-source-${entry.id}`}
-          id={`budget-editor-source-${entry.id}`}
-        >
-          Your own figure, used in place of your salary in{" "}
-          <Link className={sourceLink()} to="/app/profile">
-            Profile
-          </Link>
-          . Delete it to use your salary.
+      {linkOffer ? (
+        <p className={sourceLine()}>
+          <Button
+            aria-label={`${linkOffer.label} in place of ${entry.name}`}
+            data-testid={`budget-editor-use-link-${entry.id}`}
+            id={`budget-editor-use-link-${entry.id}`}
+            size="sm"
+            variant="outline"
+            onClick={linkOffer.onUse}
+          >
+            {linkOffer.label}
+          </Button>
         </p>
       ) : null}
       {/* E34 C1: sole or joint, and the share a joint entry counts at in the figures. */}
@@ -676,7 +693,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   onRemoveDrafts,
   linkedEntries = [],
   shadowedIds = [],
-  profileTakeHome = null,
+  linkOffers = [],
   housingStatus = null,
   onSaveHousing,
   onFinishEditing,
@@ -732,12 +749,19 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     linkedEntries.filter((e) =>
       category === INCOME ? isIncomeEntry(e) : e.category === category && !isIncomeEntry(e),
     );
-  // A pay row the person typed wins over the profile's take-home: it says so (owner item 7).
-  const overridesProfile = (entry: BudgetEntry) =>
-    profileTakeHome !== null &&
-    profileTakeHome > 0 &&
-    isTakeHomePayRow(entry) &&
-    toAmount(entry.amount) > 0;
+  // A row the saved take-home or housing figure can replace, by the person's choice: the button
+  // stores the link on the row and sets its amount to £0, so the saved figure is the one value.
+  const linkOfferFor = (entry: BudgetEntry): RowLinkOffer | null => {
+    const offer = linkOffers.find((o) => o.rowIds.includes(entry.id));
+    if (!offer) return null;
+    const figureText = formatCurrency(offer.monthly, { maximumFractionDigits: 0 });
+    const what =
+      offer.link === "take-home" ? "take-home pay" : HOUSING_KIND_LABEL[offer.kind ?? "rent"];
+    return {
+      label: `Use your ${what} of ${figureText}`,
+      onUse: () => void save(entry.id, { amount: 0, linksTo: offer.link }),
+    };
+  };
 
   const draftsFor = (category: string) => drafts.filter((d) => d.category === category);
 
@@ -791,9 +815,12 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
     }
   };
 
-  // Typing over the linked take-home saves the person's own pay entry, which then wins (item 7).
-  const overrideTakeHome = (amount: number) =>
-    add(INCOME)({
+  // Typing over the linked take-home saves the person's own pay (owner item 7): back on the row it
+  // replaced, unlinked, when there is one, else as a new entry. Either way it is then their figure.
+  const overrideTakeHome = (amount: number) => {
+    const replaced = entries.find((e) => shadowedIds.includes(e.id) && e.linksTo === "take-home");
+    if (replaced) return save(replaced.id, { amount, linksTo: null });
+    return add(INCOME)({
       name: "Take-home pay",
       amount,
       frequency: "monthly",
@@ -801,6 +828,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
       ownership: "sole",
       sharePercent: null,
     });
+  };
 
   const saveHousing = async (monthly: number) => {
     if (!onSaveHousing) return;
@@ -953,7 +981,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                     <EntryRow
                       entry={entry}
                       key={entry.id}
-                      overridesProfile={overridesProfile(entry)}
+                      linkOffer={linkOfferFor(entry)}
                       onRemove={setToRemove}
                       onSave={save}
                     />

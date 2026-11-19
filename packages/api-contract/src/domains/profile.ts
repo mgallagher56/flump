@@ -411,6 +411,8 @@ export const AccountExportBudgetEntry = z.strictObject({
   /** E34 C1. Optional so an export from a backend without these columns still parses. */
   ownership: z.string().optional(),
   sharePercent: NullableNumber.optional(),
+  /** The saved detail the row is replaced with. Optional for exports from before the column. */
+  linksTo: NullableText.optional(),
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
 });

@@ -17,6 +17,11 @@ import {
   "CHK_budget_entries_share_percent",
   `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 100)`,
 )
+// Review of PR 783 (migration AddBudgetEntryLinksTo1795440000000).
+@Check(
+  "CHK_budget_entries_links_to",
+  `"links_to" IS NULL OR "links_to" IN ('take-home', 'housing')`,
+)
 @Entity("budget_entries")
 export class BudgetEntry {
   @PrimaryGeneratedColumn("uuid")
@@ -64,6 +69,14 @@ export class BudgetEntry {
   /** E34 C1: the user's percentage share (1-100) when joint; null when sole. */
   @Column({ name: "share_percent", type: "smallint", nullable: true })
   sharePercent: number | null;
+
+  /**
+   * The saved detail this row was replaced with ("take-home" or "housing"), or null. Set when the
+   * person chooses "Use your take-home pay" or "Use your saved rent" for a row; its amount is then
+   * 0 and the engine reads the profile's figure in its place, so one value is stored.
+   */
+  @Column({ name: "links_to", type: "varchar", length: 16, nullable: true })
+  linksTo: "take-home" | "housing" | null;
 
   @Column({ name: "is_default", default: false })
   isDefault: boolean;

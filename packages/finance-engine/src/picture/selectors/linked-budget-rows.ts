@@ -1,5 +1,5 @@
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
-import { isHousingPaymentRow, isTakeHomePayRow } from "../../budget-entry-names.js";
+import { BUDGET_HOUSING_CATEGORY } from "../../budget-entry-names.js";
 import type { Figure } from "../figure.js";
 import { budgetRowMonthly } from "./budget-totals.js";
 import type { HousingPayment } from "./housing-cost.js";
@@ -18,94 +18,152 @@ const HOUSING_ROW_NAME: Record<HousingPayment["kind"], string> = {
   household: "Household contribution",
 };
 
+/**
+ * A link the person can choose to make. Nothing changes until they do: choosing a row stores
+ * `linksTo` on it with its amount set to £0, so the saved detail is the one stored value.
+ */
+export interface BudgetLinkOffer {
+  link: BudgetRowLink;
+  /** The saved figure the row would read, pounds a month. */
+  monthly: number;
+  /** For housing: rent, mortgage payment or household contribution. Null for take-home. */
+  kind: HousingPayment["kind"] | null;
+  /** The saved rows the person can pick from, in budget order. */
+  rowIds: string[];
+}
+
 export interface LinkedBudgetRows {
   /** The budget the figures count: saved rows, less the ones a linked row stands in for, plus it. */
   rows: BudgetEntryItem[];
   /** Saved rows a linked row stands in for. Kept in storage, left out of every figure. */
   shadowedRowIds: string[];
+  /** Links the budget page offers as an action instead of making them itself. */
+  offers: BudgetLinkOffer[];
 }
 
+const isIncomeRow = (row: BudgetEntryItem): boolean => row.isIncome === true;
+
+/** A spending row in the housing category. Names are never read. */
+const isHousingRow = (row: BudgetEntryItem): boolean =>
+  row.isIncome !== true && row.category === BUDGET_HOUSING_CATEGORY;
+
 /**
- * The budget with its linked rows (owner items 7 and 33b). One stored value each, read here:
+ * The budget with its linked rows (owner items 7 and 33b). One stored value each, read here. No
+ * row name is read for any of these money decisions: a name decides nothing.
  *
- * - Take-home pay: worked out from the profile's salary and pension contribution by the take-home
- *   selector. It stands in only while the budget has no take-home pay row of the person's own with
- *   an amount above £0 ("Salary", "Wages" and the other synonyms); a row they typed always wins. A
- *   £0 synonym row is left out, as the linked row stands in for it.
- * - Housing: the rent, mortgage payment or household contribution from the housing details (or the
- *   mortgage accounts' estimate). The person's own saved figure, while above £0, stands in for every
- *   housing row named as the rent or mortgage payment, so the payment is never counted twice. An
- *   estimate stands in only while no such row has an amount above £0: a row they typed wins, and
- *   then no linked housing row is added.
+ * Take-home pay (worked out from the profile's salary by the take-home selector):
+ * - A row the person replaced with it (`linksTo: "take-home"`) reads it in that row's place.
+ * - Otherwise, while the budget has any income row with an amount above £0, nothing is added or
+ *   hidden: the person's own rows are their income, and the link is only offered.
+ * - Otherwise (no income rows, or only £0 ones) the take-home row is added. £0 rows stay listed.
  *
- * Nothing is written: the rows exist only in the figures and on screen.
+ * Housing (the saved rent, mortgage payment or household contribution, or the mortgage
+ * accounts' estimate), by category: every spending row in "housing" is a payment row.
+ * - A row the person replaced with it (`linksTo: "housing"`) reads it in that row's place.
+ * - An estimate gives way to any housing row with an amount above £0: nothing is added.
+ * - No housing rows: the housing row is added.
+ * - Exactly one housing row: the linked figure stands in for it.
+ * - More than one: nothing changes, and the link is offered.
+ *
+ * A linked row standing in for a saved row keeps that row's ownership and share, unless the
+ * figure is already the person's share (the mortgage accounts' estimate, from share-scaled
+ * balances), so a shared row is never replaced by a whole amount. Nothing is written: the rows exist only in the figures and on screen.
  */
 export function withLinkedBudgetRows(
   budget: readonly BudgetEntryItem[],
   sources: { takeHome: Figure<TakeHome>; housing: HousingPayment | null },
 ): LinkedBudgetRows {
-  const shadowed = new Set<string>();
-  let rows: BudgetEntryItem[] = [...budget];
   // No budget yet stays no budget (unknown, never £0): linked rows join a budget once it is started.
-  if (budget.length === 0) return { rows, shadowedRowIds: [] };
+  if (budget.length === 0) return { rows: [...budget], shadowedRowIds: [], offers: [] };
 
+  const offers: BudgetLinkOffer[] = [];
+  const replaced = new Map<string, BudgetEntryItem>();
+  let addTakeHome: BudgetEntryItem | null = null;
+  let addHousing: BudgetEntryItem | null = null;
+
+  // Take-home pay.
   const takeHome = sources.takeHome.status === "known" ? sources.takeHome.value.monthly : 0;
-  const ownPayRow = budget.some((row) => isTakeHomePayRow(row) && budgetRowMonthly(row) > 0);
-  const linkTakeHome = takeHome > 0 && !ownPayRow;
-  if (linkTakeHome) {
-    for (const row of budget) if (isTakeHomePayRow(row)) shadowed.add(row.id);
+  if (takeHome > 0) {
+    const base: BudgetEntryItem = {
+      id: LINKED_TAKE_HOME_ID,
+      category: "income",
+      name: "Take-home pay",
+      amount: takeHome,
+      frequency: "monthly",
+      isIncome: true,
+      isEssential: true,
+      ownership: "sole",
+      sharePercent: null,
+      linked: "take-home",
+    };
+    const chosen = budget.find((row) => isIncomeRow(row) && row.linksTo === "take-home");
+    const ownIncome = budget.filter((row) => isIncomeRow(row) && budgetRowMonthly(row) > 0);
+    if (chosen) {
+      replaced.set(chosen.id, {
+        ...base,
+        ownership: chosen.ownership ?? "sole",
+        sharePercent: chosen.sharePercent ?? null,
+      });
+    } else if (ownIncome.length > 0) {
+      offers.push({
+        link: "take-home",
+        monthly: takeHome,
+        kind: null,
+        rowIds: ownIncome.map((row) => row.id),
+      });
+    } else {
+      addTakeHome = base;
+    }
   }
 
-  const knownHousing = sources.housing && sources.housing.monthly > 0 ? sources.housing : null;
-  // An estimate (from the mortgage accounts) gives way to a housing row the person typed, as
-  // take-home does; their own saved rent or housing cost always stands in for the rows.
-  const ownHousingRow =
-    knownHousing?.paymentEstimated === true &&
-    budget.some((row) => isHousingPaymentRow(row) && budgetRowMonthly(row) > 0);
-  const housing = ownHousingRow ? null : knownHousing;
-  let housingIndex = -1;
+  // Housing.
+  const housing = sources.housing && sources.housing.monthly > 0 ? sources.housing : null;
   if (housing) {
-    housingIndex = budget.findIndex(isHousingPaymentRow);
-    for (const row of budget) if (isHousingPaymentRow(row)) shadowed.add(row.id);
-  }
-
-  if (shadowed.size > 0 || linkTakeHome || housing) {
-    const housingRow: BudgetEntryItem | null = housing
-      ? {
-          id: LINKED_HOUSING_ID,
-          category: "housing",
-          name: HOUSING_ROW_NAME[housing.kind],
-          amount: housing.monthly,
-          frequency: "monthly",
-          isIncome: false,
-          isEssential: true,
-          ownership: "sole",
-          sharePercent: null,
-          linked: "housing",
-        }
-      : null;
-    const next: BudgetEntryItem[] = [];
-    if (linkTakeHome) {
-      next.push({
-        id: LINKED_TAKE_HOME_ID,
-        category: "income",
-        name: "Take-home pay",
-        amount: takeHome,
-        frequency: "monthly",
-        isIncome: true,
-        isEssential: true,
-        ownership: "sole",
-        sharePercent: null,
-        linked: "take-home",
+    const base: BudgetEntryItem = {
+      id: LINKED_HOUSING_ID,
+      category: BUDGET_HOUSING_CATEGORY,
+      name: HOUSING_ROW_NAME[housing.kind],
+      amount: housing.monthly,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: true,
+      ownership: "sole",
+      sharePercent: null,
+      linked: "housing",
+    };
+    // The saved amount carries no share, so it takes the replaced row's; the estimate is already
+    // the person's share, so it counts as it is.
+    const standIn = (row: BudgetEntryItem): BudgetEntryItem =>
+      housing.isOwnShare === true
+        ? base
+        : { ...base, ownership: row.ownership ?? "sole", sharePercent: row.sharePercent ?? null };
+    const housingRows = budget.filter(isHousingRow);
+    const chosen = housingRows.find((row) => row.linksTo === "housing");
+    const typed = housingRows.some((row) => budgetRowMonthly(row) > 0);
+    if (chosen) {
+      replaced.set(chosen.id, standIn(chosen));
+    } else if (housing.paymentEstimated && typed) {
+      // The person's own figure wins over an estimate; nothing to add or offer.
+    } else if (housingRows.length === 0) {
+      addHousing = base;
+    } else if (housingRows.length === 1) {
+      const only = housingRows[0] as BudgetEntryItem;
+      replaced.set(only.id, standIn(only));
+    } else if (!housing.paymentEstimated) {
+      offers.push({
+        link: "housing",
+        monthly: housing.monthly,
+        kind: housing.kind,
+        rowIds: housingRows.map((row) => row.id),
       });
     }
-    budget.forEach((row, index) => {
-      if (housingRow && index === housingIndex) next.push(housingRow);
-      if (!shadowed.has(row.id)) next.push(row);
-    });
-    if (housingRow && housingIndex < 0) next.push(housingRow);
-    rows = next;
   }
 
-  return { rows, shadowedRowIds: [...shadowed] };
+  if (replaced.size === 0 && !addTakeHome && !addHousing) {
+    return { rows: [...budget], shadowedRowIds: [], offers };
+  }
+  const rows: BudgetEntryItem[] = addTakeHome ? [addTakeHome] : [];
+  for (const row of budget) rows.push(replaced.get(row.id) ?? row);
+  if (addHousing) rows.push(addHousing);
+  return { rows, shadowedRowIds: [...replaced.keys()], offers };
 }

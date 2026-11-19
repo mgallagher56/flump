@@ -1,4 +1,4 @@
-import { isTakeHomePayRow } from "@flump/finance-engine";
+import { defaultIsEssential } from "@flump/finance-engine";
 import {
   Button,
   Card,
@@ -300,11 +300,11 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   };
 
   const allEffective = entries.map(getEffectiveEntry);
-  // The take-home the budget reads from the profile while it has no pay entry of its own (item 7).
-  const linkedTakeHome =
-    monthlyTakeHome && !allEffective.some((e) => isTakeHomePayRow(e) && toMonthly(e) > 0)
-      ? monthlyTakeHome
-      : null;
+  // The take-home the budget reads from the profile (item 7): in place of an income entry the
+  // person chose to replace with it, or while no income entry has an amount. Names decide nothing.
+  const takeHomeChosen = allEffective.some((e) => e.isIncome && e.linksTo === "take-home");
+  const ownIncome = allEffective.some((e) => e.isIncome && toMonthly(e) > 0);
+  const linkedTakeHome = monthlyTakeHome && (takeHomeChosen || !ownIncome) ? monthlyTakeHome : null;
   const totalIncome =
     allEffective.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0) +
     (linkedTakeHome ?? 0);
@@ -324,7 +324,8 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             setIsAdding(true);
             setNewName("");
             setNewAmount(null);
-            setNewIsEssential(currentStep !== "expenses");
+            // Everyday expenses and savings start not essential (owner item 28).
+            setNewIsEssential(currentStep !== "expenses" && defaultIsEssential(currentStep));
           }}
         >
           <Icon icon={Plus} size="sm" />
@@ -544,16 +545,17 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                         <Link className={tipLink()} to="/app/profile">
                           Profile
                         </Link>
-                        . To use a different figure, add a pay entry below.
+                        . If you add an income entry with an amount, your entries are used instead.
                       </>
                     ) : (
                       <>
-                        Your own pay entry is used in place of the take-home pay worked out from
-                        your salary in{" "}
+                        Your own income entries are used in place of the take-home pay worked out
+                        from your salary in{" "}
                         <Link className={tipLink()} to="/app/profile">
                           Profile
                         </Link>
-                        . Delete it to use your salary instead.
+                        . To use your take-home pay instead, choose it for an entry when you edit
+                        your budget.
                       </>
                     )}
                   </p>

@@ -123,6 +123,8 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
         ownership: ownershipOf(e.ownership),
         sharePercent: e.sharePercent === undefined ? undefined : numOrNull(e.sharePercent),
       }),
+      // A row replaced with a saved detail, so the remote tools read the same budget as the web.
+      ...(e.linksTo === "take-home" || e.linksTo === "housing" ? { linksTo: e.linksTo } : {}),
       // Present only for a token that may read names; the anonymised input has none.
       ...(e.notes === undefined ? {} : { notes: e.notes }),
     })),

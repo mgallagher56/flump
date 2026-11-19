@@ -1,8 +1,9 @@
 /**
  * Names that mean the same common budget entry within a category, after normalising (PR 779's
- * wizard synonym groups, moved here so the engine's linked rows and the web wizard read one list).
- * Matching is exact on the normalised name, so "Rent for parking" or "Water softener" is never read
- * as one of these.
+ * wizard synonym groups). For labels and wizard suggestions only: no money decision reads a row's
+ * name (the linked take-home and housing rows go by category and by the person's choice). Matching
+ * is exact on the normalised name, so "Rent for parking" or "Water softener" is never read as one
+ * of these.
  */
 export interface BudgetSynonymGroup {
   /** "housing", "bills", "expenses", "savings" or "income". */
@@ -67,42 +68,16 @@ export const normaliseEntryName = (name: string): string =>
     .replace(/\s+/g, " ")
     .trim();
 
-interface NamedRow {
-  name: string;
-  category: string;
-  isIncome?: boolean;
-  isPrimaryIncome?: boolean;
-}
+/** The category the linked housing row sits in. Every spending row in it is a payment row. */
+export const BUDGET_HOUSING_CATEGORY = "housing";
+
+/** The savings category, as the engine tests it (exact, lower case: budget-totals.ts). */
+export const BUDGET_SAVINGS_CATEGORY = "savings";
 
 /**
- * Words that mark an income row as pay from work, beyond the exact synonyms: "Salary (net)", "My
- * wages", "Net pay", "Earnings". Read as whole words, so "Payment from lodger" or "Repayments" are
- * not pay.
+ * Whether a new row is marked essential when the person has not said: savings rows are off (owner
+ * item 28, "default to off"), every other row is on. The web editor also starts everyday
+ * expenses off. The API, the wizard and the editor read this one rule.
  */
-const PAY_WORDS = /\b(salary|salaries|wage|wages|pay|payslip|earnings|take[- ]home)\b/;
-
-/**
- * Words that mark a row as someone else's pay ("Partner's salary", "Her wages", "Joint salary"),
- * which never stands in for the person's own take-home pay.
- */
-const SOMEONE_ELSE_WORDS = /\b(partner|partners|spouse|husband|wife|wives|his|her|joint)\b/;
-
-/**
- * True for an income row that is the person's own pay: one marked as their main pay, a take-home
- * synonym ("Salary", "Income") or a name with a pay word in it ("Salary (net)", "Net pay"), unless
- * the name says it is someone else's ("Partner's salary"). Such a row, with an amount, wins over
- * the take-home worked out from the profile, so pay is never counted twice.
- */
-export const isTakeHomePayRow = (row: NamedRow): boolean => {
-  if (row.isPrimaryIncome === true) return true;
-  if (row.isIncome !== true && row.category !== BUDGET_INCOME_CATEGORY) return false;
-  const name = normaliseEntryName(row.name);
-  if (SOMEONE_ELSE_WORDS.test(name)) return false;
-  return TAKE_HOME_PAY_NAMES.includes(name) || PAY_WORDS.test(name);
-};
-
-/** True for a spending row in housing named as the rent or mortgage payment. */
-export const isHousingPaymentRow = (row: NamedRow): boolean =>
-  row.isIncome !== true &&
-  row.category === "housing" &&
-  HOUSING_PAYMENT_NAMES.includes(normaliseEntryName(row.name));
+export const defaultIsEssential = (category: string, isIncome = false): boolean =>
+  isIncome || category !== BUDGET_SAVINGS_CATEGORY;

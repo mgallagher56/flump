@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
+import { defaultIsEssential } from "../../budget-entry-names.js";
 import { PortfolioSnapshot } from "../../portfolio.js";
 import { isFigureKnown } from "../figure.js";
+import { essentialCommitments } from "./commitments.js";
 import { monthsOfCoverFor, selectMonthsOfCover } from "./months-of-cover.js";
 
 const row = (over: Partial<BudgetEntryItem>): BudgetEntryItem => ({
@@ -169,5 +171,40 @@ describe("selectMonthsOfCover: essential savings rows (owner item 28)", () => {
       cash,
     );
     expect(fig.status).toBe("unknown");
+  });
+});
+
+describe("a savings row left at the default (owner item 28, default off)", () => {
+  it("changes neither the essentials nor the months of cover", () => {
+    // Rent £1,000 (essential) and an "Emergency fund" savings row of £300 added without choosing
+    // Essential, so it takes the default. Cash £4,000.
+    // Essentials = 1,000 (the £300 saving is not in them); 4,000 / 1,000 = 4.0 months.
+    // Were the saving counted it would be 4,000 / 1,300 = 3.1 months.
+    const savings = row({
+      id: "ef",
+      category: "savings",
+      name: "Emergency fund",
+      amount: 300,
+      isEssential: defaultIsEssential("savings"),
+    });
+    const budget = [row({ id: "rent", category: "housing", amount: 1000 }), savings];
+    const snapshot = new PortfolioSnapshot([
+      { id: "cur", name: "Current", type: "Current", balance: 4000 },
+    ]);
+    expect(savings.isEssential).toBe(false);
+    expect(essentialCommitments(budget, snapshot)).toMatchObject({
+      essentialsExcludingDebt: 1000,
+      essentialSavings: 0,
+      total: 1000,
+    });
+    const fig = selectMonthsOfCover(budget, snapshot);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value).toMatchObject({ months: 4, monthlyEssentials: 1000 });
+  });
+
+  it("defaults every other row to essential, and an income row too", () => {
+    expect(defaultIsEssential("housing")).toBe(true);
+    expect(defaultIsEssential("bills")).toBe(true);
+    expect(defaultIsEssential("savings", true)).toBe(true);
   });
 });

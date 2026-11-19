@@ -54,16 +54,41 @@ describe("BudgetSetupWizard: take-home from the profile (owner item 7)", () => {
     goToIncome();
     const note = await screen.findByTestId("wizard-linked-take-home");
     expect(note.textContent).toBe(
-      "Your take-home pay of £2,400 a month is already in your budget, worked out from your salary in Profile. To use a different figure, add a pay entry below.",
+      "Your take-home pay of £2,400 a month is already in your budget, worked out from your salary in Profile. If you add an income entry with an amount, your entries are used instead.",
     );
     expect(screen.queryByRole("button", { name: /^Use / })).toBeNull();
   });
 
-  it("says when the person's own pay entry is used instead", async () => {
-    render(<BudgetSetupWizard {...props} entries={mockEntries} monthlyTakeHome={2400} />);
+  it("uses any income entry with an amount, whatever its name, in place of the take-home", async () => {
+    // "Acme Ltd" £2,000: the person's own figure, so the take-home is not added as well.
+    const acme = { ...mockEntries[0], id: "acme", name: "Acme Ltd", amount: 2000 } as BudgetEntry;
+    render(<BudgetSetupWizard {...props} entries={[acme]} monthlyTakeHome={2400} />);
     goToIncome();
     expect((await screen.findByTestId("wizard-linked-take-home")).textContent).toContain(
-      "Your own pay entry is used in place of the take-home pay",
+      "Your own income entries are used in place of the take-home pay",
+    );
+  });
+
+  it("reads the take-home in place of an entry the person chose to replace with it", async () => {
+    const chosen = { ...mockEntries[0], amount: 0, linksTo: "take-home" } as BudgetEntry;
+    render(<BudgetSetupWizard {...props} entries={[chosen]} monthlyTakeHome={2400} />);
+    goToIncome();
+    expect((await screen.findByTestId("wizard-linked-take-home")).textContent).toContain(
+      "Your take-home pay of £2,400 a month is already in your budget",
+    );
+  });
+
+  it("starts a new savings entry as not essential (owner item 28)", async () => {
+    render(
+      <BudgetSetupWizard {...props} entries={mockEntries} mode="edit" monthlyTakeHome={2400} />,
+    );
+    for (const step of ["Income", "Housing", "Bills", "Expenses"]) {
+      await screen.findByRole("heading", { name: new RegExp(step, "i") });
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    }
+    fireEvent.click(await screen.findByText("Add savings entry"));
+    expect((screen.getByRole("checkbox", { name: /essential/i }) as HTMLInputElement).checked).toBe(
+      false,
     );
   });
 });

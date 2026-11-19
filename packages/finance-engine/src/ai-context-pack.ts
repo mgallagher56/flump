@@ -78,6 +78,11 @@ export interface BudgetEntryItem {
    * from the profile's salary, "housing" from the housing details. Never stored.
    */
   linked?: "take-home" | "housing";
+  /**
+   * Stored on a row the person chose to replace with a saved detail ("Use your take-home pay"):
+   * its own amount is 0 and the linked figure stands in for it, keeping its ownership and share.
+   */
+  linksTo?: "take-home" | "housing" | null;
 }
 
 export interface BuildContextPackInput {

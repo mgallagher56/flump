@@ -15,7 +15,7 @@ import {
   selectHousingCost,
   selectHousingPayment,
 } from "./selectors/housing-cost.js";
-import { withLinkedBudgetRows } from "./selectors/linked-budget-rows.js";
+import { type BudgetLinkOffer, withLinkedBudgetRows } from "./selectors/linked-budget-rows.js";
 import { type LoanToValue, selectLoanToValue } from "./selectors/loan-to-value.js";
 import { type MonthsOfCover, selectMonthsOfCover } from "./selectors/months-of-cover.js";
 import {
@@ -40,6 +40,11 @@ export interface FinancialPicture {
   budgetRows: BudgetEntryItem[];
   /** Saved rows a linked row stands in for: kept in storage, counted nowhere. */
   shadowedBudgetRowIds: string[];
+  /**
+   * Links the budget page offers instead of making them: the person picks the row the take-home
+   * pay or the saved housing payment replaces.
+   */
+  budgetLinkOffers: BudgetLinkOffer[];
   budget: Figure<BudgetTotals>;
   safeToSpend: Figure<SafeToSpend>;
   monthsOfCover: Figure<MonthsOfCover>;
@@ -78,6 +83,7 @@ export function buildFinancialPicture(
     takeHome,
     budgetRows: budget,
     shadowedBudgetRowIds: linked.shadowedRowIds,
+    budgetLinkOffers: linked.offers,
     budget: selectBudgetTotals(budget),
     safeToSpend: selectSafeToSpend(takeHome, budget, snapshot),
     monthsOfCover: selectMonthsOfCover(budget, snapshot),
@@ -104,6 +110,7 @@ export interface BudgetRowLike {
   ownership?: unknown;
   sharePercent?: unknown;
   isPrimaryIncome?: unknown;
+  linksTo?: unknown;
 }
 
 export interface FinancialPictureRows {
@@ -136,6 +143,7 @@ export function budgetEntryFromRow(row: BudgetRowLike, index = 0): BudgetEntryIt
     sharePercent: shareFromRow(row.sharePercent),
     // Set only when true, so rows without the flag map exactly as before.
     ...(row.isPrimaryIncome === true ? { isPrimaryIncome: true } : {}),
+    ...(row.linksTo === "take-home" || row.linksTo === "housing" ? { linksTo: row.linksTo } : {}),
   };
 }
 

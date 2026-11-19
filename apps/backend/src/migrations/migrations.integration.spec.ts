@@ -35,6 +35,7 @@ import {
   SEEDED_BUDGET_ENTRIES,
   TAX_FINGERPRINT_SQL,
 } from "./RemoveSeededExampleData1794355400000";
+import { SavingsRowsNotEssential1795450000000 } from "./SavingsRowsNotEssential1795450000000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
 
 // These tests DROP the public schema. Run them against a throwaway database only:
@@ -1934,6 +1935,34 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await ds.query("SELECT ownership, share_percent FROM budget_entries")).toEqual([
         { ownership: "joint", share_percent: 50 },
       ]);
+    });
+  });
+  describe("SavingsRowsNotEssential1795450000000 (owner item 28)", () => {
+    const NAME = "SavingsRowsNotEssential1795450000000";
+    const rows = (): Promise<unknown[]> =>
+      ds.query("SELECT category, name, is_income, is_essential FROM budget_entries ORDER BY name");
+
+    it("clears the flag on savings spending rows only, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await ds.query(
+        `INSERT INTO budget_entries (user_id, category, name, amount, is_income, is_essential) VALUES
+           ('u1', 'savings', 'Emergency fund', 200, false, true),
+           ('u1', 'savings', 'Interest', 10, true, true),
+           ('u1', 'housing', 'Rent', 1200, false, true),
+           ('u1', 'expenses', 'Takeaways', 50, false, false)`,
+      );
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      const after = [
+        { category: "savings", name: "Emergency fund", is_income: false, is_essential: false },
+        { category: "savings", name: "Interest", is_income: true, is_essential: true },
+        { category: "housing", name: "Rent", is_income: false, is_essential: true },
+        { category: "expenses", name: "Takeaways", is_income: false, is_essential: false },
+      ].sort((a, b) => a.name.localeCompare(b.name));
+      expect(await rows()).toEqual(after);
+      await runUpInTransaction(new SavingsRowsNotEssential1795450000000());
+      expect(await rows()).toEqual(after);
     });
   });
 });
