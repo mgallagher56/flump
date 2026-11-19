@@ -142,6 +142,8 @@ export class UserProfileService implements ProfileLifecycle {
       monthlyTakeHome: null,
       hasSecondIncome: false,
       secondIncomeMonthly: null,
+      hasRentalIncome: false,
+      rentalIncomeMonthly: null,
       hasMortgage: false,
       mortgageType: "repayment",
       propertyOwnershipShare: 100.0,
@@ -258,6 +260,9 @@ export class UserProfileService implements ProfileLifecycle {
     if (body.hasSecondIncome !== undefined) profile.hasSecondIncome = body.hasSecondIncome;
     if (body.secondIncomeMonthly !== undefined)
       profile.secondIncomeMonthly = body.secondIncomeMonthly ?? null;
+    if (body.hasRentalIncome !== undefined) profile.hasRentalIncome = body.hasRentalIncome;
+    if (body.rentalIncomeMonthly !== undefined)
+      profile.rentalIncomeMonthly = body.rentalIncomeMonthly ?? null;
     if (body.hasMortgage !== undefined) profile.hasMortgage = body.hasMortgage;
     if (body.mortgageType !== undefined) profile.mortgageType = body.mortgageType;
     if (body.propertyOwnershipShare !== undefined)
@@ -443,6 +448,8 @@ export class UserProfileService implements ProfileLifecycle {
       monthlyTakeHome: null,
       hasSecondIncome: false,
       secondIncomeMonthly: null,
+      hasRentalIncome: false,
+      rentalIncomeMonthly: null,
       hasMortgage: false,
       propertyOwnershipShare: 100.0,
       pensionPercent: null,

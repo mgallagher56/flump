@@ -282,6 +282,8 @@ describe("UserProfileController", () => {
           monthlyTakeHome: 3500,
           hasSecondIncome: true,
           secondIncomeMonthly: 500,
+          hasRentalIncome: true,
+          rentalIncomeMonthly: 1000,
           hasMortgage: true,
           mortgageType: "repayment",
           propertyOwnershipShare: 50,

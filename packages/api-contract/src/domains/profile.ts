@@ -60,6 +60,8 @@ export const UpdateProfileRequest = z.strictObject({
   monthlyTakeHome: Money.nullish(),
   hasSecondIncome: z.boolean().optional(),
   secondIncomeMonthly: Money.nullish(),
+  hasRentalIncome: z.boolean().optional(),
+  rentalIncomeMonthly: Money.nullish(),
   hasMortgage: z.boolean().optional(),
   mortgageType: z.enum(["repayment", "interest-only"]).optional(),
   propertyOwnershipShare: Percent.optional(),
@@ -94,8 +96,6 @@ export const UpdateProfileRequest = z.strictObject({
   // Retired (system audit slice 9 part two): accepted and ignored on write for one release, so a
   // browser tab still running the previous web bundle can save. Nothing stores or returns them;
   // the column-drop PR removes them here too.
-  hasRentalIncome: z.boolean().optional(),
-  rentalIncomeMonthly: Money.nullish(),
   hasBuyToLet: z.boolean().optional(),
   buyToLetCount: z.number().int().min(0).max(1000).optional(),
   buyToLetPropertyValue: Money.nullish(),
@@ -156,6 +156,8 @@ export const UserProfileDto = z.strictObject({
   monthlyTakeHome: NullableAmount,
   hasSecondIncome: z.boolean(),
   secondIncomeMonthly: NullableAmount,
+  hasRentalIncome: z.boolean(),
+  rentalIncomeMonthly: NullableAmount,
   hasMortgage: z.boolean(),
   mortgageType: RepaymentType,
   propertyOwnershipShare: z.number().finite(),

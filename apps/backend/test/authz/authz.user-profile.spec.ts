@@ -272,7 +272,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(after.dashboardWidgetSizes).toEqual(before.dashboardWidgetSizes);
     const got = await h.call("get", "/user-profile", h.tokens.a);
     expect(got.status).toBe(200);
-    for (const key of ["hasRentalIncome", "monthlySavingsTarget", "dashboardWidgetSizes"]) {
+    for (const key of ["hasBuyToLet", "monthlySavingsTarget", "dashboardWidgetSizes"]) {
       expect(got.body).not.toHaveProperty(key);
     }
     // Put A's salary back: later cases check A is untouched (expectProfileAUntouched).

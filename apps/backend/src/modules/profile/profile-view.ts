@@ -84,8 +84,6 @@ export function formatProfileRow(profile: UserProfile) {
   // nothing reads them, so they never go on the wire.
   const {
     lastActiveAt: _lastActiveAt,
-    hasRentalIncome: _hasRentalIncome,
-    rentalIncomeMonthly: _rentalIncomeMonthly,
     hasBuyToLet: _hasBuyToLet,
     buyToLetCount: _buyToLetCount,
     buyToLetPropertyValue: _buyToLetPropertyValue,
@@ -136,6 +134,10 @@ export function formatProfileRow(profile: UserProfile) {
     secondIncomeMonthly:
       profile.secondIncomeMonthly !== null && profile.secondIncomeMonthly !== undefined
         ? Number(profile.secondIncomeMonthly)
+        : null,
+    rentalIncomeMonthly:
+      profile.rentalIncomeMonthly !== null && profile.rentalIncomeMonthly !== undefined
+        ? Number(profile.rentalIncomeMonthly)
         : null,
     // Null until the person answers (owner decision 3, slice 6): never a stand-in rate.
     pensionPercent:
@@ -262,6 +264,8 @@ export const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> =>
   monthlyTakeHome: null,
   hasSecondIncome: false,
   secondIncomeMonthly: null,
+  hasRentalIncome: false,
+  rentalIncomeMonthly: null,
   hasMortgage: false,
   propertyOwnershipShare: 100.0,
   pensionPercent: null,

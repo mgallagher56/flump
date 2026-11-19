@@ -25,6 +25,8 @@ const profile = {
   monthlyTakeHome: 2750.5,
   hasSecondIncome: false,
   secondIncomeMonthly: null,
+  hasRentalIncome: false,
+  rentalIncomeMonthly: null,
   hasMortgage: true,
   mortgageType: "repayment",
   propertyOwnershipShare: 50,
@@ -64,8 +66,6 @@ describe("profile response schemas", () => {
 
   it("carries none of the retired profile fields (system audit slice 9 part two)", () => {
     const retired = [
-      "hasRentalIncome",
-      "rentalIncomeMonthly",
       "hasBuyToLet",
       "buyToLetCount",
       "buyToLetPropertyValue",

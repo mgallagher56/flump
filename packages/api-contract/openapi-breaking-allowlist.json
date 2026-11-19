@@ -186,18 +186,8 @@
   },
   {
     "kind": "removed-response-property",
-    "where": "GET /v1/user-profile 200 response.hasRentalIncome",
-    "reason": "System audit slice 9 part two (owner decision 12): hasRentalIncome is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
-  },
-  {
-    "kind": "removed-response-property",
     "where": "GET /v1/user-profile 200 response.monthlySavingsTarget",
     "reason": "System audit slice 9 part two (owner decision 12): monthlySavingsTarget is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
-  },
-  {
-    "kind": "removed-response-property",
-    "where": "GET /v1/user-profile 200 response.rentalIncomeMonthly",
-    "reason": "System audit slice 9 part two (owner decision 12): rentalIncomeMonthly is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
@@ -256,18 +246,8 @@
   },
   {
     "kind": "removed-response-property",
-    "where": "PATCH /v1/user-profile 200 response.hasRentalIncome",
-    "reason": "System audit slice 9 part two (owner decision 12): hasRentalIncome is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
-  },
-  {
-    "kind": "removed-response-property",
     "where": "PATCH /v1/user-profile 200 response.monthlySavingsTarget",
     "reason": "System audit slice 9 part two (owner decision 12): monthlySavingsTarget is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
-  },
-  {
-    "kind": "removed-response-property",
-    "where": "PATCH /v1/user-profile 200 response.rentalIncomeMonthly",
-    "reason": "System audit slice 9 part two (owner decision 12): rentalIncomeMonthly is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
@@ -326,18 +306,8 @@
   },
   {
     "kind": "removed-response-property",
-    "where": "PATCH /v1/user-profile/checklist 200 response.hasRentalIncome",
-    "reason": "System audit slice 9 part two (owner decision 12): hasRentalIncome is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
-  },
-  {
-    "kind": "removed-response-property",
     "where": "PATCH /v1/user-profile/checklist 200 response.monthlySavingsTarget",
     "reason": "System audit slice 9 part two (owner decision 12): monthlySavingsTarget is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
-  },
-  {
-    "kind": "removed-response-property",
-    "where": "PATCH /v1/user-profile/checklist 200 response.rentalIncomeMonthly",
-    "reason": "System audit slice 9 part two (owner decision 12): rentalIncomeMonthly is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",
@@ -396,18 +366,8 @@
   },
   {
     "kind": "removed-response-property",
-    "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.hasRentalIncome",
-    "reason": "System audit slice 9 part two (owner decision 12): hasRentalIncome is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
-  },
-  {
-    "kind": "removed-response-property",
     "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.monthlySavingsTarget",
     "reason": "System audit slice 9 part two (owner decision 12): monthlySavingsTarget is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
-  },
-  {
-    "kind": "removed-response-property",
-    "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.rentalIncomeMonthly",
-    "reason": "System audit slice 9 part two (owner decision 12): rentalIncomeMonthly is a retired profile field that nothing reads, so the profile no longer returns it. PATCH /v1/user-profile still accepts it and ignores it on write for one release, so a tab on the previous web bundle can save; the column-drop PR removes it from the request too. The web app, the only live reader, stops reading it in the same PR. Coordinator sign-off 19 November 2026."
   },
   {
     "kind": "removed-response-property",

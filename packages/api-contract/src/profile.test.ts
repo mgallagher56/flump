@@ -19,8 +19,6 @@ import { routes } from "./manifest.js";
 
 /** System audit slice 9 part two: profile fields nothing reads any more, ahead of the column drop. */
 const RETIRED_PROFILE_FIELDS: Record<string, unknown> = {
-  hasRentalIncome: true,
-  rentalIncomeMonthly: 650,
   hasBuyToLet: true,
   buyToLetCount: 1,
   buyToLetPropertyValue: 165000,
