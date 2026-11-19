@@ -404,6 +404,49 @@ describe("BudgetEditor", () => {
     });
   });
 
+  // Audit slice 5, the housing line (JO-8): the saved rent is the whole rent, and the rent line
+  // the person linked carries whether it is shared and their share, saved on its stored row.
+  it("lets a linked rent line be marked joint, saving the share on its stored row", async () => {
+    const { onUpdate } = setup({
+      entries: [row({ id: "rent", name: "Rent", amount: 0, linkKind: "housing" })],
+      shadowedIds: ["rent"],
+      linkedEntries: [
+        row({
+          id: "linked:housing",
+          name: "Rent",
+          category: "housing",
+          amount: 950,
+          linked: "housing",
+          linkedRowId: "rent",
+        }),
+      ],
+      housingStatus: "renting",
+    });
+    fireEvent.change(screen.getByLabelText("Ownership of Rent"), { target: { value: "joint" } });
+    await waitFor(() =>
+      expect(onUpdate).toHaveBeenCalledWith("rent", { ownership: "joint", sharePercent: 50 }),
+    );
+  });
+
+  it("offers no share on a mortgage line: the mortgage account's share is the one that counts", () => {
+    setup({
+      entries: [row({ id: "home", name: "Mortgage", amount: 0, linkKind: "housing" })],
+      shadowedIds: ["home"],
+      linkedEntries: [
+        row({
+          id: "linked:housing",
+          name: "Mortgage payment",
+          category: "housing",
+          amount: 1400,
+          linked: "housing",
+          linkedRowId: "home",
+        }),
+      ],
+      housingStatus: "mortgage",
+    });
+    expect(screen.queryByLabelText("Ownership of Mortgage payment")).toBeNull();
+  });
+
   describe("savings and debt lines linked to an account (audit slice 5)", () => {
     const accounts = [
       { id: "acc-saver", name: "Easy saver", type: "Saving" },
@@ -653,7 +696,7 @@ describe("BudgetEditor", () => {
         ],
       });
       expect(screen.getByTestId("budget-editor-source-linked-housing").textContent).toContain(
-        "Your own cost, from your housing details",
+        "The whole rent, from your housing details",
       );
       fireEvent.click(screen.getByRole("button", { name: "Type my own figure" }));
       await waitFor(() =>
@@ -694,6 +737,35 @@ describe("BudgetEditor", () => {
         "Water",
       ),
     );
+  });
+
+  // Focus race (found in slice 6): while the add saves, its button stays focusable (aria-disabled,
+  // not disabled), so keyboard focus never drops to the page; a failed add keeps focus on it.
+  it("keeps focus on the Add button while it saves and after a failed add", async () => {
+    let fail: (reason: Error) => void = () => undefined;
+    const onAdd = vi.fn(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          fail = reject;
+        }),
+    );
+    setup({ onAdd });
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
+    fireEvent.change(screen.getByTestId("budget-editor-new-name-bills"), {
+      target: { value: "Water" },
+    });
+    const add = screen.getByTestId("budget-editor-add-bills") as HTMLButtonElement;
+    add.focus();
+    fireEvent.click(add);
+    await waitFor(() => expect(add.getAttribute("aria-disabled")).toBe("true"));
+    expect(add.disabled).toBe(false);
+    expect(document.activeElement).toBe(add);
+    // A second press while it saves adds nothing more.
+    fireEvent.click(add);
+    expect(onAdd).toHaveBeenCalledTimes(1);
+    fail(new Error("no"));
+    await waitFor(() => expect(add.getAttribute("aria-disabled")).not.toBe("true"));
+    expect(document.activeElement).toBe(add);
   });
 
   it("asks before removing, naming the entry, then deletes", async () => {

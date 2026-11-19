@@ -469,6 +469,39 @@ describe("BudgetSetupWizard", () => {
     });
   });
 
+  // Audit slice 5, the housing line: with a housing payment saved, the common "Rent or mortgage"
+  // item is added linked to it, storing no amount, in place of a £0 copy to retype.
+  it("adds the common housing item linked to the saved housing payment", async () => {
+    const onAddEntry = vi.fn().mockResolvedValue(undefined);
+    render(
+      <BudgetSetupWizard
+        entries={[]}
+        housingPayment={{ kind: "rent", monthly: 950, paymentEstimated: false }}
+        monthlyTakeHome={2500}
+        onAddEntry={onAddEntry}
+        onCancel={vi.fn()}
+        onComplete={vi.fn()}
+        onDeleteEntry={vi.fn()}
+        onUpdateEntry={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /add common entries/i }));
+    await waitFor(() =>
+      expect(onAddEntry).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "housing",
+          name: "Rent",
+          amount: 0,
+          linkKind: "housing",
+        }),
+      ),
+    );
+    expect(onAddEntry).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Rent / Mortgage" }),
+    );
+  });
+
   const savedEntry = (name: string, category: string) => ({
     id: `s-${name}`,
     userId: "u",

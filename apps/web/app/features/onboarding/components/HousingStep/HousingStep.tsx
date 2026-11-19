@@ -15,8 +15,12 @@ export const HOUSING_OPTIONS: { value: HousingStatus; label: string }[] = [
 
 /** The monthly amount's label for each answer that has one. Own with no mortgage has none. */
 const COST_FIELD: Partial<Record<HousingStatus, { label: string; hint?: string }>> = {
-  // Whose cost it is: the person's own, so the budget counts it once at 100% (no second share).
-  renting: { label: "Monthly rent", hint: "What you pay. Your own share if you split it." },
+  // A rent is the whole rent for the home; a shared rent's share is set on the budget's rent line
+  // (audit slice 5, JO-8). A mortgage payment here is the person's own, counted once at 100%.
+  renting: {
+    label: "Monthly rent",
+    hint: "The whole rent for your home. If you share it, you can set your share in your budget.",
+  },
   mortgage: {
     label: "Monthly mortgage payment",
     hint: "What you pay. Your own share if you split it.",
