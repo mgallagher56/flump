@@ -172,6 +172,8 @@ describe("UserProfileService (Deep Module)", () => {
       ['DELETE FROM "student_loan_plan_backfill" WHERE "profile_id" = $1', ["profile-9"]],
       ['DELETE FROM "profile_column_drop_backfill" WHERE "profile_id" = $1', ["profile-9"]],
       ['DELETE FROM "paye_salary_record_backfill" WHERE "profile_id" = $1', ["profile-9"]],
+      ['DELETE FROM "take_home_salary_backfill" WHERE "profile_id" = $1', ["profile-9"]],
+      ['DELETE FROM "reset_pension_zeros_backfill" WHERE "profile_id" = $1', ["profile-9"]],
     ]);
   });
 

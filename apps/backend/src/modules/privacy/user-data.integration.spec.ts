@@ -386,6 +386,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
          VALUES ($1, $2, $3::jsonb, 40000)`,
         [profileId, crypto.randomUUID(), JSON.stringify({ user_id: userId, amount: 40000 })],
       );
+      await ds.query(
+        `INSERT INTO take_home_salary_backfill (profile_id, old_annual_salary, old_monthly_take_home)
+         VALUES ($1, 30000, 2500)`,
+        [profileId],
+      );
+      await ds.query(
+        `INSERT INTO reset_pension_zeros_backfill (profile_id, old_pension_percent, old_pension_employer_percent, old_is_salary_sacrifice)
+         VALUES ($1, 0, 0, false)`,
+        [profileId],
+      );
     }
     const profileB = await profileOf(USER_B);
     await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
@@ -393,6 +403,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       "pension_rates_backfill",
       "student_loan_plan_backfill",
       "paye_salary_record_backfill",
+      "take_home_salary_backfill",
+      "reset_pension_zeros_backfill",
     ]) {
       const rows: { profile_id: string }[] = await ds.query(`SELECT profile_id FROM "${table}"`);
       expect(
@@ -421,6 +433,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
          VALUES ($1, $2, $3::jsonb, 40000)`,
         [profileId, crypto.randomUUID(), JSON.stringify({ amount: 40000 })],
       );
+      await ds.query(
+        `INSERT INTO take_home_salary_backfill (profile_id, old_annual_salary, old_monthly_take_home)
+         VALUES ($1, 30000, 2500)`,
+        [profileId],
+      );
+      await ds.query(
+        `INSERT INTO reset_pension_zeros_backfill (profile_id, old_pension_percent, old_pension_employer_percent, old_is_salary_sacrifice)
+         VALUES ($1, 0, 0, false)`,
+        [profileId],
+      );
     }
     const profileB = await profileOf(USER_B);
     const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
@@ -434,7 +456,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       new LoggingBankConsentRevoker(),
       deletion,
     ).resetFinancialData(USER_A);
-    for (const table of ["pension_rates_backfill", "paye_salary_record_backfill"]) {
+    for (const table of [
+      "pension_rates_backfill",
+      "paye_salary_record_backfill",
+      "take_home_salary_backfill",
+      "reset_pension_zeros_backfill",
+    ]) {
       const rows: { profile_id: string }[] = await ds.query(`SELECT profile_id FROM "${table}"`);
       expect(
         rows.map((r) => r.profile_id),

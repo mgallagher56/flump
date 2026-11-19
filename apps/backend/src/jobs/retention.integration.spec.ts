@@ -196,6 +196,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
            VALUES ($1, $2, '{}'::jsonb, ${ago(age)})`,
           [profile.id, crypto.randomUUID()],
         );
+        await ds.query(
+          `INSERT INTO take_home_salary_backfill (profile_id, old_annual_salary, old_monthly_take_home, backfilled_at)
+           VALUES ($1, 30000, 2500, ${ago(age)})`,
+          [profile.id],
+        );
+        await ds.query(
+          `INSERT INTO reset_pension_zeros_backfill (profile_id, old_pension_percent, old_pension_employer_percent, old_is_salary_sacrifice, backfilled_at)
+           VALUES ($1, 0, 0, false, ${ago(age)})`,
+          [profile.id],
+        );
       }
       // The slice 9 column-drop before-image is kept 30 days: one row past it and one inside it.
       for (const [age, column] of [
@@ -231,6 +241,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           rent_share_backfill: 1,
           mortgage_repayment_type_backfill: 1,
           profile_column_drop_backfill: 1,
+          take_home_salary_backfill: 1,
+          reset_pension_zeros_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });
@@ -247,6 +259,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("paye_salary_record_backfill")).toBe(1);
       expect(await count("mortgage_repayment_type_backfill")).toBe(1);
       expect(await count("profile_column_drop_backfill")).toBe(1);
+      expect(await count("take_home_salary_backfill")).toBe(1);
+      expect(await count("reset_pension_zeros_backfill")).toBe(1);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
     });

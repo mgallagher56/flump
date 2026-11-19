@@ -128,6 +128,20 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
       "before-image of the repayment types copied to sole residential mortgages, kept 90 days so the migration can be rolled back; after that its down() restores nothing",
   },
   {
+    name: "take_home_salary_backfill",
+    table: "take_home_salary_backfill",
+    where: `"backfilled_at" < $1::timestamptz - interval '90 days'`,
+    reason:
+      "before-image of the salaries cleared because the old onboarding wrote them as take-home x 12, kept 90 days so the migration can be rolled back; after that its down() restores nothing",
+  },
+  {
+    name: "reset_pension_zeros_backfill",
+    table: "reset_pension_zeros_backfill",
+    where: `"backfilled_at" < $1::timestamptz - interval '90 days'`,
+    reason:
+      "before-image of the pension zeros the old financial data reset wrote, kept 90 days so the migration can be rolled back; after that its down() restores nothing",
+  },
+  {
     name: "rent_share_backfill",
     table: "rent_share_backfill",
     where: `"backfilled_at" < $1::timestamptz - interval '90 days'`,
