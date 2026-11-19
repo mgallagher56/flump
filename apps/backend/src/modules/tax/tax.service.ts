@@ -22,6 +22,7 @@ import {
 } from "../../contract/pagination";
 import { Account } from "../../entities/account.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
+import { TAX_RECORD_ACCOUNT_FOREIGN_KEY } from "../../migrations/TaxRecordAccountLink1795550000000";
 import { sniffReceiptMime, validateReceipt } from "../../security/receipt-validation";
 
 /** GET /tax-records order: newest date first, id as tiebreak (keyset pagination, BE-09). */
@@ -129,6 +130,25 @@ const accountLinkRefusal = (): BadRequestException =>
     message: "Request failed validation",
     issues: [{ path: "body.accountId", code: "custom", message: ACCOUNT_LINK_MESSAGE }],
   });
+
+/**
+ * A write that raced past `assertAccountLinks`: the linked account was deleted between the check
+ * and the save, so the composite foreign key refused it. The same 400 as any refused link (never
+ * a 500, and nothing about whose account it was). Any other error is returned unchanged.
+ */
+const accountLinkWriteError = (err: unknown): unknown => {
+  if (!err || typeof err !== "object") return err;
+  const e = err as {
+    code?: string;
+    constraint?: string;
+    driverError?: { code?: string; constraint?: string };
+  };
+  const code = e.code ?? e.driverError?.code;
+  const constraint = e.constraint ?? e.driverError?.constraint;
+  return code === "23503" && constraint === TAX_RECORD_ACCOUNT_FOREIGN_KEY
+    ? accountLinkRefusal()
+    : err;
+};
 
 /**
  * Whether an account can be the one a record of this source describes (slice 7). Rental income
@@ -313,7 +333,9 @@ export class TaxService {
         await records.update({ id: item.id, userId }, { endDate: item.endDate });
       }
       if (picked.length === 0) return [];
-      const saved = await records.save(records.create(picked));
+      const saved = await records.save(records.create(picked)).catch((err: unknown) => {
+        throw accountLinkWriteError(err);
+      });
       return saved.map(toTaxRecordResponse);
     });
   }
@@ -409,7 +431,10 @@ export class TaxService {
       picked.receiptData = encryptReceiptData(picked.receiptData, id);
     }
     const record = this.taxRecordRepository.create(picked);
-    return toTaxRecordResponse(await this.taxRecordRepository.save(record));
+    const saved = await this.taxRecordRepository.save(record).catch((err: unknown) => {
+      throw accountLinkWriteError(err);
+    });
+    return toTaxRecordResponse(saved);
   }
 
   /** Conditional on `expected` when given (412 when stale, BE-09). */
@@ -444,7 +469,9 @@ export class TaxService {
           await this.assertAccountLinks(userId, [record]);
         }
         withAnnualEndDate(record);
-        return repository.save(record);
+        return repository.save(record).catch((err: unknown) => {
+          throw accountLinkWriteError(err);
+        });
       },
     );
   }

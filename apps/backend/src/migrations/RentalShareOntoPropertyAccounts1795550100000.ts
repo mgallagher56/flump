@@ -55,7 +55,9 @@ export class RentalShareOntoPropertyAccounts1795550100000 implements MigrationIn
          FROM "accounts" a
          JOIN "user_profiles" u ON u."user_id" = a."user_id"
          WHERE a."type" = 'Property' AND a."account_subtype" = 'rental' AND a."ownership" = 'sole'
-           AND u."property_ownership_share" >= 1 AND u."property_ownership_share" < 100
+           -- Rounded first: a share of 99.5 to 99.99 rounds to 100, which is held solely, so the
+           -- account stays sole rather than becoming joint at 100%.
+           AND round(u."property_ownership_share") BETWEEN 1 AND 99
        ),
        img AS (
          INSERT INTO "${RENTAL_SHARE_BACKFILL_TABLE}" ("account_id", "user_id", "old_ownership", "old_share_percent")

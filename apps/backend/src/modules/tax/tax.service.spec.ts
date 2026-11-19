@@ -553,3 +553,35 @@ describe("TaxService account links (slice 7)", () => {
     expect(moved).toMatchObject({ source: "self-employed", accountId: null });
   });
 });
+
+describe("TaxService when the linked account goes between the check and the save", () => {
+  it("answers with the same 400 as any other refused link, not a 500", async () => {
+    const ACCOUNT = "00000000-0000-4000-8000-0000000000c1";
+    const records = createInMemoryRepository();
+    // The account is deleted after the check: the database's composite foreign key refuses.
+    const fkError = Object.assign(new Error("insert or update violates foreign key"), {
+      code: "23503",
+      constraint: "FK_tax_records_account",
+    });
+    vi.spyOn(records, "save").mockRejectedValue(fkError as never);
+    const accounts = createInMemoryRepository([
+      { id: ACCOUNT, userId: "u1", type: "Property", accountSubtype: "rental" },
+    ]);
+    const service = new TaxService(records as never, accounts as never);
+    const error = await service
+      .createRecord("u1", {
+        type: "income",
+        source: "rental",
+        category: "rental_income",
+        name: "Rent",
+        amount: 1000,
+        date: "2026-06-01",
+        accountId: ACCOUNT,
+      } as never)
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(BadRequestException);
+    expect((error as BadRequestException).getResponse()).toMatchObject({
+      issues: [{ path: "body.accountId" }],
+    });
+  });
+});
