@@ -6,6 +6,7 @@ import {
   MAX_ETAG_LIST,
   parseEtag,
   parseEtagList,
+  ResourceEtag,
 } from "./http-headers.js";
 import {
   allRoutes,
@@ -185,5 +186,21 @@ describe("conditional updates (BE-09, audit M7, L15)", () => {
     expect(parseEtag("*")).toBeNull();
     expect(parseEtag("2026-11-14T09:30:00.123Z")).toBeNull();
     expect(parseEtag('"2026-13-40T99:99:99.999Z"')).toBeNull();
+  });
+
+  it("takes only a whole quoted ISO date-time as a strong ETag", () => {
+    // The documented form is exactly `"<ISO date-time>"`, so text before or after it is refused.
+    expect(ResourceEtag.safeParse('"2026-11-14T09:30:00.000Z"').success).toBe(true);
+    expect(ResourceEtag.safeParse('x"2026-11-14T09:30:00.000Z"').success).toBe(false);
+    expect(ResourceEtag.safeParse('"2026-11-14T09:30:00.000Z"x').success).toBe(false);
+  });
+
+  it("refuses a quoted value that is a date but not one of this API's ETags", () => {
+    // A quoted plain date is a valid date for `new Date()`, but not the ETag form, so no version.
+    expect(parseEtag('"2026-11-14"')).toBeNull();
+  });
+
+  it("treats W/ as a weak prefix only at the start, never inside the value", () => {
+    expect(parseEtag('"2026-11-14TW/09:30:00.123Z"')).toBeNull();
   });
 });

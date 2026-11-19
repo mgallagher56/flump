@@ -4,7 +4,9 @@ import {
   ACCOUNT_EXPORT_SECTIONS,
   AcceptTermsRequest,
   AcceptTermsResponse,
+  AccountExportAuditEvent,
   AccountExportBankConnection,
+  AccountExportBankOAuthState,
   AccountExportDocument,
   AccountExportMcpToken,
   DELETE_USER_CONFIRMATION,
@@ -92,6 +94,18 @@ describe("UpdateProfileRequest", () => {
     expect(avatar(`https://example.com/${"a".repeat(2048)}`)).toBe(false);
   });
 
+  it("takes an avatar only when the value starts with https:// or an image data URL", () => {
+    // The rule is "an https URL or a png, jpeg or webp data URL": the scheme must lead the value.
+    const avatar = (avatarUrl: string) => UpdateProfileRequest.safeParse({ avatarUrl }).success;
+    expect(avatar("javascript:alert(1)//https://example.com")).toBe(false);
+    expect(avatar("x-data:image/png;base64,AAAA")).toBe(false);
+  });
+
+  it("hands the handler names without surrounding spaces", () => {
+    const parsed = UpdateProfileRequest.parse({ firstName: "  Sam  " });
+    expect(parsed.firstName).toBe("Sam");
+  });
+
   it("takes a section order of known sections, each once, and rejects anything else", () => {
     const order = (dashboardWidgetOrder: unknown) =>
       UpdateProfileRequest.safeParse({ dashboardWidgetOrder }).success;
@@ -176,6 +190,16 @@ describe("UpdateChecklistRequest", () => {
     expect(UpdateChecklistRequest.safeParse({ step: "budget" }).success).toBe(false);
     expect(UpdateChecklistRequest.safeParse({}).success).toBe(false);
   });
+
+  it("refuses a done flag with no step to apply it to", () => {
+    expect(UpdateChecklistRequest.safeParse({ completed: true }).success).toBe(false);
+  });
+
+  it("refuses a dismissal mixed with a done flag (decision 13: a dismissal comes on its own)", () => {
+    expect(UpdateChecklistRequest.safeParse({ dismissed: true, completed: false }).success).toBe(
+      false,
+    );
+  });
 });
 
 describe("DeleteUserRequest and DeleteUserResponse (BE-04)", () => {
@@ -206,6 +230,8 @@ describe("AcceptTermsRequest and AcceptTermsResponse (BE-15, M-PRIV3)", () => {
     expect(AcceptTermsRequest.safeParse({ version: "I agree" }).success).toBe(false);
     expect(AcceptTermsRequest.safeParse({ version: "v".repeat(65) }).success).toBe(false);
     expect(AcceptTermsRequest.safeParse({}).success).toBe(false);
+    // Surrounding spaces are not part of the identifier.
+    expect(AcceptTermsRequest.parse({ version: " 2026-11-01 " }).version).toBe("2026-11-01");
     expect(AcceptTermsRequest.safeParse({ version: "2026-11-01", userId: "x" }).success).toBe(
       false,
     );
@@ -314,5 +340,35 @@ describe("AccountExportDocument (BE-04)", () => {
         false,
       );
     }
+  });
+
+  it("carries a bank consent's institution and expiry only, never its state hash or verifier", () => {
+    // docs/legal/data-map.md: bankOAuthStates hold "institution and expiry only".
+    const consent = {
+      id: "123e4567-e89b-12d3-a456-426614174002",
+      institutionId: "monzo",
+      expiresAt: "2026-11-14T09:10:00.000Z",
+      createdAt: "2026-11-14T09:00:00.000Z",
+    };
+    expect(AccountExportBankOAuthState.safeParse(consent).success).toBe(true);
+    for (const secret of ["stateHash", "codeVerifier"]) {
+      expect(AccountExportBankOAuthState.safeParse({ ...consent, [secret]: "x" }).success).toBe(
+        false,
+      );
+    }
+  });
+
+  it("carries audit event identifiers and counts in its metadata", () => {
+    // BE-06 audit metadata: identifiers and counts (text, numbers, flags and id lists), no amounts.
+    const event = {
+      id: "123e4567-e89b-12d3-a456-426614174003",
+      action: "bank_consent_revoke",
+      actorType: "user",
+      targetId: null,
+      requestId: null,
+      metadata: { revoked: 1, unsupported: true, institutionIds: ["monzo"], code: "ok" },
+      createdAt: "2026-11-14T09:00:00.000Z",
+    };
+    expect(AccountExportAuditEvent.safeParse(event).success).toBe(true);
   });
 });

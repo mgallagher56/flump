@@ -68,6 +68,47 @@ describe("finance costs brought forward frequency", () => {
       broughtForwardRuleError({ ...record, category: "repairs_maintenance", type: "income" }),
     ).toBeNull();
   });
+
+  it("names the field that breaks the rule: source, then type, then frequency", () => {
+    expect(broughtForwardRuleError({ ...record, source: "paye" })?.path).toBe("source");
+    expect(broughtForwardRuleError({ ...record, type: "income" })?.path).toBe("type");
+    expect(broughtForwardRuleError({ ...record, frequency: "monthly" })?.path).toBe("frequency");
+  });
+
+  it("leaves fields an update does not send unchecked, for the merged record check", () => {
+    // Only the category is sent: source and type are absent, so nothing here breaks the rule.
+    const categoryOnly = { category: FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY };
+    expect(broughtForwardRuleError(categoryOnly)).toBeNull();
+    expect(UpdateTaxRecordRequest.safeParse(categoryOnly).success).toBe(true);
+  });
+
+  it("puts the issue on that field in a request", () => {
+    const result = CreateTaxRecordRequest.safeParse({ ...record, source: "paye" });
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["source"]]);
+  });
+
+  it("knows the category with spaces around it, as an unmerged update may carry it", () => {
+    expect(
+      broughtForwardRuleError({
+        ...record,
+        category: ` ${FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY} `,
+        type: "income",
+      })?.path,
+    ).toBe("type");
+  });
+});
+
+describe("tax record text fields", () => {
+  it("hands the handler the category and name without surrounding spaces", () => {
+    // Handlers read the parsed output (validate.ts parseAgainst), so the stored text is trimmed.
+    const parsed = CreateTaxRecordRequest.parse({
+      ...record,
+      category: "  repairs_maintenance  ",
+      name: "  Boiler repair  ",
+    });
+    expect(parsed.category).toBe("repairs_maintenance");
+    expect(parsed.name).toBe("Boiler repair");
+  });
 });
 
 describe("known tax record categories", () => {
