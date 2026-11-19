@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   AuthenticationError,
   hashPatToken,
@@ -133,5 +133,95 @@ describe("TokenVerifier (PAT-only)", () => {
         verifier.verifyAuthorizationHeader(`${scheme} dev-secret`),
       ).resolves.toMatchObject({ type: "dev" });
     }
+  });
+});
+
+describe("TokenVerifier details", () => {
+  const reasonFor = async (verifier: TokenVerifier, header?: string) =>
+    ((await verifier.verifyAuthorizationHeader(header).catch((e) => e)) as Error).message;
+
+  it("throws errors named AuthenticationError, the name the transport logs", async () => {
+    const err = await new TokenVerifier().verifyAuthorizationHeader(undefined).catch((e) => e);
+    expect(err.name).toBe("AuthenticationError");
+  });
+
+  it("says why a token was refused", async () => {
+    expect(await reasonFor(new TokenVerifier(), undefined)).toMatch(/Authorization header/);
+    expect(await reasonFor(new TokenVerifier(), "Bearer    ")).toMatch(/empty/i);
+    expect(
+      await reasonFor(
+        new TokenVerifier({ tokenStore: storeWith({ revokedAt: new Date() }) }),
+        `Bearer ${PAT}`,
+      ),
+    ).toMatch(/revoked/);
+    expect(
+      await reasonFor(
+        new TokenVerifier({ tokenStore: storeWith({ expiresAt: new Date(Date.now() - 60_000) }) }),
+        `Bearer ${PAT}`,
+      ),
+    ).toMatch(/expired/);
+    expect(
+      await reasonFor(new TokenVerifier({ tokenStore: storeWith(null) }), `Bearer ${PAT}`),
+    ).toMatch(/not recognised/);
+    expect(await reasonFor(new TokenVerifier(), `Bearer ${PAT}`)).toMatch(/not recognised/);
+  });
+
+  it("rejects a header that does not start with the scheme, or that runs onto a second line", async () => {
+    const verifier = new TokenVerifier({ devToken: "dev-secret" });
+    for (const header of ["xBearer dev-secret", "Bearer dev-secret\nX-Other: 1"]) {
+      await expect(verifier.verifyAuthorizationHeader(header)).rejects.toBeInstanceOf(
+        AuthenticationError,
+      );
+    }
+  });
+
+  it("ignores whitespace around the token, so a padded dev token still matches exactly", async () => {
+    const verifier = new TokenVerifier({ devToken: "dev-secret" });
+    await expect(verifier.verifyAuthorizationHeader("Bearer dev-secret  ")).resolves.toMatchObject({
+      type: "dev",
+    });
+  });
+
+  it("gives a row with no stored scopes the default anonymised read and simulate scopes", async () => {
+    const verifier = new TokenVerifier({
+      tokenStore: storeWith({ scopes: null as unknown as string[] }),
+    });
+    const verified = await verifier.verifyAuthorizationHeader(`Bearer ${PAT}`);
+    expect(verified.scopes).toEqual(["mcp:read:anonymized", "mcp:simulate"]);
+    expect(verified.anonymizeInstitutions).toBe(true);
+  });
+
+  it("hashes with SHA-256 over the trimmed token", () => {
+    // FIPS 180-2 test vector: SHA-256("abc").
+    const abc = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+    expect(hashPatToken("abc")).toBe(abc);
+    expect(hashPatToken("  abc\t")).toBe(abc);
+  });
+
+  it("publishes protected resource metadata, with defaults and overrides", () => {
+    expect(new TokenVerifier().getOAuthProtectedResourceMetadata()).toEqual({
+      resource: "flump-mcp",
+      authorization_servers: ["https://api.workos.com"],
+      scopes_supported: ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate", "write:stage"],
+      bearer_methods_supported: ["header"],
+    });
+    const custom = new TokenVerifier({
+      expectedAudience: "https://mcp.example.test",
+      authServerUrl: "https://auth.example.test",
+    }).getOAuthProtectedResourceMetadata();
+    expect(custom.resource).toBe("https://mcp.example.test");
+    expect(custom.authorization_servers).toEqual(["https://auth.example.test"]);
+  });
+
+  it("records a request through the store when it can, and is a no-op when it cannot", async () => {
+    const recordRequest = vi.fn().mockResolvedValue(undefined);
+    await new TokenVerifier({
+      tokenStore: { ...storeWith({}), recordRequest },
+    }).recordRequest("tok_1", 2);
+    expect(recordRequest).toHaveBeenCalledWith("tok_1", 2);
+    await expect(
+      new TokenVerifier({ tokenStore: storeWith({}) }).recordRequest("tok_1", 1),
+    ).resolves.toBeUndefined();
+    await expect(new TokenVerifier().recordRequest("tok_1", 1)).resolves.toBeUndefined();
   });
 });

@@ -1,7 +1,8 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { describe, expect, it } from "vitest";
-import { AUDIT_TOOL_NAME, primitiveAuditName } from "./audit.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { AUDIT_TOOL_NAME, primitiveAuditName, scopesUsedFor, withPrimitiveAudit } from "./audit.js";
+import { RAW_INPUT_AUDIT_NAME } from "./auth/scopes.js";
 import type { VerifiedToken } from "./auth/token-verifier.js";
 import { SCHEMA_RESOURCE_URI } from "./resources/schema.resource.js";
 import { createFlumpMcpServer } from "./server.js";
@@ -117,5 +118,133 @@ describe("prompt and resource audit (H12)", () => {
       expect(prompt.messages).toHaveLength(1);
       await client.close();
     }
+  });
+});
+
+describe("audit helpers", () => {
+  it("the audit name rule rejects a name that does not start with a lower-case letter", () => {
+    expect(AUDIT_TOOL_NAME.test("Bad_name")).toBe(false);
+    expect(primitiveAuditName("resource", "Bad name")).toBe("resource_read");
+  });
+
+  it("keeps a specific name of exactly 64 characters, the most the audit rule allows", () => {
+    // "prompt_get_" is 11 characters, so a 53-character name makes 64 in all.
+    const name = "a".repeat(53);
+    expect(primitiveAuditName("prompt", name)).toBe(`prompt_get_${name}`);
+  });
+
+  it("puts the raw input read in the resource_read family", () => {
+    expect(RAW_INPUT_AUDIT_NAME).toMatch(/^resource_read_/);
+    expect(AUDIT_TOOL_NAME.test(RAW_INPUT_AUDIT_NAME)).toBe(true);
+  });
+
+  it("lists no scopes for a primitive with no scope entry", () => {
+    expect(scopesUsedFor("tool", "nope", ["mcp:read:full"])).toEqual([]);
+  });
+});
+
+describe("withPrimitiveAudit on a stand-in server", () => {
+  const fakeServer = () => ({
+    name: "fake",
+    resource: (..._args: unknown[]) => _args[_args.length - 1],
+    prompt: (..._args: unknown[]) => _args[_args.length - 1],
+    other: (cb: unknown) => cb,
+  });
+  type Handler = (...a: unknown[]) => Promise<unknown>;
+  const ctxWith = (events: McpAuditEvent[]) =>
+    ({
+      token: TEST_TOKEN,
+      dataProvider: createFakeProvider(emptyUser),
+      audit: (e: McpAuditEvent) => void events.push(e),
+    }) as never;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("is a no-op without an audit sink", () => {
+    const server = fakeServer();
+    expect(
+      withPrimitiveAudit(
+        server as never,
+        {
+          token: TEST_TOKEN,
+          dataProvider: createFakeProvider(emptyUser),
+        } as never,
+      ),
+    ).toBe(server);
+  });
+
+  it("audits reads registered with the older resource() and prompt() methods", async () => {
+    const events: McpAuditEvent[] = [];
+    const audited = withPrimitiveAudit(
+      fakeServer() as never,
+      ctxWith(events),
+    ) as unknown as ReturnType<typeof fakeServer>;
+    await (
+      audited.resource("schema", "flump://schema", async () => ({ contents: [] })) as Handler
+    )();
+    await (audited.prompt("import-spreadsheet", async () => ({ messages: [] })) as Handler)();
+    expect(events.map((e) => e.tool)).toEqual([
+      "resource_read_schema",
+      "prompt_get_import_spreadsheet",
+    ]);
+  });
+
+  it("passes other properties, other methods and handler-less calls through untouched", () => {
+    const events: McpAuditEvent[] = [];
+    const audited = withPrimitiveAudit(
+      fakeServer() as never,
+      ctxWith(events),
+    ) as unknown as ReturnType<typeof fakeServer>;
+    expect(audited.name).toBe("fake");
+    const cb = () => "x";
+    expect(audited.other(cb)).toBe(cb);
+    expect(audited.resource("schema", "flump://schema")).toBe("flump://schema");
+  });
+
+  it("records the time the read took", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-19T12:00:00Z"));
+    const events: McpAuditEvent[] = [];
+    const audited = withPrimitiveAudit(
+      fakeServer() as never,
+      ctxWith(events),
+    ) as unknown as ReturnType<typeof fakeServer>;
+    const handler = audited.resource("schema", "flump://schema", async () => {
+      vi.advanceTimersByTime(25);
+      return { contents: [] };
+    }) as Handler;
+    await handler();
+    // Started at 12:00:00.000, finished 25 ms later.
+    expect(events[0]?.durationMs).toBe(25);
+  });
+
+  it("records a failing read as an INTERNAL error with no bytes, and rethrows it", async () => {
+    const events: McpAuditEvent[] = [];
+    const audited = withPrimitiveAudit(
+      fakeServer() as never,
+      ctxWith(events),
+    ) as unknown as ReturnType<typeof fakeServer>;
+    const handler = audited.resource("schema", "flump://schema", async () => {
+      throw new Error("db down");
+    }) as Handler;
+    await expect(handler()).rejects.toThrow("db down");
+    expect(events).toEqual([
+      expect.objectContaining({ outcome: "error", errorCode: "INTERNAL", responseBytes: 0 }),
+    ]);
+  });
+
+  it("counts 0 bytes for a result that is empty or cannot be serialised", async () => {
+    const events: McpAuditEvent[] = [];
+    const audited = withPrimitiveAudit(
+      fakeServer() as never,
+      ctxWith(events),
+    ) as unknown as ReturnType<typeof fakeServer>;
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    await (audited.resource("schema", "u", async () => undefined) as Handler)();
+    await (audited.resource("schema", "u", async () => circular) as Handler)();
+    expect(events.map((e) => e.responseBytes)).toEqual([0, 0]);
   });
 });

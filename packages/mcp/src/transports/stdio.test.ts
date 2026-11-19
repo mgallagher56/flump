@@ -3,6 +3,7 @@ import { type BuildContextPackInput, buildFlumpAiContextPack } from "@flump/fina
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, it, vi } from "vitest";
+import { shortId, shortIdKey } from "../short-ids.js";
 import { connectTestClient, TEST_TOKEN } from "../testing/client.js";
 import {
   INPUT_REUSE_MS,
@@ -409,5 +410,105 @@ describe("runStdio", () => {
     expect(viaWire.retirement.retirementAge).toBe(60);
     expect(viaWire.missing).toEqual([]);
     expect(viaWire).toEqual(viaDirect);
+  });
+});
+
+describe("runStdio details", () => {
+  const connectWith = async (
+    fetchImpl: typeof fetch,
+    clock = { now: 1_000_000 },
+    env: Record<string, string> = { FLUMP_PAT: PAT },
+  ) => {
+    const client = new Client({ name: "stdio-test", version: "0.0.0" });
+    await runStdio(
+      env,
+      fetchImpl,
+      async (server) => {
+        const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
+        await server.connect(serverSide);
+        await client.connect(clientSide);
+      },
+      undefined,
+      () => clock.now,
+    );
+    return client;
+  };
+  const listText = async (client: Client) => {
+    const result = await client.callTool({ name: "list_accounts", arguments: {} });
+    return ((result.content ?? []) as Array<{ text?: string }>).map((b) => b.text ?? "").join("");
+  };
+
+  it("names its rejection error PatRejectedError, the name a log line shows", () => {
+    expect(new PatRejectedError().name).toBe("PatRejectedError");
+  });
+
+  it("calls the local API by default", async () => {
+    const fetchImpl = vi.fn(async (_url: string) => json(okInput));
+    await runStdio({ FLUMP_PAT: PAT }, fetchImpl as unknown as typeof fetch, vi.fn());
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe("http://localhost:4000/v1/mcp/input");
+  });
+
+  it("names the request id when the API's answer does not match the contract", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ baseline: {} }), {
+          status: 200,
+          headers: { "content-type": "application/json", "x-request-id": "req-42" },
+        }),
+    );
+    const err = await runStdio(
+      { FLUMP_PAT: PAT },
+      fetchImpl as unknown as typeof fetch,
+      vi.fn(),
+    ).catch((e) => e);
+    expect(err.message).toContain("req-42");
+  });
+
+  it("keys short ids on the token id, as the remote server does", async () => {
+    const client = await connectWith((async () => json(okInput)) as unknown as typeof fetch);
+    expect(await listText(client)).toContain(shortId(TOKEN_ID, "acc", ACCOUNT_ID));
+  });
+
+  it("keys short ids on the local user when the token has no id", async () => {
+    const body = { ...okInput, token: { ...okInput.token, id: null } };
+    const client = await connectWith((async () => json(body)) as unknown as typeof fetch);
+    expect(await listText(client)).toContain(
+      shortId(shortIdKey({ userId: "local-user" }), "acc", ACCOUNT_ID),
+    );
+  });
+
+  it("an older read failing late does not throw away a newer one still being reused", async () => {
+    // Reads: #1 at start (ok). Then, past the reuse window, read #2 starts and stays pending.
+    // Past the window again, read #3 starts. #2 then fails. A call straight after must reuse #3
+    // (still inside its window), so no fourth request is made.
+    const clock = { now: 1_000_000 };
+    let failSecond!: () => void;
+    let secondStarted!: () => void;
+    const started = new Promise<void>((resolve) => {
+      secondStarted = resolve;
+    });
+    let calls = 0;
+    const fetchImpl = vi.fn(async () => {
+      calls++;
+      if (calls === 2) {
+        secondStarted();
+        await new Promise<void>((resolve) => {
+          failSecond = resolve;
+        });
+        return json({}, 503);
+      }
+      return json(okInput);
+    });
+    const client = await connectWith(fetchImpl as unknown as typeof fetch, clock);
+    clock.now += INPUT_REUSE_MS;
+    const second = client.callTool({ name: "list_accounts", arguments: {} });
+    await started;
+    clock.now += INPUT_REUSE_MS;
+    await client.callTool({ name: "list_accounts", arguments: {} });
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    failSecond();
+    expect((await second).isError).toBe(true);
+    await client.callTool({ name: "list_accounts", arguments: {} });
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
   });
 });

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { connectTestClient } from "../testing/client.js";
 import { mortgageAndIsa } from "../testing/personas.js";
 import { MINIMAL_TOOL_ARGS } from "../testing/tool-args.js";
@@ -6,6 +6,8 @@ import {
   effectiveAnonymize,
   filterKnownScopes,
   hasScopes,
+  INSUFFICIENT_SCOPE,
+  insufficientScopeMessage,
   PROMPT_SCOPES,
   RESOURCE_SCOPES,
   requirementFor,
@@ -227,4 +229,65 @@ describe("scope enforcement through the MCP server", () => {
       });
     });
   }
+});
+
+describe("the scope facade on directly registered handlers", () => {
+  /** A stand-in server: each registration method hands back the handler it was given. */
+  const fakeServer = () => ({
+    name: "fake",
+    registerTool: (_n: string, _c: unknown, h: unknown) => h,
+    tool: (_n: string, h: unknown) => h,
+    registerPrompt: (_n: string, _c: unknown, h: unknown) => h,
+    prompt: (_n: string, h: unknown) => h,
+    connect: (x: unknown) => x,
+  });
+  type Handler = () => unknown;
+
+  it("answers a tool call without the scope as an error result, and never runs the handler", async () => {
+    const handler = vi.fn(() => "data");
+    const scoped = withScopeEnforcement(fakeServer(), ["mcp:simulate"]);
+    for (const guarded of [
+      scoped.registerTool("list_accounts", {}, handler) as Handler,
+      scoped.tool("list_accounts", handler) as Handler,
+    ]) {
+      const result = (await guarded()) as {
+        isError: boolean;
+        content: Array<{ type: string; text: string }>;
+      };
+      expect(result.isError).toBe(true);
+      expect(result.content[0]?.type).toBe("text");
+      expect(result.content[0]?.text).toMatch(new RegExp(`^${INSUFFICIENT_SCOPE}`));
+    }
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("guards prompts registered with the older prompt() method too", () => {
+    const handler = vi.fn(() => "data");
+    const scoped = withScopeEnforcement(fakeServer(), ["mcp:read:anonymized"]);
+    const guarded = scoped.prompt("import-spreadsheet", handler) as Handler;
+    // import-spreadsheet needs write:stage as well as a read scope.
+    expect(() => guarded()).toThrow(INSUFFICIENT_SCOPE);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("passes other properties and methods through untouched", () => {
+    const scoped = withScopeEnforcement(fakeServer(), []);
+    expect(scoped.name).toBe("fake");
+    const transport = { kind: "transport" };
+    expect(scoped.connect(transport)).toBe(transport);
+  });
+});
+
+describe("insufficientScopeMessage", () => {
+  it("names every scope the primitive needs", () => {
+    const message = insufficientScopeMessage("tool", "simulate_debt_payoff");
+    expect(message.startsWith(INSUFFICIENT_SCOPE)).toBe(true);
+    for (const scope of ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"]) {
+      expect(message).toContain(scope);
+    }
+  });
+
+  it("still gives an INSUFFICIENT_SCOPE message for a name with no entry, without throwing", () => {
+    expect(insufficientScopeMessage("tool", "nope").startsWith(INSUFFICIENT_SCOPE)).toBe(true);
+  });
 });
