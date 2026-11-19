@@ -115,8 +115,27 @@ export const OpenEditDialog: Story = {
     await screen.findByRole("dialog");
     await expect(screen.getByRole("button", { name: /delete/i })).toHaveAttribute(
       "data-variant",
-      "ghost",
+      "dangerSubtle",
     );
+  },
+};
+
+/** The 0% interest period end is the shared, themed date picker, with a Clear action. */
+export const PromoDatePicker: Story = {
+  args: { isEditAccount: false },
+  parameters: { router: { loaderData: mockLoaderData } },
+  play: async () => {
+    await openAdd();
+    await userEvent.selectOptions(screen.getByLabelText("Account type"), "Credit Card");
+    await userEvent.click(screen.getByRole("button", { name: /^0% interest period ends/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Choose year/ }));
+    await userEvent.click(screen.getByRole("button", { name: "2027" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Choose month/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Jun" }));
+    await userEvent.click(screen.getByRole("button", { name: "30 Jun 2027" }));
+    await expect(
+      screen.getByRole("button", { name: /^0% interest period ends/ }).textContent,
+    ).toContain("30 Jun 2027");
   },
 };
 

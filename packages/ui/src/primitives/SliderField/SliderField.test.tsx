@@ -132,15 +132,15 @@ describe("SliderField Primitive", () => {
     expect(document.getElementById(id as string)?.textContent).toBe("Help");
   });
 
-  it("renders a label addon and names extra describedby ids with the helper id", () => {
+  it("shows a label addon and adds describedBy ids to the slider and the pill", () => {
     render(
       <>
-        <span id="rate-info">Explains the rate</span>
+        <p id="extra-help">Extra help</p>
         <SliderField
-          aria-describedby="rate-info"
+          describedBy="extra-help"
           helperText="Help"
           label="Rate"
-          labelAddon={<button type="button">About Rate</button>}
+          labelAddon={<button type="button">About rate</button>}
           max={10}
           min={0}
           value={1}
@@ -148,13 +148,13 @@ describe("SliderField Primitive", () => {
         />
       </>,
     );
-    expect(screen.getByRole("button", { name: "About Rate" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "About rate" })).toBeTruthy();
     const ids = screen.getByRole("slider").getAttribute("aria-describedby")?.split(" ") ?? [];
-    expect(ids[0]).toBe("rate-info");
     expect(ids).toHaveLength(2);
-    expect(document.getElementById(ids[1])?.textContent).toBe("Help");
-    // The label still names the range input.
-    expect(screen.getByLabelText("Rate", { selector: "input[type=range]" })).toBeDefined();
+    expect(ids).toContain("extra-help");
+    expect(screen.getByLabelText("Rate input").getAttribute("aria-describedby")).toBe("extra-help");
+    // The label still names the slider.
+    expect(screen.getByLabelText("Rate", { selector: "input[type=range]" })).toBeTruthy();
   });
 
   it("value pill has input boundary", () => {

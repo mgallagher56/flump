@@ -1,5 +1,5 @@
-import { ResultBlock, Select, SimulatorSplitLayout, SliderField } from "@repo/ui";
-import { type FC, useEffect, useMemo, useRef, useState } from "react";
+import { InfoTip, ResultBlock, Select, SimulatorSplitLayout, SliderField } from "@repo/ui";
+import { type FC, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import {
@@ -8,7 +8,6 @@ import {
   panel,
   remainingText,
   selectRow,
-  simDescription,
   simRoot,
 } from "./RemortgageShockSim.styles";
 
@@ -81,6 +80,7 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
   currentPaymentIsSaved = false,
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  const newRateNoteId = `remortgage-rate-note-${useId().replace(/:/g, "")}`;
 
   const balanceKnown = currentBalance > 0;
   const rateKnown = currentRate > 0;
@@ -177,20 +177,30 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
             }}
           />
         </div>
-        <p className={remainingText} id="remortgage-months-remaining">
-          {monthsRemaining === null
-            ? "Fixed rate end date not set. Choose a month and year to see the time left."
-            : rateKnown
+        {/* A fact from the chosen date. With no date the empty selects say so: no extra line. */}
+        {monthsRemaining === null ? null : (
+          <p className={remainingText} id="remortgage-months-remaining">
+            {rateKnown
               ? `${formatMonthsLeft(monthsRemaining)} left on your ${rateFormat.format(currentRate)}% fixed rate`
               : `${formatMonthsLeft(monthsRemaining)} left on your fixed rate`}
-        </p>
+          </p>
+        )}
       </div>
 
       <SliderField
+        describedBy={newRateNoteId}
         format="percent"
         fractionDigits={1}
-        helperText="Assumption: the rate after your fixed rate ends. Your lender publishes its current rates."
         label="Rate after your fixed rate ends"
+        labelAddon={
+          <InfoTip
+            descriptionId={newRateNoteId}
+            label="About the rate after your fixed rate ends"
+            term="Rate after your fixed rate ends"
+          >
+            An assumption you choose. Your lender publishes its current rates.
+          </InfoTip>
+        }
         max={8.5}
         min={2}
         step={0.1}
@@ -230,14 +240,12 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
 
   return (
     <div className={simRoot()} data-testid="remortgage-shock-sim" id="remortgage-shock-sim">
-      <p className={simDescription}>
-        Model your payment at a different rate when your fixed rate ends.
-      </p>
       <SimulatorSplitLayout
         content={content}
         contentLabel="Rate change estimates"
         controls={controls}
         controlsLabel="Rate change assumptions"
+        controlsSpan={4}
       />
     </div>
   );

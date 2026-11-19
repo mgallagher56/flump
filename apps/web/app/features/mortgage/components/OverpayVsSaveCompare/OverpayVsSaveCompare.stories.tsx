@@ -34,6 +34,19 @@ export const Populated: Story = {
   },
 };
 
+/** The years slider waits behind "Show the years compared"; opening it shows the slider. */
+export const YearsCompared: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryAllByLabelText("Years to compare")).toHaveLength(0);
+    const [toggle] = canvas.getAllByRole("button", { name: "Show the years compared" });
+    fireEvent.click(toggle as HTMLElement);
+    const [years] = canvas.getAllByLabelText("Years to compare");
+    fireEvent.change(years as HTMLElement, { target: { value: "5" } });
+    await expect(canvasElement.textContent).toMatch(/over 5 years \(estimate\)/);
+  },
+};
+
 export const InterestOnly: Story = {
   args: { mortgageType: "interest-only", interestRate: 3, overpayment: 400 },
 };

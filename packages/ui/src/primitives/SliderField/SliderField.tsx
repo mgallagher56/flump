@@ -47,13 +47,13 @@ export interface SliderFieldProps {
   /** Formats the value for assistive tech (aria-valuetext). Defaults to the pill format. */
   formatValue?: (value: number) => string;
   helperText?: string;
-  /** Optional element (such as an InfoTip) rendered inline beside the label. */
+  /** Content after the label, for example an `InfoTip`. */
   labelAddon?: ReactNode;
   /**
-   * Extra ids for the range input's `aria-describedby`, such as an InfoTip's `descriptionId`, so a
-   * screen reader reads that text with the slider. Joined with the helper text's id when both exist.
+   * Extra ids for the slider's and the pill's `aria-describedby`, for example an `InfoTip`
+   * `descriptionId`, so text kept behind an info button is still read with the field.
    */
-  "aria-describedby"?: string;
+  describedBy?: string;
   onChange: (value: number) => void;
   /** Called when the pill is blurred while empty. */
   onClear?: () => void;
@@ -94,7 +94,7 @@ export const SliderField: FC<SliderFieldProps> = ({
   formatValue,
   helperText,
   labelAddon,
-  "aria-describedby": ariaDescribedBy,
+  describedBy,
   onChange,
   onClear,
   className,
@@ -218,6 +218,8 @@ export const SliderField: FC<SliderFieldProps> = ({
   };
 
   const showAffixes = format === "number";
+  const rangeDescribedBy =
+    [helperText ? helperId : undefined, describedBy].filter(Boolean).join(" ") || undefined;
 
   return (
     <div className={cx(sliderFieldContainer(), className)}>
@@ -237,6 +239,7 @@ export const SliderField: FC<SliderFieldProps> = ({
         <div className={sliderFieldValuePill({ disabled: !!disabled })}>
           {showAffixes && unitPrefix && <span className={sliderPillAffix()}>{unitPrefix}</span>}
           <input
+            aria-describedby={describedBy}
             aria-label={`${label} input`}
             autoComplete="off"
             className={sliderPillInput()}
@@ -255,10 +258,7 @@ export const SliderField: FC<SliderFieldProps> = ({
       </div>
 
       <input
-        aria-describedby={
-          [ariaDescribedBy, helperText ? helperId : undefined].filter(Boolean).join(" ") ||
-          undefined
-        }
+        aria-describedby={rangeDescribedBy}
         aria-label={label}
         aria-valuetext={valueText}
         className={sliderInputTrack()}

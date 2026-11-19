@@ -67,6 +67,34 @@ export const Percentage: Story = {
   },
 };
 
+/** An info button after the label; its text is named in the slider's aria-describedby. */
+export const WithInfoTip: Story = {
+  args: { label: "Extra each month", describedBy: "slider-story-help" },
+  render: (args) => (
+    <StatefulSliderField
+      {...args}
+      labelAddon={
+        <InfoTip descriptionId="slider-story-help" term="Extra each month">
+          Your lender's terms set out any limit on overpayments.
+        </InfoTip>
+      }
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: "About Extra each month" })).toBeVisible();
+    await expect(canvas.getByRole("slider")).toHaveAttribute(
+      "aria-describedby",
+      "slider-story-help",
+    );
+  },
+};
+
+export const WithInfoTipDark: Story = {
+  ...WithInfoTip,
+  globals: { theme: "dark" },
+};
+
 export const Dark: Story = {
   globals: { theme: "dark" },
   args: { value: 120 },
@@ -151,30 +179,6 @@ export const NotSet: Story = {
 
 export const Disabled: Story = {
   args: { disabled: true, value: 200, helperText: "Locked while the plan is fixed." },
-};
-
-/** An InfoTip beside the label in place of helper text; the slider names its hidden description. */
-export const WithInfoTip: Story = {
-  args: {
-    label: "Extra payment each month",
-    value: 100,
-    "aria-describedby": "slider-story-info",
-    labelAddon: (
-      <InfoTip descriptionId="slider-story-info" term="Extra payment each month">
-        On top of your minimum payments.
-      </InfoTip>
-    ),
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getByRole("slider")).toHaveAttribute(
-      "aria-describedby",
-      "slider-story-info",
-    );
-    await expect(
-      canvas.getByRole("button", { name: "About Extra payment each month" }),
-    ).toBeInTheDocument();
-  },
 };
 
 export const LongLabel: Story = {

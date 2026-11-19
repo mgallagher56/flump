@@ -65,8 +65,25 @@ describe("RemortgageShockSim", () => {
 
   it("does not invent a fix end date", () => {
     render(<RemortgageShockSim currentBalance={280000} currentRate={2.5} />);
-    expect(screen.getByText(/Fixed rate end date not set/)).toBeDefined();
+    expect((screen.getByLabelText("Fixed rate end month") as HTMLSelectElement).value).toBe("");
+    expect((screen.getByLabelText("Fixed rate end year") as HTMLSelectElement).value).toBe("");
     expect(screen.queryByText(/left on your/i)).toBeNull();
+    expect(screen.getByTestId("remortgage-outcome").textContent).toMatch(
+      /after your fixed rate ends/,
+    );
+  });
+
+  it("keeps supporting text behind an info button that the rate slider names", async () => {
+    const { container } = render(<RemortgageShockSim currentBalance={280000} currentRate={2.5} />);
+    expect(container.textContent).not.toMatch(/Model your payment at a different rate/);
+    const slider = screen.getByRole("slider", { name: "Rate after your fixed rate ends" });
+    const ids = slider.getAttribute("aria-describedby")?.split(" ") ?? [];
+    const described = ids.map((id) => document.getElementById(id)?.textContent).join(" ");
+    expect(described).toContain("Your lender publishes its current rates.");
+    fireEvent.click(
+      screen.getByRole("button", { name: "About the rate after your fixed rate ends" }),
+    );
+    expect((await screen.findByRole("dialog")).textContent).toContain("An assumption you choose.");
   });
 
   it("seeds the end date from the user's own figures and has no term control of its own", () => {
