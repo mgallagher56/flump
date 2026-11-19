@@ -24,6 +24,11 @@ export interface BudgetEntry {
    * "take-home" reads the profile's salary, "housing" the housing details.
    */
   linked?: "take-home" | "housing";
+  /**
+   * Stored on a row the person replaced with a saved detail ("Use your take-home pay"): its
+   * amount is £0 and the engine reads the saved figure in its place.
+   */
+  linksTo?: "take-home" | "housing" | null;
   createdAt: string;
   updatedAt: string;
 }

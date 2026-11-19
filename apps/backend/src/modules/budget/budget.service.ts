@@ -7,6 +7,7 @@ import {
   MAX_CUSTOM_BUDGET_CATEGORIES,
   type UpdateBudgetEntryRequest,
 } from "@flump/api-contract";
+import { defaultIsEssential } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -158,7 +159,8 @@ export class BudgetService {
       frequency: body.frequency ?? "monthly",
       isIncome: body.isIncome ?? false,
       isPrimaryIncome: false,
-      isEssential: body.isEssential ?? true,
+      // Savings rows are off unless the person marks one (owner item 28); other rows stay on.
+      isEssential: body.isEssential ?? defaultIsEssential(body.category, body.isIncome ?? false),
       notes: body.notes ?? null,
       isDefault: false,
       ...share,
@@ -208,6 +210,7 @@ export class BudgetService {
     if (body.isIncome !== undefined) entry.isIncome = body.isIncome;
     if (body.isEssential !== undefined) entry.isEssential = body.isEssential;
     if (body.notes !== undefined) entry.notes = body.notes ?? null;
+    if (body.linksTo !== undefined) entry.linksTo = body.linksTo;
     // Omitted ownership and share stay as saved; an explicit null share on a joint entry is 50.
     const nextOwnership: AccountOwnership =
       (ownership ?? entry.ownership) === "joint" ? "joint" : "sole";

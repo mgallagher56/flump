@@ -116,6 +116,8 @@ const ContextPackBudgetEntry = z.strictObject({
   ownership: z.enum(["sole", "joint"]).optional(),
   /** The user's share of a joint entry, 1 to 100; null where none is saved. */
   sharePercent: z.number().int().min(1).max(100).nullable().optional(),
+  /** A row the person replaced with a saved detail; the engine reads that figure in its place. */
+  linksTo: z.enum(["take-home", "housing"]).nullable().optional(),
 });
 
 /** `FlumpAiContextPack` from `@flump/finance-engine`, after JSON serialisation. */

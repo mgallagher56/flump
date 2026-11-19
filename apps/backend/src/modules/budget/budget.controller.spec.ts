@@ -178,6 +178,49 @@ describe("BudgetController", () => {
       return { budgetRepo, controller: budgetController(budgetRepo, createInMemoryRepository()) };
     };
 
+    it("stores a savings entry as not essential when the flag is left out (owner item 28)", async () => {
+      const { controller } = entryController();
+      const savings = await controller.createBudgetEntry(req, {
+        category: "savings",
+        name: "Emergency fund",
+        amount: 200,
+      });
+      expect(savings).toMatchObject({ isEssential: false });
+      const rent = await controller.createBudgetEntry(req, {
+        category: "housing",
+        name: "Rent",
+        amount: 1200,
+      });
+      expect(rent).toMatchObject({ isEssential: true });
+      const marked = await controller.createBudgetEntry(req, {
+        category: "savings",
+        name: "Pension top-up",
+        amount: 100,
+        isEssential: true,
+      });
+      expect(marked).toMatchObject({ isEssential: true });
+    });
+
+    it("links a row to a saved detail and unlinks it", async () => {
+      const { controller } = entryController();
+      const created = await controller.createBudgetEntry(req, {
+        category: "income",
+        name: "Paycheck",
+        amount: 2000,
+        isIncome: true,
+      });
+      const linked = await controller.updateBudgetEntry(req, created.id, {
+        amount: 0,
+        linksTo: "take-home",
+      });
+      expect(linked).toMatchObject({ amount: 0, linksTo: "take-home" });
+      const unlinked = await controller.updateBudgetEntry(req, created.id, {
+        amount: 2100,
+        linksTo: null,
+      });
+      expect(unlinked).toMatchObject({ amount: 2100, linksTo: null });
+    });
+
     it("creates a sole entry with no share by default", async () => {
       const { controller } = entryController();
       const created = await controller.createBudgetEntry(req, {

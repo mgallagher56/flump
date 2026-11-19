@@ -287,7 +287,6 @@ describe("BudgetEditor", () => {
       const { onAdd } = setup({
         entries: [row({})],
         linkedEntries: [takeHome],
-        profileTakeHome: 2400,
       });
       expect(screen.getByTestId("budget-editor-source-linked-take-home").textContent).toBe(
         "From your salary in Profile. A figure you type here is used instead.",
@@ -305,11 +304,54 @@ describe("BudgetEditor", () => {
       );
     });
 
-    it("says when the person's own pay entry is used in place of the profile's", () => {
-      setup({ profileTakeHome: 2400 });
-      expect(screen.getByTestId("budget-editor-source-b-2").textContent).toBe(
-        "Your own figure, used in place of your salary in Profile. Delete it to use your salary.",
+    it("offers the take-home for an income row and replaces the row the person picks", async () => {
+      const { onUpdate } = setup({
+        linkOffers: [{ link: "take-home", monthly: 2400, kind: null, rowIds: ["b-2"] }],
+      });
+      const use = screen.getByRole("button", {
+        name: "Use your take-home pay of £2,400 in place of Salary",
+      });
+      expect(use.textContent).toBe("Use your take-home pay of £2,400");
+      // Only the offered row gets the button.
+      expect(screen.queryByTestId("budget-editor-use-link-b-3")).toBeNull();
+      fireEvent.click(use);
+      // One stored value: the row keeps its place at £0 and the take-home is read in its place.
+      await waitFor(() =>
+        expect(onUpdate).toHaveBeenCalledWith("b-2", { amount: 0, linksTo: "take-home" }),
       );
+    });
+
+    it("names the saved housing figure when it offers to replace a housing row", () => {
+      setup({
+        linkOffers: [{ link: "housing", monthly: 950, kind: "mortgage", rowIds: ["b-1"] }],
+      });
+      expect(screen.getByTestId("budget-editor-use-link-b-1").textContent).toBe(
+        "Use your saved mortgage payment of £950",
+      );
+    });
+
+    it("typing over a take-home that replaced a row saves the figure back on that row", async () => {
+      const chosen = row({
+        id: "pay",
+        name: "Paycheck",
+        category: "income",
+        amount: 0,
+        isIncome: true,
+        linksTo: "take-home",
+      });
+      const { onAdd, onUpdate } = setup({
+        entries: [chosen],
+        linkedEntries: [takeHome],
+        shadowedIds: ["pay"],
+      });
+      const amount = screen.getByLabelText("Amount for Take-home pay");
+      fireEvent.focus(amount);
+      fireEvent.change(amount, { target: { value: "2500" } });
+      fireEvent.blur(amount);
+      await waitFor(() =>
+        expect(onUpdate).toHaveBeenCalledWith("pay", { amount: 2500, linksTo: null }),
+      );
+      expect(onAdd).not.toHaveBeenCalled();
     });
 
     it("saves a rent typed on the linked housing row to the housing details", async () => {

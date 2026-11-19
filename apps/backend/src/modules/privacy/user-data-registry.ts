@@ -385,6 +385,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "isDefault",
         "ownership",
         "sharePercent",
+        "linksTo",
         "createdAt",
         "updatedAt",
       ],
