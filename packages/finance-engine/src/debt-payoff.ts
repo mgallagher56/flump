@@ -350,8 +350,8 @@ function simulateSchedule(
         debtObj.balance -= extraToPay;
         availableBudgetThisMonth -= extraToPay;
         monthTotalPaid += extraToPay;
+        // Each debt takes extra at most once a month, so this is its whole payment.
         const paidSoFar = (paidById.get(debtObj.id) ?? 0) + extraToPay;
-        paidById.set(debtObj.id, paidSoFar);
 
         const paymentRecord = monthPayments.find((p) => p.debtId === debtObj.id);
         if (paymentRecord) {
