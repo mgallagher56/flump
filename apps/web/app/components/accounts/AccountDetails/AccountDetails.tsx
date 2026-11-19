@@ -3,6 +3,7 @@ import { History } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { useMemo } from "react";
 import { useLoaderData } from "react-router";
+import RecordedReturn, { recordedReturnBalances } from "~/components/accounts/RecordedReturn";
 import AccountDetailChart, { type AccountChartRow } from "~/components/charts/AccountDetailChart";
 import { toDisplayBalance } from "~/containers/accounts/utils";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
@@ -80,6 +81,11 @@ const AccountDetails: FC = () => {
       ),
     [accountDetails, account?.type, account?.balance],
   );
+  const isInvestment = account?.type === "Investment";
+  const returnBalances = useMemo(
+    () => (isInvestment ? recordedReturnBalances(accountDetails as never[]) : []),
+    [accountDetails, isInvestment],
+  );
 
   if (!accountDetails || accountDetails.length === 0) {
     return (
@@ -103,6 +109,14 @@ const AccountDetails: FC = () => {
           accountDetails={rows}
           title={`${account?.name ?? "Account"} balance history`}
         />
+        {isInvestment ? (
+          <RecordedReturn
+            assumedAnnualReturn={account?.interestRate ?? null}
+            balances={returnBalances}
+            id="account-recorded-return"
+            monthlyContribution={account?.monthlyContribution ?? null}
+          />
+        ) : null}
       </div>
     </HistorySection>
   );

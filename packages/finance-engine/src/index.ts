@@ -21,6 +21,7 @@ export * from "./picture/index.js";
 export * from "./portfolio.js";
 export * from "./profile.js";
 export * from "./recorded-month-comparison.js";
+export * from "./recorded-return.js";
 export * from "./retirement.js";
 export * from "./retirement-input.js";
 export * from "./sample-households.js";
