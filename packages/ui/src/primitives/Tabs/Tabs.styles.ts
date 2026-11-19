@@ -1,9 +1,10 @@
 import { cva } from "../../../styled-system/css";
 
 /**
- * Below 400px the tab row becomes a grid of equal cells (two a row, one at large text) instead of
- * a row that scrolls sideways, so every label is in view (phone audit P06, P07). An odd last tab
- * takes the full row. In px, not em: at large text the cells stack, which is what we want.
+ * Below 400px the tab row becomes a grid of two equal columns instead of a row that scrolls
+ * sideways, so every label is in view (phone audit P06, P07): two tabs sit side by side, four make
+ * a 2x2 grid and an odd last tab takes the full row (three read 2+1). Two columns at every text
+ * size, so two tabs never stack and push the page's hero down; a long label wraps in its cell.
  */
 const NARROW = "@media screen and (max-width: 399.98px)";
 
@@ -58,7 +59,7 @@ export const tabsList = cva({
     [NARROW]: {
       display: "grid",
       width: "100%",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 9rem), 1fr))",
+      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
       "& > :last-child:nth-child(odd)": { gridColumn: "1 / -1" },
     },
   },

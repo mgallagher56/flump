@@ -219,6 +219,29 @@ describe("Header", () => {
     expect(screen.queryByText("FCA AISP")).toBeNull();
   });
 
+  it("on a cramped bar (a phone at large text) keeps only the logo, theme and menu buttons", () => {
+    render(
+      <HelmetProvider>
+        <ThemeProvider>
+          <MemoryRouter>
+            <Header />
+          </MemoryRouter>
+        </ThemeProvider>
+      </HelmetProvider>,
+    );
+    // The TopBar is a container queried in rem, so a 200% root font size reaches it (phone sweep
+    // 4: the invite button and menu ran to 461px on a 375px screen).
+    expect(document.querySelector("header")?.className).toContain("cq-n_top-bar");
+    const invite = screen.getAllByRole("link", { name: /invite/i })[0];
+    const auth = invite?.closest("div")?.className ?? "";
+    expect(auth).toContain("[@container_top-bar_(max-width:_17rem)]:d_none");
+    // Sign in and the invite stay reachable in the menu.
+    fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
+    const drawer = document.getElementById("mobile-nav-drawer") as HTMLElement;
+    expect(within(drawer).getByRole("link", { name: "Sign in" })).toBeDefined();
+    expect(within(drawer).getAllByRole("link", { name: /invite/i }).length).toBeGreaterThan(0);
+  });
+
   it("below 1024px shows the menu button and no inline links, and one theme button", () => {
     render(
       <HelmetProvider>

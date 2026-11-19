@@ -33,7 +33,12 @@ describe("MobileBottomBar", () => {
 
   it("at large text wraps labels to two lines and keeps the bar compact (P19)", () => {
     render(<MobileBottomBar items={sampleNavItems} />);
-    const q = "[@media_screen_and_(max-width:_19.99em)]";
+    // A container query on the bar in rem, so a root font-size of 200% triggers it too (phone
+    // sweep 4: an em media query never saw it, and the bar ran off the side).
+    const q = "[@container_bottom-bar_(max-width:_19.99rem)]";
+    const nav = screen.getByRole("navigation", { name: "Primary mobile" }).className;
+    expect(nav).toContain("cq-t_inline-size");
+    expect(nav).toContain("cq-n_bottom-bar");
     const label = screen.getByText("Home");
     expect(label.className).toContain(`${q}:white-space_normal`);
     expect(label.className).toContain(`${q}:lc_2`);

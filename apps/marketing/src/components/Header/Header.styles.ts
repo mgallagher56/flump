@@ -1,6 +1,9 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** Sign in / CTA group in the top bar. */
+/**
+ * Sign in / CTA group in the top bar. Header.tsx adds `topBarOptionalAction`, so on a cramped bar
+ * (a phone at large text) it goes; Sign in and the invite stay in the menu.
+ */
 export const headerAuth = cva({
   base: { display: "flex", alignItems: "center", gap: { base: "1", sm: "2" } },
 });

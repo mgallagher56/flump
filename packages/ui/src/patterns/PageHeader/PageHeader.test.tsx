@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { PageHeader } from "./PageHeader";
+import { SHORT_VIEWPORT } from "./PageHeader.styles";
 
 describe("PageHeader Pattern", () => {
   it("renders title, subtitle, and action slot", () => {
@@ -34,7 +35,7 @@ describe("PageHeader Pattern", () => {
     expect(screen.getByText("Custom badge")).toBeDefined();
   });
 
-  it("below md, wraps: the actions drop under the h1 when both do not fit (P01, P02, P03)", () => {
+  it("below md, wraps: h1, then the description, then the actions on their own row", () => {
     const { container } = render(
       <PageHeader
         actions={<button type="button">Edit</button>}
@@ -52,12 +53,28 @@ describe("PageHeader Pattern", () => {
     expect(h1).toContain("flex_1_1_auto");
     expect(h1).toContain("min-w_0");
     expect(h1).toContain("ov-wrap_break-word");
-    // Order: h1, then the actions, then the description on a row of its own.
+    // Order: h1, then the description on a row of its own, then the actions (phone sweep 4), so
+    // wrapped actions never sit between the h1 and its description. From md they sit beside.
     expect(h1).toContain("order_1");
-    const aside = screen.getByRole("button", { name: "Edit" }).parentElement as HTMLElement;
-    expect(aside.className).toContain("order_2");
-    expect(aside.className).toContain("max-w_100%");
-    expect(screen.getByText("About").className).toContain("flex-b_100%");
+    const about = screen.getByText("About").className;
+    expect(about).toContain("order_5");
+    expect(about).toContain("flex-b_100%");
+    const aside = (screen.getByRole("button", { name: "Edit" }).parentElement as HTMLElement)
+      .className;
+    expect(aside).toContain("order_6");
+    expect(aside).toContain("md:order_2");
+    expect(aside).toContain("flex-b_100%");
+    expect(aside).toContain("md:flex-b_auto");
+    expect(aside).toContain("max-w_100%");
+  });
+
+  it("with no description, keeps the actions beside the h1 (order 2) on a phone", () => {
+    render(<PageHeader actions={<button type="button">Add</button>} title="Debt" />);
+    const aside = (screen.getByRole("button", { name: "Add" }).parentElement as HTMLElement)
+      .className;
+    expect(aside).toContain("order_2");
+    expect(aside).not.toContain("order_6");
+    expect(aside).not.toContain("flex-b_100%");
   });
 
   it("puts the page icon on the description's row, still and decorative, and none unless asked", () => {
@@ -99,5 +116,29 @@ describe("PageHeader Pattern", () => {
   it("omits the aside when there is no badge or action", () => {
     const { container } = render(<PageHeader title="Home" />);
     expect(container.querySelector("header")?.children.length).toBe(1);
+  });
+
+  it("goes compact on a short landscape touch screen only, not a short desktop window (P78)", () => {
+    // The query needs a coarse pointer, so a short desktop window keeps the full header.
+    expect(SHORT_VIEWPORT).toBe(
+      "@media screen and (max-height: 479.98px) and (orientation: landscape) and (pointer: coarse)",
+    );
+    render(
+      <PageHeader
+        actions={<button type="button">Add</button>}
+        description="Everything you own and owe, in one place."
+        illustration="empty-accounts"
+        title="Your accounts"
+      />,
+    );
+    const q =
+      "[@media_screen_and_(max-height:_479.98px)_and_(orientation:_landscape)_and_(pointer:_coarse)]";
+    expect(screen.getByText("Everything you own and owe, in one place.").className).toContain(
+      `${q}:d_none`,
+    );
+    expect(screen.getByTestId("page-header-illustration").className).toContain(`${q}:d_none`);
+    expect(screen.getByRole("heading", { level: 1 }).className).toContain(
+      `${q}:textStyle_heading.lg`,
+    );
   });
 });

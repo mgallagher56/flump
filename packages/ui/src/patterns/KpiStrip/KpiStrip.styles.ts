@@ -10,6 +10,14 @@ import { cva } from "../../../styled-system/css";
  * Each `KpiCard` takes three of the strip's rows as a subgrid (label, value, foot), so when one
  * card's label wraps onto two lines the figures beside it still share one line (P21).
  */
+/**
+ * Two equal columns that fall to one when a column would be under 7rem. rem follows the text
+ * size, so at default text this is always two halves (a 320px phone leaves about 15rem), while at
+ * 200% text on a phone the cards stack, so a figure such as "£10,950" never runs out of its card
+ * (phone sweep 4). Never more than two: each column is at least half the row less the gap.
+ */
+const TWO_UP = "repeat(auto-fit, minmax(max(7rem, calc(50% - token(spacing.density.gap))), 1fr))";
+
 export const kpiStripGrid = cva({
   base: {
     display: "grid",
@@ -21,6 +29,9 @@ export const kpiStripGrid = cva({
       display: "grid",
       gridRow: "span 3",
       gridTemplateRows: "subgrid",
+      // One full-width column: the card's `justifyContent: flex-start` would otherwise keep its
+      // implicit column at its content's width, and the value box (a size container) adds none.
+      gridTemplateColumns: "minmax(0, 1fr)",
       alignContent: "start",
     },
   },
@@ -32,10 +43,10 @@ export const kpiStripGrid = cva({
       // Two cards: equal halves of the full content width at every size, so the strip's edges
       // line up with the hero (STYLE-GUIDE, KPI strip; round 4). Never capped to a narrower grid.
       2: {
-        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        gridTemplateColumns: TWO_UP,
       },
       3: {
-        gridTemplateColumns: { base: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" },
+        gridTemplateColumns: { base: TWO_UP, sm: "repeat(3, minmax(0, 1fr))" },
         "& > :nth-child(3):last-child": { gridColumn: { base: "1 / -1", sm: "auto" } },
         // The full-width third card shows the same figure size as the two above it (P22). Those
         // step to md when their content box is 7rem or less; the third card is then two cards
@@ -47,7 +58,7 @@ export const kpiStripGrid = cva({
         },
       },
       4: {
-        gridTemplateColumns: { base: "repeat(2, minmax(0, 1fr))", sm: "repeat(4, minmax(0, 1fr))" },
+        gridTemplateColumns: { base: TWO_UP, sm: "repeat(4, minmax(0, 1fr))" },
       },
     },
   },

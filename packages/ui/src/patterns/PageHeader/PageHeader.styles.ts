@@ -16,9 +16,10 @@ export const SHORT_VIEWPORT =
   "@media screen and (max-height: 479.98px) and (orientation: landscape) and (pointer: coarse)";
 
 /**
- * Below md: a wrapping flex row. The h1 takes the first line and the actions sit beside it when
- * the h1 fits on one line beside them; otherwise the actions drop under the h1, so the h1 is never
- * squeezed and nothing overlaps it (phone audit RC-1). The description runs full width under both.
+ * Below md: a wrapping flex row, read in order h1, description (with the page icon), then the
+ * actions on a row of their own, so wrapped actions never sit between the h1 and its description
+ * (phone sweep 4). With no description the actions sit beside the h1 when both fit, and drop under
+ * it otherwise, so the h1 is never squeezed and nothing overlaps it (phone audit RC-1).
  * From md: text beside the actions, wrapping when they do not fit.
  */
 export const pageHeaderContainer = cva({
@@ -96,7 +97,6 @@ export const pageHeaderDescription = cva({
 
 export const pageHeaderAside = cva({
   base: {
-    order: 2,
     flex: "0 1 auto",
     maxWidth: "100%",
     display: "flex",
@@ -105,6 +105,14 @@ export const pageHeaderAside = cva({
     justifyContent: { base: "flex-start", md: "flex-end" },
     gap: "3",
   },
+  variants: {
+    /** With a description, below md the actions follow it on their own row (order 6). */
+    afterText: {
+      true: { order: { base: 6, md: 2 }, flexBasis: { base: "100%", md: "auto" } },
+      false: { order: 2 },
+    },
+  },
+  defaultVariants: { afterText: false },
 });
 
 /**

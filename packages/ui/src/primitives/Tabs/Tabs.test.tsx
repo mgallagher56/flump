@@ -222,6 +222,11 @@ describe("Tabs Primitive", () => {
     const list = screen.getByRole("tablist").className;
     expect(list).toContain("[@media_screen_and_(max-width:_399.98px)]:d_grid");
     expect(list).toContain("[@media_screen_and_(max-width:_399.98px)]:w_100%");
+    // Two equal columns, so two tabs sit side by side even at 320px (never one a row).
+    expect(list).toContain(
+      "[@media_screen_and_(max-width:_399.98px)]:grid-tc_repeat(2,_minmax(0,_1fr))",
+    );
+    expect(list).not.toContain("auto-fit");
   });
 
   it("warns in development when given more than four items", () => {

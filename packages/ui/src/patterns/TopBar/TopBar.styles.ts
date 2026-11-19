@@ -1,5 +1,13 @@
 import { cva } from "../../../styled-system/css";
 
+/**
+ * The bar is narrower than 17rem: a phone at large text (375px at 200% text is about 11.7rem; a
+ * 320px phone at default text is 20rem). A container query on the bar in rem, so it follows the
+ * root font size (browser text zoom), which an em media query never sees (phone sweep 4). Not a
+ * nav breakpoint: the nav still switches only on the shared nav conditions.
+ */
+const CRAMPED_BAR = "@container top-bar (max-width: 17rem)";
+
 export const topBarRoot = cva({
   base: {
     position: "sticky",
@@ -14,9 +22,23 @@ export const topBarRoot = cva({
     // Clear the notch and the rounded corners on a phone held sideways (phone audit P15). With
     // `viewport-fit=cover` these are zero wherever the screen has no cut-outs.
     paddingTop: "env(safe-area-inset-top)",
-    paddingLeft: "env(safe-area-inset-left)",
-    paddingRight: "env(safe-area-inset-right)",
+    // The side insets, or a hair that follows the root font size (0 at default text, 1px at
+    // 200%): Chrome re-checks a container query only when the container's size changes, so a
+    // text-size change after load then re-checks CRAMPED_BAR.
+    paddingLeft: "max(env(safe-area-inset-left), calc(0.0625rem - 1px))",
+    paddingRight: "max(env(safe-area-inset-right), calc(0.0625rem - 1px))",
+    containerType: "inline-size",
+    containerName: "top-bar",
   },
+});
+
+/**
+ * For a lower-priority action (a sign-in or sign-up button) that the menu also offers: it leaves
+ * the bar when the bar is cramped, so a phone at large text shows only the logo, the theme button
+ * and the menu button.
+ */
+export const topBarOptionalAction = cva({
+  base: { [CRAMPED_BAR]: { display: "none" } },
 });
 
 export const topBarInner = cva({

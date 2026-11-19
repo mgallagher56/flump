@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "@storybook/test";
 import { Button } from "../../primitives/Button/Button";
 import { PageHeader } from "./PageHeader";
+import { SHORT_VIEWPORT } from "./PageHeader.styles";
 
 const meta: Meta<typeof PageHeader> = {
   title: "3. Patterns/PageHeader",
@@ -124,24 +125,28 @@ export const LongContent: Story = {
 };
 
 /**
- * Round 4: on a phone the h1 and a single action share the first row and the description runs
- * full width beneath, so the action never takes a row of its own.
+ * Phone sweep 4: on a phone the header reads h1, description, then the actions, so actions never
+ * sit between the h1 and its description. From md the actions sit beside the text.
  */
 const phonePlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const title = canvas.getByRole("heading", { level: 1, name: "Your budget" });
+  const description = canvas.getByText("Your income, spending and how long your money lasts.");
   const action = canvas.getByRole("button", { name: "Edit budget" });
   const titleBox = title.getBoundingClientRect();
+  const descriptionBox = description.getBoundingClientRect();
   const actionBox = action.getBoundingClientRect();
-  // Same row: the action's vertical centre falls within the h1's line box.
-  const centre = actionBox.top + actionBox.height / 2;
-  await expect(centre > titleBox.top && centre < titleBox.bottom + 8).toBe(true);
+  if (window.innerWidth < 768) {
+    await expect(descriptionBox.top >= titleBox.bottom - 1).toBe(true);
+    await expect(actionBox.top >= descriptionBox.bottom - 1).toBe(true);
+  } else {
+    // From md the action shares the h1's row.
+    const centre = actionBox.top + actionBox.height / 2;
+    await expect(centre < descriptionBox.bottom).toBe(true);
+  }
 };
 
-/**
- * 375px wide. At 320 "Your budget" and a 44px-tall "Edit budget" button need about 296px and the
- * row has 288, so there the action drops under the h1 instead (see PhoneLongTitle, P01 to P03).
- */
+/** 375px wide: the h1, then the description, then the action on its own row. */
 const phone375 = {
   viewports: {
     phone375: { name: "Phone 375", styles: { width: "375px", height: "812px" }, type: "mobile" },
@@ -224,7 +229,10 @@ export const PhoneIllustrationNoDescriptionDark: Story = {
  */
 const landscapePlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  const short = window.matchMedia("(max-height: 479.98px)").matches;
+  // The same query the recipe uses (short, landscape and a coarse pointer), so the play checks the
+  // compact header on a touch phone and the full header on a short desktop window or in
+  // Storybook's Chromium, which has a fine pointer. The recipe test covers the rule itself.
+  const short = window.matchMedia(SHORT_VIEWPORT.replace(/^@media\s+/, "")).matches;
   const description = canvas.getByText("Everything you own and owe, in one place.");
   const art = canvas.getByTestId("page-header-illustration");
   await expect(getComputedStyle(description).display === "none").toBe(short);

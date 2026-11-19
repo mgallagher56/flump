@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { sampleNavItems } from "../AppShell/AppShell.fixtures";
 import { TopBar } from "./TopBar";
+import { topBarOptionalAction } from "./TopBar.styles";
 
 describe("TopBar", () => {
   it("renders items as links and marks the active one with aria-current", () => {
@@ -187,5 +188,16 @@ describe("TopBar", () => {
     // A px floor (44px), not 3.5rem, so the phone bar does not double in height at 200% text.
     expect(inner.className).toMatch(/(^|\s)min-h_touch(\s|$)/);
     expect(inner.className).not.toMatch(/(^|\s)min-h_14(\s|$)/);
+  });
+
+  it("is a rem container, so an optional action leaves a cramped bar at large text", () => {
+    const { container } = render(<TopBar items={sampleNavItems} />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toContain("cq-t_inline-size");
+    expect(root.className).toContain("cq-n_top-bar");
+    // The side padding follows the root font size by a hair, so a text-size change resizes the
+    // container and Chrome re-checks the query (phone sweep 4).
+    expect(root.className).toContain("calc(0.0625rem_-_1px)");
+    expect(topBarOptionalAction()).toContain("[@container_top-bar_(max-width:_17rem)]:d_none");
   });
 });

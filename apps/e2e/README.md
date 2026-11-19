@@ -224,8 +224,9 @@ whose name contains `e2e`, as for the other suites. Desktop emulation shows no o
 the field walk catches script-driven jumps only.
 
 Retirement plan is a friends-beta page: the backend answers 404 unless the user is listed in
-`RETIREMENT_ALLOWED_USER_IDS`. To sweep it, run with `RETIREMENT_ALLOWED_USER_IDS=dev_user_123`
-in the environment (the dev-bypass user; the web servers inherit it, local test backend only).
+`RETIREMENT_ALLOWED_USER_IDS`. To sweep it, set that variable to the dev-bypass user's id (see
+`apps/backend/src/auth/dev-bypass.verifier.ts`) in the environment; the web servers inherit it.
+Local test backend only.
 
 ## Accessibility gate
 

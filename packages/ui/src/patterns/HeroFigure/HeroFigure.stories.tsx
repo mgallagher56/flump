@@ -109,6 +109,36 @@ export const Phone: Story = {
 export const PhoneDark: Story = { ...Phone, globals: { theme: "dark" } };
 
 /**
+ * At 200% text (the root font size doubled, as the phone sweep and browser text zoom do) the figure
+ * steps down so it stays inside its card on one line (phone sweep 4).
+ */
+export const PhoneLargeText: Story = {
+  args: { value: 641700, ...deltaArgs },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  play: async ({ canvasElement }) => {
+    const root = document.documentElement;
+    const before = root.style.fontSize;
+    root.style.fontSize = "200%";
+    try {
+      const group = within(canvasElement).getByRole("group", { name: "Net worth" });
+      const figure = group.querySelector("[class*='numeric.hero']") as HTMLElement;
+      await waitFor(() =>
+        expect(figure.getBoundingClientRect().right).toBeLessThanOrEqual(
+          group.getBoundingClientRect().right,
+        ),
+      );
+      await expect(figure.scrollWidth).toBeLessThanOrEqual(figure.clientWidth + 1);
+      const lineHeight = Number.parseFloat(getComputedStyle(figure).lineHeight);
+      await expect(figure.getBoundingClientRect().height).toBeLessThan(lineHeight * 1.5);
+    } finally {
+      root.style.fontSize = before;
+    }
+  },
+};
+
+export const PhoneLargeTextDark: Story = { ...PhoneLargeText, globals: { theme: "dark" } };
+
+/**
  * A page whose answer is an estimate (take-home pay, an estimated tax bill) names it inside the
  * hero. Saved figures never carry the label.
  */

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, within } from "@storybook/test";
+import { expect, waitFor, within } from "@storybook/test";
 import { Lock } from "lucide-react";
 import { Icon } from "../../primitives/Icon/Icon";
 import { sampleNavItems } from "../AppShell/AppShell.fixtures";
@@ -46,6 +46,46 @@ export const Dark: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
   play,
 };
+
+/**
+ * 200% text, set as the phone sweep and browser text zoom do (the root font size doubled after the
+ * page loads): every item stays on screen, labels wrap to two lines and none is cut short (phone
+ * sweep 4). The bar is a container queried in rem, so the root size reaches it.
+ */
+const largeTextPlay: Story["play"] = async ({ canvasElement }) => {
+  const root = document.documentElement;
+  const before = root.style.fontSize;
+  root.style.fontSize = "200%";
+  try {
+    const bar = canvasElement.querySelector("nav") as HTMLElement;
+    if (getComputedStyle(bar).display === "none") return; // tablet and up: no bottom bar
+    await waitFor(() =>
+      expect(getComputedStyle(bar.querySelector("[data-nav-label]") as Element).whiteSpace).toBe(
+        "normal",
+      ),
+    );
+    await expect(bar.getBoundingClientRect().right).toBeLessThanOrEqual(window.innerWidth);
+    for (const item of bar.querySelectorAll("li")) {
+      const box = item.getBoundingClientRect();
+      await expect(box.left).toBeGreaterThanOrEqual(0);
+      await expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+    }
+    for (const label of bar.querySelectorAll<HTMLElement>("[data-nav-label]")) {
+      await expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth + 1);
+    }
+    await expect(root.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+  } finally {
+    root.style.fontSize = before;
+  }
+};
+
+export const LargeText: Story = {
+  globals: { theme: "light" },
+  parameters: { viewport: { defaultViewport: "mobile2" } },
+  play: largeTextPlay,
+};
+
+export const LargeTextDark: Story = { ...LargeText, globals: { theme: "dark" } };
 
 /** Tablets (768px and up) use the desktop top bar: the bottom bar is phones only (owner ruling). */
 export const Tablet: Story = {

@@ -4,6 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { countUnsetKpis, KpiStrip } from "./KpiStrip";
 
+/**
+ * Two equal halves at default text; one column when a half would be under 7rem (a phone at 200%
+ * text), never more than two (phone sweep 4).
+ */
+const TWO_UP_CLASS =
+  "grid-tc_repeat(auto-fit,_minmax(max(7rem,_calc(50%_-_token(spacing.density.gap))),_1fr))";
+
 describe("KpiStrip Pattern", () => {
   it("renders children in horizontal grid", () => {
     render(
@@ -188,7 +195,7 @@ describe("KpiStrip Pattern", () => {
       </KpiStrip>,
     );
     const cls = container.firstElementChild?.className ?? "";
-    expect(cls).toContain("grid-tc_repeat(2,_minmax(0,_1fr))");
+    expect(cls).toContain(TWO_UP_CLASS);
     expect(cls).toContain("sm:grid-tc_repeat(3,_minmax(0,_1fr))");
     // The third card spans both columns below sm, and takes its own column from sm.
     expect(cls).toContain("[&_>_:nth-child(3):last-child]:grid-c_1_/_-1");
@@ -205,6 +212,8 @@ describe("KpiStrip Pattern", () => {
     const cls = container.firstElementChild?.className ?? "";
     expect(cls).toContain("[&_>_[data-kpi-card]]:grid-tr_subgrid");
     expect(cls).toContain("[&_>_[data-kpi-card]]:grid-r_span_3");
+    // Each card is one full-width column, so the value box (a size container) is as wide as it.
+    expect(cls).toContain("[&_>_[data-kpi-card]]:grid-tc_minmax(0,_1fr)");
     // Each card has exactly three row items for the subgrid: label, value and (here, none) foot.
     for (const card of container.querySelectorAll("[data-kpi-card]")) {
       expect(card.children.length).toBeLessThanOrEqual(3);
@@ -219,10 +228,25 @@ describe("KpiStrip Pattern", () => {
       </KpiStrip>,
     );
     const cls = container.firstElementChild?.className ?? "";
-    expect(cls).toContain("grid-tc_repeat(2,_minmax(0,_1fr))");
+    expect(cls).toContain(TWO_UP_CLASS);
     // Never capped to a narrower grid at any width.
     expect(cls).not.toContain("lg:grid-tc");
     expect(cls).not.toContain("sm:grid-tc");
+  });
+
+  it("stacks the cards at large text instead of squeezing two figures into a phone row", () => {
+    const { container } = render(
+      <KpiStrip columns={4}>
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+        <div>D</div>
+      </KpiStrip>,
+    );
+    const cls = container.firstElementChild?.className ?? "";
+    // Below sm: at most two columns, each at least 7rem (rem follows the text size).
+    expect(cls).toContain(TWO_UP_CLASS);
+    expect(cls).toContain("sm:grid-tc_repeat(4,_minmax(0,_1fr))");
   });
 
   it("rejects a fifth item at compile time", () => {

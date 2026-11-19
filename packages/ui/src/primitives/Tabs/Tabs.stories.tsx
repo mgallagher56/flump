@@ -132,7 +132,13 @@ const itemCountsPlay: Story["play"] = async ({ canvasElement }) => {
   await expect(scrollerOf("Two views")).not.toHaveAttribute("data-overflow-start");
   if (window.innerWidth < 400) {
     // Below 400px the row wraps into a grid of equal cells: no list scrolls, and every tab is in
-    // view (phone audit P06, P07).
+    // view (phone audit P06, P07). Two columns: two tabs share one row, never one a row.
+    const [first, second] = within(canvas.getByRole("tablist", { name: "Two views" })).getAllByRole(
+      "tab",
+    );
+    await expect(Math.round(first.getBoundingClientRect().top)).toBe(
+      Math.round(second.getBoundingClientRect().top),
+    );
     for (const name of ["Three tools", "Four sections"]) {
       await expect(scrollerOf(name)).not.toHaveAttribute("data-overflow-start");
       await expect(scrollerOf(name)).not.toHaveAttribute("data-overflow-end");

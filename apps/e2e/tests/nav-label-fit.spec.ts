@@ -325,7 +325,21 @@ test.describe("the Debt and borrowing nav label fits", () => {
 });
 
 test.describe("marketing top bar", () => {
-  for (const width of [768, 1023, 1024, 1280]) {
+  // Below 1024 the header shows the menu button and no inline links, so the navigation never
+  // shows twice (phone audit P72); from 1024 the inline links show and must fit.
+  for (const width of [768, 1023]) {
+    test(`at ${width} wide the header shows the menu button and no inline links`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto(`${MARKETING_URL}/`);
+      const header = page.locator("header").first();
+      await expect(header.getByRole("button", { name: "Open navigation menu" })).toBeVisible();
+      await expect(header.locator('nav[aria-label="Primary"]')).toBeHidden();
+      await expectNoPageOverflow(page);
+    });
+  }
+  for (const width of [1024, 1280]) {
     test(`at ${width} wide every link has room inside its fill and the bar fits`, async ({
       page,
     }) => {
