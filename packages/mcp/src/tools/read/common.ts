@@ -253,7 +253,7 @@ const LINKED_LINE_MISSING: Record<NonNullable<BudgetEntryItem["linked"]>, Missin
     field: "monthlySaving",
     why: "A savings entry is linked to a savings account that has no monthly saving saved, or that was removed. The budget totals are left unknown rather than counting it as zero.",
     askUser:
-      "How much do you put into that savings account each month? It can be added on the Savings page in Flump.",
+      "What is the monthly amount saved on that account? It can be added on the Savings page in Flump.",
   },
   debt: {
     field: "monthlyDebtPayment",

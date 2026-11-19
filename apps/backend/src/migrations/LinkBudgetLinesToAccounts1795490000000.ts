@@ -33,7 +33,7 @@ import { takeMigrationLock } from "../config/migration-lock";
  */
 export const LINK_ACCOUNT_COLUMN = "link_account_id";
 export const LINK_ACCOUNT_FOREIGN_KEY = "FK_budget_entries_link_account";
-export const ACCOUNTS_ID_USER_UNIQUE = "UQ_accounts_id_user_id";
+export const ACCOUNTS_OWNER_KEY_INDEX = "UQ_accounts_id_user_id";
 export const LINK_ACCOUNT_CHECK = "CHK_budget_entries_link_account";
 export const LINK_ACCOUNT_UNIQUE_INDEX = "UQ_budget_entries_link_account";
 /** The constraint and index from AddBudgetEntryLinkKind1795440000000, redefined here. */
@@ -65,7 +65,7 @@ export class LinkBudgetLinesToAccounts1795490000000 implements MigrationInterfac
       `ALTER TABLE "budget_entries" DROP CONSTRAINT IF EXISTS "${LINK_ACCOUNT_FOREIGN_KEY}"`,
     );
     await queryRunner.query(
-      `CREATE UNIQUE INDEX IF NOT EXISTS "${ACCOUNTS_ID_USER_UNIQUE}" ON "accounts" ("id", "user_id")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "${ACCOUNTS_OWNER_KEY_INDEX}" ON "accounts" ("id", "user_id")`,
     );
     await queryRunner.query(
       `ALTER TABLE "budget_entries" ADD CONSTRAINT "${LINK_ACCOUNT_FOREIGN_KEY}"
@@ -146,7 +146,7 @@ export class LinkBudgetLinesToAccounts1795490000000 implements MigrationInterfac
     await queryRunner.query(
       `ALTER TABLE "budget_entries" DROP CONSTRAINT IF EXISTS "${LINK_ACCOUNT_FOREIGN_KEY}"`,
     );
-    await queryRunner.query(`DROP INDEX IF EXISTS "${ACCOUNTS_ID_USER_UNIQUE}"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "${ACCOUNTS_OWNER_KEY_INDEX}"`);
     await queryRunner.query(
       `ALTER TABLE "budget_entries" DROP COLUMN IF EXISTS "${LINK_ACCOUNT_COLUMN}"`,
     );
