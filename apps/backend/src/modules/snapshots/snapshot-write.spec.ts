@@ -18,7 +18,7 @@ describe("writeSnapshotRows balance update", () => {
       query: async (sql: string, params?: unknown[]) => {
         statements.push(sql);
         // The import insert returns every row it wrote.
-        if (/INSERT INTO "account_details"/.test(sql) && params) {
+        if (sql.includes(`INSERT INTO "account_details"`) && params) {
           const [ids, years, months] = [params[3], params[4], params[5]] as [
             string[],
             number[],
@@ -45,9 +45,9 @@ describe("writeSnapshotRows balance update", () => {
     );
 
     expect(written).toHaveLength(5);
-    expect(statements.filter((s) => /^\s*UPDATE "accounts"/.test(s))).toHaveLength(1);
+    expect(statements.filter((s) => s.trimStart().startsWith(`UPDATE "accounts"`))).toHaveLength(1);
     // The lock that statement relies on is one statement too.
-    expect(statements.filter((s) => /FOR UPDATE/.test(s))).toHaveLength(1);
+    expect(statements.filter((s) => s.includes("FOR UPDATE"))).toHaveLength(1);
   });
 
   it("issues one UPDATE of accounts for a typed (manual) write across accounts", async () => {
@@ -83,7 +83,7 @@ describe("writeSnapshotRows balance update", () => {
     expect(written).toHaveLength(3);
     // One insert chunk, then the balance sync's lock and its one UPDATE.
     expect(inserts).toBe(1);
-    expect(statements.filter((s) => /^\s*UPDATE "accounts"/.test(s))).toHaveLength(1);
-    expect(statements.filter((s) => /FOR UPDATE/.test(s))).toHaveLength(1);
+    expect(statements.filter((s) => s.trimStart().startsWith(`UPDATE "accounts"`))).toHaveLength(1);
+    expect(statements.filter((s) => s.includes("FOR UPDATE"))).toHaveLength(1);
   });
 });
