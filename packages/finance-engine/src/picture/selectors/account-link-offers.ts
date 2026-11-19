@@ -65,6 +65,18 @@ function namesAccount(haystack: readonly string[], needle: readonly string[]): b
   return false;
 }
 
+/** The words a plain savings row may be made of ("Savings", "My monthly saving"): no other pot. */
+const PLAIN_SAVING_WORDS = new Set([
+  "savings",
+  "saving",
+  "monthly",
+  "my",
+  "the",
+  "into",
+  "to",
+  "for",
+]);
+
 const pence = (n: number): number => Math.round(n * 100);
 
 interface Candidate {
@@ -133,7 +145,8 @@ export function findBudgetAccountLinkOffers(
       if (c.link === "savings") {
         return (
           row.category === SAVINGS_CATEGORY &&
-          (namesAccount(rowWords, c.words) || rowWords.every((word) => PAYMENT_WORDS.has(word)))
+          (namesAccount(rowWords, c.words) ||
+            (rowWords.length > 0 && rowWords.every((word) => PLAIN_SAVING_WORDS.has(word))))
         );
       }
       if (row.category === DEBT_CATEGORY) return true;

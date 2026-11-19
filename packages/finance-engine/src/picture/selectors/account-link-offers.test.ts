@@ -174,4 +174,11 @@ describe("findBudgetAccountLinkOffers (audit slice 5)", () => {
       ),
     ).toHaveLength(1);
   });
+
+  it("does not read a payment word as a plain savings name, or offer an unnamed row", () => {
+    const isa = [account("Cash ISA", "Saving", 100)];
+    expect(offersFor([row("Direct debit", 100, { category: "savings" })], isa)).toEqual([]);
+    expect(offersFor([row("", 100, { category: "savings" })], isa)).toEqual([]);
+    expect(offersFor([row("My savings", 100, { category: "savings" })], isa)).toHaveLength(1);
+  });
 });

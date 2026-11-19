@@ -214,53 +214,73 @@ function mortgageDetails(accounts: readonly RawAccount[]): RetirementHousingInpu
   };
 }
 
+/** A budget line the retirement spending target can count, before its continues/stops setting. */
+export interface RetirementBudgetLine {
+  /** The stored budget entry id, the key its continues/stops setting is saved under. */
+  id: string;
+  name: string;
+  category: string;
+  amount: number;
+  frequency: BudgetEntryItem["frequency"];
+  isIncome: boolean;
+}
+
+/**
+ * The budget lines a "from budget lines" retirement target is built from, in budget order: every
+ * spending line except housing (modelled on its own) and savings. A line linked to a saved fact
+ * reads that fact, never its stored £0: a debt line linked to a card or loan (audit slice 5) is the
+ * account's monthly payment at the person's share, as the budget counts it; a take-home or housing
+ * line is left out with income and housing; a linked line that is Not set (no saved payment, the
+ * account gone) has no figure, so it is left out. The Retirement page lists exactly these, so the
+ * line on screen and the figure the plan counts are one value.
+ */
+export function retirementBudgetLines(
+  entries: readonly BudgetEntryItem[],
+  accounts: readonly RawAccount[],
+): RetirementBudgetLine[] {
+  const resolved = withLinkedBudgetRows(entries, {
+    takeHome: figureUnknown(["annualSalary"], "not-set"),
+    housing: null,
+    accounts: new PortfolioSnapshot([...accounts]),
+  }).rows;
+  const lines: RetirementBudgetLine[] = [];
+  for (const row of resolved) {
+    if (row.isIncome || isHousingBudgetLine({ category: row.category })) continue;
+    if (row.category.trim().toLowerCase() === SAVINGS_CATEGORY) continue;
+    if (row.linked) {
+      if (row.linked !== "debt" || row.notSet || !row.linkedRowId) continue;
+      // Keyed by its stored id, so its continues/stops setting stays with the line.
+      lines.push({
+        id: row.linkedRowId,
+        name: row.name,
+        category: row.category,
+        amount: row.amount,
+        frequency: row.frequency,
+        isIncome: false,
+      });
+      continue;
+    }
+    lines.push({
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      amount: row.amount,
+      frequency: row.frequency,
+      isIncome: row.isIncome,
+    });
+  }
+  return lines;
+}
+
 function budgetTarget(
   lineSettings: readonly { budgetEntryId: string; status?: BudgetLineRetirementStatus }[],
   entries: readonly BudgetEntryItem[],
   accounts: readonly RawAccount[],
 ): RetirementTargetInput | null {
   const statuses = new Map(lineSettings.map((s) => [s.budgetEntryId, s.status]));
-  // A debt line linked to a card or loan (audit slice 5) reads the account's monthly payment at the
-  // person's share, as the budget does; keyed by its stored id so its continues/stops setting
-  // stays. One that is Not set (no saved payment, account gone) has no figure, so it is left out.
-  const debtLines: RetirementBudgetTargetLine[] = withLinkedBudgetRows(entries, {
-    takeHome: figureUnknown(["annualSalary"], "not-set"),
-    housing: null,
-    accounts: new PortfolioSnapshot([...accounts]),
-  })
-    .rows.filter((r) => r.linked === "debt" && !r.notSet && r.linkedRowId)
-    .map((r) => {
-      const id = r.linkedRowId as string;
-      return {
-        id,
-        name: r.name,
-        category: r.category,
-        amount: r.amount,
-        frequency: r.frequency,
-        isIncome: false,
-        status: statuses.get(id) ?? "continues",
-      };
-    });
-  const lines: RetirementBudgetTargetLine[] = entries
-    .filter(
-      (e) =>
-        !e.isIncome &&
-        // A linked line's stored amount is never read (take-home and housing are left out anyway).
-        !e.linkKind &&
-        !e.linked &&
-        !isHousingBudgetLine({ category: e.category }) &&
-        e.category.trim().toLowerCase() !== SAVINGS_CATEGORY,
-    )
-    .map((e) => ({
-      id: e.id,
-      name: e.name,
-      category: e.category,
-      amount: e.amount,
-      frequency: e.frequency,
-      isIncome: e.isIncome,
-      status: statuses.get(e.id) ?? "continues",
-    }));
-  lines.push(...debtLines);
+  const lines: RetirementBudgetTargetLine[] = retirementBudgetLines(entries, accounts).map(
+    (line) => ({ ...line, status: statuses.get(line.id) ?? "continues" }),
+  );
   return lines.length === 0 ? null : { kind: "budget", lines };
 }
 
