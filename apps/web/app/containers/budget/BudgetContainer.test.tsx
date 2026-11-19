@@ -610,6 +610,11 @@ describe("BudgetContainer", () => {
       mockSearchParams = new URLSearchParams("setup=common");
       render(<BudgetContainer />);
       expect(screen.getByRole("heading", { name: "Add common budget items" })).toBeDefined();
+      // The parameter is cleared without moving the reader to the top.
+      expect(mockSetSearchParams).toHaveBeenCalledWith(expect.any(Function), {
+        replace: true,
+        preventScrollReset: true,
+      });
     });
 
     it("?setup=common opens first-time setup on an empty budget", () => {

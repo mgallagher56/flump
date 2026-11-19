@@ -39,27 +39,52 @@ function hashTarget(hash: string): HTMLElement | null {
 }
 
 /**
+ * The key a position is saved under. `BrowserRouter` gives every entry made by a full page load or a
+ * native `#` jump the same key, "default" (a typed URL, a link from email, the skip link), so those
+ * are told apart by their URL; otherwise one page's offset would open another page. Exported for
+ * the tests.
+ */
+export function positionKey(
+  location: Pick<Location, "key" | "pathname" | "search" | "hash">,
+): string {
+  return location.key === "default"
+    ? `default:${location.pathname}${location.search}${location.hash}`
+    : location.key;
+}
+
+/** The first load is a reload or back/forward (restore), not a fresh visit (leave at the top). */
+export function isReturnVisit(): boolean {
+  try {
+    const [entry] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    return entry?.type === "reload" || entry?.type === "back_forward";
+  } catch {
+    return false;
+  }
+}
+
+/**
  * What to do with the scroll position after the router shows `location`. Exported for the tests.
+ * - A link to an anchor (or the skip link): scroll its target into view; its `scroll-margin-top`
+ *   clears the header. This comes first, so a saved offset never overrides an anchor.
  * - Back or forward to an entry we saw: return to where the reader left it.
- * - A link to an anchor: scroll its target into view (its `scroll-margin-top` clears the header).
  * - Any other new page: the top, with focus on `<main>` for keyboard and screen-reader users.
  */
 export function applyScroll(
-  location: Pick<Location, "key" | "hash">,
+  location: Pick<Location, "key" | "pathname" | "search" | "hash">,
   navigationType: NavigationType,
   positions: Positions,
 ): void {
-  if (navigationType === NavigationType.Pop) {
-    const saved = positions[location.key];
-    if (saved !== undefined) {
-      window.scrollTo(0, saved);
-      return;
-    }
-  }
   const target = hashTarget(location.hash);
   if (target) {
     target.scrollIntoView({ block: "start" });
     return;
+  }
+  if (navigationType === NavigationType.Pop) {
+    const saved = positions[positionKey(location)];
+    if (saved !== undefined) {
+      window.scrollTo(0, saved);
+      return;
+    }
   }
   window.scrollTo(0, 0);
   if (navigationType !== NavigationType.Pop)
@@ -69,14 +94,15 @@ export function applyScroll(
 /**
  * Scroll restoration for the marketing site's `BrowserRouter`, which (unlike a data router) has no
  * `<ScrollRestoration>`: without this a new page kept the old page's scroll position, so it opened
- * part way down. Renders nothing. On the first load (a reload, or coming back from another site)
- * it returns to the position saved for that history entry, if any; otherwise the browser decides.
+ * part way down. Renders nothing. On the first load it restores only a reload or a back/forward
+ * visit to an entry it saved; a fresh visit is left where the browser puts it (the top or the
+ * anchor).
  */
 export function ScrollManager(): null {
   const location = useLocation();
   const navigationType = useNavigationType();
   const positions = useRef<Positions>({});
-  const currentKey = useRef(location.key);
+  const currentKey = useRef(positionKey(location));
   const firstRender = useRef(true);
 
   useEffect(() => {
@@ -111,22 +137,22 @@ export function ScrollManager(): null {
     };
   }, []);
 
-  const { key, hash } = location;
-  // The hash and navigation type only ever change together with the key.
+  const { key, pathname, search, hash } = location;
+  // The path, query, hash and navigation type only ever change together with the key, or with a
+  // native `#` jump that keeps the key "default".
   useClientLayoutEffect(() => {
-    currentKey.current = key;
+    const current = { key, pathname, search, hash };
+    currentKey.current = positionKey(current);
     if (firstRender.current) {
       firstRender.current = false;
       positions.current = readPositions();
-      const saved = positions.current[key];
+      const saved = positions.current[currentKey.current];
       // History is manual from here on, so the browser no longer restores a reload itself.
-      if (navigationType === NavigationType.Pop && !hash && saved !== undefined) {
-        window.scrollTo(0, saved);
-      }
+      if (isReturnVisit() && !hash && saved !== undefined) window.scrollTo(0, saved);
       return;
     }
-    applyScroll({ key, hash }, navigationType, positions.current);
-  }, [key, hash, navigationType]);
+    applyScroll(current, navigationType, positions.current);
+  }, [key, pathname, search, hash, navigationType]);
 
   return null;
 }

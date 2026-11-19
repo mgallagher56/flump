@@ -33,7 +33,8 @@ export const sheetContentRecipe = cva({
     right: "0",
     // On top of the on-screen keyboard (useVisualViewportInset), not under it.
     bottom: "var(--keyboard-inset, 0px)",
-    maxHeight: "90vh",
+    // Older browsers without dvh still get the keyboard cap.
+    maxHeight: "min(90vh, calc(var(--visual-viewport-height, 100vh) * 0.9))",
     borderTopLeftRadius: "tray",
     borderTopRightRadius: "tray",
     borderBottomWidth: "0",

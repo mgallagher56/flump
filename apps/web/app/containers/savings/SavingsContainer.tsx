@@ -87,6 +87,8 @@ export const SavingsContainer: FC = () => {
     navigate(`${location?.pathname ?? "/app/savings"}${location?.hash ?? ""}`, {
       replace: true,
       state: null,
+      // Same page: the reader stays where the button was, not at the top.
+      preventScrollReset: true,
     });
   };
 

@@ -24,14 +24,28 @@ export function measureKeyboard(
   return { height: Math.round(viewport.height), inset };
 }
 
+/**
+ * The layout viewport height that `position: fixed; bottom: 0` is measured against. On iOS Safari
+ * `documentElement.clientHeight` is the small viewport (toolbars shown), which is short by the
+ * toolbar height once they collapse; `innerHeight` follows the toolbars but not the keyboard.
+ */
+function layoutViewportHeight(): number {
+  return window.innerHeight || document.documentElement.clientHeight;
+}
+
 function start(): () => void {
   const viewport = window.visualViewport;
   if (!viewport) return () => {};
   const root = document.documentElement;
   let frame = 0;
+  let last = "";
   const write = () => {
     frame = 0;
-    const { height, inset } = measureKeyboard(root.clientHeight, viewport);
+    const { height, inset } = measureKeyboard(layoutViewportHeight(), viewport);
+    // Scroll events fire every frame while the page pans: only touch the style when it changes.
+    const next = `${height}:${inset}`;
+    if (next === last) return;
+    last = next;
     root.style.setProperty(VISUAL_VIEWPORT_HEIGHT_VAR, `${height}px`);
     root.style.setProperty(KEYBOARD_INSET_VAR, `${inset}px`);
   };

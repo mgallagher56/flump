@@ -280,7 +280,11 @@ describe("SavingsContainer", () => {
       expect(zone().textContent).toContain("Pay rise from the take-home pay tool:");
       fireEvent.click(screen.getByRole("button", { name: "Remove pay rise" }));
       expect(screen.queryByText(/Pay rise from the take-home pay tool:/)).toBeNull();
-      expect(mockNavigate).toHaveBeenCalledWith("/app/savings", { replace: true, state: null });
+      expect(mockNavigate).toHaveBeenCalledWith("/app/savings", {
+        replace: true,
+        state: null,
+        preventScrollReset: true,
+      });
       expect(mockSubmit).not.toHaveBeenCalled();
     });
 
@@ -291,7 +295,11 @@ describe("SavingsContainer", () => {
       expect(reset.hasAttribute("disabled")).toBe(false);
       fireEvent.click(reset);
       expect(screen.queryByText(/Pay rise from the take-home pay tool:/)).toBeNull();
-      expect(mockNavigate).toHaveBeenCalledWith("/app/savings", { replace: true, state: null });
+      expect(mockNavigate).toHaveBeenCalledWith("/app/savings", {
+        replace: true,
+        state: null,
+        preventScrollReset: true,
+      });
       expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
       expect(mockSubmit).not.toHaveBeenCalled();
     });
