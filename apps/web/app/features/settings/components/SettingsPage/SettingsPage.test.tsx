@@ -1,5 +1,5 @@
 import { expectPageRules } from "@repo/ui/testing";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, MemoryRouter, RouterProvider, useNavigate } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parseSettingsTab } from "~/features/settings/settings-tabs";
@@ -103,7 +103,10 @@ describe("<SettingsPage />", () => {
 
   it("offers Profile, Security and Data tabs, starting on Profile", () => {
     render(<SettingsPage initialProfile={profile} />);
-    const names = screen.getAllByRole("tab").map((t) => t.textContent);
+    // The page's own sections; the Profile tab also holds the pension "% of salary" switch.
+    const names = within(screen.getByRole("tablist", { name: "Settings sections" }))
+      .getAllByRole("tab")
+      .map((t) => t.textContent);
     expect(names).toEqual(["Profile", "Security", "Data"]);
     expect(screen.getByRole("tab", { name: "Profile" }).getAttribute("aria-selected")).toBe("true");
     expect(screen.getByTestId("settings-profile-tab")).toBeDefined();

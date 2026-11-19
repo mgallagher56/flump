@@ -48,8 +48,9 @@ describe("<PensionDetails />", () => {
     const rows = Array.from(document.querySelectorAll("dl > div")).map((r) => r.textContent);
     expect(rows).toEqual([
       "Salary£50,000 a year",
-      "You pay6% of salary",
-      "Employer pays4% of salary",
+      // £50,000 at 6%: 3,000 a year ÷ 12 = £250 a month. At 4%: 2,000 ÷ 12 = £166.67, about £167.
+      "You pay6% of salary, about £250 a month",
+      "Employer pays4% of salary, about £167 a month",
       "MethodSalary sacrifice",
     ]);
   });

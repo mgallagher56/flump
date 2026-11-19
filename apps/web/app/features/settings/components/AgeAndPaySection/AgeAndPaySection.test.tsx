@@ -182,6 +182,61 @@ describe("<AgeAndPaySection />", () => {
     );
   });
 
+  it("shows the pounds a month beside each saved rate", () => {
+    setup();
+    // £52,000 at 6%: 52,000 × 0.06 = 3,120 a year; ÷ 12 = £260 a month.
+    expect(screen.getByText("About £260 a month")).toBeDefined();
+    // £52,000 at 4%: 2,080 a year; ÷ 12 = £173.33, shown to the whole pound.
+    expect(screen.getByText("About £173 a month")).toBeDefined();
+  });
+
+  it("switches the fields to pounds a month without saving, and back", () => {
+    const { onSave } = setup();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "£ a month" }));
+    fireEvent.click(screen.getByRole("tab", { name: "£ a month" }));
+    const own = screen.getByLabelText("Your pension contribution (£ a month)") as HTMLInputElement;
+    const employer = screen.getByLabelText("Employer contribution (£ a month)") as HTMLInputElement;
+    expect(own.value).toBe("260");
+    expect(employer.value).toBe("173.33");
+    // The rate now sits beside the pounds.
+    expect(screen.getByText("6% of salary")).toBeDefined();
+    expect(screen.getByText("4% of salary")).toBeDefined();
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "% of salary" }));
+    fireEvent.click(screen.getByRole("tab", { name: "% of salary" }));
+    expect(
+      (screen.getByLabelText("Your pension contribution (% of salary)") as HTMLInputElement).value,
+    ).toBe("6");
+  });
+
+  it("saves pounds a month as the percentage of the saved salary", async () => {
+    const { onSave } = setup();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "£ a month" }));
+    fireEvent.click(screen.getByRole("tab", { name: "£ a month" }));
+    const own = screen.getByLabelText("Your pension contribution (£ a month)");
+    fireEvent.change(own, { target: { value: "300" } });
+    fireEvent.blur(own);
+    // £300 a month on £52,000: 3,600 ÷ 52,000 = 6.923%, stored to two places as 6.92%. Only the
+    // percentage is saved; the employer's 4% is unchanged.
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith({ pensionPercent: 6.92, pensionEmployerPercent: 4 }),
+    );
+  });
+
+  it("turns off pounds a month without a saved salary and says why", () => {
+    setup({ ...SAVED, annualSalary: null });
+    const monthly = screen.getByRole("tab", { name: "£ a month" });
+    expect(monthly.hasAttribute("disabled") || monthly.getAttribute("data-disabled") !== null).toBe(
+      true,
+    );
+    expect(screen.getByTestId("pension-unit-note").textContent).toBe(
+      "Add your salary to enter pounds a month.",
+    );
+    // No pounds are invented beside the rates.
+    expect(screen.queryByText(/^About £/)).toBeNull();
+    expect(screen.getByLabelText("Your pension contribution (% of salary)")).toBeDefined();
+  });
+
   it("saves the employment type on change, and Not set as null", async () => {
     const { onSave } = setup({ ...SAVED, employmentType: "employed" });
     const select = screen.getByLabelText("Employment type") as HTMLSelectElement;

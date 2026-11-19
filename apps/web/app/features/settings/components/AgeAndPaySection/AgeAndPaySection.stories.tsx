@@ -48,7 +48,30 @@ export const NothingSet: Story = {
     await userEvent.type(year, "1899{enter}");
     await expect(canvas.getByText("Enter a year between 1900 and 2026.")).toBeDefined();
     await expect(args.onSave).not.toHaveBeenCalled();
+    // Pounds a month need a saved salary, so the switch stays on "% of salary" and says why.
+    await expect(canvas.getByText("Add your salary to enter pounds a month.")).toBeDefined();
   },
 };
 
 export const NothingSetDark: Story = { ...NothingSet, globals: { theme: "dark" } };
+
+/** The contributions entered as pounds a month: saved as the percentage of the saved salary. */
+export const PoundsAMonth: Story = {
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("tab", { name: "£ a month" }));
+    const own = canvas.getByLabelText("Your pension contribution (£ a month)") as HTMLInputElement;
+    // £52,000 at 6%: 3,120 a year ÷ 12 = £260 a month.
+    await expect(own.value).toBe("260");
+    await expect(canvas.getByText("6% of salary")).toBeDefined();
+    await userEvent.clear(own);
+    await userEvent.type(own, "300{enter}");
+    // £300 a month: 3,600 ÷ 52,000 = 6.92% to two places.
+    await expect(args.onSave).toHaveBeenCalledWith({
+      pensionPercent: 6.92,
+      pensionEmployerPercent: 4,
+    });
+  },
+};
+
+export const PoundsAMonthDark: Story = { ...PoundsAMonth, globals: { theme: "dark" } };

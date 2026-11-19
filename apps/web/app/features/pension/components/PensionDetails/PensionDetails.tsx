@@ -1,3 +1,4 @@
+import { contributionMonthlyFromPercent } from "@flump/finance-engine";
 import {
   Button,
   CollapsibleDrawer,
@@ -10,6 +11,7 @@ import {
 } from "@repo/ui";
 import { Check, ClipboardList, Pencil, X } from "lucide-react";
 import { type FC, type FormEvent, type ReactNode, useState } from "react";
+import { contributionMonthlyHint, contributionRateText } from "~/features/pension/contribution";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
   buttonRow,
@@ -59,8 +61,6 @@ export interface PensionDetailsProps {
   factsOpen?: boolean;
 }
 
-const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
-const formatPercent = (value: number) => `${percentFormat.format(value)}%`;
 const NOT_SET = "Not set";
 
 const ASSUMED_RATE_LABEL = "Assumed: the auto-enrolment minimum. Edit to match your payslip.";
@@ -94,6 +94,10 @@ const DetailsForm: FC<FormProps> = ({
   const [employerNi, setEmployerNi] = useState(isSalarySacrificeEmployerNi);
   const [methodChanged, setMethodChanged] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { formatCurrency } = useFormatCurrency();
+  // The pounds beside each rate, from the salary in the form; not known without one.
+  const monthlyFor = (percent: number | null) =>
+    contributionMonthlyFromPercent(percent, { annualSalary: salary });
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -128,7 +132,10 @@ const DetailsForm: FC<FormProps> = ({
             />
           )}
         </FormField>
-        <FormField label="Your contribution (% of salary)">
+        <FormField
+          hint={contributionMonthlyHint(monthlyFor(employee), formatCurrency)}
+          label="Your contribution (% of salary)"
+        >
           {(field) => (
             <PercentInput
               {...controlProps(field)}
@@ -139,7 +146,10 @@ const DetailsForm: FC<FormProps> = ({
             />
           )}
         </FormField>
-        <FormField label="Employer contribution (% of salary)">
+        <FormField
+          hint={contributionMonthlyHint(monthlyFor(employer), formatCurrency)}
+          label="Employer contribution (% of salary)"
+        >
           {(field) => (
             <PercentInput
               {...controlProps(field)}
@@ -229,6 +239,8 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
   factsOpen = false,
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  // The saved rates apply to the whole salary; without one the pounds are not known.
+  const basis = { annualSalary: hasSalary ? annualSalary : null };
   // After an edit (saved or cancelled) the drawer comes back open, where the user left it.
   const [reopenFacts, setReopenFacts] = useState(false);
   const startEditing = () => {
@@ -284,11 +296,23 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
               </div>
               <div className={factRow()}>
                 <dt>You pay</dt>
-                <dd className={factValue()}>{formatPercent(employeePercent)} of salary</dd>
+                <dd className={factValue({ wrap: true })}>
+                  {contributionRateText(
+                    employeePercent,
+                    contributionMonthlyFromPercent(employeePercent, basis),
+                    formatCurrency,
+                  )}
+                </dd>
               </div>
               <div className={factRow()}>
                 <dt>Employer pays</dt>
-                <dd className={factValue()}>{formatPercent(employerPercent)} of salary</dd>
+                <dd className={factValue({ wrap: true })}>
+                  {contributionRateText(
+                    employerPercent,
+                    contributionMonthlyFromPercent(employerPercent, basis),
+                    formatCurrency,
+                  )}
+                </dd>
               </div>
               <div className={factRow()}>
                 <dt>Method</dt>

@@ -43,7 +43,9 @@ export const WithSalary: Story = {
     const canvas = within(canvasElement);
     // The zone starts closed: the summary names the saved starting figures.
     await expect(
-      canvas.getAllByText("Starts from your contribution of 5% of your £60,000 salary.")[0],
+      canvas.getAllByText(
+        "Starts from your contribution of 5% of your £60,000 salary, about £250 a month.",
+      )[0],
     ).toBeDefined();
     const toggle = canvas.getAllByRole("button", {
       name: "Show what-if: change your contribution",
@@ -52,7 +54,8 @@ export const WithSalary: Story = {
     const slider = canvas.getAllByLabelText("Your contribution")[0] as HTMLElement;
     slider.focus();
     await userEvent.keyboard("{ArrowRight}{ArrowRight}");
-    await expect(canvas.getAllByText("Edited. Not saved.")[0]).toBeDefined();
+    // Two 0.5 steps from 5% is 6%: 3,600 a year ÷ 12 = £300 a month.
+    await expect(canvas.getAllByText("About £300 a month. Edited. Not saved.")[0]).toBeDefined();
   },
 };
 

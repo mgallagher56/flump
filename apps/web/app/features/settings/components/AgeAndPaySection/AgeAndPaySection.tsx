@@ -1,23 +1,45 @@
-import { getUkCalendarDate } from "@flump/finance-engine";
+import {
+  contributionMonthlyFromPercent,
+  contributionPercentFromMonthly,
+  getUkCalendarDate,
+} from "@flump/finance-engine";
 import {
   ButtonLink,
   Card,
   CurrencyInput,
   controlProps,
   FormField,
+  type FormFieldControlState,
   PageSection,
   PercentInput,
   Select,
+  Tabs,
   useOptionalToast,
   WholeNumberInput,
 } from "@repo/ui";
 import { CalendarDays } from "lucide-react";
 import { type FC, type FocusEvent, type KeyboardEvent, useRef, useState } from "react";
 import { Link, useInRouterContext } from "react-router";
-import { pensionRatesAssumed } from "~/features/pension/contribution";
+import {
+  CONTRIBUTION_UNIT_ITEMS,
+  CONTRIBUTION_UNIT_LABEL,
+  type ContributionUnit,
+  contributionMonthlyHint,
+  contributionPercentHint,
+  NO_SALARY_FOR_MONTHLY,
+  pensionRatesAssumed,
+} from "~/features/pension/contribution";
 import { fieldGrid, sectionCard, statusText } from "~/features/settings/settings.styles";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type UserProfile, type UserProfileUpdate, useUserProfile } from "~/hooks/useUserProfile";
-import { ageAndPayAnchor, numericField, pensionLinkRow } from "./AgeAndPaySection.styles";
+import {
+  ageAndPayAnchor,
+  numericField,
+  pensionLinkRow,
+  pensionUnitLabel,
+  pensionUnitNote,
+  pensionUnitRow,
+} from "./AgeAndPaySection.styles";
 
 export const AGE_AND_PAY_SECTION_ID = "settings-age-and-pay";
 export const AGE_AND_PAY_SAVED_MESSAGE = "Saved";
@@ -88,6 +110,7 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
   const { updateProfile } = useUserProfile();
   const save = onSave ?? updateProfile;
   const toast = useOptionalToast()?.toast;
+  const { formatCurrency: formatPounds } = useFormatCurrency();
 
   // Outside a router (unit tests, stories) the link is a plain anchor.
   const inRouter = useInRouterContext();
@@ -106,8 +129,23 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
   const draft = useRef({ salary, employee, employer });
   const [yearError, setYearError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // How the two contributions are entered. Only the percentage is stored: a pounds amount is
+  // turned into a percentage of the saved salary as it is typed, and saved like a typed rate.
+  const [unitChoice, setUnitChoice] = useState<ContributionUnit>("percent");
+  // The pounds as typed, so the field does not jump while typing. Cleared (undefined) to show the
+  // pounds worked out from the saved rate again.
+  const [typedMonthly, setTypedMonthly] = useState<{
+    employee?: number | null;
+    employer?: number | null;
+  }>({});
 
   const setField = (patch: Partial<AgeAndPayValues>) => {
+    if ("pensionPercent" in patch || "pensionEmployerPercent" in patch) {
+      setTypedMonthly((typed) => ({
+        employee: "pensionPercent" in patch ? undefined : typed.employee,
+        employer: "pensionEmployerPercent" in patch ? undefined : typed.employer,
+      }));
+    }
     if ("birthYear" in patch) setYearText(patch.birthYear?.toString() ?? "");
     if ("employmentType" in patch) setEmploymentType(patch.employmentType ?? null);
     if ("annualSalary" in patch) {
@@ -213,6 +251,71 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
   const ratesNotSet = saved.current.pensionPercent === null && employee === null;
   const employerNotSet = saved.current.pensionEmployerPercent === null && employer === null;
 
+  // Pounds a month need a saved salary to turn into the stored percentage: without one the switch
+  // stays on "% of salary" and says why. The saved rates apply to the whole salary.
+  const basis = { annualSalary: saved.current.annualSalary };
+  const canUseMonthly = (saved.current.annualSalary ?? 0) > 0;
+  const unit: ContributionUnit = canUseMonthly ? unitChoice : "percent";
+  const monthlyShown = (key: "employee" | "employer", percent: number | null) => {
+    const typed = typedMonthly[key];
+    if (typed !== undefined) return typed;
+    const monthly = contributionMonthlyFromPercent(percent, basis);
+    return monthly === null ? null : Math.round(monthly * 100) / 100;
+  };
+  const switchUnit = (next: string) => {
+    setTypedMonthly({});
+    setUnitChoice(next as ContributionUnit);
+  };
+  /** The other form beside the one being entered, or "Not set" while the rate is assumed. */
+  const contributionHint = (notSet: boolean, percent: number | null) => {
+    if (notSet) return "Not set";
+    if (unit === "monthly") return contributionPercentHint(percent);
+    return contributionMonthlyHint(contributionMonthlyFromPercent(percent, basis), formatPounds);
+  };
+
+  const renderContributionInput = (
+    key: "employee" | "employer",
+    field: FormFieldControlState,
+    testId: string,
+    percent: number | null,
+    setPercent: (value: number | null) => void,
+  ) =>
+    unit === "monthly" ? (
+      <CurrencyInput
+        {...controlProps(field)}
+        className={numericField()}
+        data-testid={testId}
+        // A month of the whole salary is 100%, the most a rate can be.
+        max={(saved.current.annualSalary ?? 0) / 12}
+        min={0}
+        value={monthlyShown(key, percent)}
+        onBlur={leavePension}
+        onKeyDown={onEnter(commitPension)}
+        onValueChange={(monthly) => {
+          setTypedMonthly((typed) => ({ ...typed, [key]: monthly }));
+          const converted = contributionPercentFromMonthly(monthly, basis);
+          draft.current[key] = converted;
+          setPercent(converted);
+        }}
+      />
+    ) : (
+      <PercentInput
+        {...controlProps(field)}
+        className={numericField()}
+        data-testid={testId}
+        max={100}
+        min={0}
+        value={percent}
+        onBlur={leavePension}
+        onKeyDown={onEnter(commitPension)}
+        onValueChange={(value) => {
+          draft.current[key] = value;
+          setPercent(value);
+        }}
+      />
+    );
+  const unitLabel = unit === "monthly" ? "£ a month" : "% of salary";
+
   return (
     <PageSection
       className={ageAndPayAnchor()}
@@ -278,49 +381,59 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
               />
             )}
           </FormField>
-          <FormField
-            hint={ratesNotSet ? "Not set" : undefined}
-            id="pension-percent-input"
-            label="Your pension contribution (% of salary)"
-          >
-            {(field) => (
-              <PercentInput
-                {...controlProps(field)}
-                className={numericField()}
-                data-testid="pension-percent-input"
-                max={100}
-                min={0}
-                value={employee}
-                onBlur={leavePension}
-                onKeyDown={onEnter(commitPension)}
-                onValueChange={(value) => {
-                  draft.current.employee = value;
-                  setEmployee(value);
-                }}
-              />
+          <div className={pensionUnitRow()}>
+            <p aria-hidden="true" className={pensionUnitLabel()}>
+              {CONTRIBUTION_UNIT_LABEL}
+            </p>
+            <Tabs
+              aria-label={CONTRIBUTION_UNIT_LABEL}
+              items={CONTRIBUTION_UNIT_ITEMS.map((item) => ({
+                ...item,
+                disabled: item.value === "monthly" && !canUseMonthly,
+              }))}
+              size="sm"
+              value={unit}
+              onValueChange={switchUnit}
+            />
+            {canUseMonthly ? null : (
+              <p
+                className={pensionUnitNote()}
+                data-testid="pension-unit-note"
+                id="pension-unit-note"
+              >
+                {NO_SALARY_FOR_MONTHLY}
+              </p>
             )}
+          </div>
+          <FormField
+            hint={contributionHint(ratesNotSet, employee)}
+            id="pension-percent-input"
+            label={`Your pension contribution (${unitLabel})`}
+          >
+            {(field) =>
+              renderContributionInput(
+                "employee",
+                field,
+                "pension-percent-input",
+                employee,
+                setEmployee,
+              )
+            }
           </FormField>
           <FormField
-            hint={employerNotSet ? "Not set" : undefined}
+            hint={contributionHint(employerNotSet, employer)}
             id="pension-employer-percent-input"
-            label="Employer contribution (% of salary)"
+            label={`Employer contribution (${unitLabel})`}
           >
-            {(field) => (
-              <PercentInput
-                {...controlProps(field)}
-                className={numericField()}
-                data-testid="pension-employer-percent-input"
-                max={100}
-                min={0}
-                value={employer}
-                onBlur={leavePension}
-                onKeyDown={onEnter(commitPension)}
-                onValueChange={(value) => {
-                  draft.current.employer = value;
-                  setEmployer(value);
-                }}
-              />
-            )}
+            {(field) =>
+              renderContributionInput(
+                "employer",
+                field,
+                "pension-employer-percent-input",
+                employer,
+                setEmployer,
+              )
+            }
           </FormField>
         </div>
         <p className={pensionLinkRow()}>

@@ -104,3 +104,56 @@ export function workplacePensionFromProfile(
     ratesAssumed: hasDefaultPensionRates(profile),
   };
 }
+
+/**
+ * Converting a pension contribution between "% of salary" and "£ a month". One form is stored
+ * (the profile stores percentages); the other is worked out here, never stored beside it.
+ */
+export interface ContributionBasis {
+  /** The saved yearly salary before tax, or null when none is saved. */
+  annualSalary: number | null | undefined;
+  /**
+   * Take the percentage of pay inside the qualifying earnings band instead of the whole salary.
+   * Default false: the saved profile rates apply to the whole salary.
+   */
+  useQualifyingEarnings?: boolean;
+}
+
+/** The pay a percentage is taken from, or null when no salary is saved. */
+const pensionablePay = ({ annualSalary, useQualifyingEarnings }: ContributionBasis) => {
+  const salary = Number(annualSalary);
+  if (annualSalary == null || !Number.isFinite(salary) || salary <= 0) return null;
+  return useQualifyingEarnings ? calculatePensionQualifyingEarnings(salary) : salary;
+};
+
+/**
+ * The pounds a month a percentage contribution comes to, or null when the salary is not known
+ * (never 0 or an invented figure). Not rounded.
+ */
+export function contributionMonthlyFromPercent(
+  percent: number | null | undefined,
+  basis: ContributionBasis,
+): number | null {
+  const pay = pensionablePay(basis);
+  const rate = Number(percent);
+  if (pay === null || percent == null || !Number.isFinite(rate) || rate < 0) return null;
+  return (pay * rate) / 100 / 12;
+}
+
+/**
+ * The percentage of salary a monthly amount comes to, rounded to two decimal places (what the
+ * profile stores), or null when the salary is not known: a pounds amount with no salary is never
+ * turned into a percentage.
+ */
+export function contributionPercentFromMonthly(
+  monthly: number | null | undefined,
+  basis: ContributionBasis,
+): number | null {
+  const pay = pensionablePay(basis);
+  const amount = Number(monthly);
+  // Under the qualifying earnings band no pay counts, so no percentage can be worked out.
+  if (pay === null || pay <= 0 || monthly == null || !Number.isFinite(amount) || amount < 0) {
+    return null;
+  }
+  return Math.round(((amount * 12) / pay) * 100 * 100) / 100;
+}
