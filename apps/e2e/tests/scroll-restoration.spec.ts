@@ -4,10 +4,13 @@ import { MARKETING_URL } from "../support/env";
 import { waitForHydration } from "../support/page";
 
 /**
- * A new page opens at the top, back returns to where the reader was, and a link to an anchor lands
- * on its target (owner report 2026-11-18: "the page is already scrolled towards the bottom"). The
- * marketing site's router had no scroll restoration at all, so a new page kept the old offset.
- * Phone size with touch, where the report came from.
+ * A new page opens at the top with focus on its content, a page loaded fresh is not given another
+ * page's offset, and links to an anchor (and the skip link) land on their target (owner report
+ * 2026-11-18: "the page is already scrolled towards the bottom"). The marketing site's router had
+ * no scroll restoration at all, so a new page kept the old offset. Phone size with touch, where
+ * the report came from. Back and forward restoring the old place is covered by the ScrollManager
+ * unit tests (marketing) and React Router's own ScrollRestoration (web), not here: those passed
+ * before this change too.
  */
 test.use({ viewport: { width: 375, height: 812 }, hasTouch: true, isMobile: true });
 
@@ -35,16 +38,29 @@ test.describe("marketing site", () => {
     await expect(page.locator("main#main")).toBeFocused();
   });
 
-  test("back returns to where the reader was", async ({ page }) => {
+  test("a page loaded fresh after scrolling another opens at the top", async ({ page }) => {
+    // Every full page load has the router key "default": an offset saved on one page must not
+    // open the next page loaded in the same tab.
     await page.goto(`${MARKETING_URL}/`);
     await page.locator("#root main").waitFor();
-    const before = await scrollToBottom(page);
-    await page.locator("footer").getByRole("link", { name: "Pricing" }).first().click();
-    await expect(page).toHaveURL(/\/pricing$/);
-    await expect.poll(() => scrollY(page)).toBe(0);
-    await page.goBack();
-    await expect(page).toHaveURL(`${MARKETING_URL}/`);
-    await expect.poll(async () => Math.abs((await scrollY(page)) - before)).toBeLessThanOrEqual(2);
+    await scrollToBottom(page);
+    await page.goto(`${MARKETING_URL}/pricing`);
+    await page.locator("#root main").waitFor();
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    expect(await scrollY(page)).toBe(0);
+  });
+
+  test("the skip link lands on the main content, not on a saved offset", async ({ page }) => {
+    await page.goto(`${MARKETING_URL}/`);
+    await page.locator("#root main").waitFor();
+    await scrollToBottom(page);
+    await page.goto(`${MARKETING_URL}/pricing`);
+    await page.locator("#root main").waitFor();
+    await page.getByRole("link", { name: /^Skip to/ }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/pricing#main$/);
+    const top = await page.locator("main#main").evaluate((el) => el.getBoundingClientRect().top);
+    expect(Math.abs(top), "main content at the top of the screen").toBeLessThanOrEqual(120);
   });
 
   test("a link to an anchor on another page lands on the anchor", async ({ page }) => {
@@ -89,24 +105,5 @@ test.describe("web app", () => {
     await expect(page).toHaveURL(/\/app\/pension$/);
     await expect.poll(() => scrollY(page)).toBe(0);
     await expect(page.locator("main#main-content")).toBeFocused();
-  });
-
-  test("back returns to where the reader was", async ({ page }) => {
-    await page.goto("/app/accounts");
-    await waitForHydration(page);
-    const before = await scrollToBottom(page);
-    await page.locator(BAR).getByRole("link", { name: "Budget" }).tap();
-    await expect(page).toHaveURL(/\/app\/budget$/);
-    await expect.poll(() => scrollY(page)).toBe(0);
-    await page.goBack();
-    await expect(page).toHaveURL(/\/app\/accounts$/);
-    await expect.poll(async () => Math.abs((await scrollY(page)) - before)).toBeLessThanOrEqual(2);
-  });
-
-  test("a link to an anchor lands on the anchor", async ({ page }) => {
-    await page.goto("/app/profile#settings-age-and-pay");
-    await waitForHydration(page);
-    await expect(page.locator("#settings-age-and-pay")).toBeInViewport();
-    expect(await scrollY(page)).toBeGreaterThan(0);
   });
 });

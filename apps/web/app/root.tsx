@@ -28,6 +28,7 @@ import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
 import i18n from "./i18n";
 import { registerSavedDataReload, revalidateOnConflict } from "./services/conflict";
+import { scrollRestorationKey } from "./utils/scrollRestorationKey";
 import "@repo/ui/fonts.css";
 import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
@@ -256,7 +257,7 @@ export default function App() {
             </AppShell>
           </ResponsiveProvider>
         </ThemeContext.Provider>
-        <ScrollRestoration nonce={nonce} />
+        <ScrollRestoration getKey={scrollRestorationKey} nonce={nonce} />
         <Scripts nonce={nonce} />
       </body>
     </html>
@@ -307,7 +308,7 @@ export function ErrorBoundary() {
             </AppShell>
           </ResponsiveProvider>
         </ThemeContext.Provider>
-        <ScrollRestoration nonce={nonce} />
+        <ScrollRestoration getKey={scrollRestorationKey} nonce={nonce} />
         <Scripts nonce={nonce} />
       </body>
     </html>

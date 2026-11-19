@@ -131,8 +131,9 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
           // The bottom bar shows signed in and in the sandbox; elsewhere the drawer is the only nav.
           user || sandbox ? withoutBarPages(authRoutes) : [HOME_NAV_ROUTE, ...authRoutes]
         }
-        // "Pay" with its pages is inline in the tablet top bar, so the drawer drops it there.
-        isGroupInlineFromNavInline={(item) => BAR_KEYS.has(item.key)}
+        // Signed in, "Pay" with its pages is inline in the tablet top bar, so the drawer drops it
+        // there. The signed-out bar shows only Home, so the sandbox drawer keeps every group.
+        isGroupInlineFromNavInline={user ? (item) => BAR_KEYS.has(item.key) : undefined}
         isRouteDisabled={
           sandbox && !user ? (item) => SANDBOX_DISABLED_KEYS.has(item.key) : undefined
         }

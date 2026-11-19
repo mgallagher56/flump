@@ -1,7 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter, NavigationType, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { applyScroll, SCROLL_STORAGE_KEY, ScrollManager } from "./ScrollManager";
+import { applyScroll, positionKey, SCROLL_STORAGE_KEY, ScrollManager } from "./ScrollManager";
 
 let scrollTo: ReturnType<typeof vi.fn>;
 
@@ -13,19 +13,20 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   document.body.innerHTML = "";
 });
 
 describe("applyScroll", () => {
   it("opens a new page at the top and moves focus to its main content", () => {
     document.body.innerHTML = '<main id="main" tabindex="-1"></main>';
-    applyScroll({ key: "b", hash: "" }, NavigationType.Push, { a: 900 });
+    applyScroll({ key: "b", pathname: "/", search: "", hash: "" }, NavigationType.Push, { a: 900 });
     expect(scrollTo).toHaveBeenCalledWith(0, 0);
     expect(document.activeElement?.id).toBe("main");
   });
 
   it("returns to the saved position on back or forward", () => {
-    applyScroll({ key: "a", hash: "" }, NavigationType.Pop, { a: 900 });
+    applyScroll({ key: "a", pathname: "/", search: "", hash: "" }, NavigationType.Pop, { a: 900 });
     expect(scrollTo).toHaveBeenCalledWith(0, 900);
   });
 
@@ -34,7 +35,7 @@ describe("applyScroll", () => {
       '<button type="button">Back</button><main id="main" tabindex="-1"></main>';
     const back = document.querySelector("button");
     back?.focus();
-    applyScroll({ key: "unknown", hash: "" }, NavigationType.Pop, {});
+    applyScroll({ key: "unknown", pathname: "/", search: "", hash: "" }, NavigationType.Pop, {});
     expect(scrollTo).toHaveBeenCalledWith(0, 0);
     expect(document.activeElement).toBe(back);
   });
@@ -43,13 +44,13 @@ describe("applyScroll", () => {
     document.body.innerHTML = '<section id="beta"></section>';
     const target = document.getElementById("beta") as HTMLElement;
     target.scrollIntoView = vi.fn();
-    applyScroll({ key: "c", hash: "#beta" }, NavigationType.Push, {});
+    applyScroll({ key: "c", pathname: "/", search: "", hash: "#beta" }, NavigationType.Push, {});
     expect(target.scrollIntoView).toHaveBeenCalledWith({ block: "start" });
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
   it("goes to the top when the anchor is not on the page", () => {
-    applyScroll({ key: "c", hash: "#missing" }, NavigationType.Push, {});
+    applyScroll({ key: "c", pathname: "/", search: "", hash: "#missing" }, NavigationType.Push, {});
     expect(scrollTo).toHaveBeenCalledWith(0, 0);
   });
 });
@@ -90,7 +91,7 @@ describe("ScrollManager", () => {
       await new Promise((resolve) => requestAnimationFrame(resolve));
     });
     expect(JSON.parse(window.sessionStorage.getItem(SCROLL_STORAGE_KEY) ?? "{}")).toEqual({
-      default: 1200,
+      "default:/": 1200,
     });
 
     Object.defineProperty(window, "scrollY", { configurable: true, value: 0 });
@@ -102,13 +103,54 @@ describe("ScrollManager", () => {
   });
 
   it("returns to the saved position when the page is reloaded", () => {
-    // MemoryRouter's first entry has the key "default" and loads as a POP, like a reload.
-    window.sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify({ default: 640 }));
+    vi.spyOn(performance, "getEntriesByType").mockReturnValue([
+      { type: "reload" } as PerformanceNavigationTiming,
+    ]);
+    window.sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify({ "default:/": 640 }));
     render(
       <MemoryRouter initialEntries={["/"]}>
         <ScrollManager />
       </MemoryRouter>,
     );
     expect(scrollTo).toHaveBeenCalledWith(0, 640);
+  });
+
+  it("leaves a fresh visit at the top, even with an offset saved for the same entry", () => {
+    // The owner's report: a page loaded fresh opened at an offset saved for another visit.
+    vi.spyOn(performance, "getEntriesByType").mockReturnValue([
+      { type: "navigate" } as PerformanceNavigationTiming,
+    ]);
+    window.sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify({ "default:/": 640 }));
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ScrollManager />
+      </MemoryRouter>,
+    );
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+});
+
+describe("positionKey", () => {
+  it("tells apart entries a full load or a native # jump gives the same key", () => {
+    expect(positionKey({ key: "default", pathname: "/", search: "", hash: "" })).toBe("default:/");
+    expect(positionKey({ key: "default", pathname: "/pricing", search: "", hash: "#main" })).toBe(
+      "default:/pricing#main",
+    );
+    expect(positionKey({ key: "abc123", pathname: "/pricing", search: "", hash: "" })).toBe(
+      "abc123",
+    );
+  });
+
+  it("an anchor wins over a saved offset on back or forward", () => {
+    document.body.innerHTML = '<section id="main"></section>';
+    const target = document.getElementById("main") as HTMLElement;
+    target.scrollIntoView = vi.fn();
+    applyScroll(
+      { key: "default", pathname: "/pricing", search: "", hash: "#main" },
+      NavigationType.Pop,
+      { "default:/pricing#main": 900 },
+    );
+    expect(target.scrollIntoView).toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 });

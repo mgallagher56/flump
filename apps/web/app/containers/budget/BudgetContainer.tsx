@@ -283,7 +283,8 @@ const BudgetContainer: FC = () => {
         next.delete(SETUP_PARAM);
         return next;
       },
-      { replace: true },
+      // Same page: clearing the parameter never moves the reader.
+      { replace: true, preventScrollReset: true },
     );
   }, [setupParam, setSearchParams]);
 

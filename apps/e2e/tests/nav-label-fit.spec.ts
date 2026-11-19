@@ -181,6 +181,52 @@ test.describe("the Debt and borrowing nav label fits", () => {
     await expect(drawer.getByText("Pay", { exact: true })).toBeHidden();
   });
 
+  test("tablet at 768 wide: every destination is in the top bar, its menus or the drawer", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 768, height: 800 });
+    await page.goto("/app/accounts");
+    await waitForHydration(page);
+    const nav = page.locator("header").first().locator('nav[aria-label="Primary"]');
+    const visibleHrefs = (scope: Locator) =>
+      scope
+        .locator("a[href]")
+        .evaluateAll((els) =>
+          els
+            .filter((el) => el.getBoundingClientRect().width > 0)
+            .map((el) => (el as HTMLAnchorElement).getAttribute("href") ?? ""),
+        );
+    const reachable = new Set(await visibleHrefs(nav));
+    // Open each group shown inline and collect its pages.
+    const groups = nav.locator("li > button");
+    for (let i = 0; i < (await groups.count()); i += 1) {
+      const group = groups.nth(i);
+      if (!(await group.isVisible())) continue;
+      await group.click();
+      for (const href of await visibleHrefs(nav)) reachable.add(href);
+      await page.keyboard.press("Escape");
+    }
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+    const drawer = page.locator('[data-testid="mobile-nav-drawer"]');
+    await expect(drawer).toBeVisible();
+    for (const href of await visibleHrefs(drawer)) reachable.add(href);
+    const paths = new Set([...reachable].map((href) => href.split(/[?#]/)[0]));
+    for (const path of [
+      "/",
+      "/app/accounts",
+      "/app/budget",
+      "/app/take-home",
+      "/app/savings",
+      "/app/pension",
+      "/app/debt",
+      "/app/mortgage",
+      "/app/profile",
+      "/tools",
+    ]) {
+      expect(paths.has(path), `${path} reachable at 768`).toBe(true);
+    }
+  });
+
   test.describe("phone", () => {
     test.use({ viewport: { width: 320, height: 640 }, hasTouch: true, isMobile: true });
 

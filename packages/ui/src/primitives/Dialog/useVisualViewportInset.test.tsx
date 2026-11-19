@@ -58,7 +58,7 @@ describe("useVisualViewportInset", () => {
   beforeEach(() => {
     viewport = new FakeViewport();
     vi.stubGlobal("visualViewport", viewport);
-    vi.spyOn(root, "clientHeight", "get").mockReturnValue(812);
+    vi.spyOn(window, "innerHeight", "get").mockReturnValue(812);
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
       cb(0);
       return 1;
@@ -91,6 +91,31 @@ describe("useVisualViewportInset", () => {
     unmount();
     expect(read(VISUAL_VIEWPORT_HEIGHT_VAR)).toBe("");
     expect(read(KEYBOARD_INSET_VAR)).toBe("");
+  });
+
+  it("measures against innerHeight, not the small viewport iOS reports as clientHeight", () => {
+    // iOS with toolbars collapsed: layout viewport 812, clientHeight still the small 740.
+    vi.spyOn(root, "clientHeight", "get").mockReturnValue(740);
+    const { unmount } = renderHook(() => useVisualViewportInset(true));
+    act(() => {
+      viewport.height = 476;
+      viewport.dispatchEvent(new Event("resize"));
+    });
+    // 812 - 476 = 336, where clientHeight would give 740 - 476 = 264, 72px short.
+    expect(read(KEYBOARD_INSET_VAR)).toBe("336px");
+    unmount();
+  });
+
+  it("does not rewrite the variables when nothing changed", () => {
+    const setProperty = vi.spyOn(root.style, "setProperty");
+    const { unmount } = renderHook(() => useVisualViewportInset(true));
+    const writes = setProperty.mock.calls.length;
+    act(() => {
+      viewport.dispatchEvent(new Event("scroll"));
+      viewport.dispatchEvent(new Event("scroll"));
+    });
+    expect(setProperty.mock.calls.length).toBe(writes);
+    unmount();
   });
 
   it("keeps the variables until the last of two open modals closes", () => {
