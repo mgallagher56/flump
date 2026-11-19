@@ -136,6 +136,7 @@ export function buildFinancialPicture(
     loanToValue: selectLoanToValue(snapshot),
     estimatedTaxDue: selectEstimatedTaxDue(input.profile, input.taxRecords, {
       taxYear: opts.taxYear,
+      accounts: input.accounts,
     }),
     savings: selectSavingsTotals(snapshot),
     debtSummary: selectDebtSummary(snapshot, asOf),

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { taxRecord } from "./picture/__fixtures__/builders.js";
 import type { TaxRecord } from "./tax-calculator.js";
 import {
+  calculateEstimatedTax,
   estimateInputsFor,
   isLegacySalaryRecord,
   isUntaxedIncomeRecord,
@@ -38,7 +39,7 @@ describe("estimateInputsFor (one rule for every Self Assessment surface)", () =>
       [rent(12000)],
       Y,
     );
-    expect(out).toMatchObject({ status: "known", payeSalary: 30000, ownershipShare: 100 });
+    expect(out).toMatchObject({ status: "known", payeSalary: 30000 });
   });
 
   it("employee with no saved salary and no salary record: unknown, names annualSalary", () => {
@@ -63,7 +64,7 @@ describe("estimateInputsFor (one rule for every Self Assessment surface)", () =>
       [rent(12000)],
       Y,
     );
-    expect(out).toMatchObject({ status: "known", payeSalary: 0, ownershipShare: 100 });
+    expect(out).toMatchObject({ status: "known", payeSalary: 0 });
   });
 
   it("the baseline spelling PAYE with salary 0 reads the same: unknown annualSalary", () => {
@@ -149,19 +150,77 @@ describe("estimateInputsFor (one rule for every Self Assessment surface)", () =>
     expect(out).toEqual({ status: "unknown", missing: ["untaxedIncomeRecords"] });
   });
 
-  it("keeps a saved 0% share and reads an out-of-range share as 100%", () => {
-    const zero = estimateInputsFor(
-      { employmentType: "employed", annualSalary: 30000, propertyOwnershipShare: 0 },
+  it("takes the rental share from the accounts, not a profile share (decision 6)", () => {
+    const flat = {
+      id: "flat",
+      type: "Property",
+      accountSubtype: "rental",
+      ownership: "joint",
+      sharePercent: 40,
+    };
+    const out = estimateInputsFor(
+      { employmentType: "employed", annualSalary: 30000, accounts: [flat] },
       [rent(12000)],
       Y,
     );
-    const wild = estimateInputsFor(
-      { employmentType: "employed", annualSalary: 30000, propertyOwnershipShare: 140 },
+    expect(out).toMatchObject({
+      status: "known",
+      options: {
+        region: "ENGLAND_NI_WALES",
+        rentalShares: { byAccountId: { flat: 40 }, unlinked: { share: 40, basis: "only-rental" } },
+      },
+    });
+  });
+
+  it("counts rental records in full when no rental property is saved, and says why", () => {
+    const out = estimateInputsFor(
+      { employmentType: "employed", annualSalary: 30000 },
       [rent(12000)],
       Y,
     );
-    expect(zero).toMatchObject({ status: "known", ownershipShare: 0 });
-    expect(wild).toMatchObject({ status: "known", ownershipShare: 100 });
+    expect(out).toMatchObject({
+      status: "known",
+      options: { rentalShares: { unlinked: { share: 100, basis: "no-rental-property" } } },
+    });
+  });
+
+  it("passes the Scottish region on; anything else is England, Wales and Northern Ireland", () => {
+    const scot = estimateInputsFor(
+      { employmentType: "employed", annualSalary: 30000, taxRegion: "SCOTLAND" },
+      [rent(12000)],
+      Y,
+    );
+    const unset = estimateInputsFor(
+      { employmentType: "employed", annualSalary: 30000, taxRegion: null },
+      [rent(12000)],
+      Y,
+    );
+    expect(scot).toMatchObject({ status: "known", options: { region: "SCOTLAND" } });
+    expect(unset).toMatchObject({ status: "known", options: { region: "ENGLAND_NI_WALES" } });
+  });
+
+  it("works the estimate out with those options (calculateEstimatedTax)", () => {
+    // Salary 30,000, rent 12,000 with the one rental property joint at 50%: 6,000 at 20% = 1,200
+    // with costs, or (6,000 - 1,000) at 20% = 1,000 with the property allowance, which wins.
+    const inputs = estimateInputsFor(
+      {
+        employmentType: "employed",
+        annualSalary: 30000,
+        accounts: [
+          {
+            id: "f",
+            type: "Property",
+            accountSubtype: "rental",
+            ownership: "joint",
+            sharePercent: 50,
+          },
+        ],
+      },
+      [rent(12000)],
+      Y,
+    );
+    if (inputs.status !== "known") throw new Error("expected a known estimate");
+    expect(calculateEstimatedTax(inputs).netAdditionalTaxToPay).toBe(1000);
   });
 
   it("returns only the records active in the year", () => {
