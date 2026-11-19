@@ -68,6 +68,14 @@ describe("selectEstimatedTaxDue (C-11)", () => {
     expect(amount(selfEmployed, records)).toBe(3232);
   });
 
+  it("SA-1 audit case: salary 40,000, trading income 40,000, no expenses = 6,872 (as the page)", () => {
+    // 40,000 less the 1,000 trading allowance = 39,000 profit. (39,000 - 12,570) = 26,430 at 20%
+    // = 5,286, plus Class 4 26,430 at 6% = 1,585.80. 6,871.80 rounds to 6,872.
+    expect(
+      amount(selfEmployed, [annual("self-employed", "income", "self_employed_income", 40000)]),
+    ).toBe(6872);
+  });
+
   it("is unknown for a self-employed user whose trading income is not logged (never a known 0)", () => {
     // A 40,000 profile figure with only a 10,000 rental record: the trading income decides the
     // band the rent falls in, and the profile figure may be turnover, not profit.

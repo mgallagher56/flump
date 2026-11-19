@@ -61,6 +61,26 @@ describe("app.retirement friends-beta gate (RD9)", () => {
     expect(result.retirementPlan).toEqual(retirementPlanFixture);
   });
 
+  it("loader: asks for budget lines so 'From budget lines' can use them (PP-6)", async () => {
+    const food = { id: "b1", name: "Food", category: "food", amount: 400, frequency: "monthly" };
+    // Like the real loader: budget rows come back only when asked for.
+    loadWorkspaceSnapshot.mockImplementation(
+      async (_args: unknown, options?: { includeBudget?: boolean }) => ({
+        userProfile: null,
+        accounts: [],
+        accountDetails: [],
+        budgetEntries: options?.includeBudget ? [food] : [],
+      }),
+    );
+    backendFetch.mockResolvedValue({ plan: retirementPlanFixture });
+    const result = (await loader(loaderArgs())) as { budgetEntries: unknown[] };
+    expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ includeBudget: true }),
+    );
+    expect(result.budgetEntries).toEqual([food]);
+  });
+
   it("loader: a backend 404 renders the normal not-found page", async () => {
     backendFetch.mockRejectedValue(notFound());
     const err = await caught(loader(loaderArgs()));

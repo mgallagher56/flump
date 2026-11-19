@@ -25,23 +25,46 @@ interface HistoryRepository {
 }
 
 /**
- * When an account becomes a liability, its whole monthly history follows the sign rule too.
- * Run it before the account row itself is saved with the new type, in the same transaction
- * where there is one: the history is re-signed while the account is still the old type, so the
- * database check passes at every step even without a transaction. A liability that becomes an
- * asset keeps its values as they are (an asset keeps the sign it was given, so a former
- * overdraft stays an overdrawn current account); the user edits the balance if they meant
- * otherwise. Returns the number of history rows changed (a count, never a value).
+ * When an account moves between a liability and an asset type, its whole monthly history follows
+ * the sign rule too. Becoming a liability, positive months go negative. Becoming an asset from a
+ * liability (`previousType` given), negative months go positive: the edit form re-posts today's
+ * balance as the positive amount, so past months must match it (CH-4). Without `previousType`
+ * (bank sync), a move to an asset leaves the values as they are. Run it before the account row
+ * itself is saved with the new type, in the same transaction where there is one: the database
+ * trigger on history is deferred to commit, so either direction passes. Returns the number of
+ * history rows changed (a count, never a value).
  */
+/**
+ * True when a type change turns a debt into an asset whose amounts should go positive (CH-4): a
+ * credit card or loan changed to a saving is money held, not owed. An overdraft changed to a
+ * current account is the exception: it stays an overdrawn current account, so it keeps its sign.
+ */
+export function debtBecomesAsset(
+  previousType: string | null | undefined,
+  newType: string | null | undefined,
+): boolean {
+  return (
+    previousType != null &&
+    isStoredNegativeAccountType(previousType) &&
+    !isStoredNegativeAccountType(newType) &&
+    previousType !== "Overdraft"
+  );
+}
+
 export async function resignHistoryForType(
   details: HistoryRepository,
   accountId: string,
   newType: string | null | undefined,
+  previousType?: string | null,
 ): Promise<number> {
-  if (!isStoredNegativeAccountType(newType)) return 0;
+  const toLiability = isStoredNegativeAccountType(newType);
+  const toAssetFromLiability = !toLiability && debtBecomesAsset(previousType, newType);
+  if (!toLiability && !toAssetFromLiability) return 0;
   const rows = (await details.find({ where: { accountId } })) ?? [];
-  const changed = rows.filter((r) => Number(r.value) > 0);
-  for (const r of changed) r.value = storedBalance(newType, Number(r.value));
+  const changed = rows.filter((r) => (toLiability ? Number(r.value) > 0 : Number(r.value) < 0));
+  for (const r of changed) {
+    r.value = toLiability ? storedBalance(newType, Number(r.value)) : -Number(r.value);
+  }
   if (changed.length > 0) await details.save(changed);
   return changed.length;
 }

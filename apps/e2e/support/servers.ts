@@ -51,6 +51,9 @@ export function webServers(
         DB_SSL: "false",
         CORS_ALLOWED_ORIGINS: WEB_URL,
         FRONTEND_URL: WEB_URL,
+        // Retirement is a friends-beta page (retirement.access.ts). Let the fixed dev-bypass test
+        // user in, so the L58 link test can reach it. Test harness only.
+        RETIREMENT_ALLOWED_USER_IDS: "dev_user_123",
       },
     },
     {

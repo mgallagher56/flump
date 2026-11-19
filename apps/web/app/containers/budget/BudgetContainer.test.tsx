@@ -696,6 +696,32 @@ describe("BudgetContainer", () => {
     );
   });
 
+  it("counts a joint account at the user's share once in the runway (JO-2)", () => {
+    // Easy access £7,600 held jointly at 40%: 7,600 x 0.40 = £3,040.
+    // Sharing twice would give 3,040 x 0.40 = £1,216.
+    mockLoaderData = {
+      ...baseLoaderData,
+      accounts: [
+        {
+          id: "acc-joint",
+          name: "Easy access savings",
+          type: "Saving",
+          balance: 7600,
+          ownership: "joint",
+          sharePercent: 40,
+        },
+      ],
+      accountDetails: [],
+      budgetEntries: withBudget,
+    };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByRole("button", { name: /^Model a change to your budget/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Accounts and spending to include/ }));
+    const group = screen.getByRole("group", { name: "Accounts to draw on" });
+    expect(group.textContent).toContain("£3,040");
+    expect(group.textContent).not.toContain("£1,216");
+  });
+
   it("keeps the row and shows an error when deleting an entry fails", async () => {
     mockLoaderData = { ...baseLoaderData, budgetEntries: [row({})] };
     global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 500 })) as any;

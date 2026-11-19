@@ -36,6 +36,19 @@ describe("selectLoanToValue (residential only)", () => {
     });
   });
 
+  it("is unknown when a second property makes the home ambiguous (HM-3)", () => {
+    // Homeowner: 186,000 / 310,000 = 0.6, so 60%. Adding a "Rental flat" worth 200,000 whose name
+    // does not say buy to let used to give 186,000 / 510,000 = 36.47%. Two non-buy-to-let
+    // properties means the home cannot be told apart, so the figure is left out.
+    const rental: RawAccount = { id: "r", name: "Rental flat", type: "Property", balance: 200000 };
+    expect(selectLoanToValue(snap(mortgage, home))).toMatchObject({ value: { percent: 60 } });
+    expect(selectLoanToValue(snap(mortgage, home, rental))).toEqual({
+      status: "unknown",
+      missing: ["homeValue"],
+      reason: "ambiguous-home",
+    });
+  });
+
   it("uses the selected residential mortgage when one is named", () => {
     const second: RawAccount = {
       id: "m2",

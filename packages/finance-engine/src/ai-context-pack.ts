@@ -17,6 +17,7 @@ import {
   type NetWorthBasis,
   type NetWorthLeftOut,
 } from "./net-worth-basis.js";
+import { payeSalaryForTax } from "./paye-salary-for-tax.js";
 import { buildFinancialPicture } from "./picture/build.js";
 import { isFigureKnown } from "./picture/figure.js";
 import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
@@ -27,6 +28,7 @@ import {
   type RawAccountDetail,
   type ResolvedAccount,
 } from "./portfolio.js";
+import type { SavedFinancialBaseline, UnsavedBaselineField } from "./profile.js";
 import type { RetirementSavedPlanInput } from "./retirement-input.js";
 import {
   calculateUKTax,
@@ -42,7 +44,8 @@ import type {
   StudentLoanEvaluationResult,
   UkTaxCalculationResult,
 } from "./types.js";
-import { calculateUkTax as computeUkTax, getCurrentUKTaxYear } from "./uk-tax.js";
+import { calculateUkTax as computeUkTax } from "./uk-tax.js";
+import { resolveUkTaxYear } from "./uk-tax-year.js";
 import type { WorkplacePensionInput } from "./workplace-pension.js";
 
 export interface AnonymizationOptions {
@@ -65,7 +68,8 @@ export interface BudgetEntryItem {
 }
 
 export interface BuildContextPackInput {
-  baseline: FinancialBaseline;
+  /** Its `notSet` (userProfileToSavedBaseline) names stand-in zeros the pack leaves out (AI-1). */
+  baseline: SavedFinancialBaseline;
   accounts?: RawAccount[];
   accountDetails?: RawAccountDetail[];
   budgetEntries?: BudgetEntryItem[];
@@ -160,8 +164,24 @@ export function anonymiseContextPackInput(input: BuildContextPackInput): BuildCo
   };
 }
 
-/** The saved baseline as the pack carries it: figures only, so no computed stage. */
-export type ContextPackBaseline = Omit<FinancialBaseline, "financialStage">;
+/**
+ * The saved baseline as the pack carries it: figures only, so no computed stage. Salary and
+ * pension rates are absent when never saved, never a stand-in 0 (AI-1).
+ */
+export type ContextPackBaseline = Omit<FinancialBaseline, "financialStage" | UnsavedBaselineField> &
+  Partial<Pick<FinancialBaseline, UnsavedBaselineField>>;
+
+/** The salary tax calculation when no salary is saved: nothing worked out, only what is missing. */
+export interface UkTaxCalculationNotSet {
+  notSet: ["annualSalary"];
+}
+
+/** True when the pack's salary tax calculation holds worked-out figures. */
+export function isUkTaxCalculated(
+  tx: UkTaxCalculationResult | UkTaxCalculationNotSet,
+): tx is UkTaxCalculationResult {
+  return !("notSet" in tx);
+}
 
 export interface FlumpAiContextPack {
   metadata: {
@@ -220,7 +240,8 @@ export interface FlumpAiContextPack {
   };
   taxSummary: {
     currentTaxYear: string;
-    ukTaxCalculation: UkTaxCalculationResult;
+    /** `{ notSet: ["annualSalary"] }` when no salary is saved (AI-1). */
+    ukTaxCalculation: UkTaxCalculationResult | UkTaxCalculationNotSet;
     selfAssessmentLedgerSummary?: TaxCalculationResult;
   };
 }
@@ -236,9 +257,22 @@ export function buildFlumpAiContextPack(
   const currency = "GBP";
 
   // 1. Scrub baseline of any direct PII identifier. The stage is dropped: figures only.
-  const { financialStage: _stage, ...baselineFigures } = input.baseline;
+  // Figures never saved (`notSet`) are left out, not passed on as 0 (AI-1). A salary of 0 is the
+  // baseline's "no salary known", so it is left out too.
+  const { financialStage: _stage, notSet = [], ...baselineFigures } = input.baseline;
+  const salaryKnown =
+    !notSet.includes("annualGrossSalary") && baselineFigures.annualGrossSalary > 0;
+  const {
+    annualGrossSalary: annualSalary,
+    pensionContributionPct,
+    employerPensionMatchPct,
+    ...knownFigures
+  } = baselineFigures;
   const safeBaseline: ContextPackBaseline = {
-    ...baselineFigures,
+    ...knownFigures,
+    ...(salaryKnown ? { annualGrossSalary: annualSalary } : {}),
+    ...(notSet.includes("pensionContributionPct") ? {} : { pensionContributionPct }),
+    ...(notSet.includes("employerPensionMatchPct") ? {} : { employerPensionMatchPct }),
     userId: isAnonymized ? ANONYMOUS_USER_ID : input.baseline.userId,
   };
 
@@ -276,20 +310,29 @@ export function buildFlumpAiContextPack(
   // 4. Resolve Debt Items and Debt Schedules
   const debtItems = snapshot.toDebtItems();
   const { consumerDebts } = filterConsumerDebts(debtItems);
-  const comparison = compareAvalancheAndSnowball(debtItems, 50);
+  // No extra payment (AI-5): the same minimum-payments plan the Debt page shows.
+  const comparison = compareAvalancheAndSnowball(debtItems, 0);
   const totalDebtBalance = consumerDebts.reduce((sum, d) => sum + d.balanceGbp, 0);
 
   // Analyze promo cliffs if any
-  const fullSchedule = calculateDebtSchedule(consumerDebts, 50, "AVALANCHE");
+  const fullSchedule = calculateDebtSchedule(consumerDebts, 0, "AVALANCHE");
   const promoCliffAlerts = fullSchedule.promoCliffAlerts;
 
-  // Student loan evaluation if user has one
+  // The student loan check needs a saved salary and a saved balance (AI-1): no guessed balance.
+  const studentLoanBalance = resolvedAccounts
+    .filter((a) => a.category === "studentLoans")
+    .reduce((sum, a) => sum + a.nominalBalance, 0);
   let studentLoanEvaluation: StudentLoanEvaluationResult | undefined;
-  if (safeBaseline.studentLoanPlan && safeBaseline.studentLoanPlan !== "NONE") {
+  if (
+    salaryKnown &&
+    studentLoanBalance > 0 &&
+    safeBaseline.studentLoanPlan &&
+    safeBaseline.studentLoanPlan !== "NONE"
+  ) {
     studentLoanEvaluation = evaluateUkStudentLoan(
       safeBaseline.studentLoanPlan,
-      safeBaseline.annualGrossSalary,
-      15000, // standard baseline balance proxy
+      annualSalary,
+      studentLoanBalance,
     );
   }
 
@@ -333,21 +376,30 @@ export function buildFlumpAiContextPack(
   });
 
   // 7. UK Tax Calculation & Self-Assessment Ledger
-  const ukTaxCalculation = computeUkTax({
-    grossSalary: safeBaseline.annualGrossSalary,
-    pensionContributionPct: safeBaseline.pensionContributionPct,
-    isSalarySacrifice: safeBaseline.isSalarySacrifice,
-    studentLoanPlan: safeBaseline.studentLoanPlan,
-    region: safeBaseline.ukRegion,
-    taxYear: safeBaseline.taxYear,
-  });
+  // The tax year that applies today (AI-3, SA-8), never a stored or default baseline year.
+  const currentTaxYear = resolveUkTaxYear();
+  // No salary saved: no tax is worked out from a stand-in £0 (AI-1).
+  const ukTaxCalculation: UkTaxCalculationResult | UkTaxCalculationNotSet = salaryKnown
+    ? computeUkTax({
+        grossSalary: annualSalary,
+        pensionContributionPct,
+        isSalarySacrifice: safeBaseline.isSalarySacrifice,
+        studentLoanPlan: safeBaseline.studentLoanPlan,
+        region: safeBaseline.ukRegion,
+        taxYear: currentTaxYear,
+      })
+    : { notSet: ["annualSalary"] };
 
   let selfAssessmentLedgerSummary: TaxCalculationResult | undefined;
   if (taxRecords && taxRecords.length > 0) {
     selfAssessmentLedgerSummary = calculateUKTax(
-      safeBaseline.taxYear || getCurrentUKTaxYear(),
+      currentTaxYear,
       taxRecords,
-      safeBaseline.annualGrossSalary,
+      // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
+      payeSalaryForTax({
+        employmentType: safeBaseline.employmentStatus,
+        annualSalary: salaryKnown ? annualSalary : 0,
+      }),
       safeBaseline.propertyOwnershipSharePct ?? 100,
     );
   }
@@ -403,7 +455,7 @@ export function buildFlumpAiContextPack(
       entries: budgetEntries,
     },
     taxSummary: {
-      currentTaxYear: safeBaseline.taxYear || getCurrentUKTaxYear(),
+      currentTaxYear,
       ukTaxCalculation,
       selfAssessmentLedgerSummary,
     },
@@ -528,7 +580,16 @@ ${
 - **Income minus spending, a month:** ${gbpOrNotSet(bg.monthlySurplus)}
 
 ## 5. Tax, ${pack.taxSummary.currentTaxYear}
-- **Salary before tax:** £${b.annualGrossSalary.toLocaleString("en-GB")}
+${b.annualGrossSalary !== undefined && isUkTaxCalculated(tx) ? formatSalaryTax(b.annualGrossSalary, b, tx) : `- **Salary before tax:** Not set\n- **Tax region:** ${b.ukRegion}\n`}`;
+}
+
+/** The salary-based tax lines, shown only when a salary is saved (AI-1). */
+function formatSalaryTax(
+  salary: number,
+  b: ContextPackBaseline,
+  tx: UkTaxCalculationResult,
+): string {
+  return `- **Salary before tax:** £${salary.toLocaleString("en-GB")}
 - **Tax region:** ${b.ukRegion}
 - **Adjusted net income:** £${tx.adjustedNetIncomeGbp.toLocaleString("en-GB")}
 - **Adjusted net income in the £100,000 to £125,140 band:** ${tx.taxTrap.isInTaxTrap ? "Yes (the Personal Allowance reduces in this band)" : "No"}

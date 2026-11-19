@@ -1,4 +1,4 @@
-import type { DebtItem } from "@flump/finance-engine";
+import { type DebtItem, describeJointWholeValue } from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
@@ -15,6 +15,17 @@ import { cx } from "@repo/ui/styled-system/css";
 import { type FC, type FormEvent, useState } from "react";
 import { debtForm, deleteAction, fieldRow, footerButton } from "./AddDebtDialog.styles";
 
+/**
+ * What the edit form needs on top of a debt row, whose minimum payment is at the user's share: the
+ * whole stored payment and the ownership, so a joint debt is edited and saved whole (SD-7).
+ */
+export interface DebtEditSource {
+  /** The stored monthly payment, the whole of it, when one is saved above £0. */
+  wholeMinimumPayment?: number;
+  ownership?: string | null;
+  sharePercent?: number | null;
+}
+
 export interface AddDebtDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,7 +34,7 @@ export interface AddDebtDialogProps {
    * When set the dialog edits this debt instead of adding one. Only the name,
    * APR and minimum payment can be edited: the balance is not sent on edit.
    */
-  debt?: DebtItem;
+  debt?: DebtItem & DebtEditSource;
   /**
    * Called in edit mode with only the fields that changed. A caller that returns a promise keeps
    * the dialog open until it settles: `null` closes it, a message is shown and the fields stay.
@@ -60,9 +71,23 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
   const [apr, setApr] = useState<number | null>(
     debt?.aprKnown === false ? null : toFieldValue(debt?.apr),
   );
-  const [minimumPayment, setMinimumPayment] = useState<number | null>(
-    debt === undefined || debt.minimumPaymentEstimated ? null : toFieldValue(debt.minimumPayment),
+  // The whole stored payment: a joint debt's row holds only the user's share of it.
+  const [initialMinimum] = useState<number | null>(() =>
+    debt === undefined
+      ? null
+      : debt.wholeMinimumPayment !== undefined
+        ? toFieldValue(debt.wholeMinimumPayment)
+        : debt.minimumPaymentEstimated
+          ? null
+          : toFieldValue(debt.minimumPayment),
   );
+  const [minimumPayment, setMinimumPayment] = useState<number | null>(initialMinimum);
+  const minimumNote = debt
+    ? describeJointWholeValue(
+        { type: debt.type, ownership: debt.ownership, sharePercent: debt.sharePercent },
+        "monthly payment",
+      )
+    : null;
   const [type, setType] = useState<DebtItem["type"]>(debt?.type ?? "credit_card");
   const [creditLimit, setCreditLimit] = useState<number | null>(toFieldValue(debt?.creditLimitGbp));
   const [promoZeroPercentUntil, setPromoZeroPercentUntil] = useState<string>(
@@ -104,12 +129,8 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
         updates.apr = apr ?? 0;
         updates.aprKnown = apr !== null;
       }
-      const minimumWasEstimated = debt.minimumPaymentEstimated === true;
-      if (
-        minimumPayment === null
-          ? !minimumWasEstimated
-          : minimumWasEstimated || minimumPayment !== debt.minimumPayment
-      ) {
+      // Compared with what the field started from, so an untouched payment is never sent.
+      if (minimumPayment !== initialMinimum) {
         updates.minimumPayment = minimumPayment ?? 0;
         updates.minimumPaymentEstimated = minimumPayment === null;
       }
@@ -204,6 +225,7 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
         </FormField>
         <FormField
           error={minimumError}
+          hint={minimumNote ?? undefined}
           label="Minimum payment each month (optional)"
           labelAddon={
             <InfoTip term="Minimum payment">

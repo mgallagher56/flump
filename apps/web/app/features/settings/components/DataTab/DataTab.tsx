@@ -13,6 +13,7 @@ import {
   RecentLoginRequiredError,
   useUserProfile,
 } from "~/hooks/useUserProfile";
+import { clearUserStorage } from "~/utils/userStorage";
 import { dialogBody, wipeList } from "./DataTab.styles";
 
 /** How long the success message shows before sending the person back to onboarding. */
@@ -65,6 +66,8 @@ export const DataTab: FC = () => {
     setResetNeedsSignIn(false);
     try {
       await resetFinancialData();
+      // The stored copy of the old figures goes too, as on sign-out (CS-3).
+      clearUserStorage();
       setResetSuccess(true);
       redirectTimer.current = setTimeout(() => {
         redirectTimer.current = null;

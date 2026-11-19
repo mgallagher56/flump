@@ -37,7 +37,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const token = requireAccessToken({ accessToken });
 
   const [snapshot, planRes] = await Promise.all([
-    loadWorkspaceSnapshot(args),
+    loadWorkspaceSnapshot(args, { includeBudget: true }),
     backendFetch("/retirement-plan", {
       schema: RetirementPlanResponse,
       accessToken: token,

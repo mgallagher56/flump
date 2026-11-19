@@ -227,3 +227,19 @@ export function describeJointLiabilityNotice(input?: AccountShareInput | null): 
   }
   return JOINT_LIABILITY_NOTICE;
 }
+
+const SHARE_PERCENT_FORMAT = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+
+/**
+ * One plain line for an edit form whose field holds the whole stored figure of a joint account
+ * (the balance, the monthly payment), so the user knows it is not their share. `wholeOf` names
+ * the figure ("balance", "monthly payment"). Returns `null` for a sole account.
+ */
+export function describeJointWholeValue(
+  input: AccountShareInput | null | undefined,
+  wholeOf: string,
+): string | null {
+  if (resolveAccountOwnership(input) !== "joint") return null;
+  const share = SHARE_PERCENT_FORMAT.format(resolveAccountSharePercent(input));
+  return `This is the whole ${wholeOf}. Your share is ${share}% of it.`;
+}

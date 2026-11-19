@@ -725,6 +725,65 @@ describe("query reads (re-plan PR B)", () => {
       }
     });
 
+    it("does not pass a self-employed person's salary as PAYE pay, as the Dashboard (SA-1)", async () => {
+      // 2026/27: trading income 40,000 less the 1,000 trading allowance = 39,000 profit.
+      // Income Tax (39,000 - 12,570) x 20% = 5,286; Class 4 26,430 x 6% = 1,585.80. 6,871.80.
+      // With the salary passed as PAYE pay the tool gave 15,132 (the audit's SA-1 figure).
+      const se = await connectTestClient({
+        ...emptyUser,
+        baseline: {
+          ...emptyUser.baseline,
+          employmentStatus: "SELF_EMPLOYED",
+          annualGrossSalary: 40000,
+        },
+        taxRecords: [
+          taxRecord({
+            id: "se1",
+            source: "self-employed",
+            category: "self_employed_income",
+            amount: 40000,
+            frequency: "annual",
+            date: "2026-05-01",
+          }),
+        ] as never,
+      });
+      try {
+        const e = (await se.callJson("get_tax_year_position", { taxYear: "2026/27" })) as Env;
+        expect(e.result.income.payeSalaryGbp).toBe(0);
+        expect(e.result.estimate.selfAssessmentGbp).toBe(6871.8);
+        expect(e.missing.map((m) => m.field)).not.toContain("annualSalary");
+      } finally {
+        await se.close();
+      }
+    });
+
+    it("says the salary is not set when only rental income is saved (SA-2, AI-2)", async () => {
+      // No salary: rent of 20,000 with no expenses, so the 1,000 property allowance leaves 19,000
+      // profit, the only income. (19,000 - 12,570) x 20% = 1,286. The backend once sent an
+      // invented 45,000 salary here; it now sends 0 (agent-data.service.spec covers that).
+      const rentOnly = await connectTestClient({
+        ...emptyUser,
+        taxRecords: [
+          taxRecord({
+            id: "r1",
+            source: "rental",
+            category: "rental_income",
+            amount: 20000,
+            frequency: "annual",
+            date: "2026-05-01",
+          }),
+        ] as never,
+      });
+      try {
+        const e = (await rentOnly.callJson("get_tax_year_position", { taxYear: "2026/27" })) as Env;
+        expect(e.result.income.payeSalaryGbp).toBe(0);
+        expect(e.result.estimate.selfAssessmentGbp).toBe(1286);
+        expect(e.missing.map((m) => m.field)).toContain("annualSalary");
+      } finally {
+        await rentOnly.close();
+      }
+    });
+
     it("asks for income for an empty user and leaks no default salary", async () => {
       const empty = await connectTestClient(emptyUser);
       try {

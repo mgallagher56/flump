@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimateHomeEquity, isResidentialHomeAccount } from "./home-equity.js";
+import { estimateHomeEquity, isResidentialHomeAccount, pickHomeProperty } from "./home-equity.js";
 
 describe("estimateHomeEquity", () => {
   it("is value less mortgage for a home held solely", () => {
@@ -87,6 +87,29 @@ describe("estimateHomeEquity", () => {
     expect(estimateHomeEquity({ homeValue: null, mortgageBalance: 100_000 })).toBeNull();
     expect(estimateHomeEquity({ homeValue: 0, mortgageBalance: 100_000 })).toBeNull();
     expect(estimateHomeEquity({ homeValue: undefined })).toBeNull();
+  });
+});
+
+describe("pickHomeProperty", () => {
+  const home = { id: "h", name: "Home (your estimate)", type: "Property" };
+  const rental = { id: "r", name: "Rental flat", type: "Property" };
+  const btl = { id: "b", name: "Buy-to-let flat", type: "Property" };
+  const mortgage = { id: "m", name: "Mortgage", type: "Mortgage" };
+
+  it("gives the one Property account that is not buy to let as the home", () => {
+    expect(pickHomeProperty([mortgage, home, btl])).toEqual({ status: "one", account: home });
+  });
+
+  it("gives no home when every property is buy to let or there is none", () => {
+    expect(pickHomeProperty([mortgage, btl])).toEqual({ status: "none" });
+    expect(pickHomeProperty([])).toEqual({ status: "none" });
+  });
+
+  it("is ambiguous when two properties could each be the home", () => {
+    expect(pickHomeProperty([home, rental, btl])).toEqual({
+      status: "ambiguous",
+      accounts: [home, rental],
+    });
   });
 });
 

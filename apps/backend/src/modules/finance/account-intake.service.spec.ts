@@ -126,6 +126,46 @@ describe("AccountIntakeService (Deep Module)", () => {
       // A history re-sign is not a balance edit: no current-month row is written.
       expect(mockAccountDetailRepo.upsert).not.toHaveBeenCalled();
     });
+
+    it("re-signs the balance and negative history positive when a debt becomes an asset (CH-4)", async () => {
+      // A card owing 500 (stored -500) with a past month of -480 changed to Saving: today reads
+      // +500 and the past month +480, so History shows no false 1,000 rise.
+      mockAccountRepo.findOne.mockResolvedValueOnce({
+        id: "a1",
+        userId: "userA",
+        type: "Credit Card",
+        balance: -500,
+      });
+      const history = [{ id: 1, accountId: "a1", value: -480 }];
+      mockAccountDetailRepo.find.mockResolvedValueOnce(history);
+      await service.updateAccount("userA", "a1", { type: "Saving" });
+      expect(mockAccountRepo.save.mock.calls[0]?.[0]).toMatchObject({
+        type: "Saving",
+        balance: 500,
+      });
+      expect(mockAccountDetailRepo.save).toHaveBeenCalledWith([
+        { id: 1, accountId: "a1", value: 480 },
+      ]);
+      expect(mockAccountDetailRepo.upsert).not.toHaveBeenCalled();
+    });
+
+    it("keeps an overdraft overdrawn when it becomes a current account", async () => {
+      // Overdraft at -500 changed to Current Account with no balance sent: an overdrawn current
+      // account still owes 500, so today stays -500 and no history row is rewritten.
+      mockAccountRepo.findOne.mockResolvedValueOnce({
+        id: "a1",
+        userId: "userA",
+        type: "Overdraft",
+        balance: -500,
+      });
+      mockAccountDetailRepo.find.mockResolvedValueOnce([{ id: 1, accountId: "a1", value: -320 }]);
+      await service.updateAccount("userA", "a1", { type: "Current" });
+      expect(mockAccountRepo.save.mock.calls[0]?.[0]).toMatchObject({
+        type: "Current",
+        balance: -500,
+      });
+      expect(mockAccountDetailRepo.save).not.toHaveBeenCalled();
+    });
   });
 
   it("returns [] and never saves for a user with no accounts", async () => {

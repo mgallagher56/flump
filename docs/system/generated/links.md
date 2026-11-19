@@ -6,26 +6,26 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 | Verdict                                   | Count |
 | ----------------------------------------- | ----- |
-| Holds                                     | 19    |
+| Holds                                     | 28    |
 | Holds with a manual step or a delay       | 8     |
-| Broken                                    | 32    |
+| Broken                                    | 23    |
 | Duplicated (two stores that can disagree) | 14    |
 | Not checked                               | 0     |
 
 ## A. Accounts and balances
 
-| Id  | Statement                                                                                                                                                | Verdict | Checked in | Findings         |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------------- |
-| L01 | An account added on Accounts appears on its own page (Savings, Debt, Pension, Mortgage) with the same balance, and the reverse.                          | Holds   | code       | none             |
-| L02 | A balance edited on Accounts or on the account's own page is the balance in net worth, on the own page, in this month of History and in the AI snapshot. | Holds   | code       | none             |
-| L03 | A balance recorded in the monthly check-in is the balance on Accounts, Savings or Debt, net worth, History and the AI snapshot.                          | Holds   | code       | none             |
-| L04 | A past month edited in History changes History and net worth over time, and leaves today's balance alone.                                                | Holds   | code       | none             |
-| L05 | A new account has a History point for the month it was added, with no check-in needed.                                                                   | Broken  | browser    | CH-1             |
-| L06 | Deleting an account removes it from every figure, from History, and from anything that refers to it.                                                     | Holds   | code       | none             |
-| L07 | An account or balance brought in by a staged import behaves exactly like one typed into a form.                                                          | Broken  | code       | AI-9, AI-10      |
-| L67 | Editing one field of an account on any page leaves its other saved values unchanged.                                                                     | Broken  | browser    | SD-1, JO-1, SD-7 |
-| L68 | Correcting the latest recorded month, when no newer figure exists, also corrects today's balance.                                                        | Broken  | browser    | CH-2             |
-| L70 | The check-in reminder shows until this month's check-in is finished, and an unrelated edit does not hide it.                                             | Broken  | browser    | CH-3             |
+| Id  | Statement                                                                                                                                                | Verdict | Checked in | Findings |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------- | -------- |
+| L01 | An account added on Accounts appears on its own page (Savings, Debt, Pension, Mortgage) with the same balance, and the reverse.                          | Holds   | code       | none     |
+| L02 | A balance edited on Accounts or on the account's own page is the balance in net worth, on the own page, in this month of History and in the AI snapshot. | Holds   | code       | none     |
+| L03 | A balance recorded in the monthly check-in is the balance on Accounts, Savings or Debt, net worth, History and the AI snapshot.                          | Holds   | code       | none     |
+| L04 | A past month edited in History changes History and net worth over time, and leaves today's balance alone.                                                | Holds   | code       | none     |
+| L05 | A new account has a History point for the month it was added, with no check-in needed.                                                                   | Broken  | browser    | CH-1     |
+| L06 | Deleting an account removes it from every figure, from History, and from anything that refers to it.                                                     | Holds   | code       | none     |
+| L07 | An account or balance brought in by a staged import behaves exactly like one typed into a form.                                                          | Holds   | code       | none     |
+| L67 | Editing one field of an account on any page leaves its other saved values unchanged.                                                                     | Holds   | browser    | none     |
+| L68 | Correcting the latest recorded month, when no newer figure exists, also corrects today's balance.                                                        | Broken  | browser    | CH-2     |
+| L70 | The check-in reminder shows until this month's check-in is finished, and an unrelated edit does not hide it.                                             | Holds   | browser    | none     |
 
 ## B. Home and mortgage
 
@@ -67,7 +67,7 @@ Each line is a statement a user would expect to be true, with the verdict from t
 | L30 | Student loan plan has one store: the plan on a student loan account and the plans on the profile agree, and take-home uses it.                                     | Duplicated (two stores that can disagree) | browser    | PP-7, SD-9, DB-7       |
 | L31 | Take-home pay is the same figure on the Dashboard, Take-home, Budget, Pension, safe to spend and in AI output.                                                     | Broken                                    | code       | PP-1, PP-2, PP-4, PP-5 |
 | L32 | Second income, rental income and monthly take-home fields on the profile are used by a figure.                                                                     | Broken                                    | code       | PP-10, DB-2            |
-| L69 | When a fact is not saved, no page or tool invents a value for it.                                                                                                  | Broken                                    | code       | SA-2, AI-1, AI-2, DB-5 |
+| L69 | When a fact is not saved, no page or tool invents a value for it.                                                                                                  | Broken                                    | code       | DB-5                   |
 
 ## E. Budget
 
@@ -79,34 +79,34 @@ Each line is a statement a user would expect to be true, with the verdict from t
 | L36 | The monthly payment on a card or loan is the debt row in the budget and the debt commitment in safe to spend.                                     | Duplicated (two stores that can disagree) | code       | BU-6, BU-7, SD-10 |
 | L37 | Workplace pension contributions are counted once.                                                                                                 | Holds with a manual step or a delay       | code       | PP-11, BU-9       |
 | L38 | Other outgoings entered in onboarding and the budget rows are one set of facts.                                                                   | Duplicated (two stores that can disagree) | code       | BU-10, DB-3       |
-| L39 | Seeded or empty budget rows never change a figure.                                                                                                | Broken                                    | browser    | BU-8              |
+| L39 | Seeded or empty budget rows never change a figure.                                                                                                | Holds                                     | browser    | none              |
 
 ## F. Savings, ISAs and investments
 
-| Id  | Statement                                                                                      | Verdict                                   | Checked in | Findings   |
-| --- | ---------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ---------- |
-| L40 | A savings account's rate gives the same interest figure wherever interest is shown.            | Holds                                     | code       | none       |
-| L41 | ISA allowance used is worked out one way from the ISA accounts.                                | Duplicated (two stores that can disagree) | code       | SD-3       |
-| L42 | Savings totals are the same on the Dashboard, Savings and Accounts.                            | Broken                                    | browser    | SD-2, JO-3 |
-| L43 | The monthly savings target on the profile and the per-account monthly savings do not conflict. | Holds                                     | code       | SD-11      |
+| Id  | Statement                                                                                      | Verdict                                   | Checked in | Findings |
+| --- | ---------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | -------- |
+| L40 | A savings account's rate gives the same interest figure wherever interest is shown.            | Holds                                     | code       | none     |
+| L41 | ISA allowance used is worked out one way from the ISA accounts.                                | Duplicated (two stores that can disagree) | code       | SD-3     |
+| L42 | Savings totals are the same on the Dashboard, Savings and Accounts.                            | Holds                                     | browser    | none     |
+| L43 | The monthly savings target on the profile and the per-account monthly savings do not conflict. | Holds                                     | code       | SD-11    |
 
 ## G. Cards and loans
 
-| Id  | Statement                                                                                                                      | Verdict                                   | Checked in | Findings   |
-| --- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | ---------- | ---------- |
-| L44 | A card or loan added in Accounts appears on Debt with the same balance, rate, limit, 0% end date and payment, and the reverse. | Holds with a manual step or a delay       | code       | SD-8       |
-| L45 | Total debts is the same on the Dashboard, Debt, Accounts and in AI output.                                                     | Duplicated (two stores that can disagree) | code       | SD-6       |
-| L46 | The debt-free date and interest are the same on the Dashboard, Debt and in AI output.                                          | Duplicated (two stores that can disagree) | code       | SD-6, AI-5 |
-| L72 | A 0% end date saved on a card changes the interest estimate from that date.                                                    | Broken                                    | code       | SD-4       |
+| Id  | Statement                                                                                                                      | Verdict                                   | Checked in | Findings |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | ---------- | -------- |
+| L44 | A card or loan added in Accounts appears on Debt with the same balance, rate, limit, 0% end date and payment, and the reverse. | Holds with a manual step or a delay       | code       | SD-8     |
+| L45 | Total debts is the same on the Dashboard, Debt, Accounts and in AI output.                                                     | Duplicated (two stores that can disagree) | code       | SD-6     |
+| L46 | The debt-free date and interest are the same on the Dashboard, Debt and in AI output.                                          | Duplicated (two stores that can disagree) | code       | SD-6     |
+| L72 | A 0% end date saved on a card changes the interest estimate from that date.                                                    | Broken                                    | code       | SD-4     |
 
 ## H. Self Assessment
 
-| Id  | Statement                                                                                     | Verdict                                   | Checked in | Findings         |
-| --- | --------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ---------------- |
-| L47 | Employment pay for tax is entered once: a PAYE record and the Profile salary cannot disagree. | Duplicated (two stores that can disagree) | code       | SA-6             |
-| L48 | Estimated tax is the same on the Dashboard, the Self Assessment page and in AI output.        | Broken                                    | browser    | SA-1, SA-2, SA-3 |
-| L49 | The list of Self Assessment sources reflects the saved records and the accounts behind them.  | Holds with a manual step or a delay       | code       | SA-4, SA-7       |
-| L50 | Allowances use the saved records, the saved pay and the interest on saved accounts.           | Holds with a manual step or a delay       | code       | none             |
+| Id  | Statement                                                                                     | Verdict                                   | Checked in | Findings   |
+| --- | --------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ---------- |
+| L47 | Employment pay for tax is entered once: a PAYE record and the Profile salary cannot disagree. | Duplicated (two stores that can disagree) | code       | SA-6       |
+| L48 | Estimated tax is the same on the Dashboard, the Self Assessment page and in AI output.        | Holds                                     | browser    | SA-3       |
+| L49 | The list of Self Assessment sources reflects the saved records and the accounts behind them.  | Holds with a manual step or a delay       | code       | SA-4, SA-7 |
+| L50 | Allowances use the saved records, the saved pay and the interest on saved accounts.           | Holds with a manual step or a delay       | code       | none       |
 
 ## I. Check-in, history and net worth
 
@@ -119,38 +119,38 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 ## J. Joint ownership
 
-| Id  | Statement                                                                            | Verdict | Checked in | Findings                     |
-| --- | ------------------------------------------------------------------------------------ | ------- | ---------- | ---------------------------- |
-| L55 | Marking an account joint at 40% changes every figure that counts it in the same way. | Broken  | browser    | JO-1, JO-2, JO-3, JO-5, JO-9 |
-| L56 | A joint budget entry counts at its share in every budget figure.                     | Broken  | code       | JO-4                         |
-| L57 | A joint housing cost counts at its share.                                            | Broken  | code       | JO-8                         |
+| Id  | Statement                                                                            | Verdict | Checked in | Findings   |
+| --- | ------------------------------------------------------------------------------------ | ------- | ---------- | ---------- |
+| L55 | Marking an account joint at 40% changes every figure that counts it in the same way. | Broken  | browser    | JO-5, JO-9 |
+| L56 | A joint budget entry counts at its share in every budget figure.                     | Broken  | code       | JO-4       |
+| L57 | A joint housing cost counts at its share.                                            | Broken  | code       | JO-8       |
 
 ## K. Retirement
 
-| Id  | Statement                                                                                                                         | Verdict | Checked in | Findings   |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------- |
-| L58 | The retirement plan uses the saved pots, salary, pension rates, year of birth, housing details and budget rows, with no retyping. | Broken  | browser    | PP-6, HM-8 |
-| L59 | The pension projection is the same on Retirement and in AI output.                                                                | Holds   | code       | none       |
-| L60 | State Pension inputs are entered once.                                                                                            | Holds   | code       | none       |
-| L73 | The yearly return saved on an investment account is the growth the retirement projection uses for it.                             | Broken  | code       | LD-4       |
+| Id  | Statement                                                                                                                         | Verdict | Checked in | Findings |
+| --- | --------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------- | -------- |
+| L58 | The retirement plan uses the saved pots, salary, pension rates, year of birth, housing details and budget rows, with no retyping. | Holds   | browser    | none     |
+| L59 | The pension projection is the same on Retirement and in AI output.                                                                | Holds   | code       | none     |
+| L60 | State Pension inputs are entered once.                                                                                            | Holds   | code       | none     |
+| L73 | The yearly return saved on an investment account is the growth the retirement projection uses for it.                             | Broken  | code       | LD-4     |
 
 ## L. AI tools, export and reset
 
-| Id  | Statement                                                                                               | Verdict | Checked in | Findings                           |
-| --- | ------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------------------------------- |
-| L61 | AI output equals the page figures for net worth, left over, months of cover, debts, take-home and tax.  | Broken  | code       | AI-1, AI-3, AI-4, AI-5, AI-6, AI-7 |
-| L62 | The export holds every stored fact, and reset and erasure clear every store, including browser storage. | Broken  | code       | CS-3, AI-11                        |
+| Id  | Statement                                                                                               | Verdict | Checked in | Findings         |
+| --- | ------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------------- |
+| L61 | AI output equals the page figures for net worth, left over, months of cover, debts, take-home and tax.  | Broken  | code       | AI-4, AI-6, AI-7 |
+| L62 | The export holds every stored fact, and reset and erasure clear every store, including browser storage. | Holds   | code       | none             |
 
 ## M. Browser state
 
 | Id  | Statement                                                                                                  | Verdict | Checked in | Findings   |
 | --- | ---------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------- |
-| L63 | After any save, every figure on the current page and on the next page reflects it without a manual reload. | Broken  | code       | CS-1, CS-5 |
+| L63 | After any save, every figure on the current page and on the next page reflects it without a manual reload. | Broken  | code       | CS-5       |
 | L64 | The first paint from the server and the hydrated page show the same values.                                | Broken  | code       | CS-2, CS-4 |
-| L65 | Sign-out and reset leave no user figures in the browser.                                                   | Broken  | code       | CS-3       |
+| L65 | Sign-out and reset leave no user figures in the browser.                                                   | Holds   | code       | none       |
 
 ## N. Preferences
 
-| Id  | Statement                                                                     | Verdict                                   | Checked in | Findings   |
-| --- | ----------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ---------- |
-| L66 | Enabled pages, dashboard widgets and the setup checklist each have one store. | Duplicated (two stores that can disagree) | code       | CS-2, CS-3 |
+| Id  | Statement                                                                     | Verdict                                   | Checked in | Findings |
+| --- | ----------------------------------------------------------------------------- | ----------------------------------------- | ---------- | -------- |
+| L66 | Enabled pages, dashboard widgets and the setup checklist each have one store. | Duplicated (two stores that can disagree) | code       | CS-2     |

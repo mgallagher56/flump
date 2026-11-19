@@ -2,6 +2,7 @@ import { categorizeAccountType } from "./account-category.js";
 import type { BudgetEntryItem, BuildContextPackInput } from "./ai-context-pack.js";
 import { applyAccountShare } from "./joint-share.js";
 import { SAVINGS_CATEGORY } from "./picture/selectors/budget-totals.js";
+import { isBuyToLetAccount } from "./picture/selectors/loan-to-value.js";
 import type { RawAccount } from "./portfolio.js";
 import {
   type BudgetLineRetirementStatus,
@@ -191,7 +192,10 @@ function countableAccounts(
 }
 
 function mortgageDetails(accounts: readonly RawAccount[]): RetirementHousingInput["mortgage"] {
-  const mortgage = accounts.find((a) => categorizeAccountType(a.type) === "mortgages");
+  // The home mortgage only: a buy-to-let mortgage is not a housing cost (HM-8).
+  const mortgage = accounts.find(
+    (a) => categorizeAccountType(a.type) === "mortgages" && !isBuyToLetAccount(a),
+  );
   if (!mortgage) return null;
   const share = shareInput(mortgage);
   const balance = Math.abs(finiteOrNull(mortgage.balance) ?? 0);

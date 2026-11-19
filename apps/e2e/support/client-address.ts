@@ -11,6 +11,7 @@
  */
 export const PROJECT_CLIENT_ADDRESS = {
   chromium: "192.0.2.10",
+  links: "192.0.2.30",
   "new-user": "192.0.2.20",
 } as const;
 

@@ -171,6 +171,55 @@ describe("buildRetirementPlanInput", () => {
     });
   });
 
+  it("costs the home mortgage, never a buy-to-let one listed first (HM-8)", () => {
+    // The BTL (subtype or name) is skipped; the home mortgage is used whole (sole):
+    // balance |-180,000| = 180,000, rate 3.5%, term 240 months, payment £950.
+    const built = buildRetirementPlanInput({
+      plan: savedPlan,
+      birthYear: 1981,
+      now: NOW,
+      housingStatus: "mortgage",
+      accounts: [
+        {
+          id: "btl",
+          name: "Flat mortgage",
+          type: "Mortgage",
+          accountSubtype: "btl_mortgage",
+          balance: -150_000,
+          interestRate: 5,
+          monthlyContribution: 700,
+          termMonths: 120,
+        },
+        {
+          id: "btl-name",
+          name: "Buy to let mortgage",
+          type: "Mortgage",
+          balance: -90_000,
+          interestRate: 6,
+          monthlyContribution: 500,
+          termMonths: 60,
+        },
+        {
+          id: "home-m",
+          name: "Home mortgage",
+          type: "Mortgage",
+          balance: -180_000,
+          interestRate: 3.5,
+          monthlyContribution: 950,
+          termMonths: 240,
+        },
+      ],
+    });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.input.housing?.mortgage).toEqual({
+      balanceGbp: 180_000,
+      interestRateApr: 3.5,
+      remainingTermMonths: 240,
+      monthlyPaymentGbp: 950,
+    });
+  });
+
   it("passes the saved workplace pension through, and the scenario can change your rate", () => {
     const workplacePension = { annualSalary: 40_000, employeePercent: 5, employerPercent: 3 };
     const built = buildRetirementPlanInput({

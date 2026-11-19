@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { USER_STORAGE_KEYS } from "~/utils/userStorage";
 import { DataTab } from "./DataTab";
 
 const mockResetFinancialData = vi.fn().mockResolvedValue(undefined);
@@ -124,6 +125,33 @@ describe("<DataTab />", () => {
     );
     expect(alert.textContent).not.toContain("Reset failed on the server");
     expect(screen.getByRole("alertdialog")).toBeDefined();
+  });
+
+  const fillUserStorage = () => {
+    for (const key of USER_STORAGE_KEYS) localStorage.setItem(key, "kept");
+  };
+  const confirmReset = () => {
+    fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "RESET" } });
+    fireEvent.click(screen.getByRole("button", { name: "Delete all data" }));
+  };
+
+  it("clears this browser's stored user data after a successful reset (CS-3, AI-11)", async () => {
+    fillUserStorage();
+    render(<DataTab />);
+    confirmReset();
+    await waitFor(() => expect(screen.getByText("All financial data deleted")).toBeDefined());
+    for (const key of USER_STORAGE_KEYS) expect(localStorage.getItem(key)).toBeNull();
+  });
+
+  it("leaves this browser's stored user data in place when the reset fails", async () => {
+    fillUserStorage();
+    mockResetFinancialData.mockRejectedValueOnce(new Error("Reset failed on the server"));
+    render(<DataTab />);
+    confirmReset();
+    await screen.findByRole("alert");
+    for (const key of USER_STORAGE_KEYS) expect(localStorage.getItem(key)).toBe("kept");
+    localStorage.clear();
   });
 
   it("asks for a fresh sign-in when the reset needs a recent login", async () => {

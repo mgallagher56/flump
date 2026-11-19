@@ -489,6 +489,27 @@ describe("_index route", () => {
     expect(data.forecastData.estimatedTakeHome).toBeGreaterThan(0);
   });
 
+  it("totals savings at the user's share, as the Savings page does (SD-2, JO-3)", async () => {
+    // Sole ISA £8,000 counts whole; joint saver £10,000 at 50% counts £5,000.
+    // 8,000 + 5,000 = £13,000 (the whole balances would give £18,000).
+    const data = await loadSignedIn({
+      userProfile: { onboardingCompleted: true },
+      accounts: [
+        { id: "isa", name: "ISA", type: "Investment", balance: 8000 },
+        {
+          id: "joint",
+          name: "Joint saver",
+          type: "Saving",
+          balance: 10000,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+      ],
+    });
+    expect(data.savingsData.totalSavingsBalance).toBe(13000);
+    expect(data.savingsData.accountsCount).toBe(2);
+  });
+
   it("redirects signed-out visitors to the marketing site", async () => {
     const request = new Request("http://localhost/");
     const result = (await loader({ request, params: {}, context: {} } as any)) as Response;

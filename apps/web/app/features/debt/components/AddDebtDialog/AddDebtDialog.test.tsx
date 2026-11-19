@@ -223,4 +223,65 @@ describe("AddDebtDialog in edit mode", () => {
     expect(onEditDebt).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });
+
+  describe("a joint loan (SD-7)", () => {
+    // £300 a month stored, joint at 50%: the page shows the share, 300 x 0.5 = £150.
+    const jointLoan = {
+      id: "loan-1",
+      name: "Car loan",
+      type: "loan" as const,
+      balance: 3000,
+      apr: 6,
+      aprKnown: true,
+      minimumPayment: 150,
+      minimumPaymentEstimated: false,
+      wholeMinimumPayment: 300,
+      ownership: "joint",
+      sharePercent: 50,
+    };
+
+    it("starts from the whole stored payment and says it is the whole", () => {
+      customRender(<AddDebtDialog debt={jointLoan} isOpen onAddDebt={vi.fn()} onClose={vi.fn()} />);
+      const minimum = screen.getByLabelText(/^Minimum payment each month/) as HTMLInputElement;
+      expect(minimum.value.replace(/[^0-9.]/g, "")).toBe("300");
+      expect(
+        screen.getByText("This is the whole monthly payment. Your share is 50% of it."),
+      ).toBeDefined();
+    });
+
+    it("saves a typed £320 as the whole payment, 320", () => {
+      const onEditDebt = vi.fn(() => null);
+      customRender(
+        <AddDebtDialog
+          debt={jointLoan}
+          isOpen
+          onAddDebt={vi.fn()}
+          onClose={vi.fn()}
+          onEditDebt={onEditDebt}
+        />,
+      );
+      fill("Minimum payment each month", "320");
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      expect(onEditDebt).toHaveBeenCalledWith("loan-1", {
+        minimumPayment: 320,
+        minimumPaymentEstimated: false,
+      });
+    });
+
+    it("an APR-only edit sends no payment", () => {
+      const onEditDebt = vi.fn(() => null);
+      customRender(
+        <AddDebtDialog
+          debt={jointLoan}
+          isOpen
+          onAddDebt={vi.fn()}
+          onClose={vi.fn()}
+          onEditDebt={onEditDebt}
+        />,
+      );
+      fill("Interest rate", "7");
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      expect(onEditDebt).toHaveBeenCalledWith("loan-1", { apr: 7, aprKnown: true });
+    });
+  });
 });

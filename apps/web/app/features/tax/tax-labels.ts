@@ -1,5 +1,13 @@
 import { getCategoriesForSource, type TaxRecord, type TaxSource } from "@flump/finance-engine";
 
+/**
+ * SA-3: a plain fact for a Scottish taxpayer, folded into the page's one notice (audit slice 2).
+ * The estimate itself is unchanged: it uses England, Wales and Northern Ireland bands. Whether
+ * Scottish bands enter the calculation is owner decision 7, still open.
+ */
+export const SCOTTISH_BANDS_NOTE =
+  "Your tax region is Scotland. This estimate uses England, Wales and Northern Ireland Income Tax bands, so your bill may differ.";
+
 /** User-facing names for each income source, in the order the page lists them. */
 export const SOURCE_OPTIONS: ReadonlyArray<{ value: TaxSource; label: string }> = [
   { value: "paye", label: "Employment (PAYE)" },

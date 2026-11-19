@@ -336,14 +336,68 @@ describe("AddSavingsAccountDialog", () => {
     expect((screen.getByLabelText(/Account name/) as HTMLInputElement).value).toBe("Vanguard ISA");
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(mockSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        intent: "updateSavingsAccount",
-        accountId: "acc-1",
-        balance: "15000",
-        interestRate: "7",
-        monthlyContribution: "300",
-      }),
+      expect.objectContaining({ intent: "updateSavingsAccount", accountId: "acc-1" }),
       { method: "POST", action: "/app/savings" },
     );
+    // Nothing money-shaped changed, so nothing money-shaped is sent (SD-1, CH-3).
+    const sent = mockSubmit.mock.calls[0]?.[0];
+    expect(sent).not.toHaveProperty("balance");
+    expect(sent).not.toHaveProperty("interestRate");
+    expect(sent).not.toHaveProperty("monthlyContribution");
+  });
+
+  describe("a joint account (SD-1, JO-1)", () => {
+    // Homeowner's "Easy access savings": £7,600 stored, joint at 40%, so the share is £3,040.
+    const JOINT_40 = {
+      id: "ea1",
+      name: "Easy access savings",
+      type: "Saving",
+      accountSubtype: "easy_access",
+      balance: 7600,
+      interestRate: 4,
+      ownership: "joint",
+      sharePercent: 40,
+    };
+
+    it("shows the whole stored balance and says it is the whole", () => {
+      render(
+        <AddSavingsAccountDialog
+          accountToEdit={JOINT_40 as never}
+          isOpen={true}
+          onClose={vi.fn()}
+        />,
+      );
+      const balance = screen.getByLabelText("Current balance") as HTMLInputElement;
+      expect(balance.value.replace(/[^0-9.]/g, "")).toBe("7600");
+      expect(screen.getByText("This is the whole balance. Your share is 40% of it.")).toBeDefined();
+    });
+
+    it("a rate-only save sends the new rate and no balance", () => {
+      render(
+        <AddSavingsAccountDialog
+          accountToEdit={JOINT_40 as never}
+          isOpen={true}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.change(screen.getByLabelText("Interest rate (AER)"), { target: { value: "4.1" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      const sent = mockSubmit.mock.calls[0]?.[0];
+      expect(sent).toMatchObject({ interestRate: "4.1" });
+      expect(sent).not.toHaveProperty("balance");
+    });
+
+    it("a changed balance is sent as typed, the whole", () => {
+      render(
+        <AddSavingsAccountDialog
+          accountToEdit={JOINT_40 as never}
+          isOpen={true}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.change(screen.getByLabelText("Current balance"), { target: { value: "8000" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({ balance: "8000" });
+    });
   });
 });

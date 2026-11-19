@@ -1,4 +1,4 @@
-import { isIsaAccount } from "@flump/finance-engine";
+import { describeJointWholeValue, isIsaAccount } from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
@@ -74,15 +74,22 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
     accountToEdit?.ownership === "joint" &&
     isIsaAccount({ accountSubtype: subtypeToSave });
   const isInvestment = kind?.type === "Investment";
-  const [balance, setBalance] = useState<number | null>(toNumberOrNull(accountToEdit?.balance));
+  // The whole stored balance. The caller passes the saved account, not a row at the user's share,
+  // and a joint account says so beside the field (SD-1, JO-1).
+  const [initialBalance] = useState<number | null>(() => toNumberOrNull(accountToEdit?.balance));
+  const [balance, setBalance] = useState<number | null>(initialBalance);
+  const jointNote = isEditing ? describeJointWholeValue(accountToEdit, "balance") : null;
   // No assumed defaults: a new account starts with an empty rate and monthly amount, and empty
   // fields are saved as "not set" rather than 0.
-  const [interestRate, setInterestRate] = useState<number | null>(
-    toNumberOrNull(accountToEdit?.interestRate),
-  );
-  const [monthlyContribution, setMonthlyContribution] = useState<number | null>(
+  const [initialRate] = useState<number | null>(() => toNumberOrNull(accountToEdit?.interestRate));
+  const [interestRate, setInterestRate] = useState<number | null>(initialRate);
+  const [initialMonthly] = useState<number | null>(() =>
     toNumberOrNull(accountToEdit?.monthlyContribution),
   );
+  const [monthlyContribution, setMonthlyContribution] = useState<number | null>(initialMonthly);
+  // An edit sends only the figures the user changed, so an untouched balance is never rewritten
+  // (and writes no history row for this month).
+  const changed = (now: number | null, before: number | null) => !isEditing || now !== before;
 
   const canSave = name.trim().length > 0 && kind !== null;
 
@@ -99,9 +106,15 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         name: name.trim(),
         ...(kindChanged ? { type: kind.type, accountSubtype: kind.subtype } : {}),
         ...(becomesSole ? { ownership: "sole" } : {}),
-        balance: String(Number(balance) || 0),
-        interestRate: interestRate === null ? "" : String(interestRate),
-        monthlyContribution: monthlyContribution === null ? "" : String(monthlyContribution),
+        ...(changed(balance, initialBalance) ? { balance: String(Number(balance) || 0) } : {}),
+        ...(changed(interestRate, initialRate)
+          ? { interestRate: interestRate === null ? "" : String(interestRate) }
+          : {}),
+        ...(changed(monthlyContribution, initialMonthly)
+          ? {
+              monthlyContribution: monthlyContribution === null ? "" : String(monthlyContribution),
+            }
+          : {}),
       },
       { method: "POST", action: "/app/savings" },
     );
@@ -142,7 +155,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
       </FormField>
 
       <div className={fieldRow()}>
-        <FormField label="Current balance">
+        <FormField hint={jointNote ?? undefined} label="Current balance">
           {(field) => (
             <CurrencyInput {...controlProps(field)} value={balance} onValueChange={setBalance} />
           )}

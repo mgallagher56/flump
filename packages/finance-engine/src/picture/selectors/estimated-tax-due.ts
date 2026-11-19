@@ -1,3 +1,4 @@
+import { payeSalaryForTax } from "../../paye-salary-for-tax.js";
 import { calculateUKTax, isRecordActiveInTaxYear, type TaxRecord } from "../../tax-calculator.js";
 import type { UkTaxYear } from "../../types.js";
 import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.js";
@@ -82,7 +83,12 @@ export function selectEstimatedTaxDue(
       ? facts.propertyOwnershipShare
       : 100;
 
-  const result = calculateUKTax(taxYear, inYear, selfEmployed ? 0 : (salary ?? 0), share);
+  const result = calculateUKTax(
+    taxYear,
+    inYear,
+    payeSalaryForTax({ employmentType: facts.employmentType, annualSalary: salary }),
+    share,
+  );
   const untaxedIncome =
     result.rentalIncomeGrossShare +
     result.seIncomeGross +

@@ -6,6 +6,9 @@ import { webServers } from "./support/servers";
 
 const isCI = Boolean(process.env.CI);
 const NEW_USER_SPEC = /new-user-journey\.spec\.ts$/;
+// Cross-page link tests (docs/system/generated/links.md). They change the one user's saved data
+// and put it back, so they run one at a time, after the read-only persona specs.
+const LINK_SPECS = /tests\/links\/.*\.spec\.ts$/;
 
 // Known-flaky tests (quarantine.ts) are left out of the gating run and named in the CI summary.
 // E2E_QUARANTINE=only runs just those, to check whether one is still flaky.
@@ -41,14 +44,22 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"], extraHTTPHeaders: clientAddressHeaders("chromium") },
-      testIgnore: NEW_USER_SPEC,
+      testIgnore: [NEW_USER_SPEC, LINK_SPECS],
+    },
+    {
+      name: "links",
+      use: { ...devices["Desktop Chrome"], extraHTTPHeaders: clientAddressHeaders("links") },
+      testMatch: LINK_SPECS,
+      fullyParallel: false,
+      workers: 1,
+      dependencies: ["chromium"],
     },
     // The suite has one user. This spec clears it, so it runs alone, after the persona specs.
     {
       name: "new-user",
       use: { ...devices["Desktop Chrome"], extraHTTPHeaders: clientAddressHeaders("new-user") },
       testMatch: NEW_USER_SPEC,
-      dependencies: ["chromium"],
+      dependencies: ["links"],
     },
   ],
   webServer: webServers(),

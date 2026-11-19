@@ -103,6 +103,23 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
     });
   });
 
+  it("builds the baseline from saved facts only: no invented salary or defaults (SA-2, AI-1, AI-2)", async () => {
+    const service = serviceWith({});
+    for (const baseline of [
+      (await service.getUserFinancialData("u1")).baseline,
+      await service.getBaseline("u1"),
+    ]) {
+      // 0 is "no salary known", never the 45,000 display default; no pension is assumed.
+      expect(baseline.annualGrossSalary).toBe(0);
+      expect(baseline.pensionContributionPct).toBe(0);
+      expect(baseline.employerPensionMatchPct).toBe(0);
+      expect(baseline.age).toBeUndefined();
+      expect(baseline.totalCashSavings).toBeUndefined();
+      expect(baseline.totalPensionPot).toBeUndefined();
+      expect(baseline.monthlyOtherOutgoings).toBeUndefined();
+    }
+  });
+
   it("maps a saved salary, region and pension", async () => {
     const data = await serviceWith({
       annualSalary: "38000",

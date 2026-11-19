@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
+import { recordAuditEvent } from "../../audit/audit-events";
 import {
   type KeysetOrder,
   keysetPage,
@@ -22,6 +23,7 @@ import {
   type RevertRow,
   type StagedBalance,
 } from "../../entities/import-batch.entity";
+import { newAccountFields } from "../finance/account-intake.service";
 import { londonYearMonth } from "../snapshots/london-date";
 import { checkSnapshotMonth, isValidSnapshotValue } from "../snapshots/snapshot-rules";
 import { type SnapshotRowWrite, writeSnapshotRows } from "../snapshots/snapshot-write";
@@ -371,21 +373,20 @@ export class ImportsService {
           continue;
         }
         const latest = latestByRef.get(staged.ref);
-        toCreate.push({
-          ref: staged.ref,
-          account: m.create(Account, {
-            userId,
-            name: staged.name,
-            type: staged.type as Account["type"],
-            balance: latest ? storedBalance(staged.type, latest.value) : 0,
-            currency: "GBP",
-            isCurrent: true,
-            interestRate: staged.details?.interestRate ?? null,
-            monthlyContribution: staged.details?.monthlyContribution ?? null,
-            termMonths: staged.details?.termMonths ?? null,
-            fixedRateEndDate: staged.details?.fixedRateEndDate ?? null,
-          }),
+        // The account form's create rules (AI-9): field checks, the sign rule, the ownership,
+        // share and currency defaults. Saved below in one insert, as before.
+        const fields = newAccountFields({
+          name: staged.name,
+          type: staged.type,
+          balance: latest ? latest.value : 0,
+          currency: "GBP",
+          isCurrent: true,
+          interestRate: staged.details?.interestRate ?? null,
+          monthlyContribution: staged.details?.monthlyContribution ?? null,
+          termMonths: staged.details?.termMonths ?? null,
+          fixedRateEndDate: staged.details?.fixedRateEndDate ?? null,
         });
+        toCreate.push({ ref: staged.ref, account: m.create(Account, { ...fields, userId }) });
       }
       // One insert for every new account instead of one per account (audit L13); the saved
       // entities come back in input order, so each ref keeps its own id.
@@ -595,13 +596,22 @@ export class ImportsService {
         );
       }
       if (data.createdAccountIds.length > 0) {
-        await m.query(
-          `DELETE FROM "accounts" a
-           WHERE a."id" = ANY($1::uuid[]) AND a."user_id" = $2 AND a."connection_id" IS NULL
-             AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id")
-             AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id" = a."id")`,
+        // Wrapped in a CTE so the removed ids come back as plain rows.
+        const deleted: Array<{ id: string }> = await m.query(
+          `WITH "gone" AS (
+             DELETE FROM "accounts" a
+             WHERE a."id" = ANY($1::uuid[]) AND a."user_id" = $2 AND a."connection_id" IS NULL
+               AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id" = a."id")
+               AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id" = a."id")
+             RETURNING a."id"
+           )
+           SELECT "id"::text AS "id" FROM "gone"`,
           [data.createdAccountIds, userId],
         );
+        // The same audit record as a delete from Accounts (AI-10), in this transaction.
+        for (const { id: accountId } of deleted) {
+          await recordAuditEvent(m, { userId, action: "account.deleted", targetId: accountId });
+        }
       }
 
       const removed = removeIds.length;

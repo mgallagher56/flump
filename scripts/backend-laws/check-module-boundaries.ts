@@ -27,7 +27,7 @@ export const MODULE_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = 
   budget: [],
   tax: [],
   banking: ["snapshots"],
-  imports: ["snapshots"],
+  imports: ["snapshots", "finance"],
   finance: ["banking", "snapshots"],
   privacy: ["banking"],
   profile: ["banking", "privacy", "snapshots"],
