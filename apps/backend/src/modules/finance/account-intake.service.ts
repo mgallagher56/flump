@@ -865,7 +865,12 @@ export class AccountIntakeService implements IAccountIntake {
         await accounts.update({ linkedAccountId: account.id, userId }, { linkedAccountId: null });
       }
       const saved = await accounts.save(account);
-      await this.writePlanToProfile(accounts, userId, saved);
+      // Only an edit that sets the plan, or makes the account a Student Loan, is an answer about
+      // the plan. Any other edit (a balance, a rename) must never bring back a plan the user has
+      // since cleared on the profile (independent review).
+      if (body.studentLoanPlan !== undefined || (typeChanged && saved.type === "Student Loan")) {
+        await this.writePlanToProfile(accounts, userId, saved);
+      }
       if (body.balance !== undefined && body.balance !== null) {
         await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
       }
