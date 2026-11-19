@@ -1,11 +1,13 @@
 import { findFigures } from "@repo/ui/testing";
 import { fireEvent } from "@testing-library/react";
-import { createStore, Provider } from "jotai";
-import type { ReactNode } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { DEFAULT_PROFILE, type UserProfile, userProfileAtom } from "~/hooks/useUserProfile";
+import { DEFAULT_PROFILE, type UserProfile } from "~/hooks/useUserProfile";
+import { withRootLoader } from "~/test/rootLoaderRouter";
 import customRender from "~/testUtils/customRender";
 import { TakeHomeCalculator } from "./TakeHomeCalculator";
+
+// The real router: the saved profile is the root loader's (audit slice 8), and links render as links.
+vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const scenarioSpy = vi.hoisted(() => vi.fn());
 vi.mock("../NextPoundExplorer", async (importOriginal) => {
@@ -25,15 +27,10 @@ const SAVED: Partial<UserProfile> = {
   isSalarySacrifice: false,
 };
 
-const withProfile = (overrides: Partial<UserProfile> = {}) => {
-  const store = createStore();
-  store.set(userProfileAtom, { ...DEFAULT_PROFILE, ...SAVED, ...overrides } as UserProfile);
-  return {
-    wrapper: ({ children }: { children: ReactNode }) => (
-      <Provider store={store}>{children}</Provider>
-    ),
-  };
-};
+/** The saved profile, from the root loader's data (audit slice 8). */
+const withProfile = (overrides: Partial<UserProfile> = {}) => ({
+  wrapper: withRootLoader({ userProfile: { ...DEFAULT_PROFILE, ...SAVED, ...overrides } }),
+});
 
 const hero = (container: HTMLElement) => container.querySelector('[data-tone="hero"]');
 

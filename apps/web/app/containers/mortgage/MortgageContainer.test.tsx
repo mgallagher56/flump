@@ -62,6 +62,8 @@ vi.mock("react-router", async () => {
     useLoaderData: vi.fn(() => loaderData),
     useNavigate: () => mockNavigate,
     useRevalidator: () => ({ revalidate: mockRevalidate, state: "idle" }),
+    // The root loader's profile (audit slice 8): the same saved profile this page's loader has.
+    useRouteLoaderData: () => ({ userProfile: loaderData.userProfile }),
     useSearchParams: () => [searchParams, vi.fn()],
   };
 });
@@ -996,7 +998,8 @@ describe("<MortgageContainer />", () => {
       const patch = fetchSpy.mock.calls.find(([url]) => String(url).includes("/accounts/"));
       const sentHeaders = (patch?.[1]?.headers ?? {}) as Record<string, string>;
       expect(sentHeaders["If-Match"]).toBe('"2026-11-14T09:30:00.123Z"');
-      expect(mockRevalidate).toHaveBeenCalledTimes(1);
+      // Slice 8: the profile save before it reloads saved data too, so two reloads: that one and the 412's.
+      expect(mockRevalidate).toHaveBeenCalledTimes(2);
       expect(queryByText(/^Saved interest rate/)).toBeNull();
       // The edit dialog is still open with the rate that was typed.
       expect(field(/^Interest rate/).value).toBe("4.5");

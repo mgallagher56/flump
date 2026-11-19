@@ -1,7 +1,8 @@
-import { act, renderHook } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { withRootLoader } from "~/test/rootLoaderRouter";
 import { useFormatCurrency } from "./useFormatCurrency";
-import { DEFAULT_PROFILE, useUserProfile } from "./useUserProfile";
+import { DEFAULT_PROFILE } from "./useUserProfile";
 
 describe("useFormatCurrency", () => {
   it("formats whole pounds and pence in en-GB", () => {
@@ -13,15 +14,11 @@ describe("useFormatCurrency", () => {
   });
 
   it("ignores a stored non-GBP profile currency", () => {
-    const { result: profileHook } = renderHook(() => useUserProfile());
-    act(() => {
-      profileHook.current.setProfile({ ...DEFAULT_PROFILE, currency: "USD" });
+    // The saved profile comes from the root loader's data (audit slice 8).
+    const { result } = renderHook(() => useFormatCurrency(), {
+      wrapper: withRootLoader({ userProfile: { ...DEFAULT_PROFILE, currency: "USD" } }),
     });
-    const { result } = renderHook(() => useFormatCurrency());
     expect(result.current.currency).toBe("GBP");
     expect(result.current.formatCurrency(1234)).toBe("£1,234");
-    act(() => {
-      profileHook.current.setProfile(DEFAULT_PROFILE);
-    });
   });
 });

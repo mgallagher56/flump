@@ -13,6 +13,9 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useLocation: () => mockLocation,
+    // No data router here: no root data (signed out) and an inert reload (audit slice 8).
+    useRouteLoaderData: () => undefined,
+    useRevalidator: () => ({ revalidate: vi.fn(), state: "idle" }),
     Link: ({ children, to, onClick, "aria-current": ariaCurrent }: any) => (
       <a aria-current={ariaCurrent} href={to} onClick={onClick}>
         {children}

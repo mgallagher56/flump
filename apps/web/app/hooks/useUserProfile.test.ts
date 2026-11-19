@@ -1,19 +1,31 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { profileFixture } from "~/test/fixtures/contractResponses";
-import {
+import { profileBackend } from "~/test/profileBackend";
+import { withRootLoader } from "~/test/rootLoaderRouter";
+
+// The real router: the profile is the root loader's, and a save reloads it (audit slice 8).
+vi.mock("react-router", async () => await vi.importActual("react-router"));
+
+const {
   DEFAULT_PROFILE,
+  forgetWrittenProfileVersion,
   normalizeProfile,
   RecentLoginRequiredError,
   useUserProfile,
-} from "./useUserProfile";
-
-const jsonRes = (body: unknown, status = 200) =>
-  new Response(body === undefined ? null : JSON.stringify(body), { status });
+} = await import("./useUserProfile");
 
 describe("useUserProfile", () => {
+  let api: ReturnType<typeof profileBackend>;
+  const renderProfileHook = () =>
+    renderHook(() => useUserProfile(), {
+      wrapper: withRootLoader(() => ({ userProfile: api.state.saved })),
+    });
+
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn());
+    api = profileBackend();
+    forgetWrittenProfileVersion();
+    vi.stubGlobal("fetch", api.fetchMock);
     vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
   });
 
@@ -63,83 +75,61 @@ describe("useUserProfile", () => {
     expect(profile.currency).toBe("GBP");
   });
 
-  test("setProfile updates atom state", () => {
-    const { result } = renderHook(() => useUserProfile());
-
-    act(() => {
-      result.current.setProfile({
-        displayName: "John Smith",
-        annualSalary: 75000,
-      });
-    });
-
-    expect(result.current.profile.displayName).toBe("John Smith");
-    expect(result.current.profile.annualSalary).toBe(75000);
-  });
-
   test("never sends a browser access token: it calls the same-origin proxy", async () => {
-    (global.fetch as any).mockResolvedValueOnce(jsonRes(profileFixture));
-    const { result } = renderHook(() => useUserProfile());
+    const { result } = renderProfileHook();
+    api.answer(profileFixture);
 
-    await result.current.updateProfile({ displayName: "X" });
-    const [url, init] = (global.fetch as any).mock.calls[0];
+    await act(async () => {
+      await result.current.updateProfile({ displayName: "X" });
+    });
+    const [url, init] = api.fetchMock.mock.calls[0];
     expect(url).toBe("/api/user-profile");
-    expect(init.headers.Authorization).toBeUndefined();
+    expect((init?.headers as Record<string, string> | undefined)?.Authorization).toBeUndefined();
   });
 
   test("updateProfile rejects with an unavailable BackendError on 503", async () => {
-    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 503));
-    const { result } = renderHook(() => useUserProfile());
+    const { result } = renderProfileHook();
+    api.answer(undefined, 503);
     await expect(result.current.updateProfile({ displayName: "X" })).rejects.toMatchObject({
       name: "BackendError",
       kind: "server",
     });
-    (global.fetch as any).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    api.answerWith(() => {
+      throw new TypeError("Failed to fetch");
+    });
     await expect(result.current.updateProfile({ displayName: "X" })).rejects.toMatchObject({
       kind: "unavailable",
     });
   });
 
-  test("updateProfile sends PATCH request and updates state", async () => {
-    const mockUpdated = {
-      ...profileFixture,
-      displayName: "Updated User",
-      annualSalary: 80000,
-    };
-
-    (global.fetch as any).mockResolvedValueOnce(jsonRes(mockUpdated));
-
-    const { result } = renderHook(() => useUserProfile());
+  test("updateProfile sends a PATCH request, then shows the reloaded saved profile", async () => {
+    const { result } = renderProfileHook();
+    api.answer({ ...profileFixture, displayName: "Updated User", annualSalary: 80000 });
 
     await act(async () => {
       await result.current.updateProfile({ displayName: "Updated User" });
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(api.fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/user-profile"),
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({ displayName: "Updated User" }),
       }),
     );
-    expect(result.current.profile.displayName).toBe("Updated User");
+    // Slice 8: the hook reloads saved data rather than storing the response.
+    await waitFor(() => expect(result.current.profile.displayName).toBe("Updated User"));
   });
 
   test("markChecklistStep sends checklist update", async () => {
-    const mockUpdated = {
-      ...profileFixture,
-      setupChecklistCompletedSteps: ["step1"],
-    };
-
-    (global.fetch as any).mockResolvedValueOnce(jsonRes(mockUpdated));
-
-    const { result } = renderHook(() => useUserProfile());
+    const { result } = renderProfileHook();
+    api.answer({ ...profileFixture, setupChecklistCompletedSteps: ["profile", "step1"] });
 
     await act(async () => {
       await result.current.markChecklistStep("step1", true);
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(api.fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/user-profile/checklist"),
       expect.objectContaining({
         method: "PATCH",
@@ -149,9 +139,8 @@ describe("useUserProfile", () => {
   });
 
   test("sendPasswordResetEmail sends request", async () => {
-    (global.fetch as any).mockResolvedValueOnce(jsonRes({ success: true }));
-
-    const { result } = renderHook(() => useUserProfile());
+    const { result } = renderProfileHook();
+    api.answer({ success: true });
 
     const response = await result.current.sendPasswordResetEmail();
     expect(response.success).toBe(true);
@@ -159,33 +148,30 @@ describe("useUserProfile", () => {
   });
 
   test("resetFinancialData sends reset request", async () => {
-    const mockUpdated = {
+    const { result } = renderProfileHook();
+    api.answer({
       success: true,
       message: "Financial data reset",
       profile: { ...profileFixture, hasResetFinancialData: true },
-    };
-
-    (global.fetch as any).mockResolvedValueOnce(jsonRes(mockUpdated));
-
-    const { result } = renderHook(() => useUserProfile());
+    });
 
     await act(async () => {
       await result.current.resetFinancialData();
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(api.fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/user-profile/reset-financial-data"),
       expect.objectContaining({
         method: "POST",
       }),
     );
-    const [, init] = (global.fetch as any).mock.calls.at(-1);
-    expect(JSON.parse(init.body)).toEqual({ confirmation: "RESET" });
+    const [, init] = api.fetchMock.mock.calls.at(-1) ?? [];
+    expect(JSON.parse(String(init?.body))).toEqual({ confirmation: "RESET" });
   });
 
   test("resetFinancialData reports a recent-login 403 as RecentLoginRequiredError", async () => {
-    (global.fetch as any).mockResolvedValueOnce(jsonRes({ kind: "forbidden" }, 403));
-    const { result } = renderHook(() => useUserProfile());
+    const { result } = renderProfileHook();
+    api.answer({ kind: "forbidden" }, 403);
     await expect(result.current.resetFinancialData()).rejects.toBeInstanceOf(
       RecentLoginRequiredError,
     );

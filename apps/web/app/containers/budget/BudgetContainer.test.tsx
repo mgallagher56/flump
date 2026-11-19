@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue({});
-const mockSetProfile = vi.fn();
+const mockRevalidate = vi.fn();
 const mockMarkChecklistStep = vi.fn().mockResolvedValue({});
 
 let mockSearchParams = new URLSearchParams();
@@ -37,6 +37,8 @@ vi.mock("react-router", () => ({
   ),
   useLoaderData: () => mockLoaderData,
   useNavigate: () => vi.fn(),
+  // Saved writes reload saved data (audit slice 8).
+  useRevalidator: () => ({ revalidate: mockRevalidate, state: "idle" }),
   useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
 
@@ -46,7 +48,6 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
     ...actual,
     useUserProfile: () => ({
       profile: mockProfileData,
-      setProfile: mockSetProfile,
       updateProfile: mockUpdateProfile,
       markChecklistStep: mockMarkChecklistStep,
     }),

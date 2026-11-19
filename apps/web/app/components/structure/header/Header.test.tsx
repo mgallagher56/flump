@@ -19,6 +19,8 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useRouteLoaderData: mocks.mockUseLoaderData,
+    // No data router here: saved writes reload through an inert stub (audit slice 8).
+    useRevalidator: () => ({ revalidate: vi.fn(), state: "idle" }),
     useLocation: () => ({ pathname: "/" }),
     Link: ({ children, to }: any) => <a href={to}>{children}</a>,
     // The drawer's sign-out form; a plain form outside a data router.
