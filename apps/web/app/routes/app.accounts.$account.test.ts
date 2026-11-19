@@ -60,6 +60,22 @@ describe("app.accounts.$account loader", () => {
     },
   );
 
+  it.each([429, 409])(
+    "passes any other 4xx (%i) through unchanged, not as not found",
+    async (status) => {
+      backendFetch
+        .mockRejectedValueOnce(new BackendError("client", "/accounts/a1", status))
+        .mockResolvedValueOnce({});
+      const thrown = await loader(args).then(
+        () => null,
+        (e: unknown) => e as { init: { status: number }; data: { kind: string; endpoint: string } },
+      );
+      // The kind's own route status (client: 400), not the 404 not-found page.
+      expect(thrown?.init.status).toBe(400);
+      expect(thrown?.data).toEqual({ kind: "client", endpoint: "/accounts/a1" });
+    },
+  );
+
   it("leaves the basis unknown (null) when the profile cannot be read", async () => {
     respond(new Error("profile down"));
     const data = await run();

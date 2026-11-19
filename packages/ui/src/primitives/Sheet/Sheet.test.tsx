@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Sheet } from "./Sheet";
+import { sheetBodyRecipe } from "./Sheet.styles";
 
 const ReturnHarness = () => {
   const [open, setOpen] = useState(false);
@@ -118,9 +119,30 @@ describe("Sheet primitive", () => {
     // First child is the header (title and close), not an aria-hidden handle bar.
     expect(sheet.querySelector(":scope > [aria-hidden='true']")).toBeNull();
     expect(sheet.className).toContain("h_auto");
-    // The body may shrink to the height cap but never grows into an empty band.
-    expect((screen.getByText("body").parentElement as HTMLElement).className).toContain(
-      "flex_0_1_auto",
+  });
+
+  // jsdom has no layout, so these read the resolved style declarations; the SideRight story
+  // checks the real layout (footer pinned to the bottom of the full-height sheet).
+  it("bottom sheet body sizes to its content and never grows into an empty band (P31)", () => {
+    const style = sheetBodyRecipe.raw({ side: "bottom" }) as { flex?: unknown };
+    // flex-grow 0: no empty band; flex-shrink 1: it still shrinks to the height cap and scrolls.
+    expect(style.flex).toBe("0 1 auto");
+  });
+
+  it("right sheet body grows from md so the footer sits at the bottom of the full-height sheet", () => {
+    const style = sheetBodyRecipe.raw({ side: "right" }) as { flex?: unknown };
+    // Under md the right sheet is a bottom sheet, so it keeps the content-sized body.
+    expect(style.flex).toEqual({ base: "0 1 auto", md: "1 1 auto" });
+  });
+
+  it("passes its side to the body", () => {
+    render(
+      <Sheet open onOpenChange={() => {}} side="right" title="T">
+        <p>body</p>
+      </Sheet>,
+    );
+    expect((screen.getByText("body").parentElement as HTMLElement).className).toBe(
+      sheetBodyRecipe({ side: "right" }),
     );
   });
 

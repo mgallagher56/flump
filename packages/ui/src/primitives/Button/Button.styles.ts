@@ -99,6 +99,16 @@ export const buttonRecipe = cva({
             height: "touch",
             minWidth: "touch",
           },
+          // The 44px area reaches past the line box, so where another target sits on the next or
+          // previous line it would cover that target's visible text, and the later one in the
+          // page would steal its taps. CSS cannot measure the gap to a neighbour, so the area is
+          // dropped wherever neighbours are likely to be that close: inside running text (WCAG
+          // 2.5.8 exempts inline links, and their line height sets their size), beside another
+          // link button, and in a list of two or more items. A lone link button keeps the area.
+          "p &, label &, span > &, figcaption &, blockquote &": { _before: { content: "none" } },
+          '[data-variant="link"] + &': { _before: { content: "none" } },
+          '&:has(+ [data-variant="link"])': { _before: { content: "none" } },
+          "li:has(+ li) > &, li + li > &": { _before: { content: "none" } },
         },
       },
       danger: dangerStyles,

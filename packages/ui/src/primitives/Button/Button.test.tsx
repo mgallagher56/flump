@@ -85,6 +85,27 @@ describe("Button Primitive", () => {
     expect(cls).toContain("pos_relative");
   });
 
+  it("link variant drops the extended hit area where a neighbouring target is close", () => {
+    // Stacked link buttons, links in running text and lists of links sit a line apart, so a 44px
+    // area would cover the neighbour's text and steal its taps. A lone link button keeps it.
+    render(
+      <p>
+        Read <Button variant="link">the terms</Button> first.
+      </p>,
+    );
+    const cls = screen.getByRole("button", { name: "the terms" }).className;
+    const coarse = "[@media_(pointer:_coarse)]";
+    expect(cls).toContain(`${coarse}:before:h_touch`);
+    for (const selector of [
+      "[p_&,_label_&,_span_>_&,_figcaption_&,_blockquote_&]",
+      '[[data-variant="link"]_+_&]',
+      '[&:has(+_[data-variant="link"])]',
+      "[li:has(+_li)_>_&,_li_+_li_>_&]",
+    ]) {
+      expect(cls).toContain(`${coarse}:${selector}:before:content_none`);
+    }
+  });
+
   it("a disabled button uses the subtle fill in dark, not the darkest step (P29)", () => {
     render(<Button disabled>Save</Button>);
     const cls = screen.getByRole("button", { name: "Save" }).className;

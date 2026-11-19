@@ -117,8 +117,10 @@ export const sheetDescriptionRecipe = cva({
 });
 
 /**
- * The only scrolling region, so the header and footer stay put. It shrinks to fit the height cap
- * but never grows past its content, so there is no empty band under the buttons.
+ * The only scrolling region, so the header and footer stay put. As a bottom sheet it shrinks to
+ * fit the height cap but never grows past its content, so there is no empty band under the
+ * buttons (P31). The right sheet is full height from md, so there the body grows to fill it and
+ * the footer stays pinned to the bottom edge.
  */
 export const sheetBodyRecipe = cva({
   base: {
@@ -127,6 +129,13 @@ export const sheetBodyRecipe = cva({
     overflowY: "auto",
     overscrollBehavior: "contain",
   },
+  variants: {
+    side: {
+      bottom: {},
+      right: { flex: { base: "0 1 auto", md: "1 1 auto" } },
+    },
+  },
+  defaultVariants: { side: "bottom" },
 });
 
 export const sheetFooterRecipe = cva({

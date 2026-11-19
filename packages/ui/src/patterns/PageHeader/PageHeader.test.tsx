@@ -95,8 +95,12 @@ describe("PageHeader Pattern", () => {
     // The same size on every page: 40px below md, 64px from md.
     expect(art.className).toContain("w_10");
     expect(art.className).toContain("md:w_16");
-    // Hidden on a phone at large text, where it would crowd the description (P49).
-    expect(art.className).toContain("[@media_screen_and_(max-width:_19.99em)]:d_none");
+    // Hidden on a phone at large text, where it would crowd the description (P49): a rem
+    // container query on the header, since an em media query never sees the root text size.
+    expect(art.className).toContain("[@container_page-header_(max-width:_15.99rem)]:d_none");
+    const header = container.querySelector("header") as HTMLElement;
+    expect(header.className).toContain("cq-t_inline-size");
+    expect(header.className).toContain("cq-n_page-header");
     const svg = art.querySelector("svg");
     expect(svg?.getAttribute("aria-hidden")).toBe("true");
     expect(svg?.getAttribute("data-scene")).toBe("empty-savings");
@@ -133,9 +137,15 @@ describe("PageHeader Pattern", () => {
     );
     const q =
       "[@media_screen_and_(max-height:_479.98px)_and_(orientation:_landscape)_and_(pointer:_coarse)]";
-    expect(screen.getByText("Everything you own and owe, in one place.").className).toContain(
-      `${q}:d_none`,
-    );
+    // The description leaves sight but stays in the accessibility tree (visually hidden, not
+    // display none), so a screen reader still hears it.
+    const description = screen.getByText("Everything you own and owe, in one place.");
+    expect(description.className).not.toContain(`${q}:d_none`);
+    expect(description.className).toContain(`${q}:pos_absolute`);
+    expect(description.className).toContain(`${q}:w_1px`);
+    expect(description.className).toContain(`${q}:h_1px`);
+    expect(description.className).toContain(`${q}:ov_hidden`);
+    expect(screen.getByRole("banner").contains(description)).toBe(true);
     expect(screen.getByTestId("page-header-illustration").className).toContain(`${q}:d_none`);
     expect(screen.getByRole("heading", { level: 1 }).className).toContain(
       `${q}:textStyle_heading.lg`,

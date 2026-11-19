@@ -14,6 +14,8 @@ const USER_INPUT_EVENTS = ["wheel", "touchstart", "pointerdown", "keydown"] as c
  * reader lands near the top. This holds the saved place while the page grows: each time the page
  * changes size within `RESTORE_HOLD_MS`, it scrolls back to the saved offset, and it lets go as
  * soon as the reader scrolls, taps or types, or opens another page.
+ * Known limit: a page that scrolls itself within the hold after Back, with no input from the reader,
+ * is pulled back to the saved place the next time it changes size.
  */
 export function useScrollRestoreAfterGrowth(holdMs = RESTORE_HOLD_MS): void {
   const location = useLocation();

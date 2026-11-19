@@ -147,14 +147,44 @@ const longDate = (iso: string | null | undefined): string | null => {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 };
 
+type SnapshotAccounts = ConstructorParameters<typeof PortfolioSnapshot>[0];
+type SnapshotDetails = ConstructorParameters<typeof PortfolioSnapshot>[1];
+type MortgageRow = { id?: unknown; interestRate?: unknown; termMonths?: unknown };
+
 /**
- * The first residential mortgage account and its saved figures, read the same way as the account
- * effects in the page: a balance, rate or term that is not saved stays at its fallback (the
- * profile balance, or 0 for empty). Nothing is assumed and nothing is written.
+ * One mortgage account's saved figures, read from the whole-loan rows: each is null when it is not
+ * saved (not above 0), so the caller decides what an unsaved figure falls back to. `row` defaults
+ * to the account whose id is `id`. Nothing is assumed and nothing is written.
+ */
+const savedMortgageFigures = (
+  accounts: SnapshotAccounts,
+  accountDetails: SnapshotDetails,
+  id: string,
+  row: MortgageRow | undefined = (accounts as unknown as readonly MortgageRow[]).find(
+    (a) => a.id === id,
+  ),
+): { balance: number | null; rate: number | null; termYears: number | null } => {
+  const balance = new PortfolioSnapshot(
+    withWholeBalances(accounts),
+    accountDetails,
+  ).getLatestBalance(id);
+  const rate = Number(row?.interestRate);
+  const termMonths = Number(row?.termMonths);
+  return {
+    balance: balance > 0 ? balance : null,
+    rate: rate > 0 ? rate : null,
+    termYears: termMonths > 0 ? termMonths / 12 : null,
+  };
+};
+
+/**
+ * The first residential mortgage account and its saved figures, read as the account effect in the
+ * page reads them (savedMortgageFigures): a balance, rate or term that is not saved stays at its
+ * fallback (the profile balance, or 0 for empty).
  */
 export const firstResidentialFigures = (
-  accounts: ConstructorParameters<typeof PortfolioSnapshot>[0],
-  accountDetails: ConstructorParameters<typeof PortfolioSnapshot>[1],
+  accounts: SnapshotAccounts,
+  accountDetails: SnapshotDetails,
   profileBalance: number,
 ): {
   accountId: string | null;
@@ -162,30 +192,20 @@ export const firstResidentialFigures = (
   interestRate: number;
   remainingTerm: number;
 } => {
-  const rows = accounts as unknown as ReadonlyArray<{
-    id?: unknown;
-    type?: string;
-    name?: string | null;
-    accountSubtype?: string | null;
-    interestRate?: unknown;
-    termMonths?: unknown;
-  }>;
+  const rows = accounts as unknown as ReadonlyArray<
+    MortgageRow & { type?: string; name?: string | null; accountSubtype?: string | null }
+  >;
   const first = rows.find((a) => a.type === "Mortgage" && !isBuyToLetAccount(a) && !!a.id);
   if (!first) {
     return { accountId: null, loanAmount: profileBalance, interestRate: 0, remainingTerm: 0 };
   }
   const id = String(first.id);
-  const balance = new PortfolioSnapshot(
-    withWholeBalances(accounts),
-    accountDetails,
-  ).getLatestBalance(id);
-  const rate = Number(first.interestRate);
-  const termMonths = Number(first.termMonths);
+  const saved = savedMortgageFigures(accounts, accountDetails, id, first);
   return {
     accountId: id,
-    loanAmount: balance > 0 ? balance : profileBalance,
-    interestRate: rate > 0 ? rate : 0,
-    remainingTerm: termMonths > 0 ? termMonths / 12 : 0,
+    loanAmount: saved.balance ?? profileBalance,
+    interestRate: saved.rate ?? 0,
+    remainingTerm: saved.termYears ?? 0,
   };
 };
 
@@ -708,25 +728,11 @@ const MortgageContainer: FC = () => {
   // replaced by the loader copy from before the save (CS-1).
   useEffect(() => {
     if (selectedAccountId && propertyCategory === "residential") {
-      const snapshot = new PortfolioSnapshot(withWholeBalances(pictureAccounts), accountDetails);
-      const bal = snapshot.getLatestBalance(selectedAccountId);
-      if (bal > 0) {
-        setLoanAmount(bal);
-      }
-      // A stored account rate is real data; an unset rate stays empty.
-      const storedRate = Number(
-        (pictureAccounts as any[]).find((a: any) => a.id === selectedAccountId)?.interestRate,
-      );
-      if (storedRate > 0) {
-        setInterestRate(storedRate);
-      }
-      // A stored term (months) is real data; an unset term stays empty.
-      const storedTermMonths = Number(
-        (pictureAccounts as any[]).find((a: any) => a.id === selectedAccountId)?.termMonths,
-      );
-      if (storedTermMonths > 0) {
-        setRemainingTerm(storedTermMonths / 12);
-      }
+      // A stored balance, rate or term is real data; an unset one leaves the figure as it is.
+      const saved = savedMortgageFigures(pictureAccounts, accountDetails, selectedAccountId);
+      if (saved.balance !== null) setLoanAmount(saved.balance);
+      if (saved.rate !== null) setInterestRate(saved.rate);
+      if (saved.termYears !== null) setRemainingTerm(saved.termYears);
     }
   }, [selectedAccountId, pictureAccounts, accountDetails, propertyCategory]);
 

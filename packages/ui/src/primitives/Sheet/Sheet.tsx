@@ -102,7 +102,7 @@ export const Sheet: FC<SheetProps> = ({
               </button>
             </RadixDialog.Close>
           </div>
-          <div className={sheetBodyRecipe()}>{children}</div>
+          <div className={sheetBodyRecipe({ side })}>{children}</div>
           {footer ? <div className={sheetFooterRecipe()}>{footer}</div> : null}
         </RadixDialog.Content>
       </RadixDialog.Portal>

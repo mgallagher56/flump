@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SiteFooter, type SiteFooterColumn } from "./SiteFooter";
+import { siteFooterCompactLink, siteFooterCompactNav } from "./SiteFooter.styles";
 
 const columns: SiteFooterColumn[] = [
   {
@@ -86,5 +87,26 @@ describe("SiteFooter", () => {
     );
     // At 200% text on a phone the one line of links is wider than the screen (phone sweep 5).
     expect(screen.getByRole("navigation", { name: "Footer" }).className).toContain("ov-x_auto");
+  });
+
+  it("compact: the scrolling line leaves room for the links' whole focus ring (WCAG 2.4.7)", () => {
+    // The ring reaches 2px (outline) + 2px (offset) = 4px outside the link. Spacing token "1" is
+    // 4px, so the scroller's padding holds the ring and the -4px margin cancels it out.
+    const ring = siteFooterCompactLink.raw()._focusVisible as Record<string, string>;
+    expect(ring.outline).toBe("2px solid");
+    expect(ring.outlineOffset).toBe("2px");
+    const nav = siteFooterCompactNav.raw() as Record<string, string>;
+    expect(nav.padding).toBe("1");
+    expect(nav.margin).toBe("-1");
+    render(
+      <SiteFooter
+        links={[{ key: "a", label: "Always", href: "/a" }]}
+        logo={<a href="/">Logo</a>}
+        variant="compact"
+      />,
+    );
+    const navEl = screen.getByRole("navigation", { name: "Footer" });
+    expect(navEl.className).toContain("p_1");
+    expect(navEl.className).toContain("m_-1");
   });
 });

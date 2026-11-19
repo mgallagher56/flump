@@ -223,8 +223,9 @@ export const PhoneIllustrationNoDescriptionDark: Story = {
 };
 
 /**
- * A phone in landscape (812x375): under 480px tall the header goes compact, with no icon or
- * description and a smaller h1, so the h1 and the headline figure share the first view (P78).
+ * A phone in landscape (812x375): under 480px tall the header goes compact, with no icon, the
+ * description visually hidden (still read by screen readers) and a smaller h1, so the h1 and the
+ * headline figure share the first view (P78).
  * The play checks the rule against the viewport it runs in, so it holds at any size.
  */
 const landscapePlay: Story["play"] = async ({ canvasElement }) => {
@@ -235,7 +236,9 @@ const landscapePlay: Story["play"] = async ({ canvasElement }) => {
   const short = window.matchMedia(SHORT_VIEWPORT.replace(/^@media\s+/, "")).matches;
   const description = canvas.getByText("Everything you own and owe, in one place.");
   const art = canvas.getByTestId("page-header-illustration");
-  await expect(getComputedStyle(description).display === "none").toBe(short);
+  // The description is visually hidden, never display none, so screen readers still hear it.
+  await expect(getComputedStyle(description).display).not.toBe("none");
+  await expect(getComputedStyle(description).position === "absolute").toBe(short);
   await expect(getComputedStyle(art).display === "none").toBe(short);
   await expect(canvas.getByRole("heading", { level: 1, name: "Your accounts" })).toBeVisible();
 };
