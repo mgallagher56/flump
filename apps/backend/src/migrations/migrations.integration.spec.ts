@@ -17,6 +17,10 @@ import {
   AddBudgetEntryJointShare1795350000000,
   BUDGET_JOINT_DOWN_REFUSAL,
 } from "./AddBudgetEntryJointShare1795350000000";
+import {
+  AddBudgetEntryLinkKind1795440000000,
+  LINK_KIND_DOWN_REFUSAL,
+} from "./AddBudgetEntryLinkKind1795440000000";
 import { AddLivingWithFamilyHousingStatus1794700000000 } from "./AddLivingWithFamilyHousingStatus1794700000000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddNetWorthChoices1794800000000 } from "./AddNetWorthChoices1794800000000";
@@ -37,6 +41,7 @@ import {
 } from "./RemoveSeededExampleData1794355400000";
 import { SavingsRowsNotEssential1795450000000 } from "./SavingsRowsNotEssential1795450000000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
+import { WidenPensionPercentPrecision1795460000000 } from "./WidenPensionPercentPrecision1795460000000";
 
 // These tests DROP the public schema. Run them against a throwaway database only:
 //   docker run --rm -d --name flump-e3-pg -e POSTGRES_PASSWORD=postgres \
@@ -1963,6 +1968,80 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await rows()).toEqual(after);
       await runUpInTransaction(new SavingsRowsNotEssential1795450000000());
       expect(await rows()).toEqual(after);
+    });
+  });
+
+  describe("AddBudgetEntryLinkKind1795440000000 (owner items 7 and 33b)", () => {
+    const NAME = "AddBudgetEntryLinkKind1795440000000";
+    const insert = (name: string, linkKind: string | null): Promise<unknown> =>
+      ds.query(
+        `INSERT INTO budget_entries (user_id, category, name, amount, is_income, is_essential, link_kind)
+         VALUES ('u1', 'income', $1, 0, true, true, $2)`,
+        [name, linkKind],
+      );
+
+    it("allows the two kinds once per user, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      await insert("Take-home pay", "take_home");
+      await insert("Rent", "housing");
+      await insert("Child benefit", null);
+      await insert("Bonus", null);
+      // One line per user per fact.
+      await expect(insert("Second take-home", "take_home")).rejects.toThrow(/unique|duplicate/i);
+      // Only the two kinds.
+      await expect(insert("Other", "pension")).rejects.toThrow(/check constraint/i);
+      await runUpInTransaction(new AddBudgetEntryLinkKind1795440000000());
+      const rows: { n: string }[] = await ds.query(
+        "SELECT count(*)::text AS n FROM budget_entries WHERE link_kind IS NOT NULL",
+      );
+      expect(rows[0]?.n).toBe("2");
+    });
+
+    it("refuses to revert while a line is linked, and reverts once none is", async () => {
+      await ds.runMigrations();
+      await undoThrough("WidenPensionPercentPrecision1795460000000");
+      await undoThrough("SavingsRowsNotEssential1795450000000");
+      await insert("Take-home pay", "take_home");
+      await expect(ds.undoLastMigration()).rejects.toThrow(LINK_KIND_DOWN_REFUSAL);
+      expect(await applied()).toContain(NAME);
+      await ds.query("UPDATE budget_entries SET link_kind = NULL");
+      await ds.undoLastMigration();
+      expect(await applied()).not.toContain(NAME);
+      const cols: unknown[] = await ds.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = 'budget_entries' AND column_name = 'link_kind'",
+      );
+      expect(cols).toEqual([]);
+    });
+  });
+
+  describe("WidenPensionPercentPrecision1795460000000 (owner item B)", () => {
+    const NAME = "WidenPensionPercentPrecision1795460000000";
+    const rates = (): Promise<unknown[]> =>
+      ds.query(
+        "SELECT pension_percent::text AS own, pension_employer_percent::text AS employer FROM user_profiles",
+      );
+
+    it("keeps four decimal places, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      // £100 a month on £37,260: 1,200 / 37,260 = 3.2206% to four places.
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, pension_percent, pension_employer_percent) VALUES ('u1', 3.2206, 100)",
+      );
+      expect(await rates()).toEqual([{ own: "3.2206", employer: "100.0000" }]);
+      await runUpInTransaction(new WidenPensionPercentPrecision1795460000000());
+      expect(await rates()).toEqual([{ own: "3.2206", employer: "100.0000" }]);
+    });
+
+    it("rounds back to two places on revert", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, pension_percent, pension_employer_percent) VALUES ('u1', 3.2206, 4.005)",
+      );
+      await undoThrough(NAME);
+      // round(3.2206, 2) = 3.22; round(4.005, 2) = 4.01 (half away from zero).
+      expect(await rates()).toEqual([{ own: "3.22", employer: "4.01" }]);
     });
   });
 });

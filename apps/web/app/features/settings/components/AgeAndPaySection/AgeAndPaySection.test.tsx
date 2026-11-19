@@ -245,6 +245,16 @@ describe("<AgeAndPaySection />", () => {
     ).toBe("3.22");
   });
 
+  it("shows a stored 3.2206% as £100 a month after a reload, with no typed text kept", () => {
+    // Fresh mount from the stored rate only: 37,260 × 0.032206 ÷ 12 = £99.9996, shown as £100.
+    // At two places (3.22%) it would be 37,260 × 0.0322 ÷ 12 = £99.98.
+    setup({ ...SAVED, annualSalary: 37260, pensionPercent: 3.2206 });
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "£ a month" }));
+    fireEvent.click(screen.getByRole("tab", { name: "£ a month" }));
+    const own = screen.getByLabelText("Your pension contribution (£ a month)") as HTMLInputElement;
+    expect(Number(own.value.replace(/,/g, ""))).toBe(100);
+  });
+
   it("turns off pounds a month without a saved salary and says why", () => {
     setup({ ...SAVED, annualSalary: null });
     const monthly = screen.getByRole("tab", { name: "£ a month" });

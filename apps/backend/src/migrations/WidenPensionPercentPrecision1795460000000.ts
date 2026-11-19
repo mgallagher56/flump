@@ -4,7 +4,7 @@ import { takeMigrationLock } from "../config/migration-lock";
 /**
  * The profile stores a workplace pension rate as a percentage of salary, and pounds a month are
  * worked out from it (finance-engine `contributionMonthlyFromPercent`). At two decimal places a
- * typed £100 a month on a £37,260 salary was saved as 3.22% and shown back as £99.95. Four decimal
+ * typed £100 a month on a £37,260 salary was saved as 3.22% and shown back as £99.98 (37,260 × 3.22% ÷ 12 = £99.981). Four decimal
  * places keep pounds to the penny for ordinary salaries: 100 × 12 / 37,260 = 3.2206%, and
  * 37,260 × 3.2206% / 12 = £99.9996, shown as £100.00. The percentage stays the one stored value.
  *
