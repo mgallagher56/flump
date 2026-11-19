@@ -1,9 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
 import { backendCall } from "../../support/backend";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 const api = (page: Page, path: string, method = "GET", body?: unknown) =>
   page.evaluate(

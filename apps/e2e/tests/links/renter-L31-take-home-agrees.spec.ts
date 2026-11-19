@@ -1,8 +1,10 @@
 import { expect, type Page, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona, RENTER } from "../../support/personas";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 type DashboardData = {
   forecastData: { estimatedTakeHome: number | null };

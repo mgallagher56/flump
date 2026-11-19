@@ -1,13 +1,15 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
 import { accountNamed, api, entryNamed, leftOver } from "./budget-links.helpers";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 // L13 (HM-1, BU-5, audit slice 5): the payment saved on the mortgage account is the budget's
 // housing line and so the commitments, on Budget and the Dashboard. Named L33b so it runs among
-// the homeowner specs, inside L33's rate window: no extra persona switch or wait.
+// the homeowner specs: no extra persona switch.
 test("L13 a mortgage payment saved on the account reaches the linked housing line", async ({
   page,
 }) => {

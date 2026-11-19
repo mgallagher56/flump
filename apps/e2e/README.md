@@ -97,7 +97,11 @@ Each smoke project sends its own client address as `X-Forwarded-For` (`support/c
 and the servers share a per-run `WEB_CLIENT_IP_HMAC_KEY`, as production does. The backend then keys
 its per-IP ceiling (300 requests a minute) on each project's address. Without that, the whole
 suite counted as the web server's one address, and when the persona specs and the journey ran
-inside one minute the journey's first budget entry was refused with 429.
+inside one minute the journey's first budget entry was refused with 429. Each `chromium` worker
+and each link spec file in `tests/links` has its own address as well (192.0.2.40 upwards, by the
+file's place in name order; the owner allowed this on 19 November 2026), so the serial `links`
+project needs no waits for the ceiling. The per-user limits still count every project as the one
+test user. A guard in `scripts/e2e-link-addresses.test.ts` fails if a link spec leaves it out.
 
 Against a database you keep, a full smoke run therefore spends two resets (the journey, then the
 next seed), so about five runs an hour reach the limit. To skip the journey while working on

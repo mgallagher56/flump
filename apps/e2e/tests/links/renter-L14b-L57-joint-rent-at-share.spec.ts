@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
 import { api, entryNamed, leftOver } from "./budget-links.helpers";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 // L57 (JO-8, audit slice 5): a shared rent counts at its share. The saved rent is the whole rent;
 // the linked rent line says it is joint and the person's share, and every budget figure counts

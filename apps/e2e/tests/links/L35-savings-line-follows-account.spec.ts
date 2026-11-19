@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
+import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
 import { accountNamed, api, entryNamed, kpiCard } from "./budget-links.helpers";
 
-test.use({ storageState: AUTH_STATE });
+// Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
+test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 // L35 (BU-6, audit slice 5): a budget savings line linked to a savings account reads the account's
 // monthly saving, so changing it on the account changes the budget, with nothing to retype.
