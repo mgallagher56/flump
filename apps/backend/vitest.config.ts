@@ -8,9 +8,9 @@ const INCLUDE = ["src/**/*.spec.ts", "test/**/*.spec.ts"];
 
 /**
  * Every spec that decides whether to run against real Postgres calls resolveDbTestMode
- * (src/testing/dbTestMode.ts). Those files reset the one shared TEST_DATABASE_URL schema, so they
- * must run one at a time: they form the serial "db" project. Everything else is the "unit"
- * project and runs in parallel (E41 P2, owner decision 10).
+ * (src/testing/dbTestMode.ts). Those files reset the TEST_DATABASE_URL schema, so they form the
+ * "db" project, where each worker has a database of its own. Everything else is the "unit"
+ * project, with no database (E41 P2, owner decision 10).
  *
  * The split is found from the files, not from a hand-kept list, so a new database spec lands in
  * "db" without anyone remembering to add it. A database spec that slipped into "unit" anyway would
@@ -62,9 +62,11 @@ export default defineConfig({
         test: {
           name: "db",
           include: DB_SPECS,
-          // The real-Postgres suites (migrations, contract, authz) each reset the same
-          // TEST_DATABASE_URL schema, so these files must not run concurrently.
-          fileParallelism: false,
+          // The real-Postgres suites (migrations, contract, authz) each reset the schema of
+          // TEST_DATABASE_URL, so two must never share a database at once. Each worker gets its
+          // own database on the same local server ("<name>_w<worker>"), so the files run in
+          // parallel while each still has a database to itself (src/testing/perWorkerDatabase.ts).
+          setupFiles: ["./test/support/per-worker-database.setup.mts"],
         },
       },
     ],
