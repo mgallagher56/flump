@@ -72,6 +72,16 @@ export const section24Explainer = cva({
   },
 });
 
+/** A plain sentence under the figures: interest that carries forward. Not a notice. */
+export const section24Note = cva({
+  base: {
+    margin: "0",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
 export const section24Cta = cva({
   base: { alignSelf: { base: "stretch", sm: "flex-start" }, gap: "2" },
 });

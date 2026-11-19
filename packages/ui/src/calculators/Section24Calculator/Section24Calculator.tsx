@@ -25,6 +25,7 @@ import {
   section24Explainer,
   section24Header,
   section24Intro,
+  section24Note,
   section24Outcomes,
   section24Root,
   section24Title,
@@ -47,9 +48,12 @@ export const SECTION24_COPY = {
   kpiCashSubtext: "After costs, interest and tax.",
   kpiRate: "Tax share of taxable profit",
   kpiRateSubtext: "Rent less costs, before interest.",
+  broughtForwardDrawer: "Unused interest from earlier years",
+  broughtForward: "Mortgage interest not yet used from earlier years",
+  broughtForwardHelper: "Shown on your last tax return, if you have any.",
   explainerTitle: "How Section 24 works",
   explainer:
-    "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest. The reduction is at most 20% of the rental profit, or of your income above the Personal Allowance if that is lower. Rent of £1,000 or less is not taxed. Above that, the estimate takes off the £1,000 property allowance instead of your costs when that gives less tax. Then there is no reduction for interest. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
+    "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest. The reduction is at most 20% of the rental profit, or of your income above the Personal Allowance if that is lower. Interest that cannot be used this year carries forward to the next. Rent of £1,000 or less is not taxed. Above that, the estimate takes off the £1,000 property allowance instead of your costs when that gives less tax. Then there is no reduction for interest. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
   explainerMethod:
     "No law sets out the tax on rental income on its own. The estimate is your tax with the rent minus your tax without it.",
   explainerLoss:
@@ -57,6 +61,10 @@ export const SECTION24_COPY = {
   controlsLabel: "Rental figures",
   contentLabel: "Estimated tax on rental income",
 } as const;
+
+/** Shown under the figures when interest cannot all be used this year (ITTOIA 2005 s.274AA(4)). */
+export const section24CarriedForward = (amount: string) =>
+  `${amount} of mortgage interest could not be used this year. It carries forward to next year.`;
 
 export const SECTION24_DEFAULT_CTA = "Continue to sign up";
 
@@ -70,6 +78,7 @@ const RENT_MAX = 100_000;
 const INTEREST_MAX = 50_000;
 const OTHER_INCOME_MAX = 150_000;
 const EXPENSES_MAX = 15_000;
+const BROUGHT_FORWARD_MAX = 50_000;
 
 /**
  * What the button pre-fills for sign-up. The shape is unchanged from before the rebuild, so the
@@ -118,17 +127,27 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
   const [mortgageInterest, setMortgageInterest] = useState(clamp(initialMortgageInterest));
   const [allowableExpenses, setAllowableExpenses] = useState(clamp(initialAllowableExpenses));
   const [otherIncome, setOtherIncome] = useState(clamp(initialOtherIncome));
+  const [broughtForward, setBroughtForward] = useState(0);
 
   const result = useMemo(
     () =>
-      calculateSection24LandlordTax(otherIncome, rentalIncome, mortgageInterest, allowableExpenses),
-    [otherIncome, rentalIncome, mortgageInterest, allowableExpenses],
+      calculateSection24LandlordTax(
+        otherIncome,
+        rentalIncome,
+        mortgageInterest,
+        allowableExpenses,
+        100,
+        undefined,
+        broughtForward,
+      ),
+    [otherIncome, rentalIncome, mortgageInterest, allowableExpenses, broughtForward],
   );
 
   const tax = result.finalTaxDue;
   // Can be below zero: under Section 24 a landlord can owe tax and still make a cash loss. Shown
   // with a minus sign in the default tone, never red.
   const cashLeft = result.netRentalIncomeAfterTax;
+  const carriedForward = result.financeCostsCarriedForwardGbp;
 
   const announcement = section24Announcement(money(tax), money(cashLeft));
 
@@ -193,6 +212,20 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
           />
         </div>
       </CollapsibleDrawer>
+      <CollapsibleDrawer title={SECTION24_COPY.broughtForwardDrawer} variant="quiet">
+        <div className={section24DrawerBody()}>
+          <SliderField
+            format="currency"
+            helperText={SECTION24_COPY.broughtForwardHelper}
+            label={SECTION24_COPY.broughtForward}
+            max={BROUGHT_FORWARD_MAX}
+            min={0}
+            step={250}
+            value={broughtForward}
+            onChange={(v) => setBroughtForward(clamp(v))}
+          />
+        </div>
+      </CollapsibleDrawer>
     </div>
   );
 
@@ -215,6 +248,10 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
           }
         />
       </div>
+
+      {carriedForward > 0 ? (
+        <p className={section24Note()}>{section24CarriedForward(money(carriedForward))}</p>
+      ) : null}
 
       <Button className={section24Cta()} size="md" variant="primary" onClick={handleSave}>
         {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />

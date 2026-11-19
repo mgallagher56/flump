@@ -282,3 +282,55 @@ describe.each(["2025/26", "2026/27"] as const)(
     });
   },
 );
+
+describe.each(["2025/26", "2026/27"] as const)(
+  "calculator finance costs carried forward, %s",
+  (year) => {
+    const run = (salary: number, rent: number, interest: number, costs: number, bf?: number) =>
+      calculateSection24Tax({
+        grossRentalIncomeGbp: rent,
+        allowableExpensesGbp: costs,
+        mortgageInterestGbp: interest,
+        otherTaxableIncomeGbp: salary,
+        financeCostsBroughtForwardGbp: bf,
+        taxYear: year,
+      });
+
+    it("reports what carries forward when income above the allowance is the limit", () => {
+      // No salary; rent 18,000; interest 5,000; costs 2,000: 3,430 used, 1,570 carries forward.
+      const res = run(0, 18000, 5000, 2000);
+      expect(res.financeCostsBroughtForwardGbp).toBe(0);
+      expect(res.financeCostsCarriedForwardGbp).toBe(1570);
+    });
+
+    it("uses an amount brought forward under the same limits", () => {
+      // Salary 50,000; rent 10,000; interest 6,000; costs 2,000; 4,000 brought forward.
+      // Relievable 10,000, profit 8,000 limits: credit 1,600, tax 1,546, 2,000 carries forward.
+      const res = run(50000, 10000, 6000, 2000, 4000);
+      expect(res.financeCostsBroughtForwardGbp).toBe(4000);
+      expect(res.section24TaxCreditGbp).toBe(1600);
+      expect(res.finalTaxDue).toBe(1546);
+      expect(res.financeCostsCarriedForwardGbp).toBe(2000);
+      // Cash left counts this year's interest only: 10,000 - 2,000 - 6,000 - 1,546 = 454.
+      expect(res.netRentalIncomeAfterTax).toBe(454);
+    });
+
+    it("does not apply the ownership share to an amount brought forward", () => {
+      // 50% of rent 30,000, costs 4,000, interest 6,000: 15,000, 2,000, 3,000; salary 60,000.
+      // Brought forward 1,000 (already this owner's own). Relievable 3,000 + 1,000 = 4,000;
+      // profit 13,000. Credit 20% x 4,000 = 800. Tax 13,000 x 40% - 800 = 4,400.
+      const res = calculateSection24Tax({
+        grossRentalIncomeGbp: 30000,
+        allowableExpensesGbp: 4000,
+        mortgageInterestGbp: 6000,
+        otherTaxableIncomeGbp: 60000,
+        ownershipSharePct: 50,
+        financeCostsBroughtForwardGbp: 1000,
+        taxYear: year,
+      });
+      expect(res.section24TaxCreditGbp).toBe(800);
+      expect(res.finalTaxDue).toBe(4400);
+      expect(res.financeCostsCarriedForwardGbp).toBe(0);
+    });
+  },
+);

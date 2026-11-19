@@ -64,6 +64,8 @@ const result = z.object({
     taxCreditGbp: z.number(),
     rentalTaxBeforeCreditGbp: z.number(),
     rentalTaxAfterCreditGbp: z.number(),
+    /** Finance costs not used this year, which carry forward to the next (ITTOIA 2005 s.274AA(4)). */
+    financeCostsCarriedForwardGbp: z.number(),
   }),
   /**
    * null when a fact the estimate depends on is not saved (the same rule as the Dashboard and the
@@ -234,6 +236,7 @@ export const getTaxYearPosition = defineFlumpTool({
           taxCreditGbp: round2(ledger.rentalPropertyTaxCredit),
           rentalTaxBeforeCreditGbp: round2(ledger.rentalPropertyTaxDueBeforeCredit),
           rentalTaxAfterCreditGbp: round2(ledger.rentalPropertyTaxDueAfterCredit),
+          financeCostsCarriedForwardGbp: round2(ledger.financeCostsCarriedForward),
         },
         estimate:
           inputs.status === "known"

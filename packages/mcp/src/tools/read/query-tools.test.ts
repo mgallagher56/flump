@@ -642,6 +642,9 @@ describe("query reads (re-plan PR B)", () => {
         Math.round(ledger.rentalPropertyTaxCredit * 100) / 100,
       );
       expect(e.result.section24.financeCostsShareGbp).toBe(4800);
+      // 4,800 of interest is below the 12,000 rental profit and the income above the allowance, so
+      // all of it is used and nothing carries forward (ITTOIA 2005 s.274AA(4)).
+      expect(e.result.section24.financeCostsCarriedForwardGbp).toBe(0);
       // 98,000 + 4,000 (5,000 self-employed income less the 1,000 trading allowance) + 12,000 rental
       // profit before finance costs = 114,000: inside the taper, 7,000 of the allowance lost. The 50
       // expense has a category the engine does not know, so it is left out (as on the Tax page).
