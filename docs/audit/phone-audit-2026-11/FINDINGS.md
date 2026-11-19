@@ -124,7 +124,7 @@ PR 781 (phone-nav-fixes) merged before the final run. Status on `c2e14680b`:
 | P52 | J9 1 | Empty Budget | all | Two calls to action with different names ("Set up your budget" in the header, "Add common entries" in the empty state), neither matching "Add common budget items" on the filled page | E4, H13 | gets in the way | Header action kept on the empty page | Header plus one `EmptyState` with one button, named as on the filled page (overlaps ux-batch-g, budget page) |
 | P53 | J2 | Header illustrations | all | Take-home, History, Settings and Retirement have no header illustration while the other pages do, and Accounts, Mortgage, Self Assessment and the error state share one wallet scene | SG 8.2, owner's eye | cosmetic | Partial adoption in PR 779 | Map one scene per section in the illustration map, or none on those pages by rule |
 | P54 | J9 1 | Empty Self Assessment | all | No `EmptyState`: a "Not set" bill card with an oversized button, unlike every other empty page | E4 | gets in the way | `TaxContainer` renders its full layout when empty | The page's `EmptyState` with one button |
-| P55 | J9 1 | Empty Budget and Debt | all | The MoneyHelper notice shows under the empty state | E4 | cosmetic | Notice rendered unconditionally | Leave the notice out of the empty page (fixed wording itself unchanged) |
+| P55 | J9 1 | Empty Budget and Debt | all | The MoneyHelper notice shows under the empty state | E4 | cosmetic | Notice rendered unconditionally | Not changed: needs an owner ruling on T9 (the line is the same for every user, never triggered by their data) |
 | P56 | J1 5 | Onboarding progress | all | The progress bar fills only visited steps, so after "Skip this step" step 4 shows segments 1 and 4 filled and 2 and 3 empty | owner's eye | gets in the way | Progress counts visited, not reached | Fill every step up to the current one |
 | P57 | J1 5 | Onboarding step change, `apps/web/app/features/onboarding/components/OnboardingFlow` | 375; both | Step 3 opens scrolled down with "Step 3 of 4" cut at the top | owner's eye (same class as O-1) | gets in the way | The window keeps its scroll position across steps | Still present after PR 781 (the step title is cut at the top at 375). Scroll to the top of the step and focus its heading on each step change |
 | P58 | J1 5 | Onboarding header and salary chips | 320 | "Set up Flump" wraps beside "Save and exit"; the example-salary chips wrap unevenly (one chip, then two) | owner's eye | cosmetic | Header and chip row widths | Shorter header row; chips in an even grid |
@@ -163,8 +163,10 @@ PR 781 (phone-nav-fixes) merged before the final run. Status on `c2e14680b`:
   - Fixed in phase 2 after the rebase: P08, P59, P60 and the 14px pension "Your contribution"
     field (the `SliderField` value pill is now 16px), P23 (the second hero figure is named first),
     P33 (Edit budget moves focus to the editor), P52 (one action on the empty page, named "Add
-    common budget items" as on the filled page), P55 (the notice is left out of the empty Budget
-    and Debt pages), P69 (equal weight) and P32 (popovers keep clear of the sticky header).
+    common budget items" as on the filled page and opening the same wizard), P69 (equal weight)
+    and P32 (popovers keep clear of the sticky header).
+  - Not changed: P55. The MoneyHelper line stays on the empty Budget and Debt pages; leaving it
+    out needs an owner ruling on T9.
   - Needs a check on a phone: P26 (month ticks on the line chart) and the retirement accounts
     drawer row in P63.
 

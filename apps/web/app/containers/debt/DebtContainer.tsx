@@ -375,9 +375,8 @@ export const DebtContainer: FC = () => {
         </div>
       )}
 
-      {/* Shown to every user in the same place, never triggered by their figures (R3 exception, R4).
-          Left out of the empty page, so its empty state stands alone (phone audit P55). */}
-      {hasDebts ? <DebtHelpLink /> : null}
+      {/* Shown to every user in the same place, never triggered by their figures (R3 exception, R4). */}
+      <DebtHelpLink />
 
       <ConfirmDialog
         scope="single"

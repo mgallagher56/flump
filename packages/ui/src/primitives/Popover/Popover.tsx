@@ -26,8 +26,12 @@ export const stickyHeaderInset = (): number => {
   let bottom = 0;
   for (const header of document.querySelectorAll(`[${STICKY_HEADER_ATTRIBUTE}]`)) {
     const rect = header.getBoundingClientRect();
-    // A header scrolled away or hidden (display: none) reaches nowhere.
-    if (rect.height > 0 && rect.top <= 0) bottom = Math.max(bottom, rect.bottom);
+    // Any visible header counts, pinned to the very top or not (one stuck below a banner too). A
+    // header hidden (display: none), scrolled above the viewport or below it reaches nowhere. Mark
+    // only headers that are sticky from the top of the page (today the TopBar): one that is in view
+    // but not yet stuck would push the inset too far.
+    const visible = rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight;
+    if (visible) bottom = Math.max(bottom, rect.bottom);
   }
   return Math.max(0, bottom);
 };

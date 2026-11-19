@@ -64,9 +64,16 @@ export const sliderFieldValuePill = cva({
   defaultVariants: { disabled: false },
 });
 
+/**
+ * The pill sizes to its value: the input's `size` attribute (set from the value's length) is the
+ * width everywhere, and `field-sizing: content` fits it exactly where supported. A floor of 5
+ * characters (`size` at least 5, `minWidth: 5ch`) keeps short values compact without clipping "£1,250,000" at 16px text (P08 follow-up).
+ */
 export const sliderPillInput = cva({
   base: {
-    width: "88px",
+    width: "auto",
+    minWidth: "5ch",
+    fieldSizing: "content",
     textAlign: "right",
     border: "none",
     backgroundColor: "transparent",

@@ -40,7 +40,6 @@ import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator"
 import {
   type DraftBudgetEntry,
   entryFromDraft,
-  exampleBudgetDrafts,
   isDraftReady,
 } from "~/features/budget/exampleDrafts";
 import { INCOME_CATEGORY } from "~/features/budget/income";
@@ -479,14 +478,6 @@ const BudgetContainer: FC = () => {
     setView("budget");
   };
 
-  // Common entries open in the editor, held on the page. Nothing is saved until "Save entries".
-  // Only the ones the budget does not already have become drafts, so a saved row (old £0 seed rows
-  // included) is never shown twice.
-  const handleAddExampleRows = () => {
-    setDrafts(exampleBudgetDrafts(pageEntries));
-    setView("editing");
-  };
-
   const handleDraftChange = (id: string, update: Partial<DraftBudgetEntry>) => {
     setDrafts((prev) => {
       const next = prev.map((d) => (d.id === id ? { ...d, ...update } : d));
@@ -736,7 +727,9 @@ const BudgetContainer: FC = () => {
                   data-testid="add-suggested-defaults-btn"
                   id="add-suggested-defaults-btn"
                   variant="primary"
-                  onClick={handleAddExampleRows}
+                  // The same flow as the filled page's button of the same name: the wizard, in
+                  // setup mode for an empty budget.
+                  onClick={openWizard}
                 >
                   Add common budget items
                 </Button>
@@ -804,9 +797,8 @@ const BudgetContainer: FC = () => {
             />
           )}
 
-          {/* The same line for every user, never triggered by their figures (ruling 1, R3, R4). Left
-              out of the empty page, so the empty state stands alone (phone audit P52, P55). */}
-          {!(view === "budget" && isBudgetEmpty) && <DebtHelpLink />}
+          {/* The same line for every user, never triggered by their figures (ruling 1, R3, R4). */}
+          <DebtHelpLink />
         </>
       )}
 

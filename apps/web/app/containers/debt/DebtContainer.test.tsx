@@ -127,17 +127,19 @@ describe("DebtContainer", () => {
     loaderState.accountsOverride = null;
   });
 
-  it("shows the same MoneyHelper debt-help line to every user with debts, whatever their figures (R3, R4)", () => {
-    render(<DebtContainer />);
-    const help = screen.getByRole("complementary", { name: "Debt advice" }).textContent ?? "";
-    expect(help).toContain("Free, impartial debt help is available from MoneyHelper");
-  });
+  it("shows the same MoneyHelper debt-help line to every user, whatever their figures (R3, R4)", () => {
+    const helpText = () =>
+      screen.getByRole("complementary", { name: "Debt advice" }).textContent ?? "";
 
-  it("leaves the debt-help line out of the empty page, so the empty state stands alone (P55)", () => {
+    const { unmount } = render(<DebtContainer />);
+    const withDebts = helpText();
+    unmount();
+
     withEmpty(() => {
       render(<DebtContainer />);
-      expect(screen.queryByRole("complementary", { name: "Debt advice" })).toBeNull();
+      expect(helpText()).toBe(withDebts);
     });
+    expect(withDebts).toContain("Free, impartial debt help is available from MoneyHelper");
   });
 
   it("meets the page rules with debts: one hero, one primary button, one notice, at most 10 first-view figures", () => {
@@ -149,7 +151,7 @@ describe("DebtContainer", () => {
     expect(container.querySelectorAll("[data-list-row]")).toHaveLength(2);
   });
 
-  it("meets the page rules without debts: h1, intro, one Add button, no notice", () => {
+  it("meets the page rules without debts: h1, intro, one Add button, the MoneyHelper line", () => {
     withEmpty(() => {
       const { container } = render(<DebtContainer />);
       expectPageRules(container, { maxFigures: 0, maxNotSet: 0, projectionNotices: 0 });
