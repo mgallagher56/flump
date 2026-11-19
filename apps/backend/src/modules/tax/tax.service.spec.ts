@@ -324,3 +324,18 @@ describe("TaxService known categories (one list per source, from the engine)", (
     expect(response).toMatchObject({ issues: [{ path: "body.category" }] });
   });
 });
+
+describe("TaxService stores the category trimmed (contract check off)", () => {
+  it("saves a padded listed category without the spaces, so the engine counts it", async () => {
+    const service = new TaxService(createInMemoryRepository() as never);
+    const created = await service.createRecord("u1", {
+      type: "expense",
+      source: "rental",
+      category: " repairs_maintenance ",
+      name: "Boiler",
+      amount: 300,
+      date: "2026-06-01",
+    } as never);
+    expect(created.category).toBe("repairs_maintenance");
+  });
+});

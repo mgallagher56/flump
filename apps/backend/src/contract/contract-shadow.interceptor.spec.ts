@@ -317,13 +317,13 @@ describe("log volume limits", () => {
       });
       expect(bulk.error?.getStatus()).toBe(400);
 
-      // Any other category still passes.
+      // A listed PAYE category still passes; an unlisted one is refused on the category field.
       const allowed = rejectionOf({
         method: "POST",
         route: { path: "/tax-records" },
         params: {},
         query: {},
-        body: { ...record, category: "salary_bonus" },
+        body: { ...record, category: "paye_bonus" },
       });
       expect(allowed.error).toBeUndefined();
       expect(allowed.next.handle).toHaveBeenCalled();

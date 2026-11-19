@@ -94,6 +94,9 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
   for (const key of TAX_RECORD_FIELDS) {
     if (body?.[key] !== undefined) picked[key] = body[key];
   }
+  // The contract trims the category; this holds with CONTRACT_MODE off or in shadow mode, so a
+  // padded id is stored as the id the engine reads.
+  if (typeof picked.category === "string") picked.category = picked.category.trim();
   // Slice 6: the profile salary is the one salary figure, so no record may be salary. The
   // contract refuses it too; this holds with CONTRACT_MODE off or in shadow mode.
   if (picked.category === LEGACY_PAYE_SALARY_CATEGORY) {

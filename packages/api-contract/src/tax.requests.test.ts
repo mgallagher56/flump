@@ -1,4 +1,3 @@
-import { ALL_TAX_CATEGORIES } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import {
   broughtForwardRuleError,
@@ -82,9 +81,16 @@ describe("known tax record categories", () => {
   };
 
   it("are the engine's lists, one per source, without the legacy salary", () => {
-    expect(TAX_RECORD_CATEGORIES.rental).toEqual(
-      ALL_TAX_CATEGORIES.filter((c) => c.source === "rental").map((c) => c.id),
-    );
+    expect(TAX_RECORD_CATEGORIES.rental).toEqual([
+      "rental_income",
+      "rent_rates_insurance",
+      "legal_management_fees",
+      "repairs_maintenance",
+      "replace_domestic_items",
+      "services_costs",
+      "mortgage_interest",
+      "finance_costs_brought_forward",
+    ]);
     expect(TAX_RECORD_CATEGORIES["self-employed"]).toContain("self_employed_income");
     expect(TAX_RECORD_CATEGORIES.savings).toContain("savings_interest");
     expect(TAX_RECORD_CATEGORIES.paye).not.toContain("paye_salary");
