@@ -22,7 +22,7 @@ import { isSelfEmployedType, payeSalaryForTax } from "./paye-salary-for-tax.js";
 import { buildFinancialPicture } from "./picture/build.js";
 import { isFigureKnown } from "./picture/figure.js";
 import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
-import { resolveLinkedEntries } from "./picture/selectors/linked-budget-rows.js";
+import { listedBudgetEntries } from "./picture/selectors/linked-budget-rows.js";
 import {
   type MonthlyPortfolioHistoryPoint,
   PortfolioSnapshot,
@@ -99,7 +99,8 @@ export type ContextPackBudgetLineNotSet = Omit<BudgetEntryItem, "amount" | "notS
 };
 
 /**
- * The saved entries with each linked row's figure resolved, and apart from them the linked rows
+ * The budget as the picture counts it (`listedBudgetEntries`: lines the engine added included,
+ * shadowed rows left out, linked figures resolved), and apart from them the linked rows
  * whose saved fact is not set (they have no amount): a linked row's stored £0 is never listed.
  */
 function contextPackLines(
@@ -108,7 +109,7 @@ function contextPackLines(
 ): { entries: BudgetEntryItem[]; entriesNotSet: ContextPackBudgetLineNotSet[] } {
   const listed: BudgetEntryItem[] = [];
   const notSet: ContextPackBudgetLineNotSet[] = [];
-  for (const entry of resolveLinkedEntries(entries, resolved)) {
+  for (const entry of listedBudgetEntries(entries, resolved)) {
     const { linkedRowId: _id, notSet: isNotSet, ...line } = entry;
     if (isNotSet) {
       const { amount: _amount, ...rest } = line;

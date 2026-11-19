@@ -4,6 +4,7 @@ import {
   AddBudgetEntryLinkKind1795440000000,
   LINK_KIND_CONSTRAINT,
   LINK_KIND_DOWN_REFUSAL,
+  LINK_KIND_UNIQUE_INDEX,
 } from "./AddBudgetEntryLinkKind1795440000000";
 
 function runner(responses: Record<string, unknown> = {}) {
@@ -32,6 +33,10 @@ describe("AddBudgetEntryLinkKind1795440000000", () => {
     expect(drop).toBeGreaterThan(0);
     expect(add).toBeGreaterThan(drop);
     expect(sql[add]).toContain(`'take_home', 'housing'`);
+    const index = sql.indexOf(
+      `CREATE UNIQUE INDEX IF NOT EXISTS "${LINK_KIND_UNIQUE_INDEX}" ON "budget_entries" ("user_id", "link_kind") WHERE "link_kind" IS NOT NULL`,
+    );
+    expect(index).toBeGreaterThan(add);
   });
 
   it("down is refused while a row is linked", async () => {
@@ -42,7 +47,9 @@ describe("AddBudgetEntryLinkKind1795440000000", () => {
     await expect(new AddBudgetEntryLinkKind1795440000000().down(qr)).rejects.toThrow(
       LINK_KIND_DOWN_REFUSAL,
     );
-    expect(sqlOf(query).some((s) => s.includes("DROP COLUMN"))).toBe(false);
+    expect(sqlOf(query).some((s) => s.includes("DROP COLUMN") || s.includes("DROP INDEX"))).toBe(
+      false,
+    );
   });
 
   it("down drops the column when no row is linked", async () => {
@@ -51,8 +58,12 @@ describe("AddBudgetEntryLinkKind1795440000000", () => {
       "SELECT EXISTS": [{ found: false }],
     });
     await new AddBudgetEntryLinkKind1795440000000().down(qr);
-    expect(sqlOf(query)).toContain(
+    const sql = sqlOf(query);
+    const dropIndex = sql.indexOf(`DROP INDEX IF EXISTS "${LINK_KIND_UNIQUE_INDEX}"`);
+    const dropColumn = sql.indexOf(
       `ALTER TABLE "budget_entries" DROP COLUMN IF EXISTS "link_kind"`,
     );
+    expect(dropIndex).toBeGreaterThan(-1);
+    expect(dropColumn).toBeGreaterThan(dropIndex);
   });
 });

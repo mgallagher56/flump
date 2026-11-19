@@ -270,6 +270,26 @@ describe("BudgetController", () => {
       ).rejects.toThrow("Another line already uses this saved figure");
     });
 
+    it("gives the same plain error when a racing write hits the one-line-per-fact index", async () => {
+      // Two requests both pass the read-then-write check; the database's unique index refuses the
+      // second. It reads as the check's own message, a 400, never a 500.
+      const { budgetRepo, controller } = entryController();
+      const pay = await controller.createBudgetEntry(req, {
+        category: "income",
+        name: "Pay",
+        amount: 2000,
+        isIncome: true,
+      });
+      budgetRepo.save.mockRejectedValueOnce(
+        Object.assign(new Error("duplicate key"), {
+          driverError: { code: "23505", constraint: "UQ_budget_entries_user_link_kind" },
+        }),
+      );
+      const attempt = controller.updateBudgetEntry(req, pay.id, { linkKind: "take_home" });
+      await expect(attempt).rejects.toBeInstanceOf(BadRequestException);
+      await expect(attempt).rejects.toThrow("Another line already uses this saved figure");
+    });
+
     it("creates a sole entry with no share by default", async () => {
       const { controller } = entryController();
       const created = await controller.createBudgetEntry(req, {

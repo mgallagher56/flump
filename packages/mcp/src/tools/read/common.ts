@@ -8,12 +8,12 @@ import {
   DEFAULT_NET_WORTH_BASIS,
   genericAccountLabel,
   linkedBudgetRowsFor,
+  listedBudgetEntries,
   type NetWorthBasis,
   type NetWorthLeftOut,
   PortfolioSnapshot,
   profileFactsFromProfile,
   type ResolvedAccount,
-  resolveLinkedEntries,
   resolveSnapshotNetWorthScope,
 } from "@flump/finance-engine";
 import { effectiveAnonymize } from "../../auth/scopes.js";
@@ -90,9 +90,10 @@ export interface ReadModel extends AccountIndex {
   /** What net worth leaves out under the basis, in display order. */
   netWorthLeavesOut: NetWorthLeftOut[];
   /**
-   * The saved budget entries with each row the person linked to a saved fact resolved (the take-home
-   * pay or housing payment a month, or a `notSet` line). Budget tools read these, never
-   * `raw.budgetEntries`, so a linked row's stored amount is never counted.
+   * The budget as the engine resolves it for the web page and the context pack
+   * (`listedBudgetEntries`): linked rows at the take-home pay or housing payment a month, or a
+   * `notSet` line, lines the engine adds or fills on its own included, shadowed rows left out.
+   * Budget tools read these, never `raw.budgetEntries`, so their totals match the web.
    */
   budgetEntries: BudgetEntryItem[];
 }
@@ -156,22 +157,22 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
   // The provider boundary: a provider built before the choices existed sends no basis.
   const basis = raw.netWorthBasis ?? { ...DEFAULT_NET_WORTH_BASIS };
   const entries = raw.budgetEntries ?? [];
-  const resolved = entries.some((e) => e.linkKind)
-    ? linkedBudgetRowsFor(
-        {
-          profile: raw.profileFacts ?? profileFactsFromProfile(null),
-          accounts: raw.accounts ?? [],
-          details: raw.accountDetails ?? [],
-          budget: entries,
-        },
-        { snapshot },
-      ).rows
-    : [];
+  // The engine's resolved budget, the one the web page and the context pack list: rows the person
+  // linked, the take-home and housing lines it adds or fills on its own, shadowed rows left out.
+  const resolved = linkedBudgetRowsFor(
+    {
+      profile: raw.profileFacts ?? profileFactsFromProfile(null),
+      accounts: raw.accounts ?? [],
+      details: raw.accountDetails ?? [],
+      budget: entries,
+    },
+    { snapshot },
+  ).rows;
   return {
     raw,
     snapshot,
     basis,
-    budgetEntries: resolveLinkedEntries(entries, resolved),
+    budgetEntries: listedBudgetEntries(entries, resolved),
     netWorthLeavesOut: resolveSnapshotNetWorthScope(snapshot, basis).leftOut,
     ...indexAccounts(ctx, snapshot.getResolvedAccounts()),
   };
@@ -257,7 +258,8 @@ export function summariseBudget(entries: readonly BudgetEntryItem[]): MonthlyBud
   const cats = new Map<string, { monthly: number; essential: boolean }>();
   for (const e of entries) {
     if (e.notSet) {
-      if (e.linkKind) notSet.add(e.linkKind);
+      const kind = e.linked ?? e.linkKind;
+      if (kind) notSet.add(kind);
       continue;
     }
     // A joint entry counts at the user's share (E34 C1), as the financial picture counts it.
@@ -310,7 +312,7 @@ export function missingLinkedLines(budget: MonthlyBudget): Missing[] {
 
 export const MISSING_INCOME: Missing = {
   field: "monthlyIncome",
-  why: "No income entry in the budget. This tool does not yet use take-home pay worked out from the saved salary.",
+  why: "No income entry in the budget, and no salary saved to work out take-home pay from.",
   askUser: "What is your monthly take-home pay after tax?",
 };
 

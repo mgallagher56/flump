@@ -83,9 +83,14 @@ export function useTableSort<T, K extends string>({
   const [sort, setSort] = useState<TableSortState<K> | null>(initial);
   const naturalOrder = initial === null;
   // Callers usually build `columns` inline, a new object each render. Read the latest from a ref
-  // so sorting reruns only when the rows or the sort change, not on every render.
+  // so sorting reruns only when the rows, the sort or the set of columns change, not on every
+  // render. The ref is written during render on purpose: the memo below runs in the same render
+  // and must see this render's columns (a layout effect would run after it, too late). The write
+  // is idempotent, so a render React discards leaves nothing wrong behind.
   const columnsRef = useRef(columns);
   columnsRef.current = columns;
+  // A cheap signature of the column keys, so a different set of columns sorts again.
+  const columnKeys = Object.keys(columns).join("\u0000");
 
   const toggleSort = useCallback(
     (key: K) => {
@@ -103,7 +108,9 @@ export function useTableSort<T, K extends string>({
   const sortedRows = useMemo(() => {
     const indexed = rows.map((row, index) => ({ row, index }));
     if (!sort) return indexed.map((r) => r.row);
-    const column = columnsRef.current[sort.key];
+    const column = columnKeys.split("\u0000").includes(sort.key)
+      ? columnsRef.current[sort.key]
+      : undefined;
     if (!column) return indexed.map((r) => r.row);
     const factor = sort.direction === "asc" ? 1 : -1;
     return indexed
@@ -121,7 +128,7 @@ export function useTableSort<T, K extends string>({
         );
       })
       .map((r) => r.row);
-  }, [rows, sort]);
+  }, [rows, sort, columnKeys]);
 
   const getSortProps = useCallback(
     (key: K): TableSortProps => ({

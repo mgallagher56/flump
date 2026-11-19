@@ -11,6 +11,8 @@ import { takeMigrationLock } from "../config/migration-lock";
  * metadata-only and every existing row reads as not linked: no figure changes.
  */
 export const LINK_KIND_CONSTRAINT = "CHK_budget_entries_link_kind";
+/** One line per user per fact: the engine resolves one line per kind. */
+export const LINK_KIND_UNIQUE_INDEX = "UQ_budget_entries_user_link_kind";
 export const LINK_KIND_DOWN_REFUSAL =
   "budget_entries holds lines linked to a saved fact; unlink them before reverting, or their amounts read as £0";
 
@@ -27,6 +29,10 @@ export class AddBudgetEntryLinkKind1795440000000 implements MigrationInterface {
     );
     await queryRunner.query(
       `ALTER TABLE "budget_entries" ADD CONSTRAINT "${LINK_KIND_CONSTRAINT}" CHECK ("link_kind" IS NULL OR "link_kind" IN ('take_home', 'housing'))`,
+    );
+    // Partial, so unlinked rows are not indexed. The column is new, so no existing row can clash.
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS "${LINK_KIND_UNIQUE_INDEX}" ON "budget_entries" ("user_id", "link_kind") WHERE "link_kind" IS NOT NULL`,
     );
   }
 
@@ -46,6 +52,7 @@ export class AddBudgetEntryLinkKind1795440000000 implements MigrationInterface {
       `SELECT EXISTS (SELECT 1 FROM "budget_entries" WHERE "link_kind" IS NOT NULL) AS "found"`,
     );
     if (rows[0]?.found) throw new Error(LINK_KIND_DOWN_REFUSAL);
+    await queryRunner.query(`DROP INDEX IF EXISTS "${LINK_KIND_UNIQUE_INDEX}"`);
     await queryRunner.query(
       `ALTER TABLE "budget_entries" DROP CONSTRAINT IF EXISTS "${LINK_KIND_CONSTRAINT}"`,
     );

@@ -61,7 +61,7 @@ export const getBudgetSummary = defineFlumpTool({
   name: "get_budget_summary",
   title: "Budget summary",
   description:
-    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. Income and the left-over amount are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
+    "Monthly budget totals from the user's budget entries: income, essential and flexible spending, the amount left over each month, and spending by category. Weekly and annual entries are converted to monthly, and an entry marked joint counts at the user's share. With no income entry, income is the take-home pay worked out from the saved salary, as in the Flump budget. Income and the left-over amount are null (with a question in missing[]) when neither exists. Detailed format lists each entry.",
   input: {},
   result,
   maxTokens: 1500,

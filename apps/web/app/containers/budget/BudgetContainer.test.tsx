@@ -1041,7 +1041,8 @@ describe("BudgetContainer", () => {
       expect(apiFetch).not.toHaveBeenCalled();
     });
 
-    it("lists the saved rent in Housing in place of the budget's own rent row", () => {
+    it("keeps a rent the person typed in Housing: the saved rent is only offered", () => {
+      // Typed rent £700, saved rent £900: a typed figure never leaves the totals unasked.
       mockLoaderData = {
         ...baseLoaderData,
         budgetEntries: [
@@ -1056,8 +1057,26 @@ describe("BudgetContainer", () => {
       };
       render(<BudgetContainer />);
       const housing = screen.getByTestId("budget-category-housing");
+      expect(housing.textContent).toContain("£700");
+      expect(housing.textContent).not.toContain("£900");
+    });
+
+    it("lists the saved rent in Housing in place of the budget's empty rent row", () => {
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: [
+          ...spendingOnly,
+          row({ id: "old-rent", name: "Rent", category: "housing", amount: 0 }),
+        ],
+        userProfile: {
+          ...baseLoaderData.userProfile,
+          housingStatus: "renting",
+          monthlyHousingCost: 900,
+        },
+      };
+      render(<BudgetContainer />);
+      const housing = screen.getByTestId("budget-category-housing");
       expect(housing.textContent).toContain("£900");
-      expect(housing.textContent).not.toContain("£700");
     });
 
     it("shows where Breathing room comes from, with links to Savings", () => {
