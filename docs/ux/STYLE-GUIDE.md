@@ -85,16 +85,19 @@ Light mode had only two colours in practice (sand and teal). The polish plan add
 
 - About 60% sand canvas, 30% cards, 10% accent: the teal hero and buttons, apricot for debt, and the tint family on icon tiles.
 - Cards separate from the canvas by a visible 1px `border` edge (the `border.DEFAULT` token; write `"border"` in code) and a slightly stronger warm shadow **[PR 1]**, not by tint.
-- Each domain has one colour, used on its icon tile and its chart series everywhere:
+- Each area of the app has one colour, on its home section card, its page headers and its icon tiles (owner request, 19 Nov 2026, which replaced the E16 P9.3 map of teal, sage, apricot and neutral). The one home for the map is `ICON_TILE_DOMAIN_TONE` in `packages/ui` (`IconTile.tsx`); the home cards read it through `sectionColours.ts`, so a card and its page cannot differ:
 
-| Domain                       | Colour  | Tokens                               |
-| ---------------------------- | ------- | ------------------------------------ |
-| Net worth, mortgage, pension | Teal    | `chart.primary`, `surface.tint.teal` |
-| Savings                      | Sage    | `chart.wealth`, `surface.tint.sage`  |
-| Debt                         | Apricot | `chart.debt`, `surface.tint.apricot` |
-| Pay and tax                  | Neutral | `text.secondary`, `surface.subtle`   |
+| Area                 | Colour          | Tokens                                  |
+| -------------------- | --------------- | --------------------------------------- |
+| Net worth, mortgage  | Teal            | `chart.series1`, `surface.tint.teal`    |
+| Savings              | Sage            | `chart.series2`, `surface.tint.sage`    |
+| Debt                 | Apricot         | `chart.series3`, `surface.tint.apricot` |
+| Pension              | Sky             | `chart.series6`, `surface.tint.sky`     |
+| Self Assessment, tax | Violet          | `chart.series4`, `surface.tint.violet`  |
+| Budget and pay       | Rose            | `chart.series5`, `surface.tint.rose`    |
+| Accounts             | Damson (accent) | `accent`, `accent.subtle` (rule C7)     |
 
-- **Home section cards (owner request, 19 Nov 2026).** On the home page "Your sections" each card has a colour of its own, a 4px top edge and an icon tile with the glyph in that colour. The owner's request outranks the domain table above there only: debt, savings and mortgage keep their domain colours; pension is sky (`chart.series6`, `surface.tint.sky`), Self Assessment violet (`chart.series4`, `surface.tint.violet`), budget rose (`chart.series5`, `surface.tint.rose`) and accounts damson (the accent tile, so the "Your sections" header is neutral, rule C7). No section uses `series7`, the warning colour, or a status colour (rule C8). Other pages keep the domain table. Contrast and separation **Enforced by** `tokens.a11y.test.ts` ("E16 surface tints"); the card colours by `WidgetCard.test.tsx` and `sectionColours.test.ts`.
+- A colour names an area. It is never the only carrier of meaning (the title and icon always name the area) and never says good or bad: no area uses `series7` (the warning colour) or a status colour (rule C8). Chart series keep their own palette; only tiles, headers and card edges follow this map. Contrast and separation **Enforced by** `tokens.a11y.test.ts` ("E16 surface tints"); the map by `IconTile.test.tsx`, and its match with the home cards by `sectionColours.test.ts` and `WidgetCard.test.tsx`.
 
 - At most one tinted section per page, never around a `KpiStrip`, a `ScenarioZone` or a chart. KPI cards are never tinted. The marketing site may use sage and apricot section bands (owner decision D16).
 - Dark mode keeps Direction C as it is. Surfaces step lighter as they rise; the teal accent is the brighter `#6fd0ba` for text and icons while buttons stay deep teal. Apricot is a quiet `#2e261c` in dark, not a heavy brown **[R2-2]**.

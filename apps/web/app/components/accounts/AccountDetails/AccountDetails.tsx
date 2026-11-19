@@ -55,7 +55,7 @@ export const accountChartRows = (
 const HistorySection: FC<{ children: ReactNode }> = ({ children }) => (
   <PageSection
     description="This account's balance each month, as recorded."
-    domain="net-worth"
+    domain="accounts"
     icon={History}
     id="account-balance-history"
     title="Balance history"

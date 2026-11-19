@@ -236,7 +236,7 @@ interface GroupProps {
   /** One line saying what the group is (E17 5A section header). */
   description: string;
   icon: LucideIcon;
-  domain?: "net-worth" | "debt";
+  domain?: IconTileDomain;
   rows: AccountRow[];
   total?: { text: string; value: number };
   footnote?: string;
@@ -339,7 +339,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         {own.length > 0 ? (
           <Group
             description="Money and property you own, from your saved balances."
-            domain="net-worth"
+            domain="accounts"
             icon={Wallet}
             id="accounts-own-heading"
             rows={own}
@@ -351,7 +351,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         {owe.length > 0 ? (
           <Group
             description="Your debts, from your saved balances."
-            domain="debt"
+            domain="accounts"
             footnote={countedStudentLoan ? studentLoanFootnote(true) : undefined}
             icon={CreditCard}
             id="accounts-owe-heading"

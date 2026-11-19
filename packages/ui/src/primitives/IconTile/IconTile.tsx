@@ -5,8 +5,9 @@ import { Icon } from "../Icon/Icon";
 import { iconTile } from "./IconTile.styles";
 
 /**
- * Teal, sage and apricot are the money domains (E16 P9.3). Sky, rose and violet give the home
- * section cards one colour each (owner request, 19 Nov 2026); they are not domain colours.
+ * The tile colours. One colour per area of the app, on its home card, its page headers and its
+ * tiles (owner request, 19 Nov 2026, replacing the E16 P9.3 teal, sage, apricot, neutral map).
+ * A colour names an area and never says anything about a figure.
  */
 export type IconTileTone =
   | "teal"
@@ -18,7 +19,7 @@ export type IconTileTone =
   | "accent"
   | "neutral";
 
-/** The money domains, each with one colour everywhere (E16 P9.3). */
+/** The areas of the app, each with one colour everywhere. */
 export type IconTileDomain =
   | "net-worth"
   | "mortgage"
@@ -26,17 +27,25 @@ export type IconTileDomain =
   | "savings"
   | "debt"
   | "pay"
-  | "tax";
+  | "tax"
+  | "budget"
+  | "accounts";
 
-/** Teal: net worth, mortgage, pension. Sage: savings. Apricot: debt. Neutral: pay and tax. */
+/**
+ * The one home for each area's colour (law 16). The home section cards read it too
+ * (`sectionColours.ts`). Teal: net worth, mortgage. Sky: pension. Sage: savings. Apricot: debt.
+ * Violet: tax. Rose: budget and pay. Damson (accent): accounts.
+ */
 export const ICON_TILE_DOMAIN_TONE: Record<IconTileDomain, IconTileTone> = {
   "net-worth": "teal",
   mortgage: "teal",
-  pension: "teal",
+  pension: "sky",
   savings: "sage",
   debt: "apricot",
-  pay: "neutral",
-  tax: "neutral",
+  pay: "rose",
+  tax: "violet",
+  budget: "rose",
+  accounts: "accent",
 };
 
 export interface IconTileProps {

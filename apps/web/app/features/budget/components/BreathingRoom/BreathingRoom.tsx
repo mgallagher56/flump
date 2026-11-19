@@ -43,7 +43,7 @@ export const BreathingRoom: FC<BreathingRoomProps> = ({ figure, basis }) => {
     <PageSection
       description={BREATHING_ROOM_DESCRIPTION}
       // The savings tile: the figure is about savings, and the accent stays off money figures (C8).
-      domain="savings"
+      domain="budget"
       icon={LifeBuoy}
       id="breathing-room"
       title={BREATHING_ROOM_LABEL}

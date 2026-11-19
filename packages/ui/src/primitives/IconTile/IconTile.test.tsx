@@ -8,11 +8,13 @@ describe("IconTile", () => {
     expect(ICON_TILE_DOMAIN_TONE).toEqual({
       "net-worth": "teal",
       mortgage: "teal",
-      pension: "teal",
+      pension: "sky",
       savings: "sage",
       debt: "apricot",
-      pay: "neutral",
-      tax: "neutral",
+      pay: "rose",
+      tax: "violet",
+      budget: "rose",
+      accounts: "accent",
     });
   });
 
@@ -23,8 +25,8 @@ describe("IconTile", () => {
     expect(tile.className).toContain("surface.tint.sage");
   });
 
-  it("uses a neutral surface for pay and tax, and when nothing is given", () => {
-    const { container, rerender } = render(<IconTile domain="tax" icon={Landmark} />);
+  it("uses a neutral surface when no domain or tone is given", () => {
+    const { container, rerender } = render(<IconTile icon={Landmark} />);
     expect(container.firstElementChild?.className).toContain("surface.subtle");
     expect(container.firstElementChild?.className).toContain("bd-c_border");
     rerender(<IconTile icon={Landmark} />);
