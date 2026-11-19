@@ -14,9 +14,11 @@ export const numericField = cva({
 export const pensionUnitRow = cva({
   base: {
     gridColumn: "1 / -1",
+    // Stacked, so the tabs get the row's full width. `Tabs` contains its own inline size, so in a
+    // content-sized flex item (the old wrapping row) it measured 0 wide and did not show.
     display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
+    flexDirection: "column",
+    alignItems: "stretch",
     gap: "2",
   },
 });
@@ -26,7 +28,7 @@ export const pensionUnitLabel = cva({
 });
 
 export const pensionUnitNote = cva({
-  base: { flexBasis: "100%", textStyle: "body.sm", color: "text.muted", margin: 0 },
+  base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
 });
 
 export const pensionLinkRow = cva({
