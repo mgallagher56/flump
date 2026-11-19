@@ -282,10 +282,17 @@ function simulateSchedule(
     let availableBudgetThisMonth = totalMonthlyCommitment;
     const monthPayments: DebtScheduleMonthPayment[] = [];
     let monthTotalInterest = 0;
-    let monthTotalPrincipal = 0;
+    let monthTotalPaid = 0;
+    // Per debt this month: the balance before interest, the interest charged and the money paid.
+    // A payment covers the month's interest first, so principal = paid - interest (negative when
+    // the payment does not cover the interest and the balance grows).
+    const openingById = new Map<string, number>();
+    const interestById = new Map<string, number>();
+    const paidById = new Map<string, number>();
 
     // Apply monthly interest
     for (const d of remainingDebts) {
+      openingById.set(d.id, d.balance);
       // Check if 0% promo has expired
       let currentApr = d.apr;
       if (d.promoExpiryDate) {
@@ -297,6 +304,7 @@ function simulateSchedule(
 
       const monthlyInterestRate = currentApr / 100 / 12;
       const interest = Math.round(d.balance * monthlyInterestRate * 100) / 100;
+      interestById.set(d.id, interest);
       d.balance += interest;
       totalInterestPaid += interest;
       monthTotalInterest += interest;
@@ -307,14 +315,16 @@ function simulateSchedule(
       const minPayment = Math.min(d.balance, d.minimumPayment);
       d.balance -= minPayment;
       availableBudgetThisMonth -= minPayment;
-      monthTotalPrincipal += minPayment;
+      monthTotalPaid += minPayment;
+      paidById.set(d.id, minPayment);
+      const interestCharged = interestById.get(d.id) ?? 0;
 
       monthPayments.push({
         debtId: d.id,
         debtName: d.name,
-        startingBalanceGbp: Math.round((d.balance + minPayment) * 100) / 100,
-        interestChargedGbp: 0, // Recorded aggregated
-        principalPaidGbp: Math.round(minPayment * 100) / 100,
+        startingBalanceGbp: Math.round((openingById.get(d.id) ?? 0) * 100) / 100,
+        interestChargedGbp: Math.round(interestCharged * 100) / 100,
+        principalPaidGbp: Math.round((minPayment - interestCharged) * 100) / 100,
         endingBalanceGbp: Math.round(d.balance * 100) / 100,
         isPaidOff: d.balance <= 0.01,
       });
@@ -339,11 +349,14 @@ function simulateSchedule(
         const extraToPay = Math.min(debtObj.balance, availableBudgetThisMonth);
         debtObj.balance -= extraToPay;
         availableBudgetThisMonth -= extraToPay;
-        monthTotalPrincipal += extraToPay;
+        monthTotalPaid += extraToPay;
+        const paidSoFar = (paidById.get(debtObj.id) ?? 0) + extraToPay;
+        paidById.set(debtObj.id, paidSoFar);
 
         const paymentRecord = monthPayments.find((p) => p.debtId === debtObj.id);
         if (paymentRecord) {
-          paymentRecord.principalPaidGbp += Math.round(extraToPay * 100) / 100;
+          paymentRecord.principalPaidGbp =
+            Math.round((paidSoFar - (interestById.get(debtObj.id) ?? 0)) * 100) / 100;
           paymentRecord.endingBalanceGbp = Math.round(debtObj.balance * 100) / 100;
           paymentRecord.isPaidOff = debtObj.balance <= 0.01;
         }
@@ -366,9 +379,9 @@ function simulateSchedule(
     schedule.push({
       monthIndex: month,
       calendarDate: formatYearMonth(simDate),
-      totalPaymentsGbp: Math.round((monthTotalInterest + monthTotalPrincipal) * 100) / 100,
+      totalPaymentsGbp: Math.round(monthTotalPaid * 100) / 100,
       totalInterestGbp: Math.round(monthTotalInterest * 100) / 100,
-      totalPrincipalGbp: Math.round(monthTotalPrincipal * 100) / 100,
+      totalPrincipalGbp: Math.round((monthTotalPaid - monthTotalInterest) * 100) / 100,
       remainingDebtGbp: Math.round(currentTotalRemaining * 100) / 100,
       payments: monthPayments,
     });

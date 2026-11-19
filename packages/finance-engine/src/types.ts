@@ -242,11 +242,15 @@ export interface FinancialStageEvaluation {
   subline: string;
 }
 
+/** One debt in one month. The money paid is principalPaidGbp + interestChargedGbp. */
 export interface DebtScheduleMonthPayment {
   debtId: string;
   debtName: string;
+  /** Balance at the start of the month, before the month's interest. */
   startingBalanceGbp: number;
+  /** Interest added to the debt this month. */
   interestChargedGbp: number;
+  /** Money paid less the month's interest: startingBalanceGbp - principalPaidGbp = endingBalanceGbp. Negative when the payment does not cover the interest. */
   principalPaidGbp: number;
   endingBalanceGbp: number;
   isPaidOff: boolean;
@@ -255,8 +259,10 @@ export interface DebtScheduleMonthPayment {
 export interface DebtScheduleMonth {
   monthIndex: number; // 1-indexed
   calendarDate: string; // 'YYYY-MM'
+  /** Money paid across all debts this month (minimums plus any extra). */
   totalPaymentsGbp: number;
   totalInterestGbp: number;
+  /** totalPaymentsGbp - totalInterestGbp. */
   totalPrincipalGbp: number;
   remainingDebtGbp: number;
   payments: DebtScheduleMonthPayment[];
