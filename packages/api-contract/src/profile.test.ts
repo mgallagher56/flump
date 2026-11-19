@@ -34,6 +34,17 @@ describe("UpdateProfileRequest", () => {
     expect(UpdateProfileRequest.safeParse({ pensionPercent: 101 }).success).toBe(false);
   });
 
+  it("allows four decimal places on the pension rates only", () => {
+    const parse = (patch: Record<string, unknown>) => UpdateProfileRequest.safeParse(patch).success;
+    // £100 a month on £37,260: 100 × 12 / 37,260 = 3.2206% to four places.
+    expect(parse({ pensionPercent: 3.2206 })).toBe(true);
+    expect(parse({ pensionEmployerPercent: 3.2206 })).toBe(true);
+    expect(parse({ pensionPercent: 3.22064 })).toBe(false);
+    expect(parse({ pensionEmployerPercent: 100.0001 })).toBe(false);
+    // Other percentages keep the two-place rule.
+    expect(parse({ savingsDefaultInterestRate: 3.2206 })).toBe(false);
+  });
+
   it("accepts a check-in day from 1 to 31 or null, and rejects 0, 32 and fractions", () => {
     const parse = (checkInDay: unknown) => UpdateProfileRequest.safeParse({ checkInDay }).success;
     expect(parse(1)).toBe(true);

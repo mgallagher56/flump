@@ -141,9 +141,10 @@ export function contributionMonthlyFromPercent(
 }
 
 /**
- * The percentage of salary a monthly amount comes to, rounded to two decimal places (what the
- * profile stores), or null when the salary is not known: a pounds amount with no salary is never
- * turned into a percentage.
+ * The percentage of salary a monthly amount comes to, rounded to four decimal places (what the
+ * profile stores, numeric(7,4)), or null when the salary is not known: a pounds amount with no
+ * salary is never turned into a percentage. Four places keep pounds to the penny on the way back
+ * for ordinary salaries; screens show the percentage to at most two places.
  */
 export function contributionPercentFromMonthly(
   monthly: number | null | undefined,
@@ -155,5 +156,5 @@ export function contributionPercentFromMonthly(
   if (pay === null || pay <= 0 || monthly == null || !Number.isFinite(amount) || amount < 0) {
     return null;
   }
-  return Math.round(((amount * 12) / pay) * 100 * 100) / 100;
+  return Math.round(((amount * 12) / pay) * 100 * 10_000) / 10_000;
 }

@@ -887,6 +887,11 @@ facts:
     links: [L27, L31, L37]
     verdict: broken
     findings: [PP-2, PP-3, PP-4, PP-11, DB-4, AI-12]
+    note: >-
+      pension_percent and pension_employer_percent are numeric(7,4). Pounds a month typed on the
+      Profile tab become the stored rate to four places (finance-engine
+      contributionPercentFromMonthly), so they round-trip to the penny; screens show at most two
+      places.
 
   - id: birth-year
     name: Year of birth

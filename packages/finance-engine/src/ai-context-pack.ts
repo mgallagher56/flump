@@ -611,7 +611,7 @@ function buildObservations(args: {
     out.push(`Debts total ${gbp(args.consumerDebtGbp)}, not counting mortgages and student loans.`);
   }
   if (args.monthsOfCover !== null) {
-    out.push(`Cash covers ${args.monthsOfCover.toFixed(1)} months of essential spending.`);
+    out.push(`Cash covers ${formatBreathingRoomFigure(args.monthsOfCover)} of essential spending.`);
   }
   if (args.leftOverMonthly !== null) {
     out.push(

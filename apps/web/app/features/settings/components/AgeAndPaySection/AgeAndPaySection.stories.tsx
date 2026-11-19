@@ -66,9 +66,9 @@ export const PoundsAMonth: Story = {
     await expect(canvas.getByText("6% of salary")).toBeDefined();
     await userEvent.clear(own);
     await userEvent.type(own, "300{enter}");
-    // £300 a month: 3,600 ÷ 52,000 = 6.92% to two places.
+    // £300 a month: 3,600 ÷ 52,000 = 6.923076...%, stored to four places as 6.9231%.
     await expect(args.onSave).toHaveBeenCalledWith({
-      pensionPercent: 6.92,
+      pensionPercent: 6.9231,
       pensionEmployerPercent: 4,
     });
   },

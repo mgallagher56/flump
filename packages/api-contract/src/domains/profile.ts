@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IsoDateTime, Money, Percent, ResponseMoney, Uuid } from "../primitives.js";
+import { IsoDateTime, Money, PensionPercent, Percent, ResponseMoney, Uuid } from "../primitives.js";
 import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "./budget.js";
 import {
   RetirementGrowthRatesSchema,
@@ -50,8 +50,8 @@ export const UpdateProfileRequest = z.strictObject({
   buyToLetMortgageBalance: Money.nullish(),
   buyToLetMortgageRate: Percent.nullish(),
   buyToLetMortgageType: z.enum(["repayment", "interest-only"]).optional(),
-  pensionPercent: Percent.optional(),
-  pensionEmployerPercent: Percent.optional(),
+  pensionPercent: PensionPercent.optional(),
+  pensionEmployerPercent: PensionPercent.optional(),
   isSalarySacrifice: z.boolean().optional(),
   isSalarySacrificeEmployerNi: z.boolean().optional(),
   monthlySavingsTarget: Money.nullish(),
