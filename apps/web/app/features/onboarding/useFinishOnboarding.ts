@@ -125,7 +125,7 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
     setError(null);
     const pagesToSave = inferModules(values);
     const dashboardWidgets: DashboardWidgetKey[] = [...pagesToSave];
-    const dashboardWidgetOrder: DashboardWidgetKey[] = [...pagesToSave];
+    // No dashboardWidgetOrder: the section order is the user's own, set on the dashboard.
     const cash = values.cashSavings ?? 0;
     const pot = values.pensionPot ?? 0;
     const mortgageBalance = values.mortgageBalance ?? 0;
@@ -140,7 +140,6 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
         }),
         enabledPages: pagesToSave,
         dashboardWidgets,
-        dashboardWidgetOrder,
       });
       profileSavedRef.current = true;
       setProfileSaved(true);

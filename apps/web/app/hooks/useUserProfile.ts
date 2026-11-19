@@ -128,7 +128,8 @@ export const DEFAULT_PROFILE: UserProfile = {
   setupChecklistCompletedSteps: [],
   enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
   dashboardWidgets: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
-  dashboardWidgetOrder: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
+  // Empty: the dashboard's default section order until the user moves a section.
+  dashboardWidgetOrder: [],
   dashboardWidgetSizes: { accounts: "wide", debt: "wide" },
   dashboardWidgetConfig: {},
   customBudgetCategories: [],

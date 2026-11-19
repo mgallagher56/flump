@@ -93,9 +93,8 @@ const withTax = (list: string[] | null | undefined, absentDefault: readonly stri
 const SelfAssessmentOff: FC<{
   enabledPages?: string[] | null;
   dashboardWidgets?: string[] | null;
-  dashboardWidgetOrder?: string[] | null;
   onEnabled: () => void;
-}> = ({ enabledPages, dashboardWidgets, dashboardWidgetOrder, onEnabled }) => {
+}> = ({ enabledPages, dashboardWidgets, onEnabled }) => {
   const { updateProfile } = useUserProfile();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +106,7 @@ const SelfAssessmentOff: FC<{
       await updateProfile({
         enabledPages: withTax(enabledPages, DEFAULT_PROFILE.enabledPages),
         dashboardWidgets: withTax(dashboardWidgets, DEFAULT_PROFILE.dashboardWidgets),
-        dashboardWidgetOrder: withTax(dashboardWidgetOrder, DEFAULT_PROFILE.dashboardWidgetOrder),
+        // No dashboardWidgetOrder: the dashboard puts a newly shown section at the end.
       });
       onEnabled();
     } catch {
@@ -157,7 +156,6 @@ const TaxContainer: FC = () => {
   if (!optedIn) {
     return (
       <SelfAssessmentOff
-        dashboardWidgetOrder={userProfile?.dashboardWidgetOrder as string[] | null | undefined}
         dashboardWidgets={userProfile?.dashboardWidgets as string[] | null | undefined}
         enabledPages={enabledPages}
         onEnabled={() => {

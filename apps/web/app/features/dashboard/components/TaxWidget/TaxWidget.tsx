@@ -44,7 +44,6 @@ export const TaxWidget: FC<TaxWidgetProps> = ({ data }) => {
   const notes = known ? (data.estimatedTaxDueNotes ?? []) : [];
   return (
     <WidgetCard
-      domain="tax"
       figure={
         known ? (
           <span className={taxFigure()}>

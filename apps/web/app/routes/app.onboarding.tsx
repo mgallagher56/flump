@@ -58,7 +58,7 @@ export const action = async (args: ActionFunctionArgs) => {
     : DEFAULT_ENABLED_PAGES;
 
   const dashboardWidgets: DashboardWidgetKey[] = [...enabledPages];
-  const dashboardWidgetOrder: DashboardWidgetKey[] = [...enabledPages];
+  // No dashboardWidgetOrder: the section order is the user's own, set on the dashboard.
 
   try {
     await backendFetch("/user-profile", {
@@ -69,7 +69,6 @@ export const action = async (args: ActionFunctionArgs) => {
       body: {
         enabledPages,
         dashboardWidgets,
-        dashboardWidgetOrder,
         onboardingCompleted: true,
       },
     });

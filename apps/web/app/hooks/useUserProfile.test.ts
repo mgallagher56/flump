@@ -39,6 +39,12 @@ describe("useUserProfile", () => {
     expect(DEFAULT_PROFILE.enabledPages).not.toContain("forecast");
   });
 
+  test("normalizeProfile keeps no saved section order when none is stored", () => {
+    // An empty order means the dashboard's default order; it is never filled in for the user.
+    expect(normalizeProfile({}).dashboardWidgetOrder).toEqual([]);
+    expect(DEFAULT_PROFILE.dashboardWidgetOrder).toEqual([]);
+  });
+
   test("normalizeProfile falls back to default sizes when only forecast was stored", () => {
     const profile = normalizeProfile({ dashboardWidgetSizes: { forecast: "normal" } });
     expect(profile.dashboardWidgetSizes).toEqual(DEFAULT_PROFILE.dashboardWidgetSizes);

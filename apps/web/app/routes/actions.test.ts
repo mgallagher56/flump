@@ -827,7 +827,6 @@ describe("onboarding action", () => {
     expect(JSON.parse(init.body)).toEqual({
       enabledPages: ["accounts", "budget"],
       dashboardWidgets: ["accounts", "budget"],
-      dashboardWidgetOrder: ["accounts", "budget"],
       onboardingCompleted: true,
     });
   });

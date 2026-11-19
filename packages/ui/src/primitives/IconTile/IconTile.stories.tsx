@@ -85,3 +85,32 @@ export const Labelled: Story = {
     await expect(within(canvasElement).getByRole("img", { name: "Savings" })).toBeInTheDocument();
   },
 };
+
+const TONES = ["teal", "sage", "apricot", "sky", "gold", "violet", "accent", "neutral"] as const;
+
+const ToneList = () => (
+  <ul className={list}>
+    {TONES.map((tone) => (
+      <li className={row} key={tone}>
+        <IconTile icon={Landmark} tone={tone} />
+        <span className={name}>{tone}</span>
+      </li>
+    ))}
+  </ul>
+);
+
+const tonesPlay: Story["play"] = async ({ canvasElement }) => {
+  const tones = Array.from(canvasElement.querySelectorAll("[data-tile-tone]")).map((el) =>
+    el.getAttribute("data-tile-tone"),
+  );
+  await expect(tones).toEqual([...TONES]);
+};
+
+/** Every tone, including sky, gold and violet for the home section cards. */
+export const Tones: Story = { render: () => <ToneList />, play: tonesPlay };
+
+export const TonesDark: Story = {
+  render: () => <ToneList />,
+  globals: { theme: "dark" },
+  play: tonesPlay,
+};

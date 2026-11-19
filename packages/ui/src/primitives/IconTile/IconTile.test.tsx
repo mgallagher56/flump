@@ -36,6 +36,13 @@ describe("IconTile", () => {
     expect(container.firstElementChild?.getAttribute("data-tile-tone")).toBe("teal");
   });
 
+  it.each(["sky", "gold", "violet"] as const)("draws the %s tone on its own tint", (tone) => {
+    const { container } = render(<IconTile icon={Landmark} tone={tone} />);
+    const tile = container.firstElementChild as HTMLElement;
+    expect(tile.getAttribute("data-tile-tone")).toBe(tone);
+    expect(tile.className).toContain(`bg-c_surface.tint.${tone}`);
+  });
+
   it("is decorative by default and named when given a label", () => {
     const { container, rerender } = render(<IconTile domain="pension" icon={PiggyBank} />);
     expect(container.firstElementChild?.getAttribute("aria-hidden")).toBe("true");

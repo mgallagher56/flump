@@ -31,7 +31,13 @@ import {
   DEFAULT_ENABLED_PAGES,
 } from "~/utils/pageConfig";
 import { netWorthDelta, type PriorNetWorth } from "../../netWorthDelta";
-import { orderSections, SECTION_PRIORITY, selectSectionCards } from "../../sectionOrder";
+import {
+  isDefaultSectionOrder,
+  orderSections,
+  resolveSectionOrder,
+  SECTION_PRIORITY,
+  selectSectionCards,
+} from "../../sectionOrder";
 import { AccountsWidget } from "../AccountsWidget";
 import { BudgetWidget } from "../BudgetWidget";
 import { CheckInRow } from "../CheckInRow";
@@ -71,8 +77,9 @@ export interface HomeDashboardProps {
   taxData: any;
   debtData?: DebtSummary | null;
   /**
-   * Whether "Choose what shows here" choices are saved to the user's profile. `false` keeps them
-   * in this session only and never calls the backend (the signed-out sandbox).
+   * Whether "Choose what shows here" choices (which sections show and their order) are saved to
+   * the user's profile. `false` keeps them in this session only and never calls the backend (the
+   * signed-out sandbox).
    */
   persistVisibility?: boolean;
   /** Illustrative persona data (the sandbox). */
@@ -146,6 +153,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
   // Optimistic copy of dashboardWidgets while a change is saving, or the whole truth when not saved.
   const [visibilityOverride, setVisibilityOverride] = useState<DashboardWidgetKey[] | null>(null);
+  // The same for dashboardWidgetOrder.
+  const [orderOverride, setOrderOverride] = useState<DashboardWidgetKey[] | null>(null);
   const [skippedChecklistSteps, setSkippedChecklistSteps] = useState<string[]>([]);
   const [checklistError, setChecklistError] = useState<string | null>(null);
 
@@ -176,10 +185,20 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     () => (profile.enabledPages as AppPageKey[]) || DEFAULT_ENABLED_PAGES,
     [profile.enabledPages],
   );
+  // The user's section order, kept in the profile beside which sections show. Sections the saved
+  // order does not name (new ones) go at the end; nothing saved is the default order.
+  const sectionOrder = useMemo<DashboardWidgetKey[]>(
+    () => resolveSectionOrder(orderOverride ?? (profile.dashboardWidgetOrder as string[] | null)),
+    [orderOverride, profile.dashboardWidgetOrder],
+  );
   // The panel lists sections in the same order the cards are drawn (one shared order).
   const applicableKeys = useMemo<DashboardWidgetKey[]>(
-    () => orderSections(ALL_PAGE_KEYS.filter((k) => enabledPages.includes(k))),
-    [enabledPages],
+    () =>
+      orderSections(
+        ALL_PAGE_KEYS.filter((k) => enabledPages.includes(k)),
+        sectionOrder,
+      ),
+    [enabledPages, sectionOrder],
   );
 
   // Every section the user has chosen to show, including ones for pages that are switched off, so
@@ -228,6 +247,50 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     }
   };
 
+  const confirmedOrderRef = useRef<DashboardWidgetKey[] | null>(null);
+  const orderSeqRef = useRef(0);
+
+  /**
+   * Saves a new order. Only dashboardWidgetOrder is written, as the full order (hidden sections
+   * keep their place), or `[]` for the default order. Optimistic, reverted on failure.
+   */
+  const saveOrder = async (next: DashboardWidgetKey[]) => {
+    const saved = isDefaultSectionOrder(next) ? [] : next;
+    const seq = ++orderSeqRef.current;
+    if (confirmedOrderRef.current === null) confirmedOrderRef.current = sectionOrder;
+    setVisibilityError(null);
+    setOrderOverride(saved);
+    if (!persistVisibility) {
+      confirmedOrderRef.current = saved;
+      return;
+    }
+    try {
+      await updateProfile({ dashboardWidgetOrder: saved });
+      confirmedOrderRef.current = saved;
+      if (seq === orderSeqRef.current && !userProfile) setOrderOverride(null);
+    } catch {
+      if (seq !== orderSeqRef.current) return;
+      setOrderOverride(confirmedOrderRef.current);
+      setVisibilityError("We could not save that change. Your dashboard is unchanged. Try again.");
+    }
+  };
+
+  // Moves are made in the full order, so a section hidden or switched off keeps its place.
+  const handleMoveSection = (key: DashboardWidgetKey, offset: -1 | 1) => {
+    const neighbourIndex = applicableKeys.indexOf(key) + offset;
+    const neighbour = applicableKeys[neighbourIndex];
+    if (!neighbour) return;
+    // Swap with the neighbour the panel shows, even if a switched-off page sits between them.
+    const next = [...sectionOrder];
+    const a = next.indexOf(key);
+    const b = next.indexOf(neighbour);
+    next[a] = neighbour;
+    next[b] = key;
+    void saveOrder(next);
+  };
+
+  const handleResetOrder = () => void saveOrder([...SECTION_PRIORITY]);
+
   const effectiveCompletedSteps = useMemo(
     () => Array.from(new Set([...checklistProps.completedSteps, ...skippedChecklistSteps])),
     [checklistProps.completedSteps, skippedChecklistSteps],
@@ -273,7 +336,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     }
   };
 
-  const cards = selectSectionCards(dashboardWidgets.filter(hasData));
+  const cards = selectSectionCards(dashboardWidgets.filter(hasData), sectionOrder);
   const anyShown = dashboardWidgets.length > 0;
 
   // Figures: unknown stays null (rendered "Not set"); only a real zero is £0.
@@ -303,24 +366,6 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     <PageBody data-testid="dashboard-page" id="dashboard-page">
       {banner}
       <PageHeader
-        actions={
-          // An icon button below md, so the h1 keeps the first row at 375 (R2-4 dashboard item 1);
-          // the visible words return from md. The accessible name is the same at every width.
-          <Button
-            aria-haspopup="dialog"
-            aria-label={SHOW_HIDE_LABEL}
-            className={showHideButton()}
-            id="dashboard-show-hide"
-            size="sm"
-            variant="outline"
-            onClick={() => setPanelOpen(true)}
-          >
-            <Icon icon={SlidersHorizontal} size="sm" />
-            <span aria-hidden="true" className={showHideText()}>
-              {SHOW_HIDE_LABEL}
-            </span>
-          </Button>
-        }
         className={dashboardHeader()}
         // The page icon, empty or filled in; the empty state has none, so one is in view.
         illustration="empty-goals"
@@ -382,6 +427,24 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         id="dashboard-sections"
         title="Your sections"
         tone="accent"
+        action={
+          // Beside the cards it changes (owner request, 19 Nov 2026). An icon button below md, so
+          // the heading keeps its row at 375; the words return from md. Same name at every width.
+          <Button
+            aria-haspopup="dialog"
+            aria-label={SHOW_HIDE_LABEL}
+            className={showHideButton()}
+            id="dashboard-show-hide"
+            size="sm"
+            variant="outline"
+            onClick={() => setPanelOpen(true)}
+          >
+            <Icon icon={SlidersHorizontal} size="sm" />
+            <span aria-hidden="true" className={showHideText()}>
+              {SHOW_HIDE_LABEL}
+            </span>
+          </Button>
+        }
       >
         {cards.length === 0 ? (
           <DashboardEmptyState
@@ -435,13 +498,16 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       <WidgetVisibilityPanel
         error={visibilityError}
-        // Back to the page header's button when the sheet opened with nothing focused (P10).
+        // Back to the sections heading's button when the sheet opened with nothing focused (P10).
         returnFocusTo={() => document.getElementById("dashboard-show-hide")}
         open={panelOpen}
         shownKeys={cards}
         visibleKeys={dashboardWidgets}
         widgetKeys={applicableKeys}
         onOpenChange={setPanelOpen}
+        onMove={handleMoveSection}
+        onResetOrder={handleResetOrder}
+        orderIsDefault={isDefaultSectionOrder(sectionOrder)}
         onToggle={handleToggleWidget}
       />
     </PageBody>

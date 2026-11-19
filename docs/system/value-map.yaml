@@ -1944,7 +1944,7 @@ facts:
     area: preferences
     source_of_truth:
       {
-        ref: "user_profiles.enabled_pages, dashboard_widgets",
+        ref: "user_profiles.enabled_pages, dashboard_widgets, dashboard_widget_order",
         path: apps/backend/src/entities/user-profile.entity.ts,
       }
     writers:
@@ -1966,7 +1966,10 @@ facts:
     links: [L64, L66]
     verdict: holds
     findings: [CS-4]
-    note: One store. The navigation shows the default pages for a moment before the saved ones.
+    note: >-
+      One store. The navigation shows the default pages for a moment before the saved ones. The
+      section order (dashboard_widget_order) is written only by the dashboard's "Choose what shows
+      here"; empty means the default order, and sections it does not name go at the end.
 
   - id: setup-checklist
     name: Setup checklist progress

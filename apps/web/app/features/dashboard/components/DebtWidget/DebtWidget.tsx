@@ -37,7 +37,6 @@ export const DebtWidget: FC<DebtWidgetProps> = ({ data = null }) => {
 
   return (
     <WidgetCard
-      domain="debt"
       figure={date ? <span data-figure-kind="date">{date}</span> : null}
       icon={WIDGET_ICONS.debt}
       id="debt"

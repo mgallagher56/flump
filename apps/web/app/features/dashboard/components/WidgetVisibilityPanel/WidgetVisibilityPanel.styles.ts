@@ -20,8 +20,15 @@ export const panelList = cva({
   },
 });
 
+/** A row: the label (checkbox, icon, words) then, when the order can change, the move buttons. */
+export const panelItem = cva({
+  base: { display: "flex", alignItems: "center", gap: "4px", minWidth: 0 },
+});
+
 export const panelRow = cva({
   base: {
+    flex: "1 1 auto",
+    minWidth: 0,
     display: "flex",
     alignItems: "center",
     gap: "12px",
@@ -49,6 +56,21 @@ export const panelRowText = cva({
   base: { display: "flex", flexDirection: "column", minWidth: 0 },
 });
 
+/** The section's name with its showing status beside it, wrapping under it when narrow. */
+export const panelRowTitle = cva({
+  base: { display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: "8px" },
+});
+
+/** Move up and move down, side by side, 44px touch targets on a coarse pointer. */
+export const panelMoveGroup = cva({
+  base: { display: "flex", flexShrink: 0, gap: "2px" },
+});
+
+/** The reset button, at the end of the list. */
+export const panelOrderFooter = cva({
+  base: { display: "flex", justifyContent: "flex-end" },
+});
+
 export const panelRowLabel = cva({
   base: { textStyle: "label.md", color: "text.primary" },
 });
@@ -57,10 +79,9 @@ export const panelRowHint = cva({
   base: { textStyle: "body.sm", color: "text.muted" },
 });
 
-/** Whether a ticked section shows now; quiet text, pushed to the row's end. */
+/** Whether a ticked section shows now; quiet text beside the section's name. */
 export const panelRowStatus = cva({
   base: {
-    marginLeft: "auto",
     flexShrink: 0,
     textStyle: "label.sm",
     whiteSpace: "nowrap",

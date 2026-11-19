@@ -23,7 +23,6 @@ export const PensionWidget: FC<PensionWidgetProps> = ({ data, potInStrip = false
     const known = data.potsCount > 0 && Number.isFinite(data.totalPensionBalance);
     return (
       <WidgetCard
-        domain="pension"
         figure={
           known ? <Money fractionDigits={0} size="lg" value={data.totalPensionBalance} /> : null
         }
@@ -46,7 +45,6 @@ export const PensionWidget: FC<PensionWidgetProps> = ({ data, potInStrip = false
   const total = ratesKnown ? employeePercent + employerPercent : null;
   return (
     <WidgetCard
-      domain="pension"
       figure={
         total === null
           ? null

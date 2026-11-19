@@ -33,7 +33,6 @@ export const ONBOARDING_PROFILE = {
   isSalarySacrifice: false,
   enabledPages: ONBOARDING_PAGES,
   dashboardWidgets: ONBOARDING_PAGES,
-  dashboardWidgetOrder: ONBOARDING_PAGES,
 };
 
 /** POST /accounts, one per seeded baseline account. */

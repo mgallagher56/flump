@@ -163,7 +163,8 @@ export class UserProfileService implements ProfileLifecycle {
       setupChecklistCompletedSteps: [],
       enabledPages: ["accounts", "budget", "savings", "pension", "mortgage"],
       dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage"],
-      dashboardWidgetOrder: ["accounts", "budget", "savings", "pension", "mortgage"],
+      // Empty: the dashboard's default section order until the user moves a section.
+      dashboardWidgetOrder: [],
       dashboardWidgetSizes: { accounts: "wide" },
       dashboardWidgetConfig: {},
       onboardingCompleted: false,

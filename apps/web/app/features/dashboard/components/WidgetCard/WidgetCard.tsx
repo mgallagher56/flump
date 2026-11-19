@@ -1,8 +1,10 @@
-import { ICON_TILE_DOMAIN_TONE, Icon, IconTile, type IconTileDomain } from "@repo/ui";
+import { Icon, IconTile } from "@repo/ui";
 import { ArrowRight, Lock, type LucideIcon } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { Link } from "react-router";
 import { useSampleMode } from "~/context/SampleModeContext";
+import type { DashboardWidgetKey } from "~/utils/pageConfig";
+import { SECTION_COLOURS, SECTION_TILE_TONE } from "../../sectionColours";
 import {
   widgetCard,
   widgetFigure,
@@ -22,13 +24,11 @@ export interface WidgetCardLink {
 }
 
 export interface WidgetCardProps {
-  /** Used to build unique ids, e.g. "accounts". */
-  id: string;
+  /** The section, e.g. "accounts". Builds the ids and picks the section's colour. */
+  id: DashboardWidgetKey;
   /** The section's name, shown as the card heading. */
   title: string;
   icon: LucideIcon;
-  /** Picks the icon tile colour (one colour per money domain, E16 P9.3). */
-  domain?: IconTileDomain;
   /** What the figure is ("Savings and investments"). */
   label: string;
   /** The card's one figure. `null` shows "Not set" (E16 P3.1). */
@@ -43,34 +43,27 @@ export interface WidgetCardProps {
 }
 
 /**
- * One dashboard section card (E16 P1.8): icon tile, one figure, one line of text and one link.
+ * One dashboard section card (E16 P1.8): icon tile, one figure, one line of text and one link,
+ * in its section's colour (a top edge and the tile).
  * Nothing else: no badges, no second figures, no forecasts.
  */
-export const WidgetCard: FC<WidgetCardProps> = ({
-  id,
-  title,
-  icon,
-  domain,
-  label,
-  figure,
-  line,
-  link,
-}) => {
+export const WidgetCard: FC<WidgetCardProps> = ({ id, title, icon, label, figure, line, link }) => {
   const sample = useSampleMode();
   const cardId = `widget-card-${id}`;
   const titleId = `${cardId}-title`;
-  const rawTone = domain ? ICON_TILE_DOMAIN_TONE[domain] : "neutral";
-  const tone = rawTone === "accent" ? "neutral" : rawTone;
+  // One colour per section, on the top edge and the icon tile (see sectionColours.ts).
+  const colour = SECTION_COLOURS[id];
   return (
     <section
       aria-labelledby={titleId}
-      className={widgetCard({ tone, interactive: !sample })}
+      className={widgetCard({ colour, interactive: !sample })}
       data-section-card={id}
+      data-section-colour={colour}
       data-testid={cardId}
       id={cardId}
     >
       <header className={widgetHeader()}>
-        <IconTile domain={domain} icon={icon} />
+        <IconTile icon={icon} tone={SECTION_TILE_TONE[colour]} />
         <h3 className={widgetTitle()} data-testid={titleId} id={titleId}>
           {title}
         </h3>

@@ -692,8 +692,11 @@ describe("TaxContainer, not opted in (PAYE only)", () => {
     expect(mockUpdateProfile).toHaveBeenCalledWith({
       enabledPages: ["accounts", "budget", "tax"],
       dashboardWidgets: ["accounts", "tax"],
-      dashboardWidgetOrder: ["accounts", "tax"],
     });
+    // The section order is the user's own, set on the dashboard; a new section goes at the end.
+    expect(mockUpdateProfile).not.toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardWidgetOrder: expect.anything() }),
+    );
     expect(mockRevalidate).toHaveBeenCalled();
     expect(await screen.findByText("Estimated bill")).toBeDefined();
     unmount();
@@ -711,7 +714,6 @@ describe("TaxContainer, not opted in (PAYE only)", () => {
     expect(mockUpdateProfile).toHaveBeenCalledWith({
       enabledPages: ["tax"],
       dashboardWidgets: ["tax"],
-      dashboardWidgetOrder: ["tax"],
     });
     unmount();
     mockEnabledPages = ["accounts", "budget", "tax"];
@@ -731,7 +733,6 @@ describe("TaxContainer, not opted in (PAYE only)", () => {
     expect(mockUpdateProfile).toHaveBeenCalledWith({
       enabledPages: [...DEFAULT_PROFILE.enabledPages, "tax"],
       dashboardWidgets: ["tax"],
-      dashboardWidgetOrder: [...DEFAULT_PROFILE.dashboardWidgetOrder, "tax"],
     });
     unmount();
     mockEnabledPages = ["accounts", "budget", "tax"];

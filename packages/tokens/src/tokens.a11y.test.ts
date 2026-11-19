@@ -709,7 +709,7 @@ describe("Round 5 hue and series separation", () => {
 // E16 PR 1: domain tints (P9, D16 option a) and light card separation (plan 4.1)
 // ---------------------------------------------------------------------------
 
-const TINTS = ["teal", "apricot", "sage"].map((t) => `surface.tint.${t}`);
+const TINTS = ["teal", "apricot", "sage", "sky", "gold", "violet"].map((t) => `surface.tint.${t}`);
 
 describe("E16 surface tints", () => {
   it.each(TINTS)(

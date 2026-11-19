@@ -1113,8 +1113,8 @@ Read by:
 
 - Id: `enabled-pages-and-widgets` (stored fact)
 - Verdict: Holds. Findings: CS-4. Links: L64, L66.
-- Source of truth: `user_profiles.enabled_pages, dashboard_widgets` in `apps/backend/src/entities/user-profile.entity.ts`
-- Note: One store. The navigation shows the default pages for a moment before the saved ones.
+- Source of truth: `user_profiles.enabled_pages, dashboard_widgets, dashboard_widget_order` in `apps/backend/src/entities/user-profile.entity.ts`
+- Note: One store. The navigation shows the default pages for a moment before the saved ones. The section order (dashboard_widget_order) is written only by the dashboard's "Choose what shows here"; empty means the default order, and sections it does not name go at the end.
 
 Other stores:
 

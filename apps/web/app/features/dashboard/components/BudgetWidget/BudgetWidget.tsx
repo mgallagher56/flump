@@ -37,7 +37,6 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
 
   return (
     <WidgetCard
-      domain="pay"
       figure={
         budgetKnown ? (
           <span data-figure="budget.outgoings">

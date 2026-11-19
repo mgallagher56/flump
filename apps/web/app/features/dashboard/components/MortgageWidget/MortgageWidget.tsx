@@ -16,7 +16,6 @@ export const MortgageWidget: FC<MortgageWidgetProps> = ({ data }) => {
   const known = data.hasMortgageAccount && balance > 0;
   return (
     <WidgetCard
-      domain="mortgage"
       figure={known ? <Money fractionDigits={0} size="lg" value={balance} /> : null}
       icon={WIDGET_ICONS.mortgage}
       id="mortgage"
