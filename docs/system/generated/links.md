@@ -6,10 +6,10 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 | Verdict                                   | Count |
 | ----------------------------------------- | ----- |
-| Holds                                     | 41    |
+| Holds                                     | 44    |
 | Holds with a manual step or a delay       | 6     |
-| Broken                                    | 14    |
-| Duplicated (two stores that can disagree) | 12    |
+| Broken                                    | 12    |
+| Duplicated (two stores that can disagree) | 11    |
 | Not checked                               | 0     |
 
 ## A. Accounts and balances
@@ -145,12 +145,12 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 | Id  | Statement                                                                                                  | Verdict | Checked in | Findings   |
 | --- | ---------------------------------------------------------------------------------------------------------- | ------- | ---------- | ---------- |
-| L63 | After any save, every figure on the current page and on the next page reflects it without a manual reload. | Broken  | code       | CS-5       |
-| L64 | The first paint from the server and the hydrated page show the same values.                                | Broken  | code       | CS-2, CS-4 |
-| L65 | Sign-out and reset leave no user figures in the browser.                                                   | Holds   | code       | none       |
+| L63 | After any save, every figure on the current page and on the next page reflects it without a manual reload. | Holds   | browser    | CS-5       |
+| L64 | The first paint from the server and the hydrated page show the same values.                                | Holds   | browser    | CS-2, CS-4 |
+| L65 | Sign-out and reset leave no user figures in the browser.                                                   | Holds   | browser    | none       |
 
 ## N. Preferences
 
-| Id  | Statement                                                                     | Verdict                                   | Checked in | Findings |
-| --- | ----------------------------------------------------------------------------- | ----------------------------------------- | ---------- | -------- |
-| L66 | Enabled pages, dashboard widgets and the setup checklist each have one store. | Duplicated (two stores that can disagree) | code       | CS-2     |
+| Id  | Statement                                                                     | Verdict | Checked in | Findings |
+| --- | ----------------------------------------------------------------------------- | ------- | ---------- | -------- |
+| L66 | Enabled pages, dashboard widgets and the setup checklist each have one store. | Holds   | code       | CS-2     |

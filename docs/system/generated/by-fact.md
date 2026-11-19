@@ -47,7 +47,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Net worth choices (count the home, count the student loan)](#net-worth-choices)                              | fact   | preferences | Broken                                    |
 | [Check-in day of the month](#check-in-day)                                                                    | fact   | preferences | Holds                                     |
 | [Enabled pages and dashboard widgets](#enabled-pages-and-widgets)                                             | fact   | preferences | Holds                                     |
-| [Setup checklist progress](#setup-checklist)                                                                  | fact   | preferences | Duplicated (two stores that can disagree) |
+| [Setup checklist progress](#setup-checklist)                                                                  | fact   | preferences | Holds                                     |
 | [Account name](#account-name)                                                                                 | fact   | accounts    | Not checked                               |
 | [Account transactions](#transactions)                                                                         | fact   | accounts    | Not checked                               |
 | [Currency and country](#currency-and-country)                                                                 | fact   | preferences | Not checked                               |
@@ -84,7 +84,6 @@ Other stores:
 
 - `budget_entries income row` [duplicate] in `apps/web/app/services/onboarding-seed.ts` (a one-off copy of take-home; left over reads this, not the salary)
 - `tax_records category paye_salary` [legacy] in `packages/finance-engine/src/tax-estimate-inputs.ts` (slice 6: never replaces the salary (estimateInputsFor leaves them out, the API refuses new ones); migration RemovePayeSalaryRecords copied the latest into an empty salary and removed them)
-- `localStorage flump_financial_baseline_v2` [cache] in `apps/web/app/state/baseline.store.ts` (used only when no profile row exists)
 - `cookie and localStorage flump_onboarding_seed` [legacy] in `packages/finance-engine/src/persistence.ts` (numbers typed into public calculators before sign-up)
 - `engine default 45,000` [default] in `packages/finance-engine/src/profile.ts` (display default only; AI output and MCP read saved facts and report no salary as not set)
 
@@ -1113,7 +1112,7 @@ Read by:
 - Id: `enabled-pages-and-widgets` (stored fact)
 - Verdict: Holds. Findings: CS-4. Links: L64, L66.
 - Source of truth: `user_profiles.enabled_pages, dashboard_widgets, dashboard_widget_order` in `apps/backend/src/entities/user-profile.entity.ts`
-- Note: One store. The navigation shows the default pages for a moment before the saved ones. The section order (dashboard_widget_order) is written only by the dashboard's "Choose what shows here"; empty means the default order, and sections it does not name go at the end.
+- Note: One store. Slice 8: the navigation is drawn from the root loader's saved profile on the server and the first client render, so it no longer shows the default pages first (CS-4 fixed). The section order (dashboard_widget_order) is written only by the dashboard's "Choose what shows here"; empty means the default order, and sections it does not name go at the end.
 
 Other stores:
 
@@ -1135,19 +1134,18 @@ Read by:
 <a id="setup-checklist"></a>
 
 - Id: `setup-checklist` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: CS-2, CS-6. Links: L64, L65, L66.
-- Source of truth: `user_profiles.setup_checklist_completed_steps` in `apps/backend/src/entities/user-profile.entity.ts`
+- Verdict: Holds. Findings: CS-2, CS-6. Links: L64, L65, L66.
+- Source of truth: `user_profiles.setup_checklist_completed_steps, setup_checklist_dismissed` in `apps/backend/src/entities/user-profile.entity.ts`
+- Note: Slice 8: one store. The dismissed flag moved from the browser to the profile (decision 13), so the server's first paint matches the hydrated page (CS-2 fixed). Savings and Pension no longer write a step on every visit; the Dashboard reads those steps from the saved pots and accounts (CS-6 fixed).
 
 Other stores:
 
-- `localStorage flump_setup_checklist_dismissed` [duplicate] in `apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx` (per browser; cleared on a reset and on sign-out)
+- `localStorage flump_setup_checklist_dismissed` [legacy] in `apps/web/app/utils/userStorage.ts` (slice 8, decision 13: the dismissal is on the profile now; nothing writes or reads this key, and sign-out and reset remove one an earlier version left)
 
 Entered or changed by:
 
 - Dashboard: `apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx`
-- Savings: `apps/web/app/containers/savings/SavingsContainer.tsx` (written on every visit)
-- Pension: `apps/web/app/containers/pension/PensionContainer.tsx` (written on every visit)
-- Budget: `apps/web/app/containers/budget/BudgetContainer.tsx`
+- Budget: `apps/web/app/containers/budget/BudgetContainer.tsx` (marked by the action (finishing the budget, trying a months-of-cover what-if), never by a visit; a step already done sends nothing)
 
 Read by:
 
@@ -1509,19 +1507,17 @@ Shown on:
 
 Every key the browser code writes. A key that holds user data names the fact it copies; the fact's home is still the database.
 
-| Key                                | Storage        | User data | Copies                              | Code                                                                           | Note                                                                                                      |
-| ---------------------------------- | -------------- | --------- | ----------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `flump_financial_baseline_v2`      | localStorage   | yes       | [salary](#salary)                   | `apps/web/app/state/baseline.store.ts`                                         | the calculator baseline (salary, region and more); the signed-out seed, also read on some signed-in pages |
-| `flump_financial_baseline_v1`      | localStorage   | yes       | [salary](#salary)                   | `apps/web/app/state/baseline.store.ts`                                         | the older baseline key; read once, copied to v2 and removed                                               |
-| `flump_onboarding_seed`            | localStorage   | yes       | [salary](#salary)                   | `packages/finance-engine/src/persistence.ts`                                   | the marketing calculators' answers (salary, debts, savings) carried into sign-up                          |
-| `flump_onboarding_seed`            | cookie         | yes       | [salary](#salary)                   | `packages/finance-engine/src/persistence.ts`                                   | the same seed as a cookie, kept for one hour so sign-up can finish                                        |
-| `flump_setup_checklist_dismissed`  | localStorage   | yes       | [setup-checklist](#setup-checklist) | `apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx` | the setup checklist was dismissed in this browser                                                         |
-| `flump_runway_calculator_settings` | localStorage   | no        | none                                | `apps/web/app/utils/runwayStorage.ts`                                          | an account choice older versions saved; now only removed                                                  |
-| `flump-theme`                      | localStorage   | no        | none                                | `packages/ui/src/hooks/themeScript.ts`                                         | light, dark or system                                                                                     |
-| `flump.setup-step-count`           | sessionStorage | no        | none                                | `packages/ui/src/hooks/useSetupProgressOnce.ts`                                | how many setup steps were done when the progress animation last ran                                       |
-| `flump.scene-settled.*`            | sessionStorage | no        | none                                | `packages/ui/src/hooks/useSceneSettle.ts`                                      | which illustrations have already played their entry animation                                             |
-| `flump-marketing-scroll`           | sessionStorage | no        | none                                | `apps/marketing/src/app-shell/ScrollManager.tsx`                               | scroll position of each marketing page in history                                                         |
-| `flump_has_session`                | cookie         | no        | none                                | `apps/web/app/security/session-cookies.server.ts`                              | a marker the browser code reads to know a session may exist; no session data                              |
-| `flump_dev_session`                | cookie         | no        | none                                | `apps/web/app/utils/devSession.server.ts`                                      | test-only session for the end-to-end suite                                                                |
-| `__Host-wos-session`               | cookie         | no        | none                                | `apps/web/app/utils/sessionPolicy.server.ts`                                   | the sealed sign-in session in production                                                                  |
-| `wos-session`                      | cookie         | no        | none                                | `apps/web/app/utils/sessionPolicy.server.ts`                                   | the sealed sign-in session in development, and the old production name that is cleared                    |
+| Key                                | Storage        | User data | Copies                              | Code                                              | Note                                                                                                                                    |
+| ---------------------------------- | -------------- | --------- | ----------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `flump_onboarding_seed`            | localStorage   | yes       | [salary](#salary)                   | `packages/finance-engine/src/persistence.ts`      | the marketing calculators' answers (salary, debts, savings) carried into sign-up                                                        |
+| `flump_onboarding_seed`            | cookie         | yes       | [salary](#salary)                   | `packages/finance-engine/src/persistence.ts`      | the same seed as a cookie, kept for one hour so sign-up can finish                                                                      |
+| `flump_setup_checklist_dismissed`  | localStorage   | yes       | [setup-checklist](#setup-checklist) | `apps/web/app/utils/userStorage.ts`               | slice 8, decision 13: the dismissal is stored on the profile; this key is no longer written or read, only removed on sign-out and reset |
+| `flump_runway_calculator_settings` | localStorage   | no        | none                                | `apps/web/app/utils/runwayStorage.ts`             | an account choice older versions saved; now only removed                                                                                |
+| `flump-theme`                      | localStorage   | no        | none                                | `packages/ui/src/hooks/themeScript.ts`            | light, dark or system                                                                                                                   |
+| `flump.setup-step-count`           | sessionStorage | no        | none                                | `packages/ui/src/hooks/useSetupProgressOnce.ts`   | how many setup steps were done when the progress animation last ran                                                                     |
+| `flump.scene-settled.*`            | sessionStorage | no        | none                                | `packages/ui/src/hooks/useSceneSettle.ts`         | which illustrations have already played their entry animation                                                                           |
+| `flump-marketing-scroll`           | sessionStorage | no        | none                                | `apps/marketing/src/app-shell/ScrollManager.tsx`  | scroll position of each marketing page in history                                                                                       |
+| `flump_has_session`                | cookie         | no        | none                                | `apps/web/app/security/session-cookies.server.ts` | a marker the browser code reads to know a session may exist; no session data                                                            |
+| `flump_dev_session`                | cookie         | no        | none                                | `apps/web/app/utils/devSession.server.ts`         | test-only session for the end-to-end suite                                                                                              |
+| `__Host-wos-session`               | cookie         | no        | none                                | `apps/web/app/utils/sessionPolicy.server.ts`      | the sealed sign-in session in production                                                                                                |
+| `wos-session`                      | cookie         | no        | none                                | `apps/web/app/utils/sessionPolicy.server.ts`      | the sealed sign-in session in development, and the old production name that is cleared                                                  |

@@ -712,16 +712,16 @@ links:
   - {
       id: L63,
       group: M. Browser state,
-      verdict: broken,
-      checked: code,
+      verdict: holds,
+      checked: browser,
       findings: [CS-5],
       statement: "After any save, every figure on the current page and on the next page reflects it without a manual reload.",
     }
   - {
       id: L64,
       group: M. Browser state,
-      verdict: broken,
-      checked: code,
+      verdict: holds,
+      checked: browser,
       findings: [CS-2, CS-4],
       statement: "The first paint from the server and the hydrated page show the same values.",
     }
@@ -729,7 +729,7 @@ links:
       id: L65,
       group: M. Browser state,
       verdict: holds,
-      checked: code,
+      checked: browser,
       findings: [],
       statement: "Sign-out and reset leave no user figures in the browser.",
     }
@@ -737,7 +737,7 @@ links:
   - {
       id: L66,
       group: N. Preferences,
-      verdict: duplicated,
+      verdict: holds,
       checked: code,
       findings: [CS-2],
       statement: "Enabled pages, dashboard widgets and the setup checklist each have one store.",
@@ -762,12 +762,6 @@ facts:
           status: legacy,
           path: packages/finance-engine/src/tax-estimate-inputs.ts,
           note: "slice 6: never replaces the salary (estimateInputsFor leaves them out, the API refuses new ones); migration RemovePayeSalaryRecords copied the latest into an empty salary and removed them",
-        }
-      - {
-          ref: "localStorage flump_financial_baseline_v2",
-          status: cache,
-          path: apps/web/app/state/baseline.store.ts,
-          note: "used only when no profile row exists",
         }
       - {
           ref: "cookie and localStorage flump_onboarding_seed",
@@ -1967,24 +1961,26 @@ facts:
     verdict: holds
     findings: [CS-4]
     note: >-
-      One store. The navigation shows the default pages for a moment before the saved ones. The
-      section order (dashboard_widget_order) is written only by the dashboard's "Choose what shows
-      here"; empty means the default order, and sections it does not name go at the end.
+      One store. Slice 8: the navigation is drawn from the root loader's saved profile on the
+      server and the first client render, so it no longer shows the default pages first (CS-4
+      fixed). The section order (dashboard_widget_order) is written only by the dashboard's
+      "Choose what shows here"; empty means the default order, and sections it does not name go
+      at the end.
 
   - id: setup-checklist
     name: Setup checklist progress
     area: preferences
     source_of_truth:
       {
-        ref: user_profiles.setup_checklist_completed_steps,
+        ref: "user_profiles.setup_checklist_completed_steps, setup_checklist_dismissed",
         path: apps/backend/src/entities/user-profile.entity.ts,
       }
     other_stores:
       - {
           ref: "localStorage flump_setup_checklist_dismissed",
-          status: duplicate,
-          path: apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx,
-          note: "per browser; cleared on a reset and on sign-out",
+          status: legacy,
+          path: apps/web/app/utils/userStorage.ts,
+          note: "slice 8, decision 13: the dismissal is on the profile now; nothing writes or reads this key, and sign-out and reset remove one an earlier version left",
         }
     writers:
       - {
@@ -1992,24 +1988,19 @@ facts:
           path: apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx,
         }
       - {
-          surface: savings,
-          path: apps/web/app/containers/savings/SavingsContainer.tsx,
-          note: "written on every visit",
+          surface: budget,
+          path: apps/web/app/containers/budget/BudgetContainer.tsx,
+          note: "marked by the action (finishing the budget, trying a months-of-cover what-if), never by a visit; a step already done sends nothing",
         }
-      - {
-          surface: pension,
-          path: apps/web/app/containers/pension/PensionContainer.tsx,
-          note: "written on every visit",
-        }
-      - { surface: budget, path: apps/web/app/containers/budget/BudgetContainer.tsx }
     readers:
       - {
           surface: dashboard,
           path: apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx,
         }
     links: [L64, L65, L66]
-    verdict: duplicated
+    verdict: holds
     findings: [CS-2, CS-6]
+    note: "Slice 8: one store. The dismissed flag moved from the browser to the profile (decision 13), so the server's first paint matches the hydrated page (CS-2 fixed). Savings and Pension no longer write a step on every visit; the Dashboard reads those steps from the saved pots and accounts (CS-6 fixed)."
 
   - id: account-name
     name: Account name
@@ -2570,22 +2561,6 @@ figures:
 # a fact names it under fact:. A trailing * means every key with that prefix.
 browser_storage:
   - {
-      key: flump_financial_baseline_v2,
-      storage: localStorage,
-      user_data: true,
-      fact: salary,
-      path: apps/web/app/state/baseline.store.ts,
-      note: "the calculator baseline (salary, region and more); the signed-out seed, also read on some signed-in pages",
-    }
-  - {
-      key: flump_financial_baseline_v1,
-      storage: localStorage,
-      user_data: true,
-      fact: salary,
-      path: apps/web/app/state/baseline.store.ts,
-      note: "the older baseline key; read once, copied to v2 and removed",
-    }
-  - {
       key: flump_onboarding_seed,
       storage: localStorage,
       user_data: true,
@@ -2606,8 +2581,8 @@ browser_storage:
       storage: localStorage,
       user_data: true,
       fact: setup-checklist,
-      path: apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx,
-      note: "the setup checklist was dismissed in this browser",
+      path: apps/web/app/utils/userStorage.ts,
+      note: "slice 8, decision 13: the dismissal is stored on the profile; this key is no longer written or read, only removed on sign-out and reset",
     }
   - {
       key: flump_runway_calculator_settings,
