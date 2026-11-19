@@ -112,6 +112,10 @@ export const ScenarioZone: Story = {
       await canvas.findAllByRole("region", { name: "Model a change to your contribution" })
     )[0] as HTMLElement;
     await expect(within(zone).getByText("Illustration, not saved")).toBeDefined();
+    // The zone starts closed below the saved figures.
+    await userEvent.click(
+      within(zone).getByRole("button", { name: "Show what-if: change your contribution" }),
+    );
     const heroBefore = canvasElement.querySelector("[data-tone='hero']")?.textContent;
     fireEvent.change(within(zone).getAllByLabelText("Your contribution")[0] as HTMLElement, {
       target: { value: "12" },

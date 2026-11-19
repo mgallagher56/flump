@@ -16,6 +16,7 @@ import {
 } from "@repo/ui";
 import { type FC, useId, useMemo, useState } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ChartTooltip } from "~/features/charts/components/ChartTooltip";
 import { chartCursorProps } from "~/features/charts/utils/chartProps";
 import { evenYearTicks, maxYearTicks } from "~/features/mortgage/chartAxis";
 import { formatDuration, formatRate } from "~/features/mortgage/mortgageFormat";
@@ -116,21 +117,13 @@ interface PlotProps {
   standardName: string;
   overpayName: string;
   gradientId: string;
-  formatCurrency: (value: number) => string;
 }
 
 /**
  * The drawing. Reads ticks from the enclosing ChartFigure. Lines carry no direct labels: one line
  * is named by the figure title, two by the figure's legend.
  */
-const Plot: FC<PlotProps> = ({
-  rows,
-  showOverpay,
-  standardName,
-  overpayName,
-  gradientId,
-  formatCurrency,
-}) => {
+const Plot: FC<PlotProps> = ({ rows, showOverpay, standardName, overpayName, gradientId }) => {
   const { maxTicks, plotPaddingRight } = useChartFigure();
   // Measured so a narrow plot keeps to a few year ticks (0 until measured: treated as wide).
   const [width, setWidth] = useState(0);
@@ -190,12 +183,14 @@ const Plot: FC<PlotProps> = ({
             tickMargin={8}
           />
           <Tooltip
-            cursor={chartCursorProps}
-            formatter={(value) => formatCurrency(Number(value))}
-            labelFormatter={(year, payload) =>
-              (payload?.[0]?.payload as ChartRow | undefined)?.month ?? String(year)
+            content={
+              <ChartTooltip
+                labelFormatter={(year, payload) =>
+                  (payload[0]?.payload as ChartRow | undefined)?.month ?? String(year)
+                }
+              />
             }
-            separator=": "
+            cursor={chartCursorProps}
           />
           <Area
             activeDot={{ r: 6 }}
@@ -438,7 +433,6 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         title="Mortgage balance by year"
       >
         <Plot
-          formatCurrency={formatCurrency}
           gradientId={gradientId}
           overpayName={overpayName}
           rows={chartData}

@@ -332,9 +332,16 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
             ? `estimated change in take-home pay ${formatCurrency(monthlyIncrease)} a month`
             : undefined
         }
+        collapsible
         id="scenario-zone"
         isModified={payRiseModified || nextPound.isModified}
         notice={<ProjectionNotice lead={DELTA_PANEL_COPY.unverifiedBanner} />}
+        showLabel="Show what-if: change your pay"
+        summary={
+          payRiseModified && monthlyIncrease > 0
+            ? `Your illustration: a ${formatCurrency(salaryIncrease)} pay rise adds an estimated ${formatCurrency(monthlyIncrease)} a month to your take-home pay.`
+            : `Starts from your saved salary of ${formatCurrency(salary)} a year and your take-home pay above.`
+        }
         title="Model a change to your pay"
         onReset={resetScenario}
       >

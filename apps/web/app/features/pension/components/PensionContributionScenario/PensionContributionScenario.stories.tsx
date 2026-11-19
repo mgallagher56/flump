@@ -41,6 +41,14 @@ type Story = StoryObj<typeof Harness>;
 export const WithSalary: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // The zone starts closed: the summary names the saved starting figures.
+    await expect(
+      canvas.getAllByText("Starts from your contribution of 5% of your £60,000 salary.")[0],
+    ).toBeDefined();
+    const toggle = canvas.getAllByRole("button", {
+      name: "Show what-if: change your contribution",
+    })[0] as HTMLElement;
+    await userEvent.click(toggle);
     const slider = canvas.getAllByLabelText("Your contribution")[0] as HTMLElement;
     slider.focus();
     await userEvent.keyboard("{ArrowRight}{ArrowRight}");

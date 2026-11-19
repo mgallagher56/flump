@@ -54,6 +54,24 @@ describe("ChartTooltipContent", () => {
     expect(tip.id).toBe("nw-tooltip");
   });
 
+  it("shows a row's formatted value in place of the money amount", () => {
+    render(
+      <ChartTooltipContent
+        rows={[
+          {
+            id: "a",
+            label: "Pot",
+            color: "primary",
+            value: 98765,
+            formattedValue: "about £99,000",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("about £99,000")).toBeDefined();
+    expect(screen.queryByText("£98,765")).toBeNull();
+  });
+
   it("omits the title when none is given", () => {
     const { container } = render(
       <ChartTooltipContent rows={[{ id: "a", label: "A", color: "primary", value: 1 }]} />,

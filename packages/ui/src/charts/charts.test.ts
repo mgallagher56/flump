@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { token } from "../../styled-system/tokens";
 import {
+  CHART_BAR_CURSOR,
   CHART_COLOR_ROLES,
+  CHART_LINE_CURSOR,
   CHART_RULES,
   capSeriesWithOther,
   chartColor,
@@ -145,5 +147,23 @@ describe("DONUT_GEOMETRY", () => {
 
   it("keeps small slices wider than the gaps around them", () => {
     expect(DONUT_GEOMETRY.minAngle).toBeGreaterThan(DONUT_GEOMETRY.paddingAngle);
+  });
+});
+
+describe("chart cursors", () => {
+  it("draws a thin dashed baseline line for line and area charts", () => {
+    expect(CHART_LINE_CURSOR).toEqual({
+      stroke: "var(--colors-chart-baseline)",
+      strokeWidth: 1,
+      strokeDasharray: "4 4",
+    });
+  });
+
+  it("fills a grid-tinted band with no outline for bar charts", () => {
+    expect(CHART_BAR_CURSOR).toEqual({
+      fill: "var(--colors-chart-grid)",
+      fillOpacity: 1,
+      stroke: "none",
+    });
   });
 });

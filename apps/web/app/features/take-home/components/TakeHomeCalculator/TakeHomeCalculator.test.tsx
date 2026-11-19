@@ -164,13 +164,44 @@ describe("<TakeHomeCalculator /> empty states", () => {
   });
 });
 
+const ZONE_SHOW = "Show what-if: change your pay";
+/** The zone starts closed below the saved figures. */
+const openZone = (getByRole: (role: string, opts: { name: string }) => HTMLElement) =>
+  fireEvent.click(getByRole("button", { name: ZONE_SHOW }));
+
 describe("<TakeHomeCalculator /> the scenario zone", () => {
+  test("starts closed with the saved salary and take-home, then the last illustration", () => {
+    const { container, getByLabelText, getByRole, queryByLabelText } = customRender(
+      <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+      withProfile(),
+    );
+    const summary = () => container.querySelector('[data-testid="scenario-zone-summary"]');
+    const toggle = getByRole("button", { name: ZONE_SHOW });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(queryByLabelText("Pay rise a year, before tax")).toBeNull();
+    expect(container.querySelectorAll('[data-notice="projection"]')).toHaveLength(0);
+    // The take-home figure stays in the hero alone (one headline figure), so the summary names
+    // the salary and points at it.
+    expect(summary()?.textContent).toBe(
+      "Starts from your saved salary of £45,000 a year and your take-home pay above.",
+    );
+    fireEvent.click(toggle);
+    fireEvent.change(getByLabelText("Pay rise a year, before tax"), {
+      target: { value: "10000" },
+    });
+    fireEvent.click(getByRole("button", { name: "Hide what-if" }));
+    expect(summary()?.textContent).toMatch(
+      /^Your illustration: a £10,000 pay rise adds an estimated £[\d,]+ a month to your take-home pay\.$/,
+    );
+  });
+
   test("a pay rise changes the outcome, never the headline, sends no request, and resets", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const { container, getByLabelText, getByRole, getByText, queryByRole } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
       withProfile(),
     );
+    openZone(getByRole);
     const saved = hero(container)?.textContent;
     const reset = () => getByRole("button", { name: "Reset to saved figures" });
     expect(getByText("Illustration, not saved")).toBeDefined();
@@ -194,6 +225,7 @@ describe("<TakeHomeCalculator /> the scenario zone", () => {
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={onApplyIncrease} />,
       withProfile(),
     );
+    openZone(getByRole);
     fireEvent.click(getByRole("button", { name: "Model this in savings" }));
     expect(onApplyIncrease.mock.calls[0][0]).toBeGreaterThan(0);
   });
@@ -203,6 +235,7 @@ describe("<TakeHomeCalculator /> the scenario zone", () => {
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
       withProfile(),
     );
+    openZone(getByRole);
     expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).toBeNull();
     openTool(getByRole);
     expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).not.toBeNull();
@@ -225,6 +258,7 @@ describe("<TakeHomeCalculator /> the scenario zone", () => {
     );
     const count = () =>
       (container.textContent?.match(/These tax figures have not yet been checked/g) ?? []).length;
+    openZone(getByRole);
     expect(container.querySelectorAll('[data-notice="projection"]')).toHaveLength(1);
     expect(count()).toBe(1);
     openTool(getByRole);

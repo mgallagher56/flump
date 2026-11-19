@@ -259,6 +259,10 @@ export const FLOWS: Flow[] = [
       await actor.press(page.getByRole("button", { name: "Save details" }));
       await expect(page.getByText("£60,000 a year")).toBeVisible();
 
+      // The scenario zone starts closed below the saved figures.
+      await actor.press(
+        page.getByRole("button", { name: "Show what-if: change your contribution" }),
+      );
       await actor.type(page.getByRole("textbox", { name: "Your contribution input" }), "10");
       await actor.key("Enter");
       await expect(page.getByRole("slider", { name: "Your contribution" })).toHaveValue("10");

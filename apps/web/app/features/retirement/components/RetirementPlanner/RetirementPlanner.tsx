@@ -630,6 +630,13 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
         {savedResult && (
           <ScenarioZone
             basis={`Starting from your saved plan: retiring at ${savedRetirementAge}, planning to age ${savedPlanToAge}.`}
+            collapsible
+            showLabel="Show what-if: change your plan"
+            summary={
+              scenario.isModified
+                ? `Your illustration: retiring at ${scenarioRetirementAge}, planning to age ${scenarioPlanToAge}.`
+                : `Starts from your saved plan: retiring at ${savedRetirementAge}, planning to age ${savedPlanToAge}.`
+            }
             isModified={scenario.isModified}
             onReset={scenario.reset}
             notice={<ProjectionNotice lead="Unverified estimate." />}

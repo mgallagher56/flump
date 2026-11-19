@@ -25,7 +25,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { chartCursorProps } from "~/features/charts";
+import { ChartTooltip, chartCursorProps } from "~/features/charts";
 import { formatEstimate } from "~/utils/roundEstimate";
 import { annotationChip, annotationText, chartWrap } from "./RetirementPotChart.styles";
 
@@ -252,12 +252,19 @@ export const RetirementPotChart: FC<RetirementPotChartProps> = ({ points, growth
               ticks={yAxis.ticks}
             />
             <Tooltip
-              cursor={chartCursorProps}
-              formatter={(value, _name, item) =>
-                yearFigure(Number(value) || 0, Number(item?.payload?.yearIndex) || 0)
+              content={
+                <ChartTooltip
+                  labelFormatter={(label) => `Age ${String(label)}`}
+                  swatches={{ paidIn: "area", growth: "area" }}
+                  valueFormatter={(value, entry) =>
+                    yearFigure(
+                      value ?? 0,
+                      Number((entry.payload as { yearIndex?: number } | undefined)?.yearIndex) || 0,
+                    )
+                  }
+                />
               }
-              labelFormatter={(label) => `Age ${String(label)}`}
-              separator=": "
+              cursor={chartCursorProps}
             />
             {/* Dashed edges: every year after today is an estimate (P10). */}
             <Area

@@ -1,6 +1,12 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SCENARIO_BADGE_TEXT, SCENARIO_RESET_LABEL, ScenarioZone } from "./ScenarioZone";
+import {
+  SCENARIO_BADGE_TEXT,
+  SCENARIO_HIDE_LABEL,
+  SCENARIO_RESET_LABEL,
+  SCENARIO_SHOW_LABEL,
+  ScenarioZone,
+} from "./ScenarioZone";
 
 describe("ScenarioZone", () => {
   it("is a section labelled by its heading, defaulting to 'Model a change'", () => {
@@ -229,6 +235,85 @@ describe("ScenarioZone", () => {
         vi.advanceTimersByTime(1000);
       });
       expect(screen.getByRole("status").textContent).toBe("Illustration: Interest saved £1,000");
+    });
+  });
+
+  describe("collapsible", () => {
+    const zone = (props: Partial<Parameters<typeof ScenarioZone>[0]> = {}) => (
+      <ScenarioZone
+        basis="Starting from your saved plan."
+        collapsible
+        showLabel="Show what-if: change your plan"
+        summary="Starts from your pot of £50,000."
+        {...props}
+      >
+        <p>Tool inputs</p>
+      </ScenarioZone>
+    );
+
+    it("is not collapsible by default: no disclosure button, content shown", () => {
+      render(<ScenarioZone basis="Basis">Tool inputs</ScenarioZone>);
+      expect(screen.queryByTestId("scenario-zone-toggle")).toBeNull();
+      expect(screen.getByText("Tool inputs")).toBeTruthy();
+    });
+
+    it("starts closed with its title, badge, summary and a labelled disclosure button", () => {
+      render(zone());
+      expect(screen.getByRole("heading", { name: "Model a change" })).toBeTruthy();
+      expect(screen.getByText(SCENARIO_BADGE_TEXT)).toBeTruthy();
+      expect(screen.getByTestId("scenario-zone-summary").textContent).toBe(
+        "Starts from your pot of £50,000.",
+      );
+      expect(screen.queryByText("Starting from your saved plan.")).toBeNull();
+      expect(screen.queryByText("Tool inputs")).toBeNull();
+      expect(screen.queryByTestId("projection-notice")).toBeNull();
+      const button = screen.getByRole("button", { name: "Show what-if: change your plan" });
+      expect(button.getAttribute("aria-expanded")).toBe("false");
+      const panel = document.getElementById(button.getAttribute("aria-controls") ?? "");
+      expect(panel).not.toBeNull();
+      expect(panel?.hidden).toBe(true);
+    });
+
+    it("opens and closes from the disclosure button", () => {
+      render(zone());
+      fireEvent.click(screen.getByRole("button", { name: "Show what-if: change your plan" }));
+      const hide = screen.getByRole("button", { name: SCENARIO_HIDE_LABEL });
+      expect(hide.getAttribute("aria-expanded")).toBe("true");
+      expect(screen.getByText("Tool inputs")).toBeTruthy();
+      // Open, the header shows the basis line, not the summary.
+      expect(screen.getByText("Starting from your saved plan.")).toBeTruthy();
+      expect(screen.queryByTestId("scenario-zone-summary")).toBeNull();
+      expect(screen.getByTestId("projection-notice")).toBeTruthy();
+      const panel = document.getElementById(hide.getAttribute("aria-controls") ?? "");
+      expect(panel?.hidden).toBe(false);
+      fireEvent.click(hide);
+      expect(screen.queryByText("Tool inputs")).toBeNull();
+      expect(screen.getByRole("button", { name: "Show what-if: change your plan" })).toBeTruthy();
+    });
+
+    it("can start open, and falls back to the basis and default labels", () => {
+      render(
+        <ScenarioZone basis="Starting from your saved plan." collapsible defaultOpen>
+          <p>Tool inputs</p>
+        </ScenarioZone>,
+      );
+      expect(screen.getByText("Tool inputs")).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: SCENARIO_HIDE_LABEL }));
+      expect(screen.getByRole("button", { name: SCENARIO_SHOW_LABEL })).toBeTruthy();
+      expect(screen.getByTestId("scenario-zone-summary").textContent).toBe(
+        "Starting from your saved plan.",
+      );
+    });
+
+    it("follows a controlled open prop and reports presses", () => {
+      const onOpenChange = vi.fn();
+      const { rerender } = render(zone({ open: false, onOpenChange }));
+      fireEvent.click(screen.getByRole("button", { name: "Show what-if: change your plan" }));
+      expect(onOpenChange).toHaveBeenCalledWith(true);
+      // Still closed until the page passes open.
+      expect(screen.queryByText("Tool inputs")).toBeNull();
+      rerender(zone({ open: true, onOpenChange }));
+      expect(screen.getByText("Tool inputs")).toBeTruthy();
     });
   });
 });

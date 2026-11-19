@@ -6,7 +6,7 @@ import { Button } from "../../primitives/Button/Button";
 import { SliderField } from "../../primitives/SliderField";
 import { Tabs } from "../../primitives/Tabs";
 import { ResultBlock } from "../ResultBlock/ResultBlock";
-import { SCENARIO_RESET_LABEL, ScenarioZone } from "./ScenarioZone";
+import { SCENARIO_HIDE_LABEL, SCENARIO_RESET_LABEL, ScenarioZone } from "./ScenarioZone";
 
 const meta: Meta<typeof ScenarioZone> = {
   title: "3. Patterns/ScenarioZone",
@@ -361,3 +361,59 @@ export const WithResultPhone: Story = {
   ...WithResult,
   parameters: { viewport: { defaultViewport: "mobile1" } },
 };
+
+/**
+ * Owner item 4: below saved figures the zone starts closed, showing its title, badge, one summary
+ * line with the starting figures, and a disclosure button named after what it opens.
+ */
+export const Collapsible: Story = {
+  args: {
+    collapsible: true,
+    footer: <UpdateLink />,
+    onReset: () => {},
+    showLabel: "Show what-if: change your overpayment",
+    summary: "Starts from your balance of £182,400 at 4.5%, with no overpayment.",
+  },
+  render: (args) => (
+    <ScenarioZone {...args}>
+      <OverpaymentTool onChange={() => {}} value={null} />
+    </ScenarioZone>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const show = canvas.getByRole("button", { name: "Show what-if: change your overpayment" });
+    await expect(show).toHaveAttribute("aria-expanded", "false");
+    await expect(canvas.getByTestId("scenario-zone-summary")).toHaveTextContent(
+      "Starts from your balance of £182,400",
+    );
+    await expect(canvas.queryByRole("slider")).toBeNull();
+    await userEvent.click(show);
+    const hide = canvas.getByRole("button", { name: SCENARIO_HIDE_LABEL });
+    await expect(hide).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.getByRole("slider")).toBeInTheDocument();
+    await expect(canvas.getByText(/Starting from your figures/)).toBeInTheDocument();
+    await userEvent.click(hide);
+    await expect(canvas.queryByRole("slider")).toBeNull();
+    await expect(
+      canvas.getByRole("button", { name: "Show what-if: change your overpayment" }),
+    ).toHaveFocus();
+  },
+};
+
+export const CollapsibleDark: Story = { ...Collapsible, globals: { theme: "dark" } };
+
+/** A collapsible zone that starts open, for a page that hands a figure over to it. */
+export const CollapsibleOpen: Story = {
+  ...Collapsible,
+  args: { ...Collapsible.args, defaultOpen: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: SCENARIO_HIDE_LABEL })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(canvas.getByRole("slider")).toBeInTheDocument();
+  },
+};
+
+export const CollapsibleOpenDark: Story = { ...CollapsibleOpen, globals: { theme: "dark" } };

@@ -11,6 +11,8 @@ export interface ChartTooltipPayloadEntry {
   fill?: string;
   strokeDasharray?: string | number;
   hide?: boolean;
+  /** The chart data row under the cursor. */
+  payload?: unknown;
 }
 
 export interface ChartTooltipProps {
@@ -19,7 +21,15 @@ export interface ChartTooltipProps {
   payload?: readonly ChartTooltipPayloadEntry[];
   label?: string | number;
   /** Formats the cursor position (a date or category) for the title. */
-  labelFormatter?: (label: string | number) => ReactNode;
+  labelFormatter?: (
+    label: string | number,
+    payload: readonly ChartTooltipPayloadEntry[],
+  ) => ReactNode;
+  /**
+   * Words a row's value differently from whole pounds (an estimate, a figure in pence). Return
+   * `undefined` to keep the default money format for that row.
+   */
+  valueFormatter?: (value: number | null, entry: ChartTooltipPayloadEntry) => ReactNode;
   /** Series (by dataKey) to leave out, for example a shaded band. */
   hiddenKeys?: readonly string[];
   /** Swatch style per series (by dataKey). Dashed is inferred from `strokeDasharray`. */
@@ -39,6 +49,7 @@ export const ChartTooltip: FC<ChartTooltipProps> = ({
   payload,
   label,
   labelFormatter,
+  valueFormatter,
   hiddenKeys = [],
   swatches = {},
   fractionDigits,
@@ -51,12 +62,14 @@ export const ChartTooltip: FC<ChartTooltipProps> = ({
       const key = String(entry.dataKey ?? entry.name ?? index);
       const swatch: ChartSwatchStyle | undefined =
         swatches[key] ?? (entry.strokeDasharray ? "dashed" : undefined);
+      const value = toNumber(entry.value);
       return {
         id: key,
         label: String(entry.name ?? entry.dataKey ?? ""),
         color: entry.color ?? entry.stroke ?? entry.fill ?? "currentColor",
         swatch,
-        value: toNumber(entry.value),
+        value,
+        formattedValue: valueFormatter ? valueFormatter(value, entry) : undefined,
       };
     });
 
@@ -66,7 +79,7 @@ export const ChartTooltip: FC<ChartTooltipProps> = ({
     label === undefined || label === ""
       ? undefined
       : labelFormatter
-        ? labelFormatter(label)
+        ? labelFormatter(label, payload)
         : label;
 
   return <ChartTooltipContent fractionDigits={fractionDigits} rows={rows} title={title} />;

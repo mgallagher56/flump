@@ -39,6 +39,10 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Monthly take-home pay")[0]).toBeDefined();
     await expect(canvas.getAllByRole("button", { name: "Show details" })[0]).toBeDefined();
+    // The scenario zone starts closed below the saved figures.
+    const toggle = canvas.getAllByRole("button", { name: "Show what-if: change your pay" })[0];
+    if (!toggle) throw new Error("Zone toggle missing");
+    await userEvent.click(toggle);
     const button = canvas.getAllByRole("button", { name: "Model this in savings" })[0];
     if (!button) throw new Error("Button missing");
     await userEvent.click(button);

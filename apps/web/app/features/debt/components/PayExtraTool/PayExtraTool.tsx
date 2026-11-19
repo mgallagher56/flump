@@ -29,6 +29,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartTooltip } from "~/features/charts/components/ChartTooltip";
 import {
   chartCursorProps,
   chartGridProps,
@@ -186,7 +187,6 @@ interface PayoffChartProps {
  * one line is named by the figure title, two by the figure's legend.
  */
 const PayoffChart: FC<PayoffChartProps> = ({ rows, showBaseline, paidOffMonth }) => {
-  const { formatCurrency } = useFormatCurrency();
   const { maxTicks, plotPaddingRight } = useChartFigure();
   // Measured so a narrow plot keeps to a few ticks (0 until measured: treated as wide).
   const [width, setWidth] = useState(0);
@@ -241,10 +241,8 @@ const PayoffChart: FC<PayoffChartProps> = ({ rows, showBaseline, paidOffMonth })
           />
           <YAxis {...chartYAxisProps} domain={yScale.domain} interval={0} ticks={yScale.ticks} />
           <Tooltip
+            content={<ChartTooltip labelFormatter={(m) => monthLabel(Number(m))} />}
             cursor={chartCursorProps}
-            formatter={(value) => formatCurrency(Number(value))}
-            labelFormatter={(m) => monthLabel(Number(m))}
-            separator=": "
           />
           {showBaseline ? (
             <Line

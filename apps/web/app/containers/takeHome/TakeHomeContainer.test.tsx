@@ -31,6 +31,10 @@ import TakeHomeContainer from "./TakeHomeContainer";
 
 const PAY_PARTS = ["Income Tax", "National Insurance", "Pension", "Student loan"];
 
+/** The scenario zone starts closed below the saved figures. */
+const openZone = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Show what-if: change your pay" }));
+
 describe("<TakeHomeContainer /> with saved figures", () => {
   beforeEach(() => {
     navigate.mockClear();
@@ -48,6 +52,9 @@ describe("<TakeHomeContainer /> with saved figures", () => {
 
   it("meets the page rules: figure budget, one hero, one notice, at most one primary button", () => {
     const { container } = render(<TakeHomeContainer />);
+    // The scenario zone starts closed, so its one notice is behind the disclosure.
+    expectPageRules(container, { maxFigures: 9, maxNotSet: 0, projectionNotices: 0 });
+    openZone();
     expectPageRules(container, { maxFigures: 9, maxNotSet: 0, projectionNotices: 1 });
     // A strip of three, never one (RESCORE take-home).
     expect(container.querySelectorAll("[data-kpi-value]")).toHaveLength(3);
@@ -95,6 +102,7 @@ describe("<TakeHomeContainer /> with saved figures", () => {
 
   it("keeps the saved breakdown outside the scenario zone, which holds only the two what-ifs", () => {
     render(<TakeHomeContainer />);
+    openZone();
     const zone = screen.getByTestId("scenario-zone");
     const breakdown = screen.getByTestId("take-home-breakdown");
     expect(zone.contains(breakdown)).toBe(false);
@@ -126,6 +134,7 @@ describe("<TakeHomeContainer /> with saved figures", () => {
 
   it("sends 'Model this in savings' to the forecaster with the monthly change, by router state", () => {
     render(<TakeHomeContainer />);
+    openZone();
     fireEvent.click(screen.getByRole("button", { name: "Model this in savings" }));
     expect(navigate).toHaveBeenCalledTimes(1);
     const [to, opts] = navigate.mock.calls[0];
