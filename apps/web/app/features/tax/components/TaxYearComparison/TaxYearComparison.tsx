@@ -24,10 +24,11 @@ interface Line {
 const gbp = (value: number | undefined, negate = false) => (
   <Money fractionDigits={0} size="sm" value={negate ? -(value ?? 0) : (value ?? 0)} />
 );
+/** A year with no result is one whose estimate depends on a fact not set: "Not set", never £0. */
 const field =
   (key: Key, negate = false) =>
   (r: TaxCalculationResult | undefined) =>
-    gbp(r?.[key] as number | undefined, negate);
+    r ? gbp(r[key] as number | undefined, negate) : "Not set";
 
 const GROUPS: Array<{ heading: string; lines: Line[] }> = [
   {

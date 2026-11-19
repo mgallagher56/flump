@@ -89,3 +89,57 @@ test("L48 a self-employed estimate is the same on Self Assessment and the Dashbo
     });
   }
 });
+
+// L48, second case (PR 785 review): a self-employed person who keeps the 58,000 salary but has no
+// self-employed income record, only 10,000 rent. The trading income decides the band the rent
+// falls in, so neither surface works an estimate from £0 PAYE pay: both show it as not set, with
+// one prompt to add self-employed income. Before, the page showed a known £0.
+test("L48 a self-employed estimate with no self-employed record is not set on both surfaces", async ({
+  page,
+}) => {
+  await page.goto("/app");
+  await applyPersona(page, "homeowner");
+
+  const before: Profile = HOMEOWNER.profile as Profile;
+  const prompt = "Add your self-employed income for this tax year to see an estimated tax bill.";
+  let recordId: string | null = null;
+
+  try {
+    await api(page, "/user-profile", "PATCH", {
+      employmentType: "self-employed",
+      enabledPages: withTax(before.enabledPages),
+      dashboardWidgets: withTax(before.dashboardWidgets),
+      dashboardWidgetOrder: withTax(before.dashboardWidgetOrder),
+    });
+    const created = (await backendCall("/tax-records", "POST", {
+      type: "income",
+      source: "rental",
+      category: "rental_income",
+      name: "L48 rent",
+      amount: 10000,
+      frequency: "annual",
+      date: new Date().toISOString().slice(0, 10),
+    })) as TaxRecordRow;
+    recordId = created.id;
+
+    await page.goto("/app/self-assessment");
+    const hero = page.getByRole("region", { name: "Summary" }).getByTestId("hero-figure");
+    await expect(hero).toContainText("Not set");
+    await expect(hero).toContainText(prompt);
+    await expect(hero).not.toContainText("£");
+
+    await page.goto("/app");
+    const card = page.getByTestId("widget-card-tax");
+    await expect(card).toContainText("Not set");
+    await expect(card).toContainText(prompt);
+    await expect(page.locator('[data-figure="tax.estimatedDue"]')).toHaveCount(0);
+  } finally {
+    if (recordId) await backendCall(`/tax-records/${recordId}`, "DELETE");
+    await api(page, "/user-profile", "PATCH", {
+      employmentType: before.employmentType ?? "employed",
+      enabledPages: before.enabledPages ?? null,
+      dashboardWidgets: before.dashboardWidgets ?? null,
+      dashboardWidgetOrder: before.dashboardWidgetOrder ?? null,
+    });
+  }
+});

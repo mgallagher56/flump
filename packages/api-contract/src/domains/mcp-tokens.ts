@@ -227,6 +227,10 @@ const McpInputBaseline = z.strictObject({
   enabledModules: z.array(
     z.enum(["accounts", "debt", "budget", "pension", "mortgage", "forecast", "tax"]),
   ),
+  /** finance-engine `SavedFinancialBaseline.notSet`: figures that are a stand-in 0, not saved. */
+  notSet: z
+    .array(z.enum(["annualGrossSalary", "pensionContributionPct", "employerPensionMatchPct"]))
+    .optional(),
 });
 
 /** finance-engine `ProfileFacts`: the saved answers, null where not answered. */

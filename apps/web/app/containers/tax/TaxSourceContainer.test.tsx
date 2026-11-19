@@ -51,6 +51,9 @@ const records: TaxRecord[] = [
 ];
 
 let mockSource = "self-employed";
+const baseProfile = { annualSalary: 40000, propertyOwnershipShare: 50, enabledPages: ["tax"] };
+let mockProfile: Record<string, unknown> = baseProfile;
+let mockRecords: TaxRecord[] = records;
 let mockSearch = "";
 const mockSetSearchParams = vi.fn();
 const mockSubmit = vi.fn();
@@ -65,18 +68,21 @@ vi.mock("react-router", () => ({
   useSearchParams: () => [new URLSearchParams(mockSearch), mockSetSearchParams],
   useLoaderData: () => ({
     source: mockSource,
-    records,
-    userProfile: { annualSalary: 40000, propertyOwnershipShare: 50, enabledPages: ["tax"] },
+    records: mockRecords,
+    userProfile: mockProfile,
   }),
   useFetcher: () => ({ submit: mockSubmit, state: "idle", data: null }),
 }));
 
+import { SCOTTISH_BANDS_NOTE } from "~/features/tax/tax-labels";
 import TaxSourceContainer from "./TaxSourceContainer";
 
 describe("TaxSourceContainer", () => {
   beforeEach(() => {
     mockSource = "self-employed";
     mockSearch = "";
+    mockProfile = baseProfile;
+    mockRecords = records;
     mockSubmit.mockClear();
     mockSetSearchParams.mockClear();
   });
@@ -190,5 +196,31 @@ describe("TaxSourceContainer", () => {
       { intent: "delete-transaction", id: "s2" },
       { method: "POST" },
     );
+  });
+
+  it("self-employed, salary kept, rent but no self-employed record: no estimate, one prompt", () => {
+    // Before: the rental page said which deduction "your Self Assessment estimate" used, worked
+    // from £0 PAYE pay, with the Unverified estimate notice. The Dashboard says unknown.
+    mockSource = "rental";
+    mockProfile = { ...baseProfile, employmentType: "self-employed" };
+    mockRecords = records.filter((r) => r.source === "rental");
+    render(<TaxSourceContainer />);
+    expect(screen.queryByRole("note")).toBeNull();
+    expect(screen.queryByText(/Your Self Assessment estimate compares/)).toBeNull();
+    expect(
+      screen.getByText(
+        "Add your self-employed income for this tax year to see an estimated tax bill.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: "Add self-employed income" }).getAttribute("href"),
+    ).toBe(`/app/self-assessment/self-employed?year=${current.replace("/", "-")}`);
+  });
+
+  it("folds the Scottish bands note into the page's one notice for a Scottish taxpayer", () => {
+    mockProfile = { ...baseProfile, taxRegion: "SCOTLAND" };
+    render(<TaxSourceContainer />);
+    expect(screen.getAllByRole("note")).toHaveLength(1);
+    expect(within(screen.getByRole("note")).getByText(SCOTTISH_BANDS_NOTE)).toBeDefined();
   });
 });

@@ -17,7 +17,7 @@ import {
   type NetWorthBasis,
   type NetWorthLeftOut,
 } from "./net-worth-basis.js";
-import { payeSalaryForTax } from "./paye-salary-for-tax.js";
+import { isSelfEmployedType, payeSalaryForTax } from "./paye-salary-for-tax.js";
 import { buildFinancialPicture } from "./picture/build.js";
 import { isFigureKnown } from "./picture/figure.js";
 import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
@@ -35,6 +35,11 @@ import {
   type TaxCalculationResult,
   type TaxRecordFields,
 } from "./tax-calculator.js";
+import {
+  estimateInputsFor,
+  type TaxEstimateFacts,
+  type TaxEstimateMissingFact,
+} from "./tax-estimate-inputs.js";
 import type {
   AvalancheVsSnowballComparison,
   FinancialBaseline,
@@ -176,11 +181,41 @@ export interface UkTaxCalculationNotSet {
   notSet: ["annualSalary"];
 }
 
+/**
+ * The salary tax calculation for a self-employed person: none. The salary field is pay from an
+ * employer only (owner decision 15, option A); their income is in the Self Assessment records.
+ */
+export interface UkTaxCalculationNotApplicable {
+  notApplicable: "selfEmployed";
+}
+
+/** The salary tax calculation, with any assumption it makes in plain words. */
+export type UkTaxCalculationWithAssumptions = UkTaxCalculationResult & { assumptions?: string[] };
+
+export type PackUkTaxCalculation =
+  | UkTaxCalculationWithAssumptions
+  | UkTaxCalculationNotSet
+  | UkTaxCalculationNotApplicable;
+
+/** Stated when a salary is saved but no pension rate: the calculation assumes no contribution. */
+export const PENSION_NOT_SET_ASSUMPTION =
+  "Pension contribution not set; this estimate assumes none.";
+
 /** True when the pack's salary tax calculation holds worked-out figures. */
-export function isUkTaxCalculated(
-  tx: UkTaxCalculationResult | UkTaxCalculationNotSet,
-): tx is UkTaxCalculationResult {
-  return !("notSet" in tx);
+export function isUkTaxCalculated(tx: PackUkTaxCalculation): tx is UkTaxCalculationWithAssumptions {
+  return !("notSet" in tx) && !("notApplicable" in tx);
+}
+
+/** The Self Assessment estimate when a fact it depends on is not set (estimateInputsFor). */
+export interface SelfAssessmentNotSet {
+  notSet: TaxEstimateMissingFact[];
+}
+
+/** True when the pack's Self Assessment ledger holds worked-out figures. */
+export function isSelfAssessmentEstimated(
+  ledger: TaxCalculationResult | SelfAssessmentNotSet,
+): ledger is TaxCalculationResult {
+  return !("notSet" in ledger);
 }
 
 export interface FlumpAiContextPack {
@@ -240,9 +275,16 @@ export interface FlumpAiContextPack {
   };
   taxSummary: {
     currentTaxYear: string;
-    /** `{ notSet: ["annualSalary"] }` when no salary is saved (AI-1). */
-    ukTaxCalculation: UkTaxCalculationResult | UkTaxCalculationNotSet;
-    selfAssessmentLedgerSummary?: TaxCalculationResult;
+    /**
+     * `{ notSet: ["annualSalary"] }` when no salary is saved (AI-1), and
+     * `{ notApplicable: "selfEmployed" }` for a self-employed person (decision 15 option A).
+     */
+    ukTaxCalculation: PackUkTaxCalculation;
+    /**
+     * Absent with no tax records. `{ notSet: [...] }` names the missing fact when the estimate
+     * cannot be worked out (estimateInputsFor), never a figure from a stand-in £0.
+     */
+    selfAssessmentLedgerSummary?: TaxCalculationResult | SelfAssessmentNotSet;
   };
 }
 
@@ -378,30 +420,52 @@ export function buildFlumpAiContextPack(
   // 7. UK Tax Calculation & Self-Assessment Ledger
   // The tax year that applies today (AI-3, SA-8), never a stored or default baseline year.
   const currentTaxYear = resolveUkTaxYear();
-  // No salary saved: no tax is worked out from a stand-in £0 (AI-1).
-  const ukTaxCalculation: UkTaxCalculationResult | UkTaxCalculationNotSet = salaryKnown
-    ? computeUkTax({
-        grossSalary: annualSalary,
-        pensionContributionPct,
-        isSalarySacrifice: safeBaseline.isSalarySacrifice,
-        studentLoanPlan: safeBaseline.studentLoanPlan,
-        region: safeBaseline.ukRegion,
-        taxYear: currentTaxYear,
-      })
-    : { notSet: ["annualSalary"] };
-
-  let selfAssessmentLedgerSummary: TaxCalculationResult | undefined;
-  if (taxRecords && taxRecords.length > 0) {
-    selfAssessmentLedgerSummary = calculateUKTax(
-      currentTaxYear,
-      taxRecords,
-      // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
-      payeSalaryForTax({
+  // The facts the tax figures depend on: the saved profile when the caller has it, else the
+  // saved baseline (a salary of 0 there is "not saved").
+  const facts = input.profileFacts;
+  const taxFacts: TaxEstimateFacts = facts
+    ? {
+        employmentType: facts.employmentType,
+        annualSalary: facts.annualSalary,
+        propertyOwnershipShare: facts.propertyOwnershipShare,
+      }
+    : {
         employmentType: safeBaseline.employmentStatus,
-        annualSalary: salaryKnown ? annualSalary : 0,
-      }),
-      safeBaseline.propertyOwnershipSharePct ?? 100,
-    );
+        annualSalary: salaryKnown ? annualSalary : null,
+        propertyOwnershipShare: safeBaseline.propertyOwnershipSharePct,
+      };
+  // A self-employed person's salary is not PAYE pay (SA-1, decision 15 option A), so no salary
+  // tax is worked out for them. No salary saved: none is worked out from a stand-in £0 (AI-1).
+  const payeSalary = payeSalaryForTax({
+    employmentType: taxFacts.employmentType,
+    annualSalary: salaryKnown ? annualSalary : null,
+  });
+  const pensionAssumed = notSet.includes("pensionContributionPct");
+  const ukTaxCalculation: PackUkTaxCalculation = isSelfEmployedType(taxFacts.employmentType)
+    ? { notApplicable: "selfEmployed" }
+    : payeSalary > 0
+      ? {
+          ...computeUkTax({
+            grossSalary: payeSalary,
+            pensionContributionPct,
+            isSalarySacrifice: safeBaseline.isSalarySacrifice,
+            studentLoanPlan: safeBaseline.studentLoanPlan,
+            region: safeBaseline.ukRegion,
+            taxYear: currentTaxYear,
+          }),
+          // Item 4: the assumption is stated, not left silent.
+          ...(pensionAssumed ? { assumptions: [PENSION_NOT_SET_ASSUMPTION] } : {}),
+        }
+      : { notSet: ["annualSalary"] };
+
+  // The Self Assessment estimate follows the one rule every surface uses (estimateInputsFor).
+  let selfAssessmentLedgerSummary: TaxCalculationResult | SelfAssessmentNotSet | undefined;
+  if (taxRecords && taxRecords.length > 0) {
+    const inputs = estimateInputsFor(taxFacts, taxRecords, currentTaxYear);
+    selfAssessmentLedgerSummary =
+      inputs.status === "known"
+        ? calculateUKTax(currentTaxYear, inputs.records, inputs.payeSalary, inputs.ownershipShare)
+        : { notSet: inputs.missing };
   }
 
   return {
@@ -580,18 +644,43 @@ ${
 - **Income minus spending, a month:** ${gbpOrNotSet(bg.monthlySurplus)}
 
 ## 5. Tax, ${pack.taxSummary.currentTaxYear}
-${b.annualGrossSalary !== undefined && isUkTaxCalculated(tx) ? formatSalaryTax(b.annualGrossSalary, b, tx) : `- **Salary before tax:** Not set\n- **Tax region:** ${b.ukRegion}\n`}`;
+${
+  b.annualGrossSalary !== undefined && isUkTaxCalculated(tx)
+    ? formatSalaryTax(b.annualGrossSalary, b, tx)
+    : "notApplicable" in tx
+      ? `- **Salary before tax:** Not used. Self-employed income comes from the Self Assessment records.\n- **Tax region:** ${b.ukRegion}\n`
+      : `- **Salary before tax:** Not set\n- **Tax region:** ${b.ukRegion}\n`
+}${formatSelfAssessment(pack.taxSummary.selfAssessmentLedgerSummary)}`;
+}
+
+/** What to add for each fact a Self Assessment estimate can be missing. */
+const SELF_ASSESSMENT_MISSING_LINE: Record<TaxEstimateMissingFact, string> = {
+  selfEmploymentRecords: "Not set. Add self-employed income records for this tax year.",
+  annualSalary: "Not set. Add a salary.",
+  untaxedIncomeRecords: "None to work out. No income outside PAYE is recorded for this tax year.",
+};
+
+/** The Self Assessment estimate line, or nothing when there are no tax records. */
+function formatSelfAssessment(
+  ledger: TaxCalculationResult | SelfAssessmentNotSet | undefined,
+): string {
+  if (!ledger) return "";
+  if (!isSelfAssessmentEstimated(ledger)) {
+    const missing = ledger.notSet[0] ?? "untaxedIncomeRecords";
+    return `- **Self Assessment estimate:** ${SELF_ASSESSMENT_MISSING_LINE[missing]}\n`;
+  }
+  return `- **Self Assessment estimate:** ${gbp(Math.max(0, ledger.netAdditionalTaxToPay))}\n`;
 }
 
 /** The salary-based tax lines, shown only when a salary is saved (AI-1). */
 function formatSalaryTax(
   salary: number,
   b: ContextPackBaseline,
-  tx: UkTaxCalculationResult,
+  tx: UkTaxCalculationWithAssumptions,
 ): string {
   return `- **Salary before tax:** £${salary.toLocaleString("en-GB")}
 - **Tax region:** ${b.ukRegion}
-- **Adjusted net income:** £${tx.adjustedNetIncomeGbp.toLocaleString("en-GB")}
+${(tx.assumptions ?? []).map((a) => `- **Assumption:** ${a}\n`).join("")}- **Adjusted net income:** £${tx.adjustedNetIncomeGbp.toLocaleString("en-GB")}
 - **Adjusted net income in the £100,000 to £125,140 band:** ${tx.taxTrap.isInTaxTrap ? "Yes (the Personal Allowance reduces in this band)" : "No"}
 ${
   tx.taxTrap.isInTaxTrap

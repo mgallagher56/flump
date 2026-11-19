@@ -1,10 +1,10 @@
 import {
   calculateUKTax,
   compareExpensesWithAllowance,
+  estimateInputsFor,
   getCurrentUKTaxYear,
   getRecordAnnualTotalForTaxYear,
   isRecordActiveInTaxYear,
-  payeSalaryForTax,
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
@@ -30,8 +30,19 @@ import { TaxRecordsTable } from "~/features/tax/components/TaxRecordsTable";
 import { TaxYearBar } from "~/features/tax/components/TaxYearBar";
 import { availableTaxYears, resolveSelectedTaxYear } from "~/features/tax/hooks/taxYears";
 import { useTaxRecordEditor } from "~/features/tax/hooks/useTaxRecordEditor";
-import { selfAssessmentPath, taxYearFromParam, taxYearToParam } from "~/features/tax/source-pages";
-import { SOURCE_LABEL } from "~/features/tax/tax-labels";
+import {
+  selfAssessmentPath,
+  sourcePagePath,
+  taxYearFromParam,
+  taxYearToParam,
+} from "~/features/tax/source-pages";
+import {
+  addableEstimateFact,
+  ESTIMATE_MISSING_PROMPT,
+  SALARY_SETTINGS_PATH,
+  SCOTTISH_BANDS_NOTE,
+  SOURCE_LABEL,
+} from "~/features/tax/tax-labels";
 import type { loader } from "~/routes/app.self-assessment_.$source";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { propertyShareProfileFirst, salaryProfileFirst } from "~/utils/profileFirst";
@@ -84,18 +95,35 @@ const TaxSourceContainer: FC = () => {
 
   const editor = useTaxRecordEditor({ records, taxYear });
 
-  // The estimate uses the saved profile salary and share, as the list page does.
-  // An unknown salary (null) counts as none in the calculation; this page shows no salary.
-  // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
-  const payeSalary = payeSalaryForTax({
-    employmentType: userProfile?.employmentType ?? null,
-    annualSalary: salaryProfileFirst(userProfile, baseline.annualGrossSalary),
-  });
+  // The estimate uses the saved profile salary and share, as the list page does, through the
+  // engine's one rule (estimateInputsFor): a self-employed person's salary is not PAYE pay, and an
+  // estimate that depends on a fact not set is unknown, as on the Dashboard.
+  const employmentType = userProfile?.employmentType ?? null;
+  const annualSalary = salaryProfileFirst(userProfile, baseline.annualGrossSalary);
   const ownershipShare = propertyShareProfileFirst(userProfile, baseline.propertyOwnershipSharePct);
-  const result = useMemo(
-    () => calculateUKTax(taxYear, records, payeSalary, ownershipShare),
-    [taxYear, records, payeSalary, ownershipShare],
+  const inputs = useMemo(
+    () =>
+      estimateInputsFor(
+        { employmentType, annualSalary, propertyOwnershipShare: ownershipShare },
+        records,
+        taxYear,
+      ),
+    [employmentType, annualSalary, ownershipShare, records, taxYear],
   );
+  // The source's gross income and expenses do not depend on the salary, so they are read from
+  // the ledger either way. What the estimate used (the allowance, a tie) is read only when known.
+  const result = useMemo(
+    () =>
+      calculateUKTax(
+        taxYear,
+        records,
+        inputs.status === "known" ? inputs.payeSalary : 0,
+        ownershipShare,
+      ),
+    [taxYear, records, inputs, ownershipShare],
+  );
+  const estimate = inputs.status === "known" ? result : undefined;
+  const missingFact = inputs.status === "known" ? null : addableEstimateFact(inputs.missing);
 
   const label = SOURCE_LABEL[source];
   const { income, expenses } = sourceTotals(records, source, taxYear);
@@ -112,7 +140,7 @@ const TaxSourceContainer: FC = () => {
             grossIncome: result.seIncomeGross,
             recordedExpenses: result.seExpenses,
           }),
-          used: result.tradingAllowanceUsed,
+          used: estimate ? estimate.tradingAllowanceUsed : null,
         }
       : source === "rental" && (income > 0 || expenses > 0)
         ? {
@@ -124,7 +152,7 @@ const TaxSourceContainer: FC = () => {
               financeCosts: result.rentalMortgageInterest,
               ownershipSharePct: ownershipShare,
             }),
-            used: result.propertyAllowanceUsed,
+            used: estimate ? estimate.propertyAllowanceUsed : null,
           }
         : null;
 
@@ -194,12 +222,41 @@ const TaxSourceContainer: FC = () => {
           allowanceUsedInEstimate={comparison.used}
           comparison={comparison.value}
           ownershipSharePct={source === "rental" ? ownershipShare : undefined}
-          routesTie={source === "rental" ? result.propertyRoutesTie : undefined}
+          routesTie={source === "rental" ? estimate?.propertyRoutesTie : undefined}
+          unknownEstimate={
+            missingFact ? (
+              <>
+                <span>{ESTIMATE_MISSING_PROMPT[missingFact].prompt}</span>{" "}
+                <Link
+                  to={
+                    missingFact === "annualSalary"
+                      ? SALARY_SETTINGS_PATH
+                      : sourcePagePath("self-employed", taxYear)
+                  }
+                >
+                  {ESTIMATE_MISSING_PROMPT[missingFact].actionLabel}
+                </Link>
+              </>
+            ) : undefined
+          }
         />
       ) : null}
 
-      {/* The page's one notice, under the allowance comparison it covers. */}
-      {comparison ? <ProjectionNotice lead={DELTA_PANEL_COPY.unverifiedBanner} /> : null}
+      {/* The page's one notice, under the allowance comparison it covers, only with an estimate.
+          A Scottish taxpayer's bands note folds into it (SA-3). */}
+      {comparison && estimate ? (
+        <ProjectionNotice
+          lead={
+            userProfile?.taxRegion === "SCOTLAND" ? (
+              <>
+                {DELTA_PANEL_COPY.unverifiedBanner} <span>{SCOTTISH_BANDS_NOTE}</span>
+              </>
+            ) : (
+              DELTA_PANEL_COPY.unverifiedBanner
+            )
+          }
+        />
+      ) : null}
 
       <PageSection
         action={recordCount > 0 ? addButtons : undefined}

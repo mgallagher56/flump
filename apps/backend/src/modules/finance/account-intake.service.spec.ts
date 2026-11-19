@@ -166,6 +166,43 @@ describe("AccountIntakeService (Deep Module)", () => {
       });
       expect(mockAccountDetailRepo.save).not.toHaveBeenCalled();
     });
+
+    it("re-signs an overdraft positive when it becomes a saving (a saving cannot be overdrawn)", async () => {
+      // Overdraft at -500, past month -320, changed to Saving: today reads +500, the month +320.
+      mockAccountRepo.findOne.mockResolvedValueOnce({
+        id: "a1",
+        userId: "userA",
+        type: "Overdraft",
+        balance: -500,
+      });
+      mockAccountDetailRepo.find.mockResolvedValueOnce([{ id: 1, accountId: "a1", value: -320 }]);
+      await service.updateAccount("userA", "a1", { type: "Saving" });
+      expect(mockAccountRepo.save.mock.calls[0]?.[0]).toMatchObject({
+        type: "Saving",
+        balance: 500,
+      });
+      expect(mockAccountDetailRepo.save).toHaveBeenCalledWith([
+        { id: 1, accountId: "a1", value: 320 },
+      ]);
+    });
+
+    it("keeps a card balance negative when it becomes a current account (overdrawn)", async () => {
+      // Credit Card owing 400 (stored -400) changed to Current: an overdrawn current account,
+      // so today stays -400 and no history row is rewritten.
+      mockAccountRepo.findOne.mockResolvedValueOnce({
+        id: "a1",
+        userId: "userA",
+        type: "Credit Card",
+        balance: -400,
+      });
+      mockAccountDetailRepo.find.mockResolvedValueOnce([{ id: 1, accountId: "a1", value: -380 }]);
+      await service.updateAccount("userA", "a1", { type: "Current" });
+      expect(mockAccountRepo.save.mock.calls[0]?.[0]).toMatchObject({
+        type: "Current",
+        balance: -400,
+      });
+      expect(mockAccountDetailRepo.save).not.toHaveBeenCalled();
+    });
   });
 
   it("returns [] and never saves for a user with no accounts", async () => {

@@ -757,10 +757,42 @@ describe("query reads (re-plan PR B)", () => {
       }
     });
 
+    it("self-employed, salary kept, rent but no self-employed record: no estimate (PR 785)", async () => {
+      // Before: the estimate was worked from £0 PAYE pay on 10,000 rent alone, (10,000 - 1,000
+      // property allowance) = 9,000, under the 12,570 allowance: a known 0. The trading income
+      // decides the band the rent falls in, so as on the Dashboard the estimate is unknown.
+      const se = await connectTestClient({
+        ...emptyUser,
+        baseline: {
+          ...emptyUser.baseline,
+          employmentStatus: "SELF_EMPLOYED",
+          annualGrossSalary: 40000,
+        },
+        taxRecords: [
+          taxRecord({
+            id: "r1",
+            source: "rental",
+            category: "rental_income",
+            amount: 10000,
+            frequency: "annual",
+            date: "2026-05-01",
+          }),
+        ] as never,
+      });
+      try {
+        const e = (await se.callJson("get_tax_year_position", { taxYear: "2026/27" })) as Env;
+        expect(e.result.estimate).toBeNull();
+        expect(e.missing.map((m) => m.field)).toContain("selfEmploymentRecords");
+        expect(e.missing.map((m) => m.field)).not.toContain("annualSalary");
+      } finally {
+        await se.close();
+      }
+    });
+
     it("says the salary is not set when only rental income is saved (SA-2, AI-2)", async () => {
-      // No salary: rent of 20,000 with no expenses, so the 1,000 property allowance leaves 19,000
-      // profit, the only income. (19,000 - 12,570) x 20% = 1,286. The backend once sent an
-      // invented 45,000 salary here; it now sends 0 (agent-data.service.spec covers that).
+      // No salary for an employee: rent of 20,000, but the salary decides the band the rent falls
+      // in, so no estimate is worked out (before: 1,286 from a stand-in £0 salary). The backend
+      // once sent an invented 45,000 salary here; it now sends 0 (agent-data.service.spec).
       const rentOnly = await connectTestClient({
         ...emptyUser,
         taxRecords: [
@@ -777,7 +809,7 @@ describe("query reads (re-plan PR B)", () => {
       try {
         const e = (await rentOnly.callJson("get_tax_year_position", { taxYear: "2026/27" })) as Env;
         expect(e.result.income.payeSalaryGbp).toBe(0);
-        expect(e.result.estimate.selfAssessmentGbp).toBe(1286);
+        expect(e.result.estimate).toBeNull();
         expect(e.missing.map((m) => m.field)).toContain("annualSalary");
       } finally {
         await rentOnly.close();

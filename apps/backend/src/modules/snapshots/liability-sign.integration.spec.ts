@@ -414,10 +414,20 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         expect(await balanceOf(id)).toBe(-800);
         expect(await historyOf(id)).toEqual([-700, -5]);
 
-        // A liability that becomes an asset keeps its values as they are.
+        // A debt that becomes a current account keeps its sign (CH-4): a current account can be
+        // overdrawn, so -800 is an overdrawn balance and the months stay as they are.
         await svc.updateAccount(USER, id, { type: "Current" } as never);
         expect(await balanceOf(id)).toBe(-800);
         expect(await historyOf(id)).toEqual([-700, -5]);
+
+        // A debt that becomes a saving flips positive (CH-4): a saving cannot be overdrawn, so
+        // the amounts are money held. Back to Credit Card first (already negative, no change),
+        // then Saving: -800 -> 800, history -700, -5 -> 700, 5.
+        await svc.updateAccount(USER, id, { type: "Credit Card" } as never);
+        expect(await balanceOf(id)).toBe(-800);
+        await svc.updateAccount(USER, id, { type: "Saving" } as never);
+        expect(await balanceOf(id)).toBe(800);
+        expect(await historyOf(id)).toEqual([700, 5]);
 
         // Type and balance together: the balance follows the new type.
         await svc.updateAccount(USER, id, { type: "Student Loan", balance: 30000 } as never);

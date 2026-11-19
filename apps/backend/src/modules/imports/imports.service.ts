@@ -375,17 +375,29 @@ export class ImportsService {
         const latest = latestByRef.get(staged.ref);
         // The account form's create rules (AI-9): field checks, the sign rule, the ownership,
         // share and currency defaults. Saved below in one insert, as before.
-        const fields = newAccountFields({
-          name: staged.name,
-          type: staged.type,
-          balance: latest ? latest.value : 0,
-          currency: "GBP",
-          isCurrent: true,
-          interestRate: staged.details?.interestRate ?? null,
-          monthlyContribution: staged.details?.monthlyContribution ?? null,
-          termMonths: staged.details?.termMonths ?? null,
-          fixedRateEndDate: staged.details?.fixedRateEndDate ?? null,
-        });
+        let fields: Partial<Account>;
+        try {
+          fields = newAccountFields({
+            name: staged.name,
+            type: staged.type,
+            balance: latest ? latest.value : 0,
+            currency: "GBP",
+            isCurrent: true,
+            interestRate: staged.details?.interestRate ?? null,
+            monthlyContribution: staged.details?.monthlyContribution ?? null,
+            termMonths: staged.details?.termMonths ?? null,
+            fixedRateEndDate: staged.details?.fixedRateEndDate ?? null,
+          });
+        } catch (err) {
+          // Name the failing row (AI-9): the whole commit still rolls back, but the 400 says which
+          // staged account broke which rule. Only this user's own staged name and ref are shown.
+          if (err instanceof BadRequestException) {
+            throw new BadRequestException(
+              `Imported account "${staged.name}" (row ${staged.ref}): ${err.message}`,
+            );
+          }
+          throw err;
+        }
         toCreate.push({ ref: staged.ref, account: m.create(Account, { ...fields, userId }) });
       }
       // One insert for every new account instead of one per account (audit L13); the saved

@@ -201,6 +201,19 @@ describe("runStdio", () => {
     expect(pack.taxSummary.selfAssessmentLedgerSummary).toBeDefined();
   });
 
+  it("keeps the unsaved-figure list, so the local pack leaves unsaved pension rates out", () => {
+    const body = {
+      ...okInput,
+      input: {
+        ...okInput.input,
+        baseline: { ...okInput.input.baseline, notSet: ["pensionContributionPct"] },
+      },
+    };
+    const input = toEngineInput(McpInputResponse.parse(body).input);
+    const pack = buildFlumpAiContextPack(input, { anonymizeInstitutions: true });
+    expect(pack.baseline).not.toHaveProperty("pensionContributionPct");
+  });
+
   it("never runs with the staging scope, and drops scopes it does not know", () => {
     expect(localScopes(["mcp:read:anonymized", "mcp:simulate", "write:stage", "admin"])).toEqual([
       "mcp:read:anonymized",

@@ -65,6 +65,8 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
       propertyOwnershipSharePct: num(b.propertyOwnershipSharePct),
       financialStage: b.financialStage,
       enabledModules: [...b.enabledModules],
+      // Figures that are a stand-in 0, so the local pack leaves them out, as the remote one does.
+      notSet: b.notSet && b.notSet.length > 0 ? [...b.notSet] : undefined,
     }),
     profileFacts: {
       annualSalary: facts?.annualSalary ?? null,

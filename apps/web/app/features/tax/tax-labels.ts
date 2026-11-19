@@ -8,6 +8,41 @@ import { getCategoriesForSource, type TaxRecord, type TaxSource } from "@flump/f
 export const SCOTTISH_BANDS_NOTE =
   "Your tax region is Scotland. This estimate uses England, Wales and Northern Ireland Income Tax bands, so your bill may differ.";
 
+/** The Self Assessment estimate's missing facts that a person can add (estimateInputsFor). */
+export type EstimateMissingFact = "annualSalary" | "selfEmploymentRecords";
+
+/**
+ * One plain prompt per missing fact, shown where the estimate would be (PR 785 review). The
+ * estimate is unknown, never worked out from a stand-in £0, until the fact is added. Owner
+ * decision 15, option A: the salary field is pay from an employer only, so a self-employed
+ * person adds their self-employed income records instead.
+ */
+export const ESTIMATE_MISSING_PROMPT: Record<
+  EstimateMissingFact,
+  { prompt: string; actionLabel: string }
+> = {
+  annualSalary: {
+    prompt:
+      "Add your salary to see an estimated tax bill. It decides the tax band your other income falls in.",
+    actionLabel: "Add salary",
+  },
+  selfEmploymentRecords: {
+    prompt: "Add your self-employed income for this tax year to see an estimated tax bill.",
+    actionLabel: "Add self-employed income",
+  },
+};
+
+/** Where the salary is saved. */
+export const SALARY_SETTINGS_PATH = "/app/profile#settings-age-and-pay";
+
+/** The first missing fact a person can add, or null when the list holds none. */
+export const addableEstimateFact = (
+  missing: readonly string[] | null | undefined,
+): EstimateMissingFact | null =>
+  (missing ?? []).find(
+    (m): m is EstimateMissingFact => m === "annualSalary" || m === "selfEmploymentRecords",
+  ) ?? null;
+
 /** User-facing names for each income source, in the order the page lists them. */
 export const SOURCE_OPTIONS: ReadonlyArray<{ value: TaxSource; label: string }> = [
   { value: "paye", label: "Employment (PAYE)" },

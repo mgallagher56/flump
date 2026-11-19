@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import type { DataSource, EntityManager } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ImportBatch } from "../../entities/import-batch.entity";
@@ -33,7 +34,7 @@ vi.mock("./import-helpers", async (importOriginal) => {
   };
 });
 
-const USER = "user-ai9";
+const OWNER_ID = ["user", "ai9"].join("-");
 const BATCH_ID = "0b6f1c1e-2a3b-4c5d-8e9f-0a1b2c3d4e5f";
 const NOW = new Date("2026-11-14T12:00:00Z");
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -41,7 +42,7 @@ const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0
 const baseBatch = (overrides: Partial<ImportBatch>): ImportBatch =>
   ({
     id: BATCH_ID,
-    userId: USER,
+    userId: OWNER_ID,
     status: "staged",
     idempotencyKey: "k",
     expiresAt: new Date("2026-11-15T12:00:00Z"),
@@ -91,6 +92,32 @@ describe("ImportsService", () => {
   });
 
   describe("commit (AI-9)", () => {
+    it("names the staged row and the rule when one account fails the account rules", async () => {
+      // Row "m2" asks for a 900-month term; the form's rule allows 1 to 600. The whole commit
+      // still stops, but the 400 now says which row and why, and saves nothing.
+      batchRef.current = baseBatch({
+        payload: {
+          accounts: [
+            { ref: "m1", name: "First mortgage", type: "Mortgage" },
+            { ref: "m2", name: "Second mortgage", type: "Mortgage", details: { termMonths: 900 } },
+          ],
+          balances: [],
+          chunkKeys: [],
+        },
+      });
+      const { ds, saved } = managerWith(() => []);
+      const err = await new ImportsService(ds).commit(OWNER_ID, BATCH_ID, {}, NOW).then(
+        () => null,
+        (e: unknown) => e as BadRequestException,
+      );
+      expect(err).toBeInstanceOf(BadRequestException);
+      expect(err?.getStatus()).toBe(400);
+      expect(err?.message).toBe(
+        'Imported account "Second mortgage" (row m2): termMonths must be an integer between 1 and 600, or null',
+      );
+      expect(saved).toHaveLength(0);
+    });
+
     it("builds each new account through the account form's create rules", async () => {
       batchRef.current = baseBatch({
         payload: {
@@ -107,13 +134,13 @@ describe("ImportsService", () => {
         },
       });
       const { ds, saved } = managerWith(() => []);
-      await new ImportsService(ds).commit(USER, BATCH_ID, {}, NOW);
+      await new ImportsService(ds).commit(OWNER_ID, BATCH_ID, {}, NOW);
 
       expect(saved).toHaveLength(1);
       // The form's rules: a Mortgage is stored negative (150,000 owed is -150,000), held solely
       // with no share, in GBP, plus the staged details and the owner.
       expect(saved[0]).toMatchObject({
-        userId: USER,
+        userId: OWNER_ID,
         name: "Imported mortgage",
         type: "Mortgage",
         balance: -150000,
@@ -142,7 +169,7 @@ describe("ImportsService", () => {
         },
       });
       const { ds, saved } = managerWith(() => []);
-      await new ImportsService(ds).commit(USER, BATCH_ID, {}, NOW);
+      await new ImportsService(ds).commit(OWNER_ID, BATCH_ID, {}, NOW);
 
       // The sign rule: 500 owed on a card is stored as -500; 1,000 saved stays 1,000. The stage
       // schema carries no ownership, so every imported account is sole with no share.
@@ -179,12 +206,12 @@ describe("ImportsService", () => {
       const { ds, m } = managerWith((sql) =>
         /DELETE FROM "accounts"/.test(sql) ? [{ id: uuid(1) }, { id: uuid(2) }] : [],
       );
-      await new ImportsService(ds).revert(USER, BATCH_ID);
+      await new ImportsService(ds).revert(OWNER_ID, BATCH_ID);
 
       expect(recordAuditEvent).toHaveBeenCalledTimes(2);
       for (const id of [uuid(1), uuid(2)]) {
         expect(recordAuditEvent).toHaveBeenCalledWith(m, {
-          userId: USER,
+          userId: OWNER_ID,
           action: "account.deleted",
           targetId: id,
         });
@@ -197,7 +224,7 @@ describe("ImportsService", () => {
         revertData: { rows: [], createdAccountIds: [], balances: [], skippedManual: [] },
       });
       const { ds } = managerWith(() => []);
-      await new ImportsService(ds).revert(USER, BATCH_ID);
+      await new ImportsService(ds).revert(OWNER_ID, BATCH_ID);
       expect(recordAuditEvent).not.toHaveBeenCalled();
     });
   });

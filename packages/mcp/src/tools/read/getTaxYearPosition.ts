@@ -2,11 +2,14 @@ import {
   calculateHicbcPercent,
   calculateIncomeTaxOnTaxable,
   calculateUKTax,
+  estimateInputsFor,
   getTaxYearVerification,
   getUkTaxYearRules,
   isSelfEmployedType,
   MCP_NOTICE,
   payeSalaryForTax,
+  type SavedFinancialBaseline,
+  type TaxEstimateMissingFact,
 } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
@@ -62,15 +65,21 @@ const result = z.object({
     rentalTaxBeforeCreditGbp: z.number(),
     rentalTaxAfterCreditGbp: z.number(),
   }),
-  estimate: z.object({
-    incomeTaxGbp: z.number(),
-    nationalInsuranceGbp: z.number(),
-    totalTaxGbp: z.number(),
-    /** Income tax on the salary that PAYE is assumed to have taken already. */
-    payeTaxGbp: z.number(),
-    /** Total tax minus the PAYE tax: the Self Assessment estimate the Tax page shows. */
-    selfAssessmentGbp: z.number(),
-  }),
+  /**
+   * null when a fact the estimate depends on is not saved (the same rule as the Dashboard and the
+   * Tax page); `missing` names it. Never a figure from a stand-in £0.
+   */
+  estimate: z
+    .object({
+      incomeTaxGbp: z.number(),
+      nationalInsuranceGbp: z.number(),
+      totalTaxGbp: z.number(),
+      /** Income tax on the salary that PAYE is assumed to have taken already. */
+      payeTaxGbp: z.number(),
+      /** Total tax minus the PAYE tax: the Self Assessment estimate the Tax page shows. */
+      selfAssessmentGbp: z.number(),
+    })
+    .nullable(),
   notes: z.array(z.string()),
 });
 
@@ -78,7 +87,7 @@ export const getTaxYearPosition = defineFlumpTool({
   name: "get_tax_year_position",
   title: "Tax year position",
   description:
-    "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (£100,000 to £125,140 in recent years), the Income Tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the tax and Self Assessment estimates shown on the Flump tax page. Facts and estimates only.",
+    "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (£100,000 to £125,140 in recent years), the Income Tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the tax and Self Assessment estimates shown on the Flump tax page. The estimate is null when a fact it depends on is not saved, and missing names that fact. Facts and estimates only.",
   input: { taxYear: taxYearInput },
   result,
   maxTokens: 3000,
@@ -88,13 +97,29 @@ export const getTaxYearPosition = defineFlumpTool({
     const { records } = await loadTaxYearRecords(ctx, taxYear);
     // The engine's one rule (SA-1): a self-employed person's salary is not PAYE pay.
     const selfEmployed = isSelfEmployedType(baseline.employmentStatus);
-    const salary = payeSalaryForTax({
-      employmentType: baseline.employmentStatus,
-      annualSalary: Number(baseline.annualGrossSalary),
-    });
+    const notSet = (baseline as SavedFinancialBaseline).notSet ?? [];
+    const savedSalary = Number(baseline.annualGrossSalary);
     const share = Number(baseline.propertyOwnershipSharePct);
     // As on the Tax page, a stored 0 is kept (no share of the rent); only a missing value means 100.
     const ownershipShare = Number.isFinite(share) && share >= 0 && share <= 100 ? share : 100;
+    // Whether the estimate can be worked out: the one rule every surface uses.
+    const inputs = estimateInputsFor(
+      {
+        employmentType: baseline.employmentStatus,
+        annualSalary:
+          notSet.includes("annualGrossSalary") || !(savedSalary > 0) ? null : savedSalary,
+        propertyOwnershipShare: ownershipShare,
+      },
+      records,
+      taxYear,
+    );
+    const salary =
+      inputs.status === "known"
+        ? inputs.payeSalary
+        : payeSalaryForTax({
+            employmentType: baseline.employmentStatus,
+            annualSalary: savedSalary,
+          });
 
     // The Tax page's own calculation, so the figures match the app.
     const ledger = calculateUKTax(taxYear, records, salary, ownershipShare);
@@ -124,12 +149,34 @@ export const getTaxYearPosition = defineFlumpTool({
     const { hicbcThresholdStart, hicbcStepWidth } = rules.hicbc;
 
     const missing: Missing[] = [];
+    const estimateMissing: TaxEstimateMissingFact[] =
+      inputs.status === "known" ? [] : inputs.missing;
     if (salary === 0 && records.length === 0) {
       missing.push({
         field: "annualSalary",
-        why: "No salary is saved and no tax records fall in this tax year, so every figure is zero.",
+        why: "No salary is saved and no tax records fall in this tax year, so every figure is zero and there is no estimate.",
         askUser:
           "What is your yearly salary before tax, and do you have other income such as rent or self-employment?",
+      });
+    } else if (estimateMissing.includes("annualSalary")) {
+      missing.push({
+        field: "annualSalary",
+        why: "No salary is saved, so the estimate is not worked out: the salary decides the tax band the other income falls in. The other figures count only the income in the tax records.",
+        askUser: "What is your yearly salary before tax?",
+      });
+    } else if (estimateMissing.includes("selfEmploymentRecords")) {
+      missing.push({
+        field: "selfEmploymentRecords",
+        why: "No self-employed income is recorded for this tax year, so the estimate is not worked out: the trading income decides the tax band the other income falls in.",
+        askUser:
+          "What was your self-employed income for this tax year, and your business expenses?",
+      });
+    } else if (estimateMissing.includes("untaxedIncomeRecords")) {
+      missing.push({
+        field: "untaxedIncomeRecords",
+        why: "No income outside PAYE is recorded for this tax year, so there is no Self Assessment estimate.",
+        askUser:
+          "Do you have income outside PAYE this tax year, such as rent, self-employment or savings interest?",
       });
     } else if (salary === 0 && !selfEmployed) {
       missing.push({
@@ -192,13 +239,16 @@ export const getTaxYearPosition = defineFlumpTool({
           rentalTaxBeforeCreditGbp: round2(ledger.rentalPropertyTaxDueBeforeCredit),
           rentalTaxAfterCreditGbp: round2(ledger.rentalPropertyTaxDueAfterCredit),
         },
-        estimate: {
-          incomeTaxGbp: round2(ledger.totalIncomeTaxDue),
-          nationalInsuranceGbp: round2(ledger.totalNIDue),
-          totalTaxGbp: round2(ledger.totalTaxDue),
-          payeTaxGbp: round2(ledger.payeTaxDue),
-          selfAssessmentGbp: round2(ledger.netAdditionalTaxToPay),
-        },
+        estimate:
+          inputs.status === "known"
+            ? {
+                incomeTaxGbp: round2(ledger.totalIncomeTaxDue),
+                nationalInsuranceGbp: round2(ledger.totalNIDue),
+                totalTaxGbp: round2(ledger.totalTaxDue),
+                payeTaxGbp: round2(ledger.payeTaxDue),
+                selfAssessmentGbp: round2(ledger.netAdditionalTaxToPay),
+              }
+            : null,
         notes: [
           "Total income here is salary plus self-employed profit, rental profit share before finance costs, taxable savings interest and dividends. Pension contributions and Gift Aid, which lower adjusted net income, are deducted only if recorded.",
           "The Child Benefit charge is worked out on the individual's own income only.",

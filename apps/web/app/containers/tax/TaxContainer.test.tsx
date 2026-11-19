@@ -823,3 +823,65 @@ describe("TaxContainer, employment type and region (SA-1, SA-3)", () => {
     expect(screen.queryByText(SCOTTISH_BANDS_NOTE)).toBeNull();
   });
 });
+
+describe("TaxContainer, an estimate that cannot be worked out (PR 785 review)", () => {
+  const year = getCurrentUKTaxYear();
+  const rent: TaxRecord = {
+    ...mockRecords[0],
+    id: "rent-now",
+    name: "Flat rent",
+    amount: 10000,
+    frequency: "annual",
+    date: `${year.slice(0, 4)}-05-01`,
+    endDate: null,
+  };
+
+  it("self-employed, salary kept, rent but no self-employed record: Not set, never £0", () => {
+    // Before: worked from £0 PAYE pay, 10,000 rent less the 1,000 property allowance sits under
+    // the 12,570 allowance, so the hero showed a known £0. The Dashboard says unknown.
+    mockLoaderRecords = [rent];
+    mockEmploymentType = "self-employed";
+    mockProfileSalary = 40000;
+    try {
+      const { container } = render(<TaxContainer />);
+      const summary = screen.getByRole("region", { name: "Summary" });
+      expect(within(summary).getByText("Not set")).toBeDefined();
+      expect(
+        within(summary).getByText(
+          "Add your self-employed income for this tax year to see an estimated tax bill.",
+        ),
+      ).toBeDefined();
+      expect(
+        within(summary).getByRole("button", { name: "Add self-employed income" }),
+      ).toBeDefined();
+      expect(within(screen.getByTestId("hero-figure")).queryByText("£0")).toBeNull();
+      expect(container.textContent).not.toMatch(/Unverified estimate/);
+    } finally {
+      mockLoaderRecords = mockRecords;
+      mockEmploymentType = "employed";
+      mockProfileSalary = 60000;
+    }
+  });
+
+  it("employee with no saved salary and rent: Not set with the add salary link", () => {
+    // Before: worked from a stand-in £0 salary. The salary decides the band the rent falls in.
+    mockLoaderRecords = [rent];
+    mockProfileSalary = null;
+    try {
+      render(<TaxContainer />);
+      const hero = screen.getByTestId("hero-figure");
+      expect(within(hero).getByText("Not set")).toBeDefined();
+      expect(
+        within(hero).getByText(
+          "Add your salary to see an estimated tax bill. It decides the tax band your other income falls in.",
+        ),
+      ).toBeDefined();
+      expect(within(hero).getByRole("link", { name: "Add salary" }).getAttribute("href")).toBe(
+        "/app/profile#settings-age-and-pay",
+      );
+    } finally {
+      mockLoaderRecords = mockRecords;
+      mockProfileSalary = 60000;
+    }
+  });
+});

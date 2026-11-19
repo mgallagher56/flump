@@ -280,8 +280,10 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
             </FormField>
           ) : null}
           {homeValueMode === "fromAccounts" ? (
+            // Only with two or more possible homes: the same words as the page's line (HM-3).
             <p className={homeValueNote()}>
-              Your home value comes from your properties on Accounts.
+              You have more than one property on Accounts, so we cannot tell which is your home.
+              Change each value on Accounts.
             </p>
           ) : null}
         </div>

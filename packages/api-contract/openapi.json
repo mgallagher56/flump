@@ -8297,6 +8297,17 @@
                               "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                               "type": "number"
                             },
+                            "notSet": {
+                              "items": {
+                                "enum": [
+                                  "annualGrossSalary",
+                                  "pensionContributionPct",
+                                  "employerPensionMatchPct"
+                                ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
                             "pensionContributionPct": {
                               "type": "number"
                             },

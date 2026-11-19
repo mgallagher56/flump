@@ -3,6 +3,7 @@ import {
   normalizeStoredBalance,
   STORED_NEGATIVE_ACCOUNT_TYPES,
 } from "@flump/banking/server";
+import { typeChangeFlipsSign } from "@flump/finance-engine";
 
 export { isStoredNegativeAccountType, STORED_NEGATIVE_ACCOUNT_TYPES };
 
@@ -25,32 +26,28 @@ interface HistoryRepository {
 }
 
 /**
+ * True when a type change turns a debt into an asset whose amounts go positive (CH-4). The rule
+ * lives in the engine (`typeChangeFlipsSign`) so the edit dialog can warn before it happens: a
+ * debt moving to an asset that cannot be overdrawn (Saving, Investment and so on) flips; a debt
+ * moving to Current keeps its sign, as an overdrawn current account.
+ */
+export function debtBecomesAsset(
+  previousType: string | null | undefined,
+  newType: string | null | undefined,
+): boolean {
+  return typeChangeFlipsSign(previousType, newType);
+}
+
+/**
  * When an account moves between a liability and an asset type, its whole monthly history follows
  * the sign rule too. Becoming a liability, positive months go negative. Becoming an asset from a
- * liability (`previousType` given), negative months go positive: the edit form re-posts today's
+ * liability (`previousType` given) that cannot be overdrawn, negative months go positive: the edit form re-posts today's
  * balance as the positive amount, so past months must match it (CH-4). Without `previousType`
  * (bank sync), a move to an asset leaves the values as they are. Run it before the account row
  * itself is saved with the new type, in the same transaction where there is one: the database
  * trigger on history is deferred to commit, so either direction passes. Returns the number of
  * history rows changed (a count, never a value).
  */
-/**
- * True when a type change turns a debt into an asset whose amounts should go positive (CH-4): a
- * credit card or loan changed to a saving is money held, not owed. An overdraft changed to a
- * current account is the exception: it stays an overdrawn current account, so it keeps its sign.
- */
-export function debtBecomesAsset(
-  previousType: string | null | undefined,
-  newType: string | null | undefined,
-): boolean {
-  return (
-    previousType != null &&
-    isStoredNegativeAccountType(previousType) &&
-    !isStoredNegativeAccountType(newType) &&
-    previousType !== "Overdraft"
-  );
-}
-
 export async function resignHistoryForType(
   details: HistoryRepository,
   accountId: string,

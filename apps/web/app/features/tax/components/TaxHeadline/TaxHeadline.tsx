@@ -25,6 +25,13 @@ export interface TaxHeadlineProps {
   emptyAction?: ReactNode;
   /** Opens the add dialog for an expense; offered on the after-expenses card when none are recorded. */
   onAddExpense?: () => void;
+  /**
+   * When the year has income outside PAYE but the estimate cannot be worked out (a fact it
+   * depends on is not set): one prompt naming what to add, and one action. The hero shows
+   * "Not set", never a figure from a stand-in £0.
+   */
+  unknownPrompt?: string;
+  unknownAction?: ReactNode;
 }
 
 /** The bill for tax year "2026/27" is due on 31 January after it ends: 31 Jan 2028. */
@@ -88,9 +95,13 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
   result,
   emptyAction,
   onAddExpense,
+  unknownPrompt,
+  unknownAction,
 }) => {
   const income = nonPayeIncome(records, taxYear);
   const hasIncome = income > 0 && result !== undefined;
+  // Income outside PAYE, but a fact the estimate depends on is not set.
+  const unknown = income > 0 && result === undefined && unknownPrompt !== undefined;
   const bill = Math.max(0, Math.round(result?.netAdditionalTaxToPay ?? 0));
   const costs = Math.round(nonPayeCosts(records, taxYear));
   const allowance = allowanceLine(result);
@@ -98,8 +109,12 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
   return (
     <section aria-label="Summary" className={root()}>
       <HeroFigure
-        emptyAction={emptyAction}
-        emptyPrompt="Add income outside PAYE, such as self-employment or rent, to see an estimated tax bill."
+        emptyAction={unknown ? unknownAction : emptyAction}
+        emptyPrompt={
+          unknown
+            ? unknownPrompt
+            : "Add income outside PAYE, such as self-employment or rent, to see an estimated tax bill."
+        }
         estimateLabel={DELTA_PANEL_COPY.unverifiedBadge}
         explain={`Income Tax and National Insurance on your income outside PAYE, after expenses, on top of your salary, at ${taxYear} rates.`}
         label="Estimated bill"

@@ -1,5 +1,11 @@
 import { DELTA_PANEL_COPY, Money, StatusBadge } from "@repo/ui";
 import type { FC } from "react";
+import { sourcePagePath } from "~/features/tax/source-pages";
+import {
+  addableEstimateFact,
+  ESTIMATE_MISSING_PROMPT,
+  SALARY_SETTINGS_PATH,
+} from "~/features/tax/tax-labels";
 import { WIDGET_ICONS } from "../../widgetIcons";
 import { WidgetCard } from "../WidgetCard";
 import { taxFigure } from "./TaxWidget.styles";
@@ -11,6 +17,10 @@ export interface TaxWidgetProps {
      * when there is no such income to estimate. Never an invented figure.
      */
     estimatedTaxDue: number | null;
+    /** The facts an unknown estimate is missing (the selector's `missing`). */
+    estimatedTaxDueMissing?: readonly string[];
+    /** The estimate's assumption notes, such as the bands a Scottish taxpayer's estimate uses. */
+    estimatedTaxDueNotes?: readonly string[];
     recordsCount: number;
   };
 }
@@ -29,6 +39,9 @@ export const taxCardShowsEstimate = (data: TaxWidgetProps["data"] | null | undef
  */
 export const TaxWidget: FC<TaxWidgetProps> = ({ data }) => {
   const known = taxCardShowsEstimate(data);
+  // An unknown estimate that needs a fact the person can add says which one (PR 785 review).
+  const missing = known ? null : addableEstimateFact(data.estimatedTaxDueMissing);
+  const notes = known ? (data.estimatedTaxDueNotes ?? []) : [];
   return (
     <WidgetCard
       domain="tax"
@@ -54,13 +67,21 @@ export const TaxWidget: FC<TaxWidgetProps> = ({ data }) => {
       label={TAX_DUE_LABEL}
       line={
         known
-          ? "Tax on income not taxed through PAYE."
-          : "Shown once you add income not taxed through PAYE."
+          ? ["Tax on income not taxed through PAYE.", ...notes].join(" ")
+          : missing
+            ? ESTIMATE_MISSING_PROMPT[missing].prompt
+            : "Shown once you add income not taxed through PAYE."
       }
       link={
-        data.recordsCount === 0
-          ? { to: "/app/self-assessment", label: "Add income" }
-          : { to: "/app/self-assessment", label: "Open tax records" }
+        missing
+          ? {
+              to:
+                missing === "annualSalary" ? SALARY_SETTINGS_PATH : sourcePagePath("self-employed"),
+              label: ESTIMATE_MISSING_PROMPT[missing].actionLabel,
+            }
+          : data.recordsCount === 0
+            ? { to: "/app/self-assessment", label: "Add income" }
+            : { to: "/app/self-assessment", label: "Open tax records" }
       }
       title="Self Assessment"
     />
