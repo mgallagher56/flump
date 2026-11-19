@@ -681,10 +681,12 @@ export function calculateUKTax(
     );
     const rentalPropertyTaxCredit = Math.max(0, maxCreditBase * 0.2);
 
-    // Allocate Income Tax components. The tax on rent is the tax with the rent minus the tax
-    // without it. Without the rent the allowance is tapered by the other income only, so the
-    // allowance the rent takes away (ITA 2007 s.35) counts against the rent, not the salary or
-    // self-employment. The parts still add up to the same total.
+    // Allocate Income Tax components. The tax on rent is the non-savings tax with the rent minus
+    // the non-savings tax without it. Without the rent the allowance is tapered by the other
+    // income only, so the allowance the rent takes away (ITA 2007 s.35) counts against the rent,
+    // not the salary or self-employment. Extra savings or dividend tax the rent causes (a higher
+    // band, a smaller savings allowance) stays under savings and dividends. The parts still add
+    // up to the same total.
     const allowanceWithoutRental = taperedAllowance(
       totalGrossIncome - rentalProfitBeforeInterestShare,
     );

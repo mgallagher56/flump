@@ -81,6 +81,12 @@ describe("Section24Calculator", () => {
     expect(toolText()).not.toContain("£160");
   });
 
+  it("says in the working how tax on rental income is measured", () => {
+    render(<Section24Calculator />);
+    fireEvent.click(screen.getByRole("button", { name: SECTION24_COPY.explainerTitle }));
+    expect(screen.getByText(SECTION24_COPY.explainerMethod)).toBeDefined();
+  });
+
   it("caps the interest credit at income above the Personal Allowance (ITTOIA 2005 s.274AA)", () => {
     // £60,000 rent, no costs, £50,000 interest, no other income. Taxable £47,430: £7,540 +
     // £9,730 x 40% = £11,432. Credit 20% x £47,430 = £9,486 (not £10,000), so £1,946 tax.
