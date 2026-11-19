@@ -437,7 +437,6 @@ flowchart LR
   f_budget_entry_link_account -.-> s_export
   f_other_outgoings(["Other monthly outgoings as typed in onboarding"])
   s_onboarding --> f_other_outgoings
-  f_savings_settings(["Monthly savings target and savings settings on the profile"])
   g_left_over{{"Left over each month and budget totals"}}
   f_budget_entries ==> g_left_over
   g_left_over -.-> s_dashboard

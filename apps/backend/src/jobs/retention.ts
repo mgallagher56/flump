@@ -134,6 +134,13 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     reason:
       "system audit slice 5 before-image, kept 90 days so its migration can be rolled back; after that its down() restores nothing",
   },
+  {
+    name: "profile_column_drop_backfill",
+    table: "profile_column_drop_backfill",
+    where: `"backfilled_at" < $1::timestamptz - interval '30 days'`,
+    reason:
+      "system audit slice 9 column-drop before-image, kept 30 days (the plan's rollback window); after that each drop's down() re-adds its column with the default only",
+  },
 ];
 
 /** Profiles with no authenticated request for this long are due for erasure (D4). */

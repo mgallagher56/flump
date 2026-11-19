@@ -255,21 +255,22 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("PATCH /user-profile");
   });
 
-  it("PATCH /user-profile: an old-shaped payload saves, stores nothing for retired fields, and GET carries none of them", async () => {
+  it("PATCH /user-profile: a field whose column was dropped in slice 9 is refused and nothing is saved", async () => {
     const before = await profiles().findOneByOrFail({ userId: USER_A });
     const res = await h.call("patch", "/user-profile", h.tokens.a, {
       monthlySavingsTarget: 300,
-      hasBuyToLet: true,
-      dashboardWidgetSizes: { accounts: "normal" },
       annualSalary: 41000,
     });
-    expect(res.status).toBe(200);
-    expect(res.body.annualSalary).toBe(41000);
+    // A clear validation error naming the field, never a 500.
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ code: "validation_failed" });
+    expect(res.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "body.monthlySavingsTarget", code: "unrecognized_keys" }),
+      ]),
+    );
     const after = await profiles().findOneByOrFail({ userId: USER_A });
-    expect(Number(after.annualSalary)).toBe(41000);
-    expect(after.monthlySavingsTarget).toEqual(before.monthlySavingsTarget);
-    expect(after.hasBuyToLet).toEqual(before.hasBuyToLet);
-    expect(after.dashboardWidgetSizes).toEqual(before.dashboardWidgetSizes);
+    expect(after.annualSalary).toEqual(before.annualSalary);
     const got = await h.call("get", "/user-profile", h.tokens.a);
     expect(got.status).toBe(200);
     for (const key of ["hasBuyToLet", "monthlySavingsTarget", "dashboardWidgetSizes"]) {

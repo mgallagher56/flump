@@ -17,7 +17,10 @@ import {
 import { ERROR_CODES } from "./errors.js";
 import { routes } from "./manifest.js";
 
-/** System audit slice 9 part two: profile fields nothing reads any more, ahead of the column drop. */
+/**
+ * System audit slice 9: profile fields retired in part two and accepted-and-ignored for one
+ * release. That release has happened and their columns are dropped, so the request refuses them.
+ */
 const RETIRED_PROFILE_FIELDS: Record<string, unknown> = {
   hasBuyToLet: true,
   buyToLetCount: 1,
@@ -34,18 +37,17 @@ const RETIRED_PROFILE_FIELDS: Record<string, unknown> = {
 };
 
 describe("UpdateProfileRequest", () => {
-  // Accepted and ignored on write for one release, so a tab still running the previous web
-  // bundle can save; the backend stores nothing for them (user-profile.service.spec.ts).
   it.each(Object.entries(RETIRED_PROFILE_FIELDS))(
-    "still accepts the retired field %s",
+    "refuses the retired field %s as an unknown key",
     (key, value) => {
-      expect(UpdateProfileRequest.safeParse({ [key]: value }).success).toBe(true);
+      const parsed = UpdateProfileRequest.safeParse({ [key]: value });
+      expect(parsed.success).toBe(false);
+      expect(parsed.error?.issues.map((issue) => issue.code)).toEqual(["unrecognized_keys"]);
     },
   );
 
-  it("accepts an old-shaped payload that mixes retired and current fields", () => {
+  it("still accepts the current fields on their own", () => {
     const parsed = UpdateProfileRequest.safeParse({
-      ...RETIRED_PROFILE_FIELDS,
       annualSalary: 41000,
       housingStatus: "renting",
     });

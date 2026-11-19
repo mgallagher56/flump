@@ -1,5 +1,6 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
 import { takeMigrationLock } from "../config/migration-lock";
+import { buyToLetProfileColumnsPresent } from "../integrity/profile-column-drop";
 
 /**
  * System audit slice 4, migration 2 of 4: fills in what the name test and the profile used to
@@ -37,8 +38,21 @@ export const KIND_MIGRATION_MARK = "kind";
 const BTL_NAME = `"name" ~* '\\mbuy[[:space:]-]*to[[:space:]-]*let\\M|\\mbtl\\M'`;
 /** The profile (alias u) says the person owns their home. */
 const OWNS_HOME = `COALESCE(u."housing_status", '') IN ('mortgage', 'own_outright')`;
-/** The profile (alias u) holds figures from the old buy-to-let tab. */
-const HAS_BTL_FIGURES = `(COALESCE(u."buy_to_let_property_value", 0) > 0 OR COALESCE(u."buy_to_let_mortgage_balance", 0) > 0)`;
+/**
+ * The profile (alias u) holds figures from the old buy-to-let tab. Slice 9 dropped those columns;
+ * where they are gone (a re-run, or a database built by synchronize) no profile holds any, so the
+ * buy-to-let tests below become false and the repayment type is never taken from them.
+ */
+const btlSql = (present: boolean) => ({
+  hasFigures: present
+    ? `(COALESCE(u."buy_to_let_property_value", 0) > 0 OR COALESCE(u."buy_to_let_mortgage_balance", 0) > 0)`
+    : "false",
+  type: present ? `u."buy_to_let_mortgage_type"` : "NULL::varchar",
+  typeUsable: present
+    ? `u."buy_to_let_mortgage_type" IN ('repayment', 'interest-only')
+                       AND (u."buy_to_let_mortgage_balance" IS NOT NULL OR u."buy_to_let_mortgage_rate" IS NOT NULL)`
+    : "false",
+});
 
 export class BackfillPropertyKindAndMortgageLink1795470100000 implements MigrationInterface {
   name = "BackfillPropertyKindAndMortgageLink1795470100000";
@@ -63,6 +77,8 @@ export class BackfillPropertyKindAndMortgageLink1795470100000 implements Migrati
     );
     await queryRunner.query("SET LOCAL lock_timeout = '10s'");
     await queryRunner.query(`LOCK TABLE "accounts" IN SHARE ROW EXCLUSIVE MODE`);
+    const btl = btlSql(await buyToLetProfileColumnsPresent(queryRunner));
+    const HAS_BTL_FIGURES = btl.hasFigures;
 
     // The targets are worked out before anything changes, then each change is recorded with the
     // value it replaces and applied in the same statement.
@@ -129,13 +145,12 @@ export class BackfillPropertyKindAndMortgageLink1795470100000 implements Migrati
     // 4. Repayment type from the profile.
     await record(
       `SELECT m."id",
-              CASE WHEN m."account_subtype" = 'btl_mortgage' THEN u."buy_to_let_mortgage_type"
+              CASE WHEN m."account_subtype" = 'btl_mortgage' THEN ${btl.type}
                    ELSE u."mortgage_type" END AS "repayment"
        FROM "accounts" m JOIN "user_profiles" u ON u."user_id" = m."user_id"
        WHERE m."type" = 'Mortgage' AND m."repayment_type" IS NULL
          AND CASE WHEN m."account_subtype" = 'btl_mortgage'
-                  THEN u."buy_to_let_mortgage_type" IN ('repayment', 'interest-only')
-                       AND (u."buy_to_let_mortgage_balance" IS NOT NULL OR u."buy_to_let_mortgage_rate" IS NOT NULL)
+                  THEN ${btl.typeUsable}
                   ELSE u."mortgage_type" IN ('repayment', 'interest-only')
                        AND (SELECT count(*) FROM "accounts" r WHERE r."user_id" = m."user_id"
                              AND r."type" = 'Mortgage'

@@ -170,6 +170,7 @@ describe("UserProfileService (Deep Module)", () => {
     expect(deletes.map(([sql, params]) => [sql, params])).toEqual([
       ['DELETE FROM "pension_rates_backfill" WHERE "profile_id" = $1', ["profile-9"]],
       ['DELETE FROM "student_loan_plan_backfill" WHERE "profile_id" = $1', ["profile-9"]],
+      ['DELETE FROM "profile_column_drop_backfill" WHERE "profile_id" = $1', ["profile-9"]],
       ['DELETE FROM "paye_salary_record_backfill" WHERE "profile_id" = $1', ["profile-9"]],
     ]);
   });
@@ -186,7 +187,6 @@ describe("UserProfileService (Deep Module)", () => {
       housingStatus: "renting",
       monthlyHousingCost: 900,
       monthlyOtherOutgoings: 300,
-      savingsDefaultInterestRate: 4.2,
     });
     await service.resetFinancialData("user-123");
     const saved = at(mockUserProfileRepo.save.mock.calls, -1)[0];
@@ -200,7 +200,6 @@ describe("UserProfileService (Deep Module)", () => {
       housingStatus: null,
       monthlyHousingCost: null,
       monthlyOtherOutgoings: null,
-      savingsDefaultInterestRate: 5,
       hasResetFinancialData: true,
     });
   });
@@ -252,53 +251,6 @@ describe("UserProfileService (Deep Module)", () => {
       expect.objectContaining({ snapshotCheckins: 1 }),
     );
     log.mockRestore();
-  });
-
-  describe("retired profile fields (system audit slice 9 part two)", () => {
-    // The columns stay until the drop PR; nothing reads or writes them through the API.
-    const RETIRED = {
-      hasBuyToLet: true,
-      buyToLetCount: 2,
-      buyToLetPropertyValue: "165000.00",
-      buyToLetMonthlyRental: "875.00",
-      buyToLetMortgageBalance: "92000.00",
-      buyToLetMortgageRate: "5.10",
-      buyToLetMortgageType: "repayment",
-      monthlySavingsTarget: "300.00",
-      savingsAllocationMode: "total",
-      savingsDefaultInterestRate: "4.25",
-      dashboardWidgetSizes: { accounts: "normal" },
-      dashboardWidgetConfig: { accounts: { compact: true } },
-    };
-
-    it("never returns them, even when the stored row holds them", async () => {
-      mockUserProfileRepo.findOne.mockResolvedValue({ id: "p1", userId: "user-123", ...RETIRED });
-      const result = await service.getProfile("user-123");
-      expect(Object.keys(RETIRED).filter((key) => key in result)).toEqual([]);
-    });
-
-    it("saves the other fields of an old-shaped request and leaves the retired columns untouched", async () => {
-      const row = { id: "p1", userId: "user-123", ...RETIRED };
-      mockUserProfileRepo.findOne.mockResolvedValue(row);
-      const changed = {
-        hasBuyToLet: false,
-        buyToLetCount: 0,
-        buyToLetPropertyValue: 1,
-        buyToLetMonthlyRental: 1,
-        buyToLetMortgageBalance: 1,
-        buyToLetMortgageRate: 1,
-        buyToLetMortgageType: "interest-only",
-        monthlySavingsTarget: 1,
-        savingsAllocationMode: "per_account",
-        savingsDefaultInterestRate: 1,
-        dashboardWidgetSizes: {},
-        dashboardWidgetConfig: {},
-      };
-      await service.updateProfile("user-123", { ...changed, annualSalary: 41000 } as never);
-      const saved = at(mockUserProfileRepo.save.mock.calls, -1)[0];
-      expect(saved).toMatchObject(RETIRED);
-      expect(saved).toMatchObject({ annualSalary: 41000 });
-    });
   });
 
   it("filters the retired forecast module key on read without touching the stored row", async () => {

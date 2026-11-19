@@ -79,25 +79,8 @@ export function moneyOrNull(value: unknown, field: string): number | null {
 
 /** The profile row as it goes on the wire (E21 contract): every key present, decimals as numbers. */
 export function formatProfileRow(profile: UserProfile) {
-  // last_active_at is retention bookkeeping (BE-06), not part of the profile contract. The
-  // retired columns (system audit slice 9 part two) stay on the row until the drop PR, but
-  // nothing reads them, so they never go on the wire.
-  const {
-    lastActiveAt: _lastActiveAt,
-    hasBuyToLet: _hasBuyToLet,
-    buyToLetCount: _buyToLetCount,
-    buyToLetPropertyValue: _buyToLetPropertyValue,
-    buyToLetMonthlyRental: _buyToLetMonthlyRental,
-    buyToLetMortgageBalance: _buyToLetMortgageBalance,
-    buyToLetMortgageRate: _buyToLetMortgageRate,
-    buyToLetMortgageType: _buyToLetMortgageType,
-    monthlySavingsTarget: _monthlySavingsTarget,
-    savingsAllocationMode: _savingsAllocationMode,
-    savingsDefaultInterestRate: _savingsDefaultInterestRate,
-    dashboardWidgetSizes: _dashboardWidgetSizes,
-    dashboardWidgetConfig: _dashboardWidgetConfig,
-    ...rest
-  } = profile;
+  // last_active_at is retention bookkeeping (BE-06), not part of the profile contract.
+  const { lastActiveAt: _lastActiveAt, ...rest } = profile;
   return {
     ...rest,
     // Nullable columns with no DB default are absent from a just-inserted entity; pin them to
@@ -222,22 +205,12 @@ export function clearFinancialProfileFields(profile: UserProfile): void {
   profile.hasMortgage = false;
   profile.mortgageType = "repayment";
   profile.propertyOwnershipShare = 100.0;
-  profile.hasBuyToLet = false;
-  profile.buyToLetCount = 1;
-  profile.buyToLetPropertyValue = null;
-  profile.buyToLetMonthlyRental = null;
-  profile.buyToLetMortgageBalance = null;
-  profile.buyToLetMortgageRate = null;
-  profile.buyToLetMortgageType = "interest-only";
   // Not answered, not 0% (finding AI-12, owner decision 3).
   profile.pensionPercent = null;
   profile.pensionEmployerPercent = null;
   profile.isSalarySacrifice = null;
   profile.isSalarySacrificeEmployerNi = false;
   profile.customBudgetCategories = [];
-  profile.monthlySavingsTarget = null;
-  profile.savingsAllocationMode = "per_account";
-  profile.savingsDefaultInterestRate = 5.0;
   profile.taxRegion = null;
   profile.birthYear = null;
   profile.studentLoanPlans = null;

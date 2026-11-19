@@ -13793,60 +13793,6 @@
                       }
                     ]
                   },
-                  "buyToLetCount": {
-                    "maximum": 1000,
-                    "minimum": 0,
-                    "type": "integer"
-                  },
-                  "buyToLetMonthlyRental": {
-                    "anyOf": [
-                      {
-                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "buyToLetMortgageBalance": {
-                    "anyOf": [
-                      {
-                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "buyToLetMortgageRate": {
-                    "anyOf": [
-                      {
-                        "maximum": 100,
-                        "minimum": 0,
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "buyToLetMortgageType": {
-                    "enum": ["repayment", "interest-only"],
-                    "type": "string"
-                  },
-                  "buyToLetPropertyValue": {
-                    "anyOf": [
-                      {
-                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
                   "checkInDay": {
                     "anyOf": [
                       {
@@ -13878,13 +13824,6 @@
                     "maxItems": 50,
                     "type": "array"
                   },
-                  "dashboardWidgetConfig": {
-                    "additionalProperties": {},
-                    "propertyNames": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
                   "dashboardWidgetOrder": {
                     "items": {
                       "maxLength": 64,
@@ -13893,16 +13832,6 @@
                     },
                     "maxItems": 20,
                     "type": "array"
-                  },
-                  "dashboardWidgetSizes": {
-                    "additionalProperties": {
-                      "enum": ["normal", "wide"],
-                      "type": "string"
-                    },
-                    "propertyNames": {
-                      "type": "string"
-                    },
-                    "type": "object"
                   },
                   "dashboardWidgets": {
                     "items": {
@@ -13955,9 +13884,6 @@
                       }
                     ]
                   },
-                  "hasBuyToLet": {
-                    "type": "boolean"
-                  },
                   "hasMortgage": {
                     "type": "boolean"
                   },
@@ -14007,17 +13933,6 @@
                     ]
                   },
                   "monthlyOtherOutgoings": {
-                    "anyOf": [
-                      {
-                        "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "monthlySavingsTarget": {
                     "anyOf": [
                       {
                         "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
@@ -14091,15 +14006,6 @@
                         "type": "null"
                       }
                     ]
-                  },
-                  "savingsAllocationMode": {
-                    "enum": ["total", "per_account"],
-                    "type": "string"
-                  },
-                  "savingsDefaultInterestRate": {
-                    "maximum": 100,
-                    "minimum": 0,
-                    "type": "number"
                   },
                   "secondIncomeMonthly": {
                     "anyOf": [

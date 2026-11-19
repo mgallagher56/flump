@@ -78,7 +78,7 @@ describe("web payloads in enforce mode", () => {
     delete process.env.CONTRACT_ENFORCE_GROUPS;
   });
 
-  it("still accepts PATCH /user-profile with a retired profile field for one release (system audit slice 9 part two)", () => {
+  it("refuses PATCH /user-profile with a profile field whose column slice 9 dropped", () => {
     const retired: Record<string, unknown> = {
       hasBuyToLet: true,
       buyToLetCount: 1,
@@ -93,13 +93,11 @@ describe("web payloads in enforce mode", () => {
       dashboardWidgetSizes: { accounts: "wide" },
       dashboardWidgetConfig: {},
     };
-    // A tab still running the previous web bundle sends these; the save must not fail.
+    // Accepted and ignored for one release (part two); that release has happened.
     for (const [key, value] of Object.entries(retired)) {
-      expect(() => passes("PATCH", "/user-profile", { [key]: value })).not.toThrow();
+      expect(() => passes("PATCH", "/user-profile", { [key]: value }), key).toThrow();
     }
-    expect(() =>
-      passes("PATCH", "/user-profile", { ...retired, annualSalary: 41000 }),
-    ).not.toThrow();
+    expect(() => passes("PATCH", "/user-profile", { annualSalary: 41000 })).not.toThrow();
   });
 
   it("rejects a malformed id on an enforced route", () => {
