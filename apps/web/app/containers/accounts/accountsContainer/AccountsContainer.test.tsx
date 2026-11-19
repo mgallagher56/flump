@@ -107,20 +107,22 @@ describe("<AccountsContainer />", () => {
 
   test("?add=property opens a home prefilled with the unlinked mortgage's share (JO-6)", () => {
     mocks.searchParams.value = "add=property";
-    mocks.mockUseLoaderData.mockReturnValue({
-      accounts: [
-        { id: "a1", name: "Monzo", type: "Current", balance: 5000 },
-        {
-          id: "m1",
-          name: "Nationwide",
-          type: "Mortgage",
-          balance: -180000,
-          ownership: "joint",
-          sharePercent: 40,
-        },
-      ],
-      accountDetails: [],
-    });
+    mocks.mockUseLoaderData.mockReturnValue(
+      loaderData({
+        accounts: [
+          { id: "a1", name: "Monzo", type: "Current", balance: 5000 },
+          {
+            id: "m1",
+            name: "Nationwide",
+            type: "Mortgage",
+            balance: -180000,
+            ownership: "joint",
+            sharePercent: 40,
+          },
+        ],
+        accountDetails: [],
+      }),
+    );
     try {
       const { getByRole, getByLabelText } = customRender(<AccountsContainer />);
       expect(getByRole("dialog")).toBeDefined();

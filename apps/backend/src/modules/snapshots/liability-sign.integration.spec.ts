@@ -277,7 +277,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
 
         expect(await imageRows()).toBe(before);
         expect(await balanceOf(ids.card)).toBe(-500);
-        expect(await historyOf(ids.studentLoan)).toEqual([-41000, -41500]);
+        // The later slice 4 migration 4 records today's balance (-42,000) in the month the loan
+        // was created, after its newest record, so the balance sync keeps it.
+        expect(await historyOf(ids.studentLoan)).toEqual([-41000, -41500, -42000]);
       });
 
       it("is safe on an empty database", async () => {

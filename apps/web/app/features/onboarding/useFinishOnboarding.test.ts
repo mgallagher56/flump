@@ -160,7 +160,13 @@ describe("useFinishOnboarding", () => {
     await act(() => result.current.finish());
     expect(apiFetch).toHaveBeenCalledWith("/accounts", {
       method: "POST",
-      body: { name: "Home (your estimate)", type: "Property", balance: 310000, isCurrent: true },
+      body: {
+        name: "Home (your estimate)",
+        type: "Property",
+        accountSubtype: "home",
+        balance: 310000,
+        isCurrent: true,
+      },
       schema: CreateAccountResponse,
     });
   });
