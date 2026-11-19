@@ -292,3 +292,79 @@ describe.each(YEARS)("finance costs carried forward, %s", (year) => {
     expect(r.financeCostsCarriedForward).toBe(3140);
   });
 });
+
+/**
+ * The amount brought forward as a tax record (owner-approved storage: one rental category,
+ * `finance_costs_brought_forward`, in tax_records). It is the person's own figure from last
+ * year's return, so the ownership share is not applied; it counts only in the tax year the
+ * record is filed in; it is not a cost; and the property allowance route ignores it.
+ */
+describe.each(YEARS)("finance costs brought forward as a record, %s", (year) => {
+  const bfRecord = (amount: number, inYear = year) =>
+    rental(inYear, "finance_costs_brought_forward", amount);
+  const base = (rent: number, interest: number, costs: number) => [
+    rental(year, "rental_income", rent),
+    rental(year, "mortgage_interest", interest),
+    rental(year, "repairs_maintenance", costs),
+  ];
+
+  it("carried in and fully used: 2,000 joins 6,000 of interest", () => {
+    // Salary 30,000; rent 15,000; interest 6,000; costs 2,000. Relievable 8,000 is below the
+    // profit 13,000 and ATI 30,430: credit 1,600, tax on rent 2,600 - 1,600 = 1,000, none left.
+    const r = calculateUKTax(year, [...base(15000, 6000, 2000), bfRecord(2000)], 30000, 100);
+    expect(r.rentalExpensesExclInterest).toBe(2000);
+    expect(r.financeCostsBroughtForward).toBe(2000);
+    expect(r.rentalPropertyTaxCredit).toBe(1600);
+    expect(r.rentalPropertyTaxDueAfterCredit).toBe(1000);
+    expect(r.financeCostsCarriedForward).toBe(0);
+  });
+
+  it("carried in and partly used: profit is the limit", () => {
+    // Salary 50,000; rent 10,000; interest 6,000; costs 2,000; 4,000 brought forward.
+    // Relievable 10,000; profit 8,000: credit 1,600; 2,000 carries forward.
+    const r = calculateUKTax(year, [...base(10000, 6000, 2000), bfRecord(4000)], 50000, 100);
+    expect(r.rentalPropertyTaxCredit).toBe(1600);
+    expect(r.financeCostsCarriedForward).toBe(2000);
+  });
+
+  it("carried in and carried forward again: income above the allowance is the limit", () => {
+    // No salary; rent 18,000; interest 5,000; costs 2,000; 1,570 brought forward.
+    // Relievable 6,570; ATI 3,430: credit 686; 3,140 carries forward.
+    const r = calculateUKTax(year, [...base(18000, 5000, 2000), bfRecord(1570)], 0, 100);
+    expect(r.rentalPropertyTaxCredit).toBe(686);
+    expect(r.financeCostsCarriedForward).toBe(3140);
+  });
+
+  it("property allowance route wins and ignores it: the amount carries on unused", () => {
+    // Salary 30,000; rent 900; costs 100; no interest; 500 brought forward.
+    // Costs route: profit 800 x 20% = 160, credit 20% x 500 = 100, tax 60.
+    // Allowance route: rent within the 1,000 allowance, tax 0 (s.783B(3)), no credit. The
+    // allowance route wins, the 500 is not used, and it carries forward unchanged.
+    const r = calculateUKTax(year, [...base(900, 0, 100), bfRecord(500)], 30000, 100);
+    expect(r.propertyAllowanceUsed).toBe(900);
+    expect(r.rentalPropertyTaxCredit).toBe(0);
+    expect(r.rentalPropertyTaxDueAfterCredit).toBe(0);
+    expect(r.financeCostsCarriedForward).toBe(500);
+  });
+
+  it("is not shared by ownership: a 50% owner uses all of their own 1,000", () => {
+    // 50% of rent 30,000, costs 4,000, interest 6,000 = 15,000, 2,000, 3,000; salary 60,000.
+    // Relievable 3,000 + 1,000 = 4,000; profit 13,000. Credit 800; tax 5,200 - 800 = 4,400.
+    const r = calculateUKTax(year, [...base(30000, 6000, 4000), bfRecord(1000)], 60000, 50);
+    expect(r.rentalPropertyTaxCredit).toBe(800);
+    expect(r.rentalPropertyTaxDueAfterCredit).toBe(4400);
+  });
+
+  it("counts only in the tax year the record is filed in", () => {
+    // A record filed in the previous year does not join this year's finance costs.
+    const previous = `${Number(year.slice(0, 4)) - 1}/${year.slice(2, 4)}`;
+    const r = calculateUKTax(
+      year,
+      [...base(15000, 6000, 2000), bfRecord(2000, previous)],
+      30000,
+      100,
+    );
+    expect(r.financeCostsBroughtForward).toBe(0);
+    expect(r.rentalPropertyTaxCredit).toBe(1200);
+  });
+});

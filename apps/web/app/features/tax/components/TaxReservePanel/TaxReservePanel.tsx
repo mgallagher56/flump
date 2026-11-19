@@ -34,6 +34,10 @@ const TAPER_START = LATEST_RULES.ewni.personalAllowanceTaperStart;
 const TAPER_END = LATEST_RULES.taperEnd;
 const TAPER_NOTE_FROM = 90_000;
 
+/** The property allowance route cannot use finance costs, including any brought forward. */
+const ALLOWANCE_IGNORES_BROUGHT_FORWARD =
+  "This estimate uses the £1,000 property allowance, so finance costs brought forward are not used this year.";
+
 export interface TaxReservePanelProps {
   taxYear: string;
   /**
@@ -202,6 +206,9 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
                   value={gbp(result.netAdditionalTaxToPay)}
                 />
               </dl>
+              {result.propertyAllowanceUsed > 0 && result.financeCostsBroughtForward > 0 ? (
+                <p className={taperLine()}>{ALLOWANCE_IGNORES_BROUGHT_FORWARD}</p>
+              ) : null}
               {result.financeCostsCarriedForward > 0 ? (
                 <p className={taperLine()}>
                   {section24CarriedForward(pounds.format(result.financeCostsCarriedForward))}

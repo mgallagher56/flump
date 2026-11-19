@@ -33,6 +33,31 @@ const setup = (initial = draft, mode: "add" | "edit" = "add") => {
   return { onSave, onOpenChange, dialog: screen.getByRole("dialog") };
 };
 
+describe("TaxRecordDialog finance costs brought forward", () => {
+  it("offers the category for rental expenses and says what to enter and where it comes from", () => {
+    const { dialog } = setup(
+      { ...draft, type: "expense", category: "finance_costs_brought_forward" },
+      "edit",
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Category and notes" }));
+    const category = within(dialog).getByLabelText("Category") as HTMLSelectElement;
+    expect(category.value).toBe("finance_costs_brought_forward");
+    expect(
+      within(dialog).getByText(
+        "Enter the unused residential finance costs from last year's tax return or calculation.",
+      ),
+    ).toBeDefined();
+  });
+
+  it("shows no such sentence for other categories", () => {
+    const { dialog } = setup(
+      { ...draft, type: "expense", category: "repairs_maintenance" },
+      "edit",
+    );
+    expect(within(dialog).queryByText(/unused residential finance costs/)).toBeNull();
+  });
+});
+
 describe("TaxRecordDialog", () => {
   it("is a titled dialog with labelled fields", () => {
     const { dialog } = setup();

@@ -100,6 +100,21 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
   });
 
   /** One row in every table that carries a user id, labelled so a leak is easy to spot. */
+  /** The owner-approved finance costs brought forward record: an ordinary tax_records row. */
+  const saveBroughtForward = (userId: string) =>
+    ds.getRepository(TaxRecord).save(
+      ds.getRepository(TaxRecord).create({
+        userId,
+        type: "expense",
+        source: "rental",
+        category: "finance_costs_brought_forward",
+        name: "Finance costs brought forward",
+        amount: 1570,
+        frequency: "annual",
+        date: "2026-06-06",
+      }),
+    );
+
   const seed = async (userId: string, label: string) => {
     const m = ds.manager;
     const connection = await m.save(
@@ -297,6 +312,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
   it("deletion leaves no row with the user's id in any table, and the other user's untouched", async () => {
     await seed(USER_A, "A");
     await seed(USER_B, "B");
+    await saveBroughtForward(USER_A);
     const before = await countsFor(USER_B);
     expect(Object.values(await countsFor(USER_A)).every((n) => n > 0)).toBe(true);
 
@@ -606,6 +622,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     return chunks.join("");
   };
 
+  it("exports a finance costs brought forward record like any tax record", async () => {
+    await saveBroughtForward(USER_A);
+    const doc = AccountExportDocument.parse(JSON.parse(await exportFor(USER_A)));
+    expect(doc.taxRecords).toHaveLength(1);
+    expect(at(doc.taxRecords, 0)).toMatchObject({
+      category: "finance_costs_brought_forward",
+      source: "rental",
+    });
+  });
+
   it("exports every table for the caller only, matching the schema, with no secrets", async () => {
     await seed(USER_A, "A");
     await seed(USER_B, "B");
@@ -753,6 +779,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
   it("reset clears every financial table and revokes MCP tokens, keeps the audit log and B's data", async () => {
     await seed(USER_A, "A");
     await seed(USER_B, "B");
+    await saveBroughtForward(USER_A);
     const beforeB = await countsFor(USER_B);
     const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
     const service = new UserProfileService(

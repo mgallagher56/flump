@@ -133,3 +133,29 @@ describe("TaxHeadline", () => {
     expect(screen.getByText("Income Tax and National Insurance on this income")).toBeDefined();
   });
 });
+
+describe("nonPayeCosts and finance costs brought forward", () => {
+  it("leaves out an amount brought forward from earlier years: it is not a cost of this year", () => {
+    const base = {
+      id: "r",
+      userId: "u",
+      source: "rental" as const,
+      type: "expense" as const,
+      name: "x",
+      frequency: "annual" as const,
+      date: "2026-06-06",
+      endDate: null,
+      notes: null,
+      receiptFilename: null,
+      receiptMimeType: null,
+      createdAt: "2026-06-06T00:00:00.000Z",
+      updatedAt: "2026-06-06T00:00:00.000Z",
+    };
+    const records = [
+      { ...base, id: "a", category: "repairs_maintenance", amount: 500 },
+      { ...base, id: "b", category: "finance_costs_brought_forward", amount: 1570 },
+    ];
+    // Only the 500 of repairs is a cost recorded for 2026/27.
+    expect(nonPayeCosts(records, "2026/27")).toBe(500);
+  });
+});

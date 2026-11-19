@@ -70,6 +70,12 @@ export interface UserProfile {
   setupChecklistCompletedSteps: string[];
 }
 
+/**
+ * Residential finance costs not relieved in earlier years, entered once in the year they are used
+ * (ITTOIA 2005 s.274AA(4)). The person's own figure, so the ownership share is not applied.
+ */
+export const FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY = "finance_costs_brought_forward";
+
 export const RENTAL_CATEGORIES = [
   { id: "rental_income", name: "Rental income", type: "income" as const },
   {
@@ -88,6 +94,11 @@ export const RENTAL_CATEGORIES = [
   {
     id: "mortgage_interest",
     name: "Mortgage interest and other residential finance costs",
+    type: "expense" as const,
+  },
+  {
+    id: FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY,
+    name: "Finance costs brought forward from earlier years",
     type: "expense" as const,
   },
 ];
@@ -500,6 +511,7 @@ export function calculateUKTax(
   }
 
   // Sum Rental
+  let financeCostsBroughtForwardRecords = 0;
   for (const catId in rentalRecordValues) {
     const arr = rentalRecordValues[catId];
     const sum = arr ? arr.reduce((a, b) => a + b, 0) : 0;
@@ -507,6 +519,9 @@ export function calculateUKTax(
       rentalIncomeGross += sum;
     } else if (catId === "mortgage_interest") {
       rentalMortgageInterest += sum;
+    } else if (catId === FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY) {
+      // Not a cost of this year: it joins the finance costs below (ITTOIA 2005 s.274A(3)(c)).
+      financeCostsBroughtForwardRecords += sum;
     } else {
       rentalExpensesExclInterest += sum;
     }
@@ -605,7 +620,8 @@ export function calculateUKTax(
   // the lower total. With no rental income both routes are the same.
   // Finance costs not relieved in earlier years join this year's (ITTOIA 2005 s.274A(3)(c)). The
   // amount is already the person's own, so the ownership share is not applied to it.
-  const financeCostsBroughtForward = Math.max(0, options.financeCostsBroughtForward ?? 0);
+  const financeCostsBroughtForward =
+    Math.max(0, options.financeCostsBroughtForward ?? 0) + financeCostsBroughtForwardRecords;
   const withCosts = assess({
     rentalProfitBeforeInterestShare: rentalProfitBeforeInterest * shareFactor,
     creditableFinanceCosts: rentalMortgageInterestShare + financeCostsBroughtForward,

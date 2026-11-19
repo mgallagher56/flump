@@ -83,6 +83,7 @@ export const CATEGORY_SHORT_LABEL: Readonly<Record<string, string>> = {
   replace_domestic_items: "Replacing household items",
   services_costs: "Services provided",
   mortgage_interest: "Mortgage interest",
+  finance_costs_brought_forward: "Interest brought forward",
   self_employed_income: "Business income",
   office_costs: "Office, phone and internet",
   travel_costs: "Vehicle and travel",
@@ -104,6 +105,12 @@ export const CATEGORY_SHORT_LABEL: Readonly<Record<string, string>> = {
 };
 
 /** The dialog's name for a category, falling back to the engine's name for an unknown id. */
+/** One plain sentence under the category, where a category needs one. */
+export const CATEGORY_HINT: Readonly<Record<string, string>> = {
+  finance_costs_brought_forward:
+    "Enter the unused residential finance costs from last year's tax return or calculation.",
+};
+
 export const categoryShortLabel = (category: { id: string; name: string }): string =>
   CATEGORY_SHORT_LABEL[category.id] ?? category.name;
 

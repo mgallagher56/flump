@@ -114,7 +114,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/containers/tax/TaxContainer.tsx`
 - Writes: [Salary (yearly pay before tax)](by-fact.md#salary), [Rent received on a rental property](by-fact.md#buy-to-let-rent), [Self Assessment income and expense records](by-fact.md#tax-records), [Share of a rental property, as used for tax](by-fact.md#rental-share-for-tax), [Enabled pages and dashboard widgets](by-fact.md#enabled-pages-and-widgets)
 - Reads: [Salary (yearly pay before tax)](by-fact.md#salary), [Buy-to-let mortgage balance, rate and type](by-fact.md#buy-to-let-mortgage), [Rent received on a rental property](by-fact.md#buy-to-let-rent), [Self Assessment income and expense records](by-fact.md#tax-records), [Share of a rental property, as used for tax](by-fact.md#rental-share-for-tax)
-- Shows figures: [Estimated Self Assessment tax](by-fact.md#estimated-tax)
+- Shows figures: [Estimated Self Assessment tax](by-fact.md#estimated-tax), [Mortgage interest carried forward to next year](by-fact.md#finance-costs-carried-forward)
 
 ## Settings
 
@@ -162,7 +162,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `packages/mcp/src/tools/read/index.ts`
 - Writes: none
 - Reads: [Salary (yearly pay before tax)](by-fact.md#salary), [Year of birth](by-fact.md#birth-year), [Tax region](by-fact.md#tax-region), [Account balance today](by-fact.md#account-balance), [Balance for each past month](by-fact.md#balance-history), [Joint ownership and the user's share of an account](by-fact.md#ownership-share), [Interest rate on an account](by-fact.md#account-rate), [Mortgage term left and fix end date](by-fact.md#mortgage-term-and-fix-end), [Account type and kind](by-fact.md#account-type), [Budget lines](by-fact.md#budget-entries), [Which saved fact a budget line is linked to](by-fact.md#budget-entry-link-kind), [Which account a savings or debt budget line reads](by-fact.md#budget-entry-link-account), [Self Assessment income and expense records](by-fact.md#tax-records), [Share of a rental property, as used for tax](by-fact.md#rental-share-for-tax), [Retirement plan (ages, target, State Pension inputs, growth cases, excluded accounts)](by-fact.md#retirement-plan), [Net worth choices (count the home, count the student loan)](by-fact.md#net-worth-choices), [Account name](by-fact.md#account-name)
-- Shows figures: [Net worth today](by-fact.md#net-worth), [Net worth over time](by-fact.md#net-worth-over-time), [Total debts](by-fact.md#total-debts), [Debt-free date and interest](by-fact.md#debt-free-date), [Left over each month and budget totals](by-fact.md#left-over), [Breathing room (months of cover)](by-fact.md#months-of-cover), [Estimated Self Assessment tax](by-fact.md#estimated-tax), [Estimated income in retirement](by-fact.md#retirement-income)
+- Shows figures: [Net worth today](by-fact.md#net-worth), [Net worth over time](by-fact.md#net-worth-over-time), [Total debts](by-fact.md#total-debts), [Debt-free date and interest](by-fact.md#debt-free-date), [Left over each month and budget totals](by-fact.md#left-over), [Breathing room (months of cover)](by-fact.md#months-of-cover), [Estimated Self Assessment tax](by-fact.md#estimated-tax), [Mortgage interest carried forward to next year](by-fact.md#finance-costs-carried-forward), [Estimated income in retirement](by-fact.md#retirement-income)
 
 ## AI simulate tools
 
@@ -186,7 +186,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/routes/tools.$slug.tsx`
 - Writes: none
 - Reads: none
-- Shows figures: [Estimated Self Assessment tax](by-fact.md#estimated-tax)
+- Shows figures: [Estimated Self Assessment tax](by-fact.md#estimated-tax), [Mortgage interest carried forward to next year](by-fact.md#finance-costs-carried-forward)
 
 ## Data export and erasure
 

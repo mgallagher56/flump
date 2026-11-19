@@ -2497,6 +2497,31 @@ figures:
     findings: [SA-3, SA-9]
     note: One calculator. The callers pass the salary through payeSalaryForTax. The calculation still uses England, Wales and Northern Ireland bands for a Scottish region, and the page says so.
 
+  - id: finance-costs-carried-forward
+    name: Mortgage interest carried forward to next year
+    area: tax
+    computed_by: { function: calculateUKTax, path: packages/finance-engine/src/tax-calculator.ts }
+    other_paths:
+      - {
+          function: calculateSection24Tax,
+          status: wrapper,
+          path: packages/finance-engine/src/section24.ts,
+          note: "the public calculator; the amount brought forward is an optional input",
+        }
+    inputs: [tax-records, rental-share-for-tax]
+    shown_on:
+      - {
+          surface: self-assessment,
+          path: apps/web/app/features/tax/components/TaxReservePanel/TaxReservePanel.tsx,
+        }
+      - { surface: mcp-read, path: packages/mcp/src/tools/read/getTaxYearPosition.ts }
+      - {
+          surface: public-tools,
+          path: packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx,
+        }
+    verdict: holds
+    note: Finance costs not relieved this year (ITTOIA 2005 s.274AA(4)). An amount brought forward is a tax record in the rental category finance_costs_brought_forward, counted only in the tax year it is filed in and not shared by ownership.
+
   - id: pension-going-in
     name: Paid into pensions each month
     area: pay
