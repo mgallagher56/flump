@@ -50,3 +50,23 @@ describe("psa-band module", () => {
     expect("otherAnnualIncomeFromProfile" in psaBand).toBe(false);
   });
 });
+
+describe("selectPsaBand: facts it needs and the year it uses", () => {
+  it("claims no band when the pension rate is not set", () => {
+    expect(selectPsaBand({ ...FACTS, pensionPercent: null }, opts)).toBeNull();
+  });
+
+  it("claims no band for a tax year it has no rates for", () => {
+    expect(selectPsaBand(FACTS, { taxYear: "1999/00" as never })).toBeNull();
+  });
+
+  it("uses England, Wales and NI bands of the year asked for: 2020/21 higher rate above 50,000", () => {
+    // GOV.UK Income Tax rates and Personal Allowances, 2020/21: allowance 12,500, basic rate band
+    // 37,500, so the higher rate starts above 50,000 of pay. No pension.
+    // 50,000: taxable 37,500, not over the band: basic. 50,100: taxable 37,600: higher.
+    const y2020 = { taxYear: "2020/21" } as const;
+    const eng = { ...FACTS, pensionPercent: 0 };
+    expect(selectPsaBand({ ...eng, annualSalary: 50000 }, y2020)).toBe("basic");
+    expect(selectPsaBand({ ...eng, annualSalary: 50100 }, y2020)).toBe("higher");
+  });
+});

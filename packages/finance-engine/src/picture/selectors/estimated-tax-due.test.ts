@@ -194,3 +194,35 @@ describe("selectEstimatedTaxDue (C-11)", () => {
     );
   });
 });
+
+describe("selectEstimatedTaxDue: untaxed income and provenance", () => {
+  it("adds every kind of income outside PAYE: rent, trading, savings interest and dividends", () => {
+    // Gross amounts, not profit: 12,000 rent + 8,000 trading income + 1,500 interest + 600
+    // dividends = 22,100.
+    const fig = selectEstimatedTaxDue(
+      employee(30000),
+      [
+        rent(12000),
+        annual("self-employed", "income", "self_employed_income", 8000),
+        annual("savings", "income", "savings_interest", 1500),
+        annual("savings", "income", "dividend_income", 600),
+      ],
+      { taxYear: Y },
+    );
+    expect(fig.status === "known" && fig.value.untaxedIncome).toBe(22100);
+  });
+
+  it("is derived with no assumptions for an English taxpayer", () => {
+    const fig = selectEstimatedTaxDue(employee(30000), [rent(5000)], { taxYear: Y });
+    expect(fig.status).toBe("known");
+    expect(fig.status === "known" && fig.provenance).toBe("derived");
+    expect(fig.status === "known" && fig.assumptions).toBeUndefined();
+  });
+
+  it("is marked as an assumption for a Scottish taxpayer", () => {
+    const fig = selectEstimatedTaxDue({ ...employee(30000), taxRegion: "SCOTLAND" }, [rent(5000)], {
+      taxYear: Y,
+    });
+    expect(fig.status === "known" && fig.provenance).toBe("assumption");
+  });
+});
