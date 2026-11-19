@@ -31,8 +31,8 @@ export const TAX_RECORD_USER_ACCOUNT_INDEX = "IDX_tax_records_user_account";
 export const TAX_RECORD_ACCOUNT_USER_INDEX = "IDX_tax_records_account_user";
 const ACCOUNTS_OWNER_KEY_INDEX = "UQ_accounts_id_user_id";
 
-export class TaxRecordAccountLink1795540000000 implements MigrationInterface {
-  name = "TaxRecordAccountLink1795540000000";
+export class TaxRecordAccountLink1795550000000 implements MigrationInterface {
+  name = "TaxRecordAccountLink1795550000000";
 
   private readonly logger = new Logger("TaxRecordAccountLink");
 
