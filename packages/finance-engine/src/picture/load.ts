@@ -109,6 +109,7 @@ export function profileFromFacts(
   if (facts.studentLoanPlans !== null) profile.studentLoanPlans = [...facts.studentLoanPlans];
   if (facts.pensionPercent !== null) profile.pensionPercent = facts.pensionPercent;
   if (facts.isSalarySacrifice !== null) profile.isSalarySacrifice = facts.isSalarySacrifice;
+  if (facts.monthlyTakeHome != null) profile.monthlyTakeHome = facts.monthlyTakeHome;
   if (facts.housingStatus != null) profile.housingStatus = facts.housingStatus;
   if (facts.monthlyHousingCost != null) profile.monthlyHousingCost = facts.monthlyHousingCost;
   if (facts.mortgageType != null) profile.mortgageType = facts.mortgageType;

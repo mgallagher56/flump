@@ -271,6 +271,10 @@ export type PackUkTaxCalculation =
 export const PENSION_NOT_SET_ASSUMPTION =
   "Pension contribution not set; this estimate assumes none.";
 
+/** How the pension is paid is not set (slice 6): the estimate states the method it uses. */
+export const PENSION_METHOD_NOT_SET_ASSUMPTION =
+  "How the pension is paid is not set; this estimate assumes net pay.";
+
 /** True when the pack's salary tax calculation holds worked-out figures. */
 export function isUkTaxCalculated(tx: PackUkTaxCalculation): tx is ContextPackUkTaxResult {
   return !("notSet" in tx) && !("notApplicable" in tx);
@@ -436,13 +440,16 @@ export function buildFlumpAiContextPack(
     annualGrossSalary: annualSalary,
     pensionContributionPct,
     employerPensionMatchPct,
+    isSalarySacrifice,
     ...knownFigures
   } = baselineFigures;
+  const methodKnown = !notSet.includes("isSalarySacrifice");
   const safeBaseline: ContextPackBaseline = {
     ...knownFigures,
     ...(salaryKnown ? { annualGrossSalary: annualSalary } : {}),
     ...(notSet.includes("pensionContributionPct") ? {} : { pensionContributionPct }),
     ...(notSet.includes("employerPensionMatchPct") ? {} : { employerPensionMatchPct }),
+    ...(methodKnown ? { isSalarySacrifice } : {}),
     userId: isAnonymized ? ANONYMOUS_USER_ID : input.baseline.userId,
   };
 
@@ -611,14 +618,18 @@ export function buildFlumpAiContextPack(
           computeUkTax({
             grossSalary: payeSalary,
             pensionContributionPct,
-            isSalarySacrifice: safeBaseline.isSalarySacrifice,
+            isSalarySacrifice: methodKnown ? isSalarySacrifice : false,
             studentLoanPlan: safeBaseline.studentLoanPlan,
             region: safeBaseline.ukRegion,
             taxYear: currentTaxYear,
           }),
           isaAllowance,
           // Item 4: the assumption is stated, not left silent.
-          pensionAssumed ? [PENSION_NOT_SET_ASSUMPTION] : undefined,
+          pensionAssumed
+            ? [PENSION_NOT_SET_ASSUMPTION]
+            : !methodKnown && pensionContributionPct > 0
+              ? [PENSION_METHOD_NOT_SET_ASSUMPTION]
+              : undefined,
         )
       : { notSet: ["annualSalary"] };
 

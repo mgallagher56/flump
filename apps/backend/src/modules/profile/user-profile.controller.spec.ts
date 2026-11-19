@@ -17,7 +17,7 @@ const freshAuthTime = () => Math.floor(Date.now() / 1000) - 30;
 
 describe("UserProfileController", () => {
   let controller: UserProfileController;
-  let mockUserProfileRepo: { findOne: Mock; save: Mock; create: Mock };
+  let mockUserProfileRepo: { findOne: Mock; save: Mock; create: Mock; query: Mock };
   let mockAccountRepo: { find: Mock; delete: Mock };
   let mockTransactionRepo: { delete: Mock };
   let mockAccountDetailRepo: { delete: Mock };
@@ -30,6 +30,8 @@ describe("UserProfileController", () => {
       findOne: vi.fn(),
       save: vi.fn((entity) => Promise.resolve({ id: "profile-1", ...entity })),
       create: vi.fn((entity) => ({ ...entity })),
+      // Raw queries clear the profile's migration before-images on reset (every table exists here).
+      query: vi.fn().mockResolvedValue([{ t: "exists" }]),
     };
     mockAccountRepo = {
       find: vi.fn().mockResolvedValue([{ id: "acc-1", userId: "user-123" }]),
@@ -183,9 +185,10 @@ describe("UserProfileController", () => {
           annualSalary: null,
           monthlyTakeHome: null,
           hasMortgage: false,
-          pensionPercent: 0,
-          pensionEmployerPercent: 0,
-          isSalarySacrifice: false,
+          // Not answered, never 0% (finding AI-12, owner decision 3).
+          pensionPercent: null,
+          pensionEmployerPercent: null,
+          isSalarySacrifice: null,
           isSalarySacrificeEmployerNi: false,
           customBudgetCategories: [],
           hasResetFinancialData: true,
@@ -195,8 +198,9 @@ describe("UserProfileController", () => {
       expect(res.success).toBe(true);
       expect(res.profile.hasResetFinancialData).toBe(true);
       expect(res.profile.onboardingCompleted).toBe(false);
-      expect(res.profile.pensionPercent).toBe(0);
-      expect(res.profile.pensionEmployerPercent).toBe(0);
+      expect(res.profile.pensionPercent).toBeNull();
+      expect(res.profile.pensionEmployerPercent).toBeNull();
+      expect(res.profile.isSalarySacrifice).toBeNull();
       expect(res.profile.customBudgetCategories).toEqual([]);
     });
   });

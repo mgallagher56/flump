@@ -11,6 +11,8 @@ export interface LiveSummaryBarProps {
 }
 
 export const TAKE_HOME_LABEL = "Monthly take-home pay (estimate)";
+/** Take-home mode: the figure is the one the person typed, so it is not called an estimate. */
+export const TYPED_TAKE_HOME_LABEL = "Monthly take-home pay";
 const NOT_SET = "Not set";
 
 /**
@@ -28,7 +30,7 @@ export const LiveSummaryBar: FC<LiveSummaryBarProps> = ({ summary, assumingRegio
       id="onboarding-live-summary"
     >
       <span className={classes.label} id="onboarding-take-home-label">
-        {TAKE_HOME_LABEL}
+        {summary.takeHomeTyped ? TYPED_TAKE_HOME_LABEL : TAKE_HOME_LABEL}
       </span>
       <span
         className={classes.figure}

@@ -11,14 +11,18 @@ export interface PensionSummaryProps {
   monthlyTotal: number | null;
   /** True when fixed payments into pots are part of `monthlyTotal`. */
   includesPotPayments?: boolean;
-  /** True when the contribution rates are the backend defaults, which the user may not have chosen. */
-  ratesAssumed?: boolean;
+  /**
+   * True when a contribution rate has not been set (owner decision 3). The monthly total is then
+   * unknown, and the prompt asks for the rates rather than the salary.
+   */
+  ratesNotSet?: boolean;
   /** Opens the add-pot dialog, shown in the hero when there are no pots. */
   onAddPot: () => void;
 }
 
 const PROFILE_PATH = "/app/profile#settings-age-and-pay";
-const ASSUMED_RATES_CAPTION = "Assumed rates. Edit to match your payslip.";
+/** The page's own "Your details" section, whose drawer opens on this hash. */
+const PENSION_DETAILS_PATH = "/app/pension#pension-details";
 
 const promptTo = (label: string, to: string): ReactNode => (
   <Link className={promptLink} to={to}>
@@ -36,7 +40,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
   potsCount,
   monthlyTotal,
   includesPotPayments = false,
-  ratesAssumed = false,
+  ratesNotSet = false,
   onAddPot,
 }) => {
   const hasPots = potsCount > 0;
@@ -55,23 +59,32 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
         valueFormat={{ fractionDigits: 0 }}
       />
       <KpiStrip
-        emptyPrompt={{
-          title: "Add your salary to see what goes in each month",
-          action: promptTo("Update your details", PROFILE_PATH),
-        }}
+        emptyPrompt={
+          ratesNotSet
+            ? {
+                title: "Add your contribution rates to see what goes in each month",
+                action: promptTo("Add your rates", PENSION_DETAILS_PATH),
+              }
+            : {
+                title: "Add your salary to see what goes in each month",
+                action: promptTo("Update your details", PROFILE_PATH),
+              }
+        }
         items={[
           <KpiCard
-            emptyAction={promptTo("Add your salary", PROFILE_PATH)}
+            emptyAction={
+              ratesNotSet
+                ? promptTo("Add your rates", PENSION_DETAILS_PATH)
+                : promptTo("Add your salary", PROFILE_PATH)
+            }
             key="monthly"
             label="Going in each month"
             subtext={
               monthlyTotal === null
                 ? undefined
-                : ratesAssumed
-                  ? ASSUMED_RATES_CAPTION
-                  : includesPotPayments
-                    ? "You, your employer and payments into your pots"
-                    : "You and your employer"
+                : includesPotPayments
+                  ? "You, your employer and payments into your pots"
+                  : "You and your employer"
             }
             value={monthlyTotal}
             valueFormat={{ fractionDigits: 0 }}

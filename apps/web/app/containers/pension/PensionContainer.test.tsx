@@ -268,11 +268,14 @@ describe("PensionContainer", () => {
   });
 
   it("edits employer National Insurance, saving to the profile", async () => {
+    useFixture({
+      ...defaultLoaderData,
+      userProfile: { ...defaultProfileData, isSalarySacrifice: null },
+    });
     render(<PensionContainer />);
     openDetails();
     fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
-    // The stored true alongside the default 5% / 3% rates is the legacy column default, not a
-    // choice, so the method starts unticked until the user picks it.
+    // A method never answered is null, so the box starts unticked until the user picks it.
     const sacrifice = screen.getByLabelText(/Paid by salary sacrifice/i) as HTMLInputElement;
     expect(sacrifice.checked).toBe(false);
     fireEvent.click(sacrifice);
@@ -285,6 +288,7 @@ describe("PensionContainer", () => {
         expect.objectContaining({ isSalarySacrifice: true, isSalarySacrificeEmployerNi: true }),
       ),
     );
+    restore();
   });
 
   it("editing only the salary never saves the guessed contribution method", async () => {
@@ -330,11 +334,64 @@ describe("PensionContainer", () => {
     expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Salary sacrifice");
   });
 
-  it("reads the contribution method as Not set while the pension facts are the defaults", () => {
+  it("reads rates and method never answered as Not set, and what goes in as unknown", () => {
+    useFixture({
+      ...defaultLoaderData,
+      userProfile: {
+        ...defaultProfileData,
+        pensionPercent: null,
+        pensionEmployerPercent: null,
+        isSalarySacrifice: null,
+      },
+    });
+    const { container } = render(<PensionContainer />);
+    // The strip is one prompt for the rates: never £0 and never a 5% and 3% stand-in.
+    expect(container.textContent).toContain(
+      "Add your contribution rates to see what goes in each month",
+    );
+    expect(container.querySelector("[data-density='compact']")).toBeNull();
+    openDetails();
+    const details = screen.getByRole("region", { name: "Your details" });
+    expect(within(details).getByText("You pay").nextElementSibling?.textContent).toBe("Not set");
+    expect(within(details).getByText("Employer pays").nextElementSibling?.textContent).toBe(
+      "Not set",
+    );
+    expect(within(details).getByText("Method").nextElementSibling?.textContent).toBe("Not set");
+    expect(screen.queryByText(/Assumed/)).toBeNull();
+  });
+
+  it("shows a chosen 5% and 3% and salary sacrifice as chosen", () => {
     render(<PensionContainer />);
     openDetails();
-    expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Not set");
-    expect(screen.getAllByText(/Assumed: the auto-enrolment minimum/)).toHaveLength(1);
+    const details = screen.getByRole("region", { name: "Your details" });
+    // £50,000 at 5%: 2,500 / 12 = £208.33, about £208. At 3%: 1,500 / 12 = £125.
+    expect(within(details).getByText("You pay").nextElementSibling?.textContent).toBe(
+      "5% of salary, about £208 a month",
+    );
+    expect(within(details).getByText("Employer pays").nextElementSibling?.textContent).toBe(
+      "3% of salary, about £125 a month",
+    );
+    expect(within(details).getByText("Method").nextElementSibling?.textContent).toBe(
+      "Salary sacrifice",
+    );
+  });
+
+  it("saves exactly 5% and 3% when chosen, and a blank rate as not set", async () => {
+    useFixture({
+      ...defaultLoaderData,
+      userProfile: { ...defaultProfileData, pensionPercent: null, pensionEmployerPercent: null },
+    });
+    mockUpdateProfile.mockClear();
+    render(<PensionContainer />);
+    openDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
+    fireEvent.change(screen.getByLabelText(/Your contribution/), { target: { value: "5" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
+    await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
+    const sent = mockUpdateProfile.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(sent.pensionPercent).toBe(5);
+    expect(sent.pensionEmployerPercent).toBeNull();
+    restore();
   });
 
   it("shows the saved loader rates on the first render, before the profile atom is seeded", async () => {
@@ -372,8 +429,9 @@ describe("PensionContainer", () => {
     const strip = container.querySelector("[data-density='compact']") as HTMLElement;
     // £208 you + £125 employer + £100 into the current pot; the past pot's £50 is not counted.
     expect(strip.textContent).toContain("Going in each month£433");
-    // The default fixture holds the backend's 5% and 3%: the caption says so, with no figure.
-    expect(strip.textContent).toContain("Assumed rates. Edit to match your payslip");
+    // The fixture's 5% and 3% are the user's own choice: no assumed caption.
+    expect(strip.textContent).toContain("You, your employer and payments into your pots");
+    expect(strip.textContent).not.toContain("Assumed");
     const rows = container.querySelectorAll("[data-list-row]");
     expect(rows[0]?.textContent).toContain("Current pot");
     expect(rows[1]?.textContent).toContain("Past pot");
@@ -512,25 +570,31 @@ describe("PensionContainer", () => {
       expect(ani(percent - 0.5)).toBeGreaterThan(100_000);
     });
 
-    it("labels the region assumption unless the baseline is Scottish", async () => {
+    it("reads the region from the saved profile, not the baseline (PP-9)", async () => {
       const { getDefaultStore } = await import("jotai");
       const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");
       const store = getDefaultStore();
+      // A stale baseline that says Scotland while the saved profile has no region.
       store.set(financialBaselineAtom, { ...NO_SALARY_BASELINE, ukRegion: "SCOTLAND" });
-      saved(110_000);
+      saved(110_000, { taxRegion: "SCOTLAND" });
       const scottish = render(<PensionContainer />);
-      expect(screen.queryByText(/uses England, Wales and Northern Ireland/i)).toBeNull();
+      expect(screen.queryByRole("button", { name: "About Tax region" })).toBeNull();
       scottish.unmount();
-      store.set(financialBaselineAtom, NO_SALARY_BASELINE);
+      saved(110_000, { taxRegion: "ENGLAND" });
+      const english = render(<PensionContainer />);
+      expect(screen.queryByRole("button", { name: "About Tax region" })).toBeNull();
+      english.unmount();
       saved(110_000);
       render(<PensionContainer />);
-      // The assumption sits behind the "i" beside the line (owner item 23), not as its own line.
+      // No saved region: the assumption sits behind the "i" beside the line (owner item 23),
+      // whatever the baseline says.
       expect(screen.queryByText(/uses England, Wales and Northern Ireland/i)).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "About Tax region" }));
       expect(screen.getByText(/uses England, Wales and Northern Ireland/i)).toBeDefined();
       expect(screen.getByRole("link", { name: /set your region/i }).getAttribute("href")).toBe(
         "/app/profile",
       );
+      store.set(financialBaselineAtom, NO_SALARY_BASELINE);
     });
   });
 

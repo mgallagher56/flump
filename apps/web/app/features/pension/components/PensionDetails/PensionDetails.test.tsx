@@ -11,12 +11,14 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 
 const Harness: FC<{
   onSave?: () => Promise<void>;
-  ratesAssumed?: boolean;
+  employeePercent?: number | null;
+  employerPercent?: number | null;
   methodSet?: boolean;
   factsOpen?: boolean;
 }> = ({
   onSave = vi.fn().mockResolvedValue(undefined),
-  ratesAssumed = false,
+  employeePercent = 6,
+  employerPercent = 4,
   methodSet = true,
   factsOpen = false,
 }) => {
@@ -25,14 +27,13 @@ const Harness: FC<{
     <PensionDetails
       factsOpen={factsOpen}
       annualSalary={50000}
-      employeePercent={6}
-      employerPercent={4}
+      employeePercent={employeePercent}
+      employerPercent={employerPercent}
       hasSalary
       isEditing={editing}
       isSalarySacrifice
       isSalarySacrificeEmployerNi={false}
       methodSet={methodSet}
-      ratesAssumed={ratesAssumed}
       onEditingChange={setEditing}
       onSave={onSave}
     />
@@ -55,14 +56,47 @@ describe("<PensionDetails />", () => {
     ]);
   });
 
-  it("labels the backend default rates as assumed, once", () => {
-    render(<Harness ratesAssumed />);
+  it("reads a rate that is not set as Not set, never 5%, 3% or 0%", () => {
+    render(<Harness employeePercent={null} employerPercent={null} />);
     fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
-    expect(screen.getAllByText(/Assumed: the auto-enrolment minimum/)).toHaveLength(1);
+    expect(screen.getByText("You pay").nextElementSibling?.textContent).toBe("Not set");
+    expect(screen.getByText("Employer pays").nextElementSibling?.textContent).toBe("Not set");
+    expect(
+      screen.getAllByText("Add your rates from your payslip to see what goes in each month."),
+    ).toHaveLength(1);
+    expect(screen.queryByText(/Assumed/)).toBeNull();
+    expect(screen.queryByText(/\d%/)).toBeNull();
+  });
+
+  it("shows a chosen 5% and 3% as chosen, with no note", () => {
+    render(<Harness employeePercent={5} employerPercent={3} />);
+    fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
+    // £50,000 at 5%: 2,500 ÷ 12 = £208.33, about £208. At 3%: 1,500 ÷ 12 = £125.
+    expect(screen.getByText("You pay").nextElementSibling?.textContent).toBe(
+      "5% of salary, about £208 a month",
+    );
+    expect(screen.getByText("Employer pays").nextElementSibling?.textContent).toBe(
+      "3% of salary, about £125 a month",
+    );
+    expect(screen.queryByText(/Add your rates/)).toBeNull();
+  });
+
+  it("starts the form blank for a rate that is not set, and saves a blank as blank", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(<Harness employeePercent={null} employerPercent={null} onSave={onSave} />);
+    fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
+    expect((screen.getByLabelText(/Your contribution/) as HTMLInputElement).value).toBe("");
+    fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ employeePercent: null, employerPercent: null }),
+      ),
+    );
   });
 
   it("reads the contribution method as Not set until the user saves one", () => {
-    render(<Harness methodSet={false} ratesAssumed />);
+    render(<Harness methodSet={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Salary and contributions" }));
     expect(screen.getByText("Method").nextElementSibling?.textContent).toBe("Not set");
     expect(screen.queryByText(/^Salary sacrifice$/)).toBeNull();

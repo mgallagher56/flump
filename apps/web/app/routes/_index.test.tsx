@@ -367,6 +367,18 @@ describe("_index route", () => {
     );
   });
 
+  it("shows a typed take-home as it was entered, with nothing missing", async () => {
+    const data = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, annualSalary: null, monthlyTakeHome: 2500 },
+    });
+    // Typed net pay is the take-home itself (owner decision 2 option A): £2,500 a month.
+    expect(data.forecastData.estimatedTakeHome).toBe(2500);
+    expect(data.forecastData.takeHomeMissing).toBeUndefined();
+    // No pension rates were answered: the card shows no 5% and 3% stand-in.
+    expect(data.pensionData.employeePercent).toBeNull();
+    expect(data.pensionData.employerPercent).toBeNull();
+  });
+
   it("lists every missing take-home input at once", async () => {
     const data = await loadSignedIn({
       userProfile: { onboardingCompleted: true, annualSalary: 60000 },

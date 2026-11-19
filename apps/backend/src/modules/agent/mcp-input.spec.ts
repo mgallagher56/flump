@@ -327,7 +327,7 @@ describe("toMcpInputWire: joint shares and the saved retirement plan", () => {
       employerPercent: 3,
       isSalarySacrifice: true,
       passEmployerNi: false,
-      ratesAssumed: true,
+      notSet: ["pensionEmployerPercent" as const],
     };
     for (const anonymise of [true, false]) {
       const wire = toMcpInputWire({ ...saved, workplacePension }, anonymise);
@@ -440,5 +440,38 @@ describe("toMcpInputWire carries the unsaved-figure list (PR 785 review, item 6)
   it("sends no notSet key when every figure is saved", () => {
     const wire = JSON.parse(JSON.stringify(toMcpInputWire(raw, false)));
     expect(wire.baseline).not.toHaveProperty("notSet");
+  });
+
+  it("sends the typed take-home in the profile facts, or null when none is saved (slice 6)", () => {
+    const facts = {
+      annualSalary: null,
+      employmentType: "employed" as const,
+      taxRegion: null,
+      studentLoanPlans: null,
+      pensionPercent: null,
+      isSalarySacrifice: null,
+      monthlyTakeHome: 2450,
+      housingStatus: null,
+      monthlyHousingCost: null,
+      mortgageType: null,
+      propertyOwnershipShare: null,
+    };
+    for (const anonymise of [true, false]) {
+      const wire = toMcpInputWire({ ...raw, profileFacts: facts }, anonymise);
+      expect(wire.profileFacts.monthlyTakeHome).toBe(2450);
+      expect(McpInputResponse.shape.input.safeParse(wire).success).toBe(true);
+    }
+    expect(toMcpInputWire(raw, false).profileFacts.monthlyTakeHome).toBeNull();
+  });
+
+  it("leaves notSet off the workplace pension when both rates are saved", () => {
+    const workplacePension = {
+      annualSalary: 30_000,
+      employeePercent: 5,
+      employerPercent: 3,
+      notSet: [],
+    };
+    const wire = toMcpInputWire({ ...raw, workplacePension }, false);
+    expect(wire.workplacePension).not.toHaveProperty("notSet");
   });
 });

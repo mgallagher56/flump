@@ -1048,6 +1048,30 @@ describe("PR 785 review: the pack follows the one estimate rule (estimateInputsF
     expect(formatAiContextPackMarkdown(pack)).toContain("- **Self Assessment estimate:** £1,800");
   });
 
+  it("states the net pay assumption and leaves out the method when it is not set (slice 6)", () => {
+    // 5% saved, salary sacrifice never answered: the pack does not pass a stand-in false as fact.
+    const pack = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({ annualSalary: 30000, pensionPercent: 5 }),
+    });
+    expect(pack.baseline).not.toHaveProperty("isSalarySacrifice");
+    const tx = pack.taxSummary.ukTaxCalculation;
+    expect("assumptions" in tx && tx.assumptions).toEqual([
+      "How the pension is paid is not set; this estimate assumes net pay.",
+    ]);
+    // A saved answer is a fact: kept, with no assumption.
+    const saved = buildFlumpAiContextPack({
+      netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+      baseline: userProfileToSavedBaseline({
+        annualSalary: 30000,
+        pensionPercent: 5,
+        isSalarySacrifice: true,
+      }),
+    });
+    expect(saved.baseline.isSalarySacrifice).toBe(true);
+    expect(saved.taxSummary.ukTaxCalculation).not.toHaveProperty("assumptions");
+  });
+
   it("states the no-pension assumption when a salary is saved but no pension rate (item 4)", () => {
     const pack = buildFlumpAiContextPack({
       netWorthBasis: DEFAULT_NET_WORTH_BASIS,

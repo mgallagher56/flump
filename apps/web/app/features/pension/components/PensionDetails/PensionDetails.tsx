@@ -11,7 +11,11 @@ import {
 } from "@repo/ui";
 import { Check, ClipboardList, Pencil, X } from "lucide-react";
 import { type FC, type FormEvent, type ReactNode, useState } from "react";
-import { contributionMonthlyHint, contributionRateText } from "~/features/pension/contribution";
+import {
+  contributionMonthlyHint,
+  contributionRateText,
+  NOT_SET,
+} from "~/features/pension/contribution";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
   buttonRow,
@@ -43,12 +47,11 @@ export interface PensionDetailsSaveValues {
 export interface PensionDetailsProps {
   hasSalary: boolean;
   annualSalary: number;
-  employeePercent: number;
-  employerPercent: number;
+  /** The saved rate, or null when it has not been set (owner decision 3): it reads "Not set". */
+  employeePercent: number | null;
+  employerPercent: number | null;
   isSalarySacrifice: boolean;
   isSalarySacrificeEmployerNi: boolean;
-  /** True for the backend default 5% and 3%, which the user may never have chosen. */
-  ratesAssumed: boolean;
   /** False until the user saves a contribution method: it then reads "Not set". */
   methodSet?: boolean;
   isEditing: boolean;
@@ -61,9 +64,8 @@ export interface PensionDetailsProps {
   factsOpen?: boolean;
 }
 
-const NOT_SET = "Not set";
-
-const ASSUMED_RATE_LABEL = "Assumed: the auto-enrolment minimum. Edit to match your payslip.";
+/** Under the facts when a rate is missing: what that means, then the drawer's one Edit button. */
+const RATES_NOT_SET_NOTE = "Add your rates from your payslip to see what goes in each month.";
 
 type FormProps = Pick<
   PensionDetailsProps,
@@ -230,7 +232,6 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
   employerPercent,
   isSalarySacrifice,
   isSalarySacrificeEmployerNi,
-  ratesAssumed,
   methodSet = true,
   isEditing,
   onEditingChange,
@@ -247,6 +248,16 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
     setReopenFacts(true);
     onEditingChange(true);
   };
+  // A rate that is not set reads "Not set", never a stand-in 5% or 3% or 0%.
+  const rateText = (percent: number | null): string =>
+    percent === null
+      ? NOT_SET
+      : contributionRateText(
+          percent,
+          contributionMonthlyFromPercent(percent, basis),
+          formatCurrency,
+        );
+  const ratesNotSet = employeePercent === null || employerPercent === null;
   const method = !methodSet
     ? NOT_SET
     : isSalarySacrifice
@@ -296,22 +307,14 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
               </div>
               <div className={factRow()}>
                 <dt>You pay</dt>
-                <dd className={factValue({ wrap: true })}>
-                  {contributionRateText(
-                    employeePercent,
-                    contributionMonthlyFromPercent(employeePercent, basis),
-                    formatCurrency,
-                  )}
+                <dd className={factValue({ unset: employeePercent === null, wrap: true })}>
+                  {rateText(employeePercent)}
                 </dd>
               </div>
               <div className={factRow()}>
                 <dt>Employer pays</dt>
-                <dd className={factValue({ wrap: true })}>
-                  {contributionRateText(
-                    employerPercent,
-                    contributionMonthlyFromPercent(employerPercent, basis),
-                    formatCurrency,
-                  )}
+                <dd className={factValue({ unset: employerPercent === null, wrap: true })}>
+                  {rateText(employerPercent)}
                 </dd>
               </div>
               <div className={factRow()}>
@@ -319,7 +322,7 @@ export const PensionDetails: FC<PensionDetailsProps> = ({
                 <dd className={factValue({ unset: !methodSet, wrap: true })}>{method}</dd>
               </div>
             </dl>
-            {ratesAssumed && <p className={mutedNote()}>{ASSUMED_RATE_LABEL}</p>}
+            {ratesNotSet && <p className={mutedNote()}>{RATES_NOT_SET_NOTE}</p>}
             <div className={editRow()}>
               <Button
                 aria-label="Edit salary and contributions"

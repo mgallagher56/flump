@@ -325,7 +325,10 @@ describe("userProfileToSavedBaseline (SA-2, AI-1, AI-2)", () => {
       "annualGrossSalary",
       "pensionContributionPct",
       "employerPensionMatchPct",
+      "isSalarySacrifice",
     ]);
+    // Slice 6: how the pension is paid is not set either, so it is named, not passed on as false.
+    expect(baseline.isSalarySacrifice).toBe(false);
   });
 
   it("keeps every saved figure, a saved 0 included", () => {
@@ -335,6 +338,7 @@ describe("userProfileToSavedBaseline (SA-2, AI-1, AI-2)", () => {
       birthYear: year - 40,
       pensionPercent: 0,
       pensionEmployerPercent: 4,
+      isSalarySacrifice: false,
       totalCashSavings: 0,
       totalPensionPot: 22000,
       monthlyOtherOutgoings: 600,

@@ -75,9 +75,8 @@ describe("workplacePensionFromProfile", () => {
       employerPercent: 4,
       isSalarySacrifice: true,
       passEmployerNi: true,
-      ratesAssumed: false,
     });
-    // The untouched creation defaults (5% and 3%) never make a stored `true` a choice.
+    // Slice 6: a stored 5% and 3% with salary sacrifice is the user's choice, kept as chosen.
     expect(
       workplacePensionFromProfile({
         annualSalary: 40_000,
@@ -86,7 +85,13 @@ describe("workplacePensionFromProfile", () => {
         isSalarySacrifice: true,
         isSalarySacrificeEmployerNi: true,
       }),
-    ).toMatchObject({ isSalarySacrifice: false, passEmployerNi: false, ratesAssumed: true });
+    ).toEqual({
+      annualSalary: 40_000,
+      employeePercent: 5,
+      employerPercent: 3,
+      isSalarySacrifice: true,
+      passEmployerNi: true,
+    });
   });
 
   it("is null for a self-employed or other employment type, kept for employed or unanswered", () => {
@@ -98,19 +103,29 @@ describe("workplacePensionFromProfile", () => {
     expect(workplacePensionFromProfile(saved)).not.toBeNull();
   });
 
-  it("marks the rates as assumed only when they are the untouched 5% and 3% defaults", () => {
-    const at = (pensionPercent: number, pensionEmployerPercent: number) =>
+  it("names each rate that is not set, and only those (slice 6)", () => {
+    const at = (pensionPercent: number | null, pensionEmployerPercent: number | null) =>
       workplacePensionFromProfile({ annualSalary: 40_000, pensionPercent, pensionEmployerPercent })
-        ?.ratesAssumed;
-    expect(at(5, 3)).toBe(true);
-    expect(at(5, 4)).toBe(false);
-    expect(at(6, 3)).toBe(false);
+        ?.notSet;
+    expect(at(5, 3)).toBeUndefined();
+    expect(at(0, 0)).toBeUndefined();
+    expect(at(null, 3)).toEqual(["pensionPercent"]);
+    expect(at(5, null)).toEqual(["pensionEmployerPercent"]);
+    expect(at(null, null)).toEqual(["pensionPercent", "pensionEmployerPercent"]);
   });
 
-  it("gives the same contributions whether or not the rates are assumed", () => {
-    expect(calculateWorkplacePensionContributions({ ...base, ratesAssumed: true })).toEqual(
-      calculateWorkplacePensionContributions(base),
-    );
+  it("leaves an unset rate out of the contributions, never a stand-in 5% or 3%", () => {
+    // Salary 40,000, employee rate not set, employer 3%: you £0; employer 40,000 x 3% / 12 = £100.
+    const input = workplacePensionFromProfile({
+      annualSalary: 40_000,
+      pensionPercent: null,
+      pensionEmployerPercent: 3,
+    });
+    expect(input && calculateWorkplacePensionContributions(input)).toMatchObject({
+      monthlyEmployee: 0,
+      monthlyEmployer: 100,
+      monthlyTotal: 100,
+    });
   });
 });
 

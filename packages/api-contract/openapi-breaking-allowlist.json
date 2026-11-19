@@ -63,5 +63,70 @@
     "kind": "retyped-response-property",
     "where": "GET /v1/mcp-tokens/context-pack 200 response.pack.portfolio.weightedSavingsRate",
     "reason": "Audit slice 3 (AI-7): null when no savings rate is known, instead of a 5% default. Coordinator sign-off 19 November 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/user-profile 200 response.isSalarySacrifice",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/user-profile 200 response.pensionEmployerPercent",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "GET /v1/user-profile 200 response.pensionPercent",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PATCH /v1/user-profile 200 response.isSalarySacrifice",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PATCH /v1/user-profile 200 response.pensionEmployerPercent",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PATCH /v1/user-profile 200 response.pensionPercent",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PATCH /v1/user-profile/checklist 200 response.isSalarySacrifice",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PATCH /v1/user-profile/checklist 200 response.pensionEmployerPercent",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "PATCH /v1/user-profile/checklist 200 response.pensionPercent",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.isSalarySacrifice",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.pensionEmployerPercent",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "retyped-response-property",
+    "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.pensionPercent",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): pension answers have no default and are null until the user saves them, so the response field can be null. The readers in this repository (web app and MCP server) are updated in the same PR. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "removed-response-property",
+    "where": "GET /v1/mcp/input 200 response.input.workplacePension.ratesAssumed",
+    "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): the 5% and 3% row defaults are gone, so ratesAssumed is replaced by notSet[], naming each rate the user has not set. The readers in this repository (web app and MCP server) are updated in the same PR, and the reader drops unknown keys there so an older payload still parses. Coordinator sign-off 19 Nov 2026."
   }
 ]

@@ -7,7 +7,7 @@ import {
 import { clearOnboardingSeed } from "@flump/finance-engine";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { useUserProfile } from "~/hooks/useUserProfile";
+import { type UserProfileUpdate, useUserProfile } from "~/hooks/useUserProfile";
 import { apiFetch, apiFetchAll } from "~/services/api-client";
 import { buildOnboardingSeedJobs } from "~/services/onboarding-seed";
 import type { DashboardWidgetKey } from "~/utils/pageConfig";
@@ -41,6 +41,49 @@ export const FINISH_PATHS: Record<FinishDestination, string> = {
  * attempt failed before anything was confirmed.
  */
 export type FinishSaveState = "idle" | "partial" | "unconfirmed";
+
+/**
+ * The profile facts Finish saves, so the Dashboard's take-home (`selectTakeHome` over the saved
+ * profile) equals the figure onboarding showed whenever the pension is answered or the take-home
+ * was typed:
+ * - take-home mode saves the typed figure as `monthlyTakeHome` and no salary (owner decision 2
+ *   option A); it is net pay, never turned into a salary;
+ * - salary mode saves the salary and no typed take-home (the engine works it out);
+ * - a blank pension field is never saved (not as 0, not presumed), so it stays "Not set".
+ */
+export function onboardingProfileUpdate(
+  values: OnboardingValues,
+  summary: Pick<OnboardingSummary, "monthlyHousing" | "otherOutgoings">,
+  { firstRun }: { firstRun: boolean },
+): UserProfileUpdate {
+  const mortgageBalance = values.mortgageBalance ?? 0;
+  const gross = values.incomeMode === "gross";
+  const typed = values.monthlyTakeHome ?? 0;
+  return {
+    birthYear: birthYearFromAge(values.age),
+    annualSalary: gross ? (values.grossSalary ?? null) : null,
+    monthlyTakeHome: gross ? null : typed > 0 ? typed : null,
+    employmentType: values.employmentType,
+    taxRegion: values.taxRegion ?? undefined,
+    studentLoanPlans: values.studentLoanPlan === "NONE" ? [] : [values.studentLoanPlan],
+    // Not answered sends nothing, so a saved answer is never cleared or presumed.
+    ...(values.housingStatus === null
+      ? {}
+      : { housingStatus: values.housingStatus, monthlyHousingCost: summary.monthlyHousing }),
+    monthlyOtherOutgoings: summary.otherOutgoings,
+    hasMortgage: values.housingStatus === "mortgage" || mortgageBalance > 0,
+    // Blank is left out: never saved as 0 and never presumed (owner decision 3).
+    ...(values.pensionPercent !== null ? { pensionPercent: values.pensionPercent } : {}),
+    // Not asked in onboarding: on the first run save net pay, the method the summary's take-home
+    // (and the budget income row) used. On a later run leave the field out, so a choice saved
+    // since (in settings or on the pension page) is never overwritten.
+    ...(values.isSalarySacrifice !== null
+      ? { isSalarySacrifice: values.isSalarySacrifice }
+      : firstRun
+        ? { isSalarySacrifice: false }
+        : {}),
+  };
+}
 
 /**
  * The save path: profile, then baseline accounts and budget entries (each remembered so a retry
@@ -82,30 +125,9 @@ export function useFinishOnboarding(values: OnboardingValues, summary: Onboardin
     try {
       // Balances (cash, pension pot, cards, mortgage) are saved as account rows below, not here.
       await updateProfile({
-        birthYear: birthYearFromAge(values.age),
-        annualSalary:
-          values.incomeMode === "gross"
-            ? (values.grossSalary ?? 0)
-            : (values.monthlyTakeHome ?? 0) * 12,
-        monthlyTakeHome: summary.monthlyTakeHome,
-        employmentType: values.employmentType,
-        taxRegion: values.taxRegion ?? undefined,
-        studentLoanPlans: values.studentLoanPlan === "NONE" ? [] : [values.studentLoanPlan],
-        // Not answered sends nothing, so a saved answer is never cleared or presumed.
-        ...(values.housingStatus === null
-          ? {}
-          : { housingStatus: values.housingStatus, monthlyHousingCost: summary.monthlyHousing }),
-        monthlyOtherOutgoings: summary.otherOutgoings,
-        hasMortgage: values.housingStatus === "mortgage" || mortgageBalance > 0,
-        pensionPercent: values.pensionPercent ?? undefined,
-        // Not asked in onboarding: on the first run save net pay, the method the summary's
-        // take-home (and the budget income row) used. On a later run leave the field out, so a
-        // choice saved since (in settings or on the pension page) is never overwritten.
-        ...(values.isSalarySacrifice !== null
-          ? { isSalarySacrifice: values.isSalarySacrifice }
-          : profile?.onboardingCompleted
-            ? {}
-            : { isSalarySacrifice: false }),
+        ...onboardingProfileUpdate(values, summary, {
+          firstRun: !profile?.onboardingCompleted,
+        }),
         enabledPages: pagesToSave,
         dashboardWidgets,
         dashboardWidgetOrder,

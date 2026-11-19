@@ -80,9 +80,10 @@ export interface UserProfileData {
   buyToLetMortgageBalance?: number | null;
   buyToLetMortgageRate?: number | null;
   buyToLetMortgageType?: "repayment" | "interest-only";
-  pensionPercent?: number;
-  pensionEmployerPercent?: number;
-  isSalarySacrifice?: boolean;
+  /** null (or absent) when never answered: the columns have no default (owner decision 3). */
+  pensionPercent?: number | null;
+  pensionEmployerPercent?: number | null;
+  isSalarySacrifice?: boolean | null;
   isSalarySacrificeEmployerNi?: boolean;
   monthlySavingsTarget?: number | null;
   savingsAllocationMode?: "total" | "per_account";
@@ -283,7 +284,9 @@ const isSaved = (value: unknown) => value !== null && value !== undefined;
 export type UnsavedBaselineField =
   | "annualGrossSalary"
   | "pensionContributionPct"
-  | "employerPensionMatchPct";
+  | "employerPensionMatchPct"
+  /** How the pension is paid (salary sacrifice or not); a stand-in false when never answered. */
+  | "isSalarySacrifice";
 
 /**
  * A baseline from saved facts, with the list of figures that are a stand-in 0 rather than a saved
@@ -313,16 +316,19 @@ export function userProfileToSavedBaseline(
   const salarySaved = isSaved(profile.annualSalary) && Number.isFinite(salary) && salary > 0;
   const pensionSaved = isSaved(profile.pensionPercent);
   const employerSaved = isSaved(profile.pensionEmployerPercent);
+  const methodSaved = typeof profile.isSalarySacrifice === "boolean";
   const notSet: UnsavedBaselineField[] = [];
   if (!salarySaved) notSet.push("annualGrossSalary");
   if (!pensionSaved) notSet.push("pensionContributionPct");
   if (!employerSaved) notSet.push("employerPensionMatchPct");
+  if (!methodSaved) notSet.push("isSalarySacrifice");
   return {
     ...baseline,
     annualGrossSalary: salarySaved ? salary : 0,
     age: isSaved(profile.birthYear) || isSaved(profile.age) ? baseline.age : undefined,
     pensionContributionPct: pensionSaved ? baseline.pensionContributionPct : 0,
     employerPensionMatchPct: employerSaved ? baseline.employerPensionMatchPct : 0,
+    isSalarySacrifice: methodSaved ? baseline.isSalarySacrifice : false,
     ...(notSet.length > 0 ? { notSet } : {}),
     totalCashSavings: isSaved(profile.totalCashSavings) ? baseline.totalCashSavings : undefined,
     totalPensionPot: isSaved(profile.totalPensionPot) ? baseline.totalPensionPot : undefined,

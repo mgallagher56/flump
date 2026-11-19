@@ -3,7 +3,12 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveOnboardingSummary } from "./deriveOnboardingSummary";
 import { INITIAL_VALUES, type OnboardingValues } from "./types";
-import { FINISH_ERROR, PARTIAL_FINISH_ERROR, useFinishOnboarding } from "./useFinishOnboarding";
+import {
+  FINISH_ERROR,
+  onboardingProfileUpdate,
+  PARTIAL_FINISH_ERROR,
+  useFinishOnboarding,
+} from "./useFinishOnboarding";
 
 const { navigate, updateProfile, apiFetch, profileState } = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -182,5 +187,82 @@ describe("useFinishOnboarding", () => {
     expect(posted.some((body) => body.type === "Property")).toBe(false);
     // The other baseline rows are still seeded.
     expect(posted.some((body) => body.type === "Mortgage")).toBe(true);
+  });
+});
+
+describe("onboarding take-home equals the Dashboard's after finishing", () => {
+  // The Dashboard reads selectTakeHome over the saved profile; the saved profile is built from
+  // exactly what Finish sends. Rates are pinned to 2026/27.
+  const dashboardMonthly = async (vals: OnboardingValues): Promise<number | null> => {
+    const { profileFactsFromProfile, selectTakeHome } = await import("@flump/finance-engine");
+    const summary = deriveOnboardingSummary(vals);
+    const saved = onboardingProfileUpdate(vals, summary, { firstRun: true });
+    const figure = selectTakeHome(profileFactsFromProfile(saved as Record<string, unknown>));
+    return figure.status === "known" ? figure.value.monthly : null;
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-19T12:00:00Z"));
+    return () => vi.useRealTimers();
+  });
+
+  it("salary mode, £30,000 at 5% in England: £1,993 a month on both", async () => {
+    const gross: OnboardingValues = {
+      ...INITIAL_VALUES,
+      incomeMode: "gross",
+      grossSalary: 30000,
+      employmentType: "employed",
+      taxRegion: "ENGLAND",
+      pensionPercent: 5,
+    };
+    // 2026/27, England, net pay: pension 30,000 x 5% = 1,500; tax (30,000 - 1,500 - 12,570) x 20%
+    // = 3,186; NI (30,000 - 12,570) x 8% = 1,394.40; 30,000 - 1,500 - 3,186 - 1,394.40 =
+    // 23,919.60 a year; / 12 = 1,993.30, so £1,993 a month.
+    expect(deriveOnboardingSummary(gross).monthlyTakeHome).toBe(1993);
+    expect(await dashboardMonthly(gross)).toBe(1993);
+    const saved = onboardingProfileUpdate(gross, deriveOnboardingSummary(gross), {
+      firstRun: true,
+    });
+    expect(saved.annualSalary).toBe(30000);
+    // Not a typed figure: the engine works it out from the salary.
+    expect(saved.monthlyTakeHome).toBeNull();
+    expect(saved.pensionPercent).toBe(5);
+  });
+
+  it("take-home mode, £2,500 typed: £2,500 a month on both, with no salary saved", async () => {
+    const net: OnboardingValues = {
+      ...INITIAL_VALUES,
+      incomeMode: "net",
+      monthlyTakeHome: 2500,
+      taxRegion: "ENGLAND",
+    };
+    expect(deriveOnboardingSummary(net).monthlyTakeHome).toBe(2500);
+    expect(await dashboardMonthly(net)).toBe(2500);
+    const saved = onboardingProfileUpdate(net, deriveOnboardingSummary(net), { firstRun: true });
+    // Typed net pay is never turned into a salary (2,500 x 12 is not pay before tax).
+    expect(saved.annualSalary).toBeNull();
+    expect(saved.monthlyTakeHome).toBe(2500);
+  });
+
+  it("never saves a blank pension, not as 0 and not presumed", () => {
+    const blank: OnboardingValues = {
+      ...INITIAL_VALUES,
+      incomeMode: "gross",
+      grossSalary: 30000,
+      taxRegion: "ENGLAND",
+    };
+    const saved = onboardingProfileUpdate(blank, deriveOnboardingSummary(blank), {
+      firstRun: true,
+    });
+    expect(saved).not.toHaveProperty("pensionPercent");
+    expect(saved).not.toHaveProperty("pensionEmployerPercent");
+    // A typed 0 is an answer and is saved.
+    const none = onboardingProfileUpdate(
+      { ...blank, pensionPercent: 0 },
+      deriveOnboardingSummary(blank),
+      { firstRun: true },
+    );
+    expect(none.pensionPercent).toBe(0);
   });
 });

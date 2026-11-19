@@ -348,6 +348,71 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(rows.map((r) => r.account_id)).toEqual([accountB]);
   });
 
+  it("erases the slice 6 before-images with the user's profile", async () => {
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const profileOf = async (userId: string): Promise<string> =>
+      (await ds.query("SELECT id FROM user_profiles WHERE user_id = $1", [userId]))[0].id;
+    for (const userId of [USER_A, USER_B]) {
+      const profileId = await profileOf(userId);
+      await ds.query(
+        `INSERT INTO pension_rates_backfill (profile_id, old_pension_percent, old_pension_employer_percent, old_is_salary_sacrifice)
+         VALUES ($1, 5, 3, true)`,
+        [profileId],
+      );
+      await ds.query(
+        `INSERT INTO student_loan_plan_backfill (profile_id, old_student_loan_plans, new_student_loan_plans)
+         VALUES ($1, NULL, 'PLAN_2')`,
+        [profileId],
+      );
+    }
+    const profileB = await profileOf(USER_B);
+    await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    for (const table of ["pension_rates_backfill", "student_loan_plan_backfill"]) {
+      const rows: { profile_id: string }[] = await ds.query(`SELECT profile_id FROM "${table}"`);
+      expect(
+        rows.map((r) => r.profile_id),
+        table,
+      ).toEqual([profileB]);
+    }
+  });
+
+  it("clears the slice 6 before-images on a financial data reset, which keeps the profile", async () => {
+    // Security review: ON DELETE CASCADE never fires on a reset (the profile row stays), so the
+    // reset deletes them itself and no migration down() can bring the reset data back.
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const profileOf = async (userId: string): Promise<string> =>
+      (await ds.query("SELECT id FROM user_profiles WHERE user_id = $1", [userId]))[0].id;
+    for (const userId of [USER_A, USER_B]) {
+      const profileId = await profileOf(userId);
+      await ds.query(
+        `INSERT INTO pension_rates_backfill (profile_id, old_pension_percent, old_pension_employer_percent, old_is_salary_sacrifice)
+         VALUES ($1, 5, 3, true)`,
+        [profileId],
+      );
+    }
+    const profileB = await profileOf(USER_B);
+    const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
+    await new UserProfileService(
+      repo(UserProfile),
+      repo(Account),
+      repo(AccountDetail),
+      repo(BankConnection),
+      identity,
+      ds,
+      new LoggingBankConsentRevoker(),
+      deletion,
+    ).resetFinancialData(USER_A);
+    for (const table of ["pension_rates_backfill"]) {
+      const rows: { profile_id: string }[] = await ds.query(`SELECT profile_id FROM "${table}"`);
+      expect(
+        rows.map((r) => r.profile_id),
+        table,
+      ).toEqual([profileB]);
+    }
+  });
+
   it("also removes history and transactions keyed to the user's accounts under another user_id", async () => {
     await seed(USER_A, "A");
     const account = at(await ds.getRepository(Account).findBy({ userId: USER_A }), 0);

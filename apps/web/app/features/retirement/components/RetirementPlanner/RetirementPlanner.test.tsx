@@ -369,7 +369,7 @@ describe("RetirementPlanner", () => {
       ).toBe("/app/pension#pension-details");
     });
 
-    it("says when the rates are the auto-enrolment minimums stored by default", async () => {
+    it("says plainly when a rate is not set and leaves its contribution out", async () => {
       const user = userEvent.setup();
       renderPlanner({
         planArgs: {
@@ -377,15 +377,57 @@ describe("RetirementPlanner", () => {
           workplacePension: {
             annualSalary: 40_000,
             employeePercent: 5,
-            employerPercent: 3,
-            ratesAssumed: true,
+            employerPercent: 0,
+            notSet: ["pensionEmployerPercent"],
           },
         },
       });
       await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
       expect(
         screen.getByText(
-          /Workplace pension: 5% from you and 3% from your employer, the auto-enrolment minimums, which are used until you set your own in your pension details\. They apply to your saved salary of £40,000\./,
+          /Workplace pension: your employer's contribution is not set, so it is not included\. 5% from you, of your saved salary of £40,000, is included\./,
+        ),
+      ).toBeTruthy();
+      expect(screen.queryByText(/auto-enrolment minimums/)).toBeNull();
+      expect(
+        screen
+          .getByRole("link", { name: "Add your rates on the Pension page" })
+          .getAttribute("href"),
+      ).toBe("/app/pension#pension-details");
+    });
+
+    it("says both rates are not set, with no stand-in figure", async () => {
+      const user = userEvent.setup();
+      renderPlanner({
+        planArgs: {
+          ...workplaceArgs,
+          workplacePension: {
+            annualSalary: 40_000,
+            employeePercent: 0,
+            employerPercent: 0,
+            notSet: ["pensionPercent", "pensionEmployerPercent"],
+          },
+        },
+      });
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      const note = screen.getByText(
+        /Workplace pension: your contribution and your employer's are not set, so they are not included\./,
+      );
+      expect(note.textContent).not.toMatch(/\d%/);
+    });
+
+    it("states a chosen 5% and 3% as chosen", async () => {
+      const user = userEvent.setup();
+      renderPlanner({
+        planArgs: {
+          ...workplaceArgs,
+          workplacePension: { annualSalary: 40_000, employeePercent: 5, employerPercent: 3 },
+        },
+      });
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(
+        screen.getByText(
+          /Workplace pension: 5% from you and 3% from your employer, of your saved salary of £40,000, from your pension details\./,
         ),
       ).toBeTruthy();
     });

@@ -51,6 +51,9 @@ export const USER_DATA_TABLES = [
   "idempotency_keys",
   "tax_records",
   "retirement_plans",
+  // Slice 6 migration before-images (children of user_profiles by profile_id, ON DELETE CASCADE).
+  "pension_rates_backfill",
+  "student_loan_plan_backfill",
   "user_profiles",
   // BE-04 deletion proofs: cleared too, so a persona id erased during staging testing can be seeded
   // again (a tombstone would otherwise refuse every request for that id).

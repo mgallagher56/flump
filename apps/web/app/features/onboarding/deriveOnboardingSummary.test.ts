@@ -100,11 +100,20 @@ describe("onboarding take-home is the engine's one selector (E16 PR 3)", () => {
       if (fig.status !== "known") throw new Error("expected known");
       expect(deriveOnboardingSummary(values).monthlyTakeHome).toBe(fig.value.monthly);
     }
-    expect(deriveOnboardingSummary(step1).takeHomeNote).toBe("Now includes your student loan");
+    // The pension is still blank at step 1: the figure has none in it, and the note says so.
+    expect(deriveOnboardingSummary(step1).takeHomeNote).toBe(
+      "Now includes your student loan. Before any pension contribution",
+    );
     expect(deriveOnboardingSummary(step3).takeHomeNote).toBe(
       "Now includes your 5% pension and student loan",
     );
-    expect(deriveOnboardingSummary(v({ grossSalary: 45000 })).takeHomeNote).toBeNull();
+    expect(deriveOnboardingSummary(v({ grossSalary: 45000 })).takeHomeNote).toBe(
+      "Before any pension contribution",
+    );
+    // 0% is an answer: no pension, so nothing to note.
+    expect(
+      deriveOnboardingSummary(v({ grossSalary: 45000, pensionPercent: 0 })).takeHomeNote,
+    ).toBeNull();
     expect(
       deriveOnboardingSummary(v({ incomeMode: "net", monthlyTakeHome: 2000, pensionPercent: 5 }))
         .takeHomeNote,

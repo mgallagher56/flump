@@ -8552,7 +8552,8 @@
                                 "enum": [
                                   "annualGrossSalary",
                                   "pensionContributionPct",
-                                  "employerPensionMatchPct"
+                                  "employerPensionMatchPct",
+                                  "isSalarySacrifice"
                                 ],
                                 "type": "string"
                               },
@@ -8757,6 +8758,17 @@
                               "type": ["boolean", "null"]
                             },
                             "monthlyHousingCost": {
+                              "anyOf": [
+                                {
+                                  "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "monthlyTakeHome": {
                               "anyOf": [
                                 {
                                   "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
@@ -9196,10 +9208,14 @@
                                 "isSalarySacrifice": {
                                   "type": "boolean"
                                 },
-                                "passEmployerNi": {
-                                  "type": "boolean"
+                                "notSet": {
+                                  "items": {
+                                    "enum": ["pensionPercent", "pensionEmployerPercent"],
+                                    "type": "string"
+                                  },
+                                  "type": "array"
                                 },
-                                "ratesAssumed": {
+                                "passEmployerNi": {
                                   "type": "boolean"
                                 }
                               },
@@ -12939,7 +12955,7 @@
                       "type": "string"
                     },
                     "isSalarySacrifice": {
-                      "type": "boolean"
+                      "type": ["boolean", "null"]
                     },
                     "isSalarySacrificeEmployerNi": {
                       "type": "boolean"
@@ -13005,10 +13021,10 @@
                       "type": "boolean"
                     },
                     "pensionEmployerPercent": {
-                      "type": "number"
+                      "type": ["number", "null"]
                     },
                     "pensionPercent": {
-                      "type": "number"
+                      "type": ["number", "null"]
                     },
                     "propertyOwnershipShare": {
                       "type": "number"
@@ -13447,7 +13463,7 @@
                     ]
                   },
                   "isSalarySacrifice": {
-                    "type": "boolean"
+                    "type": ["boolean", "null"]
                   },
                   "isSalarySacrificeEmployerNi": {
                     "type": "boolean"
@@ -13521,14 +13537,28 @@
                     "type": "boolean"
                   },
                   "pensionEmployerPercent": {
-                    "maximum": 100,
-                    "minimum": 0,
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "maximum": 100,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "pensionPercent": {
-                    "maximum": 100,
-                    "minimum": 0,
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "maximum": 100,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "propertyOwnershipShare": {
                     "maximum": 100,
@@ -13791,7 +13821,7 @@
                       "type": "string"
                     },
                     "isSalarySacrifice": {
-                      "type": "boolean"
+                      "type": ["boolean", "null"]
                     },
                     "isSalarySacrificeEmployerNi": {
                       "type": "boolean"
@@ -13857,10 +13887,10 @@
                       "type": "boolean"
                     },
                     "pensionEmployerPercent": {
-                      "type": "number"
+                      "type": ["number", "null"]
                     },
                     "pensionPercent": {
-                      "type": "number"
+                      "type": ["number", "null"]
                     },
                     "propertyOwnershipShare": {
                       "type": "number"
@@ -14318,7 +14348,7 @@
                       "type": "string"
                     },
                     "isSalarySacrifice": {
-                      "type": "boolean"
+                      "type": ["boolean", "null"]
                     },
                     "isSalarySacrificeEmployerNi": {
                       "type": "boolean"
@@ -14384,10 +14414,10 @@
                       "type": "boolean"
                     },
                     "pensionEmployerPercent": {
-                      "type": "number"
+                      "type": ["number", "null"]
                     },
                     "pensionPercent": {
-                      "type": "number"
+                      "type": ["number", "null"]
                     },
                     "propertyOwnershipShare": {
                       "type": "number"
@@ -14961,7 +14991,7 @@
                           "type": "string"
                         },
                         "isSalarySacrifice": {
-                          "type": "boolean"
+                          "type": ["boolean", "null"]
                         },
                         "isSalarySacrificeEmployerNi": {
                           "type": "boolean"
@@ -15027,10 +15057,10 @@
                           "type": "boolean"
                         },
                         "pensionEmployerPercent": {
-                          "type": "number"
+                          "type": ["number", "null"]
                         },
                         "pensionPercent": {
-                          "type": "number"
+                          "type": ["number", "null"]
                         },
                         "propertyOwnershipShare": {
                           "type": "number"

@@ -849,6 +849,16 @@ export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reas
     reason:
       "BE-05 migration before-image (old and new balance signs) kept so its down() can restore them; rows go with the account by ON DELETE CASCADE; not exported, as the current balances are in the export",
   },
+  pension_rates_backfill: {
+    parent: "user_profiles",
+    reason:
+      "slice 6 migration before-image (the cleared default pension rates) kept 90 days so its down() can restore them; rows go with the profile by ON DELETE CASCADE; not exported, as it is a rollback copy and the current answers are in the export",
+  },
+  student_loan_plan_backfill: {
+    parent: "user_profiles",
+    reason:
+      "slice 6 migration before-image (the student loan plans copied from accounts) kept 90 days so its down() can restore them; rows go with the profile by ON DELETE CASCADE; not exported, as it is a rollback copy and the current plans are in the export",
+  },
 };
 
 /**

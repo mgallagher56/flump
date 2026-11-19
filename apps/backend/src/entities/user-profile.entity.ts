@@ -174,10 +174,11 @@ export class UserProfile {
     // Four places so a rate worked out from pounds a month round-trips to the penny.
     precision: 7,
     scale: 4,
-    default: 5.0,
+    // Null until the person answers (owner decision 3, slice 6): no stand-in 5%.
+    nullable: true,
     transformer: numericTransformer,
   })
-  pensionPercent: number;
+  pensionPercent: number | null;
 
   @Column({
     name: "pension_employer_percent",
@@ -185,16 +186,19 @@ export class UserProfile {
     // Four places so a rate worked out from pounds a month round-trips to the penny.
     precision: 7,
     scale: 4,
-    default: 3.0,
+    // Null until the person answers (owner decision 3, slice 6): no stand-in 3%.
+    nullable: true,
     transformer: numericTransformer,
   })
-  pensionEmployerPercent: number;
+  pensionEmployerPercent: number | null;
 
   @Column({
     name: "is_salary_sacrifice",
-    default: false,
+    type: "boolean",
+    // Null until the person answers (owner decision 3, slice 6).
+    nullable: true,
   })
-  isSalarySacrifice: boolean;
+  isSalarySacrifice: boolean | null;
 
   /** Net worth choice: count Property values and Mortgage balances (equity). */
   @Column({

@@ -203,6 +203,7 @@ describe("profileFactsFromProfile", () => {
       studentLoanPlans: null,
       pensionPercent: null,
       isSalarySacrifice: null,
+      monthlyTakeHome: null,
       housingStatus: null,
       monthlyHousingCost: null,
       mortgageType: null,
@@ -240,34 +241,128 @@ describe("profileFactsFromProfile", () => {
   });
 });
 
-describe("stored salary sacrifice the user may never have chosen (legacy true default)", () => {
-  it("reads a stored true with the default 5% / 3% pension rates as not set", () => {
-    const facts = profileFactsFromProfile({
-      isSalarySacrifice: true,
-      pensionPercent: 5,
-      pensionEmployerPercent: 3,
+// Slice 6 (owner decision 3): the pension columns have no default, so a stored value is the
+// user's answer, including exactly 5% and 3%, and an unset rate is unknown, never 5% or 0.
+describe("pension answers (slice 6)", () => {
+  const employee30k: ProfileFacts = {
+    annualSalary: 30000,
+    employmentType: "employed",
+    taxRegion: "ENGLAND",
+    studentLoanPlans: [],
+    pensionPercent: null,
+    isSalarySacrifice: false,
+  };
+
+  it("an unset pension rate leaves take-home unknown, naming pensionPercent", () => {
+    expect(selectTakeHome(employee30k, opts)).toEqual({
+      status: "unknown",
+      missing: ["pensionPercent"],
+      reason: "not-set",
     });
-    expect(facts.isSalarySacrifice).toBeNull();
   });
 
-  it("keeps a stored true once the pension rates were changed, and always keeps false", () => {
-    expect(
-      profileFactsFromProfile({
-        isSalarySacrifice: true,
-        pensionPercent: 8,
-        pensionEmployerPercent: 3,
-      }).isSalarySacrifice,
-    ).toBe(true);
-    expect(
-      profileFactsFromProfile({
-        isSalarySacrifice: false,
-        pensionPercent: 5,
-        pensionEmployerPercent: 3,
-      }).isSalarySacrifice,
-    ).toBe(false);
-    expect(
-      profileFactsFromProfile({ isSalarySacrifice: true, pensionPercent: "5" as never })
-        .isSalarySacrifice,
-    ).toBe(true);
+  it("an unset rate and method name both, never a stand-in", () => {
+    const fig = selectTakeHome({ ...employee30k, isSalarySacrifice: null }, opts);
+    expect(fig.status === "unknown" && fig.missing).toEqual([
+      "pensionPercent",
+      "isSalarySacrifice",
+    ]);
+  });
+
+  it("a chosen 5% by net pay counts as chosen: £1,993 a month on £30,000", () => {
+    // 2026/27, England. Pension 30,000 x 5% = 1,500 (net pay: off before tax, not before NI).
+    // Tax (30,000 - 1,500 - 12,570) x 20% = 3,186. NI (30,000 - 12,570) x 8% = 1,394.40.
+    // Take-home 30,000 - 1,500 - 3,186 - 1,394.40 = 23,919.60 a year; / 12 = 1,993.30 -> £1,993.
+    const v = value(selectTakeHome({ ...employee30k, pensionPercent: 5 }, opts));
+    expect(v).toMatchObject({ basis: "worked-out", annual: 23920, monthly: 1993, pension: 1500 });
+  });
+
+  it("a chosen 5% with salary sacrifice is kept as chosen: £2,003 a month", () => {
+    // Salary sacrifice: pay for tax and NI is 28,500. Tax (28,500 - 12,570) x 20% = 3,186.
+    // NI (28,500 - 12,570) x 8% = 1,274.40. Take-home 30,000 - 1,500 - 3,186 - 1,274.40 =
+    // 24,039.60; / 12 = 2,003.30 -> £2,003. (Before slice 6 a stored true beside 5% and 3% was
+    // read as not set.)
+    const facts = profileFactsFromProfile({
+      annualSalary: 30000,
+      employmentType: "employed",
+      taxRegion: "ENGLAND",
+      studentLoanPlans: [],
+      pensionPercent: 5,
+      pensionEmployerPercent: 3,
+      isSalarySacrifice: true,
+    });
+    expect(facts.isSalarySacrifice).toBe(true);
+    expect(value(selectTakeHome(facts, opts)).monthly).toBe(2003);
+  });
+
+  it("a stored null method and rates read as not set", () => {
+    const facts = profileFactsFromProfile({
+      pensionPercent: null,
+      pensionEmployerPercent: null,
+      isSalarySacrifice: null,
+    });
+    expect(facts).toMatchObject({ pensionPercent: null, isSalarySacrifice: null });
+  });
+});
+
+// Slice 6 (owner decision 2 option A): a take-home typed in onboarding is stored as net pay and
+// the salary left empty. It is the take-home when no salary is saved.
+describe("typed take-home (slice 6)", () => {
+  const typedOnly: ProfileFacts = {
+    annualSalary: null,
+    employmentType: "employed",
+    taxRegion: null,
+    studentLoanPlans: null,
+    pensionPercent: null,
+    isSalarySacrifice: null,
+    monthlyTakeHome: 2500,
+  };
+
+  it("a typed £2,500 a month is the take-home as given: £2,500 a month, £30,000 a year", () => {
+    // Net pay as typed: 2,500 a month; 2,500 x 12 = 30,000 a year. Nothing is taken off it, and
+    // tax, NI, pension and student loan are not set (they need pay before tax).
+    expect(selectTakeHome(typedOnly, opts)).toEqual({
+      status: "known",
+      provenance: "user",
+      value: {
+        basis: "typed",
+        monthly: 2500,
+        annual: 30000,
+        incomeTax: null,
+        nationalInsurance: null,
+        studentLoan: null,
+        pension: null,
+        taxYear: null,
+        region: null,
+      },
+    });
+  });
+
+  it("reads monthly_take_home from the stored profile", () => {
+    const facts = profileFactsFromProfile({ monthlyTakeHome: "2500" as never });
+    expect(facts.monthlyTakeHome).toBe(2500);
+    expect(profileFactsFromProfile({ monthlyTakeHome: 0 }).monthlyTakeHome).toBeNull();
+  });
+
+  it("a saved salary wins over a typed take-home", () => {
+    const fig = value(
+      selectTakeHome(
+        {
+          ...typedOnly,
+          annualSalary: 30000,
+          pensionPercent: 5,
+          isSalarySacrifice: false,
+          taxRegion: "ENGLAND",
+          studentLoanPlans: [],
+        },
+        opts,
+      ),
+    );
+    expect(fig).toMatchObject({ basis: "worked-out", monthly: 1993 });
+  });
+
+  it("with neither salary nor typed take-home, it is unknown and names the salary", () => {
+    const fig = selectTakeHome({ ...typedOnly, monthlyTakeHome: null }, opts);
+    expect(fig.status === "unknown" && fig.missing).toContain("annualSalary");
   });
 });

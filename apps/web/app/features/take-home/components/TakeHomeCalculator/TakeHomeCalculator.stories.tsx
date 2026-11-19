@@ -61,3 +61,17 @@ export const NoSalary: Story = {
     await expect(canvas.getAllByRole("link", { name: "Add salary" })[0]).toBeDefined();
   },
 };
+
+/** No salary saved, a take-home typed during setup: the hero is that figure, the parts are not set. */
+export const TypedTakeHome: Story = {
+  args: { initialSalary: null },
+  decorators: [withSavedProfile({ annualSalary: null, monthlyTakeHome: 2500 })],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByText("The take-home pay you entered")[0]).toBeDefined();
+    await expect(canvas.getAllByRole("link", { name: "Add salary" })[0]).toBeDefined();
+    await expect(
+      canvas.queryAllByRole("button", { name: "Show what-if: change your pay" }),
+    ).toHaveLength(0);
+  },
+};

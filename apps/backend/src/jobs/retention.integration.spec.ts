@@ -152,6 +152,22 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [`user_inactive_${i}`],
         );
       }
+      // The slice 6 before-images: one row past 90 days and one inside it, each.
+      const [profile] = await ds.query("SELECT id FROM user_profiles WHERE user_id = $1", [
+        "user_inactive_1",
+      ]);
+      for (const age of ["91 days", "89 days"]) {
+        await ds.query(
+          `INSERT INTO pension_rates_backfill (profile_id, old_pension_percent, old_pension_employer_percent, old_is_salary_sacrifice, backfilled_at)
+           VALUES ($1, 5, 3, true, ${ago(age)})`,
+          [profile.id],
+        );
+        await ds.query(
+          `INSERT INTO student_loan_plan_backfill (profile_id, old_student_loan_plans, new_student_loan_plans, backfilled_at)
+           VALUES ($1, NULL, 'PLAN_2', ${ago(age)})`,
+          [profile.id],
+        );
+      }
     }
 
     it("deletes every row past its cutoff and keeps the rest", async () => {
@@ -168,6 +184,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           idempotency_keys: 1,
           account_deletion_tombstones: 1,
           liability_sign_backfill: 1,
+          pension_rates_backfill: 1,
+          student_loan_plan_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });
@@ -179,6 +197,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("idempotency_keys")).toBe(1);
       expect(await count("account_deletion_tombstones")).toBe(1);
       expect(await count("liability_sign_backfill")).toBe(1);
+      expect(await count("pension_rates_backfill")).toBe(1);
+      expect(await count("student_loan_plan_backfill")).toBe(1);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
     });

@@ -394,9 +394,9 @@ links:
   - {
       id: L27,
       group: "D. Profile, pay and pension",
-      verdict: broken,
+      verdict: holds,
       checked: browser,
-      findings: [PP-2, PP-3, DB-4],
+      note: "Slice 6: the rate columns have no default; L27-pension-rates-agree.spec.ts checks Pension and the Dashboard agree, including a chosen 5% and 3% and not set.",
       statement: "Pension rates saved on Profile are the rates on Pension, Take-home, Retirement and the Dashboard; the 5% and 3% row defaults are never shown as the user's choice.",
     }
   - {
@@ -420,14 +420,16 @@ links:
       verdict: duplicated,
       checked: browser,
       findings: [PP-7, SD-9, DB-7],
+      note: "Slice 6: StudentLoanPlanToProfile copied account plans into unanswered profiles; L30-student-loan-plan-agrees.spec.ts checks they agree. Still two stores until the account form writes the profile (after slice 4) and slice 9 drops the account column.",
       statement: "Student loan plan has one store: the plan on a student loan account and the plans on the profile agree, and take-home uses it.",
     }
   - {
       id: L31,
       group: "D. Profile, pay and pension",
-      verdict: broken,
-      checked: code,
-      findings: [PP-1, PP-2, PP-4, PP-5],
+      verdict: duplicated,
+      checked: browser,
+      findings: [BU-1, PP-5],
+      note: "Slice 6: L31-take-home-agrees.spec.ts checks the Dashboard and Take-home page agree, worked out and typed. The Budget income row (slice 5) and the context pack remain apart.",
       statement: "Take-home pay is the same figure on the Dashboard, Take-home, Budget, Pension, safe to spend and in AI output.",
     }
   - {
@@ -437,6 +439,7 @@ links:
       checked: code,
       findings: [PP-10, DB-2],
       statement: "Second income, rental income and monthly take-home fields on the profile are used by a figure.",
+      note: "Slice 6: monthly take-home is now used by selectTakeHome; second and rental income are still unused.",
     }
   - {
       id: L69,
@@ -781,7 +784,7 @@ facts:
       - {
           surface: onboarding,
           path: apps/web/app/features/onboarding/useFinishOnboarding.ts,
-          note: "take-home mode saves net pay times 12 here",
+          note: "salary mode only; take-home mode leaves the salary empty (decision 2)",
         }
       - {
           surface: settings,
@@ -805,7 +808,7 @@ facts:
         }
     links: [L24, L25, L26, L33, L47, L69]
     verdict: duplicated
-    findings: [PP-1, BU-1, BU-2, SA-6, DB-5]
+    findings: [BU-1, SA-6, DB-5]
 
   - id: typed-take-home
     name: Monthly take-home pay as typed in onboarding
@@ -816,17 +819,33 @@ facts:
         path: apps/backend/src/entities/user-profile.entity.ts,
       }
     writers:
-      - { surface: onboarding, path: apps/web/app/features/onboarding/useFinishOnboarding.ts }
+      - {
+          surface: onboarding,
+          path: apps/web/app/features/onboarding/useFinishOnboarding.ts,
+          note: "take-home mode only, as net pay; salary mode saves null (decision 2)",
+        }
     readers:
+      - {
+          surface: picture,
+          path: packages/finance-engine/src/picture/input.ts,
+          note: "profileFactsFromProfile reads it as ProfileFacts.monthlyTakeHome",
+        }
+      - {
+          surface: picture,
+          path: packages/finance-engine/src/picture/selectors/take-home.ts,
+          note: "selectTakeHome uses it as the take-home (basis typed) when no salary is saved",
+        }
       - {
           surface: context-pack,
           path: packages/finance-engine/src/profile.ts,
-          note: "passed through the baseline; no figure uses it",
+          note: "passed through the baseline as monthlyTakeHomeOverride",
         }
-    links: [L32]
-    verdict: broken
-    findings: [PP-1, PP-10]
-    note: Stored and never used by a figure.
+    links: [L31, L32]
+    verdict: holds
+    note: >-
+      Slice 6 (owner decision 2 option A): net pay typed in onboarding is stored here and the
+      salary is left empty. Figures that need pay before tax (tax, National Insurance, pension in
+      pounds) show "Not set" until a salary is saved; a saved salary always wins.
 
   - id: employment-type
     name: Employment type
@@ -857,7 +876,7 @@ facts:
       {
         ref: "user_profiles.pension_percent, pension_employer_percent, is_salary_sacrifice, is_salary_sacrifice_employer_ni",
         path: apps/backend/src/entities/user-profile.entity.ts,
-        note: "the columns default to 5, 3 and false, so an unanswered question looks answered",
+        note: "pension_percent, pension_employer_percent and is_salary_sacrifice are nullable with no default (slice 6, decision 3): null is not set; a stored value, including 5 and 3, is the user's answer",
       }
     other_stores:
       - {
@@ -876,18 +895,27 @@ facts:
       - {
           surface: reset,
           path: apps/backend/src/modules/profile/profile-view.ts,
-          note: "reset stores 0% as if it were an answer",
+          note: "reset stores not set (null) for the three answers (AI-12)",
         }
     readers:
       - { surface: picture, path: packages/finance-engine/src/picture/input.ts }
       - { surface: pension, path: apps/web/app/features/pension/contribution.ts }
       - { surface: dashboard, path: apps/web/app/routes/_index.tsx }
-      - { surface: retirement, path: packages/finance-engine/src/workplace-pension.ts }
+      - {
+          surface: retirement,
+          path: packages/finance-engine/src/workplace-pension.ts,
+          note: "an unset rate is listed in notSet and left out of the projection, and the page says so",
+        }
       - { surface: context-pack, path: packages/finance-engine/src/profile.ts }
     links: [L27, L31, L37]
-    verdict: broken
-    findings: [PP-2, PP-3, PP-4, PP-11, DB-4, AI-12]
+    verdict: duplicated
+    findings: [PP-11]
     note: >-
+      Slice 6: migration ClearDefaultPensionRates set rows holding exactly the old 5% and 3%
+      defaults to not set, with a before-image table and a guard (it changes nothing on or after
+      2027-01-01, or once its before-image table exists). What remains is PP-11: a pot's own
+      monthly payment can repeat the workplace contribution.
+
       pension_percent and pension_employer_percent are numeric(7,4). Pounds a month typed on the
       Profile tab become the stored rate to four places (finance-engine
       contributionPercentFromMonthly), so they round-trip to the penny; screens show at most two
@@ -915,13 +943,6 @@ facts:
     area: pay
     source_of_truth:
       { ref: user_profiles.tax_region, path: apps/backend/src/entities/user-profile.entity.ts }
-    other_stores:
-      - {
-          ref: "browser baseline ukRegion",
-          status: cache,
-          path: apps/web/app/utils/taxTrapCopy.ts,
-          note: "the Pension tax-trap notice reads this copy",
-        }
     writers:
       - { surface: onboarding, path: apps/web/app/features/onboarding/useFinishOnboarding.ts }
       - {
@@ -934,8 +955,11 @@ facts:
       - { surface: mcp-read, path: packages/mcp/src/tools/read/getTaxYearPosition.ts }
     links: [L29]
     verdict: broken
-    findings: [SA-3, PP-8, PP-9, CS-7]
-    note: The Self Assessment calculation takes no region and always uses England, Wales and Northern Ireland bands.
+    findings: [SA-3, PP-8]
+    note: >-
+      The Self Assessment calculation takes no region and always uses England, Wales and Northern
+      Ireland bands (slice 7). Slice 6: the Pension page's £100,000 notice reads the saved region
+      from the profile, no longer the browser baseline (PP-9, CS-7).
 
   - id: student-loan-plan
     name: Student loan plan
@@ -950,7 +974,7 @@ facts:
           ref: accounts.student_loan_plan,
           status: duplicate,
           path: apps/backend/src/entities/account.entity.ts,
-          note: "asked for when a Student Loan account is added; take-home never reads it",
+          note: "asked for when a Student Loan account is added; take-home never reads it. Slice 6 migration StudentLoanPlanToProfile copied it into every profile with no answer; the account form writing the profile waits for slice 4; the column is dropped in slice 9",
         }
     writers:
       - { surface: onboarding, path: apps/web/app/features/onboarding/useFinishOnboarding.ts }
@@ -2100,15 +2124,15 @@ figures:
           function: "onboarding take-home facts",
           status: wrapper,
           path: apps/web/app/features/onboarding/deriveOnboardingSummary.ts,
-          note: "same function, blank pension read as 0%",
+          note: "same function; a blank pension is worked out with none and labelled 'Before any pension contribution', and the Dashboard says not set until a rate is saved",
         }
       - {
           function: "pension take-home facts",
           status: wrapper,
           path: apps/web/app/containers/pension/PensionContainer.tsx,
-          note: "same function, 5% read as unknown",
+          note: "same function, the saved facts as stored",
         }
-    inputs: [salary, pension-rates, tax-region, student-loan-plan]
+    inputs: [salary, typed-take-home, pension-rates, tax-region, student-loan-plan]
     shown_on:
       - { surface: dashboard, path: apps/web/app/routes/_index.tsx }
       - {
@@ -2123,8 +2147,13 @@ figures:
       - { surface: onboarding, path: apps/web/app/features/onboarding/deriveOnboardingSummary.ts }
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L31]
-    verdict: broken
-    findings: [PP-1, PP-2, PP-4, PP-5]
+    verdict: duplicated
+    findings: [BU-1, PP-5]
+    note: >-
+      Slice 6: the Dashboard, Take-home, Pension, safe to spend and onboarding all use
+      selectTakeHome, a typed take-home counts when no salary is saved, and unset pension rates
+      leave it not set. Still apart: the Budget income row is a copy (BU-1, slice 5), and the AI
+      context pack works its own tax position from the baseline (PP-5).
 
   - id: left-over
     name: Left over each month and budget totals

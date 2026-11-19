@@ -36,7 +36,7 @@ export const Saved: Story = {
 
 export const SavedDark: Story = { ...Saved, globals: { theme: "dark" } };
 
-/** A new profile: no year or salary, and the 5% and 3% creation defaults read as not set. */
+/** A new profile: no year, salary or pension rates, each read as not set. */
 export const NothingSet: Story = {
   args: {
     profile: { ...DEFAULT_PROFILE, birthYear: null, annualSalary: null },

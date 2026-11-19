@@ -280,7 +280,14 @@ const McpInputBaseline = z.strictObject({
   ),
   /** finance-engine `SavedFinancialBaseline.notSet`: figures that are a stand-in 0, not saved. */
   notSet: z
-    .array(z.enum(["annualGrossSalary", "pensionContributionPct", "employerPensionMatchPct"]))
+    .array(
+      z.enum([
+        "annualGrossSalary",
+        "pensionContributionPct",
+        "employerPensionMatchPct",
+        "isSalarySacrifice",
+      ]),
+    )
     .optional(),
 });
 
@@ -292,6 +299,8 @@ const McpInputProfileFacts = z.strictObject({
   studentLoanPlans: z.array(z.string()).nullable(),
   pensionPercent: z.number().nullable(),
   isSalarySacrifice: z.boolean().nullable(),
+  /** Monthly take-home typed as net pay (onboarding), or null; optional for older callers. */
+  monthlyTakeHome: ResponseMoney.nullable().optional(),
   housingStatus: z.enum(["renting", "mortgage", "own_outright", "living_with_family"]).nullable(),
   monthlyHousingCost: ResponseMoney.nullable(),
   mortgageType: z.enum(["repayment", "interest-only"]).nullable(),
@@ -356,6 +365,21 @@ const McpInputTaxRecord = z.strictObject({
  * the owner of the personal access token in the Authorization header. `token` says what that
  * token may do, so a local MCP server applies the same scopes and anonymisation as the remote one.
  */
+/**
+ * The saved workplace pension from salary (E33 RD6). A plain object, not strict: unknown keys are
+ * dropped, so a payload from a backend older than slice 6 (which sent `ratesAssumed`) still
+ * parses in a newer MCP reader.
+ */
+export const McpInputWorkplacePension = z.object({
+  annualSalary: z.number().nonnegative(),
+  employeePercent: z.number().nonnegative(),
+  employerPercent: z.number().nonnegative(),
+  isSalarySacrifice: z.boolean().optional(),
+  passEmployerNi: z.boolean().optional(),
+  /** The rates the person has not set (slice 6); each counts as no contribution. */
+  notSet: z.array(z.enum(["pensionPercent", "pensionEmployerPercent"])).optional(),
+});
+
 export const McpInputResponse = z.strictObject({
   token: z.strictObject({
     /** The token's own id: the key its short ids are derived from. Null for a dev token. */
@@ -380,18 +404,7 @@ export const McpInputResponse = z.strictObject({
     /** The saved retirement plan, or null when none is saved. */
     retirementPlan: McpInputRetirementPlan.nullable().optional(),
     /** The saved workplace pension from salary, or null when no salary is saved (E33 RD6). */
-    workplacePension: z
-      .strictObject({
-        annualSalary: z.number().nonnegative(),
-        employeePercent: z.number().nonnegative(),
-        employerPercent: z.number().nonnegative(),
-        isSalarySacrifice: z.boolean().optional(),
-        passEmployerNi: z.boolean().optional(),
-        /** True when the rates are the untouched 5% and 3% creation defaults, not ones the user set. */
-        ratesAssumed: z.boolean().optional(),
-      })
-      .nullable()
-      .optional(),
+    workplacePension: McpInputWorkplacePension.nullable().optional(),
     /** The saved birth year; left out when none is saved. */
     birthYear: z.number().int().optional(),
   }),

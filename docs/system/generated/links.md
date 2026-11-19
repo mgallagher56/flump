@@ -6,10 +6,10 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 | Verdict                                   | Count |
 | ----------------------------------------- | ----- |
-| Holds                                     | 29    |
+| Holds                                     | 30    |
 | Holds with a manual step or a delay       | 8     |
-| Broken                                    | 23    |
-| Duplicated (two stores that can disagree) | 13    |
+| Broken                                    | 21    |
+| Duplicated (two stores that can disagree) | 14    |
 | Not checked                               | 0     |
 
 ## A. Accounts and balances
@@ -56,18 +56,18 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 ## D. Profile, pay and pension
 
-| Id  | Statement                                                                                                                                                          | Verdict                                   | Checked in | Findings               |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | ---------- | ---------------------- |
-| L24 | A salary saved on Profile is the salary on Pension, Retirement, Take-home, Self Assessment, the Dashboard and in AI output.                                        | Holds                                     | browser    | none                   |
-| L25 | A salary edited on Pension, Self Assessment or onboarding changes the Profile salary.                                                                              | Holds                                     | code       | none                   |
-| L26 | Nothing held in the browser ever overrides or stands in for a saved salary, region or pension rate.                                                                | Holds with a manual step or a delay       | code       | PP-9, CS-7             |
-| L27 | Pension rates saved on Profile are the rates on Pension, Take-home, Retirement and the Dashboard; the 5% and 3% row defaults are never shown as the user's choice. | Broken                                    | browser    | PP-2, PP-3, DB-4       |
-| L28 | Year of birth saved on Profile is the age used on Retirement and in AI output.                                                                                     | Holds                                     | code       | none                   |
-| L29 | Tax region saved on Profile is used by Take-home, Self Assessment, the pension tax-trap notice and AI output.                                                      | Broken                                    | browser    | SA-3, PP-8             |
-| L30 | Student loan plan has one store: the plan on a student loan account and the plans on the profile agree, and take-home uses it.                                     | Duplicated (two stores that can disagree) | browser    | PP-7, SD-9, DB-7       |
-| L31 | Take-home pay is the same figure on the Dashboard, Take-home, Budget, Pension, safe to spend and in AI output.                                                     | Broken                                    | code       | PP-1, PP-2, PP-4, PP-5 |
-| L32 | Second income, rental income and monthly take-home fields on the profile are used by a figure.                                                                     | Broken                                    | code       | PP-10, DB-2            |
-| L69 | When a fact is not saved, no page or tool invents a value for it.                                                                                                  | Broken                                    | code       | DB-5                   |
+| Id  | Statement                                                                                                                                                          | Verdict                                   | Checked in | Findings         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | ---------- | ---------------- |
+| L24 | A salary saved on Profile is the salary on Pension, Retirement, Take-home, Self Assessment, the Dashboard and in AI output.                                        | Holds                                     | browser    | none             |
+| L25 | A salary edited on Pension, Self Assessment or onboarding changes the Profile salary.                                                                              | Holds                                     | code       | none             |
+| L26 | Nothing held in the browser ever overrides or stands in for a saved salary, region or pension rate.                                                                | Holds with a manual step or a delay       | code       | PP-9, CS-7       |
+| L27 | Pension rates saved on Profile are the rates on Pension, Take-home, Retirement and the Dashboard; the 5% and 3% row defaults are never shown as the user's choice. | Holds                                     | browser    | none             |
+| L28 | Year of birth saved on Profile is the age used on Retirement and in AI output.                                                                                     | Holds                                     | code       | none             |
+| L29 | Tax region saved on Profile is used by Take-home, Self Assessment, the pension tax-trap notice and AI output.                                                      | Broken                                    | browser    | SA-3, PP-8       |
+| L30 | Student loan plan has one store: the plan on a student loan account and the plans on the profile agree, and take-home uses it.                                     | Duplicated (two stores that can disagree) | browser    | PP-7, SD-9, DB-7 |
+| L31 | Take-home pay is the same figure on the Dashboard, Take-home, Budget, Pension, safe to spend and in AI output.                                                     | Duplicated (two stores that can disagree) | browser    | BU-1, PP-5       |
+| L32 | Second income, rental income and monthly take-home fields on the profile are used by a figure.                                                                     | Broken                                    | code       | PP-10, DB-2      |
+| L69 | When a fact is not saved, no page or tool invents a value for it.                                                                                                  | Broken                                    | code       | DB-5             |
 
 ## E. Budget
 

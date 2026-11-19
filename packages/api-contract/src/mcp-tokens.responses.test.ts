@@ -3,6 +3,7 @@ import {
   ContextPackResponse,
   CreateMcpTokenRequest,
   CreateMcpTokenResponse,
+  McpInputWorkplacePension,
   McpTokenActivityListResponse,
   McpTokenListResponse,
   RevokeMcpTokenResponse,
@@ -257,5 +258,35 @@ describe("mcp-tokens response schemas", () => {
     expect(route?.query?.safeParse({ cursor: "MGI2ZjRlMWEtOWMy" }).success).toBe(true);
     expect(route?.query?.safeParse({ before: "MGI2ZjRlMWEtOWMy" }).success).toBe(false);
     expect(route?.query?.safeParse({}).success).toBe(true);
+  });
+});
+
+describe("McpInputWorkplacePension (slice 6)", () => {
+  it("parses a payload from before slice 6 that still carries ratesAssumed, and drops it", () => {
+    const older = {
+      annualSalary: 40000,
+      employeePercent: 5,
+      employerPercent: 3,
+      isSalarySacrifice: false,
+      ratesAssumed: true,
+    };
+    const parsed = McpInputWorkplacePension.parse(older);
+    expect(parsed).toEqual({
+      annualSalary: 40000,
+      employeePercent: 5,
+      employerPercent: 3,
+      isSalarySacrifice: false,
+    });
+  });
+
+  it("parses the new notSet list", () => {
+    expect(
+      McpInputWorkplacePension.parse({
+        annualSalary: 40000,
+        employeePercent: 0,
+        employerPercent: 3,
+        notSet: ["pensionPercent"],
+      }).notSet,
+    ).toEqual(["pensionPercent"]);
   });
 });

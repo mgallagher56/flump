@@ -24,7 +24,16 @@ import { HOUSING_STATUSES, TAX_REGIONS, UserProfile } from "../../entities/user-
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "../../identity/identity.adapter";
 import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountDeletionService } from "../privacy/account-deletion.service";
-import { USER_DATA_REGISTRY } from "../privacy/user-data-registry";
+import { CASCADE_ONLY_TABLES, USER_DATA_REGISTRY } from "../privacy/user-data-registry";
+
+/**
+ * Before-image tables whose rows hang off the profile row (CASCADE_ONLY_TABLES with parent
+ * user_profiles). Table names are registry constants, never user input.
+ */
+const PROFILE_BEFORE_IMAGE_TABLES = Object.entries(CASCADE_ONLY_TABLES)
+  .filter(([, entry]) => entry.parent === "user_profiles")
+  .map(([table]) => table);
+
 import { writeOnboardingSnapshot } from "../snapshots/first-snapshot";
 
 import {
@@ -144,9 +153,9 @@ export class UserProfileService implements ProfileLifecycle {
       buyToLetMortgageBalance: null,
       buyToLetMortgageRate: null,
       buyToLetMortgageType: "interest-only",
-      pensionPercent: 5.0,
-      pensionEmployerPercent: 3.0,
-      isSalarySacrifice: false,
+      pensionPercent: null,
+      pensionEmployerPercent: null,
+      isSalarySacrifice: null,
       isSalarySacrificeEmployerNi: false,
       monthlySavingsTarget: null,
       savingsAllocationMode: "per_account",
@@ -250,7 +259,14 @@ export class UserProfileService implements ProfileLifecycle {
     if (body.country !== undefined) profile.country = body.country;
     if (body.employmentType !== undefined) profile.employmentType = body.employmentType ?? null;
     if (body.annualSalary !== undefined) profile.annualSalary = body.annualSalary ?? null;
-    if (body.monthlyTakeHome !== undefined) profile.monthlyTakeHome = body.monthlyTakeHome ?? null;
+    if (body.monthlyTakeHome !== undefined) {
+      profile.monthlyTakeHome = body.monthlyTakeHome ?? null;
+    } else if (body.annualSalary !== undefined) {
+      // A saved salary always wins (slice 6). Old salary-mode onboarding stored a computed
+      // take-home, which would otherwise come back as "the take-home you entered" once the
+      // salary is cleared. Onboarding's take-home mode sends both and keeps its typed figure.
+      profile.monthlyTakeHome = null;
+    }
     if (body.hasSecondIncome !== undefined) profile.hasSecondIncome = body.hasSecondIncome;
     if (body.secondIncomeMonthly !== undefined)
       profile.secondIncomeMonthly = body.secondIncomeMonthly ?? null;
@@ -381,6 +397,18 @@ export class UserProfileService implements ProfileLifecycle {
       let profile = await profileRepo.findOne({ where: { userId } });
       if (!profile) {
         profile = profileRepo.create({ userId });
+      } else {
+        // Migration before-images hang off the profile row, which a reset keeps, so ON DELETE
+        // CASCADE never fires: clear this user's rows here, so no rollback can bring back
+        // financial data the user reset (security review, slice 6).
+        for (const table of PROFILE_BEFORE_IMAGE_TABLES) {
+          const [exists] = (await profileRepo.query("SELECT to_regclass($1) AS t", [
+            `public.${table}`,
+          ])) as Array<{ t: string | null }>;
+          if (exists?.t) {
+            await profileRepo.query(`DELETE FROM "${table}" WHERE "profile_id" = $1`, [profile.id]);
+          }
+        }
       }
       clearFinancialProfileFields(profile);
       return { saved: await profileRepo.save(profile), counts };
@@ -453,9 +481,9 @@ export class UserProfileService implements ProfileLifecycle {
       rentalIncomeMonthly: null,
       hasMortgage: false,
       propertyOwnershipShare: 100.0,
-      pensionPercent: 5.0,
-      pensionEmployerPercent: 3.0,
-      isSalarySacrifice: false,
+      pensionPercent: null,
+      pensionEmployerPercent: null,
+      isSalarySacrifice: null,
       monthlySavingsTarget: null,
       savingsAllocationMode: "per_account",
       savingsDefaultInterestRate: 5.0,

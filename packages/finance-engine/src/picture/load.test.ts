@@ -99,6 +99,7 @@ describe("profileFromFacts", () => {
       studentLoanPlans: ["PLAN_2"],
       pensionPercent: 5,
       isSalarySacrifice: true,
+      monthlyTakeHome: null,
       housingStatus: "mortgage",
       monthlyHousingCost: 1100,
       mortgageType: "repayment",

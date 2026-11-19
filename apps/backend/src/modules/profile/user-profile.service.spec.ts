@@ -8,7 +8,7 @@ type DeleteRepo = { delete: Mock };
 
 describe("UserProfileService (Deep Module)", () => {
   let service: UserProfileService;
-  let mockUserProfileRepo: { findOne: Mock; save: Mock; create: Mock };
+  let mockUserProfileRepo: { findOne: Mock; save: Mock; create: Mock; query: Mock };
   let mockAccountRepo: { find: Mock; delete: Mock };
   let mockTransactionRepo: DeleteRepo;
   let mockAccountDetailRepo: DeleteRepo;
@@ -48,6 +48,8 @@ describe("UserProfileService (Deep Module)", () => {
       findOne: vi.fn(),
       save: vi.fn((entity) => Promise.resolve({ id: "profile-1", ...entity })),
       create: vi.fn((entity) => ({ ...entity })),
+      // Raw queries clear the profile's migration before-images on reset (every table exists here).
+      query: vi.fn().mockResolvedValue([{ t: "exists" }]),
     };
     mockAccountRepo = {
       find: vi.fn().mockResolvedValue([{ id: "acc-1", userId: "user-123" }]),
@@ -145,6 +147,19 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.success).toBe(true);
     expect(result.profile.hasResetFinancialData).toBe(true);
     expect(result.profile.annualSalary).toBeNull();
+  });
+
+  it("clears this profile's migration before-images on reset, so no rollback restores them", async () => {
+    // Slice 6 security review: the before-images hang off the profile row, which a reset keeps.
+    mockUserProfileRepo.findOne.mockResolvedValueOnce({ id: "profile-9", userId: "user-123" });
+    await service.resetFinancialData("user-123");
+    const deletes = mockUserProfileRepo.query.mock.calls.filter(([sql]) =>
+      String(sql).startsWith("DELETE"),
+    );
+    expect(deletes.map(([sql, params]) => [sql, params])).toEqual([
+      ['DELETE FROM "pension_rates_backfill" WHERE "profile_id" = $1', ["profile-9"]],
+      ['DELETE FROM "student_loan_plan_backfill" WHERE "profile_id" = $1', ["profile-9"]],
+    ]);
   });
 
   it("clears the leftover financial profile facts on reset (M-PRIV1) and keeps identity", async () => {
@@ -260,49 +275,124 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.dashboardWidgetSizes).toEqual({ accounts: "wide" });
   });
 
-  describe("salary sacrifice is never assumed", () => {
-    it("getProfile creates a new profile with salary sacrifice off", async () => {
+  describe("pension answers are never assumed (owner decision 3)", () => {
+    const UNANSWERED = {
+      pensionPercent: null,
+      pensionEmployerPercent: null,
+      isSalarySacrifice: null,
+    };
+
+    it("getProfile creates a new profile with the pension answers not set", async () => {
       mockUserProfileRepo.findOne.mockResolvedValue(null);
 
       const result = await service.getProfile("user-123");
 
-      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ isSalarySacrifice: false }),
-      );
-      expect(result.isSalarySacrifice).toBe(false);
+      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(expect.objectContaining(UNANSWERED));
+      expect(result).toMatchObject(UNANSWERED);
+      expect(result.isSalarySacrificeEmployerNi).toBe(false);
     });
 
-    it("updateProfile creates a new profile with salary sacrifice off", async () => {
+    it("updateProfile creates a new profile with the pension answers not set", async () => {
       mockUserProfileRepo.findOne.mockResolvedValue(null);
 
       const result = await service.updateProfile("user-123", { currency: "EUR" });
 
-      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ isSalarySacrifice: false }),
-      );
-      expect(result.isSalarySacrifice).toBe(false);
+      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(expect.objectContaining(UNANSWERED));
+      expect(result).toMatchObject(UNANSWERED);
     });
 
-    it("updateChecklist creates a new profile with salary sacrifice off", async () => {
+    it("updateChecklist creates a new profile with the pension answers not set", async () => {
       mockUserProfileRepo.findOne.mockResolvedValue(null);
 
       await service.updateChecklist("user-123", "profile", true);
 
-      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ isSalarySacrifice: false }),
-      );
+      expect(mockUserProfileRepo.create).toHaveBeenCalledWith(expect.objectContaining(UNANSWERED));
     });
 
-    it("reads a stored null as off", async () => {
+    it("reads stored nulls as not set, never 5%, 3% or off", async () => {
       mockUserProfileRepo.findOne.mockResolvedValue({
         id: "profile-1",
         userId: "user-123",
-        isSalarySacrifice: null,
+        ...UNANSWERED,
       });
 
       const result = await service.getProfile("user-123");
 
-      expect(result.isSalarySacrifice).toBe(false);
+      expect(result).toMatchObject(UNANSWERED);
+    });
+
+    it("shows a saved answer as saved, including a chosen 5% and 3% and false", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({
+        id: "profile-1",
+        userId: "user-123",
+        pensionPercent: "5.0000",
+        pensionEmployerPercent: "3.0000",
+        isSalarySacrifice: false,
+      });
+
+      const result = await service.getProfile("user-123");
+
+      expect(result).toMatchObject({
+        pensionPercent: 5,
+        pensionEmployerPercent: 3,
+        isSalarySacrifice: false,
+      });
+    });
+
+    it("saves null to clear an answer", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({
+        id: "profile-1",
+        userId: "user-123",
+        pensionPercent: 6,
+        pensionEmployerPercent: 4,
+        isSalarySacrifice: true,
+      });
+
+      const result = await service.updateProfile("user-123", UNANSWERED);
+
+      expect(mockUserProfileRepo.save).toHaveBeenCalledWith(expect.objectContaining(UNANSWERED));
+      expect(result).toMatchObject(UNANSWERED);
+    });
+  });
+
+  describe("a typed take-home never outlives a salary change (slice 6)", () => {
+    const stored = () => ({
+      id: "profile-1",
+      userId: "user-123",
+      annualSalary: 40000,
+      monthlyTakeHome: 2600,
+    });
+
+    it("clears the take-home when the salary is saved without one", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(stored());
+      const result = await service.updateProfile("user-123", { annualSalary: 52000 });
+      expect(mockUserProfileRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ annualSalary: 52000, monthlyTakeHome: null }),
+      );
+      expect(result.monthlyTakeHome).toBeNull();
+    });
+
+    it("clears the take-home when the salary is cleared without one", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(stored());
+      const result = await service.updateProfile("user-123", { annualSalary: null });
+      expect(result.annualSalary).toBeNull();
+      expect(result.monthlyTakeHome).toBeNull();
+    });
+
+    it("keeps the typed take-home when both are sent (onboarding's take-home mode)", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(stored());
+      const result = await service.updateProfile("user-123", {
+        annualSalary: null,
+        monthlyTakeHome: 2450,
+      });
+      expect(result.annualSalary).toBeNull();
+      expect(result.monthlyTakeHome).toBe(2450);
+    });
+
+    it("leaves the take-home alone when neither is sent", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(stored());
+      const result = await service.updateProfile("user-123", { currency: "EUR" });
+      expect(result.monthlyTakeHome).toBe(2600);
     });
   });
 

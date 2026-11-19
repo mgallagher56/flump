@@ -20,7 +20,8 @@ const ONBOARDING_PAGES = ["accounts", "budget", "savings", "debt", "pension", "m
 export const ONBOARDING_PROFILE = {
   birthYear: new Date().getFullYear() - 32,
   annualSalary: 45000,
-  monthlyTakeHome: 2718,
+  // Salary mode: the take-home is worked out from the salary, so none is typed (slice 6).
+  monthlyTakeHome: null,
   employmentType: "employed",
   taxRegion: "SCOTLAND",
   studentLoanPlans: ["PLAN_2"],

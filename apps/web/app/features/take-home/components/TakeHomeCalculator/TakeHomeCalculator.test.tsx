@@ -266,3 +266,35 @@ describe("<TakeHomeCalculator /> the scenario zone", () => {
     expect(count()).toBe(1);
   });
 });
+
+describe("<TakeHomeCalculator /> typed take-home", () => {
+  test("shows the typed take-home as entered, the parts as one prompt to add salary, and no pay-rise what-if", () => {
+    const { container, getByRole, getByText, queryByRole, queryByText } = customRender(
+      <TakeHomeCalculator initialSalary={null} onApplyIncrease={vi.fn()} />,
+      withProfile({ annualSalary: null, monthlyTakeHome: 2500 }),
+    );
+    const heroText = hero(container)?.textContent ?? "";
+    // Typed net pay is the take-home itself (owner decision 2 option A): £2,500 a month.
+    expect(heroText).toContain("Monthly take-home pay");
+    expect(heroText).toContain("£2,500");
+    expect(heroText).toContain("The take-home pay you entered");
+    // It is the user's own figure, not an estimate.
+    expect(container.querySelector("[data-estimate-label]")).toBeNull();
+    expect(getByText("Add your salary before tax to see what comes off your pay")).toBeDefined();
+    expect(getByRole("link", { name: "Add salary" }).getAttribute("href")).toBe(
+      "/app/profile#settings-age-and-pay",
+    );
+    expect(queryByRole("button", { name: "Show what-if: change your pay" })).toBeNull();
+    expect(queryByText(/£0\b/)).toBeNull();
+  });
+
+  test("a saved salary always wins over a typed take-home", () => {
+    const { container } = customRender(
+      <TakeHomeCalculator initialSalary={32000} onApplyIncrease={vi.fn()} />,
+      withProfile({ monthlyTakeHome: 2500 }),
+    );
+    const heroText = hero(container)?.textContent ?? "";
+    expect(heroText).not.toContain("The take-home pay you entered");
+    expect(heroText).not.toContain("£2,500");
+  });
+});

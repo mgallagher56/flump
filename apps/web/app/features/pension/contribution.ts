@@ -9,21 +9,16 @@ export const MAX_CONTRIBUTION_PERCENT = 40;
 /** Helper text under a what-if contribution slider once it has been moved. */
 export const CONTRIBUTION_EDITED_TEXT = "Edited. Not saved.";
 
-/** The rates the backend gives a new profile row: the auto-enrolment minimums. */
-export const CREATION_DEFAULT_PENSION_PERCENT = 5;
-export const CREATION_DEFAULT_EMPLOYER_PERCENT = 3;
+/** Shown wherever a pension answer has not been given (owner decision 3). Never 0 or 5%. */
+export const NOT_SET = "Not set";
 
 /**
- * True when the saved pension rates are still exactly the 5% and 3% the backend creates the
- * profile row with, so they are treated as a default the user may never have chosen. Shared by
- * the Pension page and the Profile tab so both read "Not set" in the same case.
+ * A saved pension rate as the user gave it, or null when it was never answered. The profile
+ * stores null for an unanswered rate (owner decision 3), so a stored 5 and 3 is the user's own
+ * choice like any other value.
  */
-export const pensionRatesAssumed = (profile: {
-  pensionPercent?: number | null;
-  pensionEmployerPercent?: number | null;
-}): boolean =>
-  profile.pensionPercent === CREATION_DEFAULT_PENSION_PERCENT &&
-  profile.pensionEmployerPercent === CREATION_DEFAULT_EMPLOYER_PERCENT;
+export const savedPensionRate = (value: number | null | undefined): number | null =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
 
 /**
  * How a contribution is entered or shown. The profile stores the percentage only; pounds a month

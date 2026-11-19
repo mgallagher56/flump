@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { pensionRatesAssumed } from "./contribution";
+import { savedPensionRate } from "./contribution";
 
-describe("pensionRatesAssumed", () => {
-  it("is true only for the exact 5% and 3% creation defaults", () => {
-    expect(pensionRatesAssumed({ pensionPercent: 5, pensionEmployerPercent: 3 })).toBe(true);
-    expect(pensionRatesAssumed({ pensionPercent: 5, pensionEmployerPercent: 4 })).toBe(false);
-    expect(pensionRatesAssumed({ pensionPercent: 6, pensionEmployerPercent: 3 })).toBe(false);
-    expect(pensionRatesAssumed({})).toBe(false);
+describe("savedPensionRate", () => {
+  it("keeps a saved rate, including exactly 5 and 3 and 0", () => {
+    expect(savedPensionRate(5)).toBe(5);
+    expect(savedPensionRate(3)).toBe(3);
+    expect(savedPensionRate(0)).toBe(0);
+  });
+
+  it("reads a rate never answered as not set, never as a stand-in", () => {
+    expect(savedPensionRate(null)).toBeNull();
+    expect(savedPensionRate(undefined)).toBeNull();
+    expect(savedPensionRate(Number.NaN)).toBeNull();
   });
 });

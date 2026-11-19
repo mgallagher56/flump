@@ -146,31 +146,20 @@ export function formatProfileRow(profile: UserProfile) {
         ? Number(profile.buyToLetMortgageRate)
         : null,
     buyToLetMortgageType: profile.buyToLetMortgageType || "interest-only",
+    // Null until the person answers (owner decision 3, slice 6): never a stand-in rate.
     pensionPercent:
       profile.pensionPercent !== null && profile.pensionPercent !== undefined
         ? Number(profile.pensionPercent)
-        : profile.hasResetFinancialData
-          ? 0
-          : 5.0,
+        : null,
     pensionEmployerPercent:
       profile.pensionEmployerPercent !== null && profile.pensionEmployerPercent !== undefined
         ? Number(profile.pensionEmployerPercent)
-        : profile.hasResetFinancialData
-          ? 0
-          : 3.0,
+        : null,
     isSalarySacrifice:
       profile.isSalarySacrifice !== null && profile.isSalarySacrifice !== undefined
-        ? profile.hasResetFinancialData && Number(profile.pensionPercent) === 0
-          ? false
-          : Boolean(profile.isSalarySacrifice)
-        : false,
-    isSalarySacrificeEmployerNi:
-      profile.isSalarySacrificeEmployerNi !== null &&
-      profile.isSalarySacrificeEmployerNi !== undefined
-        ? profile.hasResetFinancialData && Number(profile.pensionPercent) === 0
-          ? false
-          : Boolean(profile.isSalarySacrificeEmployerNi)
-        : false,
+        ? Boolean(profile.isSalarySacrifice)
+        : null,
+    isSalarySacrificeEmployerNi: Boolean(profile.isSalarySacrificeEmployerNi),
     monthlySavingsTarget:
       profile.monthlySavingsTarget !== null && profile.monthlySavingsTarget !== undefined
         ? Number(profile.monthlySavingsTarget)
@@ -255,9 +244,10 @@ export function clearFinancialProfileFields(profile: UserProfile): void {
   profile.buyToLetMortgageBalance = null;
   profile.buyToLetMortgageRate = null;
   profile.buyToLetMortgageType = "interest-only";
-  profile.pensionPercent = 0;
-  profile.pensionEmployerPercent = 0;
-  profile.isSalarySacrifice = false;
+  // Not answered, not 0% (finding AI-12, owner decision 3).
+  profile.pensionPercent = null;
+  profile.pensionEmployerPercent = null;
+  profile.isSalarySacrifice = null;
   profile.isSalarySacrificeEmployerNi = false;
   profile.customBudgetCategories = [];
   profile.monthlySavingsTarget = null;
@@ -292,9 +282,9 @@ export const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> =>
   rentalIncomeMonthly: null,
   hasMortgage: false,
   propertyOwnershipShare: 100.0,
-  pensionPercent: 5.0,
-  pensionEmployerPercent: 3.0,
-  isSalarySacrifice: false,
+  pensionPercent: null,
+  pensionEmployerPercent: null,
+  isSalarySacrifice: null,
   isSalarySacrificeEmployerNi: false,
   monthlySavingsTarget: null,
   savingsAllocationMode: "per_account",

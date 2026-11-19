@@ -5,16 +5,37 @@ import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.j
 import { type Figure, figureKnown, figureUnknown } from "../figure.js";
 import type { FactKey, ProfileFacts } from "../input.js";
 
-export interface TakeHome {
-  monthly: number;
-  annual: number;
-  incomeTax: number;
-  nationalInsurance: number;
-  studentLoan: number;
-  pension: number;
-  taxYear: UkTaxYear;
-  region: UkTaxRegion;
-}
+/**
+ * Take-home pay. `basis` says where it comes from:
+ * - "worked-out": from the saved salary, less tax, National Insurance, pension and student loan;
+ *   every part is a number;
+ * - "typed": the monthly take-home the person typed (onboarding's take-home option, owner
+ *   decision 2 option A), used when no salary is saved. It is net pay as given, so the parts that
+ *   need pay before tax are null ("Not set"), never worked out backwards.
+ */
+export type TakeHome =
+  | {
+      basis: "worked-out";
+      monthly: number;
+      annual: number;
+      incomeTax: number;
+      nationalInsurance: number;
+      studentLoan: number;
+      pension: number;
+      taxYear: UkTaxYear;
+      region: UkTaxRegion;
+    }
+  | {
+      basis: "typed";
+      monthly: number;
+      annual: number;
+      incomeTax: null;
+      nationalInsurance: null;
+      studentLoan: null;
+      pension: null;
+      taxYear: null;
+      region: null;
+    };
 
 export interface SelectTakeHomeOptions {
   taxYear?: UkTaxYear;
@@ -30,6 +51,27 @@ export function selectTakeHome(
   opts: SelectTakeHomeOptions = {},
 ): Figure<TakeHome> {
   const f: ProfileFacts = { ...facts, ...opts.overrides };
+
+  // No salary saved, but a take-home typed as net pay: that is the take-home (decision 2). A
+  // saved salary always wins, since tax, pension and student loan are worked out from it.
+  const salarySaved = f.annualSalary !== null && f.annualSalary > 0;
+  const typed = f.monthlyTakeHome;
+  if (!salarySaved && typed !== null && typed !== undefined && typed > 0) {
+    return figureKnown<TakeHome>(
+      {
+        basis: "typed",
+        monthly: Math.round(typed),
+        annual: Math.round(typed * 12),
+        incomeTax: null,
+        nationalInsurance: null,
+        studentLoan: null,
+        pension: null,
+        taxYear: null,
+        region: null,
+      },
+      "user",
+    );
+  }
 
   const missing: FactKey[] = [];
   if (f.annualSalary === null || !(f.annualSalary > 0)) missing.push("annualSalary");
@@ -90,6 +132,7 @@ export function selectTakeHome(
 
   return figureKnown<TakeHome>(
     {
+      basis: "worked-out",
       monthly: Math.round(annualRaw / 12),
       annual,
       incomeTax: result.incomeTaxGbp,
