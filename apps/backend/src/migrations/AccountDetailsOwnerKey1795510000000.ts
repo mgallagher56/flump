@@ -33,7 +33,11 @@ export class AccountDetailsOwnerKey1795510000000 implements MigrationInterface {
     const log = new Logger(this.name);
     // Every lock up front, in one order, at the strength adding the key needs on both tables
     // (SHARE ROW EXCLUSIVE), so nothing is upgraded part way and no row changes between the
-    // count and the key. Reads go on while it is held.
+    // count and the key. Reads go on while it is held. Writes wait: a write already holding one
+    // table and wanting the other (a check-in writes history then the balance; creating an
+    // account writes the account then its first month) can meet this migration in a deadlock,
+    // which Postgres resolves by aborting one side. No order avoids both paths; the tables are
+    // small, the locks are brief, and an aborted migration is retried by the next boot.
     await queryRunner.query(`LOCK TABLE "accounts" IN SHARE ROW EXCLUSIVE MODE`);
     await queryRunner.query(`LOCK TABLE "account_details" IN SHARE ROW EXCLUSIVE MODE`);
 

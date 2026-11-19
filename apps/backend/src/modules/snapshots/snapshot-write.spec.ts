@@ -49,4 +49,41 @@ describe("writeSnapshotRows balance update", () => {
     // The lock that statement relies on is one statement too.
     expect(statements.filter((s) => /FOR UPDATE/.test(s))).toHaveLength(1);
   });
+
+  it("issues one UPDATE of accounts for a typed (manual) write across accounts", async () => {
+    const statements: string[] = [];
+    let inserts = 0;
+    const builder = {
+      insert: () => builder,
+      into: () => builder,
+      values: () => builder,
+      orUpdate: () => builder,
+      execute: async () => {
+        inserts += 1;
+        return {};
+      },
+    };
+    const manager = {
+      createQueryBuilder: () => builder,
+      query: async (sql: string) => {
+        statements.push(sql);
+        return [];
+      },
+    } as unknown as EntityManager;
+    const written = await writeSnapshotRows(
+      manager,
+      "u1",
+      [
+        { accountId: A, year: 2026, month: 10, value: 1, asOfDate: "2026-10-01" },
+        { accountId: B, year: 2026, month: 10, value: 2, asOfDate: "2026-10-01" },
+        { accountId: C, year: 2026, month: 9, value: 3, asOfDate: "2026-09-01" },
+      ],
+      { source: "manual", importBatchId: null, current: { year: 2026, month: 10 } },
+    );
+    expect(written).toHaveLength(3);
+    // One insert chunk, then the balance sync's lock and its one UPDATE.
+    expect(inserts).toBe(1);
+    expect(statements.filter((s) => /^\s*UPDATE "accounts"/.test(s))).toHaveLength(1);
+    expect(statements.filter((s) => /FOR UPDATE/.test(s))).toHaveLength(1);
+  });
 });

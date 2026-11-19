@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { AgentAuditEvent } from "../../src/entities/agent-audit-event.entity";
 import { ImportBatch } from "../../src/entities/import-batch.entity";
 import { McpToken } from "../../src/entities/mcp-token.entity";
+import { OWNER_KEY } from "../../src/migrations/AccountDetailsOwnerKey1795510000000";
 import { AgentDataService } from "../../src/modules/agent/agent-data.service";
 import { McpService } from "../../src/modules/agent/mcp.service";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
@@ -195,6 +196,25 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       [accountId, userId, ...rows.flat()],
     );
 
+  // A history row naming another user than its account's. The owner key
+  // (AccountDetailsOwnerKey1795510000000) refuses one today, so this recreates a row stored before
+  // the key existed: the state the migration leaves when it finds one (key NOT VALID, row kept).
+  // The reads must still never return it to the user it names.
+  const insertMislabelled = async (
+    accountId: string,
+    userId: string,
+    rows: Array<[number, number, number, string]>,
+  ) => {
+    await h.dataSource.query(
+      `ALTER TABLE account_details DROP CONSTRAINT IF EXISTS "${OWNER_KEY}"`,
+    );
+    await insertDetails(accountId, userId, rows);
+    await h.dataSource.query(
+      `ALTER TABLE account_details ADD CONSTRAINT "${OWNER_KEY}"
+       FOREIGN KEY (account_id, user_id) REFERENCES accounts (id, user_id) ON DELETE CASCADE NOT VALID`,
+    );
+  };
+
   const createAccount = async (token: string, body: object) => {
     const res = await h.call("post", "/accounts", token, body);
     expect(res.status).toBe(201);
@@ -378,8 +398,8 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       await insertDetails(bAccount, USER_B, [[2025, 6, 66.66, "manual"]]);
       // A row mislabelled with B's user id but pointing at A's account must not reach B, and one
       // mislabelled with A's id but pointing at B's account must not reach A.
-      await insertDetails(saver, USER_B, [[2025, 4, 888.88, "manual"]]);
-      await insertDetails(bAccount, USER_A, [[2025, 4, 777.01, "manual"]]);
+      await insertMislabelled(saver, USER_B, [[2025, 4, 888.88, "manual"]]);
+      await insertMislabelled(bAccount, USER_A, [[2025, 4, 777.01, "manual"]]);
       const budget = await h.call("post", "/budget-entries", h.tokens.a, {
         category: "housing",
         name: "A secret rent",
@@ -600,11 +620,7 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       await insertDetails(a2, USER_A, [[2025, 3, -50, "backfill"]]);
       await insertDetails(b1, USER_B, [[2025, 3, 999, "manual"]]);
       // A row mislabelled with A's user id but pointing at B's account must not come back for A.
-      await h.dataSource.query(
-        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
-         VALUES ($1, $2, 2025, 4, 888, '2025-04-01', 'manual')`,
-        [b1, USER_A],
-      );
+      await insertMislabelled(b1, USER_A, [[2025, 4, 888, "manual"]]);
 
       const rows = await provider().getAccountSnapshots(USER_A, { from: "2025-01", to: "2025-06" });
       const key = (r: { accountId: string; year: number; month: number }) =>
@@ -649,11 +665,7 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
       const b1 = await createAccount(h.tokens.b, { name: "b1", type: "Saving", balance: 1 });
       await insertDetails(b1, USER_B, [[2025, 3, 999, "manual"]]);
       // A row mislabelled with A's user id but pointing at B's account must not count for A.
-      await h.dataSource.query(
-        `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
-         VALUES ($1, $2, 2025, 5, 888, '2025-05-01', 'manual')`,
-        [b1, USER_A],
-      );
+      await insertMislabelled(b1, USER_A, [[2025, 5, 888, "manual"]]);
 
       expect(await provider().getDataCoverage(USER_A)).toEqual([
         {

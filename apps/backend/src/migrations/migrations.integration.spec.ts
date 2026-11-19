@@ -14,7 +14,7 @@ import {
 import { AccountDetailsUserMonthIndex1794357300000 } from "./AccountDetailsUserMonthIndex1794357300000";
 import {
   ACCOUNT_TYPE_CHECK,
-  ACCOUNT_TYPE_REFUSAL,
+  ACCOUNT_TYPE_SKIPPED,
   ACCOUNT_TYPES_AT_1795510100000,
   AccountTypeCheck1795510100000,
 } from "./AccountTypeCheck1795510100000";
@@ -3132,20 +3132,49 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(count[0]?.n).toBe("11");
     });
 
-    it("stops with the count and changes nothing when a stored type is outside the eleven", async () => {
+    it("with an off-list type stored, adds nothing, changes no row, returns cleanly, and a re-run after the fix adds the check", async () => {
       await ds.runMigrations();
       await undoThrough(NAME);
       const odd = await account("savings");
+      await account("Current Account");
+      await account("savings");
       const logged = vi.spyOn(Logger.prototype, "log");
-      await expect(runUpInTransaction(new AccountTypeCheck1795510100000())).rejects.toThrow(
-        `${ACCOUNT_TYPE_REFUSAL}: 1. Nothing was changed.`,
+      const warned = vi.spyOn(Logger.prototype, "warn");
+      // The deploy and every migration behind this one go on.
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      expect(logged).toHaveBeenCalledWith("Accounts with a type outside the eleven: 3");
+      // Distinct type names only, no id.
+      expect(warned).toHaveBeenCalledWith(
+        `${ACCOUNT_TYPE_SKIPPED} Off-list types: "Current Account", "savings"`,
       );
-      expect(logged).toHaveBeenCalledWith("Accounts with a type outside the eleven: 1");
       logged.mockRestore();
+      warned.mockRestore();
       expect(await check()).toEqual([]);
       expect(await ds.query("SELECT type FROM accounts WHERE id = $1", [odd])).toEqual([
         { type: "savings" },
       ]);
+      // The row still saves, since no check was added.
+      await ds.query("UPDATE accounts SET balance = 5 WHERE id = $1", [odd]);
+      // A second run with the rows still off-list skips again.
+      await runUpInTransaction(new AccountTypeCheck1795510100000());
+      expect(await check()).toEqual([]);
+      // Once the rows are dealt with, running it again adds the check.
+      await ds.query("UPDATE accounts SET type = 'Saving' WHERE type = 'savings'");
+      await ds.query("UPDATE accounts SET type = 'Current' WHERE type = 'Current Account'");
+      await runUpInTransaction(new AccountTypeCheck1795510100000());
+      expect(await check()).toHaveLength(1);
+    });
+
+    it("logs at most ten off-list type names", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      for (let i = 0; i < 12; i++) await account(`odd ${String(i).padStart(2, "0")}`);
+      const warned = vi.spyOn(Logger.prototype, "warn");
+      await runUpInTransaction(new AccountTypeCheck1795510100000());
+      const line = String(warned.mock.calls.at(-1)?.[0] ?? "");
+      warned.mockRestore();
+      expect(line.match(/"odd \d\d"/g)).toHaveLength(10);
     });
 
     it("down removes the check", async () => {

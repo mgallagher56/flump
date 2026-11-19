@@ -7,11 +7,13 @@ import { takeMigrationLock } from "../config/migration-lock";
  * (the API, bank sync and the slice 4 migrations) already stores one of them; until now only the
  * API contract said so.
  *
- * Up counts the accounts whose type is not one of the eleven and logs the count only. When it is
- * 0 it adds `CHK_accounts_type`. When it is not, it stops with that count and changes nothing:
- * a check added NOT VALID would make every later update of such an account fail (Postgres checks
- * a row's checks on every update), and rewriting a stored type is an owner decision. Re-running
- * drops and re-adds the check. Down drops it.
+ * Up counts the accounts whose type is not one of the eleven and logs the count. When it is 0 it
+ * adds `CHK_accounts_type`. When it is not, it adds nothing, changes no row, logs the distinct
+ * off-list type names (at most ten; they are not personal data) and returns cleanly, so the deploy
+ * and the migrations queued behind it go on; a later migration adds the check once those rows are
+ * dealt with. It never adds the check NOT VALID: Postgres checks a row's checks on every update,
+ * so every later update of such an account would fail. Rewriting a stored type is an owner
+ * decision. Re-running drops and re-adds the check (or skips again). Down drops it.
  *
  * The list is frozen here, as a migration must be; `Account` declares the same check, and a unit
  * test keeps both equal to `ACCOUNT_TYPES` in the API contract.
@@ -31,8 +33,7 @@ export const ACCOUNT_TYPES_AT_1795510100000 = [
   "Overdraft",
 ] as const;
 const TYPES_SQL = ACCOUNT_TYPES_AT_1795510100000.map((t) => `'${t}'`).join(", ");
-export const ACCOUNT_TYPE_REFUSAL =
-  "AccountTypeCheck1795510100000: accounts with a type outside the eleven account types";
+export const ACCOUNT_TYPE_SKIPPED = `${ACCOUNT_TYPE_CHECK} not added and no row changed; a later migration adds it once these rows are dealt with.`;
 
 export class AccountTypeCheck1795510100000 implements MigrationInterface {
   name = "AccountTypeCheck1795510100000";
@@ -48,9 +49,17 @@ export class AccountTypeCheck1795510100000 implements MigrationInterface {
       `SELECT count(*)::int AS n FROM "accounts" WHERE "type" NOT IN (${TYPES_SQL})`,
     );
     const outside = row?.n ?? 0;
-    new Logger(this.name).log(`Accounts with a type outside the eleven: ${outside}`);
+    const log = new Logger(this.name);
+    log.log(`Accounts with a type outside the eleven: ${outside}`);
     if (outside > 0) {
-      throw new Error(`${ACCOUNT_TYPE_REFUSAL}: ${outside}. Nothing was changed.`);
+      // Type names, not personal data; at most ten, so the line stays short.
+      const values: Array<{ type: string }> = await queryRunner.query(
+        `SELECT DISTINCT "type" FROM "accounts" WHERE "type" NOT IN (${TYPES_SQL}) ORDER BY "type" LIMIT 10`,
+      );
+      log.warn(
+        `${ACCOUNT_TYPE_SKIPPED} Off-list types: ${values.map((v) => JSON.stringify(v.type)).join(", ")}`,
+      );
+      return;
     }
 
     await queryRunner.query(

@@ -137,6 +137,6 @@
   {
     "kind": "removed-path",
     "where": "/v1/budget-entries/seed-defaults",
-    "reason": "System audit slice 9 (DB-15, owner decision 12): POST /budget-entries/seed-defaults created nothing since owner item 33a and had no caller in this repository (web app, MCP server, e2e, scripts or the parked mobile companion; only the web proxy allow-list named it, removed in the same PR). Coordinator sign-off: pending."
+    "reason": "System audit slice 9 (DB-15, owner decision 12): POST /budget-entries/seed-defaults created nothing since owner item 33a and had no caller in this repository (web app, MCP server, e2e, scripts or the parked mobile companion; only the web proxy allow-list named it, removed in the same PR). Coordinator sign-off 19 November 2026."
   }
 ]
