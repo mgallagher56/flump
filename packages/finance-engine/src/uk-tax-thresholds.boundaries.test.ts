@@ -72,15 +72,14 @@ describe("getUkIncomeThresholds: Gift Aid moves only band edges above the basic 
     expect(taper?.bandExtension).toBe(0);
   });
 
-  it("moves the Scottish Intermediate and Higher starts but not the Basic start", () => {
+  it("moves the Scottish Intermediate and Higher starts with Gift Aid", () => {
     const ts = getUkIncomeThresholds(rules2526, { region: "SCOTLAND", ...giftAid });
     const band = (name: string) => byKind(ts, "scottishBand").find((t) => t.band?.name === name);
     // Scottish bands 2025/26 (GOV.UK Scottish Income Tax 2025 to 2026): Basic from 15,398, so
     // taxable income over 2,827; Intermediate from 27,492 (taxable over 14,921); Higher from
     // 43,663 (taxable over 31,092).
-    // Basic start is not extended: 12,570 + 2,827 = 15,397.
-    expect(band("Basic")?.grossAt).toBe(15397);
-    expect(band("Basic")?.bandExtension).toBe(0);
+    // Whether Gift Aid also extends the starter band (so moves the Basic start) is not settled:
+    // the owner's sign-off of 19 Nov 2026 left that figure out, so it is not asserted.
     // Intermediate start is the basic rate limit, extended: 12,570 + 14,921 + 5,000 = 32,491.
     expect(band("Intermediate")?.grossAt).toBe(32491);
     expect(band("Intermediate")?.bandExtension).toBe(5000);
