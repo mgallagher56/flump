@@ -243,6 +243,56 @@ export function blankComments(file: string, source: string): string {
   return chars.join("");
 }
 
+/**
+ * The names a file defines, from its syntax tree: function, class, variable, type, interface and
+ * enum declarations (destructured names too), methods, properties and object keys, the names in an
+ * `export { ... } from`, and every string literal (an AI tool's `name: "simulate_debt_payoff"`).
+ * A bare use or an import is not a definition, so a deleted function that is still imported is
+ * not found.
+ */
+export function declaredNames(file: string, source: string): Set<string> {
+  const kind = file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, kind);
+  const names = new Set<string>();
+  const addName = (name: ts.Node | undefined) => {
+    if (!name) return;
+    if (ts.isIdentifier(name) || ts.isStringLiteralLike(name) || ts.isPrivateIdentifier(name))
+      names.add(name.text);
+    else if (ts.isObjectBindingPattern(name) || ts.isArrayBindingPattern(name))
+      for (const el of name.elements) if (ts.isBindingElement(el)) addName(el.name);
+  };
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isFunctionDeclaration(node) ||
+      ts.isClassDeclaration(node) ||
+      ts.isVariableDeclaration(node) ||
+      ts.isTypeAliasDeclaration(node) ||
+      ts.isInterfaceDeclaration(node) ||
+      ts.isEnumDeclaration(node) ||
+      ts.isMethodDeclaration(node) ||
+      ts.isPropertyDeclaration(node) ||
+      ts.isPropertyAssignment(node) ||
+      ts.isShorthandPropertyAssignment(node) ||
+      ts.isGetAccessorDeclaration(node) ||
+      ts.isSetAccessorDeclaration(node) ||
+      ts.isPropertySignature(node) ||
+      ts.isMethodSignature(node)
+    )
+      addName(node.name);
+    if (
+      ts.isExportDeclaration(node) &&
+      node.moduleSpecifier &&
+      node.exportClause &&
+      ts.isNamedExports(node.exportClause)
+    )
+      for (const el of node.exportClause.elements) addName(el.name);
+    if (ts.isStringLiteralLike(node)) names.add(node.text);
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return names;
+}
+
 const lineAt = (text: string, offset: number) => text.slice(0, offset).split("\n").length;
 
 // ---------------------------------------------------------------------------------------------
@@ -275,6 +325,9 @@ export function stringConstants(source: string): Map<string, string[]> {
   return out;
 }
 
+/** `import { a, b } from "path"`: the names and the path. */
+const IMPORT_NAMED = /import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*["']([^"']+)["']/g;
+
 /** A string constant exported from a file under the storage roots. */
 export interface SharedConstant {
   file: string;
@@ -293,9 +346,9 @@ function importedValues(
   shared: ReadonlyMap<string, SharedConstant[]>,
 ): string[] {
   const candidates = shared.get(name) ?? [];
-  const spec = new RegExp(
-    `import\\s*(?:type\\s*)?\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*["']([^"']+)["']`,
-  ).exec(code)?.[1];
+  let spec: string | undefined;
+  for (const m of code.matchAll(IMPORT_NAMED))
+    if (m[1].split(",").some((part) => part.trim().replace(/^type\s+/, "") === name)) spec = m[2];
   let target: string | undefined;
   if (spec?.startsWith(".")) target = posix.normalize(posix.join(posix.dirname(file), spec));
   else if (spec?.startsWith("~/")) target = `apps/web/app/${spec.slice(2)}`;
@@ -402,7 +455,7 @@ export interface SecondFormulaHit {
 /** Every second-formula pattern in one file, with line numbers. */
 export function findSecondFormulas(file: string, source: string): SecondFormulaHit[] {
   // Most files match nothing: test the raw text first and parse only the files that might.
-  if (!SECOND_FORMULA_RULES.some((rule) => new RegExp(rule.pattern.source).test(source))) return [];
+  if (!SECOND_FORMULA_RULES.some((rule) => source.search(rule.pattern) !== -1)) return [];
   const code = blankComments(file, source);
   const hits: SecondFormulaHit[] = [];
   for (const rule of SECOND_FORMULA_RULES) {

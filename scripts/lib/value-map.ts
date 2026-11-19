@@ -7,7 +7,7 @@
  * the unit tests can run it on a fixture map.
  */
 
-import { blankComments } from "./value-map-sources";
+import { declaredNames } from "./value-map-sources";
 
 export const VERDICTS = ["holds", "manual", "broken", "duplicated", "not-checked"] as const;
 export type Verdict = (typeof VERDICTS)[number];
@@ -119,25 +119,6 @@ export function fileOf(path: string): string {
   return path.replace(/:\d+([-,]\d+)*$/, "");
 }
 
-/**
- * True when `code` (comments already blanked) defines `name`: a function, class, variable, type or
- * enum declaration, a method or property (`name(`, `name =`, `name:` at the start of a line), a
- * re-export, or a string that names it (an AI tool's `name: "simulate_debt_payoff"`). A bare use
- * or an import is not enough, so a function that was deleted but is still imported is caught.
- */
-export function declares(code: string, name: string): boolean {
-  const n = name.replace(/\$/g, "\\$");
-  return [
-    new RegExp(`\\b(?:function\\*?|class|const|let|var|type|interface|enum)\\s+${n}\\b`),
-    new RegExp(
-      `^\\s*(?:(?:export|default|public|private|protected|static|async|readonly|get|set|override)\\s+)*${n}\\s*[(<=:?]`,
-      "m",
-    ),
-    new RegExp(`\\bexport\\s*\\{[^}]*\\b${n}\\b[^}]*\\}\\s*from\\b`),
-    new RegExp(`(["'\`])${n}\\1`),
-  ].some((re) => re.test(code));
-}
-
 /** A function name that can be looked up in its file (`selectNetWorth`, `PortfolioSnapshot.getX`). */
 const SYMBOL = /^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)?$/;
 export const isSymbol = (name: string): boolean => SYMBOL.test(name);
@@ -223,7 +204,7 @@ export function validateMap(map: ValueMap, repo: RepoView): Problem[] {
     if (!fn || !path || !isSymbol(fn) || !repo.exists(fileOf(path))) return;
     const last = fn.split(".").at(-1) as string;
     const file = fileOf(path);
-    if (!declares(blankComments(file, repo.read(file) ?? ""), last))
+    if (!declaredNames(file, repo.read(file) ?? "").has(last))
       add(
         RULES.deadSymbol,
         `${owner} -> ${fn}`,
