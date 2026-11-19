@@ -105,3 +105,103 @@ describe("normalizeStoredBalance (BE-05 stored-balance rule)", () => {
     expect(normalizeStoredBalance(null, 5)).toBe(5);
   });
 });
+
+const account = (overrides: Partial<NormalizedAccount>): NormalizedAccount => ({
+  externalAccountId: "acc",
+  provider: "manual",
+  institutionName: "Bank",
+  name: "Account",
+  category: "CREDIT_CARD",
+  currency: "GBP",
+  netWorthImpactGbp: 0,
+  principalOwedGbp: 0,
+  isTaxFreeIsaWrapper: false,
+  lastSyncedAt: "2026-11-19T00:00:00.000Z",
+  ...overrides,
+});
+
+describe("asset and liability category lists", () => {
+  it("lists all seven asset categories and all six liability categories", () => {
+    for (const c of [
+      "CURRENT",
+      "SAVINGS",
+      "CASH_ISA",
+      "STOCKS_ISA",
+      "GENERAL_INVESTMENT",
+      "PENSION_WORKPLACE",
+      "PENSION_SIPP",
+    ] as const) {
+      expect(isAssetCategory(c)).toBe(true);
+      expect(isLiabilityCategory(c)).toBe(false);
+    }
+    for (const c of [
+      "CREDIT_CARD",
+      "OVERDRAFT",
+      "LOAN_PERSONAL",
+      "CAR_FINANCE_PCP_HP",
+      "MORTGAGE_RESIDENTIAL",
+      "MORTGAGE_BTL",
+    ] as const) {
+      expect(isLiabilityCategory(c)).toBe(true);
+      expect(isAssetCategory(c)).toBe(false);
+    }
+  });
+});
+
+describe("enforceSignConvention on liabilities", () => {
+  it("takes a positive principal owed as the amount owed", () => {
+    // principal 3000 is positive, so it wins over the 2500 net worth figure: owed 3000.
+    const out = enforceSignConvention(
+      account({ netWorthImpactGbp: -2500, principalOwedGbp: 3000 }),
+    );
+    expect(out.principalOwedGbp).toBe(3000);
+    expect(out.netWorthImpactGbp).toBe(-3000);
+  });
+
+  it("falls back to the size of the net worth figure when no principal is given", () => {
+    // principal 0 is not positive, so owed = |1200| = 1200, and net worth becomes -1200.
+    const out = enforceSignConvention(account({ netWorthImpactGbp: 1200, principalOwedGbp: 0 }));
+    expect(out.principalOwedGbp).toBe(1200);
+    expect(out.netWorthImpactGbp).toBe(-1200);
+  });
+});
+
+describe("validateSignConvention", () => {
+  it("rejects an asset that carries a principal owed", () => {
+    expect(validateSignConvention(account({ category: "CURRENT", principalOwedGbp: 5 }))).toBe(
+      false,
+    );
+  });
+
+  it("accepts a cleared liability with both figures at zero", () => {
+    expect(validateSignConvention(account({ netWorthImpactGbp: 0, principalOwedGbp: 0 }))).toBe(
+      true,
+    );
+  });
+
+  it("rejects a liability with positive net worth, even when the figures cancel", () => {
+    // 100 + (-100) = 0, but a liability's net worth must not be positive.
+    expect(
+      validateSignConvention(account({ netWorthImpactGbp: 100, principalOwedGbp: -100 })),
+    ).toBe(false);
+    // 0.0005 + 0.0004 = 0.0009 is within the tolerance and principal is not negative, but the
+    // net worth figure is still positive.
+    expect(
+      validateSignConvention(account({ netWorthImpactGbp: 0.0005, principalOwedGbp: 0.0004 })),
+    ).toBe(false);
+  });
+
+  it("rejects a liability with a negative principal, even when the figures nearly cancel", () => {
+    // -0.0005 + (-0.0004) = -0.0009, within the tolerance, but principal owed must not be negative.
+    expect(
+      validateSignConvention(account({ netWorthImpactGbp: -0.0005, principalOwedGbp: -0.0004 })),
+    ).toBe(false);
+  });
+
+  it("rejects a liability whose two figures disagree", () => {
+    // -100 + 50 = -50: the net worth figure is not minus the amount owed.
+    expect(validateSignConvention(account({ netWorthImpactGbp: -100, principalOwedGbp: 50 }))).toBe(
+      false,
+    );
+  });
+});
