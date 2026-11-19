@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.47.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.46.0...flump/web-v1.47.0) (2026-11-19)
+
+
+### Features ✨
+
+* **backend:** system audit slice 9 part one, database housekeeping ([df3fdd6](https://github.com/mgallagher56/flump/commit/df3fdd643e3273e56fd034d713add5710818ee19))
+* **budget:** one housing figure for the housing line, commitments and Retirement (audit slice 5, housing line) ([bb6011f](https://github.com/mgallagher56/flump/commit/bb6011ff603755f0334b07b8af40bbf0593ea489))
+* **dashboard:** one colour per section card, a saved section order, and the chooser beside the cards ([22ce2af](https://github.com/mgallagher56/flump/commit/22ce2af834694ed5ce66201e68437c2ed96c7eca))
+* **dashboard:** section glyphs in their colour, reorder stories, inert end buttons ([d894581](https://github.com/mgallagher56/flump/commit/d8945813614d41fe408f5550eab313a510a0b072))
+* **dashboard:** the setup checklist's dismissal is saved on the profile; first paint equals the hydrated page ([2877634](https://github.com/mgallagher56/flump/commit/28776347fe7ece95cc0ab2a8d88944b432bc8468))
+* **tax:** finance costs brought forward as a rental tax record ([9f275c5](https://github.com/mgallagher56/flump/commit/9f275c52ee54c4570901f29ddc592f569e4a2f2d))
+* **web:** slice 9 part two web part: drop retired profile fields and dead intents ([1007295](https://github.com/mgallagher56/flump/commit/10072957856c93e103328c6683e32451eb20f0f2))
+
+
+### Bug Fixes 🪲
+
+* **accounts:** the current month is the London month, never the device clock (CH-8) ([9add200](https://github.com/mgallagher56/flump/commit/9add200d39527e65d5c12096bc6643ea05bd3886))
+* **budget:** review findings on the housing line ([723593e](https://github.com/mgallagher56/flump/commit/723593e9f074481d6e072caac5b559dfff99b3b7))
+* CI findings on the housing line: seed script knows the rent before-image; a saved mortgage payment comes from your saved details ([3c6d060](https://github.com/mgallagher56/flump/commit/3c6d06092efeb0433105fc9a00255af8f0dda6c8))
+* **dashboard:** review findings on section colours and order ([33249a5](https://github.com/mgallagher56/flump/commit/33249a5a37a7f1cc7577f93e9412c3a48af1f10b))
+* review findings: keep Dashboard's isDefault reader; looser psa-band export test; drop needless authz restore ([4553411](https://github.com/mgallagher56/flump/commit/45534117c194d7517f0b392407c33cea7bf92417))
+* **tax:** brought-forward record counted once and never as a cost ([094f076](https://github.com/mgallagher56/flump/commit/094f076ec15d74f2f865c0bf2961182d57cba309))
+* **tax:** rent carries its savings and dividend effects; finance costs carry forward ([7b03a92](https://github.com/mgallagher56/flump/commit/7b03a924613db9a2664c7328917e942e0a3a5424))
+* **web:** review findings: the root profile reloads on each page change; onboarding's last save skips its reload ([d833c2e](https://github.com/mgallagher56/flump/commit/d833c2eb055d51482d00c5e125702b3524356004))
+
+
+### Documentation 📙
+
+* **system:** value map and parity log for slice 8 (browser state) ([2e0637f](https://github.com/mgallagher56/flump/commit/2e0637f089e626da9bcc0df4abbc014daf39d5a8))
+
+
+### Refactor 🔥
+
+* **web:** containers read the profile from loader data; no browser baseline; writes reload saved data ([d326b21](https://github.com/mgallagher56/flump/commit/d326b21bdc99e5c5f1c6af40a37d4606c1e79ec7))
+* **web:** the profile comes from the root loader's data only (slice 8) ([2bcc094](https://github.com/mgallagher56/flump/commit/2bcc0948e5250f38a464b9034351b110964c9165))
+
+
+### Tests 🧪
+
+* **backend:** match statements by plain text, not regex (Semgrep regex_dos on the new spec) ([22e98c7](https://github.com/mgallagher56/flump/commit/22e98c75486437b3f63d92e5995527e4696bad28))
+* **dashboard:** section colours, saved section order and the chooser in the sections heading (failing first) ([b65e3d7](https://github.com/mgallagher56/flump/commit/b65e3d7d37247c0fccb41626e0c93cd2ca5d5f09))
+* housing line link specs, onboarding payload fixtures, value map and parity log ([4db90c4](https://github.com/mgallagher56/flump/commit/4db90c48867db9ded87e9b8c29976519cd477946))
+* **visual:** homeowner Budget baselines from CI (run 44572665057): the mortgage offer reads the saved payment ([4a45cb9](https://github.com/mgallagher56/flump/commit/4a45cb9996f564b8d34f592d22c7ad37d160737a))
+* **web:** tests read the profile from root loader data (slice 8) ([b689719](https://github.com/mgallagher56/flump/commit/b689719f2d7f376bc0cc4b0989a04671c62117a5))
+
 ## [1.46.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.45.0...flump/web-v1.46.0) (2026-11-19)
 
 
