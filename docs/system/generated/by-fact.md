@@ -237,13 +237,14 @@ Read by:
 
 Other stores:
 
-- `accounts.student_loan_plan` [duplicate] in `apps/backend/src/entities/account.entity.ts` (asked for when a Student Loan account is added; take-home never reads it. Slice 6 migration StudentLoanPlanToProfile copied it into every profile with no answer; the account form writing the profile waits for slice 4; the column is dropped in slice 9)
+- `accounts.student_loan_plan` [duplicate] in `apps/backend/src/entities/account.entity.ts` (asked for when a Student Loan account is added; take-home never reads it. Slice 6 migration StudentLoanPlanToProfile copied it into every profile with no answer, and saving such an account now writes its plan to the profile when the profile has none (writeStudentLoanPlanToProfile); the column is dropped in slice 9)
 
 Entered or changed by:
 
 - Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts`
 - Settings: `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`
-- Accounts: `apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx` (writes the account copy)
+- Accounts: `apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx` (writes the account copy, and the backend writes the profile when it has no plan)
+- Accounts: `apps/backend/src/modules/finance/student-loan-plan-profile.ts` (on saving a Student Loan account with a plan, in the same transaction, only when the profile has none (null or no loan); a saved profile plan is never overwritten)
 
 Read by:
 
