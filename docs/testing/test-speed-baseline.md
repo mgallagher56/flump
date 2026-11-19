@@ -344,3 +344,11 @@ Slowest 20 files:
 - Forced runs (no Turbo cache), three before and three after: the longest Storybook leg took 89 to 116 s, against 121 to 211 s for the single job.
 - **Tried and dropped: Vitest web in two halves.** Each half ran the unit project with `--shard` and wrote a blob report, and a merge job applied the coverage floors to the merged coverage. Start of the first half to the end of the merge took 197 to 210 s (one queued run 291 s), against 196 to 251 s for the single job: no clear gain, because the merge job's own set-up costs back what the halves save. Floors set to 0 in a half and applied only at a merge step is a guard that could fail quietly, so the coordinator dropped it (20 November 2026). Web coverage floors stay enforced in the one job.
 - Every needless rebase is a full CI run, about 5 to 8 runner-minutes and 3 to 5 minutes of wall time. The merge queue's rule (only the next pull request in the queue rebases) saves more than most of these slices.
+
+## Test environment: node or happy-dom (E41 P3)
+
+Unit tests in `apps/web`, `packages/ui` and `apps/marketing` run under happy-dom by default. A test file that touches no DOM starts with `// @vitest-environment node` and skips building a DOM, which is about a quarter of each file's set-up time in these packages.
+
+- Put the docblock only on a file whose test and the source it imports use no DOM: no `document`, `window`, `localStorage`, `navigator`, no `render`, `screen` or `renderHook`, and no `typeof window` or `typeof document` check. The web setup file defines a fake `window` under node, so a source with such a check would take a different branch there and the test would prove something else.
+- **A file with the docblock that later needs the DOM drops its docblock.** Do not work around it with stubs.
+- `apps/web/test/vitest.setup.ts` loads Testing Library only when a DOM exists. A node test that needs it should not have the docblock.
