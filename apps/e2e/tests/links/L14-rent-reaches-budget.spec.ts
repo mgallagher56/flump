@@ -12,7 +12,9 @@ test("L14 a rent change reaches the linked housing line, Budget and Dashboard", 
   page,
 }) => {
   await page.goto("/app");
-  await applyPersona(page, "debtpayer");
+  // The renter persona, as the L27 to L31 specs after it use, so no extra persona switch (each
+  // switch is one reset against the backend's 10-an-hour destructive limit).
+  await applyPersona(page, "renter");
 
   const row = await entryNamed(page, "Rent");
 
@@ -23,12 +25,12 @@ test("L14 a rent change reaches the linked housing line, Budget and Dashboard", 
       await page.locator('[data-figure="budget.surplus"]').first().textContent(),
     );
 
-    // Rent saved in the housing details: £850 to £925.
-    await api(page, "/user-profile", "PATCH", { monthlyHousingCost: 925 });
+    // Rent saved in the housing details: £950 to £1,025.
+    await api(page, "/user-profile", "PATCH", { monthlyHousingCost: 1025 });
 
     await page.reload();
-    await expect(page.getByTestId("budget-category-housing")).toContainText("£925");
-    // Left over falls by 925 - 850 = £75.
+    await expect(page.getByTestId("budget-category-housing")).toContainText("£1,025");
+    // Left over falls by 1,025 - 950 = £75 (renter: £125 to £50, so it stays a positive figure).
     const after = pounds(
       await page.locator('[data-figure="budget.surplus"]').first().textContent(),
     );
@@ -40,7 +42,7 @@ test("L14 a rent change reaches the linked housing line, Budget and Dashboard", 
     );
     expect(dashboard).toBe(after);
   } finally {
-    await api(page, "/user-profile", "PATCH", { monthlyHousingCost: 850 });
+    await api(page, "/user-profile", "PATCH", { monthlyHousingCost: 950 });
     await api(page, `/budget-entries/${row.id}`, "PATCH", { linkKind: null, amount: row.amount });
   }
 });
