@@ -71,3 +71,17 @@ describe("redactString on text over the length limit", () => {
     expect(out.endsWith("[truncated]")).toBe(true);
   });
 });
+
+describe("redactString on long credentials inside the length limit", () => {
+  const secret = (n: number) => "Pw!z9.".repeat(n);
+
+  it("drops a userinfo longer than 256 characters from free text", () => {
+    const text = `ECONNREFUSED postgres://app:${secret(50)}@db:5432/x`; // 300-character password
+    expect(redactString(text)).not.toContain("Pw!z9");
+  });
+
+  it("drops everything after a Cookie header longer than 2,048 characters", () => {
+    const text = `Cookie: ${"a=b; ".repeat(600)}TAIL=${secret(2)}`; // 3,000 characters of pairs first
+    expect(redactString(text)).not.toContain("Pw!z9");
+  });
+});

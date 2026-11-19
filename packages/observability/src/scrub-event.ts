@@ -4,6 +4,7 @@ import {
   isSensitiveKey,
   MAX_STRING_LENGTH,
   REDACTED,
+  redactCredentials,
   redactString,
 } from "./redact.js";
 
@@ -56,7 +57,8 @@ function stripQueryAndHash(url: string): string {
   return cutAtBoundary(url.replace(/[?#].*$/s, ""), MAX_URL, isPathSeparator);
 }
 
-const URL_PARTS = /^([a-z][a-z0-9+.-]*:\/\/)([^/?#]*)(.*)$/is;
+// The scheme is optional so protocol-relative URLs (//user:pass@host/p) lose their userinfo too.
+const URL_PARTS = /^((?:[a-z][a-z0-9+.-]*:)?\/\/)([^/?#]*)(.*)$/is;
 const SAFE_ID = /^[\w.@+:-]{1,200}$/;
 
 /** Redacts one path segment, including percent-encoded forms such as %40 and %2540. */
@@ -96,7 +98,9 @@ function splitUrl(url: string): { origin: string; path: string } {
   // Userinfo ends at the LAST '@' of the authority, so passwords containing '@' do not leak.
   const [, scheme = "", authority = "", rest = ""] = parts;
   const host = authority.replace(/^.*@/s, "");
-  return { origin: redactString(scheme + host), path: stripQueryAndHash(rest) };
+  // Credential shapes only: the generic rules in redactString would cut digits out of ordinary host
+  // names and IP addresses.
+  return { origin: scheme + redactCredentials(host), path: stripQueryAndHash(rest) };
 }
 
 /** Full URL with userinfo, query and hash removed and path segments redacted, cut last. */
