@@ -40,19 +40,34 @@ export interface ConfirmDialogProps {
   requireText?: string;
   /** Stable id for the dialog (also data-testid). Buttons get `${id}-cancel` and `${id}-confirm`. */
   id?: string;
+  /**
+   * What the action removes, stated by every caller (owner ruling 18 November 2026, UX D1).
+   * - `"single"`: one item (a budget entry, a record, a debt, an account or pot). Focus starts on
+   *   Confirm and Enter confirms, after a short arming delay.
+   * - `"bulk"`: more than one thing or something wide-reaching (every record for a year, a bank
+   *   connection, an import, an AI token, all data). Focus starts on Cancel and Enter confirms only
+   *   when Confirm itself is focused.
+   * A dialog with `requireText` behaves as `"bulk"`.
+   */
+  scope: "single" | "bulk";
 }
+
+/** After opening, Enter or Space on Confirm waits this long, so a quick double press on the
+ * button that opened the dialog cannot also confirm it. */
+export const CONFIRM_ARMING_DELAY_MS = 400;
 
 /**
  * Modal confirmation for destructive actions. Built on Radix Dialog with role="alertdialog".
  *
- * Enter confirms (owner ruling, 18 November 2026, UX D1): initial focus lands on the confirm
- * button so the focus ring shows what Enter will do. It stays safe by design: Enter acts once per
- * opening, a held or repeating key never fires it, and a key still held from the press that
- * opened the dialog is ignored until it has been released. Escape and Cancel cancel, and Enter on
- * a focused Cancel cancels; any other control in the dialog keeps its own Enter. With
- * `requireText`, focus starts on Cancel and Enter confirms from the field or the confirm button
- * only once the typed text matches. Focus returns to whatever opened it. Outside clicks
- * never dismiss it.
+ * Enter (owner ruling, 18 November 2026, UX D1), by `scope`:
+ * - `"single"`: focus lands on Confirm, so the focus ring shows what Enter will do, and Enter
+ *   confirms. Enter or Space on Confirm is ignored for `CONFIRM_ARMING_DELAY_MS` after opening.
+ * - `"bulk"` (and any `requireText` dialog): focus lands on Cancel, and Enter confirms only when
+ *   Confirm is focused (with `requireText`, also from the field), once the typed text matches.
+ * Either way Enter acts once per opening; a held or repeating key never fires it, and a key still
+ * held from the press that opened the dialog is ignored until released. Escape and Cancel cancel,
+ * Enter on a focused Cancel cancels, and any other control in the dialog keeps its own Enter.
+ * Focus returns to whatever opened it. Outside clicks never dismiss it.
  */
 export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   open,
@@ -70,7 +85,9 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   keepFocusWhilePending = false,
   requireText,
   id = "confirm-dialog",
+  scope,
 }) => {
+  const bulk = scope === "bulk" || requireText !== undefined;
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +101,9 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   const enterArmed = useRef(true);
   // True once Enter has confirmed for this opening (or this attempt, after an error).
   const enterFired = useRef(false);
+  // When the dialog last opened, for the arming delay on a single-item confirm.
+  const openedAt = useRef(0);
+  const armingWait = () => !bulk && Date.now() - openedAt.current < CONFIRM_ARMING_DELAY_MS;
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
@@ -116,6 +136,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
     }
     enterArmed.current = !enterHeld.current;
     enterFired.current = false;
+    openedAt.current = Date.now();
   }, [open]);
 
   // A failed attempt can be tried again with Enter: once an attempt settles (pending ends, so a
@@ -149,15 +170,22 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
           onOpenAutoFocus={(event) => {
             focusReturn.onOpenAutoFocus();
             event.preventDefault();
-            if (requireText === undefined) confirmRef.current?.focus();
-            else cancelRef.current?.focus();
+            if (bulk) cancelRef.current?.focus();
+            else confirmRef.current?.focus();
           }}
           onCloseAutoFocus={focusReturn.onCloseAutoFocus}
           onKeyDown={(event) => {
-            if (event.key !== "Enter" || event.defaultPrevented) return;
+            if (event.defaultPrevented) return;
             const target = event.target;
-            const onCancel = target === cancelRef.current;
             const onConfirmButton = target === confirmRef.current;
+            // Space on Confirm is the button's own click: hold it back while arming, and never
+            // from a held key.
+            if (event.key === " ") {
+              if (onConfirmButton && (event.repeat || armingWait())) event.preventDefault();
+              return;
+            }
+            if (event.key !== "Enter") return;
+            const onCancel = target === cancelRef.current;
             const onField = inputRef.current !== null && target === inputRef.current;
             const onDialog = target === event.currentTarget;
             // Any other control (a link in the description, "Sign in again") keeps its own Enter.
@@ -170,11 +198,18 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
               handleOpenChange(false);
               return;
             }
-            // A type-to-confirm dialog confirms from its field or its (enabled) confirm button.
-            if (requireText !== undefined && onDialog) return;
+            // A bulk dialog confirms only from Confirm itself (or the type-to-confirm field).
+            if (bulk && onDialog) return;
+            if (armingWait()) return;
             if (!textMatches || enterFired.current) return;
             enterFired.current = true;
             void onConfirm();
+          }}
+          onKeyUp={(event) => {
+            // Some browsers click a button on Space's keyup: hold that back while arming too.
+            if (event.key === " " && event.target === confirmRef.current && armingWait()) {
+              event.preventDefault();
+            }
           }}
           onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}

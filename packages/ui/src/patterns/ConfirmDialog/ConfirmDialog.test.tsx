@@ -1,7 +1,17 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { css } from "../../../styled-system/css";
-import { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
+import { CONFIRM_ARMING_DELAY_MS, ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
+
+// The single-item arming delay is measured with Date.now: fake the clock so a test can step past it.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+/** Steps past the arming delay after opening. */
+const arm = () => vi.setSystemTime(Date.now() + CONFIRM_ARMING_DELAY_MS + 1);
 
 function setup(overrides: Partial<ConfirmDialogProps> = {}) {
   const onOpenChange = vi.fn();
@@ -14,6 +24,7 @@ function setup(overrides: Partial<ConfirmDialogProps> = {}) {
       description="This removes all monthly balances for 2024."
       confirmLabel="Delete year"
       onConfirm={onConfirm}
+      scope="single"
       {...overrides}
     />,
   );
@@ -86,6 +97,7 @@ describe("ConfirmDialog", () => {
     document.body.appendChild(opener);
     opener.focus();
     const props: ConfirmDialogProps = {
+      scope: "single",
       open: true,
       onOpenChange: vi.fn(),
       title: "Delete?",
@@ -108,6 +120,7 @@ describe("ConfirmDialog", () => {
 
   it("confirms on Enter (owner item 27), once only", () => {
     const { onConfirm } = setup({ tone: "danger" });
+    arm();
     const dialog = screen.getByRole("alertdialog");
     fireEvent.keyDown(document.activeElement ?? dialog, { key: "Enter" });
     fireEvent.keyUp(document.activeElement ?? dialog, { key: "Enter" });
@@ -124,6 +137,7 @@ describe("ConfirmDialog", () => {
 
   it("ignores a repeating Enter from a held key", () => {
     const { onConfirm } = setup({ tone: "danger" });
+    arm();
     const confirm = screen.getByRole("button", { name: "Delete year" });
     fireEvent.keyDown(confirm, { key: "Enter", repeat: true });
     expect(onConfirm).not.toHaveBeenCalled();
@@ -132,6 +146,7 @@ describe("ConfirmDialog", () => {
   it("ignores Enter still held from the press that opened it until it is released", () => {
     const onConfirm = vi.fn();
     const props: ConfirmDialogProps = {
+      scope: "single",
       open: false,
       onOpenChange: vi.fn(),
       title: "Delete?",
@@ -140,9 +155,11 @@ describe("ConfirmDialog", () => {
       onConfirm,
     };
     const { rerender } = render(<ConfirmDialog {...props} />);
+    arm();
     // Enter goes down on the page's Delete button and opens the dialog.
     fireEvent.keyDown(document.body, { key: "Enter" });
     rerender(<ConfirmDialog {...props} open />);
+    arm();
     const confirm = screen.getByRole("button", { name: "Delete" });
     fireEvent.keyDown(confirm, { key: "Enter" });
     expect(onConfirm).not.toHaveBeenCalled();
@@ -153,6 +170,7 @@ describe("ConfirmDialog", () => {
 
   it("cancels on Enter when the person has moved focus to Cancel", () => {
     const { onConfirm, onOpenChange } = setup({ tone: "danger" });
+    arm();
     const cancel = screen.getByRole("button", { name: "Cancel" });
     cancel.focus();
     fireEvent.keyDown(cancel, { key: "Enter" });
@@ -162,18 +180,53 @@ describe("ConfirmDialog", () => {
 
   it("does not confirm on Enter while pending", () => {
     const { onConfirm } = setup({ pending: true, keepFocusWhilePending: true });
+    arm();
     fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Enter" });
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
   it("confirms on Enter from the confirm button of a type-to-confirm dialog once the text matches", () => {
     const { onConfirm } = setup({ requireText: "DELETE", confirmLabel: "Delete" });
+    arm();
     const confirm = screen.getByRole("button", { name: "Delete" });
     fireEvent.keyDown(confirm, { key: "Enter" });
     expect(onConfirm).not.toHaveBeenCalled();
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "delete" } });
     fireEvent.keyDown(confirm, { key: "Enter" });
     expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("bulk: focus starts on Cancel, and Enter confirms only from Confirm", () => {
+    const { onConfirm } = setup({ scope: "bulk", confirmLabel: "Delete all records" });
+    arm();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Enter" });
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.keyDown(screen.getByRole("button", { name: "Delete all records" }), { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("single: Enter on Confirm waits out the arming delay after opening", () => {
+    const { onConfirm } = setup();
+    const confirm = screen.getByRole("button", { name: "Delete year" });
+    // A quick second press on the button that opened the dialog lands within the delay.
+    fireEvent.keyDown(confirm, { key: "Enter" });
+    fireEvent.keyUp(confirm, { key: "Enter" });
+    expect(onConfirm).not.toHaveBeenCalled();
+    arm();
+    fireEvent.keyDown(confirm, { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("single: Space on Confirm is held back during the arming delay and when repeating", () => {
+    setup();
+    const confirm = screen.getByRole("button", { name: "Delete year" });
+    // fireEvent returns false when the handler prevented the browser's own click.
+    expect(fireEvent.keyDown(confirm, { key: " " })).toBe(false);
+    expect(fireEvent.keyUp(confirm, { key: " " })).toBe(false);
+    arm();
+    expect(fireEvent.keyDown(confirm, { key: " " })).toBe(true);
+    expect(fireEvent.keyDown(confirm, { key: " ", repeat: true })).toBe(false);
   });
 
   it("leaves Enter on any other control alone, such as Sign in again", () => {
@@ -190,6 +243,7 @@ describe("ConfirmDialog", () => {
   it("can confirm with Enter again after a failed attempt ends, even with the same error", () => {
     const onConfirm = vi.fn();
     const props: ConfirmDialogProps = {
+      scope: "single",
       open: true,
       onOpenChange: vi.fn(),
       title: "Delete?",
@@ -199,6 +253,7 @@ describe("ConfirmDialog", () => {
       error: "Couldn't delete",
     };
     const { rerender } = render(<ConfirmDialog {...props} />);
+    arm();
     const press = () => fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Enter" });
     press();
     rerender(<ConfirmDialog {...props} pending />);
@@ -209,6 +264,7 @@ describe("ConfirmDialog", () => {
 
   it("does not confirm on Enter when pending or requireText does not match", () => {
     const { onConfirm } = setup({ requireText: "DELETE", confirmLabel: "Delete" });
+    arm();
     const input = screen.getByRole("textbox");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onConfirm).not.toHaveBeenCalled();
@@ -264,6 +320,7 @@ describe("ConfirmDialog", () => {
 
   it("clears typed text when the parent closes and reopens the dialog", () => {
     const props: ConfirmDialogProps = {
+      scope: "single",
       open: true,
       onOpenChange: vi.fn(),
       title: "Reset data?",

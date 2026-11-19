@@ -379,6 +379,7 @@ export const DebtContainer: FC = () => {
       <DebtHelpLink />
 
       <ConfirmDialog
+        scope="single"
         confirmLabel="Delete debt"
         description="Its history will be deleted too. This cannot be undone."
         error={deleteOutcome.error}

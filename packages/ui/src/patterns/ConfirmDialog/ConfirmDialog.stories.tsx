@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { expect, fn, screen, userEvent, waitFor } from "storybook/test";
-import { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
+import { CONFIRM_ARMING_DELAY_MS, ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
 
 /** Portalled content escapes the preview's themed wrapper, so theme the document root too. */
 const DarkRoot = ({ children }: { children: ReactNode }) => {
@@ -29,6 +29,7 @@ const meta: Meta<typeof ConfirmDialog> = {
     title: "Delete 2024?",
     description: "This removes all monthly balances for 2024. This can't be undone.",
     confirmLabel: "Delete year",
+    scope: "single",
   },
 };
 
@@ -38,6 +39,17 @@ type Story = StoryObj<typeof ConfirmDialog>;
 export const Default: Story = {};
 
 export const Danger: Story = { args: { tone: "danger" } };
+
+/** Wide-reaching: focus starts on Cancel, and Enter confirms only from Confirm (UX D1). */
+export const Bulk: Story = {
+  args: {
+    tone: "danger",
+    scope: "bulk",
+    title: "Delete every record for 2024/25?",
+    description: "This removes all 12 records for the tax year. This can't be undone.",
+    confirmLabel: "Delete all records",
+  },
+};
 
 /** Portalled content escapes the side-by-side frames, so dark gets its own story. */
 export const DangerDark: Story = {
@@ -113,6 +125,8 @@ export const EnterConfirms: Story = {
     if (!open) throw new Error("open button missing");
     await userEvent.click(open);
     await screen.findByRole("alertdialog");
+    // Enter waits out the arming delay after opening, so a double press cannot confirm.
+    await new Promise((resolve) => setTimeout(resolve, CONFIRM_ARMING_DELAY_MS + 50));
     await userEvent.keyboard("{Enter}");
     await expect(args.onConfirm).toHaveBeenCalledTimes(1);
   },

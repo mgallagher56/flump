@@ -646,6 +646,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
       </div>
 
       <ConfirmDialog
+        scope="single"
         confirmLabel="Delete entry"
         description="This entry will be deleted from your budget. This cannot be undone."
         open={pendingDeleteEntry !== undefined}

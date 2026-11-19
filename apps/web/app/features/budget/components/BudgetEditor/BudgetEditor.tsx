@@ -1016,6 +1016,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
       ) : null}
 
       <ConfirmDialog
+        scope="single"
         confirmLabel="Delete entry"
         description={
           toRemove ? (

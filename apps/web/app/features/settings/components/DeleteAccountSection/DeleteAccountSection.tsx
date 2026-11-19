@@ -84,6 +84,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
         </div>
 
         <ConfirmDialog
+          scope="bulk"
           id="delete-account-dialog"
           open={open}
           onOpenChange={setOpen}

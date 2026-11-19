@@ -144,6 +144,7 @@ export function useTaxRecordEditor({ records, taxYear }: UseTaxRecordEditorOptio
       />
       <TaxReceiptDialog record={receiptRecord} onClose={() => setReceiptRecord(null)} />
       <ConfirmDialog
+        scope="single"
         open={recordToDelete !== null}
         onOpenChange={(open) => {
           if (!open) {
