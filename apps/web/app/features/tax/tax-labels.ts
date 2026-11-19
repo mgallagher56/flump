@@ -127,6 +127,8 @@ export const CATEGORY_SHORT_LABEL: Readonly<Record<string, string>> = {
 /** The dialog's name for a category, falling back to the engine's name for an unknown id. */
 /** One plain sentence under the category, where a category needs one. */
 export const CATEGORY_HINT: Readonly<Record<string, string>> = {
+  investment_fees:
+    "Kept for your records. Fees are not taken off savings interest or dividends for Income Tax.",
   finance_costs_brought_forward:
     "Enter the unused residential finance costs from last year's tax return or calculation.",
 };
