@@ -5,6 +5,7 @@ import {
   btlCard,
   btlList,
   btlListItem,
+  btlPrompt,
   btlPropertyName,
   btlSubtitle,
   btlYieldLine,
@@ -39,6 +40,9 @@ export interface BtlOverviewProps {
  */
 export const BtlOverview: FC<BtlOverviewProps> = ({ properties, onManage }) => {
   const count = properties.length;
+  const hasYield = (property: BtlOverviewProperty) =>
+    property.yieldPct !== null && property.yieldPct !== undefined;
+  const anyWithoutRent = properties.some((property) => !hasYield(property));
   return (
     <PageSection
       action={
@@ -65,14 +69,19 @@ export const BtlOverview: FC<BtlOverviewProps> = ({ properties, onManage }) => {
             {properties.map((property) => (
               <li className={btlListItem()} key={property.id}>
                 <span className={btlPropertyName()}>{property.name}</span>
-                <span className={btlYieldLine()}>
-                  {property.yieldPct !== null && property.yieldPct !== undefined
-                    ? `Gross yield ${yieldFormat.format(property.yieldPct)}%`
-                    : "Add rent in Self Assessment, linked to this property, to see its yield."}
-                </span>
+                {hasYield(property) ? (
+                  <span className={btlYieldLine()}>
+                    {`Gross yield ${yieldFormat.format(property.yieldPct ?? 0)}%`}
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>
+        ) : null}
+        {anyWithoutRent ? (
+          <p className={btlPrompt()}>
+            Add rent in Self Assessment, linked to a property, to see that property's yield.
+          </p>
         ) : null}
       </div>
     </PageSection>

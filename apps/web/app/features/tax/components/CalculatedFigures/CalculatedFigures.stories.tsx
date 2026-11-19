@@ -36,7 +36,9 @@ type Story = StoryObj<typeof CalculatedFigures>;
 const play: Story["play"] = async ({ canvasElement, args }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByText(/£6,750\.00/)).toBeTruthy();
-  await userEvent.click(canvas.getByRole("button", { name: /^Add as a record: Flat 2 mortgage/ }));
+  await userEvent.click(
+    canvas.getByRole("button", { name: /^Add this estimate as a record: Flat 2 mortgage/ }),
+  );
   await expect(args.onAdd).toHaveBeenCalledWith(expect.objectContaining({ accountId: "m1" }));
 };
 
@@ -47,7 +49,9 @@ export const Dark: Story = { globals: { theme: "dark" }, play };
 export const Saving: Story = {
   args: { pending: true },
   play: async ({ canvasElement }) => {
-    const buttons = within(canvasElement).getAllByRole("button", { name: /^Add as a record/ });
+    const buttons = within(canvasElement).getAllByRole("button", {
+      name: /^Add this estimate as a record/,
+    });
     for (const button of buttons) await expect(button).toBeDisabled();
   },
 };

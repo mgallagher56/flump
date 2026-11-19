@@ -47,6 +47,7 @@ export const CalculatedFigures: FC<CalculatedFiguresProps> = ({
         {offers.map((offer) => {
           const mortgage = offer.kind === "mortgage_interest";
           const testId = `calculated-figure-${offer.accountId}`;
+          const estimateLineId = `${testId}-estimate`;
           return (
             <li key={`${offer.kind}-${offer.accountId}`}>
               <Card as="article" data-testid={testId} id={testId} padding="lg">
@@ -54,36 +55,37 @@ export const CalculatedFigures: FC<CalculatedFiguresProps> = ({
                   <p className={accountName()}>{offer.accountName}</p>
                   <h3 className={title()}>
                     {mortgage
-                      ? `Calculated mortgage interest for ${taxYear}: `
-                      : `Calculated savings interest for ${taxYear}: `}
+                      ? `Estimated mortgage interest for ${taxYear}: `
+                      : `Estimated savings interest for ${taxYear}: `}
                     <span className={figure()}>{money.format(offer.amount)}</span>
                     {!mortgage && offer.sharePercent < 100 ? " (your share)" : null}
                   </h3>
                   {mortgage ? (
                     <>
-                      <p className={line()}>
+                      <p className={line()} id={estimateLineId}>
                         {`An estimate from this mortgage's monthly balances and its ${rate.format(offer.ratePct)}% rate. Check it against your lender's yearly statement.`}
                       </p>
                       <p className={line()}>
-                        Only interest on borrowing for the let property counts. This estimate cannot
-                        see a rate change during the year.
+                        Only interest on borrowing for the let property counts towards this
+                        estimate. It cannot see a rate change during the year.
                       </p>
                     </>
                   ) : (
-                    <p className={line()}>
+                    <p className={line()} id={estimateLineId}>
                       {`An estimate from this account's monthly balances and its ${rate.format(offer.ratePct)}% rate. Interest paid once a year may count in a different tax year.`}
                     </p>
                   )}
                   <div className={actions()}>
                     <Button
-                      aria-label={`Add as a record: ${offer.accountName}`}
+                      aria-describedby={estimateLineId}
+                      aria-label={`Add this estimate as a record: ${offer.accountName}`}
                       disabled={pending}
                       size="sm"
                       type="button"
                       variant="secondary"
                       onClick={() => onAdd(offer)}
                     >
-                      Add as a record
+                      Add this estimate as a record
                     </Button>
                   </div>
                 </div>

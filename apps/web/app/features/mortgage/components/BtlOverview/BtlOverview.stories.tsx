@@ -21,6 +21,11 @@ type Story = StoryObj<typeof BtlOverview>;
 export const Populated: Story = {
   play: async ({ canvasElement, args }) => {
     await expect(within(canvasElement).getByText("Gross yield 6.0%")).toBeTruthy();
+    await expect(
+      within(canvasElement).getAllByText(
+        "Add rent in Self Assessment, linked to a property, to see that property's yield.",
+      ),
+    ).toHaveLength(1);
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Edit on Accounts" }));
     await expect(args.onManage).toHaveBeenCalled();
   },

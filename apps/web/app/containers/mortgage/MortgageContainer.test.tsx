@@ -629,7 +629,7 @@ describe("<MortgageContainer />", () => {
       loaderData = { accounts: btlAccounts(), accountDetails: [], userProfile: OLD_BTL_PROFILE };
       const { container } = customRender(<MortgageContainer />);
       expect(container.querySelector("#btl-overview")?.textContent).toContain(
-        "Add rent in Self Assessment, linked to this property, to see its yield.",
+        "Add rent in Self Assessment, linked to a property, to see that property's yield.",
       );
     });
 

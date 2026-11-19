@@ -56,7 +56,7 @@ export const btlListItem = cva({
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: "2px",
+    gap: "0.5",
     minWidth: 0,
   },
 });
@@ -73,5 +73,14 @@ export const btlYieldLine = cva({
     textStyle: "body.sm",
     color: "text.secondary",
     fontVariantNumeric: "tabular-nums",
+  },
+});
+
+/** The one rent prompt, below the list, when any property has no linked rent (one notice per surface). */
+export const btlPrompt = cva({
+  base: {
+    textStyle: "body.sm",
+    color: "text.secondary",
+    margin: 0,
   },
 });

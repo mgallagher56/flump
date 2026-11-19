@@ -362,7 +362,7 @@ const cases: Case[] = [
     intent: "create-transaction",
     // A record linked to the account it describes (slice 7).
     fields: {
-      name: "Flat 2 mortgage interest (calculated)",
+      name: "Flat 2 mortgage interest (estimate)",
       source: "rental",
       type: "expense",
       category: "mortgage_interest",
@@ -374,7 +374,7 @@ const cases: Case[] = [
     method: "POST",
     path: "/tax-records",
     body: {
-      name: "Flat 2 mortgage interest (calculated)",
+      name: "Flat 2 mortgage interest (estimate)",
       source: "rental",
       type: "expense",
       category: "mortgage_interest",

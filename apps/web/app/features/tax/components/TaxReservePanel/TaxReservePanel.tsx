@@ -202,6 +202,12 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
                   value={gbp(result.netAdditionalTaxToPay)}
                 />
               </dl>
+              {/* A line in the workings, not a banner: the bill above stays at £0. */}
+              {result.estimatedRepayment > 0 ? (
+                <p className={taperLine()}>
+                  {`The mortgage interest credit is more than the tax on your rent, so this estimate expects ${pounds.format(result.estimatedRepayment)} of PAYE tax to be repaid.`}
+                </p>
+              ) : null}
               {/* The share each rental property gives, read from Accounts: never typed here. */}
               {rentalShares.map((share) => (
                 <p className={shareLine()} key={share.accountId}>

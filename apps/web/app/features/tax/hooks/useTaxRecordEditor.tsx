@@ -67,11 +67,11 @@ export const draftFromCalculatedOffer = (
       mortgage ? "expense" : "income",
       firstDayOf(taxYear),
     ),
-    name: `${offer.accountName} interest (calculated)`,
+    name: `${offer.accountName} interest (estimate)`,
     category: offer.kind,
     amount: offer.amount,
     frequency: "annual",
-    notes: "Calculated from monthly balances",
+    notes: "Estimated from monthly balances",
     accountId: offer.accountId,
   };
 };

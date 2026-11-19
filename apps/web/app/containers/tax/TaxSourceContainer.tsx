@@ -3,11 +3,11 @@ import {
   calculateUKTax,
   compareExpensesWithAllowance,
   estimateInputsFor,
+  estimateOptionsFor,
   getCurrentUKTaxYear,
   isLegacySalaryRecord,
   isRecordActiveInTaxYear,
   recordedTotalsForTaxYear,
-  rentalSharesFromAccounts,
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
@@ -60,7 +60,7 @@ import { addActions, backLink, errorText, pageRoot } from "./TaxSourceContainer.
 const DESCRIPTION: Record<TaxSource, string> = {
   "self-employed": "Income and expenses from working for yourself, for one tax year.",
   rental: "Rent and expenses for the whole property, for one tax year.",
-  savings: "Taxable interest, dividends and fees, for one tax year.",
+  savings: "Interest, dividends and fees, for one tax year. Fees are not taken off for tax.",
   paye: "Bonuses, taxable benefits and pension contributions on top of your salary.",
 };
 
@@ -122,9 +122,9 @@ const TaxSourceContainer: FC = () => {
             records.filter((r) => !isLegacySalaryRecord(r)),
             0,
             100,
-            { rentalShares: rentalSharesFromAccounts(taxAccounts) },
+            estimateOptionsFor({ taxRegion, accounts: taxAccounts }),
           ),
-    [taxYear, records, inputs, taxAccounts],
+    [taxYear, records, inputs, taxRegion, taxAccounts],
   );
   // One share for every rental record in the year, when they share one, for the comparison's note.
   const rentalShare = uniformRentalShare(taxAccounts, records, taxYear);
