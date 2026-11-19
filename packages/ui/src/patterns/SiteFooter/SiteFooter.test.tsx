@@ -50,14 +50,29 @@ describe("SiteFooter", () => {
     expect(demo.getAttribute("rel")).toBe("noreferrer");
   });
 
-  it("compact: one row with the logo and the bottom text, no brand heading or columns", () => {
+  it("compact: one row with the logo, its links and the bottom text, no brand heading", () => {
     const { container } = render(
-      <SiteFooter bottom="© 2026 Example Ltd" logo={<a href="/">Logo</a>} variant="compact" />,
+      <SiteFooter
+        bottom="© 2026 Example Ltd"
+        bottomFrom="lg"
+        links={[
+          { key: "a", label: "Always", href: "/a" },
+          { key: "p", label: "Phones", href: "/p", show: "belowMd" },
+          { key: "w", label: "Wide", href: "/w", show: "fromMd" },
+        ]}
+        logo={<a href="/">Logo</a>}
+        variant="compact"
+      />,
     );
     expect(screen.getByRole("contentinfo")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Logo" })).toBeTruthy();
-    expect(screen.getByText("© 2026 Example Ltd")).toBeTruthy();
+    const nav = screen.getByRole("navigation", { name: "Footer" });
+    expect(within(nav).getAllByRole("link")).toHaveLength(3);
+    const item = (name: string) =>
+      screen.getByRole("link", { name }).closest("li")?.className ?? "";
+    expect(item("Phones")).toContain("md:d_none");
+    expect(item("Wide")).toContain("md:d_list-item");
+    expect(screen.getByText("© 2026 Example Ltd").className).toContain("lg:d_block");
     expect(screen.queryByRole("heading")).toBeNull();
-    expect(container.querySelectorAll("nav")).toHaveLength(0);
+    expect(container.querySelectorAll("footer > div")).toHaveLength(1);
   });
 });

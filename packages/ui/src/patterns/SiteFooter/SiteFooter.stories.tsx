@@ -44,7 +44,7 @@ export const Dark: Story = { globals: { theme: "dark" }, play };
 const compactPlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("link", { name: "Home" })).toBeInTheDocument();
-  await expect(canvas.queryAllByRole("navigation")).toHaveLength(0);
+  await expect(canvas.getByRole("navigation", { name: "Footer" })).toBeInTheDocument();
 };
 
 /** The signed-in web app's footer: one line with the logo, at every width. */
@@ -53,6 +53,13 @@ export const CompactLight: Story = {
     variant: "compact",
     logo: <a href="#home">Home</a>,
     bottom: "© 2026 Flump Finance Ltd",
+    bottomFrom: "lg",
+    links: [
+      { key: "settings", label: "Settings", href: "#settings" },
+      { key: "security", label: "Security", href: "#security", show: "fromMd" },
+      { key: "short", label: "Calculators", href: "#tools", show: "belowMd" },
+      { key: "long", label: "All calculators", href: "#tools", show: "fromMd" },
+    ],
   },
   globals: { theme: "light" },
   play: compactPlay,

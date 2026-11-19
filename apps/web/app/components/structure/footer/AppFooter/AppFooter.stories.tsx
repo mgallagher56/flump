@@ -16,21 +16,31 @@ const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("link", { name: "Flump home" })).toHaveAttribute("href", "/");
   await expect(canvas.getByText(/^© \d{4} /)).toBeInTheDocument();
-  // One line: no link columns.
-  const footer = canvasElement.querySelector("footer");
-  await expect(footer?.querySelectorAll("nav")).toHaveLength(0);
+  await expect(canvas.getByRole("navigation", { name: "Footer" })).toBeInTheDocument();
+  await expect(canvas.getByRole("link", { name: "Settings" })).toHaveAttribute(
+    "href",
+    "/app/profile",
+  );
 };
 
 export const Light: Story = { globals: { theme: "light" }, play };
 
 export const Dark: Story = { globals: { theme: "dark" }, play };
 
-/** The narrowest phone: logo and company name still share one line. */
-export const Phone320: Story = {
+/** One line at the story's width: every shown link shares the logo's row. */
+export const OneLine: Story = {
   globals: { theme: "light" },
-  parameters: { viewport: { defaultViewport: "mobile1" } },
   play: async ({ canvasElement }) => {
-    const text = within(canvasElement).getByText(/^© \d{4} /);
-    await expect(text.getBoundingClientRect().height).toBeLessThan(30);
+    const row = canvasElement.querySelector("footer > div");
+    const links = Array.from(canvasElement.querySelectorAll("footer a")).filter(
+      (el) => el.getBoundingClientRect().width > 0,
+    );
+    // One row: every shown link (the logo included) shares a vertical centre.
+    const centres = links.map((el) => {
+      const box = el.getBoundingClientRect();
+      return box.top + box.height / 2;
+    });
+    await expect(Math.max(...centres) - Math.min(...centres)).toBeLessThanOrEqual(4);
+    await expect(row?.getBoundingClientRect().height ?? 0).toBeLessThan(60);
   },
 };
