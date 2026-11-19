@@ -136,6 +136,24 @@ describe("_index route", () => {
     expect(data.budgetData.hasSpending).toBe(false);
   });
 
+  it("counts any saved budget line towards the budget step, never the retired isDefault flag", async () => {
+    // System audit slice 9 part two: budget_entries.is_default is retired. The backend has
+    // written false for years, so a stored true is a leftover and is not read.
+    mockWorkspace({
+      user: { id: "u1", email: "real@example.com" },
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [
+        { id: "b3", name: "Groceries", category: "food", amount: 0, isDefault: true },
+      ],
+      taxRecords: [],
+      userProfile: { onboardingCompleted: true, setupChecklistCompletedSteps: [] },
+    } as any);
+    const request = new Request("http://localhost/");
+    const data = (await loader({ request, params: {}, context: {} } as any)) as any;
+    expect(data.hasBudget).toBe(true);
+  });
+
   it("never invents an estimated tax due figure from tax records", async () => {
     mockWorkspace({
       user: { id: "u1", email: "real@example.com" },

@@ -50,25 +50,16 @@ describe("useUserProfile", () => {
       secondIncomeMonthly: 500,
       rentalIncomeMonthly: 800,
       propertyOwnershipShare: 50,
-      hasBuyToLet: true,
-      buyToLetCount: 2,
-      buyToLetPropertyValue: 200000,
-      buyToLetMonthlyRental: 1100,
-      buyToLetMortgageBalance: 140000,
-      buyToLetMortgageRate: 4.8,
       pensionPercent: 8,
       pensionEmployerPercent: 5,
       isSalarySacrifice: false,
       isSalarySacrificeEmployerNi: true,
-      monthlySavingsTarget: 600,
-      savingsDefaultInterestRate: 4.5,
     });
 
     expect(norm.firstName).toBe("Jane");
     expect(norm.age).toBe(34);
     expect(norm.annualSalary).toBe(75000);
-    expect(norm.hasBuyToLet).toBe(true);
-    expect(norm.buyToLetCount).toBe(2);
+    expect(norm.rentalIncomeMonthly).toBe(800);
     expect(norm.isSalarySacrifice).toBe(false);
     expect(norm.isSalarySacrificeEmployerNi).toBe(true);
   });

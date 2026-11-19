@@ -165,11 +165,3 @@ export const RETIRED_PAGE_KEYS: readonly string[] = ["forecast"];
 export function stripRetiredKeys<T extends string>(keys: readonly T[]): T[] {
   return keys.filter((k) => !RETIRED_PAGE_KEYS.includes(k));
 }
-
-/** Drops retired keys from a keyed record such as widget sizes or widget config. */
-export function stripRetiredRecordKeys<V>(
-  record: Record<string, V> | null | undefined,
-): Record<string, V> | undefined {
-  if (!record || typeof record !== "object") return undefined;
-  return Object.fromEntries(Object.entries(record).filter(([k]) => !RETIRED_PAGE_KEYS.includes(k)));
-}

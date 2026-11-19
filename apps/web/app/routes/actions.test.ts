@@ -241,31 +241,6 @@ const cases: Case[] = [
     path: "/accounts/p1",
   },
   {
-    route: "pension",
-    action: pensionAction,
-    intent: "updatePensionContributions",
-    fields: { pensionPercent: "5", annualSalary: "40000", isSalarySacrifice: "true" },
-    method: "PATCH",
-    path: "/user-profile",
-    body: { pensionPercent: 5, annualSalary: 40000, isSalarySacrifice: true },
-  },
-  {
-    route: "pension",
-    action: pensionAction,
-    intent: "completePensionWizard",
-    fields: { name: "Work", balance: "10", annualSalary: "30000", pensionPercent: "5" },
-    method: "POST",
-    path: "/accounts",
-    body: {
-      name: "Work",
-      type: "Pension",
-      balance: 10,
-      // A blank growth rate stays unset, never an assumed 5%.
-      interestRate: null,
-      monthlyContribution: null,
-    },
-  },
-  {
     route: "savings",
     action: savingsAction,
     intent: "createSavingsAccount",
@@ -340,15 +315,6 @@ const cases: Case[] = [
     fields: { accountId: "s1" },
     method: "DELETE",
     path: "/accounts/s1",
-  },
-  {
-    route: "savings",
-    action: savingsAction,
-    intent: "updateSavingsSettings",
-    fields: { savingsAllocationMode: "fixed", monthlySavingsTarget: "300" },
-    method: "PATCH",
-    path: "/user-profile",
-    body: { savingsAllocationMode: "fixed", monthlySavingsTarget: 300 },
   },
   {
     route: "tax",
@@ -778,31 +744,6 @@ describe("accounts action, a mortgage and the property it is on", () => {
   });
 });
 
-describe("pension wizard", () => {
-  const wizard = cases.find((c) => c.intent === "completePensionWizard") as Case;
-
-  it("runs account, profile then checklist, and stops at the first failure", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockImplementationOnce(contractFetch())
-      .mockResolvedValueOnce(new Response("{}", { status: 500 }));
-    globalThis.fetch = fetchMock;
-    const res: any = await pensionAction(makeArgs(wizard));
-    expect(res.data.success).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("marks the pension checklist step complete on success", async () => {
-    const fetchMock = respond(200);
-    globalThis.fetch = fetchMock;
-    await pensionAction(makeArgs(wizard));
-    const [url, init] = fetchMock.mock.calls[2];
-    expect(url).toBe(`${apiConfig.apiBaseUrl}/v1/user-profile/checklist`);
-    expect(init.method).toBe("PATCH");
-    expect(JSON.parse(init.body)).toEqual({ step: "pension", completed: true });
-  });
-});
-
 describe("onboarding action", () => {
   const args = (): any => {
     const form = new FormData();
@@ -898,18 +839,21 @@ describe("tax action, malformed JSON", () => {
   });
 });
 
-describe("action edge cases", () => {
-  it("pension checklist PATCH failing still returns success", async () => {
-    const wizard = cases.find((c) => c.intent === "completePensionWizard") as Case;
-    globalThis.fetch = vi
-      .fn()
-      .mockImplementationOnce(contractFetch())
-      .mockImplementationOnce(contractFetch())
-      .mockResolvedValueOnce(new Response("{}", { status: 503 }));
-    const res: any = await pensionAction(makeArgs(wizard));
-    expect(res.data).toEqual({ success: true });
+describe("retired route intents (system audit slice 9 part two)", () => {
+  // Nothing in the app submits these any more; the profile fields they wrote are retired.
+  it.each([
+    ["pension", "updatePensionContributions", pensionAction, { pensionPercent: "5" }],
+    ["pension", "completePensionWizard", pensionAction, { name: "Work", balance: "10" }],
+    ["savings", "updateSavingsSettings", savingsAction, { monthlySavingsTarget: "300" }],
+  ] as const)("%s %s never calls the backend", async (_route, intent, run, fields) => {
+    const fetchMock = respond(200);
+    globalThis.fetch = fetchMock;
+    await run(makeArgs({ intent, fields } as unknown as Case));
+    expect(fetchMock).not.toHaveBeenCalled();
   });
+});
 
+describe("action edge cases", () => {
   it("OAuth bank connections return a clear not-available error", async () => {
     globalThis.fetch = respond(200, {});
     const form = new FormData();

@@ -42,8 +42,6 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
           enabledPages: mockEnabledPages.current ?? ALL_ENABLED,
           dashboardWidgets: widgets,
           dashboardWidgetOrder: order,
-          dashboardWidgetSizes: { accounts: "wide" },
-          dashboardWidgetConfig: {},
         },
         updateProfile: async (updates: {
           dashboardWidgets?: string[];

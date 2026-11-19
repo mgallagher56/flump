@@ -73,27 +73,15 @@ export interface UserProfileData {
   homeValue?: number | null;
   mortgageBalance?: number | null;
   propertyOwnershipShare?: number;
-  hasBuyToLet?: boolean;
-  buyToLetCount?: number;
-  buyToLetPropertyValue?: number | null;
-  buyToLetMonthlyRental?: number | null;
-  buyToLetMortgageBalance?: number | null;
-  buyToLetMortgageRate?: number | null;
-  buyToLetMortgageType?: "repayment" | "interest-only";
   /** null (or absent) when never answered: the columns have no default (owner decision 3). */
   pensionPercent?: number | null;
   pensionEmployerPercent?: number | null;
   isSalarySacrifice?: boolean | null;
   isSalarySacrificeEmployerNi?: boolean;
-  monthlySavingsTarget?: number | null;
-  savingsAllocationMode?: "total" | "per_account";
-  savingsDefaultInterestRate?: number;
   setupChecklistCompletedSteps?: string[];
   enabledPages?: string[];
   dashboardWidgets?: string[];
   dashboardWidgetOrder?: string[];
-  dashboardWidgetSizes?: Record<string, "normal" | "wide">;
-  dashboardWidgetConfig?: Record<string, any>;
   customBudgetCategories?: string[];
   hasResetFinancialData?: boolean;
   onboardingCompleted?: boolean;

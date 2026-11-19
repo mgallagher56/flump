@@ -10,7 +10,7 @@ import { useRevalidator, useRouteLoaderData } from "react-router";
 import { apiFetch } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
 import { CONFLICT_TOAST, isConflict, reloadAfterConflict, versionEtag } from "~/services/conflict";
-import { stripRetiredKeys, stripRetiredRecordKeys } from "~/utils/pageConfig";
+import { stripRetiredKeys } from "~/utils/pageConfig";
 
 /** E23 D06: the four UK nations as stored on the profile; null means not set. */
 export type TaxRegion = "ENGLAND" | "WALES" | "SCOTLAND" | "NORTHERN_IRELAND";
@@ -54,29 +54,17 @@ export interface UserProfile {
   homeValue?: number | null;
   mortgageBalance?: number | null;
   propertyOwnershipShare: number;
-  hasBuyToLet: boolean;
-  buyToLetCount: number;
-  buyToLetPropertyValue?: number | null;
-  buyToLetMonthlyRental?: number | null;
-  buyToLetMortgageBalance?: number | null;
-  buyToLetMortgageRate?: number | null;
-  buyToLetMortgageType: "repayment" | "interest-only";
   /** null when never answered (owner decision 3): a stored 5 and 3 is the user's own answer. */
   pensionPercent?: number | null;
   pensionEmployerPercent?: number | null;
   isSalarySacrifice?: boolean | null;
   isSalarySacrificeEmployerNi: boolean;
-  monthlySavingsTarget?: number | null;
-  savingsAllocationMode: "total" | "per_account";
-  savingsDefaultInterestRate: number;
   setupChecklistCompletedSteps: string[];
   /** The person closed the setup checklist (decision 13); a reset clears it. */
   setupChecklistDismissed?: boolean;
   enabledPages: string[];
   dashboardWidgets: string[];
   dashboardWidgetOrder: string[];
-  dashboardWidgetSizes: Record<string, "normal" | "wide">;
-  dashboardWidgetConfig: Record<string, any>;
   customBudgetCategories?: string[];
   /** Net worth choices: property with its mortgage (default on), student loan (default off). */
   netWorthCountsProperty?: boolean;
@@ -111,39 +99,22 @@ export const DEFAULT_PROFILE: UserProfile = {
   hasMortgage: false,
   mortgageType: "repayment",
   propertyOwnershipShare: 100.0,
-  hasBuyToLet: false,
-  buyToLetCount: 1,
-  buyToLetPropertyValue: null,
-  buyToLetMonthlyRental: null,
-  buyToLetMortgageBalance: null,
-  buyToLetMortgageRate: null,
-  buyToLetMortgageType: "interest-only",
   pensionPercent: null,
   pensionEmployerPercent: null,
   isSalarySacrifice: null,
   isSalarySacrificeEmployerNi: false,
-  monthlySavingsTarget: null,
-  savingsAllocationMode: "per_account",
-  savingsDefaultInterestRate: 5.0,
   setupChecklistCompletedSteps: [],
   setupChecklistDismissed: false,
   enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
   dashboardWidgets: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
   // Empty: the dashboard's default section order until the user moves a section.
   dashboardWidgetOrder: [],
-  dashboardWidgetSizes: { accounts: "wide", debt: "wide" },
-  dashboardWidgetConfig: {},
   customBudgetCategories: [],
   hasResetFinancialData: false,
   onboardingCompleted: false,
   createdAt: "",
   updatedAt: "",
 };
-
-/** Falls back when stripping retired keys left a record empty (or it was never set). */
-function nonEmptyOr<V>(record: Record<string, V> | undefined, fallback: Record<string, V>) {
-  return record && Object.keys(record).length > 0 ? record : fallback;
-}
 
 export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   ...DEFAULT_PROFILE,
@@ -206,26 +177,6 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
       ? Number(p.propertyOwnershipShare)
       : 100.0,
   mortgageType: p.mortgageType || DEFAULT_PROFILE.mortgageType,
-  hasBuyToLet: p.hasBuyToLet !== undefined ? Boolean(p.hasBuyToLet) : false,
-  buyToLetCount:
-    p.buyToLetCount !== null && p.buyToLetCount !== undefined ? Number(p.buyToLetCount) : 1,
-  buyToLetPropertyValue:
-    p.buyToLetPropertyValue !== null && p.buyToLetPropertyValue !== undefined
-      ? Number(p.buyToLetPropertyValue)
-      : null,
-  buyToLetMonthlyRental:
-    p.buyToLetMonthlyRental !== null && p.buyToLetMonthlyRental !== undefined
-      ? Number(p.buyToLetMonthlyRental)
-      : null,
-  buyToLetMortgageBalance:
-    p.buyToLetMortgageBalance !== null && p.buyToLetMortgageBalance !== undefined
-      ? Number(p.buyToLetMortgageBalance)
-      : null,
-  buyToLetMortgageRate:
-    p.buyToLetMortgageRate !== null && p.buyToLetMortgageRate !== undefined
-      ? Number(p.buyToLetMortgageRate)
-      : null,
-  buyToLetMortgageType: p.buyToLetMortgageType || DEFAULT_PROFILE.buyToLetMortgageType,
   // Never presume a pension answer (owner decision 3): unanswered stays null, shown as "Not set".
   pensionPercent:
     p.pensionPercent !== null && p.pensionPercent !== undefined ? Number(p.pensionPercent) : null,
@@ -239,14 +190,6 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
       : null,
   isSalarySacrificeEmployerNi:
     p.isSalarySacrificeEmployerNi !== undefined ? Boolean(p.isSalarySacrificeEmployerNi) : false,
-  monthlySavingsTarget:
-    p.monthlySavingsTarget !== null && p.monthlySavingsTarget !== undefined
-      ? Number(p.monthlySavingsTarget)
-      : null,
-  savingsDefaultInterestRate:
-    p.savingsDefaultInterestRate !== null && p.savingsDefaultInterestRate !== undefined
-      ? Number(p.savingsDefaultInterestRate)
-      : 5.0,
   // Retired module keys (`forecast`) are dropped on every read; the stored value is rewritten the
   // next time the user saves, so no destructive migration is needed.
   enabledPages: Array.isArray(p.enabledPages)
@@ -258,12 +201,6 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   dashboardWidgetOrder: Array.isArray(p.dashboardWidgetOrder)
     ? stripRetiredKeys(p.dashboardWidgetOrder)
     : DEFAULT_PROFILE.dashboardWidgetOrder,
-  dashboardWidgetSizes: nonEmptyOr(
-    stripRetiredRecordKeys(p.dashboardWidgetSizes),
-    DEFAULT_PROFILE.dashboardWidgetSizes,
-  ),
-  dashboardWidgetConfig:
-    stripRetiredRecordKeys(p.dashboardWidgetConfig) || DEFAULT_PROFILE.dashboardWidgetConfig,
 });
 
 function messageFrom(err: unknown, fallback: string): Error {

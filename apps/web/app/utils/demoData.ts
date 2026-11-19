@@ -188,14 +188,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       isSalarySacrifice: false,
       monthlyTakeHome: 2220,
       hasMortgage: false,
-      hasBuyToLet: false,
       enabledPages: ["accounts", "budget", "debt", "pension", "tax"],
       dashboardWidgets: ["accounts", "budget", "debt"],
-      dashboardWidgetSizes: {
-        accounts: "normal",
-        budget: "normal",
-        debt: "normal",
-      },
     };
 
     const figures = demoFigures(debtAccounts, budgetEntries, userProfile);
@@ -355,15 +349,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       isSalarySacrifice: false,
       monthlyTakeHome: 2503,
       hasMortgage: false,
-      hasBuyToLet: false,
       enabledPages: ["accounts", "budget", "savings", "pension"],
       dashboardWidgets: ["accounts", "budget", "savings", "pension"],
-      dashboardWidgetSizes: {
-        accounts: "normal",
-        budget: "normal",
-        savings: "normal",
-        pension: "normal",
-      },
     };
 
     const figures = demoFigures(mediumAccounts, budgetEntries, userProfile);
@@ -586,25 +573,11 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     rentalIncomeMonthly: 1200,
     hasMortgage: true,
     mortgageType: "repayment",
-    hasBuyToLet: true,
-    buyToLetCount: 1,
-    buyToLetPropertyValue: 260000,
-    buyToLetMonthlyRental: 1200,
-    buyToLetMortgageBalance: 170000,
-    buyToLetMortgageRate: 4.8,
-    buyToLetMortgageType: "interest-only",
     pensionPercent: 8.0,
     pensionEmployerPercent: 5.0,
     isSalarySacrifice: true,
     enabledPages: ["accounts", "budget", "tax", "pension", "mortgage"],
     dashboardWidgets: ["accounts", "budget", "tax", "pension", "mortgage"],
-    dashboardWidgetSizes: {
-      accounts: "normal",
-      budget: "normal",
-      tax: "normal",
-      pension: "normal",
-      mortgage: "normal",
-    },
   };
 
   const figures = demoFigures(highAccounts, highBudgetEntries, userProfile);
