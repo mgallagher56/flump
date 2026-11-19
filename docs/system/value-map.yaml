@@ -395,7 +395,7 @@ links:
       id: L27,
       group: "D. Profile, pay and pension",
       verdict: broken,
-      checked: code,
+      checked: browser,
       findings: [PP-2, PP-3, DB-4],
       statement: "Pension rates saved on Profile are the rates on Pension, Take-home, Retirement and the Dashboard; the 5% and 3% row defaults are never shown as the user's choice.",
     }
@@ -499,7 +499,7 @@ links:
       id: L39,
       group: E. Budget,
       verdict: broken,
-      checked: code,
+      checked: browser,
       findings: [BU-8],
       statement: "Seeded or empty budget rows never change a figure.",
     }
@@ -679,6 +679,14 @@ links:
       checked: code,
       statement: "State Pension inputs are entered once.",
     }
+  - {
+      id: L73,
+      group: K. Retirement,
+      verdict: broken,
+      checked: code,
+      findings: [LD-4],
+      statement: "The yearly return saved on an investment account is the growth the retirement projection uses for it.",
+    }
   # L. AI tools, import, export, reset
   - {
       id: L61,
@@ -842,7 +850,7 @@ facts:
     area: pay
     source_of_truth:
       {
-        ref: "user_profiles.pension_percent, pension_employer_percent, is_salary_sacrifice",
+        ref: "user_profiles.pension_percent, pension_employer_percent, is_salary_sacrifice, is_salary_sacrifice_employer_ni",
         path: apps/backend/src/entities/user-profile.entity.ts,
         note: "the columns default to 5, 3 and false, so an unanswered question looks answered",
       }
@@ -1266,7 +1274,7 @@ facts:
       {
         ref: "not stored: inferred from the account name",
         path: packages/finance-engine/src/picture/selectors/loan-to-value.ts,
-        note: "a mortgage has a subtype; a property has none",
+        note: "accounts.account_subtype exists and holds a kind for mortgages, savings and investments; no kind is defined for properties",
       }
     readers:
       - { surface: picture, path: packages/finance-engine/src/picture/selectors/loan-to-value.ts }
@@ -1439,6 +1447,116 @@ facts:
     links: [L13, L14, L57]
     verdict: duplicated
     findings: [HM-1, HM-2, BU-4, BU-5, JO-8, DB-3]
+
+  - id: account-type
+    name: Account type and kind
+    area: accounts
+    source_of_truth:
+      {
+        ref: "accounts.type, accounts.account_subtype, accounts.is_current",
+        path: apps/backend/src/entities/account.entity.ts,
+        note: "type sets the sign, the category and every figure the account counts in; no database check limits its values",
+      }
+    writers:
+      - { surface: accounts, path: apps/web/app/features/accounts/accountFormBody.ts }
+      - { surface: savings, path: apps/web/app/routes/app.savings.tsx }
+      - {
+          surface: debt,
+          path: apps/web/app/features/debt/utils/debtAccountMapping.ts,
+          note: "three kinds of debt are all saved as Loan",
+        }
+      - {
+          surface: pension,
+          path: apps/web/app/routes/app.pension.tsx,
+          note: "is_current marks a pot still being paid into",
+        }
+      - {
+          surface: imports,
+          path: apps/backend/src/modules/imports/imports.service.ts,
+          note: "never sets a subtype",
+        }
+    readers:
+      - { surface: picture, path: packages/finance-engine/src/portfolio.ts }
+      - {
+          surface: account-service,
+          path: apps/backend/src/modules/snapshots/stored-balance.ts,
+          note: "a change from a debt to an asset does not re-sign past months",
+        }
+      - { surface: mcp-read, path: packages/mcp/src/tools/read/listAccounts.ts }
+    links: [L01, L44, L71]
+    verdict: broken
+    findings: [CH-4, SD-12, DB-6, JO-11]
+
+  - id: investment-return
+    name: Estimated yearly return on an investment account
+    area: accounts
+    source_of_truth:
+      {
+        ref: "accounts.interest_rate on an Investment account",
+        path: apps/backend/src/entities/account.entity.ts,
+        note: "the same column that holds the AER of a savings account",
+      }
+    other_stores:
+      - {
+          ref: retirement_plans.growth_rates,
+          status: duplicate,
+          path: apps/backend/src/entities/retirement-plan.entity.ts,
+          note: "the retirement projection uses these three growth cases and ignores the account's own return",
+        }
+    writers:
+      - {
+          surface: savings,
+          path: apps/web/app/features/savings/components/AddSavingsAccountDialog/AddSavingsAccountDialog.tsx,
+        }
+    readers:
+      - { surface: savings, path: packages/finance-engine/src/savings-interest.ts }
+    links: [L73]
+    verdict: broken
+    findings: [LD-4]
+
+  - id: name-and-avatar
+    name: Name and profile picture
+    area: preferences
+    source_of_truth:
+      {
+        ref: "user_profiles.first_name, last_name, display_name, avatar_url",
+        path: apps/backend/src/entities/user-profile.entity.ts,
+      }
+    other_stores:
+      - {
+          ref: "the sign-in provider's name fields",
+          status: duplicate,
+          path: apps/backend/src/modules/profile/user-profile.service.ts,
+          note: "a profile save pushes the name to the provider; the Settings form falls back to the provider's name",
+        }
+    writers:
+      - {
+          surface: settings,
+          path: apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx,
+        }
+    readers:
+      - {
+          surface: settings,
+          path: apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx,
+        }
+    verdict: not-checked
+    findings: [DB-11]
+    note: Not a financial fact. The picture is stored in the profile row as a data URL.
+
+  - id: custom-budget-categories
+    name: Budget categories the user added
+    area: budget
+    source_of_truth:
+      {
+        ref: user_profiles.custom_budget_categories,
+        path: apps/backend/src/entities/user-profile.entity.ts,
+      }
+    writers:
+      - { surface: budget, path: apps/web/app/containers/budget/BudgetContainer.tsx }
+    readers:
+      - { surface: budget, path: apps/web/app/containers/budget/BudgetContainer.tsx }
+    verdict: not-checked
+    note: One store. A budget line's category is free text, so a line can name a category this list no longer holds.
 
   # ---------- budget ----------
   - id: budget-entries

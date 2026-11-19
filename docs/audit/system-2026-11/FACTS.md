@@ -16,7 +16,7 @@ This file is the audit's reading of the register on 19 November 2026: which fact
 
 | Table | What it holds | Health |
 |---|---|---|
-| `user_profiles` | One row per person, about 60 columns: pay, pension, tax facts, housing, preferences, and copies of facts from other tables | The main overlap. About 25 columns duplicate another table or are dead |
+| `user_profiles` | One row per person, more than 50 columns: pay, pension, tax facts, housing, preferences, and copies of facts from other tables | The main overlap. About 25 columns duplicate another table or are dead |
 | `accounts` | One row per account of any of 11 types, with balance, rate, monthly amount, kind, share | Sound shape. Missing a kind for properties and a link from mortgage to property |
 | `account_details` | One balance per account per month | Sound. A new account gets no first row |
 | `budget_entries` | Budget lines | Sound shape. Lines repeat facts held on accounts and the profile |
@@ -37,6 +37,8 @@ Outside the database, user facts are also held in the browser:
 | `localStorage` `flump_setup_checklist_dismissed` | Whether the setup checklist was dismissed | A second store beside the profile's checklist steps. Survives a reset |
 | `sessionStorage` `flump.budget.keptDebtRows` | Budget lines the user chose to keep as they are | Lasts one browser session. Not cleared on sign-out |
 | In-memory profile and baseline atoms | The whole profile | A second copy beside loader data |
+
+The browser also holds keys that are not user facts: `flump-theme`, `flump.setup-step-count` and `flump.scene-settled.*`.
 
 No money values are held in URLs.
 
@@ -63,6 +65,8 @@ A fact is flagged when it has more than one store, more than one entry point tha
 | Other outgoings | Profile; a budget line | Copied once in onboarding; the profile copy is never read | BU-10 |
 | Setup checklist | Profile steps; a browser flag | A reset clears one and not the other | CS-2, CS-3 |
 
+The reviewer added one more: an investment account's own yearly return is saved on the account, and Retirement uses the plan's growth cases in its place (LD-4).
+
 Facts with one store and no dispute: year of birth, the retirement plan, the check-in day, the net worth choices (one page-side gap in an AI tool), enabled pages and widgets, interest rates, credit limits, mortgage term and fix end date.
 
 ## Facts stored and used by nothing
@@ -71,7 +75,7 @@ These have no writer, no reader, or neither. They are listed for slice 9 of the 
 
 - Profile: `display_name`, `monthly_take_home` (written, not read by a figure), `monthly_other_outgoings` (the same), `monthly_savings_target`, `savings_allocation_mode`, `savings_default_interest_rate`, `has_second_income`, `second_income_monthly`, `has_rental_income`, `rental_income_monthly`, `buy_to_let_count`, `buy_to_let_monthly_rental`, `dashboard_widget_sizes`, `dashboard_widget_config`. `country` and `currency` are constants today.
 - Budget lines: `is_primary_income` (always false), `is_default` (set only by an endpoint nothing calls).
-- Tables: `snapshot_checkins` (until the reminder reads it), `transactions`.
+- Tables: `snapshot_checkins` (until the reminder reads it), and `transactions`, which only the parked `apps/mobile-companion` reads.
 - Endpoints: `PATCH /accounts/balances`, `GET /portfolio-snapshot`, `POST /budget-entries/seed-defaults`, the transactions endpoints.
 
 Not confirmed: whether `avatar_url` is shown anywhere outside Settings.
