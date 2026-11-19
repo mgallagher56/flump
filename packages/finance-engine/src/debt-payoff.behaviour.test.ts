@@ -162,21 +162,20 @@ describe("calculateDebtSchedule month by month", () => {
     const m1 = res.schedule[0];
     expect(m1?.calendarDate).toBe("2026-02");
     expect(m1?.totalInterestGbp).toBe(3);
-    expect(m1?.totalPrincipalGbp).toBe(100);
-    expect(m1?.totalPaymentsGbp).toBe(103);
+    // The principal and payment columns are not asserted for a debt that charges interest:
+    // by the rule M1 pays 100, of which 3.00 is interest and 97.00 principal, but the code
+    // reports 100 principal, 0 interest on the row and 103 paid in total. Reported to the
+    // coordinator as a possible bug (E41 M2); see the triage ledger.
     expect(m1?.remainingDebtGbp).toBe(203);
     expect(m1?.payments).toMatchObject([
       {
         debtId: "d",
         debtName: "Card",
-        interestChargedGbp: 0,
-        principalPaidGbp: 100,
         endingBalanceGbp: 203,
         isPaidOff: false,
       },
     ]);
     const m4 = res.schedule[3];
-    expect(m4?.payments[0]?.principalPaidGbp).toBe(6.14);
     expect(m4?.payments[0]?.endingBalanceGbp).toBe(0);
     expect(m4?.payments[0]?.isPaidOff).toBe(true);
     expect(res.firstQuickWinMonth).toBe(4);
@@ -194,14 +193,11 @@ describe("calculateDebtSchedule month by month", () => {
     });
     const m1 = res.schedule[0];
     expect(m1?.totalInterestGbp).toBe(10);
-    expect(m1?.totalPrincipalGbp).toBe(160);
-    expect(m1?.totalPaymentsGbp).toBe(170);
     expect(m1?.remainingDebtGbp).toBe(950);
     const a = m1?.payments.find((p) => p.debtId === "a");
     const b = m1?.payments.find((p) => p.debtId === "b");
     expect(a).toMatchObject({ principalPaidGbp: 10, endingBalanceGbp: 90, isPaidOff: false });
     expect(b).toMatchObject({
-      principalPaidGbp: 150,
       endingBalanceGbp: 860,
       isPaidOff: false,
     });
@@ -222,8 +218,7 @@ describe("calculateDebtSchedule month by month", () => {
     const a = m1?.payments.find((p) => p.debtId === "a");
     const b = m1?.payments.find((p) => p.debtId === "b");
     expect(a).toMatchObject({ principalPaidGbp: 100, endingBalanceGbp: 0, isPaidOff: true });
-    expect(b).toMatchObject({ principalPaidGbp: 60, endingBalanceGbp: 950, isPaidOff: false });
-    expect(m1?.totalPrincipalGbp).toBe(160);
+    expect(b).toMatchObject({ endingBalanceGbp: 950, isPaidOff: false });
     expect(m1?.remainingDebtGbp).toBe(950);
     expect(res.firstQuickWinDebtName).toBe("Card A");
     expect(res.firstQuickWinMonth).toBe(1);
@@ -234,9 +229,22 @@ describe("calculateDebtSchedule month by month", () => {
     expect(m2?.payments).toHaveLength(1);
     expect(m2?.payments[0]).toMatchObject({
       debtId: "b",
-      principalPaidGbp: 160,
       endingBalanceGbp: 799.5,
     });
+  });
+
+  it("counts every pound paid on a 0% debt as principal, minimum and extra alike", () => {
+    // 100 at 0%, minimum 10, extra 20, one month. No interest, so the whole payment is principal:
+    // minimum 10 -> 90, extra 20 -> 70. Principal 10 + 20 = 30, paid 30, interest 0, left 70.
+    const res = calculateDebtSchedule([debt("z", "Zero", 100, 0, 10)], 20, "AVALANCHE", {
+      referenceDate: REF,
+      maxMonths: 1,
+    });
+    const m1 = res.schedule[0];
+    expect(m1?.totalInterestGbp).toBe(0);
+    expect(m1?.totalPrincipalGbp).toBe(30);
+    expect(m1?.totalPaymentsGbp).toBe(30);
+    expect(m1?.remainingDebtGbp).toBe(70);
   });
 
   it("gives payment rows that add up: start + interest charged - paid = end", () => {
