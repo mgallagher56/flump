@@ -63,6 +63,7 @@ describe("response shapes", () => {
         "savingsDefaultInterestRate",
         "secondIncomeMonthly",
         "setupChecklistCompletedSteps",
+        "setupChecklistDismissed",
         "studentLoanPlans",
         "taxRegion",
         "updatedAt",
