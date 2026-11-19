@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, within } from "storybook/test";
+import { expect, userEvent, within } from "storybook/test";
 import TakeHomeContainer from "./TakeHomeContainer";
 
 const loaderData = {
@@ -29,7 +29,11 @@ export const Overview: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByRole("heading", { name: "Take-home pay" })[0]).toBeDefined();
     await expect(canvas.getAllByRole("button", { name: "Show details" })[0]).toBeDefined();
-    await expect(canvas.getAllByRole("tab", { name: "A pay rise" })[0]).toBeDefined();
+    // The what-if zone starts closed; opening it mounts the pay-change tabs.
+    await userEvent.click(
+      canvas.getAllByRole("button", { name: "Show what-if: change your pay" })[0] as HTMLElement,
+    );
+    await expect((await canvas.findAllByRole("tab", { name: "A pay rise" }))[0]).toBeDefined();
   },
 };
 
