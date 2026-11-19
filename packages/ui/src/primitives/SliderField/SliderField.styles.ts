@@ -72,7 +72,11 @@ export const sliderPillInput = cva({
     backgroundColor: "transparent",
     color: "text.primary",
     fontWeight: "semibold",
-    fontSize: "inherit",
+    // 16px on every width: iOS Safari zooms the page when a focused input is under 16px (RC-3,
+    // P08). The pill keeps label.md for its affix text, and lineHeight stays tight so the pill
+    // does not grow.
+    fontSize: "md",
+    lineHeight: "1.25",
     fontVariantNumeric: "tabular-nums",
     p: "0",
     // The focus indicator lives on the pill container via _focusWithin.

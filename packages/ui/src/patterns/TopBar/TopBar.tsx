@@ -174,7 +174,7 @@ export const TopBar: FC<TopBarProps> = ({
   navLabel = "Primary",
   className,
 }) => (
-  <header className={cx(topBarRoot(), className)}>
+  <header data-sticky-header="" className={cx(topBarRoot(), className)}>
     <div className={topBarInner()}>
       {logo && <div className={topBarLogo()}>{logo}</div>}
       <nav aria-label={navLabel} className={topBarNav({ from: linksFrom })}>

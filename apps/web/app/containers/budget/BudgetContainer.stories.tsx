@@ -41,7 +41,7 @@ export const Empty: Story = {
   parameters: { router: { loaderData: { ...loaderData, budgetEntries: [] } } },
   play: async ({ canvasElement }) => {
     await expect(
-      within(canvasElement).getAllByRole("button", { name: "Set up your budget" })[0],
+      within(canvasElement).getAllByRole("button", { name: "Add common budget items" })[0],
     ).toBeDefined();
   },
 };

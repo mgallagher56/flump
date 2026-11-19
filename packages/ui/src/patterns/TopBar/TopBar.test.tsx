@@ -123,6 +123,11 @@ describe("TopBar", () => {
     expect(controls[0]?.textContent).toBe("Logo");
   });
 
+  it("marks itself as the sticky header popovers keep clear of (P32)", () => {
+    render(<TopBar items={sampleNavItems} />);
+    expect(screen.getByRole("banner").hasAttribute("data-sticky-header")).toBe(true);
+  });
+
   it("hides a wideOnly group below navWide, like a wideOnly link", () => {
     const items = sampleNavItems.map((item) =>
       item.children ? { ...item, wideOnly: true } : item,

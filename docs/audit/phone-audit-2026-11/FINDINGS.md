@@ -157,16 +157,16 @@ PR 781 (phone-nav-fixes) merged before the final run. Status on `c2e14680b`:
 - **phone-nav-fixes** (PR 781, merged) owned O-1 to O-5; their status is above. Left after it:
   P11 and P70 (drawer scroll lock), P12, P13 and P80 (scroll after closing an overlay and after
   Back; P80 was traced to the sweep), P14 and P57. Phase 2 takes these.
-- **ux-batch-g** (PR 783, open). Listed for that lane, not fixed in phase 2:
-  - Shared number inputs: P08, P59, P60 (the 16px input text is the phone part).
-  - Date pickers: the add-debt date field (`type=date`, no input mode) seen in J11.
-  - Chart tooltips and axes: P26.
-  - Collapsible what-if zones: P24, P63.
-  - Budget page sections: P23, P33, P51, P52, P55 (budget part), P69.
-  - Info text behind info icons: P32 (Breathing room tip) and Breathing room wording.
-  - Delete button colour: P30.
-  - Pension contribution fields: the 14px "Your contribution" input on Pension (part of P08).
-  - Sortable tables: no phone finding.
+- **ux-batch-g** (PR 783, merged 19 November 2026). Re-checked on the new `main` after it merged:
+  - Fixed by PR 783: the add-debt date field (now `DatePicker`), P24, P30, P51, and the savings
+    part of P63.
+  - Fixed in phase 2 after the rebase: P08, P59, P60 and the 14px pension "Your contribution"
+    field (the `SliderField` value pill is now 16px), P23 (the second hero figure is named first),
+    P33 (Edit budget moves focus to the editor), P52 (one action on the empty page, named "Add
+    common budget items" as on the filled page), P55 (the notice is left out of the empty Budget
+    and Debt pages), P69 (equal weight) and P32 (popovers keep clear of the sticky header).
+  - Needs a check on a phone: P26 (month ticks on the line chart) and the retirement accounts
+    drawer row in P63.
 
 ## Out of scope, noted in passing
 

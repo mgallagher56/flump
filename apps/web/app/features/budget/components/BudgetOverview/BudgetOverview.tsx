@@ -73,11 +73,13 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
   const subline = notSetPrompt ? undefined : safeToSpend ? (
     <>
       {/* Monthly, to match "left over" above; a different measure, so it says what it leaves out
-          (owner ruling 2026-11-15). */}
+          (owner ruling 2026-11-15). Named first, so it never reads as a second "left over" figure
+          (phone audit P23). */}
+      Safe to spend before flexible spending:{" "}
       <span className={figure()} data-figure="safeToSpend.monthly">
         {formatCurrency(safeToSpend.monthly, { maximumFractionDigits: 0 })}
       </span>{" "}
-      a month after essential spending, debt payments and savings, before flexible spending.
+      a month, after essential spending, debt payments and savings.
     </>
   ) : salaryMissing ? (
     <>

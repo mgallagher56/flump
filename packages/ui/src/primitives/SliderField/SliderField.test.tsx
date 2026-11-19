@@ -214,6 +214,15 @@ describe("SliderField Primitive", () => {
     expect(sliderPillInput()).toBe(screen.getByLabelText("Rate input").className);
   });
 
+  it("pill input text is 16px so iOS does not zoom on focus (P08)", () => {
+    render(<SliderField label="Rate" max={100} min={0} value={5} onChange={vi.fn()} />);
+    const input = screen.getByLabelText("Rate input");
+    expect(input.className).toContain("fs_md");
+    expect(input.className).not.toContain("fs_inherit");
+    // The affix stays at the pill's label.md size.
+    expect(input.parentElement?.className).toContain("textStyle_label.md");
+  });
+
   it("keeps focus-visible outline on the range slider", () => {
     render(<SliderField label="Rate" max={100} min={0} value={5} onChange={vi.fn()} />);
     expect(screen.getByRole("slider").className).toContain("focusVisible:");

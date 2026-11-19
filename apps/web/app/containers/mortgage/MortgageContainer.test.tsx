@@ -585,6 +585,7 @@ describe("<MortgageContainer />", () => {
         },
       };
       customRender(<MortgageContainer />);
+      openZone();
       fireEvent.click(screen.getByRole("button", { name: /Starting figures/ }));
       const years = screen.getAllByLabelText(/^Years left to try/) as HTMLInputElement[];
       expect(years.map((el) => el.value)).toContain("15");
