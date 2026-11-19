@@ -4,14 +4,12 @@ import {
   UpdateChecklistResponse,
   UpdateProfileResponse,
 } from "@flump/api-contract";
-import { type FinancialBaseline, userProfileToFinancialBaseline } from "@flump/finance-engine";
 import { useOptionalToast } from "@repo/ui";
-import { atom, useAtom, useStore } from "jotai";
-import { useCallback } from "react";
+import { useCallback, useMemo, useRef } from "react";
+import { useRevalidator, useRouteLoaderData } from "react-router";
 import { apiFetch } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
 import { CONFLICT_TOAST, isConflict, reloadAfterConflict, versionEtag } from "~/services/conflict";
-import { financialBaselineAtom } from "~/state/baseline.store";
 import { stripRetiredKeys, stripRetiredRecordKeys } from "~/utils/pageConfig";
 
 /** E23 D06: the four UK nations as stored on the profile; null means not set. */
@@ -72,6 +70,8 @@ export interface UserProfile {
   savingsAllocationMode: "total" | "per_account";
   savingsDefaultInterestRate: number;
   setupChecklistCompletedSteps: string[];
+  /** The person closed the setup checklist (decision 13); a reset clears it. */
+  setupChecklistDismissed?: boolean;
   enabledPages: string[];
   dashboardWidgets: string[];
   dashboardWidgetOrder: string[];
@@ -126,6 +126,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   savingsAllocationMode: "per_account",
   savingsDefaultInterestRate: 5.0,
   setupChecklistCompletedSteps: [],
+  setupChecklistDismissed: false,
   enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
   dashboardWidgets: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
   // Empty: the dashboard's default section order until the user moves a section.
@@ -151,6 +152,7 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   lastName: p.lastName !== undefined ? p.lastName : DEFAULT_PROFILE.lastName,
   email: p.email !== undefined ? p.email : DEFAULT_PROFILE.email,
   hasResetFinancialData: Boolean(p.hasResetFinancialData),
+  setupChecklistDismissed: Boolean(p.setupChecklistDismissed),
   onboardingCompleted: Boolean(p.onboardingCompleted),
   avatarUrl: p.avatarUrl !== undefined ? p.avatarUrl : DEFAULT_PROFILE.avatarUrl,
   age: p.age !== undefined && p.age !== null ? Number(p.age) : null,
@@ -264,29 +266,10 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
     stripRetiredRecordKeys(p.dashboardWidgetConfig) || DEFAULT_PROFILE.dashboardWidgetConfig,
 });
 
-export const userProfileAtom = atom<UserProfile>(DEFAULT_PROFILE);
-
-/**
- * Hook to access and update the global user profile.
- * The profile is fetched once via the loader and set into the atom.
- * Components can read and mutate profile data through this hook.
- */
 function messageFrom(err: unknown, fallback: string): Error {
   // Only server-supplied detail or the fixed fallback reaches the UI, never a raw "Failed to fetch".
   if (err instanceof BackendError) return new Error(err.detail ?? fallback);
   return new Error(fallback);
-}
-
-/**
- * Profile to client baseline. The engine mapper fills a missing salary with its 45,000 default;
- * the web baseline must carry no salary instead (0 = unknown, rendered as "Not set").
- */
-export function profileToBaseline(profile: UserProfile | Partial<UserProfile>): FinancialBaseline {
-  const baseline = userProfileToFinancialBaseline(profile);
-  const salary = profile.annualSalary;
-  return salary === null || salary === undefined || Number(salary) <= 0
-    ? { ...baseline, annualGrossSalary: 0 }
-    : baseline;
 }
 
 /**
@@ -318,38 +301,77 @@ const inOrder = <T>(write: () => Promise<T>): Promise<T> => {
   return result;
 };
 
-export function useUserProfile() {
-  const [profile, rawSetProfile] = useAtom(userProfileAtom);
-  const [, rawSetBaseline] = useAtom(financialBaselineAtom);
-  const setProfile = useCallback(
-    (p: UserProfile | Partial<UserProfile>) => {
-      const normalized = normalizeProfile(p);
-      rawSetProfile(normalized);
-      try {
-        rawSetBaseline(profileToBaseline(normalized));
-      } catch {
-        // Continue
-      }
-    },
-    [rawSetProfile, rawSetBaseline],
-  );
+/**
+ * The version of the profile this tab last wrote. Loader data catches up after the reload that
+ * follows each save; until then the next save in the queue sends this, not the older loaded one.
+ * Browser only: writes never run on the server, where module state is shared between requests.
+ */
+let writtenVersion: { id: string; updatedAt: string } | null = null;
 
-  const store = useStore();
+const rememberWritten = (saved: { id?: string; updatedAt?: string } | null | undefined) => {
+  if (saved?.id && saved.updatedAt) writtenVersion = { id: saved.id, updatedAt: saved.updatedAt };
+};
+
+/** The newer of the loaded version and the one this tab last wrote, for the same profile. */
+const versionToSend = (loaded: UserProfile): string => {
+  if (writtenVersion && writtenVersion.id === loaded.id) {
+    // ISO-8601 instants in one format compare as strings.
+    return writtenVersion.updatedAt.localeCompare(loaded.updatedAt) > 0
+      ? writtenVersion.updatedAt
+      : loaded.updatedAt;
+  }
+  return loaded.updatedAt;
+};
+
+/** Test seam: forget the version this tab last wrote. */
+export function forgetWrittenProfileVersion(): void {
+  writtenVersion = null;
+}
+
+/**
+ * The saved profile, from the root loader's data only (audit slice 8). It is the same on the
+ * server render, the first client render and after hydration, so nothing flashes a default
+ * (L64), and every save reloads it, so this page and the next show the saved value (L63).
+ * Signed out (no profile) it reads as `DEFAULT_PROFILE`.
+ */
+export function useSavedProfile(): UserProfile {
+  const rootData = useRouteLoaderData("root") as
+    | { userProfile?: Partial<UserProfile> | null }
+    | undefined;
+  const loaded = rootData?.userProfile;
+  return useMemo(() => (loaded ? normalizeProfile(loaded) : DEFAULT_PROFILE), [loaded]);
+}
+
+/**
+ * The saved profile and the writes to it. Each successful write reloads every loader's saved data
+ * (the router's revalidation) before it resolves, so a caller that awaits it sees the new figures.
+ */
+export function useUserProfile() {
+  const profile = useSavedProfile();
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
+  const revalidator = useRevalidator();
+  const revalidatorRef = useRef(revalidator);
+  revalidatorRef.current = revalidator;
   const toast = useOptionalToast()?.toast;
+
+  const reloadSavedData = useCallback(async () => {
+    await revalidatorRef.current.revalidate();
+  }, []);
 
   const updateProfile = useCallback(
     (updates: UserProfileUpdate): Promise<void> =>
       inOrder(async () => {
         try {
-          const updated: UserProfile = await apiFetch("/user-profile", {
+          const updated = await apiFetch("/user-profile", {
             method: "PATCH",
             body: updates,
             schema: UpdateProfileResponse,
             // The version this tab last read or wrote (BE-16): a profile changed somewhere else
             // since then is not overwritten.
-            ifMatch: versionEtag(store.get(userProfileAtom).updatedAt),
+            ifMatch: versionEtag(versionToSend(profileRef.current)),
           });
-          setProfile(updated);
+          rememberWritten(updated);
         } catch (err) {
           // 412: say so, and reload the saved profile so the next save sends its version. The
           // caller's form keeps what was typed, because the save rejects.
@@ -359,23 +381,47 @@ export function useUserProfile() {
           }
           throw err;
         }
+        await reloadSavedData();
       }),
-    [setProfile, store, toast],
+    [reloadSavedData, toast],
   );
 
+  /**
+   * Marks one setup step done (or not done) when the person takes the action it describes, never
+   * on a page visit (LD-2, CS-6). A step already in that state sends nothing.
+   */
   const markChecklistStep = useCallback(
-    (step: string, completed: boolean): Promise<void> =>
-      inOrder(async () => {
+    (step: string, completed: boolean): Promise<void> => {
+      const done = profileRef.current.setupChecklistCompletedSteps.includes(step);
+      if (done === completed) return Promise.resolve();
+      return inOrder(async () => {
         // Unconditional by contract (UNCONDITIONAL_UPDATE_ROUTES): it sets one named step. It
-        // still moves the profile's version, so it shares the queue and stores the answer.
-        const updated: UserProfile = await apiFetch("/user-profile/checklist", {
+        // still moves the profile's version, so it shares the queue and remembers the answer.
+        const updated = await apiFetch("/user-profile/checklist", {
           method: "PATCH",
           body: { step, completed },
           schema: UpdateChecklistResponse,
         });
-        setProfile(updated);
+        rememberWritten(updated);
+        await reloadSavedData();
+      });
+    },
+    [reloadSavedData],
+  );
+
+  /** Closes the setup checklist for good, on the profile (decision 13). A reset shows it again. */
+  const dismissChecklist = useCallback(
+    (): Promise<void> =>
+      inOrder(async () => {
+        const updated = await apiFetch("/user-profile/checklist", {
+          method: "PATCH",
+          body: { dismissed: true },
+          schema: UpdateChecklistResponse,
+        });
+        rememberWritten(updated);
+        await reloadSavedData();
       }),
-    [setProfile],
+    [reloadSavedData],
   );
 
   const sendPasswordResetEmail = useCallback(async (): Promise<{
@@ -406,16 +452,15 @@ export function useUserProfile() {
       if (err instanceof BackendError && err.status === 403) throw new RecentLoginRequiredError();
       throw messageFrom(err, "We could not reset your financial data. Try again.");
     }
-    if (result?.profile) {
-      setProfile(result.profile);
-    }
-  }, [setProfile]);
+    rememberWritten(result?.profile);
+    await reloadSavedData();
+  }, [reloadSavedData]);
 
   return {
     profile,
-    setProfile,
     updateProfile,
     markChecklistStep,
+    dismissChecklist,
     sendPasswordResetEmail,
     resetFinancialData,
   };

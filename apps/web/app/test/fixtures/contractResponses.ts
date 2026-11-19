@@ -80,6 +80,7 @@ export const profileFixture = {
   savingsAllocationMode: "per_account",
   savingsDefaultInterestRate: 4.25,
   setupChecklistCompletedSteps: ["profile"],
+  setupChecklistDismissed: false,
   customBudgetCategories: [],
   enabledPages: ["accounts", "budget", "savings", "pension", "mortgage"],
   dashboardWidgets: ["accounts", "budget"],

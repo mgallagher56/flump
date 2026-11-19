@@ -1,7 +1,6 @@
 import { css, cx } from "@repo/ui/styled-system/css";
-import { useAtomValue } from "jotai";
 import { type FC, useEffect, useState } from "react";
-import { type UserProfile, userProfileAtom } from "~/hooks/useUserProfile";
+import { type UserProfile, useSavedProfile } from "~/hooks/useUserProfile";
 import { resolveUserInitials } from "~/utils/avatar";
 
 export interface UserAvatarProps {
@@ -21,8 +20,8 @@ export const UserAvatar: FC<UserAvatarProps> = ({
   alt,
   bordered = false,
 }) => {
-  const atomProfile = useAtomValue(userProfileAtom);
-  const effectiveProfile = propProfile !== undefined ? propProfile : atomProfile;
+  const savedProfile = useSavedProfile();
+  const effectiveProfile = propProfile !== undefined ? propProfile : savedProfile;
 
   const initials = resolveUserInitials({
     firstName: effectiveProfile?.firstName,
