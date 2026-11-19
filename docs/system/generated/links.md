@@ -6,10 +6,10 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 | Verdict                                   | Count |
 | ----------------------------------------- | ----- |
-| Holds                                     | 28    |
+| Holds                                     | 29    |
 | Holds with a manual step or a delay       | 8     |
 | Broken                                    | 23    |
-| Duplicated (two stores that can disagree) | 14    |
+| Duplicated (two stores that can disagree) | 13    |
 | Not checked                               | 0     |
 
 ## A. Accounts and balances
@@ -83,12 +83,12 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 ## F. Savings, ISAs and investments
 
-| Id  | Statement                                                                                      | Verdict                                   | Checked in | Findings |
-| --- | ---------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | -------- |
-| L40 | A savings account's rate gives the same interest figure wherever interest is shown.            | Holds                                     | code       | none     |
-| L41 | ISA allowance used is worked out one way from the ISA accounts.                                | Duplicated (two stores that can disagree) | code       | SD-3     |
-| L42 | Savings totals are the same on the Dashboard, Savings and Accounts.                            | Holds                                     | browser    | none     |
-| L43 | The monthly savings target on the profile and the per-account monthly savings do not conflict. | Holds                                     | code       | SD-11    |
+| Id  | Statement                                                                                      | Verdict | Checked in | Findings |
+| --- | ---------------------------------------------------------------------------------------------- | ------- | ---------- | -------- |
+| L40 | A savings account's rate gives the same interest figure wherever interest is shown.            | Holds   | code       | none     |
+| L41 | ISA allowance used is worked out one way from the ISA accounts.                                | Holds   | code       | SD-3     |
+| L42 | Savings totals are the same on the Dashboard, Savings and Accounts.                            | Holds   | browser    | none     |
+| L43 | The monthly savings target on the profile and the per-account monthly savings do not conflict. | Holds   | code       | SD-11    |
 
 ## G. Cards and loans
 

@@ -514,7 +514,7 @@ links:
   - {
       id: L41,
       group: "F. Savings, ISAs and investments",
-      verdict: duplicated,
+      verdict: holds,
       checked: code,
       findings: [SD-3],
       statement: "ISA allowance used is worked out one way from the ISA accounts.",
@@ -2220,10 +2220,10 @@ figures:
       }
     other_paths:
       - {
-          function: "Savings page sum",
+          function: totalMonthlySavingAtShare,
           status: duplicate,
-          path: apps/web/app/containers/savings/SavingsContainer.tsx,
-          note: "at the share; moves to the loader's picture once the containers read it",
+          path: packages/finance-engine/src/savings-interest.ts,
+          note: "the Savings page's saved each month, at the share; not set when no account stores a monthly amount, where the selector gives 0",
         }
     inputs: [account-balance, account-monthly-amount, ownership-share]
     shown_on:
@@ -2236,7 +2236,7 @@ figures:
     links: [L42, L55]
     verdict: duplicated
     findings: []
-    note: The Dashboard and the context pack read selectSavingsTotals from the shared picture, at the user's share. The Savings page still sums the same way itself.
+    note: The Dashboard, the Savings page (its total) and the context pack read selectSavingsTotals from the shared picture, at the user's share. Saved each month on the Savings page still comes from a second engine function.
 
   - id: savings-interest
     name: Savings interest over the next 12 months
@@ -2270,7 +2270,7 @@ figures:
       }
     other_paths:
       - {
-          function: "re-export for the Savings page",
+          function: "re-export for the Savings components",
           status: wrapper,
           path: apps/web/app/features/savings/components/SavingsAccountsList/isaAllowance.utils.ts,
         }
@@ -2290,7 +2290,7 @@ figures:
     links: [L41]
     verdict: holds
     findings: [SD-3]
-    note: One engine function. The Savings page calls it through the re-export; the context pack reads it from the shared picture.
+    note: One engine function, read from the shared picture by the Savings page (through its loader) and the context pack.
 
   - id: estimated-tax
     name: Estimated Self Assessment tax

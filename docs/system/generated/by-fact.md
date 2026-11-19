@@ -688,11 +688,11 @@ Shown on:
 - Verdict: Duplicated (two stores that can disagree). Findings: none. Links: L42, L55.
 - Computed by: `selectSavingsTotals` in `packages/finance-engine/src/picture/selectors/savings-totals.ts`
 - Built from: `account-balance`, `account-monthly-amount`, `ownership-share`
-- Note: The Dashboard and the context pack read selectSavingsTotals from the shared picture, at the user's share. The Savings page still sums the same way itself.
+- Note: The Dashboard, the Savings page (its total) and the context pack read selectSavingsTotals from the shared picture, at the user's share. Saved each month on the Savings page still comes from a second engine function.
 
 Other code paths that compute it:
 
-- `Savings page sum` [duplicate] in `apps/web/app/containers/savings/SavingsContainer.tsx` (at the share; moves to the loader's picture once the containers read it)
+- `totalMonthlySavingAtShare` [duplicate] in `packages/finance-engine/src/savings-interest.ts` (the Savings page's saved each month, at the share; not set when no account stores a monthly amount, where the selector gives 0)
 
 Shown on:
 
@@ -725,11 +725,11 @@ Shown on:
 - Verdict: Holds. Findings: SD-3. Links: L41.
 - Computed by: `estimateIsaUsed` in `packages/finance-engine/src/picture/selectors/isa-allowance-used.ts`
 - Built from: `account-monthly-amount`
-- Note: One engine function. The Savings page calls it through the re-export; the context pack reads it from the shared picture.
+- Note: One engine function, read from the shared picture by the Savings page (through its loader) and the context pack.
 
 Other code paths that compute it:
 
-- `re-export for the Savings page` [wrapper] in `apps/web/app/features/savings/components/SavingsAccountsList/isaAllowance.utils.ts`
+- `re-export for the Savings components` [wrapper] in `apps/web/app/features/savings/components/SavingsAccountsList/isaAllowance.utils.ts`
 - `fixed 0 used` [default] in `packages/finance-engine/src/uk-tax.ts` (the allowance status default; the context pack replaces it with the picture's figure, or not set)
 
 Shown on:

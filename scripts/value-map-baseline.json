@@ -6,12 +6,6 @@
     }
   },
   "secondFormulas": {
-    "apps/web/app/containers/savings/SavingsContainer.tsx": {
-      "counts": {
-        "sum-of-saved-amounts": 1
-      },
-      "findings": ["SD-2"]
-    },
     "apps/web/app/containers/pension/PensionContainer.tsx": {
       "counts": {
         "sum-of-saved-amounts": 1
