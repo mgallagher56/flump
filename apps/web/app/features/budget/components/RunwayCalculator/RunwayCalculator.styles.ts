@@ -48,3 +48,8 @@ export const optionHint = cva({
 export const resultFigure = cva({
   base: { fontVariantNumeric: "tabular-nums" },
 });
+
+/** The closed zone's one-line summary: its pound figures line up like every other figure. */
+export const zoneSummary = cva({
+  base: { fontVariantNumeric: "tabular-nums" },
+});

@@ -18,6 +18,7 @@ import {
   Switch,
 } from "@repo/ui";
 import { type FC, useEffect, useMemo, useState } from "react";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetEntry } from "~/types/budget";
 import { toMonthly } from "~/types/budget";
 import {
@@ -35,6 +36,7 @@ import {
   optionLegend,
   optionsStack,
   resultFigure,
+  zoneSummary,
 } from "./RunwayCalculator.styles";
 
 interface Account {
@@ -119,6 +121,7 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   onScenarioChange,
   collapsible = false,
 }) => {
+  const { formatCurrency: formatGbp } = useFormatCurrency();
   // The saved figure: the same engine selector the dashboard, Budget overview and MCP use.
   const baseline = useMemo(
     () =>
@@ -423,9 +426,20 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
         </span>
       }
       extra={moreOptions}
+      collapsible={collapsible}
       isModified={isScenarioModified}
       notice={<ProjectionNotice />}
       result={result}
+      showLabel="Show what-if: redundancy pay, a spending cut"
+      summary={
+        <span className={zoneSummary()}>
+          {isScenarioModified
+            ? `Your illustration: Breathing room, ${coverLabel}.`
+            : saved
+              ? `Starts from your savings of ${formatGbp(saved.liquidCash)} and essentials of ${formatGbp(saved.monthlyEssentials)} a month.`
+              : "Starts from your budget. Breathing room shows once it has essential spending."}
+        </span>
+      }
       title="Model a change to your budget"
       onReset={handleResetScenario}
     >
@@ -433,17 +447,6 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     </ScenarioZone>
   );
 
-  if (!collapsible) return zone;
-
-  // The trigger names the zone and what it tries; it repeats no figure (the saved one is above).
-  return (
-    <CollapsibleDrawer
-      closedLabel="Show budget what-ifs"
-      openLabel="Hide budget what-ifs"
-      subtitle="Try redundancy pay, a spending cut or which accounts to draw on."
-      title="Model a change to your budget"
-    >
-      {zone}
-    </CollapsibleDrawer>
-  );
+  // Collapsible below the saved figure (UX S11): closed, it keeps a one-line summary.
+  return zone;
 };
