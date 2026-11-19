@@ -128,7 +128,7 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
       .fill(String(ENTRY.amount));
     await page.getByRole("button", { name: "Add to Expenses" }).click();
     await expect(page.getByLabel(`Amount for ${ENTRY.name}`)).toBeVisible();
-    await page.getByRole("button", { name: "Finish editing" }).click();
+    await page.getByRole("button", { name: "Finish editing" }).first().click();
 
     await expect(page.getByRole("button", { name: /^Expenses/ })).toContainText(ENTRY.shown);
     await expect(page.getByRole("group", { name: "Left over each month" })).toContainText(

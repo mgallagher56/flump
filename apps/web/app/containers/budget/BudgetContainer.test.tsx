@@ -786,7 +786,7 @@ describe("BudgetContainer", () => {
         "Joint mortgage",
       ),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Finish editing" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Finish editing" })[0] as HTMLElement);
     expect(within(screen.getByTestId("budget-category-housing")).getByText("£1,300")).toBeDefined();
   });
 
@@ -1012,11 +1012,14 @@ describe("BudgetContainer", () => {
       expect(screen.getAllByRole("button", { name: "Edit budget" })).toHaveLength(1);
     });
 
-    it("has Finished editing at the foot of the editor, which returns to the budget", () => {
+    it("has Finish editing at the foot of the editor, which returns to the budget", () => {
       mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
       render(<BudgetContainer />);
       fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
-      fireEvent.click(screen.getByRole("button", { name: "Finished editing" }));
+      // The same action at the head of the page and at the foot of the editor (owner item 29).
+      const finish = screen.getAllByRole("button", { name: "Finish editing" });
+      expect(finish).toHaveLength(2);
+      fireEvent.click(finish[1] as HTMLElement);
       expect(screen.queryByTestId("budget-editor")).toBeNull();
       expect(screen.getByTestId("budget-category-expenses")).toBeDefined();
     });

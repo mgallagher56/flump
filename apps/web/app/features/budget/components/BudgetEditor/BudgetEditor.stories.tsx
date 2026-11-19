@@ -172,7 +172,7 @@ export const CommonEntries: Story = {
 
 /**
  * Rows read from saved details (owner items 7 and 33b): take-home pay from the profile's salary
- * and the rent from the housing details, each saying where it comes from, with Finished editing
+ * and the rent from the housing details, each saying where it comes from, with Finish editing
  * at the foot (item 29).
  */
 export const LinkedRows: Story = {
@@ -207,7 +207,7 @@ export const LinkedRows: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText(/From your salary in/)[0]).toBeDefined();
-    await userEvent.click(canvas.getAllByRole("button", { name: "Finished editing" })[0]);
+    await userEvent.click(canvas.getAllByRole("button", { name: "Finish editing" })[0]);
     await expect(args.onFinishEditing).toHaveBeenCalled();
   },
 };

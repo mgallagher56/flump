@@ -101,7 +101,7 @@ export const FLOWS: Flow[] = [
         housing.getByRole("textbox", { name: "Amount for Mortgage payment" }),
         "1300",
       );
-      await actor.press(page.getByRole("button", { name: "Finish editing" }));
+      await actor.press(page.getByRole("button", { name: "Finish editing" }).first());
       await expect(page.getByRole("button", { name: "Edit budget" })).toBeVisible();
       // £3,450 salary + £200 side work.
       await expect(page.getByRole("main")).toContainText(/Money in each month\s*£3,650/);

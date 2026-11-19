@@ -93,7 +93,7 @@ export interface BudgetEditorProps {
   housingStatus?: HousingTenure;
   /** Saves the rent (or household contribution) to the housing details, the one stored value. */
   onSaveHousing?: (monthly: number) => Promise<void>;
-  /** Leaves edit mode. Shown as "Finished editing" at the foot (owner item 29). */
+  /** Leaves edit mode. Shown as "Finish editing" at the foot (owner item 29). */
   onFinishEditing?: () => void;
 }
 
@@ -1009,7 +1009,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
               id="budget-editor-finish-editing-btn"
               onClick={onFinishEditing}
             >
-              Finished editing
+              Finish editing
             </Button>
           ) : null}
         </div>

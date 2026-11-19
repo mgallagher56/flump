@@ -64,7 +64,9 @@ export const entryRow = cva({
     flexWrap: "wrap",
     // Fixed columns from md (each row is its own grid), so rows with no essential switch, such
     // as money in and savings, line up with the rest.
-    gridTemplateColumns: { md: "minmax(0, 1fr) 140px 120px 136px auto" },
+    // The last column is the delete button's, fixed so the add row (which has none) keeps the
+    // same widths as a saved row (owner item 26).
+    gridTemplateColumns: { md: "minmax(0, 1fr) 140px 120px 136px 44px" },
     // A 4px gap on a phone so how often, essential and delete share the second line at 375.
     columnGap: { base: "1", md: "3" },
     rowGap: "2",
@@ -140,7 +142,7 @@ export const addRow = cva({
   base: {
     display: { base: "flex", md: "grid" },
     flexWrap: "wrap",
-    gridTemplateColumns: { md: "minmax(0, 1fr) 140px 120px 136px auto" },
+    gridTemplateColumns: { md: "minmax(0, 1fr) 140px 120px 136px 44px" },
     columnGap: { base: "1", md: "3" },
     rowGap: "2",
     alignItems: "center",
