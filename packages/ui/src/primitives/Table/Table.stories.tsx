@@ -277,7 +277,7 @@ const gbp = new Intl.NumberFormat("en-GB", {
   maximumFractionDigits: 0,
 });
 
-/** Sortable headers from `useTableSort`: a button in each header, with aria-sort on every one. */
+/** Sortable headers from `useTableSort`: a button in each header, with aria-sort on the sorted one. */
 const SortableTable = () => {
   const { sortedRows, getSortProps } = useTableSort({
     rows: SORT_ROWS,
@@ -315,14 +315,14 @@ const sortablePlay: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const [record, amount] = canvas.getAllByRole("columnheader");
   await expect(amount).toHaveAttribute("aria-sort", "descending");
-  await expect(record).toHaveAttribute("aria-sort", "none");
+  await expect(record).not.toHaveAttribute("aria-sort");
   // Keyboard: focus the Record sort button and press Enter, then Space to reverse.
   const recordButton = canvas.getByRole("button", { name: "Record" });
   recordButton.focus();
   await expect(recordButton).toHaveFocus();
   await userEvent.keyboard("{Enter}");
   await expect(record).toHaveAttribute("aria-sort", "ascending");
-  await expect(amount).toHaveAttribute("aria-sort", "none");
+  await expect(amount).not.toHaveAttribute("aria-sort");
   await expect(canvas.getAllByRole("row")[1]).toHaveTextContent("Design retainer");
   await userEvent.keyboard(" ");
   await expect(record).toHaveAttribute("aria-sort", "descending");

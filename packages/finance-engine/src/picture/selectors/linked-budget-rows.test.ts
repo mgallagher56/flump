@@ -83,6 +83,59 @@ describe("withLinkedBudgetRows: take-home pay (owner item 7)", () => {
     expect(totals.value.income).toBe(2602);
   });
 
+  it.each(["Income", "Net income", "Monthly income", "Take-home", "Take home pay"])(
+    "reads %s as the person's own pay",
+    (name) => {
+      // A typed £2,000 row under this name wins: the profile's £2,500 is not added. Income = 2,000.
+      const { rows } = withLinkedBudgetRows(
+        [row({ id: "p", category: "income", name, amount: 2000, isIncome: true })],
+        { takeHome: takeHome(2500), housing: null },
+      );
+      expect(rows.map((r) => r.id)).toEqual(["p"]);
+    },
+  );
+
+  it.each([
+    "Partner's salary",
+    "Spouse wages",
+    "Husband's pay",
+    "Wife's salary",
+    "His wages",
+    "Her salary",
+    "Joint salary",
+  ])("never reads %s as the person's own pay", (name) => {
+    // £1,800 of someone else's pay plus the linked £2,500: income = 2,500 + 1,800 = 4,300.
+    const { rows } = withLinkedBudgetRows(
+      [row({ id: "o", category: "income", name, amount: 1800, isIncome: true })],
+      { takeHome: takeHome(2500), housing: null },
+    );
+    expect(rows.map((r) => r.id)).toEqual([LINKED_TAKE_HOME_ID, "o"]);
+    const totals = selectBudgetTotals(rows);
+    if (!isFigureKnown(totals)) throw new Error("expected known");
+    expect(totals.value.income).toBe(4300);
+  });
+
+  it("reads a row marked as main pay as the person's own, whatever its name", () => {
+    // "From work" £2,200 marked as main pay wins over the profile's £2,500. Income = 2,200.
+    const { rows } = withLinkedBudgetRows(
+      [
+        row({
+          id: "fw",
+          category: "income",
+          name: "From work",
+          amount: 2200,
+          isIncome: true,
+          isPrimaryIncome: true,
+        }),
+      ],
+      { takeHome: takeHome(2500), housing: null },
+    );
+    expect(rows.map((r) => r.id)).toEqual(["fw"]);
+    const totals = selectBudgetTotals(rows);
+    if (!isFigureKnown(totals)) throw new Error("expected known");
+    expect(totals.value.income).toBe(2200);
+  });
+
   it("adds nothing without a known take-home", () => {
     const budget = [row({ id: "a", amount: 50 })];
     expect(withLinkedBudgetRows(budget, { takeHome: noTakeHome, housing: null }).rows).toEqual(
@@ -149,6 +202,68 @@ describe("withLinkedBudgetRows: housing (owner item 33b)", () => {
       { takeHome: noTakeHome, housing: { kind: "rent", monthly: 950, paymentEstimated: false } },
     );
     expect(shadowedRowIds).toEqual([]);
+  });
+
+  it("lets a typed housing row win over the mortgage estimate, adding no linked row", () => {
+    // Estimate £1,234.56 from the mortgage accounts. Typed "Mortgage" £600, joint at 50%.
+    // The typed row wins: it counts 600 x 50% = 300. No linked row, so essentials = 300 (not
+    // 300 + 1,234.56).
+    const { rows, shadowedRowIds } = withLinkedBudgetRows(
+      [
+        row({
+          id: "m",
+          category: "housing",
+          name: "Mortgage",
+          amount: 600,
+          ownership: "joint",
+          sharePercent: 50,
+        }),
+      ],
+      {
+        takeHome: noTakeHome,
+        housing: { kind: "mortgage", monthly: 1234.56, paymentEstimated: true },
+      },
+    );
+    expect(rows.map((r) => r.id)).toEqual(["m"]);
+    expect(shadowedRowIds).toEqual([]);
+    const totals = selectBudgetTotals(rows);
+    if (!isFigureKnown(totals)) throw new Error("expected known");
+    expect(totals.value.essentials).toBe(300);
+  });
+
+  it("puts the saved rent in place of a typed rent row", () => {
+    // Saved rent £900, typed "Rent" £850. The saved figure is the person's own: the linked
+    // £900 replaces the typed row, so essentials = 900 (not 850, and not 850 + 900 = 1,750).
+    const { rows, shadowedRowIds } = withLinkedBudgetRows(
+      [row({ id: "rent", category: "housing", name: "Rent", amount: 850 })],
+      { takeHome: noTakeHome, housing: { kind: "rent", monthly: 900, paymentEstimated: false } },
+    );
+    expect(rows.map((r) => r.id)).toEqual([LINKED_HOUSING_ID]);
+    expect(shadowedRowIds).toEqual(["rent"]);
+    const totals = selectBudgetTotals(rows);
+    if (!isFigureKnown(totals)) throw new Error("expected known");
+    expect(totals.value.essentials).toBe(900);
+  });
+
+  it("adds the mortgage estimate when no housing row is typed, standing in for a £0 one", () => {
+    // Estimate £1,234.56; the budget has Groceries £300 and a £0 "Mortgage" row. The £0 row is
+    // not a figure of the person's own, so the estimate replaces it: essentials = 300 + 1,234.56
+    // = 1,534.56.
+    const { rows, shadowedRowIds } = withLinkedBudgetRows(
+      [
+        row({ id: "g", category: "expenses", name: "Groceries", amount: 300 }),
+        row({ id: "m", category: "housing", name: "Mortgage", amount: 0 }),
+      ],
+      {
+        takeHome: noTakeHome,
+        housing: { kind: "mortgage", monthly: 1234.56, paymentEstimated: true },
+      },
+    );
+    expect(rows.map((r) => r.id)).toEqual(["g", LINKED_HOUSING_ID]);
+    expect(shadowedRowIds).toEqual(["m"]);
+    const totals = selectBudgetTotals(rows);
+    if (!isFigureKnown(totals)) throw new Error("expected known");
+    expect(totals.value.essentials).toBeCloseTo(1534.56, 2);
   });
 
   it("keeps the budget's own rent row while no housing payment is saved", () => {

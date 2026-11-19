@@ -33,8 +33,10 @@ export interface LinkedBudgetRows {
  *   an amount above £0 ("Salary", "Wages" and the other synonyms); a row they typed always wins. A
  *   £0 synonym row is left out, as the linked row stands in for it.
  * - Housing: the rent, mortgage payment or household contribution from the housing details (or the
- *   mortgage accounts' estimate). While it is known and above £0 it stands in for every housing row
- *   named as the rent or mortgage payment, so the payment is never counted twice.
+ *   mortgage accounts' estimate). The person's own saved figure, while above £0, stands in for every
+ *   housing row named as the rent or mortgage payment, so the payment is never counted twice. An
+ *   estimate stands in only while no such row has an amount above £0: a row they typed wins, and
+ *   then no linked housing row is added.
  *
  * Nothing is written: the rows exist only in the figures and on screen.
  */
@@ -54,7 +56,13 @@ export function withLinkedBudgetRows(
     for (const row of budget) if (isTakeHomePayRow(row)) shadowed.add(row.id);
   }
 
-  const housing = sources.housing && sources.housing.monthly > 0 ? sources.housing : null;
+  const knownHousing = sources.housing && sources.housing.monthly > 0 ? sources.housing : null;
+  // An estimate (from the mortgage accounts) gives way to a housing row the person typed, as
+  // take-home does; their own saved rent or housing cost always stands in for the rows.
+  const ownHousingRow =
+    knownHousing?.paymentEstimated === true &&
+    budget.some((row) => isHousingPaymentRow(row) && budgetRowMonthly(row) > 0);
+  const housing = ownHousingRow ? null : knownHousing;
   let housingIndex = -1;
   if (housing) {
     housingIndex = budget.findIndex(isHousingPaymentRow);

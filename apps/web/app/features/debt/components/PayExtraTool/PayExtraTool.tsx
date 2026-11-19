@@ -120,7 +120,7 @@ const DebtByYearTable: FC<{
     },
   });
   return (
-    <Table caption="Debt remaining by year">
+    <Table caption="Debt remaining every 12 months and at the end">
       <THead>
         <tr>
           <Th {...getSortProps("month")}>Month</Th>

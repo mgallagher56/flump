@@ -106,7 +106,10 @@ describe("estimateRecordedReturn", () => {
       }),
     );
     expect(result.overall.return).toBeCloseTo(-0.0975, 10);
-    expect(result.years).toEqual([{ year: 2026, months: 2, return: result.overall.return }]);
+    // Both months fall in 2026, so the year's return is the same hand-worked -0.0975 over 2 months.
+    expect(result.years).toHaveLength(1);
+    expect(result.years[0]).toMatchObject({ year: 2026, months: 2 });
+    expect(result.years[0]?.return).toBeCloseTo(-0.0975, 10);
   });
 
   it("splits returns into calendar years by the later month", () => {

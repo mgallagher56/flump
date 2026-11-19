@@ -30,6 +30,11 @@ export const TAKE_HOME_PAY_NAMES: ReadonlyArray<string> = [
   "salary after tax",
   "wages",
   "monthly take-home income",
+  "income",
+  "net income",
+  "monthly income",
+  "take-home",
+  "take home pay",
 ];
 
 export const BUDGET_SYNONYM_GROUPS: ReadonlyArray<BudgetSynonymGroup> = [
@@ -66,6 +71,7 @@ interface NamedRow {
   name: string;
   category: string;
   isIncome?: boolean;
+  isPrimaryIncome?: boolean;
 }
 
 /**
@@ -76,13 +82,22 @@ interface NamedRow {
 const PAY_WORDS = /\b(salary|salaries|wage|wages|pay|payslip|earnings|take[- ]home)\b/;
 
 /**
- * True for an income row that is the person's own pay: a take-home synonym ("Salary", "Wages") or
- * a name with a pay word in it ("Salary (net)", "Net pay"). Such a row, with an amount, wins over
+ * Words that mark a row as someone else's pay ("Partner's salary", "Her wages", "Joint salary"),
+ * which never stands in for the person's own take-home pay.
+ */
+const SOMEONE_ELSE_WORDS = /\b(partner|partners|spouse|husband|wife|wives|his|her|joint)\b/;
+
+/**
+ * True for an income row that is the person's own pay: one marked as their main pay, a take-home
+ * synonym ("Salary", "Income") or a name with a pay word in it ("Salary (net)", "Net pay"), unless
+ * the name says it is someone else's ("Partner's salary"). Such a row, with an amount, wins over
  * the take-home worked out from the profile, so pay is never counted twice.
  */
 export const isTakeHomePayRow = (row: NamedRow): boolean => {
+  if (row.isPrimaryIncome === true) return true;
   if (row.isIncome !== true && row.category !== BUDGET_INCOME_CATEGORY) return false;
   const name = normaliseEntryName(row.name);
+  if (SOMEONE_ELSE_WORDS.test(name)) return false;
   return TAKE_HOME_PAY_NAMES.includes(name) || PAY_WORDS.test(name);
 };
 

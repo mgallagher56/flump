@@ -70,6 +70,8 @@ export interface BudgetEntryItem {
   /** E34 C1: "joint" counts the entry at `sharePercent` (50 when unset); absent means sole. */
   ownership?: "sole" | "joint" | string | null;
   sharePercent?: number | null;
+  /** True when the person marked this row as their own main pay. Read by the take-home link. */
+  isPrimaryIncome?: boolean;
   /**
    * Set only on a row the engine adds from a saved detail (owner items 7 and 33b): "take-home"
    * from the profile's salary, "housing" from the housing details. Never stored.

@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
-import { FormField } from "../FormField";
+import { controlProps, FormField } from "../FormField";
 import { Select } from "../Select";
 import { TextInput } from "../TextInput";
 import { tableSearchField, tableToolbar } from "./TableToolbar.styles";
@@ -62,6 +62,8 @@ export interface TableFilterSelectProps {
   /** The first option, which shows every row ("All accounts"). */
   allLabel: string;
   options: readonly TableFilterOption[];
+  /** A short line under the select, linked to it with `aria-describedby`. */
+  hint?: string;
 }
 
 /** A category filter for a `TableToolbar`: a labelled select whose first option shows every row. */
@@ -71,10 +73,16 @@ export const TableFilterSelect: FC<TableFilterSelectProps> = ({
   onChange,
   allLabel,
   options,
+  hint,
 }) => (
-  <FormField label={label}>
+  <FormField hint={hint} label={label}>
     {(field) => (
-      <Select id={field.id} value={value} onChange={(e) => onChange(e.target.value)}>
+      <Select
+        {...controlProps(field)}
+        data-testid={field.id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
         <option value="all">{allLabel}</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>

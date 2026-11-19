@@ -686,7 +686,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                       <div className={checkboxRow}>
                         <Checkbox
                           aria-describedby={QUALIFYING_INFO_ID}
-                          label="Only pay that counts for your pension"
+                          label="Base contributions on pay that counts for your pension"
                           checked={scenario.values.useQualifyingEarnings}
                           onChange={(e) => scenario.set("useQualifyingEarnings", e.target.checked)}
                         />

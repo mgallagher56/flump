@@ -73,7 +73,7 @@ export const ImportsListPage: FC<ImportsListPageProps> = ({ batches }) => {
           onChange={(v) => setFilter("status", v)}
         />
       </TableToolbar>
-      <Table caption="Your imports, newest first" stacked>
+      <Table caption="Your imports" stacked>
         <THead>
           <Tr>
             <Th {...getSortProps("received")}>Received</Th>
