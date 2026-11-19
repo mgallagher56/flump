@@ -439,6 +439,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "receiptFilename",
         "receiptMimeType",
         "receiptData",
+        "accountId",
         "createdAt",
         "updatedAt",
       ],
@@ -462,6 +463,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         receiptFilename: "tax-records",
         receiptMimeType: "tax-records",
         receiptData: "tax-records",
+        accountId: "tax-records",
       },
       notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
     },
@@ -843,6 +845,11 @@ export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reas
     parent: "budget_entries",
     reason:
       "system audit slice 5 migration before-image (the ownership and share of renters' linked rent lines it set to sole) kept 90 days so its down() can restore them; rows go with the budget line by ON DELETE CASCADE; not exported, as it is a rollback copy and the current lines are in the export",
+  },
+  rental_share_onto_property_backfill: {
+    parent: "accounts",
+    reason:
+      "system audit slice 7 migration before-image (the ownership and share of sole rental Property accounts it set to the profile's share) kept 90 days so its down() can restore them; rows go with the account by ON DELETE CASCADE; not exported, as it is a rollback copy and the current accounts are in the export",
   },
   liability_sign_backfill: {
     parent: "accounts",

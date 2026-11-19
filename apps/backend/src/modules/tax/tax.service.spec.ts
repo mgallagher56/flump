@@ -36,7 +36,7 @@ describe("annualRecordEndDate (audit M1)", () => {
 describe("TaxService.createBulk (audit M3)", () => {
   it("writes caps and records through one transaction's repository", async () => {
     const { outside, inside, transaction } = withManager();
-    const service = new TaxService(outside as never);
+    const service = new TaxService(outside as never, createInMemoryRepository() as never);
 
     const created = await service.createBulk("u1", {
       records: [{ ...base, frequency: "annual", date: "2026-04-03" } as never],
@@ -52,7 +52,7 @@ describe("TaxService.createBulk (audit M3)", () => {
 
   it("refuses a salary record with a 400 even with the contract check off (slice 6)", async () => {
     const { outside, transaction } = withManager();
-    const service = new TaxService(outside as never);
+    const service = new TaxService(outside as never, createInMemoryRepository() as never);
     await expect(
       service.createBulk("u1", {
         records: [{ ...base, source: "paye", category: "paye_salary", date: "2026-05-01" }],
@@ -66,7 +66,7 @@ describe("TaxService.createBulk (audit M3)", () => {
 
   it("rejects a cap id that is not a uuid with a 400 before opening a transaction", async () => {
     const { outside, transaction } = withManager();
-    const service = new TaxService(outside as never);
+    const service = new TaxService(outside as never, createInMemoryRepository() as never);
     await expect(
       service.createBulk("u1", {
         records: [{ ...base, date: "2026-05-01" }],
@@ -78,7 +78,7 @@ describe("TaxService.createBulk (audit M3)", () => {
 
   it("validates everything before opening the transaction", async () => {
     const { outside, transaction } = withManager();
-    const service = new TaxService(outside as never);
+    const service = new TaxService(outside as never, createInMemoryRepository() as never);
 
     await expect(
       service.createBulk("u1", {
@@ -96,7 +96,11 @@ describe("TaxService.createBulk (audit M3)", () => {
 
   it("opens no transaction for an empty request", async () => {
     const { outside, transaction } = withManager();
-    expect(await new TaxService(outside as never).createBulk("u1", { records: [] })).toEqual([]);
+    expect(
+      await new TaxService(outside as never, createInMemoryRepository() as never).createBulk("u1", {
+        records: [],
+      }),
+    ).toEqual([]);
     expect(transaction).not.toHaveBeenCalled();
   });
 
@@ -115,7 +119,7 @@ describe("TaxService.createBulk (audit M3)", () => {
     });
 
     await expect(
-      new TaxService(outside as never).createBulk("u1", {
+      new TaxService(outside as never, createInMemoryRepository() as never).createBulk("u1", {
         records: [{ ...base, frequency: "monthly", date: "2026-05-01" } as never],
         capPreviousRecordIds: [
           { id: "00000000-0000-4000-8000-000000000001", endDate: "2026-04-05" },
@@ -152,7 +156,7 @@ describe("TaxService.readReceipt (SEC-D, L4 legacy plaintext)", () => {
 
   it("serves a legacy plaintext receipt and writes back its encrypted form, not a 404", async () => {
     const { repo, qb } = repoWith(pdfDataUrl);
-    const service = new TaxService(repo as never);
+    const service = new TaxService(repo as never, createInMemoryRepository() as never);
 
     const file = await service.readReceipt("u1", RECORD_ID);
 
@@ -175,7 +179,7 @@ describe("TaxService.readReceipt (SEC-D, L4 legacy plaintext)", () => {
   it("still serves the receipt when the write-back fails", async () => {
     const { repo, qb } = repoWith(pdfDataUrl);
     qb.execute.mockRejectedValue(new Error("db down"));
-    const service = new TaxService(repo as never);
+    const service = new TaxService(repo as never, createInMemoryRepository() as never);
     await expect(service.readReceipt("u1", RECORD_ID)).resolves.toMatchObject({
       type: "application/pdf",
     });
@@ -183,7 +187,7 @@ describe("TaxService.readReceipt (SEC-D, L4 legacy plaintext)", () => {
 
   it("does not rewrite a receipt that is already encrypted", async () => {
     const { repo, qb } = repoWith(encryptReceiptData(pdfDataUrl, RECORD_ID));
-    const service = new TaxService(repo as never);
+    const service = new TaxService(repo as never, createInMemoryRepository() as never);
     await expect(service.readReceipt("u1", RECORD_ID)).resolves.toMatchObject({
       type: "application/pdf",
     });
@@ -192,7 +196,7 @@ describe("TaxService.readReceipt (SEC-D, L4 legacy plaintext)", () => {
 
   it("is a 404 for legacy plaintext that fails the receipt rules, and leaves it alone", async () => {
     const { repo, qb } = repoWith("data:application/pdf;base64,AAAA");
-    const service = new TaxService(repo as never);
+    const service = new TaxService(repo as never, createInMemoryRepository() as never);
     await expect(service.readReceipt("u1", RECORD_ID)).rejects.toBeInstanceOf(NotFoundException);
     expect(qb.execute).not.toHaveBeenCalled();
   });
@@ -210,7 +214,10 @@ describe("TaxService finance costs brought forward records", () => {
   };
 
   it("refuses one that is not a yearly rental expense, even with the contract check off", async () => {
-    const service = new TaxService(createInMemoryRepository() as never);
+    const service = new TaxService(
+      createInMemoryRepository() as never,
+      createInMemoryRepository() as never,
+    );
     await expect(
       service.createRecord("u1", { ...bf, frequency: "monthly" } as never),
     ).rejects.toBeInstanceOf(BadRequestException);
@@ -220,7 +227,10 @@ describe("TaxService finance costs brought forward records", () => {
   });
 
   it("checks an update on the merged record, not only the fields sent", async () => {
-    const service = new TaxService(createInMemoryRepository() as never);
+    const service = new TaxService(
+      createInMemoryRepository() as never,
+      createInMemoryRepository() as never,
+    );
     const created = await service.createRecord("u1", bf as never);
     // Each change alone looks harmless; on this record it would make it an income or monthly.
     await expect(
@@ -261,7 +271,10 @@ describe("TaxService known categories (one list per source, from the engine)", (
   };
 
   it("refuses an unknown category on create with a 400 on the category field, contract check off", async () => {
-    const service = new TaxService(createInMemoryRepository() as never);
+    const service = new TaxService(
+      createInMemoryRepository() as never,
+      createInMemoryRepository() as never,
+    );
     const response = await categoryIssue(
       service.createRecord("u1", { ...rent, category: "Rent" } as never),
     );
@@ -272,13 +285,16 @@ describe("TaxService known categories (one list per source, from the engine)", (
   });
 
   it("refuses a known category under the wrong source", async () => {
-    const service = new TaxService(createInMemoryRepository() as never);
+    const service = new TaxService(
+      createInMemoryRepository() as never,
+      createInMemoryRepository() as never,
+    );
     await categoryIssue(service.createRecord("u1", { ...rent, source: "savings" } as never));
   });
 
   it("refuses a bulk request with one unknown category before opening a transaction", async () => {
     const { outside, transaction } = withManager();
-    const service = new TaxService(outside as never);
+    const service = new TaxService(outside as never, createInMemoryRepository() as never);
     await categoryIssue(
       service.createBulk("u1", { records: [rent, { ...rent, category: "Repairs" }] } as never),
     );
@@ -287,7 +303,10 @@ describe("TaxService known categories (one list per source, from the engine)", (
 
   it("keeps a stored row with an unlisted category readable, editable and deletable", async () => {
     const repository = createInMemoryRepository();
-    const service = await legacyRow(new TaxService(repository as never), repository as never);
+    const service = await legacyRow(
+      new TaxService(repository as never, createInMemoryRepository() as never),
+      repository as never,
+    );
     await expect(service.getRecord("u1", "legacy-1")).resolves.toMatchObject({ category: "Rent" });
     // A change that does not touch the category or source is saved; the category is kept.
     await expect(
@@ -298,7 +317,10 @@ describe("TaxService known categories (one list per source, from the engine)", (
 
   it("fails an edit of that row only on the category field while it stays unlisted", async () => {
     const repository = createInMemoryRepository();
-    const service = await legacyRow(new TaxService(repository as never), repository as never);
+    const service = await legacyRow(
+      new TaxService(repository as never, createInMemoryRepository() as never),
+      repository as never,
+    );
     // The edit form sends the whole record back, category included.
     const response = await categoryIssue(
       service.updateRecord(
@@ -316,7 +338,10 @@ describe("TaxService known categories (one list per source, from the engine)", (
   });
 
   it("checks a source change against the stored category, on the merged record", async () => {
-    const service = new TaxService(createInMemoryRepository() as never);
+    const service = new TaxService(
+      createInMemoryRepository() as never,
+      createInMemoryRepository() as never,
+    );
     const created = await service.createRecord("u1", rent as never);
     const response = await categoryIssue(
       service.updateRecord("u1", created.id, { source: "savings" } as never, undefined),
@@ -327,7 +352,10 @@ describe("TaxService known categories (one list per source, from the engine)", (
 
 describe("TaxService stores the category trimmed (contract check off)", () => {
   it("saves a padded listed category without the spaces, so the engine counts it", async () => {
-    const service = new TaxService(createInMemoryRepository() as never);
+    const service = new TaxService(
+      createInMemoryRepository() as never,
+      createInMemoryRepository() as never,
+    );
     const created = await service.createRecord("u1", {
       type: "expense",
       source: "rental",
@@ -337,5 +365,191 @@ describe("TaxService stores the category trimmed (contract check off)", () => {
       date: "2026-06-01",
     } as never);
     expect(created.category).toBe("repairs_maintenance");
+  });
+});
+
+describe("TaxService account links (slice 7)", () => {
+  const RENTAL = "00000000-0000-4000-8000-0000000000a1";
+  const BTL = "00000000-0000-4000-8000-0000000000a2";
+  const SAVER = "00000000-0000-4000-8000-0000000000a3";
+  const ISA = "00000000-0000-4000-8000-0000000000a4";
+  const HOME = "00000000-0000-4000-8000-0000000000a5";
+  const CURRENT = "00000000-0000-4000-8000-0000000000a6";
+  const THEIRS = "00000000-0000-4000-8000-0000000000b1";
+  const MISSING = "00000000-0000-4000-8000-0000000000ff";
+
+  const accounts = () =>
+    createInMemoryRepository([
+      { id: RENTAL, userId: "u1", type: "Property", accountSubtype: "rental" },
+      { id: BTL, userId: "u1", type: "Mortgage", accountSubtype: "btl_mortgage" },
+      { id: SAVER, userId: "u1", type: "Saving", accountSubtype: "easy_access" },
+      { id: ISA, userId: "u1", type: "Investment", accountSubtype: "stocks_and_shares_isa" },
+      { id: HOME, userId: "u1", type: "Property", accountSubtype: "home" },
+      { id: CURRENT, userId: "u1", type: "Current", accountSubtype: null },
+      { id: THEIRS, userId: "u2", type: "Property", accountSubtype: "rental" },
+    ]);
+
+  const setup = () => {
+    const records = createInMemoryRepository();
+    const service = new TaxService(records as never, accounts() as never);
+    return { records, service };
+  };
+
+  const rent = {
+    type: "income",
+    source: "rental",
+    category: "rental_income",
+    name: "Flat rent",
+    amount: 1200,
+    date: "2026-05-01",
+  };
+  const interest = {
+    type: "income",
+    source: "savings",
+    category: "savings_interest",
+    name: "Interest",
+    amount: 120,
+    date: "2026-05-01",
+  };
+
+  const refusal = async (promise: Promise<unknown>) => {
+    const error = await promise.then(
+      () => null,
+      (e: unknown) => e,
+    );
+    expect(error).toBeInstanceOf(BadRequestException);
+    expect((error as BadRequestException).getResponse()).toEqual({
+      code: "validation_failed",
+      message: "Request failed validation",
+      issues: [
+        {
+          path: "body.accountId",
+          code: "custom",
+          message: "Choose one of your accounts that fits this income source",
+        },
+      ],
+    });
+  };
+
+  it("links a rental record to the user's rental Property or a Mortgage", async () => {
+    const { service } = setup();
+    const onProperty = await service.createRecord("u1", { ...rent, accountId: RENTAL } as never);
+    expect(onProperty.accountId).toBe(RENTAL);
+    const onMortgage = await service.createRecord("u1", {
+      ...rent,
+      type: "expense",
+      category: "mortgage_interest",
+      accountId: BTL,
+    } as never);
+    expect(onMortgage.accountId).toBe(BTL);
+  });
+
+  it("links a savings record to a savings or investment account, ISA included", async () => {
+    const { service } = setup();
+    expect(
+      (await service.createRecord("u1", { ...interest, accountId: SAVER } as never)).accountId,
+    ).toBe(SAVER);
+    expect(
+      (await service.createRecord("u1", { ...interest, accountId: ISA } as never)).accountId,
+    ).toBe(ISA);
+  });
+
+  it("returns accountId null when no account is given", async () => {
+    const { service } = setup();
+    expect((await service.createRecord("u1", rent as never)).accountId).toBeNull();
+  });
+
+  it("refuses another user's account and a missing id with the same 400", async () => {
+    const { service, records } = setup();
+    await refusal(service.createRecord("u1", { ...rent, accountId: THEIRS } as never));
+    await refusal(service.createRecord("u1", { ...rent, accountId: MISSING } as never));
+    await refusal(service.createRecord("u1", { ...rent, accountId: "not-a-uuid" } as never));
+    expect(records.rows).toHaveLength(0);
+  });
+
+  it("refuses an account whose type does not fit the source", async () => {
+    const { service } = setup();
+    await refusal(service.createRecord("u1", { ...rent, accountId: HOME } as never));
+    await refusal(service.createRecord("u1", { ...rent, accountId: SAVER } as never));
+    await refusal(service.createRecord("u1", { ...interest, accountId: RENTAL } as never));
+    await refusal(service.createRecord("u1", { ...interest, accountId: CURRENT } as never));
+  });
+
+  it("refuses any account on a PAYE or self-employed record", async () => {
+    const { service } = setup();
+    await refusal(
+      service.createRecord("u1", { ...base, date: "2026-05-01", accountId: SAVER } as never),
+    );
+    await refusal(
+      service.createRecord("u1", {
+        type: "income",
+        source: "self-employed",
+        category: "self_employed_income",
+        name: "Invoices",
+        amount: 500,
+        date: "2026-05-01",
+        accountId: RENTAL,
+      } as never),
+    );
+  });
+
+  it("checks every record of a bulk create before opening the transaction", async () => {
+    const records = createInMemoryRepository();
+    const transaction = vi.fn();
+    Object.assign(records, { manager: { transaction } });
+    const service = new TaxService(records as never, accounts() as never);
+    await refusal(
+      service.createBulk("u1", {
+        records: [
+          { ...rent, accountId: RENTAL },
+          { ...rent, accountId: THEIRS },
+        ],
+      } as never),
+    );
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it("clears the link with null on update", async () => {
+    const { service } = setup();
+    const created = await service.createRecord("u1", { ...rent, accountId: RENTAL } as never);
+    const updated = await service.updateRecord(
+      "u1",
+      created.id,
+      { accountId: null } as never,
+      undefined,
+    );
+    expect(updated.accountId).toBeNull();
+  });
+
+  it("links and refuses on update, checking the merged record", async () => {
+    const { service } = setup();
+    const created = await service.createRecord("u1", rent as never);
+    const linked = await service.updateRecord(
+      "u1",
+      created.id,
+      { accountId: BTL } as never,
+      undefined,
+    );
+    expect(linked.accountId).toBe(BTL);
+    await refusal(
+      service.updateRecord("u1", created.id, { accountId: THEIRS } as never, undefined),
+    );
+    // Moving a linked rental record to self-employed would leave it pointing at a mortgage.
+    await refusal(
+      service.updateRecord(
+        "u1",
+        created.id,
+        { source: "self-employed", category: "self_employed_income" } as never,
+        undefined,
+      ),
+    );
+    // With the link cleared in the same request, the move is fine.
+    const moved = await service.updateRecord(
+      "u1",
+      created.id,
+      { source: "self-employed", category: "self_employed_income", accountId: null } as never,
+      undefined,
+    );
+    expect(moved).toMatchObject({ source: "self-employed", accountId: null });
   });
 });

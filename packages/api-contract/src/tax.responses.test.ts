@@ -21,6 +21,7 @@ const record = {
   notes: null,
   receiptFilename: "statement.pdf",
   receiptMimeType: "application/pdf",
+  accountId: "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",
   hasReceipt: true,
   createdAt: "2026-01-10T12:00:00.000Z",
   updatedAt: "2026-01-11T08:30:00.000Z",
@@ -32,6 +33,7 @@ const bare = {
   endDate: null,
   receiptFilename: null,
   receiptMimeType: null,
+  accountId: null,
   hasReceipt: false,
 };
 
@@ -51,6 +53,12 @@ describe("tax response schemas", () => {
 
   it("rejects a decimal amount as a string in a list item", () => {
     expect(checkAgainst(TaxRecordListResponse, [{ ...record, amount: "1250.50" }]).ok).toBe(false);
+  });
+
+  it("always carries accountId, null when the record is not linked (slice 7)", () => {
+    const { accountId: _accountId, ...withoutAccount } = bare;
+    expect(checkAgainst(TaxRecordResponse, withoutAccount).ok).toBe(false);
+    expect(checkAgainst(TaxRecordResponse, { ...bare, accountId: "not-a-uuid" }).ok).toBe(false);
   });
 
   it("rejects a missing nullable key (create must send null, not drop it)", () => {

@@ -43,6 +43,9 @@ export const USER_DATA_TABLES = [
   // Before-image of the repayment types copied to sole residential mortgages (child of accounts,
   // ON DELETE CASCADE).
   "mortgage_repayment_type_backfill",
+  // System audit slice 7 before-image (sole rental Property accounts given the profile's share;
+  // child of accounts, ON DELETE CASCADE).
+  "rental_share_onto_property_backfill",
   "accounts",
   "bank_connections",
   // BE-12 pending bank OAuth consents (random state hash and PKCE verifier, ten minutes).

@@ -10,6 +10,11 @@ import { numericTransformer } from "./numeric.transformer";
 
 // A user's tax records by date, newest first (scanned backwards). (AddUserIdIndexes1794358100000)
 @Index("IDX_tax_records_user_date", ["userId", "date"])
+// System audit slice 7 (TaxRecordAccountLink1795540000000): a user's records grouped by the account
+// they describe, and the (account_id, user_id) foreign key's own index, so deleting an account
+// finds its records without a scan.
+@Index("IDX_tax_records_user_account", ["userId", "accountId"])
+@Index("IDX_tax_records_account_user", ["accountId", "userId"])
 @Entity("tax_records")
 export class TaxRecord {
   @PrimaryGeneratedColumn("uuid")
@@ -59,6 +64,16 @@ export class TaxRecord {
    */
   @Column({ name: "receipt_data", type: "text", nullable: true, select: false })
   receiptData: string | null;
+
+  /**
+   * The account the record describes (system audit slice 7): a rental Property or its mortgage
+   * for a rental record, a savings or investment account for a savings record. Always one of the
+   * same user's accounts (the service checks it; a composite foreign key enforces it). The
+   * (account_id, user_id) foreign key to accounts (id, user_id), ON DELETE SET NULL (account_id),
+   * lives in the migration only, as budget_entries.link_account_id's does.
+   */
+  @Column({ name: "account_id", type: "uuid", nullable: true })
+  accountId: string | null;
 
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt: Date;

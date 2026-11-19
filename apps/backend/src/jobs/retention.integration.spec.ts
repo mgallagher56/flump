@@ -170,6 +170,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [rentLine?.id],
         );
       }
+      // The slice 7 before-image: one row past 90 days and one inside it.
+      for (const age of ["91 days", "89 days"]) {
+        await ds.query(
+          `INSERT INTO rental_share_onto_property_backfill (account_id, user_id, old_ownership, backfilled_at) VALUES ($1, $2, 'sole', ${ago(age)})`,
+          [account.id, OWNER_ID],
+        );
+      }
       for (const [i, age] of ["24 months 1 day", "23 months"].entries()) {
         await ds.query(
           `INSERT INTO user_profiles (user_id, last_active_at) VALUES ($1, ${ago(age)})`,
@@ -243,6 +250,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           profile_column_drop_backfill: 1,
           take_home_salary_backfill: 1,
           reset_pension_zeros_backfill: 1,
+          rental_share_onto_property_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });
@@ -261,6 +269,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("profile_column_drop_backfill")).toBe(1);
       expect(await count("take_home_salary_backfill")).toBe(1);
       expect(await count("reset_pension_zeros_backfill")).toBe(1);
+      expect(await count("rental_share_onto_property_backfill")).toBe(1);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
     });

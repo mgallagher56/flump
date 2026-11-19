@@ -1816,7 +1816,7 @@ facts:
     links: [L47, L48, L49, L50]
     verdict: duplicated
     findings: [SA-4, SA-6, SA-7, SA-9, DB-16]
-    note: A record has no link to the account it describes, so buy-to-let interest and savings interest are typed again here.
+    note: "A record can point at the account it describes (tax_records.account_id, slice 7): a rental Property or its mortgage for a rental record, a savings or investment account for a savings record. The link is optional, and buy-to-let interest and savings interest are still typed here until a figure is offered from the linked account."
 
   - id: rental-share-for-tax
     name: Share of a rental property, as used for tax

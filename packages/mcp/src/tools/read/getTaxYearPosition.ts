@@ -2,7 +2,6 @@ import {
   calculateHicbcPercent,
   calculateIncomeTaxOnTaxable,
   calculateUKTax,
-  rentalSharesFromAccounts,
   estimateInputsFor,
   getTaxYearVerification,
   getUkTaxYearRules,
@@ -10,6 +9,7 @@ import {
   isSelfEmployedType,
   MCP_NOTICE,
   payeSalaryForTax,
+  rentalSharesFromAccounts,
   type TaxEstimateMissingFact,
 } from "@flump/finance-engine";
 import { z } from "zod";

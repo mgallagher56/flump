@@ -72,10 +72,20 @@ import {
   SEEDED_BUDGET_ENTRIES,
   TAX_FINGERPRINT_SQL,
 } from "./RemoveSeededExampleData1794355400000";
+import {
+  RENTAL_SHARE_BACKFILL_TABLE,
+  RentalShareOntoPropertyAccounts1795540100000,
+} from "./RentalShareOntoPropertyAccounts1795540100000";
 import { RentLinesWholeRent1795490100000 } from "./RentLinesWholeRent1795490100000";
 import { SavingsRowsNotEssential1795450000000 } from "./SavingsRowsNotEssential1795450000000";
 import { SetupChecklistDismissed1795500100000 } from "./SetupChecklistDismissed1795500100000";
 import { StudentLoanPlanToProfile1795480200000 } from "./StudentLoanPlanToProfile1795480200000";
+import {
+  TAX_RECORD_ACCOUNT_FOREIGN_KEY,
+  TAX_RECORD_ACCOUNT_USER_INDEX,
+  TAX_RECORD_USER_ACCOUNT_INDEX,
+  TaxRecordAccountLink1795540000000,
+} from "./TaxRecordAccountLink1795540000000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
 import { WidenPensionPercentPrecision1795460000000 } from "./WidenPensionPercentPrecision1795460000000";
 
@@ -101,9 +111,10 @@ let MIGRATIONS: MigrationClass[] = [];
 // and its later repeat for repayment types (mortgage_repayment_type_backfill,
 // BackfillMortgageRepaymentType1795530000000), the slice 9 column-drop before-image
 // (profile_column_drop_backfill, profile-column-drop.ts), and the profile before-images of
-// ClearTakeHomeSalaries1795530100000 and ClearResetPensionZeros1795530200000.
+// ClearTakeHomeSalaries1795530100000 and ClearResetPensionZeros1795530200000, and the slice 7
+// before-image (rental_share_onto_property_backfill, RentalShareOntoPropertyAccounts1795550100000).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -3531,6 +3542,201 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       expect(await typeOf(copied)).toBe("interest-only");
       expect(await tables()).toEqual(ENTITY_TABLES);
+  describe("TaxRecordAccountLink1795540000000 (audit slice 7)", () => {
+    const NAME = "TaxRecordAccountLink1795540000000";
+    const column = (): Promise<unknown[]> =>
+      ds.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = 'tax_records' AND column_name = 'account_id'",
+      );
+    const key = (): Promise<unknown[]> =>
+      ds.query(`SELECT 1 FROM pg_constraint WHERE conname = '${TAX_RECORD_ACCOUNT_FOREIGN_KEY}'`);
+    const indexes = async (): Promise<string[]> =>
+      (
+        (await ds.query(
+          `SELECT indexname FROM pg_indexes WHERE tablename = 'tax_records' AND indexname IN ($1, $2) ORDER BY indexname`,
+          [TAX_RECORD_ACCOUNT_USER_INDEX, TAX_RECORD_USER_ACCOUNT_INDEX],
+        )) as { indexname: string }[]
+      ).map((r) => r.indexname);
+    const account = async (userId: string): Promise<string> =>
+      at<{ id: string }>(
+        await ds.query(
+          `INSERT INTO accounts (user_id, name, type, account_subtype, balance, currency)
+           VALUES ($1, 'Let flat', 'Property', 'rental', 0, 'GBP') RETURNING id`,
+          [userId],
+        ),
+        0,
+      ).id;
+    const record = async (userId: string, accountId: string | null): Promise<string> =>
+      at<{ id: string }>(
+        await ds.query(
+          `INSERT INTO tax_records (user_id, type, source, category, name, amount, date, account_id)
+           VALUES ($1, 'income', 'rental', 'rental_income', 'Rent', 100, '2026-05-01', $2) RETURNING id`,
+          [userId, accountId],
+        ),
+        0,
+      ).id;
+    const linkOf = async (id: string) =>
+      at<{ account_id: string | null }>(
+        await ds.query("SELECT account_id FROM tax_records WHERE id = $1", [id]),
+        0,
+      ).account_id;
+
+    it("adds the column, the owner key and both indexes, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      expect(await column()).toHaveLength(1);
+      expect(await key()).toHaveLength(1);
+      expect(await indexes()).toEqual([
+        TAX_RECORD_ACCOUNT_USER_INDEX,
+        TAX_RECORD_USER_ACCOUNT_INDEX,
+      ]);
+      const mine = await account("u1");
+      const linked = await record("u1", mine);
+      const before = await columns();
+      await runUpInTransaction(new TaxRecordAccountLink1795540000000());
+      expect(await columns()).toEqual(before);
+      expect(await key()).toHaveLength(1);
+      expect(await linkOf(linked)).toBe(mine);
+    });
+
+    it("refuses another user's account and unlinks a record when its account is deleted", async () => {
+      await ds.runMigrations();
+      const theirs = await account("u2");
+      await expect(record("u1", theirs)).rejects.toThrow(/foreign key/i);
+      const mine = await account("u1");
+      const linked = await record("u1", mine);
+      await ds.query("DELETE FROM accounts WHERE id = $1", [mine]);
+      // The record stays, keeps its user, and is no longer linked.
+      expect(
+        at(
+          await ds.query("SELECT user_id, account_id FROM tax_records WHERE id = $1", [linked]),
+          0,
+        ),
+      ).toEqual({ user_id: "u1", account_id: null });
+    });
+
+    it("drops the indexes, the key and the column on revert, keeping the records", async () => {
+      await ds.runMigrations();
+      const linked = await record("u1", await account("u1"));
+      await undoThrough(NAME);
+      expect(await column()).toEqual([]);
+      expect(await key()).toEqual([]);
+      expect(await indexes()).toEqual([]);
+      expect(await ds.query("SELECT id FROM tax_records")).toEqual([{ id: linked }]);
+      // Up again after down: back to the full shape.
+      await ds.runMigrations();
+      expect(await column()).toHaveLength(1);
+      expect(await key()).toHaveLength(1);
+    });
+  });
+
+  describe("RentalShareOntoPropertyAccounts1795540100000 (audit slice 7, decision 6)", () => {
+    const NAME = "RentalShareOntoPropertyAccounts1795540100000";
+    const profile = (userId: string, share: number) =>
+      ds.query("INSERT INTO user_profiles (user_id, property_ownership_share) VALUES ($1, $2)", [
+        userId,
+        share,
+      ]);
+    const property = async (
+      userId: string,
+      subtype: string,
+      ownership: string,
+      share: number | null,
+    ): Promise<string> =>
+      at<{ id: string }>(
+        await ds.query(
+          `INSERT INTO accounts (user_id, name, type, account_subtype, balance, currency, ownership, share_percent)
+           VALUES ($1, 'Property', 'Property', $2, 0, 'GBP', $3, $4) RETURNING id`,
+          [userId, subtype, ownership, share],
+        ),
+        0,
+      ).id;
+    const share = async (id: string) =>
+      at(await ds.query("SELECT ownership, share_percent FROM accounts WHERE id = $1", [id]), 0);
+    const beforeImage = async (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT account_id, user_id, old_ownership, old_share_percent FROM "${RENTAL_SHARE_BACKFILL_TABLE}" ORDER BY account_id`,
+      );
+
+    it("gives a sole rental the profile's share, leaves the rest, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await profile("half", 50);
+      await profile("whole", 100);
+      // "none" has no profile row at all.
+      await profile("thirds", 33.4);
+      const soleRental = await property("half", "rental", "sole", null);
+      const home = await property("half", "home", "sole", null);
+      const jointRental = await property("half", "rental", "joint", 40);
+      const wholeRental = await property("whole", "rental", "sole", null);
+      const noShareRental = await property("none", "rental", "sole", null);
+      // 33.4 rounds to 33, as MoveBuyToLetProfileIntoAccounts rounds it.
+      const roundedRental = await property("thirds", "rental", "sole", null);
+      const logged = vi.spyOn(Logger.prototype, "log");
+      await ds.runMigrations();
+      // Counts only: two accounts changed, and no id in the message.
+      expect(logged).toHaveBeenCalledWith(
+        "Sole rental property accounts given the profile's share: 2",
+      );
+      logged.mockRestore();
+      expect(await applied()).toContain(NAME);
+      expect(await share(soleRental)).toEqual({ ownership: "joint", share_percent: 50 });
+      expect(await share(roundedRental)).toEqual({ ownership: "joint", share_percent: 33 });
+      expect(await share(home)).toEqual({ ownership: "sole", share_percent: null });
+      expect(await share(jointRental)).toEqual({ ownership: "joint", share_percent: 40 });
+      expect(await share(wholeRental)).toEqual({ ownership: "sole", share_percent: null });
+      expect(await share(noShareRental)).toEqual({ ownership: "sole", share_percent: null });
+      const image = await beforeImage();
+      expect(image).toHaveLength(2);
+      expect(image).toEqual(
+        expect.arrayContaining([
+          {
+            account_id: soleRental,
+            user_id: "half",
+            old_ownership: "sole",
+            old_share_percent: null,
+          },
+          {
+            account_id: roundedRental,
+            user_id: "thirds",
+            old_ownership: "sole",
+            old_share_percent: null,
+          },
+        ]),
+      );
+      // A share set after the migration is the person's choice: a second run leaves it.
+      await ds.query("UPDATE accounts SET ownership = 'sole', share_percent = NULL WHERE id = $1", [
+        soleRental,
+      ]);
+      await runUpInTransaction(new RentalShareOntoPropertyAccounts1795540100000());
+      expect(await share(soleRental)).toEqual({ ownership: "sole", share_percent: null });
+      expect(await beforeImage()).toHaveLength(2);
+    });
+
+    it("puts each changed account's ownership back on revert and drops the before-image", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await profile("half", 50);
+      const soleRental = await property("half", "rental", "sole", null);
+      await ds.runMigrations();
+      expect(await share(soleRental)).toEqual({ ownership: "joint", share_percent: 50 });
+      await undoThrough(NAME);
+      expect(await share(soleRental)).toEqual({ ownership: "sole", share_percent: null });
+      const tables: unknown[] = await ds.query(
+        `SELECT 1 FROM information_schema.tables WHERE table_name = '${RENTAL_SHARE_BACKFILL_TABLE}'`,
+      );
+      expect(tables).toEqual([]);
+    });
+
+    it("drops the before-image row with its account", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await profile("half", 50);
+      const soleRental = await property("half", "rental", "sole", null);
+      await ds.runMigrations();
+      expect(await beforeImage()).toHaveLength(1);
+      await ds.query("DELETE FROM accounts WHERE id = $1", [soleRental]);
+      expect(await beforeImage()).toEqual([]);
     });
   });
 
