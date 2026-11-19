@@ -87,6 +87,7 @@ export * from "./primitives/Toast";
 export * from "./primitives/Tooltip";
 // Explicit names shadow Panda's generated visually-hidden JSX pattern (star-export ambiguity).
 export { VisuallyHidden, type VisuallyHiddenProps } from "./primitives/VisuallyHidden";
+export * from "./primitives/WholeNumberInput";
 // Page building blocks (E16 P12, P13). The templates themselves stay Storybook-only.
 export {
   PageBody,

@@ -11,7 +11,7 @@ import {
   PercentInput,
   Select,
   Tabs,
-  TextInput,
+  WholeNumberInput,
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, useMemo, useState } from "react";
@@ -51,12 +51,9 @@ const TOOLS: { value: ToolId; label: string }[] = [
 ];
 
 /** Whole months typed as text. Empty or not a whole number means the figure is not set. */
-const parseWholeMonths = (text: string): number | null => {
-  const trimmed = text.trim();
-  if (!/^\d+$/.test(trimmed)) return null;
-  const value = Number(trimmed);
-  return value >= 1 ? value : null;
-};
+/** A count of months the tools can use: a whole number of at least 1, otherwise not set. */
+const wholeMonths = (value: number | null): number | null =>
+  value !== null && Number.isInteger(value) && value >= 1 ? value : null;
 
 const NEEDS_FIGURES = "Enter all the figures to see the result.";
 
@@ -85,9 +82,9 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
 
   // 1. 0% balance transfer
   const [btBalance, setBtBalance] = useState<number | null>(3000);
-  const [btMonths, setBtMonths] = useState("10");
+  const [btMonths, setBtMonths] = useState<number | null>(10);
   const [btRevertApr, setBtRevertApr] = useState<number | null>(24.9);
-  const btMonthsValue = parseWholeMonths(btMonths);
+  const btMonthsValue = wholeMonths(btMonths);
 
   const cliffResult = useMemo(
     () =>
@@ -111,9 +108,9 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
 
   // 3. Car finance final payment
   const [balloonAmount, setBalloonAmount] = useState<number | null>(8500);
-  const [financeMonths, setFinanceMonths] = useState("24");
+  const [financeMonths, setFinanceMonths] = useState<number | null>(24);
   const [financeMonthly, setFinanceMonthly] = useState<number | null>(320);
-  const financeMonthsValue = parseWholeMonths(financeMonths);
+  const financeMonthsValue = wholeMonths(financeMonths);
 
   const balloonResult = useMemo(
     () =>
@@ -152,11 +149,11 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
         </FormField>
         <FormField label="Months left on the 0% deal">
           {(field) => (
-            <TextInput
+            <WholeNumberInput
               {...controlProps(field)}
-              inputMode="numeric"
+              min={1}
               value={btMonths}
-              onChange={(e) => setBtMonths(e.target.value)}
+              onValueChange={setBtMonths}
             />
           )}
         </FormField>
@@ -271,11 +268,11 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
         </FormField>
         <FormField label="Months left in the agreement">
           {(field) => (
-            <TextInput
+            <WholeNumberInput
               {...controlProps(field)}
-              inputMode="numeric"
+              min={1}
               value={financeMonths}
-              onChange={(e) => setFinanceMonths(e.target.value)}
+              onValueChange={setFinanceMonths}
             />
           )}
         </FormField>

@@ -68,27 +68,6 @@ export const fieldLabel = cva({
   },
 });
 
-export const inputControl = cva({
-  base: {
-    width: "full",
-    px: "3",
-    py: "2",
-    borderRadius: "md",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.input",
-    bg: "surface.canvas",
-    color: "text.primary",
-    fontSize: "sm",
-    fontVariantNumeric: "tabular-nums",
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "border.focusRing",
-      outlineOffset: "1px",
-    },
-  },
-});
-
 export const toggleRow = cva({
   base: {
     display: "flex",

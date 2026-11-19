@@ -139,6 +139,7 @@ describe("Architecture & Design System Laws", () => {
         "Menu",
         "Money",
         "PercentInput",
+        "WholeNumberInput",
         "Popover",
         "RadioCardGroup",
         "SavedFigure",

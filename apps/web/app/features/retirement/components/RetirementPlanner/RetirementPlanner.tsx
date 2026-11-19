@@ -27,6 +27,7 @@ import {
   Button,
   Checkbox,
   CollapsibleDrawer,
+  CurrencyInput,
   formatMoney,
   HeroFigure,
   KpiCard,
@@ -35,11 +36,13 @@ import {
   PageBody,
   PageHeader,
   PageSection,
+  PercentInput,
   ProjectionNotice,
   ResultBlock,
   ScenarioZone,
   SimulatorSplitLayout,
   SliderField,
+  WholeNumberInput,
 } from "@repo/ui";
 import { Calendar, ClipboardList } from "lucide-react";
 import { type FC, type ReactNode, useMemo, useState } from "react";
@@ -61,7 +64,6 @@ import {
   fieldGrid,
   fieldGroup,
   fieldLabel,
-  inputControl,
   mutedNote,
   plannerStack,
   promptLink,
@@ -173,6 +175,28 @@ function parseAmount(text: string): number | null {
 }
 
 const asText = (n: number | null | undefined) => (n === null || n === undefined ? "" : String(n));
+
+function parseRate(text: string): number | null {
+  const trimmed = text.trim();
+  return trimmed === "" ? null : Number(trimmed);
+}
+
+/**
+ * Binds a shared numeric input to a text state. A number writes its text; text that does not parse
+ * is kept as typed, so Save can say what is wrong; an empty field clears it.
+ */
+function bindNumber(setText: (text: string) => void) {
+  let invalidRaw: string | null = null;
+  return {
+    onInvalid: (raw: string) => {
+      invalidRaw = raw;
+    },
+    onValueChange: (value: number | null) => {
+      setText(value === null ? (invalidRaw ?? "") : String(value));
+      invalidRaw = null;
+    },
+  };
+}
 const rateText = (rate: number) => pctFormatter.format(rate * 100);
 
 interface Computed {
@@ -732,26 +756,20 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                 <label className={fieldLabel()} htmlFor="ret-age-input">
                   Retirement age
                 </label>
-                <input
+                <WholeNumberInput
                   id="ret-age-input"
-                  className={inputControl()}
-                  type="text"
-                  inputMode="numeric"
-                  value={retirementAgeInput}
-                  onChange={(e) => setRetirementAgeInput(e.target.value)}
+                  value={parseWhole(retirementAgeInput)}
+                  {...bindNumber(setRetirementAgeInput)}
                 />
               </div>
               <div className={fieldGroup()}>
                 <label className={fieldLabel()} htmlFor="plan-to-age-input">
                   Plan to age
                 </label>
-                <input
+                <WholeNumberInput
                   id="plan-to-age-input"
-                  className={inputControl()}
-                  type="text"
-                  inputMode="numeric"
-                  value={planToAgeInput}
-                  onChange={(e) => setPlanToAgeInput(e.target.value)}
+                  value={parseWhole(planToAgeInput)}
+                  {...bindNumber(setPlanToAgeInput)}
                 />
               </div>
             </div>
@@ -779,13 +797,11 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                 </Button>
               </div>
               {targetMode === "typed" ? (
-                <input
+                <CurrencyInput
                   aria-label="Yearly target in pounds"
-                  className={inputControl()}
-                  type="text"
-                  inputMode="decimal"
-                  value={typedTargetInput}
-                  onChange={(e) => setTypedTargetInput(e.target.value)}
+                  min={0}
+                  value={parseAmount(typedTargetInput)}
+                  {...bindNumber(setTypedTargetInput)}
                 />
               ) : (
                 <div className={budgetLinesList()}>
@@ -831,13 +847,10 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                 <label className={fieldLabel()} htmlFor="sp-age-input">
                   State Pension age
                 </label>
-                <input
+                <WholeNumberInput
                   id="sp-age-input"
-                  className={inputControl()}
-                  type="text"
-                  inputMode="numeric"
-                  value={statePensionAgeInput}
-                  onChange={(e) => setStatePensionAgeInput(e.target.value)}
+                  value={parseWhole(statePensionAgeInput)}
+                  {...bindNumber(setStatePensionAgeInput)}
                 />
                 <a
                   className={promptLink()}
@@ -852,26 +865,21 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                 <label className={fieldLabel()} htmlFor="sp-forecast-input">
                   State Pension forecast (pounds a year)
                 </label>
-                <input
+                <CurrencyInput
                   id="sp-forecast-input"
-                  className={inputControl()}
-                  type="text"
-                  inputMode="decimal"
-                  value={forecastInput}
-                  onChange={(e) => setForecastInput(e.target.value)}
+                  min={0}
+                  value={parseAmount(forecastInput)}
+                  {...bindNumber(setForecastInput)}
                 />
               </div>
               <div className={fieldGroup()}>
                 <label className={fieldLabel()} htmlFor="sp-years-input">
                   Or National Insurance qualifying years
                 </label>
-                <input
+                <WholeNumberInput
                   id="sp-years-input"
-                  className={inputControl()}
-                  type="text"
-                  inputMode="numeric"
-                  value={qualifyingYearsInput}
-                  onChange={(e) => setQualifyingYearsInput(e.target.value)}
+                  value={parseWhole(qualifyingYearsInput)}
+                  {...bindNumber(setQualifyingYearsInput)}
                 />
               </div>
             </div>
@@ -908,14 +916,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                     <label className={fieldLabel()} htmlFor={id}>
                       {label}
                     </label>
-                    <input
-                      id={id}
-                      className={inputControl()}
-                      type="text"
-                      inputMode="decimal"
-                      value={value}
-                      onChange={(e) => setValue(e.target.value)}
-                    />
+                    <PercentInput id={id} value={parseRate(value)} {...bindNumber(setValue)} />
                   </div>
                 ))}
               </div>
