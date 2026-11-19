@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import { quarantinePattern } from "./quarantine";
+import { clientAddressHeaders } from "./support/client-address";
 import { WEB_URL } from "./support/env";
 import { webServers } from "./support/servers";
 
@@ -34,12 +35,18 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
+  // Each project reports its own client address, so the backend's per-IP ceiling counts the
+  // new-user journey apart from the persona specs that ran just before it (client-address.ts).
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: NEW_USER_SPEC },
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], extraHTTPHeaders: clientAddressHeaders("chromium") },
+      testIgnore: NEW_USER_SPEC,
+    },
     // The suite has one user. This spec clears it, so it runs alone, after the persona specs.
     {
       name: "new-user",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], extraHTTPHeaders: clientAddressHeaders("new-user") },
       testMatch: NEW_USER_SPEC,
       dependencies: ["chromium"],
     },

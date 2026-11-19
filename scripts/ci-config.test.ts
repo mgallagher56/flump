@@ -2,7 +2,17 @@ import { describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-
+import { IP_RATE_LIMIT } from "../apps/backend/src/security/rate-limit.decorator";
+import { RateLimitStore } from "../apps/backend/src/security/rate-limit.store";
+import {
+  CLIENT_IP_HEADER,
+  CLIENT_IP_KEY_ENV,
+  CLIENT_IP_SIG_HEADER,
+  resolveClientIpHmacKey,
+  signClientIp,
+  verifiedClientIp,
+} from "../apps/backend/src/security/signed-client-ip";
+import smokeConfig from "../apps/e2e/playwright.config";
 import {
   MAX_QUARANTINED,
   QUARANTINE,
@@ -10,6 +20,7 @@ import {
   quarantineProblems,
   quarantineSummary,
 } from "../apps/e2e/quarantine";
+import { webServers } from "../apps/e2e/support/servers";
 
 const repoRoot = resolve(import.meta.dir, "..");
 
@@ -555,6 +566,43 @@ describe("image ownership and contents (SEC-E S9, BE-17 M17)", () => {
     const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
     expect(ci).toContain('--build-arg "SENTRY_AUTH_TOKEN=$TOKEN_CANARY"');
     expect(ci).toContain("Build token is not in the web image");
+  });
+});
+
+describe("E2E rate-limit buckets: each smoke project is its own client", () => {
+  // The new-user journey runs straight after the persona specs. With every request keyed on the
+  // web server's address they shared one 300-a-minute bucket, and its first budget entry was
+  // refused with 429 whenever the suite reached that request inside a minute (PR 782's CI runs).
+  type Project = { name?: string; use?: { extraHTTPHeaders?: Record<string, string> } };
+  type Server = { name?: string; env?: Record<string, string> };
+  const servers = webServers() as Server[];
+  const env = (name: string) => servers.find((s) => s.name === name)?.env ?? {};
+  const key = env("backend")[CLIENT_IP_KEY_ENV] ?? "";
+  const address = (name: string) => {
+    const project = (smokeConfig.projects as Project[]).find((p) => p.name === name);
+    return project?.use?.extraHTTPHeaders?.["x-forwarded-for"] ?? "";
+  };
+
+  test("the backend and web servers share one signing key the backend accepts", () => {
+    expect(resolveClientIpHmacKey({ [CLIENT_IP_KEY_ENV]: key }).key).toBe(key);
+    expect(env("web")[CLIENT_IP_KEY_ENV]).toBe(key);
+  });
+
+  test("the new-user journey has its own bucket, so a full one from the persona specs passes it by", () => {
+    const store = new RateLimitStore();
+    const now = Date.now();
+    const bucketOf = (project: string) => {
+      const ip = address(project);
+      const headers = {
+        [CLIENT_IP_HEADER]: ip,
+        [CLIENT_IP_SIG_HEADER]: signClientIp(key, ip, now),
+      };
+      return `ip:${verifiedClientIp(headers, key, now) ?? "web server"}`;
+    };
+    const limit = IP_RATE_LIMIT[0]?.limit ?? 0;
+    for (let i = 0; i < limit; i++) store.hit(bucketOf("chromium"), IP_RATE_LIMIT, now);
+    expect(store.hit(bucketOf("chromium"), IP_RATE_LIMIT, now).allowed).toBe(false);
+    expect(store.hit(bucketOf("new-user"), IP_RATE_LIMIT, now).allowed).toBe(true);
   });
 });
 
