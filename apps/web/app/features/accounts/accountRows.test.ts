@@ -138,3 +138,42 @@ describe("lastUpdatedLabel", () => {
     expect(lastUpdatedLabel([])).toBeNull();
   });
 });
+
+describe("the current month is the London month, not the device's (CH-8)", () => {
+  const deviceZone = process.env.TZ;
+  afterEach(() => {
+    process.env.TZ = deviceZone;
+  });
+
+  // 23:30 UTC on 30 June 2026 is 00:30 BST on 1 July in London, and 13:30 on 30 June in Hawaii.
+  const londonFirstOfJuly = new Date(Date.UTC(2026, 5, 30, 23, 30));
+
+  test("a device behind London still counts July's recorded month as the current month", () => {
+    process.env.TZ = "Pacific/Honolulu";
+    const summary = summariseAccountBalance(
+      { id: "a1", type: "Current" },
+      [
+        { account_id: "a1", month: 6, year: 2026, value: 1000 },
+        { account_id: "a1", month: 7, year: 2026, value: 1100 },
+      ],
+      londonFirstOfJuly,
+    );
+    // July is London's current month, so it is the latest figure (1100), compared with June
+    // (1000): (1100 - 1000) / 1000 = 10%.
+    expect(summary.balance).toBe(1100);
+    expect(summary.againstLabel).toBe("June 2026");
+  });
+
+  test("lastUpdatedLabel reads July as recorded, not future, on that device", async () => {
+    process.env.TZ = "Pacific/Honolulu";
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(londonFirstOfJuly);
+    // Load the module at this moment, so no month worked out when it loads can pass by chance.
+    vi.resetModules();
+    const fresh = await import("./accountRows");
+    expect(fresh.lastUpdatedLabel([{ month: 7, year: 2026, value: 1100 } as never])).toBe(
+      "July 2026",
+    );
+    vi.useRealTimers();
+  });
+});

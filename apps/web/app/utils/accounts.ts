@@ -1,7 +1,4 @@
-import {
-  currentMonth as defaultCurrentMonth,
-  currentYear as defaultCurrentYear,
-} from "~/utils/utils";
+import { londonMonthParts } from "~/utils/londonMonth";
 
 export const monthYearSort = (
   a: {
@@ -22,9 +19,15 @@ export const monthYearSort = (
 export const isFutureMonth = (
   month: number,
   year: number,
-  currentM: number = defaultCurrentMonth,
-  currentY: number = defaultCurrentYear,
+  currentM?: number,
+  currentY?: number,
 ): boolean => {
+  // Without a month given, "now" is the London month at the moment of the call (CH-8).
+  if (currentM === undefined || currentY === undefined) {
+    const london = londonMonthParts();
+    currentM ??= london.month;
+    currentY ??= london.year;
+  }
   if (year > currentY) return true;
   if (year === currentY && month > currentM) return true;
   return false;
