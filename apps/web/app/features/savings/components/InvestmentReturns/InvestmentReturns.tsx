@@ -6,7 +6,8 @@ import RecordedReturn, {
 import { returnsGrid, returnsHeading, returnsRoot } from "./InvestmentReturns.styles";
 
 export interface InvestmentReturnsAccount {
-  id: string;
+  /** Accounts without an id (not yet saved) are left out. */
+  id?: string;
   name?: string | null;
   type?: string | null;
   /** For an investment account, the user's own "Estimated annual return" (5 means 5%). */
@@ -40,11 +41,14 @@ const numberOrNull = (value: unknown): number | null => {
  * from its recorded monthly balances, per year and overall. Renders nothing without an investment
  * account.
  */
-const InvestmentReturns: FC<InvestmentReturnsProps> = ({ accounts, accountDetails }) => {
+export const InvestmentReturns: FC<InvestmentReturnsProps> = ({ accounts, accountDetails }) => {
   const investments = useMemo(
     () =>
       accounts
-        .filter((a) => a.type === "Investment")
+        .filter(
+          (a): a is InvestmentReturnsAccount & { id: string } =>
+            a.type === "Investment" && Boolean(a.id),
+        )
         .map((a) => ({
           id: a.id,
           name: a.name || "Investment account",
