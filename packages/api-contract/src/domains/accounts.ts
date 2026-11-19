@@ -38,6 +38,13 @@ export const ACCOUNT_SUBTYPES = [
   "general_investment",
   "residential_mortgage",
   "btl_mortgage",
+  /** Property kinds (system audit slice 4, L71): the home, or a property let out. */
+  "home",
+  "rental",
+  /** Loan kinds (system audit slice 4): labels only, no figure reads them. */
+  "car_finance",
+  "buy_now_pay_later",
+  "other_loan",
 ] as const;
 export const AccountSubtype = z.enum(ACCOUNT_SUBTYPES);
 
@@ -56,7 +63,14 @@ export const ACCOUNT_SUBTYPES_BY_TYPE: Readonly<
   ],
   Investment: ["stocks_and_shares_isa", "general_investment"],
   Mortgage: ["residential_mortgage", "btl_mortgage"],
+  Property: ["home", "rental"],
+  Loan: ["car_finance", "buy_now_pay_later", "other_loan"],
 };
+
+/** How a mortgage is repaid (system audit slice 4): stored on the Mortgage account. */
+export const MORTGAGE_REPAYMENT_TYPES = ["repayment", "interest-only"] as const;
+export const MortgageRepaymentType = z.enum(MORTGAGE_REPAYMENT_TYPES);
+export type MortgageRepaymentType = z.infer<typeof MortgageRepaymentType>;
 
 /** The account types that take a credit limit and a 0% interest end date. */
 export const CREDIT_FIELD_ACCOUNT_TYPES: readonly (typeof ACCOUNT_TYPES)[number][] = [
@@ -105,6 +119,13 @@ export const CreateAccountRequest = z.strictObject({
   /** Mortgages and loans: whole months, 1 to 600 (the service enforces the same range). */
   termMonths: TermMonths.nullish(),
   fixedRateEndDate: IsoDate.nullish(),
+  /**
+   * Mortgage accounts only: the Property account the mortgage is on, one of the caller's own
+   * (system audit slice 4). Null means not linked.
+   */
+  linkedAccountId: Uuid.nullish(),
+  /** Mortgage accounts only. */
+  repaymentType: MortgageRepaymentType.nullish(),
   connectionId: Uuid.nullish(),
   externalAccountId: z.string().max(255).nullish(),
 });
@@ -132,18 +153,32 @@ export const UpdateAccountRequest = z.strictObject({
   isCurrent: z.boolean().optional(),
   termMonths: TermMonths.nullish(),
   fixedRateEndDate: IsoDate.nullish(),
+  linkedAccountId: Uuid.nullish(),
+  repaymentType: MortgageRepaymentType.nullish(),
   externalAccountId: z.string().max(255).nullish(),
 });
 
 /**
- * PATCH /accounts/balances (monthly check-in). One transaction sets every balance and upserts the
- * current UK month's history row for each. An unknown or foreign id fails the whole batch (404).
+ * POST /accounts/mortgage-with-property: a mortgage and the property it is on, created and linked
+ * in one transaction (system audit slice 4; replaces the browser's two calls from PR 779). The
+ * property takes the mortgage's ownership and share unless it is given its own (decision 14
+ * option B: a suggestion when the pair is first set up; either can differ afterwards). Its kind
+ * follows the mortgage's: a buy-to-let mortgage's property is a rental, any other is the home.
  */
-export const UpdateBalancesRequest = z.strictObject({
-  balances: z
-    .array(z.strictObject({ id: Uuid, balance: Money }))
-    .min(1)
-    .max(100),
+export const CreateMortgageWithPropertyRequest = z.strictObject({
+  mortgage: CreateAccountRequest.omit({
+    type: true,
+    linkedAccountId: true,
+    connectionId: true,
+    externalAccountId: true,
+  }),
+  property: z.strictObject({
+    name: Name.optional(),
+    /** The whole property's value, above 0. */
+    balance: MoneyNonNegative.refine((v) => v > 0, "balance must be above 0"),
+    ownership: AccountOwnership.optional(),
+    sharePercent: SharePercent.nullish(),
+  }),
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -213,6 +248,10 @@ const accountShape = {
   studentLoanPlan: StudentLoanPlan.nullable(),
   ownership: AccountOwnership.default("sole"),
   sharePercent: SharePercent.nullable().default(null),
+  /** Mortgage accounts: the linked Property account. Optional so an older response still parses. */
+  linkedAccountId: Uuid.nullish(),
+  /** Mortgage accounts: how it is repaid, or null when not set. */
+  repaymentType: MortgageRepaymentType.nullish(),
   connectionId: Uuid.nullable(),
   createdAt: IsoDateTime,
   /** The resource version: `If-Match: "<updatedAt>"` makes an update conditional (BE-09). */
@@ -250,9 +289,12 @@ export type CreateAccountResponse = z.infer<typeof CreateAccountResponse>;
 export const UpdateAccountResponse = AccountDto;
 export type UpdateAccountResponse = z.infer<typeof UpdateAccountResponse>;
 
-/** PATCH /accounts/balances: the updated accounts, in request order. */
-export const UpdateBalancesResponse = z.array(AccountDto);
-export type UpdateBalancesResponse = z.infer<typeof UpdateBalancesResponse>;
+/** POST /accounts/mortgage-with-property */
+export const CreateMortgageWithPropertyResponse = z.strictObject({
+  mortgage: AccountDto,
+  property: AccountDto,
+});
+export type CreateMortgageWithPropertyResponse = z.infer<typeof CreateMortgageWithPropertyResponse>;
 
 /** DELETE /accounts/:id */
 export const DeleteAccountResponse = z.strictObject({ success: z.literal(true) });
@@ -315,4 +357,4 @@ export type PortfolioHistoryPointDto = z.infer<typeof PortfolioHistoryPointDto>;
 // Parsed request types (z.output: what a handler receives in enforce mode).
 export type CreateAccountRequest = z.infer<typeof CreateAccountRequest>;
 export type UpdateAccountRequest = z.infer<typeof UpdateAccountRequest>;
-export type UpdateBalancesRequest = z.infer<typeof UpdateBalancesRequest>;
+export type CreateMortgageWithPropertyRequest = z.infer<typeof CreateMortgageWithPropertyRequest>;

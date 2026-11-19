@@ -42,6 +42,56 @@ describe("accountFieldsFromForm", () => {
     });
   });
 
+  it("reads the rate, monthly amount and mortgage fields", () => {
+    expect(
+      accountFieldsFromForm(
+        form({
+          interestRate: "4.555",
+          monthlyContribution: "950",
+          termMonths: "300",
+          fixedRateEndDate: "2028-05-31",
+          repaymentType: "interest-only",
+          linkedAccountId: "11111111-2222-4333-8444-555555555555",
+        }),
+      ),
+    ).toEqual({
+      // 4.555 rounds to 2 decimal places: 4.56 (the money rule the rate field shares).
+      interestRate: 4.56,
+      monthlyContribution: 950,
+      termMonths: 300,
+      fixedRateEndDate: "2028-05-31",
+      repaymentType: "interest-only",
+      linkedAccountId: "11111111-2222-4333-8444-555555555555",
+    });
+  });
+
+  it("clears an emptied rate, monthly amount, term, fixed-rate end, repayment type and link with null", () => {
+    expect(
+      accountFieldsFromForm(
+        form({
+          interestRate: "",
+          monthlyContribution: "",
+          termMonths: "",
+          fixedRateEndDate: "",
+          repaymentType: "",
+          linkedAccountId: "",
+        }),
+      ),
+    ).toEqual({
+      interestRate: null,
+      monthlyContribution: null,
+      termMonths: null,
+      fixedRateEndDate: null,
+      repaymentType: null,
+      linkedAccountId: null,
+    });
+  });
+
+  it("leaves out a term outside 1 to 600 months and an unknown repayment type", () => {
+    expect(accountFieldsFromForm(form({ termMonths: "601", repaymentType: "part" }))).toEqual({});
+    expect(accountFieldsFromForm(form({ termMonths: "0" }))).toEqual({});
+  });
+
   it("sends a null share for a sole account", () => {
     expect(accountFieldsFromForm(form({ ownership: "sole", sharePercent: "40" }))).toEqual({
       ownership: "sole",

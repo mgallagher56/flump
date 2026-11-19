@@ -248,6 +248,9 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "externalAccountId",
         "createdAt",
         "updatedAt",
+        // System audit slice 4, after the existing columns as above.
+        "linkedAccountId",
+        "repaymentType",
       ],
       excluded: { userId: USER_ID_IN_ENVELOPE },
       orderBy: ["id"],
@@ -271,6 +274,8 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         studentLoanPlan: "student-loan-plan",
         ownership: "ownership-share",
         sharePercent: "ownership-share",
+        linkedAccountId: "mortgage-property-link",
+        repaymentType: "repayment-type",
       },
       notFacts: {
         id: ROW_ID,
@@ -844,6 +849,11 @@ export const NON_USER_ENTITIES: Readonly<Record<string, string>> = {
  * foreign key into the registry.
  */
 export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reason: string }>> = {
+  account_home_backfill: {
+    parent: "accounts",
+    reason:
+      "system audit slice 4 migration before-image (the kinds, links and repayment types it filled, and the accounts and history rows it added) kept so each down() can undo it; rows go with the account by ON DELETE CASCADE; not exported, as the accounts and their history are in the export",
+  },
   liability_sign_backfill: {
     parent: "accounts",
     reason:

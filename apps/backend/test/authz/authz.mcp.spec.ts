@@ -637,6 +637,9 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
 
     it("getDataCoverage reports gaps and sources per owned account", async () => {
       const a1 = await createAccount(h.tokens.a, { name: "a1", type: "Saving", balance: 1 });
+      // Without the first month the create records (system audit slice 4): the rows below are
+      // the whole history this test reads.
+      await h.dataSource.query(`DELETE FROM "account_details" WHERE "account_id" = $1`, [a1]);
       await insertDetails(a1, USER_A, [
         [2024, 11, 100, "onboarding"],
         [2024, 12, 110, "manual"],

@@ -16,16 +16,18 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Tax region](#tax-region)                                                                                     | fact   | pay         | Broken                                    |
 | [Student loan plan](#student-loan-plan)                                                                       | fact   | pay         | Duplicated (two stores that can disagree) |
 | [Second income and rental income on the profile](#second-and-rental-income)                                   | fact   | pay         | Broken                                    |
-| [Account balance today](#account-balance)                                                                     | fact   | accounts    | Duplicated (two stores that can disagree) |
+| [Account balance today](#account-balance)                                                                     | fact   | accounts    | Holds                                     |
 | [Balance for each past month](#balance-history)                                                               | fact   | accounts    | Broken                                    |
-| [Whether a month's check-in was finished](#check-in-done)                                                     | fact   | accounts    | Broken                                    |
+| [Whether a month's check-in was finished](#check-in-done)                                                     | fact   | accounts    | Holds                                     |
 | [Joint ownership and the user's share of an account](#ownership-share)                                        | fact   | accounts    | Broken                                    |
 | [Interest rate on an account](#account-rate)                                                                  | fact   | accounts    | Holds with a manual step or a delay       |
 | [Monthly amount on an account (saving, pot payment, debt payment, mortgage payment)](#account-monthly-amount) | fact   | accounts    | Duplicated (two stores that can disagree) |
 | [Credit limit and 0% end date](#card-limit-and-zero-percent-end)                                              | fact   | accounts    | Broken                                    |
 | [Mortgage term left and fix end date](#mortgage-term-and-fix-end)                                             | fact   | home        | Holds with a manual step or a delay       |
-| [Value of a property](#home-value)                                                                            | fact   | home        | Duplicated (two stores that can disagree) |
-| [Whether a property is the home or a rental](#property-kind)                                                  | fact   | home        | Broken                                    |
+| [Value of a property](#home-value)                                                                            | fact   | home        | Holds                                     |
+| [Whether a property is the home or a rental](#property-kind)                                                  | fact   | home        | Holds                                     |
+| [Which property a mortgage is on](#mortgage-property-link)                                                    | fact   | home        | Holds                                     |
+| [How a mortgage is repaid](#repayment-type)                                                                   | fact   | home        | Holds                                     |
 | [Buy-to-let mortgage balance, rate and type](#buy-to-let-mortgage)                                            | fact   | home        | Broken                                    |
 | [Rent received on a rental property](#buy-to-let-rent)                                                        | fact   | home        | Duplicated (two stores that can disagree) |
 | [Housing status, has a mortgage, and mortgage type](#housing-status)                                          | fact   | home        | Broken                                    |
@@ -321,12 +323,12 @@ Shown on:
 <a id="account-balance"></a>
 
 - Id: `account-balance` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: CH-2, DB-13. Links: L01, L02, L03, L04, L06, L51, L67, L68.
+- Verdict: Holds. Findings: CH-2, DB-13. Links: L01, L02, L03, L04, L06, L51, L67, L68.
 - Source of truth: `accounts.balance` in `apps/backend/src/entities/account.entity.ts` (debts are stored negative)
 
 Other stores:
 
-- `account_details row for the current month` [derived] in `apps/backend/src/modules/snapshots/snapshot-write.ts` (kept equal by every current-month write; a past-month write does not move the balance)
+- `the newest account_details row` [derived] in `apps/backend/src/modules/snapshots/balance-rule.ts` (decision 8 A: syncBalancesToNewestRecord keeps the balance equal to the newest recorded month after every snapshot write, import and revert; creating an account writes its first row)
 
 Entered or changed by:
 
@@ -360,8 +362,9 @@ Read by:
 <a id="balance-history"></a>
 
 - Id: `balance-history` (stored fact)
-- Verdict: Broken. Findings: CH-1, CH-2, CH-5. Links: L04, L05, L68, L70.
+- Verdict: Broken. Findings: CH-5. Links: L04, L05, L68, L70.
 - Source of truth: `account_details (account, year, month)` in `apps/backend/src/entities/account-detail.entity.ts`
+- Note: CH-1 and CH-2 were fixed by audit slice 4; CH-5 (the history elsewhere) is slice 3.
 
 Other stores:
 
@@ -370,7 +373,7 @@ Other stores:
 Entered or changed by:
 
 - Monthly check-in: `apps/backend/src/modules/snapshots/snapshots.service.ts`
-- Backend account service: `apps/backend/src/modules/finance/account-intake.service.ts` (on a balance edit, not on create)
+- Backend account service: `apps/backend/src/modules/finance/account-intake.service.ts` (on create (the first row) and on a balance edit)
 - Onboarding: `apps/backend/src/modules/snapshots/first-snapshot.ts`
 - Staged import: `apps/backend/src/modules/imports/imports.service.ts`
 
@@ -388,20 +391,22 @@ Read by:
 <a id="check-in-done"></a>
 
 - Id: `check-in-done` (stored fact)
-- Verdict: Broken. Findings: CH-7, DB-10. Links: L70.
+- Verdict: Holds. Findings: CH-3, CH-7, DB-10. Links: L70.
 - Source of truth: `snapshot_checkins` in `apps/backend/src/entities/snapshot-checkin.entity.ts`
 
 Other stores:
 
-- `any account_details row in the month` [duplicate] in `packages/finance-engine/src/check-in-day.ts` (this is what the reminder actually reads)
+- none
 
 Entered or changed by:
 
 - Monthly check-in: `apps/backend/src/modules/snapshots/snapshots.service.ts`
+- Onboarding: `apps/backend/src/modules/snapshots/first-snapshot.ts` (finishing onboarding records its month as checked in)
 
 Read by:
 
-- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts` (the only reader of the table)
+- Dashboard: `apps/backend/src/modules/snapshots/snapshots.controller.ts` (GET /snapshots/check-ins, read by the reminder on the Dashboard and History)
+- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
 
 ### Joint ownership and the user's share of an account
 
@@ -419,7 +424,7 @@ Other stores:
 Entered or changed by:
 
 - Accounts: `apps/web/app/features/accounts/accountFormBody.ts`
-- Backend account service: `apps/backend/src/modules/finance/account-intake.service.ts` (copies a mortgage's share to its property, one way)
+- Backend account service: `apps/backend/src/modules/finance/account-intake.service.ts` (copies a new mortgage's share to its new property once, when POST /accounts/mortgage-with-property creates the pair (decision 14 B); later edits never move the other account)
 
 Read by:
 
@@ -789,16 +794,16 @@ Read by:
 <a id="home-value"></a>
 
 - Id: `home-value` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: HM-3, HM-4, DB-1. Links: L10, L11, L20, L71.
+- Verdict: Holds. Findings: HM-3, HM-4, DB-1. Links: L10, L11, L20, L71.
 - Source of truth: `accounts row of type Property, balance` in `apps/backend/src/entities/account.entity.ts`
 
 Other stores:
 
-- `user_profiles.buy_to_let_property_value` [duplicate] in `apps/backend/src/entities/user-profile.entity.ts` (what the Mortgage page's buy-to-let tab reads and writes; net worth never reads it)
+- `user_profiles.buy_to_let_property_value` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (copied into a rental Property account by MoveBuyToLetProfileIntoAccounts1795470200000; nothing reads it; dropped in slice 9)
 
 Entered or changed by:
 
-- Accounts: `apps/web/app/routes/app.accounts._index.tsx` (the browser adds the Property after the mortgage is saved)
+- Accounts: `apps/backend/src/modules/finance/account-intake.service.ts` (POST /accounts/mortgage-with-property creates the mortgage and its property in one transaction)
 - Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx`
 - Onboarding: `apps/web/app/services/onboarding-seed.ts`
 - Monthly check-in: `apps/web/app/features/snapshot/useSaveSnapshot.ts`
@@ -806,7 +811,7 @@ Entered or changed by:
 Read by:
 
 - Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/loan-to-value.ts`
-- Mortgage: `packages/finance-engine/src/home-equity.ts` (pickHomeProperty leaves the home out when there is more than one property that is not buy to let)
+- Mortgage: `packages/finance-engine/src/home-equity.ts` (pickHomeProperty takes the property saved as the home; it leaves the home out only when no kind is saved and more than one property could be it)
 - Dashboard: `apps/web/app/routes/_index.tsx`
 - Accounts: `apps/web/app/features/accounts/accountRows.ts`
 
@@ -815,8 +820,8 @@ Read by:
 <a id="property-kind"></a>
 
 - Id: `property-kind` (stored fact)
-- Verdict: Broken. Findings: HM-3, DB-6. Links: L71, L18.
-- Source of truth: `not stored: inferred from the account name` in `packages/finance-engine/src/picture/selectors/loan-to-value.ts` (accounts.account_subtype exists and holds a kind for mortgages, savings and investments; no kind is defined for properties)
+- Verdict: Holds. Findings: HM-3, DB-6. Links: L71, L18.
+- Source of truth: `accounts.account_subtype on Property rows` in `apps/backend/src/entities/account.entity.ts` (home or rental; the name test is only the back-fill rule (BackfillPropertyKindAndMortgageLink1795470100000) and the fallback for a row with no kind saved)
 
 Other stores:
 
@@ -824,7 +829,8 @@ Other stores:
 
 Entered or changed by:
 
-- none
+- Accounts: `apps/web/app/features/accounts/accountFormBody.ts`
+- Backend account service: `apps/backend/src/modules/finance/account-intake.service.ts` (a property created with its mortgage takes the mortgage's kind)
 
 Read by:
 
@@ -832,28 +838,73 @@ Read by:
 - Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx`
 - Backend account service: `apps/backend/src/modules/finance/account-intake.service.ts`
 
+### Which property a mortgage is on
+
+<a id="mortgage-property-link"></a>
+
+- Id: `mortgage-property-link` (stored fact)
+- Verdict: Holds. Findings: none. Links: L10, L18.
+- Source of truth: `accounts.linked_account_id` in `apps/backend/src/entities/account.entity.ts` (on the mortgage; a foreign key to the Property account, ON DELETE SET NULL)
+
+Other stores:
+
+- none
+
+Entered or changed by:
+
+- Accounts: `apps/web/app/features/accounts/accountFormBody.ts`
+- Backend account service: `apps/backend/src/modules/finance/account-intake.service.ts` (POST /accounts/mortgage-with-property links the pair it creates)
+- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx`
+
+Read by:
+
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/loan-to-value.ts`
+- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx`
+
+### How a mortgage is repaid
+
+<a id="repayment-type"></a>
+
+- Id: `repayment-type` (stored fact)
+- Verdict: Holds. Findings: none. Links: L17.
+- Source of truth: `accounts.repayment_type` in `apps/backend/src/entities/account.entity.ts` (repayment or interest-only, on each mortgage; null when not set)
+
+Other stores:
+
+- `user_profiles.mortgage_type` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (copied to the residential mortgage by BackfillPropertyKindAndMortgageLink1795470100000; shown only when the account has none; dropped in slice 9)
+
+Entered or changed by:
+
+- Accounts: `apps/web/app/features/accounts/accountFormBody.ts`
+- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx`
+
+Read by:
+
+- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx`
+
 ### Buy-to-let mortgage balance, rate and type
 
 <a id="buy-to-let-mortgage"></a>
 
 - Id: `buy-to-let-mortgage` (stored fact)
-- Verdict: Broken. Findings: HM-4, SA-4, DB-1. Links: L19, L21.
+- Verdict: Broken. Findings: SA-4. Links: L19, L21.
 - Source of truth: `accounts row of type Mortgage with subtype btl_mortgage` in `apps/backend/src/entities/account.entity.ts`
+- Note: HM-4 and DB-1 were fixed by audit slice 4; SA-4 (Self Assessment shows the name only) is slice 7.
 
 Other stores:
 
-- `user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type, has_buy_to_let, buy_to_let_count` [duplicate] in `apps/backend/src/entities/user-profile.entity.ts` (the Mortgage page's buy-to-let tab reads and writes these)
+- `user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type, has_buy_to_let, buy_to_let_count` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (copied into a buy-to-let Mortgage account by MoveBuyToLetProfileIntoAccounts1795470200000; nothing reads them; dropped in slice 9)
 
 Entered or changed by:
 
 - Accounts: `apps/web/app/routes/app.accounts._index.tsx`
-- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx` (writes the profile copy, not the account)
+- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx` (the buy-to-let tab writes the account)
 
 Read by:
 
 - Engine picture (headline figures): `packages/finance-engine/src/portfolio.ts`
 - Dashboard: `apps/web/app/routes/_index.tsx`
-- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx` (reads the profile copy)
+- Mortgage: `apps/web/app/containers/mortgage/MortgageContainer.tsx` (the buy-to-let tab reads the account)
 - Self Assessment: `apps/web/app/features/tax/components/TaxSourcesPanel/TaxSourcesPanel.tsx` (shows the account's name only)
 
 ### Rent received on a rental property

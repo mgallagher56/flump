@@ -6,7 +6,7 @@ const meta: Meta<typeof MonthlyCheckInCard> = {
   title: "3. Patterns/Snapshot/MonthlyCheckInCard",
   component: MonthlyCheckInCard,
   parameters: { layout: "padded" },
-  args: { currentMonth: "2026-11", lastRecordedMonth: "2026-10" },
+  args: { currentMonth: "2026-11", lastCheckInMonth: "2026-10" },
 };
 
 export default meta;
@@ -15,12 +15,12 @@ type Story = StoryObj<typeof MonthlyCheckInCard>;
 export const LastMonthRecorded: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getAllByText(/Last recorded month: October 2026/)[0]).toBeDefined();
+    await expect(canvas.getAllByText(/Last check-in: October 2026/)[0]).toBeDefined();
   },
 };
 
 export const NothingRecorded: Story = {
-  args: { lastRecordedMonth: null },
+  args: { lastCheckInMonth: null },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText(/Record your balances once a month/)[0]).toBeDefined();

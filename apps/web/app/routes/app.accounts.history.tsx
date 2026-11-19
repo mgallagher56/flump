@@ -21,7 +21,11 @@ export const meta: MetaFunction = () => [{ title: "Net worth history | Flump" }]
 export const loader = async (args: LoaderFunctionArgs) => {
   // Recorded balances only (E16 PR 5): breathing room moved to Budget and the single-month
   // projection went with the chart rule (P10.6), so the budget is no longer loaded here.
-  const { accounts, accountDetails, userProfile } = await loadWorkspaceSnapshot(args);
+  // The latest completed check-in decides whether this month's check-in is done (CH-3).
+  const { accounts, accountDetails, userProfile, latestCheckInMonth } = await loadWorkspaceSnapshot(
+    args,
+    { includeCheckIns: true },
+  );
   // Every month is computed under the user's net worth choices, as on every other page.
   const basis = netWorthBasisFromProfile(userProfile);
   // The saved check-in day sets the "Next check-in" date (UX Batch E). A day, not a figure.
@@ -31,13 +35,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
     accountDetails,
     basis,
     checkInDay,
+    // Null: never checked in. Missing (the call failed): unknown, so the prompt shows.
+    lastCheckInMonth: latestCheckInMonth ?? null,
     currentMonth: londonMonth(),
     today: londonDate(),
   });
 };
 
 const AccountsHistory = (): ReactElement => {
-  const { accounts, accountDetails, basis, checkInDay, currentMonth, today } =
+  const { accounts, accountDetails, basis, checkInDay, currentMonth, lastCheckInMonth, today } =
     useLoaderData<typeof loader>();
   const [params] = useSearchParams();
   const onSave = useSaveSnapshot(accountDetails);
@@ -49,6 +55,7 @@ const AccountsHistory = (): ReactElement => {
       checkInDay={checkInDay}
       currentMonth={currentMonth}
       initialSheet={params.get("checkIn") === "1" ? "checkIn" : null}
+      lastCheckInMonth={lastCheckInMonth}
       onSave={onSave}
       today={today}
     />

@@ -24,6 +24,7 @@ import {
   type StagedBalance,
 } from "../../entities/import-batch.entity";
 import { newAccountFields } from "../finance/account-intake.service";
+import { syncBalancesToNewestRecord } from "../snapshots/balance-rule";
 import { londonYearMonth } from "../snapshots/london-date";
 import { checkSnapshotMonth, isValidSnapshotValue } from "../snapshots/snapshot-rules";
 import { type SnapshotRowWrite, writeSnapshotRows } from "../snapshots/snapshot-write";
@@ -606,6 +607,15 @@ export class ImportsService {
           ],
         );
       }
+      // Today's balance follows the newest month still recorded (decision 8 option A), so
+      // undoing a past month that was the newest moves it back too.
+      await syncBalancesToNewestRecord(
+        m,
+        userId,
+        data.rows
+          .filter((r) => undone.has(cellKey(r.accountId, r.year, r.month)))
+          .map((r) => r.accountId),
+      );
       if (data.createdAccountIds.length > 0) {
         // Wrapped in a CTE so the removed ids come back as plain rows.
         const deleted: Array<{ id: string }> = await m.query(

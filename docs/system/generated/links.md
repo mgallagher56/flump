@@ -20,20 +20,20 @@ Each line is a statement a user would expect to be true, with the verdict from t
 | L02 | A balance edited on Accounts or on the account's own page is the balance in net worth, on the own page, in this month of History and in the AI snapshot. | Holds   | code       | none     |
 | L03 | A balance recorded in the monthly check-in is the balance on Accounts, Savings or Debt, net worth, History and the AI snapshot.                          | Holds   | code       | none     |
 | L04 | A past month edited in History changes History and net worth over time, and leaves today's balance alone.                                                | Holds   | code       | none     |
-| L05 | A new account has a History point for the month it was added, with no check-in needed.                                                                   | Broken  | browser    | CH-1     |
+| L05 | A new account has a History point for the month it was added, with no check-in needed.                                                                   | Holds   | browser    | CH-1     |
 | L06 | Deleting an account removes it from every figure, from History, and from anything that refers to it.                                                     | Holds   | code       | none     |
 | L07 | An account or balance brought in by a staged import behaves exactly like one typed into a form.                                                          | Holds   | code       | none     |
 | L67 | Editing one field of an account on any page leaves its other saved values unchanged.                                                                     | Holds   | browser    | none     |
-| L68 | Correcting the latest recorded month, when no newer figure exists, also corrects today's balance.                                                        | Broken  | browser    | CH-2     |
-| L70 | The check-in reminder shows until this month's check-in is finished, and an unrelated edit does not hide it.                                             | Holds   | browser    | none     |
+| L68 | Correcting the latest recorded month, when no newer figure exists, also corrects today's balance.                                                        | Holds   | browser    | CH-2     |
+| L70 | The check-in reminder shows until this month's check-in is finished, and an unrelated edit does not hide it.                                             | Holds   | browser    | CH-3     |
 
 ## B. Home and mortgage
 
 | Id  | Statement                                                                                                                                                                               | Verdict                                   | Checked in | Findings   |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ---------- |
-| L08 | A mortgage added in Accounts appears on the Mortgage page with the same balance, rate, term, payment and fix end date.                                                                  | Holds with a manual step or a delay       | code       | SD-8       |
+| L08 | A mortgage added in Accounts appears on the Mortgage page with the same balance, rate, term, payment and fix end date.                                                                  | Holds                                     | browser    | SD-8       |
 | L09 | Mortgage details edited on the Mortgage page are the details on Accounts and in debt totals and net worth.                                                                              | Holds                                     | browser    | none       |
-| L10 | A home value entered with the mortgage in Accounts is the home value on the Mortgage page, in equity, loan to value, net worth and the Dashboard.                                       | Holds with a manual step or a delay       | code       | none       |
+| L10 | A home value entered with the mortgage in Accounts is the home value on the Mortgage page, in equity, loan to value, net worth and the Dashboard.                                       | Holds                                     | browser    | none       |
 | L11 | A home value edited on the Mortgage page is the Property account on Accounts.                                                                                                           | Holds                                     | code       | none       |
 | L12 | Equity is the same figure wherever it is shown.                                                                                                                                         | Holds                                     | code       | none       |
 | L13 | The mortgage payment saved on the mortgage account is the housing cost in housing details, the budget's housing row, the commitments in safe to spend, and the retirement housing cost. | Broken                                    | browser    | HM-1, BU-5 |
@@ -41,15 +41,15 @@ Each line is a statement a user would expect to be true, with the verdict from t
 | L15 | A fix end date saved on the mortgage shows wherever fix end is shown.                                                                                                                   | Holds                                     | code       | none       |
 | L16 | Housing status and the has-a-mortgage flag on the profile agree with whether a mortgage account exists.                                                                                 | Broken                                    | code       | HM-6       |
 | L17 | Mortgage type (repayment or interest only) has one store and one place to change it.                                                                                                    | Holds                                     | code       | none       |
-| L18 | A property follows its mortgage's ownership share at all times, in both directions.                                                                                                     | Broken                                    | code       | HM-7, JO-6 |
-| L71 | Whether a property is the home or a rental is a saved choice, not a guess from its name.                                                                                                | Broken                                    | browser    | HM-3, DB-6 |
+| L18 | A property and its mortgage are linked. The mortgage's share is copied to the property when the pair is first set up, and either may then hold its own share (decision 14 option B).    | Holds                                     | browser    | HM-7, JO-6 |
+| L71 | Whether a property is the home or a rental is a saved choice, not a guess from its name.                                                                                                | Holds                                     | browser    | HM-3, DB-6 |
 
 ## C. Buy to let
 
 | Id  | Statement                                                                                                                        | Verdict                                   | Checked in | Findings         |
 | --- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ---------------- |
-| L19 | A buy-to-let mortgage added in Accounts appears on the Mortgage page with the same balance, rate and type.                       | Broken                                    | browser    | HM-4, DB-1       |
-| L20 | A buy-to-let property value has one store; entered once, it shows on the Mortgage page, in net worth and equity.                 | Duplicated (two stores that can disagree) | code       | HM-4             |
+| L19 | A buy-to-let mortgage added in Accounts appears on the Mortgage page with the same balance, rate and type.                       | Holds                                     | browser    | HM-4, DB-1       |
+| L20 | A buy-to-let property value has one store; entered once, it shows on the Mortgage page, in net worth and equity.                 | Holds                                     | browser    | HM-4             |
 | L21 | A buy-to-let mortgage added in Accounts appears as a Self Assessment source and its interest feeds the finance-cost calculation. | Broken                                    | browser    | SA-4             |
 | L22 | Rent received on a buy-to-let is entered once and is the same in Self Assessment, the Mortgage page yield and budget income.     | Duplicated (two stores that can disagree) | code       | HM-5, SA-4       |
 | L23 | The share of a rental property the user owns is one value, used by accounts, net worth and Self Assessment.                      | Duplicated (two stores that can disagree) | code       | SA-5, JO-7, DB-8 |

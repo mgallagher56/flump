@@ -389,14 +389,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         expect(await wrongSignRows()).toBe(0);
       });
 
-      it("PATCH /accounts/:id balance edit and the check-in batch, with their history rows", async () => {
+      it("PATCH /accounts/:id balance edit, with its history row", async () => {
         const svc = intake();
         for (const type of ALL_TYPES) {
           const id = await insertAccount(type, 0);
           for (const value of VALUES) {
             await svc.updateAccount(USER, id, { balance: value } as never);
-            expect(await balanceOf(id), `${type} ${value}`).toBe(expected(type, value));
-            await svc.updateBalances(USER, { balances: [{ id, balance: value }] } as never);
             expect(await balanceOf(id), `${type} ${value}`).toBe(expected(type, value));
             expect((await historyOf(id)).at(-1)).toBe(expected(type, value));
           }

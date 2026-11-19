@@ -127,3 +127,51 @@ describe("isResidentialHomeAccount", () => {
     expect(isResidentialHomeAccount({ type: null, name: "Home" })).toBe(false);
   });
 });
+
+describe("home equity with a saved home and a saved rental (system audit slice 4)", () => {
+  const home = { type: "Property", name: "Home", accountSubtype: "home", value: 310_000 };
+  const rental = { type: "Property", name: "Flat 2", accountSubtype: "rental", value: 200_000 };
+
+  it("picks the saved home and leaves the rental out", () => {
+    expect(pickHomeProperty([rental, home])).toEqual({ status: "one", account: home });
+    // Before slice 4 "Flat 2" (no kind, name not buy to let) made this ambiguous.
+  });
+
+  it("a saved home wins over a property with no kind saved", () => {
+    const untyped = { type: "Property", name: "Cottage", accountSubtype: null };
+    expect(pickHomeProperty([untyped, home])).toEqual({ status: "one", account: home });
+  });
+
+  it("only a rental means no home", () => {
+    expect(pickHomeProperty([rental])).toEqual({ status: "none" });
+  });
+
+  it("works out equity on the home only: 310,000 - 186,000 = 124,000", () => {
+    // Home 310,000 at 40% joint, mortgage 186,000 at 40% joint. The rental's 200,000 is not added.
+    // Whole: 310,000 - 186,000 = 124,000.
+    // Yours: 310,000 x 40 / 100 - 186,000 x 40 / 100 = 124,000 - 74,400 = 49,600.
+    const picked = pickHomeProperty([rental, home]);
+    const homeValue = picked.status === "one" ? picked.account.value : null;
+    expect(
+      estimateHomeEquity({
+        homeValue,
+        homeSharePercent: 40,
+        mortgageBalance: 186_000,
+        mortgageSharePercent: 40,
+      }),
+    ).toEqual({ whole: 124_000, yours: 49_600 });
+  });
+
+  it("allows the home and the mortgage to hold different shares (decision 14 B)", () => {
+    // Home 310,000 at 50%, mortgage 186,000 at 40%.
+    // Yours: 310,000 x 50 / 100 - 186,000 x 40 / 100 = 155,000 - 74,400 = 80,600.
+    expect(
+      estimateHomeEquity({
+        homeValue: 310_000,
+        homeSharePercent: 50,
+        mortgageBalance: 186_000,
+        mortgageSharePercent: 40,
+      }),
+    ).toEqual({ whole: 124_000, yours: 80_600 });
+  });
+});

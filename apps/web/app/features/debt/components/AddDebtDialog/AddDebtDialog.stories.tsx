@@ -45,14 +45,35 @@ export const ValidationErrors: Story = {
   },
 };
 
-/** Edit mode: only name, APR and minimum payment are editable. */
+/** Edit mode: every field but the type, the balance included (SD-8). */
 export const EditMode: Story = {
   args: { debt },
   play: async () => {
     const body = within(document.body);
     await expect(await body.findByRole("dialog", { name: "Edit debt" })).toBeInTheDocument();
-    await expect(body.queryByLabelText(/^Balance you owe/)).toBeNull();
+    await expect(body.getByLabelText(/^Balance you owe/)).toHaveValue("3,000");
     await expect(body.getByLabelText(/^Interest rate/)).toHaveValue("22.9");
+  },
+};
+
+/** A joint debt edits its whole balance and says so beside the field (decision 9 A). */
+export const EditJoint: Story = {
+  args: {
+    debt: { ...debt, balance: 1200, wholeBalance: 3000, ownership: "joint", sharePercent: 40 },
+  },
+  play: async ({ args }) => {
+    const body = within(document.body);
+    await expect(await body.findByLabelText(/^Balance you owe/)).toHaveValue("3,000");
+    await expect(
+      body.getByText("This is the whole balance. Your share is 40% of it."),
+    ).toBeInTheDocument();
+    await userEvent.clear(body.getByLabelText("Your share"));
+    await userEvent.type(body.getByLabelText("Your share"), "50");
+    await userEvent.click(body.getByRole("button", { name: "Save changes" }));
+    await expect(args.onEditDebt).toHaveBeenCalledWith("d1", {
+      ownership: "joint",
+      sharePercent: 50,
+    });
   },
 };
 

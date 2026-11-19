@@ -75,7 +75,7 @@ const noDebt: HomeDashboardProps = {
     hasTax: true,
     completedSteps: ["accounts", "budget", "savings", "pension", "mortgage", "tax"],
   },
-  checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-10" },
+  checkIn: { currentMonth: "2026-11", lastCheckInMonth: "2026-10" },
   netWorthPrior: { month: "2026-10", netWorth: 49680 },
   accountsData: { netWorth: 50000, homeEstimate: 0, accountsCount: 5 },
   budgetData: {
@@ -114,7 +114,7 @@ const nearEmpty: HomeDashboardProps = {
     hasRunForecast: false,
     completedSteps: [],
   },
-  checkIn: { currentMonth: "2026-11", lastRecordedMonth: null },
+  checkIn: { currentMonth: "2026-11", lastCheckInMonth: null },
   accountsData: { netWorth: 0, accountsCount: 0 },
   budgetData: { budgetKnown: false, monthlyIncome: 0, monthlyExpenses: 0, monthlySurplus: null },
   savingsData: { totalSavingsBalance: 0, accountsCount: 0 },
@@ -358,8 +358,8 @@ describe("HomeDashboard", () => {
     mockMarkChecklistStep.mockClear();
     renderDashboard({
       ...noDebt,
-      // This month is recorded, so no check-in row competes with the finished row.
-      checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-11" },
+      // This month is checked in, so no check-in row competes with the finished row.
+      checkIn: { currentMonth: "2026-11", lastCheckInMonth: "2026-11" },
       checklistProps: {
         ...noDebt.checklistProps,
         completedSteps: ["budget", "accounts", "pension"],
@@ -377,7 +377,7 @@ describe("HomeDashboard", () => {
   it("shows one notice: the check-in row replaces Setup finished once setup is done (P27)", async () => {
     renderDashboard({
       ...noDebt,
-      checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-10" },
+      checkIn: { currentMonth: "2026-11", lastCheckInMonth: "2026-10" },
       checklistProps: {
         ...noDebt.checklistProps,
         completedSteps: ["budget", "accounts", "pension"],
@@ -389,13 +389,13 @@ describe("HomeDashboard", () => {
       screen.getByRole("button", { name: "Not for me, skip Add your savings rates" }),
     );
     await waitFor(() => expect(screen.queryByTestId("setup-checklist")).toBeNull());
-    expect(screen.getByText("November balances not recorded yet")).toBeTruthy();
+    expect(screen.getByText("Last check-in: October 2026")).toBeTruthy();
   });
 
   it("hides the check-in row once this month is recorded", () => {
     renderDashboard({
       ...noDebt,
-      checkIn: { currentMonth: "2026-11", lastRecordedMonth: "2026-11" },
+      checkIn: { currentMonth: "2026-11", lastCheckInMonth: "2026-11" },
     });
     expect(screen.queryByTestId("monthly-check-in-card")).toBeNull();
   });

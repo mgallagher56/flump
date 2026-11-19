@@ -245,6 +245,33 @@ describe("<AccountDetailContainer />", () => {
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
   });
 
+  test("Edit opens with the saved rate and monthly payment (one field set, SD-8)", async () => {
+    const original = mocks.mockUseLoaderData.getMockImplementation();
+    mocks.mockUseLoaderData.mockReturnValue({
+      account: {
+        id: "d1",
+        name: "Barclaycard",
+        type: "Credit Card",
+        balance: -1200,
+        interestRate: 24.9,
+        monthlyContribution: 40,
+      },
+      accountDetails: [],
+    } as never);
+    try {
+      const { getByRole, getByLabelText, user } = customRender(<AccountDetailContainer />);
+      await user.click(getByRole("button", { name: /edit/i }));
+      expect((getByLabelText("Interest rate (APR) (optional)") as HTMLInputElement).value).toBe(
+        "24.9",
+      );
+      expect(
+        (getByLabelText("Minimum payment each month (optional)") as HTMLInputElement).value,
+      ).toBe("40");
+    } finally {
+      if (original) mocks.mockUseLoaderData.mockImplementation(original);
+    }
+  });
+
   test("shows a negative stored liability balance as a positive amount owed", () => {
     mocks.mockUseLoaderData.mockReturnValueOnce({
       account: { id: "d1", name: "Barclaycard", type: "Credit Card", balance: -1200 },

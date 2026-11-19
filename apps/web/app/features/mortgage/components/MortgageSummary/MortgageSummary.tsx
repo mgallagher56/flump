@@ -103,12 +103,10 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
             <dt className={detailLabel()}>Type</dt>
             <dd className={detailValue()}>{isBtl ? "Buy to let" : "Residential"}</dd>
           </div>
-          {!isBtl ? (
-            <div className={detailRow()}>
-              <dt className={detailLabel()}>Mortgage account</dt>
-              <dd className={detailValue()}>{accountName ?? "None linked"}</dd>
-            </div>
-          ) : null}
+          <div className={detailRow()}>
+            <dt className={detailLabel()}>Mortgage account</dt>
+            <dd className={detailValue()}>{accountName ?? "None linked"}</dd>
+          </div>
           <div className={detailRow()}>
             <dt className={detailLabel()}>Repayment type</dt>
             <dd className={detailValue()}>

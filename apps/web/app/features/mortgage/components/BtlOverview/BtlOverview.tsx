@@ -1,45 +1,41 @@
-import { Button, KpiCard, KpiStrip, Money, Num, PageSection } from "@repo/ui";
+import { Button, PageSection } from "@repo/ui";
 import { Building2 } from "lucide-react";
 import type { FC } from "react";
-import { btlCard, btlSubtitle, stackedHeaderSection } from "./BtlOverview.styles";
+import {
+  btlCard,
+  btlList,
+  btlListItem,
+  btlSubtitle,
+  stackedHeaderSection,
+} from "./BtlOverview.styles";
+
+export interface BtlOverviewProperty {
+  id: string;
+  name: string;
+}
 
 export interface BtlOverviewProps {
-  /** `null` when the user has not said how many properties they let. */
-  propertyCount: number | null;
-  /** Zero or less means no rent has been entered. */
-  monthlyRent: number;
-  grossYield: number | null;
-  /** `null` when the payment is unknown. The page's hero shows it, so it is not repeated here. */
-  monthlyPayment: number | null;
-  /** Opens the profile, where rent, property value and count are saved. */
-  onConfigure: () => void;
+  /** The rental Property accounts saved on Accounts (system audit slice 4). */
+  properties: readonly BtlOverviewProperty[];
+  /** Opens Accounts, where each rental property is kept. */
+  onManage: () => void;
 }
 
 /**
- * Buy to let figures that the mortgage hero does not show (E16 PR 6): rent, rental yield and the
- * rent left after the mortgage payment. Facts and estimates only, with no status colour on the
- * result and no tax rule under the person's own figure.
+ * The properties the user lets, read from their rental Property accounts (HM-4, DB-1). Rent and
+ * rental yield are not shown: no rent is saved anywhere this page reads (HM-5).
  */
-export const BtlOverview: FC<BtlOverviewProps> = ({
-  propertyCount,
-  monthlyRent,
-  grossYield,
-  monthlyPayment,
-  onConfigure,
-}) => {
-  const hasRent = monthlyRent > 0;
-  const rentLeft = hasRent && monthlyPayment !== null ? monthlyRent - monthlyPayment : null;
-  const edit = (
-    <Button size="sm" variant="outline" onClick={onConfigure}>
-      Edit
-    </Button>
-  );
-
+export const BtlOverview: FC<BtlOverviewProps> = ({ properties, onManage }) => {
+  const count = properties.length;
   return (
     <PageSection
-      action={edit}
+      action={
+        <Button size="sm" variant="outline" onClick={onManage}>
+          Edit on Accounts
+        </Button>
+      }
       className={stackedHeaderSection()}
-      description="Rent and rental yield for the properties you let."
+      description="The properties you let, as saved on Accounts."
       domain="mortgage"
       headingId="btl-overview-title"
       icon={Building2}
@@ -48,40 +44,19 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
     >
       <div className={btlCard()}>
         <p className={btlSubtitle()}>
-          {propertyCount === null
-            ? "Number of properties not set"
-            : `${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`}
+          {count === 0
+            ? "No rental property saved on Accounts yet"
+            : `${count} ${count === 1 ? "property" : "properties"}`}
         </p>
-
-        <KpiStrip
-          emptyPrompt={{
-            title: "Add your monthly rent and property value to see your rental yield",
-            action: edit,
-            headingLevel: "h3",
-          }}
-        >
-          <KpiCard
-            label="Monthly rent before costs"
-            value={hasRent ? <Money size="lg" value={monthlyRent} /> : null}
-          />
-          <KpiCard
-            label="Rental yield before costs"
-            value={
-              grossYield === null ? null : (
-                <Num fractionDigits={2} kind="percent" size="lg" value={grossYield} />
-              )
-            }
-          />
-          <KpiCard
-            label="Rent left after the mortgage payment (estimate)"
-            value={
-              rentLeft === null ? null : (
-                // Whole pounds and no sign, as every other figure on the page (P39).
-                <Money size="lg" value={rentLeft} />
-              )
-            }
-          />
-        </KpiStrip>
+        {count > 0 ? (
+          <ul aria-label="Rental properties" className={btlList()}>
+            {properties.map((property) => (
+              <li className={btlListItem()} key={property.id}>
+                {property.name}
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </PageSection>
   );

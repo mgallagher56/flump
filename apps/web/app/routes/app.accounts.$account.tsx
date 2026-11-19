@@ -1,4 +1,5 @@
 import {
+  AccountListResponse,
   AccountResponse,
   DeleteAccountResponse,
   UpdateAccountResponse,
@@ -10,7 +11,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
 import { accountFieldsFromForm } from "~/features/accounts/accountFormBody";
-import { backendFetch } from "~/services/backend-client.server";
+import { backendFetch, backendFetchAll } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
@@ -36,9 +37,10 @@ export const action = async (args: ActionFunctionArgs) => {
         method: "PATCH",
         schema: UpdateAccountResponse,
         ifMatch: ifMatchFromForm(formData),
+        // An edit sends only the fields the user changed: a name or type left out stays as saved.
         body: {
-          name,
-          type,
+          ...(name !== null ? { name } : {}),
+          ...(type !== null ? { type } : {}),
           ...accountFieldsFromForm(formData),
         },
       });
@@ -80,10 +82,20 @@ export const loader = async (args: LoaderFunctionArgs) => {
     ]);
     if (!account) throw new BackendError("not-found", `/accounts/${accountId}`);
     const accountDetails = account.details || [];
+    // A mortgage's edit form lists the properties it can be on, so it needs the user's accounts.
+    // A failure leaves the list empty: the form then offers no link, and the saved one stays.
+    const accounts =
+      account.type === "Mortgage"
+        ? await backendFetchAll("/accounts", {
+            accessToken,
+            signal: args.request.signal,
+            schema: AccountListResponse,
+          }).catch(() => [])
+        : [];
     // Whether this account counts toward net worth follows the user's choices (net worth choices).
     // A profile that loaded but has no choices gets the defaults; a failed fetch stays unknown.
     const basis = userProfile === null ? null : netWorthBasisFromProfile(userProfile);
-    return data({ account, accountDetails, basis, user });
+    return data({ account, accountDetails, accounts, basis, user });
   } catch (error) {
     // The backend refuses an id it cannot read with a 400: to the reader that account does not
     // exist, so it gets the not-found page with "Back to accounts", not "Try again" (P18). Other

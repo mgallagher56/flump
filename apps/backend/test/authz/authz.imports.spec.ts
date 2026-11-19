@@ -761,9 +761,7 @@ describe.skipIf(dbMode === "skip")("authz: imports controller (real Postgres)", 
       balances: [{ accountRef: "isa", month: THIS_MONTH, value: 500 }],
     });
     await commit(h.tokens.a, res.body.batchId, { accountMap: { isa: accountA } });
-    const edit = await h.call("patch", "/accounts/balances", h.tokens.a, {
-      balances: [{ id: accountA, balance: 500 }],
-    });
+    const edit = await h.call("patch", `/accounts/${accountA}`, h.tokens.a, { balance: 500 });
     expect(edit.status).toBe(200);
     expect(await rowFor(accountA, THIS_MONTH)).toMatchObject({
       source: "manual",

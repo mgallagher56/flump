@@ -149,3 +149,77 @@ describe("isBuyToLetAccount", () => {
     expect(isBuyToLetAccount({ name: "Home" })).toBe(false);
   });
 });
+
+describe("selectLoanToValue with saved property kinds (system audit slice 4, L71)", () => {
+  // A home and a rental whose name does not say buy to let. The saved kind decides, not the name.
+  const savedHome: RawAccount = { ...home, accountSubtype: "home" };
+  const savedRental: RawAccount = {
+    id: "r",
+    name: "Flat 2",
+    type: "Property",
+    accountSubtype: "rental",
+    balance: 200000,
+  };
+
+  it("counts only the home: 186,000 / 310,000 = 60.0%, the rental's 200,000 left out", () => {
+    // Before slice 4 "Flat 2" read as a second home: unknown, or 186,000 / 510,000 = 36.5%.
+    expect(selectLoanToValue(snap(mortgage, savedHome, savedRental))).toEqual({
+      status: "known",
+      value: { percent: 60, homeValue: 310000, mortgageBalance: 186000 },
+      provenance: "derived",
+    });
+  });
+
+  it("never takes a rental as the home, even when it is the only property", () => {
+    // Mortgage 186,000 with only a rental saved: no home value, so unknown, not 186,000 / 200,000.
+    expect(selectLoanToValue(snap(mortgage, savedRental))).toEqual({
+      status: "unknown",
+      missing: ["homeValue"],
+      reason: "not-set",
+    });
+  });
+
+  it("a property named 'Buy to let' but saved as the home is the home", () => {
+    // 186,000 / 250,000 = 0.744, so 74.4%.
+    const named: RawAccount = {
+      id: "n",
+      name: "Buy to let cottage",
+      type: "Property",
+      accountSubtype: "home",
+      balance: 250000,
+    };
+    expect(selectLoanToValue(snap(mortgage, named))).toMatchObject({
+      status: "known",
+      value: { percent: 74.4, homeValue: 250000 },
+    });
+  });
+
+  it("measures one mortgage against the property it is linked to", () => {
+    // Two homes saved (ambiguous by kind), but the mortgage is linked to the second one, worth
+    // 400,000: 186,000 / 400,000 = 0.465, so 46.5%.
+    const second: RawAccount = {
+      id: "h2",
+      name: "Cottage",
+      type: "Property",
+      accountSubtype: "home",
+      balance: 400000,
+    };
+    const linked: RawAccount = { ...mortgage, linkedAccountId: "h2" };
+    expect(selectLoanToValue(snap(linked, savedHome, second))).toMatchObject({
+      reason: "ambiguous-home",
+    });
+    expect(selectLoanToValue(snap(linked, savedHome, second), { mortgageAccountId: "m" })).toEqual({
+      status: "known",
+      value: { percent: 46.5, homeValue: 400000, mortgageBalance: 186000 },
+      provenance: "derived",
+    });
+  });
+});
+
+describe("isBuyToLetAccount with property kinds", () => {
+  it("reads the saved kind before the name", () => {
+    expect(isBuyToLetAccount({ name: "Flat 2", accountSubtype: "rental" })).toBe(true);
+    expect(isBuyToLetAccount({ name: "BTL flat", accountSubtype: "home" })).toBe(false);
+    expect(isBuyToLetAccount({ name: "BTL flat", accountSubtype: null })).toBe(true);
+  });
+});

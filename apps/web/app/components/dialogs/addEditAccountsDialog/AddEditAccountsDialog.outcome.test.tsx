@@ -183,8 +183,18 @@ describe("AddEditAccountsDialog action outcomes", () => {
       );
       await user.click(getByText("edit"));
       expect((getByLabelText("Repayment plan") as HTMLSelectElement).value).toBe("PLAN_5");
+      await user.selectOptions(getByLabelText("Repayment plan"), "PLAN_2");
       await user.click(getAllByText("save")[0]);
-      expect(lastSubmit()).toMatchObject({ studentLoanPlan: "PLAN_5" });
+      expect(lastSubmit()).toMatchObject({ studentLoanPlan: "PLAN_2" });
+    });
+
+    test("does not send an untouched plan again (an edit sends what changed)", async () => {
+      const { getByText, getAllByText, user } = customRender(
+        <AddEditAccountsDialogBtn isEditAccount accountId="sl1" />,
+      );
+      await user.click(getByText("edit"));
+      await user.click(getAllByText("save")[0]);
+      expect(lastSubmit()).not.toHaveProperty("studentLoanPlan");
     });
 
     test("does not send a plan for other account types", async () => {

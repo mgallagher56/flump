@@ -47,7 +47,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "GET /accounts/:id": finance,
   "GET /accounts/:id/details": finance,
   "POST /accounts": finance,
-  "PATCH /accounts/balances": finance,
+  "POST /accounts/mortgage-with-property": finance,
   "PATCH /accounts/:id": finance,
   "DELETE /accounts/:id": finance,
   "GET /transactions": finance,
@@ -91,6 +91,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "PUT /retirement-plan": userProfile,
 
   // Monthly snapshots (E30).
+  "GET /snapshots/check-ins": snapshots,
   "PUT /snapshots/:month": snapshots,
 
   // Import pipeline (E17 re-plan PR C).

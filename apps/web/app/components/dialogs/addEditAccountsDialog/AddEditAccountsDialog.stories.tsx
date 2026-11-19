@@ -192,3 +192,37 @@ export const EditLiabilityDark: Story = {
     ),
   ],
 };
+
+const propertyLoaderData = {
+  accounts: [
+    { id: "h-1", name: "Our house", type: AccountTypeEnum.PROPERTY, accountSubtype: "home" },
+    { id: "r-1", name: "Flat we let", type: AccountTypeEnum.PROPERTY, accountSubtype: "rental" },
+  ],
+};
+
+/** Adding a mortgage offers the properties of its kind, and preselects the one home. */
+export const MortgageLinksProperty: Story = {
+  args: { isEditAccount: false },
+  parameters: { router: { loaderData: propertyLoaderData } },
+  play: async () => {
+    await userEvent.click(await screen.findByRole("button", { name: /addAccount|add account/i }));
+    await userEvent.selectOptions(
+      await screen.findByLabelText("Account type"),
+      AccountTypeEnum.MORTGAGE,
+    );
+    const link = await screen.findByLabelText("Which property is this mortgage on");
+    await expect(link).toHaveValue("h-1");
+    await expect(screen.getByLabelText("How it is repaid (optional)")).toBeInTheDocument();
+  },
+};
+
+export const MortgageLinksPropertyDark: Story = {
+  ...MortgageLinksProperty,
+  decorators: [
+    (Story) => (
+      <DarkRoot>
+        <Story />
+      </DarkRoot>
+    ),
+  ],
+};

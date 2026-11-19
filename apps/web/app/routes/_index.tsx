@@ -12,6 +12,7 @@ import {
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
+import { pickResidentialMortgage } from "~/features/mortgage/residentialMortgage";
 import {
   buildSnapshotHistory,
   latestRecordedMonth,
@@ -50,8 +51,16 @@ export function describeMissingTakeHome(profile: TakeHomeProfile | undefined): s
 }
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, userProfile, budgetEntries, accountDetails, taxRecords, user, picture } =
-    await loadWorkspacePicture(args, { ensureSignedIn: false });
+  const {
+    accounts,
+    userProfile,
+    budgetEntries,
+    accountDetails,
+    taxRecords,
+    user,
+    picture,
+    latestCheckInMonth,
+  } = await loadWorkspacePicture(args, { ensureSignedIn: false, includeCheckIns: true });
 
   if (!user || !picture) {
     // Demo is a single experience at /sandbox; signed-in users never see demo data.
@@ -103,7 +112,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     ? accounts.filter((a: any) => a.type === "Mortgage")
     : [];
   const mortgageBalance = portfolioSnapshot.getTotalMortgageBalance();
-  const storedMortgageRate = mortgageAccounts[0]?.interestRate;
+  // The residential mortgage's rate (the one linked to the home first), never a buy-to-let one's.
+  const storedMortgageRate = pickResidentialMortgage<any>(accounts)?.interestRate;
   const toKnownNumber = (value: unknown): number | null => {
     if (value === null || value === undefined || value === "") return null;
     const n = Number(value);
@@ -168,7 +178,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     // E30: the dashboard's monthly check-in card. Month keys only, no figures.
     checkIn: {
       currentMonth,
-      lastRecordedMonth: latestRecordedMonth(details),
+      // From completed check-ins only (CH-3): a balance saved on its own, or an account added
+      // this month, does not hide the reminder. Unknown (the call failed) shows it.
+      lastCheckInMonth: latestCheckInMonth,
       // UX Batch E: the row shows from the saved check-in day (a day, not a figure).
       checkInDay: userProfile?.checkInDay ?? null,
       today: londonDate(),

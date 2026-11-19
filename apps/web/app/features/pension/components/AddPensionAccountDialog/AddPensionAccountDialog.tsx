@@ -13,6 +13,7 @@ import { Trash2 } from "lucide-react";
 import { type FC, type FormEvent, type ReactNode, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
+import { accountFieldSet } from "~/features/accounts/accountFieldSet";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { versionField } from "~/services/conflict";
 import {
@@ -73,22 +74,55 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
   const saveOutcome = useFetcherOutcome(fetcher, { onSuccess: onClose });
   const isEditing = !!accountToEdit;
 
-  const [name, setName] = useState(accountToEdit?.name || "");
-  const [balance, setBalance] = useState<number | null>(toNumberOrNull(accountToEdit?.balance));
-  const [interestRate, setInterestRate] = useState<number | null>(
+  // What the form opened with, so an edit sends only what the user changed: a re-sent value
+  // writes a history row for this month, so an untouched one is never sent (slice 4).
+  const [opened] = useState(() => ({
+    name: accountToEdit?.name || "",
+    balance: toNumberOrNull(accountToEdit?.balance),
     // Blank by default: no rate means the page asks for one, never an assumed figure.
-    toNumberOrNull(accountToEdit?.interestRate),
-  );
-  const [isCurrent, setIsCurrent] = useState<boolean>(accountToEdit?.isCurrent !== false);
+    interestRate: toNumberOrNull(accountToEdit?.interestRate),
+    isCurrent: accountToEdit?.isCurrent !== false,
+    monthlyContribution:
+      accountToEdit?.isCurrent !== false
+        ? toNumberOrNull(accountToEdit?.monthlyContribution)
+        : null,
+  }));
+  const [name, setName] = useState(opened.name);
+  const [balance, setBalance] = useState<number | null>(opened.balance);
+  const [interestRate, setInterestRate] = useState<number | null>(opened.interestRate);
+  const [isCurrent, setIsCurrent] = useState<boolean>(opened.isCurrent);
   const [monthlyContribution, setMonthlyContribution] = useState<number | null>(
-    accountToEdit?.isCurrent !== false ? toNumberOrNull(accountToEdit?.monthlyContribution) : null,
+    opened.monthlyContribution,
   );
+  // The labels come from the one field set for a pension, shared with the Accounts dialog.
+  const fieldSet = accountFieldSet({ type: "Pension" });
 
   const canSave = name.trim().length > 0;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!canSave || saveOutcome.pending) return;
+    const monthly = isCurrent ? monthlyContribution : null;
+    const values = {
+      name: name.trim(),
+      // A cleared value on an add is £0; a cleared value on an edit is not sent.
+      balance: balance === null ? (isEditing ? "" : "0") : String(balance),
+      // A cleared rate is saved as unset, never as an assumed figure.
+      interestRate: interestRate === null ? "" : String(interestRate),
+      isCurrent: String(isCurrent),
+      monthlyContribution: monthly === null ? "" : String(monthly),
+    };
+    const changed = isEditing
+      ? {
+          ...(values.name !== opened.name ? { name: values.name } : {}),
+          ...(balance !== null && balance !== opened.balance ? { balance: values.balance } : {}),
+          ...(interestRate !== opened.interestRate ? { interestRate: values.interestRate } : {}),
+          ...(isCurrent !== opened.isCurrent ? { isCurrent: values.isCurrent } : {}),
+          ...(monthly !== opened.monthlyContribution
+            ? { monthlyContribution: values.monthlyContribution }
+            : {}),
+        }
+      : values;
     saveOutcome.begin();
     fetcher.submit(
       {
@@ -96,14 +130,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
         ...(isEditing && accountToEdit?.id
           ? { accountId: accountToEdit.id, ...versionField(accountToEdit) }
           : {}),
-        name: name.trim(),
-        balance: balance === null ? (isEditing ? "" : "0") : String(balance),
-        interestRate:
-          // A cleared rate is saved as unset, never as an assumed figure.
-          interestRate === null ? "" : String(interestRate),
-        isCurrent: String(isCurrent),
-        monthlyContribution:
-          isCurrent && monthlyContribution !== null ? String(monthlyContribution) : "",
+        ...changed,
       },
       { method: "POST", action: "/app/pension" },
     );
@@ -180,7 +207,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
             />
           )}
         </FormField>
-        <FormField label="Assumed growth a year (optional)">
+        <FormField label={fieldSet.interestRate?.label ?? "Assumed growth a year (optional)"}>
           {(field) => (
             <PercentInput
               {...controlProps(field)}
@@ -199,7 +226,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
             ? "Paid into this pot on top of your workplace contributions from salary. Leave blank if there is none."
             : "Past pots take no regular payments. Their value can still change with investment returns."
         }
-        label="Extra paid in each month (optional)"
+        label={fieldSet.monthlyContribution?.label ?? "Extra paid in each month (optional)"}
       >
         {(field) => (
           <CurrencyInput

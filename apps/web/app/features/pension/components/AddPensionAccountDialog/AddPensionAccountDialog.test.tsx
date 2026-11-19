@@ -170,7 +170,8 @@ describe("AddPensionAccountDialog", () => {
     });
   });
 
-  it("submits an update for an existing pot", () => {
+  it("submits an update for an existing pot with no field left unchanged re-sent", () => {
+    mockSubmit.mockClear();
     render(
       <AddPensionAccountDialog
         accountToEdit={{ id: "p9", name: "Aviva", balance: 100, interestRate: 4 } as never}
@@ -180,9 +181,30 @@ describe("AddPensionAccountDialog", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(mockSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ intent: "updatePensionAccount", accountId: "p9", name: "Aviva" }),
+      expect.objectContaining({ intent: "updatePensionAccount", accountId: "p9" }),
       { method: "POST", action: "/app/pension" },
     );
+    const sent = mockSubmit.mock.calls.at(-1)?.[0] as Record<string, string>;
+    // An untouched value is never re-sent: a re-sent balance writes a history row this month.
+    for (const key of ["name", "balance", "interestRate", "isCurrent", "monthlyContribution"]) {
+      expect(sent).not.toHaveProperty(key);
+    }
+  });
+
+  it("sends the value only when it changed", () => {
+    mockSubmit.mockClear();
+    render(
+      <AddPensionAccountDialog
+        accountToEdit={{ id: "p9", name: "Aviva", balance: 100, interestRate: 4 } as never}
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "150" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    const sent = mockSubmit.mock.calls.at(-1)?.[0] as Record<string, string>;
+    expect(sent.balance).toBe("150");
+    expect(sent).not.toHaveProperty("interestRate");
   });
 
   it("offers Delete pot only when editing with a delete handler, and never deletes by itself", () => {
@@ -209,11 +231,14 @@ describe("AddPensionAccountDialog", () => {
     mockSubmit.mockClear();
     render(
       <AddPensionAccountDialog
-        accountToEdit={{ id: "p9", name: "Aviva", balance: 100, interestRate: null } as never}
+        accountToEdit={{ id: "p9", name: "Aviva", balance: 100, interestRate: 4 } as never}
         isOpen={true}
         onClose={vi.fn()}
       />,
     );
+    fireEvent.change(screen.getByLabelText("Assumed growth a year (optional)"), {
+      target: { value: "" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(mockSubmit).toHaveBeenCalledWith(expect.objectContaining({ interestRate: "" }), {
       method: "POST",

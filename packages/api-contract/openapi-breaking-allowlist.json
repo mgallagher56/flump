@@ -128,5 +128,10 @@
     "kind": "removed-response-property",
     "where": "GET /v1/mcp/input 200 response.input.workplacePension.ratesAssumed",
     "reason": "Audit slice 6, owner decision 3 (19 Nov 2026): the 5% and 3% row defaults are gone, so ratesAssumed is replaced by notSet[], naming each rate the user has not set. The readers in this repository (web app and MCP server) are updated in the same PR, and the reader drops unknown keys there so an older payload still parses. Coordinator sign-off 19 Nov 2026."
+  },
+  {
+    "kind": "removed-path",
+    "where": "/v1/accounts/balances",
+    "reason": "System audit slice 4 (CH-7): PATCH /accounts/balances had no caller in this repository (web, MCP, e2e or the parked mobile companion; the web proxy never allowed it). The check-in writes through PUT /snapshots/:month. Removed with coordinator sign-off on 19 November 2026."
   }
 ]

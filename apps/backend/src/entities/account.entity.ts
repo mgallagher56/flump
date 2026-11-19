@@ -19,6 +19,12 @@ import { numericTransformer } from "./numeric.transformer";
   `"type" NOT IN ('Mortgage', 'Credit Card', 'Loan', 'Overdraft', 'Student Loan') OR "balance" <= 0`,
 )
 @Check("CHK_accounts_ownership", `"ownership" IN ('sole', 'joint')`)
+// System audit slice 4 (AddAccountLinkAndRepaymentType1795470000000).
+@Check(
+  "CHK_accounts_repayment_type",
+  `"repayment_type" IS NULL OR "repayment_type" IN ('repayment', 'interest-only')`,
+)
+@Check("CHK_accounts_linked_not_self", `"linked_account_id" IS NULL OR "linked_account_id" <> "id"`)
 @Check(
   "CHK_accounts_share_percent",
   `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 100)`,
@@ -54,7 +60,11 @@ export class Account {
     | "Student Loan"
     | "Overdraft";
 
-  /** Optional subtype (e.g. easy_access, cash_isa, stocks_and_shares_isa, residential_mortgage, btl_mortgage). */
+  /**
+   * Optional subtype (e.g. easy_access, cash_isa, stocks_and_shares_isa, residential_mortgage,
+   * btl_mortgage; `home` or `rental` on a Property; car_finance, buy_now_pay_later or other_loan on
+   * a Loan).
+   */
   @Column({ name: "account_subtype", type: "varchar", nullable: true })
   accountSubtype: string | null;
 
@@ -116,6 +126,19 @@ export class Account {
   /** E34 Slice 2: percentage share (1-100) when ownership is "joint"; null when "sole". */
   @Column({ name: "share_percent", type: "integer", nullable: true })
   sharePercent: number | null;
+
+  /**
+   * Mortgage accounts: the Property account the mortgage is on (system audit slice 4).
+   * FK_accounts_linked_account: accounts(id) ON DELETE SET NULL
+   * (AddAccountLinkAndRepaymentType1795470000000), so deleting the property unlinks the mortgage.
+   */
+  @Index("IDX_accounts_linked_account")
+  @Column({ name: "linked_account_id", type: "uuid", nullable: true })
+  linkedAccountId: string | null;
+
+  /** Mortgage accounts: "repayment" or "interest-only"; null when not set. */
+  @Column({ name: "repayment_type", type: "varchar", nullable: true })
+  repaymentType: "repayment" | "interest-only" | null;
 
   @Column({ name: "connection_id", type: "uuid", nullable: true })
   connectionId: string | null;

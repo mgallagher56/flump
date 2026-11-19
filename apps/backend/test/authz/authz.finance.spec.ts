@@ -140,10 +140,10 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         body: { name: "x", type: "Saving", balance: 1 },
       },
       {
-        key: "PATCH /accounts/balances",
-        method: "patch",
-        path: () => "/accounts/balances",
-        body: { balances: [{ id: MISSING_ID, balance: 1 }] },
+        key: "POST /accounts/mortgage-with-property",
+        method: "post",
+        path: () => "/accounts/mortgage-with-property",
+        body: { mortgage: { name: "x", balance: 1 }, property: { balance: 2 } },
       },
       {
         key: "PATCH /accounts/:id",
@@ -308,38 +308,56 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       },
     );
 
-    it("PATCH /accounts/balances: A 200; B 404 identical to not-found, nothing written, even mixed with B's own account", async () => {
-      const own = await h.call("patch", "/accounts/balances", h.tokens.a, {
-        balances: [{ id: accountId, balance: 99 }],
+    it("POST /accounts/mortgage-with-property: A 201 linked pair; B cannot re-parent it or link A's property", async () => {
+      const own = await h.call("post", "/accounts/mortgage-with-property", h.tokens.a, {
+        mortgage: { name: "A mortgage", balance: 186000 },
+        property: { balance: 310000 },
       });
-      expect(own.status).toBe(200);
-      await accounts().update({ id: accountId }, { balance: 1204.5 });
+      expect(own.status).toBe(201);
+      expect(own.body.mortgage.linkedAccountId).toBe(own.body.property.id);
+      for (const id of [own.body.mortgage.id, own.body.property.id]) {
+        expect((await accounts().findOneBy({ id }))?.userId).toBe(USER_A);
+      }
 
-      const bOwn = await h.call("post", "/accounts", h.tokens.b, {
-        name: "B Saver",
-        type: "Saving",
-        balance: 10,
+      const probe = await h.call("post", "/accounts/mortgage-with-property", h.tokens.b, {
+        mortgage: { ...probeBody(accountId), name: "B mortgage", balance: 1 },
+        property: { balance: 2 },
       });
-      expect(bOwn.status).toBe(201);
-      const asB = await h.call("patch", "/accounts/balances", h.tokens.b, {
-        balances: [
-          { id: bOwn.body.id, balance: 55 },
-          { id: accountId, balance: 1 },
-        ],
-      });
-      const missing = await h.call("patch", "/accounts/balances", h.tokens.b, {
-        balances: [
-          { id: bOwn.body.id, balance: 55 },
-          { id: MISSING_ID, balance: 1 },
-        ],
-      });
-      expect(asB.status).toBe(404);
-      expect(missing.status).toBe(404);
-      expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
+      // The strict body refuses the smuggled ids, nested under `mortgage`.
+      expect(probe.status).toBe(400);
+      const paths = (probe.body.issues as Array<{ path: string }>).map((i) => i.path).sort();
+      expect(paths).toEqual(["body.mortgage.id", "body.mortgage.userId"]);
       await expectAccountUntouched();
-      const bRow = await accounts().findOneBy({ id: bOwn.body.id });
-      expect(Number(bRow?.balance)).toBe(10);
-      ran("PATCH /accounts/balances");
+
+      // The pair route takes no account id at all: naming A's property (or A's mortgage) as the
+      // link is refused, so B cannot attach a new mortgage to A's home.
+      for (const id of [own.body.property.id, own.body.mortgage.id]) {
+        const named = await h.call("post", "/accounts/mortgage-with-property", h.tokens.b, {
+          mortgage: { name: "B mortgage", balance: 1, linkedAccountId: id },
+          property: { balance: 2 },
+        });
+        expect(named.status).toBe(400);
+      }
+      expect(await accounts().findBy({ userId: USER_B })).toHaveLength(0);
+      expect(await accounts().findBy({ linkedAccountId: own.body.property.id })).toHaveLength(1);
+
+      // B's own mortgage may not point at A's property: the same 400 as an unknown id.
+      const bMortgage = await h.call("post", "/accounts", h.tokens.b, {
+        name: "B mortgage",
+        type: "Mortgage",
+        balance: 1000,
+      });
+      expect(bMortgage.status).toBe(201);
+      const linkA = await h.call("patch", `/accounts/${bMortgage.body.id}`, h.tokens.b, {
+        linkedAccountId: own.body.property.id,
+      });
+      const linkMissing = await h.call("patch", `/accounts/${bMortgage.body.id}`, h.tokens.b, {
+        linkedAccountId: MISSING_ID,
+      });
+      expect(linkA.status).toBe(400);
+      expect(sansRequestId(linkA.body)).toEqual(sansRequestId(linkMissing.body));
+      expect((await accounts().findOneBy({ id: bMortgage.body.id }))?.linkedAccountId).toBeNull();
+      ran("POST /accounts/mortgage-with-property");
     });
 
     it("DELETE /accounts/:id: B 404 identical to not-found, row kept; A 200 removes it", async () => {
@@ -433,6 +451,11 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       expect(sync.status).toBe(404);
       const put = await h.call("put", `/accounts/${accountId}`, h.tokens.a, { name: "x" });
       expect(put.status).toBe(404);
+      // PATCH /accounts/balances was removed by system audit slice 4: it is no longer a route.
+      const balances = await h.call("patch", "/accounts/balances", h.tokens.a, {
+        balances: [{ id: accountId, balance: 1 }],
+      });
+      expect(balances.status).toBeGreaterThanOrEqual(400);
       await expectAccountUntouched();
       await expectConnectionUntouched();
     });

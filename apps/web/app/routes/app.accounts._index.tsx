@@ -1,19 +1,14 @@
 import type { ContractSchema } from "@flump/api-client";
 import {
-  AccountListResponse,
   BankConnectionCapabilityResponse,
   ConnectBankResponse,
   CreateAccountResponse,
+  CreateMortgageWithPropertyResponse,
   DeleteAccountResponse,
   DeleteBankConnectionResponse,
   SyncBankConnectionResponse,
   UpdateAccountResponse,
 } from "@flump/api-contract";
-import {
-  HOME_ESTIMATE_LABEL,
-  isBuyToLetAccount,
-  isResidentialHomeAccount,
-} from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -26,81 +21,20 @@ import {
   loadWorkspacePicture,
 } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
-import { ifMatchFromForm, revalidateOnConflict, versionEtag } from "~/services/conflict";
+import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
 
-/** Shown when the mortgage saved but the home value did not. */
-export const HOME_NOT_SAVED_NOTICE =
-  "We saved your mortgage but could not save your home value. Add it on the mortgage page.";
-
-/** Shown when the mortgage saved and a home was already on Accounts, so the typed value was not added. */
-export const HOME_ALREADY_THERE_NOTICE =
-  "We saved your mortgage. Your home value was not added because you already have a home on Accounts. Update it on the mortgage page.";
-
 /**
- * Adds the home for a mortgage that has just been saved: a Property account labelled
- * HOME_ESTIMATE_LABEL with the mortgage's ownership and share. Returns a notice for the user when
- * the value was not added (a home was already there, or the save failed), or null when it was.
- * The mortgage is never taken away again: it saved, so it stays.
+ * The form field carrying the mortgage's version when a property is added for it, so linking the
+ * new property does not overwrite a change made to the mortgage elsewhere.
  */
-async function addHomeForMortgage(opts: {
-  token: string;
-  signal: AbortSignal;
-  homeValue: number;
-  mortgage: Pick<CreateAccountResponse, "ownership" | "sharePercent">;
-  idempotencyKey: string | undefined;
-}): Promise<string | null> {
-  const { token, signal, homeValue, mortgage, idempotencyKey } = opts;
-  const ownership = mortgage.ownership === "joint" ? "joint" : "sole";
-  const sharePercent = ownership === "joint" ? (mortgage.sharePercent ?? null) : null;
-  try {
-    const existing = await backendFetchAll("/accounts", {
-      accessToken: token,
-      signal,
-      schema: AccountListResponse,
-    });
-    const homes = existing.filter(isResidentialHomeAccount);
-    if (homes.length > 0) {
-      // A retry after a timeout that did save: the one home is the one this add saved before
-      // (our label and the same value). It takes the mortgage's ownership and share.
-      const earlier =
-        homes.length === 1 &&
-        homes[0]?.name === HOME_ESTIMATE_LABEL &&
-        Number(homes[0]?.balance) === homeValue
-          ? homes[0]
-          : null;
-      if (!earlier) return HOME_ALREADY_THERE_NOTICE;
-      if (earlier.ownership !== ownership || (earlier.sharePercent ?? null) !== sharePercent) {
-        await backendFetch(`/accounts/${encodeURIComponent(earlier.id)}`, {
-          accessToken: token,
-          method: "PATCH",
-          schema: UpdateAccountResponse,
-          ifMatch: versionEtag(earlier.updatedAt),
-          body: { ownership, sharePercent },
-        });
-      }
-      return null;
-    }
-    await backendFetch("/accounts", {
-      accessToken: token,
-      method: "POST",
-      schema: CreateAccountResponse,
-      body: {
-        name: HOME_ESTIMATE_LABEL,
-        type: "Property",
-        balance: homeValue,
-        ownership,
-        sharePercent,
-      },
-      idempotencyKey,
-    });
-    return null;
-  } catch {
-    return HOME_NOT_SAVED_NOTICE;
-  }
-}
+export const LINK_MORTGAGE_VERSION_FIELD = "linkMortgageVersion";
+
+/** Shown when a property saved but linking it to the mortgage it was added for did not. */
+export const MORTGAGE_NOT_LINKED_NOTICE =
+  "We saved the property but could not link it to your mortgage. Edit the mortgage to choose it.";
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -126,41 +60,69 @@ export const action = async (args: ActionFunctionArgs) => {
       const requestId = formData.get("requestId");
       const keyFor = (part: string): string | undefined =>
         typeof requestId === "string" && requestId !== "" ? `${requestId}:${part}` : undefined;
+      // A mortgage added with its property's value and no property to link to: the backend adds
+      // both in one transaction, linked, the property at the mortgage's ownership and share
+      // (decision 14 B) and of its kind (a rental for buy to let, else the home).
+      const homeValue = Number(formData.get("homeValue"));
+      if (
+        type === "Mortgage" &&
+        Number.isFinite(homeValue) &&
+        homeValue > 0 &&
+        !fields.linkedAccountId
+      ) {
+        const { linkedAccountId: _notLinked, ...mortgageFields } = fields;
+        const pairBody = {
+          mortgage: { name, ...mortgageFields },
+          property: { balance: roundTo2dp(homeValue) },
+        };
+        await backendFetch("/accounts/mortgage-with-property", {
+          accessToken: token,
+          method: "POST",
+          schema: CreateMortgageWithPropertyResponse,
+          body: pairBody,
+          idempotencyKey: keyFor("mortgage"),
+        });
+        return data({ success: true });
+      }
       const createBody = { name, type, ...fields };
-      const mortgage = await backendFetch("/accounts", {
+      const created = await backendFetch("/accounts", {
         accessToken: token,
         method: "POST",
         schema: CreateAccountResponse,
         body: createBody,
         idempotencyKey: keyFor(type === "Mortgage" ? "mortgage" : "account"),
       });
-      // A residential mortgage added with the home's value adds the home after it, as a Property
-      // account with the mortgage's ownership and share. A buy-to-let value is never stored here:
-      // the mortgage page keeps it on the profile.
-      const homeValue = Number(formData.get("homeValue"));
-      const btl = isBuyToLetAccount({
-        name: typeof name === "string" ? name : "",
-        accountSubtype: fields.accountSubtype ?? null,
-      });
-      if (type === "Mortgage" && !btl && Number.isFinite(homeValue) && homeValue > 0) {
-        const notice = await addHomeForMortgage({
-          token,
-          signal: args.request.signal,
-          homeValue: roundTo2dp(homeValue),
-          mortgage,
-          idempotencyKey: keyFor("home"),
-        });
-        if (notice) return data({ success: true, notice });
+      // A property added for a mortgage ("Add an estimate"): link the mortgage to it, at the
+      // mortgage's version. The property is kept either way; a failed link says so.
+      const linkMortgageId = formData.get("linkMortgageId");
+      if (
+        type === "Property" &&
+        typeof linkMortgageId === "string" &&
+        linkMortgageId !== "" &&
+        created?.id
+      ) {
+        try {
+          await backendFetch(`/accounts/${encodeURIComponent(linkMortgageId)}`, {
+            accessToken: token,
+            method: "PATCH",
+            schema: UpdateAccountResponse,
+            ifMatch: ifMatchFromForm(formData, LINK_MORTGAGE_VERSION_FIELD),
+            body: { linkedAccountId: created.id },
+          });
+        } catch {
+          return data({ success: true, notice: MORTGAGE_NOT_LINKED_NOTICE });
+        }
       }
     } else if (intent === "update") {
+      // An edit sends only the fields the user changed: a name or type left out stays as saved.
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
         accessToken: token,
         method: "PATCH",
         schema: UpdateAccountResponse,
         ifMatch: ifMatchFromForm(formData),
         body: {
-          name,
-          type,
+          ...(name !== null ? { name } : {}),
+          ...(type !== null ? { type } : {}),
           ...fields,
         },
       });

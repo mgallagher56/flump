@@ -15,10 +15,13 @@ import {
   countsTowardNetWorth,
   type FinancialPicture,
   financialPictureInputFromRows,
+  isBuyToLetAccount,
   isFigureKnown,
   type NetWorthBasis,
   netWorthChoicesAvailable,
+  PortfolioSnapshot,
   resolveNetWorthScope,
+  selectLoanToValue,
 } from "@flump/finance-engine";
 import { PERSONAS, type PersonaFixture, type PersonaName } from "@flump/finance-engine/testing";
 import { cleanup, render } from "@testing-library/react";
@@ -77,6 +80,7 @@ import { DebtContainer } from "~/containers/debt/DebtContainer";
 import MortgageContainer from "~/containers/mortgage/MortgageContainer";
 import { buildAccountRows } from "~/features/accounts/accountRows";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
+import { withWholeBalances } from "~/features/mortgage/jointMortgage";
 import {
   addMonths,
   buildCheckInRows,
@@ -371,6 +375,38 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
       page.container.querySelector("#mortgage-prompt") ??
       page.container.querySelector("#mortgage-empty");
     expect(strip !== "" || prompt !== null).toBe(true);
+    // The home's loan to value worked out from the persona's residential rows alone: every buy to
+    // let property and mortgage removed before the engine sees them. A rental's value added to the
+    // home (or a buy-to-let loan added to the home's) makes the picture differ from this.
+    const residentialRows = rows.accounts.filter((a) => !isBuyToLetAccount(a));
+    const residentialLtv = selectLoanToValue(
+      new PortfolioSnapshot(withWholeBalances(residentialRows), rows.accountDetails),
+    );
+    expect(picture.loanToValue).toEqual(residentialLtv);
+    const ltvText = (percent: number) =>
+      new RegExp(
+        `Loan to value[^\\d]*${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 })
+          .format(percent)
+          .replace(".", "\\.")}%`,
+      );
+    // Someone with only a buy-to-let mortgage lands on its tab, which measures that mortgage
+    // against its rental (slice 4, HM-4). The home has no loan to value then, and the page shows
+    // the whole buy-to-let loan over the whole rental value, never a figure that counts the rental
+    // as the home.
+    if (strip.includes("Buy to let")) {
+      expect(isFigureKnown(residentialLtv)).toBe(false);
+      const btlRows = withWholeBalances(rows.accounts.filter((a) => isBuyToLetAccount(a)));
+      const sum = (type: string) =>
+        btlRows
+          .filter((a) => a.type === type)
+          .reduce((total, a) => total + Math.abs(Number(a.balance)), 0);
+      expect(strip).toMatch(ltvText((sum("Mortgage") / sum("Property")) * 100));
+      page.unmount();
+      return;
+    }
+    if (strip !== "" && isFigureKnown(residentialLtv)) {
+      expect(strip).toMatch(ltvText(residentialLtv.value.percent));
+    }
     if (strip !== "" && isFigureKnown(picture.loanToValue)) {
       // R2-7: shown as entered, at most one decimal and no trailing zero ("60%", "62.5%").
       const ltv = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }).format(

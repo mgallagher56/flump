@@ -41,7 +41,13 @@ export const ONBOARDING_ACCOUNTS = [
   { name: "Cash and emergency savings", type: "Saving", balance: 5000, isCurrent: true },
   { name: "Workplace and personal pension", type: "Pension", balance: 15000, isCurrent: true },
   // E16 D3: the owner's home estimate, so net worth and loan to value count it.
-  { name: "Home (your estimate)", type: "Property", balance: 300000, isCurrent: true },
+  {
+    name: "Home (your estimate)",
+    type: "Property",
+    accountSubtype: "home",
+    balance: 300000,
+    isCurrent: true,
+  },
   { name: "Residential Mortgage", type: "Mortgage", balance: 200000, isCurrent: true },
   { name: "Cards and loans baseline", type: "Credit Card", balance: 2000, isCurrent: true },
 ];
@@ -168,13 +174,41 @@ export const BUDGET_UPDATE_PAYLOAD = {
 export const BUDGET_CATEGORY_PAYLOAD = { category: "Pets" };
 
 /**
- * PATCH /accounts/balances: the monthly check-in drawer sends one request for every account
- * (E23 D23). `ids` are filled in by the caller once the accounts exist.
+ * The mortgage and its home onboarding sends in one call (system audit slice 4), through its
+ * route action to POST /accounts/mortgage-with-property. Duplicated in
+ * apps/web/app/routes/app.onboarding.test.tsx.
  */
+export const ONBOARDING_MORTGAGE_WITH_PROPERTY = {
+  mortgage: {
+    name: "Residential Mortgage",
+    accountSubtype: "residential_mortgage",
+    balance: 200000,
+    isCurrent: true,
+  },
+  property: { name: "Home (your estimate)", balance: 300000 },
+} as const;
+
+/** Accounts created one by one, as the Accounts page sends them. */
 export const CHECK_IN_ACCOUNTS = [
   { name: "Everyday Current", type: "Current", balance: 1000 },
   { name: "Easy Access Saver", type: "Saving", balance: 5000 },
   { name: "Store Card", type: "Credit Card", balance: -800 },
 ] as const;
 
-export const CHECK_IN_BALANCES = [1250.5, 5400, -650.25] as const;
+/**
+ * POST /accounts/mortgage-with-property: the Accounts mortgage dialog and onboarding send a
+ * mortgage with the home's value (system audit slice 4).
+ */
+export const MORTGAGE_WITH_PROPERTY_PAYLOAD = {
+  mortgage: {
+    name: "Residential mortgage",
+    accountSubtype: "residential_mortgage",
+    balance: 186000,
+    interestRate: 4.5,
+    monthlyContribution: 1250,
+    repaymentType: "repayment",
+    ownership: "joint",
+    sharePercent: 40,
+  },
+  property: { balance: 310000 },
+} as const;

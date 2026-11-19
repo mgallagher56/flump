@@ -124,6 +124,44 @@ describe("backend-client.server", () => {
     });
   });
 
+  it("reads the latest completed check-in month only when asked (CH-3)", async () => {
+    const base = globalThis.fetch as ReturnType<typeof vi.fn>;
+    const inner = base.getMockImplementation() as (url: string) => Promise<Response>;
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementation((url: string) =>
+        url.includes("/v1/snapshots/check-ins")
+          ? Promise.resolve(jsonResponse({ latestCompletedMonth: "2026-10" }))
+          : inner(url),
+      );
+    const args = { request: new Request("http://x/") } as any;
+    expect((await loadWorkspaceSnapshot(args, { includeCheckIns: true })).latestCheckInMonth).toBe(
+      "2026-10",
+    );
+    const plain = await loadWorkspaceSnapshot(args);
+    expect(plain).not.toHaveProperty("latestCheckInMonth");
+    const calls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls.filter(([url]) => String(url).includes("check-ins"))).toHaveLength(1);
+  });
+
+  it("leaves the check-in month unknown, and the page loading, when that call fails", async () => {
+    const inner = (globalThis.fetch as ReturnType<typeof vi.fn>).getMockImplementation() as (
+      url: string,
+    ) => Promise<Response>;
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementation((url: string) =>
+        url.includes("/v1/snapshots/check-ins")
+          ? Promise.resolve(new Response("boom", { status: 500 }))
+          : inner(url),
+      );
+    const snapshot = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any, {
+      includeCheckIns: true,
+    });
+    expect(snapshot.accounts.length).toBe(1);
+    expect(snapshot.latestCheckInMonth).toBeUndefined();
+  });
+
   it("rejects with a 503 route error when the backend is unreachable", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network Error"));
     const err = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any, {

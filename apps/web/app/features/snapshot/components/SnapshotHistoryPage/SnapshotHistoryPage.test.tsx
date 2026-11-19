@@ -202,14 +202,16 @@ describe("SnapshotHistoryPage", () => {
     renderPage({
       accountDetails: [row(CURRENT, 2026, 10, 2000), row(CURRENT, 2026, 11, 2100)],
       checkInDay: 31,
+      lastCheckInMonth: "2026-11",
       today: "2026-11-18",
     });
     expect(screen.getByText("Next check-in: 31 December 2026")).toBeDefined();
   });
 
-  it("shows the next check-in date once this month is recorded", () => {
+  it("shows the next check-in date once this month's check-in is done", () => {
     renderPage({
       accountDetails: [row(CURRENT, 2026, 10, 2000), row(CURRENT, 2026, 11, 2100)],
+      lastCheckInMonth: "2026-11",
     });
     expect(screen.getByText("Next check-in: 1 December 2026")).toBeDefined();
     expect(screen.queryByText(/not recorded yet/)).toBeNull();
@@ -227,12 +229,24 @@ describe("SnapshotHistoryPage", () => {
         row(CURRENT, 2026, 8, 2400),
         row(CURRENT, 2026, 11, 2100),
       ],
+      lastCheckInMonth: "2026-11",
     });
     const hero = screen.getByTestId("hero-figure");
     // August to November: the carried September and October are skipped, never a change of zero.
     expect(hero.textContent).toContain("-£300");
     expect(hero.textContent).toContain("August to November 2026.");
     expect(screen.queryByTestId("snapshot-hero-check-in")).toBeNull();
+  });
+
+  it("a balance saved this month outside a check-in leaves the prompt and hides the next date (CH-3)", () => {
+    renderPage({
+      // November has a row (an edited account, or one added this month), but the last completed
+      // check-in is October.
+      accountDetails: [row(CURRENT, 2026, 10, 2000), row(CURRENT, 2026, 11, 2100)],
+      lastCheckInMonth: "2026-10",
+    });
+    expect(screen.getByRole("link", { name: "November not recorded yet" })).toBeDefined();
+    expect(screen.queryByText(/Next check-in/)).toBeNull();
   });
 
   it("with one month recorded and this month not recorded, shows no change and no prompt", () => {

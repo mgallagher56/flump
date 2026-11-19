@@ -5,9 +5,9 @@ import {
   AccountListResponse,
   AccountResponse,
   CreateAccountResponse,
+  CreateMortgageWithPropertyResponse,
   DeleteAccountResponse,
   UpdateAccountResponse,
-  UpdateBalancesResponse,
 } from "./domains/accounts.js";
 import {
   BankConnectionCapabilityResponse,
@@ -177,9 +177,13 @@ describe("accounts responses", () => {
     bad(UpdateAccountResponse, { ...account, type: "checking" });
   });
 
-  it("accepts the balance check-in result and rejects a non-boolean isCurrent", () => {
-    ok(UpdateBalancesResponse, [account, mortgage]);
-    bad(UpdateBalancesResponse, [{ ...account, isCurrent: null }]);
+  it("accepts a mortgage with its linked property and rejects a bad repayment type", () => {
+    const linked = { ...mortgage, linkedAccountId: account.id, repaymentType: "repayment" };
+    ok(CreateMortgageWithPropertyResponse, { mortgage: linked, property: account });
+    bad(CreateMortgageWithPropertyResponse, {
+      mortgage: { ...linked, repaymentType: "offset" },
+      property: account,
+    });
   });
 
   it("accepts monthly details and rejects a string value", () => {

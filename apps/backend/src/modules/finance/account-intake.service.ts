@@ -3,13 +3,15 @@ import {
   ACCOUNT_SUBTYPES_BY_TYPE,
   ACCOUNT_TYPES,
   CREDIT_FIELD_ACCOUNT_TYPES,
+  MORTGAGE_REPAYMENT_TYPES,
+  type MortgageRepaymentType,
 } from "@flump/api-contract";
 import {
   type AccountOwnership,
+  BUY_TO_LET_PROPERTY_LABEL,
   canAccountBeJoint,
-  categorizeAccountType,
   DEFAULT_JOINT_SHARE_PERCENT,
-  isBuyToLetAccount,
+  HOME_ESTIMATE_LABEL,
 } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -57,12 +59,35 @@ export interface CreateAccountDto {
   studentLoanPlan?: (typeof STUDENT_LOAN_PLANS)[number] | null;
   ownership?: AccountOwnership;
   sharePercent?: number | null;
+  /** Mortgage accounts only: the caller's own Property account the mortgage is on. */
+  linkedAccountId?: string | null;
+  /** Mortgage accounts only. */
+  repaymentType?: MortgageRepaymentType | null;
   isCurrent?: boolean;
   connectionId?: string | null;
   externalAccountId?: string | null;
 }
 
 export type UpdateAccountDto = Partial<CreateAccountDto>;
+
+/** POST /accounts/mortgage-with-property (system audit slice 4). */
+export interface CreateMortgageWithPropertyDto {
+  mortgage: Omit<
+    CreateAccountDto,
+    "type" | "linkedAccountId" | "connectionId" | "externalAccountId"
+  >;
+  property: {
+    name?: string;
+    balance: number;
+    ownership?: AccountOwnership;
+    sharePercent?: number | null;
+  };
+}
+
+export interface MortgageWithProperty {
+  mortgage: Account;
+  property: Account;
+}
 
 const DEFAULT_ACCOUNT_CURRENCY = "GBP";
 
@@ -121,6 +146,11 @@ function takesCreditFields(type: string | undefined): boolean {
   return Boolean(type && (CREDIT_FIELD_ACCOUNT_TYPES as readonly string[]).includes(type));
 }
 
+/** The link to a property and the repayment type apply to Mortgage accounts only. */
+function takesMortgageFields(type: string | undefined): boolean {
+  return type === "Mortgage";
+}
+
 /**
  * A subtype, credit limit or 0% end date is only accepted on the account types it applies to:
  * a value sent for any other type is refused with 400 rather than stored and ignored. Null (not
@@ -142,6 +172,61 @@ function assertTypeScopedFields(type: string | undefined, fields: Partial<Accoun
         "promoZeroPercentUntil applies to Credit Card and Overdraft accounts only",
       );
     }
+  }
+  if (!takesMortgageFields(type)) {
+    if (fields.linkedAccountId !== undefined && fields.linkedAccountId !== null) {
+      throw new BadRequestException("linkedAccountId applies to Mortgage accounts only");
+    }
+    if (fields.repaymentType !== undefined && fields.repaymentType !== null) {
+      throw new BadRequestException("repaymentType applies to Mortgage accounts only");
+    }
+  }
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function validateLinkedAccountId(value: unknown): string | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "string" && UUID_PATTERN.test(value)) return value.toLowerCase();
+  throw new BadRequestException("linkedAccountId must be an account id, or null");
+}
+
+function validateRepaymentType(value: unknown): MortgageRepaymentType | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (
+    typeof value === "string" &&
+    (MORTGAGE_REPAYMENT_TYPES as readonly string[]).includes(value)
+  ) {
+    return value as MortgageRepaymentType;
+  }
+  throw new BadRequestException(
+    `repaymentType must be one of ${MORTGAGE_REPAYMENT_TYPES.join(", ")}, or null`,
+  );
+}
+
+/**
+ * A mortgage may only be linked to one of the caller's own Property accounts, and never to
+ * itself. Checked inside the write's transaction; another user's id is the same 400 as an unknown
+ * one, so it reveals nothing.
+ */
+async function assertLinkTarget(
+  accounts: Repository<Account>,
+  userId: string,
+  linkedAccountId: string | null | undefined,
+  selfId?: string,
+): Promise<void> {
+  if (linkedAccountId === undefined || linkedAccountId === null) return;
+  const target =
+    linkedAccountId === selfId
+      ? null
+      : // FOR SHARE: a concurrent type change of the target waits for this write, so a mortgage
+        // is never left linked to an account that stopped being a property meanwhile.
+        await accounts.findOne({
+          where: { id: linkedAccountId, userId },
+          lock: { mode: "pessimistic_read" },
+        });
+  if (!target || target.type !== "Property") {
+    throw new BadRequestException("linkedAccountId must be one of your Property accounts");
   }
 }
 
@@ -201,6 +286,8 @@ function toAccountResponse(account: Account): Account {
     studentLoanPlan: account.studentLoanPlan ?? null,
     ownership: account.ownership === "joint" ? "joint" : "sole",
     sharePercent: nullableNumber(account.sharePercent),
+    linkedAccountId: account.linkedAccountId ?? null,
+    repaymentType: account.repaymentType ?? null,
     connectionId: account.connectionId ?? null,
     externalAccountId: account.externalAccountId ?? null,
     createdAt: account.createdAt,
@@ -263,54 +350,6 @@ function validateSharePercent(value: unknown): number | null | undefined {
   throw new BadRequestException("sharePercent must be an integer between 1 and 100, or null");
 }
 
-/**
- * E34 C1: a property follows its mortgage's share. When the caller sets a mortgage's ownership or
- * share, the one property that mortgage is on takes the same ownership and share, so net worth
- * never counts half a mortgage against a whole home. A residential mortgage pairs with a
- * residential property and a buy-to-let mortgage with a buy-to-let property
- * (`isBuyToLetAccount`, as loan to value does). Only an unambiguous pair moves: exactly one
- * mortgage and one property of that kind. With two homes or two mortgages there is no way to tell
- * which goes with which, so nothing changes and the user sets the property's share themselves.
- * Only the caller's own rows are read or written, in the caller's transaction. A property edited
- * afterwards keeps its own share until the mortgage's share is set again.
- */
-async function propertyFollowsMortgage(
-  accounts: Repository<Account>,
-  userId: string,
-  mortgage: Account,
-): Promise<void> {
-  if (categorizeAccountType(mortgage.type) !== "mortgages") return;
-  const btl = isBuyToLetAccount(mortgage);
-  const mine = await accounts.find({ where: { userId } });
-  const sameKind = (a: Account) => isBuyToLetAccount(a) === btl;
-  const mortgages = mine.filter(
-    (a) => categorizeAccountType(a.type) === "mortgages" && sameKind(a),
-  );
-  const properties = mine.filter(
-    (a) => categorizeAccountType(a.type) === "property" && sameKind(a),
-  );
-  if (mortgages.length !== 1 || properties.length !== 1) return;
-  const property = properties[0] as Account;
-  const ownership: AccountOwnership = mortgage.ownership === "joint" ? "joint" : "sole";
-  const sharePercent = ownership === "joint" ? mortgage.sharePercent : null;
-  if (property.ownership === ownership && property.sharePercent === sharePercent) return;
-  property.ownership = ownership;
-  property.sharePercent = sharePercent;
-  await accounts.save(property);
-}
-
-const MAX_BALANCE_BATCH = 100;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-interface BalanceUpdateDto {
-  id: string;
-  balance: number;
-}
-
-export interface UpdateBalancesDto {
-  balances: BalanceUpdateDto[];
-}
-
 /** A balance must be a finite number below 10 billion in magnitude (numeric(12,2) column). */
 function validateBalance(value: unknown): number | undefined {
   if (value === undefined) return undefined;
@@ -318,34 +357,6 @@ function validateBalance(value: unknown): number | undefined {
     throw new BadRequestException("balance must be a finite number below 10 billion");
   }
   return value;
-}
-
-/** Validates the PATCH /accounts/balances body; throws 400 on anything malformed. */
-function validateBalanceUpdates(body: unknown): BalanceUpdateDto[] {
-  const balances = (body as { balances?: unknown } | null | undefined)?.balances;
-  if (!Array.isArray(balances) || balances.length === 0) {
-    throw new BadRequestException("balances must be a non-empty array");
-  }
-  if (balances.length > MAX_BALANCE_BATCH) {
-    throw new BadRequestException(`balances must have at most ${MAX_BALANCE_BATCH} entries`);
-  }
-  const seen = new Set<string>();
-  return balances.map((entry: unknown) => {
-    const { id, balance } = (entry ?? {}) as Record<string, unknown>;
-    if (typeof id !== "string" || !UUID_PATTERN.test(id)) {
-      throw new BadRequestException("each balance entry needs a uuid id");
-    }
-    if (typeof balance !== "number") {
-      throw new BadRequestException("each balance must be a finite number below 10 billion");
-    }
-    validateBalance(balance);
-    const key = id.toLowerCase();
-    if (seen.has(key)) {
-      throw new BadRequestException("each account may appear once in balances");
-    }
-    seen.add(key);
-    return { id: key, balance };
-  });
 }
 
 export interface DeleteAccountResponse {
@@ -406,6 +417,8 @@ function pickAccountFields(
     studentLoanPlan,
     ownership,
     sharePercent,
+    linkedAccountId: validateLinkedAccountId(body.linkedAccountId),
+    repaymentType: validateRepaymentType(body.repaymentType),
     isCurrent: body.isCurrent,
     externalAccountId: body.externalAccountId,
   };
@@ -462,7 +475,10 @@ interface IAccountIntake {
     body: UpdateAccountDto,
     expectedVersion?: Date,
   ): Promise<Account>;
-  updateBalances(userId: string, body: UpdateBalancesDto): Promise<Account[]>;
+  createMortgageWithProperty(
+    userId: string,
+    body: CreateMortgageWithPropertyDto,
+  ): Promise<MortgageWithProperty>;
   deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse>;
 }
 
@@ -617,17 +633,72 @@ export class AccountIntakeService implements IAccountIntake {
       fields.connectionId = connection.id;
     }
     const account: Account = this.accountRepository.create({ ...fields, userId });
-    // A new mortgage moves its property only when it is joint: a default "sole" on a new mortgage
-    // must not undo a share the user already set on their home. The two writes share one
-    // transaction, so a failed property write leaves no half-made mortgage behind.
-    if (account.ownership !== "joint") {
-      return toAccountResponse(await this.accountRepository.save(account));
-    }
-    return this.runInTransaction(async (accounts) => {
+    return this.runInTransaction(async (accounts, details) => {
+      await assertLinkTarget(accounts, userId, account.linkedAccountId);
       const saved = await accounts.save(account);
-      await propertyFollowsMortgage(accounts, userId, saved);
+      await this.writeFirstHistoryRow(details, userId, saved);
       return toAccountResponse(saved);
     });
+  }
+
+  /**
+   * A mortgage and the property it is on, created and linked in one transaction (system audit
+   * slice 4, replacing the browser's two calls from PR 779): a failure anywhere leaves neither.
+   * The property's kind follows the mortgage's (a buy-to-let mortgage is on a rental, any other on
+   * the home). It takes the mortgage's ownership and share unless the request gives its own
+   * (decision 14 option B: a suggestion when the pair is first set up; either may differ after).
+   * Each account gets its first history row.
+   */
+  async createMortgageWithProperty(
+    userId: string,
+    body: CreateMortgageWithPropertyDto,
+  ): Promise<MortgageWithProperty> {
+    const mortgageBody = (body?.mortgage ?? {}) as CreateMortgageWithPropertyDto["mortgage"];
+    const propertyBody = body?.property;
+    if (!propertyBody || typeof propertyBody !== "object") {
+      throw new BadRequestException("property is required");
+    }
+    const mortgageFields = newAccountFields({ ...mortgageBody, type: "Mortgage" });
+    // Linking is what this call does, so a link or bank ids in the body are never taken.
+    delete mortgageFields.linkedAccountId;
+    delete mortgageFields.externalAccountId;
+    const value = validateBalance(propertyBody.balance);
+    if (value === undefined || !(value > 0)) {
+      throw new BadRequestException("property.balance must be a number above 0");
+    }
+    const rental = mortgageFields.accountSubtype === "btl_mortgage";
+    const followsMortgage = propertyBody.ownership === undefined;
+    const propertyFields = newAccountFields({
+      name: propertyBody.name || (rental ? BUY_TO_LET_PROPERTY_LABEL : HOME_ESTIMATE_LABEL),
+      type: "Property",
+      accountSubtype: rental ? "rental" : "home",
+      balance: value,
+      ownership: followsMortgage ? mortgageFields.ownership : propertyBody.ownership,
+      sharePercent: followsMortgage ? mortgageFields.sharePercent : propertyBody.sharePercent,
+    });
+    return this.runInTransaction(async (accounts, details) => {
+      const property = await accounts.save(accounts.create({ ...propertyFields, userId }));
+      const mortgage = await accounts.save(
+        accounts.create({ ...mortgageFields, linkedAccountId: property.id, userId }),
+      );
+      await this.writeFirstHistoryRow(details, userId, property);
+      await this.writeFirstHistoryRow(details, userId, mortgage);
+      return { mortgage: toAccountResponse(mortgage), property: toAccountResponse(property) };
+    });
+  }
+
+  /**
+   * Decision 8 option A (CH-1, L05): a new account's balance is recorded as this month's history
+   * at once, so History has a point for the month it was added and today's balance equals the
+   * newest record. A bank-connected account is left to the sync, which writes its own rows.
+   */
+  private async writeFirstHistoryRow(
+    details: Repository<AccountDetail>,
+    userId: string,
+    account: Account,
+  ): Promise<void> {
+    if (account.connectionId) return;
+    await this.upsertCurrentMonthHistory(details, userId, account.id, Number(account.balance));
   }
 
   /**
@@ -689,8 +760,6 @@ export class AccountIntakeService implements IAccountIntake {
       }
 
       const previousType = account.type;
-      const previousOwnership = account.ownership;
-      const previousSharePercent = account.sharePercent;
       const picked = this.pickAccountFields(body);
       const nextType = picked.type ?? account.type;
       assertTypeScopedFields(nextType, picked);
@@ -732,6 +801,12 @@ export class AccountIntakeService implements IAccountIntake {
         account.creditLimit = null;
         account.promoZeroPercentUntil = null;
       }
+      if (!takesMortgageFields(account.type)) {
+        account.linkedAccountId = null;
+        account.repaymentType = null;
+      } else if (picked.linkedAccountId !== undefined) {
+        await assertLinkTarget(accounts, userId, picked.linkedAccountId, account.id);
+      }
       const effectiveOwnership: AccountOwnership = account.ownership === "joint" ? "joint" : "sole";
       if (!eligible) {
         account.ownership = "sole";
@@ -760,48 +835,19 @@ export class AccountIntakeService implements IAccountIntake {
         // History first, while the row is still the old type (see resignHistoryForType).
         await resignHistoryForType(details, account.id, account.type, previousType);
       }
+      if (typeChanged && previousType === "Property") {
+        // No longer a property, so no mortgage can stay linked to it.
+        await accounts.update({ linkedAccountId: account.id, userId }, { linkedAccountId: null });
+      }
       const saved = await accounts.save(account);
       if (body.balance !== undefined && body.balance !== null) {
         await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
       }
-      // Only a real change moves the home: the web edit form re-posts ownership and share on
-      // every save, so an edit to the balance or name must not reset a share set on the home.
-      if (
-        saved.ownership !== previousOwnership ||
-        (saved.sharePercent ?? null) !== (previousSharePercent ?? null)
-      ) {
-        await propertyFollowsMortgage(accounts, userId, saved);
-      }
+      // Decision 14 option B: a property and its mortgage may hold different shares, so a share
+      // change here never moves the linked account.
       // Re-read so the response carries the version the database now holds (the ETag).
       const fresh = await accounts.findOne({ where: { id, userId } });
       return toAccountResponse(fresh ?? saved);
-    });
-  }
-
-  /**
-   * Check-in: sets every listed balance and upserts its current-month history row in one
-   * transaction. An unknown or foreign id fails the whole batch with 404 and writes nothing.
-   */
-  async updateBalances(userId: string, body: UpdateBalancesDto): Promise<Account[]> {
-    const updates = validateBalanceUpdates(body);
-    return this.runInTransaction(async (accounts, details) => {
-      const owned = await accounts.find({
-        where: { id: In(updates.map((u) => u.id)), userId },
-      });
-      const byId = new Map(owned.map((a) => [a.id, a]));
-      if (updates.some((u) => !byId.has(u.id))) {
-        throw new NotFoundException("Account not found");
-      }
-
-      const result: Account[] = [];
-      for (const { id, balance } of updates) {
-        const account = byId.get(id) as Account;
-        account.balance = storedBalance(account.type, balance);
-        const saved = await accounts.save(account);
-        await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
-        result.push(toAccountResponse(saved));
-      }
-      return result;
     });
   }
 

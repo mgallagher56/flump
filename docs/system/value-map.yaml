@@ -192,7 +192,7 @@ links:
   - {
       id: L05,
       group: A. Accounts and balances,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
       findings: [CH-1],
       statement: "A new account has a History point for the month it was added, with no check-in needed.",
@@ -223,7 +223,7 @@ links:
   - {
       id: L68,
       group: A. Accounts and balances,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
       findings: [CH-2],
       statement: "Correcting the latest recorded month, when no newer figure exists, also corrects today's balance.",
@@ -233,15 +233,15 @@ links:
       group: A. Accounts and balances,
       verdict: holds,
       checked: browser,
-      findings: [],
+      findings: [CH-3],
       statement: "The check-in reminder shows until this month's check-in is finished, and an unrelated edit does not hide it.",
     }
   # B. Home and mortgage
   - {
       id: L08,
       group: B. Home and mortgage,
-      verdict: manual,
-      checked: code,
+      verdict: holds,
+      checked: browser,
       findings: [SD-8],
       statement: "A mortgage added in Accounts appears on the Mortgage page with the same balance, rate, term, payment and fix end date.",
     }
@@ -255,8 +255,9 @@ links:
   - {
       id: L10,
       group: B. Home and mortgage,
-      verdict: manual,
-      checked: code,
+      verdict: holds,
+      checked: browser,
+      findings: [],
       statement: "A home value entered with the mortgage in Accounts is the home value on the Mortgage page, in equity, loan to value, net worth and the Dashboard.",
     }
   - {
@@ -314,15 +315,15 @@ links:
   - {
       id: L18,
       group: B. Home and mortgage,
-      verdict: broken,
-      checked: code,
+      verdict: holds,
+      checked: browser,
       findings: [HM-7, JO-6],
-      statement: "A property follows its mortgage's ownership share at all times, in both directions.",
+      statement: "A property and its mortgage are linked. The mortgage's share is copied to the property when the pair is first set up, and either may then hold its own share (decision 14 option B).",
     }
   - {
       id: L71,
       group: B. Home and mortgage,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
       findings: [HM-3, DB-6],
       statement: "Whether a property is the home or a rental is a saved choice, not a guess from its name.",
@@ -331,7 +332,7 @@ links:
   - {
       id: L19,
       group: C. Buy to let,
-      verdict: broken,
+      verdict: holds,
       checked: browser,
       findings: [HM-4, DB-1],
       statement: "A buy-to-let mortgage added in Accounts appears on the Mortgage page with the same balance, rate and type.",
@@ -339,8 +340,8 @@ links:
   - {
       id: L20,
       group: C. Buy to let,
-      verdict: duplicated,
-      checked: code,
+      verdict: holds,
+      checked: browser,
       findings: [HM-4],
       statement: "A buy-to-let property value has one store; entered once, it shows on the Mortgage page, in net worth and equity.",
     }
@@ -1025,10 +1026,10 @@ facts:
       }
     other_stores:
       - {
-          ref: "account_details row for the current month",
+          ref: "the newest account_details row",
           status: derived,
-          path: apps/backend/src/modules/snapshots/snapshot-write.ts,
-          note: "kept equal by every current-month write; a past-month write does not move the balance",
+          path: apps/backend/src/modules/snapshots/balance-rule.ts,
+          note: "decision 8 A: syncBalancesToNewestRecord keeps the balance equal to the newest recorded month after every snapshot write, import and revert; creating an account writes its first row",
         }
     writers:
       - { surface: accounts, path: apps/web/app/routes/app.accounts._index.tsx }
@@ -1062,7 +1063,7 @@ facts:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
       - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
     links: [L01, L02, L03, L04, L06, L51, L67, L68]
-    verdict: duplicated
+    verdict: holds
     findings: [CH-2, DB-13]
 
   - id: balance-history
@@ -1085,7 +1086,7 @@ facts:
       - {
           surface: account-service,
           path: apps/backend/src/modules/finance/account-intake.service.ts,
-          note: "on a balance edit, not on create",
+          note: "on create (the first row) and on a balance edit",
         }
       - { surface: onboarding, path: apps/backend/src/modules/snapshots/first-snapshot.ts }
       - { surface: imports, path: apps/backend/src/modules/imports/imports.service.ts }
@@ -1098,31 +1099,31 @@ facts:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L04, L05, L68, L70]
     verdict: broken
-    findings: [CH-1, CH-2, CH-5]
+    findings: [CH-5]
+    note: CH-1 and CH-2 were fixed by audit slice 4; CH-5 (the history elsewhere) is slice 3.
 
   - id: check-in-done
     name: Whether a month's check-in was finished
     area: accounts
     source_of_truth:
       { ref: snapshot_checkins, path: apps/backend/src/entities/snapshot-checkin.entity.ts }
-    other_stores:
-      - {
-          ref: "any account_details row in the month",
-          status: duplicate,
-          path: packages/finance-engine/src/check-in-day.ts,
-          note: "this is what the reminder actually reads",
-        }
     writers:
       - { surface: check-in, path: apps/backend/src/modules/snapshots/snapshots.service.ts }
+      - {
+          surface: onboarding,
+          path: apps/backend/src/modules/snapshots/first-snapshot.ts,
+          note: "finishing onboarding records its month as checked in",
+        }
     readers:
       - {
-          surface: export,
-          path: apps/backend/src/modules/privacy/user-data-registry.ts,
-          note: "the only reader of the table",
+          surface: dashboard,
+          path: apps/backend/src/modules/snapshots/snapshots.controller.ts,
+          note: "GET /snapshots/check-ins, read by the reminder on the Dashboard and History",
         }
+      - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
     links: [L70]
-    verdict: broken
-    findings: [CH-7, DB-10]
+    verdict: holds
+    findings: [CH-3, CH-7, DB-10]
 
   - id: ownership-share
     name: Joint ownership and the user's share of an account
@@ -1144,7 +1145,7 @@ facts:
       - {
           surface: account-service,
           path: apps/backend/src/modules/finance/account-intake.service.ts,
-          note: "copies a mortgage's share to its property, one way",
+          note: "copies a new mortgage's share to its new property once, when POST /accounts/mortgage-with-property creates the pair (decision 14 B); later edits never move the other account",
         }
     readers:
       - { surface: picture, path: packages/finance-engine/src/joint-share.ts }
@@ -1286,15 +1287,15 @@ facts:
     other_stores:
       - {
           ref: user_profiles.buy_to_let_property_value,
-          status: duplicate,
+          status: legacy,
           path: apps/backend/src/entities/user-profile.entity.ts,
-          note: "what the Mortgage page's buy-to-let tab reads and writes; net worth never reads it",
+          note: "copied into a rental Property account by MoveBuyToLetProfileIntoAccounts1795470200000; nothing reads it; dropped in slice 9",
         }
     writers:
       - {
           surface: accounts,
-          path: apps/web/app/routes/app.accounts._index.tsx,
-          note: "the browser adds the Property after the mortgage is saved",
+          path: apps/backend/src/modules/finance/account-intake.service.ts,
+          note: "POST /accounts/mortgage-with-property creates the mortgage and its property in one transaction",
         }
       - { surface: mortgage, path: apps/web/app/containers/mortgage/MortgageContainer.tsx }
       - { surface: onboarding, path: apps/web/app/services/onboarding-seed.ts }
@@ -1304,12 +1305,12 @@ facts:
       - {
           surface: mortgage,
           path: packages/finance-engine/src/home-equity.ts,
-          note: "pickHomeProperty leaves the home out when there is more than one property that is not buy to let",
+          note: "pickHomeProperty takes the property saved as the home; it leaves the home out only when no kind is saved and more than one property could be it",
         }
       - { surface: dashboard, path: apps/web/app/routes/_index.tsx }
       - { surface: accounts, path: apps/web/app/features/accounts/accountRows.ts }
     links: [L10, L11, L20, L71]
-    verdict: duplicated
+    verdict: holds
     findings: [HM-3, HM-4, DB-1]
 
   - id: property-kind
@@ -1317,10 +1318,17 @@ facts:
     area: home
     source_of_truth:
       {
-        ref: "not stored: inferred from the account name",
-        path: packages/finance-engine/src/picture/selectors/loan-to-value.ts,
-        note: "accounts.account_subtype exists and holds a kind for mortgages, savings and investments; no kind is defined for properties",
+        ref: "accounts.account_subtype on Property rows",
+        path: apps/backend/src/entities/account.entity.ts,
+        note: "home or rental; the name test is only the back-fill rule (BackfillPropertyKindAndMortgageLink1795470100000) and the fallback for a row with no kind saved",
       }
+    writers:
+      - { surface: accounts, path: apps/web/app/features/accounts/accountFormBody.ts }
+      - {
+          surface: account-service,
+          path: apps/backend/src/modules/finance/account-intake.service.ts,
+          note: "a property created with its mortgage takes the mortgage's kind",
+        }
     readers:
       - { surface: picture, path: packages/finance-engine/src/picture/selectors/loan-to-value.ts }
       - { surface: mortgage, path: apps/web/app/containers/mortgage/MortgageContainer.tsx }
@@ -1329,8 +1337,55 @@ facts:
           path: apps/backend/src/modules/finance/account-intake.service.ts,
         }
     links: [L71, L18]
-    verdict: broken
+    verdict: holds
     findings: [HM-3, DB-6]
+
+  - id: mortgage-property-link
+    name: Which property a mortgage is on
+    area: home
+    source_of_truth:
+      {
+        ref: accounts.linked_account_id,
+        path: apps/backend/src/entities/account.entity.ts,
+        note: "on the mortgage; a foreign key to the Property account, ON DELETE SET NULL",
+      }
+    writers:
+      - { surface: accounts, path: apps/web/app/features/accounts/accountFormBody.ts }
+      - {
+          surface: account-service,
+          path: apps/backend/src/modules/finance/account-intake.service.ts,
+          note: "POST /accounts/mortgage-with-property links the pair it creates",
+        }
+      - { surface: mortgage, path: apps/web/app/containers/mortgage/MortgageContainer.tsx }
+    readers:
+      - { surface: picture, path: packages/finance-engine/src/picture/selectors/loan-to-value.ts }
+      - { surface: mortgage, path: apps/web/app/containers/mortgage/MortgageContainer.tsx }
+    links: [L10, L18]
+    verdict: holds
+
+  - id: repayment-type
+    name: How a mortgage is repaid
+    area: home
+    source_of_truth:
+      {
+        ref: accounts.repayment_type,
+        path: apps/backend/src/entities/account.entity.ts,
+        note: "repayment or interest-only, on each mortgage; null when not set",
+      }
+    other_stores:
+      - {
+          ref: user_profiles.mortgage_type,
+          status: legacy,
+          path: apps/backend/src/entities/user-profile.entity.ts,
+          note: "copied to the residential mortgage by BackfillPropertyKindAndMortgageLink1795470100000; shown only when the account has none; dropped in slice 9",
+        }
+    writers:
+      - { surface: accounts, path: apps/web/app/features/accounts/accountFormBody.ts }
+      - { surface: mortgage, path: apps/web/app/containers/mortgage/MortgageContainer.tsx }
+    readers:
+      - { surface: mortgage, path: apps/web/app/containers/mortgage/MortgageContainer.tsx }
+    links: [L17]
+    verdict: holds
 
   - id: buy-to-let-mortgage
     name: Buy-to-let mortgage balance, rate and type
@@ -1343,16 +1398,16 @@ facts:
     other_stores:
       - {
           ref: "user_profiles.buy_to_let_mortgage_balance, buy_to_let_mortgage_rate, buy_to_let_mortgage_type, has_buy_to_let, buy_to_let_count",
-          status: duplicate,
+          status: legacy,
           path: apps/backend/src/entities/user-profile.entity.ts,
-          note: "the Mortgage page's buy-to-let tab reads and writes these",
+          note: "copied into a buy-to-let Mortgage account by MoveBuyToLetProfileIntoAccounts1795470200000; nothing reads them; dropped in slice 9",
         }
     writers:
       - { surface: accounts, path: apps/web/app/routes/app.accounts._index.tsx }
       - {
           surface: mortgage,
           path: apps/web/app/containers/mortgage/MortgageContainer.tsx,
-          note: "writes the profile copy, not the account",
+          note: "the buy-to-let tab writes the account",
         }
     readers:
       - { surface: picture, path: packages/finance-engine/src/portfolio.ts }
@@ -1360,7 +1415,7 @@ facts:
       - {
           surface: mortgage,
           path: apps/web/app/containers/mortgage/MortgageContainer.tsx,
-          note: "reads the profile copy",
+          note: "the buy-to-let tab reads the account",
         }
       - {
           surface: self-assessment,
@@ -1369,7 +1424,8 @@ facts:
         }
     links: [L19, L21]
     verdict: broken
-    findings: [HM-4, SA-4, DB-1]
+    findings: [SA-4]
+    note: HM-4 and DB-1 were fixed by audit slice 4; SA-4 (Self Assessment shows the name only) is slice 7.
 
   - id: buy-to-let-rent
     name: Rent received on a rental property

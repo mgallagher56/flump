@@ -190,6 +190,12 @@ const AccountDetailContainer: FC = () => {
                 account.balance === undefined || account.balance === null
                   ? undefined
                   : Number(account.balance),
+              interestRate: account.interestRate ?? null,
+              monthlyContribution: account.monthlyContribution ?? null,
+              termMonths: account.termMonths ?? null,
+              fixedRateEndDate: account.fixedRateEndDate ?? null,
+              repaymentType: account.repaymentType ?? null,
+              linkedAccountId: account.linkedAccountId ?? null,
               creditLimit: account.creditLimit ?? null,
               promoZeroPercentUntil: account.promoZeroPercentUntil ?? null,
               studentLoanPlan: account.studentLoanPlan ?? null,

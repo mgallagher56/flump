@@ -18,10 +18,33 @@ export const MORTGAGE_SUBTYPE_OPTIONS = [
   { value: "btl_mortgage", label: "Buy-to-let (BTL) mortgage" },
 ] as const;
 
+/** Property kinds (system audit slice 4, L71): the home, or a property let out. */
+export const PROPERTY_SUBTYPE_OPTIONS = [
+  { value: "home", label: "Home" },
+  { value: "rental", label: "Rental property" },
+] as const;
+
+/** Loan kinds (system audit slice 4): labels only, no figure reads them. */
+export const LOAN_SUBTYPE_OPTIONS = [
+  { value: "car_finance", label: "Car finance or HP" },
+  { value: "buy_now_pay_later", label: "Buy now, pay later" },
+  { value: "other_loan", label: "Personal or other loan" },
+] as const;
+
+/** How a mortgage is repaid, stored on the Mortgage account. */
+export const MORTGAGE_REPAYMENT_OPTIONS = [
+  { value: "repayment", label: "Repayment" },
+  { value: "interest-only", label: "Interest only" },
+] as const;
+
 export const ACCOUNT_SUBTYPE_LABEL: Record<string, string> = Object.fromEntries(
-  [...SAVINGS_SUBTYPE_OPTIONS, ...INVESTMENT_SUBTYPE_OPTIONS, ...MORTGAGE_SUBTYPE_OPTIONS].map(
-    (o) => [o.value, o.label],
-  ),
+  [
+    ...SAVINGS_SUBTYPE_OPTIONS,
+    ...INVESTMENT_SUBTYPE_OPTIONS,
+    ...MORTGAGE_SUBTYPE_OPTIONS,
+    ...PROPERTY_SUBTYPE_OPTIONS,
+    ...LOAN_SUBTYPE_OPTIONS,
+  ].map((o) => [o.value, o.label]),
 );
 
 /** The subtypes that are ISAs: one list, shared with the engine's joint-ownership rule. */

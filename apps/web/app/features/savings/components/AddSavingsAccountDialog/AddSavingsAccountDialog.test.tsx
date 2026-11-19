@@ -459,5 +459,55 @@ describe("AddSavingsAccountDialog", () => {
       fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
       expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({ balance: "8000" });
     });
+
+    it("sends no ownership or share when they were left alone", () => {
+      render(
+        <AddSavingsAccountDialog
+          accountToEdit={JOINT_40 as never}
+          isOpen={true}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      const sent = mockSubmit.mock.calls[0]?.[0];
+      expect(sent).not.toHaveProperty("ownership");
+      expect(sent).not.toHaveProperty("sharePercent");
+      expect(sent).not.toHaveProperty("name");
+    });
+
+    it("a new share is sent with the ownership", () => {
+      render(
+        <AddSavingsAccountDialog
+          accountToEdit={JOINT_40 as never}
+          isOpen={true}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.change(screen.getByLabelText("Your share"), { target: { value: "50" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+      expect(mockSubmit.mock.calls[0]?.[0]).toMatchObject({
+        ownership: "joint",
+        sharePercent: "50",
+      });
+    });
+  });
+
+  it("makes a saver joint from the Savings page (SD-8), and offers no ownership for an ISA", () => {
+    render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/Account name/), { target: { value: "Our pot" } });
+    fireEvent.change(screen.getByLabelText(/Kind of account/), {
+      target: { value: "Saving:easy_access" },
+    });
+    fireEvent.change(screen.getByLabelText("Ownership"), { target: { value: "joint" } });
+    expect(screen.getByText("This is the whole balance. Your share is 50% of it.")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Add account" }));
+    expect(mockSubmit.mock.calls.at(-1)?.[0]).toMatchObject({
+      ownership: "joint",
+      sharePercent: "50",
+    });
+    fireEvent.change(screen.getByLabelText(/Kind of account/), {
+      target: { value: "Saving:cash_isa" },
+    });
+    expect(screen.queryByLabelText("Ownership")).toBeNull();
   });
 });

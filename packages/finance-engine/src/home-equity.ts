@@ -72,15 +72,20 @@ export type HomeProperty<T> =
   | { status: "ambiguous"; accounts: T[] };
 
 /**
- * Picks the home from a user's accounts: the Property accounts that are not buy to let
- * (`isResidentialHomeAccount`). Exactly one is the home. None means no home. More than one is
- * ambiguous: with no property kind stored there is no way to tell which is the home, so callers
- * leave home figures (loan to value, home equity, the mortgage page's home value) out.
+ * Picks the home from a user's accounts. A property saved as the home (`account_subtype` `home`)
+ * decides it: exactly one such property is the home, and two are ambiguous. Only when no property
+ * is saved as the home does the older rule apply, for rows with no kind saved: the Property
+ * accounts that are not buy to let by name (`isResidentialHomeAccount`). A rental is never the
+ * home. Callers leave home figures (loan to value, home equity, the mortgage page's home value)
+ * out when the answer is ambiguous.
  */
 export function pickHomeProperty<
   T extends { type?: string | null; name?: string | null; accountSubtype?: string | null },
 >(accounts: readonly T[]): HomeProperty<T> {
-  const homes = accounts.filter(isResidentialHomeAccount);
+  const saved = accounts.filter(
+    (a) => categorizeAccountType(a.type) === "property" && a.accountSubtype === "home",
+  );
+  const homes = saved.length > 0 ? saved : accounts.filter(isResidentialHomeAccount);
   if (homes.length === 0) return { status: "none" };
   if (homes.length === 1) return { status: "one", account: homes[0] as T };
   return { status: "ambiguous", accounts: homes };

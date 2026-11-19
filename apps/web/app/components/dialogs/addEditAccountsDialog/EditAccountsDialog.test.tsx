@@ -156,14 +156,13 @@ describe("<EditAccountDialogBtn", () => {
     expect(getByDisplayValue("Easy saver")).toBeDefined();
     await user.click(getByText("save"));
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        intent: "update",
-        accountId: "123456",
-        name: "Easy saver",
-        type: "Saving",
-      }),
+      expect.objectContaining({ intent: "update", accountId: "123456" }),
       expect.anything(),
     );
+    // Nothing was changed, so no field is sent (slice 4: an edit sends what changed).
+    const sent = mocks.mockFetcherSubmit.mock.calls.at(-1)?.[0] as Record<string, string>;
+    expect(sent).not.toHaveProperty("name");
+    expect(sent).not.toHaveProperty("type");
   });
 
   describe("a liability shows the amount owed and saves the stored figure unchanged", () => {
@@ -194,11 +193,8 @@ describe("<EditAccountDialogBtn", () => {
       expect(queryByLabelText("Balance")).toBeNull();
 
       await user.click(getByText("save"));
-      expect(lastSubmit()).toMatchObject({
-        intent: "update",
-        accountId: "sl1",
-        type: "Student Loan",
-      });
+      expect(lastSubmit()).toMatchObject({ intent: "update", accountId: "sl1" });
+      expect(lastSubmit()).not.toHaveProperty("type");
       // An untouched balance is not re-posted, so no history row is written for this month.
       expect(lastSubmit()).not.toHaveProperty("balance");
     });
@@ -318,9 +314,9 @@ describe("<EditAccountDialogBtn", () => {
     await user.click(getByText("edit"));
     expect(queryByText(/held in one name/)).toBeNull();
     await user.click(getByText("save"));
-    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ ownership: "joint", sharePercent: "60" }),
-      expect.anything(),
-    );
+    // Still joint at 60%: nothing changed, so neither is sent and the saved share stays.
+    const sent = mocks.mockFetcherSubmit.mock.calls.at(-1)?.[0] as Record<string, string>;
+    expect(sent).not.toHaveProperty("ownership");
+    expect(sent).not.toHaveProperty("sharePercent");
   });
 });

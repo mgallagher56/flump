@@ -142,6 +142,9 @@ function toContractAccounts(p: PersonaFixture) {
     studentLoanPlan: a.studentLoanPlan ?? null,
     ...(a.ownership != null ? { ownership: a.ownership } : {}),
     ...(a.sharePercent != null ? { sharePercent: Number(a.sharePercent) } : {}),
+    // System audit slice 4: a mortgage's linked property and repayment type travel with the row.
+    linkedAccountId: a.linkedAccountId ?? null,
+    repaymentType: (a.repaymentType as "repayment" | "interest-only" | null | undefined) ?? null,
     connectionId: null,
     createdAt: STAMP,
     updatedAt: STAMP,

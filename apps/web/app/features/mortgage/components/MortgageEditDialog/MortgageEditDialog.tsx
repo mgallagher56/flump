@@ -76,8 +76,8 @@ export interface MortgageEditDialogProps {
   onEditFixEndDateChange?: (value: string) => void;
   onEditMonthlyPaymentChange?: (value: number | null) => void;
   /**
-   * How the home value is offered: "input" shows the field (one or no residential property, or
-   * buy to let), "fromAccounts" shows one line instead (two or more residential properties), and
+   * How the property value is offered: "input" shows the field (one or no property the mortgage
+   * could be on), "fromAccounts" shows one line instead (two or more of them), and
    * "hidden" (the default) shows neither.
    */
   homeValueMode?: "input" | "fromAccounts" | "hidden";
@@ -185,7 +185,7 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
       <div className={dialogBody()}>
         {errorText ? <InlineAlert tone="danger">{errorText}</InlineAlert> : null}
 
-        {propertyCategory === "residential" && mortgageAccounts.length > 0 && onSelectAccount ? (
+        {mortgageAccounts.length > 0 && onSelectAccount ? (
           <FormField label="Mortgage account">
             {(field) => (
               <Select
@@ -324,7 +324,7 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
                   term={isBtl ? "Property value" : "Home value"}
                 >
                   {isBtl
-                    ? "Your own estimate"
+                    ? "Your own estimate. Saved on the rental property on Accounts."
                     : "Your own estimate. Saved as your home on Accounts."}
                 </InfoTip>
               }
@@ -340,10 +340,11 @@ export const MortgageEditDialog: FC<MortgageEditDialogProps> = ({
             </FormField>
           ) : null}
           {homeValueMode === "fromAccounts" ? (
-            // Only with two or more possible homes: the same words as the page's line (HM-3).
+            // Only with two or more possible properties: the same words as the page's line (HM-3).
             <p className={homeValueNote()}>
-              You have more than one property on Accounts, so we cannot tell which is your home.
-              Change each value on Accounts.
+              {isBtl
+                ? "You have more than one rental property on Accounts, so we cannot tell which this mortgage is on. Change each value on Accounts."
+                : "You have more than one property on Accounts, so we cannot tell which is your home. Change each value on Accounts."}
             </p>
           ) : null}
         </div>

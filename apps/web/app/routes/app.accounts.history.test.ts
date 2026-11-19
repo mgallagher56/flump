@@ -25,7 +25,7 @@ describe("app.accounts.history loader", () => {
       budgetEntries: [],
     });
     const data = await run();
-    expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(args);
+    expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(args, { includeCheckIns: true });
     expect(data.currentMonth).toMatch(/^\d{4}-(0[1-9]|1[0-2])$/);
     expect(data.accounts).toBe(accounts);
     expect(data.accountDetails).toEqual([{ accountId: "a1", year: 2026, month: 10, value: 3000 }]);
@@ -44,5 +44,16 @@ describe("app.accounts.history loader", () => {
 
     loadWorkspaceSnapshot.mockResolvedValue({ accounts, accountDetails: [], userProfile: null });
     expect((await run()).basis).toEqual({ countProperty: true, countStudentLoan: false });
+  });
+
+  it("passes the latest completed check-in month, and null when there is none or it is unknown (CH-3)", async () => {
+    loadWorkspaceSnapshot.mockResolvedValue({
+      accounts,
+      accountDetails: [],
+      latestCheckInMonth: "2026-10",
+    });
+    expect((await run()).lastCheckInMonth).toBe("2026-10");
+    loadWorkspaceSnapshot.mockResolvedValue({ accounts, accountDetails: [] });
+    expect((await run()).lastCheckInMonth).toBeNull();
   });
 });

@@ -14,17 +14,8 @@ vi.mock("~/utils/auth.server", () => ({
 
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { apiConfig } from "~/config.server";
-import {
-  accountFixture,
-  accountWithDetailsFixture,
-  contractFetch,
-  jsonResponse,
-} from "~/test/fixtures/contractResponses";
-import {
-  action as accountsAction,
-  HOME_ALREADY_THERE_NOTICE,
-  HOME_NOT_SAVED_NOTICE,
-} from "./app.accounts._index";
+import { accountFixture, contractFetch, jsonResponse } from "~/test/fixtures/contractResponses";
+import { action as accountsAction, MORTGAGE_NOT_LINKED_NOTICE } from "./app.accounts._index";
 import { action as debtAction } from "./app.debt";
 import { action as onboardingAction } from "./app.onboarding";
 import { action as pensionAction } from "./app.pension";
@@ -99,6 +90,63 @@ const cases: Case[] = [
     method: "PATCH",
     path: "/accounts/d1",
     body: { name: "Card", balance: -900, interestRate: 0 },
+  },
+  {
+    // A joint car loan from the Debt page, saved with its loan kind (slice 4).
+    route: "debt",
+    action: debtAction,
+    intent: "createDebt",
+    fields: {
+      name: "Car",
+      type: "Loan",
+      balance: "8000",
+      interestRate: "",
+      monthlyContribution: "",
+      accountSubtype: "car_finance",
+      ownership: "joint",
+      sharePercent: "50",
+    },
+    method: "POST",
+    path: "/accounts",
+    body: {
+      name: "Car",
+      type: "Loan",
+      balance: -8000,
+      interestRate: null,
+      monthlyContribution: null,
+      accountSubtype: "car_finance",
+      ownership: "joint",
+      sharePercent: 50,
+    },
+  },
+  {
+    route: "debt",
+    action: debtAction,
+    intent: "updateDebt",
+    fields: { accountId: "d1", balance: "850", ownership: "sole" },
+    method: "PATCH",
+    path: "/accounts/d1",
+    body: { balance: -850, ownership: "sole", sharePercent: null },
+  },
+  {
+    // A loan kind cleared back to "Not set" on an edit is sent as null, not dropped.
+    route: "debt",
+    action: debtAction,
+    intent: "updateDebt",
+    fields: { accountId: "d1", accountSubtype: "" },
+    method: "PATCH",
+    path: "/accounts/d1",
+    body: { accountSubtype: null },
+  },
+  {
+    // A loan kind changed on an edit is sent as the new kind.
+    route: "debt",
+    action: debtAction,
+    intent: "updateDebt",
+    fields: { accountId: "d1", accountSubtype: "car_finance" },
+    method: "PATCH",
+    path: "/accounts/d1",
+    body: { accountSubtype: "car_finance" },
   },
   {
     route: "debt",
@@ -259,6 +307,33 @@ const cases: Case[] = [
     body: { name: "Joint saver", type: "Saving", accountSubtype: "cash_isa", ownership: "sole" },
   },
   {
+    // A saver made joint from the Savings page (SD-8).
+    route: "savings",
+    action: savingsAction,
+    intent: "updateSavingsAccount",
+    fields: { accountId: "s1", ownership: "joint", sharePercent: "40" },
+    method: "PATCH",
+    path: "/accounts/s1",
+    body: { ownership: "joint", sharePercent: 40 },
+  },
+  {
+    route: "savings",
+    action: savingsAction,
+    intent: "createSavingsAccount",
+    fields: { name: "Our pot", balance: "100", ownership: "joint", sharePercent: "50" },
+    method: "POST",
+    path: "/accounts",
+    body: {
+      name: "Our pot",
+      type: "Saving",
+      balance: 100,
+      interestRate: null,
+      monthlyContribution: null,
+      ownership: "joint",
+      sharePercent: 50,
+    },
+  },
+  {
     route: "savings",
     action: savingsAction,
     intent: "deleteAccount",
@@ -367,7 +442,9 @@ const cases: Case[] = [
 ];
 
 const makeArgs = (c: Case): any => {
-  const form = new FormData();
+  // URL-encoded, as `fetcher.submit` sends an object. The test environment's multipart FormData
+  // drops an empty field, and an empty field is how a form clears a value.
+  const form = new URLSearchParams();
   form.set("intent", c.intent);
   for (const [k, v] of Object.entries(c.fields)) form.set(k, v);
   return {
@@ -534,15 +611,13 @@ describe("accounts action, connectBank", () => {
   });
 });
 
-describe("accounts action, a mortgage added with the home's value", () => {
+describe("accounts action, a mortgage and the property it is on", () => {
   const REQUEST_ID = "4c1f6a2e-0d3b-4e8a-9b7c-2f5e1d0a9c33";
-  const createMortgage = (fields: Record<string, string>) => {
+  const MORTGAGE_ID = "00000000-0000-4000-8000-0000000000aa";
+  const create = (fields: Record<string, string>) => {
     const form = new FormData();
     form.set("intent", "create");
     form.set("requestId", REQUEST_ID);
-    form.set("name", "Nationwide mortgage");
-    form.set("type", "Mortgage");
-    form.set("balance", "-200000");
     for (const [k, v] of Object.entries(fields)) form.set(k, v);
     return accountsAction({
       request: new Request("http://localhost/app", { method: "POST", body: form }),
@@ -550,18 +625,14 @@ describe("accounts action, a mortgage added with the home's value", () => {
       context: {},
     } as any);
   };
+  const createMortgage = (fields: Record<string, string>) =>
+    create({ name: "Nationwide mortgage", type: "Mortgage", balance: "-200000", ...fields });
 
   /**
-   * A small in-memory backend: GET /accounts lists what is saved, POST /accounts saves a row and
-   * answers with it, PATCH /accounts/:id updates one. A POST whose Idempotency-Key was seen
-   * before replays the first answer and saves nothing, as the real backend does. `fail` can turn
-   * a request into an error, after or instead of saving.
+   * A small backend: POST /accounts saves a row, POST /accounts/mortgage-with-property saves the
+   * pair, PATCH /accounts/:id answers with the row. `fail` turns a request into a 503.
    */
-  const fakeBackend = (
-    saved: Array<Record<string, unknown>> = [],
-    fail?: (req: { method: string; body: any }) => "before" | "after" | undefined,
-  ) => {
-    const replays = new Map<string, unknown>();
+  const fakeBackend = (fail?: (req: { method: string; path: string }) => boolean) => {
     let next = 1;
     const fetchMock = vi
       .fn()
@@ -569,50 +640,39 @@ describe("accounts action, a mortgage added with the home's value", () => {
         const method = init?.method ?? "GET";
         const path = new URL(String(input)).pathname;
         const body = init?.body ? JSON.parse(String(init.body)) : null;
-        const failure = fail?.({ method, body });
-        if (failure === "before") return jsonResponse({ message: "Unavailable" }, 503);
-        if (method === "GET" && path.endsWith("/accounts")) {
+        if (fail?.({ method, path })) return jsonResponse({ message: "Unavailable" }, 503);
+        const row = (fields: Record<string, unknown>) => ({
+          ...accountFixture,
+          ...fields,
+          id: `00000000-0000-4000-8000-00000000000${next++}`,
+          ownership: fields.ownership ?? "sole",
+          sharePercent: fields.sharePercent ?? null,
+        });
+        if (method === "POST" && path.endsWith("/accounts/mortgage-with-property")) {
+          const mortgage = row({ ...body.mortgage, type: "Mortgage" });
+          const property = row({ ...body.property, type: "Property" });
           return jsonResponse(
-            saved.map((row) => ({ ...accountWithDetailsFixture, ...row })),
-            200,
+            { mortgage: { ...mortgage, linkedAccountId: property.id }, property },
+            201,
           );
         }
-        if (method === "POST" && path.endsWith("/accounts")) {
-          const key = (init?.headers as Record<string, string> | undefined)?.["Idempotency-Key"];
-          if (key && replays.has(key)) return jsonResponse(replays.get(key), 201);
-          const row = {
-            ...accountFixture,
-            ...body,
-            id: `00000000-0000-4000-8000-00000000000${next++}`,
-            ownership: body.ownership ?? "sole",
-            sharePercent: body.sharePercent ?? null,
-          };
-          saved.push(row);
-          if (key) replays.set(key, row);
-          if (failure === "after") return jsonResponse({ message: "Gateway timeout" }, 504);
-          return jsonResponse(row, 201);
-        }
-        if (method === "PATCH") {
-          const id = path.split("/").pop();
-          const row = saved.find((r) => r.id === id);
-          Object.assign(row ?? {}, body);
-          return jsonResponse({ ...accountFixture, ...row }, 200);
-        }
+        if (method === "POST" && path.endsWith("/accounts")) return jsonResponse(row(body), 201);
+        if (method === "PATCH") return jsonResponse({ ...accountFixture, ...body }, 200);
         return contractFetch()(input, init);
       });
-    return { fetchMock, saved };
+    return fetchMock;
   };
   const calls = (fetchMock: ReturnType<typeof vi.fn>, method: string) =>
     fetchMock.mock.calls.filter(([, init]) => ((init as RequestInit)?.method ?? "GET") === method);
-  const postedBodies = (fetchMock: ReturnType<typeof vi.fn>) =>
-    calls(fetchMock, "POST").map(([, init]) => JSON.parse(String((init as RequestInit).body)));
-  const postedKeys = (fetchMock: ReturnType<typeof vi.fn>) =>
-    calls(fetchMock, "POST").map(
-      ([, init]) => ((init as RequestInit).headers as Record<string, string>)["Idempotency-Key"],
-    );
+  const paths = (fetchMock: ReturnType<typeof vi.fn>) =>
+    fetchMock.mock.calls.map(([input]) => new URL(String(input)).pathname.replace(/^\/v1/, ""));
+  const bodyOf = (call: unknown[] | undefined) =>
+    JSON.parse(String((call?.[1] as RequestInit | undefined)?.body));
+  const headersOf = (call: unknown[] | undefined) =>
+    (call?.[1] as RequestInit | undefined)?.headers as Record<string, string>;
 
-  it("adds the mortgage first, then the home with the mortgage's ownership and share", async () => {
-    const { fetchMock } = fakeBackend();
+  it("adds the mortgage and its home in one call, linked, keyed from the dialog's request id", async () => {
+    const fetchMock = fakeBackend();
     globalThis.fetch = fetchMock;
     const res: any = await createMortgage({
       homeValue: "325000",
@@ -620,148 +680,101 @@ describe("accounts action, a mortgage added with the home's value", () => {
       sharePercent: "40",
     });
     expect(res.data).toEqual({ success: true });
-    const posted = postedBodies(fetchMock);
-    expect(posted).toHaveLength(2);
-    expect(posted[0]).toMatchObject({ name: "Nationwide mortgage", type: "Mortgage" });
-    // The contract is a strict object: the extra form fields never reach /accounts.
-    expect(posted[0]).not.toHaveProperty("homeValue");
-    expect(posted[0]).not.toHaveProperty("requestId");
-    expect(posted[1]).toEqual({
-      name: "Home (your estimate)",
-      type: "Property",
-      balance: 325000,
-      ownership: "joint",
-      sharePercent: 40,
+    expect(paths(fetchMock)).toEqual(["/accounts/mortgage-with-property"]);
+    const posted = calls(fetchMock, "POST")[0];
+    // The property takes the mortgage's ownership and share on the backend (decision 14 B), so
+    // only its value is sent; the strict contract keeps form-only fields out.
+    expect(bodyOf(posted)).toEqual({
+      mortgage: {
+        name: "Nationwide mortgage",
+        balance: -200000,
+        ownership: "joint",
+        sharePercent: 40,
+      },
+      property: { balance: 325000 },
     });
-    expect(postedKeys(fetchMock)).toEqual([`${REQUEST_ID}:mortgage`, `${REQUEST_ID}:home`]);
+    expect(headersOf(posted)["Idempotency-Key"]).toBe(`${REQUEST_ID}:mortgage`);
   });
 
-  it("sends a sole home with no share", async () => {
-    const { fetchMock } = fakeBackend();
+  it("adds a buy-to-let mortgage with its rental the same way (the backend picks the kind)", async () => {
+    const fetchMock = fakeBackend();
     globalThis.fetch = fetchMock;
-    await createMortgage({ homeValue: "325000", ownership: "sole" });
-    expect(postedBodies(fetchMock)[1]).toMatchObject({ ownership: "sole", sharePercent: null });
-  });
-
-  it("never stores a buy-to-let value as a property here", async () => {
-    const { fetchMock } = fakeBackend();
-    globalThis.fetch = fetchMock;
-    const res: any = await createMortgage({
+    await createMortgage({
       homeValue: "250000",
       accountSubtype: "btl_mortgage",
       ownership: "sole",
     });
-    expect(res.data).toMatchObject({ success: true });
-    // Only the mortgage is written; the buy-to-let value lives on the profile (mortgage page).
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(postedBodies(fetchMock)).toHaveLength(1);
+    expect(paths(fetchMock)).toEqual(["/accounts/mortgage-with-property"]);
+    expect(bodyOf(calls(fetchMock, "POST")[0])).toMatchObject({
+      mortgage: { accountSubtype: "btl_mortgage" },
+      property: { balance: 250000 },
+    });
   });
 
-  it("creates no home when the mortgage save fails, and returns that error", async () => {
-    const { fetchMock, saved } = fakeBackend([], ({ method, body }) =>
-      method === "POST" && body?.type === "Mortgage" ? "before" : undefined,
+  it("links to a saved property with a plain add and sends no property value", async () => {
+    const fetchMock = fakeBackend();
+    globalThis.fetch = fetchMock;
+    await createMortgage({
+      homeValue: "325000",
+      linkedAccountId: "11111111-2222-4333-8444-555555555555",
+    });
+    expect(paths(fetchMock)).toEqual(["/accounts"]);
+    expect(bodyOf(calls(fetchMock, "POST")[0])).toMatchObject({
+      type: "Mortgage",
+      linkedAccountId: "11111111-2222-4333-8444-555555555555",
+    });
+  });
+
+  it("adds only the mortgage without a value", async () => {
+    const fetchMock = fakeBackend();
+    globalThis.fetch = fetchMock;
+    await createMortgage({});
+    expect(paths(fetchMock)).toEqual(["/accounts"]);
+    expect(headersOf(calls(fetchMock, "POST")[0])["Idempotency-Key"]).toBe(
+      `${REQUEST_ID}:mortgage`,
     );
+  });
+
+  it("returns the error when the pair cannot be saved, with nothing else written", async () => {
+    const fetchMock = fakeBackend(({ path }) => path.endsWith("/mortgage-with-property"));
     globalThis.fetch = fetchMock;
     const res: any = await createMortgage({ homeValue: "325000" });
     expect(res.data.success).toBe(false);
     expect(res.init.status).toBe(503);
-    expect(saved).toHaveLength(0);
-    expect(postedBodies(fetchMock)).toHaveLength(1);
-    expect(calls(fetchMock, "GET")).toHaveLength(0);
-  });
-
-  it("keeps the mortgage and says so when the home save fails, with nothing deleted", async () => {
-    const { fetchMock, saved } = fakeBackend([], ({ method, body }) =>
-      method === "POST" && body?.type === "Property" ? "before" : undefined,
-    );
-    globalThis.fetch = fetchMock;
-    const res: any = await createMortgage({ homeValue: "325000" });
-    expect(res.data).toEqual({ success: true, notice: HOME_NOT_SAVED_NOTICE });
-    expect(HOME_NOT_SAVED_NOTICE).toBe(
-      "We saved your mortgage but could not save your home value. Add it on the mortgage page.",
-    );
-    expect(saved.map((row) => row.type)).toEqual(["Mortgage"]);
-    expect(calls(fetchMock, "DELETE")).toHaveLength(0);
-  });
-
-  it("saves the mortgage and says why the value was not added when a home is already there", async () => {
-    const { fetchMock } = fakeBackend([{ name: "Our flat", type: "Property", balance: 280000 }]);
-    globalThis.fetch = fetchMock;
-    const res: any = await createMortgage({ homeValue: "325000" });
-    expect(res.data).toEqual({ success: true, notice: HOME_ALREADY_THERE_NOTICE });
-    expect(HOME_ALREADY_THERE_NOTICE).toBe(
-      "We saved your mortgage. Your home value was not added because you already have a home on Accounts. Update it on the mortgage page.",
-    );
-    const posted = postedBodies(fetchMock);
-    expect(posted).toHaveLength(1);
-    expect(posted[0]).toMatchObject({ type: "Mortgage" });
-  });
-
-  it("does not count a buy-to-let property as a home already there", async () => {
-    const { fetchMock } = fakeBackend([{ name: "Buy to let flat", type: "Property" }]);
-    globalThis.fetch = fetchMock;
-    const res: any = await createMortgage({ homeValue: "325000" });
-    expect(res.data).toEqual({ success: true });
-    expect(postedBodies(fetchMock).map((b) => b.type)).toEqual(["Mortgage", "Property"]);
-  });
-
-  it("replays on a retry after a timeout that did save, so nothing is added twice", async () => {
-    // First try: the mortgage saves but its answer times out, so the action reports an error.
-    let first = true;
-    const { fetchMock, saved } = fakeBackend([], ({ method, body }) => {
-      if (first && method === "POST" && body?.type === "Mortgage") {
-        first = false;
-        return "after";
-      }
-      return undefined;
-    });
-    globalThis.fetch = fetchMock;
-    const failed: any = await createMortgage({ homeValue: "325000" });
-    expect(failed.data.success).toBe(false);
-    expect(saved.map((row) => row.type)).toEqual(["Mortgage"]);
-
-    // Save again from the same opening of the dialog: the same keys, so the mortgage replays.
-    const retried: any = await createMortgage({ homeValue: "325000" });
-    expect(retried.data).toEqual({ success: true });
-    expect(saved.map((row) => row.type)).toEqual(["Mortgage", "Property"]);
-    expect(postedKeys(fetchMock)).toEqual([
-      `${REQUEST_ID}:mortgage`,
-      `${REQUEST_ID}:mortgage`,
-      `${REQUEST_ID}:home`,
-    ]);
-  });
-
-  it("adds no second home on a retry after both saved, and lines its share up with the mortgage", async () => {
-    // An earlier try saved both, but the home with a different share (sole) from the mortgage.
-    const { fetchMock, saved } = fakeBackend();
-    globalThis.fetch = fetchMock;
-    await createMortgage({ homeValue: "325000", ownership: "joint", sharePercent: "50" });
-    const home = saved.find((row) => row.type === "Property") as Record<string, unknown>;
-    Object.assign(home, { ownership: "sole", sharePercent: null });
-
-    const retried: any = await createMortgage({
-      homeValue: "325000",
-      ownership: "joint",
-      sharePercent: "50",
-    });
-    expect(retried.data).toEqual({ success: true });
-    expect(saved.map((row) => row.type)).toEqual(["Mortgage", "Property"]);
-    const patches = calls(fetchMock, "PATCH");
-    expect(patches).toHaveLength(1);
-    expect(String(patches[0]?.[0])).toMatch(new RegExp(`/accounts/${home.id}$`));
-    expect(JSON.parse(String((patches[0]?.[1] as RequestInit | undefined)?.body))).toEqual({
-      ownership: "joint",
-      sharePercent: 50,
-    });
-    expect(home).toMatchObject({ ownership: "joint", sharePercent: 50 });
-  });
-
-  it("reads nothing extra and adds no home without a value", async () => {
-    const { fetchMock } = fakeBackend();
-    globalThis.fetch = fetchMock;
-    await createMortgage({});
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(postedBodies(fetchMock)).toHaveLength(1);
+  });
+
+  it("links the mortgage to a property added for it, at the mortgage's version", async () => {
+    const fetchMock = fakeBackend();
+    globalThis.fetch = fetchMock;
+    const res: any = await create({
+      name: "Home (your estimate)",
+      type: "Property",
+      accountSubtype: "home",
+      balance: "300000",
+      linkMortgageId: MORTGAGE_ID,
+      linkMortgageVersion: "2026-01-05T10:00:00.000Z",
+    });
+    expect(res.data).toEqual({ success: true });
+    expect(paths(fetchMock)).toEqual(["/accounts", `/accounts/${MORTGAGE_ID}`]);
+    const posted = bodyOf(calls(fetchMock, "POST")[0]);
+    expect(posted).not.toHaveProperty("linkMortgageId");
+    const patch = calls(fetchMock, "PATCH")[0];
+    expect(bodyOf(patch)).toEqual({ linkedAccountId: "00000000-0000-4000-8000-000000000001" });
+    expect(headersOf(patch)["If-Match"]).toBe('"2026-01-05T10:00:00.000Z"');
+  });
+
+  it("keeps the property and says so when the link fails", async () => {
+    const fetchMock = fakeBackend(({ method }) => method === "PATCH");
+    globalThis.fetch = fetchMock;
+    const res: any = await create({
+      name: "Home (your estimate)",
+      type: "Property",
+      balance: "300000",
+      linkMortgageId: MORTGAGE_ID,
+    });
+    expect(res.data).toEqual({ success: true, notice: MORTGAGE_NOT_LINKED_NOTICE });
+    expect(calls(fetchMock, "DELETE")).toHaveLength(0);
   });
 });
 

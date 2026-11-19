@@ -5,10 +5,10 @@ import { CHECK_IN_ROUTE, isCheckInDue, MonthlyCheckInCard } from "./MonthlyCheck
 
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
-const renderCard = (lastRecordedMonth: string | null) =>
+const renderCard = (lastCheckInMonth: string | null) =>
   render(
     <MemoryRouter>
-      <MonthlyCheckInCard currentMonth="2026-11" lastRecordedMonth={lastRecordedMonth} />
+      <MonthlyCheckInCard currentMonth="2026-11" lastCheckInMonth={lastCheckInMonth} />
     </MemoryRouter>,
   );
 
@@ -23,22 +23,22 @@ describe("MonthlyCheckInCard", () => {
     expect(screen.getAllByRole("link")).toHaveLength(1);
   });
 
-  it("says when balances were last recorded, without overdue wording", () => {
+  it("says when the last check-in was, without overdue wording", () => {
     renderCard("2026-08");
-    const text = screen.getByText(/Last recorded month: August 2026/).textContent ?? "";
-    expect(text).toMatch(/Balances for this month are not recorded yet/);
+    const text = screen.getByText(/Last check-in: August 2026/).textContent ?? "";
+    expect(text).toMatch(/This month's check-in is not done yet/);
     expect(text).not.toMatch(/overdue|behind|missed|streak/i);
     expect(screen.getByRole("link", { name: "Start monthly check-in" })).toBeDefined();
   });
 
-  it("shows nothing once this month is recorded", () => {
+  it("shows nothing once this month's check-in is done", () => {
     const { container } = renderCard("2026-11");
     expect(container.innerHTML).toBe("");
-    expect(isCheckInDue({ currentMonth: "2026-11", lastRecordedMonth: "2026-11" })).toBe(false);
+    expect(isCheckInDue({ currentMonth: "2026-11", lastCheckInMonth: "2026-11" })).toBe(false);
   });
 
   it("waits for the chosen check-in day when last month was recorded", () => {
-    const base = { currentMonth: "2026-11", lastRecordedMonth: "2026-10", checkInDay: 28 };
+    const base = { currentMonth: "2026-11", lastCheckInMonth: "2026-10", checkInDay: 28 };
     expect(isCheckInDue({ ...base, today: "2026-11-27" })).toBe(false);
     expect(isCheckInDue({ ...base, today: "2026-11-28" })).toBe(true);
     const { container } = render(
@@ -53,10 +53,16 @@ describe("MonthlyCheckInCard", () => {
     expect(
       isCheckInDue({
         currentMonth: "2026-11",
-        lastRecordedMonth: "2026-09",
+        lastCheckInMonth: "2026-09",
         checkInDay: 28,
         today: "2026-11-05",
       }),
+    ).toBe(true);
+  });
+
+  it("shows when the last check-in could not be read (CH-3)", () => {
+    expect(
+      isCheckInDue({ currentMonth: "2026-11", lastCheckInMonth: undefined, today: "2026-11-02" }),
     ).toBe(true);
   });
 

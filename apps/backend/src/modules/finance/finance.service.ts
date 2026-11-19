@@ -40,8 +40,8 @@ import { BankProviderRegistry } from "../banking/providers/provider.registry";
 import {
   AccountIntakeService,
   type CreateAccountDto,
+  type CreateMortgageWithPropertyDto,
   type UpdateAccountDto,
-  type UpdateBalancesDto,
 } from "./account-intake.service";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -111,8 +111,8 @@ export class FinanceService {
     return this.accountIntakeService.updateAccount(userId, id, body, expectedVersion);
   }
 
-  async updateBalances(userId: string, body: UpdateBalancesDto) {
-    return this.accountIntakeService.updateBalances(userId, body);
+  async createMortgageWithProperty(userId: string, body: CreateMortgageWithPropertyDto) {
+    return this.accountIntakeService.createMortgageWithProperty(userId, body);
   }
 
   /**

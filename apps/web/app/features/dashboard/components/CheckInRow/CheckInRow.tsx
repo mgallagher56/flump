@@ -7,6 +7,7 @@ import {
   isCheckInDue,
   type MonthlyCheckInCardProps,
 } from "~/features/snapshot/components/MonthlyCheckInCard";
+import { formatMonth } from "~/features/snapshot/snapshotModel";
 import { row, rowIcon, rowText } from "./CheckInRow.styles";
 
 export type CheckInRowProps = MonthlyCheckInCardProps;
@@ -22,15 +23,20 @@ export const monthName = (month: string): string => {
   );
 };
 
-/** The one line the row says: which month is not recorded yet, from the data. */
-export const checkInLine = ({ currentMonth, lastRecordedMonth }: CheckInRowProps): string =>
-  lastRecordedMonth
-    ? `${monthName(currentMonth)} balances not recorded yet`
-    : "No balances recorded yet";
+/**
+ * The one line the row says, from the saved check-ins (CH-3): when the last one was, that there
+ * has been none, or (when that could not be read) which month to record.
+ */
+export const checkInLine = ({ currentMonth, lastCheckInMonth }: CheckInRowProps): string =>
+  lastCheckInMonth
+    ? `Last check-in: ${formatMonth(lastCheckInMonth)}`
+    : lastCheckInMonth === null
+      ? "No monthly check-in yet"
+      : `Record your ${monthName(currentMonth)} balances`;
 
 /**
  * The dashboard's way into the monthly check-in (E30, R2-4 item 5): one line and one button, drawn
- * only when this month has no recorded balances. Matter-of-fact: no streaks, no "overdue", nothing
+ * only while this month's check-in is not done. Matter-of-fact: no streaks, no "overdue", nothing
  * that counts missed months. The heading is for screen readers; the line says the rest.
  */
 export const CheckInRow: FC<CheckInRowProps> = (props) => {

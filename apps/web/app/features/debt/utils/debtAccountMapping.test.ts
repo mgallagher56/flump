@@ -1,6 +1,6 @@
 import type { DebtItem } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
-import { debtItemToAccountPayload } from "./debtAccountMapping";
+import { debtItemToAccountPayload, debtTypeToAccountSubtype } from "./debtAccountMapping";
 
 const base: Omit<DebtItem, "id"> = {
   name: "Debt",
@@ -37,5 +37,16 @@ describe("debtItemToAccountPayload", () => {
       debtItemToAccountPayload({ ...base, minimumPaymentEstimated: true }).monthlyContribution,
     ).toBeNull();
     expect(debtItemToAccountPayload({ ...base, minimumPayment: 0 }).monthlyContribution).toBeNull();
+  });
+});
+
+describe("debtTypeToAccountSubtype", () => {
+  it("saves each loan with its kind, and a card or overdraft with none", () => {
+    expect(debtTypeToAccountSubtype("car_finance")).toBe("car_finance");
+    expect(debtTypeToAccountSubtype("bnpl")).toBe("buy_now_pay_later");
+    expect(debtTypeToAccountSubtype("loan")).toBe("other_loan");
+    expect(debtTypeToAccountSubtype("other")).toBe("other_loan");
+    expect(debtTypeToAccountSubtype("credit_card")).toBeNull();
+    expect(debtTypeToAccountSubtype("overdraft")).toBeNull();
   });
 });

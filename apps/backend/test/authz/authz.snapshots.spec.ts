@@ -71,6 +71,24 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     accountA = await create(h.tokens.a, "A Saver", 100);
     accountA2 = await create(h.tokens.a, "A Second", 50);
     accountB = await create(h.tokens.b, "B Saver", 900);
+    // Creating an account records its first month (system audit slice 4). These tests count the
+    // rows the snapshot route writes, so each starts from accounts with no history.
+    await h.dataSource.query(`DELETE FROM "account_details"`);
+  });
+
+  it("GET /snapshots/check-ins: 401 without a token; each user sees only their own check-ins", async () => {
+    exercised.add("GET /snapshots/check-ins");
+    expect((await h.call("get", "/snapshots/check-ins", undefined)).status).toBe(401);
+    const done = await put(PAST, h.tokens.a, {
+      values: [{ accountId: accountA, value: 5 }],
+      complete: true,
+    });
+    expect(done.status).toBe(200);
+    const a = await h.call("get", "/snapshots/check-ins", h.tokens.a);
+    expect(a.status).toBe(200);
+    expect(a.body).toEqual({ latestCompletedMonth: PAST });
+    const b = await h.call("get", "/snapshots/check-ins", h.tokens.b);
+    expect(b.body).toEqual({ latestCompletedMonth: null });
   });
 
   it("PUT /snapshots/:month: no, expired and dev-bypass tokens get 401 and nothing is written", async () => {
@@ -161,6 +179,8 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     });
     expect(created.status).toBe(201);
     const mortgage = created.body.id as string;
+    // Without the first-month row the create writes, so 2001-01 is the newest record below.
+    await details().delete({ accountId: mortgage });
     expect(
       (await put("2001-01", h.tokens.a, { values: [{ accountId: mortgage, value: 186000 }] }))
         .status,
@@ -203,10 +223,16 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     });
     expect(created.status).toBe(201);
     const loan = created.body.id as string;
-    // A past month does not move the saved balance, so the record (8,610) and saved (8,400) differ.
+    await details().delete({ accountId: loan });
+    // 2001-01 is now the newest record, so the saved balance moves to it (decision 8 option A,
+    // system audit slice 4): saved and record no longer drift apart through the API.
     expect(
       (await put("2001-01", h.tokens.a, { values: [{ accountId: loan, value: 8610 }] })).status,
     ).toBe(200);
+    expect(Number((await accounts().findOneBy({ id: loan }))?.balance)).toBe(-8610);
+    // Rows saved before slice 4 can still disagree. Ruling (b) withholds the calculated figure
+    // for them: record 8,610, saved 8,400.
+    await accounts().update({ id: loan }, { balance: -8400 });
     const fromRecord = calculateCheckInBalance({
       type: "Loan",
       interestRate: 7.9,
@@ -294,8 +320,8 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
       balance: -10,
     });
     const id = card.body.id as string;
-    const batch = await h.call("patch", "/accounts/balances", h.tokens.a, {
-      balances: [{ id: id.toUpperCase(), balance: 700 }],
+    const batch = await put(THIS_MONTH, h.tokens.a, {
+      values: [{ accountId: id.toUpperCase(), value: 700 }],
     });
     expect(batch.status).toBe(200);
     expect(Number((await accounts().findOneBy({ id }))?.balance)).toBe(-700);
@@ -544,9 +570,14 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(Number((await accounts().findOneBy({ id: accountA }))?.balance)).toBe(321);
   });
 
-  it("a past month never touches the account's balance", async () => {
+  it("a past month moves the balance only while it is the newest record (decision 8 A)", async () => {
+    const balance = async () => Number((await accounts().findOneBy({ id: accountA }))?.balance);
+    // accountA has no history, so the past month is the newest record.
     await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 999 }] });
-    expect(Number((await accounts().findOneBy({ id: accountA }))?.balance)).toBe(100);
+    expect(await balance()).toBe(999);
+    await put(THIS_MONTH, h.tokens.a, { values: [{ accountId: accountA, value: 321 }] });
+    await put(PAST, h.tokens.a, { values: [{ accountId: accountA, value: 555 }] });
+    expect(await balance()).toBe(321);
   });
 
   it("complete records the check-in once, per user", async () => {

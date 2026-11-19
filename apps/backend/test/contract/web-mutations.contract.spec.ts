@@ -18,10 +18,11 @@ import {
   BUDGET_CREATE_PAYLOAD,
   BUDGET_UPDATE_PAYLOAD,
   CHECK_IN_ACCOUNTS,
-  CHECK_IN_BALANCES,
+  MORTGAGE_WITH_PROPERTY_PAYLOAD,
   ONBOARDING_ACCOUNTS,
   ONBOARDING_BUDGET_ENTRIES,
   ONBOARDING_COMPLETE,
+  ONBOARDING_MORTGAGE_WITH_PROPERTY,
   ONBOARDING_PROFILE,
 } from "./web-payloads";
 
@@ -336,12 +337,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       });
     });
 
-    describe("monthly check-in (E23 D22, D23)", () => {
+    describe("history rows from account writes (E23 D22; system audit slice 4)", () => {
       const createCheckInAccounts = async () => {
         const ids: string[] = [];
         for (const account of CHECK_IN_ACCOUNTS) {
           const created = await send("post", "/accounts", account);
-          expect2xx(created, "POST /accounts (check-in)");
+          expect2xx(created, "POST /accounts");
           ids.push(created.body.id as string);
         }
         return ids;
@@ -350,43 +351,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         dataSource.query(
           "SELECT account_id, year, month, value::float AS value FROM account_details ORDER BY account_id",
         );
-      const batch = (ids: string[], balances: readonly number[]) => ({
-        balances: ids.map((id, i) => ({ id, balance: balances[i] })),
-      });
 
-      it("one request updates N balances and writes N history rows; a re-run updates in place", async () => {
+      it("creating an account writes its first history row for this month (L05)", async () => {
         const ids = await createCheckInAccounts();
-
-        const first = await send("patch", "/accounts/balances", batch(ids, CHECK_IN_BALANCES));
-        expect2xx(first, "PATCH /accounts/balances");
-        expect(first.body.map((a: { id: string; balance: number }) => [a.id, a.balance])).toEqual(
-          ids.map((id, i) => [id, CHECK_IN_BALANCES[i]]),
-        );
-        for (const [i, id] of ids.entries()) {
-          expect((await get(`/accounts/${id}`)).body.balance).toBe(CHECK_IN_BALANCES[i]);
-        }
         const rows = await history();
         expect(rows).toHaveLength(ids.length);
         expect(
           new Set(rows.map((r: { month: number; year: number }) => `${r.year}-${r.month}`)).size,
         ).toBe(1);
         expect(rows.map((r: { value: number }) => r.value).sort()).toEqual(
-          [...CHECK_IN_BALANCES].sort(),
-        );
-
-        const second = await send(
-          "patch",
-          "/accounts/balances",
-          batch(
-            ids,
-            CHECK_IN_BALANCES.map((b) => b + 100),
-          ),
-        );
-        expect2xx(second, "PATCH /accounts/balances (re-run)");
-        const after = await history();
-        expect(after).toHaveLength(ids.length);
-        expect(after.map((r: { value: number }) => r.value).sort()).toEqual(
-          CHECK_IN_BALANCES.map((b) => b + 100).sort(),
+          CHECK_IN_ACCOUNTS.map((a) => a.balance).sort(),
         );
       });
 
@@ -394,47 +368,48 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         const [id] = await createCheckInAccounts();
         expect2xx(await send("patch", `/accounts/${id}`, { balance: 10 }), "first");
         expect2xx(await send("patch", `/accounts/${id}`, { balance: 20 }), "second");
-        expect(await history()).toEqual([expect.objectContaining({ account_id: id, value: 20 })]);
+        const rows = (await history()).filter((r: { account_id: string }) => r.account_id === id);
+        expect(rows).toEqual([expect.objectContaining({ account_id: id, value: 20 })]);
       });
 
-      it("a foreign id fails the whole batch with 404 and writes nothing", async () => {
-        const ids = await createCheckInAccounts();
-        const other = await dataSource.query(
-          "INSERT INTO accounts (user_id, name, type, balance, currency) VALUES ('someone-else', 'Theirs', 'Current', 7, 'GBP') RETURNING id",
+      it("onboarding's mortgage-with-home payload is accepted as sent", async () => {
+        const res = await send(
+          "post",
+          "/accounts/mortgage-with-property",
+          ONBOARDING_MORTGAGE_WITH_PROPERTY,
         );
-        const foreignId = other[0].id as string;
-
-        const res = await send("patch", "/accounts/balances", {
-          balances: [
-            { id: ids[0], balance: 1 },
-            { id: foreignId, balance: 2 },
-          ],
+        expect2xx(res, "POST /accounts/mortgage-with-property (onboarding)");
+        expect(res.body.property).toMatchObject({
+          name: "Home (your estimate)",
+          accountSubtype: "home",
         });
-
-        expect(res.status).toBe(404);
-        expect(await history()).toEqual([]);
-        expect((await get(`/accounts/${ids[0]}`)).body.balance).toBe(CHECK_IN_ACCOUNTS[0].balance);
-        const foreign = await dataSource.query(
-          "SELECT balance::float AS balance FROM accounts WHERE id = $1",
-          [foreignId],
-        );
-        expect(foreign[0].balance).toBe(7);
+        expect(res.body.mortgage.linkedAccountId).toBe(res.body.property.id);
       });
 
-      it("rejects a malformed batch with 400, never a 500", async () => {
-        const [id] = await createCheckInAccounts();
-        // These bodies violate the contract on purpose; keep them out of the shadow-violation check.
-        const seenBefore = new Set(shadowViolations);
-        for (const body of [
-          {},
-          { balances: [] },
-          { balances: [{ id: "not-a-uuid", balance: 1 }] },
-          { balances: [{ id, balance: "5" }] },
-        ]) {
-          expect((await send("patch", "/accounts/balances", body)).status).toBe(400);
-        }
-        for (const v of [...shadowViolations]) if (!seenBefore.has(v)) shadowViolations.delete(v);
-        expect(await history()).toEqual([]);
+      it("POST /accounts/mortgage-with-property creates the linked pair, each with its first row", async () => {
+        const res = await send(
+          "post",
+          "/accounts/mortgage-with-property",
+          MORTGAGE_WITH_PROPERTY_PAYLOAD,
+        );
+        expect2xx(res, "POST /accounts/mortgage-with-property");
+        expect(res.body.mortgage).toMatchObject({
+          type: "Mortgage",
+          balance: -186000,
+          linkedAccountId: res.body.property.id,
+          repaymentType: "repayment",
+          sharePercent: 40,
+        });
+        expect(res.body.property).toMatchObject({
+          type: "Property",
+          accountSubtype: "home",
+          balance: 310000,
+          ownership: "joint",
+          sharePercent: 40,
+        });
+        expect((await history()).map((r: { value: number }) => r.value).sort()).toEqual(
+          [-186000, 310000].sort(),
+        );
       });
     });
 

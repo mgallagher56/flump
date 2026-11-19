@@ -458,6 +458,45 @@ describe("_index route", () => {
     expect(data.mortgageData.remainingTermYears).toBeNull();
   });
 
+  it("mortgage rate comes from the residential mortgage, never a buy-to-let one listed first", async () => {
+    const data = await loadSignedIn({
+      accounts: [
+        {
+          id: "b",
+          name: "Flat 2",
+          type: "Mortgage",
+          accountSubtype: "btl_mortgage",
+          balance: -150000,
+          interestRate: 5.9,
+        },
+        { id: "m", name: "Nationwide", type: "Mortgage", balance: -200000, interestRate: 3.9 },
+      ],
+    });
+    expect(data.mortgageData.interestRate).toBe(3.9);
+  });
+
+  it("the check-in reminder reads the latest completed check-in, not any balance this month (CH-3)", async () => {
+    const thisMonth = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/London",
+      year: "numeric",
+      month: "2-digit",
+    })
+      .format(new Date())
+      .slice(0, 7);
+    const [y, m] = thisMonth.split("-").map(Number) as [number, number];
+    const data = await loadSignedIn({
+      accounts: [{ id: "a", name: "Easy access", type: "Saving", balance: 3000 }],
+      // A balance saved this month on its own (an edit, or a new account).
+      accountDetails: [{ accountId: "a", year: y, month: m, value: 3000 }],
+      latestCheckInMonth: "2026-01",
+    });
+    expect(data.checkIn.lastCheckInMonth).toBe("2026-01");
+    expect(data.checkIn).not.toHaveProperty("lastRecordedMonth");
+    expect(vi.mocked(loadWorkspacePicture).mock.calls.at(-1)?.[1]).toMatchObject({
+      includeCheckIns: true,
+    });
+  });
+
   it("mortgage rate is null when the account has none", async () => {
     const data = await loadSignedIn({
       accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000 }],

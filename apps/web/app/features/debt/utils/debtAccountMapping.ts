@@ -51,3 +51,13 @@ export function debtItemToAccountPayload(d: Omit<DebtItem, "id">): DebtAccountPa
     promoZeroPercentUntil,
   };
 }
+
+/** The loan kind a debt type is saved with (system audit slice 4); a card or overdraft has none. */
+export function debtTypeToAccountSubtype(
+  type: DebtItem["type"],
+): "car_finance" | "buy_now_pay_later" | "other_loan" | null {
+  if (type === "credit_card" || type === "overdraft") return null;
+  if (type === "car_finance") return "car_finance";
+  if (type === "bnpl") return "buy_now_pay_later";
+  return "other_loan";
+}

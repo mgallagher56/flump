@@ -4,6 +4,16 @@ export const fieldStack = cva({
   base: { display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 },
 });
 
+/** Two short fields side by side (years and months), stacked on a phone. */
+export const fieldPair = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" },
+    gap: "4",
+    minWidth: 0,
+  },
+});
+
 export const saveError = cva({
   base: {
     display: "flex",
