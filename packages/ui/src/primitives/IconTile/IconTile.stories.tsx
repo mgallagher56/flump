@@ -62,7 +62,7 @@ const domainsPlay: Story["play"] = async ({ canvasElement }) => {
   const tones = Array.from(canvasElement.querySelectorAll("[data-tile-tone]")).map((el) =>
     el.getAttribute("data-tile-tone"),
   );
-  await expect(tones).toEqual(["teal", "teal", "teal", "sage", "apricot", "neutral", "neutral"]);
+  await expect(tones).toEqual(["teal", "teal", "sky", "sage", "apricot", "rose", "violet"]);
   // Beside a visible name the tile is decorative.
   for (const el of Array.from(canvasElement.querySelectorAll("[data-tile-tone]"))) {
     await expect(el).toHaveAttribute("aria-hidden", "true");
