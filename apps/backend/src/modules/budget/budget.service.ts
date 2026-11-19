@@ -20,6 +20,7 @@ import {
 } from "../../contract/pagination";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
+import { LINK_KIND_UNIQUE_INDEX } from "../../migrations/AddBudgetEntryLinkKind1795440000000";
 
 /** GET /budget-entries order: oldest first, id as tiebreak (keyset pagination, BE-09). */
 const BUDGET_ORDER: KeysetOrder = {
@@ -222,7 +223,13 @@ export class BudgetService {
     const nextShare = sharePercent !== undefined ? sharePercent : entry.sharePercent;
     Object.assign(entry, storedShare(nextOwnership, nextShare));
 
-    return repository.save(entry);
+    try {
+      return await repository.save(entry);
+    } catch (err) {
+      // Two writes raced past the check above: the unique index keeps one line per fact.
+      if (isLinkKindUniqueViolation(err)) throw new BadRequestException(LINK_TAKEN_MESSAGE);
+      throw err;
+    }
   }
 
   async deleteEntry(userId: string, id: string): Promise<{ success: boolean }> {
@@ -263,6 +270,21 @@ async function assertLinkable(
     select: { id: true },
   });
   if (others.some((other) => other.id !== entry.id)) {
-    throw new BadRequestException("Another line already uses this saved figure");
+    throw new BadRequestException(LINK_TAKEN_MESSAGE);
   }
+}
+
+const LINK_TAKEN_MESSAGE = "Another line already uses this saved figure";
+
+/** The one-line-per-fact unique index firing (AddBudgetEntryLinkKind1795440000000). */
+function isLinkKindUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as {
+    code?: string;
+    constraint?: string;
+    driverError?: { code?: string; constraint?: string };
+  };
+  const code = e.code ?? e.driverError?.code;
+  const constraint = e.constraint ?? e.driverError?.constraint;
+  return code === "23505" && constraint === LINK_KIND_UNIQUE_INDEX;
 }

@@ -336,6 +336,38 @@ describe("read tools v2: oversized fixtures", () => {
     }
   });
 
+  it("get_budget_summary counts the lines the engine adds or fills, as the web does", async () => {
+    // Salary £36,000 (employed, no pension) and rent £1,000 saved. Budget: one empty housing row
+    // (£0) and Food £300, no income row. The web adds the take-home row and fills the housing row
+    // with £1,000, so essentials = 1,000 + 300 = 1,300 and income is the take-home, never null.
+    const data = {
+      ...emptyUser,
+      profileFacts: {
+        ...profileFactsFromProfile(null),
+        annualSalary: 36000,
+        employmentType: "employed" as const,
+        pensionPercent: 0,
+        isSalarySacrifice: false,
+        housingStatus: "renting" as const,
+        monthlyHousingCost: 1000,
+      },
+      budgetEntries: [
+        { id: "h", category: "housing", name: "Rent", amount: 0 },
+        { id: "food", category: "expenses", name: "Food", amount: 300 },
+      ].map((e) => ({ ...e, frequency: "monthly", isIncome: false, isEssential: true })),
+    };
+    const client = await connectTestClient(data);
+    try {
+      const r = await call(client, "get_budget_summary");
+      expect(r.result.essentialMonthlyGbp).toBe(1300);
+      // Take-home on £36,000 (England, 2026-27): tax 20% x (36,000 - 12,570) = 4,686; NI 8% x
+      // (36,000 - 12,570) = 1,874.40; (36,000 - 4,686 - 1,874.40) / 12 = 2,453.30, shown to the pound.
+      expect(r.result.monthlyIncomeGbp).toBe(2453);
+    } finally {
+      await client.close();
+    }
+  });
+
   it("get_budget_summary: custom category names reach the model only with full read (M-PRIV4)", async () => {
     const budgetEntries = [
       { name: "Rent to J Smith", category: "Jane's nursery" },

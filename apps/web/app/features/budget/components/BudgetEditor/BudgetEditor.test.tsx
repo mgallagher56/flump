@@ -483,6 +483,39 @@ describe("BudgetEditor", () => {
       );
     });
 
+    it("turns an empty housing row the saved rent filled back into the person's own row", async () => {
+      // The one housing row was empty (£0, never linked), so the saved rent of £950 fills it. The
+      // line carries that row's id: "Type my own figure" writes £950 to it, an ordinary row again.
+      const emptyRent = row({ id: "rent", name: "Rent or mortgage", amount: 0 });
+      const { onUpdate } = setup({
+        entries: [emptyRent],
+        shadowedIds: ["rent"],
+        housingStatus: "renting",
+        linkedEntries: [
+          row({
+            id: "linked:housing",
+            name: "Rent",
+            amount: 950,
+            linked: "housing",
+            linkedRowId: "rent",
+          }),
+        ],
+      });
+      expect(screen.getByTestId("budget-editor-source-linked-housing").textContent).toContain(
+        "From your housing details",
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Type my own figure" }));
+      await waitFor(() =>
+        expect(onUpdate).toHaveBeenCalledWith("rent", {
+          linkKind: null,
+          amount: 950,
+          frequency: "monthly",
+          ownership: "sole",
+          sharePercent: null,
+        }),
+      );
+    });
+
     it("offers no unlink on a line the engine added on its own", () => {
       setup({
         entries: [],

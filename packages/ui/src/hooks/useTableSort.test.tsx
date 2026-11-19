@@ -25,6 +25,25 @@ const columns = {
 const names = (rows: Row[]) => rows.map((r) => r.name);
 
 describe("useTableSort", () => {
+  it("sorts again when the set of columns changes", () => {
+    // Sorted by "n" ascending: 1, 2. The next render drops "n" and adds "m": the sort key no
+    // longer names a column, so the rows return to the order given (2, 1).
+    const rows = [{ n: 2 }, { n: 1 }];
+    type Cols = Record<string, { value: (r: { n: number }) => number }>;
+    const { result, rerender } = renderHook(
+      ({ columns }: { columns: Cols }) =>
+        useTableSort<{ n: number }, string>({
+          rows,
+          columns,
+          initial: { key: "n", direction: "asc" },
+        }),
+      { initialProps: { columns: { n: { value: (r) => r.n } } as Cols } },
+    );
+    expect(result.current.sortedRows.map((r) => r.n)).toEqual([1, 2]);
+    rerender({ columns: { m: { value: (r) => -r.n } } });
+    expect(result.current.sortedRows.map((r) => r.n)).toEqual([2, 1]);
+  });
+
   it("does not re-sort on a re-render that passes a new columns object", () => {
     const rows = [{ n: 2 }, { n: 1 }];
     let reads = 0;

@@ -22,6 +22,11 @@ import {
   "CHK_budget_entries_link_kind",
   `"link_kind" IS NULL OR "link_kind" IN ('take_home', 'housing')`,
 )
+// One line per user per fact (same migration), partial over linked lines only.
+@Index("UQ_budget_entries_user_link_kind", ["userId", "linkKind"], {
+  unique: true,
+  where: `"link_kind" IS NOT NULL`,
+})
 @Entity("budget_entries")
 export class BudgetEntry {
   @PrimaryGeneratedColumn("uuid")

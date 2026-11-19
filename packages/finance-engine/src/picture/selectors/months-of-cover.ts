@@ -35,7 +35,9 @@ export function selectMonthsOfCover(
   budget: readonly BudgetEntryItem[],
   snapshot: PortfolioSnapshot,
 ): Figure<MonthsOfCover> {
-  const totals = selectBudgetTotals(budget);
+  // Income plays no part in months of cover, so a take-home line that is Not set does not make it
+  // unknown. A Not set housing line still does: housing is an essential.
+  const totals = selectBudgetTotals(budget.filter((row) => !(row.notSet && row.isIncome)));
   if (!isFigureKnown(totals)) return figureUnknown(["budget"], "not-set");
   // No essential spending entered (or only £0 suggestions): unknown, never "infinite". The same
   // rule as safe to spend, so the two figures are known or unknown together.

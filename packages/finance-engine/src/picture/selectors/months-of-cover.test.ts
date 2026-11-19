@@ -208,3 +208,33 @@ describe("a savings row left at the default (owner item 28, default off)", () =>
     expect(defaultIsEssential("savings", true)).toBe(true);
   });
 });
+
+describe("selectMonthsOfCover: linked lines that are Not set", () => {
+  const cash = new PortfolioSnapshot([
+    { id: "cur", name: "Current", type: "Current", balance: 3000 },
+  ]);
+
+  it("ignores a take-home line that is Not set: income plays no part in it", () => {
+    // Essentials: rent £1,000. Cash £3,000. 3,000 / 1,000 = 3.0 months, whatever the income.
+    const fig = selectMonthsOfCover(
+      [
+        row({ id: "pay", category: "income", isIncome: true, linked: "take_home", notSet: true }),
+        row({ id: "rent", category: "housing", amount: 1000 }),
+      ],
+      cash,
+    );
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value).toMatchObject({ months: 3, monthlyEssentials: 1000 });
+  });
+
+  it("stays unknown when a housing line is Not set: housing is an essential", () => {
+    const fig = selectMonthsOfCover(
+      [
+        row({ id: "rent", category: "housing", linked: "housing", notSet: true }),
+        row({ id: "food", category: "expenses", amount: 300 }),
+      ],
+      cash,
+    );
+    expect(fig.status).toBe("unknown");
+  });
+});

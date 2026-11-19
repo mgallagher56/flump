@@ -242,6 +242,35 @@ describe("linked budget lines in the context pack (decision 1)", () => {
     expect(pack.budgetSummary.monthlySurplus).toBeNull();
     expect(pack.budgetSummary.essentialBillsMonthly).toBeNull();
   });
+
+  it("lists the lines the engine adds or fills, as the web counts them, with names anonymised", () => {
+    // Salary £36,000 saved, no income rows: the take-home row is added. Rent £1,000 saved fills the
+    // one empty housing row "Landlord J Smith" (£0). The pack lists both resolved lines, the
+    // housing one under its anonymised label, and no stored £0.
+    const pack = buildFlumpAiContextPack(
+      {
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+        baseline: DEFAULT_FINANCIAL_BASELINE,
+        profileFacts: {
+          ...profileFactsFromProfile(null),
+          annualSalary: 36000,
+          employmentType: "employed",
+          pensionPercent: 0,
+          isSalarySacrifice: false,
+          housingStatus: "renting",
+          monthlyHousingCost: 1000,
+        },
+        budgetEntries: [line({ id: "h", category: "housing", name: "Landlord J Smith" })],
+      },
+      { anonymizeInstitutions: true },
+    );
+    const entries = pack.budgetSummary.entries;
+    expect(entries.map((e) => e.id)).toEqual(["linked:take-home", "h"]);
+    expect(entries[1]).toMatchObject({ amount: 1000, linked: "housing" });
+    expect(entries[0]?.amount).toBe(pack.budgetSummary.monthlyIncome);
+    expect(JSON.stringify(pack)).not.toContain("Landlord");
+    expect(JSON.stringify(pack)).not.toContain("linkedRowId");
+  });
 });
 
 describe("overdrawn accounts in the markdown (E23 C-15)", () => {

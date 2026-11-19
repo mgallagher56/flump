@@ -87,8 +87,11 @@ const isHousingRow = (row: BudgetEntryItem): boolean =>
  *   reads "Not set" when no housing payment is saved.
  * - An estimate gives way to any housing row with an amount above £0: nothing is added.
  * - No housing rows: the housing row is added.
- * - Exactly one housing row: the linked figure stands in for it.
- * - More than one: nothing changes, and the link is offered.
+ * - Exactly one housing row with no figure typed (£0): the linked figure stands in for it, carrying
+ *   its id (`linkedRowId`) so the editor can turn it back into an ordinary row.
+ * - A housing row with a figure typed, or more than one row: nothing changes, and the link is
+ *   offered. A typed figure never leaves the totals until the person chooses the link.
+ * - A second row linked to the same fact reads "Not set" (the database allows one per kind).
  *
  * A linked row standing in for a saved row keeps that row's ownership and share, unless the
  * figure is already the person's share (the mortgage accounts' estimate, from share-scaled
@@ -199,10 +202,13 @@ export function withLinkedBudgetRows(
       // The person's own figure wins over an estimate; nothing to add or offer.
     } else if (housingRows.length === 0) {
       addHousing = base;
-    } else if (housingRows.length === 1) {
+    } else if (housingRows.length === 1 && !typed) {
+      // One empty housing row: the saved figure fills it. Nothing typed leaves the totals, and the
+      // line carries the row's id, so "Type my own figure" can write the figure back to it.
       const only = housingRows[0] as BudgetEntryItem;
-      replaced.set(only.id, standIn(only));
+      replaced.set(only.id, { ...standIn(only), linkedRowId: only.id });
     } else if (!housing.paymentEstimated) {
+      // A figure the person typed is never replaced unasked: the link is offered instead.
       offers.push({
         link: "housing",
         monthly: housing.monthly,
@@ -210,6 +216,33 @@ export function withLinkedBudgetRows(
         rowIds: housingRows.map((row) => row.id),
       });
     }
+  }
+
+  // Only one row per kind can read a saved fact (the database holds one; this guards older data).
+  // Any further row linked to the same fact is Not set, never its stored £0.
+  for (const extra of budget) {
+    const kind = extra.linkKind;
+    if (!kind || replaced.has(extra.id)) continue;
+    const chosen = kind === "take_home" ? chosenTakeHome : chosenHousing;
+    if (chosen?.id === extra.id) continue;
+    replaced.set(
+      extra.id,
+      notSetLine(
+        {
+          id: `${kind === "take_home" ? LINKED_TAKE_HOME_ID : LINKED_HOUSING_ID}:${extra.id}`,
+          category: extra.category,
+          name: extra.name,
+          amount: 0,
+          frequency: "monthly",
+          isIncome: extra.isIncome,
+          isEssential: extra.isEssential,
+          ownership: "sole",
+          sharePercent: null,
+          linked: kind,
+        },
+        extra,
+      ),
+    );
   }
 
   if (replaced.size === 0 && !addTakeHome && !addHousing) {
@@ -222,29 +255,40 @@ export function withLinkedBudgetRows(
 }
 
 /**
- * The saved entries as they were stored, with each row the person linked swapped for its resolved
- * line (`withLinkedBudgetRows`' rows): the resolved figure a month, or a `notSet` line. Lines the
- * engine adds on its own are not listed. For readers that list saved entries (the AI context pack,
- * the MCP tools), so none of them reads a linked row's stored amount.
+ * The budget as every reader lists it (the web page, the AI context pack, the MCP tools): the
+ * resolved rows (`withLinkedBudgetRows`' rows, so shadowed rows are already gone and lines the
+ * engine adds are in), each shown through the caller's copy of its saved entry. A line standing in
+ * for a saved row keeps that entry's id, name, category and notes (so a caller's anonymised copy
+ * stays anonymised) and takes the line's figure, frequency, share and `notSet`. A saved row is the
+ * caller's entry as it is. A line the engine added has a fixed name ("Take-home pay", "Rent").
  */
-export function resolveLinkedEntries(
+export function listedBudgetEntries(
   entries: readonly BudgetEntryItem[],
   resolvedRows: readonly BudgetEntryItem[],
 ): BudgetEntryItem[] {
-  const byLinkedRow = new Map<string, BudgetEntryItem>();
-  for (const line of resolvedRows) if (line.linkedRowId) byLinkedRow.set(line.linkedRowId, line);
-  return entries.map((entry) => {
-    if (!entry.linkKind) return entry;
-    const line = byLinkedRow.get(entry.id);
-    if (!line || line.notSet) {
-      return { ...entry, amount: 0, linkedRowId: entry.id, notSet: true };
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  const listed: BudgetEntryItem[] = [];
+  for (const row of resolvedRows) {
+    const savedId = row.linked ? row.linkedRowId : row.id;
+    const saved = savedId ? byId.get(savedId) : undefined;
+    if (!row.linked) {
+      if (saved) listed.push(saved);
+      continue;
     }
-    return {
-      ...entry,
-      amount: line.amount,
-      frequency: line.frequency,
-      ownership: line.ownership,
-      sharePercent: line.sharePercent,
-    };
-  });
+    if (!saved) {
+      listed.push(row);
+      continue;
+    }
+    listed.push({
+      ...saved,
+      amount: row.notSet ? 0 : row.amount,
+      frequency: row.frequency,
+      ownership: row.ownership,
+      sharePercent: row.sharePercent,
+      linked: row.linked,
+      linkedRowId: saved.id,
+      ...(row.notSet ? { notSet: true as const } : {}),
+    });
+  }
+  return listed;
 }
