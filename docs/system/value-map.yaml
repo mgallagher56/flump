@@ -421,7 +421,7 @@ links:
       verdict: duplicated,
       checked: browser,
       findings: [PP-7, SD-9, DB-7],
-      note: "Slice 6: StudentLoanPlanToProfile copied account plans into unanswered profiles; L30-student-loan-plan-agrees.spec.ts checks they agree. Still two stores until the account form writes the profile (after slice 4) and slice 9 drops the account column.",
+      note: "Slice 6: StudentLoanPlanToProfile copied account plans into unanswered profiles; L30-student-loan-plan-agrees.spec.ts checks they agree. Saving a Student Loan account now writes its plan to a profile with none. Still two stores until slice 9 drops the account column.",
       statement: "Student loan plan has one store: the plan on a student loan account and the plans on the profile agree, and take-home uses it.",
     }
   - {
@@ -975,7 +975,7 @@ facts:
           ref: accounts.student_loan_plan,
           status: duplicate,
           path: apps/backend/src/entities/account.entity.ts,
-          note: "asked for when a Student Loan account is added; take-home never reads it. Slice 6 migration StudentLoanPlanToProfile copied it into every profile with no answer; the account form writing the profile waits for slice 4; the column is dropped in slice 9",
+          note: "asked for when a Student Loan account is added; take-home never reads it. Slice 6 migration StudentLoanPlanToProfile copied it into every profile with no answer, and saving such an account now writes its plan to the profile when the profile has none (writeStudentLoanPlanToProfile); the column is dropped in slice 9",
         }
     writers:
       - { surface: onboarding, path: apps/web/app/features/onboarding/useFinishOnboarding.ts }
@@ -986,7 +986,12 @@ facts:
       - {
           surface: accounts,
           path: apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx,
-          note: "writes the account copy",
+          note: "writes the account copy, and the backend writes the profile when it has no plan",
+        }
+      - {
+          surface: accounts,
+          path: apps/backend/src/modules/finance/student-loan-plan-profile.ts,
+          note: "on saving a Student Loan account with a plan, in the same transaction, only when the profile has none (null or no loan); a saved profile plan is never overwritten",
         }
     readers:
       - { surface: picture, path: packages/finance-engine/src/picture/selectors/take-home.ts }

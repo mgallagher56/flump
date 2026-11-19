@@ -30,6 +30,7 @@ import { BankConnection } from "../../entities/bank-connection.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { londonDate } from "../snapshots/london-date";
 import { debtBecomesAsset, resignHistoryForType, storedBalance } from "../snapshots/stored-balance";
+import { writeStudentLoanPlanToProfile } from "./student-loan-plan-profile";
 
 type AccountType = (typeof ACCOUNT_TYPES)[number];
 type AccountSubtype = (typeof ACCOUNT_SUBTYPES)[number];
@@ -637,6 +638,7 @@ export class AccountIntakeService implements IAccountIntake {
       await assertLinkTarget(accounts, userId, account.linkedAccountId);
       const saved = await accounts.save(account);
       await this.writeFirstHistoryRow(details, userId, saved);
+      await this.writePlanToProfile(accounts, userId, saved);
       return toAccountResponse(saved);
     });
   }
@@ -707,6 +709,20 @@ export class AccountIntakeService implements IAccountIntake {
       Number(account.balance),
       "backfill",
     );
+  }
+
+  /**
+   * Slice 6 (PP-7, L30): a Student Loan account's plan goes to the profile, the one home for it,
+   * when the profile has none. Runs on the write's own transaction manager. Test doubles without
+   * a TypeORM manager skip it (the rule itself is unit-tested in student-loan-plan-profile.spec).
+   */
+  private async writePlanToProfile(
+    accounts: Repository<Account>,
+    userId: string,
+    account: Account,
+  ): Promise<void> {
+    if (!accounts.manager?.getRepository) return;
+    await writeStudentLoanPlanToProfile(accounts.manager, userId, account);
   }
 
   /**
@@ -849,6 +865,7 @@ export class AccountIntakeService implements IAccountIntake {
         await accounts.update({ linkedAccountId: account.id, userId }, { linkedAccountId: null });
       }
       const saved = await accounts.save(account);
+      await this.writePlanToProfile(accounts, userId, saved);
       if (body.balance !== undefined && body.balance !== null) {
         await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
       }
