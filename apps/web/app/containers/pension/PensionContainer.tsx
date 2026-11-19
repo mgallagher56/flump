@@ -25,16 +25,14 @@ import {
 } from "~/features/pension/components/PensionDetails";
 import { PensionRules } from "~/features/pension/components/PensionRules";
 import { PensionSummary } from "~/features/pension/components/PensionSummary";
-import { pensionRatesAssumed } from "~/features/pension/contribution";
+import { savedPensionRate } from "~/features/pension/contribution";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
-import { useFinancialBaseline } from "~/state/baseline.store";
 import { seededProfile } from "~/utils/profileFirst";
 import { roundTo2dp } from "~/utils/roundTo2dp";
 import {
-  getKnownTrapRegion,
   REGION_ASSUMPTION_LABEL,
   REGION_SETTINGS_PATH,
   regionLinkStyle,
@@ -60,7 +58,6 @@ export const PensionContainer: FC = () => {
   const { profile: atomProfile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
   // Saved loader figures until the atom holds this user's profile (no 5% and 3% first paint).
   const profile = seededProfile(atomProfile, userProfile as typeof atomProfile | undefined);
-  const { baseline } = useFinancialBaseline();
 
   useEffect(() => {
     if (userProfile) {
@@ -112,40 +109,35 @@ export const PensionContainer: FC = () => {
       .reduce((sum, acc) => sum + (Number(acc.monthlyContribution) || 0), 0);
   }, [pensionAccounts]);
 
-  const isReset = Boolean(profile.hasResetFinancialData ?? userProfile?.hasResetFinancialData);
   // No salary is a real state: the zone prompts for it instead of assuming a figure.
   const storedSalary: number | null = profile.annualSalary ?? userProfile?.annualSalary ?? null;
   const hasSalary = storedSalary !== null && storedSalary > 0;
   const annualSalary = storedSalary ?? 0;
-  // The backend creates the profile row with the auto-enrolment minimums (5% and 3%), so
-  // that exact pair is flagged as a default the user may never have chosen.
-  const ratesAssumed = pensionRatesAssumed({
-    pensionPercent: profile.pensionPercent ?? userProfile?.pensionPercent,
-    pensionEmployerPercent: profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent,
-  });
-  const employeePercent = isReset
-    ? (profile.pensionPercent ?? userProfile?.pensionPercent ?? 0)
-    : (profile.pensionPercent ?? userProfile?.pensionPercent ?? 5.0);
-  const employerPercent = isReset
-    ? (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 0)
-    : (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 3.0);
-  // The contribution method counts only when the user chose it. The column is NOT NULL and
-  // used to default to salary sacrifice, so the method reads "Not set" while the pension facts
-  // are still the creation defaults, and a legacy stored true is never used as a choice
+  // A rate never answered is null and reads "Not set" (owner decision 3, slice 6). A stored 5%
+  // and 3% is the user's own choice, shown as chosen. No stand-in rate is ever used.
+  const savedEmployeePercent = savedPensionRate(
+    profile.pensionPercent ?? userProfile?.pensionPercent,
+  );
+  const savedEmployerPercent = savedPensionRate(
+    profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent,
+  );
+  const ratesNotSet = savedEmployeePercent === null || savedEmployerPercent === null;
+  // An unset rate counts as no contribution where a figure needs a number (the scenario seed and
+  // the £100,000 line), as the engine does; figures that show the rate itself stay unknown.
+  const employeePercent = savedEmployeePercent ?? 0;
+  // The contribution method counts only when the user chose it; null reads "Not set"
   // (salarySacrificeFromProfile, shared with the engine's take-home).
-  const methodSet = !ratesAssumed;
   const storedSalarySacrifice = salarySacrificeFromProfile({
     isSalarySacrifice: profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice,
-    pensionPercent: profile.pensionPercent ?? userProfile?.pensionPercent,
-    pensionEmployerPercent: profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent,
   });
+  const methodSet = storedSalarySacrifice !== null;
   const isSalarySacrifice = storedSalarySacrifice ?? false;
   const isSalarySacrificeEmployerNi =
     profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false;
   const employmentType = profile.employmentType ?? userProfile?.employmentType ?? null;
 
   const monthlyEmployeeContrib = (annualSalary * (employeePercent / 100)) / 12;
-  const standardMonthlyEmployerContrib = (annualSalary * (employerPercent / 100)) / 12;
+  const standardMonthlyEmployerContrib = (annualSalary * ((savedEmployerPercent ?? 0) / 100)) / 12;
   const annualEmployerNiSavings =
     isSalarySacrifice && isSalarySacrificeEmployerNi
       ? calculateEmployerNISavings(
@@ -173,16 +165,14 @@ export const PensionContainer: FC = () => {
   }, [annualSalary, employeePercent, employmentType, isSalarySacrifice, profile, userProfile]);
 
   // The take-home tool reads only answered pension facts: an unanswered percentage or method
-  // stays null so the tool asks for it instead of using the 5% / salary sacrifice defaults.
+  // stays null so the tool asks for it instead of presuming one.
   const takeHomeFacts = useMemo(
     () => ({
       ...savedFacts,
-      pensionPercent: ratesAssumed
-        ? null
-        : (profile.pensionPercent ?? userProfile?.pensionPercent ?? null),
-      isSalarySacrifice: methodSet ? storedSalarySacrifice : null,
+      pensionPercent: savedEmployeePercent,
+      isSalarySacrifice: storedSalarySacrifice,
     }),
-    [savedFacts, ratesAssumed, methodSet, storedSalarySacrifice, profile, userProfile],
+    [savedFacts, savedEmployeePercent, storedSalarySacrifice],
   );
 
   // Scenario input lives in memory only: no storage, no URL, no network. Seeded from saved data.
@@ -190,8 +180,11 @@ export const PensionContainer: FC = () => {
   const scenario = useScenarioState(scenarioSeed);
 
   const hasPots = pensionAccounts.length > 0;
+  // With a salary, the total needs both rates: one that is not set makes it unknown, never 0.
   const monthlyTotal = hasSalary
-    ? monthlyEmployeeContrib + monthlyEmployerContrib + directMonthlyContrib
+    ? ratesNotSet
+      ? null
+      : monthlyEmployeeContrib + monthlyEmployerContrib + directMonthlyContrib
     : directMonthlyContrib > 0
       ? directMonthlyContrib
       : null;
@@ -206,8 +199,11 @@ export const PensionContainer: FC = () => {
     const salaryValue = Math.max(0, values.annualSalary ?? 0);
     await updateProfile({
       ...(salaryValue > 0 ? { annualSalary: salaryValue } : {}),
-      pensionPercent: roundTo2dp(Math.max(0, values.employeePercent ?? 0)),
-      pensionEmployerPercent: roundTo2dp(Math.max(0, values.employerPercent ?? 0)),
+      // A blank rate is saved as not set (null), never as 0 or a stand-in.
+      pensionPercent:
+        values.employeePercent === null ? null : roundTo2dp(Math.max(0, values.employeePercent)),
+      pensionEmployerPercent:
+        values.employerPercent === null ? null : roundTo2dp(Math.max(0, values.employerPercent)),
       // The method is written only when the user changed it: the form starts from a guess when
       // no method is stored, and saving that guess would turn it into a choice.
       ...(values.methodChanged
@@ -236,10 +232,15 @@ export const PensionContainer: FC = () => {
   }, [scrollToZone]);
 
   // One source for the £100,000 line and its "Model this contribution" seed: the saved profile,
-  // the same figures the zone projects from, so the seeded contribution lands at £100,000. Only
-  // the region comes from the baseline.
-
-  const knownRegion = getKnownTrapRegion(baseline);
+  // the same figures the zone projects from, so the seeded contribution lands at £100,000. The
+  // region is the saved one too (PP-9); without a saved region the rates are the labelled
+  // England, Wales and Northern Ireland assumption.
+  const knownRegion =
+    savedFacts.taxRegion === null
+      ? null
+      : savedFacts.taxRegion === "SCOTLAND"
+        ? "SCOTLAND"
+        : "ENGLAND_NI_WALES";
   const taxTrap = useMemo(() => {
     return calculate100kTaxTrap(
       annualSalary,
@@ -304,7 +305,7 @@ export const PensionContainer: FC = () => {
         includesPotPayments={hasSalary && directMonthlyContrib > 0}
         monthlyTotal={monthlyTotal}
         potsCount={pensionAccounts.length}
-        ratesAssumed={ratesAssumed}
+        ratesNotSet={hasSalary && ratesNotSet}
         totalValue={totalValue}
         onAddPot={openAddPot}
       />
@@ -324,15 +325,14 @@ export const PensionContainer: FC = () => {
 
       <PensionDetails
         annualSalary={annualSalary}
-        employeePercent={employeePercent}
-        employerPercent={employerPercent}
+        employeePercent={savedEmployeePercent}
+        employerPercent={savedEmployerPercent}
         factsOpen={hash === "#pension-details"}
         hasSalary={hasSalary}
         isEditing={isEditingDetails}
         isSalarySacrifice={isSalarySacrifice}
         isSalarySacrificeEmployerNi={isSalarySacrificeEmployerNi}
         methodSet={methodSet}
-        ratesAssumed={ratesAssumed}
         onEditingChange={setIsEditingDetails}
         onSave={handleSaveDetails}
       >

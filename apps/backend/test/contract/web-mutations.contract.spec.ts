@@ -234,7 +234,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           onboardingCompleted: true,
         });
         expect(typeof profile.annualSalary).toBe("number");
-        expect(typeof profile.monthlyTakeHome).toBe("number");
+        // Salary mode stores no typed take-home (slice 6, owner decision 2).
+        expect(profile.monthlyTakeHome).toBeNull();
 
         const accounts = (await get("/accounts")).body as Array<Record<string, unknown>>;
         expect(accounts).toHaveLength(ONBOARDING_ACCOUNTS.length);

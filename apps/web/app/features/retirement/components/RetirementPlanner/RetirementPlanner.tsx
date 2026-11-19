@@ -23,6 +23,7 @@ import {
   toSnapshotRows,
   UK_QUALIFYING_EARNINGS_LOWER,
   UK_QUALIFYING_EARNINGS_UPPER,
+  type WorkplacePensionInput,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -228,6 +229,27 @@ function formatMonthKey(key: string): string {
 }
 /** A percentage already in percent (6 means 6%). */
 const pctPoints = (points: number) => `${pctFormatter.format(points)}%`;
+
+/**
+ * The workplace pension line under the assumptions: the chosen rates, or, for a rate that is not
+ * set (owner decision 3), that it is not set and its contribution is not included. Never a
+ * stand-in rate.
+ */
+export function workplaceNote(workplace: WorkplacePensionInput): string {
+  const notSet = workplace.notSet ?? [];
+  const ownSet = !notSet.includes("pensionPercent");
+  const employerSet = !notSet.includes("pensionEmployerPercent");
+  const salary = formatWholeGbp(workplace.annualSalary);
+  if (ownSet && employerSet) {
+    return `Workplace pension: ${pctPoints(workplace.employeePercent)} from you and ${pctPoints(workplace.employerPercent)} from your employer, of your saved salary of ${salary}, from your pension details.`;
+  }
+  if (!ownSet && !employerSet) {
+    return "Workplace pension: your contribution and your employer's are not set, so they are not included.";
+  }
+  return ownSet
+    ? `Workplace pension: your employer's contribution is not set, so it is not included. ${pctPoints(workplace.employeePercent)} from you, of your saved salary of ${salary}, is included.`
+    : `Workplace pension: your contribution is not set, so it is not included. ${pctPoints(workplace.employerPercent)} from your employer, of your saved salary of ${salary}, is included.`;
+}
 
 /**
  * A signed long-range change: "+~£1,200" or "−~£800" (U+2212, a minus sign, not a hyphen),
@@ -796,14 +818,14 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                         </p>
                         {workplace && (
                           <p className={mutedNote()}>
-                            {workplace.ratesAssumed
-                              ? `Workplace pension: ${pctPoints(workplace.employeePercent)} from you and ${pctPoints(workplace.employerPercent)} from your employer, the auto-enrolment minimums, which are used until you set your own in your pension details. They apply to your saved salary of ${formatWholeGbp(workplace.annualSalary)}.`
-                              : `Workplace pension: ${pctPoints(workplace.employeePercent)} from you and ${pctPoints(workplace.employerPercent)} from your employer, of your saved salary of ${formatWholeGbp(workplace.annualSalary)}, from your pension details.`}
+                            {workplaceNote(workplace)}
                             {workplace.isSalarySacrifice && workplace.passEmployerNi
                               ? " Through salary sacrifice, your employer also adds the National Insurance it saves."
                               : ""}{" "}
                             <Link className={promptLink()} to={PENSION_DETAILS_PATH}>
-                              Change them on the Pension page
+                              {(workplace.notSet ?? []).length > 0
+                                ? "Add your rates on the Pension page"
+                                : "Change them on the Pension page"}
                             </Link>
                           </p>
                         )}

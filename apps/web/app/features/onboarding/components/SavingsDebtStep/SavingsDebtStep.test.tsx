@@ -31,6 +31,15 @@ describe("<SavingsDebtStep />", () => {
     }
   });
 
+  it("tells the person to enter 0 when they do not pay into a pension, and keeps 0 as 0", () => {
+    setup();
+    const field = screen.getByLabelText(/pension contribution/i) as HTMLInputElement;
+    expect(screen.getByText("Enter 0 if you do not pay into one.")).toBeDefined();
+    expect(field.getAttribute("aria-describedby")).toBeTruthy();
+    fireEvent.change(field, { target: { value: "0" } });
+    expect(field.value).toBe("0");
+  });
+
   it("keeps a typed 0 debt as 0, distinct from empty", () => {
     setup();
     const debt = screen.getByLabelText(/owed on credit cards and loans/i) as HTMLInputElement;

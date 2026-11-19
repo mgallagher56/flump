@@ -5,8 +5,9 @@ const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 
 
 /**
  * The facts onboarding has so far, as the engine reads a saved profile. Unanswered pension and
- * salary sacrifice count as none (0% and net pay) for the live figure only; region stays null so
- * the engine names its assumption.
+ * salary sacrifice count as none (0% and net pay) for the live figure only, and the note under it
+ * says so (`takeHomeIncludesNote`); a blank pension is never saved. Region stays null so the
+ * engine names its assumption.
  */
 export function onboardingTakeHomeFacts(values: OnboardingValues): ProfileFacts {
   const salary = values.grossSalary ?? 0;
@@ -20,10 +21,20 @@ export function onboardingTakeHomeFacts(values: OnboardingValues): ProfileFacts 
   };
 }
 
-/** One sentence naming the deductions the take-home includes, or null when there are none. */
+/** Under the live take-home while the pension field is blank: it is worked out with none. */
+export const BEFORE_PENSION_NOTE = "Before any pension contribution";
+
+/**
+ * One sentence naming the deductions the take-home includes, or null when there are none. While
+ * the pension is blank the figure has no pension in it, so the note says so plainly: the Dashboard
+ * shows take-home as not set until a rate is saved.
+ */
 export function takeHomeIncludesNote(values: OnboardingValues): string | null {
   const pension = (values.pensionPercent ?? 0) > 0;
   const loan = values.studentLoanPlan !== "NONE";
+  if (values.pensionPercent === null) {
+    return loan ? `Now includes your student loan. ${BEFORE_PENSION_NOTE}` : BEFORE_PENSION_NOTE;
+  }
   if (!pension && !loan) return null;
   const pensionPart = `your ${percentFormat.format(values.pensionPercent ?? 0)}% pension`;
   if (pension && loan) return `Now includes ${pensionPart} and student loan`;
@@ -44,6 +55,8 @@ export interface OnboardingSummary {
    * loan"), or null when no pension or student loan is in it, or in net mode.
    */
   takeHomeNote: string | null;
+  /** True in take-home mode: the figure is the one typed, not an estimate. */
+  takeHomeTyped: boolean;
   monthlyHousing: number;
   otherOutgoings: number;
   monthlySurplus: number;
@@ -108,6 +121,7 @@ export function deriveOnboardingSummary(values: OnboardingValues): OnboardingSum
     monthlyTakeHome,
     annualTakeHome,
     takeHomeNote,
+    takeHomeTyped: values.incomeMode === "net",
     monthlyHousing,
     otherOutgoings,
     monthlySurplus: monthlyTakeHome - monthlyHousing - otherOutgoings,

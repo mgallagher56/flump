@@ -37,6 +37,8 @@ export function selectPsaBand(
   opts: { taxYear?: UkTaxYear; otherAnnualIncome?: number } = {},
 ): PsaBand | null {
   if (facts.annualSalary === null || !(facts.annualSalary > 0)) return null;
+  // The pension can move the band near a threshold, so an unset rate leaves it unknown (slice 6).
+  if (facts.pensionPercent === null) return null;
   let taxYear: UkTaxYear;
   try {
     taxYear = resolveUkTaxYear(opts.taxYear);
@@ -47,7 +49,7 @@ export function selectPsaBand(
   const result = calculateUkTax({
     grossSalary: facts.annualSalary,
     bonusOrSideIncome: Math.max(0, opts.otherAnnualIncome ?? 0),
-    pensionContributionPct: facts.pensionPercent ?? 0,
+    pensionContributionPct: facts.pensionPercent,
     isSalarySacrifice: facts.employmentType !== "self-employed" && facts.isSalarySacrifice === true,
     region: facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
     taxYear,

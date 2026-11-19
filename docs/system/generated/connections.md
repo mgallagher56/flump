@@ -36,6 +36,7 @@ flowchart LR
   f_salary -.-> s_context_pack
   f_typed_take_home(["Monthly take-home pay as typed in onboarding"])
   s_onboarding --> f_typed_take_home
+  f_typed_take_home -.-> s_picture
   f_typed_take_home -.-> s_context_pack
   f_employment_type(["Employment type"])
   s_onboarding --> f_employment_type
@@ -72,6 +73,7 @@ flowchart LR
   f_second_and_rental_income -.-> s_context_pack
   g_take_home{{"Take-home pay"}}
   f_salary ==> g_take_home
+  f_typed_take_home ==> g_take_home
   f_pension_rates ==> g_take_home
   f_tax_region ==> g_take_home
   f_student_loan_plan ==> g_take_home

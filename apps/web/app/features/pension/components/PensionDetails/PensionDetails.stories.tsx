@@ -14,7 +14,6 @@ const meta: Meta<typeof PensionDetails> = {
     isEditing: false,
     isSalarySacrifice: true,
     isSalarySacrificeEmployerNi: false,
-    ratesAssumed: false,
     onEditingChange: fn(),
     onSave: fn().mockResolvedValue(undefined),
   },
@@ -46,6 +45,14 @@ export const Editing: Story = {
   },
 };
 
-export const DefaultRates: Story = {
-  args: { ratesAssumed: true, methodSet: false, employeePercent: 5, employerPercent: 3 },
+export const RatesNotSet: Story = {
+  args: { methodSet: false, employeePercent: null, employerPercent: null },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(
+      canvas.getAllByRole("button", { name: "Salary and contributions" })[0] as HTMLElement,
+    );
+    await expect(canvas.getAllByText("Not set").length).toBeGreaterThanOrEqual(3);
+    await expect(canvas.queryAllByText(/Assumed/)).toHaveLength(0);
+  },
 };

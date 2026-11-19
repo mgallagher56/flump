@@ -53,3 +53,18 @@ export const WithDeductionsNote: Story = {
     );
   },
 };
+
+/** Salary entered, pension left blank: the figure has no pension in it, and the note says so. */
+export const BeforePension: Story = {
+  args: {
+    assumingRegion: false,
+    summary: deriveOnboardingSummary({
+      ...INITIAL_VALUES,
+      grossSalary: 45000,
+      taxRegion: "ENGLAND",
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.textContent).toContain("Before any pension contribution");
+  },
+};

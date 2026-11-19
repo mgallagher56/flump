@@ -661,7 +661,8 @@ describe("OnboardingRoute (4-step flow)", () => {
     expect(JSON.parse(JSON.stringify(mockUpdateProfile.mock.calls[0][0]))).toEqual({
       birthYear: new Date().getFullYear() - 32,
       annualSalary: 45000,
-      monthlyTakeHome: 2718,
+      // Salary mode: no typed take-home is saved; the engine works it out from the salary.
+      monthlyTakeHome: null,
       employmentType: "employed",
       taxRegion: "SCOTLAND",
       studentLoanPlans: ["PLAN_2"],

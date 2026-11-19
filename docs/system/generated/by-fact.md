@@ -9,9 +9,9 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | Value                                                                                                         | Kind   | Area        | Verdict                                   |
 | ------------------------------------------------------------------------------------------------------------- | ------ | ----------- | ----------------------------------------- |
 | [Salary (yearly pay before tax)](#salary)                                                                     | fact   | pay         | Duplicated (two stores that can disagree) |
-| [Monthly take-home pay as typed in onboarding](#typed-take-home)                                              | fact   | pay         | Broken                                    |
+| [Monthly take-home pay as typed in onboarding](#typed-take-home)                                              | fact   | pay         | Holds                                     |
 | [Employment type](#employment-type)                                                                           | fact   | pay         | Holds                                     |
-| [Workplace pension rates and how the pension is paid](#pension-rates)                                         | fact   | pay         | Broken                                    |
+| [Workplace pension rates and how the pension is paid](#pension-rates)                                         | fact   | pay         | Duplicated (two stores that can disagree) |
 | [Year of birth](#birth-year)                                                                                  | fact   | pay         | Holds                                     |
 | [Tax region](#tax-region)                                                                                     | fact   | pay         | Broken                                    |
 | [Student loan plan](#student-loan-plan)                                                                       | fact   | pay         | Duplicated (two stores that can disagree) |
@@ -55,7 +55,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Home equity](#home-equity)                                                                                   | figure | home        | Holds                                     |
 | [Loan to value](#loan-to-value)                                                                               | figure | home        | Broken                                    |
 | [Mortgage monthly payment (calculated)](#mortgage-payment)                                                    | figure | home        | Holds                                     |
-| [Take-home pay](#take-home)                                                                                   | figure | pay         | Broken                                    |
+| [Take-home pay](#take-home)                                                                                   | figure | pay         | Duplicated (two stores that can disagree) |
 | [Left over each month and budget totals](#left-over)                                                          | figure | budget      | Broken                                    |
 | [Safe to spend](#safe-to-spend)                                                                               | figure | budget      | Holds                                     |
 | [Breathing room (months of cover)](#months-of-cover)                                                          | figure | budget      | Broken                                    |
@@ -74,7 +74,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 <a id="salary"></a>
 
 - Id: `salary` (stored fact)
-- Verdict: Duplicated (two stores that can disagree). Findings: PP-1, BU-1, BU-2, SA-6, DB-5. Links: L24, L25, L26, L33, L47, L69.
+- Verdict: Duplicated (two stores that can disagree). Findings: BU-1, SA-6, DB-5. Links: L24, L25, L26, L33, L47, L69.
 - Source of truth: `user_profiles.annual_salary` in `apps/backend/src/entities/user-profile.entity.ts`
 
 Other stores:
@@ -87,7 +87,7 @@ Other stores:
 
 Entered or changed by:
 
-- Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts` (take-home mode saves net pay times 12 here)
+- Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts` (salary mode only; take-home mode leaves the salary empty (decision 2))
 - Settings: `apps/web/app/features/settings/components/AgeAndPaySection/AgeAndPaySection.tsx`
 - Pension: `apps/web/app/containers/pension/PensionContainer.tsx`
 - Self Assessment: `apps/web/app/features/tax/taxActions.server.ts`
@@ -109,9 +109,9 @@ Read by:
 <a id="typed-take-home"></a>
 
 - Id: `typed-take-home` (stored fact)
-- Verdict: Broken. Findings: PP-1, PP-10. Links: L32.
+- Verdict: Holds. Findings: none. Links: L31, L32.
 - Source of truth: `user_profiles.monthly_take_home` in `apps/backend/src/entities/user-profile.entity.ts`
-- Note: Stored and never used by a figure.
+- Note: Slice 6 (owner decision 2 option A): net pay typed in onboarding is stored here and the salary is left empty. Figures that need pay before tax (tax, National Insurance, pension in pounds) show "Not set" until a salary is saved; a saved salary always wins.
 
 Other stores:
 
@@ -119,11 +119,13 @@ Other stores:
 
 Entered or changed by:
 
-- Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts`
+- Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts` (take-home mode only, as net pay; salary mode saves null (decision 2))
 
 Read by:
 
-- AI context pack: `packages/finance-engine/src/profile.ts` (passed through the baseline; no figure uses it)
+- Engine picture (headline figures): `packages/finance-engine/src/picture/input.ts` (profileFactsFromProfile reads it as ProfileFacts.monthlyTakeHome)
+- Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/take-home.ts` (selectTakeHome uses it as the take-home (basis typed) when no salary is saved)
+- AI context pack: `packages/finance-engine/src/profile.ts` (passed through the baseline as monthlyTakeHomeOverride)
 
 ### Employment type
 
@@ -152,9 +154,10 @@ Read by:
 <a id="pension-rates"></a>
 
 - Id: `pension-rates` (stored fact)
-- Verdict: Broken. Findings: PP-2, PP-3, PP-4, PP-11, DB-4, AI-12. Links: L27, L31, L37.
-- Source of truth: `user_profiles.pension_percent, pension_employer_percent, is_salary_sacrifice, is_salary_sacrifice_employer_ni` in `apps/backend/src/entities/user-profile.entity.ts` (the columns default to 5, 3 and false, so an unanswered question looks answered)
-- Note: pension_percent and pension_employer_percent are numeric(7,4). Pounds a month typed on the Profile tab become the stored rate to four places (finance-engine contributionPercentFromMonthly), so they round-trip to the penny; screens show at most two places.
+- Verdict: Duplicated (two stores that can disagree). Findings: PP-11. Links: L27, L31, L37.
+- Source of truth: `user_profiles.pension_percent, pension_employer_percent, is_salary_sacrifice, is_salary_sacrifice_employer_ni` in `apps/backend/src/entities/user-profile.entity.ts` (pension_percent, pension_employer_percent and is_salary_sacrifice are nullable with no default (slice 6, decision 3): null is not set; a stored value, including 5 and 3, is the user's answer)
+- Note: Slice 6: migration ClearDefaultPensionRates set rows holding exactly the old 5% and 3% defaults to not set, with a before-image table and a guard (it changes nothing on or after 2027-01-01, or once its before-image table exists). What remains is PP-11: a pot's own monthly payment can repeat the workplace contribution.
+  pension_percent and pension_employer_percent are numeric(7,4). Pounds a month typed on the Profile tab become the stored rate to four places (finance-engine contributionPercentFromMonthly), so they round-trip to the penny; screens show at most two places.
 
 Other stores:
 
@@ -165,14 +168,14 @@ Entered or changed by:
 - Onboarding: `apps/web/app/features/onboarding/useFinishOnboarding.ts`
 - Settings: `apps/web/app/features/settings/components/AgeAndPaySection/AgeAndPaySection.tsx`
 - Pension: `apps/web/app/containers/pension/PensionContainer.tsx`
-- Reset financial data: `apps/backend/src/modules/profile/profile-view.ts` (reset stores 0% as if it were an answer)
+- Reset financial data: `apps/backend/src/modules/profile/profile-view.ts` (reset stores not set (null) for the three answers (AI-12))
 
 Read by:
 
 - Engine picture (headline figures): `packages/finance-engine/src/picture/input.ts`
 - Pension: `apps/web/app/features/pension/contribution.ts`
 - Dashboard: `apps/web/app/routes/_index.tsx`
-- Retirement plan: `packages/finance-engine/src/workplace-pension.ts`
+- Retirement plan: `packages/finance-engine/src/workplace-pension.ts` (an unset rate is listed in notSet and left out of the projection, and the page says so)
 - AI context pack: `packages/finance-engine/src/profile.ts`
 
 ### Year of birth
@@ -202,13 +205,13 @@ Read by:
 <a id="tax-region"></a>
 
 - Id: `tax-region` (stored fact)
-- Verdict: Broken. Findings: SA-3, PP-8, PP-9, CS-7. Links: L29.
+- Verdict: Broken. Findings: SA-3, PP-8. Links: L29.
 - Source of truth: `user_profiles.tax_region` in `apps/backend/src/entities/user-profile.entity.ts`
-- Note: The Self Assessment calculation takes no region and always uses England, Wales and Northern Ireland bands.
+- Note: The Self Assessment calculation takes no region and always uses England, Wales and Northern Ireland bands (slice 7). Slice 6: the Pension page's £100,000 notice reads the saved region from the profile, no longer the browser baseline (PP-9, CS-7).
 
 Other stores:
 
-- `browser baseline ukRegion` [cache] in `apps/web/app/utils/taxTrapCopy.ts` (the Pension tax-trap notice reads this copy)
+- none
 
 Entered or changed by:
 
@@ -231,7 +234,7 @@ Read by:
 
 Other stores:
 
-- `accounts.student_loan_plan` [duplicate] in `apps/backend/src/entities/account.entity.ts` (asked for when a Student Loan account is added; take-home never reads it)
+- `accounts.student_loan_plan` [duplicate] in `apps/backend/src/entities/account.entity.ts` (asked for when a Student Loan account is added; take-home never reads it. Slice 6 migration StudentLoanPlanToProfile copied it into every profile with no answer; the account form writing the profile waits for slice 4; the column is dropped in slice 9)
 
 Entered or changed by:
 
@@ -270,15 +273,16 @@ Read by:
 <a id="take-home"></a>
 
 - Id: `take-home` (derived figure)
-- Verdict: Broken. Findings: PP-1, PP-2, PP-4, PP-5. Links: L31.
+- Verdict: Duplicated (two stores that can disagree). Findings: BU-1, PP-5. Links: L31.
 - Computed by: `selectTakeHome` in `packages/finance-engine/src/picture/selectors/take-home.ts`
-- Built from: `salary`, `pension-rates`, `tax-region`, `student-loan-plan`
+- Built from: `salary`, `typed-take-home`, `pension-rates`, `tax-region`, `student-loan-plan`
+- Note: Slice 6: the Dashboard, Take-home, Pension, safe to spend and onboarding all use selectTakeHome, a typed take-home counts when no salary is saved, and unset pension rates leave it not set. Still apart: the Budget income row is a copy (BU-1, slice 5), and the AI context pack works its own tax position from the baseline (PP-5).
 
 Other code paths that compute it:
 
 - `context pack take-home from the baseline` [duplicate] in `packages/finance-engine/src/ai-context-pack.ts` (saved facts only, the tax year that applies today, no extra debt payment)
-- `onboarding take-home facts` [wrapper] in `apps/web/app/features/onboarding/deriveOnboardingSummary.ts` (same function, blank pension read as 0%)
-- `pension take-home facts` [wrapper] in `apps/web/app/containers/pension/PensionContainer.tsx` (same function, 5% read as unknown)
+- `onboarding take-home facts` [wrapper] in `apps/web/app/features/onboarding/deriveOnboardingSummary.ts` (same function; a blank pension is worked out with none and labelled 'Before any pension contribution', and the Dashboard says not set until a rate is saved)
+- `pension take-home facts` [wrapper] in `apps/web/app/containers/pension/PensionContainer.tsx` (same function, the saved facts as stored)
 
 Shown on:
 

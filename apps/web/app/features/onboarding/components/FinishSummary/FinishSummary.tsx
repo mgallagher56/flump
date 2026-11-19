@@ -176,7 +176,7 @@ export const FinishSummary: FC<FinishSummaryProps> = ({
       </Heading>
 
       {/* The same flat take-home line as every step: an estimate, never a hero (D2), and not a
-          card inside the step card. Its label already says "(estimate)". */}
+          card inside the step card. Its label says "(estimate)" unless the figure was typed. */}
       <LiveSummaryBar assumingRegion={assumingRegion} summary={summary} />
 
       {groups.map((group) => (

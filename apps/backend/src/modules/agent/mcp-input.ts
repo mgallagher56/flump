@@ -75,6 +75,7 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
       studentLoanPlans: facts?.studentLoanPlans ?? null,
       pensionPercent: facts?.pensionPercent ?? null,
       isSalarySacrifice: facts?.isSalarySacrifice ?? null,
+      monthlyTakeHome: facts?.monthlyTakeHome ?? null,
       housingStatus: facts?.housingStatus ?? null,
       monthlyHousingCost: facts?.monthlyHousingCost ?? null,
       mortgageType: facts?.mortgageType ?? null,
@@ -161,7 +162,10 @@ export function toMcpInputWire(raw: BuildContextPackInput, anonymise: boolean): 
                   employerPercent: num(input.workplacePension.employerPercent),
                   isSalarySacrifice: input.workplacePension.isSalarySacrifice,
                   passEmployerNi: input.workplacePension.passEmployerNi,
-                  ratesAssumed: input.workplacePension.ratesAssumed,
+                  notSet:
+                    input.workplacePension.notSet && input.workplacePension.notSet.length > 0
+                      ? [...input.workplacePension.notSet]
+                      : undefined,
                 }),
         }),
     ...(typeof input.birthYear === "number" && Number.isInteger(input.birthYear)

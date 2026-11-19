@@ -13,6 +13,12 @@ export interface ProfileFacts {
   pensionPercent: number | null;
   isSalarySacrifice: boolean | null;
   /**
+   * Monthly take-home pay as the person typed it (onboarding's take-home option, owner decision 2
+   * option A), or null. Used by selectTakeHome only when no salary is saved; it is net pay, so no
+   * tax is worked out from it. Optional so callers that only build salary facts need not list it.
+   */
+  monthlyTakeHome?: number | null;
+  /**
    * How the pension is paid, when known. Optional: no saved profile field holds it yet, so it is
    * set only by callers that ask the person. When absent, `isSalarySacrifice` decides between
    * salary sacrifice and a net pay arrangement.
@@ -78,37 +84,23 @@ function toNumber(value: unknown): number | null {
   return null;
 }
 
+const positiveOrNull = (n: number | null): number | null => (n !== null && n > 0 ? n : null);
+
 const REGIONS = ["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"] as const;
 const EMPLOYMENT = ["employed", "self-employed", "other"] as const;
 const HOUSING = ["renting", "mortgage", "own_outright", "living_with_family"] as const;
 const MORTGAGE_TYPES = ["repayment", "interest-only"] as const;
 
 /**
- * True when the stored pension rates are still the backend's row-creation defaults (5% employee,
- * 3% employer), which the user may never have chosen. There is no "set by the user" flag, so
- * this exact pair is the only signal (the same heuristic the pension page uses).
- */
-export function hasDefaultPensionRates(
-  profile: Partial<UserProfileData> | null | undefined,
-): boolean {
-  const p = profile ?? {};
-  return toNumber(p.pensionPercent) === 5 && toNumber(p.pensionEmployerPercent) === 3;
-}
-
-/**
- * The stored salary sacrifice flag, or null when it cannot be taken as the user's choice.
- * `is_salary_sacrifice` is NOT NULL and used to default to true, so older rows carry `true`
- * the user never chose. Rows are not backfilled (owner decision); instead a stored `true`
- * alongside the untouched default pension rates is read as not set. A stored `false` is the
- * new default and the net pay method, the one onboarding saves, so it is kept.
+ * The stored salary sacrifice flag, or null when it was never answered. The column is nullable
+ * with no default (owner decision 3, slice 6), so a stored value is always the user's own answer,
+ * including false (the net pay method onboarding saves) and true.
  */
 export function salarySacrificeFromProfile(
   profile: Partial<UserProfileData> | null | undefined,
 ): boolean | null {
   const value = profile?.isSalarySacrifice;
-  if (typeof value !== "boolean") return null;
-  if (value && hasDefaultPensionRates(profile)) return null;
-  return value;
+  return typeof value === "boolean" ? value : null;
 }
 
 /** Maps a stored profile to facts. Never invents a default: unanswered stays null. */
@@ -133,6 +125,7 @@ export function profileFactsFromProfile(
     studentLoanPlans,
     pensionPercent: toNumber(p.pensionPercent),
     isSalarySacrifice,
+    monthlyTakeHome: positiveOrNull(toNumber(p.monthlyTakeHome)),
     housingStatus: HOUSING.find((h) => h === p.housingStatus) ?? null,
     monthlyHousingCost: toNumber(p.monthlyHousingCost),
     mortgageType: MORTGAGE_TYPES.find((t) => t === p.mortgageType) ?? null,

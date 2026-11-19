@@ -149,17 +149,17 @@ export const WorkplacePensionDark: Story = {
   },
 };
 
-/** The untouched 5% and 3% creation defaults: the drawer says they are the minimums. */
-export const WorkplacePensionDefaultRates: Story = {
+/** Rates never answered: the drawer says they are not set and not included. */
+export const WorkplacePensionRatesNotSet: Story = {
   args: {
     ...baseArgs,
     planArgs: {
       ...planArgs,
       workplacePension: {
         annualSalary: 48_000,
-        employeePercent: 5,
-        employerPercent: 3,
-        ratesAssumed: true,
+        employeePercent: 0,
+        employerPercent: 0,
+        notSet: ["pensionPercent", "pensionEmployerPercent"],
       },
     },
   },
@@ -169,7 +169,7 @@ export const WorkplacePensionDefaultRates: Story = {
     await userEvent.click(
       canvas.getByRole("button", { name: /Assumptions, pots and year by year/ }),
     );
-    await expect(canvas.getByText(/the auto-enrolment minimums/)).toBeInTheDocument();
+    await expect(canvas.getByText(/are not set, so they are not included/)).toBeInTheDocument();
     await userEvent.click(
       canvas.getByLabelText("Base contributions on pay that counts for your pension"),
     );

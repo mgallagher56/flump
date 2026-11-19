@@ -430,6 +430,7 @@ describe("new user", () => {
       studentLoanPlans: null,
       pensionPercent: null,
       isSalarySacrifice: null,
+      monthlyTakeHome: null,
       housingStatus: null,
       monthlyHousingCost: null,
       mortgageType: null,

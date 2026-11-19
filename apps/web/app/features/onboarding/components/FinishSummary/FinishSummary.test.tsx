@@ -59,7 +59,9 @@ describe("<FinishSummary />", () => {
       />,
     );
     expect(container.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
-    expect(screen.getByText("Monthly take-home pay (estimate)")).toBeDefined();
+    // Take-home mode: the figure is the one typed, so it is not labelled an estimate.
+    expect(screen.queryByText("Monthly take-home pay (estimate)")).toBeNull();
+    expect(screen.getAllByText("Monthly take-home pay").length).toBeGreaterThan(0);
     expect(container.textContent).toContain("£3,000");
     // One figure on the review: no left over or net worth beside the take-home.
     expect(container.textContent).not.toMatch(/surplus|left over each month|net worth/i);

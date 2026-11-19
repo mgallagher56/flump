@@ -32,7 +32,12 @@ import { AuditEventsDeleteAndTruncateGuards1795100000000 } from "./AuditEventsDe
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
+import {
+  ClearDefaultPensionRates1795480100000,
+  PENSION_DEFAULTS_CLEAR_BEFORE,
+} from "./ClearDefaultPensionRates1795480100000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
+import { PensionAnswersNullable1795480000000 } from "./PensionAnswersNullable1795480000000";
 import {
   RemoveSeededExampleData1794355400000,
   SEEDED_ACCOUNTS,
@@ -40,6 +45,7 @@ import {
   TAX_FINGERPRINT_SQL,
 } from "./RemoveSeededExampleData1794355400000";
 import { SavingsRowsNotEssential1795450000000 } from "./SavingsRowsNotEssential1795450000000";
+import { StudentLoanPlanToProfile1795480200000 } from "./StudentLoanPlanToProfile1795480200000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
 import { WidenPensionPercentPrecision1795460000000 } from "./WidenPensionPercentPrecision1795460000000";
 
@@ -59,8 +65,10 @@ let MIGRATIONS: MigrationClass[] = [];
 
 // Operational tables a migration creates that no entity maps (left out of the entity
 // comparisons): the BE-05 liability sign before-image (LiabilitySignRule1794358050000) and the
-// BE-07 shared rate-limit counters (AddRateLimitBuckets1794632012000).
-const MIGRATION_ONLY_TABLES = "'migrations', 'liability_sign_backfill', 'rate_limit_buckets'";
+// BE-07 shared rate-limit counters (AddRateLimitBuckets1794632012000) and the two slice 6
+// before-images (ClearDefaultPensionRates, StudentLoanPlanToProfile).
+const MIGRATION_ONLY_TABLES =
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -1389,16 +1397,18 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         await ds.query("SELECT is_salary_sacrifice FROM user_profiles WHERE user_id = $1", [userId])
       )[0].is_salary_sacrifice;
 
-    it("defaults new profiles to false and leaves existing rows untouched; down() restores true", async () => {
+    it("leaves existing rows untouched; down() restores true", async () => {
       await ds.runMigrations();
       await undoThrough(MIGRATION);
-      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('before')");
+      // A chosen 6% keeps the row out of ClearDefaultPensionRates, whose run depends on the date.
+      await ds.query("INSERT INTO user_profiles (user_id, pension_percent) VALUES ('before', 6)");
       expect(await flag("before")).toBe(true);
 
       await ds.runMigrations();
       await ds.query("INSERT INTO user_profiles (user_id) VALUES ('after')");
       expect(await flag("before")).toBe(true);
-      expect(await flag("after")).toBe(false);
+      // PensionAnswersNullable1795480000000 has since dropped the default: not answered is null.
+      expect(await flag("after")).toBeNull();
 
       await undoThrough(MIGRATION);
       await ds.query("INSERT INTO user_profiles (user_id) VALUES ('reverted')");
@@ -2042,6 +2052,217 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await undoThrough(NAME);
       // round(3.2206, 2) = 3.22; round(4.005, 2) = 4.01 (half away from zero).
       expect(await rates()).toEqual([{ own: "3.22", employer: "4.01" }]);
+    });
+  });
+
+  describe("PensionAnswersNullable1795480000000 (slice 6, owner decision 3)", () => {
+    const NAME = "PensionAnswersNullable1795480000000";
+    const answers = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT user_id, pension_percent::text AS own, pension_employer_percent::text AS employer,
+                is_salary_sacrifice AS sacrifice
+         FROM user_profiles ORDER BY user_id`,
+      );
+
+    it("stores a new profile's pension answers as null, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('u1')");
+      const unanswered = [{ user_id: "u1", own: null, employer: null, sacrifice: null }];
+      expect(await answers()).toEqual(unanswered);
+      await runUpInTransaction(new PensionAnswersNullable1795480000000());
+      expect(await answers()).toEqual(unanswered);
+    });
+
+    it("on revert fills nulls with 5, 3 and false and restores the defaults and NOT NULL", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, pension_percent, pension_employer_percent, is_salary_sacrifice) VALUES ('u1', NULL, NULL, NULL), ('u2', 6, 4, true)",
+      );
+      await undoThrough(NAME);
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('u3')");
+      expect(await answers()).toEqual([
+        { user_id: "u1", own: "5.0000", employer: "3.0000", sacrifice: false },
+        { user_id: "u2", own: "6.0000", employer: "4.0000", sacrifice: true },
+        { user_id: "u3", own: "5.0000", employer: "3.0000", sacrifice: false },
+      ]);
+      await expect(
+        ds.query("INSERT INTO user_profiles (user_id, pension_percent) VALUES ('u4', NULL)"),
+      ).rejects.toThrow(/not-null|null value/i);
+    });
+  });
+
+  describe("ClearDefaultPensionRates1795480100000 (slice 6, owner decision 3)", () => {
+    const NAME = "ClearDefaultPensionRates1795480100000";
+    const answers = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT user_id, pension_percent::text AS own, pension_employer_percent::text AS employer,
+                is_salary_sacrifice AS sacrifice
+         FROM user_profiles ORDER BY user_id`,
+      );
+    const imageRows = async (): Promise<number> =>
+      (await ds.query("SELECT count(*)::int AS n FROM pension_rates_backfill"))[0].n;
+    const imageExists = async (): Promise<boolean> =>
+      (await ds.query("SELECT to_regclass('public.pension_rates_backfill') IS NOT NULL AS t"))[0].t;
+    /** The migration with its clock set, so each side of the cutoff is tested without mocking time. */
+    const withClock = (now: string): ClearDefaultPensionRates1795480100000 => {
+      const migration = new ClearDefaultPensionRates1795480100000();
+      migration.now = new Date(now);
+      return migration;
+    };
+    const BEFORE_CUTOFF = "2026-12-31T23:59:59Z";
+
+    // Undone so its body can be run directly with a set clock (the chain's own run used the real date).
+    const seed = async (): Promise<void> => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      expect(await imageExists()).toBe(false);
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, pension_percent, pension_employer_percent, is_salary_sacrifice)
+         VALUES ('a-default-off', 5, 3, false), ('b-default-on', 5, 3, true),
+                ('c-six-three', 6, 3, true), ('d-five-four', 5, 4, false)`,
+      );
+    };
+    const UNTOUCHED = [
+      { user_id: "a-default-off", own: "5.0000", employer: "3.0000", sacrifice: false },
+      { user_id: "b-default-on", own: "5.0000", employer: "3.0000", sacrifice: true },
+      { user_id: "c-six-three", own: "6.0000", employer: "3.0000", sacrifice: true },
+      { user_id: "d-five-four", own: "5.0000", employer: "4.0000", sacrifice: false },
+    ];
+
+    it("before the cutoff clears every 5/3 pair and its flag, and keeps any other pair", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await answers()).toEqual([
+        { user_id: "a-default-off", own: null, employer: null, sacrifice: null },
+        { user_id: "b-default-on", own: null, employer: null, sacrifice: null },
+        UNTOUCHED[2],
+        UNTOUCHED[3],
+      ]);
+      expect(await imageRows()).toBe(2);
+    });
+
+    it("on or after the cutoff changes nothing, and still marks itself as run", async () => {
+      await seed();
+      await runUpInTransaction(withClock(PENSION_DEFAULTS_CLEAR_BEFORE));
+      expect(await answers()).toEqual(UNTOUCHED);
+      expect(await imageExists()).toBe(true);
+      expect(await imageRows()).toBe(0);
+      // A later run, even with a clock before the cutoff, has run once and changes nothing.
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await answers()).toEqual(UNTOUCHED);
+    });
+
+    it("runs once: a second run keeps a 5/3 answer saved since", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, pension_percent, pension_employer_percent, is_salary_sacrifice) VALUES ('e-chosen-later', 5, 3, false)",
+      );
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      expect(await answers()).toContainEqual({
+        user_id: "e-chosen-later",
+        own: "5.0000",
+        employer: "3.0000",
+        sacrifice: false,
+      });
+      expect(await imageRows()).toBe(2);
+    });
+
+    it("down restores the old values where all three are still null, keeps a newer answer, and drops the image", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      // b answers 7% after the clear: that answer is the person's and stays.
+      await ds.query("UPDATE user_profiles SET pension_percent = 7 WHERE user_id = 'b-default-on'");
+      await runMigrationDown(new ClearDefaultPensionRates1795480100000());
+      expect(await answers()).toEqual([
+        UNTOUCHED[0],
+        { user_id: "b-default-on", own: "7.0000", employer: null, sacrifice: null },
+        UNTOUCHED[2],
+        UNTOUCHED[3],
+      ]);
+      expect(await imageExists()).toBe(false);
+      // Down after a skipped run (no image) also works.
+      await runMigrationDown(new ClearDefaultPensionRates1795480100000());
+    });
+
+    it("its image rows go with the profile", async () => {
+      await seed();
+      await runUpInTransaction(withClock(BEFORE_CUTOFF));
+      await ds.query("DELETE FROM user_profiles WHERE user_id = 'a-default-off'");
+      expect(await imageRows()).toBe(1);
+    });
+  });
+
+  describe("StudentLoanPlanToProfile1795480200000 (slice 6)", () => {
+    const NAME = "StudentLoanPlanToProfile1795480200000";
+    const plans = (): Promise<unknown[]> =>
+      ds.query("SELECT user_id, student_loan_plans FROM user_profiles ORDER BY user_id");
+    const loan = (userId: string, type: string, plan: string | null): Promise<unknown> =>
+      ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, student_loan_plan) VALUES ($1, 'Loan', $2, -1000, $3)`,
+        [userId, type, plan],
+      );
+
+    it("copies account plans into unanswered profiles only, in plan order, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await ds.query(
+        `INSERT INTO user_profiles (user_id, student_loan_plans)
+         VALUES ('a-null', NULL), ('b-no-loan', ''), ('c-plan-1', 'PLAN_1'), ('d-two', NULL), ('e-none', NULL)`,
+      );
+      await loan("a-null", "Student Loan", "PLAN_2");
+      await loan("b-no-loan", "Student Loan", "PLAN_2");
+      await loan("c-plan-1", "Student Loan", "PLAN_2");
+      await loan("d-two", "Student Loan", "POSTGRAD");
+      await loan("d-two", "Student Loan", "PLAN_1");
+      await loan("d-two", "Student Loan", "PLAN_1");
+      // Not a Student Loan account, and a Student Loan with no plan: neither counts.
+      await loan("e-none", "Loan", "PLAN_4");
+      await loan("e-none", "Student Loan", null);
+
+      await ds.runMigrations();
+      const after = [
+        { user_id: "a-null", student_loan_plans: "PLAN_2" },
+        { user_id: "b-no-loan", student_loan_plans: "" },
+        { user_id: "c-plan-1", student_loan_plans: "PLAN_1" },
+        // Distinct, in the order PLAN_1, PLAN_2, PLAN_4, PLAN_5, POSTGRAD.
+        { user_id: "d-two", student_loan_plans: "PLAN_1,POSTGRAD" },
+        { user_id: "e-none", student_loan_plans: null },
+      ];
+      expect(await plans()).toEqual(after);
+      await runUpInTransaction(new StudentLoanPlanToProfile1795480200000());
+      expect(await plans()).toEqual(after);
+      expect(
+        (await ds.query("SELECT count(*)::int AS n FROM student_loan_plan_backfill"))[0].n,
+      ).toBe(2);
+      // The account's own plan is untouched.
+      expect(
+        await ds.query("SELECT student_loan_plan FROM accounts WHERE user_id = 'a-null'"),
+      ).toEqual([{ student_loan_plan: "PLAN_2" }]);
+    });
+
+    it("down puts back null where the copied value still stands, and drops the image", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, student_loan_plans) VALUES ('a-null', NULL), ('d-changed', NULL)",
+      );
+      await loan("a-null", "Student Loan", "PLAN_2");
+      await loan("d-changed", "Student Loan", "PLAN_1");
+      await ds.runMigrations();
+      // d answers again after the copy: kept on revert.
+      await ds.query(
+        "UPDATE user_profiles SET student_loan_plans = 'PLAN_5' WHERE user_id = 'd-changed'",
+      );
+      await undoThrough(NAME);
+      expect(await plans()).toEqual([
+        { user_id: "a-null", student_loan_plans: null },
+        { user_id: "d-changed", student_loan_plans: "PLAN_5" },
+      ]);
+      expect(
+        (await ds.query("SELECT to_regclass('public.student_loan_plan_backfill') AS t"))[0].t,
+      ).toBeNull();
     });
   });
 });

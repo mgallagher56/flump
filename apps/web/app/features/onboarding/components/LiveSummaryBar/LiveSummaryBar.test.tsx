@@ -20,7 +20,9 @@ describe("<LiveSummaryBar />", () => {
         summary={summaryFor({ incomeMode: "net", monthlyTakeHome: 3000, cashSavings: 12000 })}
       />,
     );
-    expect(screen.getByText("Monthly take-home pay (estimate)")).toBeDefined();
+    // A typed take-home is the person's own figure, so it is not labelled an estimate.
+    expect(screen.getByText("Monthly take-home pay")).toBeDefined();
+    expect(screen.queryByText("Monthly take-home pay (estimate)")).toBeNull();
     expect(screen.queryByTestId("onboarding-surplus")).toBeNull();
     expect(screen.queryByTestId("onboarding-net-worth")).toBeNull();
     expect(screen.getByTestId("onboarding-live-summary").textContent?.match(/£/g)).toHaveLength(1);
@@ -61,13 +63,25 @@ describe("<LiveSummaryBar />", () => {
     );
   });
 
-  it("shows no note when nothing is deducted beyond tax and NI", () => {
+  it("shows no note when the pension is answered as 0 and nothing else is deducted", () => {
+    render(
+      <LiveSummaryBar
+        assumingRegion={false}
+        summary={summaryFor({ grossSalary: 45000, taxRegion: "ENGLAND", pensionPercent: 0 })}
+      />,
+    );
+    expect(screen.queryByTestId("onboarding-take-home-note")).toBeNull();
+  });
+
+  it("says the figure is before any pension while the pension field is blank", () => {
     render(
       <LiveSummaryBar
         assumingRegion={false}
         summary={summaryFor({ grossSalary: 45000, taxRegion: "ENGLAND" })}
       />,
     );
-    expect(screen.queryByTestId("onboarding-take-home-note")).toBeNull();
+    expect(screen.getByTestId("onboarding-take-home-note").textContent).toBe(
+      "Before any pension contribution",
+    );
   });
 });

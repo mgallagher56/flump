@@ -1,4 +1,4 @@
-import { hasDefaultPensionRates, salarySacrificeFromProfile } from "./picture/input.js";
+import { salarySacrificeFromProfile } from "./picture/input.js";
 import type { UserProfileData } from "./profile.js";
 import { calculateEmployerNISavings } from "./uk-tax.js";
 import {
@@ -30,11 +30,15 @@ export interface WorkplacePensionInput {
   useQualifyingEarnings?: boolean;
   taxYear?: string;
   /**
-   * True when the rates are the untouched 5% and 3% creation defaults rather than ones the user
-   * set, so a screen can say so. Default false. It never changes the calculation.
+   * The rates the person has not set (owner decision 3, slice 6). A rate that is not set counts
+   * as no contribution in the calculation (it is left out, never a stand-in 5% or 3%), and a
+   * screen names it as not set. Absent or empty when both are set.
    */
-  ratesAssumed?: boolean;
+  notSet?: WorkplacePensionRate[];
 }
+
+/** A workplace pension rate the person may not have set. */
+export type WorkplacePensionRate = "pensionPercent" | "pensionEmployerPercent";
 
 export interface WorkplacePensionContributions {
   pensionableSalary: number;
@@ -45,6 +49,10 @@ export interface WorkplacePensionContributions {
   monthlyEmployer: number;
   monthlyTotal: number;
 }
+
+/** True when a stored rate is a number the person saved (a numeric string counts). */
+const isSavedRate = (n: unknown): boolean =>
+  n !== null && n !== undefined && n !== "" && Number.isFinite(Number(n)) && Number(n) >= 0;
 
 const nonNegative = (n: unknown): number => {
   const value = Number(n);
@@ -83,8 +91,8 @@ export function calculateWorkplacePensionContributions(
 /**
  * The saved workplace pension from a stored profile, or null when no salary is saved or the
  * saved employment type is self-employed or other (no workplace scheme). The rates are the stored
- * ones, marked `ratesAssumed` when they are the untouched creation defaults; a legacy salary
- * sacrifice `true` the user never chose is read as not set (`salarySacrificeFromProfile`).
+ * ones; a rate never saved is listed in `notSet` and counts as no contribution. A chosen 5% and
+ * 3% is a choice like any other.
  */
 export function workplacePensionFromProfile(
   profile: Partial<UserProfileData> | null | undefined,
@@ -95,13 +103,16 @@ export function workplacePensionFromProfile(
     return null;
   }
   const isSalarySacrifice = salarySacrificeFromProfile(profile) === true;
+  const notSet: WorkplacePensionRate[] = [];
+  if (!isSavedRate(profile?.pensionPercent)) notSet.push("pensionPercent");
+  if (!isSavedRate(profile?.pensionEmployerPercent)) notSet.push("pensionEmployerPercent");
   return {
     annualSalary: salary,
     employeePercent: nonNegative(profile?.pensionPercent),
     employerPercent: nonNegative(profile?.pensionEmployerPercent),
     isSalarySacrifice,
     passEmployerNi: isSalarySacrifice && profile?.isSalarySacrificeEmployerNi === true,
-    ratesAssumed: hasDefaultPensionRates(profile),
+    ...(notSet.length > 0 ? { notSet } : {}),
   };
 }
 

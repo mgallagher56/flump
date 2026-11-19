@@ -209,6 +209,37 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   }
 
   const v = saved.value;
+
+  if (v.basis === "typed") {
+    // No salary saved, but a take-home typed as net pay (owner decision 2 option A): that figure
+    // is the hero as entered, not an estimate. Tax, National Insurance and pension need pay before
+    // tax, so they are "Not set" behind one prompt to add the salary, and there is no pay-rise
+    // what-if (it needs a salary to start from).
+    return (
+      <div className={calculatorRoot()}>
+        <HeroFigure
+          label={heroLabel}
+          subline="The take-home pay you entered"
+          value={v.monthly}
+          valueFormat={{ fractionDigits: 0 }}
+        />
+        <KpiStrip
+          className={payStrip()}
+          emptyPrompt={{
+            title: "Add your salary before tax to see what comes off your pay",
+            description: "Income Tax, National Insurance and pension are worked out from it.",
+            action: profileLink("Add salary", "primary", SALARY_HREF),
+          }}
+          items={[
+            salaryCard,
+            <KpiCard key="tax" label="Tax and National Insurance" value={null} />,
+            <KpiCard key="pension" label="Pension" value={null} />,
+          ]}
+        />
+      </div>
+    );
+  }
+
   const salary = savedSalary;
   const shareNotTakenHome = salary > 0 ? (salary - v.annual) / salary : 0;
   const payAfterPension = Math.max(0, salary - v.pension);

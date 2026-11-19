@@ -96,6 +96,7 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
       studentLoanPlans: null,
       pensionPercent: null,
       isSalarySacrifice: null,
+      monthlyTakeHome: null,
       housingStatus: null,
       monthlyHousingCost: null,
       mortgageType: null,
@@ -166,6 +167,12 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
       studentLoanPlans: ["PLAN_2"],
       pensionPercent: 5,
     });
+  });
+
+  it("passes a typed take-home through when no salary is saved (slice 6)", async () => {
+    const data = await serviceWith({ monthlyTakeHome: "2450.00" }).getUserFinancialData("u1");
+    expect(data.profileFacts?.annualSalary).toBeNull();
+    expect(data.profileFacts?.monthlyTakeHome).toBe(2450);
   });
 });
 

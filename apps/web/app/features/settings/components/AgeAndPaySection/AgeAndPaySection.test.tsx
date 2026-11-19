@@ -80,15 +80,26 @@ describe("<AgeAndPaySection />", () => {
     expect(link.getAttribute("data-router-link")).toBe("true");
   });
 
-  it("shows the 5% and 3% creation defaults as empty fields marked Not set", () => {
+  it("shows rates never answered as empty fields marked Not set", () => {
+    const { own, employer } = setup({
+      ...DEFAULT_PROFILE,
+      pensionPercent: null,
+      pensionEmployerPercent: null,
+    });
+    expect(own.value).toBe("");
+    expect(employer.value).toBe("");
+    expect(screen.getAllByText("Not set", { selector: ":not(option)" })).toHaveLength(2);
+  });
+
+  it("shows a chosen 5% and 3% as chosen", () => {
     const { own, employer } = setup({
       ...DEFAULT_PROFILE,
       pensionPercent: 5,
       pensionEmployerPercent: 3,
     });
-    expect(own.value).toBe("");
-    expect(employer.value).toBe("");
-    expect(screen.getAllByText("Not set", { selector: ":not(option)" })).toHaveLength(2);
+    expect(own.value).toBe("5");
+    expect(employer.value).toBe("3");
+    expect(screen.queryAllByText("Not set", { selector: ":not(option)" })).toHaveLength(0);
   });
 
   it("keeps an unsaved salary and year empty, never 0", () => {
@@ -134,38 +145,39 @@ describe("<AgeAndPaySection />", () => {
   it("saves both pension rates together once one is entered, after leaving the pair", async () => {
     const { own, employer, onSave } = setup({
       ...DEFAULT_PROFILE,
-      pensionPercent: 5,
-      pensionEmployerPercent: 3,
+      pensionPercent: null,
+      pensionEmployerPercent: null,
     });
     fireEvent.change(own, { target: { value: "7" } });
     // Moving to the employer field is not leaving the pair.
     fireEvent.blur(own, { relatedTarget: employer });
     expect(onSave).not.toHaveBeenCalled();
     fireEvent.blur(employer);
-    // The employer field was left empty while the rates were assumed, so it keeps the saved 3%.
+    // The employer field was never answered and left empty, so it stays not set: never 0 or 3%.
     await waitFor(() =>
-      expect(onSave).toHaveBeenCalledWith({ pensionPercent: 7, pensionEmployerPercent: 3 }),
+      expect(onSave).toHaveBeenCalledWith({ pensionPercent: 7, pensionEmployerPercent: null }),
     );
-    expect(employer.value).toBe("3");
+    expect(employer.value).toBe("");
   });
 
-  it("keeps the saved own rate when only the employer rate is typed over assumed rates", async () => {
+  it("saves exactly 5% and 3% when typed over rates never answered", async () => {
     const { own, employer, onSave } = setup({
       ...DEFAULT_PROFILE,
-      pensionPercent: 5,
-      pensionEmployerPercent: 3,
+      pensionPercent: null,
+      pensionEmployerPercent: null,
     });
-    fireEvent.change(employer, { target: { value: "6" } });
+    fireEvent.change(own, { target: { value: "5" } });
+    fireEvent.blur(own, { relatedTarget: employer });
+    fireEvent.change(employer, { target: { value: "3" } });
     fireEvent.blur(employer);
     await waitFor(() =>
-      expect(onSave).toHaveBeenCalledWith({ pensionPercent: 5, pensionEmployerPercent: 6 }),
+      expect(onSave).toHaveBeenCalledWith({ pensionPercent: 5, pensionEmployerPercent: 3 }),
     );
-    expect(own.value).toBe("5");
   });
 
   it("does not save an emptied rate once the rates are a choice, and shows the saved rate again", () => {
-    // Saved 6% and 4%. The rate columns cannot be empty, so emptying the employer field and
-    // leaving it saves nothing and puts 4 back.
+    // Saved 6% and 4%. An emptied rate is not cleared by accident: leaving the field saves
+    // nothing and puts 4 back.
     const { employer, onSave } = setup();
     fireEvent.change(employer, { target: { value: "" } });
     fireEvent.blur(employer);

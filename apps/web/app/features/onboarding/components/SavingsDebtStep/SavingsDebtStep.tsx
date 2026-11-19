@@ -4,6 +4,9 @@ import type { OnboardingValues } from "../../types";
 import { StepFrame } from "../StepFrame";
 import { savingsDebtStepRecipe } from "./SavingsDebtStep.styles";
 
+/** A blank contribution is never saved or presumed, so 0 is how to say there is none. */
+export const PENSION_CONTRIBUTION_HINT = "Enter 0 if you do not pay into one.";
+
 export interface SavingsDebtStepProps {
   values: OnboardingValues;
   update: (patch: Partial<OnboardingValues>) => void;
@@ -61,6 +64,7 @@ export const SavingsDebtStep: FC<SavingsDebtStepProps> = ({
           )}
         </FormField>
         <FormField
+          hint={PENSION_CONTRIBUTION_HINT}
           id="baseline-pension-pct"
           label="Your pension contribution (% of pay before tax)"
         >

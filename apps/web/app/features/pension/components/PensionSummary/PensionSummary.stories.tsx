@@ -44,3 +44,14 @@ export const NoSalary: Story = {
     ).toBeDefined();
   },
 };
+
+export const RatesNotSet: Story = {
+  args: { monthlyTotal: null, ratesNotSet: true },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getAllByText(
+        "Add your contribution rates to see what goes in each month",
+      )[0],
+    ).toBeDefined();
+  },
+};

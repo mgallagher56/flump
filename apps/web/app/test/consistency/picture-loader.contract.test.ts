@@ -163,7 +163,8 @@ function toContractProfile(p: PersonaFixture) {
     country: "GB",
     employmentType: f.employmentType,
     annualSalary: f.annualSalary,
-    monthlyTakeHome: null,
+    // A typed take-home is a fact now (owner decision 2 option A), so it round-trips too.
+    monthlyTakeHome: f.monthlyTakeHome ?? null,
     hasSecondIncome: false,
     secondIncomeMonthly: null,
     hasRentalIncome: false,
@@ -179,9 +180,9 @@ function toContractProfile(p: PersonaFixture) {
     buyToLetMortgageRate: null,
     buyToLetMortgageType: "interest-only",
     pensionPercent: f.pensionPercent,
-    // 0, not the column default 3: with 5% and 3% a stored salary sacrifice `true` reads as the
-    // legacy default (hasDefaultPensionRates), and the facts would not survive the round trip.
-    pensionEmployerPercent: 0,
+    // Not a persona fact, so never answered: null (owner decision 3, the column has no default).
+    // A stored rate, 5% and 3% included, is the user's answer and never changes the facts.
+    pensionEmployerPercent: null,
     isSalarySacrifice: f.isSalarySacrifice,
     isSalarySacrificeEmployerNi: false,
     monthlySavingsTarget: null,

@@ -27,7 +27,8 @@ import {
   contributionMonthlyHint,
   contributionPercentHint,
   NO_SALARY_FOR_MONTHLY,
-  pensionRatesAssumed,
+  NOT_SET,
+  savedPensionRate,
 } from "~/features/pension/contribution";
 import { fieldGrid, sectionCard, statusText } from "~/features/settings/settings.styles";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -70,7 +71,7 @@ export const parseBirthYear = (text: string, currentYear: number): number | null
   return year >= EARLIEST_BIRTH_YEAR && year <= currentYear ? year : "invalid";
 };
 
-/** The fields this section edits, as saved. Assumed pension rates read as not set (null). */
+/** The fields this section edits, as saved. A pension rate never answered is null ("Not set"). */
 interface AgeAndPayValues {
   birthYear: number | null;
   employmentType: EmploymentType | null;
@@ -79,16 +80,14 @@ interface AgeAndPayValues {
   pensionEmployerPercent: number | null;
 }
 
-const valuesFromProfile = (profile: UserProfile): AgeAndPayValues => {
-  const assumed = pensionRatesAssumed(profile);
-  return {
-    birthYear: profile.birthYear ?? null,
-    employmentType: profile.employmentType ?? null,
-    annualSalary: profile.annualSalary ?? null,
-    pensionPercent: assumed ? null : (profile.pensionPercent ?? null),
-    pensionEmployerPercent: assumed ? null : (profile.pensionEmployerPercent ?? null),
-  };
-};
+const valuesFromProfile = (profile: UserProfile): AgeAndPayValues => ({
+  birthYear: profile.birthYear ?? null,
+  employmentType: profile.employmentType ?? null,
+  annualSalary: profile.annualSalary ?? null,
+  // A stored 5% and 3% is the user's own choice (owner decision 3); only null is not set.
+  pensionPercent: savedPensionRate(profile.pensionPercent),
+  pensionEmployerPercent: savedPensionRate(profile.pensionEmployerPercent),
+});
 
 export interface AgeAndPaySectionProps {
   /** The saved profile: the one source of truth for age, salary and pension rates. */
@@ -209,17 +208,15 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
   };
 
   /**
-   * Both rates save together once either is entered, so saving makes them a choice (as on the
-   * Pension page). While the rates are still the assumed creation defaults, an empty rate beside
-   * an entered one keeps its saved value (the assumed rate), so typing only your own rate does not
-   * drop the employer's. The rates are always stored (the columns cannot be empty), so once they
-   * are a choice an emptied rate is not saved: it shows its saved value again. Typing 0 saves 0%.
+   * Both rates save together once either is entered (as on the Pension page). A rate never
+   * answered and left empty stays not set (null), never 0 or a stand-in. A rate that was set and
+   * is emptied is not cleared by accident: it shows its saved value again. Typing 0 saves 0%.
    */
   const commitPension = () => {
-    const assumed =
-      saved.current.pensionPercent === null && saved.current.pensionEmployerPercent === null;
     let { employee: own, employer: theirs } = draft.current;
-    if (!assumed && (own === null || theirs === null)) {
+    const restoreOwn = own === null && saved.current.pensionPercent !== null;
+    const restoreTheirs = theirs === null && saved.current.pensionEmployerPercent !== null;
+    if (restoreOwn || restoreTheirs) {
       own = own ?? saved.current.pensionPercent;
       theirs = theirs ?? saved.current.pensionEmployerPercent;
       setField({ pensionPercent: own, pensionEmployerPercent: theirs });
@@ -227,11 +224,7 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
     if (own === saved.current.pensionPercent && theirs === saved.current.pensionEmployerPercent) {
       return;
     }
-    if (own === null && theirs === null) return;
-    void saveFields({
-      pensionPercent: own ?? profile.pensionPercent ?? 0,
-      pensionEmployerPercent: theirs ?? profile.pensionEmployerPercent ?? 0,
-    });
+    void saveFields({ pensionPercent: own, pensionEmployerPercent: theirs });
   };
 
   /** Moving between the two rate fields is not leaving them: the pair saves once focus goes. */
@@ -266,9 +259,9 @@ export const AgeAndPaySection: FC<AgeAndPaySectionProps> = ({ profile, onSave, n
     setTypedMonthly({});
     setUnitChoice(next as ContributionUnit);
   };
-  /** The other form beside the one being entered, or "Not set" while the rate is assumed. */
+  /** The other form beside the one being entered, or "Not set" while the rate is not answered. */
   const contributionHint = (notSet: boolean, percent: number | null) => {
-    if (notSet) return "Not set";
+    if (notSet) return NOT_SET;
     if (unit === "monthly") return contributionPercentHint(percent);
     return contributionMonthlyHint(contributionMonthlyFromPercent(percent, basis), formatPounds);
   };

@@ -63,9 +63,10 @@ export interface UserProfile {
   buyToLetMortgageBalance?: number | null;
   buyToLetMortgageRate?: number | null;
   buyToLetMortgageType: "repayment" | "interest-only";
-  pensionPercent: number;
-  pensionEmployerPercent: number;
-  isSalarySacrifice: boolean;
+  /** null when never answered (owner decision 3): a stored 5 and 3 is the user's own answer. */
+  pensionPercent?: number | null;
+  pensionEmployerPercent?: number | null;
+  isSalarySacrifice?: boolean | null;
   isSalarySacrificeEmployerNi: boolean;
   monthlySavingsTarget?: number | null;
   savingsAllocationMode: "total" | "per_account";
@@ -117,9 +118,9 @@ export const DEFAULT_PROFILE: UserProfile = {
   buyToLetMortgageBalance: null,
   buyToLetMortgageRate: null,
   buyToLetMortgageType: "interest-only",
-  pensionPercent: 5.0,
-  pensionEmployerPercent: 3.0,
-  isSalarySacrifice: false,
+  pensionPercent: null,
+  pensionEmployerPercent: null,
+  isSalarySacrifice: null,
   isSalarySacrificeEmployerNi: false,
   monthlySavingsTarget: null,
   savingsAllocationMode: "per_account",
@@ -222,14 +223,17 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
       ? Number(p.buyToLetMortgageRate)
       : null,
   buyToLetMortgageType: p.buyToLetMortgageType || DEFAULT_PROFILE.buyToLetMortgageType,
+  // Never presume a pension answer (owner decision 3): unanswered stays null, shown as "Not set".
   pensionPercent:
-    p.pensionPercent !== null && p.pensionPercent !== undefined ? Number(p.pensionPercent) : 5.0,
+    p.pensionPercent !== null && p.pensionPercent !== undefined ? Number(p.pensionPercent) : null,
   pensionEmployerPercent:
     p.pensionEmployerPercent !== null && p.pensionEmployerPercent !== undefined
       ? Number(p.pensionEmployerPercent)
-      : 3.0,
-  // Never assume salary sacrifice the user did not choose: net pay, as the dashboard and budget use.
-  isSalarySacrifice: p.isSalarySacrifice !== undefined ? Boolean(p.isSalarySacrifice) : false,
+      : null,
+  isSalarySacrifice:
+    p.isSalarySacrifice !== null && p.isSalarySacrifice !== undefined
+      ? Boolean(p.isSalarySacrifice)
+      : null,
   isSalarySacrificeEmployerNi:
     p.isSalarySacrificeEmployerNi !== undefined ? Boolean(p.isSalarySacrificeEmployerNi) : false,
   monthlySavingsTarget:

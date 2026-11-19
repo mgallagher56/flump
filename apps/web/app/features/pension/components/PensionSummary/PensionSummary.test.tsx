@@ -64,9 +64,20 @@ describe("<PensionSummary />", () => {
     expect(onAddPot).toHaveBeenCalled();
   });
 
-  test("assumed rates are named in the caption, with no figure", () => {
-    const { getByText } = customRender(<PensionSummary {...props} ratesAssumed />);
-    expect(getByText("Assumed rates. Edit to match your payslip.")).toBeDefined();
+  test("rates that are not set make the monthly total one prompt for the rates, never 5% and 3%", () => {
+    const { getByText, queryByText } = customRender(
+      <PensionSummary {...props} monthlyTotal={null} ratesNotSet />,
+    );
+    expect(getByText("Add your contribution rates to see what goes in each month")).toBeDefined();
+    expect(getByText("Add your rates").getAttribute("href")).toBe("/app/pension#pension-details");
+    expect(queryByText(/Assumed/)).toBeNull();
+    expect(queryByText("£0")).toBeNull();
+  });
+
+  test("chosen rates read as chosen, with no assumed caption", () => {
+    const { getByText, queryByText } = customRender(<PensionSummary {...props} />);
+    expect(getByText("You and your employer")).toBeDefined();
+    expect(queryByText(/Assumed/)).toBeNull();
   });
 
   test("an unknown monthly total becomes one prompt", () => {
