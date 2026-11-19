@@ -49,7 +49,7 @@ export const SECTION24_COPY = {
   kpiRateSubtext: "Rent less costs, before interest.",
   explainerTitle: "How Section 24 works",
   explainer:
-    "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest, up to 20% of the taxable rental profit. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
+    "Mortgage interest is not deducted from rental profit. Instead, the tax is reduced by 20% of the interest. The reduction is at most 20% of the rental profit, or of your income above the Personal Allowance if that is lower. Rent of £1,000 or less is not taxed. Above that, the estimate takes off the £1,000 property allowance instead of your costs when that gives less tax, and then there is no reduction for interest. The estimate uses England, Wales and Northern Ireland rates for a sole owner. Flump does not file your tax return.",
   explainerLoss:
     "Tax is worked out before mortgage interest is taken off. So the tax can be more than the cash the property makes, and the cash left can be below zero.",
   controlsLabel: "Rental figures",

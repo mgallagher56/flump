@@ -1,133 +1,106 @@
-import type { Section24Input, Section24Result } from "./types.js";
-import {
-  calculateIncomeTaxOnTaxable,
-  calculatePersonalAllowanceForYear,
-  getUkTaxYearRules,
-  resolveUkTaxYear,
-} from "./uk-tax-year.js";
+import { calculateUKTax, type TaxRecordFields } from "./tax-calculator.js";
+import type { Section24Input, Section24Result, UkTaxYear } from "./types.js";
+import { getUkTaxYearRules, resolveUkTaxYear } from "./uk-tax-year.js";
+
+const round2 = (n: number): number => Math.round(n * 100) / 100 + 0;
+
+/** One rental figure for the whole year, filed in the tax year it belongs to. */
+function annualRentalRecord(taxYear: UkTaxYear, category: string, amount: number): TaxRecordFields {
+  return {
+    id: `section24-${category}`,
+    type: category === "rental_income" ? "income" : "expense",
+    source: "rental",
+    category,
+    name: category,
+    amount,
+    frequency: "annual",
+    date: `${taxYear.slice(0, 4)}-06-06`,
+    endDate: null,
+    notes: null,
+  };
+}
 
 /**
- * Calculates Section 24 Buy-to-Let Landlord Tax and HMRC Payments on Account Reserve.
+ * Tax on rental income under Section 24, for the public calculator. It is the same estimate as
+ * the signed-in Self Assessment page: the figures come from `calculateUKTax`, with the other
+ * income treated as salary. So the property allowance (ITTOIA 2005 Part 7A), the finance cost
+ * credit and its three limits (ITTOIA 2005 s.274AA) and the Personal Allowance taper (ITA 2007
+ * s.35) are worked out in one place. England, Wales and Northern Ireland bands only.
  */
 export function calculateSection24Tax(input: Section24Input): Section24Result {
-  const share = Math.min(100, Math.max(1, input.ownershipSharePct ?? 100)) / 100;
-  const shareRentalIncome = Math.round(Math.max(0, input.grossRentalIncomeGbp) * share * 100) / 100;
-  const shareAllowableExpenses =
-    Math.round(Math.max(0, input.allowableExpensesGbp) * share * 100) / 100;
-  const shareMortgageInterest =
-    Math.round(Math.max(0, input.mortgageInterestGbp) * share * 100) / 100;
-
-  // True net profit before tax
-  const netRentalProfitBeforeFinance = shareRentalIncome - shareAllowableExpenses;
-
-  // Under Section 24: mortgage interest cannot be deducted to find taxable profit
-  const taxableRentalProfit = Math.max(0, netRentalProfitBeforeFinance);
-
-  // Determine marginal tax band of landlord from other taxable income
+  const taxYear = resolveUkTaxYear(input.taxYear);
+  const sharePct = Math.min(100, Math.max(1, input.ownershipSharePct ?? 100));
+  const rent = Math.max(0, input.grossRentalIncomeGbp);
+  const costs = Math.max(0, input.allowableExpensesGbp);
+  const interest = Math.max(0, input.mortgageInterestGbp);
   const otherIncome = Math.max(0, input.otherTaxableIncomeGbp);
-  const totalCombinedIncome = otherIncome + taxableRentalProfit;
 
-  // Tax on the rental slice = tax on (other + rental) minus tax on other alone, using the
-  // tax year's rUK bands and the Personal Allowance taper (above £100,000 the allowance falls by
-  // £1 for every £2, so the slice can be taxed at an effective 60%).
-  const rules = getUkTaxYearRules(resolveUkTaxYear(input.taxYear));
-  const computeIncomeTax = (income: number): number => {
-    const allowance = calculatePersonalAllowanceForYear(income, rules);
-    return calculateIncomeTaxOnTaxable(Math.max(0, income - allowance), rules, "ENGLAND_NI_WALES")
-      .total;
-  };
-
-  let taxOnTotal = 0;
-  let taxOnOtherOnly = 0;
-
-  taxOnTotal = computeIncomeTax(totalCombinedIncome);
-  taxOnOtherOnly = computeIncomeTax(otherIncome);
-
-  const grossRentalTaxLiability = Math.max(0, taxOnTotal - taxOnOtherOnly);
-
-  // Section 24 20% basic rate finance cost tax credit
-  const eligibleFinanceCost = Math.min(shareMortgageInterest, taxableRentalProfit);
-  const section24TaxCredit = Math.round(eligibleFinanceCost * 0.2 * 100) / 100;
-
-  // Net tax payable on rental income after Section 24 credit
-  const netRentalTaxLiability = Math.max(
-    0,
-    Math.round((grossRentalTaxLiability - section24TaxCredit) * 100) / 100,
+  const ledger = calculateUKTax(
+    taxYear,
+    [
+      annualRentalRecord(taxYear, "rental_income", rent),
+      annualRentalRecord(taxYear, "repairs_maintenance", costs),
+      annualRentalRecord(taxYear, "mortgage_interest", interest),
+    ],
+    otherIncome,
+    sharePct,
   );
 
+  const shareRentalIncome = round2(ledger.rentalIncomeGrossShare);
+  const shareAllowableExpenses = round2(ledger.rentalExpensesExclInterestShare);
+  const shareMortgageInterest = round2(ledger.rentalMortgageInterestShare);
+  // Rent less costs, before interest: what the tax share is measured against.
+  const netRentalProfitBeforeFinance = shareRentalIncome - shareAllowableExpenses;
+  const profitBeforeFinance = Math.max(0, netRentalProfitBeforeFinance);
+  // The profit actually taxed: rent less costs, or rent less the property allowance.
+  const taxableRentalProfit = round2(ledger.rentalProfitBeforeInterestShare);
+
+  const section24TaxCredit = round2(ledger.rentalPropertyTaxCredit);
+  const grossRentalTaxLiability = round2(ledger.rentalPropertyTaxDueBeforeCredit);
+  const netRentalTaxLiability = round2(ledger.rentalPropertyTaxDueAfterCredit);
+
   const effectiveRentalTaxRate =
-    taxableRentalProfit > 0
-      ? Math.round((netRentalTaxLiability / taxableRentalProfit) * 1000) / 10
+    profitBeforeFinance > 0
+      ? Math.round((netRentalTaxLiability / profitBeforeFinance) * 1000) / 10
       : 0;
 
-  // HMRC Payments on Account calculation:
-  // If liability > £1,000:
-  // 31 Jan: Balancing payment for current year + 1st payment on account (50% of annual liability)
-  // 31 Jul: 2nd payment on account (50% of annual liability)
-  const isSubjectToPoA = netRentalTaxLiability >= 1000;
-  const paymentOnAccount = isSubjectToPoA ? Math.round(netRentalTaxLiability * 0.5 * 100) / 100 : 0;
+  // When the Self Assessment bill is due, from the engine's payments (threshold and the share
+  // already taken at source both apply).
+  const payments = ledger.payments;
+  const paymentOnAccount = round2(payments.paymentOnAccount);
 
-  const balancingPayment31Jan = netRentalTaxLiability;
-  const firstPaymentOnAccount31Jan = paymentOnAccount;
-  const totalDue31Jan =
-    Math.round((balancingPayment31Jan + firstPaymentOnAccount31Jan) * 100) / 100;
-
-  const secondPaymentOnAccount31July = paymentOnAccount;
-  const totalDue31July = secondPaymentOnAccount31July;
-
-  // Recommended monthly tax set aside:
-  // Monthly reserve needed to cover annual recurring tax bills smoothly
-  const recommendedMonthlyTaxSetAside = Math.round((netRentalTaxLiability / 12) * 100) / 100;
-
-  // Old rules (pre-Section 24) comparison
   // Not floored: under Section 24 the tax is worked out before mortgage interest, so a landlord
   // can owe tax and still make a cash loss. The result shows that loss rather than £0.
   const actualCashProfit = netRentalProfitBeforeFinance - shareMortgageInterest;
+  const rules = getUkTaxYearRules(taxYear);
   const isHigherRate = otherIncome >= rules.ewni.personalAllowance + rules.ewni.basicRateBandWidth;
-  // Pre-Section 24: interest was deducted, so the cash profit is the taxable slice. Same slice
-  // method and allowance taper as above, so the "penalty" is only the effect of Section 24. A
-  // property loss was carried forward against later property profit, not set against other
-  // income, so a loss adds no tax and takes none away.
-  const oldRulesTaxableProfit = Math.max(0, actualCashProfit);
-  const oldRulesTax =
-    Math.round(
-      (computeIncomeTax(otherIncome + oldRulesTaxableProfit) - computeIncomeTax(otherIncome)) * 100,
-    ) / 100;
-  const section24Penalty = Math.max(
-    0,
-    Math.round((netRentalTaxLiability - oldRulesTax) * 100) / 100,
-  );
-  // Can be negative: a cash loss after tax (see `actualCashProfit`).
-  // `+ 0` turns a rounded -0 into 0, so a break-even never shows as "-£0".
-  const netRentalIncomeAfterTax =
-    Math.round((actualCashProfit - netRentalTaxLiability) * 100) / 100 + 0;
 
   return {
-    ownershipSharePct: Math.round(share * 100),
+    ownershipSharePct: Math.round(sharePct),
     shareRentalIncomeGbp: shareRentalIncome,
     shareAllowableExpensesGbp: shareAllowableExpenses,
     shareMortgageInterestGbp: shareMortgageInterest,
-    netRentalProfitBeforeFinanceCostsGbp: Math.round(netRentalProfitBeforeFinance * 100) / 100,
-    taxableRentalProfitGbp: Math.round(taxableRentalProfit * 100) / 100,
+    netRentalProfitBeforeFinanceCostsGbp: round2(netRentalProfitBeforeFinance),
+    taxableRentalProfitGbp: taxableRentalProfit,
+    propertyAllowanceUsedGbp: round2(ledger.propertyAllowanceUsed),
     section24TaxCreditGbp: section24TaxCredit,
     netRentalTaxLiabilityGbp: netRentalTaxLiability,
     effectiveRentalTaxRatePct: effectiveRentalTaxRate,
-    balancingPayment31JanGbp: balancingPayment31Jan,
-    firstPaymentOnAccount31JanGbp: firstPaymentOnAccount31Jan,
-    totalDue31JanGbp: totalDue31Jan,
-    secondPaymentOnAccount31JulyGbp: secondPaymentOnAccount31July,
-    totalDue31JulyGbp: totalDue31July,
-    recommendedMonthlyTaxSetAsideGbp: recommendedMonthlyTaxSetAside,
+    balancingPayment31JanGbp: round2(payments.balancingPayment),
+    firstPaymentOnAccount31JanGbp: paymentOnAccount,
+    totalDue31JanGbp: round2(payments.january.amount),
+    secondPaymentOnAccount31JulyGbp: paymentOnAccount,
+    totalDue31JulyGbp: round2(payments.july?.amount ?? 0),
+    recommendedMonthlyTaxSetAsideGbp: round2(netRentalTaxLiability / 12),
     // Compatibility aliases
-    actualCashProfit: Math.round(actualCashProfit * 100) / 100,
-    section24TaxableProfit: Math.round(taxableRentalProfit * 100) / 100,
-    grossTaxOnProperty: Math.round(grossRentalTaxLiability * 100) / 100,
+    actualCashProfit: round2(actualCashProfit),
+    section24TaxableProfit: taxableRentalProfit,
+    grossTaxOnProperty: grossRentalTaxLiability,
     financeCredit: section24TaxCredit,
     finalTaxDue: netRentalTaxLiability,
-    oldRulesTax,
-    section24Penalty,
     effectiveTaxRate: effectiveRentalTaxRate,
-    netRentalIncomeAfterTax,
+    // Can be negative: a cash loss after tax (see `actualCashProfit`).
+    netRentalIncomeAfterTax: round2(actualCashProfit - netRentalTaxLiability),
     isHigherRate,
   };
 }
@@ -141,6 +114,7 @@ export function calculateSection24LandlordTax(
   mortgageInterest: number,
   allowableExpenses: number,
   ownershipSharePct = 100,
+  taxYear?: UkTaxYear,
 ): Section24Result {
   return calculateSection24Tax({
     grossRentalIncomeGbp: rentalIncome,
@@ -148,5 +122,6 @@ export function calculateSection24LandlordTax(
     mortgageInterestGbp: mortgageInterest,
     otherTaxableIncomeGbp: employmentIncome,
     ownershipSharePct,
+    taxYear,
   });
 }

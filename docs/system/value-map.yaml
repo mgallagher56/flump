@@ -147,6 +147,13 @@ surfaces:
       path: packages/finance-engine/src/ai-context-pack.ts,
     }
   - {
+      id: public-tools,
+      name: Public calculators,
+      kind: page,
+      route: /tools/:slug,
+      path: apps/web/app/routes/tools.$slug.tsx,
+    }
+  - {
       id: export,
       name: Data export and erasure,
       kind: export,
@@ -2464,6 +2471,12 @@ figures:
           note: "the one rule for the salary passed as PAYE pay",
         }
       - {
+          function: calculateSection24Tax,
+          status: wrapper,
+          path: packages/finance-engine/src/section24.ts,
+          note: "the public Section 24 calculator: entered figures as one year's rental records, other income as salary",
+        }
+      - {
           function: "headline strip sums",
           status: duplicate,
           path: apps/web/app/features/tax/components/TaxHeadline/TaxHeadline.tsx,
@@ -2474,6 +2487,11 @@ figures:
       - { surface: self-assessment, path: apps/web/app/containers/tax/TaxContainer.tsx }
       - { surface: mcp-read, path: packages/mcp/src/tools/read/getTaxYearPosition.ts }
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
+      - {
+          surface: public-tools,
+          path: packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx,
+          note: "tax on rental income, entered figures only",
+        }
     links: [L29, L48, L69]
     verdict: broken
     findings: [SA-3, SA-9]

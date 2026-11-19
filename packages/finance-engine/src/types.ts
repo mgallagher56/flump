@@ -461,7 +461,10 @@ export interface Section24Result {
   shareAllowableExpensesGbp: number;
   shareMortgageInterestGbp: number;
   netRentalProfitBeforeFinanceCostsGbp: number;
+  /** The profit taxed: rent less costs, or rent less the property allowance when that is lower. */
   taxableRentalProfitGbp: number;
+  /** Property allowance used in place of the costs and the finance cost credit (0 if not). */
+  propertyAllowanceUsedGbp: number;
   section24TaxCreditGbp: number; // 20% basic rate reducer
   netRentalTaxLiabilityGbp: number;
   effectiveRentalTaxRatePct: number;
@@ -477,8 +480,6 @@ export interface Section24Result {
   grossTaxOnProperty: number;
   financeCredit: number;
   finalTaxDue: number;
-  oldRulesTax: number;
-  section24Penalty: number;
   effectiveTaxRate: number;
   netRentalIncomeAfterTax: number;
   isHigherRate: boolean;
