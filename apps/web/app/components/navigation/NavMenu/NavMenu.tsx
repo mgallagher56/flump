@@ -35,6 +35,11 @@ interface NavMenuProps {
   onNavigate?: () => void;
   /** Mobile only: routes this returns true for render as disabled "Sign up to open" items (sandbox). */
   isRouteDisabled?: (item: NavRouteItem) => boolean;
+  /**
+   * Mobile variant: groups the top bar already shows inline from the nav breakpoint (tablets), so
+   * the drawer drops its copy there instead of listing the group twice.
+   */
+  isGroupInlineFromNavInline?: (item: NavRouteItem) => boolean;
 }
 
 const DesktopDropdownGroup: FC<{
@@ -200,6 +205,7 @@ const NavMenu: FC<NavMenuProps> = ({
   variant = "desktop",
   onNavigate,
   isRouteDisabled,
+  isGroupInlineFromNavInline,
 }) => {
   const { t } = useTranslation();
   const isMobileVariant = isMobile || variant === "mobile";
@@ -211,7 +217,12 @@ const NavMenu: FC<NavMenuProps> = ({
         {routes?.map((route) => {
           if (route.children && route.children.length > 0) {
             return (
-              <div key={route.key} className={mobileSection()}>
+              <div
+                key={route.key}
+                className={mobileSection({
+                  hideFromNavInline: Boolean(isGroupInlineFromNavInline?.(route)),
+                })}
+              >
                 <div className={mobileSectionHeading()}>
                   {navLabel(t, route.label ?? route.key)}
                 </div>

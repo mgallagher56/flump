@@ -93,6 +93,20 @@ describe("<NavMenu />", () => {
     expect(screen.getByText("pension")).toBeDefined();
   });
 
+  it("mobile variant: hides a group from navInline when the tablet top bar shows it inline", () => {
+    customRender(
+      <NavMenu
+        isGroupInlineFromNavInline={(item) => item.key === "wealth"}
+        isMobile
+        routes={groupedRoutes}
+        variant="mobile"
+      />,
+    );
+    const section = (name: string) => screen.getByText(name).parentElement?.className ?? "";
+    expect(section("wealth")).toContain("navInline:d_none");
+    expect(section("planning")).not.toContain("navInline:d_none");
+  });
+
   it("renders the label key instead of the module key when a route sets one", () => {
     customRender(
       <NavMenu routes={[{ key: "tax", label: "selfAssessment", route: "/app/self-assessment" }]} />,
