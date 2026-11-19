@@ -33,7 +33,11 @@ const figureSource = (offer: BudgetLinkOffer): string =>
     ? " from Profile"
     : offer.paymentEstimated
       ? ""
-      : " from your housing details";
+      : offer.kind === "mortgage"
+        ? // A saved mortgage payment is on the mortgage account, or in the details for a mortgage
+          // with no account payment yet (audit slice 5): both are saved details.
+          " from your saved details"
+        : " from your housing details";
 
 /**
  * One quiet note on the budget page when a saved figure (take-home pay, the rent or mortgage

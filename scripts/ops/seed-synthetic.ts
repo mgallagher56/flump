@@ -44,6 +44,9 @@ export const USER_DATA_TABLES = [
   "bank_connections",
   // BE-12 pending bank OAuth consents (random state hash and PKCE verifier, ten minutes).
   "bank_oauth_states",
+  // System audit slice 5 before-image (renters' linked rent lines it set to sole; child of
+  // budget_entries, ON DELETE CASCADE).
+  "rent_share_backfill",
   "budget_entries",
   "agent_audit_events",
   // BE-06 sensitive-action records and consents (user_id is null only for user.deleted rows).
