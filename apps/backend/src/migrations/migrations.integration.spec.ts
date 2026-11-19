@@ -74,8 +74,8 @@ import {
 } from "./RemoveSeededExampleData1794355400000";
 import {
   RENTAL_SHARE_BACKFILL_TABLE,
-  RentalShareOntoPropertyAccounts1795540100000,
-} from "./RentalShareOntoPropertyAccounts1795540100000";
+  RentalShareOntoPropertyAccounts1795550100000,
+} from "./RentalShareOntoPropertyAccounts1795550100000";
 import { RentLinesWholeRent1795490100000 } from "./RentLinesWholeRent1795490100000";
 import { SavingsRowsNotEssential1795450000000 } from "./SavingsRowsNotEssential1795450000000";
 import { SetupChecklistDismissed1795500100000 } from "./SetupChecklistDismissed1795500100000";
@@ -84,8 +84,8 @@ import {
   TAX_RECORD_ACCOUNT_FOREIGN_KEY,
   TAX_RECORD_ACCOUNT_USER_INDEX,
   TAX_RECORD_USER_ACCOUNT_INDEX,
-  TaxRecordAccountLink1795540000000,
-} from "./TaxRecordAccountLink1795540000000";
+  TaxRecordAccountLink1795550000000,
+} from "./TaxRecordAccountLink1795550000000";
 import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMonth1794356000000";
 import { WidenPensionPercentPrecision1795460000000 } from "./WidenPensionPercentPrecision1795460000000";
 
@@ -3545,8 +3545,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("TaxRecordAccountLink1795540000000 (audit slice 7)", () => {
-    const NAME = "TaxRecordAccountLink1795540000000";
+  describe("TaxRecordAccountLink1795550000000 (audit slice 7)", () => {
+    const NAME = "TaxRecordAccountLink1795550000000";
     const column = (): Promise<unknown[]> =>
       ds.query(
         "SELECT 1 FROM information_schema.columns WHERE table_name = 'tax_records' AND column_name = 'account_id'",
@@ -3596,7 +3596,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       const mine = await account("u1");
       const linked = await record("u1", mine);
       const before = await columns();
-      await runUpInTransaction(new TaxRecordAccountLink1795540000000());
+      await runUpInTransaction(new TaxRecordAccountLink1795550000000());
       expect(await columns()).toEqual(before);
       expect(await key()).toHaveLength(1);
       expect(await linkOf(linked)).toBe(mine);
@@ -3633,8 +3633,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("RentalShareOntoPropertyAccounts1795540100000 (audit slice 7, decision 6)", () => {
-    const NAME = "RentalShareOntoPropertyAccounts1795540100000";
+  describe("RentalShareOntoPropertyAccounts1795550100000 (audit slice 7, decision 6)", () => {
+    const NAME = "RentalShareOntoPropertyAccounts1795550100000";
     const profile = (userId: string, share: number) =>
       ds.query("INSERT INTO user_profiles (user_id, property_ownership_share) VALUES ($1, $2)", [
         userId,
@@ -3711,7 +3711,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.query("UPDATE accounts SET ownership = 'sole', share_percent = NULL WHERE id = $1", [
         soleRental,
       ]);
-      await runUpInTransaction(new RentalShareOntoPropertyAccounts1795540100000());
+      await runUpInTransaction(new RentalShareOntoPropertyAccounts1795550100000());
       expect(await share(soleRental)).toEqual({ ownership: "sole", share_percent: null });
       expect(await beforeImage()).toHaveLength(2);
     });

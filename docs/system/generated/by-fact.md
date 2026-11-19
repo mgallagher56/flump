@@ -1400,7 +1400,7 @@ Read by:
 
 Other stores:
 
-- `user_profiles.property_ownership_share` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (no longer read or written for tax since slice 7; RentalShareOntoPropertyAccounts1795540100000 copied a value below 100 onto sole rental Property accounts; slice 9 drops the column)
+- `user_profiles.property_ownership_share` [legacy] in `apps/backend/src/entities/user-profile.entity.ts` (no longer read or written for tax since slice 7; RentalShareOntoPropertyAccounts1795550100000 copied a value below 100 onto sole rental Property accounts; slice 9 drops the column)
 
 Entered or changed by:
 

@@ -22,8 +22,8 @@ import { takeMigrationLock } from "../config/migration-lock";
  */
 export const RENTAL_SHARE_BACKFILL_TABLE = "rental_share_onto_property_backfill";
 
-export class RentalShareOntoPropertyAccounts1795540100000 implements MigrationInterface {
-  name = "RentalShareOntoPropertyAccounts1795540100000";
+export class RentalShareOntoPropertyAccounts1795550100000 implements MigrationInterface {
+  name = "RentalShareOntoPropertyAccounts1795550100000";
 
   private readonly logger = new Logger("RentalShareOntoPropertyAccounts");
 

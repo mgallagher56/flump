@@ -10,7 +10,7 @@ import { numericTransformer } from "./numeric.transformer";
 
 // A user's tax records by date, newest first (scanned backwards). (AddUserIdIndexes1794358100000)
 @Index("IDX_tax_records_user_date", ["userId", "date"])
-// System audit slice 7 (TaxRecordAccountLink1795540000000): a user's records grouped by the account
+// System audit slice 7 (TaxRecordAccountLink1795550000000): a user's records grouped by the account
 // they describe, and the (account_id, user_id) foreign key's own index, so deleting an account
 // finds its records without a scan.
 @Index("IDX_tax_records_user_account", ["userId", "accountId"])
