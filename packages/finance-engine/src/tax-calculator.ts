@@ -421,9 +421,10 @@ const isRentalProperty = (a: RentalShareAccount) =>
   a.type === "Property" && a.accountSubtype === "rental";
 
 /**
- * The share of each rental property and of each buy-to-let mortgage, from the accounts (owner
- * decision 6). A buy-to-let mortgage is one with the `btl_mortgage` subtype or one linked to a
- * rental property; a property and its mortgage can have different shares (decision 14).
+ * The share of each rental property and of each mortgage, from the accounts (owner decision 6). A
+ * rental record can be linked to any mortgage (the loan whose interest is the finance cost), so a
+ * record linked to one takes that loan's share; a property and its mortgage can have different
+ * shares (decision 14). The unlinked share is worked out from the rental properties only.
  */
 export function rentalSharesFromAccounts(accounts: readonly RentalShareAccount[]): RentalShares {
   const byAccountId: Record<string, number> = {};
@@ -432,13 +433,9 @@ export function rentalSharesFromAccounts(accounts: readonly RentalShareAccount[]
   );
   const rentalIds = new Set(withIds.filter(isRentalProperty).map((a) => a.id));
   for (const a of withIds) {
-    const isBtlMortgage =
-      a.type === "Mortgage" &&
-      (a.accountSubtype === "btl_mortgage" ||
-        (a.linkedAccountId !== null &&
-          a.linkedAccountId !== undefined &&
-          rentalIds.has(a.linkedAccountId)));
-    if (isRentalProperty(a) || isBtlMortgage) byAccountId[a.id] = resolveAccountSharePercent(a);
+    if (isRentalProperty(a) || a.type === "Mortgage") {
+      byAccountId[a.id] = resolveAccountSharePercent(a);
+    }
   }
   const propertyShares = [...new Set([...rentalIds].map((id) => byAccountId[id] as number))];
   const unlinked: RentalShares["unlinked"] =
@@ -555,6 +552,12 @@ export interface TaxCalculationResult {
   totalNIDue: number;
   totalTaxDue: number; // Total combined tax due (Income Tax + NI)
   netAdditionalTaxToPay: number; // totalTaxDue - PAYE tax already paid
+  /**
+   * PAYE tax beyond the year's whole bill, which would be repaid: totalTaxDue below the PAYE tax.
+   * It happens when the finance cost credit is more than the tax on the rent and there is too
+   * little other tax for it to come off (the Scottish 19% starter rate). 0 otherwise.
+   */
+  estimatedRepayment: number;
   /**
    * When `netAdditionalTaxToPay` is due: the bill on 31 January after the year, plus payments on
    * account towards the next year when they apply. PAYE tax counts as taken at source.
@@ -972,6 +975,7 @@ export function calculateUKTax(
     const totalTaxDue = totalIncomeTaxDue + totalNIDue;
 
     const netAdditionalTaxToPay = Math.max(0, totalTaxDue - payeTaxDue);
+    const estimatedRepayment = Math.max(0, payeTaxDue - totalTaxDue);
     const totalTaxable = Math.max(0, totalGrossIncome - personalAllowance);
 
     return {
@@ -1031,6 +1035,7 @@ export function calculateUKTax(
       totalNIDue,
       totalTaxDue,
       netAdditionalTaxToPay,
+      estimatedRepayment,
       payments: calculateSelfAssessmentPayments({
         taxYear,
         bill: netAdditionalTaxToPay,
