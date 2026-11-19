@@ -47,3 +47,5 @@ docs/design/e16-polish/after*/.auth/
 # E41 mutation testing (Stryker): local reports and temp copies, never committed
 **/reports/mutation/
 .stryker-tmp/
+# Left in the package folder when an in-place run is interrupted
+stryker-setup-*.js

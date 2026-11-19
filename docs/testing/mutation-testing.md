@@ -2,21 +2,50 @@
 
 Mutation testing makes one small fault at a time in the code (a `>` becomes `>=`, a `-` becomes `+`) and runs the tests. If no test fails, the fault "survived": the tests would not notice that mistake. The tool is [StrykerJS](https://stryker-mutator.io/). The plan is [E41](../audit/plans/E41-mutation-testing-and-test-speed-plan.md).
 
-Status: slice M0, a proof on one module. Nothing here runs in CI, there is no score check, and no test was written to kill a survivor.
+Status: slice M1. The whole of `packages/finance-engine` is mutation-tested once a week in CI, and its score is checked against a floor. Pull requests that change engine source get an advisory list of faults no test caught. No test has been written to kill a survivor yet: that is M2. Other packages come in M3 to M5.
 
 ## Run it locally
 
 ```bash
-bun run mutation
+bun run mutation --mutate "src/mortgage.ts"
 ```
 
-This runs Stryker in `packages/finance-engine` with [`stryker.config.json`](../../packages/finance-engine/stryker.config.json). Today it mutates `src/mortgage.ts` only.
+This runs Stryker in `packages/finance-engine` with [`stryker.config.json`](../../packages/finance-engine/stryker.config.json). The config mutates the whole package: every `src/**/*.ts` file except tests, `__fixtures__`, `test-vectors` and `index.ts` barrels (69 files, 11,577 faults). A whole-package run took 56 minutes on a busy laptop, so pass `--mutate` for the file or folder you are working on.
 
 - Reports: `packages/finance-engine/reports/mutation/mutation.html` (open it in a browser) and `mutation.json`. The folder is git-ignored.
-- The run reuses earlier results from `reports/mutation/stryker-incremental.json`. Add `--force` for a full run: `bun run mutation --force`.
-- To mutate something else for one run, pass `--mutate`, for example `bun run mutation --mutate "src/debt.ts"`, or a line range: `--mutate "src/mortgage.ts:32-44"`.
-- The config uses `inPlace` (see below). Stryker writes the faults into the real source file and puts the original back at the end, from a backup in `packages/finance-engine/.stryker-tmp/`. Do not edit the mutated file while a run is going. If a run is killed, check `git status` and restore the file from that backup or from git.
-- The script is not part of `turbo run test` or any CI job.
+- The run reuses earlier results from `reports/mutation/stryker-incremental.json`. Add `--force` for a full run.
+- `--mutate` also takes a line range: `--mutate "src/mortgage.ts:32-44"`.
+- The config uses `inPlace` (see below). Stryker writes the faults into the real source files, and adds `// @ts-nocheck` to every file in the package, test files included. It puts the originals back at the end, from a backup in `packages/finance-engine/.stryker-tmp/`. Do not edit or commit engine files while a run is going.
+- To stop a run, press Ctrl+C or send it SIGINT. In M1 this put every file back and saved a partial incremental file. It leaves `stryker-setup-*.js` files in the package folder, which are git-ignored and safe to delete. The main process renames itself `stryker`, so `pkill -f "stryker.js run"` does not find it.
+- The script is not part of `turbo run test`. CI runs Stryker from its own workflow (next section).
+
+## The weekly run and the ratchet
+
+[`.github/workflows/mutation.yml`](../../.github/workflows/mutation.yml), its own workflow file, not a required check (E41 decisions 3 to 6).
+
+| Job           | When                                                                   | What it does                                                                                                                                                                                       | Blocks a merge?               |
+| ------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Pick packages | Weekly run and manual start                                            | Chooses the packages: by cron for the weekly run, or the `package` input (a folder, or `all`) for a manual start                                                                                   | No                            |
+| Shards 1 to 8 | After it                                                               | Each mutates about an eighth of the package's files, by size, and uploads its HTML and JSON report. Each shard saves its own incremental file to the Actions cache                                 | No                            |
+| Score         | After all shards                                                       | Joins the eight JSON reports and runs the ratchet. Fails when a shard report is missing or the score is under the floor. Writes the score and the files with the most survivors to the job summary | No. It fails only its own job |
+| Changed files | Pull requests that touch engine source or its Stryker or Vitest config | Mutates the changed source files only and lists every survivor in the job summary. Advisory (decision 4)                                                                                           | No                            |
+
+- Schedule: Sunday at 02:17 UTC for the engine. The weekly run always reruns every fault (`--force`). Stryker's incremental mode reuses a fault's result when its own file and the test files are unchanged, but it does not see a change to another source file that a test imports, so reused results could go stale. A manual start (Actions, "🧬 Mutation testing", Run workflow) reuses the latest saved results unless `force` is ticked. It then runs in a few minutes: the M1 rerun took under a minute per shard.
+- Node 24 from `actions/setup-node`, because Stryker 10 needs 22 or later. Bun runs the scripts.
+- Reports are artifacts named `mutation-report-finance-engine-shard1` to `shard8`, kept for 30 days. There is no hosted dashboard (decision 6).
+- Why shards: they run side by side, so the run finishes in about 20 minutes instead of over an hour. That leaves room as M3 to M5 add packages. Each shard runs only the tests Vitest finds related to its own files. The M1 comparison below found the same results as an unsharded run, apart from tests that time themselves.
+- Files are split by size, so a file can move to another shard when files change. Its results then start again in the new shard. Stryker also keeps the moved file's old results in the old shard's report, carried over from that shard's incremental file, so the score job keeps from each report only the files that shard was given this run. Without that, the second CI run on the branch failed with `src/picture/figure.ts is in more than one shard report`.
+- The pull request job compares GitHub's merge commit with its first parent, so changes that reached `main` after the pull request opened are not mutated as its own. It does not use the weekly incremental files. Each shard's file covers only that shard's files, and Stryker numbers tests from 0 in every run, so the files cannot be joined. Mutating only the changed files keeps the job short: M0 measured 22 to 70 seconds for all of `mortgage.ts`.
+
+The ratchet, [`scripts/check-mutation-score.ts`](../../scripts/check-mutation-score.ts):
+
+- The score is Stryker's own: faults caught (killed or timed out) over faults caught, survived or with no coverage. Compile and runtime errors are left out, as Stryker leaves them out.
+- [`scripts/mutation-baseline.json`](../../scripts/mutation-baseline.json) holds one floor per package, set at floor(measured) - 1 (decision 3). The check fails under the floor, and also when a package has no floor.
+- When the score allows a higher floor, the job summary says so. Raising a floor needs no sign-off. Lowering one is a guard change (AGENTS.md section 15) and is listed under "Guard changes" in the PR.
+- Survivors recorded as equivalent or not worth killing (decision 2, the triage ledger M2 adds) stay in the count. The floor sits below 100 to allow for them. Nothing is suppressed.
+- A red weekly run is the coordinator's to pick up (plan section 9). Open the score job's summary, then the shard reports.
+- Run the check by hand on any report: `bun scripts/check-mutation-score.ts check packages/finance-engine path/to/mutation.json`. `survivors` lists the faults no test caught; `shard` and `targets` print the file lists the workflow uses.
+- Adding a package (M3 onwards): give it a `stryker.config.json`, a cron in `on.schedule`, an entry in the "Pick packages" step, and a floor. `scripts/check-mutation-score.test.ts` checks that every cron picks a package and that every picked package has a floor.
 
 ## Versions
 
@@ -66,6 +95,74 @@ Survivors by function, with line numbers in `packages/finance-engine/src/mortgag
 
 These are not triaged. Some will be equivalent (the changed code behaves the same for every input), and some may be faults TypeScript would reject, because no type checker runs (see below). Triage and kill tests are M2.
 
+## What M1 measured on the whole engine
+
+### On `main` after audit slices 4 to 6 (the floor comes from these)
+
+PRs 791, 797 and 798 changed 17 engine files after the first measurement, so the engine was measured again on this branch rebased onto them (commit `49a9e7fa8`). Both runs started with no saved results.
+
+| Figure                        | CI, 8 shards (run 44558249413, attempt 2) | Laptop, one run                                     |
+| ----------------------------- | ----------------------------------------- | --------------------------------------------------- |
+| Faults                        | 11,863 in 69 files                        | 11,863 in 69 files                                  |
+| Static (module-level) faults  | not read                                  | 4,743 (40%)                                         |
+| Killed                        | 8,125                                     | 8,208                                               |
+| Timed out (counted as caught) | 235                                       | 66                                                  |
+| Survived                      | 3,006                                     | 3,092                                               |
+| No coverage                   | 470                                       | 470                                                 |
+| Errors                        | 27                                        | 27                                                  |
+| **Mutation score**            | **70.63%**                                | **69.91%**                                          |
+| Score of covered faults       | 73.55%                                    | 72.80%                                              |
+| Stryker time                  | 2 min 36 s to 19 min 13 s per shard       | 65 min 39 s (load average 12 to 34 from other work) |
+| Whole workflow run            | 20 minutes                                | not applicable                                      |
+
+Of the 11,863 faults, 188 had a different result in the two runs:
+
+- 173 are timeouts.
+- 14 were killed on the laptop and survived on CI. 13 of them were "killed" by a test's own time limit failing on the loaded laptop (in `uk-what-if.ts` 7, `uk-tax-thresholds.ts` 4, `uk-take-home.ts` 1 and `uk-hicbc.ts` 1). The other one, in `retirement.ts`, was killed by the unseeded property test in `retirement.test.ts` ("Property failed after 16 tests"), which M0 flagged.
+- 1 was killed on CI only: the same fake-timer case in `uk-tax-year.ts` as in the first measurement.
+
+The floor. `scripts/mutation-baseline.json` sets the engine's floor at **68%**: floor(69.91) - 1, from the lower of the two runs. A floor from the CI run (69%) could fail a later run that happened to time out fewer faults, with no code change.
+
+Files with the most faults no test caught on CI (survived plus no coverage): `retirement.ts` 285, `profile.ts` 284, `debt-payoff.ts` 264, `mortgage.ts` 230, `tax-calculator.ts` 218, `health-score.ts` 216 (score 35.33%), `portfolio.ts` 156. The weekly job summary lists the top 15.
+
+### First measurement, before the rebase
+
+Two full runs of the same engine source and config (branch commit `c82c6b53d`): one on CI in eight shards, one unsharded on the laptop.
+
+| Figure                              | CI, 8 shards (run 44544787241)                                 | Laptop, one run                                                                                   |
+| ----------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Machine                             | `ubuntu-latest`, 4 test runner processes per shard, Node 24.22 | 8-core Apple laptop, 7 test runner processes, Node 22.12.0, load average 24 to 33 from other work |
+| Files instrumented                  | 69 (68 with faults)                                            | 69 (68 with faults)                                                                               |
+| Faults                              | 11,577                                                         | 11,577                                                                                            |
+| Static (module-level) faults        | 21% to 53% per shard                                           | 4,483 (39%), estimated at 99% of the test time                                                    |
+| Killed                              | 7,905                                                          | 7,912                                                                                             |
+| Timed out (counted as caught)       | 181                                                            | 42                                                                                                |
+| Survived                            | 2,992                                                          | 3,124                                                                                             |
+| No coverage                         | 472                                                            | 472                                                                                               |
+| Errors                              | 27                                                             | 27                                                                                                |
+| **Mutation score**                  | **70.01%**                                                     | **68.87%**                                                                                        |
+| Score of covered faults             | 72.99%                                                         | 71.80%                                                                                            |
+| Stryker time                        | 3 min 37 s to 18 min 13 s per shard, about 72 minutes in all   | 55 min 37 s                                                                                       |
+| Whole workflow run, start to finish | 19 minutes                                                     | not applicable                                                                                    |
+| Incremental file                    | 210 to 292 KB per shard in the Actions cache (compressed)      | 17.4 MB for the whole package                                                                     |
+| HTML and JSON report                | 3.0 to 5.0 MB per shard artifact                               | 8.6 MB and 8.4 MB                                                                                 |
+
+`mortgage.ts` alone scored 55.68% in both runs, the same as in M0.
+
+A second CI run (44554616807) on a commit that added one comment line to `check-in-day.ts` restored each shard's incremental file. Each shard took 30 to 56 seconds, and the whole run under 2 minutes. That run is the one that found shards carrying over moved files (previous section). Scored again with the fix, its eight reports give the same 11,577 faults and 70.01%.
+
+The pull request job, on the same commit, mutated only `check-in-day.ts`: 86 faults, 10 seconds of Stryker time, 36 seconds for the job.
+
+How the two runs differ. Comparing every fault by file, position, fault type and replacement, 147 of the 11,577 faults had a different result:
+
+- 139 are timeouts. 138 faults survived on the laptop and timed out on CI, and one was killed on the laptop and timed out on CI. Stryker sets each fault's time limit from the first test run, so a timeout depends on the machine. Timeouts count as caught, which is most of why CI scores higher.
+- 7 were killed on the laptop and survived on CI (4 in `uk-rule-sources.ts`, 3 in `uk-tax.ts`). Every one was "killed" by a test that times itself: `uk-tax-year.property.test.ts` expects a sweep to finish in under 5,000 ms, and `uk-what-if.property.test.ts` expects a curve in under 250 ms. On the overloaded laptop these took 5,017 to 6,405 ms and 252 to 335 ms, so the test failed for being slow, not for a wrong figure. M2 should treat these as not caught.
+- 1 was killed on CI and survived on the laptop: a static fault in `uk-tax-year.ts` line 116, caught on CI by the fake-timer test for the 5/6 April rollover. Not explained.
+
+Sharding did not change which tests caught which faults: no fault moved between killed and survived for any other reason.
+
+The plan estimated 30 to 90 minutes for the engine's full run. The two unsharded runs took 56 and 66 minutes, inside that range. Sharded on CI it takes about 20 minutes of wall time.
+
 ## Answers to the M0 questions
 
 **Does the Vitest runner work on Vitest 5.1.0 and TypeScript 7.0.2?** Yes. The first test run and every fault run completed with Vitest 5.1.0, with no errors. Vitest strips types without checking them, so TypeScript 7 does not get in the way of the runner.
@@ -102,14 +199,18 @@ A likely way back to the sandbox, not tried: make the engine's `tsconfig.json` e
 
 ## Not verified
 
-- No run in CI. The CI Node version is read from an image readme, not from a job.
-- Web's single-project config and the sandbox in web or `packages/ui` were not run.
-- The `tsconfig` package-name fix for the sandbox was not tried.
-- What happens to the source file if a run is killed part way. Stryker keeps a backup, but recovery was not tested.
+- The weekly schedule itself. A scheduled trigger only fires from `main`, so it cannot run before this merges. On the branch, a temporary `push` trigger ran the same jobs three times (runs 44544787241, 44554616807 and 44555258134), and it was removed before review. Those runs did not pass `--force`, which only the schedule or a ticked `force` adds; the first run had no saved results, so it ran every fault anyway. The first Sunday run after merge is the proof.
+- The manual start (`workflow_dispatch`). GitHub only offers it for workflows on the default branch. The "Pick packages" step that handles its input ran only through the temporary trigger, as `all`.
+- The pull request job's `git diff HEAD^1 HEAD` was changed after its CI runs (they used the base commit), so the new form has not run on CI.
+- A rerun attempt of a weekly run. Its cache save reuses a key that already exists; I expect `actions/cache/save` to warn and carry on without saving, but this was not tried.
+- How much CI timeouts vary from run to run on the same code. The two CI full runs were on different code (181 and 235 timeouts).
+- Why the fake-timer test caught one fault on CI but not on the laptop.
 - Results from the unseeded property tests in `src/retirement.test.ts` and `src/uk-tax.property.test.ts` were not checked for run-to-run change.
-- Whole-package figures (run time, fault count, incremental file size) for the engine. M1's first scheduled run measures these.
+- Web's single-project config and the sandbox in web or `packages/ui` were not run.
+- The `tsconfig` package-name fix for the sandbox was not tried. `inPlace` stays.
+- Whether standard runners are free for this public repository was not checked on the billing page.
 
-## Recommendation for M1
+## Recommendation for M1 (from M0)
 
 Go, with changes:
 
@@ -119,3 +220,5 @@ Go, with changes:
 4. Measure the engine's full run before choosing the weekly schedule. The plan's estimate of 30 to 90 minutes is still an estimate.
 5. Seed the property tests in `src/retirement.test.ts` and `src/uk-tax.property.test.ts` (M2) before trusting scores for the code they reach.
 6. For web (M5), add a Stryker-only Vitest config with just the `unit` project.
+
+What M1 did with it: kept `inPlace` and the `plugins` list (1); added no type checker (2); pins Node 24 with `actions/setup-node` (3); measured the full run before choosing the schedule, which led to the shards (4). Items 5 and 6 are for M2 and M5. M2 should also treat kills that come only from a test's own time limit (above) as not caught.
