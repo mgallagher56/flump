@@ -314,4 +314,52 @@ describe("buildRetirementPlanInput: linked budget lines (decision 1)", () => {
     if (target?.kind !== "budget") return;
     expect(target.lines.map((l) => l.id)).toEqual(["food"]);
   });
+
+  // Audit slice 5: a debt line linked to a loan stays a target line, at the loan's payment, so
+  // linking it never drops it from the retirement spending target.
+  it("keeps a linked debt line at the account's payment, and leaves out one that is Not set", () => {
+    const entry = (over: Record<string, unknown>) => ({
+      id: "e",
+      category: "debt",
+      name: "Entry",
+      amount: 0,
+      frequency: "monthly",
+      isIncome: false,
+      isEssential: true,
+      ...over,
+    });
+    const built = buildRetirementPlanInput({
+      plan: {
+        ...savedPlan,
+        target: { kind: "budget", lineSettings: [{ budgetEntryId: "repay", status: "stops" }] },
+      },
+      birthYear: 1981,
+      now: NOW,
+      accounts: [
+        ...accounts,
+        // Joint at 50%: a £360 payment is £180 at the person's share.
+        {
+          id: "car",
+          name: "Car loan",
+          type: "Loan",
+          balance: -6000,
+          monthlyContribution: 360,
+          ownership: "joint",
+          sharePercent: 50,
+        },
+      ],
+      budgetEntries: [
+        entry({ id: "repay", name: "Car loan", linkKind: "debt", linkAccountId: "car" }),
+        // Its account was deleted: Not set, so no figure to count.
+        entry({ id: "gone", name: "Old card", linkKind: "debt", linkAccountId: null }),
+      ],
+    });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    const target = built.input.target;
+    if (target?.kind !== "budget") throw new Error("expected a budget target");
+    expect(target.lines).toEqual([
+      expect.objectContaining({ id: "repay", amount: 180, frequency: "monthly", status: "stops" }),
+    ]);
+  });
 });

@@ -83,7 +83,9 @@ interface Candidate {
  * - its monthly figure at the person's share equals the account's saved monthly amount at the
  *   person's share to the penny (an account with no saved amount, or £0, is never offered); and
  * - it sits where a linked line of that kind would: a savings account matches a row in the
- *   "savings" category, a debt account a row in the "debt" category. A debt account also matches
+ *   "savings" category whose name is the account's name or only general words ("Savings",
+ *   "Monthly saving"), so a "Holiday fund" row is never offered for an ISA; a debt account
+ *   matches a row in the "debt" category. A debt account also matches
  *   a row in another spending category (not savings) whose name is the account's name and nothing
  *   but payment words ("Car loan payment"), the copy safe to spend would otherwise count twice.
  *
@@ -126,7 +128,14 @@ export function findBudgetAccountLinkOffers(
     const rowWords = words(row.name);
     const matches = candidates.filter((c) => {
       if (taken.has(c.id) || pence(c.monthly) !== pence(monthly)) return false;
-      if (c.link === "savings") return row.category === SAVINGS_CATEGORY;
+      // A savings row must name the account, or be a plain "Savings" or "Monthly saving" row:
+      // "Holiday fund" at the ISA's £100 is a different pot, never offered.
+      if (c.link === "savings") {
+        return (
+          row.category === SAVINGS_CATEGORY &&
+          (namesAccount(rowWords, c.words) || rowWords.every((word) => PAYMENT_WORDS.has(word)))
+        );
+      }
       if (row.category === DEBT_CATEGORY) return true;
       return row.category !== SAVINGS_CATEGORY && namesAccount(rowWords, c.words);
     });

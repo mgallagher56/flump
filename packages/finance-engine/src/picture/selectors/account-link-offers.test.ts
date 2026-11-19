@@ -58,7 +58,7 @@ describe("findBudgetAccountLinkOffers (audit slice 5)", () => {
     const savings = row("Pot", 400, { category: "savings", ownership: "joint", sharePercent: 50 });
     const offers = offersFor(
       [savings],
-      [account("Joint saver", "Saving", 500, { ownership: "joint", sharePercent: 40 })],
+      [account("Pot", "Saving", 500, { ownership: "joint", sharePercent: 40 })],
     );
     expect(offers.map((o) => [o.rowId, o.monthly])).toEqual([[savings.id, 200]]);
   });
@@ -145,5 +145,33 @@ describe("findBudgetAccountLinkOffers (audit slice 5)", () => {
         [account("Mortgage", "Mortgage", 900), account("Pension", "Pension", 200)],
       ),
     ).toEqual([]);
+  });
+
+  it("never offers a savings row that names something else, even at the same amount", () => {
+    expect(
+      offersFor(
+        [row("Holiday fund", 100, { category: "savings" })],
+        [account("Cash ISA", "Saving", 100)],
+      ),
+    ).toEqual([]);
+    // A name with other words is not offered; the account's own name, or a plain one, is.
+    expect(
+      offersFor(
+        [row("Cash ISA top-up", 100, { category: "savings" })],
+        [account("Cash ISA", "Saving", 100)],
+      ),
+    ).toEqual([]);
+    expect(
+      offersFor(
+        [row("Cash ISA", 100, { category: "savings" })],
+        [account("Cash ISA", "Saving", 100)],
+      ),
+    ).toHaveLength(1);
+    expect(
+      offersFor(
+        [row("Monthly saving", 100, { category: "savings" })],
+        [account("Cash ISA", "Saving", 100)],
+      ),
+    ).toHaveLength(1);
   });
 });

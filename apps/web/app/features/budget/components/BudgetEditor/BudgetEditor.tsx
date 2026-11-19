@@ -402,7 +402,7 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
       </>
     ) : (
       <>
-        Your share of the {accountAmount} on {account.name}, from the{" "}
+        The {accountAmount} on {account.name}, your share if it is joint, from the{" "}
         <Link className={sourceLink()} to={accountPage.to}>
           {accountPage.label}
         </Link>{" "}

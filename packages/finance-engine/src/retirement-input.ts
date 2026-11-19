@@ -1,9 +1,11 @@
 import { categorizeAccountType } from "./account-category.js";
 import type { BudgetEntryItem, BuildContextPackInput } from "./ai-context-pack.js";
 import { applyAccountShare } from "./joint-share.js";
+import { figureUnknown } from "./picture/figure.js";
 import { SAVINGS_CATEGORY } from "./picture/selectors/budget-totals.js";
+import { withLinkedBudgetRows } from "./picture/selectors/linked-budget-rows.js";
 import { isBuyToLetAccount } from "./picture/selectors/loan-to-value.js";
-import type { RawAccount } from "./portfolio.js";
+import { PortfolioSnapshot, type RawAccount } from "./portfolio.js";
 import {
   type BudgetLineRetirementStatus,
   DEFAULT_RETIREMENT_GROWTH_CASES,
@@ -215,8 +217,30 @@ function mortgageDetails(accounts: readonly RawAccount[]): RetirementHousingInpu
 function budgetTarget(
   lineSettings: readonly { budgetEntryId: string; status?: BudgetLineRetirementStatus }[],
   entries: readonly BudgetEntryItem[],
+  accounts: readonly RawAccount[],
 ): RetirementTargetInput | null {
   const statuses = new Map(lineSettings.map((s) => [s.budgetEntryId, s.status]));
+  // A debt line linked to a card or loan (audit slice 5) reads the account's monthly payment at the
+  // person's share, as the budget does; keyed by its stored id so its continues/stops setting
+  // stays. One that is Not set (no saved payment, account gone) has no figure, so it is left out.
+  const debtLines: RetirementBudgetTargetLine[] = withLinkedBudgetRows(entries, {
+    takeHome: figureUnknown(["annualSalary"], "not-set"),
+    housing: null,
+    accounts: new PortfolioSnapshot([...accounts]),
+  })
+    .rows.filter((r) => r.linked === "debt" && !r.notSet && r.linkedRowId)
+    .map((r) => {
+      const id = r.linkedRowId as string;
+      return {
+        id,
+        name: r.name,
+        category: r.category,
+        amount: r.amount,
+        frequency: r.frequency,
+        isIncome: false,
+        status: statuses.get(id) ?? "continues",
+      };
+    });
   const lines: RetirementBudgetTargetLine[] = entries
     .filter(
       (e) =>
@@ -236,6 +260,7 @@ function budgetTarget(
       isIncome: e.isIncome,
       status: statuses.get(e.id) ?? "continues",
     }));
+  lines.push(...debtLines);
   return lines.length === 0 ? null : { kind: "budget", lines };
 }
 
@@ -277,7 +302,7 @@ export function buildRetirementPlanInput(
   } else if (plan?.target?.kind === "typed") {
     target = { kind: "typed", yearlyAmount: plan.target.yearlyAmount };
   } else if (plan?.target?.kind === "budget") {
-    target = budgetTarget(plan.target.lineSettings, args.budgetEntries ?? []);
+    target = budgetTarget(plan.target.lineSettings, args.budgetEntries ?? [], args.accounts);
   }
 
   const statePensionAge = wholeAge(overrides.statePensionAge ?? plan?.statePensionAge ?? null);

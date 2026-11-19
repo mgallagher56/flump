@@ -35,7 +35,7 @@ import {
 })
 // One line per account. The (link_account_id, user_id) foreign key to accounts (id, user_id),
 // ON DELETE SET NULL (link_account_id), lives in the migration only.
-@Index("UQ_budget_entries_link_account", ["linkAccountId"], {
+@Index("UQ_budget_entries_link_account", ["linkAccountId", "userId"], {
   unique: true,
   where: `"link_account_id" IS NOT NULL`,
 })
