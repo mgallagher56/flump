@@ -26,6 +26,7 @@
     "sweep:design": "bun run --cwd apps/e2e e2e:sweep",
     "test:scripts": "bun test ./scripts",
     "test:load": "bun scripts/load/load-smoke.ts",
+    "mutation": "cd packages/finance-engine && stryker run",
     "test:coverage": "turbo run test:coverage",
     "test:storybook": "bun run --cwd apps/web test:storybook",
     "test:storybook:dark": "bun run --cwd apps/web test:storybook:dark",
@@ -43,6 +44,8 @@
   "devDependencies": {
     "@babel/parser": "8.1.0",
     "@biomejs/biome": "2.6.7",
+    "@stryker-mutator/core": "10.1.1",
+    "@stryker-mutator/vitest-runner": "10.1.1",
     "@types/node": "26.6.6",
     "@typescript/typescript6": "6.0.2",
     "@vitest/coverage-v8": "5.1.0",

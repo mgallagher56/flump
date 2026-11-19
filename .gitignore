@@ -43,3 +43,7 @@ drill-after.txt
 # E16 sweep output: shots stay local (see docs/design/e16-polish/RESCORE.md); metrics are committed
 docs/design/e16-polish/after*/**/*.jpg
 docs/design/e16-polish/after*/.auth/
+
+# E41 mutation testing (Stryker): local reports and temp copies, never committed
+**/reports/mutation/
+.stryker-tmp/
