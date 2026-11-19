@@ -1,4 +1,3 @@
-import { ALL_TAX_CATEGORIES } from "@flump/finance-engine";
 import { z } from "zod";
 import { IsoDate, IsoDateTime, Money, Notes, ResponseMoney, Uuid } from "../primitives.js";
 
@@ -56,30 +55,54 @@ export const broughtForwardRuleError = (
 };
 
 /**
- * The categories a record can be written with, one list per source. The finance engine's
- * category lists are the one home for them (AGENTS.md law 16): the engine leaves out any category
- * it does not list, so the contract accepts only those. The legacy PAYE salary is not writable.
- * Stored rows with other categories stay readable and deletable (`TaxRecordDto` is not checked).
+ * The categories a record can be written with, one list per source: the ids the finance engine
+ * counts (`ALL_TAX_CATEGORIES` in finance-engine `tax-calculator.ts`), without the legacy PAYE
+ * salary. The engine leaves out any category it does not list, so the contract accepts only
+ * these. Stored rows with other categories stay readable and deletable (`TaxRecordDto` is not
+ * checked).
+ *
+ * The contract holds the ids itself, with no import of the engine: scripts load the contract's
+ * source before anything is built, and the engine resolves to its build output. A contract test
+ * (`tax.requests.test.ts`) fails if these lists and the engine's ever differ.
  */
-export const TAX_RECORD_CATEGORIES: Readonly<
-  Record<(typeof TAX_RECORD_SOURCES)[number], readonly string[]>
-> = Object.fromEntries(
-  TAX_RECORD_SOURCES.map((source) => [
-    source,
-    ALL_TAX_CATEGORIES.filter(
-      (c) => c.source === source && c.id !== LEGACY_PAYE_SALARY_CATEGORY,
-    ).map((c) => c.id),
-  ]),
-) as unknown as Record<(typeof TAX_RECORD_SOURCES)[number], readonly string[]>;
+export const TAX_RECORD_CATEGORIES = {
+  paye: ["paye_bonus", "paye_benefit", "paye_pension"],
+  "self-employed": [
+    "self_employed_income",
+    "office_costs",
+    "travel_costs",
+    "clothing_costs",
+    "staff_costs",
+    "premises_costs",
+    "legal_finance_fees",
+    "advertising_marketing",
+    "stock_raw_materials",
+    "other_expenses",
+  ],
+  rental: [
+    "rental_income",
+    "rent_rates_insurance",
+    "legal_management_fees",
+    "repairs_maintenance",
+    "replace_domestic_items",
+    "services_costs",
+    "mortgage_interest",
+    FINANCE_COSTS_BROUGHT_FORWARD_CATEGORY,
+  ],
+  savings: ["savings_interest", "dividend_income", "isa_interest", "investment_fees"],
+} as const satisfies Readonly<Record<(typeof TAX_RECORD_SOURCES)[number], readonly string[]>>;
 
 const UNKNOWN_CATEGORY_MESSAGE = "Choose a category from the list for this income source";
 
 const isListedCategory = (source: string | undefined, category: string): boolean =>
   source === undefined
-    ? Object.values(TAX_RECORD_CATEGORIES).some((list) => list.includes(category))
-    : (TAX_RECORD_CATEGORIES[source as keyof typeof TAX_RECORD_CATEGORIES] ?? []).includes(
-        category,
-      );
+    ? Object.values(TAX_RECORD_CATEGORIES).some((list) =>
+        (list as readonly string[]).includes(category),
+      )
+    : (
+        (TAX_RECORD_CATEGORIES[source as keyof typeof TAX_RECORD_CATEGORIES] ??
+          []) as readonly string[]
+      ).includes(category);
 
 /**
  * Why a record's category is not one it can be written with, or null. With no source (a partial
