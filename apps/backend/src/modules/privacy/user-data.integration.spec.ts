@@ -526,6 +526,26 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(rows.map((r) => r.account_id)).toEqual([accountB]);
   });
 
+  it("erases the slice 7 before-image (rental_share_onto_property_backfill) with the user's accounts", async () => {
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const accountOf = async (userId: string) =>
+      at(await ds.getRepository(Account).findBy({ userId }), 0).id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        `INSERT INTO rental_share_onto_property_backfill (account_id, user_id, old_ownership)
+         VALUES ($1, $2, 'sole')`,
+        [await accountOf(userId), userId],
+      );
+    }
+    const accountB = await accountOf(USER_B);
+    await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    const rows: { account_id: string }[] = await ds.query(
+      "SELECT account_id FROM rental_share_onto_property_backfill",
+    );
+    expect(rows.map((r) => r.account_id)).toEqual([accountB]);
+  });
+
   it("erases the repayment type before-image (mortgage_repayment_type_backfill) with the user's accounts", async () => {
     await seed(USER_A, "A");
     await seed(USER_B, "B");

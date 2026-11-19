@@ -448,6 +448,11 @@ export const AccountExportTaxRecord = z.strictObject({
   receiptFilename: NullableText,
   receiptMimeType: NullableText,
   receiptData: NullableText,
+  /**
+   * The account the record describes (an id in this export's accounts), or null (slice 7).
+   * Optional for exports from before it.
+   */
+  accountId: NullableText.optional(),
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
 });

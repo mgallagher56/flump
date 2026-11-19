@@ -18,9 +18,13 @@ import { withManager } from "../../testing/with-manager";
 import { MAX_BULK_TAX_RECORDS, TaxController } from "./tax.controller";
 import { TaxService } from "./tax.service";
 
-/** Test wiring (BE-13): the controller takes TaxService; the profile repository is no longer used. */
+/**
+ * Test wiring (BE-13): the controller takes TaxService; the profile repository is no longer used.
+ * The account repository is empty: these tests send no accountId (slice 7 links are in the service
+ * spec).
+ */
 const taxController = (taxRepo: unknown, _profileRepo?: unknown) =>
-  new TaxController(new TaxService(taxRepo as never));
+  new TaxController(new TaxService(taxRepo as never, createInMemoryRepository() as never));
 
 describe("TaxController", () => {
   it("should be defined", () => {
@@ -107,6 +111,7 @@ describe("TaxController", () => {
       notes: null,
       receiptFilename: null,
       receiptMimeType: null,
+      accountId: null,
       hasReceipt: false,
     });
 
@@ -709,6 +714,7 @@ describe("TaxController response shape (E21)", () => {
         notes: null,
         receiptFilename: null,
         receiptMimeType: null,
+        accountId: null,
         hasReceipt: false,
       });
       expect(record).not.toHaveProperty("receiptData");

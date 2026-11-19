@@ -144,6 +144,12 @@ const taxRecordFields = {
   receiptMimeType: z.enum(RECEIPT_MIME_TYPES).nullable(),
   // Decoded size limits and magic-byte sniffing belong to E20 Q9 (receipt-validation.ts).
   receiptData: z.string().nullable(),
+  /**
+   * The account the record describes (slice 7): a rental Property or its buy-to-let mortgage for
+   * a rental record, a savings or investment account for a savings record. Null clears the link.
+   * The backend checks the account is the caller's own and fits the source.
+   */
+  accountId: Uuid.nullable(),
 };
 
 /** `frequency` defaults to "one-off" in the column, so it is optional on create. */
@@ -155,6 +161,7 @@ const CreateTaxRecordFields = z.strictObject({
   receiptFilename: taxRecordFields.receiptFilename.optional(),
   receiptMimeType: taxRecordFields.receiptMimeType.optional(),
   receiptData: taxRecordFields.receiptData.optional(),
+  accountId: taxRecordFields.accountId.optional(),
 });
 
 export const CreateTaxRecordRequest = CreateTaxRecordFields.superRefine(recordRules);
@@ -193,6 +200,8 @@ export const TaxRecordDto = z.strictObject({
   notes: z.string().nullable(),
   receiptFilename: z.string().nullable(),
   receiptMimeType: z.enum(RECEIPT_MIME_TYPES).nullable(),
+  /** The account the record describes, or null (slice 7). */
+  accountId: Uuid.nullable(),
   hasReceipt: z.boolean(),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,

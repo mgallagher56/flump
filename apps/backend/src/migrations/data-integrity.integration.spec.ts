@@ -388,7 +388,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
             date: "2025-04-06",
           }),
         );
-        const service = new TaxService(records);
+        const service = new TaxService(records, ds.getRepository(Account));
 
         await expect(
           service.createBulk(OWNER_A, {
@@ -417,10 +417,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
             date: "2025-04-06",
           }),
         );
-        const created = await new TaxService(records).createBulk(OWNER_A, {
-          capPreviousRecordIds: [{ id: previous.id, endDate: "2026-04-05" }],
-          records: [{ ...base, name: "Annual", frequency: "annual", date: "2026-04-03" }],
-        });
+        const created = await new TaxService(records, ds.getRepository(Account)).createBulk(
+          OWNER_A,
+          {
+            capPreviousRecordIds: [{ id: previous.id, endDate: "2026-04-05" }],
+            records: [{ ...base, name: "Annual", frequency: "annual", date: "2026-04-03" }],
+          },
+        );
         expect(created).toHaveLength(1);
         // Audit M1 acceptance: a record dated 3 April 2026 files under 2025/26.
         expect(created[0]?.endDate).toBe("2026-04-05");

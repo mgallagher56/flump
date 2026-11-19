@@ -9,7 +9,7 @@ import {
   type UpdateTaxRecordRequest,
 } from "@flump/api-contract";
 import { decryptReceiptData, encryptReceiptData, isEncryptedToken } from "@flump/banking/server";
-import { getAnnualRecordEndDate } from "@flump/finance-engine";
+import { categorizeAccountType, getAnnualRecordEndDate } from "@flump/finance-engine";
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -20,6 +20,7 @@ import {
   type Page,
   type PageRequest,
 } from "../../contract/pagination";
+import { Account } from "../../entities/account.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { sniffReceiptMime, validateReceipt } from "../../security/receipt-validation";
 
@@ -64,6 +65,7 @@ const TAX_RECORD_FIELDS = [
   "receiptFilename",
   "receiptMimeType",
   "receiptData",
+  "accountId",
 ] as const;
 
 /** Finance costs brought forward are one yearly rental expense (contract rule, also held here). */
@@ -117,6 +119,36 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
     picked.receiptFilename = null;
   }
   return picked as Partial<TaxRecord>;
+};
+
+const ACCOUNT_LINK_MESSAGE = "Choose one of your accounts that fits this income source";
+
+const accountLinkRefusal = (): BadRequestException =>
+  new BadRequestException({
+    code: "validation_failed",
+    message: "Request failed validation",
+    issues: [{ path: "body.accountId", code: "custom", message: ACCOUNT_LINK_MESSAGE }],
+  });
+
+/**
+ * Whether an account can be the one a record of this source describes (slice 7). Rental income
+ * and costs belong to a let property: its rental Property account, or a mortgage (the loan whose
+ * interest is a finance cost). Savings interest is paid by a savings or investment account, the
+ * two groups the engine's `categorizeAccountType` names (cash and stocks and shares ISAs
+ * included). PAYE and self-employed records describe no account.
+ */
+const accountFitsSource = (
+  source: unknown,
+  account: Pick<Account, "type" | "accountSubtype">,
+): boolean => {
+  const category = categorizeAccountType(account.type);
+  if (source === "rental") {
+    return (
+      (category === "property" && account.accountSubtype === "rental") || category === "mortgages"
+    );
+  }
+  if (source === "savings") return category === "savings" || category === "investments";
+  return false;
 };
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -174,6 +206,7 @@ export const toTaxRecordResponse = (record: TaxRecord): TaxRecordResponse => {
     notes: rest.notes ?? null,
     receiptFilename: rest.receiptFilename ?? null,
     receiptMimeType: rest.receiptMimeType ?? null,
+    accountId: rest.accountId ?? null,
     hasReceipt,
   };
 };
@@ -190,7 +223,38 @@ export class TaxService {
   constructor(
     @InjectRepository(TaxRecord)
     private readonly taxRecordRepository: Repository<TaxRecord>,
+    @InjectRepository(Account)
+    private readonly accountRepository: Repository<Account>,
   ) {}
+
+  /**
+   * A record's `accountId`, when it is a string, must name one of the same user's accounts that
+   * fits the record's source (slice 7); null or absent means no link. Every refusal is the same
+   * 400, so it never says whether another user's account id exists. Accounts are looked up once
+   * per id for a bulk write.
+   */
+  private async assertAccountLinks(
+    userId: string,
+    records: ReadonlyArray<Partial<TaxRecord>>,
+  ): Promise<void> {
+    const found = new Map<string, Account | null>();
+    for (const record of records) {
+      const accountId = record.accountId;
+      if (accountId === undefined || accountId === null) continue;
+      if (typeof accountId !== "string" || !UUID_PATTERN.test(accountId)) {
+        throw accountLinkRefusal();
+      }
+      if (record.source !== "rental" && record.source !== "savings") throw accountLinkRefusal();
+      if (!found.has(accountId)) {
+        found.set(
+          accountId,
+          await this.accountRepository.findOne({ where: { id: accountId, userId } }),
+        );
+      }
+      const account = found.get(accountId);
+      if (!account || !accountFitsSource(record.source, account)) throw accountLinkRefusal();
+    }
+  }
 
   /**
    * `POST tax-records/bulk`: caps the previous records and creates the new ones in one
@@ -242,6 +306,7 @@ export class TaxService {
         })
       : [];
     if (caps.length === 0 && picked.length === 0) return [];
+    await this.assertAccountLinks(userId, picked);
 
     return this.inTransaction(async (records) => {
       for (const item of caps) {
@@ -337,6 +402,7 @@ export class TaxService {
       ...pickTaxRecordFields(body),
       userId,
     });
+    await this.assertAccountLinks(userId, [picked]);
     if (typeof picked.receiptData === "string" && picked.receiptData.length > 0) {
       const id = picked.id ?? randomUUID();
       picked.id = id;
@@ -372,6 +438,10 @@ export class TaxService {
         assertBroughtForwardRules(record);
         if (picked.category !== undefined || picked.source !== undefined) {
           assertKnownCategory(record);
+        }
+        // The link is checked on the merged record too: a new source can stop fitting the account.
+        if (picked.accountId !== undefined || picked.source !== undefined) {
+          await this.assertAccountLinks(userId, [record]);
         }
         withAnnualEndDate(record);
         return repository.save(record);

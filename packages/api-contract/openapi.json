@@ -11342,6 +11342,18 @@
                   "items": {
                     "additionalProperties": false,
                     "properties": {
+                      "accountId": {
+                        "anyOf": [
+                          {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "amount": {
                         "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                         "type": "number"
@@ -11419,6 +11431,7 @@
                       "notes",
                       "receiptFilename",
                       "receiptMimeType",
+                      "accountId",
                       "hasReceipt",
                       "createdAt",
                       "updatedAt"
@@ -11529,6 +11542,18 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "accountId": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "amount": {
                     "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                     "type": "number"
@@ -11612,6 +11637,18 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "accountId": {
+                      "anyOf": [
+                        {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "amount": {
                       "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                       "type": "number"
@@ -11689,6 +11726,7 @@
                     "notes",
                     "receiptFilename",
                     "receiptMimeType",
+                    "accountId",
                     "hasReceipt",
                     "createdAt",
                     "updatedAt"
@@ -11852,6 +11890,18 @@
                     "items": {
                       "additionalProperties": false,
                       "properties": {
+                        "accountId": {
+                          "anyOf": [
+                            {
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
                         "amount": {
                           "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                           "type": "number"
@@ -11943,6 +11993,18 @@
                   "items": {
                     "additionalProperties": false,
                     "properties": {
+                      "accountId": {
+                        "anyOf": [
+                          {
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "amount": {
                         "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                         "type": "number"
@@ -12020,6 +12082,7 @@
                       "notes",
                       "receiptFilename",
                       "receiptMimeType",
+                      "accountId",
                       "hasReceipt",
                       "createdAt",
                       "updatedAt"
@@ -12272,6 +12335,18 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "accountId": {
+                      "anyOf": [
+                        {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "amount": {
                       "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                       "type": "number"
@@ -12349,6 +12424,7 @@
                     "notes",
                     "receiptFilename",
                     "receiptMimeType",
+                    "accountId",
                     "hasReceipt",
                     "createdAt",
                     "updatedAt"
@@ -12474,6 +12550,18 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "accountId": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "amount": {
                     "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                     "type": "number"
@@ -12556,6 +12644,18 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "accountId": {
+                      "anyOf": [
+                        {
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "amount": {
                       "description": "Money in pounds as a JSON number (decision D9), never a string. Requests allow at most 2 decimal places.",
                       "type": "number"
@@ -12633,6 +12733,7 @@
                     "notes",
                     "receiptFilename",
                     "receiptMimeType",
+                    "accountId",
                     "hasReceipt",
                     "createdAt",
                     "updatedAt"

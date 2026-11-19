@@ -317,4 +317,75 @@ describe.skipIf(dbMode === "skip")("authz: tax controller (real Postgres)", () =
       await expectRecordUntouched();
     });
   });
+
+  describe("accountId links (slice 7)", () => {
+    const rentBody = (name: string, accountId: string) => ({
+      type: "income",
+      source: "rental",
+      category: "rental_income",
+      name,
+      amount: 1200,
+      frequency: "monthly",
+      date: "2025-04-06",
+      accountId,
+    });
+
+    const rentalAccount = async (token: string) => {
+      const res = await h.call("post", "/accounts", token, {
+        name: "Let flat",
+        type: "Property",
+        accountSubtype: "rental",
+        balance: 250000,
+      });
+      expect(res.status).toBe(201);
+      return res.body.id as string;
+    };
+
+    it("A links a record to A's own rental account (control)", async () => {
+      const mine = await rentalAccount(h.tokens.a);
+      const res = await h.call("post", "/tax-records", h.tokens.a, rentBody("A rent", mine));
+      expect(res.status).toBe(201);
+      expect(res.body.accountId).toBe(mine);
+    });
+
+    it("B cannot link to A's account: the same 400 as a missing id, and nothing is written", async () => {
+      const theirs = await rentalAccount(h.tokens.a);
+      const asB = await h.call("post", "/tax-records", h.tokens.b, rentBody("B rent", theirs));
+      const missing = await h.call(
+        "post",
+        "/tax-records",
+        h.tokens.b,
+        rentBody("B rent", MISSING_ID),
+      );
+      expect(asB.status).toBe(400);
+      expect(missing.status).toBe(400);
+      expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
+      expect(asB.text).not.toContain(theirs);
+      expect(await records().findBy({ userId: USER_B })).toHaveLength(0);
+
+      const bulk = await h.call("post", "/tax-records/bulk", h.tokens.b, {
+        records: [rentBody("B bulk", theirs)],
+      });
+      expect(bulk.status).toBe(400);
+      expect(await records().findBy({ userId: USER_B })).toHaveLength(0);
+    });
+
+    it("B cannot point B's own record at A's account on update", async () => {
+      const theirs = await rentalAccount(h.tokens.a);
+      const own = await h.call("post", "/tax-records", h.tokens.b, {
+        ...rentBody("B rent", MISSING_ID),
+        accountId: null,
+      });
+      expect(own.status).toBe(201);
+      const asB = await h.call("patch", `/tax-records/${own.body.id}`, h.tokens.b, {
+        accountId: theirs,
+      });
+      const missing = await h.call("patch", `/tax-records/${own.body.id}`, h.tokens.b, {
+        accountId: MISSING_ID,
+      });
+      expect(asB.status).toBe(400);
+      expect(sansRequestId(asB.body)).toEqual(sansRequestId(missing.body));
+      expect((await records().findOneBy({ id: own.body.id }))?.accountId).toBeNull();
+    });
+  });
 });

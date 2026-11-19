@@ -1370,7 +1370,7 @@ Shown on:
 - Id: `tax-records` (stored fact)
 - Verdict: Duplicated (two stores that can disagree). Findings: SA-4, SA-6, SA-7, SA-9, DB-16. Links: L47, L48, L49, L50.
 - Source of truth: `tax_records` in `apps/backend/src/entities/tax-record.entity.ts`
-- Note: A record has no link to the account it describes, so buy-to-let interest and savings interest are typed again here.
+- Note: A record can point at the account it describes (tax_records.account_id, slice 7): a rental Property or its mortgage for a rental record, a savings or investment account for a savings record. The link is optional, and buy-to-let interest and savings interest are still typed here until a figure is offered from the linked account.
 
 Other stores:
 

@@ -159,3 +159,31 @@ describe("known tax record categories", () => {
     expect(TaxRecordDto.shape.category.safeParse("Rent").success).toBe(true);
   });
 });
+
+describe("accountId on a tax record (slice 7)", () => {
+  const rent = {
+    type: "income",
+    source: "rental",
+    category: "rental_income",
+    name: "Flat rent",
+    amount: 1200,
+    date: "2026-04-06",
+  };
+  const ACCOUNT = "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b";
+
+  it("is optional on create, and takes a uuid or null", () => {
+    expect(CreateTaxRecordRequest.safeParse(rent).success).toBe(true);
+    expect(CreateTaxRecordRequest.safeParse({ ...rent, accountId: ACCOUNT }).success).toBe(true);
+    expect(CreateTaxRecordRequest.safeParse({ ...rent, accountId: null }).success).toBe(true);
+  });
+
+  it("refuses anything that is not a uuid", () => {
+    expect(CreateTaxRecordRequest.safeParse({ ...rent, accountId: "acc-1" }).success).toBe(false);
+    expect(UpdateTaxRecordRequest.safeParse({ accountId: 7 }).success).toBe(false);
+  });
+
+  it("is accepted alone on update, as a uuid or null to clear the link", () => {
+    expect(UpdateTaxRecordRequest.safeParse({ accountId: ACCOUNT }).success).toBe(true);
+    expect(UpdateTaxRecordRequest.safeParse({ accountId: null }).success).toBe(true);
+  });
+});
