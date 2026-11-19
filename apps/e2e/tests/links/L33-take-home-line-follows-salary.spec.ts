@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
 import { applyPersona } from "../../support/personas";
-import { waitOutRateWindow } from "../../support/rate-window";
 import { api, entryNamed, kpiCard, pounds } from "./budget-links.helpers";
 
 test.use({ storageState: AUTH_STATE });
@@ -9,9 +8,6 @@ test.use({ storageState: AUTH_STATE });
 // L33 (BU-1, BU-2): an income line the person linked to their take-home reads the take-home worked
 // out from the saved salary, so a salary change reaches the budget with nothing to retype.
 test("L33 a linked take-home line follows the saved salary", async ({ page }) => {
-  // The first homeowner spec after the renter ones: seeding the homeowner is a burst of writes, so
-  // it and the homeowner specs after it start in a fresh minute of the request limits.
-  await waitOutRateWindow();
   await page.goto("/app");
   await applyPersona(page, "homeowner");
 
