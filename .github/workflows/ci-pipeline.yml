@@ -111,8 +111,11 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run check-types
 
-  # Vitest runs as two parallel shards (web, backend + packages) so neither is the critical path.
-  # Both need the throwaway Postgres: the web unit project includes the backend contract suite
+  # Vitest runs as three parallel jobs (web in two halves, then backend + packages below) so none is the
+  # critical path (E41 P5). The web halves run the unit project with `--shard` and write blob
+  # reports; vitest-web-merge joins them and applies the coverage floors to the whole web run, so
+  # the floors are checked on the same coverage as before, never on half of it.
+  # All three need the throwaway Postgres: the web unit project includes the backend contract suite
   # (apps/web/app/contract), which boots the backend against a real database.
   # Throwaway Postgres for the real-database suites. The job runs on the runner (not in a
   # container), so localhost:5432 reaches the service. The password is a literal for this
@@ -122,23 +125,74 @@ jobs:
   # variables under `env` for the test tasks so turbo passes them to vitest and includes them in
   # the task hash.
   vitest-shard:
-    name: ⚡ Vitest ${{ matrix.name }}
+    name: ⚡ Vitest web ${{ matrix.shard }}/2
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # pull-requests: write is for the coverage report comment.
     permissions:
       actions: write
       contents: read
-      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: web
-            filter: "--filter=@flump/web"
-          - name: backend and packages
-            filter: "--filter=!@flump/web"
+        shard: [1, 2]
+
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flump_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flump_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/flump_ci_test
+      REQUIRE_DB_TESTS: "1"
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
+
+      # Each half skips the coverage floors here (it sees half the coverage); vitest-web-merge
+      # applies them to the whole web run.
+      - name: ⚡ Run vitest (web, one half)
+        run: >-
+          bunx turbo run test:coverage:shard --filter=@flump/web --
+          --shard=${{ matrix.shard }}/2 --outputFile=.vitest/blob/web-${{ matrix.shard }}.json
+
+      - name: 📎 Upload web blob report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: vitest-blob-web-${{ matrix.shard }}
+          path: apps/web/.vitest/blob/web-${{ matrix.shard }}.json
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 1
+
+  vitest-backend:
+    name: ⚡ Vitest backend and packages
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      actions: write
+      contents: read
 
     services:
       postgres:
@@ -173,30 +227,81 @@ jobs:
           turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: ⚡ Run vitest with coverage floors
-        run: bunx turbo run test:coverage ${{ matrix.filter }}
+        run: bunx turbo run test:coverage --filter=!@flump/web
+
+  # Joins the two web halves and applies the web coverage floors to the whole run (E41 P5).
+  vitest-web-merge:
+    name: ⚡ Vitest web coverage
+    if: github.event_name != 'schedule'
+    needs: [vitest-shard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # pull-requests: write is for the coverage report comment.
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
+
+      - name: 📥 Download web blob reports
+        # actions/download-artifact v8.0.2
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          pattern: vitest-blob-web-*
+          path: apps/web/.vitest/blob
+          merge-multiple: true
+
+      # Both halves must be here: a missing half would leave its tests unreported and its coverage
+      # out of the floors.
+      - name: 🧮 Check both halves arrived
+        working-directory: apps/web/.vitest/blob
+        run: |
+          ls -la
+          [ -f web-1.json ] && [ -f web-2.json ] && [ "$(ls | wc -l)" -eq 2 ]
+
+      - name: 🏗️ Build what the web Vitest config loads
+        run: bunx turbo run build generate --filter=@flump/web^...
+
+      - name: ⚡ Merge reports and check the coverage floors
+        working-directory: apps/web
+        run: bun run test:coverage:merge
 
       - name: "Report Coverage"
-        if: always() && matrix.name == 'web'
+        if: always()
         uses: davelosert/vitest-coverage-report-action@74c2d9210b4fc44c84d8213f61d7ec99837b7aa0 # v2.13.2
         with:
           working-directory: "apps/web"
           threshold-icons: '{"0": "🔴", "80": "🟢"}'
 
   # Stable required-check name: branch protection keeps pointing at "⚡ Vitest Tests" while the
-  # work happens in the shards above.
+  # work happens in the jobs above.
   vitest:
     name: ⚡ Vitest Tests
     if: always() && github.event_name != 'schedule'
-    needs: [vitest-shard]
+    needs: [vitest-shard, vitest-web-merge, vitest-backend]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: ✅ All Vitest shards passed
+      - name: ✅ All Vitest jobs passed
         env:
-          RESULT: ${{ needs.vitest-shard.result }}
+          WEB: ${{ needs.vitest-shard.result }}
+          MERGE: ${{ needs.vitest-web-merge.result }}
+          BACKEND: ${{ needs.vitest-backend.result }}
         run: |
-          echo "vitest-shard: $RESULT"
-          [ "$RESULT" = "success" ]
+          echo "web halves: $WEB, web coverage: $MERGE, backend and packages: $BACKEND"
+          [ "$WEB" = "success" ] && [ "$MERGE" = "success" ] && [ "$BACKEND" = "success" ]
 
   # Ops script tests (scripts/ops): the DB-backed ones run against a Postgres service through the
   # runner's own psql. REQUIRE_DB_TESTS=1 makes them fail instead of skip. Only needs installed
@@ -279,8 +384,12 @@ jobs:
   # that ended 2026-11-25): both legs are required checks (.github/required-checks.json).
   # Light (plus the build smoke) and dark run as parallel matrix legs, each through turbo so an
   # unchanged web app (and its workspace deps) replays from the remote cache.
-  storybook-a11y:
-    name: ♿ Storybook ${{ matrix.name }}
+  # Storybook a11y (E8 gate): every story in headless Chromium with the a11y addon, once per theme.
+  # Each theme runs in two halves (`--shard`) beside each other (E41 P5); the light theme also has
+  # its build smoke leg. storybook-a11y below keeps the two required check names and passes only
+  # when every leg of its theme passed.
+  storybook-light:
+    name: ♿ Storybook light ${{ matrix.part }}
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -291,14 +400,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # The light leg also runs the build smoke: the Storybook production build (--test)
-          # must still compile. It shares this leg's install, setup and turbo replay.
-          - name: a11y (light)
-            task: test:storybook
-            smoke: true
-          - name: a11y (dark)
-            task: test:storybook:dark
-            smoke: false
+          - part: "1/2"
+            shard: "1/2"
+          - part: "2/2"
+            shard: "2/2"
+          # The Storybook production build (--test) must still compile. Its own leg, so it runs
+          # beside the two halves instead of after one of them.
+          - part: build smoke
+            shard: ""
 
     steps:
       - name: ⬇️ Checkout repo
@@ -314,6 +423,7 @@ jobs:
           turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: 🗂️ Cache Playwright browsers
+        if: matrix.shard != ''
         id: playwright-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -321,6 +431,7 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
 
       - name: 🌐 Install Chromium
+        if: matrix.shard != ''
         working-directory: apps/web
         env:
           CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
@@ -328,12 +439,87 @@ jobs:
 
       # turbo.json makes these tasks depend on ^build and generate, so the workspace packages
       # the stories import (e.g. @flump/finance-engine) are built (or replayed) first.
-      - name: ♿ Storybook ${{ matrix.name }}
-        run: bunx turbo run ${{ matrix.task }} --filter=@flump/web
+      - name: ♿ Storybook a11y (light), ${{ matrix.part }}
+        if: matrix.shard != ''
+        run: bunx turbo run test:storybook --filter=@flump/web -- --shard=${{ matrix.shard }}
 
       - name: 🏭 Storybook build smoke
-        if: matrix.smoke
+        if: matrix.shard == ''
         run: bunx turbo run build-storybook:test --filter=@flump/web
+
+  storybook-dark:
+    name: ♿ Storybook dark ${{ matrix.part }}
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - part: "1/2"
+            shard: "1/2"
+          - part: "2/2"
+            shard: "2/2"
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
+
+      - name: 🗂️ Cache Playwright browsers
+        if: matrix.shard != ''
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
+      - name: 🌐 Install Chromium
+        if: matrix.shard != ''
+        working-directory: apps/web
+        env:
+          CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/install-chromium.sh" "$CACHE_HIT"
+
+      # turbo.json makes these tasks depend on ^build and generate, so the workspace packages
+      # the stories import (e.g. @flump/finance-engine) are built (or replayed) first.
+      - name: ♿ Storybook a11y (dark), ${{ matrix.part }}
+        if: matrix.shard != ''
+        run: bunx turbo run test:storybook:dark --filter=@flump/web -- --shard=${{ matrix.shard }}
+
+  # Stable required-check names: "♿ Storybook a11y (light)" and "♿ Storybook a11y (dark)".
+  storybook-a11y:
+    name: ♿ Storybook ${{ matrix.name }}
+    if: always() && github.event_name != 'schedule'
+    needs: [storybook-light, storybook-dark]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: a11y (light)
+            legs: storybook-light
+          - name: a11y (dark)
+            legs: storybook-dark
+    steps:
+      - name: ✅ Every leg of this theme passed
+        env:
+          RESULT: ${{ needs[matrix.legs].result }}
+        run: |
+          echo "${{ matrix.legs }}: $RESULT"
+          [ "$RESULT" = "success" ]
 
   # Playwright smoke suite (apps/e2e): the built backend, web and marketing apps against a real
   # Postgres, signed in through the test-only cookie session (E2E_DEV_SESSION, development
