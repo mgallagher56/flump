@@ -254,3 +254,65 @@ describe("MCP surface output policy (E29-T6)", () => {
     );
   });
 });
+
+describe("policy violation details (unit)", () => {
+  it("reports a missing notice as one notice violation, also for a null result", () => {
+    const missing = {
+      kind: "notice",
+      path: "$.notice",
+      detail: "MCP_NOTICE",
+      text: "missing",
+    };
+    expect(collectToolOutputViolations({ a: 1 })).toEqual([missing]);
+    expect(collectToolOutputViolations(null)).toEqual([missing]);
+  });
+
+  it("quotes a wrong notice in the violation", () => {
+    expect(collectToolOutputViolations({ notice: "Guidance only." })).toEqual([
+      { kind: "notice", path: "$.notice", detail: "MCP_NOTICE", text: "Guidance only." },
+    ]);
+  });
+
+  it("walks past null values without a violation", () => {
+    expect(collectToolOutputViolations({ ...good, empty: null, list: [null] })).toEqual([]);
+  });
+
+  it("bans keys that start with best, not keys that only contain it", () => {
+    expect(collectToolOutputViolations({ ...good, estimateBestCaseGbp: 1 })).toEqual([]);
+  });
+
+  it("clips offending text longer than 120 characters to 117 and an ellipsis", () => {
+    // "You should act. " is 16 characters; padded with "x" to exactly 120 and 121.
+    const at120 = `You should act. ${"x".repeat(104)}`;
+    const at121 = `${at120}x`;
+    expect(collectDescriptionViolations(at120)[0]?.text).toBe(at120);
+    expect(collectDescriptionViolations(at121)[0]?.text).toBe(`${at121.slice(0, 117)}...`);
+  });
+
+  it("puts a description violation at the root path", () => {
+    expect(collectDescriptionViolations("You should act.")[0]?.path).toBe("$");
+  });
+
+  it("names the error and lists each violation on its own line", () => {
+    try {
+      assertToolOutputPolicy({ a: "You should act." });
+      expect.unreachable();
+    } catch (e) {
+      const err = e as OutputPolicyError;
+      expect(err.name).toBe("OutputPolicyError");
+      // A header line, then one line per violation (the missing notice and the advice wording).
+      expect(err.message.split("\n")).toHaveLength(1 + err.violations.length);
+    }
+  });
+});
+
+describe("provider names in any case (unit)", () => {
+  it("finds a provider name written in lower or upper case", () => {
+    expect(collectDescriptionViolations("open a vanguard isa")).toEqual([
+      expect.objectContaining({ kind: "provider-name", detail: "Vanguard" }),
+    ]);
+    expect(collectDescriptionViolations("MOVE IT TO MONZO")).toEqual([
+      expect.objectContaining({ kind: "provider-name", detail: "Monzo" }),
+    ]);
+  });
+});
