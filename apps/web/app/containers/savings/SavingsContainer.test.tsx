@@ -75,8 +75,8 @@ import SavingsContainer, { parsePayRise } from "./SavingsContainer";
 
 const zone = () => screen.getByRole("region", { name: "Model a change to your savings" });
 
-/** The drawer's button, named by its title: the model sits closed below saved figures. */
-const modelToggle = () => screen.getByRole("button", { name: /^Model a change to your savings/ });
+/** The disclosure button: the zone sits closed below saved figures. */
+const modelToggle = () => screen.getByRole("button", { name: "Show what-if: grow your savings" });
 const openModel = () => fireEvent.click(modelToggle());
 
 /** The saved facts: hero plus KPI strip. */
@@ -134,21 +134,23 @@ describe("SavingsContainer", () => {
     render(<SavingsContainer />);
     const toggle = modelToggle();
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(toggle.hasAttribute("aria-controls")).toBe(false);
+    expect(screen.getByText(/^Starts from your savings of/)).toBeDefined();
     expect(screen.queryByRole("slider")).toBeNull();
-    expect(screen.queryByRole("region", { name: "Model a change to your savings" })).toBeNull();
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    const controlled = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
-    expect(controlled?.contains(zone())).toBe(true);
+    expect(zone()).toBeDefined();
     expect(screen.getAllByRole("slider").length).toBeGreaterThan(0);
   });
 
   it("opens the model straight away when a pay rise is handed over", () => {
     mockLocation.current = { pathname: "/app/savings", hash: "", state: { payRise: 230 } };
     render(<SavingsContainer />);
-    expect(modelToggle().getAttribute("aria-expanded")).toBe("true");
-    expect(zone()).toBeDefined();
+    // Open, the same button reads "Hide what-if".
+    expect(screen.queryByRole("button", { name: "Show what-if: grow your savings" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Hide what-if" }).getAttribute("aria-expanded")).toBe(
+      "true",
+    );
+    expect(screen.getAllByRole("slider").length).toBeGreaterThan(0);
   });
 
   it("has no slider outside the scenario zone", () => {

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fireEvent, within } from "storybook/test";
+import { expect, fireEvent, userEvent, within } from "storybook/test";
 import DebtContainer from "./DebtContainer";
 
 const debts = [
@@ -87,6 +87,10 @@ export const Empty: Story = {
 export const Scenario: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // The zone starts closed below the saved figures (UX S11).
+    await userEvent.click(
+      (await canvas.findAllByRole("button", { name: "Show what-if: pay more each month" }))[0],
+    );
     const zones = await canvas.findAllByRole("region", { name: "Model a change to your debts" });
     await expect(zones.length).toBeGreaterThan(0);
     await expect(canvas.getAllByText("Illustration, not saved").length).toBeGreaterThan(0);

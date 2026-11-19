@@ -194,6 +194,8 @@ export const FLOWS: Flow[] = [
       await actor.press(edit.getByRole("button", { name: /^Save/ }));
       await expect(edit).toBeHidden();
 
+      // The scenario zone starts closed below the saved figures.
+      await actor.press(page.getByRole("button", { name: "Show what-if: pay more each month" }));
       await actor.type(page.getByRole("textbox", { name: "Extra payment each month input" }), "50");
       await actor.key("Enter");
       await expect(page.getByRole("slider", { name: "Extra payment each month" })).toHaveValue(
