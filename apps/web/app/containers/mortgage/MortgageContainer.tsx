@@ -313,6 +313,15 @@ const MortgageContainer: FC = () => {
     setEditTermMonths(total > 0 ? String(total % 12) : "");
   };
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  // The "Saved ..." line clears itself after 3 seconds; the timer goes with the page, so it never
+  // sets state after the page (or a test's environment) is gone.
+  const saveMessageTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (saveMessageTimer.current !== null) clearTimeout(saveMessageTimer.current);
+    },
+    [],
+  );
   const [saveError, setSaveError] = useState<string | null>(null);
   // Seeded from the selected account's repayment type when the dialog opens (startEditing).
   const [editMortgageType, setEditMortgageType] = useState<"repayment" | "interest-only">(
@@ -681,7 +690,8 @@ const MortgageContainer: FC = () => {
       setSavedAt(new Date().toISOString());
       setSaveMessage(saved.length > 0 ? `Saved ${formatList(saved)}` : "No changes to save");
       setIsEditing(false);
-      setTimeout(() => setSaveMessage(null), 3000);
+      if (saveMessageTimer.current !== null) clearTimeout(saveMessageTimer.current);
+      saveMessageTimer.current = setTimeout(() => setSaveMessage(null), 3000);
     } catch (err) {
       console.error("Failed to save mortgage details:", err);
       setSaveMessage(null);
