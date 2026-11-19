@@ -38,7 +38,17 @@ export const siteFooterCompactRow = cva({
  * also stretches the fixed bottom bar off screen (phone sweep 5).
  */
 export const siteFooterCompactNav = cva({
-  base: { minWidth: 0, overflowX: "auto", overscrollBehaviorX: "contain" },
+  base: {
+    minWidth: 0,
+    overflowX: "auto",
+    overscrollBehaviorX: "contain",
+    // A scroller clips whatever paints outside its padding box, which would cut the links' focus
+    // ring (2px outline at a 2px offset: 4px out) at the top, bottom and first link's left edge
+    // (WCAG 2.4.7). 4px of padding holds the whole ring, and the matching negative margin keeps
+    // the row's height and alignment as they were.
+    padding: "1",
+    margin: "-1",
+  },
 });
 
 export const siteFooterCompactList = cva({

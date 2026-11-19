@@ -1,11 +1,12 @@
 import { cva } from "../../../styled-system/css";
 
 /**
- * Viewport narrower than 20em: a phone with large text (375px at 200% text is about 11.7em, 320px
- * at default text is exactly 20em, so it does not match). Panda's `md` is em-based too, so on a
- * phone at large text the base (phone) layout always applies.
+ * The header is narrower than 16rem: a phone at large text (375px at 200% text leaves a header of
+ * about 10.7rem). At default text the narrowest header is 17rem (a 320px phone less 24px gutters),
+ * so it never matches. A container query on the header in rem, so it follows the root font size
+ * (browser text zoom), which an em media query never sees (as in TopBar and MobileBottomBar).
  */
-const LARGE_TEXT_PHONE = "@media screen and (max-width: 19.99em)";
+const LARGE_TEXT_PHONE = "@container page-header (max-width: 15.99rem)";
 
 /**
  * A viewport under 480px tall: a phone in landscape (812x375). The 67px app header and a full page
@@ -33,6 +34,12 @@ export const pageHeaderContainer = cva({
     width: "100%",
     minWidth: 0,
     mb: { base: "5", md: "6" },
+    containerType: "inline-size",
+    containerName: "page-header",
+    // A hair that follows the root font size (0 at default text, 1px at 200%): Chrome re-checks a
+    // container query only when the container's size changes, so a text-size change after load
+    // then re-checks LARGE_TEXT_PHONE.
+    paddingInline: "calc(0.0625rem - 1px)",
     [SHORT_VIEWPORT]: { alignItems: "center", rowGap: "2", mb: "3" },
   },
   variants: {
@@ -83,7 +90,19 @@ export const pageHeaderDescription = cva({
     maxWidth: "720px",
     order: 5,
     minWidth: 0,
-    [SHORT_VIEWPORT]: { display: "none" },
+    // Out of sight but still read by screen readers (the visually hidden pattern), unlike
+    // `display: none`, which would take the page's one-line description from them too.
+    [SHORT_VIEWPORT]: {
+      position: "absolute",
+      width: "1px",
+      height: "1px",
+      margin: "-1px",
+      padding: "0",
+      overflow: "hidden",
+      clip: "rect(0, 0, 0, 0)",
+      whiteSpace: "nowrap",
+      borderWidth: "0",
+    },
   },
   variants: {
     // Below md the page icon shares the description's row; without it the description is a row.

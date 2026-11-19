@@ -204,6 +204,45 @@ export const LinkVariant: Story = {
 
 export const LinkVariantDark: Story = { ...LinkVariant, globals: { theme: "dark" } };
 
+/**
+ * Link buttons a line apart, in a list and in running text: on a touch screen none of them takes
+ * the extended 44px area, so no link's area covers its neighbour's text.
+ */
+export const LinkNeighbours: Story = {
+  args: { onClick: fn() },
+  render: (args) => (
+    <div>
+      <ul>
+        <li>
+          <Button onClick={args.onClick} variant="link">
+            First link
+          </Button>
+        </li>
+        <li>
+          <Button onClick={args.onClick} variant="link">
+            Second link
+          </Button>
+        </li>
+      </ul>
+      <p>
+        Read{" "}
+        <Button onClick={args.onClick} variant="link">
+          the terms
+        </Button>{" "}
+        before you start.
+      </p>
+    </div>
+  ),
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "First link" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Second link" }));
+    await expect(args.onClick).toHaveBeenCalledTimes(2);
+  },
+};
+
+export const LinkNeighboursDark: Story = { ...LinkNeighbours, globals: { theme: "dark" } };
+
 export const Links: Story = {
   render: () => (
     <div className={row}>

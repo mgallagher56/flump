@@ -94,7 +94,35 @@ export const Default: Story = {
   },
 };
 
-export const SideRight: Story = { args: { side: "right" } };
+/**
+ * From md the right sheet is full height: the body grows so the footer is pinned to the bottom
+ * edge, not floating under the content.
+ */
+const footerPinnedPlay: Story["play"] = async ({ canvasElement }) => {
+  const body = within(canvasElement.ownerDocument.body);
+  const sheet = await body.findByRole("dialog", { name: "Adjust your plan" });
+  const view = canvasElement.ownerDocument.defaultView;
+  if (!view || view.innerWidth < 768) return;
+  const footer = sheet.lastElementChild as HTMLElement;
+  const gap = sheet.getBoundingClientRect().bottom - footer.getBoundingClientRect().bottom;
+  // Only the sheet's bottom padding (and safe area) sits under the footer.
+  await expect(gap).toBeLessThan(64);
+  await expect(sheet.getBoundingClientRect().height).toBeGreaterThan(view.innerHeight - 2);
+};
+
+export const SideRight: Story = { args: { side: "right" }, play: footerPinnedPlay };
+
+export const SideRightDark: Story = {
+  ...SideRight,
+  globals: { theme: "dark" },
+  decorators: [
+    (Story) => (
+      <DarkRoot>
+        <Story />
+      </DarkRoot>
+    ),
+  ],
+};
 
 /** On a phone the sheet is as tall as its content, with no grab handle (phone audit P31). */
 const phoneFitPlay: Story["play"] = async ({ canvasElement }) => {
