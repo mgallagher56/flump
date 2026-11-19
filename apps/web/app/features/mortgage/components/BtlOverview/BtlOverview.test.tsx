@@ -61,7 +61,8 @@ describe("<BtlOverview />", () => {
         onManage={vi.fn()}
       />,
     );
-    const prompt = "Add rent in Self Assessment, linked to a property, to see that property's yield.";
+    const prompt =
+      "Add rent in Self Assessment, linked to a property, to see that property's yield.";
     expect(container.textContent?.split(prompt).length).toBe(2);
     const list = screen.getByRole("list", { name: "Rental properties" });
     expect(list.textContent).not.toContain(prompt);
