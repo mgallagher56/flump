@@ -105,11 +105,30 @@ export function isSensitiveKey(key: string): boolean {
 // Zero-width characters have no legitimate use in logs and would split a key (`pass\u200Bword`).
 const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/g;
 
+/**
+ * Cuts `text` to at most `max` characters. When it has to cut, it also drops the part-token left at
+ * the end (back to the last character `isBoundary` accepts), so a secret the cut falls inside is
+ * dropped whole instead of being left half there, where no redaction pattern would recognise it.
+ */
+export function cutAtBoundary(
+  text: string,
+  max: number,
+  isBoundary: (char: string) => boolean,
+): string {
+  if (text.length <= max) return text;
+  let end = max;
+  while (end > 0 && !isBoundary(text.charAt(end - 1))) end--;
+  return text.slice(0, end);
+}
+
+const isWhitespace = (char: string): boolean => /\s/.test(char);
+
 function capLength(input: string): string {
   input = input.replace(ZERO_WIDTH, "");
-  // Truncate before any regex runs so adversarial input cannot cause slow matching.
+  // Truncate before any regex runs so adversarial input cannot cause slow matching. The token the
+  // cut falls in is dropped whole (cutAtBoundary).
   return input.length > MAX_STRING_LENGTH
-    ? `${input.slice(0, MAX_STRING_LENGTH)}${TRUNCATED}`
+    ? `${cutAtBoundary(input, MAX_STRING_LENGTH, isWhitespace)}${TRUNCATED}`
     : input;
 }
 

@@ -181,3 +181,57 @@ describe("scrubBreadcrumb", () => {
     expect(scrubBreadcrumb({ category: "http" })).toEqual({ category: "http", data: {} });
   });
 });
+
+// Long values are built at runtime. Each secret mixes in punctuation so no run of it is long enough
+// for the generic long-token rule to hide it: only removing it by position keeps it out.
+describe("long values are cleaned before they are cut to length", () => {
+  const secret = (n: number) => "Pw!z9.".repeat(n);
+
+  it("drops URL userinfo that runs past the 2,048-character URL limit", () => {
+    const url = `https://user:${secret(400)}@host.test/p`; // userinfo of about 2,400 characters
+    const out = scrubEvent({ request: { url } })?.request?.url ?? "";
+    expect(out).toBe("https://host.test/p");
+  });
+
+  it("drops a long basic-auth password from the URL", () => {
+    const password = `${"eyJ"}${secret(200)}.${secret(200)}`; // about 2,400 characters
+    const out = scrubEvent({ request: { url: `https://svc:${password}@api.test/v1/x` } })?.request
+      ?.url;
+    expect(out).toBe("https://api.test/v1/x");
+  });
+
+  it("drops userinfo cut by the transaction name limit", () => {
+    // 8,170 characters of words put the userinfo across the 8,192-character limit.
+    const name = `${"ab ".repeat(2723)}x https://user:${secret(20)}@host.test/p`;
+    const out = scrubEvent({ transaction: name })?.transaction ?? "";
+    expect(out).not.toContain("Pw!z9");
+    expect(out).not.toContain("user:");
+  });
+
+  it("drops a path segment that the URL limit would cut in half", () => {
+    // "https://h.test/" is 15 characters, so the email starts at 15 + 2,025 + 1 = 2,041 and the
+    // 2,048-character limit falls inside it.
+    const url = `https://h.test/${"a.b-".repeat(506)}c/sentinel.person@example.com/end`;
+    const out = scrubEvent({ request: { url } })?.request?.url ?? "";
+    expect(out).not.toContain("sentin");
+    expect(out.length).toBeLessThanOrEqual(2048);
+  });
+
+  it("drops a home directory that the file path limit would cut", () => {
+    const filename = `/Users/${"jo.do-".repeat(400)}/project/src/a.ts`; // user folder of 2,400
+    const out = scrubEvent({ exception: { values: [{ stacktrace: { frames: [{ filename }] } }] } });
+    expect(JSON.stringify(out)).not.toContain("jo.do-");
+  });
+
+  it("leaves ordinary URLs as they were, apart from userinfo, query and hash", () => {
+    const clean = (url: string) => scrubEvent({ request: { url } })?.request?.url;
+    expect(clean("https://api.example.test/v1/accounts")).toBe(
+      "https://api.example.test/v1/accounts",
+    );
+    expect(clean("https://u:p@api.example.test/v1/accounts?page=2#top")).toBe(
+      "https://api.example.test/v1/accounts",
+    );
+    expect(clean("/v1/accounts")).toBe("/v1/accounts");
+    expect(scrubEvent({ transaction: "GET /v1/accounts" })?.transaction).toBe("GET /v1/accounts");
+  });
+});
