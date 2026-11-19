@@ -863,6 +863,22 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       });
     });
 
+    it("a financial data reset keeps the saved section order (a layout preference)", async () => {
+      const service = profiles();
+      await service.updateProfile(USER_A, { dashboardWidgetOrder: ["tax", "debt"] });
+      const { profile } = await service.resetFinancialData(USER_A);
+      expect(profile.dashboardWidgetOrder).toEqual(["tax", "debt"]);
+    });
+
+    it("the export carries the saved section order, and deletion removes it with the profile", async () => {
+      await seed(USER_A, "A");
+      await profiles().updateProfile(USER_A, { dashboardWidgetOrder: ["budget", "accounts"] });
+      const doc = AccountExportDocument.parse(JSON.parse(await exportFor(USER_A)));
+      expect(doc.profile).toMatchObject({ dashboardWidgetOrder: ["budget", "accounts"] });
+      await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+      expect(await repo(UserProfile).findOneBy({ userId: USER_A })).toBeNull();
+    });
+
     it("the export carries both choices", async () => {
       await seed(USER_A, "A");
       await profiles().updateProfile(USER_A, { netWorthCountsStudentLoan: true });

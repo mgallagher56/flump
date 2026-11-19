@@ -1,4 +1,4 @@
-import { type UpdateProfileRequest } from "@flump/api-contract";
+import { DASHBOARD_SECTION_KEYS, type UpdateProfileRequest } from "@flump/api-contract";
 import { BadRequestException } from "@nestjs/common";
 import {
   STUDENT_LOAN_PLANS,
@@ -180,8 +180,15 @@ export function formatProfileRow(profile: UserProfile) {
       ? withoutRetiredModules(profile.dashboardWidgets)
       : ["accounts", "budget", "savings", "pension", "mortgage"],
     // Empty means the dashboard's default section order; only the user's own moves fill it.
+    // Unknown, retired and repeated ids are dropped on read (writes refuse them).
     dashboardWidgetOrder: Array.isArray(profile.dashboardWidgetOrder)
-      ? withoutRetiredModules(profile.dashboardWidgetOrder)
+      ? [
+          ...new Set(
+            profile.dashboardWidgetOrder.filter((k) =>
+              (DASHBOARD_SECTION_KEYS as readonly string[]).includes(k),
+            ),
+          ),
+        ]
       : [],
     dashboardWidgetSizes: nonEmptyRecord(
       withoutRetiredModuleKeys(profile.dashboardWidgetSizes),
