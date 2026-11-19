@@ -317,6 +317,14 @@ The owner gave these rulings on 14 November 2026. They are numbered R1 to R6 in 
    - Source: plan R5; built in #704 (`useDelayedPending`, `PendingReveal`, `durations.pendingDelay`, `pendingMinimum`, `reveal`). Recorded in UX-GUIDELINES E2.
    - Supersedes: the page skeleton after 200ms shown on every navigation (#688).
 
+# Owner decisions, round 10a (2026-11-18): the owner's testing list
+
+The owner listed what they noticed while using the site (about 15 November 2026). A review rework on 17 November reversed several of these requests against `docs/ux/`; the owner did not agree to those reversals, and on 18 November asked for the open items to be built. These rulings outrank the UX guidelines (AGENTS.md section 10). Item numbers are the owner's list positions.
+
+1. **Enter confirms an ordinary delete (item 27).** Owner's words: "When I try to delete an item, the modal appears then when I press enter it should delete the entry rather than cancel."
+   - Built in `ConfirmDialog` (`packages/ui`): focus starts on the confirm button; Enter confirms once per opening; a repeating or held key never fires it, and a key still held from the press that opened the dialog is ignored until released; Escape and Cancel still cancel, and Enter on a focused Cancel cancels. Type-to-confirm dialogs (account erasure, reset all data) are unchanged: focus starts on Cancel and Enter confirms only from the field once the text matches.
+   - Supersedes: UX-GUIDELINES D1 "Cancel is the safe default focus" (D1 now states the ruling).
+
 # Owner decisions, round 11 (2026-11-19): system data audit
 
 The fifteen decisions in [docs/audit/system-2026-11/PLAN.md](../system-2026-11/PLAN.md), "Owner decisions". Asked on 19 November 2026 whether they accept the recommended option on all fifteen, the owner answered: "everything else is accepted". Each is accepted with the plan's recommended option. The plan's status line now reads "Decisions: accepted on 19 November 2026".

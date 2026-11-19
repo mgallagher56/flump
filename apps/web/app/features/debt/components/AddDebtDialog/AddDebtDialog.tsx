@@ -3,6 +3,7 @@ import {
   Button,
   CurrencyInput,
   controlProps,
+  DatePicker,
   Dialog,
   FormField,
   InfoTip,
@@ -263,11 +264,11 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
             label="0% interest period ends (optional)"
           >
             {(field) => (
-              <TextInput
+              <DatePicker
                 {...controlProps(field)}
-                type="date"
+                clearable
                 value={promoZeroPercentUntil}
-                onChange={(e) => setPromoZeroPercentUntil(e.target.value)}
+                onValueChange={setPromoZeroPercentUntil}
               />
             )}
           </FormField>

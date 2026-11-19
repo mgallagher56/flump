@@ -39,9 +39,9 @@ describe("ConfirmDialog", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("focuses Cancel initially", () => {
+  it("focuses the confirm button initially, so Enter confirms (owner item 27)", () => {
     setup();
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancel" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Delete year" }));
   });
 
   it("Cancel and Escape call onOpenChange(false) and not onConfirm", () => {
@@ -66,7 +66,7 @@ describe("ConfirmDialog", () => {
       onConfirm: vi.fn(),
     };
     const { rerender } = render(<ConfirmDialog {...props} />);
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancel" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Delete" }));
     rerender(<ConfirmDialog {...props} open={false} />);
     await waitFor(() => expect(document.activeElement).toBe(opener));
     opener.remove();
