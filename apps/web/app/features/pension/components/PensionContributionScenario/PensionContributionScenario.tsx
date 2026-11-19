@@ -1,4 +1,4 @@
-import type { ProfileFacts } from "@flump/finance-engine";
+import { contributionMonthlyFromPercent, type ProfileFacts } from "@flump/finance-engine";
 import {
   DELTA_PANEL_COPY,
   ProjectionNotice,
@@ -9,7 +9,7 @@ import {
 import { type FC, useMemo } from "react";
 import { Link } from "react-router";
 import {
-  CONTRIBUTION_EDITED_TEXT,
+  contributionSliderHelper,
   MAX_CONTRIBUTION_PERCENT,
 } from "~/features/pension/contribution";
 import type { ScenarioState } from "~/hooks/useScenarioState";
@@ -75,10 +75,14 @@ export const pensionZoneSummary = (
   savedPercent: number,
   scenarioPercent: number,
   isModified: boolean,
-): string =>
-  isModified
-    ? `Your illustration: a contribution of ${percentText(scenarioPercent)} instead of ${percentText(savedPercent)}.`
-    : `Starts from your contribution of ${percentText(savedPercent)} of your ${wholePounds.format(salary)} salary.`;
+): string => {
+  if (isModified) {
+    return `Your illustration: a contribution of ${percentText(scenarioPercent)} instead of ${percentText(savedPercent)}.`;
+  }
+  const monthly = contributionMonthlyFromPercent(savedPercent, { annualSalary: salary });
+  const pounds = monthly === null ? "" : `, about ${wholePounds.format(monthly)} a month`;
+  return `Starts from your contribution of ${percentText(savedPercent)} of your ${wholePounds.format(salary)} salary${pounds}.`;
+};
 
 /**
  * The Pension page's one ScenarioZone (decision RD6): the effect of changing your contribution on
@@ -148,9 +152,11 @@ export const PensionContributionScenario: FC<PensionContributionScenarioProps> =
           <SliderField
             format="percent"
             fractionDigits={percentDigits(values.contributionPercent)}
-            helperText={
-              scenario.isEdited("contributionPercent") ? CONTRIBUTION_EDITED_TEXT : undefined
-            }
+            helperText={contributionSliderHelper(
+              contributionMonthlyFromPercent(values.contributionPercent, { annualSalary: salary }),
+              scenario.isEdited("contributionPercent"),
+              wholePounds.format,
+            )}
             label="Your contribution"
             max={Math.max(MAX_CONTRIBUTION_PERCENT, savedEmployeePercent)}
             min={0}

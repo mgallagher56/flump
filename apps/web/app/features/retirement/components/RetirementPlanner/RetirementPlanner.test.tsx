@@ -304,9 +304,20 @@ describe("RetirementPlanner", () => {
 
     it("says an edited contribution is not saved", () => {
       renderPlanner({ planArgs: workplaceArgs });
-      expect(screen.queryByText("Edited. Not saved.")).toBeNull();
+      // Saved 6% of £40,000: 2,400 a year ÷ 12 = £200 a month.
+      expect(screen.getByText("About £200 a month.")).toBeTruthy();
       fireEvent.change(screen.getByLabelText("Your contribution"), { target: { value: "8" } });
-      expect(screen.getByText("Edited. Not saved.")).toBeTruthy();
+      // 8% of £40,000: 3,200 a year ÷ 12 = £266.67, about £267 a month.
+      expect(screen.getByText("About £267 a month. Edited. Not saved.")).toBeTruthy();
+    });
+
+    it("works out the pounds on pay that counts once that basis is ticked", () => {
+      renderPlanner({ planArgs: workplaceArgs });
+      fireEvent.click(
+        screen.getByLabelText("Base contributions on pay that counts for your pension"),
+      );
+      // 6% of £40,000 − £6,240 = 33,760: 2,025.60 a year ÷ 12 = £168.80, about £169 a month.
+      expect(screen.getByText("About £169 a month.")).toBeTruthy();
     });
 
     it("shows a lower estimate with a minus sign, not a hyphen", () => {

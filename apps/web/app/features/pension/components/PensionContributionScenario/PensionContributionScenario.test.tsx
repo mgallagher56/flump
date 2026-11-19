@@ -50,9 +50,11 @@ describe("<PensionContributionScenario />", () => {
     const toggle = screen.getByRole("button", { name: PENSION_ZONE_SHOW_LABEL });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("slider")).toBeNull();
-    // Saved: 5% of £60,000.
+    // Saved: 5% of £60,000, which is 3,000 a year ÷ 12 = £250 a month.
     expect(
-      screen.getByText("Starts from your contribution of 5% of your £60,000 salary."),
+      screen.getByText(
+        "Starts from your contribution of 5% of your £60,000 salary, about £250 a month.",
+      ),
     ).toBeTruthy();
     fireEvent.click(toggle);
     fireEvent.change(screen.getByLabelText("Your contribution"), { target: { value: "8" } });
@@ -61,9 +63,10 @@ describe("<PensionContributionScenario />", () => {
   });
 
   it("words half percentages with one decimal place in the summary", () => {
-    // 5.5% of £42,500: one decimal kept, whole pounds with a thousands comma.
+    // 5.5% of £42,500: one decimal kept, whole pounds with a thousands comma. The pounds:
+    // 42,500 × 0.055 = 2,337.50 a year; ÷ 12 = £194.79, about £195 a month.
     expect(pensionZoneSummary(42_500, 5.5, 5.5, false)).toBe(
-      "Starts from your contribution of 5.5% of your £42,500 salary.",
+      "Starts from your contribution of 5.5% of your £42,500 salary, about £195 a month.",
     );
     expect(pensionZoneSummary(42_500, 5.5, 7, true)).toBe(
       "Your illustration: a contribution of 7% instead of 5.5%.",
@@ -84,7 +87,8 @@ describe("<PensionContributionScenario />", () => {
     openZone();
     fireEvent.change(screen.getByLabelText("Your contribution"), { target: { value: "8" } });
     expect(current.values.contributionPercent).toBe(8);
-    expect(screen.getByText("Edited. Not saved.")).toBeTruthy();
+    // 8% of £60,000: 4,800 a year ÷ 12 = £400 a month.
+    expect(screen.getByText("About £400 a month. Edited. Not saved.")).toBeTruthy();
     expect(document.querySelector('[data-figure="takeHome.delta"]')?.textContent).toMatch(
       /^-£[\d,]+ a month$/,
     );

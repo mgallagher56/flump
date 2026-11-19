@@ -8,6 +8,7 @@ import {
   buildRetirementPlanInput,
   calculateEvenRealDrawdown,
   calculateRetirementPlan,
+  contributionMonthlyFromPercent,
   DEFAULT_RETIREMENT_GROWTH_CASES,
   DEFAULT_RETIREMENT_INFLATION_RATE,
   doesAccountCountTowardsRetirement,
@@ -51,7 +52,7 @@ import { Calendar, ClipboardList } from "lucide-react";
 import { type FC, type ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
-  CONTRIBUTION_EDITED_TEXT,
+  contributionSliderHelper,
   MAX_CONTRIBUTION_PERCENT,
 } from "~/features/pension/contribution";
 import { useScenarioState } from "~/hooks/useScenarioState";
@@ -676,11 +677,15 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                         min={0}
                         max={Math.max(MAX_CONTRIBUTION_PERCENT, savedEmployeePercent)}
                         step={0.5}
-                        helperText={
-                          scenario.isEdited("employeePercent")
-                            ? CONTRIBUTION_EDITED_TEXT
-                            : undefined
-                        }
+                        // The pounds follow the basis ticked below: whole salary or pay that counts.
+                        helperText={contributionSliderHelper(
+                          contributionMonthlyFromPercent(scenario.values.employeePercent, {
+                            annualSalary: workplace.annualSalary,
+                            useQualifyingEarnings: scenario.values.useQualifyingEarnings,
+                          }),
+                          scenario.isEdited("employeePercent"),
+                          formatWholeGbp,
+                        )}
                         onChange={(v) => scenario.set("employeePercent", v)}
                       />
                       <div className={checkboxRow}>

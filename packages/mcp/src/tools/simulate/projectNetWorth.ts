@@ -1,4 +1,8 @@
-import { calculateForecast, type LifeEventScenario } from "@flump/finance-engine";
+import {
+  calculateForecast,
+  contributionMonthlyFromPercent,
+  type LifeEventScenario,
+} from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import {
@@ -168,9 +172,12 @@ export const projectNetWorth = defineFlumpTool({
       );
     }
 
-    const salary = base?.annualGrossSalary ?? 0;
-    const pensionPct = base?.pensionContributionPct ?? 0;
-    const monthlyPension = salary > 0 && pensionPct > 0 ? (salary * (pensionPct / 100)) / 12 : 0;
+    // Without a saved salary the pounds are not known, so no contribution is added to the
+    // projection and no assumption is reported (never an invented amount).
+    const monthlyPension =
+      contributionMonthlyFromPercent(base?.pensionContributionPct, {
+        annualSalary: base?.annualGrossSalary,
+      }) ?? 0;
     if (monthlyPension > 0) {
       assumptions.push(
         fromProfile(

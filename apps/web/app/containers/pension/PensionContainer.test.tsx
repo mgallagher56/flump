@@ -190,8 +190,9 @@ describe("PensionContainer", () => {
       const rows = Array.from(details.querySelectorAll("dl > div")).map((r) => r.textContent);
       expect(rows).toEqual([
         "Salary£58,000 a year",
-        "You pay8% of salary",
-        "Employer pays3% of salary",
+        // £58,000 at 8%: 4,640 a year ÷ 12 = £386.67, about £387. At 3%: 1,740 ÷ 12 = £145.
+        "You pay8% of salary, about £387 a month",
+        "Employer pays3% of salary, about £145 a month",
         "MethodNo salary sacrifice",
       ]);
       const pots = details.querySelectorAll("[data-list-row]");
