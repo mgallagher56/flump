@@ -5,6 +5,36 @@
       "floor": 92,
       "measured": 93.04,
       "measuredOn": "2026-11-19"
+    },
+    "packages/api-contract": {
+      "floor": 93,
+      "measured": 94.29,
+      "measuredOn": "2026-11-19"
+    },
+    "packages/banking": {
+      "floor": 93,
+      "measured": 94.43,
+      "measuredOn": "2026-11-19"
+    },
+    "packages/observability": {
+      "floor": 94,
+      "measured": 95.77,
+      "measuredOn": "2026-11-19"
+    },
+    "packages/format": {
+      "floor": 92,
+      "measured": 93.03,
+      "measuredOn": "2026-11-19"
+    },
+    "packages/api-client": {
+      "floor": 89,
+      "measured": 90.93,
+      "measuredOn": "2026-11-19"
+    },
+    "packages/business-details": {
+      "floor": 96,
+      "measured": 97.01,
+      "measuredOn": "2026-11-19"
     }
   }
 }
