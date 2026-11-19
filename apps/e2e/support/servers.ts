@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { PlaywrightTestConfig } from "@playwright/test";
 import {
   BACKEND_PORT,
@@ -20,6 +21,11 @@ const authEnv = {
   RAILWAY_ENVIRONMENT: "",
 };
 
+// Production requires this key on both services (PRODUCTION_REQUIRED, requiredEnv.ts): with it
+// the backend keys its per-IP ceiling on each browser's address rather than on the web server's,
+// so one project's traffic never uses up another's (support/client-address.ts). Made per run.
+const clientIpEnv = { WEB_CLIENT_IP_HMAC_KEY: randomBytes(32).toString("hex") };
+
 /**
  * The built backend, web app and marketing site, shared by the smoke and visual configs.
  * `extraEnv` is added to every server (the visual suite passes its frozen clock).
@@ -38,6 +44,7 @@ export function webServers(
       timeout: 120_000,
       env: {
         ...authEnv,
+        ...clientIpEnv,
         ...extraEnv,
         PORT: String(BACKEND_PORT),
         DATABASE_URL: databaseUrl,
@@ -55,6 +62,7 @@ export function webServers(
       timeout: 120_000,
       env: {
         ...authEnv,
+        ...clientIpEnv,
         ...extraEnv,
         E2E_DEV_SESSION: "true",
         PORT: String(WEB_PORT),

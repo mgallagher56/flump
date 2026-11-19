@@ -93,6 +93,12 @@ budget entry and the dashboard. The suite has one user, so the spec clears it wi
 after every spec in `chromium` has finished. If a `chromium` spec fails, the journey does not run.
 It leaves the journey's data behind; global setup seeds the homeowner again on the next run.
 
+Each smoke project sends its own client address as `X-Forwarded-For` (`support/client-address.ts`),
+and the servers share a per-run `WEB_CLIENT_IP_HMAC_KEY`, as production does. The backend then keys
+its per-IP ceiling (300 requests a minute) on each project's address. Without that, the whole
+suite counted as the web server's one address, and when the persona specs and the journey ran
+inside one minute the journey's first budget entry was refused with 429.
+
 Against a database you keep, a full smoke run therefore spends two resets (the journey, then the
 next seed), so about five runs an hour reach the limit. To skip the journey while working on
 another spec, run `bunx playwright test --project=chromium`. To run only the journey, run
