@@ -28,6 +28,7 @@ import {
   defaultDepositTarget,
   depositOutcomeText,
 } from "~/features/savings/components/DepositTimeline";
+import { InvestmentReturns } from "~/features/savings/components/InvestmentReturns";
 import { PayRiseScenario } from "~/features/savings/components/PayRiseScenario";
 import {
   estimateIsaUsed,
@@ -210,6 +211,8 @@ export const SavingsContainer: FC = () => {
             accounts={savingsAccounts}
             savedAccounts={accounts.filter(isSavingsType)}
           />
+
+          <InvestmentReturns accounts={accounts} accountDetails={accountDetails} />
 
           {/* Below saved figures, the model starts closed (one pattern for hiding a simulator:
               CollapsibleDrawer). A pay rise handed over from Take-home pay opens it. */}
