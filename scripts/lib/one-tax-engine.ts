@@ -62,6 +62,12 @@ export const ALLOWED_READERS: Readonly<Record<string, { max: number; reason: str
     max: 1,
     reason: "Relief at source gross-up at the basic rate.",
   },
+  // Signed off by the coordinator, 19 November 2026 (PR 821).
+  "apps/backend/src/migrations/ClearTakeHomeSalaries1795530100000.ts": {
+    max: 1,
+    reason:
+      "Frozen 2026/27 personal allowance: the historic take-home salary migration must decide the same rows whenever it runs, and migrations load where the engine is not built. A spec checks it equals the engine's value.",
+  },
 };
 
 export interface OneTaxEngineViolation {
