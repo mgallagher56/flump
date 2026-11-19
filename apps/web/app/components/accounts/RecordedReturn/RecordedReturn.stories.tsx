@@ -24,7 +24,10 @@ export const WithHistory: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Overall, a year on average")).toBeDefined();
-    await expect(canvas.getByText("Your estimated annual return")).toBeDefined();
+    await expect(canvas.getByText("Investment returns can go down as well as up.")).toBeDefined();
+    await expect(
+      canvas.getByText("The estimated annual return you set for this account is 5%."),
+    ).toBeDefined();
   },
 };
 
@@ -53,4 +56,54 @@ export const NotEnoughHistory: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByText(/Not enough history yet/)).toBeDefined();
   },
+};
+
+export const WithHistoryDark: Story = {
+  ...WithHistory,
+  globals: { theme: "dark" },
+};
+
+/** 1,000 flat while 500 a month is set: the balances do not show the payments. */
+export const ContributionNotShown: Story = {
+  args: {
+    balances: [
+      { year: 2026, month: 1, value: 1000 },
+      { year: 2026, month: 2, value: 1000 },
+      { year: 2026, month: 3, value: 1000 },
+    ],
+    monthlyContribution: 500,
+    assumedAnnualReturn: null,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/Not enough reliable history/)).toBeDefined();
+    await expect(canvas.getByText(/do not show the £500 paid in each month/)).toBeDefined();
+  },
+};
+
+export const ContributionNotShownDark: Story = {
+  ...ContributionNotShown,
+  globals: { theme: "dark" },
+};
+
+/** February to March rises by 30%, beyond the 25% bound. */
+export const ImplausibleMonth: Story = {
+  args: {
+    balances: [
+      { year: 2026, month: 1, value: 1000 },
+      { year: 2026, month: 2, value: 1010 },
+      { year: 2026, month: 3, value: 1313 },
+    ],
+    monthlyContribution: null,
+    assumedAnnualReturn: null,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/between February 2026 and March 2026/)).toBeDefined();
+  },
+};
+
+export const ImplausibleMonthDark: Story = {
+  ...ImplausibleMonth,
+  globals: { theme: "dark" },
 };

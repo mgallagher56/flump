@@ -173,7 +173,7 @@ describe("<AccountDetails />", () => {
 });
 
 describe("estimated return from recorded balances", () => {
-  test("shows for an investment account, beside its assumed return", () => {
+  test("shows for an investment account, with its assumed return as a separate line", () => {
     mocks.account.current = {
       id: "123456",
       name: "Stocks and Shares ISA",
@@ -182,14 +182,19 @@ describe("estimated return from recorded balances", () => {
       monthlyContribution: null,
     };
     try {
-      const { getByRole } = customRender(<AccountDetails />);
+      const { getByRole, getByText } = customRender(<AccountDetails />);
       const region = getByRole("region", {
         name: "Estimated return from your recorded balances",
       });
       // Every recorded month is £1,000 with nothing paid in: 0% each month, 0.0% overall.
       expect(region.textContent).toContain("Overall, a year on average");
       expect(region.textContent).toContain("0.0%");
-      expect(region.textContent).toContain("Your estimated annual return");
+      expect(region.textContent).toContain("Investment returns can go down as well as up.");
+      // The assumption is outside the recorded block, never in its list.
+      expect(region.textContent).not.toContain("you set for this account");
+      expect(
+        getByText("The estimated annual return you set for this account is 5%."),
+      ).toBeDefined();
     } finally {
       mocks.account.current = { id: "123456", name: "Monzo Current" };
     }

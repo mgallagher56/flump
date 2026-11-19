@@ -8,6 +8,9 @@
 export const PROJECTION_NOTICE =
   "Guidance, not advice. Flump works from the figures you enter and shows estimates, which can differ from what happens in practice. It is not financial, tax, investment or debt advice.";
 
+/** The standard line beside any investment return, past or assumed. */
+export const INVESTMENT_RISK_NOTICE = "Investment returns can go down as well as up.";
+
 /** Carried by every MCP tool result (E17-N8 envelope, E29-T6 policy). */
 export const MCP_NOTICE =
   "Calculations from figures held in Flump. Guidance, not advice. Unverified.";

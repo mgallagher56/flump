@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   estimateRecordedReturn,
+  MAX_PLAUSIBLE_MONTHLY_RETURN,
   MIN_RECORDED_RETURN_MONTHS,
   modifiedDietzMonth,
   type RecordedBalance,
@@ -181,5 +182,77 @@ describe("estimateRecordedReturn", () => {
       }),
     );
     expect(result.overall.return).toBeCloseTo(0.0195279308, 8);
+  });
+});
+
+describe("estimateRecordedReturn: unreliable history", () => {
+  it("flags a flat balance while a monthly contribution is set", () => {
+    // 1,000 flat for 3 months with 500 a month set. Each month would read
+    // r = (1000 - 1000 - 500) / (1000 + 0.5 * 500) = -500 / 1250 = -0.4, which is -40% a month.
+    // The balance never rises in any month while money is paid in: the payments are not in the
+    // records, so no figure is given.
+    expect(
+      estimateRecordedReturn({
+        balances: [bal(2026, 1, 1000), bal(2026, 2, 1000), bal(2026, 3, 1000)],
+        monthlyContribution: 500,
+      }),
+    ).toEqual({
+      status: "unreliable",
+      reason: "contribution-not-reflected",
+      monthlyContribution: 500,
+    });
+  });
+
+  it("still reports a genuine fall with no contribution as a negative figure", () => {
+    // 10,000 -> 9,500 -> 9,025, nothing paid in: -5% each month.
+    // r1 = -500 / 10000 = -0.05; r2 = -475 / 9500 = -0.05.
+    // Overall: 0.95 * 0.95 - 1 = -0.0975 over 2 months, not annualised.
+    const result = okResult(
+      estimateRecordedReturn({
+        balances: [bal(2026, 1, 10000), bal(2026, 2, 9500), bal(2026, 3, 9025)],
+      }),
+    );
+    expect(result.overall.return).toBeCloseTo(-0.0975, 12);
+    expect(result.overall.annualised).toBe(false);
+  });
+
+  it("passes a contribution run when one month rises", () => {
+    // 10,000 -> 10,100 -> 10,050 with 100 a month: the first month rises, so the check passes.
+    // r1 = (10100 - 10000 - 100) / 10050 = 0; r2 = (10050 - 10100 - 100) / 10150 = -150 / 10150
+    // = -0.0147783... Overall: 1 * (1 - 0.0147783) - 1 = -0.0147783.
+    const result = okResult(
+      estimateRecordedReturn({
+        balances: [bal(2026, 1, 10000), bal(2026, 2, 10100), bal(2026, 3, 10050)],
+        monthlyContribution: 100,
+      }),
+    );
+    expect(result.overall.return).toBeCloseTo(-150 / 10150, 12);
+  });
+
+  it("flags a month above 25% and names it", () => {
+    expect(MAX_PLAUSIBLE_MONTHLY_RETURN).toBe(0.25);
+    // 1,000 -> 1,010 -> 1,313, nothing paid in.
+    // r1 = 10 / 1000 = 0.01; r2 = (1313 - 1010) / 1010 = 303 / 1010 = 0.30, which is +30%.
+    expect(
+      estimateRecordedReturn({
+        balances: [bal(2026, 1, 1000), bal(2026, 2, 1010), bal(2026, 3, 1313)],
+      }),
+    ).toEqual({
+      status: "unreliable",
+      reason: "implausible-month",
+      monthlyContribution: 0,
+      month: { from: { year: 2026, month: 2 }, to: { year: 2026, month: 3 } },
+    });
+  });
+
+  it("keeps a month of exactly -25% as a figure", () => {
+    // 1,000 -> 750 -> 750, nothing paid in: r1 = -250 / 1000 = -0.25 (at the bound, not beyond);
+    // r2 = 0. Overall: 0.75 * 1 - 1 = -0.25.
+    const result = okResult(
+      estimateRecordedReturn({
+        balances: [bal(2026, 1, 1000), bal(2026, 2, 750), bal(2026, 3, 750)],
+      }),
+    );
+    expect(result.overall.return).toBeCloseTo(-0.25, 12);
   });
 });

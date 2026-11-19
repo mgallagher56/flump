@@ -42,7 +42,12 @@ describe("InvestmentReturns", () => {
     const isa = within(section).getByRole("region", { name: "Stocks and Shares ISA" });
     expect(within(isa).getByText("Overall, over 2 months")).toBeDefined();
     expect(within(isa).getAllByText("2.0%")).toHaveLength(2);
-    expect(within(isa).getByText("Your estimated annual return")).toBeDefined();
+    expect(within(isa).getByText("Investment returns can go down as well as up.")).toBeDefined();
+    // The ISA's own assumption is a separate line outside its recorded block.
+    expect(within(isa).queryByText(/you set for this account/)).toBeNull();
+    expect(
+      within(section).getByText("The estimated annual return you set for this account is 5%."),
+    ).toBeDefined();
     const gia = within(section).getByRole("region", { name: "General account" });
     expect(within(gia).getByText(/Not enough history yet/)).toBeDefined();
     expect(within(section).queryByRole("region", { name: "Easy access" })).toBeNull();
