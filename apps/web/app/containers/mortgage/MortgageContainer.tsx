@@ -133,7 +133,7 @@ const isScenarioTool = (value: string | null): value is ScenarioTool =>
 
 const SCENARIO_ZONE_ID = "mortgage-scenario";
 
-/** Years left and the rate in the closed zone summary: up to 2 decimals, en-GB. */
+/** The rate in the closed zone summary: up to 2 decimals, en-GB. */
 const YEARS_AND_RATE = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
 
 const scrollToId = (id: string) => {
@@ -1142,7 +1142,7 @@ const MortgageContainer: FC = () => {
         summary={
           scenarioAnnouncement
             ? `Your illustration: ${scenarioAnnouncement}.`
-            : `Starts from your mortgage of ${formatCurrency(loanAmount)} at ${YEARS_AND_RATE.format(interestRate)}% with ${YEARS_AND_RATE.format(remainingTerm)} years left.`
+            : `Starts from your mortgage of ${formatCurrency(loanAmount)} at ${YEARS_AND_RATE.format(interestRate)}% with ${formatYearsLeft(remainingTerm)} left.`
         }
         title="Model a change to your mortgage"
         onOpenChange={setScenarioOpen}
