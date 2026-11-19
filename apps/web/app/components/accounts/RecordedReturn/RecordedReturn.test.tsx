@@ -1,3 +1,4 @@
+import { estimateRecordedReturn } from "@flump/finance-engine";
 import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import customRender from "~/testUtils/customRender";
@@ -28,6 +29,32 @@ describe("recordedReturnBalances", () => {
         { month: 2, year: 2026, value: "not a number" },
       ]),
     ).toEqual([{ month: 1, year: 2026, value: 100 }]);
+  });
+
+  it('leaves out "No change" months, so they never read as 0% growth', () => {
+    // Recorded January 2024 to January 2025, growing 1% a month from £10,000: 13 balances, 12
+    // measured months, total 1.01^12 - 1 = 12.68%. Then February 2025 to January 2026 confirmed
+    // "No change" at the last balance. Counted as 0% months, the overall figure would be 24
+    // months annualised, 1.1268^(12/24) - 1 = 6.15%. Left out, it is the 12 months: 12.68%.
+    const recorded = Array.from({ length: 13 }, (_, i) => ({
+      year: 2024 + Math.floor(i / 12),
+      month: (i % 12) + 1,
+      value: 10_000 * 1.01 ** i,
+      source: "manual",
+    }));
+    const last = recorded[12]?.value ?? 0;
+    const confirmed = Array.from({ length: 12 }, (_, i) => ({
+      year: 2025 + Math.floor((i + 1) / 12),
+      month: ((i + 1) % 12) + 1,
+      value: last,
+      source: "confirmed",
+    }));
+    const balances = recordedReturnBalances([...recorded, ...confirmed]);
+    expect(balances).toHaveLength(13);
+    const result = estimateRecordedReturn({ balances, monthlyContribution: null });
+    if (result.status !== "ok") throw new Error(`expected ok, got ${result.status}`);
+    expect(result.overall.months).toBe(12);
+    expect(result.overall.return).toBeCloseTo(0.1268, 4);
   });
 });
 

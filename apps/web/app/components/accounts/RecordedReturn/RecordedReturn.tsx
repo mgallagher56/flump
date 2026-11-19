@@ -40,12 +40,15 @@ export interface RecordedReturnProps {
 
 /**
  * The recorded months of an investment account for its estimated return: months up to now only,
- * never the carried saved balance (the estimate uses balances the person recorded).
+ * never the carried saved balance (the estimate uses balances the person recorded). A "No change"
+ * month (`source` "confirmed") repeats the last balance rather than recording one, so it is left
+ * out: counted, it would read as a month of 0% growth. The estimate skips the gap it leaves.
  */
 export const recordedReturnBalances = (
-  details: readonly { month?: unknown; year?: unknown; value?: unknown }[],
+  details: readonly { month?: unknown; year?: unknown; value?: unknown; source?: unknown }[],
 ): { year: number; month: number; value: number }[] =>
   details
+    .filter((d) => d.source !== "confirmed")
     .map((d) => ({ month: Number(d.month), year: Number(d.year), value: Number(d.value) }))
     .filter(
       (d) =>
