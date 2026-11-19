@@ -7,6 +7,7 @@
  * fast. user-data-registry.spec.ts checks the same tie against TypeORM's real metadata, so a gap in
  * this parser cannot hide a column for long.
  */
+import { posix } from "node:path";
 import ts from "@typescript/typescript6";
 
 // ---------------------------------------------------------------------------------------------
@@ -274,6 +275,35 @@ export function stringConstants(source: string): Map<string, string[]> {
   return out;
 }
 
+/** A string constant exported from a file under the storage roots. */
+export interface SharedConstant {
+  file: string;
+  value: string;
+}
+
+/**
+ * The values `name` may have when this file imports it: the exporting file's value when the import
+ * path can be resolved (relative, or `~/` for apps/web/app), else every exported constant of that
+ * name, so a package import is still followed by name.
+ */
+function importedValues(
+  file: string,
+  code: string,
+  name: string,
+  shared: ReadonlyMap<string, SharedConstant[]>,
+): string[] {
+  const candidates = shared.get(name) ?? [];
+  const spec = new RegExp(
+    `import\\s*(?:type\\s*)?\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*["']([^"']+)["']`,
+  ).exec(code)?.[1];
+  let target: string | undefined;
+  if (spec?.startsWith(".")) target = posix.normalize(posix.join(posix.dirname(file), spec));
+  else if (spec?.startsWith("~/")) target = `apps/web/app/${spec.slice(2)}`;
+  if (!target) return candidates.map((c) => c.value);
+  const stem = (path: string) => path.replace(/\.tsx?$/, "").replace(/\/index$/, "");
+  return candidates.filter((c) => stem(c.file) === stem(target)).map((c) => c.value);
+}
+
 /** The first argument of a Storage call: a literal, a template with a literal start, or a name. */
 const STORAGE_CALL =
   /\b(?:getItem|setItem|removeItem)\(\s*(?:`\$\{\s*([A-Za-z_$][\w$]*)\s*\}|(["'`])([^"'`$\\\n]*)(\$\{)?|([A-Za-z_$][\w$]*)\s*(\+)?)/g;
@@ -287,7 +317,8 @@ const STORAGE_CALL =
  * - the first argument of every `getItem`, `setItem` and `removeItem` call, whatever its name: a
  *   literal, a template that starts with a literal (`flump-draft-${id}` is the prefix
  *   `flump-draft-*`), or a constant defined in this file or exported from another file under the
- *   same roots (`shared`). `PREFIX + id` is the prefix `PREFIX*`.
+ *   same roots (`shared`), resolved through the file's import of it when the import path is
+ *   relative or `~/`. `PREFIX + id` is the prefix `PREFIX*`.
  *
  * A key built at run time from a parameter (`setItem(key, ...)` with `key` passed in) cannot be
  * followed; its caller's literal or constant is what gets found.
@@ -295,7 +326,7 @@ const STORAGE_CALL =
 export function findStorageKeys(
   file: string,
   source: string,
-  shared: ReadonlyMap<string, string[]> = new Map(),
+  shared: ReadonlyMap<string, SharedConstant[]> = new Map(),
 ): FoundKey[] {
   if (!STORAGE_API.test(source)) return [];
   const code = blankComments(file, source);
@@ -314,7 +345,7 @@ export function findStorageKeys(
     const name = m[1] ?? m[5];
     if (!name) continue;
     const prefix = m[1] !== undefined || m[6] !== undefined;
-    for (const value of local.get(name) ?? shared.get(name) ?? [])
+    for (const value of local.get(name) ?? importedValues(file, code, name, shared))
       add(prefix ? `${value}*` : value, at);
   }
   return [...found.values()];
