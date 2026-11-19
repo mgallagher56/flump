@@ -1814,6 +1814,13 @@ facts:
     verdict: not-checked
     note: "Added by slice 1 so every accounts column has an entry. The audit did not check it."
 
+  - id: transactions
+    name: Account transactions
+    area: accounts
+    source_of_truth: { ref: transactions, path: apps/backend/src/entities/transaction.entity.ts }
+    verdict: not-checked
+    note: "Added by slice 1 so every column has an entry. Nothing writes the table while bank sync is deferred; decision 12 keeps it empty until the bank plan returns."
+
   - id: currency-and-country
     name: Currency and country
     area: preferences

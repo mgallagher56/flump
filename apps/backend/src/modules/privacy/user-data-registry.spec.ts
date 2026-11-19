@@ -125,13 +125,15 @@ describe("user-data registry coverage", () => {
       // TypeORM's real metadata, so a gap in the check's parser cannot hide a column. That script
       // also checks each fact id against docs/system/value-map.yaml.
       const tie = t.valueMap;
-      if ("noUserFacts" in tie) {
-        expect(tie.noUserFacts.length, t.entity.name).toBeGreaterThan(20);
-        return;
-      }
       const all = columnsOf(t.entity)
         .map((c) => c.propertyName)
         .sort();
+      if ("noUserFacts" in tie) {
+        expect(tie.noUserFacts.length, t.entity.name).toBeGreaterThan(20);
+        // Listed, so a new column on the table still has to be placed.
+        expect([...tie.columns].sort()).toEqual(all);
+        return;
+      }
       const facts = Object.keys(tie.facts);
       const notFacts = Object.keys(tie.notFacts);
       expect([...facts, ...notFacts].sort()).toEqual(all);

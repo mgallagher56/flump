@@ -110,7 +110,9 @@ describe("one home per value: the fixture map", () => {
       ["balance", "account-balance"],
     ]);
     // The spread of KEYS is followed.
-    expect([...entry.notFacts].sort()).toEqual(["createdAt", "id", "userId"]);
+    expect([...entry.notFacts.keys()].sort()).toEqual(["createdAt", "id", "userId"]);
+    // String constants are followed to their text.
+    expect(entry.notFacts.get("createdAt")).toBe("when the row was written, kept by the database");
   });
 });
 
@@ -148,7 +150,7 @@ describe("malformed", () => {
   test("a column both tied to a fact and marked as no fact fails", () => {
     const registry = registryText.replace(
       "createdAt: WRITTEN_AT",
-      'createdAt: WRITTEN_AT, name: "x"',
+      'createdAt: WRITTEN_AT, name: "a reason long enough"',
     );
     expect(rulesOf(problemsOf(freshMap(), { registry }))).toEqual([RULES.malformed]);
   });
@@ -207,6 +209,16 @@ describe("dead-path, dead-symbol and dead-column", () => {
     expect(rulesOf(problemsOf(map))).toEqual([RULES.deadSymbol]);
   });
 
+  test("a function that is only imported or mentioned in a comment counts as gone", () => {
+    const map = freshMap();
+    const files = {
+      ...FILES,
+      "packages/finance-engine/src/picture/selectors/net-worth.ts":
+        'import { selectNetWorth } from "./old";\n// selectNetWorth used to live here\nexport const x = selectNetWorth;\n',
+    };
+    expect(rulesOf(problemsOf(map, { files }))).toEqual([RULES.deadSymbol]);
+  });
+
   test("a column that no longer exists fails, in a list of columns too", () => {
     const map = freshMap();
     map.facts[1].source_of_truth.ref = "accounts.name, nickname";
@@ -262,17 +274,34 @@ describe("unmapped-column", () => {
     expect(problems[0].message).toContain('fact "account-label"');
   });
 
-  test("a table marked as holding no user facts passes with a reason, fails without one", () => {
-    const ok = registryText.replace(
-      /valueMap: \{[\s\S]*?\n {4}\}/,
-      'valueMap: { noUserFacts: "agent tokens, no money" }',
+  const noUserFacts = (body: string) =>
+    registryText.replace(/valueMap: \{[\s\S]*?\n {4}\}/, `valueMap: { ${body} }`);
+  const ALL = 'columns: ["id", "userId", "name", "balance", "createdAt"]';
+
+  test("a table marked as holding no user facts passes with a reason and every column listed", () => {
+    const registry = noUserFacts(`noUserFacts: "agent access tokens, no money at all", ${ALL}`);
+    expect(problemsOf(freshMap(), { registry })).toEqual([]);
+  });
+
+  test("a no-user-facts table fails with a short reason, or with no column list", () => {
+    const short = noUserFacts(`noUserFacts: "tokens", ${ALL}`);
+    expect(rulesOf(problemsOf(freshMap(), { registry: short }))).toEqual([RULES.malformed]);
+    const unlisted = noUserFacts('noUserFacts: "agent access tokens, no money at all"');
+    expect(rulesOf(problemsOf(freshMap(), { registry: unlisted }))).toContain(RULES.malformed);
+  });
+
+  test("a new column on a no-user-facts table still fails", () => {
+    const registry = noUserFacts(
+      'noUserFacts: "agent access tokens, no money at all", columns: ["id", "userId", "name", "createdAt"]',
     );
-    expect(problemsOf(freshMap(), { registry: ok })).toEqual([]);
-    const bad = registryText.replace(
-      /valueMap: \{[\s\S]*?\n {4}\}/,
-      'valueMap: { noUserFacts: "x" }',
-    );
-    expect(rulesOf(problemsOf(freshMap(), { registry: bad }))).toEqual([RULES.malformed]);
+    const problems = problemsOf(freshMap(), { registry });
+    expect(rulesOf(problems)).toEqual([RULES.unmappedColumn]);
+    expect(problems[0].message).toContain("add the column to its columns list");
+  });
+
+  test("a notFacts reason that says nothing fails", () => {
+    const registry = registryText.replace("createdAt: WRITTEN_AT", 'createdAt: "time"');
+    expect(rulesOf(problemsOf(freshMap(), { registry }))).toEqual([RULES.malformed]);
   });
 });
 
@@ -299,10 +328,42 @@ describe("browser storage keys", () => {
     expect(rulesOf(problemsOf(map))).toEqual([RULES.deadStorageKey]);
   });
 
+  test("any key passed to a storage call is found: a literal, a template prefix, a constant", () => {
+    const shared = new Map([["PREFS_KEY", ["prefs_v1"]]]);
+    const source = [
+      'import { PREFS_KEY } from "./keys";',
+      'const DRAFT = "draft.";',
+      "export function go(id: string) {",
+      '  localStorage.setItem("sidebar-collapsed", "1");',
+      '  localStorage.setItem(PREFS_KEY, "1");',
+      `  sessionStorage.setItem(\`panel-\${id}\`, "1");`,
+      '  sessionStorage.setItem(DRAFT + id, "1");',
+      `  sessionStorage.removeItem(\`\${DRAFT}\${id}\`);`,
+      "}",
+    ].join("\n");
+    expect(findStorageKeys("a.ts", source, shared).map((k) => `${k.key}@${k.line}`)).toEqual([
+      "sidebar-collapsed@4",
+      "prefs_v1@5",
+      "panel-*@6",
+      "draft.*@7",
+      "draft.*@8",
+    ]);
+  });
+
+  test("a key built from a parameter cannot be followed and is not reported", () => {
+    expect(
+      findStorageKeys(
+        "a.ts",
+        "export const clear = (key: string) => localStorage.removeItem(key);",
+      ),
+    ).toEqual([]);
+  });
+
   test("keys in comments, and files that touch no storage, are ignored", () => {
-    expect(findStorageKeys("a.ts", fixture("storage.ts")).map((k) => k.key)).toEqual([
+    expect([...new Set(findStorageKeys("a.ts", fixture("storage.ts")).map((k) => k.key))]).toEqual([
       "flump_fixture_baseline",
       "flump.fixture-seen.",
+      "flump.fixture-seen.*",
     ]);
     expect(findStorageKeys("b.ts", 'export const FILE = "flump-export.json";')).toEqual([]);
   });
