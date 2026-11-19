@@ -1,3 +1,4 @@
+import { resolveAccountSharePercent } from "./joint-share.js";
 import {
   calculatePropertyProfit,
   calculateSelfAssessmentPayments,
@@ -28,6 +29,11 @@ export interface TaxRecord {
   date: string; // YYYY-MM-DD
   endDate: string | null; // YYYY-MM-DD
   notes: string | null;
+  /**
+   * The account the record describes (slice 7): a rental Property or its mortgage for rental
+   * records, a savings account for savings records. null or missing when not linked.
+   */
+  accountId?: string | null;
   receiptFilename: string | null;
   receiptMimeType: string | null;
   /** Never returned by the API (E20-N15): receipts are fetched from the receipt route. */
@@ -382,9 +388,81 @@ export function buildCopiedRecordForTaxYear(
   };
 }
 
+/**
+ * Where a person's share of a rental record comes from (owner decision 6, slice 7): the account
+ * the record is linked to, else one share for unlinked records with a basis saying why.
+ */
+export interface RentalShares {
+  /** Share (0 to 100) of each rental Property and buy-to-let mortgage account, by account id. */
+  byAccountId: Readonly<Record<string, number>>;
+  unlinked: {
+    share: number;
+    /**
+     * `only-rental`: the one rental property's share, or the share all of them have in common;
+     * `shares-differ`: rental properties with different shares, so an unlinked record is counted
+     * in full until it is linked; `no-rental-property`: no rental property account, so in full.
+     */
+    basis: "only-rental" | "shares-differ" | "no-rental-property";
+  };
+}
+
+/** The account fields `rentalSharesFromAccounts` reads. */
+export interface RentalShareAccount {
+  /** Accounts without an id are skipped: no record can point at them. */
+  id?: string | null;
+  type?: string | null;
+  accountSubtype?: string | null;
+  ownership?: string | null;
+  sharePercent?: number | string | null;
+  linkedAccountId?: string | null;
+}
+
+const isRentalProperty = (a: RentalShareAccount) =>
+  a.type === "Property" && a.accountSubtype === "rental";
+
+/**
+ * The share of each rental property and of each buy-to-let mortgage, from the accounts (owner
+ * decision 6). A buy-to-let mortgage is one with the `btl_mortgage` subtype or one linked to a
+ * rental property; a property and its mortgage can have different shares (decision 14).
+ */
+export function rentalSharesFromAccounts(accounts: readonly RentalShareAccount[]): RentalShares {
+  const byAccountId: Record<string, number> = {};
+  const withIds = accounts.filter(
+    (a): a is RentalShareAccount & { id: string } => typeof a.id === "string",
+  );
+  const rentalIds = new Set(withIds.filter(isRentalProperty).map((a) => a.id));
+  for (const a of withIds) {
+    const isBtlMortgage =
+      a.type === "Mortgage" &&
+      (a.accountSubtype === "btl_mortgage" ||
+        (a.linkedAccountId !== null &&
+          a.linkedAccountId !== undefined &&
+          rentalIds.has(a.linkedAccountId)));
+    if (isRentalProperty(a) || isBtlMortgage) byAccountId[a.id] = resolveAccountSharePercent(a);
+  }
+  const propertyShares = [...new Set([...rentalIds].map((id) => byAccountId[id] as number))];
+  const unlinked: RentalShares["unlinked"] =
+    propertyShares.length === 0
+      ? { share: 100, basis: "no-rental-property" }
+      : propertyShares.length === 1
+        ? { share: propertyShares[0] as number, basis: "only-rental" }
+        : { share: 100, basis: "shares-differ" };
+  return { byAccountId, unlinked };
+}
+
 export interface UkTaxCalculationOptions {
   /** Residential finance costs not relieved in earlier years (ITTOIA 2005 s.274AA(4)). */
   financeCostsBroughtForward?: number;
+  /**
+   * Where the person pays Income Tax. Scottish rates apply to non-savings income only (ITA 2007
+   * s.11A); savings and dividends stay on UK rates and bands. Default England, Wales and NI.
+   */
+  region?: "SCOTLAND" | "ENGLAND_NI_WALES";
+  /**
+   * The share of each rental record, by the account it is linked to (slice 7). When left out,
+   * `propertyOwnershipShare` applies to every rental record, as before.
+   */
+  rentalShares?: RentalShares;
 }
 
 export interface TaxCalculationResult {
@@ -655,11 +733,37 @@ export function calculateUKTax(
   const trading = calculateTradingProfit(seIncomeGross, seExpenses, yearRules);
   const seProfit = trading.profit;
 
-  // Ownership shares
-  const shareFactor = propertyOwnershipShare / 100;
-  const rentalIncomeGrossShare = rentalIncomeGross * shareFactor;
-  const rentalExpensesExclInterestShare = rentalExpensesExclInterest * shareFactor;
-  const rentalMortgageInterestShare = rentalMortgageInterest * shareFactor;
+  // Ownership shares, per record: the share of the account a record is linked to, else the
+  // share for unlinked records (owner decision 6). Without `rentalShares` one share applies to
+  // every record, as before. All of a person's UK lettings are one property business, so a loss
+  // on one property is set against the profit on another before the share is compared.
+  const region = options.region ?? "ENGLAND_NI_WALES";
+  const rentalShares = options.rentalShares;
+  const shareOf = (record: TaxRecordFields): number => {
+    if (!rentalShares) return propertyOwnershipShare;
+    const linked =
+      record.accountId !== null && record.accountId !== undefined
+        ? rentalShares.byAccountId[record.accountId]
+        : undefined;
+    return linked ?? rentalShares.unlinked.share;
+  };
+  const unlinkedShare = rentalShares ? rentalShares.unlinked.share : propertyOwnershipShare;
+  const rentalCategoryIds = new Set(RENTAL_CATEGORIES.map((c) => c.id));
+  let rentalIncomeGrossShare = 0;
+  let rentalExpensesExclInterestShare = 0;
+  let rentalMortgageInterestShare = 0;
+  for (const record of records) {
+    if (record.source !== "rental" || isFinanceCostsBroughtForwardRecord(record)) continue;
+    if (!rentalCategoryIds.has(record.category)) continue;
+    const yearly = getRecordAnnualTotalForTaxYear(record, taxYear) * (shareOf(record) / 100);
+    if (record.category === "rental_income") rentalIncomeGrossShare += yearly;
+    else if (record.category === "mortgage_interest") rentalMortgageInterestShare += yearly;
+    else rentalExpensesExclInterestShare += yearly;
+  }
+  const rentalProfitBeforeInterestShareRecorded = Math.max(
+    0,
+    rentalIncomeGrossShare - rentalExpensesExclInterestShare,
+  );
 
   // Property income can be taxed two ways. With the recorded costs, finance costs earn the
   // Section 24 credit. With the property allowance, neither the costs nor the finance cost credit
@@ -670,7 +774,7 @@ export function calculateUKTax(
   const financeCostsBroughtForward =
     Math.max(0, options.financeCostsBroughtForward ?? 0) + financeCostsBroughtForwardRecords;
   const withCosts = assess({
-    rentalProfitBeforeInterestShare: rentalProfitBeforeInterest * shareFactor,
+    rentalProfitBeforeInterestShare: rentalProfitBeforeInterestShareRecorded,
     creditableFinanceCosts: rentalMortgageInterestShare + financeCostsBroughtForward,
     propertyAllowanceUsed: 0,
   });
@@ -811,7 +915,7 @@ export function calculateUKTax(
       const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
       savingsTaxDue = Math.max(
         0,
-        incomeTaxOn(zeroRatedTop + taxableSavingsInterest) - incomeTaxOn(zeroRatedTop),
+        ukIncomeTaxOn(zeroRatedTop + taxableSavingsInterest) - ukIncomeTaxOn(zeroRatedTop),
       );
     }
 
@@ -856,11 +960,14 @@ export function calculateUKTax(
       rentalPropertyTaxDueBeforeCredit - rentalPropertyTaxCredit,
     );
 
-    const totalNonSavingsIncomeTax = Math.max(
+    // The credit is a tax reduction at Step 6, allowed only so far as there is tax (ITA 2007
+    // s.26(1)(a), s.29(2)): it comes off the whole Income Tax bill, savings and dividends
+    // included. On England, Wales and NI bands the non-savings tax always covers it; at the
+    // Scottish 19% starter rate the 20% credit can be larger than the tax on the rent.
+    const totalIncomeTaxDue = Math.max(
       0,
-      nonSavingsIncomeTaxBeforeCredit - rentalPropertyTaxCredit,
+      nonSavingsIncomeTaxBeforeCredit + savingsTaxDue + dividendTaxDue - rentalPropertyTaxCredit,
     );
-    const totalIncomeTaxDue = totalNonSavingsIncomeTax + savingsTaxDue + dividendTaxDue;
     const totalNIDue = seClass4NIDue;
     const totalTaxDue = totalIncomeTaxDue + totalNIDue;
 
@@ -870,7 +977,7 @@ export function calculateUKTax(
     return {
       taxYear,
       payeSalary: effectivePayeSalary,
-      propertyOwnershipShare,
+      propertyOwnershipShare: unlinkedShare,
 
       payeIncomeGross,
       payeExpenses,
@@ -885,7 +992,10 @@ export function calculateUKTax(
       rentalExpensesExclInterestShare,
       rentalMortgageInterestShare,
       rentalProfitBeforeInterestShare,
-      rentalProfitPostInterestShare: rentalProfitPostInterest * shareFactor,
+      rentalProfitPostInterestShare: Math.max(
+        0,
+        rentalProfitBeforeInterestShareRecorded - rentalMortgageInterestShare,
+      ),
 
       seIncomeGross,
       seExpenses,
@@ -929,8 +1039,16 @@ export function calculateUKTax(
     };
   }
 
-  /** Income Tax on taxable non-savings income, at the year's England, Wales and NI bands. */
+  /** Income Tax on taxable non-savings income, at the year's bands for the person's region. */
   function incomeTaxOn(taxable: number): number {
+    return calculateIncomeTaxOnTaxable(taxable, yearRules, region).total;
+  }
+
+  /**
+   * Income Tax at the UK rates on the UK bands, which savings interest uses whatever the region
+   * (ITA 2007 s.11A(1A): Scottish rates are for non-savings income only).
+   */
+  function ukIncomeTaxOn(taxable: number): number {
     return calculateIncomeTaxOnTaxable(taxable, yearRules, "ENGLAND_NI_WALES").total;
   }
 }

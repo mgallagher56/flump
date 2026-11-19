@@ -1,5 +1,5 @@
-import { calculateUKTax, type TaxRecord } from "../../tax-calculator.js";
-import { estimateInputsFor } from "../../tax-estimate-inputs.js";
+import type { RentalShareAccount, TaxRecord } from "../../tax-calculator.js";
+import { calculateEstimatedTax, estimateInputsFor } from "../../tax-estimate-inputs.js";
 import type { UkTaxYear } from "../../types.js";
 import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.js";
 import { type Figure, figureKnown, figureUnknown } from "../figure.js";
@@ -18,10 +18,9 @@ export interface EstimatedTaxDue {
 
 export interface SelectEstimatedTaxDueOptions {
   taxYear?: UkTaxYear;
+  /** The accounts, for the share of each rental property and buy-to-let mortgage (decision 6). */
+  accounts?: readonly RentalShareAccount[];
 }
-
-export const ESTIMATED_TAX_EWNI_BANDS_NOTE =
-  "Uses England, Wales and Northern Ireland Income Tax bands.";
 
 /**
  * Estimated tax due for the current tax year (C-11): what calculateUKTax encodes as
@@ -52,23 +51,23 @@ export function selectEstimatedTaxDue(
   }
 
   // The one rule every Self Assessment surface uses (estimateInputsFor).
-  const inputs = estimateInputsFor(facts, records, taxYear);
+  const inputs = estimateInputsFor({ ...facts, accounts: opts.accounts ?? [] }, records, taxYear);
   if (inputs.status !== "known") return figureUnknown(inputs.missing, "not-set");
-  const result = calculateUKTax(taxYear, inputs.records, inputs.payeSalary, inputs.ownershipShare);
+  const result = calculateEstimatedTax(inputs);
   const untaxedIncome =
     result.rentalIncomeGrossShare +
     result.seIncomeGross +
     result.savingsInterestGross +
     result.dividendIncomeGross;
 
-  const assumptions = facts.taxRegion === "SCOTLAND" ? [ESTIMATED_TAX_EWNI_BANDS_NOTE] : [];
+  // Scottish taxpayers are worked out on Scottish bands (decision 7), so no region assumption.
   return figureKnown<EstimatedTaxDue>(
     {
       amount: Math.round(result.netAdditionalTaxToPay),
       taxYear,
       untaxedIncome: Math.round(untaxedIncome * 100) / 100,
     },
-    assumptions.length > 0 ? "assumption" : "derived",
-    assumptions,
+    "derived",
+    [],
   );
 }

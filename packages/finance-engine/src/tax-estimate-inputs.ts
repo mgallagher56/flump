@@ -1,5 +1,13 @@
 import { isSelfEmployedType, payeSalaryForTax } from "./paye-salary-for-tax.js";
-import { isRecordActiveInTaxYear, type TaxRecordFields } from "./tax-calculator.js";
+import {
+  calculateUKTax,
+  isRecordActiveInTaxYear,
+  type RentalShareAccount,
+  rentalSharesFromAccounts,
+  type TaxCalculationResult,
+  type TaxRecordFields,
+  type UkTaxCalculationOptions,
+} from "./tax-calculator.js";
 
 /**
  * The fact a Self Assessment estimate can be missing:
@@ -22,8 +30,16 @@ export interface TaxEstimateFacts {
   employmentType?: string | null;
   /** The saved salary. null or undefined when never saved. */
   annualSalary?: number | null;
-  /** Share of rental property owned, 0 to 100. null, undefined or out of range means 100. */
-  propertyOwnershipShare?: number | null;
+  /**
+   * The saved tax region. "SCOTLAND" uses Scottish rates on non-savings income (owner decision
+   * 7); anything else, or nothing, uses England, Wales and Northern Ireland bands.
+   */
+  taxRegion?: string | null;
+  /**
+   * The person's accounts, for the share of each rental property and buy-to-let mortgage (owner
+   * decision 6). The profile's single `property_ownership_share` is no longer read for tax.
+   */
+  accounts?: readonly RentalShareAccount[] | null;
 }
 
 export type TaxEstimateInputs<R extends TaxRecordFields = TaxRecordFields> =
@@ -34,7 +50,8 @@ export type TaxEstimateInputs<R extends TaxRecordFields = TaxRecordFields> =
       records: R[];
       /** The PAYE pay to pass to calculateUKTax (payeSalaryForTax). */
       payeSalary: number;
-      ownershipShare: number;
+      /** The region and the per-property shares to pass to calculateUKTax. */
+      options: Required<Pick<UkTaxCalculationOptions, "region" | "rentalShares">>;
     }
   | { status: "unknown"; missing: TaxEstimateMissingFact[] };
 
@@ -114,13 +131,25 @@ export function estimateInputsFor<R extends TaxRecordFields>(
     return { status: "unknown", missing: ["selfEmploymentRecords"] };
   }
 
-  const share = facts.propertyOwnershipShare;
   return {
     status: "known",
     taxYear,
     records: inYear,
     payeSalary: payeSalaryForTax({ employmentType: facts.employmentType, annualSalary: salary }),
-    ownershipShare:
-      share !== null && share !== undefined && share >= 0 && share <= 100 ? share : 100,
+    options: {
+      region: facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
+      rentalShares: rentalSharesFromAccounts(facts.accounts ?? []),
+    },
   };
+}
+
+/**
+ * The Self Assessment estimate from known inputs: calculateUKTax with the region and the
+ * per-property shares, so no caller can leave them out. The share argument is unused once
+ * `rentalShares` is given.
+ */
+export function calculateEstimatedTax(
+  inputs: Extract<TaxEstimateInputs, { status: "known" }>,
+): TaxCalculationResult {
+  return calculateUKTax(inputs.taxYear, inputs.records, inputs.payeSalary, 100, inputs.options);
 }

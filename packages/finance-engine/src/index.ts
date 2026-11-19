@@ -5,6 +5,7 @@ export * from "./anonymise.js";
 export * from "./breathing-room-wording.js";
 export * from "./budget-entry-names.js";
 export * from "./budget-entry-share.js";
+export * from "./calculated-tax-figures.js";
 export * from "./check-in.js";
 export * from "./check-in-day.js";
 export * from "./compliance/advice-lexicon.js";

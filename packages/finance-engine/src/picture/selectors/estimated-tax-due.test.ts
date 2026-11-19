@@ -4,7 +4,7 @@ import type { TaxRecord } from "../../tax-calculator.js";
 import { taxRecord } from "../__fixtures__/builders.js";
 import { buildFinancialPicture } from "../build.js";
 import type { ProfileFacts } from "../input.js";
-import { ESTIMATED_TAX_EWNI_BANDS_NOTE, selectEstimatedTaxDue } from "./estimated-tax-due.js";
+import { selectEstimatedTaxDue } from "./estimated-tax-due.js";
 
 /**
  * Golden figures, 2026/27 England, Wales and NI: personal allowance 12,570, basic band 37,700
@@ -159,16 +159,31 @@ describe("selectEstimatedTaxDue (C-11)", () => {
     expect(amount(employee(40000), [rent(12000), repairs(2000)])).toBe(2000);
   });
 
-  it("applies the rental ownership share", () => {
-    const half = { ...employee(30000), propertyOwnershipShare: 50 };
-    expect(amount(half, [rent(12000), repairs(2000)])).toBe(1000);
+  it("applies the rental property account's share (decision 6)", () => {
+    // Rent 12,000 less 2,000 of costs, the one rental property joint at 50%: 5,000 at 20% = 1,000.
+    const flat = {
+      id: "flat",
+      type: "Property" as const,
+      accountSubtype: "rental",
+      ownership: "joint",
+      sharePercent: 50,
+    };
+    const fig = selectEstimatedTaxDue(employee(30000), [rent(12000), repairs(2000)], {
+      taxYear: Y,
+      accounts: [flat],
+    });
+    expect(fig.status === "known" && fig.value.amount).toBe(1000);
   });
 
-  it("names the England bands as an assumption for a Scottish taxpayer", () => {
+  it("uses Scottish bands for a Scottish taxpayer, with no assumption note (decision 7)", () => {
+    // Salary 30,000, rent 5,000, 2026/27. Taxable income before the rent 17,430, so the rent sits
+    // in the Scottish intermediate band (16,956 to 31,092) at 21%. With the 1,000 property
+    // allowance (no costs recorded): 4,000 x 21% = 840. England bands gave 4,000 x 20% = 800.
     const fig = selectEstimatedTaxDue({ ...employee(30000), taxRegion: "SCOTLAND" }, [rent(5000)], {
       taxYear: Y,
     });
-    expect(fig.status === "known" && fig.assumptions).toEqual([ESTIMATED_TAX_EWNI_BANDS_NOTE]);
+    expect(fig.status === "known" && fig.value.amount).toBe(840);
+    expect(fig.status === "known" ? (fig.assumptions ?? []) : null).toEqual([]);
   });
 
   it("is unknown for an unsupported tax year", () => {

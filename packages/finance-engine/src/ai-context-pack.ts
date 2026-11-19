@@ -42,12 +42,9 @@ import {
 import type { SavedFinancialBaseline, UnsavedBaselineField } from "./profile.js";
 import type { RetirementSavedPlanInput } from "./retirement-input.js";
 import type { NetWorthPoint } from "./snapshots.js";
+import type { TaxCalculationResult, TaxRecordFields } from "./tax-calculator.js";
 import {
-  calculateUKTax,
-  type TaxCalculationResult,
-  type TaxRecordFields,
-} from "./tax-calculator.js";
-import {
+  calculateEstimatedTax,
   estimateInputsFor,
   type TaxEstimateFacts,
   type TaxEstimateMissingFact,
@@ -597,16 +594,20 @@ export function buildFlumpAiContextPack(
   // The facts the tax figures depend on: the saved profile when the caller has it, else the
   // saved baseline (a salary of 0 there is "not saved").
   const facts = input.profileFacts;
+  // The rental share comes from each property's account (decision 6), the region from the
+  // saved facts (decision 7), as on the Self Assessment page.
   const taxFacts: TaxEstimateFacts = facts
     ? {
         employmentType: facts.employmentType,
         annualSalary: facts.annualSalary,
-        propertyOwnershipShare: facts.propertyOwnershipShare,
+        taxRegion: facts.taxRegion,
+        accounts: input.accounts ?? [],
       }
     : {
         employmentType: safeBaseline.employmentStatus,
         annualSalary: salaryKnown ? annualSalary : null,
-        propertyOwnershipShare: safeBaseline.propertyOwnershipSharePct,
+        taxRegion: safeBaseline.ukRegionAssumed ? null : safeBaseline.ukRegion,
+        accounts: input.accounts ?? [],
       };
   // A self-employed person's salary is not PAYE pay (SA-1, decision 15 option A), so no salary
   // tax is worked out for them. No salary saved: none is worked out from a stand-in £0 (AI-1).
@@ -642,9 +643,7 @@ export function buildFlumpAiContextPack(
   if (taxRecords && taxRecords.length > 0) {
     const inputs = estimateInputsFor(taxFacts, taxRecords, currentTaxYear);
     selfAssessmentLedgerSummary =
-      inputs.status === "known"
-        ? calculateUKTax(currentTaxYear, inputs.records, inputs.payeSalary, inputs.ownershipShare)
-        : { notSet: inputs.missing };
+      inputs.status === "known" ? calculateEstimatedTax(inputs) : { notSet: inputs.missing };
   }
 
   return {
