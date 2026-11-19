@@ -557,6 +557,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
       </PageSection>
 
       <ConfirmDialog
+        scope="bulk"
         confirmLabel="Disconnect"
         description="The assistant using this token loses access straight away. This cannot be undone."
         error={revokeError}

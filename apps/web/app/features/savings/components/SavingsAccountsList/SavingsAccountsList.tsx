@@ -133,6 +133,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, sa
       </Card>
 
       <ConfirmDialog
+        scope="single"
         open={accountToDelete !== undefined}
         onOpenChange={(open) => {
           if (!open) {

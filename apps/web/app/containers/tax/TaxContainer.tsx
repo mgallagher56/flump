@@ -545,6 +545,7 @@ const SelfAssessmentPage: FC<{
       />
 
       <ConfirmDialog
+        scope="bulk"
         open={taxYearToDelete !== null}
         onOpenChange={(open) => {
           if (!open) {

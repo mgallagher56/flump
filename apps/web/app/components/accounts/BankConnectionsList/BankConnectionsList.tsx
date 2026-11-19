@@ -92,6 +92,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
       </div>
 
       <ConfirmDialog
+        scope="bulk"
         open={disconnectTarget !== null}
         onOpenChange={(open) => {
           if (!open) {

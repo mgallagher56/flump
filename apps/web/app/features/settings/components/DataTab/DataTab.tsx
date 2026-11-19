@@ -124,6 +124,7 @@ export const DataTab: FC = () => {
       </PageSection>
 
       <ConfirmDialog
+        scope="bulk"
         id="reset-financial-data-dialog"
         open={resetModalOpen}
         onOpenChange={(open) => {

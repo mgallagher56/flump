@@ -14,6 +14,7 @@ function setup(overrides: Partial<ConfirmDialogProps> = {}) {
       description="This removes all monthly balances for 2024."
       confirmLabel="Delete year"
       onConfirm={onConfirm}
+      scope="single"
       {...overrides}
     />,
   );
@@ -58,6 +59,7 @@ describe("ConfirmDialog", () => {
     document.body.appendChild(opener);
     opener.focus();
     const props: ConfirmDialogProps = {
+      scope: "single",
       open: true,
       onOpenChange: vi.fn(),
       title: "Delete?",
@@ -103,6 +105,7 @@ describe("ConfirmDialog", () => {
 
   it("clears typed text when the parent closes and reopens the dialog", () => {
     const props: ConfirmDialogProps = {
+      scope: "single",
       open: true,
       onOpenChange: vi.fn(),
       title: "Reset data?",

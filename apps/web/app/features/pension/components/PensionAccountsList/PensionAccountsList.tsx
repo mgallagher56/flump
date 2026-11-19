@@ -138,6 +138,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({ accounts }) 
       )}
 
       <ConfirmDialog
+        scope="single"
         open={accountToDelete !== null}
         onOpenChange={(open) => {
           if (!open) {
