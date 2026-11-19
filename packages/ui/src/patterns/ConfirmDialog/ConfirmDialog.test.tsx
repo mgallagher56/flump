@@ -166,11 +166,45 @@ describe("ConfirmDialog", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  it("does not confirm on Enter from a button in a type-to-confirm dialog", () => {
+  it("confirms on Enter from the confirm button of a type-to-confirm dialog once the text matches", () => {
     const { onConfirm } = setup({ requireText: "DELETE", confirmLabel: "Delete" });
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "delete" } });
-    fireEvent.keyDown(screen.getByRole("button", { name: "Delete" }), { key: "Enter" });
+    const confirm = screen.getByRole("button", { name: "Delete" });
+    fireEvent.keyDown(confirm, { key: "Enter" });
     expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "delete" } });
+    fireEvent.keyDown(confirm, { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves Enter on any other control alone, such as Sign in again", () => {
+    const { onConfirm } = setup({
+      error: "Your session has ended.",
+      errorAction: <button type="button">Sign in again</button>,
+    });
+    const other = screen.getByRole("button", { name: "Sign in again" });
+    // Not prevented, so the browser still clicks it; and it never confirms the delete.
+    expect(fireEvent.keyDown(other, { key: "Enter" })).toBe(true);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("can confirm with Enter again after a failed attempt ends, even with the same error", () => {
+    const onConfirm = vi.fn();
+    const props: ConfirmDialogProps = {
+      open: true,
+      onOpenChange: vi.fn(),
+      title: "Delete?",
+      description: "Sure?",
+      confirmLabel: "Delete",
+      onConfirm,
+      error: "Couldn't delete",
+    };
+    const { rerender } = render(<ConfirmDialog {...props} />);
+    const press = () => fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Enter" });
+    press();
+    rerender(<ConfirmDialog {...props} pending />);
+    rerender(<ConfirmDialog {...props} pending={false} />);
+    press();
+    expect(onConfirm).toHaveBeenCalledTimes(2);
   });
 
   it("does not confirm on Enter when pending or requireText does not match", () => {
