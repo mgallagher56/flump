@@ -60,3 +60,14 @@ describe("redactDeep", () => {
     expect(JSON.stringify(redactDeep(deep))).not.toContain("leaf");
   });
 });
+
+describe("redactString on text over the length limit", () => {
+  it("drops a credential that the 8,192-character limit would cut in half", () => {
+    // 4,085 "x " pairs are 8,170 characters; "https://user:" adds 13, so the password starts at
+    // 8,183 and the limit falls 9 characters into it, before its closing "@".
+    const text = `${"x ".repeat(4085)}https://user:${"pa!ss.".repeat(50)}@h.test`;
+    const out = redactString(text);
+    expect(out).not.toContain("pa!ss");
+    expect(out.endsWith("[truncated]")).toBe(true);
+  });
+});

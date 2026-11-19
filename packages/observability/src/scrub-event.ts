@@ -1,4 +1,11 @@
-import { hasEmail, isSensitiveKey, MAX_STRING_LENGTH, REDACTED, redactString } from "./redact.js";
+import {
+  cutAtBoundary,
+  hasEmail,
+  isSensitiveKey,
+  MAX_STRING_LENGTH,
+  REDACTED,
+  redactString,
+} from "./redact.js";
 
 type Json = Record<string, unknown>;
 
@@ -38,8 +45,15 @@ function set(out: Json, key: string, value: unknown): void {
   if (value !== undefined) out[key] = value;
 }
 
+const isPathSeparator = (char: string): boolean => char === "/" || char === "\\";
+const isWhitespace = (char: string): boolean => /\s/.test(char);
+
+/**
+ * Removes query and hash, then cuts to MAX_URL. The cut drops the path segment it falls in, so a
+ * value split by the cut is not left half there, where redaction would not recognise it.
+ */
 function stripQueryAndHash(url: string): string {
-  return url.slice(0, MAX_URL).replace(/[?#].*$/s, "");
+  return cutAtBoundary(url.replace(/[?#].*$/s, ""), MAX_URL, isPathSeparator);
 }
 
 const URL_PARTS = /^([a-z][a-z0-9+.-]*:\/\/)([^/?#]*)(.*)$/is;
@@ -71,20 +85,24 @@ function redactPath(path: string): string {
     .join("");
 }
 
-/** Splits a URL into a userinfo-free origin (if any) and its query-free path. */
+/**
+ * Splits a URL into a userinfo-free, redacted origin (if any) and its query-free path. Userinfo is
+ * removed from the whole URL before anything is cut to length, so a long userinfo cannot be cut
+ * before its '@' and then kept.
+ */
 function splitUrl(url: string): { origin: string; path: string } {
-  const text = url.slice(0, MAX_URL);
-  const parts = URL_PARTS.exec(text);
-  if (parts === null) return { origin: "", path: stripQueryAndHash(text) };
+  const parts = URL_PARTS.exec(url);
+  if (parts === null) return { origin: "", path: stripQueryAndHash(url) };
   // Userinfo ends at the LAST '@' of the authority, so passwords containing '@' do not leak.
   const [, scheme = "", authority = "", rest = ""] = parts;
-  return { origin: scheme + authority.replace(/^.*@/s, ""), path: stripQueryAndHash(rest) };
+  const host = authority.replace(/^.*@/s, "");
+  return { origin: redactString(scheme + host), path: stripQueryAndHash(rest) };
 }
 
-/** Full URL with userinfo, query and hash removed and path segments redacted. */
+/** Full URL with userinfo, query and hash removed and path segments redacted, cut last. */
 function cleanUrl(url: string): string {
   const { origin, path } = splitUrl(url);
-  return origin + redactPath(path);
+  return (origin + redactPath(path)).slice(0, MAX_URL);
 }
 
 /** Path only: origin (and so userinfo), query and hash removed, then redacted. */
@@ -94,8 +112,8 @@ function cleanPath(url: string): string {
 
 /** Transaction names: URL- or path-looking tokens get path cleaning, the rest plain redaction. */
 function cleanTransaction(name: string): string {
-  return name
-    .slice(0, MAX_STRING_LENGTH)
+  // The cut drops the word it falls in, so a URL cut before its '@' does not keep its userinfo.
+  return cutAtBoundary(name, MAX_STRING_LENGTH, isWhitespace)
     .split(/(\s+)/)
     .map((token) =>
       /^(?:[a-z][a-z0-9+.-]*:\/\/|\/)/i.test(token) ? cleanUrl(token) : redactString(token),
@@ -111,8 +129,8 @@ function ident(value: unknown): string | undefined {
 
 /** Repo-relative tail of a file path: no home directories, no absolute prefixes. */
 function cleanFilename(file: string): string {
-  const tail = file
-    .slice(0, MAX_URL)
+  // The cut drops the folder it falls in, so a home folder cut before its closing '/' is not kept.
+  const tail = cutAtBoundary(file, MAX_URL, isPathSeparator)
     .replace(/^file:\/\//i, "")
     .replace(/^.*[\\/](node_modules[\\/])/s, "$1")
     .replace(/^.*?(?:[\\/]users[\\/][^\\/]+[\\/]|[\\/]home[\\/][^\\/]+[\\/])/is, "");
