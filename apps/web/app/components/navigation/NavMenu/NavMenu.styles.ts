@@ -6,6 +6,11 @@ export const mobileMenuContainer = cva({
 
 export const mobileSection = cva({
   base: { display: "flex", flexDirection: "column", gap: "1" },
+  variants: {
+    // A group the tablet top bar shows inline: left out of the drawer from navInline.
+    hideFromNavInline: { true: { _navInline: { display: "none" } }, false: {} },
+  },
+  defaultVariants: { hideFromNavInline: false },
 });
 
 export const mobileSectionHeading = cva({

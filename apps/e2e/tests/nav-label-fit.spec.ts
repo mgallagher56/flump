@@ -144,6 +144,14 @@ test.describe("the Debt and borrowing nav label fits", () => {
       );
       expect(paddings.length).toBeGreaterThan(0);
       expect(Math.min(...paddings), "link padding each side").toBeGreaterThanOrEqual(12);
+      const clipped = await nav
+        .locator(":scope li > :is(a, button)")
+        .evaluateAll((els) =>
+          els.some(
+            (el) => el.getBoundingClientRect().width > 0 && el.scrollWidth > el.clientWidth + 1,
+          ),
+        );
+      expect(clipped, "a label is cut off").toBe(false);
       // Nothing spills out of the nav into the controls at the end of the bar.
       const spill = await nav.evaluate((el) => {
         const last = el.querySelector("ul")?.lastElementChild?.getBoundingClientRect();
@@ -169,6 +177,8 @@ test.describe("the Debt and borrowing nav label fits", () => {
     expect(fit.lines).toBe(1);
     expect(fit.clipped).toBe(false);
     expect(fit.ellipsis).toBe(false);
+    // "Pay" and its pages are inline in the tablet bar, so the drawer does not list them again.
+    await expect(drawer.getByText("Pay", { exact: true })).toBeHidden();
   });
 
   test.describe("phone", () => {
