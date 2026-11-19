@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateUKTax,
+  incomeOutsidePaye,
   rentalSharesFromAccounts,
   type TaxRecordFields,
 } from "./tax-calculator.js";
@@ -160,5 +161,38 @@ describe("calculateUKTax with a share per property", () => {
       50,
     );
     expect(r.rentalPropertyTaxDueAfterCredit).toBe(700);
+  });
+});
+
+describe("incomeOutsidePaye: the headline strip's figures (SA-9)", () => {
+  it("counts rent and costs at the share the engine taxes, and leaves ISA interest out", () => {
+    // Flat A joint at 50%: rent 12,000, repairs 2,000, so 6,000 and 1,000 are the person's.
+    // ISA interest 300 is tax-free, so it is not income outside PAYE.
+    // Income 6,000; costs 1,000; income after costs 5,000. Before slice 7 the strip summed every
+    // record whole: 12,300 and 10,300.
+    const isa: TaxRecordFields = {
+      id: "isa",
+      type: "income",
+      source: "savings",
+      category: "isa_interest",
+      name: "ISA",
+      amount: 300,
+      frequency: "annual",
+      date: "2026-06-06",
+      endDate: null,
+      notes: null,
+    };
+    const r = calculateUKTax(
+      YEAR,
+      [
+        rental("rental_income", 12000, "flat-a"),
+        rental("repairs_maintenance", 2000, "flat-a"),
+        isa,
+      ],
+      30000,
+      100,
+      { rentalShares: rentalSharesFromAccounts([flatA]) },
+    );
+    expect(incomeOutsidePaye(r)).toEqual({ income: 6000, costs: 1000 });
   });
 });

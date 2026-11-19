@@ -1,4 +1,8 @@
-import type { RentalShareAccount, TaxRecord } from "../../tax-calculator.js";
+import {
+  incomeOutsidePaye,
+  type RentalShareAccount,
+  type TaxRecord,
+} from "../../tax-calculator.js";
 import { calculateEstimatedTax, estimateInputsFor } from "../../tax-estimate-inputs.js";
 import type { UkTaxYear } from "../../types.js";
 import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.js";
@@ -54,11 +58,7 @@ export function selectEstimatedTaxDue(
   const inputs = estimateInputsFor({ ...facts, accounts: opts.accounts ?? [] }, records, taxYear);
   if (inputs.status !== "known") return figureUnknown(inputs.missing, "not-set");
   const result = calculateEstimatedTax(inputs);
-  const untaxedIncome =
-    result.rentalIncomeGrossShare +
-    result.seIncomeGross +
-    result.savingsInterestGross +
-    result.dividendIncomeGross;
+  const untaxedIncome = incomeOutsidePaye(result).income;
 
   // Scottish taxpayers are worked out on Scottish bands (decision 7), so no region assumption.
   return figureKnown<EstimatedTaxDue>(
