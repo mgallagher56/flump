@@ -3193,13 +3193,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         `SELECT data_type, is_nullable, column_default FROM information_schema.columns
          WHERE table_name = 'user_profiles' AND column_name = 'setup_checklist_dismissed'`,
       );
-    const dismissed = async (userId: string): Promise<boolean> =>
-      at(
-        await ds.query("SELECT setup_checklist_dismissed FROM user_profiles WHERE user_id = $1", [
-          userId,
-        ]),
-        0,
-      ).setup_checklist_dismissed;
+    const dismissed = async (userId: string): Promise<boolean> => {
+      const rows: { setup_checklist_dismissed: boolean }[] = await ds.query(
+        "SELECT setup_checklist_dismissed FROM user_profiles WHERE user_id = $1",
+        [userId],
+      );
+      return at(rows, 0).setup_checklist_dismissed;
+    };
 
     it("adds a not-null flag that reads false for every existing profile; a second run changes nothing", async () => {
       await ds.runMigrations();

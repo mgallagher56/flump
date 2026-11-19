@@ -1,4 +1,8 @@
-import { DASHBOARD_SECTION_KEYS, type UpdateProfileRequest } from "@flump/api-contract";
+import {
+  DASHBOARD_SECTION_KEYS,
+  type UpdateChecklistRequest,
+  type UpdateProfileRequest,
+} from "@flump/api-contract";
 import { BadRequestException } from "@nestjs/common";
 import {
   STUDENT_LOAN_PLANS,
@@ -221,8 +225,7 @@ export interface ProfileLifecycle {
   sendPasswordReset(userId: string): Promise<{ success: true }>;
   updateChecklist(
     userId: string,
-    step: string,
-    completed: boolean,
+    change: UpdateChecklistRequest,
     email?: string,
   ): Promise<ProfileView>;
 }
