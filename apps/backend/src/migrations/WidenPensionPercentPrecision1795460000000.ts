@@ -14,10 +14,10 @@ import { takeMigrationLock } from "../config/migration-lock";
  */
 export const PENSION_PERCENT_COLUMNS = ["pension_percent", "pension_employer_percent"] as const;
 
-export const widenSql = (column: string): string =>
+const widenSql = (column: string): string =>
   `ALTER TABLE "user_profiles" ALTER COLUMN "${column}" TYPE numeric(7,4)`;
 
-export const narrowSql = (column: string): string =>
+const narrowSql = (column: string): string =>
   `ALTER TABLE "user_profiles" ALTER COLUMN "${column}" TYPE numeric(5,2) USING round("${column}", 2)`;
 
 export class WidenPensionPercentPrecision1795460000000 implements MigrationInterface {
