@@ -266,6 +266,43 @@ describe("simulate tools v2", () => {
       expect(e.result.scheduleStrategy).toBe("avalanche");
     });
 
+    it("reports payments, interest and principal per month that add up", async () => {
+      // One loan of £300 at 12% APR (1% a month), minimum £100, no extra.
+      // M1: interest 3.00; paid 100 = 3.00 interest + 97.00 principal; left 203.00.
+      // M2: interest 2.03; paid 100 = 2.03 + 97.97; left 105.03.
+      // M3: interest 1.05 (105.03 x 1% = 1.0503); paid 100 = 1.05 + 98.95; left 6.08.
+      // M4: interest 0.06 (6.08 x 1% = 0.0608); paid 6.14 = 0.06 + 6.08; left 0.
+      h = await connectTestClient({
+        ...emptyUser,
+        accounts: [
+          {
+            id: "11111111-aaaa-4aaa-8aaa-0000000000d1",
+            name: "Test Loan",
+            type: "Loan",
+            balance: 300,
+            interestRate: 12,
+            monthlyContribution: 100,
+          },
+        ],
+      });
+      const e = await call("simulate_debt_payoff", {
+        strategy: "avalanche",
+        includeSchedule: "monthly",
+      });
+      const rows = (e.result.schedule as Array<Record<string, unknown>>).map((r) => ({
+        paymentsGbp: r.paymentsGbp,
+        interestGbp: r.interestGbp,
+        principalGbp: r.principalGbp,
+        remainingDebtGbp: r.remainingDebtGbp,
+      }));
+      expect(rows).toEqual([
+        { paymentsGbp: 100, interestGbp: 3, principalGbp: 97, remainingDebtGbp: 203 },
+        { paymentsGbp: 100, interestGbp: 2.03, principalGbp: 97.97, remainingDebtGbp: 105.03 },
+        { paymentsGbp: 100, interestGbp: 1.05, principalGbp: 98.95, remainingDebtGbp: 6.08 },
+        { paymentsGbp: 6.14, interestGbp: 0.06, principalGbp: 6.08, remainingDebtGbp: 0 },
+      ]);
+    });
+
     it("aggregates a yearly schedule", async () => {
       h = await connectTestClient(mixedAccountsWithHistory);
       const e = await call("simulate_debt_payoff", { includeSchedule: "yearly" });
