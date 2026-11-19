@@ -27,8 +27,8 @@ import { takeMigrationLock } from "../config/migration-lock";
  */
 export const TAX_RECORD_ACCOUNT_COLUMN = "account_id";
 export const TAX_RECORD_ACCOUNT_FOREIGN_KEY = "FK_tax_records_account";
-export const TAX_RECORD_USER_ACCOUNT_INDEX = "IDX_tax_records_user_account";
-export const TAX_RECORD_ACCOUNT_USER_INDEX = "IDX_tax_records_account_user";
+export const TAX_RECORD_OWNER_ACCOUNT_INDEX = "IDX_tax_records_user_account";
+export const TAX_RECORD_ACCOUNT_OWNER_INDEX = "IDX_tax_records_account_user";
 const ACCOUNTS_OWNER_KEY_INDEX = "UQ_accounts_id_user_id";
 
 export class TaxRecordAccountLink1795550000000 implements MigrationInterface {
@@ -59,10 +59,10 @@ export class TaxRecordAccountLink1795550000000 implements MigrationInterface {
        ON DELETE SET NULL ("${TAX_RECORD_ACCOUNT_COLUMN}")`,
     );
     await queryRunner.query(
-      `CREATE INDEX IF NOT EXISTS "${TAX_RECORD_USER_ACCOUNT_INDEX}" ON "tax_records" ("user_id", "${TAX_RECORD_ACCOUNT_COLUMN}")`,
+      `CREATE INDEX IF NOT EXISTS "${TAX_RECORD_OWNER_ACCOUNT_INDEX}" ON "tax_records" ("user_id", "${TAX_RECORD_ACCOUNT_COLUMN}")`,
     );
     await queryRunner.query(
-      `CREATE INDEX IF NOT EXISTS "${TAX_RECORD_ACCOUNT_USER_INDEX}" ON "tax_records" ("${TAX_RECORD_ACCOUNT_COLUMN}", "user_id")`,
+      `CREATE INDEX IF NOT EXISTS "${TAX_RECORD_ACCOUNT_OWNER_INDEX}" ON "tax_records" ("${TAX_RECORD_ACCOUNT_COLUMN}", "user_id")`,
     );
     const [row]: Array<{ n: number }> = await queryRunner.query(
       `SELECT count(*)::int AS n FROM "tax_records" WHERE "${TAX_RECORD_ACCOUNT_COLUMN}" IS NOT NULL`,
@@ -75,8 +75,8 @@ export class TaxRecordAccountLink1795550000000 implements MigrationInterface {
     await takeMigrationLock(queryRunner);
     await queryRunner.query("SET LOCAL lock_timeout = '10s'");
     await queryRunner.query(`LOCK TABLE "tax_records" IN ACCESS EXCLUSIVE MODE`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "${TAX_RECORD_ACCOUNT_USER_INDEX}"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "${TAX_RECORD_USER_ACCOUNT_INDEX}"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "${TAX_RECORD_ACCOUNT_OWNER_INDEX}"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "${TAX_RECORD_OWNER_ACCOUNT_INDEX}"`);
     await queryRunner.query(
       `ALTER TABLE "tax_records" DROP CONSTRAINT IF EXISTS "${TAX_RECORD_ACCOUNT_FOREIGN_KEY}"`,
     );
