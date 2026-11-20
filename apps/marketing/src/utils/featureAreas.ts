@@ -18,7 +18,7 @@ export type MoneyAreaKey =
 type FeatureKey = MoneyAreaKey | "ai-connection";
 
 /** Which sample the "See it" section shows. `none` shows an illustration in the hero instead. */
-type FeatureSample = "dashboard" | "breathing-room" | "none";
+type FeatureSample = "dashboard" | "breathing-room" | "savings-pension" | "debt-borrowing" | "none";
 
 export interface Feature {
   key: FeatureKey;
@@ -143,7 +143,7 @@ export const MONEY_AREAS: readonly MoneyArea[] = [
       "A deposit timeline",
       "Investment returns",
     ],
-    sample: "none",
+    sample: "savings-pension",
     previewHref: "/preview",
     meta: {
       title: "Savings and pension | Flump",
@@ -169,7 +169,7 @@ export const MONEY_AREAS: readonly MoneyArea[] = [
       "Overpay or save, compared",
       "Loan to value (LTV) milestones",
     ],
-    sample: "none",
+    sample: "debt-borrowing",
     previewHref: "/preview",
     meta: {
       title: "Debt and borrowing: cards, loans and mortgage | Flump",

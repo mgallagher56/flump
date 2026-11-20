@@ -1,5 +1,5 @@
 import { expectPageRules } from "@repo/ui/testing";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -116,12 +116,25 @@ describe("FeaturePage samples (D6)", () => {
     expect(screen.queryByRole("complementary", { name: "Debt advice" })).toBeNull();
   });
 
-  it.each(["savings-and-pension", "debt-and-borrowing"] as const)(
-    "shows a scene and no sample on %s",
-    (key) => {
-      renderArea(byKey(key));
-      expect(screen.getByTestId("feature-illustration")).toBeDefined();
-      expect(screen.queryByRole("heading", { name: "See it with sample figures" })).toBeNull();
-    },
-  );
+  it.each([
+    ["savings-and-pension", "feature-savings-pension-preview"],
+    ["debt-and-borrowing", "feature-debt-borrowing-preview"],
+  ] as const)("shows its own sample preview on %s (S8), with the household switch", (key, id) => {
+    renderArea(byKey(key));
+    expect(screen.getByRole("heading", { name: "See it with sample figures" })).toBeDefined();
+    expect(document.getElementById(id)).not.toBeNull();
+    const homeowner = screen.getByRole("button", { name: "Paying a mortgage" });
+    fireEvent.click(homeowner);
+    expect(homeowner.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("shows a sample on every area page, so no page needs a stand-in scene", () => {
+    for (const area of MONEY_AREAS) {
+      const { unmount } = renderArea(area);
+      if (area.key !== "pay") {
+        expect(screen.getByRole("heading", { name: "See it with sample figures" })).toBeDefined();
+      }
+      unmount();
+    }
+  });
 });

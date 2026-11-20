@@ -594,8 +594,10 @@ describe("E16 PR 3 homeowner: the home counts once, labelled (D3)", () => {
   const { fixture } = PERSONAS.homeowner;
   const picture = buildFinancialPicture(fixture, OPTS);
 
-  it("net worth is 310,000 + 21,000 + 96,000 - 186,000 = 241,000, the home counted once", () => {
-    expect(picture.netWorth.netWorth).toBe(241000);
+  // E42 S8 added a 1,800 card and a 7,200 loan: 310,000 + 21,000 + 96,000 - 186,000 - 1,800
+  // - 7,200 = 232,000.
+  it("net worth is 310,000 + 21,000 + 96,000 - 186,000 - 9,000 = 232,000, the home counted once", () => {
+    expect(picture.netWorth.netWorth).toBe(232000);
     expect(picture.netWorth.property).toBe(310000);
     expect(picture.netWorth.homeEstimate).toBe(310000);
     expect(HOME_ESTIMATE_LABEL).toBe("Home (your estimate)");
@@ -614,14 +616,14 @@ describe("E16 PR 3 homeowner: the home counts once, labelled (D3)", () => {
       ...fixture,
       profile: { ...fixture.profile, homeValue: 500000 } as PersonaFixture["profile"],
     };
-    expect(buildFinancialPicture(withProfileValue, OPTS).netWorth.netWorth).toBe(241000);
+    expect(buildFinancialPicture(withProfileValue, OPTS).netWorth.netWorth).toBe(232000);
     // A sold home (account deleted) leaves nothing behind, whatever the profile once said.
     const sold: PersonaFixture = {
       ...withProfileValue,
       accounts: fixture.accounts.filter((a) => a.type !== "Property"),
     };
     const p = buildFinancialPicture(sold, OPTS);
-    expect(p.netWorth.netWorth).toBe(241000 - 310000);
+    expect(p.netWorth.netWorth).toBe(232000 - 310000);
     expect(p.netWorth.homeEstimate).toBe(0);
     expect(p.loanToValue.status).toBe("unknown");
   });
