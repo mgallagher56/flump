@@ -241,6 +241,39 @@ describe("allocatePersonalAllowance", () => {
     ).toEqual({ onNonSavings: 11570, onSavings: 0, onDividends: 1000 });
   });
 
+  it("keeps today's order on an exact tie at a half penny", () => {
+    // Salary 21,158, interest 9,054, dividends 14,374. Taxable 32,016: basic rate, PSA 1,000.
+    // Today: salary 8,588 x 20% = 1,717.60; interest above the PSA 8,054 x 20% = 1,610.80;
+    //   dividends 14,374 - 500 = 13,874 x 10.75% = 1,491.455. Total 4,819.855.
+    // Moving 8,054 to the interest: salary 16,642 x 20% = 3,328.40; interest 1,000, all in the
+    //   PSA; dividends unchanged 1,491.455. Total 4,819.855: equal (20% against 20%), so nothing
+    //   moves, though float sums can put the two half pennies either side of the rounding point.
+    expect(
+      allocatePersonalAllowance(input({ nonSavings: 21158, savings: 9054, dividends: 14374 })),
+    ).toEqual({ onNonSavings: 12570, onSavings: 0, onDividends: 0 });
+  });
+
+  it("keeps today's order on an exact Scottish tie with Gift Aid", () => {
+    // Scotland 2020/21, salary 18,395, interest 8,886, dividends 19,109, 6,455 of grossed-up Gift
+    // Aid (allowance 12,500; taxable 33,890 is basic rate, PSA 1,000). Salary taxable 5,895
+    // sits in the Scottish 20% band, extended by 6,455; the interest above the PSA is at the UK
+    // 20% basic rate. Moving allowance from salary to interest is 20% against 20%: the totals
+    // are equal (4,018.525 both ways), so nothing moves.
+    expect(
+      allocatePersonalAllowance(
+        input({
+          rules: getUkTaxYearRules("2020/21"),
+          region: "SCOTLAND",
+          allowance: 12500,
+          nonSavings: 18395,
+          savings: 8886,
+          dividends: 19109,
+          bandExtension: 6455,
+        }),
+      ),
+    ).toEqual({ onNonSavings: 12500, onSavings: 0, onDividends: 0 });
+  });
+
   it("on a tie keeps the most on non-savings, then savings", () => {
     // Salary 50,000, interest 3,000. Taxable 40,430: PSA 500. x moved: salary 37,430 + x;
     // interest taxed above the PSA band at 40% throughout.

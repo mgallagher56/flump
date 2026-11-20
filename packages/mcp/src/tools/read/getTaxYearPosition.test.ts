@@ -1,10 +1,4 @@
-import {
-  type BuildContextPackInput,
-  calculateUKTax,
-  type ProfileFacts,
-  type TaxRecord,
-  type TaxRecordFields,
-} from "@flump/finance-engine";
+import type { BuildContextPackInput, ProfileFacts, TaxRecord } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import { connectTestClient } from "../../testing/client.js";
 import { emptyUser } from "../../testing/personas.js";
@@ -139,9 +133,12 @@ describe("get_tax_year_position notes, provenance and bands", () => {
   });
 
   it("reads taxable non-savings income from the engine's allowance split", async () => {
-    // Plumbing only: the tool must not take the whole allowance off non-savings income itself.
-    // With dividends beside a salary near the basic rate limit the engine may set part of the
-    // allowance against the dividends (ITA 2007 s.25(2)), so the two can differ.
+    // The tool must not take the whole allowance off non-savings income itself. 2025/26: salary
+    // 50,000 and dividends 10,000, taxable 47,430. Setting 270 of the 12,570 allowance against
+    // the dividends puts their 500 allowance wholly above the 37,700 basic rate limit: 270 x
+    // 33.75% saved for 270 x 20% more on the salary (ITA 2007 s.25(2)). So 12,300 is set
+    // against the salary and taxable non-savings income is 50,000 - 12,300 = 37,700 (the old
+    // rule gave 37,430).
     const dividends = rent({
       id: "div1",
       source: "savings",
@@ -153,9 +150,7 @@ describe("get_tax_year_position notes, provenance and bands", () => {
     const e = (await position(facts({ employmentType: "employed", annualSalary: 50000 }), [
       dividends,
     ])) as Env & { result: { incomeTaxBands: { taxableGbp: number } } };
-    const ledger = calculateUKTax("2025/26", [dividends as unknown as TaxRecordFields], 50000, 100);
-    expect(ledger.allowanceOnNonSavings).not.toBe(ledger.personalAllowance);
-    expect(e.result.incomeTaxBands.taxableGbp).toBe(50000 - ledger.allowanceOnNonSavings);
+    expect(e.result.incomeTaxBands.taxableGbp).toBe(37700);
   });
 
   it("lists the bands from the lowest rate up", async () => {
