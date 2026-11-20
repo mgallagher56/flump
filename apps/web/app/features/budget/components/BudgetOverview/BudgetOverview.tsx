@@ -85,7 +85,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
       "Your housing payment is not set, so what is left over is unknown. Add it in your housing details below."
     ) : null;
 
-  const subline = notSetPrompt ? undefined : safeToSpend ? (
+  const baseSubline = notSetPrompt ? undefined : safeToSpend ? (
     <>
       {/* Monthly, to match "left over" above; a different measure, so it says what it leaves out
           (owner ruling 2026-11-15). Named first, so it never reads as a second "left over" figure
@@ -106,6 +106,16 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
   ) : (
     "Add your essential spending to see what you have after it each month."
   );
+  // What the left over leaves out (a refused student loan plan in the linked take-home pay),
+  // said once, beside the figure it changes.
+  const subline =
+    budgetLeavesOut && baseSubline ? (
+      <>
+        {baseSubline} {budgetLeavesOut}
+      </>
+    ) : (
+      (budgetLeavesOut ?? baseSubline)
+    );
 
   return (
     <div className={overviewRoot()}>
@@ -137,8 +147,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
           <KpiCard
             key="income"
             label="Money in each month"
-            // What income leaves out (a refused student loan plan in the linked take-home pay).
-            subtext={budgetLeavesOut ?? "After tax"}
+            subtext="After tax"
             value={hasIncome ? (budget?.income ?? 0) : null}
             valueFormat={{ fractionDigits: 0 }}
           />,

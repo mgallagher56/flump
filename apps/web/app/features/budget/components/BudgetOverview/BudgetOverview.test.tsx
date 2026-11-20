@@ -210,8 +210,10 @@ describe("<BudgetOverview /> with a refused Plan 1 in 2027/28", () => {
     });
     const { container } = customRender(<BudgetOverview entries={linked} picture={picture} />);
     expect(container.querySelector('[data-figure="budget.surplus"]')).not.toBeNull();
-    expect(container.textContent).toContain(
-      "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
-    );
+    const note =
+      "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.";
+    // Said once, beside the left over figure it changes, not again on the money-in card.
+    expect(container.textContent?.split(note).length).toBe(2);
+    expect(container.textContent).toContain("After tax");
   });
 });

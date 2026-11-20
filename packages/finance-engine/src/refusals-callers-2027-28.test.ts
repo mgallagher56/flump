@@ -237,6 +237,7 @@ describe("a refused plan beside a published one (review finding 2)", () => {
           studentLoanPlan: "PLAN_1",
         },
         profileFacts: FACTS,
+        accounts: [{ id: "sl", name: "Student loan", type: "Student Loan", balance: 20_000 }],
       },
       { anonymizeInstitutions: false, asOf: IN_2027_28 },
     );
@@ -246,6 +247,14 @@ describe("a refused plan beside a published one (review finding 2)", () => {
       // Same working as above: (£50,000 - £29,385) x 9% = £1,855.35.
       expect(tx.studentLoanDeductionGbp).toBe(1855.35);
       expect(tx.assumptions).toContain(LOAN_LEFT_OUT);
+    }
+    // The repayment estimate is for Plan 2 and says Plan 1 is left out (review re-check).
+    const loan = pack.debtSummary.studentLoanEvaluation;
+    expect(isPackFigureNotAvailable(loan)).toBe(false);
+    if (loan && !isPackFigureNotAvailable(loan)) {
+      expect(loan.plan).toBe("plan2");
+      expect(loan.annualRepayment).toBe(1855.35);
+      expect(loan.reasoning).toContain(LOAN_LEFT_OUT);
     }
   });
 });
