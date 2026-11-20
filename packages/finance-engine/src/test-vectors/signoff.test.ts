@@ -57,7 +57,10 @@ describe("vector sign-off", () => {
   it("rejects a signer name that is empty, padded, too long or not a plain name", () => {
     for (const bad of ["", " owner", "owner ", "-x", "a b", 'x"y', "a\nb", "a".repeat(65)]) {
       expect(isValidSigner(bad), JSON.stringify(bad)).toBe(false);
-      expect(evaluateSignoff(sign(base, { signedOffBy: bad })).state, bad).toBe("invalid");
+      expect(evaluateSignoff(sign(base, { signedOffBy: bad })), bad).toEqual({
+        state: "invalid",
+        reason: "signedOffBy must be a signer name, such as fable-decider",
+      });
     }
   });
   it("rejects a bad date, a missing hash and stray fields", () => {

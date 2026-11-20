@@ -54,8 +54,9 @@ describe("Child Benefit weeks in a tax year (ITEPA 2003 s.681H(3))", () => {
     expect(childBenefitWeeksInTaxYear("2031/32")).toBe(53);
   });
   it("rejects a malformed year", () => {
-    expect(() => childBenefitWeeksInTaxYear("2026-27")).toThrow();
-    expect(() => childBenefitWeeksInTaxYear("2026/28")).toThrow();
+    for (const bad of ["2026-27", "2026/28", "x2026/27", "2026/27x"]) {
+      expect(() => childBenefitWeeksInTaxYear(bad), bad).toThrow(`not a tax year: ${bad}`);
+    }
   });
 });
 
