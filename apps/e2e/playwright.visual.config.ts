@@ -47,6 +47,11 @@ export default defineConfig({
       // An absolute pixel budget, not a ratio: a black 32 px logo is a tiny share of a
       // full-page shot and would slip under any percentage worth having.
       maxDiffPixels: 100,
+      // Per-pixel colour tolerance (pixelmatch YIQ, 0 to 1). Playwright's default, 0.2, ignores
+      // every pixel whose colour moves less than that, so on PR 812 every recoloured tile and tint
+      // counted zero pixels (pension's teal to sky tint is a YIQ delta of 10, a threshold of about
+      // 0.017). E11: measured candidate, see the PR.
+      threshold: 0.015,
       animations: "disabled",
       caret: "hide",
       scale: "css",
