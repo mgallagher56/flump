@@ -418,9 +418,16 @@ Relayed by the coordinator on 20 November 2026, while PR #845 (invite links) was
 Relayed by the coordinator during E41 M4 (PR 847). Owner's words: "mutation testing takes a long time, so we shouldn't be running it in a pipeline. It should just be a local check we do irregularly, maybe once per month, to verify our tests are in a good state".
 
 - The mutation workflow is removed: no weekly run, no manual start in CI, no pull request job. Mutation testing runs locally with `bun run mutation <package|all>`, about once a month or before a release, when someone chooses. Every Stryker config, the floors in `scripts/mutation-baseline.json` and the score check stay.
-- Supersedes round 12 decisions 4 and 5, and decision 6 as far as CI artifacts go (reports stay local; still no hosted dashboard). E41 M5 is withdrawn.
+- Supersedes round 12 decisions 4 and 5, and decision 6 as far as CI artifacts go (reports stay local; still no hosted dashboard). This entry first said "E41 M5 is withdrawn"; that was a coordinator error, corrected in the next entry.
 - Decision 11 stands for the local run: asked "Keep mutation testing on the fast unit tests only, as recommended?", the owner answered: "Keep unit only".
 - A floor still only moves down with the owner's sign-off (AGENTS.md section 15). No reminder job and no staleness check.
+
+# Owner decision (2026-11-20): E41 M5 reinstated as a local-only stage
+
+The entry above recorded E41 M5 (web and UI logic) as withdrawn. That was a coordinator error: the owner's decision was only that mutation testing does not run in a pipeline. Asked whether to reinstate M5 as a local-only stage, the owner answered: "Yes, reinstate", then "Start it".
+
+- M5 gives `apps/web` (utils, hooks, services, state, containers and `server/`, `unit` Vitest project only) and `packages/ui` (helpers and component logic) a Stryker config and a floor, run locally by `bun run mutation`. Nothing is added to CI.
+- Round 12 decisions 2, 3, 7 and 11 apply unchanged: string faults are off in these two packages (decision 7, option B).
 
 # Owner decision (2026-11-20): a Fable decider signs off tax figures
 

@@ -2,7 +2,7 @@
 
 Decisions: accepted on 19 November 2026
 
-> Status: plan accepted by the owner on 19 November 2026. Amended on 20 November 2026: mutation testing is a local check run about once a month, not a CI job, and M5 is withdrawn (owner's words in section 12, "Mutation testing becomes a local check"). Sections 6 and 7 describe the CI design used from M1 to M4, kept as a record. Written 2026-11-19 against `origin/main` at `6c2022fc`. Paths are relative to the repository root. Figures are marked "measured" or "estimate".
+> Status: plan accepted by the owner on 19 November 2026. Amended on 20 November 2026: mutation testing is a local check run about once a month, not a CI job (owner's words in section 12, "Mutation testing becomes a local check"). M5 was recorded as withdrawn that day by a coordinator error and was reinstated the same day as a local-only stage (section 12, "M5 reinstated"). Sections 6 and 7 describe the CI design used from M1 to M4, kept as a record. Written 2026-11-19 against `origin/main` at `6c2022fc`. Paths are relative to the repository root. Figures are marked "measured" or "estimate".
 
 ## 1. Summary and why it matters
 
@@ -169,7 +169,7 @@ Each slice is one PR, not stacked, reviewed by a different agent before merge. L
 - First run without the database specs. Report how many survivors sit in code only the database specs reach.
 - Authorisation survivors are top priority: a guard that still passes with its check removed.
 
-**M5. Web and UI logic (L).** Withdrawn on 20 November 2026 (section 12, "Mutation testing becomes a local check"). The plan as it stood:
+**M5. Web and UI logic (L).** A local-only stage, like M1 to M4 after the move to a local check: a Stryker config and a floor per package, run by `bun run mutation`, no CI job. It was recorded as withdrawn on 20 November 2026 by a coordinator error and reinstated that day (section 12, "M5 reinstated"). String faults are off in both packages (decision 7).
 - Web: `utils` (26 files), `hooks` (9), `services` (8), `state`, `server/`, then `containers` (14). The runner must use the `unit` project only.
 - UI: helpers and component logic. Style files and stories excluded.
 - New or changed components follow sections 1 and 4. Test-only changes do not need new stories.
@@ -345,9 +345,14 @@ Each has options and a recommendation. A flag says when it names an outside serv
 
 - The mutation workflow (weekly crons, manual start, the pull request job) is removed. Every Stryker config, `scripts/mutation-baseline.json` with its floors and the score check stay, run by `bun run mutation <package|all>`.
 - Supersedes decision 4 (there is no pull request check), decision 5 (no weekly run: about monthly, locally, when someone chooses) and decision 6 as far as CI artifacts go (reports stay local; still no hosted dashboard).
-- M5 is withdrawn (relayed by the coordinator as "M5 (making it a required check) is withdrawn"). Nothing is added to CI.
+- Nothing is added to CI. The coordinator also recorded M5 as withdrawn, relaying it as "M5 (making it a required check) is withdrawn". That was an error, corrected below.
 - Decision 11 stands for the local run: on 20 November 2026, asked "Keep mutation testing on the fast unit tests only, as recommended?", the owner answered: "Keep unit only".
 - A floor still only moves down with the owner's sign-off. No reminder job and no staleness check.
+
+**M5 reinstated (20 November 2026).** The withdrawal of M5 recorded above was a coordinator error: the owner's decision was only that mutation testing does not run in CI, not that the web and UI stage is dropped. Asked whether to reinstate M5 as a local-only stage, the owner answered: "Yes, reinstate", then "Start it".
+
+- M5 adds `apps/web` (`app/utils`, `app/hooks`, `app/services`, `app/state`, `app/containers` and `server/`, judged by the `unit` Vitest project only) and `packages/ui` (helpers and component logic, without style files, stories, tokens or test helpers), each with a Stryker config and a floor, run by `bun run mutation`. Nothing runs in CI.
+- Decisions 2, 3, 7 and 11 apply as written: survivors go in the ledger, floor(measured) - 1, string faults off in these two packages, unit tests only.
 
 ## 13. The strongest argument against
 
