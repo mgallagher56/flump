@@ -1,5 +1,5 @@
-import { type BuildContextPackInput, getUkCalendarDate } from "@flump/finance-engine";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import type { BuildContextPackInput } from "@flump/finance-engine";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { shortId, shortIdKey } from "../../short-ids.js";
 import { connectTestClient, TEST_TOKEN, type TestHarness } from "../../testing/client.js";
 import { emptyUser } from "../../testing/personas.js";
@@ -247,6 +247,12 @@ describe("get_balance_history: values, sources and groups", () => {
 });
 
 describe("get_balance_history: missing history and current month", () => {
+  // The clock is pinned to 15 November 2026 (noon UTC, also 15 November in the UK).
+  beforeEach(() =>
+    vi.useFakeTimers({ now: new Date("2026-11-15T12:00:00.000Z"), toFake: ["Date"] }),
+  );
+  afterEach(() => vi.useRealTimers());
+
   it("asks for history when no selected account has any", async () => {
     const h = await connectTestClient({
       ...emptyUser,
@@ -279,9 +285,9 @@ describe("get_balance_history: missing history and current month", () => {
   });
 
   it("a saved balance standing in for the current month of an unrecorded account reads as manual", async () => {
-    const now = getUkCalendarDate(new Date()).slice(0, 7);
-    const [year, month] = now.split("-").map(Number) as [number, number];
-    const prev = month === 1 ? { y: year - 1, m: 12 } : { y: year, m: month - 1 };
+    // Pinned clock: the current month is 2026-11, so last month is October 2026.
+    const now = "2026-11";
+    const prev = { y: 2026, m: 10 };
     const h = await connectTestClient({
       ...emptyUser,
       accounts: [

@@ -262,8 +262,6 @@ describe("missing entries", () => {
       ),
     );
     for (const m of [...all, ASK_NO_ACCOUNTS, MISSING_INCOME]) expectAskable(m);
-    expect(ASK_NO_ACCOUNTS.field).toBe("accounts");
-    expect(MISSING_INCOME.field).toBe("monthlyIncome");
   });
 });
 

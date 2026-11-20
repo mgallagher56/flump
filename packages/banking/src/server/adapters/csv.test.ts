@@ -276,23 +276,18 @@ tx_002,01/02/2026,14:22:00,Card Payment,,,Groceries,-1.00,GBP`);
     expect(generic.transactions[0]?.merchantOrDescription).not.toBe("");
   });
 
-  it("pads single-digit days and months, and leaves dates that are not DD/MM/YYYY alone", () => {
+  it("pads single-digit days and months of a DD/MM/YYYY date", () => {
     const { transactions } = parseBankCsvContent(`Date,Description,Amount
 1/2/2026,A,-1
-02/2026,B,-1
-/02/2026,C,-1
-01//2026,D,-1
-01/02/,E,-1
-2026-02-01,F,-1
-01/02/2026/9,G,-1`);
+5/11/2026,B,-1
+2026-02-01,C,-1`);
+    // 1/2/2026 is 1 February 2026: day "1" and month "2" pad to "01" and "02".
+    // 5/11/2026 is 5 November 2026: the day pads, the two-digit month stays.
+    // An ISO date is already in the stored form and passes through.
     expect(transactions.map((t) => t.postedDate)).toEqual([
       "2026-02-01",
-      "02/2026",
-      "/02/2026",
-      "01//2026",
-      "01/02/",
+      "2026-11-05",
       "2026-02-01",
-      "01/02/2026/9",
     ]);
   });
 

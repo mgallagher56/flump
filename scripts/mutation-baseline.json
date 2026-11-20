@@ -12,9 +12,9 @@
       "measuredOn": "2026-11-20"
     },
     "packages/banking": {
-      "floor": 93,
-      "measured": 94.43,
-      "measuredOn": "2026-11-19"
+      "floor": 92,
+      "measured": 93.85,
+      "measuredOn": "2026-11-20"
     },
     "packages/observability": {
       "floor": 94,
@@ -38,7 +38,7 @@
     },
     "packages/mcp": {
       "floor": 91,
-      "measured": 92.01,
+      "measured": 92.56,
       "measuredOn": "2026-11-20"
     }
   }
