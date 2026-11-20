@@ -881,7 +881,10 @@ export function calculateUKTax(
       // non-savings income first (s.25(3A)), so other income's taxable part is its income less the
       // allowance, wherever the rest of the allowance is set. A Scottish taxpayer's property income
       // stays on their Scottish rates (Scotland Act 1998 s.80C(2B)), so no split for them.
-      const otherNonSavingsTaxable = Math.max(0, effectivePayeSalary + seProfit - personalAllowance);
+      const otherNonSavingsTaxable = Math.max(
+        0,
+        effectivePayeSalary + seProfit - personalAllowance,
+      );
       const nonSavingsTax = propertyRates
         ? incomeTaxOn(otherNonSavingsTaxable) +
           ukIncomeTaxOn(nonSavingsTaxable, propertyRates) -
