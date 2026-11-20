@@ -129,9 +129,11 @@ export const FeaturePage: FC<FeaturePageProps> = ({
                 <Button asChild size="lg" variant="primary">
                   <a href={cta.href}>{cta.label}</a>
                 </Button>
-                <Button asChild size="lg" variant="outline">
-                  <a href={feature.previewHref}>Interactive preview</a>
-                </Button>
+                {feature.previewHref && (
+                  <Button asChild size="lg" variant="outline">
+                    <a href={feature.previewHref}>Interactive preview</a>
+                  </Button>
+                )}
               </div>
             </div>
             {scene && (
