@@ -151,8 +151,10 @@ different when its colour moves more than `threshold: 0.015` (E11). Playwright's
 threshold, 0.2, ignored every pixel of PR 812's recoloured tiles and tints (pension's teal to sky
 tint is a colour distance of 10 on pixelmatch's scale; 0.2 ignores anything under 1,409), so those
 changes passed. At 0.015 three runs on unchanged code are steady, and the same sky-to-teal change
-fails about 1,200 pixels per shot. To hide something that changes from run to run, give it a
-`data-visual-mask` attribute.
+fails about 1,200 pixels per shot. Known noise: the edge of the avatar ring in the top bar can
+differ by up to 9 pixels (each channel off by 3 at most) between runs, well under the 100-pixel
+budget; it needs no mask and is not a regression. To hide something that changes from run to run,
+give it a `data-visual-mask` attribute.
 
 **Baselines** live in `visual/__screenshots__/<route>-<project>.png`. They are only valid when
 generated in that container on Linux x64: font rendering differs on macOS and on Apple Silicon,
