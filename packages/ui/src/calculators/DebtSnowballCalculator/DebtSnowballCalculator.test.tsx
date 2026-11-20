@@ -308,6 +308,67 @@ describe("DebtSnowballCalculator", () => {
     );
   });
 
+  it("announces no balance, and says when either method does not pay the debts off", () => {
+    const result = (payoffAchievable: boolean) =>
+      ({ debtFreeDate: "May 2028", totalInterest: 100, payoffAchievable }) as never;
+    expect(
+      debtSnowballAnnouncement({ avalanche: result(true), snowball: result(true) }, true),
+    ).toBe("Illustration: there is no debt balance to pay off");
+    const notPaidOff = "Illustration: the debts are not paid off at these payments";
+    expect(debtSnowballAnnouncement({ avalanche: result(false), snowball: result(true) })).toBe(
+      notPaidOff,
+    );
+    expect(debtSnowballAnnouncement({ avalanche: result(true), snowball: result(false) })).toBe(
+      notPaidOff,
+    );
+  });
+
+  it("keeps each added debt separate from the others", () => {
+    const onSave = vi.fn();
+    render(<DebtSnowballCalculator onSaveAndContinue={onSave} persistSeed={false} />);
+    fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.add }));
+    fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.add }));
+    enter(debtGroup(/^Debt 4$/).getByLabelText(DEBT_SNOWBALL_COPY.balance), "700");
+    expect(
+      (debtGroup(/Debt 2/).getByLabelText(DEBT_SNOWBALL_COPY.balance) as HTMLInputElement).value,
+    ).toBe("1,500");
+    fireEvent.click(screen.getByRole("button", { name: "Continue to sign up" }));
+    // £4,500 credit card + £1,500 personal loan + £0 (Debt 3, empty) + £700 (Debt 4) = £6,700.
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ totalUnsecuredDebt: 6700 }));
+  });
+
+  it("keeps the minimum and rate entered, caps the rate at 100% and lets each field be cleared", () => {
+    render(<DebtSnowballCalculator />);
+    openDebt(1);
+    const card = debtGroup(/Debt 1/);
+    const field = (label: string) => card.getByLabelText(label) as HTMLInputElement;
+    enter(field(DEBT_SNOWBALL_COPY.minimum), "150");
+    expect(field(DEBT_SNOWBALL_COPY.minimum).value).toBe("150");
+    enter(field(DEBT_SNOWBALL_COPY.rate), "19.9");
+    expect(field(DEBT_SNOWBALL_COPY.rate).value).toBe("19.9");
+    enter(field(DEBT_SNOWBALL_COPY.rate), "250");
+    expect(field(DEBT_SNOWBALL_COPY.rate).value).toBe("100");
+    for (const label of [
+      DEBT_SNOWBALL_COPY.balance,
+      DEBT_SNOWBALL_COPY.minimum,
+      DEBT_SNOWBALL_COPY.rate,
+    ]) {
+      enter(field(label), "");
+      expect(field(label).value).toBe("");
+    }
+  });
+
+  it("hides Add a debt in the short form once there are six debts", () => {
+    render(<DebtSnowballCalculator shortForm />);
+    fireEvent.click(screen.getByRole("button", { name: "Change the debt details" }));
+    // Two examples plus four added makes six, the most allowed.
+    for (let i = 0; i < 4; i++) {
+      fireEvent.click(screen.getByRole("button", { name: DEBT_SNOWBALL_COPY.add }));
+    }
+    expect(screen.getAllByLabelText(DEBT_SNOWBALL_COPY.balance)).toHaveLength(6);
+    expect(screen.queryByRole("button", { name: DEBT_SNOWBALL_COPY.add })).toBeNull();
+  });
+
   it("shows one arrow on the sign-up button when the caller's label has its own", () => {
     render(<DebtSnowballCalculator ctaText="Request an invite →" />);
     expect(screen.getByRole("button", { name: "Request an invite" })).toBeDefined();

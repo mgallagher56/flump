@@ -270,6 +270,117 @@ describe("TaxTrapCalculator", () => {
   });
 });
 
+describe("TaxTrapCalculator inputs and figures", () => {
+  const nextRow = () =>
+    screen.getByRole("row", { name: new RegExp(TAX_TRAP_COPY.factNextThousand) }).textContent;
+  const slider = (name: string) => screen.getByRole("slider", { name }) as HTMLInputElement;
+
+  it("uses a supported tax year it is given, and the rates year for one it does not know", () => {
+    const now = new Date(Date.UTC(2026, 5, 1));
+    const { unmount } = render(<TaxTrapCalculator now={now} taxYear="2025/26" />);
+    expect(screen.getByText("As at tax year 2025/26")).toBeDefined();
+    unmount();
+    render(<TaxTrapCalculator now={now} taxYear="1999/00" />);
+    expect(screen.getByText("As at tax year 2026/27")).toBeDefined();
+  });
+
+  it("shows no fallback banner when an earlier year is chosen in a fallback year", () => {
+    const latest = getLatestSupportedUkTaxYear();
+    const now = new Date(Date.UTC(Number(latest.slice(0, 4)) + 1, 5, 1));
+    render(<TaxTrapCalculator now={now} taxYear="2025/26" />);
+    expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
+  });
+
+  it("caps the contribution at the pay entered", () => {
+    render(<TaxTrapCalculator initialContribution={10_000} initialGrossIncome={6_000} />);
+    const contribution = slider(TAX_TRAP_COPY.contribution);
+    expect(contribution.max).toBe("6000");
+    expect(contribution.value).toBe("6000");
+  });
+
+  it("follows the pay and the contribution in the next £1,000 row, with one decimal when needed", () => {
+    render(
+      <TaxTrapCalculator
+        initialContribution={15_000}
+        initialGrossIncome={110_000}
+        taxYear="2026/27"
+      />,
+    );
+    openDetails();
+    // Before: £110,000 to £111,000 is in the taper, 40% tax + 20% lost allowance + 2% NI = 62%.
+    // After £15,000 sacrifice: £95,000 to £96,000 is higher rate, 40% tax + 2% NI = 42%.
+    expect(nextRow()).toMatch(/62%.*42%/);
+    fireEvent.change(slider(TAX_TRAP_COPY.contribution), { target: { value: "0" } });
+    fireEvent.change(slider(TAX_TRAP_COPY.grossIncome), { target: { value: "124500" } });
+    // £124,500 to £125,140 at 62% = £396.80; £125,140 to £125,500 at 45% tax + 2% NI = £169.20.
+    // £566 of £1,000 is 56.6%, shown before and after (no contribution).
+    expect(nextRow()).toMatch(/56\.6%.*56\.6%/);
+  });
+
+  it("counts adjusted net income of exactly £100,000 as £100,000 or less for childcare", () => {
+    render(
+      <TaxTrapCalculator
+        initialContribution={10_000}
+        initialGrossIncome={110_000}
+        taxYear="2026/27"
+      />,
+    );
+    openDetails();
+    // £110,000 pay less a £10,000 sacrifice is £100,000 adjusted net income.
+    expect(screen.getByTestId("tax-trap-childcare-status").textContent).toContain(
+      "£100,000 or less",
+    );
+  });
+
+  it("lists the engine's assumptions in words under How this is worked out", () => {
+    render(<TaxTrapCalculator taxYear="2026/27" />);
+    openDetails();
+    const heading = screen.getByRole("heading", { name: TAX_TRAP_COPY.assumptionsHeading });
+    const items = [...(heading.parentElement?.querySelectorAll("li") ?? [])].map(
+      (li) => li.textContent,
+    );
+    expect(items).toEqual([
+      "Worked out on a full year's pay, not pay period by pay period.",
+      "The pension contribution is modelled as salary sacrifice.",
+    ]);
+  });
+
+  it("offers both regions", () => {
+    render(<TaxTrapCalculator taxYear="2026/27" />);
+    const options = [
+      ...(screen.getByLabelText(TAX_TRAP_COPY.region) as HTMLSelectElement).options,
+    ].map((o) => [o.value, o.textContent]);
+    expect(options).toEqual([
+      ["ENGLAND_NI_WALES", "England, Wales or Northern Ireland"],
+      ["SCOTLAND", "Scotland"],
+    ]);
+  });
+
+  it("asks onboarding for the tax and pension modules", () => {
+    const onSave = vi.fn();
+    render(<TaxTrapCalculator ctaText="Continue" persistSeed={false} onSaveAndContinue={onSave} />);
+    fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ inferredModules: ["tax", "pension"] }),
+    );
+  });
+});
+
+describe("allTaxTrapCopyStrings", () => {
+  it("collects every string, nested ones included, for the copy guard", () => {
+    const all = allTaxTrapCopyStrings();
+    expect(all[0]).toBe(TAX_TRAP_COPY.title);
+    expect(all).toContain(TAX_TRAP_COPY.regionOptions.SCOTLAND);
+    expect(all).toContain(
+      "With this contribution, adjusted net income is an estimated £105,000: over £100,000.",
+    );
+    expect(all).toContain(
+      "With this contribution, adjusted net income is an estimated £95,000: £100,000 or less.",
+    );
+    expect(all.every((s) => typeof s === "string")).toBe(true);
+  });
+});
+
 describe("TaxTrapCalculator outcome captions", () => {
   it("gives both outcome cards a caption with no figure", () => {
     render(<TaxTrapCalculator />);

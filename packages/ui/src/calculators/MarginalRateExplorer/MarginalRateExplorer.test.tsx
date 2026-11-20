@@ -392,3 +392,232 @@ describe("MarginalRateExplorer in 2027/28 (refused rates)", () => {
     expect(screen.getByTestId("explorer-outcomes")).toBeDefined();
   });
 });
+
+describe("explorerScenario", () => {
+  it("passes the bonus, the pension and the number of children to the engine", () => {
+    const scenario = explorerScenario({
+      ...DEFAULTS_2026,
+      bonus: 5_000,
+      pensionMethod: "net-pay",
+      pensionAmount: 2_400,
+      childBenefit: true,
+      children: 3,
+    });
+    expect(scenario.bonus).toBe(5_000);
+    expect(scenario.pension).toEqual({ method: "net-pay", amount: 2_400 });
+    expect(scenario.childBenefit).toEqual({ children: 3 });
+  });
+
+  it("clamps a negative pension to zero and counts at least one whole child", () => {
+    const scenario = explorerScenario({
+      ...DEFAULTS_2026,
+      pensionMethod: "salary-sacrifice",
+      pensionAmount: -50,
+      childBenefit: true,
+      children: 0,
+    });
+    expect(scenario.pension).toEqual({ method: "salary-sacrifice", amount: 0 });
+    expect(scenario.childBenefit).toEqual({ children: 1 });
+    // 2.6 children rounds to 3.
+    expect(
+      explorerScenario({ ...DEFAULTS_2026, childBenefit: true, children: 2.6 }).childBenefit,
+    ).toEqual({ children: 3 });
+  });
+});
+
+describe("MarginalRateExplorer controls", () => {
+  const renderControlled = (values = DEFAULTS_2026) => {
+    const onChange = vi.fn();
+    const view = render(<MarginalRateExplorer values={values} onChange={onChange} />);
+    openMoreOptions();
+    return { onChange, ...view };
+  };
+  const slider = (name: string) => screen.getByRole("slider", { name });
+
+  it("reports each input through onChange", () => {
+    const { onChange } = renderControlled({
+      ...DEFAULTS_2026,
+      pensionMethod: "salary-sacrifice",
+      childBenefit: true,
+      children: 1,
+    });
+    fireEvent.change(slider("Bonus a year"), { target: { value: "4000" } });
+    expect(onChange).toHaveBeenCalledWith("bonus", 4000);
+    fireEvent.change(screen.getByLabelText("Where you pay tax"), { target: { value: "SCOTLAND" } });
+    expect(onChange).toHaveBeenCalledWith("region", "SCOTLAND");
+    fireEvent.change(screen.getByLabelText("Pension contribution type"), {
+      target: { value: "net-pay" },
+    });
+    expect(onChange).toHaveBeenCalledWith("pensionMethod", "net-pay");
+    fireEvent.change(slider("Pension contribution a year"), { target: { value: "3000" } });
+    expect(onChange).toHaveBeenCalledWith("pensionAmount", 3000);
+    fireEvent.click(screen.getByLabelText("Include Child Benefit"));
+    expect(onChange).toHaveBeenCalledWith("childBenefit", false);
+    fireEvent.change(slider("Children receiving Child Benefit"), { target: { value: "2" } });
+    expect(onChange).toHaveBeenCalledWith("children", 2);
+  });
+
+  it("shows the pension amount only once a pension type is chosen", () => {
+    renderControlled();
+    expect(screen.queryByRole("slider", { name: "Pension contribution a year" })).toBeNull();
+  });
+
+  it("offers both regions, England first", () => {
+    renderControlled();
+    const options = [
+      ...(screen.getByLabelText("Where you pay tax") as HTMLSelectElement).options,
+    ].map((o) => o.value);
+    expect(options).toEqual(["ENGLAND_NI_WALES", "SCOTLAND"]);
+  });
+
+  it("adds and removes student loan plans, keeping the fixed plan order", () => {
+    const { onChange } = renderControlled({ ...DEFAULTS_2026, studentLoans: "postgrad" });
+    fireEvent.click(screen.getByLabelText("Plan 2"));
+    expect(onChange).toHaveBeenLastCalledWith("studentLoans", "plan2+postgrad");
+    fireEvent.click(screen.getByLabelText("Postgraduate loan"));
+    expect(onChange).toHaveBeenLastCalledWith("studentLoans", "");
+  });
+
+  it("lists the tax years newest first", () => {
+    renderControlled();
+    const years = [...(screen.getByLabelText("Tax year") as HTMLSelectElement).options].map(
+      (o) => o.value,
+    );
+    expect(years.length).toBeGreaterThan(1);
+    expect(years).toEqual([...years].sort().reverse());
+  });
+
+  it("opens the extra pension slider at once and asks for £1,000", () => {
+    const { onChange } = renderControlled();
+    fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
+    expect(onChange).toHaveBeenCalledWith("extraPension", 1000);
+    // The parent has not passed the new value back yet, and the slider is already open.
+    expect(slider("Extra pension contribution")).toBeDefined();
+  });
+
+  it("reports the extra pension slider through onChange", () => {
+    const onChange = vi.fn();
+    // Salary and deduction options opens itself when an extra pension is set.
+    render(
+      <MarginalRateExplorer
+        values={{ ...DEFAULTS_2026, extraPension: 1000 }}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.change(slider("Extra pension contribution"), { target: { value: "2500" } });
+    expect(onChange).toHaveBeenCalledWith("extraPension", 2500);
+  });
+
+  it("closes the extra pension slider on an outside reset after it was moved or opened", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <MarginalRateExplorer
+        values={{ ...DEFAULTS_2026, extraPension: 1000 }}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.change(slider("Extra pension contribution"), { target: { value: "2000" } });
+    rerender(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
+    expect(screen.getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Model a pension contribution" }));
+    rerender(
+      <MarginalRateExplorer
+        values={{ ...DEFAULTS_2026, extraPension: 1000 }}
+        onChange={onChange}
+      />,
+    );
+    rerender(<MarginalRateExplorer values={DEFAULTS_2026} onChange={onChange} />);
+    expect(screen.getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
+  });
+});
+
+describe("MarginalRateExplorer results", () => {
+  it("shows no pension preview when no extra pension is set", () => {
+    render(<MarginalRateExplorer values={DEFAULTS_2026} onChange={vi.fn()} />);
+    expect(screen.queryByTestId("take-home-delta-pension")).toBeNull();
+  });
+
+  it("shows pence when the next £1,000 crosses a threshold", () => {
+    render(
+      <MarginalRateExplorer values={{ ...DEFAULTS_2026, grossPay: 49_500 }} onChange={vi.fn()} />,
+    );
+    // £49,500 to £50,270: £770 keeps 72% (20% tax, 8% NI) = £554.40.
+    // £50,270 to £50,500: £230 keeps 58% (40% tax, 2% NI) = £133.40. Total £687.80.
+    expect(screen.getByTestId("explorer-outcomes").textContent).toContain("£687.80");
+  });
+
+  it("counts pay of exactly £150,000 as on the chart, and more as above it", () => {
+    const above = /Your pay is above the £150,000 the chart goes up to/;
+    const { rerender } = render(
+      <MarginalRateExplorer values={{ ...DEFAULTS_2026, grossPay: 150_000 }} onChange={vi.fn()} />,
+    );
+    expect(screen.queryByText(above)).toBeNull();
+    rerender(
+      <MarginalRateExplorer values={{ ...DEFAULTS_2026, grossPay: 150_500 }} onChange={vi.fn()} />,
+    );
+    expect(screen.getByText(above)).toBeDefined();
+  });
+
+  it("says a plan is left out when one of two chosen plans has no threshold for the year", () => {
+    render(
+      <MarginalRateExplorer
+        now={new Date("2027-05-01T12:00:00Z")}
+        values={{ ...DEFAULTS_2026, taxYear: "2027/28", studentLoans: "plan1+plan2" }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("explorer-loan-left-out")).toBeDefined();
+  });
+
+  it("says the rates are not in Flump yet only for the year standing in for today's", () => {
+    const latest = getLatestSupportedUkTaxYear();
+    const now = new Date(Date.UTC(Number(latest.slice(0, 4)) + 1, 5, 1));
+    expect(latest).not.toBe("2026/27");
+    const banner = () => screen.getByTestId("tax-rates-status-banner").textContent;
+    const { rerender } = render(
+      <MarginalRateExplorer
+        now={now}
+        values={{ ...DEFAULTS_2026, taxYear: latest }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(banner()).toContain(`Using ${latest} rates. The`);
+    expect(banner()).toContain("rates are not in Flump yet");
+    // An earlier year chosen on purpose is out of date, not a stand-in.
+    rerender(<MarginalRateExplorer now={now} values={DEFAULTS_2026} onChange={vi.fn()} />);
+    expect(banner()).toContain("Using 2026/27 rates, not");
+    expect(banner()).not.toContain("not in Flump yet");
+  });
+
+  it("updates the refusal and the chart when the values change", () => {
+    const onChange = vi.fn();
+    const now = new Date("2027-05-01T12:00:00Z");
+    const values = { ...DEFAULTS_2026, taxYear: "2027/28" };
+    const { rerender } = render(
+      <MarginalRateExplorer now={now} values={values} onChange={onChange} />,
+    );
+    expect(screen.queryAllByTestId("marginal-rate-stepped-zone")).toHaveLength(0);
+    rerender(
+      <MarginalRateExplorer
+        now={now}
+        values={{ ...values, childBenefit: true, children: 2 }}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getAllByTestId("marginal-rate-stepped-zone")).toHaveLength(1);
+    rerender(
+      <MarginalRateExplorer
+        now={now}
+        values={{ ...values, region: "SCOTLAND" }}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByTestId("explorer-refusal")).toBeDefined();
+  });
+
+  it("uses h3 section headings by default", () => {
+    render(<MarginalRateExplorer values={DEFAULTS_2026} onChange={vi.fn()} />);
+    expect(screen.getByRole("heading", { level: 3, name: CHART_TITLE })).toBeDefined();
+  });
+});
