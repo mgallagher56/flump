@@ -183,6 +183,38 @@ describe("Personal Allowance set where it lowers the bill", () => {
   });
 });
 
+describe("which line the gain comes off", () => {
+  it("interest that rises stays on its old line; the dividends take the net gain", () => {
+    // 2026/27, no other income: interest 50,000, dividends 10,000. Taxable 47,430: PSA 500.
+    // Today: interest 5,000 starting rate, 500 PSA, 5,500 to 37,430 at 20% = 6,386; dividend
+    //   allowance 37,430 to 37,930; 9,500 x 35.75% = 3,396.25. Total 9,782.25.
+    // Lowest: 270 moves from interest to dividends: interest to 37,700, 32,200 x 20% = 6,440
+    //   (+54); dividends 9,230 x 35.75% = 3,299.725 (-96.525). Total 9,739.725, gain 42.525.
+    // The interest line rose, so it stays at 6,386; the dividend line is 3,396.25 - 42.525.
+    const y = "2026/27";
+    const r = calculateUKTax(y, [interest(y, 50000), dividends(y, 10000)], 0, 100);
+    expect(r.allowanceOnSavings).toBe(12300);
+    expect(r.savingsTaxDue).toBeCloseTo(6386, 6);
+    expect(r.dividendTaxDue).toBeCloseTo(3353.725, 6);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(9739.725, 6);
+  });
+
+  it("dividends that do not change keep their line; the interest takes the net gain", () => {
+    // 2026/27: salary 50,000, interest 10,000, dividends 1,000. Taxable 48,430: PSA 500.
+    // Today: salary 37,430 x 20% = 7,486; PSA 37,430 to 37,930, 9,500 x 40% = 3,800; dividend
+    //   allowance 47,430 to 47,930, 500 x 35.75% = 178.75. Total 11,464.75.
+    // Lowest: 270 moves from salary to interest (as in case 4): salary 37,700 x 20% = 7,540;
+    //   interest 9,230 x 40% = 3,692; dividends unchanged. Total 11,410.75, gain 54.
+    // Lines: salary 7,486; interest 3,800 - 54 = 3,746; dividends 178.75.
+    const y = "2026/27";
+    const r = calculateUKTax(y, [interest(y, 10000), dividends(y, 1000)], 50000, 100);
+    expect(r.allowanceOnSavings).toBe(270);
+    expect(r.savingsTaxDue).toBeCloseTo(3746, 6);
+    expect(r.dividendTaxDue).toBeCloseTo(178.75, 6);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(11410.75, 6);
+  });
+});
+
 describe("tax on rent when the allowance moves", () => {
   it("the rent line rises while the bill falls (2026/27)", () => {
     // Rent profit 10,000, interest 8,000, dividends 12,000. Taxable 17,430: PSA 1,000.
@@ -246,6 +278,25 @@ describe("2027/28: other income first, then the lowest bill", () => {
     // moves: salary 37,430 x 20% = 7,486; the dividend allowance sits on 37,430 to 37,930 and
     // 9,500 x 35.75% = 3,396.25. Total 10,882.25 (2026/27 would move 270: case 3a).
     const r = calculateUKTax(y, [dividends(y, 10000)], 50000, 100);
+    expect(r.allowanceOnNonSavings).toBe(12570);
+    expect(r.allowanceOnDividends).toBe(0);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(10882.25, 6);
+  });
+
+  it("self-employed profit is other income too: it takes the whole allowance", () => {
+    // Self-employed income 52,000 less 2,000 of costs: profit 50,000 (other income, s.25(3A)),
+    // dividends 10,000. As case 3b: 37,430 x 20% = 7,486 and 9,500 x 35.75% = 3,396.25, total
+    // Income Tax 10,882.25, with all 12,570 against the profit.
+    const r = calculateUKTax(
+      y,
+      [
+        rec(y, "self-employed", "self_employed_income", 52000),
+        rec(y, "self-employed", "office_costs", 2000, "expense"),
+        dividends(y, 10000),
+      ],
+      0,
+      100,
+    );
     expect(r.allowanceOnNonSavings).toBe(12570);
     expect(r.allowanceOnDividends).toBe(0);
     expect(r.totalIncomeTaxDue).toBeCloseTo(10882.25, 6);
