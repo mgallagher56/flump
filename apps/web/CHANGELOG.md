@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.48.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.47.0...flump/web-v1.48.0) (2026-11-20)
+
+
+### Features ✨
+
+* **tax:** Self Assessment reads account shares, region and calculated figures; Mortgage yield (slice 7 web) ([9bbe977](https://github.com/mgallagher56/flump/commit/9bbe977180adf0e7c9fa68b7593b6793c36c351b))
+* **ui:** one colour per area across pages, read from the same map as the home cards ([7f6b646](https://github.com/mgallagher56/flump/commit/7f6b646d7d31c2f9d7e819fabc258a79df764470))
+
+
+### Bug Fixes 🪲
+
+* audit leftovers 3 to 6 (mortgage type, outgoings, budget flags, promo rate) ([6d39246](https://github.com/mgallagher56/flump/commit/6d39246a34a54a5805c529358277a8ed1064f160))
+* review findings for audit leftovers (remote MCP account fields, short id, repayment choice) ([5ab7d54](https://github.com/mgallagher56/flump/commit/5ab7d5493e390ebea8203ec9cd42b00738284b03))
+* say when a pension contribution is left out for want of a salary ([e023f60](https://github.com/mgallagher56/flump/commit/e023f601fe4d24202d82ad56010a3deeb2111922))
+* **tax:** CI fixes after the rebase: one tax record index, sole-or-joint column, timer, wording ([cdd1b8e](https://github.com/mgallagher56/flump/commit/cdd1b8e4d986028d73650179be783694ee9a5ee7))
+* **tax:** investment fees do not reduce the tax on savings interest ([ecc045f](https://github.com/mgallagher56/flump/commit/ecc045fc89aa655db5881d6518d5745fa08d6606))
+* **tax:** own line for allowance lost to savings; known tax record categories only ([cd024a6](https://github.com/mgallagher56/flump/commit/cd024a61f164a06bb1dc1cd1eaea4dfcbf803374))
+* **tax:** review fixes on the web: estimate wording, one yield prompt, repayment line, panel stories ([f6d4683](https://github.com/mgallagher56/flump/commit/f6d468360b05853d8273f4e36153573463d47382))
+* **ui:** keep the debts group apricot, tidy stale colour notes, add parity row and tile tests ([45c71dd](https://github.com/mgallagher56/flump/commit/45c71ddabb76216fe9df4b3979650311fbc841b3))
+
+
+### CI 🤖
+
+* **e41:** drop the Vitest web split; keep the Storybook halves (coordinator, 20 Nov) ([a9e6b19](https://github.com/mgallagher56/flump/commit/a9e6b19b85899bb6ad62a7d3b2569177fab54771))
+* **e41:** show test results in the web halves' logs as well as the blob report ([069f570](https://github.com/mgallagher56/flump/commit/069f570ae1db7985ca4761f06b452bde422e38f8))
+* **e41:** split Vitest web and both Storybook a11y jobs in halves; local test runs stop running dependencies' tests (E41 P5) ([95ff2cc](https://github.com/mgallagher56/flump/commit/95ff2cc3fef1f37fed832c9cfa1a2bf4f5c1e0b2))
+* **e41:** the web halves build what the contract suite boots, as test:coverage does ([074ff38](https://github.com/mgallagher56/flump/commit/074ff38f784d52bdefa6a2b8bc1e0c8fe3036d69))
+
+
+### Refactor 🔥
+
+* drop apps/mobile-companion, GET/POST /transactions and the displayName and hasSecondIncome responses ([bcfcaf9](https://github.com/mgallagher56/flump/commit/bcfcaf9bf597abb7de932bf1b08fd9580580d2c9))
+
+
+### Tests 🧪
+
+* **web,ui,marketing:** run DOM-free unit tests under node; load Testing Library only with a DOM (E41 P3) ([a5d2f50](https://github.com/mgallagher56/flump/commit/a5d2f50575c8cdd1cbf24540dac905af91dc68a4))
+
 ## [1.47.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.46.0...flump/web-v1.47.0) (2026-11-19)
 
 
