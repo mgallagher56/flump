@@ -280,3 +280,107 @@ describe("RetirementService.upsertPlan", () => {
     expect(qb.where.mock.calls[0]?.[0]).toContain(`"user_id" = :user_id`);
   });
 });
+
+describe("RetirementService database errors on save", () => {
+  it("maps the age check with no constraint name to a 400", async () => {
+    const { repo } = makeRepo(null);
+    repo.save.mockRejectedValueOnce(Object.assign(new Error("check"), { code: "23514" }));
+    const service = new RetirementService(repo as never, notErased() as never);
+    await expect(service.upsertPlan("user_1", { retirementAge: 66 })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it("returns a check failure on some other constraint unchanged", async () => {
+    const { repo } = makeRepo(null);
+    // Top-level code and constraint, as a raw driver error carries them (no driverError).
+    const other = Object.assign(new Error("check"), {
+      code: "23514",
+      constraint: "CHK_retirement_plans_other",
+    });
+    repo.save.mockRejectedValueOnce(other);
+    const service = new RetirementService(repo as never, notErased() as never);
+    await expect(service.upsertPlan("user_1", { retirementAge: 66 })).rejects.toBe(other);
+  });
+
+  it("rethrows a failed first save that is not a duplicate, never updating a row", async () => {
+    const { repo, scoped } = makeRepo(null);
+    // Were the failure treated as a lost race, the re-read would find this row and update it.
+    scoped.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(makePlanRow());
+    const lost = new Error("connection lost");
+    repo.save.mockRejectedValueOnce(lost);
+    const service = new RetirementService(repo as never, notErased() as never);
+
+    await expect(service.upsertPlan("user_1", { retirementAge: 67 })).rejects.toBe(lost);
+    expect(scoped.update).not.toHaveBeenCalled();
+  });
+
+  it("rethrows the duplicate when the winning row cannot be found either", async () => {
+    const { repo } = makeRepo(null);
+    const duplicate = Object.assign(new Error("dup"), { code: "23505" });
+    repo.save.mockRejectedValueOnce(duplicate);
+    const service = new RetirementService(repo as never, notErased() as never);
+
+    await expect(service.upsertPlan("user_1", { retirementAge: 67 })).rejects.toBe(duplicate);
+  });
+});
+
+describe("RetirementService updates of a saved plan", () => {
+  it("writes nothing for a PUT that carries no fields and returns the saved plan", async () => {
+    const current = makePlanRow({ retirementAge: 60, planToAge: 90 });
+    const { repo, scoped } = makeRepo(current);
+    const service = new RetirementService(repo as never, notErased() as never);
+
+    const res = await service.upsertPlan("user_1", {});
+
+    expect(scoped.update).not.toHaveBeenCalled();
+    expect(res.plan).toMatchObject({ id: current.id, retirementAge: 60, planToAge: 90 });
+  });
+
+  it("re-reads the caller's own row by its id, never another user's plan", async () => {
+    const own = makePlanRow({ retirementAge: 67 });
+    const theirs = makePlanRow({
+      id: "22222222-2222-4222-8222-222222222222",
+      userId: "user_2",
+      retirementAge: 55,
+    });
+    const { repo, scoped } = makeRepo(own);
+    // A table holding two users' plans, the other user's first: a lookup without the id filter
+    // would come back with theirs.
+    const table = [theirs, own];
+    scoped.findOneBy.mockImplementation(
+      async (where: Partial<RetirementPlan>) =>
+        table.find((row) =>
+          Object.entries(where).every(([key, value]) => row[key as keyof RetirementPlan] === value),
+        ) ?? null,
+    );
+    const service = new RetirementService(repo as never, notErased() as never);
+
+    const res = await service.upsertPlan("user_1", { retirementAge: 67 });
+
+    expect(res.plan).toMatchObject({ id: own.id, userId: "user_1", retirementAge: 67 });
+  });
+
+  it("is a 412 when the row has gone by the time it is re-read", async () => {
+    const { repo, scoped } = makeRepo(makePlanRow());
+    scoped.findOneBy.mockResolvedValue(null);
+    const service = new RetirementService(repo as never, notErased() as never);
+
+    await expect(service.upsertPlan("user_1", { retirementAge: 67 })).rejects.toBeInstanceOf(
+      PreconditionFailedException,
+    );
+    expect(repo.save).not.toHaveBeenCalled();
+  });
+});
+
+describe("RetirementService reads a saved cash savings rate as a number", () => {
+  it("converts the stored decimal text to a number", async () => {
+    // The decimal(6,4) column comes back from the driver as text: "0.0400" is 4 / 100 = 0.04.
+    const { repo } = makeRepo(makePlanRow({ cashSavingsNominalRate: "0.0400" as never }));
+    const service = new RetirementService(repo as never, notErased() as never);
+
+    const { plan } = await service.getPlan("user_1");
+
+    expect(plan.cashSavingsNominalRate).toBe(0.04);
+  });
+});
