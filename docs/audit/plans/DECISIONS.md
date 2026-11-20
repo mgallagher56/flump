@@ -412,3 +412,12 @@ Relayed by the coordinator on 20 November 2026, while PR #845 (invite links) was
 - Supersedes E33 RD9 (friends beta). Retirement has no gate of its own: every caller the beta gate allows (open beta, admin, either env list, active invite member) can use the page, `/retirement-plan` and the MCP retirement tools.
 - `RETIREMENT_ALLOWED_USER_IDS` is no longer read. An environment that still sets it boots and behaves the same (the env schema ignores unknown variables).
 - Nothing the page says changes: wording, the MoneyHelper line and estimates marked as estimates stay. No figure changes.
+
+# Owner decision (2026-11-20): E41 mutation testing becomes a local check
+
+Relayed by the coordinator during E41 M4 (PR 847). Owner's words: "mutation testing takes a long time, so we shouldn't be running it in a pipeline. It should just be a local check we do irregularly, maybe once per month, to verify our tests are in a good state".
+
+- The mutation workflow is removed: no weekly run, no manual start in CI, no pull request job. Mutation testing runs locally with `bun run mutation <package|all>`, about once a month or before a release, when someone chooses. Every Stryker config, the floors in `scripts/mutation-baseline.json` and the score check stay.
+- Supersedes round 12 decisions 4 and 5, and decision 6 as far as CI artifacts go (reports stay local; still no hosted dashboard). E41 M5 is withdrawn.
+- Decision 11 stands for the local run: asked "Keep mutation testing on the fast unit tests only, as recommended?", the owner answered: "Keep unit only".
+- A floor still only moves down with the owner's sign-off (AGENTS.md section 15). No reminder job and no staleness check.

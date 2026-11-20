@@ -2,7 +2,7 @@
 
 Decisions: accepted on 19 November 2026
 
-> Status: plan accepted by the owner on 19 November 2026. No code yet. Written 2026-11-19 against `origin/main` at `6c2022fc`. Paths are relative to the repository root. Figures are marked "measured" or "estimate".
+> Status: plan accepted by the owner on 19 November 2026. Amended on 20 November 2026: mutation testing is a local check run about once a month, not a CI job, and M5 is withdrawn (owner's words in section 12, "Mutation testing becomes a local check"). Sections 6 and 7 describe the CI design used from M1 to M4, kept as a record. Written 2026-11-19 against `origin/main` at `6c2022fc`. Paths are relative to the repository root. Figures are marked "measured" or "estimate".
 
 ## 1. Summary and why it matters
 
@@ -127,6 +127,8 @@ Recording equivalents (decision 2, recommended form): a triage ledger, `docs/tes
 
 ## 6. Where it runs
 
+Superseded on 20 November 2026: no workflow runs mutation testing. It is a local check (`bun run mutation <package|all>`, about once a month), see section 12. The table below is the CI design used from M1 to M4.
+
 | Run | When | Blocking? | Output |
 | --- | --- | --- | --- |
 | Full run per package | Weekly, staggered, plus manual start (decision 5) | Fails its own scheduled job when a score is under its floor. Not a merge gate | HTML and JSON report as a CI artifact; score table in the job summary; the incremental file saved to the Actions cache |
@@ -167,7 +169,7 @@ Each slice is one PR, not stacked, reviewed by a different agent before merge. L
 - First run without the database specs. Report how many survivors sit in code only the database specs reach.
 - Authorisation survivors are top priority: a guard that still passes with its check removed.
 
-**M5. Web and UI logic (L).** Starts after the E40 slices that rewrite containers and forms have merged.
+**M5. Web and UI logic (L).** Withdrawn on 20 November 2026 (section 12, "Mutation testing becomes a local check"). The plan as it stood:
 - Web: `utils` (26 files), `hooks` (9), `services` (8), `state`, `server/`, then `containers` (14). The runner must use the `unit` project only.
 - UI: helpers and component logic. Style files and stories excluded.
 - New or changed components follow sections 1 and 4. Test-only changes do not need new stories.
@@ -339,6 +341,14 @@ Each has options and a recommendation. A flag says when it names an outside serv
     - C. Run the jobs in the official Playwright container image.
     - Recommendation: A if P1 shows Chromium starts without the step; otherwise B.
     - **Accepted on 19 November 2026: option A if P1 shows Chromium starts without the step, otherwise B**.
+
+**Mutation testing becomes a local check (20 November 2026).** Relayed by the coordinator during M4 (PR 847). The owner's words: "mutation testing takes a long time, so we shouldn't be running it in a pipeline. It should just be a local check we do irregularly, maybe once per month, to verify our tests are in a good state".
+
+- The mutation workflow (weekly crons, manual start, the pull request job) is removed. Every Stryker config, `scripts/mutation-baseline.json` with its floors and the score check stay, run by `bun run mutation <package|all>`.
+- Supersedes decision 4 (there is no pull request check), decision 5 (no weekly run: about monthly, locally, when someone chooses) and decision 6 as far as CI artifacts go (reports stay local; still no hosted dashboard).
+- M5 is withdrawn (relayed by the coordinator as "M5 (making it a required check) is withdrawn"). Nothing is added to CI.
+- Decision 11 stands for the local run: on 20 November 2026, asked "Keep mutation testing on the fast unit tests only, as recommended?", the owner answered: "Keep unit only".
+- A floor still only moves down with the owner's sign-off. No reminder job and no staleness check.
 
 ## 13. The strongest argument against
 
