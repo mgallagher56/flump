@@ -1,5 +1,5 @@
 import { Logger } from "@nestjs/common";
-import { SignJWT } from "jose";
+import { generateKeyPair, SignJWT } from "jose";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { createTestJwks } from "./testing/test-jwks";
 import { resolveWorkosIssuer, WorkOsJwtVerifier } from "./workos-jwt.verifier";
@@ -249,5 +249,49 @@ describe("WorkOsJwtVerifier diagnostics", { timeout: 15_000 }, () => {
     const lines = log.mock.calls.map((c) => String(c[0]));
     log.mockRestore();
     expect(lines.some((l) => l.includes("https://a.example"))).toBe(true);
+  });
+});
+
+describe("WorkOsJwtVerifier claim shapes", { timeout: 15_000 }, () => {
+  beforeAll(() => {
+    Logger.overrideLogger(false);
+  });
+
+  it("accepts only RS256 by default, even from a key the JWKS trusts", async () => {
+    // WorkOS signs access tokens with RS256. With that one algorithm pinned, a token signed
+    // under another algorithm (RS512 here) is refused even though the JWKS serves its key.
+    const { publicKey, privateKey } = await generateKeyPair("RS512");
+    const issuer = "https://test.workos.example/user_management/client_test";
+    const verifier = new WorkOsJwtVerifier({ jwks: async () => publicKey, issuer });
+    const token = await new SignJWT({ sub: "user_1" })
+      .setProtectedHeader({ alg: "RS512" })
+      .setIssuer(issuer)
+      .setExpirationTime("1h")
+      .sign(privateKey);
+    await expect(verifier.verify(token)).rejects.toThrow("invalid token");
+  });
+
+  it.each([
+    ["an empty string", ""],
+    ["a number", 12345],
+  ])("rejects a token whose sub is %s", async (_name, sub) => {
+    // The user id must be a non-empty string: an empty or numeric sub names no WorkOS user.
+    const { t, verifier } = await setup();
+    await expect(verifier.verify(await t.sign({ sub }))).rejects.toThrow("invalid token");
+  });
+
+  it("ignores a client_id claim when no client id is configured", async () => {
+    // The client_id check applies only when one is set; without it the claim is not compared.
+    const { t, verifier } = await setup();
+    await expect(
+      verifier.verify(await t.sign({ sub: "user_1", client_id: "client_any" })),
+    ).resolves.toMatchObject({ id: "user_1" });
+  });
+
+  it("drops an email claim that is not a string", async () => {
+    // Only a string is an email; anything else is treated as no email at all.
+    const { t, verifier } = await setup();
+    const user = await verifier.verify(await t.sign({ sub: "user_1", email: 42 }));
+    expect(user.email).toBeUndefined();
   });
 });

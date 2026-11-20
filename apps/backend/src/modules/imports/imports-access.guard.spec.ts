@@ -1,4 +1,4 @@
-import type { ExecutionContext } from "@nestjs/common";
+import { type ExecutionContext, NotFoundException } from "@nestjs/common";
 import { afterEach, describe, expect, it } from "vitest";
 import { ImportsAccessGuard } from "./imports-access.guard";
 
@@ -26,6 +26,12 @@ describe("ImportsAccessGuard", () => {
       expect(body).toEqual({ code: "not_found", message: "Not found" });
       expect(JSON.stringify(body)).not.toMatch(/AI|MCP/);
     }
+  });
+
+  it("answers the neutral 404 rather than failing when request.user is missing", () => {
+    process.env.MCP_OPEN_ACCESS = "false";
+    process.env.MCP_ALLOWED_USER_IDS = "owner";
+    expect(() => new ImportsAccessGuard().canActivate(ctx())).toThrow(NotFoundException);
   });
 
   it("is open when open access is on", () => {

@@ -47,6 +47,43 @@ describe("McpTokenService audit trail (BE-06)", () => {
     );
   });
 
+  it("records the granted scopes, expiry and staging choice on the mint audit row", async () => {
+    const { service, auditInsert } = buildTokenService();
+    await service.createPatToken("u1", "Reader");
+    await service.createPatToken("u1", "Stager", { allowStaging: true, expiryDays: 30 });
+    // Default mint: read and simulate, the 90-day default expiry, staging off.
+    expect(auditInsert).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        metadata: {
+          scopes: ["mcp:read:anonymized", "mcp:simulate"],
+          expiryDays: 90,
+          allowStaging: false,
+        },
+      }),
+    );
+    // Opted in: write:stage added, 30 days as asked, staging on.
+    expect(auditInsert).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        metadata: {
+          scopes: ["mcp:read:anonymized", "mcp:simulate", "write:stage"],
+          expiryDays: 30,
+          allowStaging: true,
+        },
+      }),
+    );
+  });
+
+  it("names each granted scope in the AI-access consent's version", async () => {
+    const { service, consentInsert } = buildTokenService();
+    await service.createPatToken("u1", "Reader");
+    // The consent records what was agreed to: the two default scopes, comma-separated.
+    expect(consentInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ version: "mcp:read:anonymized,mcp:simulate" }),
+    );
+  });
+
   it("records mcp_token.revoked and withdraws the consent when a token is revoked", async () => {
     const { service, repo, auditInsert, consentUpdate, tokenUpdate } = buildTokenService();
     Object.assign(repo, {

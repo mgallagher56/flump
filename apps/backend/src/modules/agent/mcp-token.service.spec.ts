@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { afterEach, describe, expect, it, type Mock, vi } from "vitest";
+import { encodeCursor } from "../../contract/pagination";
 import { fakeBetaMembership } from "../../testing/fake-beta-membership";
 import { at } from "../../testing/must";
 import { McpTokenService } from "./mcp-token.service";
@@ -254,7 +255,10 @@ describe("McpTokenService.listTokens expiry label", () => {
     revokedAt: null,
   };
   const service = () =>
-    new McpTokenService({ find: vi.fn().mockResolvedValue([token]) } as never, fakeBetaMembership());
+    new McpTokenService(
+      { find: vi.fn().mockResolvedValue([token]) } as never,
+      fakeBetaMembership(),
+    );
 
   afterEach(() => vi.useRealTimers());
 
@@ -268,5 +272,51 @@ describe("McpTokenService.listTokens expiry label", () => {
     vi.useFakeTimers({ now: expiresAt.getTime() - 1, toFake: ["Date"] });
     const [item] = await service().listTokens("u_1");
     expect(item?.isExpired).toBe(false);
+  });
+
+  it("asks only for the caller's own tokens, newest first", async () => {
+    // Tenancy contract: the lookup is filtered by the caller's user id, so one user never sees
+    // another's tokens; the list reads newest first.
+    const find = vi.fn().mockResolvedValue([]);
+    await new McpTokenService({ find } as never).listTokens("u_1");
+    expect(find).toHaveBeenCalledWith({ where: { userId: "u_1" }, order: { createdAt: "DESC" } });
+  });
+});
+
+describe("McpTokenService.listTokensPage (GET /mcp-tokens, BE-09)", () => {
+  /** A chainable stand-in for TypeORM's query builder that records each call. */
+  const builder = () => {
+    const calls: Array<[string, unknown[]]> = [];
+    const qb: Record<string, unknown> = {};
+    for (const m of ["where", "andWhere", "addSelect", "orderBy", "addOrderBy", "limit"]) {
+      qb[m] = (...args: unknown[]) => {
+        calls.push([m, args]);
+        return qb;
+      };
+    }
+    qb.getRawAndEntities = async () => ({ entities: [], raw: [] });
+    return { repo: { createQueryBuilder: () => qb }, calls };
+  };
+
+  it("filters by the caller and orders newest first with the id as tiebreak", async () => {
+    const { repo, calls } = builder();
+    const page = await new McpTokenService(repo as never).listTokensPage("u_1", { limit: 10 });
+    expect(calls).toContainEqual(["where", ["t.userId = :userId", { userId: "u_1" }]]);
+    // Documented order: created_at descending, then id descending for equal times.
+    expect(calls).toContainEqual(["orderBy", ['"t"."created_at"', "DESC"]]);
+    expect(calls).toContainEqual(["addOrderBy", ['"t"."id"', "DESC"]]);
+    expect(page).toEqual({ items: [], nextCursor: null });
+  });
+
+  it("accepts a cursor made of a creation time and a token id", async () => {
+    // The cursor is the last row's (created_at, id): a microsecond timestamp and a UUID.
+    const { repo } = builder();
+    const cursor = encodeCursor([
+      "2026-11-20T12:00:00.000000",
+      "0b6f4e1a-9c2d-4e3f-a1b2-c3d4e5f60711",
+    ]);
+    await expect(
+      new McpTokenService(repo as never).listTokensPage("u_1", { limit: 10, cursor }),
+    ).resolves.toEqual({ items: [], nextCursor: null });
   });
 });

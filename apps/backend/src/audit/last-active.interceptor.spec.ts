@@ -48,4 +48,25 @@ describe("LastActiveInterceptor", () => {
     expect(await interceptor.touch("user_a", Date.now() + 5 * 60 * 1000 + 1)).toBe(true);
     expect(query).toHaveBeenCalledTimes(2);
   });
+
+  it("waits the full five minutes after a failed write before trying again", async () => {
+    const query = vi.fn().mockRejectedValueOnce(new Error("db down")).mockResolvedValue([]);
+    const { interceptor } = make(query);
+    const FIVE_MIN = 5 * 60 * 1000; // 300,000 ms
+    expect(await interceptor.touch("user_a", 0)).toBe(false);
+    // Failed at t=0: no retry at 299,999 ms, a retry at 300,000 ms.
+    expect(await interceptor.touch("user_a", FIVE_MIN - 1)).toBe(false);
+    expect(await interceptor.touch("user_a", FIVE_MIN)).toBe(true);
+    expect(query).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears its cache when it holds 10,000 users, so it never grows without bound", async () => {
+    const { interceptor, query } = make();
+    // 10,000 users fill the cache; the 10,001st clears it before being stored, so user 0 is no
+    // longer remembered and is written again the same day (10,002 writes in all).
+    for (let i = 0; i < 10_000; i++) await interceptor.touch(`user_${i}`, 0);
+    await interceptor.touch("user_new", 0);
+    expect(await interceptor.touch("user_0", 1)).toBe(true);
+    expect(query).toHaveBeenCalledTimes(10_002);
+  });
 });
