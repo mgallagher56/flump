@@ -882,13 +882,12 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     additionalSources: [
       "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
     ],
     derivation:
-      "Annual method. relief at source: net 3000 grossed up x 1.25 = 3750; basic band extended and ANI reduced by it; 3000 paid from take-home; PA 12570 (no taper at ANI 56250); taxable 60000 - 12570 = 47430; basic 41450 x 20% = 8290; higher 5980 x 40% = 2392; additional 0 x 45% = 0; income tax 10682; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6. Take-home = 60000 - net contribution 3000 - tax 10682 - NI 3210.6 = 43107.4.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: relief-at-source band extension rests on ITA 2007 s.414, no GOV.UK page read for it.",
+      "Annual method. relief at source: net 3000 grossed up x 1.25 = 3750; basic rate limit and higher rate limit increased by the gross contribution (FA 2004 s.192(4)) and ANI reduced by it; assumes the higher-rate relief has been claimed (FA 2004 s.192(4)); 3000 paid from take-home; PA 12570 (no taper at ANI 56250); taxable 60000 - 12570 = 47430; basic 41450 x 20% = 8290; higher 5980 x 40% = 2392; additional 0 x 45% = 0; income tax 10682; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6. Take-home = 60000 - net contribution 3000 - tax 10682 - NI 3210.6 = 43107.4.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1612,15 +1611,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 5000 (ITA 2007 s.414). Income tax on salary 60000: PA 12500 (no taper at ANI 55000); taxable 60000 - 12500 = 47500; basic 42500 x 20% = 8500; higher 5000 x 40% = 2000; additional 0 x 45% = 0; income tax 10500. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12500 (no taper at ANI 55000); taxable 60000 - 12500 = 47500; basic 42500 x 20% = 8500; higher 5000 x 40% = 2000; additional 0 x 45% = 0; income tax 10500. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1634,15 +1631,15 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 10000 (ITA 2007 s.414). Income tax on salary 110000: PA 12500 (no taper at ANI 100000); taxable 110000 - 12500 = 97500; basic 47500 x 20% = 9500; higher 50000 x 40% = 20000; additional 0 x 45% = 0; income tax 29500. Expected is income tax only.",
+      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12500 (no taper at ANI 100000); taxable 110000 - 12500 = 97500; basic 47500 x 20% = 9500; higher 50000 x 40% = 20000; additional 0 x 45% = 0; income tax 29500. Expected is income tax only.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it; personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
+      "UNVERIFIED: personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
     signedOffBy: null,
   },
   {
@@ -1656,15 +1653,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 5000 (ITA 2007 s.414). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1678,15 +1673,15 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 10000 (ITA 2007 s.414). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
+      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it; personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
+      "UNVERIFIED: personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
     signedOffBy: null,
   },
   {
@@ -1700,15 +1695,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 5000 (ITA 2007 s.414). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1722,15 +1715,15 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 10000 (ITA 2007 s.414). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
+      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it; personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
+      "UNVERIFIED: personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
     signedOffBy: null,
   },
   {
@@ -1744,15 +1737,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 5000 (ITA 2007 s.414). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1766,15 +1757,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 10000 (ITA 2007 s.414). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1788,15 +1777,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 5000 (ITA 2007 s.414). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1810,15 +1797,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 10000 (ITA 2007 s.414). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1832,15 +1817,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 5000 (ITA 2007 s.414). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1854,15 +1837,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 10000 (ITA 2007 s.414). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1876,15 +1857,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 5000 (ITA 2007 s.414). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1898,15 +1877,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     ],
     derivation:
-      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 10000 (ITA 2007 s.414). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.",
+      "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1920,15 +1897,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/income-tax-rates",
     ],
     derivation:
-      "Relief at source: net 4000 grossed up x 1.25 = 5000. Scottish basic band limit and every limit above it extended by 5000; starter band unchanged (ITA 2007 s.414(2)(b)). Income tax on 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; starter 2827 x 19% = 537.13; basic 17094 x 20% = 3418.8; intermediate 16171 x 21% = 3395.91; higher 11338 x 42% = 4761.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 12113.8. Expected is income tax only.",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: Scottish band extension for relief-at-source pension contributions rests on ITA 2007 s.414(2)(b); no GOV.UK page read states it.",
+      "Relief at source: net 4000 grossed up x 1.25 = 5000. The Scottish basic rate limit and every Scottish limit above it increased by the gross contribution, 5000; starter band unchanged (FA 2004 s.192(4A)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4A)). Income tax on 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; starter 2827 x 19% = 537.13; basic 17094 x 20% = 3418.8; intermediate 16171 x 21% = 3395.91; higher 11338 x 42% = 4761.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 12113.8. Expected is income tax only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -1942,15 +1917,15 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/guidance/adjusted-net-income",
     additionalSources: [
       "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief",
-      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.legislation.gov.uk/ukpga/2004/12/section/192",
       "https://www.gov.uk/income-tax-rates",
     ],
     derivation:
-      "Relief at source: net 4000 grossed up x 1.25 = 5000. Scottish basic band limit and every limit above it extended by 5000; starter band unchanged (ITA 2007 s.414(2)(b)). Income tax on 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; starter 3967 x 19% = 753.73; basic 17989 x 20% = 3597.8; intermediate 14136 x 21% = 2968.56; higher 11338 x 42% = 4761.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 12082.05. Expected is income tax only.",
+      "Relief at source: net 4000 grossed up x 1.25 = 5000. The Scottish basic rate limit and every Scottish limit above it increased by the gross contribution, 5000; starter band unchanged (FA 2004 s.192(4A)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4A)). Income tax on 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; starter 3967 x 19% = 753.73; basic 17989 x 20% = 3597.8; intermediate 14136 x 21% = 2968.56; higher 11338 x 42% = 4761.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 12082.05. Expected is income tax only.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Scottish band extension for relief-at-source pension contributions rests on ITA 2007 s.414(2)(b); no GOV.UK page read states it; Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages.",
+      "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages.",
     signedOffBy: null,
   },
   {
