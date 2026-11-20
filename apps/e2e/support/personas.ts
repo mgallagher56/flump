@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { FROZEN_NOW, SERVER_CLOCK_FROZEN } from "./clock";
 import { BACKEND_URL } from "./env";
-import { allowRateLimitRetry, RATE_LIMIT_BINDING, RETRY_WINDOW_MS } from "./rate-limit-retry";
+import { allowRateLimitRetry } from "./rate-limit-retry";
 
 /**
  * Neutral sample households (two for the visual suite, three more for the phone audit) for the single dev-bypass user, written through the same-origin
@@ -854,26 +854,26 @@ export interface PersonaResult {
  */
 export async function applyPersona(page: Page, name: PersonaName): Promise<PersonaResult> {
   const plan = planFor(PERSONAS[name], seedNow());
-  await allowRateLimitRetry(page);
+  const binding = await allowRateLimitRetry(page);
   const outcome = await page.evaluate(
-    async ({ seed, windowMs, binding }) => {
+    async ({ seed, binding }) => {
       const failures: string[] = [];
-      // One retry after a 429 whose Retry-After is within one window (rate-limit-retry.ts).
+      // On a 429, the Node side decides whether to wait and retry once (rate-limit-retry.ts,
+      // onRateLimited). No binding: this suite does not retry.
       const send = async (path: string, init: RequestInit): Promise<Response> => {
         const response = await fetch(`/api${path}`, init);
-        if (response.status !== 429) return response;
-        const retryAfter = response.headers.get("Retry-After");
-        const waitMs =
-          retryAfter && Number.isInteger(Number(retryAfter)) && Number(retryAfter) >= 0
-            ? Number(retryAfter) * 1000 + 500
-            : 0;
-        if (waitMs === 0 || waitMs > windowMs) return response;
-        const report = (window as unknown as Record<string, unknown>)[binding] as (
+        if (response.status !== 429 || !binding) return response;
+        const decide = (window as unknown as Record<string, unknown>)[binding] as (
           method: string,
           path: string,
-          waitMs: number,
-        ) => Promise<void>;
-        await report(init.method ?? "GET", path, waitMs);
+          retryAfter: string | null,
+        ) => Promise<number | null>;
+        const waitMs = await decide(
+          init.method ?? "GET",
+          path,
+          response.headers.get("Retry-After"),
+        );
+        if (waitMs === null) return response;
         await new Promise((resolve) => setTimeout(resolve, waitMs));
         return fetch(`/api${path}`, init);
       };
@@ -958,7 +958,7 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
       }
       return { failures, unchanged: false, reset: hasData };
     },
-    { seed: plan, windowMs: RETRY_WINDOW_MS, binding: RATE_LIMIT_BINDING },
+    { seed: plan, binding },
   );
 
   if (outcome.failures.length > 0) {

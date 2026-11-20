@@ -3,9 +3,11 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  isDestructiveCall,
   MAX_RETRIES_PER_RUN,
   RETRY_WINDOW_MS,
   readRetries,
+  retryEnabled,
   retryWaitMs,
 } from "../apps/e2e/support/rate-limit-retry";
 
@@ -49,4 +51,18 @@ test("the retry log is read back one record per line, and a run with none reads 
   expect(readRetries(file)).toEqual([
     { test: "a", method: "GET", path: "/accounts", waitMs: 12_500 },
   ]);
+});
+
+test("only the smoke suite retries: the opt-in must be exactly 1", () => {
+  expect(retryEnabled({ E2E_RATE_LIMIT_RETRY: "1" })).toBe(true);
+  expect(retryEnabled({})).toBe(false);
+  expect(retryEnabled({ E2E_RATE_LIMIT_RETRY: "true" })).toBe(false);
+});
+
+test("a reset or a delete is never retried, whatever the Retry-After", () => {
+  expect(isDestructiveCall("POST", "/user-profile/reset-financial-data")).toBe(true);
+  expect(isDestructiveCall("DELETE", "/accounts/1")).toBe(true);
+  expect(isDestructiveCall("delete", "/tax-records/1")).toBe(true);
+  expect(isDestructiveCall("GET", "/accounts")).toBe(false);
+  expect(isDestructiveCall("POST", "/budget-entries")).toBe(false);
 });
