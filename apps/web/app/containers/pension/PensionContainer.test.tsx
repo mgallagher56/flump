@@ -647,6 +647,28 @@ describe("PensionContainer", () => {
       expect(screen.getByText("Method").nextElementSibling?.textContent).toContain(
         "Salary sacrifice",
       );
+      // The saved employment type reaches the take-home tool, so it asks for nothing.
+      openZone();
+      expect(zone().textContent).not.toContain("Add your employment type");
+    });
+
+    it("shows the empty state from the root profile when there is no loader data", async () => {
+      const { DEFAULT_PROFILE } =
+        await vi.importActual<typeof import("~/hooks/useUserProfile")>("~/hooks/useUserProfile");
+      testLoaderData = undefined;
+      testProfileData = { ...DEFAULT_PROFILE, isSalarySacrificeEmployerNi: null };
+      render(<PensionContainer />);
+      expect(screen.getByRole("heading", { level: 2, name: "No pension pots yet" })).toBeDefined();
+    });
+
+    it("gives the take-home tool the latest saved facts after the loader changes", () => {
+      useFixture(FILLED);
+      const view = render(<PensionContainer />);
+      openZone();
+      expect(zone().textContent).not.toContain("Add your employment type");
+      useFixture({ ...FILLED, userProfile: { ...FILLED.userProfile, employmentType: null } });
+      view.rerender(<PensionContainer />);
+      expect(zone().textContent).toContain("Add your employment type");
     });
 
     it("adds the employer's National Insurance saving only with salary sacrifice and the employer passing it on", async () => {
