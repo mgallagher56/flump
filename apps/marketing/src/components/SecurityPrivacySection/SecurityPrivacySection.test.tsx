@@ -14,8 +14,8 @@ describe("SecurityPrivacySection (home security strip)", () => {
   it("is a short strip on a quiet band that links to the security page", () => {
     renderStrip();
     const strip = screen.getByTestId("security-privacy-section");
-    // A quiet neutral band, a step off the canvas.
-    expect(strip.getAttribute("data-tone-band")).toBe("sunken");
+    // A soft teal band, a step off the canvas.
+    expect(strip.getAttribute("data-tone-band")).toBe("teal");
     expect(screen.getByRole("heading", { level: 2, name: "Security and privacy" })).toBeDefined();
     expect(
       screen.getByRole("link", { name: "What Flump can and cannot do" }).getAttribute("href"),

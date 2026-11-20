@@ -74,14 +74,14 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
     const faqHeader = within(faq).getByRole("heading", { level: 2 }).parentElement as HTMLElement;
     expect(faqHeader.className).toContain("ta_left");
     expect(faqHeader.className).not.toContain("ta_center");
-    // Neutral bands only, alternating canvas and sunken after the canvas hero (owner, 2026-11-20:
-    // no peach, brown or green band fills). The hero is a plain section, so it has no tone mark.
+    // Bands alternate the canvas and the soft brand-teal tint after the canvas hero (owner choice
+    // "A", 2026-11-20: no peach, brown or green fills). The hero is a plain section, no tone mark.
     expect(sections.slice(1).map((s) => s.getAttribute("data-tone-band"))).toEqual([
-      "sunken",
+      "teal",
       "canvas",
-      "sunken",
+      "teal",
       "canvas",
-      "sunken",
+      "teal",
       "canvas",
     ]);
   });

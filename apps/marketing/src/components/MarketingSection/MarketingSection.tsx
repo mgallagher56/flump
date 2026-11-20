@@ -10,7 +10,7 @@ export interface MarketingSectionProps extends Omit<SectionBandProps, "variant" 
 
 /**
  * One marketing band: the design system's `SectionBand` (variant `marketing`), with a required
- * anchor id. Bands are neutral: alternate `canvas` with `sunken`, with cards on `surface.card`.
+ * anchor id. Bands alternate `canvas` with `teal` (a soft brand-teal tint), with cards on `surface.card`.
  */
 export const MarketingSection: FC<MarketingSectionProps> = (props) => (
   <SectionBand {...props} variant="marketing" />

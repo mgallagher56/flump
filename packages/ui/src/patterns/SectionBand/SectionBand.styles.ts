@@ -1,13 +1,12 @@
 import { cva } from "../../../styled-system/css";
 
 /**
- * A full-width band (`marketing`) or an in-product section heading (`app`). Marketing bands use
- * two neutral tones: `canvas`, and `sunken` as the calm step between bands, with cards on
- * `surface.card`. The tinted sage and apricot bands (D16 b) were removed at the owner's request:
- * in dark mode they read as green and brown fills, and `surface.subtle` carries a brown cast at
- * band size. Sunken is the darkest dark neutral, so its warm hue barely shows. Colour on the
- * marketing site lives in buttons, links, the hero, illustrations and charts. No eyebrow, index
- * pill or monospace (E16 PR 12).
+ * A full-width band (`marketing`) or an in-product section heading (`app`). Marketing bands
+ * alternate two tones: the plain `canvas` and `teal`, a soft tint of the brand teal (owner choice
+ * "A", 2026-11-20), with cards on `surface.card`. The tint is a cool teal in both themes, with no
+ * brown or olive cast. It replaced the sage and apricot bands (D16 b) and the `surface.subtle`
+ * strip, which read as green, peach, brown and brown-grey fills. No eyebrow, index pill or
+ * monospace (E16 PR 12).
  */
 export const sectionBandRecipe = cva({
   base: {
@@ -18,8 +17,8 @@ export const sectionBandRecipe = cva({
   variants: {
     tone: {
       canvas: { backgroundColor: "surface.canvas" },
-      sunken: {
-        backgroundColor: "surface.sunken",
+      teal: {
+        backgroundColor: "surface.tint.teal",
         borderBlockWidth: "1px",
         borderStyle: "solid",
         borderColor: "border.subtle",

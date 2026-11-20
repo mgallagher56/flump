@@ -129,14 +129,14 @@ export const sectionIllustration = cva({
 
 /**
  * The page's one phone-width illustration: above the closing call to action, with no figures.
- * 192px on a phone, 320px from `md` (was 140px), as on the home page.
+ * 160px on a phone, 320px from `md` (was 140px), as on the home page.
  */
 export const ctaIllustration = cva({
   base: {
     display: "flex",
     justifyContent: "center",
     width: "full",
-    maxWidth: { base: "48", md: "xs" },
+    maxWidth: { base: "40", md: "xs" },
     mx: "auto",
   },
 });

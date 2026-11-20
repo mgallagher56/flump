@@ -12,7 +12,7 @@ import {
   sectionBandTitle,
 } from "./SectionBand.styles";
 
-export type SectionBandTone = "canvas" | "sunken";
+export type SectionBandTone = "canvas" | "teal";
 
 export interface SectionBandProps {
   /** Anchor id. The title gets `${id}-title` and labels the section. */
@@ -23,7 +23,7 @@ export interface SectionBandProps {
    * one-line description, no band padding and no tone.
    */
   variant?: "marketing" | "app";
-  /** Marketing only. Neutral bands: alternate `canvas` with `sunken`. */
+  /** Marketing only. Alternate `canvas` with `teal`, a soft brand-teal tint. */
   tone?: SectionBandTone;
   /** Marketing only. `compact` trims the vertical padding, for a short strip. */
   size?: "default" | "compact";
