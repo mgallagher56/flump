@@ -46,7 +46,7 @@ Other commands:
 
 ## Recording a result
 
-- After a monthly run, update `measured` (the score without timeouts, as in the ledger, or Stryker's own score if there were no timeouts) and `measuredOn` for each package in `scripts/mutation-baseline.json`, and commit it.
+- After a monthly run, update `measured` (the score without timeouts: killed / (killed + timed out + survived + no coverage), from the counts the check prints; with no timeouts it equals Stryker's score) and `measuredOn` for each package in `scripts/mutation-baseline.json`, and commit it.
 - A floor is floor(measured) - 1 (decision 3). It may be raised with no sign-off when the score allows (the check says so). It only moves down with the owner's sign-off (AGENTS.md section 15), listed under "Guard changes" in the PR.
 - A package under its floor: find the new survivors (`bun run mutation:score survivors <package>`), then write the missing tests or add ledger rows as in the [triage ledger](./mutation-triage.md). Survivors recorded as equivalent or not worth killing stay in the count; nothing is suppressed.
 - A new package: give it a `stryker.config.json` and a floor. `scripts/check-mutation-score.test.ts` checks that every package with a Stryker config has a floor, and that no workflow runs Stryker.
