@@ -87,3 +87,13 @@ export const footerRow = cva({
     width: "100%",
   },
 });
+
+/** The one-press keep: a quiet secondary button under the accounts, left aligned. */
+export const keepRow = cva({
+  base: { display: "flex", justifyContent: "flex-start" },
+});
+
+/** "6 balances kept as they are…": quiet, and takes no room while it says nothing. */
+export const keptStatus = cva({
+  base: { margin: 0, textStyle: "body.sm", color: "text.secondary", _empty: { display: "none" } },
+});

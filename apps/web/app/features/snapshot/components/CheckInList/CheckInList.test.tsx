@@ -116,8 +116,10 @@ describe("CheckInList", () => {
     await waitFor(() => expect(document.activeElement).toBe(field(everyday)));
   });
 
-  it("does not render No change to the rest", () => {
+  // The one-press keep (owner approved 20 November 2026) lives in CheckInSheet, under the list
+  // or card, so the list itself holds only the rows.
+  it("leaves the one-press keep to the sheet", () => {
     setup();
-    expect(screen.queryByRole("button", { name: "No change to the rest" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Keep (all|the other)/ })).toBeNull();
   });
 });

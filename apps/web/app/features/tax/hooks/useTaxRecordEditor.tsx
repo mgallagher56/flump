@@ -101,6 +101,7 @@ export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRe
   const [receiptRecord, setReceiptRecord] = useState<TaxRecord | null>(null);
   // The record just added with "Add and start another" (E38 S2), said in the dialog.
   const [savedName, setSavedName] = useState<string | null>(null);
+  const [savedCount, setSavedCount] = useState(0);
   // The draft saved with "Add and start another", until its save lands.
   const another = useRef<TaxRecordDraft | null>(null);
 
@@ -121,6 +122,7 @@ export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRe
         frequency: saved.frequency,
       });
       setSavedName(saved.name);
+      setSavedCount((n) => n + 1);
     },
   });
 
@@ -176,12 +178,14 @@ export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRe
   };
 
   const save = (values: TaxRecordDraft) => {
+    if (saveOutcome.pending) return;
     another.current = null;
     submit(values, editingRecord);
   };
 
   /** Adds this record and keeps the dialog open for the next one. */
   const saveAndAddAnother = (values: TaxRecordDraft) => {
+    if (saveOutcome.pending) return;
     another.current = values;
     submit(values, null);
   };
@@ -216,6 +220,8 @@ export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRe
         onSave={save}
         onSaveAndAddAnother={saveAndAddAnother}
         savedName={savedName}
+        savedCount={savedCount}
+        pending={saveOutcome.pending}
         saveError={saveOutcome.error}
       />
       <TaxReceiptDialog record={receiptRecord} onClose={() => setReceiptRecord(null)} />

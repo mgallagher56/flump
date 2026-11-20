@@ -61,13 +61,14 @@ describe("CheckInCard", () => {
     await waitFor(() => expect(document.activeElement).toBe(next));
   });
 
-  it("renders Back as a quiet button and omits No change to the rest", async () => {
+  // The one-press keep lives in CheckInSheet (owner approved 20 November 2026), not in the card.
+  it("renders Back as a quiet button and leaves the one-press keep to the sheet", async () => {
     setup();
     await userEvent.click(screen.getByRole("button", { name: "No change" }));
     await waitFor(() => expect(screen.getByText("2 of 4")).toBeDefined());
     const back = screen.getByRole("button", { name: "Back" });
     expect(back.dataset.variant).toBe("ghost");
-    expect(screen.queryByRole("button", { name: "No change to the rest" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Keep (all|the other)/ })).toBeNull();
   });
 
   it("moves to the next account once the answer is saved, and back again", async () => {

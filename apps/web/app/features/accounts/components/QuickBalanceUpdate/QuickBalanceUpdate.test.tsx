@@ -27,6 +27,22 @@ const Harness: FC<
   );
 };
 
+// As the page does: opening clears the last outcome.
+const Reopen: FC = () => {
+  const [status, setStatus] = useState<FetcherOutcomeStatus>("idle");
+  return (
+    <QuickBalanceUpdate
+      accountName="Holiday fund"
+      current={500}
+      error={status === "failed" ? "We could not save that. Try again." : null}
+      isLiability={false}
+      onOpen={() => setStatus("idle")}
+      onSave={() => setStatus("failed")}
+      status={status}
+    />
+  );
+};
+
 const open = () => userEvent.click(screen.getByRole("button", { name: "Update balance" }));
 const field = () => screen.getByRole("textbox", { name: "New balance" });
 
@@ -79,6 +95,16 @@ describe("<QuickBalanceUpdate />", () => {
     await userEvent.type(field(), "750{Enter}");
     expect((await screen.findByRole("alert")).textContent).toContain("We could not save that.");
     expect((field() as HTMLInputElement).value).toBe("750");
+  });
+
+  it("a reopened row does not show the error from an earlier failed save", async () => {
+    render(<Reopen />);
+    await open();
+    await userEvent.type(field(), "{Enter}");
+    expect(await screen.findByRole("alert")).toBeDefined();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await open();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("asks a debt for the amount owed now", async () => {

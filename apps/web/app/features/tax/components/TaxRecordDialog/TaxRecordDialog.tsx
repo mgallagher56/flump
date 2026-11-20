@@ -76,6 +76,10 @@ export interface TaxRecordDialogProps {
   onSaveAndAddAnother?: (draft: TaxRecordDraft) => void;
   /** The record just saved with "Add and start another", said quietly at the top of the form. */
   savedName?: string | null;
+  /** Counts saves made with "Add and start another", so the same name is said again. */
+  savedCount?: number;
+  /** A save is on its way: both add buttons wait, so a second press cannot add the record twice. */
+  pending?: boolean;
 }
 
 /** The Name field's id, so the focus can return to it for the next record. */
@@ -117,6 +121,8 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
   accounts = [],
   onSaveAndAddAnother,
   savedName,
+  savedCount = 0,
+  pending = false,
 }) => {
   const [draft, setDraft] = useState<TaxRecordDraft>(initial);
   const [errors, setErrors] = useState<Errors>({});
@@ -193,12 +199,14 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    if (pending) return;
     focusNameNext.current = false;
     const ready = checked();
     if (ready) onSave(ready);
   };
 
   const saveAndAddAnother = () => {
+    if (pending) return;
     const ready = checked();
     if (!ready || !onSaveAndAddAnother) return;
     focusNameNext.current = true;
@@ -231,9 +239,12 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
       id="tax-record-dialog"
     >
       <form className={form()} noValidate onSubmit={submit}>
-        {mode === "add" && savedName ? (
+        {/* Always on the page while adding, so a screen reader hears each new line said into it. */}
+        {mode === "add" ? (
           <p className={savedLine()} role="status">
-            {`${savedName} added. Add the next record.`}
+            {savedName ? (
+              <span key={savedCount}>{`${savedName} added. Add the next record.`}</span>
+            ) : null}
           </p>
         ) : null}
         {/* Amount comes straight after the name; category and notes wait under a toggle named for them. */}
@@ -458,16 +469,16 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
             </FormField>
           </div>
         </CollapsibleDrawer>
-        <div className={footer()}>
+        <div className={footer({ stacked: mode === "add" && Boolean(onSaveAndAddAnother) })}>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           {mode === "add" && onSaveAndAddAnother ? (
-            <Button type="button" variant="secondary" onClick={saveAndAddAnother}>
+            <Button type="button" variant="secondary" onClick={saveAndAddAnother} pending={pending}>
               Add and start another
             </Button>
           ) : null}
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" pending={pending}>
             {mode === "edit" ? "Save changes" : "Add record"}
           </Button>
         </div>

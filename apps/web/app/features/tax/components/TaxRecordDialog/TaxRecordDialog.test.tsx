@@ -383,6 +383,26 @@ describe("TaxRecordDialog add and start another (E38 S2)", () => {
     expect(within(dialog).getByText("Enter a name for this record.")).toBeDefined();
   });
 
+  it("waits while a save is on its way, so a second press cannot add the record twice", async () => {
+    const onSave = vi.fn();
+    const onAnother = vi.fn();
+    render(
+      <TaxRecordDialog
+        initial={{ ...draft, name: "Flat rent", amount: 900 }}
+        mode="add"
+        onOpenChange={() => undefined}
+        onSave={onSave}
+        onSaveAndAddAnother={onAnother}
+        open
+        pending
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Add and start another" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add record" }));
+    expect(onAnother).not.toHaveBeenCalled();
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it("is not offered when editing", () => {
     render(
       <TaxRecordDialog

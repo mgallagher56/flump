@@ -13,7 +13,7 @@ import {
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { buildCheckInSummary, type CheckInAccountInput } from "../../checkInModel";
-import { CHECK_IN_COPY, statusText } from "../../snapshotCopy";
+import { CHECK_IN_COPY, keepRestLabel, keptText, statusText } from "../../snapshotCopy";
 import {
   type AccountDetailInput,
   addMonths,
@@ -28,6 +28,7 @@ import { useCheckIn } from "../../useCheckIn";
 import type { SaveSnapshot } from "../../useSaveSnapshot";
 import { CheckInCard } from "../CheckInCard";
 import { CheckInList } from "../CheckInList";
+import { focusCheckInStep } from "../CheckInStep";
 import { CheckInSummary } from "../CheckInSummary";
 import {
   accountList,
@@ -38,6 +39,8 @@ import {
   checkInScene,
   connectedValue,
   footerRow,
+  keepRow,
+  keptStatus,
   monthPicker,
   summaryLine,
 } from "./CheckInSheet.styles";
@@ -134,6 +137,28 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
     [finished, steps, answers, accounts, accountDetails, currentMonth, basis],
   );
 
+  // The one-press keep (E38 S1): offered while two or more open balances can be kept as they are.
+  // Afterwards a step left open (a calculated figure, no saved balance, a typed figure) takes the
+  // focus; with none left the summary shows, and "Change a balance" still corrects any figure.
+  const keepRest = async () => {
+    const count = await checkIn.keepRest();
+    if (count === 0) return;
+    const next = checkIn.steps.findIndex(
+      (s) => !checkIn.keepable.includes(s) && !checkIn.isDone(s.accountId),
+    );
+    const target = next === -1 ? null : checkIn.steps[next];
+    if (!target) return;
+    if (phone) checkIn.setIndex(next);
+    else setTimeout(() => focusCheckInStep(target.accountId), 0);
+  };
+  const keepCount = checkIn.keepable.length;
+  // Always on the page, so a screen reader hears the count when it is said into it.
+  const keptLine = (
+    <p className={keptStatus()} data-testid="checkin-kept" id="checkin-kept" role="status">
+      {checkIn.kept !== null ? keptText(checkIn.kept) : null}
+    </p>
+  );
+
   const handleOpenChange = (next: boolean) => {
     if (!next && checkIn.takeDirty()) onSave.refresh?.();
     onOpenChange(next);
@@ -149,15 +174,33 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
     steps.length === 0 ? (
       <p className={checkInIntro()}>{CHECK_IN_COPY.empty}</p>
     ) : summary ? (
-      <CheckInSummary
-        month={currentMonth}
-        onChangeBalance={checkIn.reopen}
-        onDone={() => handleOpenChange(false)}
-        summary={summary}
-      />
+      <>
+        {keptLine}
+        <CheckInSummary
+          month={currentMonth}
+          onChangeBalance={checkIn.reopen}
+          onDone={() => handleOpenChange(false)}
+          summary={summary}
+        />
+      </>
     ) : (
       <>
+        {keptLine}
         {phone ? <CheckInCard checkIn={checkIn} /> : <CheckInList checkIn={checkIn} />}
+        {keepCount >= 2 ? (
+          <div className={keepRow()}>
+            <Button
+              data-testid="checkin-keep-rest"
+              id="checkin-keep-rest"
+              onClick={() => void keepRest()}
+              size="sm"
+              type="button"
+              variant="secondary"
+            >
+              {keepRestLabel(keepCount, keepCount === steps.length)}
+            </Button>
+          </div>
+        ) : null}
         {checkIn.allAnswered ? (
           // Every balance has a figure this month, but the check-in was not finished (a balance
           // saved on its own counts as a figure, not as a check-in): finish it here.

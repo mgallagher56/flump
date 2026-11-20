@@ -25,6 +25,8 @@ export interface QuickBalanceUpdateProps {
   /** The save's progress: the row closes when it succeeds and stays open with `error` if not. */
   status: FetcherOutcomeStatus;
   error?: string | null;
+  /** Called as the row opens, so the caller can clear an error from an earlier attempt. */
+  onOpen?: () => void;
 }
 
 export const QUICK_BALANCE_COPY = {
@@ -52,6 +54,7 @@ export const QuickBalanceUpdate: FC<QuickBalanceUpdateProps> = ({
   onSave,
   status,
   error,
+  onOpen,
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<number | null>(current);
@@ -98,6 +101,7 @@ export const QuickBalanceUpdate: FC<QuickBalanceUpdateProps> = ({
           id="quick-balance-open"
           onClick={() => {
             setValue(current);
+            onOpen?.();
             setOpen(true);
           }}
           ref={openerRef}
@@ -113,7 +117,8 @@ export const QuickBalanceUpdate: FC<QuickBalanceUpdateProps> = ({
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (value === null || pending) return;
+    // A debt's amount owed is never below zero: a minus figure is not saved as more owed.
+    if (value === null || pending || (isLiability && value < 0)) return;
     submitted.current = true;
     onSave(value);
   };

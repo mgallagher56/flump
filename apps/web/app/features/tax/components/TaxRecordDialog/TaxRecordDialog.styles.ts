@@ -56,11 +56,12 @@ export const receiptHint = cva({
   base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
 });
 
-/** A failed save, inside the dialog. */
 /** "Design work added. Add the next record.": a plain statement, no colour or tone. */
 export const savedLine = cva({
-  base: { textStyle: "body.sm", color: "text.secondary", margin: 0 },
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0, _empty: { display: "none" } },
 });
+
+/** A failed save, inside the dialog. */
 
 export const saveErrorText = cva({
   base: { textStyle: "body.sm", color: "text.primary", margin: 0 },
@@ -155,5 +156,14 @@ export const footer = cva({
     borderTopWidth: "1px",
     borderTopStyle: "solid",
     borderTopColor: "border.subtle",
+  },
+  variants: {
+    // Three buttons stack full width on a phone, the main action on top (Add and start another).
+    stacked: {
+      true: {
+        flexDirection: { base: "column-reverse", sm: "row" },
+        alignItems: { base: "stretch", sm: "center" },
+      },
+    },
   },
 });

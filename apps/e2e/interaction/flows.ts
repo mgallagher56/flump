@@ -80,21 +80,17 @@ export const FLOWS: Flow[] = [
       const { page } = actor;
       await actor.press(page.getByRole("button", { name: "Edit budget" }));
       const moneyIn = page.getByRole("region", { name: "Money in" });
-      // The add row opens with the focus on its name field, and Enter in the row adds the entry.
       await actor.press(moneyIn.getByRole("button", { name: "Add income" }));
-      await actor.typeFocused(
-        moneyIn.getByRole("textbox", { name: /^New entry name in/ }),
-        "Side work",
-      );
+      await actor.type(moneyIn.getByRole("textbox", { name: /^New entry name in/ }), "Side work");
       await actor.type(moneyIn.getByRole("textbox", { name: /^New entry amount in/ }), "200");
-      await actor.key("Enter");
+      await actor.press(moneyIn.getByRole("button", { name: /^Add to / }));
       await expect(moneyIn.getByLabel("Amount for Side work")).toBeVisible();
 
       const expenses = page.getByRole("region", { name: "Expenses" });
       await actor.press(expenses.getByRole("button", { name: "Add to expenses" }));
-      await actor.typeFocused(expenses.getByRole("textbox", { name: /^New entry name in/ }), "Gym");
+      await actor.type(expenses.getByRole("textbox", { name: /^New entry name in/ }), "Gym");
       await actor.type(expenses.getByRole("textbox", { name: /^New entry amount in/ }), "35");
-      await actor.key("Enter");
+      await actor.press(expenses.getByRole("button", { name: "Add to Expenses" }));
       const essential = expenses.getByRole("switch", { name: "Essential: Gym" });
       const wasEssential = await essential.isChecked();
       await actor.press(essential);
@@ -129,14 +125,19 @@ export const FLOWS: Flow[] = [
       await actor.key("Enter");
       // From md the sheet is one list and the row folds up; on a phone it moves to the next step.
       await expect(current).toBeHidden();
-      // Every other balance is unchanged this month.
-      const same = sheet.getByRole("button", { name: "No change", exact: true });
+      // Every other balance is unchanged this month: one press keeps them all (E38 S1, owner
+      // approved 20 November 2026). A row it cannot keep (a calculated figure) gets its own answer.
+      await actor.press(
+        sheet.getByRole("button", { name: /^Keep the other \d+ balances? as they are$/ }),
+      );
+      await expect(sheet.getByText(/kept as they are\./)).toBeVisible();
+      const keep = sheet.getByRole("button", { name: /^(No change|Keep this figure)$/ });
       const done = sheet.getByRole("button", { name: "Done", exact: true });
       for (let row = 0; row < 20; row++) {
-        await expect(same.first().or(done)).toBeVisible();
+        await expect(keep.first().or(done)).toBeVisible();
         if (await done.isVisible()) break;
-        const pressed = await same.first().elementHandle();
-        await actor.press(same.first());
+        const pressed = await keep.first().elementHandle();
+        await actor.press(keep.first());
         await pressed?.waitForElementState("hidden");
       }
       await actor.press(done);
