@@ -96,9 +96,53 @@ describe("calculateHicbc result and edge cases", () => {
     expect(calculateHicbc(90000, Number.NaN, r).charge).toBe(0);
   });
   it("never charges more than the Child Benefit", () => {
+    // 100% of the total rounded down: 1,406.60 -> 1,406; 1,406 x 100% = 1,406. Net 0.60.
     const res = calculateHicbc(1e9, 1406.6, r);
-    expect(res.charge).toBe(1406.6);
-    expect(res.netChildBenefit).toBe(0);
+    expect(res.charge).toBe(1406);
+    expect(res.netChildBenefit).toBe(0.6);
+  });
+});
+
+/**
+ * ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C): the total Child
+ * Benefit, the appropriate percentage and the charge are each rounded down to a whole number. Order
+ * (coordinator ruling): total, then percentage, then multiply, then the charge.
+ */
+describe("HICBC rounding (ITEPA 2003 s.681C(3))", () => {
+  const r = rules("2025/26");
+  it("rounds the total Child Benefit down to whole pounds before the percentage", () => {
+    // Total 1,354.60 -> 1,354. 50% of 1,354 = 677 (not 50% of 1,354.60 = 677.30).
+    const res = calculateHicbc(70000, 1354.6, r);
+    expect(res.charge).toBe(677);
+    expect(res.childBenefitAnnual).toBe(1354.6);
+    expect(res.netChildBenefit).toBe(677.6);
+  });
+  it("rounds the charge down to whole pounds", () => {
+    // Total 1,354.60 -> 1,354; 99% at ANI 79,800 (floor(19,800 / 200) = 99);
+    // 1,354 x 99% = 1,340.46 -> 1,340.
+    expect(calculateHicbc(79800, 1354.6, r).charge).toBe(1340);
+    // Total 1,354; 1% at ANI 60,200; 13.54 -> 13.
+    expect(calculateHicbc(60200, 1354.6, r).charge).toBe(13);
+  });
+  it("rounds a total of 0.99 down to 0, so no charge", () => {
+    // floor(0.99) = 0; 0 x 100% = 0.
+    expect(calculateHicbc(90000, 0.99, r).charge).toBe(0);
+  });
+  it("leaves a whole-pound total and charge unchanged", () => {
+    // 2,000 x 50% = 1,000, already whole.
+    expect(calculateHicbc(70000, 2000, r).charge).toBe(1000);
+  });
+});
+
+describe("HICBC result fields", () => {
+  const r = rules("2025/26");
+  it("charges 0 when the percentage is 0", () => {
+    expect(calculateHicbc(60000, 1354.6, r)).toEqual({
+      childBenefitAnnual: 1354.6,
+      chargePercent: 0,
+      charge: 0,
+      netChildBenefit: 1354.6,
+    });
   });
   it("exposes the thresholds on the year rules", () => {
     expect(rules("2024/25").hicbc.hicbcThresholdStart).toBe(60000);

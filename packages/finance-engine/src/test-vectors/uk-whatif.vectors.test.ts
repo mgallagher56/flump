@@ -144,10 +144,11 @@ describe("E25 what-if vector catalogue", () => {
     expect(get("scottishMarginal.2026-27.35000.plus1000")?.expected).toBe(710);
     expect(get("scottishMarginal.2026-27.45000.plus1000")?.expected).toBe(500);
     expect(get("scottishMarginal.2026-27.85000.plus1000")?.expected).toBe(530);
-    // HICBC 2026/27, one child 27.05 x 52 = 1,406.60: 100% at 80,000; 2,337.40 for two children, 50% at 70,000.
-    expect(get("hicbc.2026-27.ani80000.children3")?.expected).toBe(
-      Math.round((27.05 + 2 * 17.9) * 52 * 100) / 100,
-    );
+    // HICBC 2026/27, three children (27.05 + 2 x 17.90) x 52 = 3,268.20, rounded down to 3,268
+    // (ITEPA 2003 s.681C(3)); 100% at 80,000 = 3,268.
+    expect(get("hicbc.2026-27.ani80000.children3")?.expected).toBe(3268);
+    // One child 1,406.60 -> 1,406; 99% at 79,800 = 1,391.94, rounded down to 1,391.
+    expect(get("hicbc.2026-27.ani79800.children1")?.expected).toBe(1391);
     // Plan 2 (45,000 - 29,385) x 9% + postgrad (45,000 - 21,000) x 6% = 1,405.35 + 1,440.
     expect(get("studentLoanMulti.2026-27.plan2+postgrad.45000")?.expected).toBe(2845.35);
     // Plan 5 (30,000 - 25,000) x 9% + postgrad (30,000 - 21,000) x 6% = 450 + 540.

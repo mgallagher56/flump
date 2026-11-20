@@ -85,7 +85,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 52 = 1094.6; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1094.6 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 52 = 1094.6; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge: total 1094.6 rounded down to 1094; 1094 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -99,13 +99,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 50100, children: 1 },
-    expected: 10.95,
+    expected: 10,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 52 = 1094.6; charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge 1094.6 x 1% = 10.95. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 52 = 1094.6; charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge: total 1094.6 rounded down to 1094; 1094 x 1% = 10.94, rounded down to 10. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -125,7 +125,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 35/week x 52 = 1820; charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge 1820 x 50% = 910. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 2 child(ren): eldest 21.05 + 1 x 13.95.",
+      "Individual basis, claimant is the higher earner. Child Benefit 35/week x 52 = 1820; charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge 1820 x 50% = 910. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 21.05 + 1 x 13.95.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -139,13 +139,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 60000, children: 1 },
-    expected: 1094.6,
+    expected: 1094,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 52 = 1094.6; charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge 1094.6 x 100% = 1094.6. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 52 = 1094.6; charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge: total 1094.6 rounded down to 1094; 1094 x 100% = 1094. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -159,13 +159,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 70000, children: 3 },
-    expected: 2545.4,
+    expected: 2545,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 48.95/week x 52 = 2545.4; charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge 2545.4 x 100% = 2545.4. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 21.05 + 2 x 13.95.",
+      "Individual basis, claimant is the higher earner. Child Benefit 48.95/week x 52 = 2545.4; charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge: total 2545.4 rounded down to 2545; 2545 x 100% = 2545. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 21.05 + 2 x 13.95.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -185,7 +185,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.15/week x 52 = 1099.8; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1099.8 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.15.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.15/week x 52 = 1099.8; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge: total 1099.8 rounded down to 1099; 1099 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.15.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -199,13 +199,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 50100, children: 1 },
-    expected: 11,
+    expected: 10,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.15/week x 52 = 1099.8; charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge 1099.8 x 1% = 11. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.15.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.15/week x 52 = 1099.8; charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge: total 1099.8 rounded down to 1099; 1099 x 1% = 10.99, rounded down to 10. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.15.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -219,13 +219,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 55000, children: 2 },
-    expected: 913.9,
+    expected: 913,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 35.15/week x 52 = 1827.8; charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge 1827.8 x 50% = 913.9. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 2 child(ren): eldest 21.15 + 1 x 14.",
+      "Individual basis, claimant is the higher earner. Child Benefit 35.15/week x 52 = 1827.8; charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge: total 1827.8 rounded down to 1827; 1827 x 50% = 913.50, rounded down to 913. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 21.15 + 1 x 14.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -239,13 +239,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 60000, children: 1 },
-    expected: 1099.8,
+    expected: 1099,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.15/week x 52 = 1099.8; charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge 1099.8 x 100% = 1099.8. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.15.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.15/week x 52 = 1099.8; charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge: total 1099.8 rounded down to 1099; 1099 x 100% = 1099. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.15.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -259,13 +259,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 70000, children: 3 },
-    expected: 2555.8,
+    expected: 2555,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 49.15/week x 52 = 2555.8; charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge 2555.8 x 100% = 2555.8. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 21.15 + 2 x 14.",
+      "Individual basis, claimant is the higher earner. Child Benefit 49.15/week x 52 = 2555.8; charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge: total 2555.8 rounded down to 2555; 2555 x 100% = 2555. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 21.15 + 2 x 14.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -286,7 +286,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.8/week x 52 = 1133.6; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1133.6 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.8.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.8/week x 52 = 1133.6; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge: total 1133.6 rounded down to 1133; 1133 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.8.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -300,14 +300,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 50100, children: 1 },
-    expected: 11.34,
+    expected: 11,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.8/week x 52 = 1133.6; charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge 1133.6 x 1% = 11.34. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.8.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.8/week x 52 = 1133.6; charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge: total 1133.6 rounded down to 1133; 1133 x 1% = 11.33, rounded down to 11. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.8.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -321,14 +321,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 55000, children: 2 },
-    expected: 942.5,
+    expected: 942,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 36.25/week x 52 = 1885; charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge 1885 x 50% = 942.5. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 2 child(ren): eldest 21.8 + 1 x 14.45.",
+      "Individual basis, claimant is the higher earner. Child Benefit 36.25/week x 52 = 1885; charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge 1885 x 50% = 942.50, rounded down to 942. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 21.8 + 1 x 14.45.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -342,14 +342,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 60000, children: 1 },
-    expected: 1133.6,
+    expected: 1133,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.8/week x 52 = 1133.6; charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge 1133.6 x 100% = 1133.6. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.8.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.8/week x 52 = 1133.6; charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge: total 1133.6 rounded down to 1133; 1133 x 100% = 1133. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.8.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -363,14 +363,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 70000, children: 3 },
-    expected: 2636.4,
+    expected: 2636,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 50.7/week x 52 = 2636.4; charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge 2636.4 x 100% = 2636.4. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 21.8 + 2 x 14.45.",
+      "Individual basis, claimant is the higher earner. Child Benefit 50.7/week x 52 = 2636.4; charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge: total 2636.4 rounded down to 2636; 2636 x 100% = 2636. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 21.8 + 2 x 14.45.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -391,7 +391,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 24/week x 52 = 1248; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1248 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 24.",
+      "Individual basis, claimant is the higher earner. Child Benefit 24/week x 52 = 1248; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1248 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 24.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -405,14 +405,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 50100, children: 1 },
-    expected: 12.48,
+    expected: 12,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 24/week x 52 = 1248; charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge 1248 x 1% = 12.48. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 24.",
+      "Individual basis, claimant is the higher earner. Child Benefit 24/week x 52 = 1248; charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge 1248 x 1% = 12.48, rounded down to 12. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 24.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -426,14 +426,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 55000, children: 2 },
-    expected: 1037.4,
+    expected: 1037,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 39.9/week x 52 = 2074.8; charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge 2074.8 x 50% = 1037.4. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 2 child(ren): eldest 24 + 1 x 15.9.",
+      "Individual basis, claimant is the higher earner. Child Benefit 39.9/week x 52 = 2074.8; charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge: total 2074.8 rounded down to 2074; 2074 x 50% = 1037. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 24 + 1 x 15.9.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -454,7 +454,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 24/week x 52 = 1248; charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge 1248 x 100% = 1248. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 24.",
+      "Individual basis, claimant is the higher earner. Child Benefit 24/week x 52 = 1248; charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge 1248 x 100% = 1248. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 24.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -468,14 +468,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 70000, children: 3 },
-    expected: 2901.6,
+    expected: 2901,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 55.8/week x 52 = 2901.6; charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge 2901.6 x 100% = 2901.6. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 24 + 2 x 15.9.",
+      "Individual basis, claimant is the higher earner. Child Benefit 55.8/week x 52 = 2901.6; charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge: total 2901.6 rounded down to 2901; 2901 x 100% = 2901. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 24 + 2 x 15.9.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -496,7 +496,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.legislation.gov.uk/uksi/2024/247/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 25.6/week x 52 = 1331.2; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge 1331.2 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 25.6.",
+      "Individual basis, claimant is the higher earner. Child Benefit 25.6/week x 52 = 1331.2; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge: total 1331.2 rounded down to 1331; 1331 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 25.6.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -510,14 +510,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 60200, children: 1 },
-    expected: 13.31,
+    expected: 13,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2024/247/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 25.6/week x 52 = 1331.2; charge percentage min(100, floor((ANI 60200 - 60000) / 200)) = 1%; charge 1331.2 x 1% = 13.31. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 25.6.",
+      "Individual basis, claimant is the higher earner. Child Benefit 25.6/week x 52 = 1331.2; charge percentage min(100, floor((ANI 60200 - 60000) / 200)) = 1%; charge: total 1331.2 rounded down to 1331; 1331 x 1% = 13.31, rounded down to 13. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 25.6.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -531,14 +531,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 70000, children: 2 },
-    expected: 1106.3,
+    expected: 1106,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2024/247/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 42.55/week x 52 = 2212.6; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge 2212.6 x 50% = 1106.3. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 2 child(ren): eldest 25.6 + 1 x 16.95.",
+      "Individual basis, claimant is the higher earner. Child Benefit 42.55/week x 52 = 2212.6; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge: total 2212.6 rounded down to 2212; 2212 x 50% = 1106. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 25.6 + 1 x 16.95.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -552,14 +552,14 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 79800, children: 1 },
-    expected: 1317.89,
+    expected: 1317,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
       "https://www.legislation.gov.uk/uksi/2024/247/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 25.6/week x 52 = 1331.2; charge percentage min(100, floor((ANI 79800 - 60000) / 200)) = 99%; charge 1331.2 x 99% = 1317.89. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 25.6.",
+      "Individual basis, claimant is the higher earner. Child Benefit 25.6/week x 52 = 1331.2; charge percentage min(100, floor((ANI 79800 - 60000) / 200)) = 99%; charge: total 1331.2 rounded down to 1331; 1331 x 99% = 1317.69, rounded down to 1317. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 25.6.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -580,7 +580,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.legislation.gov.uk/uksi/2024/247/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 59.5/week x 52 = 3094; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge 3094 x 100% = 3094. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 25.6 + 2 x 16.95.",
+      "Individual basis, claimant is the higher earner. Child Benefit 59.5/week x 52 = 3094; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge 3094 x 100% = 3094. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 25.6 + 2 x 16.95.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -600,7 +600,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 26.05/week x 52 = 1354.6; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge 1354.6 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 26.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 26.05/week x 52 = 1354.6; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge: total 1354.6 rounded down to 1354; 1354 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 26.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -614,13 +614,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 60200, children: 1 },
-    expected: 13.55,
+    expected: 13,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 26.05/week x 52 = 1354.6; charge percentage min(100, floor((ANI 60200 - 60000) / 200)) = 1%; charge 1354.6 x 1% = 13.55. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 26.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 26.05/week x 52 = 1354.6; charge percentage min(100, floor((ANI 60200 - 60000) / 200)) = 1%; charge: total 1354.6 rounded down to 1354; 1354 x 1% = 13.54, rounded down to 13. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 26.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -634,13 +634,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 70000, children: 2 },
-    expected: 1125.8,
+    expected: 1125,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 43.3/week x 52 = 2251.6; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge 2251.6 x 50% = 1125.8. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 2 child(ren): eldest 26.05 + 1 x 17.25.",
+      "Individual basis, claimant is the higher earner. Child Benefit 43.3/week x 52 = 2251.6; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge: total 2251.6 rounded down to 2251; 2251 x 50% = 1125.50, rounded down to 1125. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 26.05 + 1 x 17.25.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -654,13 +654,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 79800, children: 1 },
-    expected: 1341.05,
+    expected: 1340,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 26.05/week x 52 = 1354.6; charge percentage min(100, floor((ANI 79800 - 60000) / 200)) = 99%; charge 1354.6 x 99% = 1341.05. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 26.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 26.05/week x 52 = 1354.6; charge percentage min(100, floor((ANI 79800 - 60000) / 200)) = 99%; charge: total 1354.6 rounded down to 1354; 1354 x 99% = 1340.46, rounded down to 1340. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 26.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -674,13 +674,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 80000, children: 3 },
-    expected: 3148.6,
+    expected: 3148,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 60.55/week x 52 = 3148.6; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge 3148.6 x 100% = 3148.6. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 26.05 + 2 x 17.25.",
+      "Individual basis, claimant is the higher earner. Child Benefit 60.55/week x 52 = 3148.6; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge: total 3148.6 rounded down to 3148; 3148 x 100% = 3148. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 26.05 + 2 x 17.25.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -700,7 +700,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 27.05/week x 52 = 1406.6; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge 1406.6 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 27.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 27.05/week x 52 = 1406.6; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge: total 1406.6 rounded down to 1406; 1406 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 27.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -714,13 +714,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 60200, children: 1 },
-    expected: 14.07,
+    expected: 14,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 60200 - 60000) / 200)) = 1%; charge 1406.6 x 1% = 14.07. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 27.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 60200 - 60000) / 200)) = 1%; charge: total 1406.6 rounded down to 1406; 1406 x 1% = 14.06, rounded down to 14. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 27.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -734,13 +734,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 70000, children: 2 },
-    expected: 1168.7,
+    expected: 1168,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 44.95/week x 52 = 2337.4; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge 2337.4 x 50% = 1168.7. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 2 child(ren): eldest 27.05 + 1 x 17.9.",
+      "Individual basis, claimant is the higher earner. Child Benefit 44.95/week x 52 = 2337.4; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge: total 2337.4 rounded down to 2337; 2337 x 50% = 1168.50, rounded down to 1168. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 27.05 + 1 x 17.9.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -754,13 +754,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 79800, children: 1 },
-    expected: 1392.53,
+    expected: 1391,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 79800 - 60000) / 200)) = 99%; charge 1406.6 x 99% = 1392.53. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 27.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 79800 - 60000) / 200)) = 99%; charge: total 1406.6 rounded down to 1406; 1406 x 99% = 1391.94, rounded down to 1391. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 27.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -774,13 +774,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 80000, children: 3 },
-    expected: 3268.2,
+    expected: 3268,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 62.85/week x 52 = 3268.2; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge 3268.2 x 100% = 3268.2. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 27.05 + 2 x 17.9.",
+      "Individual basis, claimant is the higher earner. Child Benefit 62.85/week x 52 = 3268.2; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge: total 3268.2 rounded down to 3268; 3268 x 100% = 3268. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 27.05 + 2 x 17.9.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -903,7 +903,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       studentLoanPlans: "plan2",
       children: 2,
     },
-    expected: 46333.35,
+    expected: 46334.05,
     source:
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     additionalSources: [
@@ -912,7 +912,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Annual method. PA 12570 (no taper at ANI 70000); taxable 70000 - 12570 = 57430; basic 37700 x 20% = 7540; higher 19730 x 40% = 7892; additional 0 x 45% = 0; income tax 15432; NI on 70000: 37700 x 8% + 19730 x 2% = 3410.6; student loan plan2 (70000 - 29385) x 9% = 3655.35 = 3655.35; HICBC Child Benefit 44.95/week x 52 = 2337.4; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge 2337.4 x 50% = 1168.7. Take-home = 70000 - tax 15432 - NI 3410.6 - student loan 3655.35 - HICBC 1168.7 = 46333.35.",
+      "Annual method. PA 12570 (no taper at ANI 70000); taxable 70000 - 12570 = 57430; basic 37700 x 20% = 7540; higher 19730 x 40% = 7892; additional 0 x 45% = 0; income tax 15432; NI on 70000: 37700 x 8% + 19730 x 2% = 3410.6; student loan plan2 (70000 - 29385) x 9% = 3655.35 = 3655.35; HICBC Child Benefit 44.95/week x 52 = 2337.4; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge: total 2337.4 rounded down to 2337; 2337 x 50% = 1168.50, rounded down to 1168 (ITEPA 2003 s.681C(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681C). Take-home = 70000 - tax 15432 - NI 3410.6 - student loan 3655.35 - HICBC 1168 = 46334.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -1010,7 +1010,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       studentLoanPlans: "plan2+postgrad",
       children: 2,
     },
-    expected: 43353.9,
+    expected: 43354.7,
     source:
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     additionalSources: [
@@ -1019,7 +1019,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Annual method. PA 12570 (no taper at ANI 70000); taxable 70000 - 12570 = 57430; basic 37700 x 20% = 7540; higher 19730 x 40% = 7892; additional 0 x 45% = 0; income tax 15432; NI on 70000: 37700 x 8% + 19730 x 2% = 3410.6; student loan plan2 (70000 - 28470) x 9% = 3737.7; postgrad (70000 - 21000) x 6% = 2940 = 6677.7; HICBC Child Benefit 43.3/week x 52 = 2251.6; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge 2251.6 x 50% = 1125.8. Take-home = 70000 - tax 15432 - NI 3410.6 - student loan 6677.7 - HICBC 1125.8 = 43353.9.",
+      "Annual method. PA 12570 (no taper at ANI 70000); taxable 70000 - 12570 = 57430; basic 37700 x 20% = 7540; higher 19730 x 40% = 7892; additional 0 x 45% = 0; income tax 15432; NI on 70000: 37700 x 8% + 19730 x 2% = 3410.6; student loan plan2 (70000 - 28470) x 9% = 3737.7; postgrad (70000 - 21000) x 6% = 2940 = 6677.7; HICBC Child Benefit 43.3/week x 52 = 2251.6; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge: total 2251.6 rounded down to 2251; 2251 x 50% = 1125.50, rounded down to 1125 (ITEPA 2003 s.681C(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681C). Take-home = 70000 - tax 15432 - NI 3410.6 - student loan 6677.7 - HICBC 1125 = 43354.7.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -1221,7 +1221,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "whatIfDelta",
     feature: "whatIf",
     input: { salary: 60000, deltaGross: 1000, children: 1 },
-    expected: 509.67,
+    expected: 510,
     source:
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     additionalSources: [
@@ -1230,7 +1230,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Change in annual take-home for +1000 gross. At 60000: PA 12570 (no taper at ANI 60000); taxable 60000 - 12570 = 47430; basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; additional 0 x 45% = 0; income tax 11432; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage: ANI 60000 is not over 60000, so no steps over the threshold, 0%; charge 1406.6 x 0% = 0. Take-home = 60000 - tax 11432 - NI 3210.6 - HICBC 0 = 45357.4. At 61000: PA 12570 (no taper at ANI 61000); taxable 61000 - 12570 = 48430; basic 37700 x 20% = 7540; higher 10730 x 40% = 4292; additional 0 x 45% = 0; income tax 11832; NI on 61000: 37700 x 8% + 10730 x 2% = 3230.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 61000 - 60000) / 200)) = 5%; charge 1406.6 x 5% = 70.33. Take-home = 61000 - tax 11832 - NI 3230.6 - HICBC 70.33 = 45867.07. Delta = 1000 - tax change 400 - NI change 20 - HICBC change 70.33 = 509.67 (effective marginal rate 49.03%).",
+      "Change in annual take-home for +1000 gross. At 60000: PA 12570 (no taper at ANI 60000); taxable 60000 - 12570 = 47430; basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; additional 0 x 45% = 0; income tax 11432; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage: ANI 60000 is not over 60000, so no steps over the threshold, 0%; charge 1406.6 x 0% = 0. Take-home = 60000 - tax 11432 - NI 3210.6 - HICBC 0 = 45357.4. At 61000: PA 12570 (no taper at ANI 61000); taxable 61000 - 12570 = 48430; basic 37700 x 20% = 7540; higher 10730 x 40% = 4292; additional 0 x 45% = 0; income tax 11832; NI on 61000: 37700 x 8% + 10730 x 2% = 3230.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 61000 - 60000) / 200)) = 5%; charge: total 1406.6 rounded down to 1406; 1406 x 5% = 70.30, rounded down to 70 (ITEPA 2003 s.681C(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681C). Take-home = 61000 - tax 11832 - NI 3230.6 - HICBC 70 = 45867.4. Delta = 1000 - tax change 400 - NI change 20 - HICBC change 70 = 510 (effective marginal rate 49%).",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -1244,7 +1244,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "whatIfDelta",
     feature: "whatIf",
     input: { salary: 79500, deltaGross: 1000, children: 1 },
-    expected: 537.8,
+    expected: 537,
     source:
       "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
     additionalSources: [
@@ -1253,7 +1253,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Change in annual take-home for +1000 gross. At 79500: PA 12570 (no taper at ANI 79500); taxable 79500 - 12570 = 66930; basic 37700 x 20% = 7540; higher 29230 x 40% = 11692; additional 0 x 45% = 0; income tax 19232; NI on 79500: 37700 x 8% + 29230 x 2% = 3600.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 79500 - 60000) / 200)) = 97%; charge 1406.6 x 97% = 1364.4. Take-home = 79500 - tax 19232 - NI 3600.6 - HICBC 1364.4 = 55303. At 80500: PA 12570 (no taper at ANI 80500); taxable 80500 - 12570 = 67930; basic 37700 x 20% = 7540; higher 30230 x 40% = 12092; additional 0 x 45% = 0; income tax 19632; NI on 80500: 37700 x 8% + 30230 x 2% = 3620.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 80500 - 60000) / 200)) = 100%; charge 1406.6 x 100% = 1406.6. Take-home = 80500 - tax 19632 - NI 3620.6 - HICBC 1406.6 = 55840.8. Delta = 1000 - tax change 400 - NI change 20 - HICBC change 42.2 = 537.8 (effective marginal rate 46.22%).",
+      "Change in annual take-home for +1000 gross. At 79500: PA 12570 (no taper at ANI 79500); taxable 79500 - 12570 = 66930; basic 37700 x 20% = 7540; higher 29230 x 40% = 11692; additional 0 x 45% = 0; income tax 19232; NI on 79500: 37700 x 8% + 29230 x 2% = 3600.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 79500 - 60000) / 200)) = 97%; charge: total 1406.6 rounded down to 1406; 1406 x 97% = 1363.82, rounded down to 1363 (ITEPA 2003 s.681C(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681C). Take-home = 79500 - tax 19232 - NI 3600.6 - HICBC 1363 = 55304.4. At 80500: PA 12570 (no taper at ANI 80500); taxable 80500 - 12570 = 67930; basic 37700 x 20% = 7540; higher 30230 x 40% = 12092; additional 0 x 45% = 0; income tax 19632; NI on 80500: 37700 x 8% + 30230 x 2% = 3620.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 80500 - 60000) / 200)) = 100%; charge: total 1406.6 rounded down to 1406; 1406 x 100% = 1406. Take-home = 80500 - tax 19632 - NI 3620.6 - HICBC 1406 = 55841.4. Delta = 1000 - tax change 400 - NI change 20 - HICBC change 43 = 537 (effective marginal rate 46.3%).",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -2049,7 +2049,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 28/week x 52 = 1456; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge 1456 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 28. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
+      "Individual basis, claimant is the higher earner. Child Benefit 28/week x 52 = 1456; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge 1456 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 28. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -2063,13 +2063,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 60200, children: 1 },
-    expected: 14.56,
+    expected: 14,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 28/week x 52 = 1456; charge percentage min(100, floor((ANI 60200 - 60000) / 200)) = 1%; charge 1456 x 1% = 14.56. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 28. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
+      "Individual basis, claimant is the higher earner. Child Benefit 28/week x 52 = 1456; charge percentage min(100, floor((ANI 60200 - 60000) / 200)) = 1%; charge 1456 x 1% = 14.56, rounded down to 14. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 28. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -2083,13 +2083,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 70000, children: 2 },
-    expected: 1210.3,
+    expected: 1210,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 46.55/week x 52 = 2420.6; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge 2420.6 x 50% = 1210.3. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 2 child(ren): eldest 28 + 1 x 18.55. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
+      "Individual basis, claimant is the higher earner. Child Benefit 46.55/week x 52 = 2420.6; charge percentage min(100, floor((ANI 70000 - 60000) / 200)) = 50%; charge: total 2420.6 rounded down to 2420; 2420 x 50% = 1210. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 28 + 1 x 18.55. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -2103,13 +2103,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 79800, children: 1 },
-    expected: 1441.44,
+    expected: 1441,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 28/week x 52 = 1456; charge percentage min(100, floor((ANI 79800 - 60000) / 200)) = 99%; charge 1456 x 99% = 1441.44. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 28. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
+      "Individual basis, claimant is the higher earner. Child Benefit 28/week x 52 = 1456; charge percentage min(100, floor((ANI 79800 - 60000) / 200)) = 99%; charge 1456 x 99% = 1441.44, rounded down to 1441. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 28. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -2123,13 +2123,13 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     kind: "hicbc",
     feature: "hicbc",
     input: { adjustedNetIncome: 80000, children: 3 },
-    expected: 3385.2,
+    expected: 3385,
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 65.1/week x 52 = 3385.2; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge 3385.2 x 100% = 3385.2. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 28 + 2 x 18.55. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
+      "Individual basis, claimant is the higher earner. Child Benefit 65.1/week x 52 = 3385.2; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge: total 3385.2 rounded down to 3385; 3385 x 100% = 3385. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 28 + 2 x 18.55. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:

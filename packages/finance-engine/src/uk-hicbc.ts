@@ -3,11 +3,18 @@
  *
  * The claimant is taken to be the higher earner, so the charge depends on their own adjusted net
  * income. No household (partner) comparison is made. The charge is 1% of the Child Benefit received
- * for every full step of adjusted net income over the threshold (GBP100 up to 2023/24, GBP200 from
- * 2024/25), the percentage is floored to a whole per cent and capped at 100%.
+ * for every full step of adjusted net income over the threshold (GBP100 over GBP50,000 up to 2023/24,
+ * GBP200 over GBP60,000 from 2024/25), capped at 100%. The step rule is taken from GOV.UK
+ * (https://www.gov.uk/child-benefit-tax-charge), because the ITEPA 2003 s.681C(2)(b) formula is an
+ * image on legislation.gov.uk.
  *
- * Child Benefit is weekly rate x `weeksPerYear` (52, pending the owner ruling on 52 or 53 Mondays).
- * Figures are UNVERIFIED until the owner signs off the `hicbc` vectors.
+ * Rounding, ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C): the
+ * total Child Benefit is rounded down to whole pounds, the percentage down to a whole number, and the
+ * charge down to whole pounds, in that order.
+ *
+ * Child Benefit is weekly rate x `weeksPerYear` (52; ITEPA s.681H(3) counts a week whose Monday is in
+ * the tax year, and some years have 53 Mondays, a ruling still open). Figures are UNVERIFIED until the
+ * `hicbc` vectors are signed off.
  */
 
 import { roundPence, type UkTaxYearRules } from "./uk-tax-year.js";
@@ -17,7 +24,7 @@ export interface HicbcResult {
   childBenefitAnnual: number;
   /** Whole per cent of Child Benefit charged, 0 to 100. */
   chargePercent: number;
-  /** The charge itself, pence-rounded. */
+  /** The charge in whole pounds: floor(floor(total) x percentage / 100) (ITEPA s.681C(3)). */
   charge: number;
   /** Child Benefit left after the charge. */
   netChildBenefit: number;
@@ -51,8 +58,12 @@ export function calculateHicbc(
   const benefit = roundPence(
     Math.max(0, Number.isFinite(childBenefitAnnual) ? childBenefitAnnual : 0),
   );
+  // ITEPA 2003 s.681C(3): the total Child Benefit, the percentage and the charge are each rounded
+  // down to a whole number. Order: total, then percentage, then multiply, then the charge.
+  // Integer x integer / 100 is exact enough in floating point for the floor to be right.
+  const wholePoundsBenefit = Math.floor(benefit);
   const chargePercent = calculateHicbcPercent(adjustedNetIncome, rules);
-  const charge = roundPence((benefit * chargePercent) / 100);
+  const charge = Math.floor((wholePoundsBenefit * chargePercent) / 100);
   return {
     childBenefitAnnual: benefit,
     chargePercent,
