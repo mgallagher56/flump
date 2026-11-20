@@ -893,16 +893,10 @@ export function calculateUKTax(
 
       // Savings tax (stacked above non-savings income), at the savings rates: the main rates up
       // to 2026/27, their own from 2027/28 (FA 2026 s.5).
-      let savingsTax = 0;
-      if (taxableSavingsInterest > 0) {
-        const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
-        const rates = yearRules.savingsRates;
-        savingsTax = Math.max(
-          0,
-          ukIncomeTaxOn(zeroRatedTop + taxableSavingsInterest, rates) -
-            ukIncomeTaxOn(zeroRatedTop, rates),
-        );
-      }
+      const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
+      const savingsTax =
+        ukIncomeTaxOn(zeroRatedTop + taxableSavingsInterest, yearRules.savingsRates) -
+        ukIncomeTaxOn(zeroRatedTop, yearRules.savingsRates);
       // Dividend tax (stacked at top of all income, taxed at the year's dividend rates)
       const dividendTax = calculateDividendTaxForStack(
         nonSavingsTaxable + savingsAfterAllowance,
