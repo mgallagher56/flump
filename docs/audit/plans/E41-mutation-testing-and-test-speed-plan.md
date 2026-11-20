@@ -214,6 +214,8 @@ On Playwright workers: the backend allows 300 requests a minute per address (`ap
 **P4. Slow files and isolation (M).** The slowest 20 files from P0, then isolation for pure packages only if decision 10 allows.
 
 **P5. Turbo and CI shape (S to M).** Decisions 9 and 10.
+- Done (PR 823): Storybook a11y light and dark run in two halves each (longest leg 89 to 116 s against 121 to 211 s, forced runs, three each); `turbo.json` `test` no longer depends on `^test`.
+- Tried and dropped (20 November 2026): Vitest web in two halves with a merge job applying the coverage floors. 197 to 210 s against 196 to 251 s for the single job, so no clear gain, and floors set to 0 per half were judged a guard that could fail quietly. Web coverage floors stay in the one job.
 
 ## 9. Risks and trade-offs
 
