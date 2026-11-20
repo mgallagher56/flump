@@ -245,8 +245,8 @@ describe("computeUkTakeHome: unverified rule groups", () => {
     expect(computeUkTakeHome(y).unverifiedRuleKeys).toEqual([]);
   });
 
-  it("lists the 2020/21 Child Benefit rates only when Child Benefit is claimed", () => {
-    const y = { ...base, taxYear: "2020/21", salary: 30_000 };
+  it("lists the 2021/22 Child Benefit rates only when Child Benefit is claimed", () => {
+    const y = { ...base, taxYear: "2021/22", salary: 30_000 };
     expect(computeUkTakeHome({ ...y, childBenefit: { children: 1 } }).unverifiedRuleKeys).toEqual([
       "childBenefit",
     ]);

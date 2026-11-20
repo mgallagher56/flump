@@ -671,7 +671,7 @@ export interface UKChildBenefitYear {
 /**
  * Child Benefit weekly rates per tax year and the High Income Child Benefit Charge
  * thresholds (GOV.UK child-benefit-tax-charge: over 50,000 at 1% per 100 up to 2023/24,
- * over 60,000 at 1% per 200 from 2024/25). 2020/21 and 2021/22 weekly rates are UNVERIFIED
+ * over 60,000 at 1% per 200 from 2024/25). 2021/22 weekly rates are UNVERIFIED (2020/21 from SI 2020/298 reg 5)
  * (see `docs/tax-sources/hicbc-child-benefit.md` and the `childBenefit` registry key).
  */
 export const UK_CHILD_BENEFIT: Record<string, UKChildBenefitYear> = {

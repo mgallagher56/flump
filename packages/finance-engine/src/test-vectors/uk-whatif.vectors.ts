@@ -83,15 +83,16 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+      "https://www.legislation.gov.uk/uksi/2020/298/made",
     ],
     archiveUrl:
       "https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 53 weeks = 1115.65 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge: total 1115.65 rounded down to 1115; 1115 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05. Weekly rates: archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 53 weeks = 1115.65 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge: total 1115.65 rounded down to 1115; 1115 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05. Weekly rates: SI 2020/298 reg 5 (21.05 and 13.95 from 6 April 2020, read on legislation.gov.uk on 20 Nov 2026, https://www.legislation.gov.uk/uksi/2020/298/made); archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -105,15 +106,16 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+      "https://www.legislation.gov.uk/uksi/2020/298/made",
     ],
     archiveUrl:
       "https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 53 weeks = 1115.65 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge: total 1115.65 rounded down to 1115; 1115 x 1% = 11.15, rounded down to 11. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05. Weekly rates: archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 53 weeks = 1115.65 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage min(100, floor((ANI 50100 - 50000) / 100)) = 1%; charge: total 1115.65 rounded down to 1115; 1115 x 1% = 11.15, rounded down to 11. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05. Weekly rates: SI 2020/298 reg 5 (21.05 and 13.95 from 6 April 2020, read on legislation.gov.uk on 20 Nov 2026, https://www.legislation.gov.uk/uksi/2020/298/made); archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -127,15 +129,16 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+      "https://www.legislation.gov.uk/uksi/2020/298/made",
     ],
     archiveUrl:
       "https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 35/week x 53 weeks = 1855 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge 1855 x 50% = 927.50, rounded down to 927. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 21.05 + 1 x 13.95. Weekly rates: archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
+      "Individual basis, claimant is the higher earner. Child Benefit 35/week x 53 weeks = 1855 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage min(100, floor((ANI 55000 - 50000) / 100)) = 50%; charge 1855 x 50% = 927.50, rounded down to 927. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 2 child(ren): eldest 21.05 + 1 x 13.95. Weekly rates: SI 2020/298 reg 5 (21.05 and 13.95 from 6 April 2020, read on legislation.gov.uk on 20 Nov 2026, https://www.legislation.gov.uk/uksi/2020/298/made); archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -149,15 +152,16 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+      "https://www.legislation.gov.uk/uksi/2020/298/made",
     ],
     archiveUrl:
       "https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 53 weeks = 1115.65 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge: total 1115.65 rounded down to 1115; 1115 x 100% = 1115. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05. Weekly rates: archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 53 weeks = 1115.65 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage min(100, floor((ANI 60000 - 50000) / 100)) = 100%; charge: total 1115.65 rounded down to 1115; 1115 x 100% = 1115. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 1 child(ren): eldest 21.05. Weekly rates: SI 2020/298 reg 5 (21.05 and 13.95 from 6 April 2020, read on legislation.gov.uk on 20 Nov 2026, https://www.legislation.gov.uk/uksi/2020/298/made); archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -171,15 +175,16 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     source: "https://www.gov.uk/child-benefit-tax-charge",
     additionalSources: [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+      "https://www.legislation.gov.uk/uksi/2020/298/made",
     ],
     archiveUrl:
       "https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 48.95/week x 53 weeks = 2594.35 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge: total 2594.35 rounded down to 2594; 2594 x 100% = 2594. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 21.05 + 2 x 13.95. Weekly rates: archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
+      "Individual basis, claimant is the higher earner. Child Benefit 48.95/week x 53 weeks = 2594.35 (weeks: the Mondays from 6 April to 5 April, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H; one weekly rate for the whole year); charge percentage min(100, floor((ANI 70000 - 50000) / 100)) = 100%; charge: total 2594.35 rounded down to 2594; 2594 x 100% = 2594. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The step rule is from GOV.UK because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk. The percentage is capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order. Weekly rate for 3 child(ren): eldest 21.05 + 2 x 13.95. Weekly rates: SI 2020/298 reg 5 (21.05 and 13.95 from 6 April 2020, read on legislation.gov.uk on 20 Nov 2026, https://www.legislation.gov.uk/uksi/2020/298/made); archived GOV.UK rates table captured 31 May 2022 (2020 to 2021 column), https://webarchive.nationalarchives.gov.uk/ukgwa/20220531182920/https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -201,7 +206,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
     signedOffBy: null,
   },
   {
@@ -223,7 +228,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
     signedOffBy: null,
   },
   {
@@ -245,7 +250,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
     signedOffBy: null,
   },
   {
@@ -267,7 +272,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
     signedOffBy: null,
   },
   {
@@ -289,7 +294,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
     signedOffBy: null,
   },
   {
@@ -312,7 +317,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -335,7 +340,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -358,7 +363,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -381,7 +386,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -404,7 +409,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -427,7 +432,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -450,7 +455,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -473,7 +478,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -496,7 +501,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -519,7 +524,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -542,7 +547,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -565,7 +570,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -588,7 +593,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -611,7 +616,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -634,7 +639,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -654,7 +659,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -674,7 +679,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -694,7 +699,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -714,7 +719,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -734,7 +739,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -754,7 +759,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -774,7 +779,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -794,7 +799,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -814,7 +819,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -834,7 +839,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -966,7 +971,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -1073,7 +1078,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -1284,7 +1289,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -1307,7 +1312,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -2103,7 +2108,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -2123,7 +2128,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -2143,7 +2148,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -2163,7 +2168,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {
@@ -2183,7 +2188,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at one weekly rate for the whole year; the recomputed figure awaits the decider's review.",
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
     signedOffBy: null,
   },
   {

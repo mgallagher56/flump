@@ -106,7 +106,7 @@ describe("E25 what-if vector catalogue", () => {
     }
   });
 
-  it("every HICBC vector is UNVERIFIED until the decider reviews the week-count figures", () => {
+  it("every HICBC vector is UNVERIFIED and names the s.681H(3) week ruling", () => {
     for (const v of selectUkWhatIfVectors({ kind: "hicbc" })) {
       expect(v.status, v.id).toBe("UNVERIFIED");
       expect(v.unverifiedReason, v.id).toContain("s.681H(3)");
