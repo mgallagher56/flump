@@ -83,4 +83,29 @@ describe("DeprecationInterceptor", () => {
     if (!route) throw new Error("missing route");
     expect(successorPath(route, { id: "a/b" })).toBe("/v1/accounts/a%2Fb");
   });
+
+  it("keeps the placeholder of a param the request did not carry", () => {
+    const route = allRoutes.find((r) => r.id === "accounts.update");
+    if (!route) throw new Error("missing route");
+    // No id to fill in, so the ":id" placeholder stays, encoded like any value: ":" is "%3A".
+    expect(successorPath(route)).toBe("/v1/accounts/%3Aid");
+  });
+
+  it("leaves non-http contexts alone", () => {
+    const headers: Record<string, string> = {};
+    const res = { setHeader: (name: string, value: string) => (headers[name] = value) };
+    const req = {
+      method: "POST",
+      route: { path: "/bank-connections/:id/sync" },
+      params: { id: ID },
+    };
+    const next = { handle: vi.fn(() => of("handled")) };
+    const context = {
+      getType: () => "rpc",
+      switchToHttp: () => ({ getRequest: () => req, getResponse: () => res }),
+    };
+    new DeprecationInterceptor().intercept(context as never, next);
+    expect(headers).toEqual({});
+    expect(next.handle).toHaveBeenCalledOnce();
+  });
 });

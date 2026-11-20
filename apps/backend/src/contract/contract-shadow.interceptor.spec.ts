@@ -433,6 +433,118 @@ describe("log volume limits", () => {
       expect(resolveEnforcedGroups({ CONTRACT_ENFORCE_GROUPS: "accounts, nope" })).toEqual(
         new Set(["accounts"]),
       );
+      // Spaces after a comma are allowed: " accounts" is the accounts group.
+      expect(resolveEnforcedGroups({ CONTRACT_ENFORCE_GROUPS: "nope, accounts" })).toEqual(
+        new Set(["accounts"]),
+      );
     });
+
+    it("enforces every group when CONTRACT_ENFORCE_GROUPS=all", () => {
+      process.env.CONTRACT_MODE = "enforce";
+      process.env.CONTRACT_ENFORCE_GROUPS = "all";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const { error, next } = rejectionOf(badAccount);
+      expect(error?.getStatus()).toBe(400);
+      expect(next.handle).not.toHaveBeenCalled();
+    });
+
+    it("names a body that is not an object at all as `body`", () => {
+      process.env.CONTRACT_MODE = "enforce";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const { error } = rejectionOf({ ...badAccount, body: [] });
+      // The issue is on the whole body, so its path is the part name with nothing after it.
+      expect(error?.getResponse().issues).toEqual([
+        { path: "body", code: "invalid_type", message: expect.any(String) },
+      ]);
+    });
+
+    it("leaves a valid body as sent in shadow mode, even when parsing would reshape it", () => {
+      process.env.CONTRACT_MODE = "shadow";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const body = { name: "  Everyday  ", type: "Current", balance: 1 };
+      const req = { ...badAccount, body };
+      const { error, next } = rejectionOf(req);
+      expect(error).toBeUndefined();
+      expect(next.handle).toHaveBeenCalledOnce();
+      expect(req.body).toBe(body);
+    });
+  });
+});
+
+describe("requests and responses the check skips", () => {
+  const prodEnv = process.env.NODE_ENV;
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (prodEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = prodEnv;
+  });
+
+  const handled = (
+    interceptor: ContractShadowInterceptor,
+    req: Record<string, unknown>,
+    body: unknown,
+  ) => {
+    const context = { getType: () => "http", switchToHttp: () => ({ getRequest: () => req }) };
+    interceptor.intercept(context as never, { handle: () => of(body) }).subscribe();
+  };
+
+  it("does not log for a request with no matched route or no method", () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    run(new ContractShadowInterceptor(), { method: "GET", params: {}, query: {} });
+    run(new ContractShadowInterceptor(), { route: { path: "/accounts" }, params: {}, query: {} });
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("does not check a handler that returned nothing", () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    handled(
+      new ContractShadowInterceptor(),
+      { method: "GET", route: { path: "/accounts" }, params: {}, query: {} },
+      undefined,
+    );
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("counts response violations per route, with the route's path template", () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const interceptor = new ContractShadowInterceptor();
+    handled(interceptor, { method: "GET", route: { path: "/accounts" }, params: {}, query: {} }, [
+      { wrong: true },
+    ]);
+    handled(
+      interceptor,
+      { method: "GET", route: { path: "/budget-entries" }, params: {}, query: {} },
+      [{ wrong: true }],
+    );
+    const responses = warnings(warn).filter((v) => v.event === "contract_response_violation");
+    // Each route's first response violation is its own first: count 1 for both.
+    expect(responses.map((v) => [v.routeId, v.pathTemplate, v.count])).toEqual([
+      ["accounts.list", "/accounts", 1],
+      ["budget.list", "/budget-entries", 1],
+    ]);
+  });
+
+  it("in production checks the first 20 responses per route and then every 50th", () => {
+    process.env.NODE_ENV = "production";
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const interceptor = new ContractShadowInterceptor();
+    // A body that fails to serialise makes every checked response log one line.
+    const unserialisable = {
+      toJSON() {
+        throw new Error("no");
+      },
+    };
+    for (let i = 0; i < 60; i++) {
+      handled(
+        interceptor,
+        { method: "GET", route: { path: "/accounts" }, params: {}, query: {} },
+        unserialisable,
+      );
+    }
+    const checked = warn.mock.calls.filter(([m]) =>
+      String(m).includes("contract response check failed"),
+    );
+    // Responses 1 to 20 (20 of them) and response 50: 21 of the 60.
+    expect(checked).toHaveLength(21);
   });
 });

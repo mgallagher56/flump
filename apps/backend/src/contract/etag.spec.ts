@@ -80,4 +80,51 @@ describe("withVersionClaim", () => {
     expect(result).toBe("plain");
     expect(repository.manager.transaction).not.toHaveBeenCalled();
   });
+
+  /** A repository whose version update touches `affected` rows and whose owner lookup finds `count`. */
+  const claimRepository = (affected: number, count: number) => {
+    const builder: Record<string, unknown> = {};
+    for (const step of ["update", "set", "where"]) builder[step] = () => builder;
+    builder.execute = async () => ({ affected });
+    builder.getCount = async () => count;
+    const scoped = { createQueryBuilder: () => builder };
+    const repository = {
+      target: "Account",
+      manager: {
+        transaction: async (fn: (em: unknown) => Promise<unknown>) =>
+          fn({ getRepository: () => scoped }),
+      },
+    };
+    return { repository: repository as never, scoped };
+  };
+  const expected = new Date("2026-11-14T09:30:00.123Z");
+  const where = { id: "x", user_id: "u" };
+
+  it("runs the work on the transaction's repository when the version matches", async () => {
+    const { repository, scoped } = claimRepository(1, 1);
+    const work = vi.fn(async (repo: unknown) => (repo === scoped ? "scoped" : "other"));
+    await expect(
+      withVersionClaim(repository, where, expected, () => new Error("missing"), work),
+    ).resolves.toBe("scoped");
+  });
+
+  it("is a 412 and skips the work when the row changed since it was read", async () => {
+    // No row updated, but the row exists: someone else changed it.
+    const { repository } = claimRepository(0, 1);
+    const work = vi.fn(async () => "written");
+    await expect(
+      withVersionClaim(repository, where, expected, () => new Error("missing"), work),
+    ).rejects.toThrow(PreconditionFailedException);
+    expect(work).not.toHaveBeenCalled();
+  });
+
+  it("is the caller's not-found error and skips the work when no row matches", async () => {
+    // No row updated and none found for this owner.
+    const { repository } = claimRepository(0, 0);
+    const work = vi.fn(async () => "written");
+    await expect(
+      withVersionClaim(repository, where, expected, () => new Error("missing"), work),
+    ).rejects.toThrow("missing");
+    expect(work).not.toHaveBeenCalled();
+  });
 });
