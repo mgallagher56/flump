@@ -1,7 +1,10 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ConflictException } from "@nestjs/common";
 import type { DataSource, EntityManager } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { encodeCursor } from "../../contract/pagination";
 import type { ImportBatch } from "../../entities/import-batch.entity";
+import { writeSnapshotRows } from "../snapshots/snapshot-write";
+import { expireStale } from "./import-helpers";
 import { ImportsService } from "./imports.service";
 
 // Unit tests over a stand-in manager: the database work is pinned by
@@ -74,9 +77,12 @@ const managerWith = (answer: (sql: string) => unknown) => {
         saved.push(...rows);
         return rows.map((r, i) => ({ ...(r as object), id: uuid(i + 1) }));
       }
-      return entityOrRow;
+      // A new batch gets its id and creation time from the database.
+      return { id: BATCH_ID, createdAt: NOW, ...(entityOrRow as object) };
     }),
     query: vi.fn(async (sql: string) => answer(sql)),
+    count: vi.fn(async () => 0),
+    find: vi.fn(async (): Promise<unknown[]> => []),
   };
   const ds = {
     transaction: (work: (em: EntityManager) => unknown) => work(m as unknown as EntityManager),
@@ -187,6 +193,150 @@ describe("ImportsService", () => {
         currency: "GBP",
       });
       expect(newAccountFields.spy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("commit outcomes", () => {
+    const stagedWithGhost = () =>
+      baseBatch({
+        payload: {
+          accounts: [{ ref: "a", name: "Imported saver", type: "Saving" }],
+          // "ghost" names no staged account, so its row is an error and is not written.
+          balances: [
+            { accountRef: "a", month: "2026-10", value: 1000 },
+            { accountRef: "ghost", month: "2026-10", value: 5 },
+          ],
+          chunkKeys: [],
+        },
+      });
+
+    it("counts a row that names no account as an error and writes the rest", async () => {
+      batchRef.current = stagedWithGhost();
+      // The database writes the one good row: the new account (first id) for October 2026.
+      vi.mocked(writeSnapshotRows).mockResolvedValueOnce([
+        { accountId: uuid(1), year: 2026, month: 10 },
+      ] as never);
+      const { ds } = managerWith(() => []);
+      const view = await new ImportsService(ds).commit(OWNER_ID, BATCH_ID, {}, NOW);
+      // The batch had 0 errors when staged; the ghost row adds 1. The good row is new.
+      expect(view.counts).toMatchObject({ errors: 1, new: 1, overwrite: 0, skipped: 0 });
+      expect(view.skippedManual).toEqual([]);
+    });
+
+    it("skips a row the database kept because a protected value appeared after the read", async () => {
+      batchRef.current = stagedWithGhost();
+      // The conditional upsert wrote nothing: someone saved a value for that month meanwhile.
+      vi.mocked(writeSnapshotRows).mockResolvedValueOnce([]);
+      const { ds } = managerWith(() => []);
+      const view = await new ImportsService(ds).commit(OWNER_ID, BATCH_ID, {}, NOW);
+      expect(view.counts).toMatchObject({ new: 0, overwrite: 0, skipped: 1 });
+      expect(view.skippedManual).toEqual(["a:2026-10"]);
+    });
+
+    it("answers 409 for an expired batch and marks it expired", async () => {
+      // It expired at 11:00, an hour before the commit at 12:00.
+      batchRef.current = baseBatch({ expiresAt: new Date("2026-11-14T11:00:00Z") });
+      vi.mocked(expireStale).mockClear();
+      const { ds, saved } = managerWith(() => []);
+      const err = await new ImportsService(ds).commit(OWNER_ID, BATCH_ID, {}, NOW).then(
+        () => null,
+        (e: unknown) => e,
+      );
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as Error).message).toMatch(/expired/);
+      expect(expireStale).toHaveBeenCalledWith(expect.anything(), OWNER_ID, NOW);
+      expect(saved).toHaveLength(0);
+    });
+
+    it("passes an unexpected failure on as it is, not as a 400", async () => {
+      batchRef.current = stagedWithGhost();
+      const failure = new TypeError("unexpected");
+      newAccountFields.spy.mockImplementationOnce(() => {
+        throw failure;
+      });
+      const { ds } = managerWith(() => []);
+      await expect(new ImportsService(ds).commit(OWNER_ID, BATCH_ID, {}, NOW)).rejects.toBe(
+        failure,
+      );
+    });
+  });
+
+  describe("stage", () => {
+    it("records a value with more than two decimal places as a bad_value error, not a row", async () => {
+      const { ds } = managerWith(() => []);
+      const view = await new ImportsService(ds).stage(
+        OWNER_ID,
+        {
+          idempotencyKey: "stage-key-1",
+          accounts: [{ ref: "a", name: "Imported saver", type: "Saving" }],
+          // 10.123 has three decimal places; pounds are kept to the penny.
+          balances: [{ accountRef: "a", month: "2026-10", value: 10.123 }],
+        } as never,
+        NOW,
+      );
+      expect(view.validationErrors).toEqual([{ ref: "a", month: "2026-10", code: "bad_value" }]);
+      // One account and no balance rows staged: rows = 1 + 0, staged = 0, errors = 1.
+      expect(view.counts).toMatchObject({ staged: 0, errors: 1 });
+      expect(view.rows).toBe(1);
+    });
+  });
+
+  describe("preview", () => {
+    it("counts a row that names no account as an error and lists only the others", async () => {
+      batchRef.current = baseBatch({
+        payload: {
+          accounts: [{ ref: "a", name: "Imported saver", type: "Saving" }],
+          balances: [
+            { accountRef: "a", month: "2026-10", value: 1000 },
+            { accountRef: "ghost", month: "2026-10", value: 5 },
+          ],
+          chunkKeys: [],
+        },
+      });
+      const { ds } = managerWith(() => []);
+      const view = await new ImportsService(ds).preview(OWNER_ID, BATCH_ID, {}, NOW);
+      expect(view.totals).toEqual({ new: 1, overwrite: 0, unchanged: 0, needsTick: 0, errors: 1 });
+      expect(view.rows.map((r) => r.ref)).toEqual(["a"]);
+    });
+  });
+
+  describe("listing the caller's batches", () => {
+    it("list reads only the caller's 50 newest batches, after marking expired ones", async () => {
+      vi.mocked(expireStale).mockClear();
+      const { ds, m } = managerWith(() => []);
+      m.find.mockResolvedValueOnce([baseBatch({})]);
+      const views = await new ImportsService(ds).list(OWNER_ID, NOW);
+      expect(expireStale).toHaveBeenCalledWith(m, OWNER_ID, NOW);
+      expect(m.find).toHaveBeenCalledWith(expect.anything(), {
+        where: { userId: OWNER_ID },
+        order: { createdAt: "DESC" },
+        take: 50,
+      });
+      expect(views.map((v) => v.batchId)).toEqual([BATCH_ID]);
+    });
+
+    it("listPage filters by the caller, newest first with the id as tiebreak, and takes our cursor", async () => {
+      const calls: Array<[string, unknown[]]> = [];
+      const qb: Record<string, unknown> = {};
+      for (const name of ["where", "andWhere", "addSelect", "orderBy", "addOrderBy", "limit"]) {
+        qb[name] = (...args: unknown[]) => {
+          calls.push([name, args]);
+          return qb;
+        };
+      }
+      qb.getRawAndEntities = async () => ({ entities: [baseBatch({})], raw: [] });
+      const { ds, m } = managerWith(() => []);
+      (m as Record<string, unknown>).createQueryBuilder = () => qb;
+
+      // A cursor as the list hands it out: the creation instant and the batch id.
+      const cursor = encodeCursor(["2026-11-14T11:00:00.000000", BATCH_ID]);
+      const page = await new ImportsService(ds).listPage(OWNER_ID, { limit: 10, cursor }, NOW);
+
+      expect(calls).toContainEqual(["where", ["b.userId = :userId", { userId: OWNER_ID }]]);
+      expect(calls).toContainEqual(["orderBy", ['"b"."created_at"', "DESC"]]);
+      expect(calls).toContainEqual(["addOrderBy", ['"b"."id"', "DESC"]]);
+      expect(page.items.map((v) => v.batchId)).toEqual([BATCH_ID]);
+      expect(page.nextCursor).toBeNull();
     });
   });
 

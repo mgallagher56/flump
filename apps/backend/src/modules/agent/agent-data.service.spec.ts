@@ -270,6 +270,14 @@ describe("AgentDataService.getUserFinancialData retirement plan and birth year (
     const other = await serviceWith(profile, null).service.getUserFinancialData("u2");
     expect(other.workplacePension).toMatchObject({ annualSalary: 40000 });
   });
+
+  it("passes no birth year for a saved 0 or a negative year", async () => {
+    // A birth year is a whole positive number; 0 and -1970 are not years anyone was born in.
+    for (const birthYear of [0, -1970]) {
+      const data = await serviceWith({ birthYear }, null).service.getUserFinancialData("u2");
+      expect(data.birthYear).toBeNull();
+    }
+  });
 });
 
 describe("AgentDataService ranged MCP reads (E17 re-plan PR B, unit)", () => {
@@ -355,6 +363,71 @@ describe("AgentDataService ranged MCP reads (E17 re-plan PR B, unit)", () => {
         sources: ["connected", "manual"],
       },
     ]);
+  });
+
+  it("returns no rows and runs no query when no account id is a whole UUID", async () => {
+    const { service, query } = build();
+    const id = "0a1b2c3d-0000-4000-8000-000000000001";
+    // Text before or after a UUID makes it not a UUID.
+    expect(
+      await service.getAccountSnapshots("u1", {
+        from: "2025-01",
+        to: "2025-02",
+        accountIds: [`x${id}`, `${id}x`, "not-an-id"],
+      }),
+    ).toEqual([]);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it("gives an account with no gaps and no recorded sources empty lists", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce([
+        { accountId: "a1", first: 24300, last: 24300, recorded: 1, sources: null },
+        { accountId: "a2", first: 24300, last: 24300, recorded: 1, sources: "{}" },
+        { accountId: "a3", first: 24300, last: 24300, recorded: 1, sources: ["manual"] },
+      ])
+      .mockResolvedValueOnce([]);
+    const { service } = build(query);
+    const coverage = await service.getDataCoverage("u1");
+    // 24300 = 2025 * 12 + 0, which is January 2025.
+    expect(coverage).toEqual([
+      {
+        accountId: "a1",
+        firstMonth: "2025-01",
+        lastMonth: "2025-01",
+        recordedMonths: 1,
+        gaps: [],
+        sources: [],
+      },
+      {
+        accountId: "a2",
+        firstMonth: "2025-01",
+        lastMonth: "2025-01",
+        recordedMonths: 1,
+        gaps: [],
+        sources: [],
+      },
+      {
+        accountId: "a3",
+        firstMonth: "2025-01",
+        lastMonth: "2025-01",
+        recordedMonths: 1,
+        gaps: [],
+        sources: ["manual"],
+      },
+    ]);
+  });
+
+  it("reads no tax records for a date with anything before or after YYYY-MM-DD", async () => {
+    const { service, qb } = build();
+    expect(
+      await service.getTaxRecords("u1", { fromDate: "x2025-04-01", toDate: "2026-03-31" }),
+    ).toEqual([]);
+    expect(
+      await service.getTaxRecords("u1", { fromDate: "2025-04-01", toDate: "2026-03-31x" }),
+    ).toEqual([]);
+    expect(qb.select).not.toHaveBeenCalled();
   });
 
   it("selects tax-record columns explicitly, with no receipt or notes column", async () => {
@@ -452,5 +525,109 @@ describe("AgentDataService.getAccounts carries joint ownership (E34)", () => {
       accountFind.mock.calls[0] as unknown as [{ select: Record<string, boolean> }]
     )[0].select;
     expect(select).toMatchObject({ repaymentType: true, promoZeroPercentUntil: true });
+  });
+});
+
+describe("AgentDataService.queryTransactions", () => {
+  function build(rows: Array<Record<string, unknown>> = []) {
+    const find = vi.fn(async () => rows);
+    const service = agentData(
+      {} as never,
+      {} as never,
+      { find } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    return { service, find };
+  }
+  const optionsOf = (find: ReturnType<typeof vi.fn>) =>
+    (find.mock.calls[0] as unknown as [Record<string, unknown>])[0];
+
+  it("reads only the caller's transactions, newest first, 30 by default", async () => {
+    const { service, find } = build();
+    await service.queryTransactions("u1", {});
+    expect(optionsOf(find)).toEqual({
+      where: { userId: "u1" },
+      order: { timestamp: "DESC" },
+      take: 30,
+    });
+  });
+
+  it("narrows by account and category, and keeps the user filter", async () => {
+    const { service, find } = build();
+    await service.queryTransactions("u1", { accountId: "a1", category: "Food", limit: 5 });
+    expect(optionsOf(find)).toMatchObject({
+      where: { userId: "u1", accountId: "a1", category: "Food" },
+      take: 5,
+    });
+  });
+
+  it("filters by a date range, an open start or an open end", async () => {
+    const start = "2026-01-01T00:00:00.000Z";
+    const end = "2026-01-31T23:59:59.000Z";
+    const cases: Array<[Record<string, string>, Record<string, unknown>]> = [
+      [
+        { startDate: start, endDate: end },
+        { type: "between", value: [new Date(start), new Date(end)] },
+      ],
+      [{ startDate: start }, { type: "moreThanOrEqual", value: new Date(start) }],
+      [{ endDate: end }, { type: "lessThanOrEqual", value: new Date(end) }],
+      [{}, {}],
+    ];
+    for (const [filters, expected] of cases) {
+      const { service, find } = build();
+      await service.queryTransactions("u1", filters);
+      const where = optionsOf(find).where as Record<string, unknown>;
+      expect(where.userId).toBe("u1");
+      if (Object.keys(expected).length === 0) {
+        expect(where).not.toHaveProperty("timestamp");
+      } else {
+        expect(where.timestamp).toMatchObject(expected);
+      }
+    }
+  });
+
+  it("returns each transaction with a numeric amount (0 when unreadable) and an ISO time", async () => {
+    const { service } = build([
+      {
+        id: "t1",
+        userId: "u1",
+        accountId: "a1",
+        amount: "-42.50",
+        description: "Shop",
+        category: "Food",
+        timestamp: new Date("2026-01-05T10:00:00.000Z"),
+      },
+      {
+        id: "t2",
+        userId: "u1",
+        accountId: "a1",
+        amount: "not a number",
+        description: "Odd",
+        category: null,
+        timestamp: new Date("2026-01-04T10:00:00.000Z"),
+      },
+    ]);
+    expect(await service.queryTransactions("u1", {})).toEqual([
+      {
+        id: "t1",
+        accountId: "a1",
+        amount: -42.5,
+        description: "Shop",
+        category: "Food",
+        timestamp: "2026-01-05T10:00:00.000Z",
+      },
+      {
+        id: "t2",
+        accountId: "a1",
+        amount: 0,
+        description: "Odd",
+        category: null,
+        timestamp: "2026-01-04T10:00:00.000Z",
+      },
+    ]);
   });
 });

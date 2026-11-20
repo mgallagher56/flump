@@ -59,6 +59,69 @@ describe("AgentAuditService (E17-N17)", () => {
   });
 });
 
+describe("AgentAuditService argument fingerprints", () => {
+  const { service } = make();
+  const fp = (args: unknown) => service.fingerprint(args, "k");
+
+  it("tells different lists apart: values, order, splits and an object with index keys", () => {
+    expect(fp([1])).not.toBe(fp([2]));
+    expect(fp([1, 2])).not.toBe(fp([2, 1]));
+    // Joining without a separator would make both read 123.
+    expect(fp([1, 23])).not.toBe(fp([12, 3]));
+    expect(fp(["a"])).not.toBe(fp({ 0: "a" }));
+  });
+
+  it("treats an undefined property as absent, as JSON does", () => {
+    // The arguments arrive as JSON, where { a: 1, b: undefined } and { a: 1 } are the same.
+    expect(fp({ a: 1, b: undefined })).toBe(fp({ a: 1 }));
+  });
+});
+
+describe("AgentAuditService keeps well-formed identifiers", () => {
+  const UUID = "0b6f4e1a-9c2d-4e3f-a1b2-c3d4e5f60712";
+  const HEX = "0123456789abcdef".repeat(4);
+  const stored = async (over: Record<string, unknown>) => {
+    const { service, insert } = make();
+    await service.record({
+      userId: "u1",
+      toolName: "x",
+      outcome: "ok",
+      latencyMs: 1,
+      responseBytes: 1,
+      ...over,
+    } as never);
+    return insert.mock.calls[0]?.[0] as Record<string, unknown>;
+  };
+
+  it("stores a real token id, tool name, scopes, error code and fingerprint as given", async () => {
+    const row = await stored({
+      tokenId: UUID,
+      toolName: "list_accounts",
+      scopesUsed: ["mcp:read:full", "write:stage"],
+      errorCode: "RATE_LIMITED",
+      argsFingerprint: HEX,
+    });
+    expect(row).toMatchObject({
+      tokenId: UUID,
+      toolName: "list_accounts",
+      scopesUsed: ["mcp:read:full", "write:stage"],
+      errorCode: "RATE_LIMITED",
+      argsFingerprint: HEX,
+    });
+    // An upper-case UUID is still a UUID.
+    expect((await stored({ tokenId: UUID.toUpperCase() })).tokenId).toBe(UUID.toUpperCase());
+  });
+
+  it("drops a value with anything before or after the identifier", async () => {
+    expect((await stored({ tokenId: `x${UUID}` })).tokenId).toBeNull();
+    expect((await stored({ tokenId: `${UUID}x` })).tokenId).toBeNull();
+    expect((await stored({ toolName: "list_accounts £5" })).toolName).toBe("unknown");
+    expect((await stored({ scopesUsed: ["mcp:read £1,234"] })).scopesUsed).toEqual([]);
+    expect((await stored({ argsFingerprint: `z${HEX}` })).argsFingerprint).toBeNull();
+    expect((await stored({ argsFingerprint: `${HEX}z` })).argsFingerprint).toBeNull();
+  });
+});
+
 describe("AgentAuditService.listForToken (E17 re-plan PR D)", () => {
   const row = (i: number) => ({
     id: `0b6f4e1a-9c2d-4e3f-a1b2-c3d4e5f6071${i}`,
@@ -126,6 +189,14 @@ describe("AgentAuditService.listForToken (E17 re-plan PR D)", () => {
     expect(String(compound?.[1][0])).toMatch(/\("e"\."created_at", "e"\."id"\) </);
     expect(compound?.[1][1]).toMatchObject({ __keyset1: row(5).id });
     expect(page.nextCursor).toBeNull();
+  });
+
+  it("reads the default page of 100 when no page is asked for", async () => {
+    const { repo, calls } = builder([row(0)]);
+    const service = new AgentAuditService(repo as never);
+    await service.listForToken("u1", "t1");
+    // The contract's activity default is 100 rows; one more is read to know if a next page exists.
+    expect(calls).toContainEqual(["limit", [101]]);
   });
 
   it("a cursor that is not ours is a 400 and nothing is read", async () => {
