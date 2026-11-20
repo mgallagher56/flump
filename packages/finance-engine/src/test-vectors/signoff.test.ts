@@ -7,7 +7,9 @@ import {
   vectorSignoffHashV1,
   yearVerification,
 } from "./signoff.js";
+import { UK_SELF_ASSESSMENT_VECTORS } from "./uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS, type UkTaxVector } from "./uk-tax.vectors.js";
+import { UK_WHATIF_VECTORS } from "./uk-whatif.vectors.js";
 
 const base = UK_TAX_VECTORS.find(
   (v) => v.status === "VERIFIED" && v.signedOffBy === null,
@@ -152,5 +154,28 @@ describe("vector sign-off", () => {
     // computed by hand. That is caught in review, by the vector diff and its baseline diff.
     for (const v of UK_TAX_VECTORS) expect(evaluateSignoff(v).state, v.id).not.toBe("invalid");
     expect(UK_TAX_VECTORS.some((v) => v.signedOffBy === "owner")).toBe(true);
+  });
+
+  it("a v1 signature dated after 20 Nov 2026 is invalid: the owner stopped signing that day", () => {
+    const v1 = (at: string): UkTaxVector => ({
+      ...base,
+      signedOffBy: "owner",
+      signedOffAt: at,
+      signedOffHash: vectorSignoffHashV1(base),
+    });
+    expect(evaluateSignoff(v1("2026-11-20")).state).toBe("signed");
+    expect(evaluateSignoff(v1("2026-11-21")).state).toBe("invalid");
+  });
+
+  it("the committed v1 (owner) signatures are exactly the owner's 37 from 20 Nov 2026", () => {
+    // A new v1 signature cannot slip in: the owner's rule of 20 Nov 2026 ended owner sign-off,
+    // and every later signature is v2. Changing this count is a guard change (AGENTS.md s.15).
+    const v1Signed = [
+      ...UK_TAX_VECTORS,
+      ...UK_SELF_ASSESSMENT_VECTORS,
+      ...UK_WHATIF_VECTORS,
+    ].filter((v) => v.signedOffBy !== null && !v.signedOffHash?.startsWith("v2:"));
+    expect(v1Signed).toHaveLength(37);
+    expect(v1Signed.every((v) => v.signedOffBy === "owner" && v.taxYear === "2027/28")).toBe(true);
   });
 });
