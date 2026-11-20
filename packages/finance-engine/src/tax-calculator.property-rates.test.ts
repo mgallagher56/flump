@@ -135,7 +135,7 @@ describe("2027/28 property income sits above self-employed profit too", () => {
   });
 });
 
-describe("2026/27 is unchanged: property and savings at the main rates, credit at 20%", () => {
+describe("2026/27: property and savings at the main rates, credit at 20%", () => {
   it("row 2's inputs in 2026/27", () => {
     const r = calculateUKTax("2026/27", letting(20000, 6000, "2026/27"), 45000, 100);
     // 5,270 x 20% = 1,054; 14,730 x 40% = 5,892; total 6,946. Credit 6,000 x 20% = 1,200.
@@ -157,7 +157,7 @@ describe("2026/27 is unchanged: property and savings at the main rates, credit a
     // allowance goes where the bill is lowest (ITA 2007 s.25(2); s.25(3A) starts in 2027/28):
     // moving 270 onto the interest takes non-savings taxable to 37,700 x 20% = 7,540 (+54) and
     // puts the PSA on 37,700 to 38,200, leaving 1,730 - 500 = 1,230 x 40% = 492 (-108). Total
-    // 8,032. Moving more is a tie (40% against 40%), so 270 is kept.
+    // 8,032. Moving any amount from 270 up to 1,500 is a tie (40% against 40%), so 270 is kept.
     expect(r.totalIncomeTaxDue).toBeCloseTo(8032, 2);
   });
 });
