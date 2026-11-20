@@ -257,6 +257,24 @@ describe("AuthGuard", () => {
       await expect(run({ id: "user_new" }, Probe.prototype.redeem)).resolves.toBe(true);
       await refusal(run({ id: "user_new" }, Probe.prototype.other));
     });
+
+    it("refuses an uninvited caller when the context names no handler (no route marked AllowUninvited)", async () => {
+      local();
+      process.env.BETA_ADMIN_USER_IDS = ADMIN_ID;
+      members.clear();
+      // No handler means no AllowUninvited mark could have been read, so the beta check applies.
+      const noHandler = {
+        switchToHttp: () => ({ getRequest: () => ({ headers: { authorization: "Bearer x" } }) }),
+      } as unknown as ExecutionContext;
+      await refusal(
+        new AuthGuard(
+          verifierFor({ id: "user_new" }),
+          undefined,
+          undefined,
+          membership,
+        ).canActivate(noHandler),
+      );
+    });
   });
 });
 
