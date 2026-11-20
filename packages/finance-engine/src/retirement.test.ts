@@ -800,9 +800,8 @@ describe("E33 Retirement Plan Engine (S0-S1)", () => {
 
   describe("Property-based invariants (fast-check)", () => {
     // A fixed seed keeps the generated cases the same on every run (E41 M2), so a mutation score
-    // for retirement.ts does not change from run to run. Test files share one module graph per
-    // worker (isolate off, E41 P4), so the setting is reset after these properties and reaches
-    // no other file.
+    // for retirement.ts does not change from run to run. The setting is reset after these
+    // properties, so it never reaches a property test that runs after them in the same process.
     beforeAll(() => {
       fc.configureGlobal({ seed: 20261119 });
     });
