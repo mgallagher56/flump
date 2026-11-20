@@ -122,28 +122,28 @@ Both runs were forced, on branch `e41-m2-kill-tests-b` after PRs 807, 808 and 81
 
 ## What M4 measured (20 November 2026)
 
-M4 added `apps/backend`. [`stryker.config.json`](../../apps/backend/stryker.config.json) mutates the guards, interceptors and filters, `src/auth`, `src/security`, `src/contract`, every module service, and `bank-connection-oauth.ts` (46 files). It leaves out migrations, entities, scripts, testing helpers, `main.ts`, `instrument.ts` and module wiring. Stryker runs the unit Vitest project only, read from `vitest.config.ts` by [`vitest.stryker.config.ts`](../../apps/backend/vitest.stryker.config.ts), so the split between unit and database specs stays in one place.
+M4 added `apps/backend`. [`stryker.config.json`](../../apps/backend/stryker.config.json) mutates the guards, interceptors and filters, `src/auth`, `src/security`, `src/contract`, every module service, the beta invite services and `bank-connection-oauth.ts` (49 files after the rebase onto main). It leaves out migrations, entities, scripts, testing helpers, `main.ts`, `instrument.ts` and module wiring. Stryker runs the unit Vitest project only, read from `vitest.config.ts` by [`vitest.stryker.config.ts`](../../apps/backend/vitest.stryker.config.ts), so the split between unit and database specs stays in one place.
 
 All runs were forced, on the laptop (8 cores, Node 22.12.0).
 
-| Run                             | Faults | Killed / timed out / survived / no coverage / errors | Stryker's score | Without timeouts |                                  Time |
-| ------------------------------- | -----: | ---------------------------------------------------- | --------------: | ---------------: | ------------------------------------: |
-| Unit specs, before              |  6,300 | 3,663 / 4 / 1,480 / 1,151 / 2                        |          58.22% |           58.16% |   19 min (concurrency 6, load 5 to 9) |
-| Unit and database specs, before |  6,300 | 4,627 / 62 / 600 / 262 / 749                         |          84.47% |           83.35% |               161 min (concurrency 4) |
-| Unit specs, after               |  6,343 | 4,708 / 4 / 1,168 / 461 / 2                          |          74.31% |           74.25% | 29 min (concurrency 6, load 11 to 35) |
+| Run                                   | Faults | Killed / timed out / survived / no coverage / errors | Stryker's score | Without timeouts |                                 Time |
+| ------------------------------------- | -----: | ---------------------------------------------------- | --------------: | ---------------: | -----------------------------------: |
+| Unit specs, before                    |  6,300 | 3,663 / 4 / 1,480 / 1,151 / 2                        |          58.22% |           58.16% |  19 min (concurrency 6, load 5 to 9) |
+| Unit and database specs, before       |  6,300 | 4,627 / 62 / 600 / 262 / 749                         |          84.47% |           83.35% |              161 min (concurrency 4) |
+| Unit specs, after (rebased onto main) |  6,638 | 4,935 / 4 / 1,192 / 504 / 3                          |          74.44% |           74.38% | 25 min (concurrency 6, load 5 to 14) |
 
-- The floor. `scripts/mutation-baseline.json` sets `apps/backend` at **73%**: floor(74.25) - 1. Fault counts differ after because `client-key.ts` was rewritten (below).
+- The floor. `scripts/mutation-baseline.json` sets `apps/backend` at **73%**: floor(74.38) - 1, measured on the rebased head. Fault counts differ after because `client-key.ts` was rewritten (below) and main added the beta invite module and changed 10 of the mutated files during M4. Before the rebase the same tests scored 74.25%.
 - The database run (decision 11, for measuring only, not committed): a throwaway Postgres in Docker, with each Stryker worker given its own database through the `STRYKER_MUTATOR_WORKER` variable, so concurrent workers never reset each other's schema. "Errors" there are runs that stopped with an error, which Stryker leaves out of the score.
-- Kill tests were written only for the 924 faults that **neither** run caught (survived, no coverage or timed out in both), in six areas by six agents, each in its own worktree. They killed 579. The rest have ledger rows. Unit tests were not written for faults that only the database specs catch: they would repeat those specs.
-- After M4, 1,633 faults are not caught by unit specs. 685 of them are killed by a database spec and 628 more stopped the database run with an error or a timeout; both are counted per file in the [triage ledger](./mutation-triage.md). About 320 are caught by neither and each has a ledger row.
+- Kill tests were written only for faults that **neither** run caught (survived, no coverage or timed out in both): 924 at first, in six areas by six agents, each in its own worktree, which killed 579; then 142 in the 14 files main changed or added during M4, measured again with the database specs after the rebase, of which a seventh agent killed 27. The rest have ledger rows. Unit tests were not written for faults that only the database specs catch: they would repeat those specs.
+- After M4, 1,700 faults are not caught by unit specs. 684 of them are killed by a database spec and 659 more stopped the database run with an error or a timeout; both are counted per file in the [triage ledger](./mutation-triage.md). 357 are caught by neither and each has a ledger row.
 
 Decision 11 figures for the owner:
 
-- Code only the database specs reach: before M4, 1,827 of the 2,631 faults the unit specs missed were killed or errored in the database run. After M4, 1,313 of 1,633.
+- Code only the database specs reach: before M4, 1,827 of the 2,631 faults the unit specs missed were killed or errored in the database run. After M4, 1,343 of 1,700.
 - Cost: the database run took about 8 times as long as the unit run on the laptop (161 against 19 minutes, at lower concurrency because each worker needs its own database). In CI it would also need a Postgres service in each shard.
 - Recommendation: keep option A (unit specs only in the weekly run). The faults only the database specs catch are counted per file in the ledger, so a later change in that number shows. If the owner wants them in the score, a monthly database run, not a weekly one, would cost the least.
 
-CI_M4_LINE
+On CI: the first forced manual run of `apps/backend` on this branch is recorded below once it finishes.
 
 What the triage found, besides missing tests (each fixed on this branch, test first, with a security review):
 
