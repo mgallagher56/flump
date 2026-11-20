@@ -27,7 +27,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 11 | E8 | Make the Storybook a11y job blocking (due 2026-11-25) | Done: blocking in `ci-pipeline.yml` and listed in `.github/required-checks.json`. Whether branch protection requires it is not re-checked |
 | 12 | E1 D-06, C-18, F-03 | Transactional deleteAccount; MCP auth coverage to 80% | Partly: deletion runs in one transaction (BE-04, #668, per the backend re-score); MCP auth coverage not re-checked |
 | 13 | E3 B-04, D-11, N-02 | Foreign keys and indexes; key id for bank tokens; zod env schema | Done in code per the backend re-score: foreign keys (BE-08, #675), indexes proven by a query-plan test, versioned bank token keys (BE-12, #672), `config/env.schema.ts` |
-| 14 | E7 M-09, I-07 | Widen the claims guard; mirror the copy changes in web | Partly |
+| 14 | E7 M-09, I-07 | Widen the claims guard; mirror the copy changes in web | Done: the marketing claims guard and the web copy guard now also ban "256-bit", "bank-grade", "GDPR" and "Open Banking"; no source used them |
 | 15 | E2, E1 G-03 | Salary-sacrifice defaults; delete the mock token and fake accounts in the parked mobile app | Mobile part done: `apps/mobile-companion` was deleted (#827). Salary-sacrifice defaults not re-checked |
 | 16 | E15 | Pre-release visual pass | Not started |
 | 17 | E9 H-03 | Last 17 design-token violations | Partly |
@@ -460,7 +460,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 ## E7. Marketing and security claims vs reality
 
-- **Status (2026-11-14, checked against `origin/main`):** mostly done (commits 6278f571, 32f9d2f5 and 16ae682f; guard test `apps/marketing/src/claims.test.ts`). M-07, M-08, M-10, G-08 and G-12 are done; M-06, M-09 and I-07 are partly done. Later work built on it: E24 T4 pricing (#601), E31 (#624) and E17 (#637).
+- **Status (2026-11-14, checked against `origin/main`):** mostly done (commits 6278f571, 32f9d2f5 and 16ae682f; guard test `apps/marketing/src/claims.test.ts`). M-07, M-08, M-10, G-08 and G-12 are done; M-06 is partly done; M-09 and I-07 are done (2026-11-20). Later work built on it: E24 T4 pricing (#601), E31 (#624) and E17 (#637).
 - **Severity:** P1
 - **Blocked by:** none
 - **Done when:** No page promises a feature, certification, regulatory status or security property the product does not have today.
@@ -490,7 +490,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 #### M-09: Encryption and transport claims conflict with Track D and with the server's actual headers
 
-- **Status (2026-11-14):** PARTLY. The claims are reworded, but the guard does not cover "256-bit", "bank-grade", "GDPR" or "Open Banking".
+- **Status (2026-11-20):** DONE. The claims are reworded, and `apps/marketing/src/claims.test.ts` bans "256-bit", "bank-grade", "GDPR" and "Open Banking".
 - Severity P1, effort S, location `SecurityPage.tsx:126,183-187; SecurityPrivacySection.tsx:124,191; Footer.tsx:81; apps/marketing/server.ts:16`
 - Acceptance: Reword to verified facts, drop TLS 1.3 and preload unless confirmed at the edge, and hold security claims until D-01 to D-04 and D-11 are closed.
 - Blocked by: none
@@ -515,7 +515,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 #### I-07: Marketing promises that the product does not implement
 
-- **Status (2026-11-14):** PARTLY. Marketing is done; mirroring the copy changes in the web app (E7 T12) was left out of scope.
+- **Status (2026-11-20):** DONE. Marketing is done. The web app source holds none of the removed claims, and `apps/web/app/copy-guard.test.ts` now bans them there too (E7 T12).
 - Severity P1, effort S, location `apps/marketing pricing and home; apps/web/app/routes/signUp._index.tsx`
 - Acceptance: Reword or remove until implemented, or implement the plan hand-off.
 - Blocked by: none
