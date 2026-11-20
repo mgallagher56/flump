@@ -1,12 +1,13 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { encodeCursor } from "../../contract/pagination";
 import type { Account } from "../../entities/account.entity";
 import type { AccountDetail } from "../../entities/account-detail.entity";
 import type { BankConnection } from "../../entities/bank-connection.entity";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
 import { at } from "../../testing/must";
-import { AccountIntakeService } from "./account-intake.service";
+import { AccountIntakeService, newAccountFields } from "./account-intake.service";
 
 /** Builds the service over test doubles, which stand in for the TypeORM repositories. */
 const intakeOver = (
@@ -1213,5 +1214,273 @@ describe("system audit slice 4: a new account records its first history row (dec
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("account reads: one account's history, lists and pages", () => {
+  const A1 = "6f1c6a4e-5b0e-4a63-9d0a-00000000d0a1";
+  const A2 = "6f1c6a4e-5b0e-4a63-9d0a-00000000d0a2";
+  const B1 = "6f1c6a4e-5b0e-4a63-9d0a-00000000d0b1";
+  const setup = () => {
+    const accounts = createInMemoryRepository([
+      { id: A1, userId: "userA", name: "Current", type: "Current", balance: 100 },
+      { id: A2, userId: "userA", name: "Saver", type: "Saving", balance: 200 },
+      { id: B1, userId: "userB", name: "Theirs", type: "Saving", balance: 999 },
+    ]);
+    const details = createInMemoryRepository([
+      { id: 1, accountId: A1, year: 2026, month: 9, value: 90 },
+      { id: 2, accountId: A1, year: 2026, month: 10, value: 100 },
+      { id: 3, accountId: A2, year: 2026, month: 10, value: 200 },
+      { id: 4, accountId: B1, year: 2026, month: 10, value: 999 },
+    ]);
+    const svc = intakeOver(accounts, details, { findOne: vi.fn() });
+    return { svc, accounts, details };
+  };
+
+  it("getAccountDetails for one account returns that account's months only", async () => {
+    const { svc } = setup();
+    const rows = await svc.getAccountDetails("userA", A1);
+    expect(rows.map((r) => r.id).sort()).toEqual([1, 2]);
+  });
+
+  it("getAccountDetails is a 404 for another user's account and reads none of its months", async () => {
+    const { svc, details } = setup();
+    await expect(svc.getAccountDetails("userA", B1)).rejects.toBeInstanceOf(NotFoundException);
+    expect(details.find).not.toHaveBeenCalled();
+  });
+
+  it("getAccounts gives an account with no history an empty list", async () => {
+    const accounts = createInMemoryRepository([
+      { id: A1, userId: "userA", name: "New", type: "Saving", balance: 5 },
+    ]);
+    const svc = intakeOver(accounts, createInMemoryRepository(), { findOne: vi.fn() });
+    const [only] = await svc.getAccounts("userA");
+    expect(only?.details).toEqual([]);
+  });
+
+  it("listAccounts returns every month of history when no details option is given", async () => {
+    const { svc } = setup();
+    const page = await svc.listAccounts("userA", { limit: 10 });
+    expect(page.items.map((a) => a.id).sort()).toEqual([A1, A2]);
+    const a1 = page.items.find((a) => a.id === A1);
+    expect(a1?.details.map((d) => d.month).sort((x, y) => x - y)).toEqual([9, 10]);
+  });
+
+  it("listAccounts accepts a next-page cursor of the account keys (created time, then id)", async () => {
+    const { svc } = setup();
+    // Accounts page oldest first by created_at, then id: a microsecond UTC timestamp and a uuid.
+    const cursor = encodeCursor(["2026-11-01T09:30:00.123456", A2]);
+    await expect(svc.listAccounts("userA", { limit: 10, cursor }, "none")).resolves.toMatchObject({
+      nextCursor: null,
+    });
+  });
+
+  it("listAccountDetails accepts a next-page cursor of the month keys (year, month, id)", async () => {
+    const { svc } = setup();
+    // Monthly values page by year, month, then the row id: three whole numbers.
+    const cursor = encodeCursor([2026, 10, 3]);
+    await expect(svc.listAccountDetails("userA", { limit: 10, cursor })).resolves.toMatchObject({
+      nextCursor: null,
+    });
+    const wrong = encodeCursor(["2026", 10, 3]);
+    await expect(
+      svc.listAccountDetails("userA", { limit: 10, cursor: wrong }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe("account writes: bounds, links and conditional updates", () => {
+  const HOME = "6f1c6a4e-5b0e-4a63-9d0a-00000000e001";
+  const MORT = "6f1c6a4e-5b0e-4a63-9d0a-00000000e002";
+  const SAVER = "6f1c6a4e-5b0e-4a63-9d0a-00000000e003";
+  const OTHER_HOME = "6f1c6a4e-5b0e-4a63-9d0a-00000000e004";
+  const MORT_2 = "6f1c6a4e-5b0e-4a63-9d0a-00000000e005";
+  const THEIR_MORT = "6f1c6a4e-5b0e-4a63-9d0a-00000000e006";
+  const setup = (rows: Record<string, unknown>[] = []) => {
+    const accounts = createInMemoryRepository(rows);
+    const details = createInMemoryRepository();
+    const svc = intakeOver(accounts, details, { findOne: vi.fn() });
+    const row = (id: string) => accounts.rows.find((r) => r.id === id);
+    return { svc, accounts, details, row };
+  };
+  const card = (extra: Record<string, unknown>) => ({
+    name: "Card",
+    type: "Credit Card",
+    balance: 0,
+    ...extra,
+  });
+
+  it("accepts a credit limit of £0 and of the largest value the column holds", async () => {
+    const { svc } = setup();
+    // numeric(12,2) holds up to 9,999,999,999.99; a £0 limit is a real limit, not "unset".
+    expect((await svc.createAccount("userA", card({ creditLimit: 0 }))).creditLimit).toBe(0);
+    const top = await svc.createAccount("userA", card({ creditLimit: 9_999_999_999.99 }));
+    expect(top.creditLimit).toBe(9_999_999_999.99);
+  });
+
+  it("refuses a credit limit that is not a finite number", async () => {
+    const { svc, accounts } = setup();
+    for (const creditLimit of [Number.NaN, Number.POSITIVE_INFINITY]) {
+      await expect(svc.createAccount("userA", card({ creditLimit }))).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    }
+    expect(accounts.rows).toHaveLength(0);
+  });
+
+  it("refuses a balance of 10 billion or more either way, and accepts one just below", async () => {
+    const { svc, accounts } = setup();
+    for (const balance of [1e10, -1e10, Number.POSITIVE_INFINITY, Number.NaN]) {
+      await expect(
+        svc.createAccount("userA", { name: "Saver", type: "Saving", balance }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+    expect(accounts.rows).toHaveLength(0);
+    // 9,999,999,999.99 is under 10,000,000,000, so it fits numeric(12,2).
+    const saved = await svc.createAccount("userA", {
+      name: "Saver",
+      type: "Saving",
+      balance: 9_999_999_999.99,
+    });
+    expect(saved.balance).toBe(9_999_999_999.99);
+  });
+
+  it("leaves the balance out of a new account's fields when none is sent", () => {
+    const fields = newAccountFields({ name: "Saver", type: "Saving" } as never);
+    expect(fields).not.toHaveProperty("balance");
+  });
+
+  it("accepts a date in year 1, the first year a real date can have", async () => {
+    const { svc } = setup();
+    const saved = await svc.createAccount("userA", card({ promoZeroPercentUntil: "0001-01-01" }));
+    expect(saved.promoZeroPercentUntil).toBe("0001-01-01");
+  });
+
+  it("accepts a null link and a null repayment type on an account that is not a mortgage", async () => {
+    const { svc } = setup();
+    const saved = await svc.createAccount("userA", {
+      name: "Saver",
+      type: "Saving",
+      balance: 10,
+      linkedAccountId: null,
+      repaymentType: null,
+    });
+    expect(saved).toMatchObject({ linkedAccountId: null, repaymentType: null });
+  });
+
+  it("refuses a link id with anything around the uuid before looking it up", async () => {
+    const { svc, accounts } = setup([
+      { id: HOME, userId: "userA", name: "Home", type: "Property", balance: 1 },
+    ]);
+    for (const linkedAccountId of [`${HOME}0`, `0${HOME}`]) {
+      await expect(
+        svc.createAccount("userA", {
+          name: "Mortgage",
+          type: "Mortgage",
+          balance: -1,
+          linkedAccountId,
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+    expect(accounts.findOne).not.toHaveBeenCalled();
+  });
+
+  it("refuses a link to one of the caller's own accounts that is not a property", async () => {
+    const { svc, row } = setup([
+      { id: SAVER, userId: "userA", name: "Saver", type: "Saving", balance: 1 },
+      { id: MORT, userId: "userA", name: "Mortgage", type: "Mortgage", balance: -1 },
+    ]);
+    await expect(
+      svc.updateAccount("userA", MORT, { linkedAccountId: SAVER }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(row(MORT)?.linkedAccountId ?? null).toBeNull();
+  });
+
+  it("unlinks only the caller's mortgages on the property that stopped being one", async () => {
+    const { svc, row } = setup([
+      { id: HOME, userId: "userA", name: "Home", type: "Property", balance: 1 },
+      { id: OTHER_HOME, userId: "userA", name: "Flat", type: "Property", balance: 1 },
+      { id: MORT, userId: "userA", type: "Mortgage", balance: -1, linkedAccountId: HOME },
+      { id: MORT_2, userId: "userA", type: "Mortgage", balance: -1, linkedAccountId: OTHER_HOME },
+      { id: THEIR_MORT, userId: "userB", type: "Mortgage", balance: -1, linkedAccountId: HOME },
+    ]);
+    await svc.updateAccount("userA", HOME, { type: "Investment" });
+    expect(row(MORT)?.linkedAccountId).toBeNull();
+    expect(row(MORT_2)?.linkedAccountId).toBe(OTHER_HOME);
+    expect(row(THEIR_MORT)?.linkedAccountId).toBe(HOME);
+  });
+
+  it("a conditional update claims the version on the caller's own row only", async () => {
+    const { svc, accounts } = setup([
+      { id: SAVER, userId: "userA", name: "Saver", type: "Saving", balance: 1 },
+    ]);
+    const claimParams: Record<string, unknown>[] = [];
+    const chain = {
+      update: () => chain,
+      set: () => chain,
+      where: (_sql: string, params: Record<string, unknown>) => {
+        claimParams.push(params);
+        return chain;
+      },
+      execute: async () => ({ affected: 1 }),
+    };
+    accounts.createQueryBuilder.mockImplementation(() => chain as never);
+    await svc.updateAccount("userA", SAVER, { balance: 2 }, new Date("2026-11-01T00:00:00Z"));
+    // The tenancy filter: the version claim names both the row and its owner.
+    expect(claimParams[0]).toMatchObject({ id: SAVER, user_id: "userA" });
+  });
+
+  it("refuses an ISA subtype on a joint account unless the change says sole", async () => {
+    const { svc } = setup([
+      {
+        id: SAVER,
+        userId: "userA",
+        name: "Family pot",
+        type: "Saving",
+        accountSubtype: "easy_access",
+        balance: 1,
+        ownership: "joint",
+        sharePercent: 50,
+      },
+    ]);
+    await expect(
+      svc.updateAccount("userA", SAVER, { accountSubtype: "cash_isa" }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("lets an unrelated edit through on a stored joint ISA that resends its own subtype, as sole", async () => {
+    const { svc, row } = setup([
+      {
+        id: SAVER,
+        userId: "userA",
+        name: "Old pot",
+        type: "Saving",
+        accountSubtype: "cash_isa",
+        balance: 1,
+        ownership: "joint",
+        sharePercent: 50,
+      },
+    ]);
+    // The subtype is unchanged, so only the balance changes: no joint question is asked.
+    await svc.updateAccount("userA", SAVER, { accountSubtype: "cash_isa", balance: 1_200 });
+    expect(row(SAVER)).toMatchObject({ balance: 1_200, ownership: "sole", sharePercent: null });
+  });
+
+  it("gives an account made joint by an update the default 50% share", async () => {
+    const { svc, row } = setup([
+      { id: SAVER, userId: "userA", name: "Saver", type: "Saving", balance: 1, ownership: "sole" },
+    ]);
+    await svc.updateAccount("userA", SAVER, { ownership: "joint" });
+    expect(row(SAVER)).toMatchObject({ ownership: "joint", sharePercent: 50 });
+  });
+
+  it("refuses a mortgage-with-property request that has no property", async () => {
+    const { svc, accounts } = setup();
+    await expect(
+      svc.createMortgageWithProperty("userA", {
+        mortgage: { name: "Mortgage", balance: 1 },
+      } as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(accounts.rows).toHaveLength(0);
   });
 });
