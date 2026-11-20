@@ -53,11 +53,12 @@ describe("redirectTarget", () => {
 });
 
 describe("redirectMiddleware", () => {
-  it("answers /mcp with a 301 to /features/ai-connection, keeping the query and the headers", async () => {
+  it("answers /mcp with a 301 to /features/ai-connection, with the headers and without the query", async () => {
     const base = await start();
     const res = await fetch(`${base}/mcp?ref=app`, { redirect: "manual" });
     expect(res.status).toBe(301);
-    expect(res.headers.get("location")).toBe("/features/ai-connection?ref=app");
+    // The target comes from the table alone, never from the request.
+    expect(res.headers.get("location")).toBe("/features/ai-connection");
     expect(res.headers.get("strict-transport-security")).toContain("max-age=31536000");
   });
 

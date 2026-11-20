@@ -33,6 +33,9 @@ const STAGING = MCP_TOOLS.filter((tool) => tool.kind === "stage");
 
 const count = new Intl.NumberFormat("en-GB");
 
+/** The web app's Settings link lands here (`apps/web/app/routes/app.profile.tsx`). */
+const SETUP_FRAGMENT = "#setup";
+
 /**
  * The AI connection page (E42 S2b): a feature page like the five areas, at
  * `/features/ai-connection` (`/mcp` answers 301 here). Access stays with the accounts the owner
@@ -45,11 +48,11 @@ const count = new Intl.NumberFormat("en-GB");
  * there (after hydration, since the server never sees the fragment).
  */
 export const AiConnectionPage: FC = () => {
-  const { hash } = useLocation();
+  const { hash: fragment } = useLocation();
   const [openOnArrival, setOpenOnArrival] = useState(false);
   useEffect(() => {
-    if (hash === "#setup") setOpenOnArrival(true);
-  }, [hash]);
+    if (fragment === SETUP_FRAGMENT) setOpenOnArrival(true);
+  }, [fragment]);
 
   return (
     <FeaturePage
