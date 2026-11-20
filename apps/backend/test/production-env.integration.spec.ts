@@ -234,6 +234,8 @@ describe.skipIf(dbMode === "skip")(
       h = await bootAuthzHarness({
         env: {
           RAILWAY_ENVIRONMENT: "staging",
+          // A Railway process must say how the beta is gated (boot guard); open here.
+          BETA_OPEN: "true",
           // A Railway service never uses the development banking key (S3).
           BANKING_TOKEN_ENCRYPTION_KEY: runtimeValue("b"),
           MCP_AUDIT_HMAC_KEY: runtimeValue("m"),

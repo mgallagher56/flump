@@ -609,29 +609,21 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("PUT /retirement-plan", "idor");
   });
 
-  it("/retirement-plan: an account outside the RD9 friends beta gets the unknown-route 404", async () => {
-    const saved = process.env.RETIREMENT_ALLOWED_USER_IDS;
-    process.env.RETIREMENT_ALLOWED_USER_IDS = USER_A;
+  it("/retirement-plan: open to every allowed account; an uninvited one gets not_invited (owner, 20 Nov 2026)", async () => {
+    // Open beta (nothing set): both accounts reach it, with no Retirement list to be on.
+    expect((await h.call("get", "/retirement-plan", h.tokens.a)).status).toBe(200);
+    expect((await h.call("get", "/retirement-plan", h.tokens.b)).status).toBe(200);
+    // Invite-only with only A allowed: B gets the beta refusal, not a Retirement-specific 404.
+    const saved = process.env.BETA_ALLOWED_USER_IDS;
+    process.env.BETA_ALLOWED_USER_IDS = USER_A;
     try {
-      const strip = (body: Record<string, unknown>) => ({ ...body, requestId: undefined });
-      const unknownGet = await h.call("get", "/no-such-route", h.tokens.b);
-      const unknownPut = await h.call("put", "/no-such-route", h.tokens.b, {});
-      expect(unknownGet.status).toBe(404);
-
-      const get = await h.call("get", "/retirement-plan", h.tokens.b);
-      expect(get.status).toBe(404);
-      expect(strip(get.body)).toEqual(strip(unknownGet.body));
-
-      const put = await h.call("put", "/retirement-plan", h.tokens.b, { retirementAge: 60 });
-      expect(put.status).toBe(404);
-      expect(strip(put.body)).toEqual(strip(unknownPut.body));
-      expect(JSON.stringify([get.body, put.body])).not.toMatch(/retire|feature|disabled/i);
-
-      // The listed account is unaffected.
+      const refused = await h.call("get", "/retirement-plan", h.tokens.b);
+      expect(refused.status).toBe(403);
+      expect(JSON.stringify(refused.body)).toContain("not_invited");
       expect((await h.call("get", "/retirement-plan", h.tokens.a)).status).toBe(200);
     } finally {
-      if (saved === undefined) delete process.env.RETIREMENT_ALLOWED_USER_IDS;
-      else process.env.RETIREMENT_ALLOWED_USER_IDS = saved;
+      if (saved === undefined) delete process.env.BETA_ALLOWED_USER_IDS;
+      else process.env.BETA_ALLOWED_USER_IDS = saved;
     }
   });
 });

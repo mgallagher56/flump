@@ -61,7 +61,7 @@ describe("inviteGateMiddleware", () => {
 
   it("stops an uninvited page load before any other route's loader runs", async () => {
     backendAnswers(403, { statusCode: 403, error: "not_invited" });
-    for (const path of ["/app", "/app/accounts", "/app/budget", "/tools", "/"]) {
+    for (const path of ["/app", "/app/accounts", "/app/budget", "/app/retirement", "/tools", "/"]) {
       const { result, loaderRan } = runGate(path);
       const thrown = await result.catch((e: unknown) => e);
       // `data(...)` thrown from middleware: React Router renders it in the root error boundary.

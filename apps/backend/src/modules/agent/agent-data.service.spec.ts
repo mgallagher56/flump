@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fakeBetaMembership } from "../../testing/fake-beta-membership";
+import { describe, expect, it, vi } from "vitest";
 import { AgentDataService } from "./agent-data.service";
 import { FinancialPictureService } from "./financial-picture.service";
 
@@ -15,16 +14,7 @@ function agentData(
   plans: never,
 ): AgentDataService {
   const picture = new FinancialPictureService(budget, tax, finance, profile);
-  return new AgentDataService(
-    tax,
-    transactions,
-    profile,
-    accounts,
-    details,
-    plans,
-    picture,
-    fakeBetaMembership(),
-  );
+  return new AgentDataService(tax, transactions, profile, accounts, details, plans, picture);
 }
 
 describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16, E17-N7)", () => {
@@ -187,16 +177,7 @@ describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
 });
 
 describe("AgentDataService.getUserFinancialData retirement plan and birth year (E33)", () => {
-  // RD9: the plan is read only for the friends beta; u1 is on the list here.
-  const originalEnv = process.env;
-  beforeEach(() => {
-    const { BETA_OPEN: _open, ...rest } = originalEnv;
-    process.env = { ...rest, RETIREMENT_ALLOWED_USER_IDS: "u1" };
-  });
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
+  // Retirement is open to everyone the beta lets in (owner, 20 Nov 2026, superseding RD9).
   const savedRow = {
     id: "plan-1",
     userId: "u1",
@@ -265,16 +246,15 @@ describe("AgentDataService.getUserFinancialData retirement plan and birth year (
     for (const fn of Object.values(writes)) expect(fn).not.toHaveBeenCalled();
   });
 
-  it("neither reads nor passes the plan for an account outside the friends beta (RD9)", async () => {
+  it("reads and passes the plan for any account, with no list to be on", async () => {
     const { service, findOne } = serviceWith({ birthYear: 1970 }, savedRow);
     const data = await service.getUserFinancialData("u2");
-    expect(findOne).not.toHaveBeenCalled();
-    expect(data.retirementPlan).toBeUndefined();
-    expect("retirementPlan" in data).toBe(false);
+    expect(findOne).toHaveBeenCalled();
+    expect(data.retirementPlan?.retirementAge).toBe(66);
     expect(data.birthYear).toBe(1970);
   });
 
-  it("passes the workplace pension only with the plan, for the friends beta", async () => {
+  it("passes the workplace pension with the plan, for any account", async () => {
     const profile = {
       annualSalary: "40000",
       employmentType: "employed",
@@ -287,16 +267,8 @@ describe("AgentDataService.getUserFinancialData retirement plan and birth year (
       employeePercent: 6,
       employerPercent: 4,
     });
-    const refused = await serviceWith(profile, null).service.getUserFinancialData("u2");
-    expect(refused.workplacePension).toBeUndefined();
-    expect("workplacePension" in refused).toBe(false);
-  });
-
-  it("reads the plan for anyone in open testing (BETA_OPEN)", async () => {
-    process.env = { ...process.env, BETA_OPEN: "true", RETIREMENT_ALLOWED_USER_IDS: "" };
-    const { service } = serviceWith({}, savedRow);
-    const data = await service.getUserFinancialData("u2");
-    expect(data.retirementPlan?.retirementAge).toBe(66);
+    const other = await serviceWith(profile, null).service.getUserFinancialData("u2");
+    expect(other.workplacePension).toMatchObject({ annualSalary: 40000 });
   });
 });
 

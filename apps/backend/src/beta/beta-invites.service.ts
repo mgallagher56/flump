@@ -20,7 +20,6 @@ import {
 import { DataSource } from "typeorm";
 import { isBetaInviteOnly, isBetaUserAllowedByEnv } from "../auth/beta-access";
 import type { AuthenticatedUser } from "../auth/token-verifier";
-import { BetaMembershipService } from "./beta-membership.service";
 import { hashInviteToken, newInviteToken } from "./invite-token";
 
 /** How long a closed invite (used, expired or cancelled) stays in the admin list and the table. */
@@ -55,10 +54,7 @@ const iso = (value: Date | string): string => new Date(value).toISOString();
 export class BetaInvitesService {
   private readonly logger = new Logger(BetaInvitesService.name);
 
-  constructor(
-    private readonly dataSource: DataSource,
-    private readonly membership: BetaMembershipService,
-  ) {}
+  constructor(private readonly dataSource: DataSource) {}
 
   /**
    * Redeems a link for the caller. Already allowed (open beta, admin, env-listed or an active
@@ -227,7 +223,6 @@ export class BetaInvitesService {
       ),
     );
     if (rows.length === 0) throw new NotFoundException("Member not found.");
-    this.membership.forget(userId);
     this.logger.log("beta_member_removed count=1");
     return { success: true };
   }

@@ -18,7 +18,7 @@ type Env = Record<string, string | undefined>;
  * Production also refuses to boot with no allowlist, no admin and no `BETA_OPEN=true`
  * (`config/boot-guards.ts`).
  */
-export function parseList(value: string | undefined, lower: boolean): string[] {
+function parseList(value: string | undefined, lower: boolean): string[] {
   return (value ?? "")
     .split(",")
     .map((item) => (lower ? item.trim().toLowerCase() : item.trim()))
@@ -74,16 +74,6 @@ export function isBetaUserAllowedByEnv(env: Env, user: AuthenticatedUser): boole
  */
 export interface BetaMembershipCheck {
   isActiveMember(userId: string): Promise<boolean>;
-}
-
-/**
- * The same lookup plus a synchronous answer for the MCP tool list (Retirement), which the MCP
- * package builds without awaiting: the result of the last `isActiveMember` for this user, if it
- * was asked within the last minute. Every AI token request asks it while the token is checked,
- * just before the tools are listed, so in practice it is the answer of that same request.
- */
-export interface BetaMembershipLookup extends BetaMembershipCheck {
-  wasActiveMemberRecently(userId: string): boolean;
 }
 
 export const BETA_MEMBERSHIP_CHECK = "BETA_MEMBERSHIP_CHECK";

@@ -32,7 +32,11 @@ describe("buildNavManifest", () => {
     const keys = items.map((i) => i.key);
     expect(keys.slice(0, 3)).toEqual(["home", "accounts", "budget"]);
     const savings = items.find((i) => i.key === "savingsAndPension");
-    expect(savings?.children?.map((c) => c.href)).toEqual(["/app/savings", "/app/pension"]);
+    expect(savings?.children?.map((c) => c.href)).toEqual([
+      "/app/savings",
+      "/app/pension",
+      "/app/retirement",
+    ]);
     expect(savings?.href).toBe("/app/savings");
   });
 

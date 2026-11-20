@@ -404,3 +404,11 @@ Two questions put to the owner on 19 November 2026 through the coordinator, afte
 
 - The two readings differ on purpose, and each input says which it is: `UkPensionInput` in `packages/finance-engine/src/uk-take-home.ts`, and the calculator label "What you pay into your pension a year (tax relief is added on top)".
 - No stored value changes: the app stores no relief-at-source method, so no saved answer is read differently. The 17 unsigned what-if vectors that use a £ amount are unchanged.
+
+# Owner decision (2026-11-20): Retirement open to everyone the beta allows
+
+Relayed by the coordinator on 20 November 2026, while PR #845 (invite links) was open. Owner's words: "Why is retirement not open to everyone? It should be. We're only using beta invites for testing currently, but it will be open to everyone as nothing is actually production ready 'public' yet."
+
+- Supersedes E33 RD9 (friends beta). Retirement has no gate of its own: every caller the beta gate allows (open beta, admin, either env list, active invite member) can use the page, `/retirement-plan` and the MCP retirement tools.
+- `RETIREMENT_ALLOWED_USER_IDS` is no longer read. An environment that still sets it boots and behaves the same (the env schema ignores unknown variables).
+- Nothing the page says changes: wording, the MoneyHelper line and estimates marked as estimates stay. No figure changes.

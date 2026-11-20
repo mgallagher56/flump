@@ -1,4 +1,5 @@
 import {
+  Briefcase,
   Building2,
   Calculator,
   Coins,
@@ -90,8 +91,13 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
         description: "navPensionDesc",
         icon: Coins,
       },
-      // Retirement (/app/retirement) is reachable by URL only: decision RD9 keeps it to the
-      // friends beta, out of the main navigation.
+      {
+        key: "retirement",
+        route: "/app/retirement",
+        description: "navRetirementDesc",
+        // The same icon as Retirement's dashboard and page tiles.
+        icon: Briefcase,
+      },
     ],
   },
   {

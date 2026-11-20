@@ -221,7 +221,7 @@ describe("PensionContainer", () => {
 
   describe("the link to the retirement plan", () => {
     it("shows one plain link when the Retirement page is available", () => {
-      useFixture({ ...FILLED, retirementAvailable: true });
+      useFixture(FILLED);
       render(<PensionContainer />);
       const line = screen.getByTestId("pension-retirement-link");
       expect(line.textContent).toBe(
@@ -232,14 +232,10 @@ describe("PensionContainer", () => {
       expect(within(line).queryByRole("button")).toBeNull();
     });
 
-    it("is hidden when the Retirement page is not available", () => {
-      useFixture({ ...FILLED, retirementAvailable: false });
-      const { unmount } = render(<PensionContainer />);
-      expect(screen.queryByTestId("pension-retirement-link")).toBeNull();
-      unmount();
+    it("shows for everyone, with no availability check (owner, 20 Nov 2026)", () => {
       useFixture(FILLED);
       render(<PensionContainer />);
-      expect(screen.queryByRole("link", { name: "Open your retirement plan" })).toBeNull();
+      expect(screen.getByRole("link", { name: "Open your retirement plan" })).toBeDefined();
     });
   });
 

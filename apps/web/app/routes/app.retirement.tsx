@@ -14,26 +14,13 @@ import {
   workplaceSalaryNotSetFromLoader,
 } from "~/features/retirement/retirementInput";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
-import { actionErrorResponse } from "~/services/route-error.server";
+import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
 export const meta: MetaFunction = () => [{ title: "Retirement plan | Flump" }];
 
 export const shouldRevalidate = revalidateOnConflict;
-
-/**
- * RD9: Retirement is a friends-beta feature. For anyone else the backend answers /retirement-plan
- * with its unknown-route 404, and the page is the app's normal not-found page, as for any unknown
- * URL. Any other error is rethrown unchanged.
- */
-function rethrowAsNotFound(err: unknown): never {
-  if (err instanceof BackendError && err.status === 404) {
-    throw new Response("Not Found", { status: 404, statusText: "Not Found" });
-  }
-  throw err;
-}
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -45,7 +32,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       schema: RetirementPlanResponse,
       accessToken: token,
       method: "GET",
-    }).catch(rethrowAsNotFound),
+    }).catch(throwRouteError),
   ]);
 
   const plan = planRes.plan;
@@ -80,7 +67,6 @@ export const action = async (args: ActionFunctionArgs) => {
     });
     return { ok: true as const, plan: result.plan };
   } catch (err) {
-    if (err instanceof BackendError && err.status === 404) rethrowAsNotFound(err);
     return actionErrorResponse(err);
   }
 };
