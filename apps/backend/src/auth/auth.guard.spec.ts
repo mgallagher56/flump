@@ -284,7 +284,7 @@ describe("AuthGuard erased-account check (BE-04)", () => {
       ).rejects.toThrow(GoneException);
     });
 
-    it("refuses a caller who is neither erased nor invited, even on the deletion route", async () => {
+    it("AllowErasedAccount alone does not exempt a caller who is neither erased nor invited", async () => {
       const guard = new AuthGuard(new DevBypassVerifier(), undefined, {
         isErased: async () => false,
       });
