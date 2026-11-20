@@ -77,6 +77,7 @@ describe("HTTP success status", () => {
         "accounts.create",
         "accounts.createMortgageWithProperty",
         "bankConnections.connect",
+        "beta.createInvite",
         "budget.addCategory",
         "budget.create",
         "imports.stage",

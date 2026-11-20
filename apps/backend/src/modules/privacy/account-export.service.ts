@@ -77,7 +77,7 @@ export class AccountExportService {
         schemaVersion: ACCOUNT_EXPORT_SCHEMA_VERSION,
         exportedAt: now.toISOString(),
         userId,
-        notes: EXPORT_NOTES,
+        notes: [...EXPORT_NOTES, ...(await betaAccessNotes(manager, userId))],
       };
       // The envelope without its closing brace, then each section appended to it.
       await write(JSON.stringify(head).slice(0, -1));
@@ -240,6 +240,42 @@ export class AccountExportService {
       await write(formatCsvRow(columns.map((c) => row[c])));
     });
   }
+}
+
+const day = (value: Date | string): string => new Date(value).toISOString().slice(0, 10);
+
+/**
+ * The invite-only beta tables (USER_LINKED_TABLES) are not export sections, since the document's
+ * sections are fixed by the API contract, so the person's membership (joined, removed) and every
+ * invite link they used (its label and when) are written as notes. Only the columns the registry
+ * lists for export are read.
+ */
+async function betaAccessNotes(manager: EntityManager, userId: string): Promise<string[]> {
+  const notes: string[] = [];
+  const members: Array<{ added_at: Date; removed_at: Date | null }> = await manager.query(
+    `SELECT "added_at", "removed_at" FROM "beta_members" WHERE "user_id" = $1`,
+    [userId],
+  );
+  for (const m of members) {
+    notes.push(
+      m.removed_at
+        ? `Beta access: you joined the beta on ${day(m.added_at)} and your access was removed on ${day(m.removed_at)}.`
+        : `Beta access: you joined the beta on ${day(m.added_at)}.`,
+    );
+  }
+  const invites: Array<{ label: string | null; redeemed_at: Date }> = await manager.query(
+    `SELECT "label", "redeemed_at" FROM "beta_invites"
+     WHERE "redeemed_by_user_id" = $1 ORDER BY "redeemed_at" ASC`,
+    [userId],
+  );
+  for (const i of invites) {
+    notes.push(
+      i.label
+        ? `Beta invite link: you used it on ${day(i.redeemed_at)}. Its label was ${JSON.stringify(i.label)}.`
+        : `Beta invite link: you used it on ${day(i.redeemed_at)}. It had no label.`,
+    );
+  }
+  return notes;
 }
 
 /**

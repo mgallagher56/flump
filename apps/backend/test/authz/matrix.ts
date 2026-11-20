@@ -11,7 +11,15 @@
 export type MatrixRow =
   | {
       status: "covered";
-      spec: "finance" | "budget" | "tax" | "user-profile" | "mcp-tokens" | "snapshots" | "imports";
+      spec:
+        | "finance"
+        | "budget"
+        | "tax"
+        | "user-profile"
+        | "mcp-tokens"
+        | "snapshots"
+        | "imports"
+        | "beta";
     }
   | { status: "public"; reason: string; spec?: "mcp" };
 
@@ -22,6 +30,7 @@ const userProfile = { status: "covered", spec: "user-profile" } as const;
 const mcpTokens = { status: "covered", spec: "mcp-tokens" } as const;
 const snapshots = { status: "covered", spec: "snapshots" } as const;
 const imports = { status: "covered", spec: "imports" } as const;
+const beta = { status: "covered", spec: "beta" } as const;
 const mcpTransport = {
   status: "public",
   reason: "MCP transport, authenticates with a PAT itself (authz.mcp.spec.ts)",
@@ -36,6 +45,11 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "GET /app/client-policy": {
     status: "public",
     reason: "mobile client version policy (no user data)",
+  },
+  "GET /app/beta": {
+    status: "public",
+    reason:
+      "whether the beta is invite-only: one boolean, no user data (coordinator sign-off 20 Nov)",
   },
   "GET /mcp": mcpTransport,
   "POST /mcp": mcpTransport,
@@ -105,6 +119,16 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "DELETE /mcp-tokens/:id": mcpTokens,
   "GET /mcp-tokens/context-pack": mcpTokens,
   "GET /mcp-tokens/:id/activity": mcpTokens,
+
+  // Invite links for the invite-only beta. Redeem is any signed-in caller (AllowUninvited); the
+  // admin routes are BETA_ADMIN_USER_IDS only, the 404 of an unknown route for anyone else.
+  "POST /beta/invites/redeem": beta,
+  "GET /beta/admin": beta,
+  "GET /beta/admin/invites": beta,
+  "POST /beta/admin/invites": beta,
+  "DELETE /beta/admin/invites/:id": beta,
+  "GET /beta/admin/members": beta,
+  "DELETE /beta/admin/members/:userId": beta,
 };
 
 /** Routes allowed to carry no AuthGuard. Anything else without one fails the meta-test. */
@@ -117,4 +141,5 @@ export const UNGUARDED_ALLOWLIST: readonly string[] = [
   // PAT only, through McpPatGuard (the /mcp transport's own authentication).
   "GET /mcp/input",
   "GET /app/client-policy",
+  "GET /app/beta",
 ];

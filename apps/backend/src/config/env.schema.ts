@@ -158,6 +158,8 @@ const backendEnvSchema = z.looseObject({
   BETA_ALLOWED_EMAILS: text(),
   BETA_ALLOWED_USER_IDS: text(),
   BETA_OPEN: bool(),
+  /** Comma-separated WorkOS user ids who create and cancel beta invite links. Sets invite-only. */
+  BETA_ADMIN_USER_IDS: text(),
   BANK_CONNECTIONS_ENABLED: bool(),
   BANK_CONNECTIONS_ALLOWED_USER_IDS: text(),
   /** RD9: comma-separated WorkOS user ids who see Retirement. Not needed while BETA_OPEN=true. */

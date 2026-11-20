@@ -24,6 +24,11 @@ export const RATE_LIMIT_POLICIES = {
   dataExport: [{ limit: 10, windowMs: HOUR }],
   /** Receipt downloads move up to 5 MB each, so they get a tighter read class. */
   receiptRead: [{ limit: 30, windowMs: MINUTE }],
+  /**
+   * Redeeming a beta invite link: five tries an hour, counted per user and also per client
+   * address (ADDRESS_KEYED_RATE_LIMIT_CLASSES), so guessing links from many accounts is slow too.
+   */
+  inviteRedeem: [{ limit: 5, windowMs: HOUR }],
 } as const satisfies Record<string, readonly RateLimitWindow[]>;
 
 /**
@@ -49,6 +54,7 @@ export const SHARED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new Set<Ra
   "bank",
   "bulkWrite",
   "dataExport",
+  "inviteRedeem",
 ]);
 
 /**
@@ -60,7 +66,15 @@ export const FAIL_CLOSED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new S
   "credential",
   "tokenMint",
   "destructive",
+  "inviteRedeem",
 ]);
+
+/**
+ * Classes counted twice: per user, and per client address (the same address the per-IP ceiling
+ * uses), each against the class's own windows. A request is refused when either is spent.
+ */
+export const ADDRESS_KEYED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> =
+  new Set<RateLimitClass>(["inviteRedeem"]);
 
 export const RATE_LIMIT_CLASS = "flump:rate-limit-class";
 export const RATE_LIMIT_SKIP = "flump:rate-limit-skip";

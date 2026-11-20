@@ -9,7 +9,9 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { from, type Observable, switchMap } from "rxjs";
+import { clientKey } from "./client-key";
 import {
+  ADDRESS_KEYED_RATE_LIMIT_CLASSES,
   FAIL_CLOSED_RATE_LIMIT_CLASSES,
   isExemptPath,
   RATE_LIMIT_CLASS,
@@ -25,6 +27,7 @@ import {
   type SharedRateLimitStore,
 } from "./rate-limit.store";
 import { isMissingTableError, SHARED_RATE_LIMIT_STORE } from "./shared-rate-limit";
+import { resolveClientIpHmacKey, verifiedClientIp } from "./signed-client-ip";
 
 const RATE_LIMIT_UNAVAILABLE = "This action is unavailable right now. Try again shortly.";
 
@@ -43,12 +46,16 @@ const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 export class UserRateLimitInterceptor implements NestInterceptor {
   private readonly logger = new Logger("RateLimit");
   private warnedMissingTable = false;
+  private readonly clientIpKey: string | null;
 
   constructor(
     @Inject(Reflector) private readonly reflector: Reflector,
     @Inject(RateLimitStore) private readonly store: RateLimitStore,
     @Inject(SHARED_RATE_LIMIT_STORE) private readonly shared: SharedRateLimitStore,
-  ) {}
+  ) {
+    // The same client address the per-IP guard keys by (signed web header, else the socket).
+    this.clientIpKey = resolveClientIpHmacKey(process.env).key;
+  }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() !== "http") return next.handle();
@@ -65,7 +72,11 @@ export class UserRateLimitInterceptor implements NestInterceptor {
       this.reflector.getAllAndOverride<RateLimitClass>(RATE_LIMIT_CLASS, targets) ??
       (READ_METHODS.has(String(req.method).toUpperCase()) ? "read" : "write");
 
-    const key = `user:${userId}:${cls}`;
+    const keys = [`user:${userId}:${cls}`];
+    if (ADDRESS_KEYED_RATE_LIMIT_CLASSES.has(cls)) {
+      const ip = verifiedClientIp(req.headers ?? {}, this.clientIpKey) ?? req.ip;
+      keys.push(`ip:${clientKey(ip)}:${cls}`);
+    }
     const enforce = (decision: RateLimitDecision) => {
       if (!decision.allowed) {
         const template = `${req.method} ${req.route?.path ?? "unknown"}`;
@@ -73,15 +84,26 @@ export class UserRateLimitInterceptor implements NestInterceptor {
       }
     };
     if (!SHARED_RATE_LIMIT_CLASSES.has(cls)) {
-      enforce(this.store.hit(key, RATE_LIMIT_POLICIES[cls]));
+      for (const key of keys) enforce(this.store.hit(key, RATE_LIMIT_POLICIES[cls]));
       return next.handle();
     }
-    return from(this.sharedHit(key, cls)).pipe(
+    return from(this.sharedHits(keys, cls)).pipe(
       switchMap((decision) => {
         enforce(decision);
         return next.handle();
       }),
     );
+  }
+
+  /** Every key is counted (so the address bucket fills even when the user bucket refuses). */
+  private async sharedHits(keys: string[], cls: RateLimitClass): Promise<RateLimitDecision> {
+    let refused: RateLimitDecision | null = null;
+    let last: RateLimitDecision | null = null;
+    for (const key of keys) {
+      last = await this.sharedHit(key, cls);
+      if (!last.allowed && !refused) refused = last;
+    }
+    return (refused ?? last) as RateLimitDecision;
   }
 
   private async sharedHit(key: string, cls: RateLimitClass): Promise<RateLimitDecision> {

@@ -80,6 +80,11 @@ export const USER_DATA_TABLES = [
   // BE-04 deletion proofs: cleared too, so a persona id erased during staging testing can be seeded
   // again (a tombstone would otherwise refuse every request for that id).
   "account_deletion_tombstones",
+  // Invite-only beta: members first (beta_members.invite_id references beta_invites, ON DELETE
+  // SET NULL). Cleared so a reseed starts with no members and no open links; the admins
+  // (BETA_ADMIN_USER_IDS) create new links.
+  "beta_members",
+  "beta_invites",
   // BE-07 shared rate-limit counters (keys built from user ids and client IPs, short windows):
   // cleared so a reseed starts every persona with fresh limits.
   "rate_limit_buckets",

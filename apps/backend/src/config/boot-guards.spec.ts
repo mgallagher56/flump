@@ -24,12 +24,41 @@ const PROD = {
 };
 
 describe("open beta guard (M12, D8)", () => {
-  it("refuses production with neither allow-list and no BETA_OPEN", () => {
+  it("refuses production with neither allow-list, no beta admin and no BETA_OPEN", () => {
     const env = { ...PROD, BETA_ALLOWED_USER_IDS: undefined };
     expect(() => assertBootGuards(env)).toThrow(OpenBetaNotConfirmedError);
     expect(() => assertBootGuards({ ...env, BETA_OPEN: "false" })).toThrow(
       OpenBetaNotConfirmedError,
     );
+    // An admin list of only separators names nobody.
+    expect(() => assertBootGuards({ ...env, BETA_ADMIN_USER_IDS: " , " })).toThrow(
+      OpenBetaNotConfirmedError,
+    );
+  });
+
+  it("refuses a Railway process with nothing set, whatever NODE_ENV says", () => {
+    for (const NODE_ENV of ["development", "test", undefined]) {
+      expect(() => assertBootGuards({ NODE_ENV, RAILWAY_ENVIRONMENT: "staging" })).toThrow(
+        OpenBetaNotConfirmedError,
+      );
+    }
+    expect(() =>
+      assertBootGuards({
+        NODE_ENV: "development",
+        RAILWAY_ENVIRONMENT: "staging",
+        BETA_OPEN: "true",
+      }),
+    ).not.toThrow();
+  });
+
+  it("allows production with only BETA_ADMIN_USER_IDS (invite links)", () => {
+    expect(() =>
+      assertBootGuards({
+        ...PROD,
+        BETA_ALLOWED_USER_IDS: undefined,
+        BETA_ADMIN_USER_IDS: "user_01",
+      }),
+    ).not.toThrow();
   });
 
   it("allows production with either allow-list, or BETA_OPEN=true", () => {
@@ -51,6 +80,7 @@ describe("open beta guard (M12, D8)", () => {
     const error = new OpenBetaNotConfirmedError();
     expect(error.name).toBe("OpenBetaNotConfirmedError");
     expect(error.message).toContain("BETA_OPEN=true");
+    expect(error.message).toContain("BETA_ADMIN_USER_IDS");
   });
 });
 

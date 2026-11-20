@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { AllowUninvited } from "./allow-uninvited";
 import { AuthGuard } from "./auth.guard";
 import { DEV_BYPASS_TOKEN, DevBypassVerifier } from "./dev-bypass.verifier";
 import { AllowErasedAccount } from "./erased-account";
@@ -103,29 +104,108 @@ describe("AuthGuard", () => {
     afterEach(() => {
       process.env = { ...original };
     });
+    /** A local run with no beta variables; each case sets what it needs. */
+    const local = () => {
+      process.env = { ...original, NODE_ENV: "test" };
+      for (const name of [
+        "BETA_ALLOWED_EMAILS",
+        "BETA_ALLOWED_USER_IDS",
+        "BETA_ADMIN_USER_IDS",
+        "BETA_OPEN",
+        "RAILWAY_ENVIRONMENT",
+      ]) {
+        delete process.env[name];
+      }
+    };
 
     const verifierFor = (user: { id: string; email?: string }): TokenVerifier => ({
       verify: async () => user,
     });
-    const run = (user: { id: string; email?: string }) =>
-      new AuthGuard(verifierFor(user)).canActivate(ctx({ headers: { authorization: "Bearer x" } }));
+    const members = new Set<string>();
+    const lookups: string[] = [];
+    const membership = {
+      isActiveMember: async (id: string) => {
+        lookups.push(id);
+        return members.has(id);
+      },
+    };
+    const withHandler = (handler: () => void): ExecutionContext =>
+      ({
+        switchToHttp: () => ({ getRequest: () => ({ headers: { authorization: "Bearer x" } }) }),
+        getHandler: () => handler,
+      }) as unknown as ExecutionContext;
+    const run = (user: { id: string; email?: string }, handler: () => void = () => {}) =>
+      new AuthGuard(verifierFor(user), undefined, undefined, membership).canActivate(
+        withHandler(handler),
+      );
+    const refusal = async (promise: Promise<unknown>) => {
+      const err: unknown = await promise.catch((e) => e);
+      if (!(err instanceof ForbiddenException)) throw new Error("expected a ForbiddenException");
+      // The body is exactly what it was before invite links.
+      expect(err.getResponse()).toEqual({
+        statusCode: 403,
+        error: "not_invited",
+        message: "This account has not been invited to the Flump beta.",
+      });
+    };
 
-    it("does not restrict anyone when no allowlist is configured", async () => {
-      delete process.env.BETA_ALLOWED_EMAILS;
-      delete process.env.BETA_ALLOWED_USER_IDS;
+    it("does not restrict anyone on a local run with no allowlist and no admin", async () => {
+      local();
+      lookups.length = 0;
       await expect(run({ id: "anyone" })).resolves.toBe(true);
+      expect(lookups).toEqual([]);
     });
 
     it("lets listed emails and ids in and refuses everyone else with not_invited", async () => {
+      local();
       process.env.BETA_ALLOWED_EMAILS = "Owner@Example.com";
       process.env.BETA_ALLOWED_USER_IDS = "user_friend";
       await expect(run({ id: "u1", email: "owner@example.com" })).resolves.toBe(true);
       await expect(run({ id: "user_friend" })).resolves.toBe(true);
+      await refusal(run({ id: "stranger", email: "x@y.com" }));
+      await refusal(run({ id: "no-email" }));
+    });
 
-      const err = await run({ id: "stranger", email: "x@y.com" }).catch((e) => e);
-      expect(err).toBeInstanceOf(ForbiddenException);
-      expect(err.getResponse()).toMatchObject({ error: "not_invited" });
-      await expect(run({ id: "no-email" })).rejects.toBeInstanceOf(ForbiddenException);
+    it("an admin list alone makes the beta invite-only: admins and active members pass", async () => {
+      local();
+      process.env.BETA_ADMIN_USER_IDS = "user_admin";
+      members.clear();
+      members.add("user_member");
+      await expect(run({ id: "user_admin" })).resolves.toBe(true);
+      await expect(run({ id: "user_member" })).resolves.toBe(true);
+      await refusal(run({ id: "user_stranger" }));
+      // Removal is read on the very next request (no cache).
+      members.delete("user_member");
+      await refusal(run({ id: "user_member" }));
+    });
+
+    it("a production-like process with no variables is invite-only (fail closed)", async () => {
+      local();
+      process.env.RAILWAY_ENVIRONMENT = "staging";
+      members.clear();
+      await refusal(run({ id: "anyone" }));
+      process.env.BETA_OPEN = "true";
+      await expect(run({ id: "anyone" })).resolves.toBe(true);
+    });
+
+    it("treats nobody as a member when the membership check cannot be resolved", async () => {
+      local();
+      process.env.BETA_ADMIN_USER_IDS = "user_admin";
+      const guard = new AuthGuard(verifierFor({ id: "user_member" }));
+      await refusal(guard.canActivate(withHandler(() => {})));
+    });
+
+    it("lets an uninvited caller through only on a handler marked AllowUninvited", async () => {
+      local();
+      process.env.BETA_ADMIN_USER_IDS = "user_admin";
+      members.clear();
+      class Probe {
+        @AllowUninvited()
+        redeem() {}
+        other() {}
+      }
+      await expect(run({ id: "user_new" }, Probe.prototype.redeem)).resolves.toBe(true);
+      await refusal(run({ id: "user_new" }, Probe.prototype.other));
     });
   });
 });
@@ -160,6 +240,17 @@ describe("AuthGuard erased-account check (BE-04)", () => {
     await expect(
       guard.canActivate(withHandler(request(), Probe.prototype.retryDelete)),
     ).resolves.toBe(true);
+  });
+
+  it("AllowUninvited does not exempt an erased account (it can never redeem an invite)", async () => {
+    const guard = new AuthGuard(new DevBypassVerifier(), undefined, check);
+    class Probe {
+      @AllowUninvited()
+      redeem() {}
+    }
+    await expect(guard.canActivate(withHandler(request(), Probe.prototype.redeem))).rejects.toThrow(
+      GoneException,
+    );
   });
 
   it("passes accounts that are not erased, and resolves the check lazily from the app", async () => {

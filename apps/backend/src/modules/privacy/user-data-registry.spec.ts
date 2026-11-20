@@ -6,7 +6,12 @@ import { ENTITIES } from "../../config/typeorm.options";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { ImportBatch } from "../../entities/import-batch.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
-import { NON_USER_ENTITIES, NOT_USER_LINK_COLUMNS, USER_DATA_REGISTRY } from "./user-data-registry";
+import {
+  NON_USER_ENTITIES,
+  NOT_USER_LINK_COLUMNS,
+  USER_DATA_REGISTRY,
+  USER_LINKED_TABLES,
+} from "./user-data-registry";
 
 /**
  * The user-data coverage test (BE-04 acceptance): shared by account deletion, the data export and
@@ -32,9 +37,15 @@ describe("user-data registry coverage", () => {
     relationsOf(entity).length > 0 ||
     joinColumnsOf(entity).length > 0;
 
+  /** Registry tables plus the linked tables, each entity once. */
+  const handled = [
+    ...USER_DATA_REGISTRY.map((t) => t.entity),
+    ...USER_LINKED_TABLES.map((t) => t.entity),
+  ];
+
   it("lists every entity in ENTITIES that has a user id column, exactly once", () => {
     const withUserId = ENTITIES.filter((e) => columnsOf(e).some(isUserIdColumn));
-    const registered = USER_DATA_REGISTRY.map((t) => t.entity);
+    const registered = handled;
     expect(new Set(registered).size).toBe(registered.length);
     const missing = withUserId.filter((e) => !registered.includes(e as never)).map((e) => e.name);
     expect(missing, "entities with a user id and no delete/export/reset handling").toEqual([]);
@@ -42,13 +53,14 @@ describe("user-data registry coverage", () => {
       expect(ENTITIES).toContain(t.entity);
       expect(columnsOf(t.entity).some(isUserIdColumn), t.entity.name).toBe(true);
     }
+    for (const t of USER_LINKED_TABLES) expect(ENTITIES).toContain(t.entity);
   });
 
   it("an entity with any user-like column or relation is in the registry or the explicit allow-list", () => {
     const unhandled = ENTITIES.filter(
       (e) =>
         looksUserLinked(e) &&
-        !USER_DATA_REGISTRY.some((t) => t.entity === e) &&
+        !handled.includes(e as never) &&
         !Object.hasOwn(NON_USER_ENTITIES, e.name),
     ).map((e) => e.name);
     expect(unhandled, "user-linked entities with no delete/export/reset handling").toEqual([]);
@@ -70,7 +82,7 @@ describe("user-data registry coverage", () => {
   });
 
   it("everything outside the registry is in the allow-list, with a reason", () => {
-    const outside = ENTITIES.filter((e) => !USER_DATA_REGISTRY.some((t) => t.entity === e));
+    const outside = ENTITIES.filter((e) => !handled.includes(e as never));
     expect(outside.map((e) => e.name).sort()).toEqual(Object.keys(NON_USER_ENTITIES).sort());
     for (const reason of Object.values(NON_USER_ENTITIES)) {
       expect(reason.length).toBeGreaterThan(20);
@@ -152,6 +164,57 @@ describe("user-data registry coverage", () => {
       expect(t.reset.reason.length, t.key).toBeGreaterThan(10);
       expect(t.deleteOnErasure).toBe(true);
     }
+  });
+
+  describe("linked tables (the invite-only beta)", () => {
+    it.each(USER_LINKED_TABLES.map((t) => [t.entity.name, t] as const))(
+      "%s: links to the user through its one user column, with no relation",
+      (_name, t) => {
+        const userLike = columnsOf(t.entity)
+          .filter((c) => isUserLikeColumn(c) && !notALink(t.entity, c.propertyName))
+          .map((c) => c.propertyName);
+        expect(userLike, t.entity.name).toEqual([t.userColumn]);
+        expect(relationsOf(t.entity), t.entity.name).toEqual([]);
+        // A user_id column is only ever deleted with the user, never blanked.
+        if (t.userColumn === "userId") expect(t.erasure).toBe("delete-rows");
+      },
+    );
+
+    it.each(USER_LINKED_TABLES.map((t) => [t.entity.name, t] as const))(
+      "%s: every column is described in the export or excluded with a reason, never both",
+      (_name, t) => {
+        const all = columnsOf(t.entity)
+          .map((c) => c.propertyName)
+          .sort();
+        const exported = [...t.export.columns];
+        const excluded = Object.keys(t.export.excluded);
+        expect([...exported, ...excluded].sort()).toEqual(all);
+        expect(exported.filter((c) => excluded.includes(c))).toEqual([]);
+        expect(exported).not.toContain(t.userColumn);
+        expect(exported).not.toContain("tokenHash");
+        for (const reason of Object.values(t.export.excluded)) {
+          expect(String(reason).length).toBeGreaterThan(10);
+        }
+        expect(t.export.via.length).toBeGreaterThan(20);
+        expect(t.reset.reason.length).toBeGreaterThan(10);
+      },
+    );
+
+    it.each(USER_LINKED_TABLES.map((t) => [t.entity.name, t] as const))(
+      "%s: every column is tied to a value-map fact or marked as no fact, exactly once",
+      (_name, t) => {
+        const tie = t.valueMap;
+        const all = columnsOf(t.entity)
+          .map((c) => c.propertyName)
+          .sort();
+        if ("noUserFacts" in tie) {
+          expect(tie.noUserFacts.length).toBeGreaterThan(20);
+          expect([...tie.columns].sort()).toEqual(all);
+          return;
+        }
+        expect([...Object.keys(tie.facts), ...Object.keys(tie.notFacts)].sort()).toEqual(all);
+      },
+    );
   });
 
   it("deletes children before parents and the profile last", () => {

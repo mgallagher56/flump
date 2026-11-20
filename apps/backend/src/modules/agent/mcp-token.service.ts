@@ -5,12 +5,16 @@ import {
   type McpTokenStoreAdapter,
   WRITE_STAGE_SCOPE,
 } from "@flump/mcp";
-import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, Repository } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
 import { grantConsent, withdrawConsent } from "../../audit/consents";
-import { isBetaUserIdRemoved } from "../../auth/beta-access";
+import {
+  BETA_MEMBERSHIP_CHECK,
+  type BetaMembershipCheck,
+  isBetaUserIdAllowed,
+} from "../../auth/beta-access";
 import { isMcpUserAllowed, readMcpAccessConfig } from "../../auth/mcp-access";
 import { type KeysetOrder, keysetPage, type PageRequest } from "../../contract/pagination";
 import { McpToken } from "../../entities/mcp-token.entity";
@@ -26,6 +30,7 @@ export class McpTokenService implements McpTokenStoreAdapter {
   constructor(
     @InjectRepository(McpToken)
     private readonly mcpTokenRepository: Repository<McpToken>,
+    @Inject(BETA_MEMBERSHIP_CHECK) private readonly betaMembership: BetaMembershipCheck,
   ) {}
 
   // --- McpTokenStoreAdapter implementation ---
@@ -42,10 +47,11 @@ export class McpTokenService implements McpTokenStoreAdapter {
       this.logger.warn(`mcp_token_denied tokenId=${found.id} reason=mcp_allowlist`);
       return null;
     }
-    // BE-15 S1: a user removed from a beta gated by user ids loses MCP access at once (refused,
-    // not revoked). A token carries no email, so while BETA_ALLOWED_EMAILS is set the owner cannot
-    // be judged here and the token is left to expiry and revocation (see isBetaUserIdRemoved).
-    if (isBetaUserIdRemoved(process.env, found.userId)) {
+    // BE-15 S1, invite links: while the beta is invite-only a token works only while its owner is
+    // allowed by user id (an admin, BETA_ALLOWED_USER_IDS or an active member), checked on every
+    // request, so removing a member stops their tokens at once (refused, not revoked). A token
+    // carries no email, so an owner known only to the email list is refused (fail closed).
+    if (!(await isBetaUserIdAllowed(process.env, found.userId, this.betaMembership))) {
       this.logger.warn(`mcp_token_denied tokenId=${found.id} reason=beta_allowlist`);
       return null;
     }

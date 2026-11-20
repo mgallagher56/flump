@@ -2,7 +2,7 @@ import type { BetaModeResponse, ClientPolicyResponse } from "@flump/api-contract
 import { Controller, Get, HttpCode, Inject, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { AppService } from "./app.service";
-import { isBetaRestricted } from "./auth/beta-access";
+import { isBetaInviteOnly } from "./auth/beta-access";
 import { BOOT_CONFIG, type BootConfig } from "./config/config.module";
 
 @Controller()
@@ -33,13 +33,14 @@ export class AppController {
   /**
    * Whether the beta is invite-only, so the web app stops offering sign-up and refuses an
    * uninvited session before any page loads. Public on purpose: it is read before sign-in. It
-   * returns one boolean and never the allowlists, their size or any email. Read per request, from
-   * the same variables and the same rule as `AuthGuard`, so the two can never disagree.
+   * returns one boolean and never the allowlists, the admins, their size or any email. Read per
+   * request, from the same variables and the same rule (`isBetaInviteOnly`) as `AuthGuard`, so the
+   * two can never disagree.
    */
   @Get("app/beta")
   @HttpCode(200)
   getBetaMode(@Res({ passthrough: true }) res: Response): BetaModeResponse {
     res.setHeader("Cache-Control", "no-store");
-    return { inviteOnly: isBetaRestricted(process.env) };
+    return { inviteOnly: isBetaInviteOnly(process.env) };
   }
 }

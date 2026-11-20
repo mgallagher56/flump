@@ -7,6 +7,8 @@ import { AgentAuditEvent } from "../entities/agent-audit-event.entity";
 import { AuditEvent } from "../entities/audit-event.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { BankOAuthState } from "../entities/bank-oauth-state.entity";
+import { BetaInvite } from "../entities/beta-invite.entity";
+import { BetaMember } from "../entities/beta-member.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
 import { Consent } from "../entities/consent.entity";
 import { IdempotencyKey } from "../entities/idempotency-key.entity";
@@ -38,6 +40,8 @@ export const ENTITIES: Function[] = [
   IdempotencyKey,
   AuditEvent,
   Consent,
+  BetaInvite,
+  BetaMember,
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).

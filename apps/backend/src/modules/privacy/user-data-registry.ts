@@ -6,6 +6,8 @@ import { AgentAuditEvent } from "../../entities/agent-audit-event.entity";
 import { AuditEvent } from "../../entities/audit-event.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
 import { BankOAuthState } from "../../entities/bank-oauth-state.entity";
+import { BetaInvite } from "../../entities/beta-invite.entity";
+import { BetaMember } from "../../entities/beta-member.entity";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { Consent } from "../../entities/consent.entity";
 import { IdempotencyKey } from "../../entities/idempotency-key.entity";
@@ -75,9 +77,42 @@ type ValueMapTie<E> =
       columns: readonly (keyof E & string)[];
     };
 
-/** Checks an entry against its own entity's columns, then widens it for the shared list. */
-const table = <E extends ObjectLiteral>(t: UserDataTable<E>): UserDataTable =>
-  t as unknown as UserDataTable;
+/**
+ * A table that links to a user but is not a section of the export document (the sections are fixed
+ * by the API contract): the invite-only beta's tables. Erasure, export and reset are each decided
+ * here and applied explicitly by account deletion and the export; user-data-registry.spec.ts and
+ * the real-Postgres coverage test hold them to the same column-by-column rules as the registry.
+ */
+export interface UserLinkedTable<E extends ObjectLiteral = ObjectLiteral> {
+  entity: new () => E;
+  /** The one column that holds the user's id. */
+  userColumn: keyof E & string;
+  /**
+   * `delete-rows`: the rows are the user's; erasure deletes them. `blank-column`: the rows are not
+   * the user's (an admin's invite); erasure sets `userColumn` to null and keeps the row.
+   */
+  erasure: "delete-rows" | "blank-column";
+  export: {
+    /** Where the user's link appears in the export instead of a section of its own. */
+    via: string;
+    /** Properties described there. */
+    columns: Columns<E>;
+    /** Properties deliberately left out, each with the reason. With `columns`, covers every column. */
+    excluded: Partial<Record<keyof E & string, string>>;
+  };
+  reset: ResetHandling;
+  valueMap: ValueMapTie<E>;
+}
+
+/**
+ * Checks an entry against its own entity's columns, then widens it for the shared list. One name
+ * for both kinds, so scripts/check-value-map.ts reads every `table({ entity, valueMap })` entry.
+ */
+function table<E extends ObjectLiteral>(t: UserDataTable<E>): UserDataTable;
+function table<E extends ObjectLiteral>(t: UserLinkedTable<E>): UserLinkedTable;
+function table(t: unknown): unknown {
+  return t;
+}
 
 // a description of the userId field, not a credential
 // nosemgrep: ajinabraham.njsscan.generic.hardcoded_secrets.node_username
@@ -808,6 +843,72 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         createdAt: WRITTEN_AT,
         updatedAt: WRITTEN_AT,
       },
+    },
+  }),
+];
+
+/**
+ * The invite-only beta's tables (invite links). Neither is an export section: the export names the
+ * user's membership and the invite they used in its notes (account-export.service.ts). Members go
+ * first: an erasure deletes the member row, then blanks the invite's link to the user.
+ */
+export const USER_LINKED_TABLES: readonly UserLinkedTable[] = [
+  table({
+    entity: BetaMember,
+    userColumn: "userId",
+    erasure: "delete-rows",
+    export: {
+      via: "the export's notes: when the person joined the beta and, if so, when they were removed",
+      columns: ["addedAt", "removedAt"],
+      excluded: {
+        userId: USER_ID_IN_ENVELOPE,
+        inviteId:
+          "an internal link to the invite; the invite's label and use date are given instead",
+      },
+    },
+    reset: {
+      kind: "keep",
+      reason: "beta access is not financial data; a reset must not lock the person out",
+    },
+    valueMap: {
+      noUserFacts: "who may use the invite-only beta, not a fact about the person's money",
+      columns: ["userId", "inviteId", "addedAt", "removedAt"],
+    },
+  }),
+  table({
+    entity: BetaInvite,
+    userColumn: "redeemedByUserId",
+    erasure: "blank-column",
+    export: {
+      via: "the export's notes: the label of the invite the person used and when they used it",
+      columns: ["label", "redeemedAt"],
+      excluded: {
+        id: "the invite's own id, meaningless outside Flump",
+        tokenHash: "secret: the hash that identifies the link, never exported",
+        createdBy: "the admin who made the link, not the person's data",
+        createdAt: "when the admin made the link",
+        expiresAt: "when the link would have stopped working",
+        redeemedByUserId: USER_ID_IN_ENVELOPE,
+        revokedAt: "an unused link the admin cancelled; a used link is never cancelled",
+      },
+    },
+    reset: {
+      kind: "keep",
+      reason: "the admin's invite record, not the person's financial data",
+    },
+    valueMap: {
+      noUserFacts: "an admin's invite link and who used it, not a fact about the person's money",
+      columns: [
+        "id",
+        "tokenHash",
+        "label",
+        "createdBy",
+        "createdAt",
+        "expiresAt",
+        "redeemedByUserId",
+        "redeemedAt",
+        "revokedAt",
+      ],
     },
   }),
 ];

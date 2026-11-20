@@ -2636,6 +2636,13 @@ browser_storage:
       note: "a marker the browser code reads to know a session may exist; no session data",
     }
   - {
+      key: flump_invite,
+      storage: cookie,
+      user_data: false,
+      path: apps/web/app/features/invites/invite-cookie.server.ts,
+      note: "the raw beta invite token from /invite/<token>, held until the person signs in; Path=/, HttpOnly, SameSite=Lax, Max-Age 3600; the web invite gate redeems it (POST /beta/invites/redeem) wherever a signed-in person not yet allowed lands, then clears it; only its SHA-256 hash is stored, in beta_invites.token_hash",
+    }
+  - {
       key: flump_dev_session,
       storage: cookie,
       user_data: false,
