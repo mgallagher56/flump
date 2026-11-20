@@ -39,7 +39,7 @@ function fakeDataSource() {
     },
     delete: vi.fn(async () => ({ affected: 0 })),
     findOneByOrFail: async () => ({ ...tombstone }),
-    exists: async () => tombstone !== null,
+    exists: vi.fn(async () => tombstone !== null),
     update: vi.fn(async (_where: unknown, patch: { identityDeletedAt: Date }) => {
       if (tombstone) tombstone.identityDeletedAt = patch.identityDeletedAt;
     }),
@@ -192,6 +192,8 @@ describe("AccountDeletionService", () => {
     // N1: a stable code in the error envelope, and an operator log naming the variable only.
     expect((thrown as ServiceUnavailableException).getResponse()).toMatchObject({
       code: "account_deletion_unavailable",
+      // A plain message for the person alongside the code: never blank.
+      message: expect.stringMatching(/\w/),
     });
     expect(error).toHaveBeenCalledTimes(1);
     expect(String(error.mock.calls[0]?.[0])).toContain(TOMBSTONE_KEY_ENV_VAR);
@@ -210,6 +212,72 @@ describe("AccountDeletionService", () => {
     await expect(service.isErased("user_A")).resolves.toBe(false);
     await service.deleteAccount("user_A");
     await expect(service.isErased("user_A")).resolves.toBe(true);
+  });
+
+  it("remembers an erased account, so later requests do not read the tombstone again", async () => {
+    const f = fakeDataSource();
+    // The account is erased through one instance; a second instance (another process) has an
+    // empty cache and must find the tombstone in the database once, then answer from memory.
+    await new AccountDeletionService(
+      f.ds as never,
+      identity,
+      new LoggingBankConsentRevoker(),
+    ).deleteAccount("user_A");
+    const other = new AccountDeletionService(
+      f.ds as never,
+      identity,
+      new LoggingBankConsentRevoker(),
+    );
+    f.tombstoneRepo.exists.mockClear();
+
+    await expect(other.isErased("user_A")).resolves.toBe(true);
+    await expect(other.isErased("user_A")).resolves.toBe(true);
+    await expect(other.isErased("user_A")).resolves.toBe(true);
+    // One database read for three requests: the first finds the tombstone, the rest hit the cache.
+    expect(f.tombstoneRepo.exists).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps at most 10,000 erased ids in memory and starts the cache again when it is full", async () => {
+    // Every id has a tombstone here, so every lookup that reaches the database answers true.
+    const exists = vi.fn(async () => true);
+    const ds = { getRepository: () => ({ exists }) };
+    const service = new AccountDeletionService(
+      ds as never,
+      identity,
+      new LoggingBankConsentRevoker(),
+    );
+
+    // 10,000 distinct ids: the cache holds 0, 1, ... 9,999 before each add, never 10,000, so it
+    // is never cleared and ends up holding all 10,000.
+    for (let i = 0; i < 10_000; i += 1) await service.isErased(`user_${i}`);
+    expect(exists).toHaveBeenCalledTimes(10_000);
+
+    // user_0 is still cached: no database read.
+    await expect(service.isErased("user_0")).resolves.toBe(true);
+    expect(exists).toHaveBeenCalledTimes(10_000);
+
+    // The 10,001st id finds the cache full (10,000), so the cache is cleared before it is added.
+    await expect(service.isErased("user_10000")).resolves.toBe(true);
+    expect(exists).toHaveBeenCalledTimes(10_001);
+
+    // user_1 was dropped by the clear, so it is read from the database again.
+    await expect(service.isErased("user_1")).resolves.toBe(true);
+    expect(exists).toHaveBeenCalledTimes(10_002);
+  });
+
+  it("still erases the account when revoking bank consent fails, and warns the operator", async () => {
+    const f = fakeDataSource();
+    const revoker = new LoggingBankConsentRevoker();
+    vi.spyOn(revoker, "revokeAll").mockRejectedValue(new Error("provider down"));
+    const service = new AccountDeletionService(f.ds as never, identity, revoker);
+    const warn = vi.mocked(Logger.prototype.warn);
+    warn.mockClear();
+
+    await expect(service.deleteAccount("user_A")).resolves.toEqual({ status: "deleted" });
+    expect(identity.deletedUsers).toEqual(["user_A"]);
+    // One warning, for the failed revoke only (WorkOS succeeded), and it never names the user.
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]?.[0])).not.toContain("user_A");
   });
 });
 

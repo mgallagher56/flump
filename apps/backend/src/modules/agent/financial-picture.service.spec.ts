@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { FinancialPictureService } from "./financial-picture.service";
+import { FinancialPictureService, wireProfile } from "./financial-picture.service";
 
 function build() {
   const budgetFind = vi.fn(async () => [
@@ -76,5 +76,21 @@ describe("FinancialPictureService.load", () => {
     expect(loaded.taxYear).toBe("2026/27");
     // The budget rows come back whole, so the context pack can keep notes.
     expect(loaded.rows.budgetEntries[0]?.notes).toBe("kept for the pack");
+  });
+});
+
+describe("wireProfile", () => {
+  it("gives the profile's dates as ISO strings, keeps a string as it is, and drops anything else", () => {
+    const wired = wireProfile({
+      createdAt: new Date("2026-01-02T03:04:05.000Z"),
+      updatedAt: "2026-02-03T04:05:06.000Z",
+    } as never);
+    expect(wired.createdAt).toBe("2026-01-02T03:04:05.000Z");
+    expect(wired.updatedAt).toBe("2026-02-03T04:05:06.000Z");
+
+    // Neither null nor a bare number is a date the engine reads, so both become undefined.
+    const blank = wireProfile({ createdAt: null, updatedAt: 1_767_225_600_000 } as never);
+    expect(blank.createdAt).toBeUndefined();
+    expect(blank.updatedAt).toBeUndefined();
   });
 });

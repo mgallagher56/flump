@@ -133,6 +133,23 @@ describe("AccountExportService CSV export (E19 portability)", () => {
     expect(csv).toContain("2026-11-16T08:00:00.000Z");
   });
 
+  it("writes nothing once the overall deadline has already passed", async () => {
+    // The clock is pinned, so a 0 ms deadline is exactly reached (0 ms left) at the first write:
+    // that counts as missed, even for a client that would accept the chunk at once.
+    vi.useFakeTimers({ now: new Date("2026-11-20T09:00:00.000Z"), toFake: ["Date"] });
+    try {
+      const { dataSource } = createMockDataSource({});
+      const service = new AccountExportService(dataSource as never);
+      const write = vi.fn(async () => undefined);
+      await expect(
+        service.writeCsvExport("user-1", write, { section: "accounts", deadlineMs: 0 }),
+      ).rejects.toBeInstanceOf(ExportDeadlineError);
+      expect(write).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("aborts with ExportDeadlineError when the client writer stalls", async () => {
     const { dataSource } = createMockDataSource({});
     const service = new AccountExportService(dataSource as never);
@@ -186,6 +203,33 @@ describe("AccountExportService receipts (SEC-D, L4)", () => {
     });
     const doc = JSON.parse(json.join("")) as { taxRecords: Array<Record<string, unknown>> };
     expect(doc.taxRecords[0]?.receiptData).toBe(plaintext);
+  });
+});
+
+describe("AccountExportService JSON envelope", () => {
+  it("opens with the schema version, the time, the user and plain-English notes", async () => {
+    const { dataSource } = createMockDataSource({});
+    const service = new AccountExportService(dataSource as never);
+    const json: string[] = [];
+    const now = new Date("2026-11-20T09:30:00.000Z");
+    await service.writeExport(
+      "user-1",
+      async (chunk) => {
+        json.push(chunk);
+      },
+      now,
+    );
+    const doc = JSON.parse(json.join("")) as {
+      exportedAt: string;
+      userId: string;
+      notes: unknown[];
+    };
+    expect(doc.exportedAt).toBe("2026-11-20T09:30:00.000Z");
+    expect(doc.userId).toBe("user-1");
+    // The notes tell the person what the file holds and what is left out (secrets, the login held
+    // by WorkOS), so there is at least one, and none of them is blank.
+    expect(doc.notes.length).toBeGreaterThan(0);
+    for (const note of doc.notes) expect(note).toMatch(/\w+ \w+/);
   });
 });
 

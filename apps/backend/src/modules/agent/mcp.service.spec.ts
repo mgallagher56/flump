@@ -171,6 +171,26 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
       ),
     ).resolves.toBeUndefined();
   });
+
+  it("logs a failed audit write by the error's name only, never its message", async () => {
+    const failure = Object.assign(new Error("insert failed for user u1"), {
+      name: "QueryFailedError",
+    });
+    const { options } = make(vi.fn().mockRejectedValue(failure));
+    const error = vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    try {
+      await must(options.audit)(
+        { token: { userId: "u1", scopes: [], anonymizeInstitutions: true, type: "pat" } },
+        { tool: "list_accounts", outcome: "ok", durationMs: 1, responseBytes: 1, scopesUsed: [] },
+      );
+      expect(error).toHaveBeenCalledTimes(1);
+      const line = String(error.mock.calls[0]?.[0]);
+      expect(line).toContain("QueryFailedError");
+      expect(line).not.toContain("u1");
+    } finally {
+      error.mockRestore();
+    }
+  });
 });
 
 describe("McpService dev token wiring", () => {
@@ -304,6 +324,53 @@ describe("McpService.getInput (GET /mcp/input) anonymises as the remote tools do
     const { service } = make();
     const body = await service.getInput(caller(false, ["mcp:read:full"]) as never);
     expect(body.retirementAvailable).toBe(true);
+  });
+
+  it("records a failed read as an error with no bytes sent, then passes the failure on", async () => {
+    const failure = new Error("load failed");
+    const agentData = { getUserFinancialData: vi.fn().mockRejectedValue(failure) };
+    const audit = { record: vi.fn().mockResolvedValue(undefined), fingerprint: vi.fn() };
+    const service = new McpService(
+      {} as never,
+      agentData as never,
+      { get: vi.fn().mockReturnValue(undefined) } as never,
+      "workos",
+      audit as never,
+      {} as never,
+    );
+    await expect(service.getInput(caller(true, ["mcp:read:anonymized"]) as never)).rejects.toBe(
+      failure,
+    );
+    expect(audit.record).toHaveBeenCalledTimes(1);
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user_real", outcome: "error", responseBytes: 0 }),
+    );
+  });
+});
+
+describe("McpService.getContextPack anonymises by default", () => {
+  it("asks for anonymised institutions when the caller does not say", async () => {
+    const raw: BuildContextPackInput = {
+      baseline: { ...DEFAULT_FINANCIAL_BASELINE, userId: "u1" },
+      netWorthBasis: { countProperty: true, countStudentLoan: false },
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [],
+      taxRecords: [],
+    };
+    const agentData = { getUserFinancialData: vi.fn().mockResolvedValue(raw) };
+    const service = new McpService(
+      {} as never,
+      agentData as never,
+      { get: vi.fn().mockReturnValue(undefined) } as never,
+      "workos",
+      {} as never,
+      {} as never,
+    );
+    await service.getContextPack("u1");
+    expect(agentData.getUserFinancialData).toHaveBeenCalledWith("u1", {
+      anonymizeInstitutions: true,
+    });
   });
 });
 
