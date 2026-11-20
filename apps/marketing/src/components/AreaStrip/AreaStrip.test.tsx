@@ -30,5 +30,9 @@ describe("AreaStrip", () => {
     expect(current.getAttribute("href")).toBe("/features/pay");
     expect(current.textContent).toBe("PayYou are here");
     expect(screen.getAllByText("You are here")).toHaveLength(1);
+    // The current tile keeps the card surface (it sits on a teal band) and shows the primary ring.
+    expect(current.className).toContain("bg-c_surface.card");
+    expect(current.className).not.toContain("bg-c_primary.subtle");
+    expect(current.className).toContain("ring-c_primary");
   });
 });

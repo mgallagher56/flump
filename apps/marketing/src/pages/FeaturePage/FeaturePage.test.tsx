@@ -128,6 +128,30 @@ describe("FeaturePage samples (D6)", () => {
     expect(homeowner.getAttribute("aria-pressed")).toBe("true");
   });
 
+  // Owner choice "A" (2026-11-20): bands alternate canvas and the soft teal tint after the canvas
+  // hero, and a band with figures (the sample, the calculators) always stays on the canvas.
+  // Worked by hand from each page's band order:
+  //   Accounts, Budget: what-you-see teal, see-it canvas (figures), more-detail teal, one-picture canvas
+  //   Pay (no sample): what-you-see teal, more-detail canvas, one-picture teal, try-it canvas (figures)
+  //   Savings and pension: teal, see-it canvas, retirement teal, more-detail canvas, one-picture teal
+  //   Debt and borrowing: teal, see-it canvas, more-detail teal, one-picture canvas, try-it canvas
+  it.each([
+    ["accounts", ["teal", "canvas", "teal", "canvas"]],
+    ["budget", ["teal", "canvas", "teal", "canvas"]],
+    ["pay", ["teal", "canvas", "teal", "canvas"]],
+    ["savings-and-pension", ["teal", "canvas", "teal", "canvas", "teal"]],
+    ["debt-and-borrowing", ["teal", "canvas", "teal", "canvas", "canvas"]],
+  ])("alternates the band tones on %s", (key, tones) => {
+    const area = MONEY_AREAS.find((a) => a.key === key) as MoneyArea;
+    const { container } = renderArea(area);
+    const bands = [...container.querySelectorAll("main > [data-tone-band]")];
+    expect(bands.map((band) => band.getAttribute("data-tone-band"))).toEqual(tones);
+    for (const id of ["see-it", "try-it"]) {
+      const band = container.querySelector(`#${id}`);
+      if (band) expect(band.getAttribute("data-tone-band")).toBe("canvas");
+    }
+  });
+
   it("shows a sample on every area page, so no page needs a stand-in scene", () => {
     for (const area of MONEY_AREAS) {
       const { unmount } = renderArea(area);

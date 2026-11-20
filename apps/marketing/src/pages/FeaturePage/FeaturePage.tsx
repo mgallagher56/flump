@@ -14,7 +14,7 @@ import { type FC, type ReactNode, useState } from "react";
 import { AreaStrip } from "../../components/AreaStrip";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
-import { MarketingSection } from "../../components/MarketingSection";
+import { MarketingSection, type MarketingSectionTone } from "../../components/MarketingSection";
 import { PageMeta } from "../../components/PageMeta";
 import { TryItSection } from "../../components/TryItSection";
 import { type Feature, MONEY_AREAS, RETIREMENT_SECTION } from "../../utils/featureAreas";
@@ -49,9 +49,19 @@ export interface FeaturePageProps {
   heroNote?: string;
   /** Replaces the sample the data file names (the AI connection's example questions). */
   sample?: ReactNode;
+  /** The tone of the last band inside `sample`, so the bands after it keep alternating. */
+  sampleLastTone?: MarketingSectionTone;
   /** Replaces the depth list in "More detail when you want it". */
   moreDetail?: ReactNode;
 }
+
+/**
+ * Bands alternate the canvas and the soft teal tint (owner choice "A", 2026-11-20). A band that
+ * holds figures (a sample or a calculator) always stays on the canvas, since a tint never goes
+ * around a chart, so the band after it starts the teal again.
+ */
+const nextTone = (previous: MarketingSectionTone): MarketingSectionTone =>
+  previous === "teal" ? "canvas" : "teal";
 
 /** The working sample for an area (D6): the same sample components the preview page uses. */
 const SAMPLES = {
@@ -97,11 +107,23 @@ export const FeaturePage: FC<FeaturePageProps> = ({
   badge,
   heroNote: note,
   sample,
+  sampleLastTone = "canvas",
   moreDetail,
 }) => {
   const cta = signupCta();
   const titleId = `${feature.key}-title`;
   const currentArea = MONEY_AREAS.find((area) => area.key === feature.key)?.key;
+  const showRetirement = feature.key === "savings-and-pension";
+  // The hero is canvas, so "What you see" is teal; a built-in sample holds figures (canvas).
+  const whatYouSeeTone: MarketingSectionTone = "teal";
+  const afterSampleTone: MarketingSectionTone = sample
+    ? sampleLastTone
+    : feature.sample === "none"
+      ? whatYouSeeTone
+      : "canvas";
+  const retirementTone = nextTone(afterSampleTone);
+  const moreDetailTone = nextTone(showRetirement ? retirementTone : afterSampleTone);
+  const onePictureTone = nextTone(moreDetailTone);
 
   return (
     <div className={pageShell()} data-testid={`feature-page-${feature.key}`}>
@@ -134,7 +156,7 @@ export const FeaturePage: FC<FeaturePageProps> = ({
           </div>
         </section>
 
-        <MarketingSection id="what-you-see" title="What you see">
+        <MarketingSection id="what-you-see" title="What you see" tone={whatYouSeeTone}>
           <ul className={factGrid()}>
             {feature.facts.map((fact) => (
               <Card as="li" key={fact} padding="md">
@@ -151,8 +173,8 @@ export const FeaturePage: FC<FeaturePageProps> = ({
 
         {sample ?? <SampleSection sample={feature.sample} />}
 
-        {feature.key === "savings-and-pension" && (
-          <MarketingSection id="retirement" title={RETIREMENT_SECTION.title}>
+        {showRetirement && (
+          <MarketingSection id="retirement" title={RETIREMENT_SECTION.title} tone={retirementTone}>
             <div className={retirementBody()}>
               {RETIREMENT_SECTION.body.map((paragraph) => (
                 <p className={retirementText()} key={paragraph}>
@@ -164,7 +186,11 @@ export const FeaturePage: FC<FeaturePageProps> = ({
           </MarketingSection>
         )}
 
-        <MarketingSection id="more-detail" title="More detail when you want it">
+        <MarketingSection
+          id="more-detail"
+          title="More detail when you want it"
+          tone={moreDetailTone}
+        >
           {moreDetail ?? (
             <ul className={depthList()}>
               {feature.depth.map((item) => (
@@ -178,7 +204,7 @@ export const FeaturePage: FC<FeaturePageProps> = ({
           id="one-picture"
           subtitle="Use one area or all five. Together they make one picture of your money, on your Home page."
           title="Part of one picture"
-          tone="teal"
+          tone={onePictureTone}
         >
           <AreaStrip current={currentArea} />
         </MarketingSection>

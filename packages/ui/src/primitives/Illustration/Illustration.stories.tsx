@@ -74,5 +74,6 @@ export const ExtraLarge: Story = {
 export const ExtraLargeDark: Story = {
   args: { scene: "onboarding", size: "xl", settle: false },
   globals: { theme: "dark" },
+  parameters: { backgrounds: { default: "dark" } },
   play: assertSpot,
 };
