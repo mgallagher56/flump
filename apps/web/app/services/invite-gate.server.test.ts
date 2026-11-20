@@ -116,6 +116,85 @@ describe("inviteGateMiddleware", () => {
     expect(isInviteOnly).not.toHaveBeenCalled();
   });
 
+  it.each([
+    "/logout",
+    "/signup",
+    "/SignUp",
+    "/sandbox",
+    "/sandbox/",
+    "/account-deleted",
+    "/account/export",
+    "/api",
+    "/healthz",
+    "/ping",
+    "/robots.txt",
+    "/csp-report",
+  ])("never checks a page load of %s", async (path) => {
+    backendAnswers(403, { error: "not_invited" });
+    const { result, loaderRan } = runGate(path);
+    await result;
+    expect(loaderRan).toHaveBeenCalledOnce();
+    expect(isInviteOnly).not.toHaveBeenCalled();
+  });
+
+  // The open paths match the whole path only: a page whose path merely starts or ends like one of
+  // them is still checked, so the list cannot be used to reach the app uninvited.
+  it.each([
+    "/app/login",
+    "/login-help",
+    "/app/logout",
+    "/logout-now",
+    "/app/callback",
+    "/callbacks",
+    "/app/signup",
+    "/signup-later",
+    "/app/invite/abc",
+    "/invites",
+    "/app/sandbox",
+    "/sandbox-extra",
+    "/app/account-deleted",
+    "/account-deleted-x",
+    "/app/account/export",
+    "/account/exports",
+    "/app/api/x",
+    "/apiary",
+    "/app/healthz",
+    "/healthzz",
+    "/app/ping",
+    "/pings",
+    "/app/robots.txt",
+    "/robots.txt.bak",
+    "/app/csp-report",
+    "/csp-reports",
+  ])("still checks a page load of %s", async (path) => {
+    backendAnswers(403, { statusCode: 403, error: "not_invited" });
+    const { result, loaderRan } = runGate(path);
+    const thrown = await result.catch((e: unknown) => e);
+    expect(thrown).toMatchObject({ init: { status: 403 }, data: { kind: "not-invited" } });
+    expect(loaderRan).not.toHaveBeenCalled();
+  });
+
+  it("reads the session without forcing a sign-in", async () => {
+    backendAnswers(200, { id: "p" });
+    const { result } = runGate("/app");
+    await result;
+    expect(getAuthSession).toHaveBeenCalledWith(expect.anything(), { ensureSignedIn: false });
+  });
+
+  it("needs both a user and an access token before it reads the profile", async () => {
+    backendAnswers(403, { error: "not_invited" });
+    for (const partial of [
+      { user: null, accessToken: "tok" },
+      { user: { id: "user_uninvited" }, accessToken: null },
+    ]) {
+      vi.mocked(getAuthSession).mockResolvedValue(partial as never);
+      const { result, loaderRan } = runGate("/app");
+      await result;
+      expect(loaderRan).toHaveBeenCalledOnce();
+    }
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
   it("leaves any other backend failure to the root loader", async () => {
     backendAnswers(500, {});
     const { result, loaderRan } = runGate("/app");
