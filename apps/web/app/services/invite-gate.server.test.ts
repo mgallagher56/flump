@@ -22,7 +22,7 @@ const backendAnswers = (status: number, body: unknown) => {
 
 /** Stands in for every loader below the root: it records that it ran and returns its data. */
 const OTHER_ROUTE_DATA = { accounts: [{ name: "Joint savings", balance: 1200 }] };
-function runGate(path: string, method = "GET") {
+function runGate(path: string, method = "GET", cookie?: string) {
   const loaderRan = vi.fn();
   const next = vi.fn(async () => {
     loaderRan();
@@ -31,7 +31,17 @@ function runGate(path: string, method = "GET") {
   const context = {};
   const result = (
     inviteGateMiddleware as unknown as (args: unknown, next: unknown) => Promise<Response>
-  )({ request: new Request(`http://localhost${path}`, { method }), params: {}, context }, next);
+  )(
+    {
+      request: new Request(`https://localhost${path}`, {
+        method,
+        headers: cookie ? { Cookie: cookie } : {},
+      }),
+      params: {},
+      context,
+    },
+    next,
+  );
   return { result, next, loaderRan, context };
 }
 
@@ -111,5 +121,55 @@ describe("inviteGateMiddleware", () => {
     const { result, loaderRan } = runGate("/app");
     await result;
     expect(loaderRan).toHaveBeenCalledOnce();
+  });
+
+  describe("a pending invite from a sign-up that did not come back to /invite", () => {
+    const token = `${"p".repeat(40)}_-1`;
+    const cookie = `flump_invite=${token}`;
+    /** First call (the profile) answers not invited, the second (the redeem) as given. */
+    const answers = (redeemStatus: number, redeemBody: unknown) => {
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: "not_invited" }), {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify(redeemBody), {
+            status: redeemStatus,
+            headers: { "Content-Type": "application/json" },
+          }),
+        ) as unknown as typeof fetch;
+    };
+
+    it("redeems it wherever the person lands, clears it and opens the app", async () => {
+      answers(200, { status: "joined" });
+      const { result, loaderRan } = runGate("/app/budget", "GET", cookie);
+      const thrown = (await result.catch((e: unknown) => e)) as Response;
+      expect(thrown.status).toBe(302);
+      expect(thrown.headers.get("Location")).toBe("/app");
+      expect(thrown.headers.get("Set-Cookie")).toMatch(/flump_invite=;.*Max-Age=0/);
+      expect(loaderRan).not.toHaveBeenCalled();
+      const [url, init] = vi.mocked(globalThis.fetch).mock.calls[1] as [string, RequestInit];
+      expect(String(url)).toMatch(/\/v1\/beta\/invites\/redeem$/);
+      expect(JSON.parse(String(init.body))).toEqual({ token });
+    });
+
+    it("drops an unusable one and loads the page again, which then shows not invited", async () => {
+      answers(410, { error: "invite_unusable" });
+      const { result } = runGate("/app?x=1", "GET", cookie);
+      const thrown = (await result.catch((e: unknown) => e)) as Response;
+      expect(thrown.headers.get("Location")).toBe("/app?x=1");
+      expect(thrown.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    });
+
+    it("keeps it when rate limited and shows the not-invited page", async () => {
+      answers(429, {});
+      const { result } = runGate("/app", "GET", cookie);
+      const thrown = await result.catch((e: unknown) => e);
+      expect(thrown).toMatchObject({ init: { status: 403 }, data: { kind: "not-invited" } });
+    });
   });
 });

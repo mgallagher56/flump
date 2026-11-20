@@ -23,7 +23,7 @@ const SECRET = "Joint savings 1200";
 const childLoader = vi.fn(() => ({ accounts: SECRET }));
 const rootLoader = vi.fn(() => ({ user: { id: "user_x" } }));
 
-async function pageLoad(path: string) {
+async function pageLoad(path: string, cookie?: string) {
   const handler = createStaticHandler([
     {
       id: "root",
@@ -35,7 +35,9 @@ async function pageLoad(path: string) {
       children: [{ id: "accounts", path: "app/accounts", loader: childLoader }],
     },
   ]);
-  const request = new Request(`http://localhost${path}`);
+  const request = new Request(`http://localhost${path}`, {
+    headers: cookie ? { Cookie: cookie } : {},
+  });
   let context: StaticHandlerContext | null = null;
   const response = await handler.query(request, {
     requestContext: new RouterContextProvider(),
@@ -96,5 +98,27 @@ describe("invite gate in the real React Router pipeline", () => {
     expect(response.status).toBe(200);
     expect(childLoader).toHaveBeenCalledOnce();
     expect(await response.text()).toContain(SECRET);
+  });
+
+  it("redeems a pending invite cookie and redirects to the app before any loader runs", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "not_invited" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ status: "joined" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ) as unknown as typeof fetch;
+    const { response } = await pageLoad("/app/accounts", `flump_invite=${"q".repeat(43)}`);
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe("/app");
+    expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    expect(childLoader).not.toHaveBeenCalled();
   });
 });
