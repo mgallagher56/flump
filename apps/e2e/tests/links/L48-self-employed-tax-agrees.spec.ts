@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
 import { backendCall } from "../../support/backend";
 import { linkSpecHeaders } from "../../support/client-address";
-import { applyPersona, HOMEOWNER } from "../../support/personas";
+import { applyPersona, HOMEOWNER, taxYearStart } from "../../support/personas";
 
 // Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
 test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
@@ -146,8 +146,6 @@ test("L48 a self-employed estimate with no self-employed record is not set on bo
 // profile back. No new persona seeding or rate-window wait, so this file stays inside the
 // backend's request limits (support/rate-window.ts).
 
-type AccountRow = { id: string };
-type CreatedPair = { mortgage: AccountRow; property: AccountRow };
 type SavedTaxRecord = {
   id: string;
   accountId?: string | null;
@@ -156,66 +154,18 @@ type SavedTaxRecord = {
   type: string;
 };
 
-// L21 (SA-4, owner decision 5): a buy-to-let mortgage added in Accounts brings its interest into
-// Self Assessment as an estimated figure to check, and adding it saves a record linked to
-// the mortgage. The figure depends on the month (the mortgage's one history point is this month),
-// so the test checks the card and the link, not the amount; the amount is worked by hand in
-// apps/web/app/features/tax/linkedAccounts.test.ts.
-test("L21 a buy-to-let mortgage's estimated interest is added as a record linked to it", async ({
-  page,
-}) => {
-  await page.goto("/app");
-  const before: Profile = HOMEOWNER.profile as Profile;
-  let pair: CreatedPair | null = null;
-  let recordId: string | null = null;
-
-  try {
-    await api(page, "/user-profile", "PATCH", {
-      enabledPages: withTax(before.enabledPages),
-      dashboardWidgets: withTax(before.dashboardWidgets),
-    });
-    pair = await backendCall<CreatedPair>("/accounts/mortgage-with-property", "POST", {
-      mortgage: {
-        name: "L21 flat mortgage",
-        accountSubtype: "btl_mortgage",
-        balance: 150000,
-        interestRate: 4.5,
-        repaymentType: "interest-only",
-      },
-      property: { name: "L21 flat", balance: 230000 },
-    });
-    const mortgageId = pair.mortgage.id;
-
-    await page.goto("/app/self-assessment");
-    const card = page.getByTestId(`calculated-figure-${mortgageId}`);
-    await expect(card).toContainText(
-      /Estimated mortgage interest for \d{4}\/\d{2}: £[\d,]+\.\d{2}/,
-    );
-    await expect(card).toContainText("4.5% rate");
-    await card.getByRole("button", { name: /^Add this estimate as a record/ }).click();
-    // Once the linked record is saved, the page reloads its data and the offer goes.
-    await expect(card).toHaveCount(0);
-
-    const records = await backendCall<SavedTaxRecord[]>("/tax-records");
-    const linked = records.find(
-      (r) => r.accountId === mortgageId && r.category === "mortgage_interest",
-    );
-    expect(linked).toBeDefined();
-    expect(linked?.source).toBe("rental");
-    expect(linked?.type).toBe("expense");
-    recordId = linked?.id ?? null;
-  } finally {
-    if (recordId) await backendCall(`/tax-records/${recordId}`, "DELETE");
-    if (pair) {
-      await backendCall(`/accounts/${pair.mortgage.id}`, "DELETE");
-      await backendCall(`/accounts/${pair.property.id}`, "DELETE");
-    }
-    await api(page, "/user-profile", "PATCH", {
-      enabledPages: before.enabledPages ?? null,
-      dashboardWidgets: before.dashboardWidgets ?? null,
-    });
-  }
-});
+/**
+ * Moves a record this file created to 6 April of the previous tax year, where no estimate for the
+ * current year reads it, in place of deleting it: the backend allows 10 destructive calls an hour
+ * per user, and the suite shares them (resets and every delete count).
+ */
+async function moveToPreviousTaxYear(recordId: string, extra: Record<string, unknown> = {}) {
+  const start = Number(taxYearStart(new Date()).slice(0, 4));
+  await backendCall(`/tax-records/${recordId}`, "PATCH", {
+    date: `${start - 1}-04-06`,
+    ...extra,
+  });
+}
 
 // L29 (SA-3, owner decision 7): a tax region of Scotland saved on Profile reaches Self Assessment
 // and the Dashboard card, which show the same Scottish estimate. The homeowner earns 58,000.
@@ -263,9 +213,73 @@ test("L29 a Scottish tax region gives the same Scottish estimate on Self Assessm
     await page.goto("/app");
     await expect(page.locator('[data-figure="tax.estimatedDue"]')).toContainText(pageFigure);
   } finally {
-    if (recordId) await backendCall(`/tax-records/${recordId}`, "DELETE");
+    // No delete: the backend allows 10 destructive calls an hour per user, shared by the whole
+    // suite. The record moves to the previous tax year, where no current estimate reads it.
+    if (recordId) await moveToPreviousTaxYear(recordId);
     await api(page, "/user-profile", "PATCH", {
       taxRegion: before.taxRegion ?? "ENGLAND",
+      enabledPages: before.enabledPages ?? null,
+      dashboardWidgets: before.dashboardWidgets ?? null,
+    });
+  }
+});
+
+// L21 (SA-4, owner decision 5): a buy-to-let mortgage in Accounts brings its interest into Self
+// Assessment as an estimated figure to check, and adding it saves a record linked to the
+// mortgage. The test borrows the homeowner's own mortgage and home, marked buy-to-let and rental
+// for the test and put back after, so it creates and deletes no account (the backend allows 10
+// destructive calls an hour per user, shared by the whole suite). It runs last in this file
+// because, while the home is marked rental, the share and the offers on the page change. The
+// figure depends on the persona's history months, so the test checks the card and the link, not
+// the amount; the amount is worked by hand in apps/web/app/features/tax/linkedAccounts.test.ts.
+test("L21 a buy-to-let mortgage's estimated interest is added as a record linked to it", async ({
+  page,
+}) => {
+  await page.goto("/app");
+  const before: Profile = HOMEOWNER.profile as Profile;
+  type Account = { id: string; name: string; accountSubtype?: string | null };
+  const accounts = await backendCall<Account[]>("/accounts");
+  const mortgage = accounts.find((a) => a.name === "Residential mortgage");
+  const home = accounts.find((a) => a.name === "Home");
+  if (!mortgage || !home) throw new Error("The homeowner persona has no mortgage and home");
+  let recordId: string | null = null;
+
+  try {
+    await api(page, "/user-profile", "PATCH", {
+      enabledPages: withTax(before.enabledPages),
+      dashboardWidgets: withTax(before.dashboardWidgets),
+    });
+    await backendCall(`/accounts/${home.id}`, "PATCH", { accountSubtype: "rental" });
+    await backendCall(`/accounts/${mortgage.id}`, "PATCH", { accountSubtype: "btl_mortgage" });
+
+    await page.goto("/app/self-assessment");
+    const card = page.getByTestId(`calculated-figure-${mortgage.id}`);
+    await expect(card).toContainText(
+      /Estimated mortgage interest for \d{4}\/\d{2}: £[\d,]+\.\d{2}/,
+    );
+    await expect(card).toContainText("4.5% rate");
+    await card.getByRole("button", { name: /^Add this estimate as a record/ }).click();
+    // Once the linked record is saved, the page reloads its data and the offer goes.
+    await expect(card).toHaveCount(0);
+
+    const records = await backendCall<SavedTaxRecord[]>("/tax-records");
+    const linked = records.find(
+      (r) => r.accountId === mortgage.id && r.category === "mortgage_interest",
+    );
+    expect(linked).toBeDefined();
+    expect(linked?.source).toBe("rental");
+    expect(linked?.type).toBe("expense");
+    recordId = linked?.id ?? null;
+  } finally {
+    // No delete: the record moves to the previous tax year and loses its link.
+    if (recordId) await moveToPreviousTaxYear(recordId, { accountId: null });
+    await backendCall(`/accounts/${mortgage.id}`, "PATCH", {
+      accountSubtype: mortgage.accountSubtype ?? null,
+    });
+    await backendCall(`/accounts/${home.id}`, "PATCH", {
+      accountSubtype: home.accountSubtype ?? null,
+    });
+    await api(page, "/user-profile", "PATCH", {
       enabledPages: before.enabledPages ?? null,
       dashboardWidgets: before.dashboardWidgets ?? null,
     });
