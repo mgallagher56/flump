@@ -3,7 +3,10 @@
  * Exit: 0 ok, 1 fail, 3 warn. TAX_CALENDAR_NOW (ISO instant) overrides the clock for tests.
  * See docs/runbooks/tax-year-update.md.
  */
-import { SUPPORTED_UK_TAX_YEARS } from "../packages/finance-engine/src/types";
+import {
+  PROVISIONAL_UK_TAX_YEARS,
+  SUPPORTED_UK_TAX_YEARS,
+} from "../packages/finance-engine/src/types";
 import { getUkCalendarDate, getUkTaxYearForDate } from "../packages/finance-engine/src/uk-tax-year";
 import { evaluateTaxYearCalendar, exitCodeFor } from "./lib/tax-year-calendar";
 
@@ -12,8 +15,14 @@ const ukDate = getUkCalendarDate(now);
 const result = evaluateTaxYearCalendar(
   ukDate,
   getUkTaxYearForDate(ukDate),
-  // Every supported year is a full table today. When a provisional table is added, mark it here.
-  SUPPORTED_UK_TAX_YEARS.map((year) => ({ year, status: "confirmed" as const })),
+  // A provisional year (announced, not yet law: 2027/28) must be confirmed by 1 April of the year
+  // it starts (the default), so the guard warns from 15 March and fails from then on.
+  SUPPORTED_UK_TAX_YEARS.map((year) => ({
+    year,
+    status: (PROVISIONAL_UK_TAX_YEARS as readonly string[]).includes(year)
+      ? ("provisional" as const)
+      : ("confirmed" as const),
+  })),
 );
 
 const head = `Tax-year calendar guard (${ukDate}): ${result.level}`;
