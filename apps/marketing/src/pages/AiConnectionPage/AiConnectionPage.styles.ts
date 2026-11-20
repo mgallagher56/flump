@@ -90,6 +90,8 @@ export const techDisclosure = cva({
     borderBlockWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",
+    // The web app links to #setup: land below the sticky header, not under it.
+    scrollMarginTop: "24",
     "& > div > button": { textStyle: "body.md", fontWeight: "semibold", color: "text.primary" },
   },
 });
