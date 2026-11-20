@@ -35,8 +35,8 @@ export interface Feature {
   /** "More detail when you want it": deeper tools in the area. */
   depth: readonly string[];
   sample: FeatureSample;
-  /** Where the hero's "Interactive preview" button goes. */
-  previewHref: string;
+  /** Where the hero's "Interactive preview" button goes. Left out where the preview shows none of it. */
+  previewHref?: string;
   meta: { title: string; description: string };
 }
 
@@ -197,7 +197,6 @@ export const AI_CONNECTION: Feature = {
   ],
   depth: [],
   sample: "none",
-  previewHref: "/preview",
   meta: {
     title: "AI connection | Flump",
     description:
@@ -218,7 +217,7 @@ export const FEATURES_INDEX = {
   title: "Flump features",
   lead: "Five areas, laid out the same way here and in the app.",
   intro: [
-    "Flump is laid out the same way here and in the app: accounts, budget, pay, savings and pension, and debt and borrowing. Use one area or all five.",
+    "The five areas are accounts, budget, pay, savings and pension, and debt and borrowing. Use one area or all five.",
     "Each starts from a few rough figures. Each has more detail underneath for when you want it. Together they make one picture of your money, on your Home page.",
   ],
   meta: {

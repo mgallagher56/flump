@@ -42,8 +42,11 @@ export const stripLink = cva({
   variants: {
     current: {
       true: {
+        // An inset ring, not a wider border, so the current tile keeps the same layout as the rest.
         borderColor: "primary",
-        borderWidth: "2px",
+        outline: "1px solid",
+        outlineColor: "primary",
+        outlineOffset: "-2px",
         backgroundColor: "primary.subtle",
         fontWeight: "bold",
       },

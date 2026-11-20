@@ -9,10 +9,10 @@ import { AI_STAGING_SENTENCE } from "../../utils/aiConnection";
 import { AiConnectionPage, EXAMPLE_QUESTIONS } from "./AiConnectionPage";
 import { MCP_TOOLS } from "./mcpTools";
 
-const renderPage = () =>
+const renderPage = (path = "/features/ai-connection") =>
   render(
     <HelmetProvider>
-      <MemoryRouter initialEntries={["/features/ai-connection"]}>
+      <MemoryRouter initialEntries={[path]}>
         <AiConnectionPage />
       </MemoryRouter>
     </HelmetProvider>,
@@ -50,7 +50,8 @@ describe("Marketing AI connection page (E42 S2b)", () => {
     const invite = within(hero).getByRole("link", { name: "Request an invite" });
     expect(invite.getAttribute("href")).toBe("/contact#beta");
     expect(invite.getAttribute("data-variant")).toBe("primary");
-    expect(within(hero).getByRole("link", { name: "Interactive preview" })).toBeDefined();
+    // The sample preview has no AI connection in it, so the page does not offer it.
+    expect(within(hero).queryByRole("link", { name: "Interactive preview" })).toBeNull();
     expectPageRules(hero, { projectionNotices: 0 });
   });
 
@@ -86,6 +87,12 @@ describe("Marketing AI connection page (E42 S2b)", () => {
     const strip = screen.getByTestId("area-strip");
     expect(within(strip).getAllByRole("link")).toHaveLength(5);
     expect(within(strip).queryByRole("link", { current: "page" })).toBeNull();
+  });
+
+  it("opens the technical details on arrival at #setup, the web app's link", () => {
+    renderPage("/features/ai-connection#setup");
+    expect(screen.getByTestId("mcp-technical-details")).toBeDefined();
+    expect(screen.getByText(/The steps to connect are in the Flump app/)).toBeDefined();
   });
 
   it("keeps the technical details collapsed until asked", () => {

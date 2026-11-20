@@ -57,7 +57,7 @@ const FEATURE_LINKS: AppNavChild[] = [
     key: FEATURES_INDEX_KEY,
     label: FEATURES_INDEX.title,
     href: FEATURES_INDEX.path,
-    description: "All five areas on one page",
+    description: "Every feature on one page",
   },
   ...FEATURES.map((feature) => ({
     key: feature.key,
