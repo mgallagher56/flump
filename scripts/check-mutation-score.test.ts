@@ -465,7 +465,9 @@ describe("the committed files", () => {
 
   test("every package with a Stryker config is picked, watched on pull requests and floored", () => {
     const baseline = readBaseline(join(root, "scripts/mutation-baseline.json"));
-    const configured = [...new Bun.Glob("packages/*/stryker.config.json").scanSync({ cwd: root })]
+    const configured = [
+      ...new Bun.Glob("{packages,apps}/*/stryker.config.json").scanSync({ cwd: root }),
+    ]
       .map((p) => p.replace("/stryker.config.json", ""))
       .sort();
     expect(targets.map((t) => t.package).sort()).toEqual(configured);
