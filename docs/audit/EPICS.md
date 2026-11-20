@@ -41,6 +41,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 25 | E39 | Mortgage affordability from your own figures | Plan merged (#776); nothing built |
 | 26 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
 | 27 | E41 | Mutation testing and faster tests | In progress: see the E41 status line. M4 is in progress; M5 waits for the owner |
+| 28 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Plan written 2026-11-20, eight owner decisions open; nothing built |
 
 ### Work in progress
 
@@ -1024,6 +1025,15 @@ The E41 block below was added on 2026-11-19. The handoff notes after it were bro
 - **Notes:** two workstreams. Mutation: M0 proof on one engine module, M1 scheduled run and ratchet, M2 engine kill tests, M3 contract, MCP and small packages, M4 backend guards and services, M5 web and UI logic, M6 close-out. Speed: P0 baseline, P1 browser install in CI, P2 backend files in parallel, P3 web and UI environment and setup, P4 slow files and isolation, P5 Turbo and CI shape. Measured on 2026-11-19: pull request CI took 2 to 9 minutes over six runs; the backend suite is the slowest Vitest run (281 seconds, files run one at a time); the "Install Chromium" step varied from 9 to 328 seconds. No outside service is used; the hosted Stryker dashboard is decision 6. Plan: [E41-mutation-testing-and-test-speed-plan.md](plans/E41-mutation-testing-and-test-speed-plan.md).
 - **Status (2026-11-20):** in progress. Mutation: M0 (`#792`), M1 (`#800`, weekly run and score ratchet), M2 parts A and B (`#809`, `#822`) and M3 (`#832`, contract, MCP and the small packages) merged; M4 (backend guards and services) is in progress; M5 waits for the owner. Speed: P0 (`#794`), P1 (`#795`), P2 (`#813`), P3 (`#828`), P4 (`#819`) and P5 (`#823`) merged. The change to isolate the engine from the rest was withdrawn.
 - **Labels:** ready
+
+## E42. Marketing site restructure: the site mirrors the app
+
+- **Severity:** P2 (owner request, 2026-11-20).
+- **Blocked by:** the owner's answers to decisions D1 to D8 in the plan (page list and navigation, home page direction, the words for the whole-picture message, fog wording, gated features, working samples or screenshots, SEO titles, Pricing). The two data facts for the Security page also wait for the owner to confirm download and deletion work in staging.
+- **Done when:** the marketing site has a "What Flump covers" page and one page for each of the app's five navigation areas (Accounts, Budget, Pay, Savings and pension, Debt and borrowing), named as the app names them and checked against the app's labels by a test; the home page shows all five areas in one picture and carries the three messages (one whole view, simple for everyone, more detail for those who want it); top navigation is four links and the call to action; every calculator and preview section links to its area page; no page mentions Retirement or sells a gated feature as available; every claim passes the claims and copy guards and the owner has signed off the copy (E7).
+- **Notes:** plan: [E42-marketing-site-restructure-plan.md](plans/E42-marketing-site-restructure-plan.md), with the inventory, gap list, site map, draft copy, constraints check and eight slices in two pull requests. All copy in the plan is a draft. It would change the home h1 and five-band layout set by E16 PR 12, only with the owner's yes.
+- **Status (2026-11-20):** plan written; decisions open; nothing built.
+- **Labels:** needs-owner
 
 ## 1. The merge-queue PRs from the 2026-11-16 handoff
 
