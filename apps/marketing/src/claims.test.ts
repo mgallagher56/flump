@@ -74,14 +74,22 @@ describe("claims guard", () => {
 });
 
 /**
- * Public calculator pages (E16 PR 11): the tool page, the index and the shared catalogue and
- * guides they read carry no hooks or feature claims the calculators do not back.
+ * Public calculator copy (E16 PR 11, E42 PR 2): every marketing file that renders or wraps a
+ * calculator, and the shared catalogue and guides, carry no hooks or feature claims the calculators
+ * do not back. The marketing calculator pages left with E42 PR 2 (D9); the kept calculators now sit
+ * on the area pages in short forms, so those files take their place here (coordinator sign-off,
+ * 20 November 2026).
  */
 describe("public calculator copy guard (E16 PR 11)", () => {
   const banned = /ENGINE|Mathematically|guaranteed|\bsyncs\b|\bmonitors\b|tax trap/i;
+  const marketingCalculatorFiles = [
+    join(__dirname, "pages", "FeaturePage", "FeaturePage.tsx"),
+    join(__dirname, "components", "TryItSection", "TryItSection.tsx"),
+    join(__dirname, "components", "PayRiseTeaser", "PayRiseTeaser.tsx"),
+    join(__dirname, "pages", "HomePage", "HomePage.tsx"),
+  ];
   const toolSources = [
-    join(__dirname, "pages", "ToolPage", "ToolPage.tsx"),
-    join(__dirname, "pages", "ToolsIndexPage", "ToolsIndexPage.tsx"),
+    ...marketingCalculatorFiles,
     ...files(join(__dirname, "..", "..", "..", "packages", "ui", "src", "tools")),
   ].map((f) => [f, readFileSync(f, "utf8")] as const);
 
@@ -91,8 +99,8 @@ describe("public calculator copy guard (E16 PR 11)", () => {
     expect(hits).toEqual([]);
   });
 
-  it("uses no react-icons and no dollar icon on the tool pages", () => {
-    for (const [file, text] of toolSources.slice(0, 2)) {
+  it("uses no react-icons and no dollar icon in the files that show a calculator", () => {
+    for (const [file, text] of toolSources.slice(0, marketingCalculatorFiles.length)) {
       expect(text, file).not.toMatch(/react-icons|FiDollarSign|DollarSign/);
     }
   });

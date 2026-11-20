@@ -3,7 +3,8 @@ import { expectPageRules } from "@repo/ui/testing";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_SALARY_GBP, PayRiseTeaser, payRiseResult, taxYearInWords } from "./PayRiseTeaser";
+import { DEFAULT_SALARY_GBP, PayRiseTeaser } from "./PayRiseTeaser";
+import { payRiseResult, taxYearInWords } from "./payRise";
 
 const renderTeaser = () =>
   render(
