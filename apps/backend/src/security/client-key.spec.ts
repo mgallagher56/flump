@@ -43,6 +43,12 @@ describe("clientKey", () => {
     expect(clientKey("::1")).toBe("0:0:0:0::/64");
   });
 
+  it("expands an address that ends with ::", () => {
+    // 2001:db8:abcd:12:: writes four groups, so :: stands for the last four, all zero:
+    // 2001:db8:abcd:12:0:0:0:0, whose /64 is 2001:db8:abcd:12.
+    expect(clientKey("2001:db8:abcd:12::")).toBe("2001:db8:abcd:12::/64");
+  });
+
   it("handles a missing address", () => {
     expect(clientKey(undefined)).toBe("unknown");
     expect(clientKey("")).toBe("unknown");
