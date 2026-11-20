@@ -3,20 +3,17 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   checkScore,
+  configuredPackages,
   floorFor,
   formatSummary,
   formatSurvivors,
-  joinShardReports,
   listMutateFiles,
   type Mutant,
   type MutantStatus,
   type MutationReport,
-  mergeReports,
-  partitionFiles,
   readBaseline,
   readMutateGlobs,
   scoreReport,
-  selectMutateTargets,
 } from "./lib/mutation-score";
 
 const root = join(import.meta.dir, "..");
@@ -234,116 +231,13 @@ describe("formatSurvivors", () => {
   });
 });
 
-describe("selectMutateTargets", () => {
-  const globs = [
-    "src/**/*.ts",
-    "!src/**/*.{test,spec}.ts",
-    "!src/**/__fixtures__/**",
-    "!src/**/index.ts",
-  ];
-
-  test("keeps changed source files in the package and drops tests, fixtures, barrels and other packages", () => {
-    const changed = [
-      "packages/finance-engine/src/uk-tax.ts",
-      "packages/finance-engine/src/uk-tax.test.ts",
-      "packages/finance-engine/src/picture/selectors/housing-cost.ts",
-      "packages/finance-engine/src/picture/__fixtures__/personas/dan.ts",
-      "packages/finance-engine/src/index.ts",
-      "packages/finance-engine/README.md",
-      "packages/mcp/src/uk-tax.ts",
-      "packages/finance-engine/src/uk-tax.ts",
-    ];
-    expect(selectMutateTargets(changed, "packages/finance-engine", globs)).toEqual([
-      "src/picture/selectors/housing-cost.ts",
-      "src/uk-tax.ts",
-    ]);
-  });
-
-  test("is empty when nothing mutable changed", () => {
-    expect(selectMutateTargets(["docs/a.md"], "packages/finance-engine", globs)).toEqual([]);
-  });
-});
-
-describe("partitionFiles", () => {
-  test("puts each file, largest first, into the lightest shard so far", () => {
-    // Sizes a 50, b 40, c 30, d 20, e 10 into 2 shards. Totals after each step:
-    // a -> shard 1 (tie, lower wins): 50 / 0. b -> shard 2: 50 / 40. c -> shard 2: 50 / 70.
-    // d -> shard 1: 70 / 70. e -> shard 1 (tie): 80 / 70. So shard 1 = a, d, e; shard 2 = b, c.
-    const files = [
-      { path: "e.ts", size: 10 },
-      { path: "c.ts", size: 30 },
-      { path: "a.ts", size: 50 },
-      { path: "d.ts", size: 20 },
-      { path: "b.ts", size: 40 },
-    ];
-    expect(partitionFiles(files, 2)).toEqual([
-      ["a.ts", "d.ts", "e.ts"],
-      ["b.ts", "c.ts"],
-    ]);
-    expect(partitionFiles(files, 1)).toEqual([["a.ts", "b.ts", "c.ts", "d.ts", "e.ts"]]);
-  });
-
-  test("leaves extra shards empty and refuses a shard count under 1", () => {
-    expect(partitionFiles([{ path: "a.ts", size: 1 }], 3)).toEqual([["a.ts"], [], []]);
-    expect(() => partitionFiles([], 0)).toThrow();
-  });
-
-  test("covers every engine file exactly once across the shards", () => {
-    const files = listMutateFiles(
-      root,
-      "packages/finance-engine",
-      readMutateGlobs(root, "packages/finance-engine"),
-    );
-    const shards = partitionFiles(files, 4);
-    expect(shards.flat().sort()).toEqual(files.map((f) => f.path));
-    for (const shard of shards) expect(shard.length).toBeGreaterThan(0);
-  });
-});
-
-describe("mergeReports", () => {
-  test("joins shard reports and refuses a file reported twice", () => {
-    const a: MutationReport = { files: { "src/a.ts": { mutants: [mutant("Killed")] } } };
-    const b: MutationReport = { files: { "src/b.ts": { mutants: [mutant("Survived")] } } };
-    // 1 caught of 2 = 50%.
-    expect(scoreReport(mergeReports([a, b])).score).toBe(50);
-    expect(Object.keys(mergeReports([a, b]).files)).toEqual(["src/a.ts", "src/b.ts"]);
-    expect(() => mergeReports([a, a])).toThrow("src/a.ts");
-  });
-});
-
-describe("joinShardReports", () => {
-  test("drops files a shard carried over from an earlier run, so a moved file counts once", () => {
-    // Sizes a 30, b 20, c 10 into 2 shards: a -> 1 (30/0), b -> 2 (30/20), c -> 2 (30/30).
-    // So shard 1 = a, shard 2 = b, c. Shard 1's report still holds c from an earlier run, where
-    // c survived; this run c was killed in shard 2. Joined: a killed, b killed, c killed = 100%.
-    const files = [
-      { path: "a.ts", size: 30 },
-      { path: "b.ts", size: 20 },
-      { path: "c.ts", size: 10 },
-    ];
-    const shard1: MutationReport = {
-      files: {
-        "a.ts": { mutants: [mutant("Killed")] },
-        "c.ts": { mutants: [mutant("Survived")] },
-      },
-    };
-    const shard2: MutationReport = {
-      files: { "b.ts": { mutants: [mutant("Killed")] }, "c.ts": { mutants: [mutant("Killed")] } },
-    };
-    expect(() => mergeReports([shard1, shard2])).toThrow("c.ts");
-    const joined = joinShardReports([shard1, shard2], files);
-    expect(Object.keys(joined.files).sort()).toEqual(["a.ts", "b.ts", "c.ts"]);
-    expect(scoreReport(joined).score).toBe(100);
-  });
-});
-
 describe("the committed files", () => {
   test("the engine's mutate list is source only: no tests, fixtures, vectors or barrels", () => {
     const paths = listMutateFiles(
       root,
       "packages/finance-engine",
       readMutateGlobs(root, "packages/finance-engine"),
-    ).map((f) => f.path);
+    );
     expect(paths).toContain("src/mortgage.ts");
     expect(paths).toContain("src/picture/selectors/housing-cost.ts");
     expect(
@@ -370,140 +264,23 @@ describe("the committed files", () => {
       expect(floor.floor).toBeLessThanOrEqual(floorFor(floor.measured));
   });
 
-  type Step = {
-    id?: string;
-    name?: string;
-    run?: string;
-    uses?: string;
-    env?: Record<string, string>;
-    with?: Record<string, string>;
-  };
-  type Workflow = {
-    on: { schedule: { cron: string }[]; pull_request: { paths: string[] } };
-    jobs: Record<
-      string,
-      {
-        "continue-on-error"?: boolean;
-        env?: Record<string, string | number>;
-        strategy?: { matrix?: Record<string, unknown> };
-        steps: Step[];
-      }
-    >;
-  };
-  const workflow = Bun.YAML.parse(
-    readFileSync(join(root, ".github/workflows/mutation.yml"), "utf8"),
-  ) as Workflow;
-  const pick = workflow.jobs.plan?.steps.find((s) => s.id === "pick")?.run ?? "";
-
-  test("every weekly cron picks a package, and every picked package has a floor", () => {
+  test("every package with a Stryker config has a floor, so a local run can pass or fail", () => {
+    // `bun run mutation all` runs exactly these packages; each must have a floor to check against.
     const baseline = readBaseline(join(root, "scripts/mutation-baseline.json"));
-    const crons = workflow.on.schedule.map((s) => s.cron);
-    expect(crons.length).toBeGreaterThan(0);
-    expect(new Set(crons).size).toBe(crons.length);
-    for (const cron of crons) expect(pick).toContain(`"${cron}")`);
-    const picked = [...pick.matchAll(/packages\/[a-z-]+/g)].map((m) => m[0]);
-    expect(picked.length).toBeGreaterThan(0);
-    for (const pkg of picked) expect(baseline.packages[pkg], pkg).toBeDefined();
+    const configured = configuredPackages(root);
+    expect(configured).toContain("packages/finance-engine");
+    expect(configured).toContain("apps/backend");
+    for (const pkg of configured) expect(baseline.packages[pkg], pkg).toBeDefined();
+    // And no floor is left for a package that no longer has a config.
+    expect(Object.keys(baseline.packages).sort()).toEqual(configured);
   });
 
-  const runs = (job: string) =>
-    (workflow.jobs[job]?.steps ?? []).map((s) => s.run ?? "").join("\n");
-
-  /** A GitHub Actions expression, built so no source string holds the literal. */
-  const D = "$";
-  const expr = (e: string) => [D, "{{ ", e, " }}"].join("");
-
-  test("the score job reads the shard reports by the names the shards upload them under", () => {
-    // Upload name, download pattern and the path the score step reads must agree, or the first
-    // weekly run would fail with "No report from shard 1".
-    const upload = workflow.jobs.full?.steps.find((s) =>
-      s.uses?.startsWith("actions/upload-artifact@"),
-    );
-    const download = workflow.jobs.score?.steps.find((s) =>
-      s.uses?.startsWith("actions/download-artifact@"),
-    );
-    expect(upload?.with?.name).toBe(
-      `mutation-report-${expr("matrix.target.slug")}-shard${expr("matrix.shard")}`,
-    );
-    expect(download?.with?.pattern).toBe(`mutation-report-${expr("matrix.target.slug")}-shard*`);
-    expect(download?.with?.path).toBe("shard-reports");
-    expect(upload?.with?.path).toContain("reports/mutation/mutation.json");
-    expect(runs("score")).toContain(
-      'report="shard-reports/mutation-report-$SLUG-shard$i/mutation.json"',
-    );
-  });
-
-  test("the weekly run reruns every fault, and only a manual start may reuse saved results", () => {
-    const stryker = workflow.jobs.full?.steps.find((s) => s.name === "🧬 Run Stryker");
-    expect(stryker?.env?.FORCE).toBe(
-      expr("(github.event_name == 'schedule' || inputs.force) && '--force' || ''"),
-    );
-    expect(stryker?.run).toContain("run $FORCE");
-  });
-
-  /** The targets the "Pick packages" step defines, read from its JSON literals. */
-  const targets = [...pick.matchAll(/'(\{"package":[^']+\})'/g)].map(
-    (m) => JSON.parse(m[1] ?? "") as { package: string; slug: string; shards: number },
-  );
-
-  test("each package sets its own shard count, and the shards and score job read it", () => {
-    expect(targets.length).toBeGreaterThan(0);
-    for (const t of targets) {
-      expect(Number.isInteger(t.shards) && t.shards >= 1, t.package).toBe(true);
-      // The slug is the folder name: packages/mcp is "mcp", apps/backend is "backend".
-      expect(t.slug, t.package).toBe(t.package.split("/").at(-1));
-    }
-    const full = workflow.jobs.full;
-    expect(full?.strategy?.matrix).toEqual({
-      include: expr("fromJSON(needs.plan.outputs.shards)"),
-    });
-    expect(full?.env?.SHARDS).toBe(expr("matrix.target.shards"));
-    expect(workflow.jobs.score?.env?.SHARDS).toBe(expr("matrix.target.shards"));
-    expect(runs("score")).toContain('for i in $(seq 1 "$SHARDS"); do');
-    // One matrix entry per shard, each carrying its target.
-    expect(pick).toContain("range(1; $t.shards + 1) | {target: $t, shard: .}");
-  });
-
-  test("every package with a Stryker config is picked, watched on pull requests and floored", () => {
-    const baseline = readBaseline(join(root, "scripts/mutation-baseline.json"));
-    const configured = [
-      ...new Bun.Glob("{packages,apps}/*/stryker.config.json").scanSync({ cwd: root }),
-    ]
-      .map((p) => p.replace("/stryker.config.json", ""))
-      .sort();
-    expect(targets.map((t) => t.package).sort()).toEqual(configured);
-    expect(
-      String(workflow.jobs.changed?.env?.PACKAGES).split(/\s+/).filter(Boolean).sort(),
-    ).toEqual(configured);
-    for (const pkg of configured) {
-      expect(baseline.packages[pkg], pkg).toBeDefined();
-      expect(workflow.on.pull_request.paths).toContain(`${pkg}/src/**`);
-      expect(workflow.on.pull_request.paths).toContain(`${pkg}/stryker.config.json`);
-      expect(workflow.on.pull_request.paths).toContain(`${pkg}/vitest.config.ts`);
-      // A manual start can pick the package by its folder.
-      expect(pick).toContain(`${pkg}) targets=`);
-    }
-  });
-
-  test("the pull request job is advisory and only the weekly score job checks the floor", () => {
-    expect(workflow.jobs.changed?.["continue-on-error"]).toBe(true);
-    expect(workflow.jobs.full?.["continue-on-error"]).toBeUndefined();
-    expect(workflow.jobs.score?.["continue-on-error"]).toBeUndefined();
-    expect(runs("score")).toContain("check-mutation-score.ts check");
-    expect(runs("full")).not.toContain("check-mutation-score.ts check");
-    expect(runs("changed")).not.toContain("check-mutation-score.ts check");
-    // A pull request never touches the weekly shards' incremental caches.
-    expect(workflow.jobs.changed?.steps.some((s) => s.uses?.startsWith("actions/cache"))).toBe(
-      false,
-    );
-  });
-
-  test("the mutation workflow is not a required check", () => {
-    const required = JSON.parse(
-      readFileSync(join(root, ".github/required-checks.json"), "utf8"),
-    ) as {
-      checks: { workflow: string }[];
-    };
-    expect(required.checks.map((c) => c.workflow)).not.toContain("mutation.yml");
+  test("no mutation workflow runs in CI (owner decision, 20 November 2026)", () => {
+    // Mutation testing is a local check; a workflow running it again would be a new decision.
+    const workflows = [...new Bun.Glob("*.yml").scanSync({ cwd: join(root, ".github/workflows") })];
+    for (const file of workflows)
+      expect(readFileSync(join(root, ".github/workflows", file), "utf8"), file).not.toMatch(
+        /stryker|check-mutation-score|run-mutation/,
+      );
   });
 });
