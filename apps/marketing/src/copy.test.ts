@@ -90,6 +90,34 @@ describe("E16 PR 12 page copy", () => {
   });
 });
 
+/**
+ * E42 PR 2 done criterion: no marketing source links to a calculator page or to /mcp. Both answer
+ * 301 (server/redirects.ts), so a link to either would send every visitor through a redirect.
+ */
+describe("no links to old addresses (E42)", () => {
+  const sourceFiles = (dir: string): string[] =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) return sourceFiles(full);
+      return /\.tsx?$/.test(entry.name) && !/\.(test|stories)\.tsx?$/.test(entry.name)
+        ? [full]
+        : [];
+    });
+
+  // Comments may name the old addresses (to say they redirect); code may not quote them.
+  const withoutComments = (source: string) =>
+    source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+  it("no source quotes a /tools or /mcp path", () => {
+    const hits = sourceFiles(__dirname)
+      .filter((file) =>
+        /["'`]\/(tools|mcp)\b/.test(withoutComments(fs.readFileSync(file, "utf-8"))),
+      )
+      .map((file) => path.relative(__dirname, file));
+    expect(hits).toEqual([]);
+  });
+});
+
 // "tool slugs" left with E42 PR 2: the marketing site lists no calculator slugs. Every slug and
 // alias in the shared catalogue is now asserted to answer 301 in server/redirects.test.ts.
 

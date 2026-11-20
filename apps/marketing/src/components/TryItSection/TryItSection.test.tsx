@@ -45,7 +45,7 @@ describe("TryItSection (D9)", () => {
   it("opens each short form's details on request", () => {
     renderSection("debt-and-borrowing");
     const debts = screen.getByRole("region", { name: "Two ways to pay off debts" });
-    const toggle = within(debts).getByRole("button", { name: "Change the details" });
+    const toggle = within(debts).getByRole("button", { name: "Change the debt details" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");

@@ -333,7 +333,7 @@ describe("DebtSnowballCalculator", () => {
         })),
         75,
       );
-    const toggle = () => screen.getByRole("button", { name: "Change the details" });
+    const toggle = () => screen.getByRole("button", { name: "Change the debt details" });
 
     it("shows only the two example balances and the extra payment on first view", () => {
       render(<DebtSnowballCalculator shortForm />);

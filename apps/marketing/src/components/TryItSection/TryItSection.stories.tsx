@@ -23,7 +23,7 @@ type Story = StoryObj<typeof TryItSection>;
 const assertDebt: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("heading", { name: "Two ways to pay off debts" })).toBeVisible();
-  const toggle = canvas.getByRole("button", { name: "Change the details" });
+  const toggle = canvas.getByRole("button", { name: "Change the debt details" });
   await userEvent.click(toggle);
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
 };

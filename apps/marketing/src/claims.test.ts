@@ -87,6 +87,8 @@ describe("public calculator copy guard (E16 PR 11)", () => {
     join(__dirname, "components", "TryItSection", "TryItSection.tsx"),
     join(__dirname, "components", "PayRiseTeaser", "PayRiseTeaser.tsx"),
     join(__dirname, "pages", "HomePage", "HomePage.tsx"),
+    // The headings and lines round the short forms ("Try it with your own numbers").
+    join(__dirname, "utils", "featureAreas.ts"),
   ];
   const toolSources = [
     ...marketingCalculatorFiles,

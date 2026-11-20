@@ -426,7 +426,7 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | That choosing the headline allows its two full stops and slogan shape for the marketing home h1 only (ruling R-a, section 5.1), and the copy guide exception that records it | Owner | The copy guide edit; the h1 text itself is decided |
 | That downloading and deleting data work in staging | Owner | The two data facts on the Security page |
 | The list of account kinds named on the Accounts page | Build lane, checked against the code | One sentence of the Accounts page |
-| Names for calculators 5 and 6 | Coordinator | The two section headings |
+| ~~Names for calculators 5 and 6~~ | Decided by the coordinator, 20 November 2026 (above) | Built in PR 2 |
 | Each guard change in section 8, before it is made | Coordinator | The tests named there |
 
 The table below is the record of the options and recommendations as they were put to the owner.
