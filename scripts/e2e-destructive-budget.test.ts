@@ -26,9 +26,17 @@ const sourceFiles = (dir: string): string[] =>
     if (name === "node_modules") return [];
     return statSync(path).isDirectory() ? sourceFiles(path) : path.endsWith(".ts") ? [path] : [];
   });
-// A reset or a delete, however it is written: the method in any quote style or as an options key,
-// Playwright's request.delete(), or the reset route.
-const DESTRUCTIVE_TEXT = /["'`]DELETE["'`]|\.delete\(|reset-financial-data/i;
+// A reset or a delete, however it is written: the method in any quote style (also as an options
+// key), Playwright's request.delete(), or the reset route. Plain string checks, no regex.
+const DESTRUCTIVE_TEXT = ['"delete"', "'delete'", "`delete`", ".delete(", "reset-financial-data"];
+const looksDestructive = (line: string) => {
+  const lower = line.toLowerCase();
+  return DESTRUCTIVE_TEXT.some((text) => lower.includes(text));
+};
+const isComment = (line: string) => {
+  const start = line.trimStart();
+  return start.startsWith("//") || start.startsWith("*");
+};
 
 test("the allowance stays well inside the backend's 10 an hour", () => {
   expect(MAX_DESTRUCTIVE_PER_RUN).toBeLessThanOrEqual(6);
@@ -51,13 +59,15 @@ test("every reset or delete in the e2e specs and support goes through a counted 
       if (COUNTED_HELPER_FILES.has(rel)) continue;
       const source = readFileSync(file, "utf8");
       // A file with a helper of its own named `api` (in any form) makes its api() calls uncounted.
-      const definesOwnApi = /\b(const|let|function)\s+api\b/.test(source);
+      const definesOwnApi = ["const api =", "let api =", "function api("].some((text) =>
+        source.includes(text),
+      );
       source.split("\n").forEach((line, i) => {
-        if (!DESTRUCTIVE_TEXT.test(line) || /^\s*(\/\/|\*)/.test(line)) return;
+        if (!looksDestructive(line) || isComment(line)) return;
         const counted =
-          /\bbackendCall\(/.test(line) ||
-          /\bpageApi\(/.test(line) ||
-          (/\bapi\(/.test(line) && !definesOwnApi);
+          line.includes("backendCall(") ||
+          line.includes("pageApi(") ||
+          (line.includes("api(") && !definesOwnApi);
         if (!counted) offenders.push(`${rel}:${i + 1}`);
       });
     }
