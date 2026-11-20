@@ -50,7 +50,9 @@ export class BudgetEntryShareOneHome1795570000000 implements MigrationInterface 
     await queryRunner.query(
       `CREATE INDEX "IDX_${BUDGET_ENTRY_SHARE_BACKFILL_TABLE}_entry" ON "${BUDGET_ENTRY_SHARE_BACKFILL_TABLE}" ("budget_entry_id")`,
     );
-    await queryRunner.query(`LOCK TABLE "budget_entries" IN SHARE ROW EXCLUSIVE MODE`);
+    // ACCESS EXCLUSIVE up front: the ADD CONSTRAINT calls below need it, and taking a weaker lock
+    // first could deadlock with a reader that later writes.
+    await queryRunner.query(`LOCK TABLE "budget_entries" IN ACCESS EXCLUSIVE MODE`);
     const changed: unknown[] = await queryRunner.query(
       `WITH t AS (
          SELECT b."id", b."ownership", b."share_percent"
@@ -98,7 +100,7 @@ export class BudgetEntryShareOneHome1795570000000 implements MigrationInterface 
       `SELECT 1 FROM information_schema.tables WHERE "table_schema" = current_schema() AND "table_name" = '${BUDGET_ENTRY_SHARE_BACKFILL_TABLE}'`,
     );
     if (existing.length === 0) return;
-    await queryRunner.query(`LOCK TABLE "budget_entries" IN SHARE ROW EXCLUSIVE MODE`);
+    await queryRunner.query(`LOCK TABLE "budget_entries" IN ACCESS EXCLUSIVE MODE`);
     await queryRunner.query(
       `ALTER TABLE "budget_entries" DROP CONSTRAINT IF EXISTS "CHK_budget_entries_linked_no_share"`,
     );
