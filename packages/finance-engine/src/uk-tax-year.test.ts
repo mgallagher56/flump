@@ -92,15 +92,15 @@ describe("month bucketing versus the 6 April date boundary (documented granulari
 });
 
 describe("resolveUkTaxYear / UnsupportedUkTaxYearError", () => {
-  it("throws UnsupportedUkTaxYearError for 2027/28 and 1999/00", () => {
-    expect(() => resolveUkTaxYear("2027/28")).toThrow(UnsupportedUkTaxYearError);
+  it("throws UnsupportedUkTaxYearError for 2028/29 and 1999/00", () => {
+    expect(() => resolveUkTaxYear("2028/29")).toThrow(UnsupportedUkTaxYearError);
     expect(() => resolveUkTaxYear("1999/00")).toThrow(UnsupportedUkTaxYearError);
     expect(() => resolveUkTaxYear("2019/20")).toThrow(UnsupportedUkTaxYearError);
     try {
-      resolveUkTaxYear("2027/28");
+      resolveUkTaxYear("2028/29");
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
-      expect((e as UnsupportedUkTaxYearError).year).toBe("2027/28");
+      expect((e as UnsupportedUkTaxYearError).year).toBe("2028/29");
     }
   });
 
@@ -109,7 +109,7 @@ describe("resolveUkTaxYear / UnsupportedUkTaxYearError", () => {
     expect(resolveUkTaxYear(undefined, new Date("2025-07-01T12:00:00Z"))).toBe("2025/26");
   });
 
-  it("supports exactly 2020/21 to 2026/27", () => {
+  it("supports exactly 2020/21 to 2027/28", () => {
     expect([...SUPPORTED_UK_TAX_YEARS]).toEqual([
       "2020/21",
       "2021/22",
@@ -118,11 +118,12 @@ describe("resolveUkTaxYear / UnsupportedUkTaxYearError", () => {
       "2024/25",
       "2025/26",
       "2026/27",
+      "2027/28",
     ]);
   });
 
   it("getUkTaxYearRules throws for an unsupported year", () => {
-    expect(() => getUkTaxYearRules("2027/28" as never)).toThrow(UnsupportedUkTaxYearError);
+    expect(() => getUkTaxYearRules("2028/29" as never)).toThrow(UnsupportedUkTaxYearError);
   });
 });
 
@@ -154,7 +155,7 @@ describe("getCurrentUkTaxYear", () => {
   });
 
   it("throws rather than silently falling back when the current year is unsupported", () => {
-    expect(() => getCurrentUkTaxYear(new Date("2027-04-06T12:00:00Z"))).toThrow(
+    expect(() => getCurrentUkTaxYear(new Date("2028-04-06T12:00:00Z"))).toThrow(
       UnsupportedUkTaxYearError,
     );
     expect(() => getCurrentUkTaxYear(new Date("2019-06-01T12:00:00Z"))).toThrow(
@@ -169,10 +170,16 @@ describe("getUkTaxYearRules", () => {
       const r = getUkTaxYearRules(year);
       expect(r.year).toBe(year);
       expect(r.ewni.personalAllowance, year).toBeGreaterThan(0);
-      expect(r.scotland.bands.length, year).toBeGreaterThan(0);
+      // 2027/28 has no published Scottish table (owner decision): scotland is null.
+      if (year === "2027/28") expect(r.scotland, year).toBeNull();
+      else expect(r.scotland?.bands.length, year).toBeGreaterThan(0);
       expect(r.ni.class1.primaryThreshold, year).toBeGreaterThan(0);
       expect(r.employerNi.rate, year).toBeGreaterThan(0);
-      expect(r.studentLoans.plans.plan1.threshold, year).toBeGreaterThan(0);
+      // 2027/28 has no published Plan 1 or Plan 4 threshold, so those plans are absent.
+      if (year === "2027/28") {
+        expect(r.studentLoans.plans.plan1, year).toBeUndefined();
+        expect(r.studentLoans.plans.plan4, year).toBeUndefined();
+      } else expect(r.studentLoans.plans.plan1?.threshold, year).toBeGreaterThan(0);
       expect(r.studentLoans.plans.plan2.threshold, year).toBeGreaterThan(0);
       expect(r.studentLoans.plans.postgrad.threshold, year).toBeGreaterThan(0);
       expect(r.savings.psaBasic, year).toBe(1000);

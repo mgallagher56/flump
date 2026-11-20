@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { UK_SCOTLAND_INCOME_TAX } from "./tax-rules.js";
 import {
   selectUkSelfAssessmentVectors,
   type UkSelfAssessmentVectorKind,
@@ -25,11 +26,14 @@ import {
 } from "./uk-rule-sources.js";
 import { UK_TAX_CONSTANTS } from "./uk-tax.js";
 import {
+  calculateIncomeTaxOnTaxable,
   calculateNewStatePensionAnnual,
   getUkStatePensionRules,
   getUkTaxYearRules,
+  PROVISIONAL_UK_TAX_YEARS,
   SUPPORTED_UK_TAX_YEARS,
   UK_STATE_PENSION_AGE,
+  UnsupportedUkTaxYearError,
 } from "./uk-tax-year.js";
 
 /** Same pattern as the vector catalogue (uk-tax.vectors.test.ts). */
@@ -75,6 +79,38 @@ const NO_VECTOR_YET: readonly UkRuleKey[] = [
   "statePension",
 ];
 
+/**
+ * GUARD EXCEPTION, one year and one key only: 2027/28 Scottish income tax has no vector because
+ * the engine refuses it (no 2027/28 Scottish rate resolution is published). It expires on its own:
+ * the "still refused" test below fails as soon as a 2027/28 Scottish table exists, and the vector
+ * catalogue must then gain 2027/28 Scottish vectors and this entry be removed.
+ */
+const REFUSED_WITHOUT_VECTOR: readonly { year: string; key: UkRuleKey }[] = [
+  { year: "2027/28", key: "incomeTaxScotland" },
+];
+
+function isRefusedWithoutVector(year: string, key: UkRuleKey): boolean {
+  return REFUSED_WITHOUT_VECTOR.some((e) => e.year === year && e.key === key);
+}
+
+describe("2027/28 Scottish income tax: refused, so no vector (guard exception)", () => {
+  it("is the only exception", () => {
+    expect(REFUSED_WITHOUT_VECTOR).toEqual([{ year: "2027/28", key: "incomeTaxScotland" }]);
+  });
+
+  it("still refused: no Scottish table, and the engine throws for a Scottish figure", () => {
+    expect(UK_SCOTLAND_INCOME_TAX["2027/28"]).toBeUndefined();
+    const rules = getUkTaxYearRules("2027/28");
+    expect(rules.scotland).toBeNull();
+    expect(() => calculateIncomeTaxOnTaxable(20000, rules, "SCOTLAND")).toThrow(
+      UnsupportedUkTaxYearError,
+    );
+    expect(() => calculateIncomeTaxOnTaxable(20000, rules, "SCOTLAND")).toThrow(
+      /Scottish income tax/,
+    );
+  });
+});
+
 describe("UK rule sources registry (E25-T1)", () => {
   it("covers the same years as the vectors and the rules", () => {
     expect(Object.keys(UK_RULE_SOURCES)).toEqual([...SUPPORTED_UK_TAX_YEARS]);
@@ -88,9 +124,15 @@ describe("UK rule sources registry (E25-T1)", () => {
         const label = `${year} ${key}`;
         expect(e.url, label).toMatch(GOV_URL);
         for (const u of e.additionalUrls ?? []) expect(u, label).toMatch(GOV_URL);
-        expect(["verified", "unverified"], label).toContain(e.status);
+        // "announced" (announced, not yet law) only in a provisional year.
+        const statuses = (PROVISIONAL_UK_TAX_YEARS as readonly string[]).includes(year)
+          ? ["verified", "unverified", "announced"]
+          : ["verified", "unverified"];
+        expect(statuses, label).toContain(e.status);
         if (e.status === "unverified") {
           expect(e.note, label).toMatch(/^UNVERIFIED: .{10,}/);
+        } else if (e.status === "announced") {
+          expect(e.note, label).toMatch(/^ANNOUNCED, NOT YET LAW: .{10,}/);
         } else {
           expect(e.note, label).toBeUndefined();
         }
@@ -129,10 +171,12 @@ describe("UK rule sources registry (E25-T1)", () => {
       }
       expect(NO_VECTOR_YET, key).not.toContain(key);
       for (const taxYear of UK_TAX_VECTOR_YEARS) {
-        expect(
-          selectUkTaxVectors({ taxYear, kind: link.kind, region: link.region }).length,
-          `${taxYear} ${key}`,
-        ).toBeGreaterThan(0);
+        const count = selectUkTaxVectors({ taxYear, kind: link.kind, region: link.region }).length;
+        if (isRefusedWithoutVector(taxYear, key)) {
+          expect(count, `${taxYear} ${key} is refused, so it has no vector`).toBe(0);
+          continue;
+        }
+        expect(count, `${taxYear} ${key}`).toBeGreaterThan(0);
       }
     }
   });
@@ -143,7 +187,13 @@ describe("UK rule sources registry (E25-T1)", () => {
       expect(UK_RULE_SOURCES[year].hicbc.url, year).toBe(
         "https://www.gov.uk/child-benefit-tax-charge",
       );
-      const expected = year === "2020/21" || year === "2021/22" ? "unverified" : "verified";
+      // 2027/28 weekly rates come from the Budget 2026 rates annex: announced, not yet law.
+      const expected =
+        year === "2020/21" || year === "2021/22"
+          ? "unverified"
+          : year === "2027/28"
+            ? "announced"
+            : "verified";
       expect(UK_RULE_SOURCES[year].childBenefit.status, year).toBe(expected);
     }
   });
@@ -158,17 +208,25 @@ describe("UK rule sources registry (E25-T1)", () => {
   });
 
   it("the annual allowance is verified for every year against the per-year HMRC table", () => {
+    const HMRC_TABLE =
+      "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates";
     for (const year of SUPPORTED_UK_TAX_YEARS) {
       const src = UK_RULE_SOURCES[year].pensionAnnualAllowance;
       expect(src.status, year).toBe("verified");
-      expect(src.url, year).toBe(
-        "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
-      );
+      // 2027/28 is read on the Budget 2026 rates annex; the HMRC table stays as a further page.
+      if (year === "2027/28") {
+        expect(src.url, year).toBe(
+          "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        );
+        expect(src.additionalUrls, year).toContain(HMRC_TABLE);
+      } else {
+        expect(src.url, year).toBe(HMRC_TABLE);
+      }
     }
     for (const year of ["2020/21", "2021/22", "2022/23"] as const) {
       expect(getUkTaxYearRules(year).pensionAnnualAllowance, year).toBe(40000);
     }
-    for (const year of ["2023/24", "2024/25", "2025/26", "2026/27"] as const) {
+    for (const year of ["2023/24", "2024/25", "2025/26", "2026/27", "2027/28"] as const) {
       expect(getUkTaxYearRules(year).pensionAnnualAllowance, year).toBe(60000);
     }
   });
@@ -179,7 +237,8 @@ describe("UK rule sources registry (E25-T1)", () => {
       expect(r.ruleSources).toBe(UK_RULE_SOURCES[year]);
       expect(r.sources).toEqual(ruleSourceUrls(year));
       expect(r.unverified).toEqual(ruleUnverifiedNotes(year));
-      expect(r.verified, year).toBe(r.unverified.length === 0);
+      expect(r.verified, year).toBe(r.unverified.length === 0 && r.announced.length === 0);
+      expect(r.provisional, year).toBe(year === "2027/28");
       expect(new Set(r.sources).size, year).toBe(r.sources.length);
       for (const s of r.sources) expect(s, year).toMatch(GOV_URL);
     }
@@ -208,11 +267,11 @@ describe("UK rule sources registry (E25-T1)", () => {
     }
   });
 
-  it("ISA allowance is 20,000, verified for 2026/27 only", () => {
+  it("ISA allowance is 20,000, verified for 2026/27 and 2027/28 only", () => {
     for (const year of SUPPORTED_UK_TAX_YEARS) {
       expect(getUkTaxYearRules(year).isaAllowance, year).toBe(20000);
       expect(UK_RULE_SOURCES[year].isaAllowance.status, year).toBe(
-        year === "2026/27" ? "verified" : "unverified",
+        year === "2026/27" || year === "2027/28" ? "verified" : "unverified",
       );
     }
   });

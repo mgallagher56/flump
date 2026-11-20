@@ -79,7 +79,7 @@ describe("TaxRecordDialog", () => {
   });
 
   it("rejects a date outside the supported tax years, so no record is saved out of sight", () => {
-    expect(RECORD_DATE_RANGE_ERROR).toBe("Enter a date between 6 April 2020 and 5 April 2027.");
+    expect(RECORD_DATE_RANGE_ERROR).toBe("Enter a date between 6 April 2020 and 5 April 2028.");
     const { dialog, onSave } = setup({ ...draft, name: "Rent", amount: 900, date: "2019-05-01" });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
     expect(onSave).not.toHaveBeenCalled();
@@ -87,13 +87,15 @@ describe("TaxRecordDialog", () => {
 
     fireEvent.click(within(dialog).getByRole("button", { name: /^First payment/ }));
     fireEvent.click(screen.getByRole("button", { name: /^Choose year/ }));
-    fireEvent.click(screen.getByRole("button", { name: "2027" }));
+    // Years show twelve to a page (2016 to 2027), so 2028 is on the next page.
+    fireEvent.click(screen.getByRole("button", { name: "Next years" }));
+    fireEvent.click(screen.getByRole("button", { name: "2028" }));
     fireEvent.click(screen.getByRole("button", { name: /^Choose month/ }));
     fireEvent.click(screen.getByRole("button", { name: "Apr" }));
-    expect((screen.getByRole("button", { name: "6 Apr 2027" }) as HTMLButtonElement).disabled).toBe(
+    expect((screen.getByRole("button", { name: "6 Apr 2028" }) as HTMLButtonElement).disabled).toBe(
       true,
     );
-    fireEvent.click(screen.getByRole("button", { name: "5 Apr 2027" }));
+    fireEvent.click(screen.getByRole("button", { name: "5 Apr 2028" }));
 
     fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
     expect(onSave).toHaveBeenCalledTimes(1);

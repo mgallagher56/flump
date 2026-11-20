@@ -38,7 +38,7 @@ interface YearVector {
   ni: { pt: number; uel: number; main: number; upper: number };
   /** Student loan thresholds; undefined = plan not listed for that year. */
   studentLoan: {
-    plan1: number;
+    plan1?: number;
     plan2: number;
     plan4?: number;
     plan5?: number;
@@ -123,6 +123,21 @@ const YEAR_VECTORS: Record<UkTaxYear, YearVector> = {
     studentLoan: { plan1: 26900, plan2: 29385, plan4: 33795, plan5: 25000, postgrad: 21000 },
     unverified: [],
   },
+  "2027/28": {
+    // Provisional year. PA 12,570 and basic band 37,700 (50,270 - 12,570) are enacted:
+    // https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted
+    // Additional-rate threshold 125,140 (100,000 + 2 x 12,570, where the taper removes the PA),
+    // Class 1 PT 12,570, UEL 50,270, 8% / 2%: announced, not yet law, Budget 2026 OOTLAR Annex A
+    // https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
+    pa: 12570,
+    basicBand: 37700,
+    additionalThreshold: 125140,
+    ni: { pt: 12570, uel: 50270, main: 0.08, upper: 0.02 },
+    // Announced: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
+    // Plan 2 29,385, Plan 5 26,025, postgraduate 21,000. Plan 1 and Plan 4 are not published (omitted).
+    studentLoan: { plan2: 29385, plan5: 26025, postgrad: 21000 },
+    unverified: [],
+  },
 };
 
 describe("table values per supported tax year", () => {
@@ -155,9 +170,16 @@ describe("table values per supported tax year", () => {
   it.each(SUPPORTED_UK_TAX_YEARS)("%s student loan thresholds equal the vector", (year) => {
     const v = YEAR_VECTORS[year].studentLoan;
     const plans = getUkTaxYearRules(year).studentLoans.plans;
-    expect(plans.plan1.threshold).toBe(v.plan1);
+    if (year === "2027/28") {
+      // No Plan 1 or Plan 4 threshold is published for 2027/28, so the engine lists neither
+      // (and refuses them); only Plan 2, Plan 5 and postgraduate are compared for that year.
+      expect(plans.plan1).toBeUndefined();
+      expect(plans.plan4).toBeUndefined();
+    } else {
+      expect(plans.plan1?.threshold).toBe(v.plan1);
+      expect(plans.plan4?.threshold).toBe(v.plan4);
+    }
     expect(plans.plan2.threshold).toBe(v.plan2);
-    expect(plans.plan4?.threshold).toBe(v.plan4);
     expect(plans.plan5?.threshold).toBe(v.plan5);
     expect(plans.postgrad.threshold).toBe(v.postgrad);
     for (const plan of [plans.plan1, plans.plan2, plans.plan4, plans.plan5]) {
@@ -205,10 +227,33 @@ const VARIANTS: SweepVariant[] = [
   { name: "8% salary sacrifice, plan 1 loan", pensionPct: 8, plan: "PLAN_1", sacrifice: true },
 ];
 
+/**
+ * The combinations the engine deliberately refuses for 2027/28 (owner decision): no Scottish
+ * table and no Plan 1 or Plan 4 threshold is published for that year, so they throw
+ * UnsupportedUkTaxYearError. The sweep leaves out only these; the first test below checks they
+ * throw, so the exclusion cannot hide a different failure.
+ */
+function isRefusedCase(year: UkTaxYear, region: UkTaxRegion, plan = "NONE"): boolean {
+  if (year !== "2027/28") return false;
+  return region === "SCOTLAND" || plan === "PLAN_1" || plan === "PLAN_4";
+}
+
 describe("sweep 0..300000 step 250 per year, region and variant", () => {
   const cases = SUPPORTED_UK_TAX_YEARS.flatMap((year) =>
     REGIONS.flatMap((region) => VARIANTS.map((variant) => ({ year, region, variant }))),
-  );
+  ).filter(({ year, region, variant }) => !isRefusedCase(year, region, variant.plan));
+
+  it("the refused 2027/28 combinations throw UnsupportedUkTaxYearError", () => {
+    const y = "2027/28" as const;
+    expect(() => calculateUkTax({ grossSalary: 40000, taxYear: y, region: "SCOTLAND" })).toThrow(
+      UnsupportedUkTaxYearError,
+    );
+    for (const studentLoanPlan of ["PLAN_1", "PLAN_4"] as const) {
+      expect(() => calculateUkTax({ grossSalary: 40000, taxYear: y, studentLoanPlan })).toThrow(
+        UnsupportedUkTaxYearError,
+      );
+    }
+  });
 
   it.each(cases)("$year $region ($variant.name)", ({ year, region, variant }) => {
     let prevNet = Number.NEGATIVE_INFINITY;
@@ -255,8 +300,11 @@ describe("sweep 0..300000 step 250 per year, region and variant", () => {
   }) => {
     const t0 = performance.now();
     let results = 0;
+    let expected = 0;
     for (const year of SUPPORTED_UK_TAX_YEARS) {
       for (const region of REGIONS) {
+        if (isRefusedCase(year, region)) continue;
+        expected += GROSSES.length;
         for (const gross of GROSSES) {
           const r = calculateUkTax({ grossSalary: gross, taxYear: year, region });
           if (Number.isFinite(r.netTakeHomePayAnnualGbp)) results++;
@@ -264,7 +312,9 @@ describe("sweep 0..300000 step 250 per year, region and variant", () => {
       }
     }
     const ms = performance.now() - t0;
-    expect(results).toBe(SUPPORTED_UK_TAX_YEARS.length * REGIONS.length * GROSSES.length);
+    // Every year and region pair except Scotland in 2027/28 (refused, see isRefusedCase).
+    expect(expected).toBe((SUPPORTED_UK_TAX_YEARS.length * REGIONS.length - 1) * GROSSES.length);
+    expect(results).toBe(expected);
     await annotate(`${results} calculations in ${ms.toFixed(0)} ms`);
   });
 
@@ -327,7 +377,7 @@ describe("tax year rollover at 5/6 April with fake timers", () => {
 describe("unknown tax years", () => {
   it("getUkTaxYearRules throws UnsupportedUkTaxYearError instead of falling back", () => {
     expect(() => getUkTaxYearRules("1999/00" as UkTaxYear)).toThrow(UnsupportedUkTaxYearError);
-    expect(() => getUkTaxYearRules("2027/28" as UkTaxYear)).toThrow(UnsupportedUkTaxYearError);
+    expect(() => getUkTaxYearRules("2028/29" as UkTaxYear)).toThrow(UnsupportedUkTaxYearError);
     for (const year of SUPPORTED_UK_TAX_YEARS) {
       expect(getUkTaxYearRules(year).ewni.personalAllowance).toBe(YEAR_VECTORS[year].pa);
     }

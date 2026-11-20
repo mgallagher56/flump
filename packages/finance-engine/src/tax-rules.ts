@@ -19,6 +19,7 @@
  *   - Scotland: Revenue Scotland / Scottish Government budget documents
  */
 
+import { SUPPORTED_UK_TAX_YEARS } from "./types.js";
 import { getUkTaxYearContext } from "./uk-tax-year.js";
 
 // ---------------------------------------------------------------------------
@@ -164,10 +165,27 @@ export const UK_EWNI_INCOME_TAX: Record<string, UKEWNIIncomeTaxYear> = {
     additionalRate: 0.45,
     personalAllowanceTaperStart: 100000,
   },
+  // Provisional (see PROVISIONAL_UK_TAX_YEARS). Allowance 12,570 and basic rate limit 37,700 are
+  // enacted (FA 2021 s.5 as amended by FA 2026 s.10). The main rates 20/40/45 are announced: the
+  // 2027/28 charge and main rates are in Finance Bill 2026-27 (Budget 2026 OOTLAR 1.3, Annex A).
+  // Property and savings income take their own rates from 2027/28 (uk-tax-year.ts).
+  "2027/28": {
+    description: "England, Wales and Northern Ireland, 2027/28",
+    personalAllowance: 12570,
+    basicRateBandWidth: 37700,
+    basicRate: 0.2,
+    higherRateThreshold: 50270,
+    higherRate: 0.4,
+    additionalRateThreshold: 125140,
+    additionalRate: 0.45,
+    personalAllowanceTaperStart: 100000,
+  },
 };
 
 // ---------------------------------------------------------------------------
 // UK — Scotland Income Tax
+// No 2027/28 entry: the Scottish rate resolution for 2027/28 is not published, so a Scottish
+// estimate for that year is refused rather than carried forward.
 // Scotland sets its own income tax rates on non-savings, non-dividend income.
 // NI contributions remain UK-wide (same as EWNI).
 // ---------------------------------------------------------------------------
@@ -311,6 +329,8 @@ export const UK_EMPLOYER_NI_RATES: Record<string, UKEmployerNIRate> = {
   "2024/25": { secondaryThreshold: 9100, rate: 0.138 },
   "2025/26": { secondaryThreshold: 5000, rate: 0.15 },
   "2026/27": { secondaryThreshold: 5000, rate: 0.15 },
+  // Announced: Budget 2026 OOTLAR Annex A keeps 15% and the secondary threshold (96 a week).
+  "2027/28": { secondaryThreshold: 5000, rate: 0.15 },
 };
 
 export interface UKNationalInsuranceYear {
@@ -479,6 +499,26 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
     },
     class2: { abolished: true, weeklyRate: 0, smallProfitsThreshold: 0 },
   },
+  // Announced: Budget 2026 OOTLAR Annex A. LEL 133 a week (133 x 52 = 6,916); PT 242 and UEL 967
+  // a week stay at the frozen annual 12,570 and 50,270; Class 4 limits unchanged. The 2027/28
+  // contribution regulations were not found when this was added (19 November 2026).
+  "2027/28": {
+    description: "UK National Insurance, 2027/28",
+    class1: {
+      lowerEarningsLimit: 6916,
+      primaryThreshold: 12570,
+      upperEarningsLimit: 50270,
+      mainRate: 0.08,
+      upperRate: 0.02,
+    },
+    class4: {
+      lowerProfitsLimit: 12570,
+      upperProfitsLimit: 50270,
+      mainRate: 0.06,
+      upperRate: 0.02,
+    },
+    class2: { abolished: true, weeklyRate: 0, smallProfitsThreshold: 0 },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -496,7 +536,8 @@ export interface UKStudentLoanPlan {
 export interface UKStudentLoanYear {
   description: string;
   plans: {
-    plan1: UKStudentLoanPlan;
+    /** Absent where the year's threshold is not published (2027/28 so far). */
+    plan1?: UKStudentLoanPlan;
     plan2: UKStudentLoanPlan;
     /** Scotland. Absent where the year's source page lists no Plan 4 threshold. */
     plan4?: UKStudentLoanPlan;
@@ -596,6 +637,18 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
       postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
     },
   },
+  // Announced: DfE and Welsh Government, 12 November 2026
+  // (https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement):
+  // Plan 2 stays 29,385, Plan 5 rises to 26,025, Plan 3 (postgraduate) stays 21,000.
+  // Plan 1 and Plan 4 thresholds for 2027/28 are not published, so they are omitted, not guessed.
+  "2027/28": {
+    description: "Student loans, 2027/28",
+    plans: {
+      plan2: { name: "Plan 2", threshold: 29385, rate: 0.09 },
+      plan5: { name: "Plan 5", threshold: 26025, rate: 0.09 },
+      postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -671,6 +724,15 @@ export const UK_CHILD_BENEFIT: Record<string, UKChildBenefitYear> = {
     hicbcThresholdStart: 60000,
     hicbcStepWidth: 200,
   },
+  // Weekly rates announced: Budget 2026 OOTLAR Annex A (28.00 / 18.55). HICBC start and step are
+  // fixed amounts on the GOV.UK child-benefit-tax-charge page (from 2024 to 2025 onwards).
+  "2027/28": {
+    eldestWeekly: 28,
+    otherWeekly: 18.55,
+    weeksPerYear: 52,
+    hicbcThresholdStart: 60000,
+    hicbcStepWidth: 200,
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -689,5 +751,7 @@ export function getCurrentUKTaxYear(): string {
 
 /** Returns all supported UK tax year keys in chronological order. */
 export function getAvailableUKTaxYears(): string[] {
-  return Object.keys(UK_EWNI_INCOME_TAX).sort();
+  // The supported list, not the table keys: provisional years (2027/28) have rows but are not
+  // supported yet.
+  return [...SUPPORTED_UK_TAX_YEARS];
 }

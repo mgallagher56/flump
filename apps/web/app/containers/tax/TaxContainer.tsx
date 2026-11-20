@@ -9,6 +9,7 @@ import {
   isBuyToLetAccount,
   isRecordActiveInTaxYear,
   isSupportedUkTaxYear,
+  ratesContextForYear,
   type TaxCalculationResult,
   type TaxEstimateMissingFact,
   type TaxRecord,
@@ -430,7 +431,7 @@ const SelfAssessmentPage: FC<{
         }
       />
 
-      <TaxRatesStatusBanner {...ratesContext} />
+      <TaxRatesStatusBanner {...ratesContextForYear(selectedTaxYear, ratesContext)} />
 
       {saveOutcome.error && !editor.isRecordDialogOpen ? (
         <p className={errorText()} role="alert">

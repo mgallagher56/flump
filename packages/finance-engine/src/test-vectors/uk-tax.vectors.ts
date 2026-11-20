@@ -49,6 +49,7 @@ export const UK_TAX_VECTOR_YEARS = [
   "2024/25",
   "2025/26",
   "2026/27",
+  "2027/28",
 ] as const;
 export type UkTaxVectorYear = (typeof UK_TAX_VECTOR_YEARS)[number];
 
@@ -3699,6 +3700,403 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       'UNVERIFIED: hand-derived from ITA 2007 s.414(2)(b) as read on legislation.gov.uk (the revised text and the 06/04/2020 and 06/04/2025 point-in-time versions carry the same wording); no HMRC guidance page confirming the Scottish application was read, and the ITA 2007 does not itself define which Scottish band is the Scottish basic rate (s.6A omitted), so the Scottish Parliament\'s "Basic" band is taken as that rate; owner to review against s.414 before merge. Also rests on the taper frame for Scottish bands (sheet ruling 6).',
+    signedOffBy: null,
+  },
+  {
+    id: "ewni.incomeTax.2027-28.30000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "incomeTax",
+    input: {
+      grossIncome: 30000,
+    },
+    expected: 3486,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+    ],
+    derivation:
+      "Gross income 30000. PA 12570 (no taper at adjusted net income 30000). Taxable 30000 - 12570 = 17430. Basic 17430 x 20% = 3486; higher 0 x 40% = 0; additional 0 x 45% = 0. Total 3486. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "ewni.incomeTax.2027-28.60000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "incomeTax",
+    input: {
+      grossIncome: 60000,
+    },
+    expected: 11432,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+    ],
+    derivation:
+      "Gross income 60000. PA 12570 (no taper at adjusted net income 60000). Taxable 60000 - 12570 = 47430. Basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; additional 0 x 45% = 0. Total 11432. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "ewni.incomeTax.2027-28.100000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "incomeTax",
+    input: {
+      grossIncome: 100000,
+    },
+    expected: 27432,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+    ],
+    derivation:
+      "Gross income 100000. PA 12570 (no taper at adjusted net income 100000). Taxable 100000 - 12570 = 87430. Basic 37700 x 20% = 7540; higher 49730 x 40% = 19892; additional 0 x 45% = 0. Total 27432. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "ewni.incomeTax.2027-28.110000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "incomeTax",
+    input: {
+      grossIncome: 110000,
+    },
+    expected: 33432,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+    ],
+    derivation:
+      "Gross income 110000. Taper: (110000 - 100000) / 2 = 5000, PA 12570 - 5000 = 7570. Taxable 110000 - 7570 = 102430. Basic 37700 x 20% = 7540; higher 64730 x 40% = 25892; additional 0 x 45% = 0. Total 33432. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "ewni.incomeTax.2027-28.125140",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "incomeTax",
+    input: {
+      grossIncome: 125140,
+    },
+    expected: 42516,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+    ],
+    derivation:
+      "Gross income 125140. Taper: (125140 - 100000) / 2 = 12570, PA 12570 - 12570 = 0. Taxable 125140 - 0 = 125140. Basic 37700 x 20% = 7540; higher 87440 x 40% = 34976; additional 0 x 45% = 0. Total 42516. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "ewni.incomeTax.2027-28.150000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "incomeTax",
+    input: {
+      grossIncome: 150000,
+    },
+    expected: 53703,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+    ],
+    derivation:
+      "Gross income 150000. Taper: (150000 - 100000) / 2 = 25000, PA 12570 - 25000 = 0. Taxable 150000 - 0 = 150000. Basic 37700 x 20% = 7540; higher 87440 x 40% = 34976; additional 24860 x 45% = 11187. Total 53703. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "ewni.giftAid.2027-28.60000.net1000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "giftAid",
+    input: {
+      grossIncome: 60000,
+      giftAidNet: 1000,
+    },
+    expected: 11182,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+      "https://www.gov.uk/donating-to-charity/gift-aid",
+      "https://www.gov.uk/guidance/adjusted-net-income",
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+    ],
+    derivation:
+      "Gross income 60000. Gift Aid gross-up 1000 x 1.25 = 1250; adjusted net income 60000 - 1250 = 58750; basic and higher limits both raised by 1250 (ITA 2007 s.414): 37700 + 1250 = 38950, 125140 + 1250 = 126390. PA 12570 (no taper at adjusted net income 58750). Taxable 60000 - 12570 = 47430. Basic 38950 x 20% = 7790; higher 8480 x 40% = 3392; additional 0 x 45% = 0. Total 11182. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
+    confidence: "medium",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "ewni.giftAid.2027-28.110000.net1000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "giftAid",
+    input: {
+      grossIncome: 110000,
+      giftAidNet: 1000,
+    },
+    expected: 32932,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+      "https://www.gov.uk/donating-to-charity/gift-aid",
+      "https://www.gov.uk/guidance/adjusted-net-income",
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+    ],
+    derivation:
+      "Gross income 110000. Gift Aid gross-up 1000 x 1.25 = 1250; adjusted net income 110000 - 1250 = 108750; basic and higher limits both raised by 1250 (ITA 2007 s.414): 37700 + 1250 = 38950, 125140 + 1250 = 126390. Taper: (108750 - 100000) / 2 = 4375, PA 12570 - 4375 = 8195. Taxable 110000 - 8195 = 101805. Basic 38950 x 20% = 7790; higher 62855 x 40% = 25142; additional 0 x 45% = 0. Total 32932. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
+    confidence: "medium",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "employeeNi.2027-28.30000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "employeeNi",
+    input: {
+      grossEarnings: 30000,
+    },
+    expected: 1394.4,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    derivation:
+      "Annual earnings 30000. Main band 30000 - PT 12570 = 17430 x 8% = 1394.4; above UEL 50270: 0 x 2% = 0. Total 1394.4. 2027/28 figures: primary threshold 12570, upper earnings limit 50270 and rates 8% and 2% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "employeeNi.2027-28.60000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "employeeNi",
+    input: {
+      grossEarnings: 60000,
+    },
+    expected: 3210.6,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    derivation:
+      "Annual earnings 60000. Main band 50270 - PT 12570 = 37700 x 8% = 3016; above UEL 50270: 9730 x 2% = 194.6. Total 3210.6. 2027/28 figures: primary threshold 12570, upper earnings limit 50270 and rates 8% and 2% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "class4.2027-28.60000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "class4",
+    input: {
+      profits: 60000,
+    },
+    expected: 2456.6,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    derivation:
+      "Profits 60000. (50270 - LPL 12570) = 37700 x 6% = 2262; above UPL 50270: 9730 x 2% = 194.6. Total 2456.6. 2027/28 figures: lower profits limit 12570, upper profits limit 50270 and rates 6% and 2% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "employerNiSaving.2027-28.60000.3000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "employerNiSaving",
+    input: {
+      grossSalary: 60000,
+      salarySacrifice: 3000,
+    },
+    expected: 450,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    derivation:
+      "Employer NI before = (60000 - ST 5000, floored at 0) = 55000; after sacrifice = (57000 - 5000, floored at 0) = 52000; reduction 3000 x 15% = 450. 2027/28 figures: secondary threshold 5000 and rate 15% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "employerNiSaving.2027-28.6000.3000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "employerNiSaving",
+    input: {
+      grossSalary: 6000,
+      salarySacrifice: 3000,
+    },
+    expected: 150,
+    source:
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+    derivation:
+      "Employer NI before = (6000 - ST 5000, floored at 0) = 1000; after sacrifice = (3000 - 5000, floored at 0) = 0; reduction 1000 x 15% = 150. 2027/28 figures: secondary threshold 5000 and rate 15% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "studentLoan.2027-28.plan2.35000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "studentLoan",
+    input: {
+      grossIncome: 35000,
+      plan: "plan2",
+    },
+    expected: 505.35,
+    source: "https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement",
+    derivation:
+      "plan2 threshold 29385; (35000 - 29385) = 5615 x 9% = 505.35. 2027/28 figures: plan2 threshold 29385 and rate 9% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "studentLoan.2027-28.plan5.35000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "studentLoan",
+    input: {
+      grossIncome: 35000,
+      plan: "plan5",
+    },
+    expected: 807.75,
+    source: "https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement",
+    derivation:
+      "plan5 threshold 26025; (35000 - 26025) = 8975 x 9% = 807.75. 2027/28 figures: plan5 threshold 26025 and rate 9% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "studentLoan.2027-28.postgrad.35000",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "studentLoan",
+    input: {
+      grossIncome: 35000,
+      plan: "postgrad",
+    },
+    expected: 840,
+    source: "https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement",
+    derivation:
+      "postgrad threshold 21000; (35000 - 21000) = 14000 x 6% = 840. 2027/28 figures: postgrad threshold 21000 and rate 6% are announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "studentLoan.2027-28.plan2.28385",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "studentLoan",
+    input: {
+      grossIncome: 28385,
+      plan: "plan2",
+    },
+    expected: 0,
+    source: "https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement",
+    derivation:
+      "plan2 threshold 29385; income 28385 is below it, so repayment is 0. 2027/28 figures: plan2 threshold 29385 is announced, not yet law.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "dividends.2027-28.basic",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "dividends",
+    input: {
+      employmentIncome: 20000,
+      dividendIncome: 5000,
+    },
+    expected: 483.75,
+    source: "https://www.legislation.gov.uk/ukpga/2026/11/section/4/enacted",
+    additionalSources: [
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/tax-on-dividends",
+    ],
+    derivation:
+      "Employment income 20000 less PA 12570 = 7430, inside the basic band 37700, so all dividends fall in the basic band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 10.75% = 483.75 (dividend tax only).",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "dividends.2027-28.higher",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "dividends",
+    input: {
+      employmentIncome: 60000,
+      dividendIncome: 5000,
+    },
+    expected: 1608.75,
+    source: "https://www.legislation.gov.uk/ukpga/2026/11/section/4/enacted",
+    additionalSources: [
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/tax-on-dividends",
+    ],
+    derivation:
+      "Employment income 60000 less PA 12570 = 47430 already exceeds the basic band 37700, so all dividends fall in the higher band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 35.75% = 1608.75 (dividend tax only).",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: null,
+  },
+  {
+    id: "dividends.2027-28.additional",
+    taxYear: "2027/28",
+    region: "ENGLAND_NI_WALES",
+    kind: "dividends",
+    input: {
+      employmentIncome: 200000,
+      dividendIncome: 5000,
+    },
+    expected: 1770.75,
+    source: "https://www.legislation.gov.uk/ukpga/2026/11/section/4/enacted",
+    additionalSources: [
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "https://www.legislation.gov.uk/ukpga/2026/11/section/10/enacted",
+      "https://www.gov.uk/tax-on-dividends",
+    ],
+    derivation:
+      "Employment income 200000 gives PA 0 (taper from 100000 removes it all) and taxable income 200000 above 125140, so all dividends fall in the additional band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 39.35% = 1770.75 (dividend tax only).",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
 ];

@@ -13,7 +13,7 @@ export type ActiveModule =
   | "tax";
 
 /**
- * UK tax years the engine supports (2020/21 to 2026/27). Any other year is
+ * UK tax years the engine supports (2020/21 to 2027/28). Any other year is
  * rejected with UnsupportedUkTaxYearError (see uk-tax-year.ts).
  */
 export const SUPPORTED_UK_TAX_YEARS = [
@@ -24,9 +24,22 @@ export const SUPPORTED_UK_TAX_YEARS = [
   "2024/25",
   "2025/26",
   "2026/27",
+  "2027/28",
 ] as const;
 
 export type UkTaxYear = (typeof SUPPORTED_UK_TAX_YEARS)[number];
+
+/**
+ * Supported years that are provisional: some figures are announced, not yet law, and the UI says
+ * so. 2027/28 has the separate property and savings rates at the announced 24/44/49 of Finance
+ * Bill 2026-27 (Finance Act 2026 s.5 and s.7 enact 22/42/47), and no Scottish rates yet.
+ */
+export const PROVISIONAL_UK_TAX_YEARS = ["2027/28"] as const satisfies readonly UkTaxYear[];
+
+export type UkProvisionalTaxYear = (typeof PROVISIONAL_UK_TAX_YEARS)[number];
+
+/** A year with rate tables. Every provisional year is also supported. */
+export type UkRatesYear = UkTaxYear;
 
 export type UkTaxRegion = "ENGLAND_NI_WALES" | "SCOTLAND";
 

@@ -5,6 +5,7 @@ import {
   TAX_DISCLAIMER,
   UK_EWNI_INCOME_TAX,
 } from "./tax-rules.js";
+import { SUPPORTED_UK_TAX_YEARS } from "./types.js";
 import { computeUkTakeHome } from "./uk-take-home.js";
 import {
   calculateIncomeTaxOnTaxable,
@@ -26,6 +27,8 @@ describe("tax-rules", () => {
     const ukYears = getAvailableUKTaxYears();
     expect(ukYears.length).toBeGreaterThan(0);
     expect(ukYears).toContain("2024/25");
+    // The supported list, in order, not the table keys.
+    expect(ukYears).toEqual([...SUPPORTED_UK_TAX_YEARS]);
 
     const currentUK = getCurrentUKTaxYear();
     expect(typeof currentUK).toBe("string");

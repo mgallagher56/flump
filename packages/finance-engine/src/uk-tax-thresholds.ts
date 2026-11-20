@@ -14,13 +14,18 @@
  */
 
 import type { UkTaxRegion } from "./types.js";
-import { UK_RULE_SOURCES, type UkRuleKey, type UkRuleStatus } from "./uk-rule-sources.js";
+import type { UkRuleKey, UkRuleStatus } from "./uk-rule-sources.js";
 import {
   computeUkTakeHome,
   type UkIncomeScenario,
   type UkTakeHomeBreakdown,
 } from "./uk-take-home.js";
-import { roundPence, type UkStudentLoanPlanKey, type UkTaxYearRules } from "./uk-tax-year.js";
+import {
+  requireScottishRules,
+  roundPence,
+  type UkStudentLoanPlanKey,
+  type UkTaxYearRules,
+} from "./uk-tax-year.js";
 
 export type UkThresholdKind =
   | "incomeTaxStarts"
@@ -115,7 +120,7 @@ export function getUkIncomeThresholds(
 ): UkIncomeThreshold[] {
   const s: UkIncomeScenario = { ...scenario, taxYear: rules.year };
   const region: UkTaxRegion = s.region ?? "ENGLAND_NI_WALES";
-  const sources = UK_RULE_SOURCES[rules.year];
+  const sources = rules.ruleSources;
   type Draft = Omit<
     UkIncomeThreshold,
     "grossAt" | "aniAt" | "status" | "source" | "bandExtension"
@@ -130,8 +135,9 @@ export function getUkIncomeThresholds(
     ruleKey: "personalAllowance",
   });
   if (region === "SCOTLAND") {
-    const basicIdx = rules.scotland.bands.findIndex((b) => b.rate === 0.2);
-    for (const [i, band] of rules.scotland.bands.entries()) {
+    const scottishBands = requireScottishRules(rules).bands;
+    const basicIdx = scottishBands.findIndex((b) => b.rate === 0.2);
+    for (const [i, band] of scottishBands.entries()) {
       if (i === 0) continue;
       out.push({
         kind: "scottishBand",

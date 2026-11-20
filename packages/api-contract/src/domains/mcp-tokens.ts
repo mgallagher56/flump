@@ -247,12 +247,25 @@ export type CreateMcpTokenRequest = z.infer<typeof CreateMcpTokenRequest>;
 
 // --- GET /mcp/input: the raw finance-engine input, for a personal access token ----------------
 
+/** The engine's supported tax years, held here as literals so the contract needs no engine import. */
+export const McpTaxYear = z.enum([
+  "2020/21",
+  "2021/22",
+  "2022/23",
+  "2023/24",
+  "2024/25",
+  "2025/26",
+  "2026/27",
+  "2027/28",
+]);
+
 /** finance-engine `FinancialBaseline`. Strict: a field the engine gains must be listed here. */
 const McpInputBaseline = z.strictObject({
   /** `anonymous-user` for an anonymised token, never the real id. */
   userId: z.string(),
   age: z.number().optional(),
-  taxYear: z.enum(["2020/21", "2021/22", "2022/23", "2023/24", "2024/25", "2025/26", "2026/27"]),
+  /** finance-engine SUPPORTED_UK_TAX_YEARS (checked by mcp-tokens.test.ts). */
+  taxYear: McpTaxYear,
   ukRegion: z.enum(["ENGLAND_NI_WALES", "SCOTLAND"]),
   ukRegionAssumed: z.boolean().optional(),
   employmentStatus: z.enum(["PAYE", "SELF_EMPLOYED", "MIXED", "OTHER"]),

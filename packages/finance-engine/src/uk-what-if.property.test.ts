@@ -6,7 +6,11 @@ import { describe, expect, it } from "vitest";
 import { SUPPORTED_UK_TAX_YEARS, type UkTaxRegion, type UkTaxYear } from "./types.js";
 import { computeUkTakeHome, type UkIncomeScenario, type UkPensionMethod } from "./uk-take-home.js";
 import { scenarioAtGross } from "./uk-tax-thresholds.js";
-import { getUkTaxYearRules, type UkStudentLoanPlanKey } from "./uk-tax-year.js";
+import {
+  getUkTaxYearRules,
+  type UkStudentLoanPlanKey,
+  UnsupportedUkTaxYearError,
+} from "./uk-tax-year.js";
 import { marginalRateCurve, whatIfGrossChange, whatIfSacrificeChange } from "./uk-what-if.js";
 
 function rng(seed: number) {
@@ -27,11 +31,24 @@ const METHODS: (UkPensionMethod | null)[] = [
   "relief-at-source",
 ];
 
+/**
+ * The engine deliberately refuses Scottish figures for 2027/28: no Scottish table is published
+ * for that year (owner decision). This is the only year and region pair the generators skip; a
+ * plain test below checks it throws. Plans a year does not list (Plan 1 and Plan 4 in 2027/28)
+ * are already left out by the `available` filter in genScenario.
+ */
+const isRefusedYearRegion = (taxYear: string, region: UkTaxRegion): boolean =>
+  taxYear === "2027/28" && region === "SCOTLAND";
+
 function genScenario(r: () => number, opts: { children?: boolean } = {}): UkIncomeScenario {
   const pick = <T>(xs: readonly T[]) => xs[Math.floor(r() * xs.length)] as T;
-  const taxYear = pick(SUPPORTED_UK_TAX_YEARS) as UkTaxYear;
+  let taxYear: UkTaxYear;
+  let region: UkTaxRegion;
+  do {
+    taxYear = pick(SUPPORTED_UK_TAX_YEARS) as UkTaxYear;
+    region = pick<UkTaxRegion>(["ENGLAND_NI_WALES", "SCOTLAND"]);
+  } while (isRefusedYearRegion(taxYear, region));
   const rules = getUkTaxYearRules(taxYear);
-  const region = pick<UkTaxRegion>(["ENGLAND_NI_WALES", "SCOTLAND"]);
   const method = pick(METHODS);
   const available = (["plan1", "plan2", "plan4", "plan5"] as const).filter(
     (p) => rules.studentLoans.plans[p],
@@ -53,6 +70,12 @@ function genScenario(r: () => number, opts: { children?: boolean } = {}): UkInco
 const RUNS = 300;
 
 describe("what-if properties", () => {
+  it("refuses a Scottish 2027/28 scenario, the one pair the generators skip", () => {
+    expect(() =>
+      computeUkTakeHome({ taxYear: "2027/28", region: "SCOTLAND", salary: 40_000 }),
+    ).toThrow(UnsupportedUkTaxYearError);
+  });
+
   it("whatIf(s, d).after equals compute(s with salary + d)", () => {
     const r = rng(1);
     for (let i = 0; i < RUNS; i++) {
@@ -104,10 +127,11 @@ describe("what-if properties", () => {
       const rules = getUkTaxYearRules(taxYear);
       const mid = (rules.ewni.personalAllowanceTaperStart + rules.taperEnd) / 2;
       for (const region of ["ENGLAND_NI_WALES", "SCOTLAND"] as const) {
+        if (isRefusedYearRegion(taxYear, region)) continue;
         const before = computeUkTakeHome({ taxYear, region, salary: mid });
         const band =
           region === "SCOTLAND"
-            ? rules.scotland.bands.find(
+            ? rules.scotland?.bands.find(
                 (b) =>
                   before.taxableIncome > b.from &&
                   (b.to === null || before.taxableIncome + 1500 <= b.to),

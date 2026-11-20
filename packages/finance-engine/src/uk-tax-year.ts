@@ -33,17 +33,25 @@ import {
   type UKScotlandIncomeTaxYear,
   type UKStudentLoanYear,
 } from "./tax-rules.js";
-import { SUPPORTED_UK_TAX_YEARS, type UkTaxRegion, type UkTaxYear } from "./types.js";
 import {
+  PROVISIONAL_UK_TAX_YEARS,
+  SUPPORTED_UK_TAX_YEARS,
+  type UkProvisionalTaxYear,
+  type UkRatesYear,
+  type UkTaxRegion,
+  type UkTaxYear,
+} from "./types.js";
+import {
+  ruleAnnouncedNotes,
+  ruleSourcesFor,
   ruleSourceUrls,
   ruleUnverifiedNotes,
-  UK_RULE_SOURCES,
   UK_STATE_PENSION_SOURCES,
   type UkRuleSources,
   type UkStatePensionYear,
 } from "./uk-rule-sources.js";
 
-export { SUPPORTED_UK_TAX_YEARS };
+export { PROVISIONAL_UK_TAX_YEARS, SUPPORTED_UK_TAX_YEARS };
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -131,6 +139,15 @@ export function isSupportedUkTaxYear(year: string): year is UkTaxYear {
   return (SUPPORTED_UK_TAX_YEARS as readonly string[]).includes(year);
 }
 
+/** A year whose tables are held but which is not supported yet (2027/28: announced, not yet law). */
+export function isProvisionalUkTaxYear(year: string): year is UkProvisionalTaxYear {
+  return (PROVISIONAL_UK_TAX_YEARS as readonly string[]).includes(year);
+}
+
+function isUkRatesYear(year: string): year is UkRatesYear {
+  return isSupportedUkTaxYear(year) || isProvisionalUkTaxYear(year);
+}
+
 /** Current UK tax year (UK calendar date). Throws if the year is not supported. */
 export function getCurrentUkTaxYear(now: Date = new Date()): UkTaxYear {
   const year = getUkTaxYearForDate(getUkCalendarDate(now));
@@ -162,12 +179,19 @@ export interface UkTaxYearContext {
   ratesYear: UkTaxYear;
   isFallback: boolean;
   reason?: "after-latest-supported";
+  /**
+   * "provisional" when the rates year is provisional (2027/28: some figures announced, not yet
+   * law); the TaxRatesStatusBanner then says so. Absent otherwise.
+   */
+  kind?: "provisional";
 }
 
 export function getUkTaxYearContext(now: Date = new Date()): UkTaxYearContext {
   const calendarYear = getUkTaxYearForDate(getUkCalendarDate(now));
   if (isSupportedUkTaxYear(calendarYear)) {
-    return { calendarYear, ratesYear: calendarYear, isFallback: false };
+    return isProvisionalUkTaxYear(calendarYear)
+      ? { calendarYear, ratesYear: calendarYear, isFallback: false, kind: "provisional" }
+      : { calendarYear, ratesYear: calendarYear, isFallback: false };
   }
   if (compareTaxYearLabels(calendarYear, getLatestSupportedUkTaxYear()) > 0) {
     return {
@@ -178,6 +202,15 @@ export function getUkTaxYearContext(now: Date = new Date()): UkTaxYearContext {
     };
   }
   throw new UnsupportedUkTaxYearError(calendarYear);
+}
+
+/**
+ * The rates notice for a page that shows a chosen year (the Self Assessment page): provisional
+ * when that year is provisional, else today's context unchanged.
+ */
+export function ratesContextForYear(year: string, today: UkTaxYearContext): UkTaxYearContext {
+  if (!isProvisionalUkTaxYear(year)) return today;
+  return { calendarYear: year, ratesYear: year, isFallback: false, kind: "provisional" };
 }
 
 function compareTaxYearLabels(a: string, b: string): number {
@@ -287,7 +320,7 @@ const DIVIDENDS_2022_23: UkDividendRules = {
   additionalRate: 0.3935,
 };
 
-const DIVIDENDS: Record<UkTaxYear, UkDividendRules> = {
+const DIVIDENDS: Record<UkRatesYear, UkDividendRules> = {
   "2020/21": DIVIDENDS_2020_TO_2022,
   "2021/22": DIVIDENDS_2020_TO_2022,
   "2022/23": DIVIDENDS_2022_23,
@@ -295,12 +328,84 @@ const DIVIDENDS: Record<UkTaxYear, UkDividendRules> = {
   "2024/25": { allowance: 500, basicRate: 0.0875, higherRate: 0.3375, additionalRate: 0.3935 },
   "2025/26": { allowance: 500, basicRate: 0.0875, higherRate: 0.3375, additionalRate: 0.3935 },
   "2026/27": { allowance: 500, basicRate: 0.1075, higherRate: 0.3575, additionalRate: 0.3935 },
+  // Enacted: FA 2026 s.4 (10.75% and 35.75% for 2026/27 and later years); allowance 500 (ITA s.13A),
+  // additional 39.35% unchanged. Budget 2026 OOTLAR Annex A prints the same for 2027/28.
+  "2027/28": { allowance: 500, basicRate: 0.1075, higherRate: 0.3575, additionalRate: 0.3935 },
 };
+
+/** Rates for one kind of income: basic, higher and additional. */
+export interface UkIncomeRates {
+  basicRate: number;
+  higherRate: number;
+  additionalRate: number;
+}
+
+const MAIN_RATES_20_40_45: UkIncomeRates = {
+  basicRate: 0.2,
+  higherRate: 0.4,
+  additionalRate: 0.45,
+};
+
+// Owner choice (19 November 2026): "Announced 24/44/49".
+// Announced: Budget 2026 OOTLAR 1.1 and 1.2 (Finance Bill 2026-27) set savings and property rates of
+// 24/44/49 for 2027/28. Enacted today: Finance Act 2026 s.5 (savings) and s.7 (property), 22/42/47.
+const ANNOUNCED_2027_28: UkIncomeRates = {
+  basicRate: 0.24,
+  higherRate: 0.44,
+  additionalRate: 0.49,
+};
+
+// Savings rates. Up to 2026/27 they equal the main rates, 20/40/45 (the GOV.UK income tax rates
+// table taxes savings above the starting rate at the basic, higher and additional rates).
+const SAVINGS_RATES: Record<UkRatesYear, UkIncomeRates> = {
+  "2020/21": MAIN_RATES_20_40_45,
+  "2021/22": MAIN_RATES_20_40_45,
+  "2022/23": MAIN_RATES_20_40_45,
+  "2023/24": MAIN_RATES_20_40_45,
+  "2024/25": MAIN_RATES_20_40_45,
+  "2025/26": MAIN_RATES_20_40_45,
+  "2026/27": MAIN_RATES_20_40_45,
+  "2027/28": ANNOUNCED_2027_28,
+};
+
+// Property rates exist from 2027/28 (ITA 2007 s.6D and s.11CA, inserted by FA 2026 s.6). Before
+// that, property income is non-savings income charged at the main rates, so there are none (null).
+const PROPERTY_RATES: Record<UkRatesYear, UkIncomeRates | null> = {
+  "2020/21": null,
+  "2021/22": null,
+  "2022/23": null,
+  "2023/24": null,
+  "2024/25": null,
+  "2025/26": null,
+  "2026/27": null,
+  "2027/28": ANNOUNCED_2027_28,
+};
+
+/** Savings rates (above the starting rate and the savings allowance) for a supported or provisional year. */
+export function getUkSavingsRates(year: string): UkIncomeRates {
+  if (!isUkRatesYear(year)) throw new UnsupportedUkTaxYearError(year, "savings rates");
+  return SAVINGS_RATES[year];
+}
+
+/**
+ * Property rates for a supported or provisional year, or null before 2027/28, when property
+ * income took the main rates.
+ */
+export function getUkPropertyRates(year: string): UkIncomeRates | null {
+  if (!isUkRatesYear(year)) throw new UnsupportedUkTaxYearError(year, "property rates");
+  return PROPERTY_RATES[year];
+}
+
+/** Dividend allowance and rates for a supported or provisional year. */
+export function getUkDividendRules(year: string): UkDividendRules {
+  if (!isUkRatesYear(year)) throw new UnsupportedUkTaxYearError(year, "dividend");
+  return DIVIDENDS[year];
+}
 
 // Pension annual allowance (E25-T1). Verified for every supported year against HMRC's per-year
 // table (https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates):
 // 40,000 for 2020/21 to 2022/23, 60,000 from 2023/24.
-const PENSION_ANNUAL_ALLOWANCE: Record<UkTaxYear, number> = {
+const PENSION_ANNUAL_ALLOWANCE: Record<UkRatesYear, number> = {
   "2020/21": 40000,
   "2021/22": 40000,
   "2022/23": 40000,
@@ -308,13 +413,15 @@ const PENSION_ANNUAL_ALLOWANCE: Record<UkTaxYear, number> = {
   "2024/25": 60000,
   "2025/26": 60000,
   "2026/27": 60000,
+  // Budget 2026 OOTLAR Annex A: 60,000 for 2027/28.
+  "2027/28": 60000,
 };
 
 // Pension lump sum allowance: the most that can be taken tax-free across all pensions, 268,275,
 // from 6 April 2024, when it replaced the lifetime allowance
 // (https://www.gov.uk/tax-on-your-private-pension/lump-sum-allowance). Years before 2024/25
 // had the lifetime allowance instead, so they have no lump sum allowance (null).
-const PENSION_LUMP_SUM_ALLOWANCE: Record<UkTaxYear, number | null> = {
+const PENSION_LUMP_SUM_ALLOWANCE: Record<UkRatesYear, number | null> = {
   "2020/21": null,
   "2021/22": null,
   "2022/23": null,
@@ -322,6 +429,8 @@ const PENSION_LUMP_SUM_ALLOWANCE: Record<UkTaxYear, number | null> = {
   "2024/25": 268275,
   "2025/26": 268275,
   "2026/27": 268275,
+  // Budget 2026 OOTLAR Annex A: 268,275 for 2027/28.
+  "2027/28": 268275,
 };
 
 /**
@@ -351,6 +460,20 @@ const SELF_ASSESSMENT: UkSelfAssessmentRules = {
 // ISA allowance 20,000: https://www.gov.uk/individual-savings-accounts ("In the 2026 to 2027 tax
 // year, the maximum you can save in ISAs is 20,000"). Other years UNVERIFIED in the registry.
 const ISA_ALLOWANCE = 20000;
+
+/** Pension annual allowance, lump sum allowance and ISA allowance for a supported or provisional year. */
+export function getUkPensionAllowances(year: string): {
+  pensionAnnualAllowance: number;
+  pensionLumpSumAllowance: number | null;
+  isaAllowance: number;
+} {
+  if (!isUkRatesYear(year)) throw new UnsupportedUkTaxYearError(year, "pension and ISA allowance");
+  return {
+    pensionAnnualAllowance: PENSION_ANNUAL_ALLOWANCE[year],
+    pensionLumpSumAllowance: PENSION_LUMP_SUM_ALLOWANCE[year],
+    isaAllowance: ISA_ALLOWANCE,
+  };
+}
 
 // State Pension. Weekly rates per tax year, from the GOV.UK benefit and pension rates publications
 // (see UK_STATE_PENSION_SOURCES). 2020/21 to 2022/23 are UNVERIFIED in the registry. The annual
@@ -418,13 +541,21 @@ export function calculateNewStatePensionAnnual(qualifyingYears: number, year: st
 // ---------------------------------------------------------------------------
 
 export interface UkTaxYearRules {
-  year: UkTaxYear;
+  year: UkRatesYear;
   ewni: UKEWNIIncomeTaxYear;
-  scotland: UKScotlandIncomeTaxYear;
+  /**
+   * Scottish rates and bands, or null for a provisional year whose Scottish rate resolution is
+   * not published (2027/28). Read it through `requireScottishRules`, which refuses a null table.
+   */
+  scotland: UKScotlandIncomeTaxYear | null;
   ni: UKNationalInsuranceYear;
   employerNi: UKEmployerNIRate;
   studentLoans: UKStudentLoanYear;
   savings: UkSavingsRules;
+  /** Rates on savings income above the starting rate and the allowance (the main rates before 2027/28). */
+  savingsRates: UkIncomeRates;
+  /** Rates on property income from 2027/28; null before, when property income took the main rates. */
+  propertyRates: UkIncomeRates | null;
   dividends: UkDividendRules;
   /** Trading and property allowances and the payments on account thresholds. */
   selfAssessment: UkSelfAssessmentRules;
@@ -451,14 +582,21 @@ export interface UkTaxYearRules {
    * taper start + 2 x personal allowance (GBP1 lost per GBP2).
    */
   taperEnd: number;
-  /** True only when `unverified` is empty. */
+  /** True only when `unverified` and `announced` are both empty. */
   verified: boolean;
+  /**
+   * True for a year whose figures are partly announced, not yet law (2027/28). The UI says so
+   * with the "provisional" rates notice.
+   */
+  provisional: boolean;
+  /** One "ANNOUNCED, NOT YET LAW: <reason>" line per announced figure group (provisional years). */
+  announced: string[];
   /** One "UNVERIFIED: <reason>" line per figure not confirmed on GOV.UK. */
   unverified: string[];
 }
 
-export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
-  if (!isSupportedUkTaxYear(year)) throw new UnsupportedUkTaxYearError(String(year));
+export function getUkTaxYearRules(year: UkRatesYear): UkTaxYearRules {
+  if (!isUkRatesYear(year)) throw new UnsupportedUkTaxYearError(String(year));
   const ewni = UK_EWNI_INCOME_TAX[year];
   const scotland = UK_SCOTLAND_INCOME_TAX[year];
   const ni = UK_NATIONAL_INSURANCE[year];
@@ -467,34 +605,65 @@ export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
   const hicbc = UK_CHILD_BENEFIT[year];
   if (!ewni)
     throw new UnsupportedUkTaxYearError(year, "England, Wales and Northern Ireland income tax");
-  if (!scotland) throw new UnsupportedUkTaxYearError(year, "Scottish income tax");
+  // A year may lack the Scottish table (2027/28): Scottish figures are then refused on use,
+  // through requireScottishRules, and every other figure still works.
   if (!ni) throw new UnsupportedUkTaxYearError(year, "National Insurance");
   if (!employerNi) throw new UnsupportedUkTaxYearError(year, "employer National Insurance");
   if (!studentLoans) throw new UnsupportedUkTaxYearError(year, "student loan");
   if (!hicbc) throw new UnsupportedUkTaxYearError(year, "Child Benefit and HICBC");
   const unverified = ruleUnverifiedNotes(year);
+  const provisional = isProvisionalUkTaxYear(year);
+  const announcedNotes = provisional ? ruleAnnouncedNotes(year) : [];
   return {
     year,
     ewni,
-    scotland,
+    scotland: scotland ?? null,
     ni,
     employerNi,
     studentLoans,
     savings: SAVINGS,
+    savingsRates: SAVINGS_RATES[year],
+    propertyRates: PROPERTY_RATES[year],
     dividends: DIVIDENDS[year],
     selfAssessment: SELF_ASSESSMENT,
     hicbc,
     giftAidGrossUp: 1.25,
     sources: ruleSourceUrls(year),
-    ruleSources: UK_RULE_SOURCES[year],
+    ruleSources: ruleSourcesFor(year),
     pensionAnnualAllowance: PENSION_ANNUAL_ALLOWANCE[year],
     pensionLumpSumAllowance: PENSION_LUMP_SUM_ALLOWANCE[year],
     isaAllowance: ISA_ALLOWANCE,
     statePension: getUkStatePensionRules(year),
     taperEnd: ewni.personalAllowanceTaperStart + 2 * ewni.personalAllowance,
-    verified: unverified.length === 0,
+    verified: unverified.length === 0 && announcedNotes.length === 0,
     unverified,
+    provisional,
+    announced: announcedNotes,
   };
+}
+
+/** The year's Scottish rates and bands. Throws when they are not published (a provisional year). */
+export function requireScottishRules(rules: UkTaxYearRules): UKScotlandIncomeTaxYear {
+  if (!rules.scotland) throw new UnsupportedUkTaxYearError(rules.year, "Scottish income tax");
+  return rules.scotland;
+}
+
+/**
+ * Rate of the residential finance-cost credit (ITTOIA 2005 s.274AA(5), s.274C(2)): the basic rate
+ * up to 2026/27, the property basic rate from 2027/28 (FA 2026 Sch 1 para 40). A UK rate for every
+ * taxpayer, Scottish ones included.
+ */
+export function financeCostCreditRate(rules: UkTaxYearRules): number {
+  return rules.propertyRates?.basicRate ?? rules.ewni.basicRate;
+}
+
+/**
+ * The property rates a taxpayer's property income takes, or null when it takes the same rates
+ * as their other non-savings income: before 2027/28, and always for a Scottish taxpayer, whose
+ * property income stays on the Scottish rates (Scotland Act 1998 s.80C(2B), FA 2026 Sch 1 para 55).
+ */
+export function propertyRatesFor(rules: UkTaxYearRules, region: UkTaxRegion): UkIncomeRates | null {
+  return region === "SCOTLAND" ? null : rules.propertyRates;
 }
 
 // ---------------------------------------------------------------------------
@@ -539,19 +708,21 @@ export interface IncomeTaxResult {
  * the limits for any Scottish rates above the Scottish basic rate": the upper
  * limit of the 20% (basic rate) band and every limit (lower and upper) of the bands
  * after it. Bands before Basic (Starter) are unchanged.
+ * `rates` (England, Wales and NI bands only) charges the bands at other rates: the savings or
+ * property rates, which use the same band limits as the main rates (ITA 2007 s.11C, s.11CA).
  */
 export function calculateIncomeTaxOnTaxable(
   taxable: number,
   rules: UkTaxYearRules,
   region: UkTaxRegion,
-  opts: { bandExtension?: number } = {},
+  opts: { bandExtension?: number; rates?: UkIncomeRates } = {},
 ): IncomeTaxResult {
   const income = Math.max(0, taxable);
   const raw: { name: string; rate: number; taxable: number; tax: number }[] = [];
 
   if (region === "SCOTLAND") {
     const ext = Math.max(0, opts.bandExtension ?? 0);
-    const bands = rules.scotland.bands;
+    const bands = requireScottishRules(rules).bands;
     // The basic band is identified by its 20% rate, not its display name: the statute does
     // not define Scottish band names, and a rename must not silently disable the extension.
     const basicIdx = bands.findIndex((b) => b.rate === 0.2);
@@ -570,19 +741,20 @@ export function calculateIncomeTaxOnTaxable(
   } else {
     const ext = Math.max(0, opts.bandExtension ?? 0);
     const e = rules.ewni;
+    const r = opts.rates ?? e;
     const basicTop = e.basicRateBandWidth + ext;
     const higherTop = e.additionalRateThreshold + ext;
     const basic = Math.min(income, basicTop);
     const higher = Math.max(0, Math.min(income, higherTop) - basicTop);
     const additional = Math.max(0, income - higherTop);
     raw.push(
-      { name: "Basic", rate: e.basicRate, taxable: basic, tax: basic * e.basicRate },
-      { name: "Higher", rate: e.higherRate, taxable: higher, tax: higher * e.higherRate },
+      { name: "Basic", rate: r.basicRate, taxable: basic, tax: basic * r.basicRate },
+      { name: "Higher", rate: r.higherRate, taxable: higher, tax: higher * r.higherRate },
       {
         name: "Additional",
-        rate: e.additionalRate,
+        rate: r.additionalRate,
         taxable: additional,
-        tax: additional * e.additionalRate,
+        tax: additional * r.additionalRate,
       },
     );
   }
