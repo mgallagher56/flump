@@ -15,7 +15,22 @@ import {
 import { UK_TAX_VECTOR_YEARS } from "./uk-tax.vectors.js";
 
 /** Vector ids the owner has signed. Empty until the owner signs (`bun run tax:signoff apply`). */
-const OWNER_SIGNED_IDS: readonly string[] = [];
+// Owner sign-off of 20 Nov 2026 (2027/28, tax:signoff apply); ids approved by the owner.
+const OWNER_SIGNED_IDS: readonly string[] = [
+  "tradingAllowance.2027-28.5000.300",
+  "tradingAllowance.2027-28.800.0",
+  "tradingAllowance.2027-28.1000.200",
+  "tradingAllowance.2027-28.5000.1800",
+  "propertyAllowance.2027-28.6000.400.100",
+  "propertyAllowance.2027-28.900.0.100",
+  "propertyAllowance.2027-28.6000.2500.100",
+  "propertyAllowance.2027-28.3000.0.50",
+  "paymentsOnAccount.2027-28.3000.0",
+  "paymentsOnAccount.2027-28.999.99.0",
+  "paymentsOnAccount.2027-28.1000.0",
+  "paymentsOnAccount.2027-28.2000.9000",
+  "paymentsOnAccount.2027-28.2000.8000",
+];
 
 const GOV_URL = /^https:\/\/www\.gov\.uk\//;
 const KINDS: UkSelfAssessmentVectorKind[] = [
@@ -45,6 +60,13 @@ function evaluate(v: UkSelfAssessmentVector): number {
 }
 
 describe("Self Assessment vector catalogue", () => {
+  it("every id in OWNER_SIGNED_IDS is a vector the owner signed, so the list cannot drift", () => {
+    const signed = new Set(
+      UK_SELF_ASSESSMENT_VECTORS.filter((v) => v.signedOffBy !== null).map((v) => v.id),
+    );
+    for (const id of OWNER_SIGNED_IDS) expect(signed.has(id), id).toBe(true);
+    expect(new Set(OWNER_SIGNED_IDS).size).toBe(OWNER_SIGNED_IDS.length);
+  });
   it("every vector cites a GOV.UK page, the date it was read, and a derivation", () => {
     for (const v of UK_SELF_ASSESSMENT_VECTORS) {
       expect(v.source, v.id).toMatch(GOV_URL);

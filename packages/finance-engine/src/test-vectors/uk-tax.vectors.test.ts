@@ -14,11 +14,38 @@ import {
  * edit that signs a vector fails here. The owner adds ids to this list in the same commit as
  * the sign-off (`bun run tax:signoff apply`).
  */
-const OWNER_SIGNED_IDS: readonly string[] = [];
+// Owner sign-off of 20 Nov 2026 (2027/28, tax:signoff apply); ids approved by the owner.
+const OWNER_SIGNED_IDS: readonly string[] = [
+  "ewni.incomeTax.2027-28.30000",
+  "ewni.incomeTax.2027-28.60000",
+  "ewni.incomeTax.2027-28.100000",
+  "ewni.incomeTax.2027-28.110000",
+  "ewni.incomeTax.2027-28.125140",
+  "ewni.incomeTax.2027-28.150000",
+  "ewni.giftAid.2027-28.60000.net1000",
+  "ewni.giftAid.2027-28.110000.net1000",
+  "employeeNi.2027-28.30000",
+  "employeeNi.2027-28.60000",
+  "class4.2027-28.60000",
+  "employerNiSaving.2027-28.60000.3000",
+  "employerNiSaving.2027-28.6000.3000",
+  "studentLoan.2027-28.plan2.35000",
+  "studentLoan.2027-28.plan5.35000",
+  "studentLoan.2027-28.postgrad.35000",
+  "studentLoan.2027-28.plan2.28385",
+  "dividends.2027-28.basic",
+  "dividends.2027-28.higher",
+  "dividends.2027-28.additional",
+];
 
 const GOV_URL = /^https:\/\/www\.(gov\.(uk|scot)|legislation\.gov\.uk)\//;
 
 describe("UK tax vector catalogue", () => {
+  it("every id in OWNER_SIGNED_IDS is a vector the owner signed, so the list cannot drift", () => {
+    const signed = new Set(UK_TAX_VECTORS.filter((v) => v.signedOffBy !== null).map((v) => v.id));
+    for (const id of OWNER_SIGNED_IDS) expect(signed.has(id), id).toBe(true);
+    expect(new Set(OWNER_SIGNED_IDS).size).toBe(OWNER_SIGNED_IDS.length);
+  });
   it("every vector cites a gov.uk or gov.scot source", () => {
     for (const v of UK_TAX_VECTORS) {
       expect(v.source, v.id).toMatch(GOV_URL);

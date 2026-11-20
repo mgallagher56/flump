@@ -11,12 +11,25 @@ import {
  * Vector ids the owner has signed off. Empty until the owner signs (DECISIONS E4): an unreviewed
  * edit that signs a vector fails here. The owner adds ids in the same commit as the sign-off.
  */
-const OWNER_SIGNED_IDS: readonly string[] = [];
+// Owner sign-off of 20 Nov 2026 (2027/28, tax:signoff apply); ids approved by the owner.
+const OWNER_SIGNED_IDS: readonly string[] = [
+  "studentLoanMulti.2027-28.plan2+postgrad.45000",
+  "studentLoanMulti.2027-28.plan5+postgrad.24000",
+  "studentLoanMulti.2027-28.plan5+postgrad.30000",
+  "studentLoanMulti.2027-28.plan5+postgrad.45000",
+];
 
 const GOV_URL = /^https:\/\/www\.(gov\.(uk|scot)|legislation\.gov\.uk)\//;
 const get = (id: string) => UK_WHATIF_VECTORS.find((v) => v.id === id);
 
 describe("E25 what-if vector catalogue", () => {
+  it("every id in OWNER_SIGNED_IDS is a vector the owner signed, so the list cannot drift", () => {
+    const signed = new Set(
+      UK_WHATIF_VECTORS.filter((v) => v.signedOffBy !== null).map((v) => v.id),
+    );
+    for (const id of OWNER_SIGNED_IDS) expect(signed.has(id), id).toBe(true);
+    expect(new Set(OWNER_SIGNED_IDS).size).toBe(OWNER_SIGNED_IDS.length);
+  });
   it("is non-trivial and every kind is present", () => {
     expect(UK_WHATIF_VECTORS.length).toBeGreaterThanOrEqual(60);
     for (const kind of UK_WHATIF_VECTOR_KINDS) {
