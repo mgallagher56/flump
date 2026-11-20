@@ -76,6 +76,7 @@ const pack = {
         nominalBalance: 4000,
         netWorthBalance: 4000,
         latestBalance: 4000,
+        sharePercent: 100,
         overdrawnAmount: 0,
         interestRate: 0,
         interestRateKnown: false,
