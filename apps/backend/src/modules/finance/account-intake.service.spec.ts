@@ -360,6 +360,62 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(mockAccountRepo.save.mock.calls.at(-1)?.[0]).toMatchObject({ termMonths: 240 });
     });
 
+    // The web app's quick balance update (E38 S2) sends a PATCH with the balance alone. Every
+    // other saved field must stay exactly as it was: losing one would be a data fault.
+    it("a balance-only update leaves every other field of a joint mortgage as saved", async () => {
+      const saved = {
+        id: "a1",
+        userId: "userA",
+        name: "Residential mortgage",
+        type: "Mortgage",
+        accountSubtype: null,
+        balance: -186550,
+        currency: "GBP",
+        interestRate: 4.5,
+        monthlyContribution: 1250,
+        termMonths: 240,
+        fixedRateEndDate: "2028-02-29",
+        repaymentType: "repayment",
+        linkedAccountId: "p1",
+        // A stored row holds the fields its type does not take as null.
+        creditLimit: null,
+        promoZeroPercentUntil: null,
+        ownership: "joint",
+        sharePercent: 50,
+      };
+      mockAccountRepo.findOne.mockResolvedValueOnce({ ...saved });
+      await service.updateAccount("userA", "a1", { balance: 186000 });
+      // Sent as £186,000 owed; a mortgage is stored negative, so -186,000. Nothing else moves.
+      expect(mockAccountRepo.save.mock.calls.at(-1)?.[0]).toEqual({ ...saved, balance: -186000 });
+    });
+
+    it("a balance-only update leaves a credit card's limit and 0% date as saved", async () => {
+      const saved = {
+        id: "a1",
+        userId: "userA",
+        name: "Card",
+        type: "Credit Card",
+        accountSubtype: null,
+        balance: -640,
+        currency: "GBP",
+        interestRate: 22.9,
+        monthlyContribution: 50,
+        creditLimit: 3000,
+        promoZeroPercentUntil: "2027-06-30",
+        // A stored row holds the fields its type does not take as null.
+        termMonths: null,
+        fixedRateEndDate: null,
+        repaymentType: null,
+        linkedAccountId: null,
+        ownership: "sole",
+        sharePercent: null,
+      };
+      mockAccountRepo.findOne.mockResolvedValueOnce({ ...saved });
+      await service.updateAccount("userA", "a1", { balance: 500 });
+      // £500 owed is stored as -500.
+      expect(mockAccountRepo.save.mock.calls.at(-1)?.[0]).toEqual({ ...saved, balance: -500 });
+    });
+
     it("updateAccount can clear both fields with null", async () => {
       mockAccountRepo.findOne.mockResolvedValueOnce({
         id: "a1",

@@ -13,6 +13,21 @@ describe("accountFieldsFromForm", () => {
     expect(accountFieldsFromForm(form({ name: "Pot" }))).toEqual({});
   });
 
+  // The quick balance update on the account page (E38 S2) posts the balance alone, with the
+  // intent, id and version, none of which are account fields: only the balance is sent on.
+  it("sends only the balance for a balance-only update", () => {
+    expect(
+      accountFieldsFromForm(
+        form({
+          intent: "update",
+          accountId: "a1",
+          version: "2026-11-01T10:00:00.000Z",
+          balance: "-900",
+        }),
+      ),
+    ).toEqual({ balance: -900 });
+  });
+
   it("clears an emptied subtype, credit limit and 0% date with null", () => {
     expect(
       accountFieldsFromForm(
