@@ -142,4 +142,34 @@ describe("mcpAllowedOriginsBootWarning", () => {
     expect(w).toContain("app.example.com");
     expect(w).not.toContain("https://ok.example");
   });
+
+  it("lists exactly the entries that can never match a browser Origin", () => {
+    // An Origin is scheme://host[:port] with nothing before or after. "ftp://files.example"
+    // has the wrong scheme, "https://a.example/app" has a path, "xhttps://b.example" has text
+    // before the scheme; "https://ok.example" is the only good one.
+    const w = mcpAllowedOriginsBootWarning({
+      MCP_ALLOWED_ORIGINS:
+        "ftp://files.example,https://a.example/app,xhttps://b.example,https://ok.example",
+    });
+    expect(w).toMatch(
+      /^MCP_ALLOWED_ORIGINS has invalid entries \(ftp:\/\/files\.example, https:\/\/a\.example\/app, xhttps:\/\/b\.example\);/,
+    );
+  });
+});
+
+describe("McpAllowlistGuard without a signed-in user", () => {
+  it("answers 404 rather than failing when request.user is missing", () => {
+    const original = process.env;
+    process.env = {
+      ...original,
+      NODE_ENV: "production",
+      MCP_ALLOWED_USER_IDS: "owner",
+      MCP_OPEN_ACCESS: "",
+    } as NodeJS.ProcessEnv;
+    try {
+      expect(() => new McpAllowlistGuard().canActivate(ctx())).toThrow(NotFoundException);
+    } finally {
+      process.env = original;
+    }
+  });
 });

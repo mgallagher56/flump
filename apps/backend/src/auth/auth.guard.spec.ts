@@ -5,7 +5,7 @@ import {
   Logger,
   UnauthorizedException,
 } from "@nestjs/common";
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AllowUninvited } from "./allow-uninvited";
 import { AuthGuard } from "./auth.guard";
 import { DEV_BYPASS_TOKEN, DevBypassVerifier } from "./dev-bypass.verifier";
@@ -96,6 +96,52 @@ describe("AuthGuard", () => {
       true,
     );
     expect((request.user as { id: string }).id).toBe("dev_user_123");
+  });
+
+  describe("header parsing with a verifier that accepts any token", () => {
+    // A permissive verifier isolates the header rules: whatever reaches it would be accepted,
+    // so a refusal here can only come from the guard's own parsing.
+    const accepting: TokenVerifier = { verify: async (token) => ({ id: `user_${token}` }) };
+    const run = (headers: Req["headers"] | undefined) =>
+      new AuthGuard(accepting).canActivate(ctx({ headers } as Req));
+
+    it.each([
+      ["a Basic scheme", "Basic abc"],
+      ["a Token scheme", "Token abc"],
+      ["three parts", "Bearer abc def"],
+    ])("refuses %s before the token is checked", async (_name, header) => {
+      await expect(run({ authorization: header })).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it("refuses a request with no headers object as 401, not a crash", async () => {
+      await expect(run(undefined)).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it("accepts surrounding whitespace and several spaces after the scheme", async () => {
+      // RFC 7235: credentials = auth-scheme 1*SP token68, so one or more spaces separate them;
+      // the guard also trims the header. The token passed on is "abc" in both cases.
+      const a: Req = { headers: { authorization: "  Bearer abc  " } };
+      const b: Req = { headers: { authorization: "Bearer   abc" } };
+      await expect(new AuthGuard(accepting).canActivate(ctx(a))).resolves.toBe(true);
+      await expect(new AuthGuard(accepting).canActivate(ctx(b))).resolves.toBe(true);
+      expect((a.user as { id: string }).id).toBe("user_abc");
+      expect((b.user as { id: string }).id).toBe("user_abc");
+    });
+
+    it("gives the same message for a malformed header as for a bad token", async () => {
+      // One generic message for every 401, so a caller cannot tell which check failed.
+      const malformed = await run({ authorization: "Basic abc" }).catch((e) => e);
+      const rejecting: TokenVerifier = {
+        verify: async () => {
+          throw new Error("bad");
+        },
+      };
+      const badToken = await new AuthGuard(rejecting)
+        .canActivate(ctx({ headers: { authorization: "Bearer abc" } }))
+        .catch((e) => e);
+      expect(malformed.message).toBe("Authentication failed");
+      expect(badToken.message).toBe("Authentication failed");
+    });
   });
 
   it("no longer bypasses auth for /bank-connections/callback", async () => {
@@ -308,5 +354,25 @@ describe("AuthGuard erased-account check (BE-04)", () => {
     await expect(guard.canActivate(withHandler(request(), () => {}))).rejects.toThrow(
       GoneException,
     );
+  });
+
+  it("still refuses an erased account when the context exposes no handler", async () => {
+    // Without a handler there is no AllowErasedAccount mark to read, so the check must run.
+    erased.add("dev_user_123");
+    const guard = new AuthGuard(new DevBypassVerifier(), undefined, check);
+    await expect(guard.canActivate(ctx(request()))).rejects.toThrow(GoneException);
+  });
+
+  it("lets requests through when the erased-account check cannot be found, looking once", async () => {
+    // The check is resolved lazily and once; an app without it (a lookup that throws) is
+    // treated as having no check, and the lookup is not repeated on every request.
+    const get = () => {
+      throw new Error("not provided");
+    };
+    const moduleRef = { get: vi.fn(get) };
+    const guard = new AuthGuard(new DevBypassVerifier(), moduleRef as never);
+    await expect(guard.canActivate(withHandler(request(), () => {}))).resolves.toBe(true);
+    await expect(guard.canActivate(withHandler(request(), () => {}))).resolves.toBe(true);
+    expect(moduleRef.get).toHaveBeenCalledTimes(1);
   });
 });

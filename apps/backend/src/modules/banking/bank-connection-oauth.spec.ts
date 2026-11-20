@@ -141,6 +141,20 @@ describe("bank-connection-oauth (M4, database-free unit tests)", () => {
     expect(await consumeOAuthState(manager, "x".repeat(129), "monzo", t0)).toBeNull();
   });
 
+  it("refuses an empty or over-long state without touching the database", async () => {
+    // States are 256 random bits; anything empty or longer than 128 characters cannot be one,
+    // so it is refused before it is hashed or looked up. A manager that throws on any query
+    // shows no lookup happens.
+    const manager = {
+      query: async () => {
+        throw new Error("no query expected");
+      },
+    } as unknown as EntityManager;
+    const t0 = new Date("2026-11-16T12:00:00.000Z");
+    await expect(consumeOAuthState(manager, "", "monzo", t0)).resolves.toBeNull();
+    await expect(consumeOAuthState(manager, "x".repeat(129), "monzo", t0)).resolves.toBeNull();
+  });
+
   it("attaches PKCE S256 query parameters to an authorization URL", () => {
     const url = withPkceChallenge("https://auth.example.test/authorize?state=abc", "ch-1");
     expect(new URL(url).searchParams.get("code_challenge")).toBe("ch-1");

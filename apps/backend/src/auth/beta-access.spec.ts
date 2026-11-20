@@ -38,3 +38,23 @@ describe("isBetaInviteOnly: the one open-or-invite-only rule", () => {
     expect(await isBetaUserIdAllowed({ BETA_ADMIN_USER_IDS: "x" }, "user_m", null)).toBe(false);
   });
 });
+
+describe("isBetaUserAllowedByEnv (closed beta, E19 A7)", () => {
+  // WorkOS user ids carry upper-case letters (for example `user_01H...`), so a sample id is
+  // built the same way at runtime.
+  const workosId = `user_01${"H".repeat(4)}${"X".repeat(20)}`;
+
+  it("matches a listed WorkOS user id exactly, upper-case letters included", () => {
+    // The id list is not case-folded: the token's `sub` is compared as written.
+    expect(isBetaUserAllowedByEnv({ BETA_ALLOWED_USER_IDS: workosId }, { id: workosId })).toBe(
+      true,
+    );
+  });
+
+  it("reads comma-separated emails with spaces after the commas", () => {
+    // "a@x.example, owner@example.com" lists two emails; the space is not part of the second.
+    const env = { BETA_ALLOWED_EMAILS: "a@x.example, owner@example.com" };
+    expect(isBetaUserAllowedByEnv(env, { id: "u1", email: "owner@example.com" })).toBe(true);
+    expect(isBetaUserAllowedByEnv(env, { id: "u2", email: "stranger@example.com" })).toBe(false);
+  });
+});
