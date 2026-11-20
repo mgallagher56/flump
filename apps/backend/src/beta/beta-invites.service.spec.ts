@@ -132,8 +132,8 @@ describe("BetaInvitesService.createInvite", () => {
 
   it.each([
     ["a bell (control character)", "a\u0007b"],
-    ["a zero-width space (invisible format character)", "a​b"],
-    ["a line separator", "a b"],
+    ["a zero-width space (invisible format character)", "a\u200Bb"],
+    ["a line separator", "a\u2028b"],
   ])("refuses a label containing %s with a 400", async (_name, label) => {
     const { ds, query } = created();
     await expect(

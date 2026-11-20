@@ -79,16 +79,13 @@ describe("root secret handling", () => {
   });
 
   it("keeps stored bucket keys and log references the same across releases", () => {
-    // The labels are fixed and versioned, written out here rather than imported: changing one
-    // would silently reset every stored bucket and break log correlation.
-    const bucketDerived = createHmac("sha256", ROOT).update("flump:rate-limit-bucket:v1").digest();
-    expect(rateLimitStorageKey("x|1", ENV)).toBe(
-      `rl1:${createHmac("sha256", bucketDerived).update("x|1").digest("hex").slice(0, 32)}`,
-    );
-    const logDerived = createHmac("sha256", ROOT).update("flump:log-user-ref:v1").digest();
-    expect(logUserRef(USER, ENV)).toBe(
-      createHmac("sha256", logDerived).update(USER).digest("hex").slice(0, 16),
-    );
+    // Golden values, worked out with openssl outside this code base from the documented scheme:
+    // derived = HMAC-SHA256(root, "flump:rate-limit-bucket:v1") (or "flump:log-user-ref:v1"), then
+    // HMAC-SHA256(derived, input) in hex, cut to 32 (bucket) or 16 (log) characters, root "k" x 40.
+    // A change to either label or to the scheme changes these and would silently reset every stored
+    // bucket and break log correlation.
+    expect(rateLimitStorageKey("x|1", ENV)).toBe("rl1:e902fefc353062a931d50c20d0f8147b");
+    expect(logUserRef(USER, ENV)).toBe("ca8481e88d4d6a2a");
   });
 
   it("uses a configured key in production and on Railway", () => {
