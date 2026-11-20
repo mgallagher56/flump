@@ -12,10 +12,6 @@
     // (backend#build builds those dependencies first) without the backend's own tests.
     "test:coverage": {
       "dependsOn": ["$TURBO_EXTENDS$", "backend#build"]
-    },
-    // The CI web halves (E41 P5) run the same suite in two parts, so they need the same builds.
-    "test:coverage:shard": {
-      "dependsOn": ["$TURBO_EXTENDS$", "backend#build"]
     }
   }
 }

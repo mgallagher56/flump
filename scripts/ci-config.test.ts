@@ -213,43 +213,24 @@ describe("merge gate (BE-01)", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  // E41 P5: the split jobs report through aggregates with the required names. Dropping a need
-  // here would quietly stop the required check covering that part of the suite.
-  test("the Vitest and Storybook aggregates need every part of their suite and check each result", () => {
+  // E41 P5: the Storybook halves report through the jobs that keep the required names. Dropping a
+  // need, or the success check, would quietly stop a required check covering part of the suite.
+  test("the Storybook a11y aggregates need every leg of their theme and pass only on success", () => {
     const ci = readWorkflow("ci-pipeline.yml");
-    const needsOf = (id: string) => {
-      const needs = (ci.jobs[id] as Job & { needs?: string | string[] }).needs;
-      return Array.isArray(needs) ? needs : [needs];
-    };
-    const stepText = (id: string) =>
-      JSON.stringify((ci.jobs[id] as Job & { steps?: unknown[] }).steps ?? []);
-
-    expect(needsOf("vitest").sort()).toEqual([
-      "vitest-backend",
-      "vitest-shard",
-      "vitest-web-merge",
-    ]);
-    for (const part of ["vitest-shard", "vitest-web-merge", "vitest-backend"])
-      expect(stepText("vitest")).toContain(`needs.${part}.result`);
-    expect(needsOf("vitest-web-merge")).toEqual(["vitest-shard"]);
-
-    expect(needsOf("storybook-a11y").sort()).toEqual(["storybook-dark", "storybook-light"]);
-    expect(ci.jobs["storybook-a11y"]?.strategy?.matrix?.include).toEqual([
+    const job = ci.jobs["storybook-a11y"] as Job & { needs?: string[]; steps?: unknown[] };
+    expect([...(job.needs ?? [])].sort()).toEqual(["storybook-dark", "storybook-light"]);
+    expect(job.strategy?.matrix?.include).toEqual([
       { name: "a11y (light)", legs: "storybook-light" },
       { name: "a11y (dark)", legs: "storybook-dark" },
     ]);
-    expect(stepText("storybook-a11y")).toContain("needs[matrix.legs].result");
-
-    // Both halves of each split suite are in the matrix.
-    const shards = (id: string) =>
-      (ci.jobs[id]?.strategy?.matrix as { shard?: unknown[]; include?: { shard?: string }[] }) ??
-      {};
-    expect(shards("vitest-shard").shard).toEqual([1, 2]);
-    for (const id of ["storybook-light", "storybook-dark"])
-      expect((shards(id).include ?? []).map((leg) => leg.shard).filter(Boolean)).toEqual([
-        "1/2",
-        "2/2",
-      ]);
+    const [check] = (job.steps ?? []) as { env?: Record<string, string>; run?: string }[];
+    // A failed, skipped or cancelled leg gives a result other than "success", so the check fails.
+    expect(check?.env?.RESULT).toBe("${{ needs[matrix.legs].result }}");
+    expect(check?.run).toContain('[ "$RESULT" = "success" ]');
+    for (const id of ["storybook-light", "storybook-dark"]) {
+      const include = (ci.jobs[id]?.strategy?.matrix?.include ?? []) as { shard?: string }[];
+      expect(include.map((leg) => leg.shard).filter(Boolean)).toEqual(["1/2", "2/2"]);
+    }
   });
 
   test("no two jobs across workflows render the same check name", () => {

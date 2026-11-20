@@ -111,11 +111,8 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run check-types
 
-  # Vitest runs as three parallel jobs (web in two halves, then backend + packages below) so none is the
-  # critical path (E41 P5). The web halves run the unit project with `--shard` and write blob
-  # reports; vitest-web-merge joins them and applies the coverage floors to the whole web run, so
-  # the floors are checked on the same coverage as before, never on half of it.
-  # All three need the throwaway Postgres: the web unit project includes the backend contract suite
+  # Vitest runs as two parallel shards (web, backend + packages) so neither is the critical path.
+  # Both need the throwaway Postgres: the web unit project includes the backend contract suite
   # (apps/web/app/contract), which boots the backend against a real database.
   # Throwaway Postgres for the real-database suites. The job runs on the runner (not in a
   # container), so localhost:5432 reaches the service. The password is a literal for this
@@ -125,74 +122,23 @@ jobs:
   # variables under `env` for the test tasks so turbo passes them to vitest and includes them in
   # the task hash.
   vitest-shard:
-    name: ⚡ Vitest web ${{ matrix.shard }}/2
+    name: ⚡ Vitest ${{ matrix.name }}
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # pull-requests: write is for the coverage report comment.
     permissions:
       actions: write
       contents: read
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
-
-    services:
-      postgres:
-        image: postgres:18-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: flump_ci_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d flump_ci_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 12
-
-    env:
-      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/flump_ci_test
-      REQUIRE_DB_TESTS: "1"
-
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: ⚙️ Setup Bun and install dependencies
-        uses: ./.github/actions/bun-setup
-        with:
-          turbo: true
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          turboToken: ${{ env.TURBO_TOKEN }}
-
-      # Each half skips the coverage floors here (it sees half the coverage); vitest-web-merge
-      # applies them to the whole web run.
-      - name: ⚡ Run vitest (web, one half)
-        run: >-
-          bunx turbo run test:coverage:shard --filter=@flump/web --
-          --shard=${{ matrix.shard }}/2 --outputFile=.vitest/blob/web-${{ matrix.shard }}.json
-
-      - name: 📎 Upload web blob report
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: vitest-blob-web-${{ matrix.shard }}
-          path: apps/web/.vitest/blob/web-${{ matrix.shard }}.json
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 1
-
-  vitest-backend:
-    name: ⚡ Vitest backend and packages
-    if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    permissions:
-      actions: write
-      contents: read
+        include:
+          - name: web
+            filter: "--filter=@flump/web"
+          - name: backend and packages
+            filter: "--filter=!@flump/web"
 
     services:
       postgres:
@@ -227,81 +173,30 @@ jobs:
           turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: ⚡ Run vitest with coverage floors
-        run: bunx turbo run test:coverage --filter=!@flump/web
-
-  # Joins the two web halves and applies the web coverage floors to the whole run (E41 P5).
-  vitest-web-merge:
-    name: ⚡ Vitest web coverage
-    if: github.event_name != 'schedule'
-    needs: [vitest-shard]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # pull-requests: write is for the coverage report comment.
-    permissions:
-      actions: write
-      contents: read
-      pull-requests: write
-
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: ⚙️ Setup Bun and install dependencies
-        uses: ./.github/actions/bun-setup
-        with:
-          turbo: true
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          turboToken: ${{ env.TURBO_TOKEN }}
-
-      - name: 📥 Download web blob reports
-        # actions/download-artifact v8.0.2
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          pattern: vitest-blob-web-*
-          path: apps/web/.vitest/blob
-          merge-multiple: true
-
-      # Both halves must be here: a missing half would leave its tests unreported and its coverage
-      # out of the floors.
-      - name: 🧮 Check both halves arrived
-        working-directory: apps/web/.vitest/blob
-        run: |
-          ls -la
-          [ -f web-1.json ] && [ -f web-2.json ] && [ "$(ls | wc -l)" -eq 2 ]
-
-      - name: 🏗️ Build what the web Vitest config loads
-        run: bunx turbo run build generate --filter=@flump/web^...
-
-      - name: ⚡ Merge reports and check the coverage floors
-        working-directory: apps/web
-        run: bun run test:coverage:merge
+        run: bunx turbo run test:coverage ${{ matrix.filter }}
 
       - name: "Report Coverage"
-        if: always()
+        if: always() && matrix.name == 'web'
         uses: davelosert/vitest-coverage-report-action@74c2d9210b4fc44c84d8213f61d7ec99837b7aa0 # v2.13.2
         with:
           working-directory: "apps/web"
           threshold-icons: '{"0": "🔴", "80": "🟢"}'
 
   # Stable required-check name: branch protection keeps pointing at "⚡ Vitest Tests" while the
-  # work happens in the jobs above.
+  # work happens in the shards above.
   vitest:
     name: ⚡ Vitest Tests
     if: always() && github.event_name != 'schedule'
-    needs: [vitest-shard, vitest-web-merge, vitest-backend]
+    needs: [vitest-shard]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: ✅ All Vitest jobs passed
+      - name: ✅ All Vitest shards passed
         env:
-          WEB: ${{ needs.vitest-shard.result }}
-          MERGE: ${{ needs.vitest-web-merge.result }}
-          BACKEND: ${{ needs.vitest-backend.result }}
+          RESULT: ${{ needs.vitest-shard.result }}
         run: |
-          echo "web halves: $WEB, web coverage: $MERGE, backend and packages: $BACKEND"
-          [ "$WEB" = "success" ] && [ "$MERGE" = "success" ] && [ "$BACKEND" = "success" ]
+          echo "vitest-shard: $RESULT"
+          [ "$RESULT" = "success" ]
 
   # Ops script tests (scripts/ops): the DB-backed ones run against a Postgres service through the
   # runner's own psql. REQUIRE_DB_TESTS=1 makes them fail instead of skip. Only needs installed
