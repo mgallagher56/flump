@@ -116,7 +116,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:d0f0ef41c5d60ccfdcb924e1b21c29931345d8624da43e9eb3b694a22a1fa504",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2020-21.ani55000.children2",
@@ -139,7 +143,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:b088a37ed3cd328721ec95a0ad99a221c316a14c079b321b383c0583bea874f0",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2020-21.ani60000.children1",
@@ -162,7 +170,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:e018366e93b4c2adaf6b4f374030e2b8bb78a100a65c009fda69347d23e6d852",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2020-21.ani70000.children3",
@@ -185,7 +197,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:4f56ec73b9f6dfbce08c717a28f0223f3a309186c634231058ca2e940e295495",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2021-22.ani49999.children1",
@@ -341,7 +357,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:df90c8b2d3ae994e7655392150960487b3e010e7da291d28645875aa1fbdf45d",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2022-23.ani55000.children2",
@@ -364,7 +384,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:783ad95ed96e31751b22135a41ab4dbb669e59f5dfd0e9bc67634b6cdbe59b5f",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2022-23.ani60000.children1",
@@ -387,7 +411,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:064b629c625e27bbbc77163263d21a58e423a42f3994d14676659172b6010114",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2022-23.ani70000.children3",
@@ -410,7 +438,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:9b35e0138fd78e1891abdd712c04b41b5513a3736f83276c1375e728805da50a",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2023-24.ani49999.children1",
@@ -456,7 +488,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:a6500fa0bb4caf16c821a9b87a36544603cb7ec773e93100b179ad8d1d60baa9",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2023-24.ani55000.children2",
@@ -479,7 +515,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:f1132c251560ffd50e2bedc6541d0ace9500f3a2498bd2da7d184cfea36d778d",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2023-24.ani60000.children1",
@@ -525,7 +565,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:4a346199f24645b541c556218fa6f2737da2f210a772a668921877b50c1b0e8e",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2024-25.ani59999.children1",
@@ -571,7 +615,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:9fd36631aaa3859f9af77d9919f9619ae5a2b73a9cbb5b40e3cf847cf9141fba",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2024-25.ani70000.children2",
@@ -594,7 +642,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:b2a749d0c7aaddb425cf35be90be273571abd23c5edae57d561f28d7eb72cb8a",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2024-25.ani79800.children1",
@@ -617,7 +669,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:cad69c0049b32bd0883d9f0e951d4388a11a18a9783c917182594d81155fea10",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2024-25.ani80000.children3",
@@ -680,7 +736,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:4eeba8a8b9e74ecf96e5f446df10c90f6f3077c898f12d9afa7a2070b155321e",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2025-26.ani70000.children2",
@@ -700,7 +760,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:2a3f0f229022e6829da6ac5bc604d6530f2f73a99ba09a35a36d973df100d9ea",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2025-26.ani79800.children1",
@@ -720,7 +784,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:4b1fd989c785025ff3dd199a665e05873ff51e02e99c662a5e81d3d8f748ff1c",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2025-26.ani80000.children3",
@@ -740,7 +808,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:4f9e349b694244c4e0ef82ac1c229ce6b848a453e3f66c4735a7b2f6d92bff29",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2026-27.ani59999.children1",
@@ -780,7 +852,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:6c73b4138a2483d2ca438ab2995911756c223871754f9e5f1a79c96c01d661b4",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2026-27.ani70000.children2",
@@ -800,7 +876,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:0fc407d6aac2be3e78315f8427aa0fcd5934d828a31a6628e340249d26376932",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2026-27.ani79800.children1",
@@ -820,7 +900,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:3f745492380732154d68bf01a405af811c4f60e0b24778218ce36495c8e712ca",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2026-27.ani80000.children3",
@@ -840,7 +924,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:cf868005bcce945b7d0244a0b3004321373cd48fa1b22a9691928f52b19eb08b",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "takeHome.2026-27.ewni.30000.none0",
@@ -972,7 +1060,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:f387b49534882d122d45c30404d7b8e126ded95947062f6e7db306dfa61fa838",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "takeHome.2026-27.scot.45000.none0.plan4",
@@ -1079,7 +1171,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:8dc7cf16ee2047da12dbeedbab064fc00fc36f51c429f7330e64a04bae6c2c5e",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "takeHome.2025-26.scot.60000.none0",
@@ -1290,7 +1386,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:06d42b0ad5a10c61f6f0e8b12ba5154f7977d08f80de5d98e874aa7f35cebebe",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "whatIfDelta.2026-27.ewni.79500.plus1000.children1",
@@ -1313,7 +1413,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:6a6a9df0155699df52b3a81a14e1a4c6976ef374d317873991d74a5c21efa5a5",
+    rulingRef:
+      "Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3)): 53 in 2020/21 and 2026/27, at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; total, percentage and charge rounded down under s.681C(3); figure re-derived by the decider on 20 Nov 2026.",
   },
   {
     id: "scottishMarginal.2025-26.35000.plus1000",
@@ -2109,7 +2213,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:7a0ec563ac7257ba979c0ea364c29d5a078be2d3e45505082abef7819eefdb0b",
+    rulingRef:
+      "ITEPA 2003 s.681B(1)(a) charges only where adjusted net income exceeds 60,000, so the charge is 0 regardless of week count or weekly rate.",
   },
   {
     id: "hicbc.2027-28.ani60200.children1",
@@ -2129,7 +2237,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:e3fec5bff8435bdd7faa442da39ceb0debfef549b93063e6ab82e93b58b922a4",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2027-28.ani70000.children2",
@@ -2149,7 +2261,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:f2fd01e7be51b1dc2918154abdffb3937065aeee97a07d2c7da789ff28705a13",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2027-28.ani79800.children1",
@@ -2169,7 +2285,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:9c7278590082d75ac6f0510768aa677d60edff40fb7d6ddca1c95f8e1e177eaf",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "hicbc.2027-28.ani80000.children3",
@@ -2189,7 +2309,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:a8874be1920d558f8a76384f7726207fca0a024e57e03226cd128a535ac64e44",
+    rulingRef:
+      "Total Child Benefit, percentage and charge rounded down under ITEPA 2003 s.681C(3); weeks are the Mondays in the tax year (s.681H(3)), 52 in this year, at that year's single weekly rate; figure approved by the decider on 20 Nov 2026.",
   },
   {
     id: "studentLoanMulti.2027-28.plan2+postgrad.45000",
@@ -2283,7 +2407,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)): 37700 + 5000 = 42700. Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:bb70a059f4300be5b44cb446747c10ce2fcb576514ce0fd603ae60933ccb2469",
+    rulingRef:
+      "FA 2004 s.192(4), read on legislation.gov.uk on 20 Nov 2026, raises the basic and higher rate limits by the gross contribution on a claim where higher-rate tax is otherwise chargeable; this vector meets that condition and assumes the claim is made.",
   },
   {
     id: "reliefAtSource.ewni.2027-28.110000.net8000",
@@ -2305,6 +2433,10 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)): 37700 + 10000 = 47700. Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "v2:0c899c6f2654a241f11c89417724ced03b7a19ab40b82ecaa8a9d1b9de749a1f",
+    rulingRef:
+      "FA 2004 s.192(4), read on legislation.gov.uk on 20 Nov 2026, raises the basic and higher rate limits by the gross contribution on a claim where higher-rate tax is otherwise chargeable; this vector meets that condition and assumes the claim is made.",
   },
 ];
