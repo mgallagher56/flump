@@ -19,22 +19,22 @@ Self Assessment has no record filter yet, so flow 5 adds and edits records but d
 | --- | --- | ---: | ---: | ---: | ---: |
 | 1. Create and edit a budget | 1280 mouse | 12 | 23 | 0 | 0 (0 + 0) |
 | 1. Create and edit a budget | 375 touch | 12 | 23 | 0 | 0 (0 + 0) |
-| 1. Create and edit a budget | 1280 keyboard | 0 | 151 | 120 | 0 (0 + 0) |
-| 2. Complete a monthly check-in | 1280 mouse | 10 | 5 | 0 | 2 (1 + 1) |
-| 2. Complete a monthly check-in | 375 touch | 10 | 5 | 0 | 2 (1 + 1) |
-| 2. Complete a monthly check-in | 1280 keyboard | 0 | 38 | 24 | 2 (1 + 1) |
-| 3. Add, edit, update the balance of and remove an account | 1280 mouse | 16 (1 select picks) | 37 | 0 | 6 (2 + 4) |
-| 3. Add, edit, update the balance of and remove an account | 375 touch | 16 (1 select picks) | 37 | 0 | 6 (2 + 4) |
-| 3. Add, edit, update the balance of and remove an account | 1280 keyboard | 0 | 99 | 54 | 6 (2 + 4) |
-| 4. Add and edit a debt and model paying it off | 1280 mouse | 8 | 20 | 0 | 2 (0 + 2) |
-| 4. Add and edit a debt and model paying it off | 375 touch | 8 | 20 | 0 | 2 (0 + 2) |
-| 4. Add and edit a debt and model paying it off | 1280 keyboard | 0 | 67 | 45 | 2 (0 + 2) |
-| 5. Add and edit Self Assessment income and cost records | 1280 mouse | 14 | 29 | 0 | 3 (0 + 3) |
-| 5. Add and edit Self Assessment income and cost records | 375 touch | 14 | 29 | 0 | 3 (0 + 3) |
-| 5. Add and edit Self Assessment income and cost records | 1280 keyboard | 0 | 106 | 66 | 3 (0 + 3) |
-| 6. Update salary and pension, then model pension and mortgage changes | 1280 mouse | 10 | 21 | 0 | 2 (2 + 0) |
-| 6. Update salary and pension, then model pension and mortgage changes | 375 touch | 10 | 21 | 0 | 3 (2 + 1) |
-| 6. Update salary and pension, then model pension and mortgage changes | 1280 keyboard | 0 | 76 | 56 | 2 (2 + 0) |
+| 1. Create and edit a budget | 1280 keyboard | 0 | 164 | 133 | 0 (0 + 0) |
+| 2. Complete a monthly check-in | 1280 mouse | 4 | 5 | 0 | 2 (1 + 1) |
+| 2. Complete a monthly check-in | 375 touch | 4 | 5 | 0 | 2 (1 + 1) |
+| 2. Complete a monthly check-in | 1280 keyboard | 0 | 27 | 18 | 2 (1 + 1) |
+| 3. Add, edit, update the balance of and remove an account | 1280 mouse | 14 (1 select picks) | 36 | 0 | 5 (2 + 3) |
+| 3. Add, edit, update the balance of and remove an account | 375 touch | 14 (1 select picks) | 36 | 0 | 5 (2 + 3) |
+| 3. Add, edit, update the balance of and remove an account | 1280 keyboard | 0 | 100 | 54 | 5 (2 + 3) |
+| 4. Add and edit a debt and model paying it off | 1280 mouse | 9 | 20 | 0 | 2 (0 + 2) |
+| 4. Add and edit a debt and model paying it off | 375 touch | 9 | 20 | 0 | 2 (0 + 2) |
+| 4. Add and edit a debt and model paying it off | 1280 keyboard | 0 | 71 | 48 | 2 (0 + 2) |
+| 5. Add and edit Self Assessment income and cost records | 1280 mouse | 13 (1 select picks) | 29 | 0 | 2 (0 + 2) |
+| 5. Add and edit Self Assessment income and cost records | 375 touch | 13 (1 select picks) | 29 | 0 | 2 (0 + 2) |
+| 5. Add and edit Self Assessment income and cost records | 1280 keyboard | 0 | 99 | 64 | 2 (0 + 2) |
+| 6. Update salary and pension, then model pension and mortgage changes | 1280 mouse | 12 | 21 | 0 | 2 (2 + 0) |
+| 6. Update salary and pension, then model pension and mortgage changes | 375 touch | 12 | 21 | 0 | 3 (2 + 1) |
+| 6. Update salary and pension, then model pension and mortgage changes | 1280 keyboard | 0 | 81 | 59 | 2 (2 + 0) |
 | 7. New-user setup to the first dashboard figure | 1280 mouse | 9 (1 select picks) | 7 | 0 | 1 (1 + 0) |
 | 7. New-user setup to the first dashboard figure | 375 touch | 9 (1 select picks) | 7 | 0 | 1 (1 + 0) |
-| 7. New-user setup to the first dashboard figure | 1280 keyboard | 0 | 45 | 33 | 1 (1 + 0) |
+| 7. New-user setup to the first dashboard figure | 1280 keyboard | 0 | 46 | 34 | 1 (1 + 0) |

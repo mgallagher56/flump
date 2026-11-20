@@ -81,8 +81,22 @@ export interface CostChange {
   actual: number;
 }
 
+/**
+ * The most a metric may cost before the run fails (ED1 option (b); coordinator sign-off for the
+ * owner, 20 November 2026, PR 841): one click more than the baseline, no extra transition, and
+ * keystrokes or Tab hops up to 10% more, rounded up. Worked in whole numbers (baseline x 11 / 10)
+ * so 100 gives 110, not 111 from a floating-point 110.00000000000001.
+ */
+export function costLimit(metric: ComparedMetric, baseline: number): number {
+  if (metric === "clicks") return baseline + 1;
+  if (metric === "transitions") return baseline;
+  return Math.ceil((baseline * 11) / 10);
+}
+
 export interface Comparison {
   regressions: CostChange[];
+  /** Regressions above `costLimit`: these fail the run. */
+  overBudget: CostChange[];
   improvements: CostChange[];
   /** Flow runs with no baseline entry yet. */
   unbaselined: string[];
@@ -90,13 +104,17 @@ export interface Comparison {
   missing: string[];
 }
 
-/** Any compared metric above its baseline is a regression; below it, an improvement. */
+/**
+ * Any compared metric above its baseline is a regression (a warning); above its `costLimit` it is
+ * also over budget (a failure); below the baseline, an improvement.
+ */
 export function compareResults(
   baseline: InteractionBaseline,
   results: readonly FlowResult[],
 ): Comparison {
   const comparison: Comparison = {
     regressions: [],
+    overBudget: [],
     improvements: [],
     unbaselined: [],
     missing: [],
@@ -115,6 +133,7 @@ export function compareResults(
     for (const metric of COMPARED_METRICS) {
       const change = { flow, mode, metric, baseline: expected[metric], actual: cost[metric] };
       if (cost[metric] > expected[metric]) comparison.regressions.push(change);
+      if (cost[metric] > costLimit(metric, expected[metric])) comparison.overBudget.push(change);
       else if (cost[metric] < expected[metric]) comparison.improvements.push(change);
     }
   }
@@ -166,10 +185,16 @@ export function comparisonSummary(
     const scope = comparison.missing.length ? " among the flows that finished" : "";
     parts.push(`No flow costs more than the committed baseline${scope}.`, "");
   } else {
+    const over = comparison.overBudget.length;
     parts.push(
-      `**${comparison.regressions.length} cost increase(s) against the baseline.** Warn-only: this does not fail the job (ED1 option (a)).`,
+      over > 0
+        ? `**${comparison.regressions.length} cost increase(s) against the baseline, ${over} over budget: this fails the job.** The budget is one click more, no extra transition, or 10% more keystrokes or Tab hops (ED1 option (b)).`
+        : `**${comparison.regressions.length} cost increase(s) against the baseline**, all within budget (one click more, no extra transition, 10% more keystrokes or Tab hops): a warning only.`,
       "",
-      ...comparison.regressions.map((c) => `- ${describeChange(c)}`),
+      ...comparison.regressions.map(
+        (c) =>
+          `- ${describeChange(c)}${comparison.overBudget.includes(c) ? ` **over budget (limit ${costLimit(c.metric, c.baseline)})**` : ""}`,
+      ),
       "",
     );
   }

@@ -27,8 +27,8 @@
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 151,
-          "tabHops": 120,
+          "keystrokes": 164,
+          "tabHops": 133,
           "routeChanges": 0,
           "dialogOpens": 0,
           "dialogCloses": 0,
@@ -41,7 +41,7 @@
       "title": "2. Complete a monthly check-in",
       "runs": {
         "desktop-pointer": {
-          "clicks": 10,
+          "clicks": 4,
           "keystrokes": 5,
           "tabHops": 0,
           "routeChanges": 1,
@@ -51,7 +51,7 @@
           "syntheticClicks": 0
         },
         "phone-touch": {
-          "clicks": 10,
+          "clicks": 4,
           "keystrokes": 5,
           "tabHops": 0,
           "routeChanges": 1,
@@ -62,8 +62,8 @@
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 38,
-          "tabHops": 24,
+          "keystrokes": 27,
+          "tabHops": 18,
           "routeChanges": 1,
           "dialogOpens": 1,
           "dialogCloses": 1,
@@ -76,33 +76,33 @@
       "title": "3. Add, edit, update the balance of and remove an account",
       "runs": {
         "desktop-pointer": {
-          "clicks": 16,
-          "keystrokes": 37,
+          "clicks": 14,
+          "keystrokes": 36,
           "tabHops": 0,
           "routeChanges": 2,
-          "dialogOpens": 4,
-          "dialogCloses": 4,
-          "transitions": 6,
+          "dialogOpens": 3,
+          "dialogCloses": 3,
+          "transitions": 5,
           "syntheticClicks": 1
         },
         "phone-touch": {
-          "clicks": 16,
-          "keystrokes": 37,
+          "clicks": 14,
+          "keystrokes": 36,
           "tabHops": 0,
           "routeChanges": 2,
-          "dialogOpens": 4,
-          "dialogCloses": 4,
-          "transitions": 6,
+          "dialogOpens": 3,
+          "dialogCloses": 3,
+          "transitions": 5,
           "syntheticClicks": 1
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 99,
+          "keystrokes": 100,
           "tabHops": 54,
           "routeChanges": 2,
-          "dialogOpens": 4,
-          "dialogCloses": 4,
-          "transitions": 6,
+          "dialogOpens": 3,
+          "dialogCloses": 3,
+          "transitions": 5,
           "syntheticClicks": 0
         }
       }
@@ -111,7 +111,7 @@
       "title": "4. Add and edit a debt and model paying it off",
       "runs": {
         "desktop-pointer": {
-          "clicks": 8,
+          "clicks": 9,
           "keystrokes": 20,
           "tabHops": 0,
           "routeChanges": 0,
@@ -121,7 +121,7 @@
           "syntheticClicks": 0
         },
         "phone-touch": {
-          "clicks": 8,
+          "clicks": 9,
           "keystrokes": 20,
           "tabHops": 0,
           "routeChanges": 0,
@@ -132,8 +132,8 @@
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 67,
-          "tabHops": 45,
+          "keystrokes": 71,
+          "tabHops": 48,
           "routeChanges": 0,
           "dialogOpens": 2,
           "dialogCloses": 2,
@@ -146,33 +146,33 @@
       "title": "5. Add and edit Self Assessment income and cost records",
       "runs": {
         "desktop-pointer": {
-          "clicks": 14,
+          "clicks": 13,
           "keystrokes": 29,
           "tabHops": 0,
           "routeChanges": 0,
-          "dialogOpens": 3,
-          "dialogCloses": 3,
-          "transitions": 3,
-          "syntheticClicks": 0
+          "dialogOpens": 2,
+          "dialogCloses": 2,
+          "transitions": 2,
+          "syntheticClicks": 1
         },
         "phone-touch": {
-          "clicks": 14,
+          "clicks": 13,
           "keystrokes": 29,
           "tabHops": 0,
           "routeChanges": 0,
-          "dialogOpens": 3,
-          "dialogCloses": 3,
-          "transitions": 3,
-          "syntheticClicks": 0
+          "dialogOpens": 2,
+          "dialogCloses": 2,
+          "transitions": 2,
+          "syntheticClicks": 1
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 106,
-          "tabHops": 66,
+          "keystrokes": 99,
+          "tabHops": 64,
           "routeChanges": 0,
-          "dialogOpens": 3,
-          "dialogCloses": 3,
-          "transitions": 3,
+          "dialogOpens": 2,
+          "dialogCloses": 2,
+          "transitions": 2,
           "syntheticClicks": 0
         }
       }
@@ -181,7 +181,7 @@
       "title": "6. Update salary and pension, then model pension and mortgage changes",
       "runs": {
         "desktop-pointer": {
-          "clicks": 10,
+          "clicks": 12,
           "keystrokes": 21,
           "tabHops": 0,
           "routeChanges": 2,
@@ -191,7 +191,7 @@
           "syntheticClicks": 0
         },
         "phone-touch": {
-          "clicks": 10,
+          "clicks": 12,
           "keystrokes": 21,
           "tabHops": 0,
           "routeChanges": 2,
@@ -202,8 +202,8 @@
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 76,
-          "tabHops": 56,
+          "keystrokes": 81,
+          "tabHops": 59,
           "routeChanges": 2,
           "dialogOpens": 0,
           "dialogCloses": 0,
@@ -237,8 +237,8 @@
         },
         "desktop-keyboard": {
           "clicks": 0,
-          "keystrokes": 45,
-          "tabHops": 33,
+          "keystrokes": 46,
+          "tabHops": 34,
           "routeChanges": 1,
           "dialogOpens": 0,
           "dialogCloses": 0,
