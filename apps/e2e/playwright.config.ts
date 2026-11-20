@@ -8,7 +8,10 @@ const isCI = Boolean(process.env.CI);
 // The smoke suite (this config only) retries a seeding call once after a 429 within one minute's
 // Retry-After (support/rate-limit-retry.ts). Set here so the runner and its workers both see it.
 process.env.E2E_RATE_LIMIT_RETRY = "1";
-const NEW_USER_SPEC = /new-user-journey\.spec\.ts$/;
+// The new-user project's specs: the journey (it clears the one user and sets it up again), then
+// new-user-then-adds-accounts.spec.ts on the state the journey left. One worker, files in name
+// order ("new-user-journey" sorts before "new-user-then-…"), so the journey always runs first.
+const NEW_USER_SPEC = /new-user-[^/]*\.spec\.ts$/;
 // Cross-page link tests (docs/system/generated/links.md). They change the one user's saved data
 // and put it back, so they run one at a time, after the read-only persona specs. Files run in name
 // order: the homeowner specs ("L…", the persona global setup leaves) first, then the renter specs
@@ -61,11 +64,14 @@ export default defineConfig({
       workers: 1,
       dependencies: ["chromium"],
     },
-    // The suite has one user. This spec clears it, so it runs alone, after the persona specs.
+    // The suite has one user. The journey clears it, so the project runs alone, after the persona
+    // and link specs, one file at a time in name order: the journey, then the spec that builds on it.
     {
       name: "new-user",
       use: { ...devices["Desktop Chrome"], extraHTTPHeaders: clientAddressHeaders("new-user") },
       testMatch: NEW_USER_SPEC,
+      fullyParallel: false,
+      workers: 1,
       dependencies: ["links"],
     },
   ],

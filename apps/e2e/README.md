@@ -92,6 +92,11 @@ budget entry and the dashboard. The suite has one user, so the spec clears it wi
 `clearToNewUser` (the same reset endpoint) and runs in its own Playwright project, `new-user`,
 after every spec in `chromium` has finished. If a `chromium` spec fails, the journey does not run.
 It leaves the journey's data behind; global setup seeds the homeowner again on the next run.
+Setup fills the housing step as a renter (a rent and other spending, which are budget lines and
+create no account) and skips savings and debt. `tests/new-user-then-adds-accounts.spec.ts` runs
+next in the same project (one worker, files in name order, so the journey sorts first): it adds a
+savings account and a credit card on the state the journey left and checks the net worth. It
+deletes nothing and spends no reset.
 
 Each smoke project sends its own client address as `X-Forwarded-For` (`support/client-address.ts`),
 and the servers share a per-run `WEB_CLIENT_IP_HMAC_KEY`, as production does. The backend then keys
