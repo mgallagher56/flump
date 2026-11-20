@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 import { AXE_TAGS } from "../a11y/checks";
 import { clearToNewUser } from "../support/personas";
+import { paceReads } from "../support/read-budget";
 
 /**
  * Setup is not in the visual and accessibility suites (the seeded user has finished it and is sent
@@ -48,6 +49,8 @@ test("a new user sets up, adds an account and a budget entry, and the dashboard 
 }) => {
   // Five screens and four saves in one test: twice the suite default.
   test.setTimeout(60_000);
+  // Runs straight after the links project in the same read window: wait if it is nearly spent.
+  await paceReads();
   // Signed out with no stored session: the real /login route starts the (test-only) session.
   await page.goto("/login");
   await expect(page).toHaveURL(/\/$/);

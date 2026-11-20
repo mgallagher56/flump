@@ -49,16 +49,17 @@ test("colour codes in the backend's output do not break parsing", () => {
   ]);
 });
 
-test("only authenticated reads count: no health checks, no 401s, no writes", () => {
+test("only reads the store counts: no health checks, no 401s, no refused reads, no writes", () => {
   const access = [
     { at: 1, method: "GET", route: "/accounts", status: 200 },
     { at: 2, method: "GET", route: "/health/ready", status: 200 },
     { at: 3, method: "GET", route: "/user-profile", status: 401 },
     { at: 4, method: "POST", route: "/accounts", status: 201 },
     { at: 5, method: "GET", route: "/budget-entries", status: 429 },
+    { at: 6, method: "HEAD", route: "/accounts", status: 200 },
   ];
-  // The refused read still counted against the window before it was refused.
-  expect(userReads(access)).toEqual([1, 5]);
+  // A refused read burns no quota (RateLimitStore.hit returns before counting), so 5 is left out.
+  expect(userReads(access)).toEqual([1, 6]);
 });
 
 test("windows start at the first read after the last one ended, as the backend's store counts", () => {
