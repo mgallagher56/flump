@@ -271,17 +271,29 @@ test("L21 a buy-to-let mortgage's estimated interest is added as a record linked
     expect(linked?.type).toBe("expense");
     recordId = linked?.id ?? null;
   } finally {
-    // No delete: the record moves to the previous tax year and loses its link.
-    if (recordId) await moveToPreviousTaxYear(recordId, { accountId: null });
-    await backendCall(`/accounts/${mortgage.id}`, "PATCH", {
-      accountSubtype: mortgage.accountSubtype ?? null,
-    });
-    await backendCall(`/accounts/${home.id}`, "PATCH", {
-      accountSubtype: home.accountSubtype ?? null,
-    });
-    await api(page, "/user-profile", "PATCH", {
-      enabledPages: before.enabledPages ?? null,
-      dashboardWidgets: before.dashboardWidgets ?? null,
-    });
+    // Each clean-up step runs even when one before it fails (nested finally), and a failure still
+    // fails the test: the borrowed accounts go back first, so the homeowner persona never keeps
+    // rental subtypes for later specs.
+    try {
+      await backendCall(`/accounts/${mortgage.id}`, "PATCH", {
+        accountSubtype: mortgage.accountSubtype ?? null,
+      });
+    } finally {
+      try {
+        await backendCall(`/accounts/${home.id}`, "PATCH", {
+          accountSubtype: home.accountSubtype ?? null,
+        });
+      } finally {
+        try {
+          // No delete: the record moves to the previous tax year and loses its link.
+          if (recordId) await moveToPreviousTaxYear(recordId, { accountId: null });
+        } finally {
+          await api(page, "/user-profile", "PATCH", {
+            enabledPages: before.enabledPages ?? null,
+            dashboardWidgets: before.dashboardWidgets ?? null,
+          });
+        }
+      }
+    }
   }
 });
