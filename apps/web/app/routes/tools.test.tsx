@@ -10,6 +10,8 @@ vi.mock("react-router", async (importOriginal) => ({
   redirect: (await importOriginal<typeof import("react-router")>()).redirect,
   useNavigate: () => vi.fn(),
   useLoaderData: vi.fn(),
+  // The signed-out footer reads the beta mode from the root data; none here.
+  useRouteLoaderData: () => undefined,
   Link: ({
     children,
     to,

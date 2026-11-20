@@ -1,4 +1,3 @@
-import { UserProfileResponse } from "@flump/api-contract";
 import { THEME_INIT_SCRIPT, ToastProvider, useThemePreference, VisuallyHidden } from "@repo/ui";
 import { css, cx } from "@repo/ui/styled-system/css";
 import { type ReactNode, useEffect } from "react";
@@ -35,8 +34,11 @@ import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
 import { securityMiddleware } from "./security/middleware.server";
 import { useNonce } from "./security/nonce";
-import { backendFetch } from "./services/backend-client.server";
 import { ACCOUNT_ERASED_PATH, BackendError, isAccountErased } from "./services/backend-error";
+import { isInviteOnly } from "./services/beta-mode.server";
+import { inviteGateMiddleware } from "./services/invite-gate.server";
+import { loadRootProfile } from "./services/root-profile.server";
+import { throwRouteError } from "./services/route-error.server";
 import { ThemeContext } from "./ThemeContext";
 import { getAuthSession } from "./utils/auth.server";
 import { watchLogoutForms } from "./utils/userStorage";
@@ -47,13 +49,16 @@ export const links = () => [
   { rel: "stylesheet", href: styles },
 ];
 
-export const middleware = [securityMiddleware];
+// The invite gate runs inside the security middleware, so its refusal gets the same headers.
+export const middleware = [securityMiddleware, inviteGateMiddleware];
 
 // A save refused with 412 reloads the profile too, so the next save sends its latest version.
 export const shouldRevalidate = revalidateRootData;
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = i18n.lng;
+  // Started first so it overlaps the session and profile reads (usually answered from memory).
+  const inviteOnlyRead = isInviteOnly();
   const session = await getAuthSession(args, { ensureSignedIn: false });
   // A user without an access token is treated as signed out; never invent a token.
   const user = session.accessToken ? session.user : null;
@@ -63,11 +68,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   if (user && accessToken) {
     try {
-      userProfile = await backendFetch("/user-profile", {
-        accessToken,
-        signal: args.request.signal,
-        schema: UserProfileResponse,
-      });
+      // Shared with the invite gate, which may already have read it for this request.
+      userProfile = await loadRootProfile(args.context, accessToken, args.request.signal);
     } catch (error) {
       // An erased account (410) goes to the page that finishes the deletion, unless already there.
       if (
@@ -76,6 +78,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
       ) {
         throw redirect(ACCOUNT_ERASED_PATH);
       }
+      // An uninvited account gets the root "not invited" page, never the app shell.
+      if (error instanceof BackendError && error.kind === "not-invited") throwRouteError(error);
       // Keep the shell up without a profile; log only the kind and endpoint, never the token.
       if (error instanceof BackendError) {
         console.error("Root loader profile failed", { kind: error.kind, endpoint: error.endpoint });
@@ -93,6 +97,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
       : /Mobi|Android|iPhone|iPod/i.test(args.request.headers.get("user-agent") ?? "");
 
   return {
+    // Whether the beta is invite-only: the chrome then offers "Sign in" and no "Sign up".
+    inviteOnly: await inviteOnlyRead,
     isMobileClient,
     locale,
     user,
@@ -256,6 +262,15 @@ export default function App() {
   );
 }
 
+/** The invite gate's refusal (or the root loader's): a 403 whose payload kind is "not-invited". */
+function isNotInvitedError(error: unknown): boolean {
+  return (
+    isRouteErrorResponse(error) &&
+    error.status === 403 &&
+    (error.data as { kind?: unknown } | null)?.kind === "not-invited"
+  );
+}
+
 export function ErrorBoundary() {
   const nonce = useNonce();
   const { theme, preference, setPreference, toggleTheme } = useThemePreference();
@@ -265,8 +280,10 @@ export function ErrorBoundary() {
   const rootData = useRouteLoaderData<typeof loader>("root");
   forgetRootUserOnAuthError(error);
   const rootUser = useRootUser();
-  const title =
-    isRouteErrorResponse(error) && error.status === 404
+  const notInvited = isNotInvitedError(error);
+  const title = notInvited
+    ? "This account has not been invited yet"
+    : isRouteErrorResponse(error) && error.status === 404
       ? "We cannot find that page"
       : "This page did not load";
   // The root boundary replaces the whole document, so it must render html and body itself. It
@@ -298,7 +315,8 @@ export function ErrorBoundary() {
         <ThemeContext.Provider value={{ theme, preference, setPreference, toggleTheme }}>
           <ResponsiveProvider serverIsMobile={rootData?.isMobileClient}>
             {/* useRootUser keeps a signed-in reader's shell when the root data was lost (P17). */}
-            <AppShell user={rootUser}>
+            {/* Not invited: no header, nav or bottom bar, just the page and its "Sign out". */}
+            <AppShell focused={notInvited} user={notInvited ? null : rootUser}>
               <RouteErrorBoundary headingLevel="h1" />
             </AppShell>
           </ResponsiveProvider>

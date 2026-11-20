@@ -29,15 +29,28 @@ const Stub = createRoutesStub([{ path: "/", Component: UserLoginRoute }]);
 const renderWithRouter = () => customRender(<Stub />);
 
 describe("<UserLogin />", () => {
-  test("offers sign up and sign in as links when signed out", () => {
-    mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
+  test("offers sign up and sign in as links when signed out and the beta is open", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: undefined, inviteOnly: false });
     const { getByRole } = renderWithRouter();
     expect(getByRole("link", { name: "signUp" }).getAttribute("href")).toBe("/signup");
     expect(getByRole("link", { name: "logIn" }).getAttribute("href")).toBe("/login");
   });
 
+  test("offers sign in and no sign up while the beta is invite-only", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: undefined, inviteOnly: true });
+    const { getByRole, queryByRole } = renderWithRouter();
+    expect(queryByRole("link", { name: "signUp" })).toBeNull();
+    expect(getByRole("link", { name: "logIn" }).getAttribute("href")).toBe("/login");
+  });
+
+  test("offers no sign up without root data, so a failure never brings it back", () => {
+    mocks.mockUseLoaderData.mockReturnValue(undefined);
+    const { queryByRole } = renderWithRouter();
+    expect(queryByRole("link", { name: "signUp" })).toBeNull();
+  });
+
   test("renders the links with the design-system button styles, not the legacy FLP ones", () => {
-    mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
+    mocks.mockUseLoaderData.mockReturnValue({ user: undefined, inviteOnly: false });
     const { getByRole } = renderWithRouter();
     expect(getByRole("link", { name: "signUp" }).getAttribute("data-variant")).toBe("ghost");
   });

@@ -16,6 +16,7 @@ import {
 } from "~/components/navigation/navConfig";
 import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
 import UserLogin from "~/components/navigation/UserLogin";
+import { useInviteOnly } from "~/hooks/useInviteOnly";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { isPageEnabled } from "~/utils/pageConfig";
 import { footerRow, signOutForm, signUpLink } from "./MobileNavDrawer.styles";
@@ -73,6 +74,7 @@ export function withoutBarPages(routes: NavRouteItem[]): NavRouteItem[] {
 /** App content for the shared `NavDrawer` (modal behaviour lives in `@repo/ui`). */
 const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sandbox }) => {
   const { t } = useTranslation();
+  const inviteOnly = useInviteOnly();
   const { profile } = useUserProfile();
   const { pathname, search } = useLocation();
   const currentRow = currentFooterRow(pathname, search);
@@ -130,7 +132,7 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
         </>
       }
     >
-      {sandbox && !user ? (
+      {sandbox && !user && !inviteOnly ? (
         <Link className={signUpLink()} to="/signup" onClick={onClose}>
           {t("signUp", "Sign up")}
           <span>{t("signUpToOpen", "Sign up to open")}</span>

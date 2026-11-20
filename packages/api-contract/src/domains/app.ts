@@ -45,3 +45,12 @@ export const ClientPolicyResponse = z.strictObject({
   android: PlatformClientPolicy,
 });
 export type ClientPolicyResponse = z.infer<typeof ClientPolicyResponse>;
+
+/**
+ * GET /app/beta: whether the beta is invite-only, so the web app can stop offering sign-up. No
+ * auth. One boolean only: never the allowlists, their size or any email.
+ */
+export const BetaModeResponse = z.strictObject({
+  inviteOnly: z.boolean(),
+});
+export type BetaModeResponse = z.infer<typeof BetaModeResponse>;

@@ -6,6 +6,9 @@ vi.mock("@workos-inc/authkit-react-router", () => ({
   getSignUpUrl: vi.fn(async () => ({ url: "https://authkit.example/sign-up", headers: {} })),
 }));
 
+const beta = vi.hoisted(() => ({ inviteOnly: false }));
+vi.mock("~/services/beta-mode.server", () => ({ isInviteOnly: async () => beta.inviteOnly }));
+
 import { loader } from "./signup._index";
 
 const call = (path: string) =>
@@ -32,5 +35,16 @@ describe("signup route", () => {
     const response = (await call("/signup")) as Response;
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe("https://authkit.example/sign-up");
+  });
+
+  it("sends a visitor to sign in, never to sign-up, while the beta is invite-only", async () => {
+    beta.inviteOnly = true;
+    try {
+      const response = (await call("/signup")) as Response;
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe("/login");
+    } finally {
+      beta.inviteOnly = false;
+    }
   });
 });

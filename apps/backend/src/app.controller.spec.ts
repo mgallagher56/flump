@@ -40,4 +40,46 @@ describe("AppController", () => {
       vi.unstubAllEnvs();
     }
   });
+
+  describe("GET /app/beta", () => {
+    const read = (env: Record<string, string>) => {
+      for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+      try {
+        const setHeader = vi.fn();
+        const body = new AppController(new AppService(), bootConfig()).getBetaMode({
+          setHeader,
+        } as never);
+        return { body, setHeader };
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    };
+    const EMAIL = ["invited", "example.test"].join("@");
+
+    it("is open when neither allowlist is set, even with BETA_OPEN", () => {
+      expect(
+        read({ BETA_ALLOWED_EMAILS: "", BETA_ALLOWED_USER_IDS: "", BETA_OPEN: "true" }).body,
+      ).toEqual({ inviteOnly: false });
+    });
+
+    it("is invite-only when an email list or a user id list is set", () => {
+      expect(read({ BETA_ALLOWED_EMAILS: EMAIL, BETA_ALLOWED_USER_IDS: "" }).body).toEqual({
+        inviteOnly: true,
+      });
+      expect(read({ BETA_ALLOWED_EMAILS: "", BETA_ALLOWED_USER_IDS: "user_a" }).body).toEqual({
+        inviteOnly: true,
+      });
+    });
+
+    it("returns one boolean and nothing from the lists, and is never cached", () => {
+      const { body, setHeader } = read({
+        BETA_ALLOWED_EMAILS: `${EMAIL}, other@example.test`,
+        BETA_ALLOWED_USER_IDS: "user_a,user_b",
+      });
+      expect(Object.keys(body)).toEqual(["inviteOnly"]);
+      const text = JSON.stringify(body);
+      for (const leak of ["@", "example", "user_", "2", "4"]) expect(text).not.toContain(leak);
+      expect(setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
+    });
+  });
 });

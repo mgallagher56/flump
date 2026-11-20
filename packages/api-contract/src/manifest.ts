@@ -43,6 +43,7 @@ import {
   AddBudgetCategoryResponse,
   BankConnectionCapabilityResponse,
   BankConnectionListResponse,
+  BetaModeResponse,
   BudgetEntryListResponse,
   BudgetEntryResponse,
   ClientPolicyResponse,
@@ -779,6 +780,16 @@ export const routes = {
       ownership: "none",
       group: "app",
       response: ClientPolicyResponse,
+    }),
+    /** Whether the beta is invite-only (one boolean), read by the web app before sign-in. */
+    betaMode: defineRoute({
+      id: "app.betaMode",
+      method: "GET",
+      path: "app/beta",
+      auth: "public",
+      ownership: "none",
+      group: "app",
+      response: BetaModeResponse,
     }),
   },
 } as const;

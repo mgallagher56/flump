@@ -5,6 +5,9 @@ import { describe, expect, it, vi } from "vitest";
 import { SUPPORT_EMAIL } from "~/utils/support";
 import { SignedOutFooter } from "./SignedOutFooter";
 
+const beta = vi.hoisted(() => ({ inviteOnly: false }));
+vi.mock("~/hooks/useInviteOnly", () => ({ useInviteOnly: () => beta.inviteOnly }));
+
 vi.mock("react-router", () => ({
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
@@ -21,6 +24,17 @@ describe("SignedOutFooter", () => {
     expect(screen.getByRole("link", { name: "Send feedback" }).getAttribute("href")).toContain(
       SUPPORT_EMAIL,
     );
+  });
+
+  it("offers sign in and no sign up while the beta is invite-only", () => {
+    beta.inviteOnly = true;
+    try {
+      render(<SignedOutFooter />);
+      expect(screen.queryByRole("link", { name: "Sign up" })).toBeNull();
+      expect(screen.getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe("/login");
+    } finally {
+      beta.inviteOnly = false;
+    }
   });
 
   it("lists no per-tool links, only All calculators (same rule as marketing)", async () => {
