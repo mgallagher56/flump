@@ -36,7 +36,7 @@ describe("AppConfigModule banking key format warning", () => {
 
   const compile = () =>
     NestFactory.createApplicationContext(AppConfigModule, { logger: false, abortOnError: false });
-  const keyWarnings = (warn: ReturnType<typeof vi.spyOn>) =>
+  const keyWarnings = (warn: { mock: { calls: unknown[][] } }) =>
     warn.mock.calls.map(([m]) => String(m)).filter((m) => m.includes("BANKING_TOKEN_ENCRYPTION"));
 
   it("a 32-character passphrase boots and warns once, naming the variable only", async () => {

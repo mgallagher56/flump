@@ -177,8 +177,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     it("a financial data reset that fails part-way leaves every row and the profile as they were", async () => {
       await seed(USER);
       const before = await snapshot(USER);
-      // Sanity: the seed put a row in each table the reset clears before accounts.
-      expect(before).toMatchObject({ transactions: 1, account_details: 1, budget_entries: 1 });
+      // Sanity: transactions and account_details come before accounts in the registry order, so the
+      // reset has really deleted them when the accounts trigger fires.
+      expect(before).toMatchObject({ transactions: 1, account_details: 1 });
 
       await withFailingAccountDelete(() =>
         expect(profileService().resetFinancialData(USER)).rejects.toThrow(/e1 forced failure/),
