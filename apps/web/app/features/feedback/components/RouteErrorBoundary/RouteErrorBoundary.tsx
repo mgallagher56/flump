@@ -12,6 +12,8 @@ const ACCOUNT_DETAIL = /^\/app\/accounts\/[^/]+/;
 const ID_ROUTES: readonly RegExp[] = [
   /^(\/app\/accounts\/)[^/]+/,
   /^(\/app\/tax\/receipts\/)[^/]+/,
+  // An invite token: a secret, never in a feedback subject whatever it looks like.
+  /^(\/invite\/)[^/]+/,
 ];
 
 /**

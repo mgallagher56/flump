@@ -25,7 +25,10 @@ export async function redeemInvite(
     });
     return "joined";
   } catch (error) {
-    if (error instanceof BackendError && error.status === 410) return "unusable";
+    // Only the invite's own 410: an erased account's 410 (account_deleted) is the caller's to handle.
+    if (error instanceof BackendError && error.status === 410 && error.code === "invite_unusable") {
+      return "unusable";
+    }
     if (error instanceof BackendError && error.status === 429) return "busy";
     throw error;
   }

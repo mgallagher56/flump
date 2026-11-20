@@ -29,9 +29,10 @@ const UNGATED = [
   /^\/csp-report\/?$/,
 ];
 
-function pathAndQuery(request: Request): string {
+/** The same page, always on this site: leading slashes collapse so `//host` is never a target. */
+function samePage(request: Request): string {
   const url = new URL(request.url);
-  return `${url.pathname}${url.search}`;
+  return `/${url.pathname.replace(/^\/+/, "")}${url.search}`;
 }
 
 /** A full page load: a GET that is not a client navigation's `.data` request. */
@@ -63,19 +64,18 @@ export const inviteGateMiddleware: MiddlewareFunction<Response> = async (args, n
   } catch (error) {
     // Only "not invited" stops the request; any other failure is the root loader's to handle.
     if (!(error instanceof BackendError && error.kind === "not-invited")) return next();
-    // A pending invite (sign-up did not come back to /invite): redeem it here, then start the
-    // page again, now as a member. An unusable one is dropped and the page loads again without it.
+    // A pending invite (sign-up did not come back to /invite): redeem it here once, then start
+    // the page again. Joined opens the app; otherwise the cookie is dropped (so a rate limit is not
+    // spent again on every page) and the page loads again as not invited, whose wording says to
+    // open the link again while signed in.
     const token = readInviteCookie(request);
     if (token) {
       const outcome = await redeemInvite(session.accessToken, token, request.signal).catch(
         () => "busy" as const,
       );
-      if (outcome !== "busy") {
-        const to = outcome === "joined" ? "/app" : pathAndQuery(request);
-        throw redirect(to, {
-          headers: { "Set-Cookie": clearInviteCookie(request), "Cache-Control": "no-store" },
-        });
-      }
+      throw redirect(outcome === "joined" ? "/app" : samePage(request), {
+        headers: { "Set-Cookie": clearInviteCookie(request), "Cache-Control": "no-store" },
+      });
     }
     throwRouteError(error);
   }

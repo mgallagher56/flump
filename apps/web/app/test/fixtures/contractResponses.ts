@@ -286,6 +286,10 @@ export function contractBody(method: string, path: string): unknown {
   if (/^\/imports\/[^/]+\/preview$/.test(p)) return importPreviewFixture;
   if (/^\/imports\/[^/]+(\/commit|\/revert)?$/.test(p)) return importBatchFixture;
   if (p === "/mcp-tokens") return [mcpTokenFixture];
+  if (p === "/beta/admin") return { admin: true };
+  if (p === "/beta/admin/invites" && m === "GET") return { invites: [] };
+  if (p === "/beta/admin/members") return { members: [] };
+  if (p === "/beta/invites/redeem") return { status: "joined" };
   if (p === "/retirement-plan") return { plan: retirementPlanFixture };
   if (p === "/snapshots/check-ins") return { latestCompletedMonth: "2026-10" };
   if (/^\/snapshots\/[^/]+$/.test(p)) return snapshotResponseFixture;

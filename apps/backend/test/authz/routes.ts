@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { RequestMethod } from "@nestjs/common";
 import { GUARDS_METADATA, METHOD_METADATA, PATH_METADATA } from "@nestjs/common/constants";
 import { AppModule } from "../../src/app.module";
+import { ALLOW_UNINVITED } from "../../src/auth/allow-uninvited";
 import { AuthGuard } from "../../src/auth/auth.guard";
 import { moduleControllers } from "../../src/testing/module-controllers";
 
@@ -9,6 +10,8 @@ export interface RegisteredRoute {
   /** "METHOD /path" with Nest `:param` syntax, the matrix key. */
   key: string;
   guarded: boolean;
+  /** Marked `@AllowUninvited()`: the AuthGuard's beta refusal does not apply. */
+  allowUninvited: boolean;
 }
 
 const VERBS: Partial<Record<number, string>> = {
@@ -59,6 +62,7 @@ export function registeredRoutes(): RegisteredRoute[] {
       routes.push({
         key: `${VERBS[verb]} ${joinPath(prefix, sub)}`,
         guarded: [...classGuards, ...methodGuards].includes(AuthGuard),
+        allowUninvited: Reflect.getMetadata(ALLOW_UNINVITED, handler as object) === true,
       });
     }
   }

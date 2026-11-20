@@ -50,4 +50,20 @@ describe("authz route coverage", () => {
     const offenders = fake.filter((r) => !r.guarded && !UNGUARDED_ALLOWLIST.includes(r.key));
     expect(offenders).toHaveLength(1);
   });
+
+  it("lets an uninvited caller through only to join and to their own data rights", () => {
+    // Redeeming an invite is how they join; a removed member must still be able to export their
+    // data and delete their account. Nothing else may skip the beta refusal.
+    expect(
+      routes
+        .filter((r) => r.allowUninvited)
+        .map((r) => r.key)
+        .sort(),
+    ).toEqual([
+      "DELETE /user-profile",
+      "GET /user-profile/export",
+      "GET /user-profile/export/csv",
+      "POST /beta/invites/redeem",
+    ]);
+  });
 });

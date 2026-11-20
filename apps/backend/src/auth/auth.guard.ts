@@ -89,6 +89,18 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException("Authentication failed");
     }
     const handler = typeof context.getHandler === "function" ? context.getHandler() : undefined;
+    // BE-04: an erased account's access token stays cryptographically valid until it expires (and
+    // a re-sign-in is possible while the WorkOS step is pending). Refuse it everywhere except the
+    // deletion route itself, so no write can recreate data for the erased user. /mcp is not behind
+    // this guard: its PATs are deleted with the account, which revokes them. Checked before the
+    // beta: erasure removes an invited person's membership, and a retried deletion must still get
+    // through, and every other route must answer 410 (finish the deletion), not "not invited".
+    const allowErased = handler ? Reflect.getMetadata(ALLOW_ERASED, handler) === true : false;
+    const check = this.resolveErasedCheck();
+    if (check && (await check.isErased(request.user.id))) {
+      if (allowErased) return true;
+      throw accountDeletedException();
+    }
     // Closed beta (E19 A7, invite links): a valid sign-in is not enough while the beta is
     // invite-only. Only the redeem route lets an uninvited caller through, so they can join.
     const allowUninvited = handler ? Reflect.getMetadata(ALLOW_UNINVITED, handler) === true : false;
@@ -98,15 +110,6 @@ export class AuthGuard implements CanActivate {
         error: "not_invited",
         message: "This account has not been invited to the Flump beta.",
       });
-    }
-    // BE-04: an erased account's access token stays cryptographically valid until it expires (and
-    // a re-sign-in is possible while the WorkOS step is pending). Refuse it everywhere except the
-    // deletion route itself, so no write can recreate data for the erased user. /mcp is not behind
-    // this guard: its PATs are deleted with the account, which revokes them.
-    const allowErased = handler ? Reflect.getMetadata(ALLOW_ERASED, handler) === true : false;
-    const check = allowErased ? null : this.resolveErasedCheck();
-    if (check && (await check.isErased(request.user.id))) {
-      throw accountDeletedException();
     }
     return true;
   }

@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
 /**
  * An invite link to the invite-only beta (AddBetaInvitesAndMembers1795590000000). Only the SHA-256
@@ -6,6 +6,8 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeor
  * email is stored. Retention deletes it 30 days after it closes (jobs/retention.ts).
  */
 @Entity("beta_invites")
+@Index("IDX_beta_invites_created_at", ["createdAt"])
+@Index("IDX_beta_invites_redeemed_by", ["redeemedByUserId"])
 export class BetaInvite {
   @PrimaryGeneratedColumn("uuid")
   id: string;

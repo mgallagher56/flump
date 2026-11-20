@@ -28,6 +28,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import type { Response } from "express";
+import { AllowUninvited } from "../../auth/allow-uninvited";
 import { AuthGuard } from "../../auth/auth.guard";
 import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { AllowErasedAccount } from "../../auth/erased-account";
@@ -133,6 +134,7 @@ export class UserProfileController {
    */
   @Delete("user-profile")
   @AllowErasedAccount()
+  @AllowUninvited()
   @HttpCode(200)
   @RateLimit("destructive")
   async deleteUser(
@@ -157,6 +159,7 @@ export class UserProfileController {
    * reverse.
    */
   @Get("user-profile/export")
+  @AllowUninvited()
   @RateLimit("dataExport")
   @HttpCode(200)
   async exportData(@Req() req: AuthenticatedRequest, @Res() res: Response): Promise<void> {
@@ -172,6 +175,7 @@ export class UserProfileController {
    * Writes the `user.exported` audit row before the first byte.
    */
   @Get("user-profile/export/csv")
+  @AllowUninvited()
   @RateLimit("dataExport")
   @HttpCode(200)
   async exportCsv(
