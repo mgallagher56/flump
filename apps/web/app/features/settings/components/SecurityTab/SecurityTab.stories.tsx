@@ -23,3 +23,13 @@ export const Default: Story = {
 };
 
 export const Dark: Story = { globals: { theme: "dark" } };
+
+/** A beta admin also sees the link to the invites page. */
+export const BetaAdmin: Story = {
+  args: { isBetaAdmin: true },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getByRole("link", { name: "Manage invites" }),
+    ).toHaveAttribute("href", "/app/invites");
+  },
+};

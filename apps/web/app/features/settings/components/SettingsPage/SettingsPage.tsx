@@ -22,6 +22,8 @@ export interface SettingsPageProps {
   mcpServerUrl?: string;
   /** Which net worth choices apply to the user's accounts; null when they could not be read. */
   netWorthChoices?: NetWorthChoicesAvailable | null;
+  /** True for a beta admin: the Security tab links to the invites page. */
+  isBetaAdmin?: boolean;
   /** The signed-in auth user. */
   user?: {
     email?: string;
@@ -42,6 +44,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({
   aiGuideUrl,
   mcpServerUrl,
   netWorthChoices,
+  isBetaAdmin = false,
 }) => {
   const { profile } = useUserProfile();
   const effectiveProfile = profile.id ? profile : initialProfile;
@@ -82,7 +85,12 @@ export const SettingsPage: FC<SettingsPageProps> = ({
             />
           </Tabs.Panel>
           <Tabs.Panel value="security">
-            <SecurityTab email={email} guideUrl={aiGuideUrl} serverUrl={mcpServerUrl} />
+            <SecurityTab
+              email={email}
+              guideUrl={aiGuideUrl}
+              isBetaAdmin={isBetaAdmin}
+              serverUrl={mcpServerUrl}
+            />
           </Tabs.Panel>
           <Tabs.Panel value="data">
             <DataTab />

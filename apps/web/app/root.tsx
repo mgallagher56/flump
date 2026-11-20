@@ -65,6 +65,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // Server-only: used below to fetch the profile and never returned from this loader (E20-N8).
   const { accessToken } = session;
   let userProfile: UserProfile | null = null;
+  let notInvited = false;
 
   if (user && accessToken) {
     try {
@@ -78,8 +79,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
       ) {
         throw redirect(ACCOUNT_ERASED_PATH);
       }
-      // An uninvited account gets the root "not invited" page, never the app shell.
-      if (error instanceof BackendError && error.kind === "not-invited") throwRouteError(error);
+      // An uninvited account gets the root "not invited" page, never the app shell. An invite link
+      // is the exception: it is how an uninvited person joins, so it renders its own outcome in a
+      // shell with no header or nav.
+      if (error instanceof BackendError && error.kind === "not-invited") {
+        if (!isInvitePath(new URL(args.request.url).pathname)) throwRouteError(error);
+        notInvited = true;
+      }
       // Keep the shell up without a profile; log only the kind and endpoint, never the token.
       if (error instanceof BackendError) {
         console.error("Root loader profile failed", { kind: error.kind, endpoint: error.endpoint });
@@ -101,7 +107,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     inviteOnly: await inviteOnlyRead,
     isMobileClient,
     locale,
-    user,
+    // Uninvited (only ever on an invite link): no user, so the chrome offers nothing of the app.
+    user: notInvited ? null : user,
+    notInvited,
     userProfile,
     // The browser's only public config channel (E20-N8): the three non-secret Sentry keys that
     // entry.client.tsx reads from `window.ENV`. Never add a token, API URL or other secret here.
@@ -202,10 +210,10 @@ function AppShell({ user, focused = false, children }: AppShellProps) {
 }
 
 export default function App() {
-  const { user, ENV, isMobileClient } = useLoaderData<typeof loader>();
+  const { user, ENV, isMobileClient, notInvited } = useLoaderData<typeof loader>();
   const nonce = useNonce();
   const { theme, preference, setPreference, toggleTheme } = useThemePreference();
-  const focused = useIsFocusedShell();
+  const focused = useIsFocusedShell() || notInvited;
 
   // Sign-out wipes this browser's per-user storage (E19 A6); covers every form posting to /logout.
   useEffect(() => watchLogoutForms(), []);
@@ -260,6 +268,11 @@ export default function App() {
       </body>
     </html>
   );
+}
+
+/** Invite links: `/invite/<token>` and `/invite`. */
+function isInvitePath(pathname: string): boolean {
+  return /^\/invite(\/|$)/.test(pathname);
 }
 
 /** The invite gate's refusal (or the root loader's): a 403 whose payload kind is "not-invited". */
@@ -317,7 +330,7 @@ export function ErrorBoundary() {
             {/* useRootUser keeps a signed-in reader's shell when the root data was lost (P17). */}
             {/* Not invited: no header, nav or bottom bar, just the page and its "Sign out". */}
             <AppShell focused={notInvited} user={notInvited ? null : rootUser}>
-              <RouteErrorBoundary headingLevel="h1" />
+              <RouteErrorBoundary headingLevel="h1" isRoot />
             </AppShell>
           </ResponsiveProvider>
         </ThemeContext.Provider>

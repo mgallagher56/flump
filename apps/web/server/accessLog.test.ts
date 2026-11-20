@@ -7,6 +7,13 @@ import { accessLog, formatLine, normalisePath, resolveRequestId } from "./access
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 describe("normalisePath", () => {
+  it("never logs an invite token (web /invite/<token>)", () => {
+    // Built at runtime so no token-shaped literal sits in the source.
+    const token = ["Zq7", "k".repeat(37), "-_4"].join("");
+    expect(normalisePath(`/invite/${token}`)).toBe("/invite/:id");
+    expect(normalisePath(`/invite/${token}`)).not.toContain(token);
+  });
+
   it("drops the query string and fragment", () => {
     expect(normalisePath("/callback?code=abc123&state=xyz789")).toBe("/callback");
     expect(normalisePath("/callback#frag")).toBe("/callback");

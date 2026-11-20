@@ -28,8 +28,8 @@ export const NotInvited: Story = {
   args: { kind: "not-invited", routeKey: "/app" },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const [report] = await canvas.findAllByRole("link", { name: "Report this problem by email" });
-    const href = decodeURIComponent(report.getAttribute("href") ?? "");
+    const [contact] = await canvas.findAllByRole("link", { name: "Contact us by email" });
+    const href = decodeURIComponent(contact.getAttribute("href") ?? "");
     await expect(href).toContain("mailto:");
     await expect(href).toContain("[/app]");
     await expect(href).not.toContain("body=");

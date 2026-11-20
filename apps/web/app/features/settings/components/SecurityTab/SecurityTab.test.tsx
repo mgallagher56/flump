@@ -1,7 +1,11 @@
 import { ToastProvider } from "@repo/ui";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SecurityTab } from "./SecurityTab";
+
+// The admin section renders a router link; the global setup stubs parts of react-router.
+vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const mockSendResetEmail = vi
   .fn()
@@ -99,5 +103,20 @@ describe("<SecurityTab />", () => {
     mcp.tokens = [{ id: "t", name: "a", tokenPrefix: "p", scopes: ["write:stage"] }];
     render(<SecurityTab email="user@example.com" />);
     expect(screen.getByTestId("settings-imports-link").getAttribute("href")).toBe("/app/imports");
+  });
+
+  it("links a beta admin to the invites page, and shows nothing of it to anyone else", () => {
+    const { unmount } = render(
+      <MemoryRouter>
+        <SecurityTab email="sam@example.com" isBetaAdmin />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "Manage invites" }).getAttribute("href")).toBe(
+      "/app/invites",
+    );
+    unmount();
+    render(<SecurityTab email="sam@example.com" />);
+    expect(screen.queryByRole("link", { name: "Manage invites" })).toBeNull();
+    expect(screen.queryByText("Invites")).toBeNull();
   });
 });
