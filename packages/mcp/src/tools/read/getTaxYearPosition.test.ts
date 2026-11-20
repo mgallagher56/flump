@@ -141,7 +141,7 @@ describe("get_tax_year_position notes, provenance and bands", () => {
 });
 
 describe("get_tax_year_position verification for a provisional year (ruling B)", () => {
-  it("gives 2027/28 as unverified: rates announced but not yet law, checked against them", async () => {
+  it("gives 2027/28 as unverified: rates announced but not yet law", async () => {
     const h = await connectTestClient({ ...emptyUser, profileFacts: facts() });
     try {
       const e = (await h.callJson("get_tax_year_position", { taxYear: "2027/28" })) as {
@@ -150,7 +150,7 @@ describe("get_tax_year_position verification for a provisional year (ruling B)",
       expect(e.verification).toEqual({
         status: "unverified",
         detail:
-          "2027/28 figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.",
+          "2027/28 figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.",
       });
     } finally {
       await h.close();
