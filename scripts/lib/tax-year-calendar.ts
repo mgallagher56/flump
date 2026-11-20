@@ -32,6 +32,10 @@ function taxYearLabel(start: number): string {
  * @param ukDate today's UK calendar date, "YYYY-MM-DD"
  * @param currentYear tax year containing ukDate, e.g. "2026/27"
  */
+/** What to do about a provisional year (coordinator sign-off, 20 November 2026). */
+export const PROVISIONAL_NEXT_STEP =
+  "Remove the provisional marker once the Finance Bill has Royal Assent and the figures are re-checked, or get a coordinator-signed later confirmBy.";
+
 export function evaluateTaxYearCalendar(
   ukDate: string,
   currentYear: string,
@@ -58,7 +62,8 @@ export function evaluateTaxYearCalendar(
     );
   } else if (current.status === "provisional") {
     const by = current.confirmBy ?? `${startYear(currentYear)}-04-01`;
-    if (ukDate >= by) raise("fail", `${currentYear} is still provisional past ${by}.`);
+    if (ukDate >= by)
+      raise("fail", `${currentYear} is still provisional past ${by}. ${PROVISIONAL_NEXT_STEP}`);
   }
 
   // Window is 1 Dec .. 5 Apr of the current tax year (md >= 12-01 or md <= 04-05).
@@ -79,9 +84,13 @@ export function evaluateTaxYearCalendar(
     } else if (next.status === "provisional") {
       const by = next.confirmBy ?? `${nextStart}-04-01`;
       const warnFrom = `${nextStart}-03-15`;
-      if (ukDate >= by) raise("fail", `${nextYear} is still provisional on/after ${by}.`);
+      if (ukDate >= by)
+        raise("fail", `${nextYear} is still provisional on/after ${by}. ${PROVISIONAL_NEXT_STEP}`);
       else if (ukDate >= warnFrom)
-        raise("warn", `${nextYear} is still provisional (must be confirmed by ${by}).`);
+        raise(
+          "warn",
+          `${nextYear} is still provisional (must be confirmed by ${by}). ${PROVISIONAL_NEXT_STEP}`,
+        );
     }
   }
   return { level, messages };

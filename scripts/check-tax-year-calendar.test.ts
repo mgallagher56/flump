@@ -81,3 +81,14 @@ describe("check-tax-year-calendar CLI", () => {
     expect(run("2027-04-05T23:30:00Z")).toBe(1);
   });
 });
+
+describe("a provisional year's messages say what to do", () => {
+  const prov: TaxYearCalendarEntry[] = [...upTo2627, { year: "2027/28", status: "provisional" }];
+  const DO =
+    "Remove the provisional marker once the Finance Bill has Royal Assent and the figures are re-checked, or get a coordinator-signed later confirmBy.";
+  test("the warning and both failures carry the instruction", () => {
+    expect(evaluateTaxYearCalendar("2027-03-15", "2026/27", prov).messages.join(" ")).toContain(DO);
+    expect(evaluateTaxYearCalendar("2027-04-01", "2026/27", prov).messages.join(" ")).toContain(DO);
+    expect(evaluateTaxYearCalendar("2027-04-06", "2027/28", prov).messages.join(" ")).toContain(DO);
+  });
+});
