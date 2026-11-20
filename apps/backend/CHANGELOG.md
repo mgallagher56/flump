@@ -1,5 +1,55 @@
 # Changelog
 
+## [1.42.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.41.0...flump/backend-v1.42.0) (2026-11-20)
+
+
+### Features ✨
+
+* **backend:** drop the 12 retired profile columns with a 30-day before-image (audit slice 9) ([b9dc47e](https://github.com/mgallagher56/flump/commit/b9dc47ea79719e2500bd351f11a620b3b1faa17b))
+* **tax:** tax_records.account_id, rental share onto property accounts (slice 7 backend) ([e530961](https://github.com/mgallagher56/flump/commit/e530961d51313ce6b38f40cf4178c77b51b52dbf))
+
+
+### Bug Fixes 🪲
+
+* audit leftovers 3 to 6 (mortgage type, outgoings, budget flags, promo rate) ([6d39246](https://github.com/mgallagher56/flump/commit/6d39246a34a54a5805c529358277a8ed1064f160))
+* **data:** clear old take-home salaries and old reset pension zeros (audit leftovers 1, 2) ([6dc8f5c](https://github.com/mgallagher56/flump/commit/6dc8f5cc9d7ac84db007faa3f98bbacb3a8ffedb))
+* **data:** freeze the 2026/27 personal allowance in ClearTakeHomeSalaries ([dc8dba2](https://github.com/mgallagher56/flump/commit/dc8dba250ba22cd2cfbb721fd12ecb7aa887238b))
+* **data:** keep the threshold helper private in ClearTakeHomeSalaries ([56b5f10](https://github.com/mgallagher56/flump/commit/56b5f10132f1fe82e55508132bc35178ab59f7cd))
+* **migrations:** rental share before-image keeps later choices and holds no user id ([b4e4f2f](https://github.com/mgallagher56/flump/commit/b4e4f2fec3af40662f949670a0364c81f53e31a1))
+* review findings for audit leftovers (remote MCP account fields, short id, repayment choice) ([5ab7d54](https://github.com/mgallagher56/flump/commit/5ab7d5493e390ebea8203ec9cd42b00738284b03))
+* review findings for the data migrations PR ([a5eac12](https://github.com/mgallagher56/flump/commit/a5eac12a9be007dad9510701350a7f06d6f8202d))
+* **tax:** a link whose account goes mid-save is a 400; a share rounding to 100 stays sole ([62a6cde](https://github.com/mgallagher56/flump/commit/62a6cde3a55ee520d58aa7fbfc9210f84abcd0c5))
+* **tax:** CI fixes after the rebase: one tax record index, sole-or-joint column, timer, wording ([cdd1b8e](https://github.com/mgallagher56/flump/commit/cdd1b8e4d986028d73650179be783694ee9a5ee7))
+* **tax:** own line for allowance lost to savings; known tax record categories only ([cd024a6](https://github.com/mgallagher56/flump/commit/cd024a61f164a06bb1dc1cd1eaea4dfcbf803374))
+* **tax:** review fixes: self-employed line wording, trimmed category, literal list, dividend assertion ([c196ab0](https://github.com/mgallagher56/flump/commit/c196ab0918589edb34f64c07dadf60277a3903eb))
+
+
+### Documentation 📙
+
+* **value-map:** the rental share for tax is the account's; estimate and records hold (slice 7) ([acc622e](https://github.com/mgallagher56/flump/commit/acc622ebf1bf2c86ef71e177c543c3a0cf95c8d5))
+
+
+### Refactor 🔥
+
+* drop apps/mobile-companion, GET/POST /transactions and the displayName and hasSecondIncome responses ([bcfcaf9](https://github.com/mgallagher56/flump/commit/bcfcaf9bf597abb7de932bf1b08fd9580580d2c9))
+* review fixes: the data map, comments on who writes transactions, unused FinanceService injections, stale mobile mentions ([f460a02](https://github.com/mgallagher56/flump/commit/f460a02915d10260ebf4ef1b635ce090ac649673))
+
+
+### Tests 🧪
+
+* **backend:** check the worker's own database name before creating it; prove a non-test URL is refused ([237412b](https://github.com/mgallagher56/flump/commit/237412ba9f672ef07f4a41b642fe21091fd5ba3c))
+* **backend:** clear CONTRACT_ENFORCE_GROUPS after each log-volume case ([dda8511](https://github.com/mgallagher56/flump/commit/dda851158c3821c2dd1de9761e39e81c97c8522e))
+* **backend:** give each db-project worker its own database so the database specs run in parallel (E41 P2) ([1e770be](https://github.com/mgallagher56/flump/commit/1e770bed61a43a1ddae35322bf5fd7e5d89e43c8))
+* **backend:** move the per-worker database helper to test/support and let TypeORM create the database ([0121be8](https://github.com/mgallagher56/flump/commit/0121be8ac951fc927ac9cd2a6f518120ba43d6df))
+* **backend:** run non-database specs in parallel, keep database specs serial (E41 P2) ([90b55b0](https://github.com/mgallagher56/flump/commit/90b55b028f008c9e9969f4b4438507da6601564e))
+* **backend:** widen the database-spec markers, cap worker database names at 63 bytes, derive from the first URL ([d8c4a16](https://github.com/mgallagher56/flump/commit/d8c4a16262266cf06861b37a9f0fef90c7676b82))
+
+
+### Miscellaneous 🙃
+
+* **migrations:** rename the tax record index constants Semgrep read as usernames ([f2784f5](https://github.com/mgallagher56/flump/commit/f2784f5b147a02f1b53b95c7ffdf428379a813b3))
+* **migrations:** slice 7 migrations into the lane's range (1795550000000, 1795550100000) ([99aa9db](https://github.com/mgallagher56/flump/commit/99aa9db7e07777ece5796cd2f6c941c2c9b056dd))
+
 ## [1.41.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.40.0...flump/backend-v1.41.0) (2026-11-19)
 
 

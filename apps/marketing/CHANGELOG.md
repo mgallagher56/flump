@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.4](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.3...flump/marketing-v1.36.4) (2026-11-20)
+
+
+### Tests 🧪
+
+* **web,ui,marketing:** run DOM-free unit tests under node; load Testing Library only with a DOM (E41 P3) ([a5d2f50](https://github.com/mgallagher56/flump/commit/a5d2f50575c8cdd1cbf24540dac905af91dc68a4))
+
 ## [1.36.3](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.2...flump/marketing-v1.36.3) (2026-11-19)
 
 
