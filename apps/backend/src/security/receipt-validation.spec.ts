@@ -90,6 +90,25 @@ describe("validateReceipt", () => {
     ).toThrow(BadRequestException);
   });
 
+  it("rejects text before the data URL", () => {
+    expect(() => validateReceipt({ receiptData: `x${dataUrl("image/png", PNG)}` })).toThrow(
+      BadRequestException,
+    );
+  });
+
+  it("rejects a RIFF file that is not WebP (a WAV) declared as image/webp", () => {
+    // WebP is "RIFF", a 4 byte size, then "WEBP" at byte 8; a WAV has "WAVE" there.
+    const WAV = Buffer.concat([
+      Buffer.from("RIFF"),
+      Buffer.alloc(4),
+      Buffer.from("WAVE"),
+      Buffer.alloc(8),
+    ]);
+    expect(() => validateReceipt({ receiptData: dataUrl("image/webp", WAV) })).toThrow(
+      BadRequestException,
+    );
+  });
+
   it("accepts an uppercase MIME and returns it lowercased", () => {
     expect(validateReceipt({ receiptData: dataUrl("APPLICATION/PDF", PDF) })).toBe(
       "application/pdf",
@@ -122,6 +141,8 @@ describe("validateReceiptFilename", () => {
     "a\u0000b.pdf",
     "a\nb.pdf",
     "a\u202eb.exe",
+    "a\u2066b.pdf", // bidi isolates, U+2066 to U+2069
+    "a\u2069b.pdf",
     "a\u200bb.pdf",
     "a\u0085b.pdf",
     "\ufeffa.pdf",
