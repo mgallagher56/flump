@@ -108,7 +108,7 @@ export interface TaxYearComparisonProps {
 }
 
 /** A refused year's cell: the figure is not available, and the line below the table says why. */
-export const NOT_AVAILABLE_CELL = "Not available";
+const NOT_AVAILABLE_CELL = "Not available";
 
 const SECTION_OPTIONS = GROUPS.map((g) => ({ value: g.heading, label: g.heading }));
 

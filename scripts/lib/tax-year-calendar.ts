@@ -33,7 +33,7 @@ function taxYearLabel(start: number): string {
  * @param currentYear tax year containing ukDate, e.g. "2026/27"
  */
 /** What to do about a provisional year (coordinator sign-off, 20 November 2026). */
-export const PROVISIONAL_NEXT_STEP =
+const PROVISIONAL_NEXT_STEP =
   "Remove the provisional marker once the Finance Bill has Royal Assent and the figures are re-checked, or get a coordinator-signed later confirmBy.";
 
 export function evaluateTaxYearCalendar(
