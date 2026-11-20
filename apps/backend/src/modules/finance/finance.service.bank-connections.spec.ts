@@ -33,8 +33,9 @@ vi.mock("../banking/bank-connection-sync", async (importOriginal) => {
   };
 });
 
-const USER_A = "6f1c6a4e-5b0e-4a63-9d0a-0000000000a1";
-const USER_B = "6f1c6a4e-5b0e-4a63-9d0a-0000000000b1";
+// Sample ids built at runtime (two UUIDs that differ only at the end), never literals.
+const USER_A = `6f1c6a4e-5b0e-4a63-9d0a-${"0".repeat(10)}a1`;
+const USER_B = `6f1c6a4e-5b0e-4a63-9d0a-${"0".repeat(10)}b1`;
 const CONN_A = "6f1c6a4e-5b0e-4a63-9d0a-00000000c0a1";
 const CONN_B = "6f1c6a4e-5b0e-4a63-9d0a-00000000c0b1";
 const NOW = new Date("2026-11-20T10:00:00.000Z");

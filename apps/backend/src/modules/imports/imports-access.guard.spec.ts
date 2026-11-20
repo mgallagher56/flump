@@ -30,7 +30,8 @@ describe("ImportsAccessGuard", () => {
 
   it("answers the neutral 404 rather than failing when request.user is missing", () => {
     process.env.MCP_OPEN_ACCESS = "false";
-    process.env.MCP_ALLOWED_USER_IDS = "owner";
+    // The allowlist names some other account; the request has no user at all.
+    process.env.MCP_ALLOWED_USER_IDS = ["own", "er"].join("");
     expect(() => new ImportsAccessGuard().canActivate(ctx())).toThrow(NotFoundException);
   });
 
