@@ -32,15 +32,26 @@ export const LiveSummaryBar: FC<LiveSummaryBarProps> = ({ summary, assumingRegio
       <span className={classes.label} id="onboarding-take-home-label">
         {summary.takeHomeTyped ? TYPED_TAKE_HOME_LABEL : TAKE_HOME_LABEL}
       </span>
-      <span
-        className={classes.figure}
-        data-figure="takeHome.monthly"
-        data-testid="onboarding-take-home"
-        id="onboarding-take-home"
-      >
-        {summary.hasIncome ? formatCurrency(summary.monthlyTakeHome) : NOT_SET}
-      </span>
-      {assumingRegion && summary.hasIncome ? (
+      {summary.hasIncome && summary.takeHomeRefusal ? (
+        // Refused (the year's rates are not published): one quiet line in place of the figure.
+        <span
+          className={classes.note}
+          data-testid="onboarding-take-home-refusal"
+          id="onboarding-take-home-refusal"
+        >
+          {summary.takeHomeRefusal}
+        </span>
+      ) : (
+        <span
+          className={classes.figure}
+          data-figure="takeHome.monthly"
+          data-testid="onboarding-take-home"
+          id="onboarding-take-home"
+        >
+          {summary.hasIncome ? formatCurrency(summary.monthlyTakeHome) : NOT_SET}
+        </span>
+      )}
+      {assumingRegion && summary.hasIncome && !summary.takeHomeRefusal ? (
         <span
           className={classes.note}
           data-testid="onboarding-take-home-assumption"
@@ -49,7 +60,7 @@ export const LiveSummaryBar: FC<LiveSummaryBarProps> = ({ summary, assumingRegio
           {REGION_ASSUMPTION_LABEL}
         </span>
       ) : null}
-      {summary.hasIncome && summary.takeHomeNote ? (
+      {summary.hasIncome && summary.takeHomeNote && !summary.takeHomeRefusal ? (
         <span
           className={classes.note}
           data-testid="onboarding-take-home-note"

@@ -5,6 +5,8 @@ import {
   marginalRateCurve,
   persistOnboardingSeed,
   SUPPORTED_UK_TAX_YEARS,
+  scottishRatesRefusal,
+  studentLoanThresholdNotPublishedNotice,
   type UkIncomeScenario,
   type UkStudentLoanPlanKey,
   type UkTaxYear,
@@ -225,12 +227,20 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   // banner follows the calendar instead: today's tax year has no rates yet and the year in use is
   // the one standing in for it.
   const isFallback = context.isFallback && resolveYear(taxYear) === context.ratesYear;
+  // Refused, never carried forward: Scotland in a year with no Scottish rates has no estimate.
+  // The figures below are then worked out on the other UK bands only so the hooks run in the same
+  // order every render; none of them is shown, the refusal line is.
+  const refusal = useMemo(
+    () => scottishRatesRefusal(getUkTaxYearRules(resolveYear(taxYear)), region),
+    [taxYear, region],
+  );
+  const workedRegion: MarginalRateExplorerRegion = refusal ? "ENGLAND_NI_WALES" : region;
   const scenario = useMemo(
     () =>
       explorerScenario({
         grossPay,
         bonus,
-        region,
+        region: workedRegion,
         pensionMethod,
         pensionAmount,
         studentLoans,
@@ -249,6 +259,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
       childBenefit,
       children,
       taxYear,
+      workedRegion,
     ],
   );
 
@@ -259,7 +270,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
       explorerScenario({
         grossPay: 0,
         bonus: 0,
-        region,
+        region: workedRegion,
         pensionMethod,
         pensionAmount,
         studentLoans,
@@ -268,7 +279,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         taxYear,
         extraPension: 0,
       }),
-    [region, pensionMethod, pensionAmount, studentLoans, childBenefit, children, taxYear],
+    [workedRegion, pensionMethod, pensionAmount, studentLoans, childBenefit, children, taxYear],
   );
   const curve = useMemo(
     () => marginalRateCurve(curveScenario, { from: 0, to: CURVE_MAX, step: 250 }),
@@ -294,6 +305,10 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
     [taxYear],
   );
   const selectedPlans = parseStudentLoanPlans(studentLoans);
+  // A chosen plan with no published threshold for the year is left out, and the result says so.
+  const loanLeftOut = selectedPlans.some((plan) => !plansForYear.includes(plan))
+    ? studentLoanThresholdNotPublishedNotice(resolveYear(taxYear))
+    : null;
   const togglePlan = (plan: UkStudentLoanPlanKey, on: boolean) => {
     const next = new Set(selectedPlans);
     if (on) next.add(plan);
@@ -516,6 +531,11 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
           />
         </div>
       )}
+      {loanLeftOut ? (
+        <p className={explorerOutcomeCaption()} data-testid="explorer-loan-left-out">
+          {loanLeftOut}
+        </p>
+      ) : null}
       {cta}
       <MarginalRateChart
         headingLevel={sectionHeading}
@@ -582,7 +602,21 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
       id="marginal-rate-explorer"
     >
       <SimulatorSplitLayout
-        content={content}
+        content={
+          refusal ? (
+            <div className={explorerContent()}>
+              <div className={explorerBadges()}>
+                <StatusBadge variant="neutral">{asAtTaxYear(resolveYear(taxYear))}</StatusBadge>
+              </div>
+              <p className={explorerOutcomeCaption()} data-testid="explorer-refusal">
+                {refusal.notice}
+              </p>
+              {cta}
+            </div>
+          ) : (
+            content
+          )
+        }
         contentLabel={EXPLORER_COPY.contentLabel}
         controls={controls}
         controlsLabel={EXPLORER_COPY.controlsLabel}

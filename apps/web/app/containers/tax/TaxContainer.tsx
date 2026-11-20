@@ -271,9 +271,12 @@ const SelfAssessmentPage: FC<{
   // is not PAYE pay, and a year whose estimate depends on a fact not set has no figure.
   const employmentType = userProfile?.employmentType ?? null;
   const taxRegion = userProfile?.taxRegion ?? null;
-  const { calculatedTaxYearsData, missingByYear } = useMemo(() => {
+  const { calculatedTaxYearsData, missingByYear, refusedByYear } = useMemo(() => {
     const results: Record<string, TaxCalculationResult> = {};
     const missing: Record<string, TaxEstimateMissingFact[]> = {};
+    // Years refused because the person's rates are not published (Scottish 2027/28): the notice
+    // stands in for the figure, never a zero or a carried-forward estimate.
+    const refused: Record<string, string> = {};
     for (const year of availableYears) {
       // calculateUKTax is strict and throws for unsupported years (E22).
       if (!isSupportedUkTaxYear(year)) continue;
@@ -284,16 +287,20 @@ const SelfAssessmentPage: FC<{
       );
       if (inputs.status === "known") {
         results[year] = calculateEstimatedTax(inputs);
+      } else if (inputs.status === "refused") {
+        refused[year] = inputs.refusal.notice;
       } else {
         missing[year] = inputs.missing;
       }
     }
-    return { calculatedTaxYearsData: results, missingByYear: missing };
+    return { calculatedTaxYearsData: results, missingByYear: missing, refusedByYear: refused };
   }, [availableYears, initialRecords, payeSalary, employmentType, taxRegion, taxAccounts]);
 
   const activeYearData: TaxCalculationResult | undefined = calculatedTaxYearsData[selectedTaxYear];
   // The fact to add when the selected year's estimate cannot be worked out.
   const missingFact = addableEstimateFact(missingByYear[selectedTaxYear]);
+  // The one quiet line in place of the bill when the selected year's rates are not published.
+  const refusalNotice = refusedByYear[selectedTaxYear] ?? null;
 
   const handleSaveProfile = useCallback(() => {
     setIsProfileSaving(true);
@@ -456,8 +463,10 @@ const SelfAssessmentPage: FC<{
           onAddExpense={() => editor.openAdd(expenseSource, "expense")}
           result={activeYearData}
           taxYear={selectedTaxYear}
-          unknownAction={unknownAction}
-          unknownPrompt={missingFact ? ESTIMATE_MISSING_PROMPT[missingFact].prompt : undefined}
+          unknownAction={refusalNotice ? undefined : unknownAction}
+          unknownPrompt={
+            refusalNotice ?? (missingFact ? ESTIMATE_MISSING_PROMPT[missingFact].prompt : undefined)
+          }
         />
       )}
 
@@ -571,6 +580,7 @@ const SelfAssessmentPage: FC<{
             <TaxYearComparison
               years={availableYears}
               selectedYear={selectedTaxYear}
+              refusedYears={refusedByYear}
               results={calculatedTaxYearsData}
               salaryKnown={payeSalary !== null}
             />

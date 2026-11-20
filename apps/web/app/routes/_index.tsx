@@ -87,6 +87,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const monthlyOutgoings = budget?.outgoings ?? 0;
   const budgetedSavings = budget?.savings ?? 0;
   const safeToSpend = knownOrNull(picture.safeToSpend);
+  // A budget left unknown only because its linked take-home line is refused (the year's rates
+  // for this person are not published): the card says why, rather than asking for a budget.
+  const budgetNotice: string | null =
+    budget === null &&
+    !isFigureKnown(picture.takeHome) &&
+    picture.takeHome.reason === "rates-not-published" &&
+    picture.budgetRows.some((row) => row.linked === "take_home" && row.notSet)
+      ? (picture.takeHome.notice ?? null)
+      : null;
   const monthsOfCover = knownOrNull(picture.monthsOfCover);
 
   // Savings accounts data
@@ -147,6 +156,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const estimatedTaxDueMissing: string[] = isFigureKnown(picture.estimatedTaxDue)
     ? []
     : [...picture.estimatedTaxDue.missing];
+  // Refused (the year's rates for this person are not published): the line to show instead.
+  const estimatedTaxDueNotice: string | null = isFigureKnown(picture.estimatedTaxDue)
+    ? null
+    : (picture.estimatedTaxDue.notice ?? null);
 
   // Estimated take-home comes from the engine's one selector; unknown stays unknown.
   const takeHomeFigure = picture.takeHome;
@@ -206,6 +219,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     },
     budgetData: {
       budgetKnown: budget !== null,
+      budgetNotice,
       // Whether the budget holds income only (set up straight after onboarding): the dashboard then
       // shows the income and asks for spending, never income minus nothing as "left over".
       hasIncome: budget?.hasIncome ?? false,
@@ -282,6 +296,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       estimatedTaxDue,
       estimatedTaxDueNotes,
       estimatedTaxDueMissing,
+      estimatedTaxDueNotice,
       recordsCount: currentYearRecords.length,
     },
     debtData: picture.debtSummary,

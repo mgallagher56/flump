@@ -88,7 +88,7 @@ describe("2027/28 is supported and provisional", () => {
     expect(classifyUkTaxYear("2028/29")).toEqual({ kind: "fallback", ratesYear: "2027/28" });
   });
 
-  it("a page showing 2027/28 says provisional; any other chosen year keeps today's context", () => {
+  it("a page showing 2027/28 says provisional; today's year keeps today's notice; any other year has none", () => {
     const today = getUkTaxYearContext(new Date("2026-11-20T12:00:00Z"));
     expect(ratesContextForYear(Y, today)).toEqual({
       calendarYear: "2027/28",
@@ -96,7 +96,24 @@ describe("2027/28 is supported and provisional", () => {
       isFallback: false,
       kind: "provisional",
     });
-    expect(ratesContextForYear("2025/26", today)).toBe(today);
+    // Another year shows its own rates, so no notice: { year, year, not a fallback }.
+    expect(ratesContextForYear("2025/26", today)).toEqual({
+      calendarYear: "2025/26",
+      ratesYear: "2025/26",
+      isFallback: false,
+    });
+    // Today's own year keeps today's context.
+    expect(ratesContextForYear("2026/27", today)).toBe(today);
+    // Once today is 2027/28 (provisional), viewing 2026/27 shows no provisional notice.
+    const in2027 = getUkTaxYearContext(new Date("2027-06-01T12:00:00Z"));
+    expect(ratesContextForYear("2026/27", in2027)).toEqual({
+      calendarYear: "2026/27",
+      ratesYear: "2026/27",
+      isFallback: false,
+    });
+    // In 2028/29 the latest rates year is a fallback: viewing it keeps the fallback notice.
+    const in2028 = getUkTaxYearContext(new Date("2028-06-01T12:00:00Z"));
+    expect(ratesContextForYear("2027/28", in2028)).toBe(in2028);
   });
 
   it("the finance-cost credit rate is the property basic rate from 2027/28, 20% before", () => {

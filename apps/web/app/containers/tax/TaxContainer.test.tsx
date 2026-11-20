@@ -263,6 +263,35 @@ describe("TaxContainer, opted in", () => {
     }
   });
 
+  it("shows the refusal line, not a bill or a crash, for a Scottish taxpayer in 2027/28", () => {
+    const record2027: TaxRecord = {
+      ...mockRecords[0],
+      id: "rec-2027-scot",
+      name: "Flat rent (2027/28)",
+      date: "2027-04-06",
+      endDate: "2028-03-31",
+    };
+    mockLoaderRecords = [...mockRecords, record2027];
+    mockTaxRegion = "SCOTLAND";
+    try {
+      const { container: page } = render(<TaxContainer />);
+      fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2027/28" } });
+      expect(page.textContent).toContain(
+        "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+      );
+      // The rest of the page still renders: the records drawer and the year by year view.
+      expect(screen.getByRole("button", { name: /Records/ })).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: /Year by year/ }));
+      expect(within(page).getAllByText("Not available").length).toBeGreaterThan(0);
+      expect(
+        page.querySelector('[data-testid="tax-year-comparison-refusal"]')?.textContent,
+      ).toContain("Scottish Income Tax rates for 2027/28 are not published yet");
+    } finally {
+      mockLoaderRecords = mockRecords;
+      mockTaxRegion = "ENGLAND";
+    }
+  });
+
   it("has no next £1,000 explorer, no £100,000 banner and no link away", () => {
     const { container } = render(<TaxContainer />);
     expect(container.querySelector("#tax-pay-planner")).toBeNull();

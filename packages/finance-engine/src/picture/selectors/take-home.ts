@@ -1,8 +1,14 @@
 import { normalizeStudentLoanPlan, pickEnginePlan } from "../../profile.js";
 import type { UkStudentLoanPlan, UkTaxRegion, UkTaxYear } from "../../types.js";
-import { calculateUkTax } from "../../uk-tax.js";
-import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.js";
-import { type Figure, figureKnown, figureUnknown } from "../figure.js";
+import { calculateUkTax, toStudentLoanPlanKey } from "../../uk-tax.js";
+import {
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+  scottishRatesRefusal,
+  studentLoanThresholdRefusal,
+  UnsupportedUkTaxYearError,
+} from "../../uk-tax-year.js";
+import { type Figure, figureKnown, figureRefused, figureUnknown } from "../figure.js";
 import type { FactKey, ProfileFacts } from "../input.js";
 
 /**
@@ -100,11 +106,23 @@ export function selectTakeHome(
   const region: UkTaxRegion = f.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES";
   if (f.taxRegion === null) assumptions.push(ASSUMED_REGION_NOTE);
 
+  // Refused, never carried forward: no Scottish rates for the year means no take-home figure.
+  const rules = getUkTaxYearRules(taxYear);
+  const scottish = scottishRatesRefusal(rules, region);
+  if (scottish) return figureRefused(scottish);
+
   let studentLoanPlan: UkStudentLoanPlan = "NONE";
   if (f.studentLoanPlans === null) {
     assumptions.push(ASSUMED_NO_STUDENT_LOAN_NOTE);
   } else if (f.studentLoanPlans.length > 0) {
     studentLoanPlan = normalizeStudentLoanPlan(pickEnginePlan(f.studentLoanPlans));
+  }
+  // A plan with no published threshold for the year is left out, and the figure says so.
+  const planKey = toStudentLoanPlanKey(studentLoanPlan);
+  const loanRefusal = planKey ? studentLoanThresholdRefusal(rules, planKey) : null;
+  if (loanRefusal) {
+    studentLoanPlan = "NONE";
+    assumptions.push(loanRefusal.notice);
   }
 
   const selfEmployed = f.employmentType === "self-employed";

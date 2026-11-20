@@ -21,6 +21,11 @@ export interface TaxWidgetProps {
     estimatedTaxDueMissing?: readonly string[];
     /** The estimate's assumption notes from the engine, if any. */
     estimatedTaxDueNotes?: readonly string[];
+    /**
+     * The engine's line when the estimate is refused because the year's rates for this person
+     * are not published (Scottish 2027/28). Shown in place of the figure, never £0.
+     */
+    estimatedTaxDueNotice?: string | null;
     recordsCount: number;
   };
 }
@@ -40,7 +45,8 @@ export const taxCardShowsEstimate = (data: TaxWidgetProps["data"] | null | undef
 export const TaxWidget: FC<TaxWidgetProps> = ({ data }) => {
   const known = taxCardShowsEstimate(data);
   // An unknown estimate that needs a fact the person can add says which one (PR 785 review).
-  const missing = known ? null : addableEstimateFact(data.estimatedTaxDueMissing);
+  const refusal = known ? null : (data.estimatedTaxDueNotice ?? null);
+  const missing = known || refusal ? null : addableEstimateFact(data.estimatedTaxDueMissing);
   const notes = known ? (data.estimatedTaxDueNotes ?? []) : [];
   return (
     <WidgetCard
@@ -67,9 +73,11 @@ export const TaxWidget: FC<TaxWidgetProps> = ({ data }) => {
       line={
         known
           ? ["Tax on income not taxed through PAYE.", ...notes].join(" ")
-          : missing
-            ? ESTIMATE_MISSING_PROMPT[missing].prompt
-            : "Shown once you add income not taxed through PAYE."
+          : refusal
+            ? refusal
+            : missing
+              ? ESTIMATE_MISSING_PROMPT[missing].prompt
+              : "Shown once you add income not taxed through PAYE."
       }
       link={
         missing

@@ -1,4 +1,9 @@
-import { isFigureKnown, type ProfileFacts, selectTakeHome } from "@flump/finance-engine";
+import {
+  isFigureKnown,
+  type ProfileFacts,
+  selectTakeHome,
+  studentLoanThresholdNotPublishedNotice,
+} from "@flump/finance-engine";
 import { type OnboardingValues, ownsHome } from "./types";
 
 const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
@@ -55,6 +60,11 @@ export interface OnboardingSummary {
    * loan"), or null when no pension or student loan is in it, or in net mode.
    */
   takeHomeNote: string | null;
+  /**
+   * The one line shown in place of the take-home when the year's rates for this person are not
+   * published (Scottish 2027/28), or null. The figure is then not available, never £0.
+   */
+  takeHomeRefusal: string | null;
   /** True in take-home mode: the figure is the one typed, not an estimate. */
   takeHomeTyped: boolean;
   monthlyHousing: number;
@@ -86,6 +96,7 @@ export function deriveOnboardingSummary(values: OnboardingValues): OnboardingSum
   let monthlyTakeHome = 0;
   let annualTakeHome = 0;
   let takeHomeNote: string | null = null;
+  let takeHomeRefusal: string | null = null;
   if (values.incomeMode === "net") {
     monthlyTakeHome = takeHomeNet;
     annualTakeHome = takeHomeNet * 12;
@@ -94,7 +105,18 @@ export function deriveOnboardingSummary(values: OnboardingValues): OnboardingSum
     if (isFigureKnown(takeHome)) {
       monthlyTakeHome = takeHome.value.monthly;
       annualTakeHome = takeHome.value.annual;
-      takeHomeNote = takeHomeIncludesNote(values);
+      // A plan with no published threshold for the year is left out of the figure, so the note
+      // says so instead of "Now includes your student loan".
+      const year = takeHome.value.taxYear;
+      const loanNotice = year ? studentLoanThresholdNotPublishedNotice(year) : null;
+      if (loanNotice && takeHome.assumptions?.includes(loanNotice)) {
+        const includes = takeHomeIncludesNote({ ...values, studentLoanPlan: "NONE" });
+        takeHomeNote = includes ? `${includes}. ${loanNotice}` : loanNotice;
+      } else {
+        takeHomeNote = takeHomeIncludesNote(values);
+      }
+    } else if (takeHome.reason === "rates-not-published") {
+      takeHomeRefusal = takeHome.notice ?? null;
     }
   }
 
@@ -121,6 +143,7 @@ export function deriveOnboardingSummary(values: OnboardingValues): OnboardingSum
     monthlyTakeHome,
     annualTakeHome,
     takeHomeNote,
+    takeHomeRefusal,
     takeHomeTyped: values.incomeMode === "net",
     monthlyHousing,
     otherOutgoings,

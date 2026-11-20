@@ -11,7 +11,7 @@ import { selectSavedNetWorthSeries } from "./check-in.js";
 import {
   calculateDebtSchedule,
   compareAvalancheAndSnowball,
-  evaluateUkStudentLoan,
+  evaluateUkStudentLoanOrRefusal,
   filterConsumerDebts,
 } from "./debt-payoff.js";
 import {
@@ -59,8 +59,14 @@ import type {
   UkAllowancesStatus,
   UkTaxCalculationResult,
 } from "./types.js";
-import { calculateUkTax as computeUkTax } from "./uk-tax.js";
-import { getUkCalendarDate, resolveUkTaxYear } from "./uk-tax-year.js";
+import { calculateUkTax as computeUkTax, toStudentLoanPlanKey } from "./uk-tax.js";
+import {
+  getUkCalendarDate,
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+  scottishRatesRefusal,
+  studentLoanThresholdRefusal,
+} from "./uk-tax-year.js";
 import type { WorkplacePensionInput } from "./workplace-pension.js";
 
 export interface AnonymizationOptions {
@@ -271,10 +277,21 @@ export interface UkTaxCalculationNotApplicable {
 /** The salary tax calculation, with any assumption it makes in plain words. */
 export type UkTaxCalculationWithAssumptions = UkTaxCalculationResult & { assumptions?: string[] };
 
+/**
+ * A figure refused because the year's rate or threshold for this person is not published
+ * (Scottish rates or a student loan plan in 2027/28): not available, with the line that says why.
+ * Never a zero and never a carried-forward figure.
+ */
+export interface PackFigureNotAvailable {
+  notAvailable: "rates-not-published";
+  notice: string;
+}
+
 export type PackUkTaxCalculation =
   | ContextPackUkTaxResult
   | UkTaxCalculationNotSet
-  | UkTaxCalculationNotApplicable;
+  | UkTaxCalculationNotApplicable
+  | PackFigureNotAvailable;
 
 /** Stated when a salary is saved but no pension rate: the calculation assumes no contribution. */
 export const PENSION_NOT_SET_ASSUMPTION =
@@ -286,7 +303,12 @@ export const PENSION_METHOD_NOT_SET_ASSUMPTION =
 
 /** True when the pack's salary tax calculation holds worked-out figures. */
 export function isUkTaxCalculated(tx: PackUkTaxCalculation): tx is ContextPackUkTaxResult {
-  return !("notSet" in tx) && !("notApplicable" in tx);
+  return !("notSet" in tx) && !("notApplicable" in tx) && !("notAvailable" in tx);
+}
+
+/** True when the pack holds a refusal in place of the figure. */
+export function isPackFigureNotAvailable(value: unknown): value is PackFigureNotAvailable {
+  return typeof value === "object" && value !== null && "notAvailable" in value;
 }
 
 /** The Self Assessment estimate when a fact it depends on is not set (estimateInputsFor). */
@@ -296,9 +318,9 @@ export interface SelfAssessmentNotSet {
 
 /** True when the pack's Self Assessment ledger holds worked-out figures. */
 export function isSelfAssessmentEstimated(
-  ledger: TaxCalculationResult | SelfAssessmentNotSet,
+  ledger: TaxCalculationResult | SelfAssessmentNotSet | PackFigureNotAvailable,
 ): ledger is TaxCalculationResult {
-  return !("notSet" in ledger);
+  return !("notSet" in ledger) && !("notAvailable" in ledger);
 }
 
 export interface FlumpAiContextPack {
@@ -359,8 +381,11 @@ export interface FlumpAiContextPack {
     /** Highest rate first against smallest balance first, on minimum payments; null with no date. */
     avalancheVsSnowballComparison: AvalancheVsSnowballComparison | null;
     promoCliffAlerts: PromoCliffAlert[];
-    /** Run only when a plan and a saved Student Loan account balance exist. */
-    studentLoanEvaluation?: StudentLoanEvaluationResult;
+    /**
+     * Run only when a plan and a saved Student Loan account balance exist. Not available, with
+     * the reason, when the plan's threshold for the year is not published.
+     */
+    studentLoanEvaluation?: StudentLoanEvaluationResult | PackFigureNotAvailable;
   };
   /**
    * From the financial picture (E23): the same figures the web pages show. null means not
@@ -394,14 +419,20 @@ export interface FlumpAiContextPack {
     currentTaxYear: string;
     /**
      * `{ notSet: ["annualSalary"] }` when no salary is saved (AI-1), and
-     * `{ notApplicable: "selfEmployed" }` for a self-employed person (decision 15 option A).
+     * `{ notApplicable: "selfEmployed" }` for a self-employed person (decision 15 option A), and
+     * `{ notAvailable, notice }` when the year's Scottish rates are not published. A student loan
+     * plan with no published threshold is left out, with its notice in `assumptions`.
      */
     ukTaxCalculation: PackUkTaxCalculation;
     /**
      * Absent with no tax records. `{ notSet: [...] }` names the missing fact when the estimate
-     * cannot be worked out (estimateInputsFor), never a figure from a stand-in £0.
+     * cannot be worked out (estimateInputsFor), never a figure from a stand-in £0, and
+     * `{ notAvailable, notice }` when the year's rates for this person are not published.
      */
-    selfAssessmentLedgerSummary?: TaxCalculationResult | SelfAssessmentNotSet;
+    selfAssessmentLedgerSummary?:
+      | TaxCalculationResult
+      | SelfAssessmentNotSet
+      | PackFigureNotAvailable;
   };
   /** The ISA allowance used and remaining, present whether or not a salary is saved. */
   isaAllowance: ContextPackIsaAllowance;
@@ -553,19 +584,29 @@ export function buildFlumpAiContextPack(
 
   // Student loan: needs a saved salary and the saved Student Loan account balance (AI-1, AI-7),
   // never an assumed salary or balance.
+  // The tax year that applies on asOf (AI-3, SA-8), as the ISA allowance reads it, never a
+  // stored or default baseline year.
+  const currentTaxYear = resolveUkTaxYear(undefined, asOf);
+  const currentRules = getUkTaxYearRules(currentTaxYear);
   const studentLoanBalance = picture.netWorth.studentLoans;
-  let studentLoanEvaluation: StudentLoanEvaluationResult | undefined;
+  let studentLoanEvaluation: StudentLoanEvaluationResult | PackFigureNotAvailable | undefined;
   if (
     salaryKnown &&
     safeBaseline.studentLoanPlan &&
     safeBaseline.studentLoanPlan !== "NONE" &&
     studentLoanBalance > 0
   ) {
-    studentLoanEvaluation = evaluateUkStudentLoan(
+    // Refused, never carried forward: a plan with no published threshold has no estimate.
+    const outcome = evaluateUkStudentLoanOrRefusal(
       safeBaseline.studentLoanPlan,
       annualSalary,
       studentLoanBalance,
+      currentTaxYear,
     );
+    studentLoanEvaluation =
+      outcome.status === "known"
+        ? outcome.evaluation
+        : { notAvailable: "rates-not-published", notice: outcome.refusal.notice };
   }
 
   const observations = buildObservations({
@@ -595,10 +636,7 @@ export function buildFlumpAiContextPack(
       isaAllowanceUsedGbp === null ? null : Math.max(0, isaAllowanceGbp - isaAllowanceUsedGbp),
   };
 
-  // 7. UK Tax Calculation & Self-Assessment Ledger
-  // The tax year that applies on asOf (AI-3, SA-8), as the ISA allowance reads it, never a
-  // stored or default baseline year.
-  const currentTaxYear = resolveUkTaxYear(undefined, asOf);
+  // 7. UK Tax Calculation & Self-Assessment Ledger, for currentTaxYear (above).
   // The facts the tax figures depend on: the saved profile when the caller has it, else the
   // saved baseline (a salary of 0 there is "not saved").
   const facts = input.profileFacts;
@@ -624,34 +662,53 @@ export function buildFlumpAiContextPack(
     annualSalary: salaryKnown ? annualSalary : null,
   });
   const pensionAssumed = notSet.includes("pensionContributionPct");
+  // Refused, never carried forward (owner decision): no Scottish rates for the year means no
+  // salary tax figure; a plan with no published threshold is left out and the result says so.
+  const scottishRefusal = scottishRatesRefusal(currentRules, safeBaseline.ukRegion);
+  const loanPlanKey = toStudentLoanPlanKey(safeBaseline.studentLoanPlan ?? "NONE");
+  const loanRefusal = loanPlanKey ? studentLoanThresholdRefusal(currentRules, loanPlanKey) : null;
+  const salaryTaxAssumptions = [
+    // Item 4: the assumption is stated, not left silent.
+    ...(pensionAssumed
+      ? [PENSION_NOT_SET_ASSUMPTION]
+      : !methodKnown && pensionContributionPct > 0
+        ? [PENSION_METHOD_NOT_SET_ASSUMPTION]
+        : []),
+    ...(loanRefusal ? [loanRefusal.notice] : []),
+  ];
   const ukTaxCalculation: PackUkTaxCalculation = isSelfEmployedType(taxFacts.employmentType)
     ? { notApplicable: "selfEmployed" }
     : payeSalary > 0
-      ? withPictureIsa(
-          computeUkTax({
-            grossSalary: payeSalary,
-            pensionContributionPct,
-            isSalarySacrifice: methodKnown ? isSalarySacrifice : false,
-            studentLoanPlan: safeBaseline.studentLoanPlan,
-            region: safeBaseline.ukRegion,
-            taxYear: currentTaxYear,
-          }),
-          isaAllowance,
-          // Item 4: the assumption is stated, not left silent.
-          pensionAssumed
-            ? [PENSION_NOT_SET_ASSUMPTION]
-            : !methodKnown && pensionContributionPct > 0
-              ? [PENSION_METHOD_NOT_SET_ASSUMPTION]
-              : undefined,
-        )
+      ? scottishRefusal
+        ? { notAvailable: "rates-not-published", notice: scottishRefusal.notice }
+        : withPictureIsa(
+            computeUkTax({
+              grossSalary: payeSalary,
+              pensionContributionPct,
+              isSalarySacrifice: methodKnown ? isSalarySacrifice : false,
+              studentLoanPlan: loanRefusal ? "NONE" : safeBaseline.studentLoanPlan,
+              region: safeBaseline.ukRegion,
+              taxYear: currentTaxYear,
+            }),
+            isaAllowance,
+            salaryTaxAssumptions.length > 0 ? salaryTaxAssumptions : undefined,
+          )
       : { notSet: ["annualSalary"] };
 
   // The Self Assessment estimate follows the one rule every surface uses (estimateInputsFor).
-  let selfAssessmentLedgerSummary: TaxCalculationResult | SelfAssessmentNotSet | undefined;
+  let selfAssessmentLedgerSummary:
+    | TaxCalculationResult
+    | SelfAssessmentNotSet
+    | PackFigureNotAvailable
+    | undefined;
   if (taxRecords && taxRecords.length > 0) {
     const inputs = estimateInputsFor(taxFacts, taxRecords, currentTaxYear);
     selfAssessmentLedgerSummary =
-      inputs.status === "known" ? calculateEstimatedTax(inputs) : { notSet: inputs.missing };
+      inputs.status === "known"
+        ? calculateEstimatedTax(inputs)
+        : inputs.status === "refused"
+          ? { notAvailable: "rates-not-published", notice: inputs.refusal.notice }
+          : { notSet: inputs.missing };
   }
 
   return {
@@ -889,11 +946,13 @@ ${
     : ""
 }
 ${
-  d.studentLoanEvaluation
-    ? `\n### Student loan:\n- Balance saved: £${studentLoans.toLocaleString("en-GB")}\n- Plan: ${d.studentLoanEvaluation.plan.toUpperCase()} | Projected outcome: ${d.studentLoanEvaluation.projectedOutcome}\n- Detail: ${d.studentLoanEvaluation.reasoning}`
-    : b.studentLoanPlan && b.studentLoanPlan !== "NONE"
-      ? `\n### Student loan:\n- Plan: ${String(b.studentLoanPlan).toUpperCase()} | No student loan balance is saved, so no repayment estimate is shown.`
-      : ""
+  isPackFigureNotAvailable(d.studentLoanEvaluation)
+    ? `\n### Student loan:\n- Balance saved: £${studentLoans.toLocaleString("en-GB")}\n- Plan: ${String(b.studentLoanPlan).toUpperCase()} | ${d.studentLoanEvaluation.notice}`
+    : d.studentLoanEvaluation
+      ? `\n### Student loan:\n- Balance saved: £${studentLoans.toLocaleString("en-GB")}\n- Plan: ${d.studentLoanEvaluation.plan.toUpperCase()} | Projected outcome: ${d.studentLoanEvaluation.projectedOutcome}\n- Detail: ${d.studentLoanEvaluation.reasoning}`
+      : b.studentLoanPlan && b.studentLoanPlan !== "NONE"
+        ? `\n### Student loan:\n- Plan: ${String(b.studentLoanPlan).toUpperCase()} | No student loan balance is saved, so no repayment estimate is shown.`
+        : ""
 }
 
 ## 4. Budget
@@ -907,9 +966,11 @@ ${
 ${
   b.annualGrossSalary !== undefined && isUkTaxCalculated(tx)
     ? formatSalaryTax(b.annualGrossSalary, b, tx)
-    : "notApplicable" in tx
-      ? `- **Salary before tax:** Not used. Self-employed income comes from the Self Assessment records.\n- **Tax region:** ${b.ukRegion}\n`
-      : `- **Salary before tax:** Not set\n- **Tax region:** ${b.ukRegion}\n`
+    : isPackFigureNotAvailable(tx)
+      ? `- **Salary before tax:** ${b.annualGrossSalary === undefined ? "Not set" : `£${b.annualGrossSalary.toLocaleString("en-GB")}`}\n- **Tax region:** ${b.ukRegion}\n- **Income tax and take-home pay:** ${tx.notice}\n`
+      : "notApplicable" in tx
+        ? `- **Salary before tax:** Not used. Self-employed income comes from the Self Assessment records.\n- **Tax region:** ${b.ukRegion}\n`
+        : `- **Salary before tax:** Not set\n- **Tax region:** ${b.ukRegion}\n`
 }- **ISA allowance used this tax year:** ${
     isa.usedGbp === null
       ? "Not set (no monthly amount is saved into an ISA)"
@@ -927,9 +988,10 @@ const SELF_ASSESSMENT_MISSING_LINE: Record<TaxEstimateMissingFact, string> = {
 
 /** The Self Assessment estimate line, or nothing when there are no tax records. */
 function formatSelfAssessment(
-  ledger: TaxCalculationResult | SelfAssessmentNotSet | undefined,
+  ledger: TaxCalculationResult | SelfAssessmentNotSet | PackFigureNotAvailable | undefined,
 ): string {
   if (!ledger) return "";
+  if (isPackFigureNotAvailable(ledger)) return `- **Self Assessment estimate:** ${ledger.notice}\n`;
   if (!isSelfAssessmentEstimated(ledger)) {
     const missing = ledger.notSet[0] ?? "untaxedIncomeRecords";
     return `- **Self Assessment estimate:** ${SELF_ASSESSMENT_MISSING_LINE[missing]}\n`;

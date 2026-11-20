@@ -4,6 +4,7 @@ import {
   type MissingKey,
   profileFactsFromProfile,
   selectTakeHome,
+  studentLoanThresholdNotPublishedNotice,
 } from "@flump/finance-engine";
 import {
   ButtonLink,
@@ -198,7 +199,8 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
           emptyPrompt={
             others
               ? `Add your ${others} to see an estimate of your take-home pay.`
-              : "Take-home pay cannot be worked out for this tax year yet."
+              : // Refused (Scottish rates not published for the year): the engine's one line.
+                (saved.notice ?? "Take-home pay cannot be worked out for this tax year yet.")
           }
           label={heroLabel}
           value={undefined}
@@ -209,6 +211,10 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
   }
 
   const v = saved.value;
+  // A student loan plan with no published threshold for the year is left out of the figure, so
+  // the hero says so rather than leaving it to the details.
+  const loanLeftOutNotice = studentLoanThresholdNotPublishedNotice(taxYear);
+  const loanLeftOut = saved.assumptions?.includes(loanLeftOutNotice) ?? false;
 
   if (v.basis === "typed") {
     // No salary saved, but a take-home typed as net pay (owner decision 2 option A): that figure
@@ -264,7 +270,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
       estimateLabel={DELTA_PANEL_COPY.unverifiedBadge}
       explain={`Your saved salary before tax, less Income Tax, National Insurance, pension and student loan, at ${taxYear} rates.`}
       label={heroLabel}
-      subline="After tax and deductions"
+      subline={loanLeftOut ? loanLeftOutNotice : "After tax and deductions"}
       value={parts.takeHome}
       valueFormat={{ fractionDigits: 0 }}
     />
@@ -339,11 +345,13 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
         </div>
       </dl>
       <TaxEstimateNote className={detailNote()} taxYear={taxYear} />
-      {saved.assumptions?.map((a) => (
-        <p key={a} className={detailNote()}>
-          {a}
-        </p>
-      ))}
+      {saved.assumptions
+        ?.filter((a) => a !== loanLeftOutNotice)
+        .map((a) => (
+          <p key={a} className={detailNote()}>
+            {a}
+          </p>
+        ))}
     </>
   );
 

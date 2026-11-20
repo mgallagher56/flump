@@ -23,7 +23,7 @@ export interface BudgetOverviewProps {
    * scenario input ever reaches these figures.
    */
   picture?: Pick<FinancialPicture, "budget" | "safeToSpend"> &
-    Partial<Pick<FinancialPicture, "budgetRows">>;
+    Partial<Pick<FinancialPicture, "budgetRows" | "takeHome">>;
 }
 
 /**
@@ -59,16 +59,27 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
   const notSetLinks = new Set(
     (picture.budgetRows ?? []).filter((row) => row.notSet).map((row) => row.linked),
   );
-  const notSetPrompt = notSetLinks.has("take_home") ? (
-    <>
-      Your take-home pay is not set, so what is left over is unknown.{" "}
-      <SampleAwareLink className={inlineLink()} to="/app/profile#settings-age-and-pay">
-        Add your salary
-      </SampleAwareLink>
-    </>
-  ) : notSetLinks.has("housing") ? (
-    "Your housing payment is not set, so what is left over is unknown. Add it in your housing details below."
-  ) : null;
+  // Take-home refused because the year's rates are not published: the engine's one line, never
+  // "not set" (the salary is saved) and never £0.
+  const takeHomeRefusal =
+    picture.takeHome &&
+    !isFigureKnown(picture.takeHome) &&
+    picture.takeHome.reason === "rates-not-published"
+      ? (picture.takeHome.notice ?? null)
+      : null;
+  const notSetPrompt =
+    notSetLinks.has("take_home") && takeHomeRefusal ? (
+      takeHomeRefusal
+    ) : notSetLinks.has("take_home") ? (
+      <>
+        Your take-home pay is not set, so what is left over is unknown.{" "}
+        <SampleAwareLink className={inlineLink()} to="/app/profile#settings-age-and-pay">
+          Add your salary
+        </SampleAwareLink>
+      </>
+    ) : notSetLinks.has("housing") ? (
+      "Your housing payment is not set, so what is left over is unknown. Add it in your housing details below."
+    ) : null;
 
   const subline = notSetPrompt ? undefined : safeToSpend ? (
     <>

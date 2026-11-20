@@ -117,14 +117,14 @@ describe("<TakeHomeCalculator /> saved figures", () => {
 
   test("says which rates are used when the calendar is past the latest supported year", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2027-06-01T12:00:00Z"));
+    vi.setSystemTime(new Date("2028-06-01T12:00:00Z"));
     const { getByText, getByRole } = customRender(
       <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
       withProfile(),
     );
-    expect(getByText(/Using 2026\/27 rates/)).toBeDefined();
+    expect(getByText(/Using 2027\/28 rates/)).toBeDefined();
     fireEvent.click(getByRole("button", { name: "Show details" }));
-    expect(getByText(/^Estimate for 2026\/27/)).toBeDefined();
+    expect(getByText(/^Estimate for 2027\/28/)).toBeDefined();
   });
 });
 
@@ -293,5 +293,38 @@ describe("<TakeHomeCalculator /> typed take-home", () => {
     const heroText = hero(container)?.textContent ?? "";
     expect(heroText).not.toContain("The take-home pay you entered");
     expect(heroText).not.toContain("£2,500");
+  });
+});
+
+describe("<TakeHomeCalculator /> in 2027/28 (refused rates)", () => {
+  afterEach(() => vi.useRealTimers());
+  const in2027 = () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-05-01T12:00:00Z"));
+  };
+
+  test("a Scottish taxpayer sees the refusal line in the hero, not a figure, and the salary still shows", () => {
+    in2027();
+    const { container } = customRender(
+      <TakeHomeCalculator initialSalary={40000} onApplyIncrease={vi.fn()} />,
+      withProfile({ taxRegion: "SCOTLAND" }),
+    );
+    expect(container.textContent).toContain(
+      "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+    );
+    expect(container.querySelector("[data-estimate-label]")).toBeNull();
+    // The saved salary still shows beneath.
+    expect(container.textContent).toContain("£40,000");
+  });
+
+  test("a Plan 1 loan is left out and the hero says so", () => {
+    in2027();
+    const { container } = customRender(
+      <TakeHomeCalculator initialSalary={40000} onApplyIncrease={vi.fn()} />,
+      withProfile({ taxRegion: "ENGLAND", studentLoanPlans: ["PLAN_1"] }),
+    );
+    expect(hero(container)?.textContent).toContain(
+      "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+    );
   });
 });

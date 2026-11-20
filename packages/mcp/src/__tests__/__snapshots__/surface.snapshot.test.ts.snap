@@ -1913,6 +1913,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "2024/25",
             "2025/26",
             "2026/27",
+            "2027/28",
           ],
           "type": "string",
         },
@@ -2271,6 +2272,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "2024/25",
             "2025/26",
             "2026/27",
+            "2027/28",
           ],
           "type": "string",
         },
@@ -2457,51 +2459,58 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               "type": "object",
             },
             "incomeTaxBands": {
-              "additionalProperties": false,
-              "properties": {
-                "bands": {
-                  "items": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": "string",
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "bands": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                          },
+                          "ratePct": {
+                            "type": "number",
+                          },
+                          "taxGbp": {
+                            "type": "number",
+                          },
+                          "taxableGbp": {
+                            "type": "number",
+                          },
+                        },
+                        "required": [
+                          "name",
+                          "ratePct",
+                          "taxableGbp",
+                          "taxGbp",
+                        ],
+                        "type": "object",
                       },
-                      "ratePct": {
-                        "type": "number",
-                      },
-                      "taxGbp": {
-                        "type": "number",
-                      },
-                      "taxableGbp": {
-                        "type": "number",
-                      },
+                      "type": "array",
                     },
-                    "required": [
-                      "name",
-                      "ratePct",
-                      "taxableGbp",
-                      "taxGbp",
-                    ],
-                    "type": "object",
+                    "taxableGbp": {
+                      "type": "number",
+                    },
+                    "topBand": {
+                      "type": [
+                        "string",
+                        "null",
+                      ],
+                    },
                   },
-                  "type": "array",
-                },
-                "taxableGbp": {
-                  "type": "number",
-                },
-                "topBand": {
-                  "type": [
-                    "string",
-                    "null",
+                  "required": [
+                    "taxableGbp",
+                    "bands",
+                    "topBand",
                   ],
+                  "type": "object",
                 },
-              },
-              "required": [
-                "taxableGbp",
-                "bands",
-                "topBand",
+                {
+                  "type": "null",
+                },
               ],
-              "type": "object",
             },
             "notes": {
               "items": {
@@ -2566,13 +2575,22 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                   "type": "number",
                 },
                 "rentalTaxAfterCreditGbp": {
-                  "type": "number",
+                  "type": [
+                    "number",
+                    "null",
+                  ],
                 },
                 "rentalTaxBeforeCreditGbp": {
-                  "type": "number",
+                  "type": [
+                    "number",
+                    "null",
+                  ],
                 },
                 "taxCreditGbp": {
-                  "type": "number",
+                  "type": [
+                    "number",
+                    "null",
+                  ],
                 },
               },
               "required": [

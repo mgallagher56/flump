@@ -6,7 +6,7 @@ import {
 import { calculateEstimatedTax, estimateInputsFor } from "../../tax-estimate-inputs.js";
 import type { UkTaxYear } from "../../types.js";
 import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.js";
-import { type Figure, figureKnown, figureUnknown } from "../figure.js";
+import { type Figure, figureKnown, figureRefused, figureUnknown } from "../figure.js";
 import type { ProfileFacts } from "../input.js";
 
 export interface EstimatedTaxDue {
@@ -56,6 +56,7 @@ export function selectEstimatedTaxDue(
 
   // The one rule every Self Assessment surface uses (estimateInputsFor).
   const inputs = estimateInputsFor({ ...facts, accounts: opts.accounts ?? [] }, records, taxYear);
+  if (inputs.status === "refused") return figureRefused(inputs.refusal);
   if (inputs.status !== "known") return figureUnknown(inputs.missing, "not-set");
   const result = calculateEstimatedTax(inputs);
   const untaxedIncome = incomeOutsidePaye(result).income;

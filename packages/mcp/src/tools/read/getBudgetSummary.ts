@@ -112,7 +112,7 @@ export const getBudgetSummary = defineFlumpTool({
     // A linked line whose saved fact is not set makes the picture's totals unknown. Spending is
     // still known: it is the same selector over the lines that are set. Income and left over stay
     // unknown, never counted with a £0 line.
-    const notSetMissing = missingLinkedLines(rows);
+    const notSetMissing = missingLinkedLines(rows, m.picture.takeHome);
     const totalsFigure = isFigureKnown(m.picture.budget)
       ? m.picture.budget
       : notSetMissing.length > 0

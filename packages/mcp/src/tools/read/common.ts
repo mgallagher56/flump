@@ -289,11 +289,40 @@ const LINKED_LINE_MISSING: Record<NonNullable<BudgetEntryItem["linked"]>, Missin
   },
 };
 
-/** What a linked line that is not set is missing, for a tool's missing[]. One entry per kind. */
-export function missingLinkedLines(budgetRows: readonly BudgetEntryItem[]): Missing[] {
+/**
+ * A figure the engine refused because the year's rate or threshold for this person is not
+ * published (Scottish rates or a student loan plan in 2027/28), in the missing[] shape. There is
+ * nothing for the user to add, so `askUser` says so; `why` is the engine's notice.
+ */
+export function refusalMissing(field: string, notice: string): Missing {
+  return {
+    field,
+    why: notice,
+    askUser:
+      "Nothing to ask the user: the figure cannot be estimated until the rates are published.",
+  };
+}
+
+/**
+ * What a linked line that is not set is missing, for a tool's missing[]. One entry per kind. A
+ * take-home line refused because the year's rates are not published (pass the picture's
+ * `takeHome`) gives the engine's notice, not "no salary is saved".
+ */
+export function missingLinkedLines(
+  budgetRows: readonly BudgetEntryItem[],
+  takeHome?: FinancialPicture["takeHome"],
+): Missing[] {
   const notSet = new Set<NonNullable<BudgetEntryItem["linked"]>>();
   for (const row of budgetRows) if (row.notSet && row.linked) notSet.add(row.linked);
-  return [...notSet].map((kind) => LINKED_LINE_MISSING[kind]);
+  const refusal =
+    takeHome && takeHome.status === "unknown" && takeHome.reason === "rates-not-published"
+      ? (takeHome.notice ?? null)
+      : null;
+  return [...notSet].map((kind) =>
+    kind === "take_home" && refusal
+      ? refusalMissing("takeHome", refusal)
+      : LINKED_LINE_MISSING[kind],
+  );
 }
 
 export const MISSING_INCOME: Missing = {

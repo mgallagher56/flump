@@ -99,7 +99,7 @@ export const getFinancialSnapshot = defineFlumpTool({
 
     // Income and left over are null without an income entry, or with a linked line not set (the
     // picture's totals are then unknown): no salary-based guess, never a £0 line counted.
-    missing.push(...missingLinkedLines(m.picture.budgetRows));
+    missing.push(...missingLinkedLines(m.picture.budgetRows, m.picture.takeHome));
     const income = budget?.hasIncome ? budget.income : null;
     const surplus = budget?.hasIncome ? budget.surplus : null;
     if (income === null) {

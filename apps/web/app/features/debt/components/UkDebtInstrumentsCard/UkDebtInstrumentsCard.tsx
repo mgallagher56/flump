@@ -3,7 +3,7 @@ import {
   calculateCarFinanceBalloon,
   calculateOverdraftCost,
   calculateZeroPercentCliff,
-  evaluateUkStudentLoan,
+  evaluateUkStudentLoanOrRefusal,
 } from "@flump/finance-engine";
 import {
   CurrencyInput,
@@ -146,13 +146,17 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
   const [studentBalance, setStudentBalance] = useState<number | null>(45000);
   const [studentPlan, setStudentPlan] = useState<StudentPlan>("plan2");
 
-  const studentResult = useMemo(
+  const studentOutcome = useMemo(
     () =>
       studentSalary !== null && studentBalance !== null
-        ? evaluateUkStudentLoan(studentPlan, studentSalary, studentBalance)
+        ? evaluateUkStudentLoanOrRefusal(studentPlan, studentSalary, studentBalance)
         : null,
     [studentPlan, studentSalary, studentBalance],
   );
+  // A plan with no published threshold for this year (Plan 1 and Plan 4 in 2027/28) is refused:
+  // one line in place of the estimate, never a carried-forward one.
+  const studentResult = studentOutcome?.status === "known" ? studentOutcome.evaluation : null;
+  const studentRefusal = studentOutcome?.status === "refused" ? studentOutcome.refusal : null;
 
   const daysLeft = (days: number) => `${days} ${days === 1 ? "day" : "days"}`;
 
@@ -393,7 +397,11 @@ export const UkDebtInstrumentsCard: FC<UkDebtInstrumentsCardProps> = ({ classNam
 
       <div className={resultBox()}>
         <h3 className={resultHeading}>Student loan repayments (estimate)</h3>
-        {studentResult === null ? (
+        {studentRefusal ? (
+          <p className={footnote} data-testid="student-loan-refusal">
+            {studentRefusal.notice}
+          </p>
+        ) : studentResult === null ? (
           <p className={footnote}>{NEEDS_FIGURES}</p>
         ) : (
           <>

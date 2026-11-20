@@ -85,3 +85,35 @@ describe("<PensionTakeHomeEffect />", () => {
     expect(screen.getByText("As at tax year 2026/27")).toBeDefined();
   });
 });
+
+describe("<PensionTakeHomeEffect /> in 2027/28 (refused rates)", () => {
+  const IN_2027_28 = { now: new Date("2027-05-01T12:00:00Z") };
+
+  it("shows the Scottish refusal line in place of the outcome", () => {
+    const effect = computePensionTakeHomeEffect(
+      { ...FACTS, taxRegion: "SCOTLAND" },
+      2400,
+      IN_2027_28,
+    );
+    expect(effect.result).toBeNull();
+    render(<PensionTakeHomeEffect effect={effect} />);
+    expect(
+      screen.getByText(
+        "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+      ),
+    ).toBeDefined();
+    expect(document.querySelector('[data-figure="takeHome.delta"]')).toBeNull();
+  });
+
+  it("leaves out Plan 4 and says so beside the result", () => {
+    const effect = computePensionTakeHomeEffect(
+      { ...FACTS, studentLoanPlans: ["PLAN_4"] },
+      2400,
+      IN_2027_28,
+    );
+    expect(effect.refusalNotice).toBeNull();
+    expect(effect.result?.components.studentLoan).toBe(0);
+    render(<PensionTakeHomeEffect effect={effect} />);
+    expect(screen.getByText(/so repayments are not included\./)).toBeDefined();
+  });
+});

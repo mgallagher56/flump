@@ -8,6 +8,12 @@ import {
   type TaxRecordFields,
   type UkTaxCalculationOptions,
 } from "./tax-calculator.js";
+import {
+  getUkTaxYearRules,
+  isSupportedUkTaxYear,
+  scottishRatesRefusal,
+  type UkRefusal,
+} from "./uk-tax-year.js";
 
 /**
  * The fact a Self Assessment estimate can be missing:
@@ -53,7 +59,9 @@ export type TaxEstimateInputs<R extends TaxRecordFields = TaxRecordFields> =
       /** The region and the per-property shares to pass to calculateUKTax. */
       options: Required<Pick<UkTaxCalculationOptions, "region" | "rentalShares">>;
     }
-  | { status: "unknown"; missing: TaxEstimateMissingFact[] };
+  | { status: "unknown"; missing: TaxEstimateMissingFact[] }
+  /** The year's rates for this person are not published (Scottish 2027/28): no estimate. */
+  | { status: "refused"; refusal: UkRefusal };
 
 /** The legacy PAYE salary category, which no longer replaces the saved salary (slice 6). */
 export const LEGACY_PAYE_SALARY_CATEGORY = "paye_salary";
@@ -131,12 +139,19 @@ export function estimateInputsFor<R extends TaxRecordFields>(
     return { status: "unknown", missing: ["selfEmploymentRecords"] };
   }
 
+  // Refused, never carried forward: a Scottish taxpayer in a year with no Scottish rates.
+  const options = estimateOptionsFor(facts);
+  if (isSupportedUkTaxYear(taxYear)) {
+    const refusal = scottishRatesRefusal(getUkTaxYearRules(taxYear), options.region);
+    if (refusal) return { status: "refused", refusal };
+  }
+
   return {
     status: "known",
     taxYear,
     records: inYear,
     payeSalary: payeSalaryForTax({ employmentType: facts.employmentType, annualSalary: salary }),
-    options: estimateOptionsFor(facts),
+    options,
   };
 }
 

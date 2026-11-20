@@ -23,6 +23,8 @@ import {
   getUkTaxYearRules,
   resolveUkTaxYear,
   roundPence,
+  studentLoanThresholdRefusal,
+  type UkRefusal,
 } from "./uk-tax-year.js";
 
 /**
@@ -757,7 +759,47 @@ export function calculateCarFinanceBalloon(
 }
 
 /**
- * UK Student Loan Evaluation (Plans 1, 2, 4, 5 & Postgraduate).
+ * The student loan estimate's line when the plan's threshold for the year is not published. The
+ * estimate is the repayment itself, so "repayments are not included" does not fit here.
+ */
+export const studentLoanEstimateNotPublishedNotice = (taxYear: string): string =>
+  `The ${taxYear} repayment threshold for this student loan plan is not published yet, so there is no estimate for this year.`;
+
+/** The student loan estimate, or the refusal when the plan has no published threshold for the year. */
+export type StudentLoanEvaluationOutcome =
+  | { status: "known"; evaluation: StudentLoanEvaluationResult }
+  | { status: "refused"; refusal: UkRefusal };
+
+/**
+ * evaluateUkStudentLoan without the throw for a refused plan (Plan 1 and Plan 4 in 2027/28): the
+ * plan's threshold is not published, so there is no estimate, never a carried-forward one. The
+ * refusal's notice is the estimate's own line (studentLoanEstimateNotPublishedNotice).
+ */
+export function evaluateUkStudentLoanOrRefusal(
+  plan: "plan1" | "plan2" | "plan4" | "plan5" | "postgrad" | string,
+  annualSalary: number,
+  currentBalance: number,
+  taxYear: string = resolveUkTaxYear(),
+): StudentLoanEvaluationOutcome {
+  const year = resolveUkTaxYear(taxYear);
+  const key = toStudentLoanPlanKey(plan) ?? "plan2";
+  const refusal = studentLoanThresholdRefusal(getUkTaxYearRules(year), key);
+  if (refusal) {
+    return {
+      status: "refused",
+      refusal: { ...refusal, notice: studentLoanEstimateNotPublishedNotice(refusal.taxYear) },
+    };
+  }
+  return {
+    status: "known",
+    evaluation: evaluateUkStudentLoan(plan, annualSalary, currentBalance, year),
+  };
+}
+
+/**
+ * UK Student Loan Evaluation (Plans 1, 2, 4, 5 & Postgraduate). Throws UnsupportedUkTaxYearError
+ * for a plan with no threshold for the year; callers with a user's plan use
+ * evaluateUkStudentLoanOrRefusal instead.
  */
 export function evaluateUkStudentLoan(
   plan: "plan1" | "plan2" | "plan4" | "plan5" | "postgrad" | string,
