@@ -37,6 +37,7 @@ export const QUICK_BALANCE_COPY = {
   save: "Save",
   saving: "Saving…",
   cancel: "Cancel",
+  owedBelowZero: "Enter an amount owed of £0 or more.",
 } as const;
 
 /**
@@ -58,6 +59,7 @@ export const QuickBalanceUpdate: FC<QuickBalanceUpdateProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<number | null>(current);
+  const [fieldError, setFieldError] = useState<string | null>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
   // Set when the row closes, so focus goes back to the button that opened it (UX A3).
   const returnFocus = useRef(false);
@@ -101,6 +103,7 @@ export const QuickBalanceUpdate: FC<QuickBalanceUpdateProps> = ({
           id="quick-balance-open"
           onClick={() => {
             setValue(current);
+            setFieldError(null);
             onOpen?.();
             setOpen(true);
           }}
@@ -117,8 +120,12 @@ export const QuickBalanceUpdate: FC<QuickBalanceUpdateProps> = ({
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
+    if (value === null || pending) return;
     // A debt's amount owed is never below zero: a minus figure is not saved as more owed.
-    if (value === null || pending || (isLiability && value < 0)) return;
+    if (isLiability && value < 0) {
+      setFieldError(QUICK_BALANCE_COPY.owedBelowZero);
+      return;
+    }
     submitted.current = true;
     onSave(value);
   };
@@ -142,7 +149,12 @@ export const QuickBalanceUpdate: FC<QuickBalanceUpdateProps> = ({
         noValidate
         onSubmit={submit}
       >
-        <FormField hint={hint ?? undefined} id="quick-balance-value" label={label}>
+        <FormField
+          error={fieldError ?? undefined}
+          hint={hint ?? undefined}
+          id="quick-balance-value"
+          label={label}
+        >
           {(field) => (
             <CurrencyInput
               {...controlProps(field)}
@@ -150,7 +162,10 @@ export const QuickBalanceUpdate: FC<QuickBalanceUpdateProps> = ({
               // Escape is a shortcut for the Cancel button beside the field, not the only way out.
               onKeyDown={onKeyDown}
               min={isLiability ? 0 : undefined}
-              onValueChange={setValue}
+              onValueChange={(next) => {
+                setValue(next);
+                setFieldError(null);
+              }}
               value={value}
             />
           )}

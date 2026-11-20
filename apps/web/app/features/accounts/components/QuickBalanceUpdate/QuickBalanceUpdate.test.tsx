@@ -115,6 +115,18 @@ describe("<QuickBalanceUpdate />", () => {
     ).toBe("1,200");
   });
 
+  it("says so, and saves nothing, when a debt's amount owed is below zero", async () => {
+    const spy = vi.fn();
+    render(<Harness current={1200} isLiability spy={spy} />);
+    await userEvent.click(screen.getByRole("button", { name: "Update amount owed" }));
+    const owed = screen.getByRole("textbox", { name: "Amount owed now" });
+    await userEvent.clear(owed);
+    await userEvent.type(owed, "-50{Enter}");
+    // The field takes the minus sign as typed (only blur clamps it), so Enter submits -50.
+    expect(spy).not.toHaveBeenCalled();
+    expect(screen.getByText("Enter an amount owed of £0 or more.")).toBeDefined();
+  });
+
   it("shows the joint-account note under the field", async () => {
     render(<Harness hint="Enter the whole balance of the joint account." />);
     await open();

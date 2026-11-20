@@ -2,6 +2,7 @@ import { DEFAULT_NET_WORTH_BASIS } from "@flump/finance-engine";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { CHECK_IN_ACCOUNTS, CHECK_IN_DETAILS } from "../../fixtures";
 import type { SaveSnapshotArgs } from "../../useSaveSnapshot";
 import { CheckInSheet, type CheckInSheetProps } from "./CheckInSheet";
 
@@ -73,8 +74,9 @@ describe("CheckInSheet", () => {
         screen.getByRole("button", { name: "Keep all 2 balances as they are" }),
       );
       await screen.findByRole("heading", { name: "November is checked in." });
-      // One save: the saved current balance £1,500, and the mortgage's £180,000 owed (saved as
-      // -£180,000, shown positive). Every step then has a figure, so the month is complete.
+      // One save: the saved current balance £1,500, and the mortgage's saved balance of -£180,000,
+      // which the check-in sends as £180,000 owed (as in the step-by-step test below). Every step
+      // then has a figure, so the month is complete.
       expect(onSave).toHaveBeenCalledTimes(1);
       expect(onSave).toHaveBeenCalledWith({
         month: "2026-11",
@@ -111,6 +113,43 @@ describe("CheckInSheet", () => {
       const current = field(/New balance.*Current account/);
       expect(current.value).toBe("1,600");
       await waitFor(() => expect(document.activeElement).toBe(current));
+    });
+
+    it("never overwrites a figure given this month, even on a row reopened with Change", async () => {
+      const { onSave } = setup(withIsa);
+      // Current account: Update £1,600, then Change reopens it with the figure kept.
+      await userEvent.type(field(/New balance.*Current account/), "1600{Enter}");
+      await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+      await userEvent.click(await screen.findByRole("button", { name: /^Change/ }));
+      await userEvent.click(
+        screen.getByRole("button", { name: "Keep the other 2 balances as they are" }),
+      );
+      await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+      const sent = onSave.mock.calls[1]?.[0].payload.values.map((v) => v.accountId);
+      expect(sent).toEqual([MORTGAGE, ISA]);
+    });
+
+    it("skips a calculated figure and an account with no saved balance", async () => {
+      const [everyday, isa, mortgage, card] = CHECK_IN_ACCOUNTS.map((a) => a.id);
+      const fresh = {
+        id: "b0000000-0000-4000-8000-000000000009",
+        name: "New pot",
+        type: "Savings",
+      };
+      const { onSave } = setup({
+        accounts: [...CHECK_IN_ACCOUNTS, fresh],
+        accountDetails: CHECK_IN_DETAILS,
+      });
+      // The mortgage (rate and payment, saved balance equal to October) offers a calculated
+      // figure, and the new pot has no balance to repeat: 3 of the 5 can be kept.
+      await userEvent.click(
+        screen.getByRole("button", { name: "Keep the other 3 balances as they are" }),
+      );
+      await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+      const sent = onSave.mock.calls[0]?.[0].payload.values.map((v) => v.accountId);
+      expect([...(sent ?? [])].sort()).toEqual([everyday, isa, card].sort());
+      expect(sent).not.toContain(mortgage);
+      expect(sent).not.toContain(fresh.id);
     });
 
     it("is not offered for fewer than two balances", async () => {

@@ -148,8 +148,10 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
     );
     const target = next === -1 ? null : checkIn.steps[next];
     if (!target) return;
+    // On a phone the card moves to it and focuses its field as it shows; the field is focused here
+    // too, so the focus never drops to the page when the Keep button goes away.
     if (phone) checkIn.setIndex(next);
-    else setTimeout(() => focusCheckInStep(target.accountId), 0);
+    setTimeout(() => focusCheckInStep(target.accountId), 0);
   };
   const keepCount = checkIn.keepable.length;
   // Always on the page, so a screen reader hears the count when it is said into it.
@@ -170,23 +172,21 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
   const showInstructions = !summary && (!phone || checkIn.index === 0);
   // The month leads the description: a title with it wraps at "check-" on a phone.
   const description = showInstructions ? `${month}. ${CHECK_IN_COPY.description}` : month;
-  const body =
+  // The kept line sits above every branch, so the same live region stays on the page from the
+  // list to the summary and its count is heard.
+  const inner =
     steps.length === 0 ? (
       <p className={checkInIntro()}>{CHECK_IN_COPY.empty}</p>
     ) : summary ? (
-      <>
-        {keptLine}
-        <CheckInSummary
-          month={currentMonth}
-          onChangeBalance={checkIn.reopen}
-          onDone={() => handleOpenChange(false)}
-          summary={summary}
-        />
-      </>
+      <CheckInSummary
+        month={currentMonth}
+        onChangeBalance={checkIn.reopen}
+        onDone={() => handleOpenChange(false)}
+        summary={summary}
+      />
     ) : (
       <>
-        {keptLine}
-        {phone ? <CheckInCard checkIn={checkIn} /> : <CheckInList checkIn={checkIn} />}
+        {/* Above the accounts, so a keyboard user reaches it in a hop from the first field. */}
         {keepCount >= 2 ? (
           <div className={keepRow()}>
             <Button
@@ -201,6 +201,7 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
             </Button>
           </div>
         ) : null}
+        {phone ? <CheckInCard checkIn={checkIn} /> : <CheckInList checkIn={checkIn} />}
         {checkIn.allAnswered ? (
           // Every balance has a figure this month, but the check-in was not finished (a balance
           // saved on its own counts as a figure, not as a check-in): finish it here.
@@ -217,6 +218,12 @@ const MonthlyCheckInSheet: FC<CheckInSheetProps> = ({
         ) : null}
       </>
     );
+  const body = (
+    <>
+      {keptLine}
+      {inner}
+    </>
+  );
 
   // Opened with every account already recorded, only the short summary shows: from md that is a
   // dialog, not a full-height side sheet (STYLE-GUIDE 12.3). On a phone both rise from the bottom.
