@@ -8,7 +8,8 @@ Page: https://www.gov.uk/child-benefit-tax-charge
 
 - Tax years up to and including 2023 to 2024: charge starts over 50,000; "1% for every 100 you earned over 50,000"; 100% at 60,000.
 - Tax years starting from 2024 to 2025: charge starts over 60,000; "1% of your Child Benefit for every 200 you earn over 60,000"; 100% at 80,000.
-- Modelled on the individual basis (claimant is the higher earner). The percentage is floored to a whole per cent per full step.
+- Modelled on the individual basis (claimant is the higher earner). The step rule (1% per full £200 of adjusted net income over £60,000, £100 over £50,000 before 2024/25) is from GOV.UK, because the ITEPA 2003 s.681C(2)(b) formula is an image on legislation.gov.uk.
+- Rounding, ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C): the total Child Benefit is rounded down to whole pounds, then the percentage down to a whole number, then the charge down to whole pounds.
 
 ## Child Benefit weekly rates (eldest or only child / each other child)
 
@@ -26,7 +27,7 @@ The regulations call the two rates "enhanced rate" and "other cases". Reading th
 
 ## Open ruling
 
-Annual Child Benefit is taken as weekly rate x 52. Some tax years contain 53 Mondays, so the real annual amount, and the charge, can differ. Every HICBC vector is UNVERIFIED for this reason until the owner rules.
+Annual Child Benefit is taken as weekly rate x 52. Some tax years contain 53 Mondays, so the real annual amount, and the charge, can differ. Every HICBC vector is UNVERIFIED for this reason until a Fable decider rules (ITEPA s.681H(3) counts a week whose Monday falls in the tax year).
 
 ## Not sourced here
 

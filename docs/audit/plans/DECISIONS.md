@@ -421,3 +421,14 @@ Relayed by the coordinator during E41 M4 (PR 847). Owner's words: "mutation test
 - Supersedes round 12 decisions 4 and 5, and decision 6 as far as CI artifacts go (reports stay local; still no hosted dashboard). E41 M5 is withdrawn.
 - Decision 11 stands for the local run: asked "Keep mutation testing on the fast unit tests only, as recommended?", the owner answered: "Keep unit only".
 - A floor still only moves down with the owner's sign-off (AGENTS.md section 15). No reminder job and no staleness check.
+
+# Owner decision (2026-11-20): a Fable decider signs off tax figures
+
+Given by the owner in session on 20 November 2026. Owner's words: "I confirm: I no longer sign off tax figures. A fable agent decides them and is recorded as the signer. Change the sign-off tool and docs to match." An earlier relay of the same rule read: "remove the requirement for me to sign off on tax and similar things. a fable agent can handle these decisions".
+
+- Supersedes round 3 item 13 (tax vector sign-off: three passes, a paid accountant hour for judgement rulings, the owner's own P60s) and, for tax figures, round 1 E4 "The owner signs off the tax test vectors" and the owner sign-off notes on round 11 decisions 5, 7 and 15 and round 12 decision 8.
+- Every new figure table (tax vectors, rulings on UNVERIFIED vectors) goes to a Fable decider, not the owner. The decider is independent of the lane that built the figures: a separate agent that wrote none of them.
+- An UNVERIFIED vector is still signed only with a written ruling. Rulings now come from the decider.
+- `bun run tax:signoff apply --signer <name>` writes the signer's name to `signedOffBy` exactly as given; a decider signs as `fable-decider`. Who may run it: the coordinator, applying a recorded decider decision, or the owner. It still refuses to run in CI. A lane agent never signs its own figures.
+- The 37 signatures the owner made on 20 November 2026 (2027/28, `signedOffBy: "owner"`) stay as they are and still validate.
+- What users and the AI read says the figures are checked against the published rates (or, for a provisional year, the announced rates). It never says a person or an accountant checked them. A year in `PROVISIONAL_UK_TAX_YEARS` still never reports verified (ruling B).

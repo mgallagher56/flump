@@ -11,17 +11,17 @@ show stale figures. Hard deadline for the first cycle: **6 April 2027** (2027/28
 | Calendar guard     | `bun run check:tax-calendar` (`scripts/check-tax-year-calendar.ts`), runs in the CI Lint job | Warns from 1 December, **fails PRs and the weekly run from 1 March** if next year's table is missing. Warns from 15 March and fails from 1 April if it is only provisional. On push to `main` it only warns, so deploys are never blocked. Exit codes: 0 ok, 1 fail, 3 warn. |
 | Year context       | `getUkTaxYearContext()` in `packages/finance-engine`                                         | The one place that may substitute a year. Returns `isFallback: true` when the clock is past the last supported year.                                                                                                                                                         |
 | Strict calculators | all of `finance-engine`                                                                      | An explicit unsupported year throws `UnsupportedUkTaxYearError`. No silent fallback.                                                                                                                                                                                         |
-| Sign-off check     | `packages/finance-engine/src/test-vectors/signoff.ts`                                        | A vector is "signed" only with `signedOffBy: "owner"`, a date and a matching content hash. Editing a signed vector invalidates it.                                                                                                                                           |
+| Sign-off check     | `packages/finance-engine/src/test-vectors/signoff.ts`                                        | A vector is "signed" only with a signer name in `signedOffBy`, a date and a matching content hash. Editing a signed vector invalidates it.                                                                                                                                   |
 
 ## Calendar (normal pattern)
 
-| When                 | What appears                                                          | You do                                                                                                                         |
-| -------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Late Oct to late Nov | Budget; OOTLAR Annex A about a week later                             | Start the new year table (below). Tick the owner checklist: `docs/runbooks/tax-2027-28-verification-checklist.md` for 2027/28. |
-| Dec to Jan           | Scottish Budget (Scottish bands), Welsh rates, HMRC student-loan spec | Fill Scottish, Welsh and student-loan values.                                                                                  |
-| Late Jan / early Feb | GOV.UK "rates and thresholds for employers" page for the year         | Verify every value against it.                                                                                                 |
-| By about 20 March    |                                                                       | Owner signs vectors; flip the year to confirmed; release.                                                                      |
-| 6 April              | Go-live                                                               | Confirm the live site shows the new year with **no banner**.                                                                   |
+| When                 | What appears                                                          | You do                                                                                                                   |
+| -------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Late Oct to late Nov | Budget; OOTLAR Annex A about a week later                             | Start the new year table (below). Tick the checklist: `docs/runbooks/tax-2027-28-verification-checklist.md` for 2027/28. |
+| Dec to Jan           | Scottish Budget (Scottish bands), Welsh rates, HMRC student-loan spec | Fill Scottish, Welsh and student-loan values.                                                                            |
+| Late Jan / early Feb | GOV.UK "rates and thresholds for employers" page for the year         | Verify every value against it.                                                                                           |
+| By about 20 March    |                                                                       | A Fable decider rules on the vectors and the coordinator signs them; flip the year to confirmed; release.                |
+| 6 April              | Go-live                                                               | Confirm the live site shows the new year with **no banner**.                                                             |
 
 ## Adding a year (steps)
 
@@ -34,21 +34,27 @@ show stale figures. Hard deadline for the first cycle: **6 April 2027** (2027/28
 
 **Never load unverified figures as verified.** A year carrying any carried-forward or announced value must be provisional.
 
-## Owner sign-off of vectors (owner only)
+## Sign-off of vectors (a Fable decider decides)
 
-Agents never sign. The tool refuses to run in CI and needs `--i-am-the-owner`.
+Owner rule of 20 November 2026 (DECISIONS, "a Fable decider signs off tax figures", superseding round 3 item 13): the owner no longer signs off tax figures. A Fable decider decides them and is recorded as the signer.
 
-```bash
-bun run tax:signoff sheet --year 2027/28
-```
-
-Open the generated `docs/tax-vector-signoff-2027-28.md`. For each vector, check the figures against the source it lists, then change `[ ]` to `[x]`. For an UNVERIFIED vector also write the judgement call on its `ruling:` line (it cannot be signed without one).
+1. The lane that built the figures writes a figure table (each vector or pinned test: old, new, working, source) and hands it to a Fable decider. The decider is independent of that lane: a separate agent that wrote none of the figures.
+2. The decider checks each figure against its source and rules. For an UNVERIFIED vector it writes the judgement call, its ruling (a vector cannot be signed without one).
+3. The coordinator records the decision and prepares a sheet for exactly the vectors the decider signed:
 
 ```bash
-bun run tax:signoff apply --year 2027/28 --sheet docs/tax-vector-signoff-2027-28.md --i-am-the-owner
+bun run tax:signoff sheet --year 2027/28 --out <sheet file>
 ```
 
-This writes `signedOffBy`, `signedOffAt` and `signedOffHash` into the vectors file. Review the diff and commit it yourself. Sign 2024/25 to 2026/27 first, then 2020/21 to 2023/24 (DECISIONS round 3 item 13).
+Tick `[x]` only the vectors the decider signed, delete the rest, and copy each ruling onto its `ruling:` line.
+
+4. The coordinator, applying the recorded decision, or the owner runs:
+
+```bash
+bun run tax:signoff apply --year 2027/28 --sheet <sheet file> --signer fable-decider
+```
+
+`--signer` is written to `signedOffBy` exactly as given. The tool refuses to run in CI. A lane agent never signs its own figures. This writes `signedOffBy`, `signedOffAt` and `signedOffHash` into the vectors file; review the diff, run `bun scripts/check-tax-signoff.ts --write-baseline` and commit. The owner's 2027/28 signatures of 20 November 2026 (`signedOffBy: "owner"`) stay valid.
 
 ## 6 April checklist
 
