@@ -190,6 +190,57 @@ describe("allocatePersonalAllowance", () => {
     });
   });
 
+  it("moves allowance from interest to dividends until the interest reaches the basic rate limit", () => {
+    // Scotland (savings and dividends use UK bands, so the Scottish limits do not apply), no
+    // other income; interest 50,000, dividends 10,000. Taxable 47,430: PSA 500.
+    // Today: 12,570 against the interest. Interest 0 to 5,000 starting rate, 5,000 to 5,500 PSA,
+    //   5,500 to 37,430 at 20% = 6,386. Dividend allowance on 37,430 to 37,930; 9,500 at 35.75%
+    //   = 3,396.25. Total 9,782.25.
+    // x moved from interest to dividends: the interest top rises to 37,430 + x (+20% a pound
+    //   while it stays under 37,700); the dividend allowance moves up, so a pound taxed at 35.75%
+    //   falls into it (-35.75%). Net -15.75% a pound until x = 270; beyond, interest pays 40%.
+    // Lowest: 12,300 to interest, 270 to dividends: 9,782.25 - 270 x 15.75% = 9,739.725.
+    expect(
+      allocatePersonalAllowance(
+        input({
+          region: "SCOTLAND",
+          savings: 50000,
+          dividends: 10000,
+          personalSavingsAllowance: 500,
+        }),
+      ),
+    ).toEqual({ onNonSavings: 0, onSavings: 12300, onDividends: 270 });
+  });
+
+  it("moves allowance off property until the dividends sit wholly in their allowance (3A)", () => {
+    // 2022/23 (dividend allowance 2,000; 8.75% ordinary, 33.75% upper), 2,000 of grossed-up Gift
+    // Aid: basic rate limit 39,700. Salary 11,000 (other income first) and property 34,000:
+    // non-savings 45,000; interest 5,000; dividends 3,000. Taxable 40,430: PSA 500.
+    // The salary takes 11,000; 1,570 may move.
+    // Today: non-savings 32,430 x 20% = 6,486; interest: PSA to 32,930, 4,500 x 20% = 900;
+    //   dividend allowance 37,430 to 39,430; 270 x 8.75% = 23.625 and 730 x 33.75% = 246.375.
+    //   Total 7,656.
+    // x moved from property to dividends: non-savings +20% a pound; the interest only shifts up
+    //   (still 20%); the dividend allowance moves up 1 a pound. While x <= 270 the pound it
+    //   covers is at 8.75%: a cost. From 270 to 1,000 it covers 33.75%: total 7,723.50 -
+    //   13.75% x, which at x = 1,000 is 7,586 (the dividends are then all in their allowance).
+    //   Beyond 1,000 nothing is saved. Moving allowance to the interest instead is 20% against
+    //   20%: no gain. So 11,570 / 0 / 1,000.
+    expect(
+      allocatePersonalAllowance(
+        input({
+          rules: getUkTaxYearRules("2022/23"),
+          nonSavings: 45000,
+          savings: 5000,
+          dividends: 3000,
+          personalSavingsAllowance: 500,
+          bandExtension: 2000,
+          otherIncomeFirst: 11000,
+        }),
+      ),
+    ).toEqual({ onNonSavings: 11570, onSavings: 0, onDividends: 1000 });
+  });
+
   it("on a tie keeps the most on non-savings, then savings", () => {
     // Salary 50,000, interest 3,000. Taxable 40,430: PSA 500. x moved: salary 37,430 + x;
     // interest taxed above the PSA band at 40% throughout.
@@ -244,6 +295,24 @@ describe("allocatePersonalAllowance", () => {
           }),
         ),
       ).toEqual({ onNonSavings: 12400, onSavings: 0, onDividends: 170 });
+    });
+
+    it("on a tie that runs to the other-income limit keeps the move closest to today's", () => {
+      // Salary 11,000 (other income) and property 39,000: non-savings 50,000; interest 10,000.
+      // Taxable 47,430: PSA 500. The salary takes 11,000; 1,570 is free. x moved off the
+      // property onto the interest (as in case 4): x from 0 to 270 saves 20% a pound (the
+      // non-savings income reaches 37,700); x from 270 to 1,570 is a tie (40% against 40%), and
+      // the tie ends at the limit the salary sets. The move closest to today's is 270.
+      expect(
+        allocatePersonalAllowance(
+          input({
+            nonSavings: 50000,
+            savings: 10000,
+            personalSavingsAllowance: 500,
+            otherIncomeFirst: 11000,
+          }),
+        ),
+      ).toEqual({ onNonSavings: 12300, onSavings: 270, onDividends: 0 });
     });
 
     it("leaves the choice open when other income is small", () => {

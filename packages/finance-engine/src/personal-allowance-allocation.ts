@@ -4,6 +4,7 @@ import {
   type IncomeTaxBandLimit,
   incomeTaxBandLimits,
   type UkTaxYearRules,
+  ukIncomeTaxBandLimits,
 } from "./uk-tax-year.js";
 
 /**
@@ -34,7 +35,7 @@ export interface PersonalAllowanceAllocationInput {
   bandExtension?: number;
   /**
    * s.25(3A), 2027/28 on: the part of `nonSavings` that is not property income. The allowance
-   * goes against it first. Left out before 2027/28.
+   * goes against it first. Left out before 2027/28. Never more than `nonSavings`.
    */
   otherIncomeFirst?: number;
 }
@@ -59,16 +60,12 @@ function taxBetween(bands: readonly IncomeTaxBandLimit[], lo: number, hi: number
   return tax;
 }
 
-/** Positions closer than this are the same allocation (float noise, far below a penny). */
-const SAME = 1e-6;
-
 /**
  * The allocation with the lowest Income Tax. With the allowance used and total taxable income T
  * fixed, the tax depends on two positions: n, the top of taxable non-savings income, and m, the
  * top of taxable savings. It is continuous and piecewise linear in (n, m), cut by lines of three
- * kinds: n constant, m constant and m - n constant. A linear function on a convex piece is lowest
- * at a corner, so every crossing of two such lines is tried (the function is not convex, so no
- * local search). The tax of each is compared in pence. The allocation moves away from today's
+ * kinds: n constant, m constant and m - n constant. It is lowest at a corner of the pieces, so
+ * every crossing of two such lines is tried (the function is not convex, so no local search). The tax of each is compared in pence. The allocation moves away from today's
  * order (non-savings, then savings, then dividends) only when strictly lower, and among equal
  * lowest allocations takes the one closest to it: the most on non-savings, then on savings.
  */
@@ -81,7 +78,7 @@ export function allocatePersonalAllowance(
   const total = nonSavings + savings + dividends - used;
   const lock = Math.min(used, i.otherIncomeFirst ?? 0);
   const nonSavingsBands = incomeTaxBandLimits(rules, i.region, i.bandExtension);
-  const ukBands = incomeTaxBandLimits(rules, "ENGLAND_NI_WALES", i.bandExtension);
+  const ukBands = ukIncomeTaxBandLimits(rules, i.bandExtension);
   const dividendBands = dividendBandLimits(rules, i.bandExtension);
   const dividendAllowance = rules.dividends.allowance;
   const startingRate = rules.savings.startingRateBand;
@@ -110,59 +107,54 @@ export function allocatePersonalAllowance(
     return [nIn, mIn];
   };
 
-  const onNonSavings = Math.min(used, nonSavings);
-  const onSavings = Math.min(used - onNonSavings, savings);
-  let chosen: PersonalAllowanceAllocation = {
-    onNonSavings,
-    onSavings,
-    onDividends: used - onNonSavings - onSavings,
-  };
-  let bestN = nonSavings - onNonSavings;
-  let bestM = bestN + savings - onSavings;
-  let bestPence = pence(bestN, bestM);
-
-  // The edges: the region's own bounds, the band limits (extended), the starting rate, and where
-  // the PSA or the dividend allowance crosses a band limit or reaches the top of the income.
-  const limits = ukBands.slice(0, 2).map((b) => b.upper);
-  const nLines = [
-    nMin,
-    nMax,
-    startingRate,
-    ...nonSavingsBands.map((b) => b.lower),
-    ...limits,
-    ...limits.map((l) => l - psa),
-  ];
+  // The lines to try: the region's own bounds and every line where the tax bends upwards
+  // (its slope rises as the line is crossed):
+  // - n: the non-savings band limits (extended);
+  // - m: the UK band limits (extended), the top of the starting rate and the PSA together, and
+  //   where the dividend allowance reaches the top of the income;
+  // - m - n: where the savings equal the PSA.
+  // The other bends (the starting rate limit itself, the top of the PSA band or of the dividend
+  // allowance reaching a band limit) only lower the slope. A function that bends only downwards
+  // on a convex piece is concave there, and a concave function is still lowest at a corner of
+  // the piece, so those lines need no corners of their own.
+  const nLines = [nMin, nMax, ...nonSavingsBands.map((b) => b.lower)];
   const mLines = [
     total - dividends,
     total,
-    startingRate,
     startingRate + psa,
     total - dividendAllowance,
-    ...limits,
-    ...limits.map((l) => l - dividendAllowance),
+    ...ukBands.map((b) => b.lower),
   ];
   const kLines = [0, savings, psa];
   const points: [number, number][] = [];
   for (const n of nLines) {
-    for (const m of mLines) points.push([n, m]);
-    for (const k of kLines) points.push([n, n + k]);
+    for (const m of mLines) points.push(place(n, m));
+    for (const k of kLines) points.push(place(n, n + k));
   }
-  for (const m of mLines) for (const k of kLines) points.push([m - k, m]);
-
-  for (const point of points) {
-    const [n, m] = place(...point);
-    const p = pence(n, m);
-    const closer = n < bestN - SAME || (n < bestN + SAME && m < bestM - SAME);
-    if (p < bestPence || (p === bestPence && closer)) {
+  for (const m of mLines) for (const k of kLines) points.push(place(m - k, m));
+  // Sorted by n, then m: the first point is today's order (the least taxable non-savings income,
+  // then the least taxable savings), and each later point gives less allowance to non-savings,
+  // then to savings. So keeping the first point strictly lower picks, among equal lowest, the one
+  // closest to today's.
+  points.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  let best = 0;
+  let bestPence = pence(...(points[0] as [number, number]));
+  for (const [k, point] of points.entries()) {
+    const p = pence(...point);
+    if (p < bestPence) {
+      best = k;
       bestPence = p;
-      bestN = n;
-      bestM = m;
-      chosen = {
-        onNonSavings: nonSavings - n,
-        onSavings: savings - (m - n),
-        onDividends: dividends - (total - m),
-      };
     }
   }
-  return chosen;
+  if (best === 0) {
+    const onNonSavings = Math.min(used, nonSavings);
+    const onSavings = Math.min(used - onNonSavings, savings);
+    return { onNonSavings, onSavings, onDividends: used - onNonSavings - onSavings };
+  }
+  const [n, m] = points[best] as [number, number];
+  return {
+    onNonSavings: nonSavings - n,
+    onSavings: savings - (m - n),
+    onDividends: dividends - (total - m),
+  };
 }
