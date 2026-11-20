@@ -40,6 +40,11 @@
       "floor": 91,
       "measured": 92.56,
       "measuredOn": "2026-11-20"
+    },
+    "apps/backend": {
+      "floor": 73,
+      "measured": 74.25,
+      "measuredOn": "2026-11-20"
     }
   }
 }
