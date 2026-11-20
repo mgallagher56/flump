@@ -1,5 +1,53 @@
 # Changelog
 
+## [1.49.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.48.0...flump/web-v1.49.0) (2026-11-20)
+
+
+### Features ✨
+
+* **backend:** invite links and membership for the invite-only beta ([913c2f7](https://github.com/mgallagher56/flump/commit/913c2f70f137c1671b4deb7b56b0a4c9f2aad103))
+* **e34:** finish C1: joint lines at the person's share everywhere, one home per share ([ac6a40e](https://github.com/mgallagher56/flump/commit/ac6a40e6a4ac4e26967a616e4643b0cc1f31782d))
+* **engine:** 2027/28 tax year with property and savings rates (provisional) ([2860608](https://github.com/mgallagher56/flump/commit/286060878016db776d8047aba43c17544f6489a5))
+* **marketing:** feature pages, Features menu and the AI connection page (E42 PR 1) ([58f534d](https://github.com/mgallagher56/flump/commit/58f534da779c2c25501a3ad743236e0975ebfd35))
+* **marketing:** home page, kept calculators, Retirement and the /tools redirects (E42 PR 2) ([28f2833](https://github.com/mgallagher56/flump/commit/28f283391edaa1e7be3b959c54bca65590ced612))
+* **marketing:** sample previews for Savings and pension and for Debt and borrowing (E42 S8) ([eff0cf9](https://github.com/mgallagher56/flump/commit/eff0cf9e5cdc2431ec100248d8ffcc55aae13737))
+* Retirement open to everyone the beta allows (owner, 20 Nov 2026) ([9947cc7](https://github.com/mgallagher56/flump/commit/9947cc782e4d24f137dd6afb929c7693ee666874))
+* **tax:** refusals never crash: "not available" with the reason, on every surface ([0e43cc2](https://github.com/mgallagher56/flump/commit/0e43cc206cbaeb1add574082d1a9b003a09db1cf))
+* **web,e2e:** E38 S2 quick balance update on the account page, Add and start another for Self Assessment records ([8a27673](https://github.com/mgallagher56/flump/commit/8a276734f770f54283a10f4cbb39b991202c7d6d))
+* **web:** E38 S1 one-press keep in the monthly check-in; review fixes ([a156dbc](https://github.com/mgallagher56/flump/commit/a156dbcababaa500f94b03701260c16c28673c3a))
+* **web:** hide sign-up and gate uninvited sessions while the beta is invite-only ([21c6ad7](https://github.com/mgallagher56/flump/commit/21c6ad79b6faa0453e3db87ab41b21696ec717d4))
+* **web:** invite links, invites admin page and not-invited fixes ([a7bc4a5](https://github.com/mgallagher56/flump/commit/a7bc4a57385b028adaca4a4cf032f69df630075a))
+* **web:** redeem a pending invite wherever a signed-in person lands ([560fc3f](https://github.com/mgallagher56/flump/commit/560fc3f7845d2099bcad23d4b59fad933dcb1c52))
+
+
+### Bug Fixes 🪲
+
+* **knip:** keep React Router entry.server exports, delete locals left unused by un-exporting ([ae3a8e7](https://github.com/mgallagher56/flump/commit/ae3a8e77bed2a2d302ce434c6960de7594294720))
+* **knip:** un-export INVITE_COOKIE_NAME added by the invite flow ([9d6cac6](https://github.com/mgallagher56/flump/commit/9d6cac60506bd09a0e5180cb78011588b01bbb2c))
+* **knip:** un-export two constants used only in their own files ([652ac2a](https://github.com/mgallagher56/flump/commit/652ac2a32e357968156399e633c8b557e3aba807))
+* review findings on the invite flow ([8e6897a](https://github.com/mgallagher56/flump/commit/8e6897a4b726bcd0db4e50d9b3139674506737c8))
+* **tax:** review fixes for refusals: totals say a loan is left out, Plan 2 kept ([8b18f7e](https://github.com/mgallagher56/flump/commit/8b18f7eb0d5fca7c6eb2b8ecc93bfc0f81731e61))
+* **tax:** the budget left over and the pack's loan estimate say a refused plan is left out ([d11975b](https://github.com/mgallagher56/flump/commit/d11975bb6accadaf12b1850d0cf247856fcec87c))
+* **web:** second review fixes for the check-in keep and the balance row ([bb65e2f](https://github.com/mgallagher56/flump/commit/bb65e2f72bd23f8f62e1acb4e17e22d9c681a11a))
+
+
+### Documentation 📙
+
+* **copy:** close E42 with the home headline exception, plan status and DebtWidget note ([c145fc3](https://github.com/mgallagher56/flump/commit/c145fc3041fef198591afc1e9dbebab2487f3e97))
+
+
+### Tests 🧪
+
+* **backend,web:** a balance-only account update leaves every other field as saved ([68c42dc](https://github.com/mgallagher56/flump/commit/68c42dc86eadd14436ac884a04d7fe6f83596c97))
+* build sample ids and markers at runtime (Semgrep node_username, node_secret) ([0c85f4c](https://github.com/mgallagher56/flump/commit/0c85f4cd741d342f065dfc5be9ddf705e4b9b058))
+* **copy:** ban 256-bit, bank-grade, GDPR and Open Banking in marketing and web copy guards ([acd820f](https://github.com/mgallagher56/flump/commit/acd820f741f5eee87cf8ef2e083e68d290191522))
+* **copy:** ban GDPR compliance claims, not the word GDPR ([eeaef8f](https://github.com/mgallagher56/flump/commit/eeaef8ffea9e02f09187a0bde0ae52c1fb96f9e8))
+
+
+### Miscellaneous 🙃
+
+* make knip trustworthy, remove dead code and gate it in CI ([5c99fda](https://github.com/mgallagher56/flump/commit/5c99fda2bee1b506d77c3ea6b83ccc4a635e69b8))
+
 ## [1.48.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.47.0...flump/web-v1.48.0) (2026-11-20)
 
 
