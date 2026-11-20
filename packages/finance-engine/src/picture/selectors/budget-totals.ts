@@ -62,8 +62,15 @@ const NOT_SET_LINK_MISSING: Record<NonNullable<BudgetEntryItem["linked"]>, Missi
  * The one budget-totals selector. No rows means unknown, never £0. A linked line whose saved fact
  * is not set (`notSet`) makes the totals unknown too, naming the missing fact: its stored £0 is
  * never counted as a real figure.
+ *
+ * `takeHomeLeavesOut` (takeHomeLeavesOut) names what the take-home leaves out, such as a student
+ * loan plan with no published threshold. When the linked take-home line is counted, the totals
+ * carry it as an assumption, so income and left over say what they leave out.
  */
-export function selectBudgetTotals(budget: readonly BudgetEntryItem[]): Figure<BudgetTotals> {
+export function selectBudgetTotals(
+  budget: readonly BudgetEntryItem[],
+  takeHomeLeavesOut: readonly string[] = [],
+): Figure<BudgetTotals> {
   if (budget.length === 0) return figureUnknown(["budget"], "not-set");
   const notSet = new Set<MissingKey>();
   for (const row of budget) {
@@ -97,7 +104,7 @@ export function selectBudgetTotals(budget: readonly BudgetEntryItem[]): Figure<B
     }
   }
 
-  return figureKnown<BudgetTotals>({
+  const totals: BudgetTotals = {
     income: round2(income),
     essentials: round2(essentials),
     savings: round2(savings),
@@ -107,5 +114,11 @@ export function selectBudgetTotals(budget: readonly BudgetEntryItem[]): Figure<B
     debtPayments: round2(debtPayments),
     hasIncome,
     hasEssentials,
-  });
+  };
+  const takeHomeCounted = budget.some(
+    (row) => row.linked === "take_home" && !row.notSet && budgetRowMonthly(row) > 0,
+  );
+  return takeHomeCounted && takeHomeLeavesOut.length > 0
+    ? figureKnown<BudgetTotals>(totals, "assumption", [...takeHomeLeavesOut])
+    : figureKnown<BudgetTotals>(totals);
 }

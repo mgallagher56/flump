@@ -136,6 +136,8 @@ describe("deriveOnboardingSummary in 2027/28 (refused rates)", () => {
       "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
     );
     expect(s.takeHomeNote).toBeNull();
+    // Left over needs the take-home, so it is not known either: null, never 0 minus spending.
+    expect(s.monthlySurplus).toBeNull();
     // The rest still works: Finish is allowed once income and a region are given.
     expect(s.canFinish).toBe(true);
   });

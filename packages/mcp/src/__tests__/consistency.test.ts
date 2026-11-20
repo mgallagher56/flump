@@ -590,6 +590,33 @@ describe("linked budget lines: the AI tools count the saved fact, never the stor
     await expectToolsMatchPicture(h, picture);
   });
 
+  it("2027/28 Plan 1: the budget tools say the linked take-home leaves the loan out", async () => {
+    // Fixed date in tax year 2027/28, when the Plan 1 threshold is not published (refused).
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-05-01T12:00:00Z"));
+    try {
+      const input = linkedInput(40000);
+      (input.profileFacts as { studentLoanPlans: string[] }).studentLoanPlans = ["PLAN_1"];
+      h = await connectTestClient(input);
+      const notice =
+        "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.";
+      const reasons = (e: { assumptions: Array<{ reason?: string }> }) =>
+        e.assumptions.map((a) => a.reason);
+      const b = (await h.callJson("get_budget_summary")) as Envelope<BudgetResult>;
+      expect(b.result.monthlyIncomeGbp).not.toBeNull();
+      expect(reasons(b)).toContain(notice);
+      const snap = (await h.callJson("get_financial_snapshot")) as Envelope<SnapshotResult>;
+      expect(reasons(snap)).toContain(notice);
+      const proj = (await h.callJson("project_net_worth", {
+        horizonYears: 5,
+        expectedReturnPct: 5,
+      })) as Envelope<unknown>;
+      expect(reasons(proj)).toContain(notice);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("no salary saved: income and left over are not set, spending is still the saved lines", async () => {
     h = await connectTestClient(linkedInput(null));
     const b = (await h.callJson("get_budget_summary")) as Envelope<BudgetResult>;

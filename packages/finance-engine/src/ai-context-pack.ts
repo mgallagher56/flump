@@ -32,6 +32,7 @@ import {
   type BudgetLinkOffer,
   listedBudgetEntries,
 } from "./picture/selectors/linked-budget-rows.js";
+import { withoutRefusedPlans } from "./picture/selectors/take-home.js";
 import {
   type MonthlyPortfolioHistoryPoint,
   PortfolioSnapshot,
@@ -39,7 +40,12 @@ import {
   type RawAccountDetail,
   type ResolvedAccount,
 } from "./portfolio.js";
-import type { SavedFinancialBaseline, UnsavedBaselineField } from "./profile.js";
+import {
+  normalizeStudentLoanPlan,
+  pickEnginePlan,
+  type SavedFinancialBaseline,
+  type UnsavedBaselineField,
+} from "./profile.js";
 import type { RetirementSavedPlanInput } from "./retirement-input.js";
 import type { NetWorthPoint } from "./snapshots.js";
 import type { TaxCalculationResult, TaxRecordFields } from "./tax-calculator.js";
@@ -57,15 +63,15 @@ import type {
   SafeToSpendResult,
   StudentLoanEvaluationResult,
   UkAllowancesStatus,
+  UkStudentLoanPlan,
   UkTaxCalculationResult,
 } from "./types.js";
-import { calculateUkTax as computeUkTax, toStudentLoanPlanKey } from "./uk-tax.js";
+import { calculateUkTax as computeUkTax } from "./uk-tax.js";
 import {
   getUkCalendarDate,
   getUkTaxYearRules,
   resolveUkTaxYear,
   scottishRatesRefusal,
-  studentLoanThresholdRefusal,
 } from "./uk-tax-year.js";
 import type { WorkplacePensionInput } from "./workplace-pension.js";
 
@@ -588,6 +594,16 @@ export function buildFlumpAiContextPack(
   // stored or default baseline year.
   const currentTaxYear = resolveUkTaxYear(undefined, asOf);
   const currentRules = getUkTaxYearRules(currentTaxYear);
+  // Saved plans less those with no published threshold for the year, taken out before the one
+  // plan is picked, so a published plan saved beside a refused one is still charged.
+  const savedPlans =
+    input.profileFacts?.studentLoanPlans ??
+    (safeBaseline.studentLoanPlan && safeBaseline.studentLoanPlan !== "NONE"
+      ? [safeBaseline.studentLoanPlan]
+      : []);
+  const { kept: keptPlans, refusal: loanRefusal } = withoutRefusedPlans(savedPlans, currentRules);
+  const chargedPlan: UkStudentLoanPlan =
+    keptPlans.length > 0 ? normalizeStudentLoanPlan(pickEnginePlan(keptPlans)) : "NONE";
   const studentLoanBalance = picture.netWorth.studentLoans;
   let studentLoanEvaluation: StudentLoanEvaluationResult | PackFigureNotAvailable | undefined;
   if (
@@ -598,7 +614,7 @@ export function buildFlumpAiContextPack(
   ) {
     // Refused, never carried forward: a plan with no published threshold has no estimate.
     const outcome = evaluateUkStudentLoanOrRefusal(
-      safeBaseline.studentLoanPlan,
+      chargedPlan !== "NONE" ? chargedPlan : safeBaseline.studentLoanPlan,
       annualSalary,
       studentLoanBalance,
       currentTaxYear,
@@ -665,8 +681,6 @@ export function buildFlumpAiContextPack(
   // Refused, never carried forward (owner decision): no Scottish rates for the year means no
   // salary tax figure; a plan with no published threshold is left out and the result says so.
   const scottishRefusal = scottishRatesRefusal(currentRules, safeBaseline.ukRegion);
-  const loanPlanKey = toStudentLoanPlanKey(safeBaseline.studentLoanPlan ?? "NONE");
-  const loanRefusal = loanPlanKey ? studentLoanThresholdRefusal(currentRules, loanPlanKey) : null;
   const salaryTaxAssumptions = [
     // Item 4: the assumption is stated, not left silent.
     ...(pensionAssumed
@@ -686,7 +700,7 @@ export function buildFlumpAiContextPack(
               grossSalary: payeSalary,
               pensionContributionPct,
               isSalarySacrifice: methodKnown ? isSalarySacrifice : false,
-              studentLoanPlan: loanRefusal ? "NONE" : safeBaseline.studentLoanPlan,
+              studentLoanPlan: chargedPlan,
               region: safeBaseline.ukRegion,
               taxYear: currentTaxYear,
             }),

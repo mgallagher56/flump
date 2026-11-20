@@ -87,6 +87,12 @@ export interface BudgetSetupWizardProps {
   /** Pre-filled monthly take-home from user profile */
   monthlyTakeHome: number | null;
   /**
+   * The engine's line about the take-home: why there is none (the year's rates for this person
+   * are not published), or what it leaves out (a student loan plan with no published threshold).
+   * Shown as one quiet line on the income step. Null when there is nothing to say.
+   */
+  takeHomeNotice?: string | null;
+  /**
    * The saved housing payment (the picture's `housingPayment`, already the person's own share), or null
    * when none is saved. The totals resolve linked and engine-added lines with it, as the page does.
    */
@@ -193,6 +199,7 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   onComplete,
   onCancel,
   monthlyTakeHome,
+  takeHomeNotice = null,
   housingPayment = null,
   accounts = null,
   mode = "setup",
@@ -720,7 +727,16 @@ export const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                         entries, when you edit your budget.
                       </>
                     )}
+                    {takeHomeNotice ? ` ${takeHomeNotice}` : null}
                   </p>
+                </div>
+              ) : takeHomeNotice ? (
+                <div
+                  className={callout()}
+                  data-testid="wizard-take-home-notice"
+                  id="wizard-take-home-notice"
+                >
+                  <p className={calloutText()}>{takeHomeNotice}</p>
                 </div>
               ) : null}
               {renderEntries("income", "No income yet. Add your salary or other earnings below.")}

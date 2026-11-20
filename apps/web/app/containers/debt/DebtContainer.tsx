@@ -50,12 +50,14 @@ export const DebtContainer: FC = () => {
   const debtInputs = loaderData?.debtInputs as
     | {
         monthlySurplus: number | null;
+        monthlySurplusLeavesOut?: string | null;
         liquidSavings: number;
         monthlyEssentialExpenses: number | null;
         totalDebt?: number;
       }
     | undefined;
   const budgetLeftOver = debtInputs?.monthlySurplus ?? null;
+  const budgetLeftOverNote = debtInputs?.monthlySurplusLeavesOut ?? null;
 
   // Debts come straight from the user's liability accounts. Add, edit and delete persist through
   // the route action, and the loader revalidation refreshes this list. Balances are amounts owed:
@@ -353,6 +355,7 @@ export const DebtContainer: FC = () => {
           >
             <PayExtraTool
               budgetLeftOver={budgetLeftOver}
+              budgetLeftOverNote={budgetLeftOverNote}
               comparison={comparison}
               extraPayment={extraPayment}
               interestKnown={!aprUnknown && !minimumEstimated}

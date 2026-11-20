@@ -13,6 +13,7 @@ import { monthLabel, parseMonth } from "../../provider/in-memory.js";
 import type { McpServerContext } from "../../types.js";
 import {
   ASK_NO_ACCOUNTS,
+  budgetLeavesOutAssumptions,
   indexAccounts,
   loadReadModel,
   MISSING_INCOME,
@@ -125,7 +126,9 @@ export const getFinancialSnapshot = defineFlumpTool({
           "Roughly how much do you spend each month on essentials (rent or mortgage, bills, food)?",
       });
     }
-    const assumptions: Array<{ field: string; source: "default"; reason: string }> = [];
+    const assumptions: Array<{ field: string; source: "default" | "derived"; reason: string }> = [
+      ...budgetLeavesOutAssumptions(m.picture.budget),
+    ];
     const estimatedCount = m.snapshot.toDebtItems().filter((d) => d.minimumPaymentEstimated).length;
     if (cover && estimatedCount > 0) {
       assumptions.push({

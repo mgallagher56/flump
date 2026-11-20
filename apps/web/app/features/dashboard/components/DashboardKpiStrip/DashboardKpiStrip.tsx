@@ -16,6 +16,11 @@ export interface DashboardKpiStripProps {
   totalOwed: number | null;
   /** Pension pots total, shown in the second card when there is no debt. */
   pensionPot: number | null;
+  /**
+   * What the budget's income leaves out (a student loan plan with no published threshold, left
+   * out of the linked take-home pay). Said as the first card's caption, never dropped silently.
+   */
+  leavesOut?: string | null;
 }
 
 /** True when the second card shows the debt total, so the pension card keeps the pot. */
@@ -54,6 +59,7 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
   incomeOnly = null,
   totalOwed,
   pensionPot,
+  leavesOut = null,
 }) => {
   const short = monthlySurplus !== null && monthlySurplus < 0;
   const showDebt = stripShowsDebt(totalOwed);
@@ -64,9 +70,16 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
         key="income"
         label={INCOME_ONLY_LABEL}
         subtext={
-          <SampleAwareLink className={kpiPromptLink()} id="dashboard-add-spending" to="/app/budget">
-            {ADD_SPENDING_PROMPT}
-          </SampleAwareLink>
+          <>
+            <SampleAwareLink
+              className={kpiPromptLink()}
+              id="dashboard-add-spending"
+              to="/app/budget"
+            >
+              {ADD_SPENDING_PROMPT}
+            </SampleAwareLink>
+            {leavesOut ? ` ${leavesOut}` : null}
+          </>
         }
         unset={false}
         value={
@@ -81,7 +94,7 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
         explain={monthlySurplus === null ? undefined : LEFT_OVER_EXPLAIN}
         key="left-over"
         label={short ? "Short each month" : "Left over each month"}
-        subtext={monthlySurplus === null ? undefined : LEFT_OVER_CAPTION}
+        subtext={monthlySurplus === null ? undefined : (leavesOut ?? LEFT_OVER_CAPTION)}
         unset={monthlySurplus === null}
         value={
           monthlySurplus === null ? null : (

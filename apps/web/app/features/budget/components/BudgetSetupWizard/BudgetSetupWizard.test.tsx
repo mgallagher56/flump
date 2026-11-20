@@ -719,3 +719,33 @@ describe("BudgetSetupWizard", () => {
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+describe("BudgetSetupWizard: a refused take-home (2027/28)", () => {
+  const props = {
+    onAddEntry: vi.fn().mockResolvedValue(undefined),
+    onCancel: vi.fn(),
+    onComplete: vi.fn(),
+    onDeleteEntry: vi.fn().mockResolvedValue(undefined),
+    onUpdateEntry: vi.fn().mockResolvedValue(undefined),
+  };
+
+  it("shows the refusal line on the income step when there is no take-home", async () => {
+    render(
+      <BudgetSetupWizard
+        {...props}
+        entries={[]}
+        monthlyTakeHome={null}
+        takeHomeNotice="Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year."
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(screen.getByRole("button", { name: /start blank/i }));
+    expect((await screen.findByTestId("wizard-take-home-notice")).textContent).toBe(
+      "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+    );
+    // The step still works: income entries can be added.
+    expect(
+      screen.getByText("No income yet. Add your salary or other earnings below."),
+    ).toBeDefined();
+  });
+});

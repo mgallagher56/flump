@@ -64,6 +64,11 @@ export interface PayExtraToolProps {
   onSelectStrategy: (strategy: PayoffOrder) => void;
   /** What the budget leaves over each month, or null when there is no budget with income. */
   budgetLeftOver: number | null;
+  /**
+   * What the left over figure leaves out (a student loan plan with no published threshold), said
+   * as one quiet line under it. Null when it leaves nothing out.
+   */
+  budgetLeftOverNote?: string | null;
   /** Total balance of the debts in the payoff plan today: the chart's first point. */
   startBalance: number;
   /**
@@ -290,6 +295,7 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
   selectedStrategy,
   onSelectStrategy,
   budgetLeftOver,
+  budgetLeftOverNote = null,
   startBalance,
   interestKnown = true,
 }) => {
@@ -401,6 +407,11 @@ export const PayExtraTool: FC<PayExtraToolProps> = ({
             Use the {formatCurrency(leftOver)} left over
           </Button>
         </div>
+      ) : null}
+      {budgetLeftOver !== null && budgetLeftOverNote ? (
+        <p className={mutedNote} data-testid="pay-extra-left-over-note">
+          {budgetLeftOverNote}
+        </p>
       ) : null}
     </div>
   );

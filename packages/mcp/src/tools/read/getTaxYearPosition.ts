@@ -94,7 +94,7 @@ export const getTaxYearPosition = defineFlumpTool({
   name: "get_tax_year_position",
   title: "Tax year position",
   description:
-    "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (£100,000 to £125,140 in recent years), the Income Tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the tax and Self Assessment estimates shown on the Flump tax page. The estimate is null when a fact it depends on is not saved, and missing names that fact. Facts and estimates only.",
+    "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (£100,000 to £125,140 in recent years), the Income Tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the tax and Self Assessment estimates shown on the Flump tax page. The estimate is null when a fact it depends on is not saved, and missing names that fact. When the year's rates for the user's region are not published (Scottish rates for 2027/28), the Income Tax bands and the tax figures are null and missing says why. Facts and estimates only.",
   input: { taxYear: taxYearInput },
   result,
   maxTokens: 3000,

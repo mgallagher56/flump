@@ -325,6 +325,21 @@ export function missingLinkedLines(
   );
 }
 
+/**
+ * What the budget totals leave out (a student loan plan with no published threshold, left out of
+ * the linked take-home line), as assumptions, so income and left over say what they leave out.
+ */
+export function budgetLeavesOutAssumptions(
+  budget: FinancialPicture["budget"],
+): Array<{ field: string; source: "derived"; reason: string }> {
+  if (budget.status !== "known") return [];
+  return (budget.assumptions ?? []).map((reason) => ({
+    field: "monthlyIncomeGbp",
+    source: "derived" as const,
+    reason,
+  }));
+}
+
 export const MISSING_INCOME: Missing = {
   field: "monthlyIncome",
   why: "No income entry in the budget, and no salary saved to work out take-home pay from.",

@@ -39,7 +39,7 @@ import {
 } from "./selectors/portfolio-totals.js";
 import { type SafeToSpend, selectSafeToSpend } from "./selectors/safe-to-spend.js";
 import { type SavingsTotals, selectSavingsTotals } from "./selectors/savings-totals.js";
-import { selectTakeHome, type TakeHome } from "./selectors/take-home.js";
+import { selectTakeHome, type TakeHome, takeHomeLeavesOut } from "./selectors/take-home.js";
 
 /**
  * The derived figures every page, loader and MCP resource shows. Built once per request from
@@ -126,7 +126,7 @@ export function buildFinancialPicture(
     budgetLinkOffers: linked.offers,
     budgetAccountLinkOffers: findBudgetAccountLinkOffers(input.budget, snapshot),
     housingPayment,
-    budget: selectBudgetTotals(budget),
+    budget: selectBudgetTotals(budget, takeHomeLeavesOut(takeHome)),
     safeToSpend: selectSafeToSpend(takeHome, budget, snapshot),
     monthsOfCover: selectMonthsOfCover(budget, snapshot),
     netWorth: selectNetWorth(snapshot, input.netWorthBasis),

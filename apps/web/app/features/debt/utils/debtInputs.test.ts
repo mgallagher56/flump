@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BudgetEntry } from "~/types/budget";
 import { buildDebtInputs } from "./debtInputs";
 
@@ -72,5 +72,40 @@ describe("buildDebtInputs without income rows", () => {
     );
     expect(result.monthlySurplus).toBeNull();
     expect(result.monthlyEssentialExpenses).toBe(900);
+  });
+});
+
+describe("debtInputsFromPicture in 2027/28 (refused Plan 1)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("says the left over figure leaves the refused loan out", () => {
+    // Fixed date in tax year 2027/28, when the Plan 1 threshold is not published.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-05-01T12:00:00Z"));
+    const entries = [
+      entry({ name: "Pay", isIncome: true, amount: 0, linkKind: "take_home" }),
+      entry({ name: "Rent", amount: 900 }),
+    ];
+    const result = buildDebtInputs([], [], entries, {
+      annualSalary: 40000,
+      employmentType: "employed",
+      taxRegion: "ENGLAND",
+      studentLoanPlans: ["PLAN_1"],
+      pensionPercent: 0,
+      isSalarySacrifice: false,
+    });
+    expect(result.monthlySurplus).not.toBeNull();
+    expect(result.monthlySurplusLeavesOut).toBe(
+      "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+    );
+  });
+
+  it("leaves nothing to say without a refused plan", () => {
+    const result = buildDebtInputs(
+      [],
+      [],
+      [entry({ name: "Salary", isIncome: true, amount: 3000 })],
+    );
+    expect(result.monthlySurplusLeavesOut).toBeNull();
   });
 });

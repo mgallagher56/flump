@@ -69,7 +69,8 @@ export interface OnboardingSummary {
   takeHomeTyped: boolean;
   monthlyHousing: number;
   otherOutgoings: number;
-  monthlySurplus: number;
+  /** Null when the take-home is refused (the year's rates are not published), never a guess. */
+  monthlySurplus: number | null;
   homeEquity: number;
   startingNetWorth: number;
   /** False until at least one balance or property figure has been given. */
@@ -147,7 +148,7 @@ export function deriveOnboardingSummary(values: OnboardingValues): OnboardingSum
     takeHomeTyped: values.incomeMode === "net",
     monthlyHousing,
     otherOutgoings,
-    monthlySurplus: monthlyTakeHome - monthlyHousing - otherOutgoings,
+    monthlySurplus: takeHomeRefusal ? null : monthlyTakeHome - monthlyHousing - otherOutgoings,
     homeEquity,
     startingNetWorth,
     hasNetWorthInputs: [

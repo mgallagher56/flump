@@ -5,7 +5,10 @@ import {
   getUkTaxYearRules,
   resolveUkTaxYear,
   scottishRatesRefusal,
+  studentLoanThresholdNotPublishedNotice,
   studentLoanThresholdRefusal,
+  type UkRefusal,
+  type UkTaxYearRules,
   UnsupportedUkTaxYearError,
 } from "../../uk-tax-year.js";
 import { type Figure, figureKnown, figureRefused, figureUnknown } from "../figure.js";
@@ -42,6 +45,35 @@ export type TakeHome =
       taxYear: null;
       region: null;
     };
+
+/**
+ * Saved student loan plans less those with no published threshold for the year (Plan 1 and
+ * Plan 4 in 2027/28), and the refusal that says so (null when none is left out). Refused, never
+ * carried forward; a published plan beside a refused one is kept.
+ */
+export function withoutRefusedPlans(
+  plans: readonly string[],
+  rules: UkTaxYearRules,
+): { kept: string[]; refusal: UkRefusal | null } {
+  let refusal: UkRefusal | null = null;
+  const kept = plans.filter((plan) => {
+    const key = toStudentLoanPlanKey(normalizeStudentLoanPlan(plan));
+    const refused = key ? studentLoanThresholdRefusal(rules, key) : null;
+    if (refused) refusal = refused;
+    return refused === null;
+  });
+  return { kept, refusal };
+}
+
+/**
+ * What a worked-out take-home leaves out because its threshold is not published (a refused
+ * student loan plan): the notices to carry into any total the take-home is counted in.
+ */
+export function takeHomeLeavesOut(takeHome: Figure<TakeHome>): string[] {
+  if (takeHome.status !== "known" || takeHome.value.taxYear === null) return [];
+  const notice = studentLoanThresholdNotPublishedNotice(takeHome.value.taxYear);
+  return (takeHome.assumptions ?? []).filter((a) => a === notice);
+}
 
 export interface SelectTakeHomeOptions {
   taxYear?: UkTaxYear;
@@ -115,14 +147,11 @@ export function selectTakeHome(
   if (f.studentLoanPlans === null) {
     assumptions.push(ASSUMED_NO_STUDENT_LOAN_NOTE);
   } else if (f.studentLoanPlans.length > 0) {
-    studentLoanPlan = normalizeStudentLoanPlan(pickEnginePlan(f.studentLoanPlans));
-  }
-  // A plan with no published threshold for the year is left out, and the figure says so.
-  const planKey = toStudentLoanPlanKey(studentLoanPlan);
-  const loanRefusal = planKey ? studentLoanThresholdRefusal(rules, planKey) : null;
-  if (loanRefusal) {
-    studentLoanPlan = "NONE";
-    assumptions.push(loanRefusal.notice);
+    // A plan with no published threshold for the year is left out before the engine's one plan
+    // is picked, so a published plan saved beside it (Plan 2 with Plan 1) is still charged.
+    const { kept, refusal } = withoutRefusedPlans(f.studentLoanPlans, rules);
+    if (refusal) assumptions.push(refusal.notice);
+    if (kept.length > 0) studentLoanPlan = normalizeStudentLoanPlan(pickEnginePlan(kept));
   }
 
   const selfEmployed = f.employmentType === "self-employed";

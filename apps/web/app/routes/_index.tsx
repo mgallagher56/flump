@@ -220,6 +220,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     budgetData: {
       budgetKnown: budget !== null,
       budgetNotice,
+      // What income and left over leave out (a refused student loan plan in the linked take-home).
+      budgetLeavesOut:
+        picture.budget.status === "known" ? (picture.budget.assumptions?.join(" ") ?? null) : null,
       // Whether the budget holds income only (set up straight after onboarding): the dashboard then
       // shows the income and asks for spending, never income minus nothing as "left over".
       hasIncome: budget?.hasIncome ?? false,

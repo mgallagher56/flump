@@ -42,6 +42,10 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
     [pictureProp, entries],
   );
   const budget = isFigureKnown(picture.budget) ? picture.budget.value : null;
+  const budgetLeavesOut =
+    isFigureKnown(picture.budget) && picture.budget.assumptions?.length
+      ? picture.budget.assumptions.join(" ")
+      : null;
   // Bills, spending and savings: money in minus going out is the hero, so the strip explains it.
   const goingOut = budget ? budget.essentials + budget.discretionary + budget.savings : null;
   const safeToSpend = isFigureKnown(picture.safeToSpend) ? picture.safeToSpend.value : null;
@@ -133,7 +137,8 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
           <KpiCard
             key="income"
             label="Money in each month"
-            subtext="After tax"
+            // What income leaves out (a refused student loan plan in the linked take-home pay).
+            subtext={budgetLeavesOut ?? "After tax"}
             value={hasIncome ? (budget?.income ?? 0) : null}
             valueFormat={{ fractionDigits: 0 }}
           />,
