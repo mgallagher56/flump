@@ -8,10 +8,10 @@ import {
   isRecordActiveInTaxYear,
   type TaxRecord,
 } from "@flump/finance-engine";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockRecords: TaxRecord[] = [
   {
@@ -133,6 +133,9 @@ let mockAccounts: Record<string, unknown>[] = [];
 let mockEnabledPages: string[] | null = ["accounts", "budget", "tax"];
 let mockDashboardWidgets: string[] | null = ["accounts"];
 let mockDashboardWidgetOrder: string[] | null = ["accounts"];
+let mockSearch = "";
+let mockNoProfile = false;
+let mockNoLists = false;
 const mockSubmit = vi.fn();
 const mockRevalidate = vi.fn();
 const mockUpdateProfile = vi.fn(async () => {});
@@ -145,22 +148,24 @@ vi.mock("react-router", () => ({
     </a>
   ),
   useInRouterContext: () => false,
-  useSearchParams: () => [new URLSearchParams(), vi.fn()],
+  useSearchParams: () => [new URLSearchParams(mockSearch), vi.fn()],
   useRevalidator: () => ({ revalidate: mockRevalidate, state: "idle" }),
   useLoaderData: () => ({
-    records: mockLoaderRecords,
-    userProfile: {
-      id: mockProfileId,
-      annualSalary: mockProfileSalary,
-      employmentType: mockEmploymentType,
-      taxRegion: mockTaxRegion,
-      propertyOwnershipShare: 100,
-      country: "GB",
-      enabledPages: mockEnabledPages,
-      dashboardWidgets: mockDashboardWidgets,
-      dashboardWidgetOrder: mockDashboardWidgetOrder,
-    },
-    accounts: mockAccounts,
+    records: mockNoLists ? undefined : mockLoaderRecords,
+    userProfile: mockNoProfile
+      ? undefined
+      : {
+          id: mockProfileId,
+          annualSalary: mockProfileSalary,
+          employmentType: mockEmploymentType,
+          taxRegion: mockTaxRegion,
+          propertyOwnershipShare: 100,
+          country: "GB",
+          enabledPages: mockEnabledPages,
+          dashboardWidgets: mockDashboardWidgets,
+          dashboardWidgetOrder: mockDashboardWidgetOrder,
+        },
+    accounts: mockNoLists ? undefined : mockAccounts,
   }),
   useFetcher: () => ({
     submit: mockSubmit,
@@ -1062,5 +1067,385 @@ describe("TaxContainer, an estimate that cannot be worked out (PR 785 review)", 
       mockLoaderRecords = mockRecords;
       mockProfileSalary = 60000;
     }
+  });
+});
+
+describe("TaxContainer, what the page decides (E41 M5)", () => {
+  const year = getCurrentUKTaxYear();
+  const start = year.slice(0, 4);
+  const previousYear = getPreviousTaxYear(year);
+  const record = (over: Partial<TaxRecord>): TaxRecord => ({
+    ...mockRecords[0],
+    frequency: "one-off",
+    endDate: null,
+    ...over,
+  });
+  const reset = () => {
+    mockLoaderRecords = mockRecords;
+    mockProfileSalary = 60000;
+    mockProfileId = undefined;
+    mockEmploymentType = "employed";
+    mockTaxRegion = "ENGLAND";
+    mockAccounts = [];
+    mockEnabledPages = ["accounts", "budget", "tax"];
+    mockDashboardWidgets = ["accounts"];
+    mockDashboardWidgetOrder = ["accounts"];
+    mockSearch = "";
+    mockNoProfile = false;
+    mockNoLists = false;
+    fetcherData.current = null;
+    mockSubmit.mockClear();
+    mockUpdateProfile.mockClear();
+    mockRevalidate.mockClear();
+  };
+  beforeEach(reset);
+  afterEach(reset);
+
+  const salaryField = () => screen.getByLabelText(/Yearly salary before tax/) as HTMLInputElement;
+  /** The salary field's figure without its thousands separators. */
+  const salaryShown = () => salaryField().value.replace(/,/g, "");
+
+  describe("turning Self Assessment on", () => {
+    it("does not add tax twice to a list that already holds it", async () => {
+      mockEnabledPages = ["accounts"];
+      mockDashboardWidgets = ["accounts", "tax"];
+      const user = userEvent.setup();
+      render(<TaxContainer />);
+      await user.click(screen.getByRole("button", { name: "Turn on Self Assessment" }));
+      expect(mockUpdateProfile).toHaveBeenCalledWith({
+        enabledPages: ["accounts", "tax"],
+        dashboardWidgets: ["accounts", "tax"],
+      });
+    });
+
+    it("is busy while saving, and says so and frees the button when it fails", async () => {
+      mockEnabledPages = ["accounts"];
+      let fail: (reason: Error) => void = () => {};
+      mockUpdateProfile.mockImplementationOnce(
+        () =>
+          new Promise<void>((_, reject) => {
+            fail = reject;
+          }),
+      );
+      render(<TaxContainer />);
+      const button = () => screen.getByRole("button", { name: "Turn on Self Assessment" });
+      fireEvent.click(button());
+      expect(button().getAttribute("aria-busy")).toBe("true");
+      await act(async () => fail(new Error("offline")));
+      expect(screen.getByRole("alert").textContent).toBe(
+        "We could not turn on Self Assessment. Try again.",
+      );
+      expect(button().getAttribute("aria-busy")).toBeNull();
+      expect(mockRevalidate).not.toHaveBeenCalled();
+      // Trying again clears the old error while it saves.
+      mockUpdateProfile.mockImplementationOnce(() => new Promise<void>(() => {}));
+      fireEvent.click(button());
+      await act(async () => {});
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
+
+    it("opens the page after turning it on with no saved profile", async () => {
+      mockNoProfile = true;
+      const { DEFAULT_PROFILE } = await import("~/hooks/useUserProfile");
+      const user = userEvent.setup();
+      render(<TaxContainer />);
+      await user.click(screen.getByRole("button", { name: "Turn on Self Assessment" }));
+      expect(mockUpdateProfile).toHaveBeenCalledWith({
+        enabledPages: [...DEFAULT_PROFILE.enabledPages, "tax"],
+        dashboardWidgets: [...DEFAULT_PROFILE.dashboardWidgets, "tax"],
+      });
+      expect(await screen.findByLabelText("Tax year")).toBeDefined();
+    });
+  });
+
+  it("shows the empty state when the loader sends no records or accounts", () => {
+    mockNoLists = true;
+    render(<TaxContainer />);
+    expect(screen.getByTestId("tax-empty")).toBeDefined();
+  });
+
+  it("opens on the year in the link", () => {
+    mockSearch = "year=2024-25";
+    render(<TaxContainer />);
+    expect((screen.getByLabelText("Tax year") as HTMLSelectElement).value).toBe("2024/25");
+  });
+
+  describe("the salary in the workings", () => {
+    it("takes a newly saved salary, but keeps an unsaved edit", () => {
+      const view = render(<TaxContainer />);
+      openDrawer(/How the estimate is worked out/);
+      expect(salaryShown()).toBe("60000");
+      mockProfileSalary = 70000;
+      view.rerender(<TaxContainer />);
+      expect(salaryShown()).toBe("70000");
+      fireEvent.change(salaryField(), { target: { value: "75000" } });
+      mockProfileSalary = 80000;
+      view.rerender(<TaxContainer />);
+      expect(salaryShown()).toBe("75000");
+    });
+
+    it("saves the salary as typed, shows it saving, then shows a failed save on the page", async () => {
+      const view = render(<TaxContainer />);
+      openDrawer(/How the estimate is worked out/);
+      fireEvent.change(salaryField(), { target: { value: "65000" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+      expect(mockSubmit).toHaveBeenCalledWith(
+        { intent: "update-profile", annualSalary: "65000" },
+        { method: "POST" },
+      );
+      expect(screen.getByRole("button", { name: "Saving…" })).toBeDefined();
+      await waitFor(
+        () => expect(screen.getByRole("button", { name: "Save details" })).toBeDefined(),
+        { timeout: 2000 },
+      );
+      fetcherData.current = { success: false, error: "We could not save your salary." };
+      view.rerender(<TaxContainer />);
+      expect(screen.getByRole("alert").textContent).toBe("We could not save your salary.");
+    });
+
+    it("gives the band line from the estimate's total income, not the salary alone", () => {
+      // Salary 60,000 plus 45,000 self-employed income less the 1,000 trading allowance:
+      // 60,000 + 45,000 - 1,000 = 104,000 in total, inside the £100,000 to £125,140 band. The
+      // salary alone (60,000) would show no line.
+      mockLoaderRecords = [
+        record({
+          id: "se",
+          source: "self-employed",
+          category: "self_employed_income",
+          amount: 45000,
+          date: `${start}-05-01`,
+        }),
+      ];
+      render(<TaxContainer />);
+      openDrawer(/How the estimate is worked out/);
+      expect(
+        screen.getByText(
+          "Total income in this estimate is £104,000, in the £100,000 to £125,140 band where the Personal Allowance reduces.",
+        ),
+      ).toBeDefined();
+    });
+  });
+
+  it("shows the latest records after the loader sends new ones", () => {
+    const view = render(<TaxContainer />);
+    const options = () =>
+      Array.from((screen.getByLabelText("Tax year") as HTMLSelectElement).options).map(
+        (o) => o.value,
+      );
+    expect(options()).not.toContain(previousYear);
+    mockLoaderRecords = [
+      ...mockRecords,
+      record({
+        id: "rec-prev",
+        name: "Last year's invoice",
+        source: "self-employed",
+        category: "self_employed_income",
+        amount: 5000,
+        date: `${previousYear.slice(0, 4)}-06-01`,
+      }),
+      record({ id: "rec-old", name: "Old invoice", date: "2019-05-01" }),
+    ];
+    view.rerender(<TaxContainer />);
+    expect(options()).toContain(previousYear);
+    fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: previousYear } });
+    // The new year has an estimate of its own, not an unknown bill.
+    expect(within(screen.getByTestId("hero-figure")).queryByText("Not set")).toBeNull();
+    openDrawer(/^Records$/);
+    expect(screen.getByRole("heading", { name: "Other dates (1)" })).toBeDefined();
+  });
+
+  describe("deleting a tax year", () => {
+    it("sends only the ids of the records dated in that year", async () => {
+      mockLoaderRecords = [
+        ...mockRecords,
+        record({ id: "rec-25", name: "One-off job", date: "2025-06-01" }),
+      ];
+      const user = userEvent.setup();
+      render(<TaxContainer />);
+      fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2025/26" } });
+      await pickFromMenu(user, "More for 2025/26", "Delete all records for 2025/26");
+      fireEvent.click(screen.getByRole("button", { name: "Delete records" }));
+      expect(mockSubmit).toHaveBeenCalledWith(
+        { intent: "delete-tax-year", recordIds: JSON.stringify(["rec-25"]) },
+        { method: "POST" },
+      );
+    });
+
+    it("shows a failed delete, cancels without sending, opens clean, and closes on success", async () => {
+      const user = userEvent.setup();
+      const view = render(<TaxContainer />);
+      fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2024/25" } });
+      await pickFromMenu(user, "More for 2024/25", "Delete all records for 2024/25");
+      fireEvent.click(screen.getByRole("button", { name: "Delete records" }));
+      fetcherData.current = { success: false, error: "We could not delete those records." };
+      view.rerender(<TaxContainer />);
+      expect(within(screen.getByRole("alertdialog")).getByRole("alert").textContent).toBe(
+        "We could not delete those records.",
+      );
+      mockSubmit.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+      expect(mockSubmit).not.toHaveBeenCalled();
+      await pickFromMenu(user, "More for 2024/25", "Delete all records for 2024/25");
+      expect(within(screen.getByRole("alertdialog")).queryByRole("alert")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Delete records" }));
+      fetcherData.current = { success: true };
+      view.rerender(<TaxContainer />);
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+    });
+
+    it("offers delete-all at the foot of the records too", () => {
+      render(<TaxContainer />);
+      openRecords();
+      fireEvent.click(screen.getByRole("button", { name: "Delete all records for 2024/25" }));
+      expect(screen.getByRole("alertdialog").textContent).toContain(
+        "Delete all 6 records for 2024/25?",
+      );
+    });
+  });
+
+  it("starts Add an expense on the source of the year's first income outside PAYE", () => {
+    mockLoaderRecords = [
+      record({
+        id: "paye-bonus",
+        name: "Bonus",
+        source: "paye",
+        category: "paye_bonus",
+        amount: 1000,
+        date: `${start}-05-01`,
+      }),
+      record({
+        id: "fee",
+        name: "Platform fee",
+        source: "savings",
+        type: "expense",
+        category: "investment_fees",
+        amount: 20,
+        date: `${start}-05-01`,
+      }),
+      record({
+        id: "old-interest",
+        name: "Old interest",
+        source: "savings",
+        category: "savings_interest",
+        amount: 50,
+        date: `${previousYear.slice(0, 4)}-05-01`,
+      }),
+      record({ id: "rent", name: "Flat rent", amount: 9000, date: `${start}-05-01` }),
+    ];
+    render(<TaxContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Add an expense" }));
+    const dialog = screen.getByRole("dialog", { name: "Add a record" });
+    expect((within(dialog).getByLabelText("Income source") as HTMLSelectElement).value).toBe(
+      "rental",
+    );
+    expect((within(dialog).getByLabelText("Type") as HTMLSelectElement).value).toBe("expense");
+  });
+
+  it("opens a self-employed income record from the unknown estimate's button", () => {
+    mockLoaderRecords = [record({ id: "rent", amount: 10000, date: `${start}-05-01` })];
+    mockEmploymentType = "self-employed";
+    render(<TaxContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Add self-employed income" }));
+    const dialog = screen.getByRole("dialog", { name: "Add a record" });
+    expect((within(dialog).getByLabelText("Income source") as HTMLSelectElement).value).toBe(
+      "self-employed",
+    );
+    expect((within(dialog).getByLabelText("Type") as HTMLSelectElement).value).toBe("income");
+  });
+
+  it("for a year with costs only, offers no workings, no salary link and no year by year", () => {
+    mockLoaderRecords = [
+      { ...mockRecords[1], id: "cost-only", date: `${start}-04-06`, endDate: null },
+    ];
+    render(<TaxContainer />);
+    expect(screen.queryByRole("button", { name: /How the estimate is worked out/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Add salary" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Year by year/ })).toBeNull();
+  });
+
+  it("names the buy-to-let mortgages from Accounts while no rent is recorded", () => {
+    mockLoaderRecords = [
+      record({
+        id: "se",
+        name: "Design work",
+        source: "self-employed",
+        category: "self_employed_income",
+        amount: 5000,
+        date: `${start}-05-01`,
+      }),
+    ];
+    mockAccounts = [
+      { id: "m1", name: "Flat 2 mortgage", type: "Mortgage", accountSubtype: "btl_mortgage" },
+      { id: "m2", name: "Home loan", type: "Mortgage", accountSubtype: "residential_mortgage" },
+      { id: "p1", name: "Flat 2", type: "Property", accountSubtype: "rental" },
+      { id: "m3", type: "Mortgage", accountSubtype: "btl_mortgage" },
+    ];
+    const { container } = render(<TaxContainer />);
+    const row = container.querySelector("[data-source='rental']") as HTMLElement;
+    expect(row.textContent).toContain("From your accounts: Flat 2 mortgage, Buy-to-let mortgage");
+  });
+
+  describe("the records drawer", () => {
+    it("is not offered for a year with no records", () => {
+      mockLoaderRecords = [record({ id: "old-year", date: "2024-06-01" })];
+      render(<TaxContainer />);
+      expect(screen.queryByRole("button", { name: /^Records$/ })).toBeNull();
+    });
+
+    it("still lists records on other dates, with an add button in the year's empty table", () => {
+      mockLoaderRecords = [record({ id: "rec-old", name: "Old invoice", date: "2019-05-01" })];
+      render(<TaxContainer />);
+      openDrawer(/^Records$/);
+      expect(screen.getByRole("heading", { name: "Other dates (1)" })).toBeDefined();
+      fireEvent.click(screen.getByRole("button", { name: "Add record" }));
+      const dialog = screen.getByRole("dialog", { name: "Add a record" });
+      expect((within(dialog).getByLabelText("Income source") as HTMLSelectElement).value).toBe(
+        "self-employed",
+      );
+    });
+  });
+
+  it("shows £0 PAYE salary year by year when a salary is saved, and asks for it when none is", () => {
+    const selfEmployed = () => {
+      mockEmploymentType = "self-employed";
+      mockLoaderRecords = [
+        record({
+          id: "se-now",
+          source: "self-employed",
+          category: "self_employed_income",
+          amount: 20000,
+          date: `${start}-05-01`,
+        }),
+        record({
+          id: "se-prev",
+          source: "self-employed",
+          category: "self_employed_income",
+          amount: 20000,
+          date: `${previousYear.slice(0, 4)}-05-01`,
+        }),
+      ];
+    };
+    const salaryRow = () =>
+      screen.getByText("Salary through PAYE").closest("tr") as HTMLTableRowElement;
+    selfEmployed();
+    const saved = render(<TaxContainer />);
+    openDrawer(/Year by year/);
+    expect(salaryRow().textContent).toContain("£0");
+    saved.unmount();
+    mockProfileSalary = null;
+    render(<TaxContainer />);
+    openDrawer(/Year by year/);
+    expect(salaryRow().textContent).not.toContain("£0");
+  });
+
+  it("closes the copy dialog", async () => {
+    const user = userEvent.setup();
+    render(<TaxContainer />);
+    await user.click(screen.getByRole("button", { name: "Add income or expense" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Copy from last year" }));
+    const dialog = screen.getByRole("dialog", { name: "Copy records from another tax year" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog", { name: "Copy records from another tax year" })).toBeNull();
   });
 });
