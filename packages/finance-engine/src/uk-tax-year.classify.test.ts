@@ -8,8 +8,8 @@ import {
   UnsupportedUkTaxYearError,
 } from "./uk-tax-year.js";
 
-// The engine supports 2020/21 to 2026/27 (types.ts SUPPORTED_UK_TAX_YEARS), so the latest
-// supported year is 2026/27 and the first year it lacks is 2027/28.
+// The engine supports 2020/21 to 2027/28 (types.ts SUPPORTED_UK_TAX_YEARS), so the latest
+// supported year is 2027/28 (provisional) and the first year it lacks is 2028/29.
 
 function caught(fn: () => unknown): unknown {
   try {
@@ -28,7 +28,9 @@ describe("UnsupportedUkTaxYearError", () => {
   it("lists every supported year, comma separated, when the whole year is unsupported", () => {
     const err = new UnsupportedUkTaxYearError("2019/20");
     expect(err.message).toContain('"2019/20"');
-    expect(err.message).toContain("2020/21, 2021/22, 2022/23, 2023/24, 2024/25, 2025/26, 2026/27");
+    expect(err.message).toContain(
+      "2020/21, 2021/22, 2022/23, 2023/24, 2024/25, 2025/26, 2026/27, 2027/28",
+    );
     expect(err.table).toBeUndefined();
   });
 
@@ -52,9 +54,9 @@ describe("getUkTaxYearForDate input checks", () => {
 });
 
 describe("getFirstUnsupportedUkTaxYear", () => {
-  it("is the year straight after 2026/27", () => {
-    // 2026 + 1 = 2027, label 2027/28.
-    expect(getFirstUnsupportedUkTaxYear()).toBe("2027/28");
+  it("is the year straight after 2027/28", () => {
+    // 2027 + 1 = 2028, label 2028/29.
+    expect(getFirstUnsupportedUkTaxYear()).toBe("2028/29");
   });
 });
 
@@ -68,10 +70,19 @@ describe("getUkTaxYearContext", () => {
     });
   });
 
-  it("falls back to 2026/27 rates, and says why, once the clock is in 2027/28", () => {
+  it("marks 2027/28 as provisional, with its own rates and no fallback", () => {
     expect(getUkTaxYearContext(new Date("2027-06-01T12:00:00Z"))).toEqual({
       calendarYear: "2027/28",
-      ratesYear: "2026/27",
+      ratesYear: "2027/28",
+      isFallback: false,
+      kind: "provisional",
+    });
+  });
+
+  it("falls back to 2027/28 rates, and says why, once the clock is in 2028/29", () => {
+    expect(getUkTaxYearContext(new Date("2028-06-01T12:00:00Z"))).toEqual({
+      calendarYear: "2028/29",
+      ratesYear: "2027/28",
       isFallback: true,
       reason: "after-latest-supported",
     });
@@ -81,7 +92,7 @@ describe("getUkTaxYearContext", () => {
     // 1 June 2030 is in tax year 2030/31.
     const ctx = getUkTaxYearContext(new Date("2030-06-01T12:00:00Z"));
     expect(ctx.calendarYear).toBe("2030/31");
-    expect(ctx.ratesYear).toBe("2026/27");
+    expect(ctx.ratesYear).toBe("2027/28");
     expect(ctx.isFallback).toBe(true);
   });
 
@@ -97,14 +108,15 @@ describe("classifyUkTaxYear", () => {
   it("treats every supported year as supported", () => {
     expect(classifyUkTaxYear("2020/21")).toEqual({ kind: "supported" });
     expect(classifyUkTaxYear("2026/27")).toEqual({ kind: "supported" });
+    expect(classifyUkTaxYear("2027/28")).toEqual({ kind: "supported" });
   });
 
   it("lets only the year after the latest use the latest rates", () => {
-    expect(classifyUkTaxYear("2027/28")).toEqual({ kind: "fallback", ratesYear: "2026/27" });
+    expect(classifyUkTaxYear("2028/29")).toEqual({ kind: "fallback", ratesYear: "2027/28" });
   });
 
   it("rejects later years as too far ahead", () => {
-    expect(classifyUkTaxYear("2028/29")).toEqual({ kind: "unsupported", reason: "too-far-ahead" });
+    expect(classifyUkTaxYear("2029/30")).toEqual({ kind: "unsupported", reason: "too-far-ahead" });
   });
 
   it("rejects earlier years as before the earliest", () => {

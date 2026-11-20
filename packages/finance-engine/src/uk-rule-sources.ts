@@ -12,7 +12,12 @@
  * Imports only types, so there is no cycle with uk-tax-year.ts.
  */
 
-import { SUPPORTED_UK_TAX_YEARS, type UkTaxYear } from "./types.js";
+import {
+  PROVISIONAL_UK_TAX_YEARS,
+  SUPPORTED_UK_TAX_YEARS,
+  type UkProvisionalTaxYear,
+  type UkTaxYear,
+} from "./types.js";
 
 export type UkRuleKey =
   | "personalAllowance"
@@ -35,7 +40,11 @@ export type UkRuleKey =
   | "propertyAllowance"
   | "paymentsOnAccount";
 
-export type UkRuleStatus = "verified" | "unverified";
+/**
+ * "announced": confirmed against the cited page, but the page is an announcement (a Budget
+ * document or a department's notice), not law yet. Only provisional years use it.
+ */
+export type UkRuleStatus = "verified" | "unverified" | "announced";
 
 export interface UkRuleSource {
   /** Primary page. Always https://www.gov.uk/, gov.scot or legislation.gov.uk. */
@@ -43,7 +52,10 @@ export interface UkRuleSource {
   /** Further pages the figure group also rests on. */
   additionalUrls?: readonly string[];
   status: UkRuleStatus;
-  /** Present exactly when status is "unverified"; starts with "UNVERIFIED: ". */
+  /**
+   * Present exactly when status is not "verified": starts with "UNVERIFIED: " or
+   * "ANNOUNCED, NOT YET LAW: ".
+   */
   note?: string;
 }
 
@@ -317,23 +329,173 @@ function buildYear(year: UkTaxYear): UkRuleSources {
   };
 }
 
-export const UK_RULE_SOURCES: Record<UkTaxYear, UkRuleSources> = Object.fromEntries(
-  SUPPORTED_UK_TAX_YEARS.map((y) => [y, buildYear(y)]),
-) as Record<UkTaxYear, UkRuleSources>;
-
 /** Unique source URLs for a year: primary pages first, then additional ones, in key order. */
 export function ruleSourceUrls(year: UkTaxYear): string[] {
-  const entries = UK_RULE_KEYS.map((k) => UK_RULE_SOURCES[year][k]);
+  const sources = ruleSourcesFor(year);
+  const entries = ruleKeysFor(year).map((k) => sources[k as UkRuleKey]);
   return [
     ...new Set([...entries.map((e) => e.url), ...entries.flatMap((e) => e.additionalUrls ?? [])]),
   ];
 }
 
+// ---------------------------------------------------------------------------
+// Provisional years (2027/28): tables held, not yet supported
+// ---------------------------------------------------------------------------
+
+/** A provisional year's registry: every supported key plus the separate property and savings rates. */
+export type UkProvisionalRuleSources = UkRuleSources & {
+  propertyRates: UkRuleSource;
+  savingsRates: UkRuleSource;
+};
+
+const announced = (
+  url: string,
+  note: string,
+  additionalUrls?: readonly string[],
+): UkRuleSource => ({
+  url,
+  ...(additionalUrls ? { additionalUrls } : {}),
+  status: "announced",
+  note: `ANNOUNCED, NOT YET LAW: ${note}`,
+});
+
+// All read 2026-11-19.
+// Finance Act 2026 (c. 11), Royal Assent 18 March 2026.
+const FA_2026 = (section: number) =>
+  `https://www.legislation.gov.uk/ukpga/2026/11/section/${section}/enacted`;
+const FA_2026_SCH_1 = "https://www.legislation.gov.uk/ukpga/2026/11/schedule/1/enacted";
+// Budget 2026 (28 October 2026) overview of tax legislation and rates, updated 5 November 2026.
+const OOTLAR_2026 =
+  "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar";
+const OOTLAR_2026_ANNEX_A =
+  "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances";
+// Finance Bill 2026-27 (bills.parliament.uk/bills/4316) was at Commons second reading on 19 November
+// 2026. Named in the notes, not linked: every registry URL is on gov.uk or legislation.gov.uk.
+// DfE and Welsh Government, 12 November 2026: Plan 2, Plan 3 and Plan 5 thresholds for 2027/28.
+const STUDENT_LOAN_THRESHOLDS_2027_28 =
+  "https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement";
+
+const NOTE_CURRENT_GUIDANCE = (what: string, verb: "is" | "are" = "is") =>
+  `${what} ${verb} only confirmed as current guidance, not for this year`;
+
+function buildProvisionalYear(year: UkProvisionalTaxYear): UkProvisionalRuleSources {
+  return {
+    personalAllowance: verified(FA_2026(10), [OOTLAR_2026_ANNEX_A]),
+    personalAllowanceTaper: verified(OOTLAR_2026_ANNEX_A, [ADJUSTED_NET_INCOME]),
+    incomeTaxEwni: announced(
+      OOTLAR_2026,
+      "main rates 20/40/45 for 2027/28 are set by Finance Bill 2026-27 (OOTLAR 1.3); the allowance and basic rate limit are enacted (Finance Act 2026 s.10)",
+      [OOTLAR_2026_ANNEX_A, FA_2026(10)],
+    ),
+    incomeTaxScotland: unverified(
+      INCOME_TAX_RATES,
+      "Scottish rates and bands for 2027/28 are not published (set by the Scottish rate resolution), so a Scottish estimate for 2027/28 is refused",
+    ),
+    niClass1: announced(
+      OOTLAR_2026_ANNEX_A,
+      "Class 1 thresholds for 2027/28 (LEL 133, PT 242, UEL 967 a week) are from the Budget 2026 rates annex; the 2027/28 contribution regulations were not found",
+      [NIC_RATES],
+    ),
+    niClass4: announced(
+      OOTLAR_2026_ANNEX_A,
+      "Class 4 limits for 2027/28 (12,570 and 50,270) are from the Budget 2026 rates annex",
+      [NIC_RATES],
+    ),
+    employerNi: announced(
+      OOTLAR_2026_ANNEX_A,
+      "employer rate 15% and secondary threshold (96 a week) for 2027/28 are from the Budget 2026 rates annex",
+      [NIC_RATES],
+    ),
+    studentLoan: announced(
+      STUDENT_LOAN_THRESHOLDS_2027_28,
+      "Plan 2, Plan 5 and postgraduate thresholds for 2027/28 are from the DfE announcement of 12 November 2026; Plan 1 and Plan 4 thresholds are not published, so they are refused",
+    ),
+    savingsAllowance: verified(OOTLAR_2026_ANNEX_A, [FA_2026(9), PSA]),
+    dividends: verified(FA_2026(4), [OOTLAR_2026_ANNEX_A, TAX_ON_DIVIDENDS]),
+    giftAid: verified(GIFT_AID, [ADJUSTED_NET_INCOME]),
+    pensionAnnualAllowance: verified(OOTLAR_2026_ANNEX_A, [ANNUAL_ALLOWANCE]),
+    isaAllowance: verified(OOTLAR_2026_ANNEX_A, [ISA]),
+    statePension: UK_STATE_PENSION_SOURCES[year],
+    hicbc: verified(HICBC_PAGE),
+    childBenefit: announced(
+      OOTLAR_2026_ANNEX_A,
+      "Child Benefit weekly rates for 2027/28 (28.00 and 18.55) are from the Budget 2026 rates annex; the uprating order was not checked",
+      [CHILD_BENEFIT_RATES],
+    ),
+    tradingAllowance: unverified(
+      TRADING_PROPERTY_ALLOWANCES,
+      NOTE_CURRENT_GUIDANCE("trading allowance 1,000"),
+    ),
+    propertyAllowance: unverified(
+      TRADING_PROPERTY_ALLOWANCES,
+      NOTE_CURRENT_GUIDANCE("property allowance 1,000"),
+    ),
+    paymentsOnAccount: unverified(
+      PAYMENTS_ON_ACCOUNT,
+      NOTE_CURRENT_GUIDANCE("payments on account thresholds (1,000 and 80%)", "are"),
+    ),
+    propertyRates: announced(
+      OOTLAR_2026,
+      "property rates 24/44/49 for 2027/28 are in Finance Bill 2026-27 (OOTLAR 1.2); Finance Act 2026 s.7 enacts 22/42/47 until then. Property income sits above other non-savings income and below savings and dividends (s.6), and the finance-cost credit uses the property basic rate (Sch 1 para 40)",
+      [OOTLAR_2026_ANNEX_A, FA_2026(7), FA_2026(6), FA_2026_SCH_1],
+    ),
+    savingsRates: announced(
+      OOTLAR_2026,
+      "savings rates 24/44/49 for 2027/28 are in Finance Bill 2026-27 (OOTLAR 1.1); Finance Act 2026 s.5 enacts 22/42/47 until then",
+      [OOTLAR_2026_ANNEX_A, FA_2026(5)],
+    ),
+  };
+}
+
+/** Registry for the provisional years, kept apart from UK_RULE_SOURCES (supported years only). */
+export const UK_PROVISIONAL_RULE_SOURCES: Record<UkProvisionalTaxYear, UkProvisionalRuleSources> =
+  Object.fromEntries(PROVISIONAL_UK_TAX_YEARS.map((y) => [y, buildProvisionalYear(y)])) as Record<
+    UkProvisionalTaxYear,
+    UkProvisionalRuleSources
+  >;
+
+const PROVISIONAL_KEYS = [...UK_RULE_KEYS, "propertyRates", "savingsRates"] as const;
+
+function isProvisional(year: string): year is UkProvisionalTaxYear {
+  return (PROVISIONAL_UK_TAX_YEARS as readonly string[]).includes(year);
+}
+
+/**
+ * Every supported year's registry. A provisional year (2027/28) uses its provisional registry,
+ * which also has the property and savings rate keys.
+ */
+export const UK_RULE_SOURCES: Record<UkTaxYear, UkRuleSources> = Object.fromEntries(
+  SUPPORTED_UK_TAX_YEARS.map((y) => [
+    y,
+    isProvisional(y) ? UK_PROVISIONAL_RULE_SOURCES[y] : buildYear(y),
+  ]),
+) as Record<UkTaxYear, UkRuleSources>;
+
+/** The registry for a year. */
+export function ruleSourcesFor(year: UkTaxYear): UkRuleSources {
+  return UK_RULE_SOURCES[year];
+}
+
+function ruleKeysFor(year: UkTaxYear): readonly string[] {
+  return isProvisional(year) ? PROVISIONAL_KEYS : UK_RULE_KEYS;
+}
+
+/** Unique "ANNOUNCED, NOT YET LAW: <reason>" lines for a provisional year, in key order. */
+export function ruleAnnouncedNotes(year: UkProvisionalTaxYear): string[] {
+  const notes: string[] = [];
+  for (const key of PROVISIONAL_KEYS) {
+    const e = UK_PROVISIONAL_RULE_SOURCES[year][key];
+    if (e.status === "announced" && e.note && !notes.includes(e.note)) notes.push(e.note);
+  }
+  return notes;
+}
+
 /** Unique "UNVERIFIED: <reason>" lines for a year, in key order. */
 export function ruleUnverifiedNotes(year: UkTaxYear): string[] {
   const notes: string[] = [];
-  for (const key of UK_RULE_KEYS) {
-    const e = UK_RULE_SOURCES[year][key];
+  const sources = ruleSourcesFor(year);
+  for (const key of ruleKeysFor(year)) {
+    const e = sources[key as UkRuleKey];
     if (e.status === "unverified" && e.note && !notes.includes(e.note)) notes.push(e.note);
   }
   return notes;

@@ -243,6 +243,26 @@ describe("TaxContainer, opted in", () => {
     expect(container.textContent).not.toMatch(/Figures are estimates for guidance only/);
   });
 
+  it("says 2027/28 rates are provisional when that year is chosen", () => {
+    const record2027: TaxRecord = {
+      ...mockRecords[0],
+      id: "rec-2027",
+      name: "Flat rent (2027/28)",
+      date: "2027-04-06",
+      endDate: "2028-03-31",
+    };
+    mockLoaderRecords = [...mockRecords, record2027];
+    try {
+      render(<TaxContainer />);
+      fireEvent.change(screen.getByLabelText("Tax year"), { target: { value: "2027/28" } });
+      expect(screen.getByRole("status").textContent).toContain(
+        "2027/28 rates are provisional: announced but not yet confirmed.",
+      );
+    } finally {
+      mockLoaderRecords = mockRecords;
+    }
+  });
+
   it("has no next £1,000 explorer, no £100,000 banner and no link away", () => {
     const { container } = render(<TaxContainer />);
     expect(container.querySelector("#tax-pay-planner")).toBeNull();

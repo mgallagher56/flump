@@ -19,6 +19,7 @@ import {
   calculatePersonalAllowanceForYear,
   getUkTaxYearForDate,
   getUkTaxYearRules,
+  UnsupportedUkTaxYearError,
 } from "./uk-tax-year.js";
 
 // A fixed seed keeps the generated cases the same on every run (E41 M2), so mutation scores repeat.
@@ -27,6 +28,15 @@ const PENNY = 0.011;
 
 const year = fc.constantFrom<UkTaxYear>(...SUPPORTED_UK_TAX_YEARS);
 const region = fc.constantFrom<UkTaxRegion>("ENGLAND_NI_WALES", "SCOTLAND");
+
+/**
+ * The engine deliberately refuses Scottish figures for 2027/28: no Scottish table is published
+ * for that year (owner decision). This is the only pair left out of the year and region draw; the
+ * plain test below checks it throws, so the exclusion cannot hide a different failure.
+ */
+const isRefusedYearRegion = (y: UkTaxYear, r: UkTaxRegion): boolean =>
+  y === "2027/28" && r === "SCOTLAND";
+const yearRegion = fc.tuple(year, region).filter(([y, r]) => !isRefusedYearRegion(y, r));
 const gross = fc.integer({ min: 0, max: 400_000 });
 
 const DAY_MS = 86_400_000;
@@ -43,8 +53,15 @@ function tax(y: UkTaxYear, r: UkTaxRegion, grossSalary: number) {
 
 function maxBandRate(y: UkTaxYear): number {
   const rules = getUkTaxYearRules(y);
-  return Math.max(rules.ewni.additionalRate, ...rules.scotland.bands.map((b) => b.rate));
+  // 2027/28 has no Scottish table, so only the EWNI rates bound that year.
+  return Math.max(rules.ewni.additionalRate, ...(rules.scotland?.bands ?? []).map((b) => b.rate));
 }
+
+describe("refused year and region", () => {
+  it("throws UnsupportedUkTaxYearError for a Scottish 2027/28 estimate", () => {
+    expect(() => tax("2027/28", "SCOTLAND", 40_000)).toThrow(UnsupportedUkTaxYearError);
+  });
+});
 
 describe("tax-year boundaries", () => {
   it("every date maps to a year whose 6 April start <= date <= 5 April end", () => {
@@ -105,7 +122,7 @@ describe("tax-year boundaries", () => {
 describe("income tax", () => {
   it("is never negative and never exceeds gross income", () => {
     fc.assert(
-      fc.property(year, region, gross, (y, r, g) => {
+      fc.property(yearRegion, gross, ([y, r], g) => {
         const t = tax(y, r, g).incomeTaxGbp;
         expect(t).toBeGreaterThanOrEqual(0);
         expect(t).toBeLessThanOrEqual(g);
@@ -116,7 +133,7 @@ describe("income tax", () => {
 
   it("is monotonic non-decreasing in gross income", () => {
     fc.assert(
-      fc.property(year, region, gross, gross, (y, r, a, b) => {
+      fc.property(yearRegion, gross, gross, ([y, r], a, b) => {
         const [lo, hi] = a <= b ? [a, b] : [b, a];
         expect(tax(y, r, lo).incomeTaxGbp).toBeLessThanOrEqual(tax(y, r, hi).incomeTaxGbp);
       }),
@@ -126,7 +143,7 @@ describe("income tax", () => {
 
   it("marginal rate stays within the year's bands (at most 1.5x the top rate in the taper)", () => {
     fc.assert(
-      fc.property(year, region, gross, (y, r, g) => {
+      fc.property(yearRegion, gross, ([y, r], g) => {
         const step = 100;
         const rate = (tax(y, r, g + step).incomeTaxGbp - tax(y, r, g).incomeTaxGbp) / step;
         expect(rate).toBeGreaterThanOrEqual(0);
@@ -138,7 +155,7 @@ describe("income tax", () => {
 
   it("is zero up to the personal allowance", () => {
     fc.assert(
-      fc.property(year, region, fc.double({ min: 0, max: 1, noNaN: true }), (y, r, f) => {
+      fc.property(yearRegion, fc.double({ min: 0, max: 1, noNaN: true }), ([y, r], f) => {
         const pa = getUkTaxYearRules(y).ewni.personalAllowance;
         expect(tax(y, r, Math.floor(pa * f)).incomeTaxGbp).toBe(0);
       }),
@@ -194,7 +211,7 @@ describe("national insurance", () => {
 
   it("calculateUkTax NI is non-negative and below gross", () => {
     fc.assert(
-      fc.property(year, region, gross, (y, r, g) => {
+      fc.property(yearRegion, gross, ([y, r], g) => {
         const ni = tax(y, r, g).nationalInsuranceGbp;
         expect(ni).toBeGreaterThanOrEqual(0);
         expect(ni).toBeLessThanOrEqual(g);

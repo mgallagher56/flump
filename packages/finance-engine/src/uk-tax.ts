@@ -21,6 +21,7 @@ import {
   calculateStudentLoanRepayment,
   getLatestSupportedUkTaxYear,
   getUkTaxYearRules,
+  requireScottishRules,
   resolveUkTaxYear,
   roundPence,
   type UkStudentLoanPlanKey,
@@ -119,7 +120,7 @@ function marginalIncomeTaxRate(
 ): number {
   if (taxable <= 0) return 0;
   if (region === "SCOTLAND") {
-    const bands = rules.scotland.bands;
+    const bands = requireScottishRules(rules).bands;
     const band = bands.find((b) => taxable > b.from && (b.to === null || taxable <= b.to));
     return band?.rate ?? bands.at(-1)?.rate ?? 0;
   }

@@ -55,7 +55,23 @@ const UNVERIFIED_BY_YEAR: Record<string, readonly UkRuleKey[]> = {
   "2024/25": ["studentLoan", ...ALWAYS_UNVERIFIED_BEFORE_2026],
   "2025/26": ["studentLoan", ...ALWAYS_UNVERIFIED_BEFORE_2026],
   "2026/27": ["incomeTaxScotland"],
+  // 2027/28 is provisional (buildProvisionalYear): no Scottish table is published, and the
+  // trading, property and payments-on-account figures rest on current guidance only.
+  "2027/28": ["incomeTaxScotland", "tradingAllowance", "propertyAllowance", "paymentsOnAccount"],
 };
+
+/**
+ * Figure groups whose page is an announcement (Budget 2026 or the DfE threshold notice) rather
+ * than enacted law. Only the provisional year 2027/28 has any; every earlier year has none.
+ */
+const ANNOUNCED_BY_YEAR: Record<string, readonly UkRuleKey[]> = {
+  "2027/28": ["incomeTaxEwni", "niClass1", "niClass4", "employerNi", "studentLoan", "childBenefit"],
+};
+
+const OOTLAR_2026 =
+  "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar";
+const OOTLAR_2026_ANNEX_A =
+  "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances";
 
 const INCOME_TAX_PAST =
   "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past";
@@ -78,6 +94,14 @@ describe("rule source status per year", () => {
         (k) => UK_RULE_SOURCES[year][k].status === "unverified",
       );
       expect([...unverified].sort()).toEqual([...(UNVERIFIED_BY_YEAR[year] ?? [])].sort());
+    });
+
+    it(`flags exactly the expected figure groups as announced, not yet law, for ${year}`, () => {
+      const announced = UK_RULE_KEYS.filter((k) => UK_RULE_SOURCES[year][k].status === "announced");
+      expect([...announced].sort()).toEqual([...(ANNOUNCED_BY_YEAR[year] ?? [])].sort());
+      for (const k of announced) {
+        expect(UK_RULE_SOURCES[year][k].note, `${year} ${k}`).toMatch(/^ANNOUNCED, NOT YET LAW: /);
+      }
     });
   }
 
@@ -132,7 +156,8 @@ describe("rule source pages per year", () => {
   });
 
   it("lists the further pages each figure group rests on", () => {
-    for (const year of SUPPORTED_UK_TAX_YEARS) {
+    // 2027/28 cites the Budget 2026 papers instead; its pages are pinned in the next test.
+    for (const year of SUPPORTED_UK_TAX_YEARS.filter((y) => y !== "2027/28")) {
       const s = UK_RULE_SOURCES[year];
       const from = Number(year.slice(0, 4));
       expect(s.personalAllowance.additionalUrls, year).toEqual([INCOME_TAX_RATES]);
@@ -148,6 +173,18 @@ describe("rule source pages per year", () => {
       expect(s.dividends.additionalUrls, year).toEqual([INCOME_TAX_PAST]);
       expect(s.giftAid.additionalUrls, year).toEqual([ADJUSTED_NET_INCOME]);
     }
+  });
+
+  it("cites the Budget 2026 papers for the provisional year 2027/28", () => {
+    const s = UK_RULE_SOURCES["2027/28"];
+    expect(s.personalAllowance.additionalUrls).toEqual([OOTLAR_2026_ANNEX_A]);
+    expect(s.incomeTaxEwni.url).toBe(OOTLAR_2026);
+    expect(s.incomeTaxScotland.url).toBe(INCOME_TAX_RATES);
+    for (const key of ["niClass1", "niClass4", "employerNi"] as const) {
+      expect(s[key].url, key).toBe(OOTLAR_2026_ANNEX_A);
+      expect(s[key].additionalUrls, key).toEqual([NIC_RATES]);
+    }
+    expect(s.giftAid.additionalUrls).toEqual([ADJUSTED_NET_INCOME]);
   });
 
   it("cites the uprating regulations for Child Benefit 2022/23 to 2024/25", () => {

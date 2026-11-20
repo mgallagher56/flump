@@ -117,9 +117,26 @@ describe("computeUkTakeHome: E25-T2 vectors", () => {
   );
 });
 
+/**
+ * The one combination the engine deliberately refuses in this sweep: no Scottish table is
+ * published for 2027/28 (owner decision), so any Scottish figure for that year throws. Plans the
+ * year does not list (Plan 1 and Plan 4 in 2027/28) are already skipped by the plan check below.
+ */
+const isRefusedYearRegion = (taxYear: string, region: UkTaxRegion): boolean =>
+  taxYear === "2027/28" && region === "SCOTLAND";
+
 // calculateUkTax is an adapter over computeUkTakeHome; this sparse grid checks the adapter maps
 // every input and output field, not that two engines agree.
 describe("computeUkTakeHome: calculateUkTax adapter mapping", () => {
+  it("refuses a Scottish 2027/28 estimate, so the sweep skips only that pair", () => {
+    expect(() =>
+      calculateUkTax({ grossSalary: 40_000, region: "SCOTLAND", taxYear: "2027/28" }),
+    ).toThrow(UnsupportedUkTaxYearError);
+    expect(() =>
+      computeUkTakeHome({ taxYear: "2027/28", region: "SCOTLAND", salary: 40_000 }),
+    ).toThrow(UnsupportedUkTaxYearError);
+  });
+
   const regions: UkTaxRegion[] = ["ENGLAND_NI_WALES", "SCOTLAND"];
   const loanPlans: UkStudentLoanPlan[] = [
     "NONE",
@@ -135,6 +152,7 @@ describe("computeUkTakeHome: calculateUkTax adapter mapping", () => {
     for (const taxYear of SUPPORTED_UK_TAX_YEARS) {
       const rules = getUkTaxYearRules(taxYear);
       for (const region of regions) {
+        if (isRefusedYearRegion(taxYear, region)) continue;
         for (const plan of loanPlans) {
           const key = toStudentLoanPlanKey(plan);
           if (key && !rules.studentLoans.plans[key]) continue;
@@ -223,9 +241,9 @@ describe("computeUkTakeHome: behaviour", () => {
   });
 
   it("uses the fallback rates year when the clock is past the latest supported year", () => {
-    const b = computeUkTakeHome({ salary: 39000 }, { now: new Date("2027-06-01T12:00:00Z") });
-    expect(b.taxYear).toBe("2027/28");
-    expect(b.ratesYear).toBe("2026/27");
+    const b = computeUkTakeHome({ salary: 39000 }, { now: new Date("2028-06-01T12:00:00Z") });
+    expect(b.taxYear).toBe("2028/29");
+    expect(b.ratesYear).toBe("2027/28");
     expect(b.isFallback).toBe(true);
   });
 

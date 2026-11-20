@@ -9,9 +9,12 @@ import {
   calculateClass4Ni,
   calculateIncomeTaxOnTaxable,
   calculatePersonalAllowanceForYear,
+  financeCostCreditRate,
   getUkTaxYearForDate,
   getUkTaxYearRules,
+  propertyRatesFor,
   resolveUkTaxYear,
+  type UkIncomeRates,
   type UkTaxYearRules,
 } from "./uk-tax-year.js";
 
@@ -867,7 +870,17 @@ export function calculateUKTax(
     const taxableSavingsInterest = savingsAfterAllowance - startingRateUsed - psaUsed;
     const dividendAllowanceUsed = Math.min(dividendsAfterAllowance, dividendAllowance);
     const taxableDividends = dividendsAfterAllowance - dividendAllowanceUsed;
-    const nonSavingsIncomeTaxBeforeCredit = incomeTaxOn(nonSavingsTaxable);
+    // From 2027/28 property income has its own rates and is the top slice of non-savings income,
+    // below savings and dividends (ITA 2007 s.11CA, s.16A). The allowance above already goes
+    // against other non-savings income first (s.25(3A)). A Scottish taxpayer's property income
+    // stays on their Scottish rates (Scotland Act 1998 s.80C(2B)), so no split for them.
+    const propertyRates = propertyRatesFor(yearRules, region);
+    const otherNonSavingsTaxable = Math.max(0, effectivePayeSalary + seProfit - personalAllowance);
+    const nonSavingsIncomeTaxBeforeCredit = propertyRates
+      ? incomeTaxOn(otherNonSavingsTaxable) +
+        ukIncomeTaxOn(nonSavingsTaxable, propertyRates) -
+        ukIncomeTaxOn(otherNonSavingsTaxable, propertyRates)
+      : incomeTaxOn(nonSavingsTaxable);
 
     // Section 24 Rental Property Finance Tax Credit
     const maxCreditBase = Math.min(
@@ -875,7 +888,8 @@ export function calculateUKTax(
       rentalProfitBeforeInterestShare,
       nonSavingsTaxable,
     );
-    const rentalPropertyTaxCredit = Math.max(0, maxCreditBase * 0.2);
+    // At the basic rate, or the property basic rate from 2027/28 (ITTOIA 2005 s.274AA(5)).
+    const rentalPropertyTaxCredit = Math.max(0, maxCreditBase * financeCostCreditRate(yearRules));
     // What is not relieved this year carries forward to the next (ITTOIA 2005 s.274AA(4)). On the
     // property allowance route no finance costs are relieved, so only the amount brought in
     // carries on: this year's costs are not deductible at all on that route.
@@ -919,9 +933,12 @@ export function calculateUKTax(
     let savingsTaxDue = 0;
     if (taxableSavingsInterest > 0) {
       const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
+      // At the savings rates: the main rates up to 2026/27, their own from 2027/28 (FA 2026 s.5).
+      const rates = yearRules.savingsRates;
       savingsTaxDue = Math.max(
         0,
-        ukIncomeTaxOn(zeroRatedTop + taxableSavingsInterest) - ukIncomeTaxOn(zeroRatedTop),
+        ukIncomeTaxOn(zeroRatedTop + taxableSavingsInterest, rates) -
+          ukIncomeTaxOn(zeroRatedTop, rates),
       );
     }
 
@@ -1053,11 +1070,11 @@ export function calculateUKTax(
   }
 
   /**
-   * Income Tax at the UK rates on the UK bands, which savings interest uses whatever the region
-   * (ITA 2007 s.11A(1A): Scottish rates are for non-savings income only).
+   * Income Tax on the UK bands at the given UK rates (savings or property), which savings interest
+   * uses whatever the region (ITA 2007 s.11A(1A): Scottish rates are for non-savings income only).
    */
-  function ukIncomeTaxOn(taxable: number): number {
-    return calculateIncomeTaxOnTaxable(taxable, yearRules, "ENGLAND_NI_WALES").total;
+  function ukIncomeTaxOn(taxable: number, rates: UkIncomeRates): number {
+    return calculateIncomeTaxOnTaxable(taxable, yearRules, "ENGLAND_NI_WALES", { rates }).total;
   }
 }
 

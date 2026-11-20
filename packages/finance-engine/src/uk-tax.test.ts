@@ -64,18 +64,20 @@ describe("uk-tax module", () => {
   });
 
   describe("tax trap default year after the last supported year", () => {
-    it("does not throw when the clock passes 6 April 2027 (falls back to the latest supported year)", () => {
+    it("does not throw when the clock passes 6 April 2028 (falls back to the latest supported year)", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date("2027-04-06T12:00:00Z"));
+      vi.setSystemTime(new Date("2028-04-06T12:00:00Z"));
       expect(() => calculateTaxTrapRelief(110000)).not.toThrow();
       expect(() => analyzeTaxTrap(110000)).not.toThrow();
       expect(() => calculate100kTaxTrap(110000)).not.toThrow();
-      expect(calculateTaxTrapRelief(110000)).toEqual(calculateTaxTrapRelief(110000, "2026/27"));
+      expect(calculateTaxTrapRelief(110000)).toEqual(calculateTaxTrapRelief(110000, "2027/28"));
     });
 
     it("still throws for an explicitly passed unsupported year", () => {
-      expect(() => calculateTaxTrapRelief(110000, "2027/28")).toThrow(UnsupportedUkTaxYearError);
-      expect(() => analyzeTaxTrap(110000, "ENGLAND_NI_WALES", "2027/28")).toThrow(
+      expect(() => calculateTaxTrapRelief(110000, "2028/29" as UkTaxYear)).toThrow(
+        UnsupportedUkTaxYearError,
+      );
+      expect(() => analyzeTaxTrap(110000, "ENGLAND_NI_WALES", "2028/29" as UkTaxYear)).toThrow(
         UnsupportedUkTaxYearError,
       );
     });
@@ -410,7 +412,7 @@ describe("uk-tax module", () => {
     it("is derived from the current year's UK_STUDENT_LOANS table", () => {
       const year = UK_STUDENT_LOANS[getCurrentUKTaxYear()] ?? UK_STUDENT_LOANS["2026/27"]!;
       expect(STUDENT_LOAN_THRESHOLDS.PLAN_2?.threshold).toBe(year.plans.plan2.threshold);
-      expect(STUDENT_LOAN_THRESHOLDS.PLAN_1?.threshold).toBe(year.plans.plan1.threshold);
+      expect(STUDENT_LOAN_THRESHOLDS.PLAN_1?.threshold).toBe(year.plans.plan1?.threshold);
       expect(STUDENT_LOAN_THRESHOLDS.POSTGRAD?.rate).toBe(year.plans.postgrad.rate);
       expect(STUDENT_LOAN_THRESHOLDS.PLAN_2?.writeOffYears).toBe(
         STUDENT_LOAN_WRITE_OFF_YEARS.plan2,
@@ -538,7 +540,9 @@ describe("uk-tax module", () => {
         const i = v.input as { grossIncome: number; giftAidNet: number };
         return tax(i.grossIncome, v.taxYear as UkTaxYear, i.giftAidNet).incomeTaxGbp;
       });
-      expect(res.checked).toBe(14);
+      // 16: the 14 vectors for 2020/21 to 2026/27 plus two for 2027/28
+      // (ewni.giftAid.2027-28.60000.net1000 and ewni.giftAid.2027-28.110000.net1000).
+      expect(res.checked).toBe(16);
       expect(res.failures).toEqual([]);
     });
   });

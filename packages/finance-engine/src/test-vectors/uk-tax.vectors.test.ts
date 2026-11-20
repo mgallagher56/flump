@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { UK_SCOTLAND_INCOME_TAX } from "../tax-rules.js";
 import { evaluateSignoff } from "./signoff.js";
 import {
   runUkTaxVectors,
@@ -76,10 +77,16 @@ describe("UK tax vector catalogue", () => {
           0,
         );
       }
-      expect(
-        selectUkTaxVectors({ taxYear, kind: "incomeTax", region: "SCOTLAND" }).length,
-        `${taxYear} scotland`,
-      ).toBeGreaterThan(0);
+      const scottish = selectUkTaxVectors({ taxYear, kind: "incomeTax", region: "SCOTLAND" });
+      // GUARD EXCEPTION, 2027/28 only: Scottish rates are not published, so the engine refuses
+      // them and there is no vector. Same entry and expiry test as REFUSED_WITHOUT_VECTOR in
+      // uk-rule-sources.test.ts: it fails once a 2027/28 Scottish table exists.
+      if (taxYear === "2027/28") {
+        expect(scottish, "2027/28 scotland is refused").toHaveLength(0);
+        expect(UK_SCOTLAND_INCOME_TAX["2027/28"]).toBeUndefined();
+        continue;
+      }
+      expect(scottish.length, `${taxYear} scotland`).toBeGreaterThan(0);
     }
   });
 
