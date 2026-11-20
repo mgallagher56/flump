@@ -681,3 +681,12 @@ describe("E2E retries and quarantine (BE-17 L10)", () => {
     expect(quarantineSummary([])).toContain("No quarantined tests");
   });
 });
+
+describe("backend build", () => {
+  test("keeps its incremental build info inside dist so a clean build starts clean", () => {
+    // `bun run build` removes dist first. Build info stored elsewhere survives that and makes
+    // tsc skip files it thinks it already emitted, leaving dist incomplete.
+    const config = readFileSync(resolve(repoRoot, "apps/backend/tsconfig.build.json"), "utf8");
+    expect(config).toMatch(/"tsBuildInfoFile":\s*"\.\/dist\//);
+  });
+});
