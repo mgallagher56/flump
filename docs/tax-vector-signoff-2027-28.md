@@ -11,64 +11,64 @@ Convention: takeHome vectors with children are net of the HICBC charge and exclu
 
 44 vectors. Already signed ones are marked and skipped.
 
-- [ ] `ewni.incomeTax.2027-28.30000` incomeTax ENGLAND_NI_WALES {"grossIncome":30000} => 3486
+- [x] `ewni.incomeTax.2027-28.30000` incomeTax ENGLAND_NI_WALES {"grossIncome":30000} => 3486
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Gross income 30000. PA 12570 (no taper at adjusted net income 30000). Taxable 30000 - 12570 = 17430. Basic 17430 x 20% = 3486; higher 0 x 40% = 0; additional 0 x 45% = 0. Total 3486. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
-- [ ] `ewni.incomeTax.2027-28.60000` incomeTax ENGLAND_NI_WALES {"grossIncome":60000} => 11432
+- [x] `ewni.incomeTax.2027-28.60000` incomeTax ENGLAND_NI_WALES {"grossIncome":60000} => 11432
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Gross income 60000. PA 12570 (no taper at adjusted net income 60000). Taxable 60000 - 12570 = 47430. Basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; additional 0 x 45% = 0. Total 11432. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
-- [ ] `ewni.incomeTax.2027-28.100000` incomeTax ENGLAND_NI_WALES {"grossIncome":100000} => 27432
+- [x] `ewni.incomeTax.2027-28.100000` incomeTax ENGLAND_NI_WALES {"grossIncome":100000} => 27432
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Gross income 100000. PA 12570 (no taper at adjusted net income 100000). Taxable 100000 - 12570 = 87430. Basic 37700 x 20% = 7540; higher 49730 x 40% = 19892; additional 0 x 45% = 0. Total 27432. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
-- [ ] `ewni.incomeTax.2027-28.110000` incomeTax ENGLAND_NI_WALES {"grossIncome":110000} => 33432
+- [x] `ewni.incomeTax.2027-28.110000` incomeTax ENGLAND_NI_WALES {"grossIncome":110000} => 33432
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Gross income 110000. Taper: (110000 - 100000) / 2 = 5000, PA 12570 - 5000 = 7570. Taxable 110000 - 7570 = 102430. Basic 37700 x 20% = 7540; higher 64730 x 40% = 25892; additional 0 x 45% = 0. Total 33432. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
-- [ ] `ewni.incomeTax.2027-28.125140` incomeTax ENGLAND_NI_WALES {"grossIncome":125140} => 42516
+- [x] `ewni.incomeTax.2027-28.125140` incomeTax ENGLAND_NI_WALES {"grossIncome":125140} => 42516
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Gross income 125140. Taper: (125140 - 100000) / 2 = 12570, PA 12570 - 12570 = 0. Taxable 125140 - 0 = 125140. Basic 37700 x 20% = 7540; higher 87440 x 40% = 34976; additional 0 x 45% = 0. Total 42516. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
-- [ ] `ewni.incomeTax.2027-28.150000` incomeTax ENGLAND_NI_WALES {"grossIncome":150000} => 53703
+- [x] `ewni.incomeTax.2027-28.150000` incomeTax ENGLAND_NI_WALES {"grossIncome":150000} => 53703
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Gross income 150000. Taper: (150000 - 100000) / 2 = 25000, PA 12570 - 25000 = 0. Taxable 150000 - 0 = 150000. Basic 37700 x 20% = 7540; higher 87440 x 40% = 34976; additional 24860 x 45% = 11187. Total 53703. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
-- [ ] `ewni.giftAid.2027-28.60000.net1000` giftAid ENGLAND_NI_WALES {"grossIncome":60000,"giftAidNet":1000} => 11182
+- [x] `ewni.giftAid.2027-28.60000.net1000` giftAid ENGLAND_NI_WALES {"grossIncome":60000,"giftAidNet":1000} => 11182
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Gross income 60000. Gift Aid gross-up 1000 x 1.25 = 1250; adjusted net income 60000 - 1250 = 58750; basic and higher limits both raised by 1250 (ITA 2007 s.414): 37700 + 1250 = 38950, 125140 + 1250 = 126390. PA 12570 (no taper at adjusted net income 58750). Taxable 60000 - 12570 = 47430. Basic 38950 x 20% = 7790; higher 8480 x 40% = 3392; additional 0 x 45% = 0. Total 11182. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
-- [ ] `ewni.giftAid.2027-28.110000.net1000` giftAid ENGLAND_NI_WALES {"grossIncome":110000,"giftAidNet":1000} => 32932
+- [x] `ewni.giftAid.2027-28.110000.net1000` giftAid ENGLAND_NI_WALES {"grossIncome":110000,"giftAidNet":1000} => 32932
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Gross income 110000. Gift Aid gross-up 1000 x 1.25 = 1250; adjusted net income 110000 - 1250 = 108750; basic and higher limits both raised by 1250 (ITA 2007 s.414): 37700 + 1250 = 38950, 125140 + 1250 = 126390. Taper: (108750 - 100000) / 2 = 4375, PA 12570 - 4375 = 8195. Taxable 110000 - 8195 = 101805. Basic 38950 x 20% = 7790; higher 62855 x 40% = 25142; additional 0 x 45% = 0. Total 32932. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
-- [ ] `employeeNi.2027-28.30000` employeeNi ENGLAND_NI_WALES {"grossEarnings":30000} => 1394.4
+- [x] `employeeNi.2027-28.30000` employeeNi ENGLAND_NI_WALES {"grossEarnings":30000} => 1394.4
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Annual earnings 30000. Main band 30000 - PT 12570 = 17430 x 8% = 1394.4; above UEL 50270: 0 x 2% = 0. Total 1394.4. 2027/28 figures: primary threshold 12570, upper earnings limit 50270 and rates 8% and 2% are announced, not yet law.
-- [ ] `employeeNi.2027-28.60000` employeeNi ENGLAND_NI_WALES {"grossEarnings":60000} => 3210.6
+- [x] `employeeNi.2027-28.60000` employeeNi ENGLAND_NI_WALES {"grossEarnings":60000} => 3210.6
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Annual earnings 60000. Main band 50270 - PT 12570 = 37700 x 8% = 3016; above UEL 50270: 9730 x 2% = 194.6. Total 3210.6. 2027/28 figures: primary threshold 12570, upper earnings limit 50270 and rates 8% and 2% are announced, not yet law.
-- [ ] `class4.2027-28.60000` class4 ENGLAND_NI_WALES {"profits":60000} => 2456.6
+- [x] `class4.2027-28.60000` class4 ENGLAND_NI_WALES {"profits":60000} => 2456.6
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Profits 60000. (50270 - LPL 12570) = 37700 x 6% = 2262; above UPL 50270: 9730 x 2% = 194.6. Total 2456.6. 2027/28 figures: lower profits limit 12570, upper profits limit 50270 and rates 6% and 2% are announced, not yet law.
-- [ ] `employerNiSaving.2027-28.60000.3000` employerNiSaving ENGLAND_NI_WALES {"grossSalary":60000,"salarySacrifice":3000} => 450
+- [x] `employerNiSaving.2027-28.60000.3000` employerNiSaving ENGLAND_NI_WALES {"grossSalary":60000,"salarySacrifice":3000} => 450
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Employer NI before = (60000 - ST 5000, floored at 0) = 55000; after sacrifice = (57000 - 5000, floored at 0) = 52000; reduction 3000 x 15% = 450. 2027/28 figures: secondary threshold 5000 and rate 15% are announced, not yet law.
-- [ ] `employerNiSaving.2027-28.6000.3000` employerNiSaving ENGLAND_NI_WALES {"grossSalary":6000,"salarySacrifice":3000} => 150
+- [x] `employerNiSaving.2027-28.6000.3000` employerNiSaving ENGLAND_NI_WALES {"grossSalary":6000,"salarySacrifice":3000} => 150
   - source: https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances
   - derivation: Employer NI before = (6000 - ST 5000, floored at 0) = 1000; after sacrifice = (3000 - 5000, floored at 0) = 0; reduction 1000 x 15% = 150. 2027/28 figures: secondary threshold 5000 and rate 15% are announced, not yet law.
-- [ ] `studentLoan.2027-28.plan2.35000` studentLoan ENGLAND_NI_WALES {"grossIncome":35000,"plan":"plan2"} => 505.35
+- [x] `studentLoan.2027-28.plan2.35000` studentLoan ENGLAND_NI_WALES {"grossIncome":35000,"plan":"plan2"} => 505.35
   - source: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
   - derivation: plan2 threshold 29385; (35000 - 29385) = 5615 x 9% = 505.35. 2027/28 figures: plan2 threshold 29385 and rate 9% are announced, not yet law.
-- [ ] `studentLoan.2027-28.plan5.35000` studentLoan ENGLAND_NI_WALES {"grossIncome":35000,"plan":"plan5"} => 807.75
+- [x] `studentLoan.2027-28.plan5.35000` studentLoan ENGLAND_NI_WALES {"grossIncome":35000,"plan":"plan5"} => 807.75
   - source: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
   - derivation: plan5 threshold 26025; (35000 - 26025) = 8975 x 9% = 807.75. 2027/28 figures: plan5 threshold 26025 and rate 9% are announced, not yet law.
-- [ ] `studentLoan.2027-28.postgrad.35000` studentLoan ENGLAND_NI_WALES {"grossIncome":35000,"plan":"postgrad"} => 840
+- [x] `studentLoan.2027-28.postgrad.35000` studentLoan ENGLAND_NI_WALES {"grossIncome":35000,"plan":"postgrad"} => 840
   - source: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
   - derivation: postgrad threshold 21000; (35000 - 21000) = 14000 x 6% = 840. 2027/28 figures: postgrad threshold 21000 and rate 6% are announced, not yet law.
-- [ ] `studentLoan.2027-28.plan2.28385` studentLoan ENGLAND_NI_WALES {"grossIncome":28385,"plan":"plan2"} => 0
+- [x] `studentLoan.2027-28.plan2.28385` studentLoan ENGLAND_NI_WALES {"grossIncome":28385,"plan":"plan2"} => 0
   - source: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
   - derivation: plan2 threshold 29385; income 28385 is below it, so repayment is 0. 2027/28 figures: plan2 threshold 29385 is announced, not yet law.
-- [ ] `dividends.2027-28.basic` dividends ENGLAND_NI_WALES {"employmentIncome":20000,"dividendIncome":5000} => 483.75
+- [x] `dividends.2027-28.basic` dividends ENGLAND_NI_WALES {"employmentIncome":20000,"dividendIncome":5000} => 483.75
   - source: https://www.legislation.gov.uk/ukpga/2026/11/section/4/enacted
   - derivation: Employment income 20000 less PA 12570 = 7430, inside the basic band 37700, so all dividends fall in the basic band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 10.75% = 483.75 (dividend tax only).
-- [ ] `dividends.2027-28.higher` dividends ENGLAND_NI_WALES {"employmentIncome":60000,"dividendIncome":5000} => 1608.75
+- [x] `dividends.2027-28.higher` dividends ENGLAND_NI_WALES {"employmentIncome":60000,"dividendIncome":5000} => 1608.75
   - source: https://www.legislation.gov.uk/ukpga/2026/11/section/4/enacted
   - derivation: Employment income 60000 less PA 12570 = 47430 already exceeds the basic band 37700, so all dividends fall in the higher band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 35.75% = 1608.75 (dividend tax only).
-- [ ] `dividends.2027-28.additional` dividends ENGLAND_NI_WALES {"employmentIncome":200000,"dividendIncome":5000} => 1770.75
+- [x] `dividends.2027-28.additional` dividends ENGLAND_NI_WALES {"employmentIncome":200000,"dividendIncome":5000} => 1770.75
   - source: https://www.legislation.gov.uk/ukpga/2026/11/section/4/enacted
   - derivation: Employment income 200000 gives PA 0 (taper from 100000 removes it all) and taxable income 200000 above 125140, so all dividends fall in the additional band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 39.35% = 1770.75 (dividend tax only).
 - [ ] `hicbc.2027-28.ani59999.children1` hicbc ENGLAND_NI_WALES {"adjustedNetIncome":59999,"children":1} => 0
@@ -96,16 +96,16 @@ Convention: takeHome vectors with children are net of the HICBC charge and exclu
   - derivation: Individual basis, claimant is the higher earner. Child Benefit 65.1/week x 52 = 3385.2; charge percentage min(100, floor((ANI 80000 - 60000) / 200)) = 100%; charge 3385.2 x 100% = 3385.2. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 3 child(ren): eldest 28 + 2 x 18.55. 2027/28 figures: Child Benefit weekly rates 28.00 (eldest) and 18.55 (each other child) are announced, not yet law.
   - UNVERIFIED: Child Benefit is assumed to be paid for 52 weeks a year; some tax years contain 53 Mondays, so the annual figure and the charge may differ (owner ruling pending).
   - ruling:
-- [ ] `studentLoanMulti.2027-28.plan2+postgrad.45000` studentLoanMulti ENGLAND_NI_WALES {"grossIncome":45000,"plans":"plan2+postgrad"} => 2845.35
+- [x] `studentLoanMulti.2027-28.plan2+postgrad.45000` studentLoanMulti ENGLAND_NI_WALES {"grossIncome":45000,"plans":"plan2+postgrad"} => 2845.35
   - source: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
   - derivation: Undergraduate Plan 2 (9% over 29,385) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 29385) = 15615 x 9% = 1405.35; postgrad (45000 - 21000) = 24000 x 6% = 1440. Total 2845.35. 2027/28 figures: Plan 2 threshold 29385 and postgraduate threshold 21000 are announced, not yet law.
-- [ ] `studentLoanMulti.2027-28.plan5+postgrad.24000` studentLoanMulti ENGLAND_NI_WALES {"grossIncome":24000,"plans":"plan5+postgrad"} => 180
+- [x] `studentLoanMulti.2027-28.plan5+postgrad.24000` studentLoanMulti ENGLAND_NI_WALES {"grossIncome":24000,"plans":"plan5+postgrad"} => 180
   - source: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
   - derivation: Plan 5 (9% over 26,025) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 income 24000 is below 26025, so 0; postgrad (24000 - 21000) = 3000 x 6% = 180. Total 180. 2027/28 figures: Plan 5 threshold 26025 and postgraduate threshold 21000 are announced, not yet law.
-- [ ] `studentLoanMulti.2027-28.plan5+postgrad.30000` studentLoanMulti ENGLAND_NI_WALES {"grossIncome":30000,"plans":"plan5+postgrad"} => 897.75
+- [x] `studentLoanMulti.2027-28.plan5+postgrad.30000` studentLoanMulti ENGLAND_NI_WALES {"grossIncome":30000,"plans":"plan5+postgrad"} => 897.75
   - source: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
   - derivation: Plan 5 (9% over 26,025) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 (30000 - 26025) = 3975 x 9% = 357.75; postgrad (30000 - 21000) = 9000 x 6% = 540. Total 897.75. 2027/28 figures: Plan 5 threshold 26025 and postgraduate threshold 21000 are announced, not yet law.
-- [ ] `studentLoanMulti.2027-28.plan5+postgrad.45000` studentLoanMulti ENGLAND_NI_WALES {"grossIncome":45000,"plans":"plan5+postgrad"} => 3147.75
+- [x] `studentLoanMulti.2027-28.plan5+postgrad.45000` studentLoanMulti ENGLAND_NI_WALES {"grossIncome":45000,"plans":"plan5+postgrad"} => 3147.75
   - source: https://www.gov.uk/government/news/student-loans-repayment-threshold-announcement
   - derivation: Plan 5 (9% over 26,025) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 (45000 - 26025) = 18975 x 9% = 1707.75; postgrad (45000 - 21000) = 24000 x 6% = 1440. Total 3147.75. 2027/28 figures: Plan 5 threshold 26025 and postgraduate threshold 21000 are announced, not yet law.
 - [ ] `reliefAtSource.ewni.2027-28.60000.net4000` reliefAtSource ENGLAND_NI_WALES {"grossIncome":60000,"netContribution":4000} => 10432
@@ -118,42 +118,42 @@ Convention: takeHome vectors with children are net of the HICBC charge and exclu
   - derivation: Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic-rate band and all limits above it extended by 10000 (ITA 2007 s.414): 37700 + 10000 = 47700. Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only. 2027/28 figures: main rates 20%, 40% and 45% are announced, not yet law.
   - UNVERIFIED: band extension for relief-at-source pension contributions rests on ITA 2007 s.414; no GOV.UK page read states it.
   - ruling:
-- [ ] `tradingAllowance.2027-28.5000.300` tradingAllowance ENGLAND_NI_WALES {"income":5000,"costs":300} => 4000
+- [x] `tradingAllowance.2027-28.5000.300` tradingAllowance ENGLAND_NI_WALES {"income":5000,"costs":300} => 4000
   - source: https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income
   - derivation: Income 5000, recorded costs 300. The 1000 trading allowance is larger than the costs, so it is deducted in their place: 5000 - 1000 = 4000.
-- [ ] `tradingAllowance.2027-28.800.0` tradingAllowance ENGLAND_NI_WALES {"income":800,"costs":0} => 0
+- [x] `tradingAllowance.2027-28.800.0` tradingAllowance ENGLAND_NI_WALES {"income":800,"costs":0} => 0
   - source: https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income
   - derivation: Income 800 is not more than the 1000 trading allowance, so the allowance covers all of it: profit 0.
-- [ ] `tradingAllowance.2027-28.1000.200` tradingAllowance ENGLAND_NI_WALES {"income":1000,"costs":200} => 0
+- [x] `tradingAllowance.2027-28.1000.200` tradingAllowance ENGLAND_NI_WALES {"income":1000,"costs":200} => 0
   - source: https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income
   - derivation: Income 1000 equals the 1000 trading allowance. The allowance (1000) is larger than the costs (200): 1000 - 1000 = 0.
-- [ ] `tradingAllowance.2027-28.5000.1800` tradingAllowance ENGLAND_NI_WALES {"income":5000,"costs":1800} => 3200
+- [x] `tradingAllowance.2027-28.5000.1800` tradingAllowance ENGLAND_NI_WALES {"income":5000,"costs":1800} => 3200
   - source: https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income
   - derivation: Income 5000, recorded costs 1800. The costs are larger than the 1000 trading allowance, so the costs are deducted and the allowance is not: 5000 - 1800 = 3200.
-- [ ] `propertyAllowance.2027-28.6000.400.100` propertyAllowance ENGLAND_NI_WALES {"income":6000,"costs":400,"ownershipSharePct":100} => 5000
+- [x] `propertyAllowance.2027-28.6000.400.100` propertyAllowance ENGLAND_NI_WALES {"income":6000,"costs":400,"ownershipSharePct":100} => 5000
   - source: https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income
   - derivation: Sole owner. Rent 6000, recorded costs 400, no finance costs. The 1000 property allowance is larger than the costs, so it is deducted in their place: 6000 - 1000 = 5000.
-- [ ] `propertyAllowance.2027-28.900.0.100` propertyAllowance ENGLAND_NI_WALES {"income":900,"costs":0,"ownershipSharePct":100} => 0
+- [x] `propertyAllowance.2027-28.900.0.100` propertyAllowance ENGLAND_NI_WALES {"income":900,"costs":0,"ownershipSharePct":100} => 0
   - source: https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income
   - derivation: Sole owner. Rent 900 is not more than the 1000 property allowance, so the allowance covers all of it: profit 0.
-- [ ] `propertyAllowance.2027-28.6000.2500.100` propertyAllowance ENGLAND_NI_WALES {"income":6000,"costs":2500,"ownershipSharePct":100} => 3500
+- [x] `propertyAllowance.2027-28.6000.2500.100` propertyAllowance ENGLAND_NI_WALES {"income":6000,"costs":2500,"ownershipSharePct":100} => 3500
   - source: https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income
   - derivation: Sole owner. Rent 6000, recorded costs 2500. The costs are larger than the 1000 property allowance, so the costs are deducted: 6000 - 2500 = 3500.
-- [ ] `propertyAllowance.2027-28.3000.0.50` propertyAllowance ENGLAND_NI_WALES {"income":3000,"costs":0,"ownershipSharePct":50} => 500
+- [x] `propertyAllowance.2027-28.3000.0.50` propertyAllowance ENGLAND_NI_WALES {"income":3000,"costs":0,"ownershipSharePct":50} => 500
   - source: https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income
   - derivation: Joint owner with a 50% share. Own share of rent 3000 x 50% = 1500, no costs. Each owner has the 1000 allowance against their own share: 1500 - 1000 = 500.
-- [ ] `paymentsOnAccount.2027-28.3000.0` paymentsOnAccount ENGLAND_NI_WALES {"bill":3000,"taxDeductedAtSource":0} => 4500
+- [x] `paymentsOnAccount.2027-28.3000.0` paymentsOnAccount ENGLAND_NI_WALES {"bill":3000,"taxDeductedAtSource":0} => 4500
   - source: https://www.gov.uk/understand-self-assessment-bill/payments-on-account
   - derivation: Bill 3000, nothing taken at source. The bill is not less than 1000 and no more than 80% was taken at source, so payments on account are due: each is 3000 / 2 = 1500. Due by 31 January: 3000 + 1500 = 4500 (the GOV.UK page's second example).
-- [ ] `paymentsOnAccount.2027-28.999.99.0` paymentsOnAccount ENGLAND_NI_WALES {"bill":999.99,"taxDeductedAtSource":0} => 999.99
+- [x] `paymentsOnAccount.2027-28.999.99.0` paymentsOnAccount ENGLAND_NI_WALES {"bill":999.99,"taxDeductedAtSource":0} => 999.99
   - source: https://www.gov.uk/understand-self-assessment-bill/payments-on-account
   - derivation: Bill 999.99 is less than 1000, so no payments on account. Due by 31 January: 999.99.
-- [ ] `paymentsOnAccount.2027-28.1000.0` paymentsOnAccount ENGLAND_NI_WALES {"bill":1000,"taxDeductedAtSource":0} => 1500
+- [x] `paymentsOnAccount.2027-28.1000.0` paymentsOnAccount ENGLAND_NI_WALES {"bill":1000,"taxDeductedAtSource":0} => 1500
   - source: https://www.gov.uk/understand-self-assessment-bill/payments-on-account
   - derivation: Bill 1000 is not less than 1000, so payments on account are due: each is 1000 / 2 = 500. Due by 31 January: 1000 + 500 = 1500.
-- [ ] `paymentsOnAccount.2027-28.2000.9000` paymentsOnAccount ENGLAND_NI_WALES {"bill":2000,"taxDeductedAtSource":9000} => 2000
+- [x] `paymentsOnAccount.2027-28.2000.9000` paymentsOnAccount ENGLAND_NI_WALES {"bill":2000,"taxDeductedAtSource":9000} => 2000
   - source: https://www.gov.uk/understand-self-assessment-bill/payments-on-account
   - derivation: Bill 2000, 9000 taken at source. Tax owed in all 11000; 9000 / 11000 = 81.8%, more than 80%, so no payments on account. Due by 31 January: 2000.
-- [ ] `paymentsOnAccount.2027-28.2000.8000` paymentsOnAccount ENGLAND_NI_WALES {"bill":2000,"taxDeductedAtSource":8000} => 3000
+- [x] `paymentsOnAccount.2027-28.2000.8000` paymentsOnAccount ENGLAND_NI_WALES {"bill":2000,"taxDeductedAtSource":8000} => 3000
   - source: https://www.gov.uk/understand-self-assessment-bill/payments-on-account
   - derivation: Bill 2000, 8000 taken at source. Tax owed in all 10000; 8000 / 10000 = 80%, which is not more than 80%, so payments on account are due: each is 2000 / 2 = 1000. Due by 31 January: 2000 + 1000 = 3000.
