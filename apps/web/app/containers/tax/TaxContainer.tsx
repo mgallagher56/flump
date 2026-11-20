@@ -438,7 +438,10 @@ const SelfAssessmentPage: FC<{
         }
       />
 
-      <TaxRatesStatusBanner {...ratesContextForYear(selectedTaxYear, ratesContext)} />
+      {/* One quiet notice per surface (UX P4): a refused year shows only its refusal line. */}
+      {refusalNotice ? null : (
+        <TaxRatesStatusBanner {...ratesContextForYear(selectedTaxYear, ratesContext)} />
+      )}
 
       {saveOutcome.error && !editor.isRecordDialogOpen ? (
         <p className={errorText()} role="alert">

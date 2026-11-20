@@ -5,6 +5,11 @@ import { buildWorkspacePicture, knownOrNull } from "~/utils/financialPicture";
 export interface DebtInputs {
   /** The budget's monthly surplus, or null with no budget entries or no income row. */
   monthlySurplus: number | null;
+  /**
+   * What that figure leaves out (a student loan plan with no published threshold, left out of
+   * the linked take-home pay), or null. Said beside it, never dropped silently.
+   */
+  monthlySurplusLeavesOut: string | null;
   /** Current plus saving account balances (liquid cash). */
   liquidSavings: number;
   /** Monthly essential spending, or null when the user has no budget entries. */
@@ -21,6 +26,10 @@ export function debtInputsFromPicture(picture: FinancialPicture): DebtInputs {
   const budget = knownOrNull(picture.budget);
   return {
     monthlySurplus: budget?.hasIncome ? budget.surplus : null,
+    monthlySurplusLeavesOut:
+      budget?.hasIncome && picture.budget.status === "known"
+        ? (picture.budget.assumptions?.join(" ") ?? null)
+        : null,
     liquidSavings: picture.netWorth.liquidCash,
     monthlyEssentialExpenses: budget?.essentials ?? null,
     totalDebt: picture.debt.consumerDebt,

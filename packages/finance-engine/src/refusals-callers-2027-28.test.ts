@@ -11,9 +11,13 @@ import {
   studentLoanEstimateNotPublishedNotice,
 } from "./debt-payoff.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
+import { buildFinancialPicture } from "./picture/build.js";
 import { figureRefused, figureUnknown } from "./picture/figure.js";
+import { profileFactsFromProfile } from "./picture/input.js";
+import { selectBudgetTotals } from "./picture/selectors/budget-totals.js";
 import { selectHousingCost } from "./picture/selectors/housing-cost.js";
 import { selectSafeToSpend } from "./picture/selectors/safe-to-spend.js";
+import { selectTakeHome } from "./picture/selectors/take-home.js";
 import { PortfolioSnapshot } from "./portfolio.js";
 import { DEFAULT_FINANCIAL_BASELINE } from "./profile.js";
 import { scenarioWithPublishedRates } from "./uk-take-home.js";
@@ -199,5 +203,115 @@ describe("context pack in 2027/28", () => {
     const md = formatAiContextPackMarkdown(pack);
     expect(md).toContain(studentLoanEstimateNotPublishedNotice("2027/28"));
     expect(md).toContain(`- **Assumption:** ${LOAN_LEFT_OUT}`);
+  });
+});
+
+describe("a refused plan beside a published one (review finding 2)", () => {
+  const FACTS = {
+    annualSalary: 50_000,
+    employmentType: "employed" as const,
+    taxRegion: "ENGLAND",
+    studentLoanPlans: ["PLAN_1", "PLAN_2"],
+    pensionPercent: 0,
+    isSalarySacrifice: false,
+  };
+
+  it("take-home still charges Plan 2 and says Plan 1 is left out", () => {
+    const fig = selectTakeHome(FACTS, { taxYear: "2027/28" });
+    expect(fig.status).toBe("known");
+    if (fig.status === "known") {
+      // 2027/28 Plan 2: 9% above £29,385. (£50,000 - £29,385) x 9% = £20,615 x 0.09 = £1,855.35.
+      expect(fig.value.studentLoan).toBe(1855.35);
+      expect(fig.assumptions).toContain(LOAN_LEFT_OUT);
+    }
+  });
+
+  it("the context pack charges Plan 2 too and carries the notice", () => {
+    const pack = buildFlumpAiContextPack(
+      {
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+        baseline: {
+          ...DEFAULT_FINANCIAL_BASELINE,
+          annualGrossSalary: 50_000,
+          pensionContributionPct: 0,
+          studentLoanPlan: "PLAN_1",
+        },
+        profileFacts: FACTS,
+      },
+      { anonymizeInstitutions: false, asOf: IN_2027_28 },
+    );
+    const tx = pack.taxSummary.ukTaxCalculation;
+    expect(isUkTaxCalculated(tx)).toBe(true);
+    if (isUkTaxCalculated(tx)) {
+      // Same working as above: (£50,000 - £29,385) x 9% = £1,855.35.
+      expect(tx.studentLoanDeductionGbp).toBe(1855.35);
+      expect(tx.assumptions).toContain(LOAN_LEFT_OUT);
+    }
+  });
+});
+
+describe("budget totals say what the linked take-home leaves out (review finding 1)", () => {
+  it("carries the refused-plan notice when the linked take-home line is counted", () => {
+    const picture = buildFinancialPicture(
+      {
+        profile: {
+          ...profileFactsFromProfile(null),
+          annualSalary: 40_000,
+          employmentType: "employed",
+          taxRegion: "ENGLAND",
+          studentLoanPlans: ["PLAN_1"],
+          pensionPercent: 0,
+          isSalarySacrifice: false,
+        },
+        netWorthBasis: DEFAULT_NET_WORTH_BASIS,
+        accounts: [],
+        details: [],
+        budget: [
+          {
+            id: "i",
+            category: "income",
+            name: "Pay",
+            amount: 0,
+            frequency: "monthly",
+            isIncome: true,
+            isEssential: false,
+            linkKind: "take_home",
+          },
+          {
+            id: "r",
+            category: "housing",
+            name: "Rent",
+            amount: 900,
+            frequency: "monthly",
+            isIncome: false,
+            isEssential: true,
+          },
+        ] as never,
+      },
+      { taxYear: "2027/28", asOf: IN_2027_28 },
+    );
+    expect(picture.budget.status).toBe("known");
+    if (picture.budget.status === "known") {
+      expect(picture.budget.assumptions).toEqual([LOAN_LEFT_OUT]);
+    }
+  });
+
+  it("carries nothing when no linked take-home line is counted", () => {
+    expect(
+      selectBudgetTotals(
+        [
+          {
+            id: "i",
+            category: "income",
+            name: "Pay",
+            amount: 2000,
+            frequency: "monthly",
+            isIncome: true,
+            isEssential: false,
+          } as never,
+        ],
+        [LOAN_LEFT_OUT],
+      ),
+    ).not.toHaveProperty("assumptions");
   });
 });

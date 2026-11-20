@@ -403,6 +403,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       <DashboardKpiStrip
         incomeOnly={incomeOnly}
+        leavesOut={budgetKnown ? (budgetData?.budgetLeavesOut ?? null) : null}
         monthlySurplus={
           budgetKnown && incomeOnly === null ? finiteOrNull(budgetData?.monthlySurplus) : null
         }

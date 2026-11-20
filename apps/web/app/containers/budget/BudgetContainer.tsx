@@ -13,6 +13,7 @@ import {
   getUkTaxYearContext,
   HOUSING_ROW_NAME,
   PortfolioSnapshot,
+  takeHomeLeavesOut,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -595,6 +596,11 @@ const BudgetContainer: FC = () => {
           mode={wizardMode}
           monthlyTakeHome={
             picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
+          }
+          takeHomeNotice={
+            picture.takeHome.status === "known"
+              ? takeHomeLeavesOut(picture.takeHome).join(" ") || null
+              : (picture.takeHome.notice ?? null)
           }
           housingPayment={picture.housingPayment}
           accounts={snapshot}

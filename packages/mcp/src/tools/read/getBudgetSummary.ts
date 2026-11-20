@@ -6,11 +6,13 @@ import {
   resolveBudgetEntrySharePercent,
   selectBudgetByCategory,
   selectBudgetTotals,
+  takeHomeLeavesOut,
 } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import {
   budgetCategoryLabeller,
+  budgetLeavesOutAssumptions,
   loadReadModel,
   MISSING_INCOME,
   type Missing,
@@ -116,7 +118,10 @@ export const getBudgetSummary = defineFlumpTool({
     const totalsFigure = isFigureKnown(m.picture.budget)
       ? m.picture.budget
       : notSetMissing.length > 0
-        ? selectBudgetTotals(rows.filter((row) => !row.notSet))
+        ? selectBudgetTotals(
+            rows.filter((row) => !row.notSet),
+            takeHomeLeavesOut(m.picture.takeHome),
+          )
         : m.picture.budget;
     const totals = isFigureKnown(totalsFigure) ? totalsFigure.value : null;
     const missing: Missing[] = [];
@@ -191,6 +196,7 @@ export const getBudgetSummary = defineFlumpTool({
       },
       provenance: { totals: "budget_entries" },
       missing,
+      assumptions: budgetLeavesOutAssumptions(totalsFigure),
       notice: MCP_NOTICE,
     };
   },

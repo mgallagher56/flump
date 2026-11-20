@@ -279,6 +279,8 @@ describe("TaxContainer, opted in", () => {
       expect(page.textContent).toContain(
         "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
       );
+      // One quiet notice per surface: the provisional rates banner gives way to the refusal line.
+      expect(page.textContent).not.toContain("2027/28 rates are provisional");
       // The rest of the page still renders: the records drawer and the year by year view.
       expect(screen.getByRole("button", { name: /Records/ })).toBeTruthy();
       fireEvent.click(screen.getByRole("button", { name: /Year by year/ }));

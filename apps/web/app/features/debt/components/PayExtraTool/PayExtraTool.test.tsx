@@ -191,3 +191,24 @@ describe("PayExtraTool", () => {
     expect(screen.queryByText(/\(solid\)|\(dashed\)/)).toBeNull();
   });
 });
+
+describe("PayExtraTool: what left over leaves out", () => {
+  it("says it as one quiet line under the left over control", () => {
+    const { container } = renderTool({
+      budgetLeftOverNote:
+        "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+    });
+    expect(container.querySelector('[data-testid="pay-extra-left-over-note"]')?.textContent).toBe(
+      "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+    );
+  });
+
+  it("says nothing when the budget has no left over figure", () => {
+    const { container } = renderTool({
+      budgetLeftOver: null,
+      budgetLeftOverNote:
+        "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+    });
+    expect(container.querySelector('[data-testid="pay-extra-left-over-note"]')).toBeNull();
+  });
+});

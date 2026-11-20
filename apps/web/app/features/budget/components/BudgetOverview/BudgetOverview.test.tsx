@@ -193,3 +193,25 @@ describe("<BudgetOverview /> in 2027/28 (refused rates)", () => {
     expect(container.textContent).not.toContain("Your take-home pay is not set");
   });
 });
+
+describe("<BudgetOverview /> with a refused Plan 1 in 2027/28", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("says money in leaves the loan out, beside the figure", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-05-01T12:00:00Z"));
+    const linked = [
+      entry({ ...income, amount: 0, linkKind: "take_home" }),
+      entry({ id: "e2", category: "expenses", name: "Food", amount: 300 }),
+    ];
+    const picture = buildWorkspacePicture({
+      budgetEntries: linked,
+      userProfile: { ...profile, studentLoanPlans: ["PLAN_1"] },
+    });
+    const { container } = customRender(<BudgetOverview entries={linked} picture={picture} />);
+    expect(container.querySelector('[data-figure="budget.surplus"]')).not.toBeNull();
+    expect(container.textContent).toContain(
+      "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+    );
+  });
+});

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   DashboardKpiStrip,
   type DashboardKpiStripProps,
+  LEFT_OVER_CAPTION,
   LEFT_OVER_EXPLAIN,
   stripShowsDebt,
 } from "./DashboardKpiStrip";
@@ -92,5 +93,21 @@ describe("DashboardKpiStrip", () => {
     expect(screen.getByText("From your accounts")).toBeTruthy();
     renderStrip({ totalOwed: 8000 });
     expect(screen.getByText("Cards, loans and overdrafts")).toBeTruthy();
+  });
+});
+
+describe("<DashboardKpiStrip /> leaves-out caption", () => {
+  it("says what left over leaves out in place of the plain caption", () => {
+    renderStrip({
+      monthlySurplus: 400,
+      leavesOut:
+        "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+    });
+    expect(
+      screen.getByText(
+        "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByText(LEFT_OVER_CAPTION)).toBeNull();
   });
 });

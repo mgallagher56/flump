@@ -10,6 +10,7 @@ import { defineFlumpTool } from "../../define-tool.js";
 import {
   ASK_NO_ACCOUNTS,
   askSalaryForPension,
+  budgetLeavesOutAssumptions,
   loadReadModel,
   type Missing,
   missingLinkedLines,
@@ -169,6 +170,10 @@ export const projectNetWorth = defineFlumpTool({
             surplus,
           ),
         );
+        // What the budget's income leaves out (a refused student loan plan) is said too.
+        for (const a of budgetLeavesOutAssumptions(m.picture.budget)) {
+          assumptions.push(derived("monthlySavingGbp", a.reason, surplus));
+        }
         if (surplus < 0) {
           earlyNotes.push("The budget is short each month, so zero saving was used.");
         }
