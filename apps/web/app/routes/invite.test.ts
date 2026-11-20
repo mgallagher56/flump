@@ -47,13 +47,13 @@ const backendAnswers = (status: number, body: unknown) => {
 };
 
 describe("/invite/<token>", () => {
-  it("moves a well-formed token into an HttpOnly cookie scoped to /invite and drops it from the URL", async () => {
+  it("moves a well-formed token into an HttpOnly cookie for an hour and drops it from the URL", async () => {
     const response = await callToken(TOKEN);
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe("/invite");
     const cookie = response.headers.get("Set-Cookie") ?? "";
     expect(cookie).toContain(`flump_invite=${TOKEN}`);
-    expect(cookie).toMatch(/Path=\/invite;/);
+    expect(cookie).toMatch(/Path=\/;/);
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Lax");
     expect(cookie).toContain("Secure");

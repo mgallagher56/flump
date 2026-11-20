@@ -1,11 +1,9 @@
-import { RedeemBetaInviteResponse } from "@flump/api-contract";
 import { Button, EmptyState, Illustration, PageBody } from "@repo/ui";
 import { configure, getSignUpUrl } from "@workos-inc/authkit-react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, Link, redirect, useLoaderData } from "react-router";
 import { clearInviteCookie, readInviteCookie } from "~/features/invites/invite-cookie.server";
-import { backendFetch } from "~/services/backend-client.server";
-import { BackendError } from "~/services/backend-error";
+import { redeemInvite } from "~/features/invites/redeem-invite.server";
 import { throwRouteError } from "~/services/route-error.server";
 import { getAuthSession } from "~/utils/auth.server";
 import { isDevSessionEnabled } from "~/utils/devSession.server";
@@ -44,25 +42,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
     return redirect(signUp.url, { headers: signUp.headers });
   }
 
+  let outcome: Awaited<ReturnType<typeof redeemInvite>>;
   try {
-    await backendFetch("/beta/invites/redeem", {
-      accessToken: session.accessToken,
-      method: "POST",
-      body: { token },
-      idempotencyKey: false,
-      signal: request.signal,
-      schema: RedeemBetaInviteResponse,
-    });
+    outcome = await redeemInvite(session.accessToken, token, request.signal);
   } catch (error) {
-    if (error instanceof BackendError && error.status === 410) {
-      return data({ outcome: "unusable" as InviteOutcome }, { headers });
-    }
-    if (error instanceof BackendError && error.status === 429) {
-      return data({ outcome: "busy" as InviteOutcome }, { headers });
-    }
     throwRouteError(error);
   }
-  return redirect("/app", { headers });
+  if (outcome === "joined") return redirect("/app", { headers });
+  return data({ outcome: outcome as InviteOutcome }, { headers });
 };
 
 const COPY: Record<InviteOutcome, { title: string; description: string }> = {

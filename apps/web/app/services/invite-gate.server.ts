@@ -1,4 +1,7 @@
 import type { LoaderFunctionArgs, MiddlewareFunction } from "react-router";
+import { redirect } from "react-router";
+import { clearInviteCookie, readInviteCookie } from "~/features/invites/invite-cookie.server";
+import { redeemInvite } from "~/features/invites/redeem-invite.server";
 import { getAuthSession } from "~/utils/auth.server";
 import { BackendError } from "./backend-error";
 import { isInviteOnly } from "./beta-mode.server";
@@ -25,6 +28,11 @@ const UNGATED = [
   /^\/robots\.txt$/,
   /^\/csp-report\/?$/,
 ];
+
+function pathAndQuery(request: Request): string {
+  const url = new URL(request.url);
+  return `${url.pathname}${url.search}`;
+}
 
 /** A full page load: a GET that is not a client navigation's `.data` request. */
 function isDocumentRequest(request: Request): boolean {
@@ -54,7 +62,22 @@ export const inviteGateMiddleware: MiddlewareFunction<Response> = async (args, n
     await loadRootProfile(context, session.accessToken, request.signal);
   } catch (error) {
     // Only "not invited" stops the request; any other failure is the root loader's to handle.
-    if (error instanceof BackendError && error.kind === "not-invited") throwRouteError(error);
+    if (!(error instanceof BackendError && error.kind === "not-invited")) return next();
+    // A pending invite (sign-up did not come back to /invite): redeem it here, then start the
+    // page again, now as a member. An unusable one is dropped and the page loads again without it.
+    const token = readInviteCookie(request);
+    if (token) {
+      const outcome = await redeemInvite(session.accessToken, token, request.signal).catch(
+        () => "busy" as const,
+      );
+      if (outcome !== "busy") {
+        const to = outcome === "joined" ? "/app" : pathAndQuery(request);
+        throw redirect(to, {
+          headers: { "Set-Cookie": clearInviteCookie(request), "Cache-Control": "no-store" },
+        });
+      }
+    }
+    throwRouteError(error);
   }
   return next();
 };
