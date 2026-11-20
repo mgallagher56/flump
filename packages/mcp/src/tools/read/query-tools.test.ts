@@ -745,6 +745,32 @@ describe("query reads (re-plan PR B)", () => {
       }
     });
 
+    it("returns the 2027/28 Scottish refusal in missing[], with no bands or estimate, instead of an error", async () => {
+      const scot = await connectTestClient({
+        ...persona,
+        baseline: { ...persona.baseline, ukRegion: "SCOTLAND", ukRegionAssumed: false },
+        profileFacts: { ...facts({ annualSalary: 98000 }), taxRegion: "SCOTLAND" },
+      });
+      try {
+        const s = (await scot.callJson("get_tax_year_position", { taxYear: "2027/28" })) as Env;
+        expect(s.result.region).toBe("SCOTLAND");
+        expect(s.result.incomeTaxBands).toBeNull();
+        expect(s.result.estimate).toBeNull();
+        expect(s.result.section24.taxCreditGbp).toBeNull();
+        // Income does not depend on the region: the saved salary is still reported.
+        expect(s.result.income.payeSalaryGbp).toBe(98000);
+        expect(s.missing).toContainEqual(
+          expect.objectContaining({
+            field: "taxRates",
+            why: "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+          }),
+        );
+        expect(s.result.notes.join(" ")).not.toMatch(/Scottish rates/);
+      } finally {
+        await scot.close();
+      }
+    });
+
     it("does not pass a self-employed person's salary as PAYE pay, as the Dashboard (SA-1)", async () => {
       // 2026/27: trading income 40,000 less the 1,000 trading allowance = 39,000 profit.
       // Income Tax (39,000 - 12,570) x 20% = 5,286; Class 4 26,430 x 6% = 1,585.80. 6,871.80.

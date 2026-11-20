@@ -35,6 +35,10 @@ import {
   getUkTaxYearRules,
   resolveUkTaxYear,
   roundPence,
+  scottishRatesRefusal,
+  studentLoanThresholdNotPublishedNotice,
+  studentLoanThresholdRefusal,
+  type UkRefusal,
   type UkStudentLoanPlanKey,
   type UkTaxYearRules,
 } from "./uk-tax-year.js";
@@ -260,6 +264,41 @@ function featureVerification(year: UkTaxYear, feature: UkTaxFeature): "verified"
 
 export interface UkTakeHomeOptions {
   now?: Date;
+}
+
+/** A scenario checked against the rates published for its year (see scenarioWithPublishedRates). */
+export type UkScenarioRatesCheck =
+  | { status: "refused"; refusal: UkRefusal }
+  | { status: "ok"; scenario: UkIncomeScenario; notes: string[] };
+
+/**
+ * The scenario for its rates year (the year computeUkTakeHome would use) with refusals applied,
+ * never carried forward (owner decision): a Scottish taxpayer in a year with no Scottish rates is
+ * refused; a student loan plan with no published threshold is left out, and `notes` says so.
+ * Never throws for a refusal; an explicitly unsupported year is left for the core to report.
+ */
+export function scenarioWithPublishedRates(
+  s: UkIncomeScenario,
+  opts: UkTakeHomeOptions = {},
+): UkScenarioRatesCheck {
+  let ratesYear: UkTaxYear;
+  try {
+    ratesYear = resolveYear(s.taxYear, opts.now).ratesYear;
+  } catch {
+    return { status: "ok", scenario: s, notes: [] };
+  }
+  const rules = getUkTaxYearRules(ratesYear);
+  const scottish = scottishRatesRefusal(rules, s.region);
+  if (scottish) return { status: "refused", refusal: scottish };
+  const loans = s.studentLoans ?? [];
+  const kept = loans.filter((plan) => !studentLoanThresholdRefusal(rules, plan));
+  if (kept.length === loans.length) return { status: "ok", scenario: s, notes: [] };
+  const { studentLoans: _dropped, ...rest } = s;
+  return {
+    status: "ok",
+    scenario: kept.length > 0 ? { ...rest, studentLoans: kept } : rest,
+    notes: [studentLoanThresholdNotPublishedNotice(ratesYear)],
+  };
 }
 
 export function computeUkTakeHome(

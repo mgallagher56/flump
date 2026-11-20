@@ -85,3 +85,15 @@ describe("<LiveSummaryBar />", () => {
     );
   });
 });
+
+describe("<LiveSummaryBar /> with a refused take-home", () => {
+  it("shows the one refusal line in place of the figure, never £0", () => {
+    const notice =
+      "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.";
+    const summary = { ...summaryFor({ grossSalary: 40000 }), takeHomeRefusal: notice };
+    const { container } = render(<LiveSummaryBar assumingRegion={false} summary={summary} />);
+    expect(screen.getByText(notice)).toBeDefined();
+    expect(container.querySelector('[data-figure="takeHome.monthly"]')).toBeNull();
+    expect(container.textContent).not.toContain("£0");
+  });
+});

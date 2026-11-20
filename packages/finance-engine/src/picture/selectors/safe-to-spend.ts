@@ -47,8 +47,13 @@ export function selectSafeToSpend(
   const totals = selectBudgetTotals(budget);
   if (!isFigureKnown(totals) || !totals.value.hasIncome) {
     // The budget has no income to start from. Without a salary the take-home line cannot fill it.
-    if (!isFigureKnown(takeHome) && takeHome.reason === "unsupported-year") {
-      return figureUnknown([], "unsupported-year");
+    // A take-home the engine cannot work out for the year (unsupported, or refused because the
+    // year's rates are not published) passes through with its reason and notice.
+    if (
+      !isFigureKnown(takeHome) &&
+      (takeHome.reason === "unsupported-year" || takeHome.reason === "rates-not-published")
+    ) {
+      return figureUnknown([], takeHome.reason, takeHome.notice);
     }
     const missing = new Set<MissingKey>(isFigureKnown(takeHome) ? [] : takeHome.missing);
     if (!isFigureKnown(totals)) {

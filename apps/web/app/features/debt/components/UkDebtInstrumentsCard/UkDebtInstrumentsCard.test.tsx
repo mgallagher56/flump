@@ -1,5 +1,5 @@
 import { fireEvent, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import { UkDebtInstrumentsCard } from "./UkDebtInstrumentsCard";
 
@@ -112,5 +112,30 @@ describe("UkDebtInstrumentsCard", () => {
     });
     expect(p.getByText("Repayment taken from your pay")).toBeDefined();
     expect(p.getByText(/in this estimate the balance is/)).toBeDefined();
+  });
+
+  describe("in 2027/28 (Plan 1 and Plan 4 thresholds not published)", () => {
+    afterEach(() => vi.useRealTimers());
+
+    it.each(["plan1", "plan4"])("shows the refusal line for %s; other tools still work", (plan) => {
+      // Fixed date in tax year 2027/28.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2027-05-01T12:00:00Z"));
+      customRender(<UkDebtInstrumentsCard />);
+      fireEvent.mouseDown(screen.getByRole("tab", { name: /Student loan outlook/ }), {
+        button: 0,
+      });
+      const p = panel(/Student loan outlook/);
+      fireEvent.change(p.getByLabelText("Student loan plan"), { target: { value: plan } });
+      expect(
+        p.getByText(
+          "The 2027/28 repayment threshold for this student loan plan is not published yet, so there is no estimate for this year.",
+        ),
+      ).toBeDefined();
+      expect(p.queryByText("Repayment taken from your pay")).toBeNull();
+      // Plan 2 has a 2027/28 threshold, so it is still estimated.
+      fireEvent.change(p.getByLabelText("Student loan plan"), { target: { value: "plan2" } });
+      expect(p.getByText("Repayment taken from your pay")).toBeDefined();
+    });
   });
 });

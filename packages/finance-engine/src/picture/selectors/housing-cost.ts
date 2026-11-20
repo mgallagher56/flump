@@ -133,7 +133,7 @@ export function selectHousingCost(
 
   if (takeHome.status === "unknown") {
     for (const key of takeHome.missing) if (!missing.includes(key)) missing.push(key);
-    return figureUnknown(missing, takeHome.reason ?? "not-set");
+    return figureUnknown(missing, takeHome.reason ?? "not-set", takeHome.notice);
   }
   if (missing.length > 0 || monthly === null) return figureUnknown(missing, "not-set");
   const takeHomeMonthly = takeHome.value.monthly;

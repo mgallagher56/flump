@@ -2,10 +2,13 @@ import {
   calculate100kTaxTrap,
   calculateEmployerNISavings,
   getCurrentUKTaxYear,
+  getUkTaxYearRules,
   isInTaxTrapAlertBand,
   PortfolioSnapshot,
   profileFactsFromProfile,
+  resolveUkTaxYear,
   salarySacrificeFromProfile,
+  scottishRatesRefusal,
 } from "@flump/finance-engine";
 import { Button, EmptyState, Icon, InfoTip, PageBody, PageHeader } from "@repo/ui";
 import { Plus } from "lucide-react";
@@ -233,11 +236,17 @@ const PensionContainer: FC = () => {
         ? "SCOTLAND"
         : "ENGLAND_NI_WALES";
   const taxTrap = useMemo(() => {
+    // The note reads only adjusted net income and the contribution back to £100,000, which no
+    // band decides. A year with no Scottish rates refuses the Scottish bands, so those two are
+    // read under the other UK bands; no rate from that analysis is shown.
+    const scottishRefused =
+      knownRegion === "SCOTLAND" &&
+      scottishRatesRefusal(getUkTaxYearRules(resolveUkTaxYear()), knownRegion) !== null;
     return calculate100kTaxTrap(
       annualSalary,
       employeePercent,
       isSalarySacrifice,
-      knownRegion ?? "ENGLAND_NI_WALES",
+      scottishRefused ? "ENGLAND_NI_WALES" : (knownRegion ?? "ENGLAND_NI_WALES"),
     );
   }, [annualSalary, employeePercent, isSalarySacrifice, knownRegion]);
   // Saved profile figures only (adjusted net income after the saved contribution).

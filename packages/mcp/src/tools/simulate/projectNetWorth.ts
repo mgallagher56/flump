@@ -174,7 +174,7 @@ export const projectNetWorth = defineFlumpTool({
         }
       } else {
         saving = 0;
-        missing.push(...missingLinkedLines(m.picture.budgetRows));
+        missing.push(...missingLinkedLines(m.picture.budgetRows, m.picture.takeHome));
         missing.push({
           field: "monthlySavingGbp",
           why: "No income entry in the budget and no monthly saving supplied, so zero saving was used.",

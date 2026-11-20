@@ -88,13 +88,13 @@ describe("tax-year defaults and verification (E17-N5, re-plan PR A)", () => {
     }
   });
 
-  it("falls back to the latest supported year, with an assumption, from 6 April 2027", async () => {
+  it("falls back to the latest supported year, with an assumption, from 6 April 2028", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     h = await connectTestClient(mortgageAndIsa);
-    vi.setSystemTime(new Date("2027-04-06T12:00:00Z"));
+    vi.setSystemTime(new Date("2028-04-06T12:00:00Z"));
     for (const name of TAX_YEAR_TOOLS) {
       const e = (await h.callJson(name, {})) as Env;
-      expect(e.taxYear, name).toBe("2026/27");
+      expect(e.taxYear, name).toBe("2027/28");
       expect(
         e.assumptions.map((a) => a.field),
         name,

@@ -360,3 +360,35 @@ describe("MarginalRateExplorer", () => {
     expect(parseStudentLoanPlans("")).toEqual([]);
   });
 });
+
+describe("MarginalRateExplorer in 2027/28 (refused rates)", () => {
+  it("shows the Scottish refusal line in place of the results", () => {
+    render(
+      <MarginalRateExplorerStandalone
+        initialValues={{ taxYear: "2027/28", region: "SCOTLAND" }}
+        now={new Date("2027-05-01T12:00:00Z")}
+      />,
+    );
+    expect(
+      screen.getByText(
+        "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByTestId("explorer-outcomes")).toBeNull();
+  });
+
+  it("says a chosen Plan 1 is left out in 2027/28", () => {
+    render(
+      <MarginalRateExplorerStandalone
+        initialValues={{ taxYear: "2027/28", studentLoans: "plan1" }}
+        now={new Date("2027-05-01T12:00:00Z")}
+      />,
+    );
+    expect(
+      screen.getByText(
+        "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByTestId("explorer-outcomes")).toBeDefined();
+  });
+});

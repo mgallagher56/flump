@@ -2,6 +2,8 @@ import {
   getUkTaxYearContext,
   incomeScenarioFromFacts,
   type ProfileFacts,
+  scenarioWithPublishedRates,
+  type UkTakeHomeOptions,
   type UkWhatIfResult,
   whatIfSacrificeChange,
 } from "@flump/finance-engine";
@@ -58,6 +60,13 @@ export interface PensionTakeHomeEffectData {
   result: UkWhatIfResult | null;
   /** True when the saved facts carry no pension method, so salary sacrifice is assumed. */
   methodAssumed: boolean;
+  /**
+   * The one line shown in place of the outcome when the year's rates for this person are not
+   * published (Scottish 2027/28); null otherwise. Never a zero or a carried-forward figure.
+   */
+  refusalNotice: string | null;
+  /** What the result leaves out (a student loan plan with no published threshold). */
+  notes: readonly string[];
 }
 
 /**
@@ -67,13 +76,30 @@ export interface PensionTakeHomeEffectData {
 export const computePensionTakeHomeEffect = (
   facts: ProfileFacts,
   deltaYear: number,
+  opts: UkTakeHomeOptions = {},
 ): PensionTakeHomeEffectData => {
   const { scenario, missing } = incomeScenarioFromFacts(facts);
   const rounded = Math.round(deltaYear);
+  const methodAssumed = scenario.pension === undefined;
+  const checked = scenarioWithPublishedRates(scenario, opts);
+  if (checked.status === "refused") {
+    return {
+      missing,
+      result: null,
+      methodAssumed,
+      refusalNotice: missing.length === 0 ? checked.refusal.notice : null,
+      notes: [],
+    };
+  }
   return {
     missing,
-    result: missing.length === 0 && rounded !== 0 ? whatIfSacrificeChange(scenario, rounded) : null,
-    methodAssumed: scenario.pension === undefined,
+    result:
+      missing.length === 0 && rounded !== 0
+        ? whatIfSacrificeChange(checked.scenario, rounded, opts)
+        : null,
+    methodAssumed,
+    refusalNotice: null,
+    notes: checked.notes,
   };
 };
 
@@ -153,6 +179,18 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
       </p>
     );
   }
+  if (effect.refusalNotice) {
+    // Refused, never carried forward: one quiet line in place of the outcome.
+    return (
+      <p
+        className={effectNote()}
+        data-testid="pension-take-home-effect"
+        id="pension-take-home-effect"
+      >
+        {effect.refusalNotice}
+      </p>
+    );
+  }
   if (!result) {
     // At the saved contribution the outcome slot still reads as an outcome: "No change".
     return (
@@ -222,7 +260,11 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
             </InfoTip>
           </>
         }
-        note={`${PENSION_TAKE_HOME_COPY.reliefLabel}: ${money(Math.max(0, reliefMonthly))} ${PENSION_TAKE_HOME_COPY.perMonth}.`}
+        note={[
+          `${PENSION_TAKE_HOME_COPY.reliefLabel}: ${money(Math.max(0, reliefMonthly))} ${PENSION_TAKE_HOME_COPY.perMonth}.`,
+          // What the change leaves out (a plan with no published threshold) is said beside it.
+          ...effect.notes,
+        ].join(" ")}
         row={{
           label: PENSION_TAKE_HOME_COPY.reachesPension,
           value: `${signed(pensionMonthly)} ${PENSION_TAKE_HOME_COPY.perMonth}`,

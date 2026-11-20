@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import type { BudgetEntry } from "~/types/budget";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
@@ -167,5 +167,29 @@ describe("<BudgetOverview />", () => {
     expect(screen.queryByText(/StepChange|National Debtline|Citizens Advice/)).toBeNull();
     expect(screen.queryByText(/priority bills/i)).toBeNull();
     expect(container.querySelector('[class*="danger"], [class*="warning"]')).toBeNull();
+  });
+});
+
+describe("<BudgetOverview /> in 2027/28 (refused rates)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("says why a linked take-home line has no figure for a Scottish taxpayer, never 'not set' or £0", () => {
+    // Fixed date in tax year 2027/28, when Scottish rates are not published.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-05-01T12:00:00Z"));
+    const linked = [
+      entry({ ...income, amount: 0, linkKind: "take_home" }),
+      entry({ id: "e2", category: "expenses", name: "Food", amount: 300 }),
+    ];
+    const picture = buildWorkspacePicture({
+      budgetEntries: linked,
+      userProfile: { ...profile, taxRegion: "SCOTLAND" },
+    });
+    const { container } = customRender(<BudgetOverview entries={linked} picture={picture} />);
+    expect(container.querySelector('[data-figure="budget.surplus"]')).toBeNull();
+    expect(container.textContent).toContain(
+      "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+    );
+    expect(container.textContent).not.toContain("Your take-home pay is not set");
   });
 });

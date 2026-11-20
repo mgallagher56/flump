@@ -156,3 +156,22 @@ describe("StudentLoanCalculator", () => {
     expect(`${tsx}${styles}`).not.toMatch(/status\.(danger|warning)|#[0-9a-f]{3,6}\b/i);
   });
 });
+
+describe("StudentLoanCalculator in 2027/28 (Plan 1 and Plan 4 thresholds not published)", () => {
+  const LINE =
+    "The 2027/28 repayment threshold for this student loan plan is not published yet, so there is no estimate for this year.";
+
+  it.each(["plan1", "plan4"] as const)(
+    "shows the one refusal line for %s, with no figures",
+    (plan) => {
+      render(<StudentLoanCalculator initialPlan={plan} persistSeed={false} taxYear="2027/28" />);
+      expect(screen.getByText(LINE)).toBeDefined();
+      expect(screen.queryByTestId("student-loan-outcomes")).toBeNull();
+      expect(toolText()).not.toMatch(/£/);
+      // The controls still work: Plan 2 has a 2027/28 threshold, so it is estimated.
+      fireEvent.change(planSelect(), { target: { value: "plan2" } });
+      expect(screen.queryByText(LINE)).toBeNull();
+      expect(screen.getByTestId("student-loan-outcomes")).toBeDefined();
+    },
+  );
+});

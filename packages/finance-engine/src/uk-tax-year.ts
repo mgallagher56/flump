@@ -205,12 +205,15 @@ export function getUkTaxYearContext(now: Date = new Date()): UkTaxYearContext {
 }
 
 /**
- * The rates notice for a page that shows a chosen year (the Self Assessment page): provisional
- * when that year is provisional, else today's context unchanged.
+ * The rates notice for a page that shows a chosen year (the Self Assessment page). Today's rates
+ * year keeps today's context (with its fallback notice, if any). Another year is worked out at
+ * its own rates: provisional when that year is provisional, else no notice.
  */
 export function ratesContextForYear(year: string, today: UkTaxYearContext): UkTaxYearContext {
-  if (!isProvisionalUkTaxYear(year)) return today;
-  return { calendarYear: year, ratesYear: year, isFallback: false, kind: "provisional" };
+  if (year === today.ratesYear || !isSupportedUkTaxYear(year)) return today;
+  return isProvisionalUkTaxYear(year)
+    ? { calendarYear: year, ratesYear: year, isFallback: false, kind: "provisional" }
+    : { calendarYear: year, ratesYear: year, isFallback: false };
 }
 
 function compareTaxYearLabels(a: string, b: string): number {
@@ -640,6 +643,75 @@ export function getUkTaxYearRules(year: UkRatesYear): UkTaxYearRules {
     provisional,
     announced: announcedNotes,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Refusals: figures not published for a year (owner decision: refuse, never carry forward)
+// ---------------------------------------------------------------------------
+
+export type UkRefusalKind = "scottish-rates-not-published" | "student-loan-threshold-not-published";
+
+/** A figure the engine will not estimate because its rate or threshold is not published. */
+export interface UkRefusal {
+  kind: UkRefusalKind;
+  taxYear: string;
+  /** One quiet line for the page or tool to show in place of the figure. */
+  notice: string;
+}
+
+export const scottishRatesNotPublishedNotice = (taxYear: string): string =>
+  `Scottish Income Tax rates for ${taxYear} are not published yet, so there is no estimate for this year.`;
+
+export const studentLoanThresholdNotPublishedNotice = (taxYear: string): string =>
+  `The ${taxYear} repayment threshold for this student loan plan is not published yet, so repayments are not included.`;
+
+/** The refusal for a Scottish taxpayer in a year with no Scottish rates, or null. Never throws. */
+export function scottishRatesRefusal(
+  rules: UkTaxYearRules,
+  region: UkTaxRegion | null | undefined,
+): UkRefusal | null {
+  if (region !== "SCOTLAND" || rules.scotland) return null;
+  return {
+    kind: "scottish-rates-not-published",
+    taxYear: rules.year,
+    notice: scottishRatesNotPublishedNotice(rules.year),
+  };
+}
+
+/** The refusal for a student loan plan with no threshold for the year, or null. Never throws. */
+export function studentLoanThresholdRefusal(
+  rules: UkTaxYearRules,
+  plan: UkStudentLoanPlanKey,
+): UkRefusal | null {
+  if (rules.studentLoans.plans[plan]) return null;
+  return {
+    kind: "student-loan-threshold-not-published",
+    taxYear: rules.year,
+    notice: studentLoanThresholdNotPublishedNotice(rules.year),
+  };
+}
+
+/**
+ * The refusal behind an engine error, for a caller that catches one: UnsupportedUkTaxYearError
+ * for a missing Scottish table or student loan plan. Null for any other error.
+ */
+export function ukRefusalFromError(error: unknown): UkRefusal | null {
+  if (!(error instanceof UnsupportedUkTaxYearError) || !error.table) return null;
+  if (error.table === "Scottish income tax") {
+    return {
+      kind: "scottish-rates-not-published",
+      taxYear: error.year,
+      notice: scottishRatesNotPublishedNotice(error.year),
+    };
+  }
+  if (error.table.startsWith("student loan ")) {
+    return {
+      kind: "student-loan-threshold-not-published",
+      taxYear: error.year,
+      notice: studentLoanThresholdNotPublishedNotice(error.year),
+    };
+  }
+  return null;
 }
 
 /** The year's Scottish rates and bands. Throws when they are not published (a provisional year). */

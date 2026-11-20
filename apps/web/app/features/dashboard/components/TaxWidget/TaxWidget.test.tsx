@@ -76,3 +76,25 @@ describe("TaxWidget", () => {
     ).toBeTruthy();
   });
 });
+
+describe("<TaxWidget /> with a refused estimate", () => {
+  it("shows the refusal line in place of the figure, with no prompt to add a fact", () => {
+    const notice =
+      "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.";
+    const { container } = render(
+      <MemoryRouter>
+        <TaxWidget
+          data={{
+            estimatedTaxDue: null,
+            estimatedTaxDueMissing: [],
+            estimatedTaxDueNotice: notice,
+            recordsCount: 2,
+          }}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(notice)).toBeDefined();
+    expect(container.querySelector('[data-figure="tax.estimatedDue"]')).toBeNull();
+    expect(screen.getByRole("link", { name: "Open tax records" })).toBeDefined();
+  });
+});

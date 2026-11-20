@@ -3,6 +3,7 @@ import {
   getUkTaxYearRules,
   persistOnboardingSeed,
   SUPPORTED_UK_TAX_YEARS,
+  scenarioWithPublishedRates,
   type UkIncomeScenario,
   type UkTaxYear,
   whatIfGrossChange,
@@ -138,9 +139,20 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   const maxContribution = Math.min(CONTRIBUTION_MAX, Math.max(0, grossIncome));
   const sacrifice = Math.min(contribution, maxContribution);
 
-  const scenario = useMemo<UkIncomeScenario>(
+  const chosenScenario = useMemo<UkIncomeScenario>(
     () => ({ taxYear: year, region, salary: Math.max(0, grossIncome) }),
     [year, region, grossIncome],
+  );
+  // Refused, never carried forward: Scotland in a year with no Scottish rates has no estimate.
+  // The figures below are then worked out on the other UK bands only so the hooks run in the
+  // same order every render; none of them is shown, the refusal line is.
+  const refusal = useMemo(() => {
+    const checked = scenarioWithPublishedRates(chosenScenario);
+    return checked.status === "refused" ? checked.refusal : null;
+  }, [chosenScenario]);
+  const scenario = useMemo<UkIncomeScenario>(
+    () => (refusal ? { ...chosenScenario, region: "ENGLAND_NI_WALES" } : chosenScenario),
+    [chosenScenario, refusal],
   );
   const change = useMemo(() => whatIfSacrificeChange(scenario, sacrifice), [scenario, sacrifice]);
   const nextBefore = useMemo(() => whatIfGrossChange(scenario, NEXT), [scenario]);
@@ -379,7 +391,23 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       )}
 
       <SimulatorSplitLayout
-        content={content}
+        content={
+          refusal ? (
+            <div className={taxTrapContent()}>
+              <div className={taxTrapBadges()}>
+                <StatusBadge variant="neutral">{asAtTaxYear(year)}</StatusBadge>
+              </div>
+              <p className={taxTrapNote()} data-testid="tax-trap-refusal">
+                {refusal.notice}
+              </p>
+              <Button className={taxTrapCta()} size="md" variant="primary" onClick={handleSave}>
+                {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+              </Button>
+            </div>
+          ) : (
+            content
+          )
+        }
         contentLabel={TAX_TRAP_COPY.contentLabel}
         controls={controls}
         controlsLabel={TAX_TRAP_COPY.controlsLabel}

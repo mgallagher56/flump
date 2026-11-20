@@ -1,6 +1,11 @@
 import type { UkTaxYear } from "../../types.js";
 import { calculateUkTax } from "../../uk-tax.js";
-import { resolveUkTaxYear, UnsupportedUkTaxYearError } from "../../uk-tax-year.js";
+import {
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+  scottishRatesRefusal,
+  UnsupportedUkTaxYearError,
+} from "../../uk-tax-year.js";
 import type { ProfileFacts } from "../input.js";
 
 /** The rate band that sets the Personal Savings Allowance (£1,000, £500 or £0). */
@@ -27,12 +32,15 @@ export function selectPsaBand(
     if (error instanceof UnsupportedUkTaxYearError) return null;
     throw error;
   }
+  const region = facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES";
+  // Refused (no Scottish rates for the year): no band, never a carried-forward one.
+  if (scottishRatesRefusal(getUkTaxYearRules(taxYear), region)) return null;
   const result = calculateUkTax({
     grossSalary: facts.annualSalary,
     bonusOrSideIncome: Math.max(0, opts.otherAnnualIncome ?? 0),
     pensionContributionPct: facts.pensionPercent,
     isSalarySacrifice: facts.employmentType !== "self-employed" && facts.isSalarySacrifice === true,
-    region: facts.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
+    region,
     taxYear,
   });
   switch (result.allowances.marginalIncomeTaxBand) {

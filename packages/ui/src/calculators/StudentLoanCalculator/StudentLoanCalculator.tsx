@@ -1,7 +1,8 @@
 import {
-  evaluateUkStudentLoan,
+  evaluateUkStudentLoanOrRefusal,
   type OnboardingSeedPayload,
   persistOnboardingSeed,
+  type StudentLoanEvaluationResult,
 } from "@flump/finance-engine";
 import { ArrowRight } from "lucide-react";
 import type { FC } from "react";
@@ -98,6 +99,11 @@ export interface StudentLoanCalculatorProps {
   initialBalance?: number;
   /** Inside a tool page that already shows the title and description: hide this calculator's own title and intro. */
   embedded?: boolean;
+  /**
+   * The tax year whose thresholds apply. Defaults to the current one; tests and stories pass a
+   * year (a plan with no published threshold for it shows the engine's line instead of figures).
+   */
+  taxYear?: string;
 }
 
 /**
@@ -114,32 +120,39 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   initialSalary = 38_000,
   initialBalance = 45_000,
   embedded = false,
+  taxYear,
 }) => {
   const [plan, setPlan] = useState<StudentLoanPlanOption>(initialPlan);
   // Clamped so a negative entry never reaches the engine.
   const [salary, setSalary] = useState(Math.max(0, initialSalary));
   const [balance, setBalance] = useState(Math.max(0, initialBalance));
 
-  const evaluation = useMemo(
-    () => evaluateUkStudentLoan(plan, salary, balance),
-    [plan, salary, balance],
+  const outcome = useMemo(
+    () => evaluateUkStudentLoanOrRefusal(plan, salary, balance, taxYear),
+    [plan, salary, balance, taxYear],
   );
+  // A plan with no published threshold for the year (Plan 1 and Plan 4 in 2027/28) is refused:
+  // the engine's one line stands in place of the estimate, never a carried-forward one.
+  const evaluation: StudentLoanEvaluationResult | null =
+    outcome.status === "known" ? outcome.evaluation : null;
+  const refusalNotice = outcome.status === "refused" ? outcome.refusal.notice : null;
 
-  const annualText = money(evaluation.annualRepayment);
   const nothingOwed = balance <= 0;
-  const repaid = evaluation.projectedOutcome === "repaid_before_write_off";
+  const repaid = evaluation?.projectedOutcome === "repaid_before_write_off";
   const outcomeValue = nothingOwed
     ? STUDENT_LOAN_COPY.outcomeNothingOwed
     : repaid
       ? STUDENT_LOAN_COPY.outcomeRepaid
-      : STUDENT_LOAN_COPY.outcomeWrittenOff(evaluation.writeOffYears);
+      : STUDENT_LOAN_COPY.outcomeWrittenOff(evaluation?.writeOffYears ?? 0);
   const outcomeReason = nothingOwed
     ? STUDENT_LOAN_COPY.reasonNothingOwed
     : repaid
       ? STUDENT_LOAN_COPY.reasonRepaid
       : STUDENT_LOAN_COPY.reasonWrittenOff;
 
-  const announcement = studentLoanAnnouncement(money(evaluation.monthlyRepayment), annualText);
+  const announcement = evaluation
+    ? studentLoanAnnouncement(money(evaluation.monthlyRepayment), money(evaluation.annualRepayment))
+    : (refusalNotice ?? "");
 
   const handleSave = () => {
     const payload: StudentLoanSeedPayload = {
@@ -191,7 +204,16 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
     </div>
   );
 
-  const content = (
+  const content = !evaluation ? (
+    <div className={studentLoanContent()}>
+      <p className={studentLoanExplainer()} data-testid="student-loan-refusal">
+        {refusalNotice}
+      </p>
+      <Button className={studentLoanCta()} size="md" variant="primary" onClick={handleSave}>
+        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+      </Button>
+    </div>
+  ) : (
     <div className={studentLoanContent()}>
       {/* The question is "paid off or written off first", so the worded answer leads, set in a
           text style (KpiCard's value style is for figures). The monthly repayment supports it. */}

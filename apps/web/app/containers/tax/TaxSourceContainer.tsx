@@ -5,9 +5,12 @@ import {
   estimateInputsFor,
   estimateOptionsFor,
   getCurrentUKTaxYear,
+  getUkTaxYearRules,
   isLegacySalaryRecord,
   isRecordActiveInTaxYear,
+  isSupportedUkTaxYear,
   recordedTotalsForTaxYear,
+  scottishRatesRefusal,
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
@@ -112,20 +115,24 @@ const TaxSourceContainer: FC = () => {
   );
   // The source's gross income and expenses do not depend on the salary, so they are read from
   // the ledger either way. What the estimate used (the allowance, a tie) is read only when known.
-  const result = useMemo(
-    () =>
-      inputs.status === "known"
-        ? calculateEstimatedTax(inputs)
-        : calculateUKTax(
-            taxYear,
-            // A legacy PAYE salary record never stands in for the saved salary (slice 6).
-            records.filter((r) => !isLegacySalaryRecord(r)),
-            0,
-            100,
-            estimateOptionsFor({ taxRegion, accounts: taxAccounts }),
-          ),
-    [taxYear, records, inputs, taxRegion, taxAccounts],
-  );
+  const result = useMemo(() => {
+    if (inputs.status === "known") return calculateEstimatedTax(inputs);
+    const options = estimateOptionsFor({ taxRegion, accounts: taxAccounts });
+    // Only the source's income and expense totals are read from this ledger, and they do not
+    // depend on the region. A year with no Scottish rates would refuse the ledger, so the totals
+    // are read under the other UK bands; no tax figure from it is shown (`estimate` stays unset).
+    const scottishRefused =
+      isSupportedUkTaxYear(taxYear) &&
+      scottishRatesRefusal(getUkTaxYearRules(taxYear), options.region) !== null;
+    return calculateUKTax(
+      taxYear,
+      // A legacy PAYE salary record never stands in for the saved salary (slice 6).
+      records.filter((r) => !isLegacySalaryRecord(r)),
+      0,
+      100,
+      scottishRefused ? { ...options, region: "ENGLAND_NI_WALES" } : options,
+    );
+  }, [taxYear, records, inputs, taxRegion, taxAccounts]);
   // One share for every rental record in the year, when they share one, for the comparison's note.
   const rentalShare = uniformRentalShare(taxAccounts, records, taxYear);
   const offers =
@@ -136,7 +143,9 @@ const TaxSourceContainer: FC = () => {
       : [];
   const shareNotice = source === "rental" ? rentalShareNotice(taxAccounts, records, taxYear) : null;
   const estimate = inputs.status === "known" ? result : undefined;
-  const missingFact = inputs.status === "known" ? null : addableEstimateFact(inputs.missing);
+  const missingFact = inputs.status === "unknown" ? addableEstimateFact(inputs.missing) : null;
+  // The one quiet line in place of the estimate when the year's rates are not published.
+  const refusalNotice = inputs.status === "refused" ? inputs.refusal.notice : null;
 
   const label = SOURCE_LABEL[source];
   const { income, expenses } = sourceTotals(records, source, taxYear);
@@ -238,7 +247,9 @@ const TaxSourceContainer: FC = () => {
           ownershipSharePct={source === "rental" ? (rentalShare ?? undefined) : undefined}
           routesTie={source === "rental" ? estimate?.propertyRoutesTie : undefined}
           unknownEstimate={
-            missingFact ? (
+            refusalNotice ? (
+              <span>{refusalNotice}</span>
+            ) : missingFact ? (
               <>
                 <span>{ESTIMATE_MISSING_PROMPT[missingFact].prompt}</span>{" "}
                 <Link

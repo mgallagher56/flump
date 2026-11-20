@@ -280,3 +280,26 @@ describe("TaxTrapCalculator outcome captions", () => {
     expect(TAX_TRAP_COPY.noContributionTaxAndNi).not.toMatch(/\d|£|%/);
   });
 });
+
+describe("TaxTrapCalculator in 2027/28 (Scottish rates not published)", () => {
+  it("shows the refusal line in place of the results for Scotland, and England still works", () => {
+    render(
+      <TaxTrapCalculator
+        initialRegion="SCOTLAND"
+        now={new Date("2027-05-01T12:00:00Z")}
+        persistSeed={false}
+        taxYear="2027/28"
+      />,
+    );
+    expect(
+      screen.getByText(
+        "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByTestId("tax-trap-outcomes")).toBeNull();
+    fireEvent.change(screen.getByLabelText(TAX_TRAP_COPY.region), {
+      target: { value: "ENGLAND_NI_WALES" },
+    });
+    expect(screen.getByTestId("tax-trap-outcomes")).toBeDefined();
+  });
+});

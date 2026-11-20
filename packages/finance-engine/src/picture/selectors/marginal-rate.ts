@@ -6,9 +6,17 @@ import {
   type UkIncomeThreshold,
   type UkThresholdKind,
 } from "../../uk-tax-thresholds.js";
-import { getUkTaxYearRules, type UkStudentLoanPlanKey } from "../../uk-tax-year.js";
+import {
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+  scottishRatesRefusal,
+  studentLoanThresholdNotPublishedNotice,
+  studentLoanThresholdRefusal,
+  type UkStudentLoanPlanKey,
+  UnsupportedUkTaxYearError,
+} from "../../uk-tax-year.js";
 import { whatIfGrossChange } from "../../uk-what-if.js";
-import { type Figure, figureKnown, figureUnknown } from "../figure.js";
+import { type Figure, figureKnown, figureRefused, figureUnknown } from "../figure.js";
 import type { FactKey, ProfileFacts } from "../input.js";
 import { ASSUMED_REGION_NOTE } from "./take-home.js";
 
@@ -46,6 +54,16 @@ export interface SelectMarginalRateOptions {
 }
 
 const NEXT = 1000;
+
+/** The rates year the what-if will use, or null when the engine will refuse the year itself. */
+function ratesYearFor(opts: SelectMarginalRateOptions): UkTaxYear | null {
+  try {
+    return resolveUkTaxYear(opts.taxYear, opts.now);
+  } catch (error) {
+    if (error instanceof UnsupportedUkTaxYearError) return null;
+    throw error;
+  }
+}
 /**
  * E31: the Personal Allowance taper is only surfaced when adjusted net income is within this much
  * below the taper start, up to the taper end (£90,000 to £125,140 in 2026/27).
@@ -133,8 +151,26 @@ export function selectMarginalRate(
   opts: SelectMarginalRateOptions = {},
 ): Figure<MarginalRate> {
   const f: ProfileFacts = { ...facts, ...opts.overrides };
-  const { scenario, missing } = incomeScenarioFromFacts(f, { taxYear: opts.taxYear });
-  if (missing.length > 0) return figureUnknown(missing, "not-set");
+  const built = incomeScenarioFromFacts(f, { taxYear: opts.taxYear });
+  if (built.missing.length > 0) return figureUnknown(built.missing, "not-set");
+
+  // Refused, never carried forward: no Scottish rates for the year means no figure; a loan plan
+  // with no published threshold is left out, and the figure says so.
+  let scenario = built.scenario;
+  const refusalNotes: string[] = [];
+  const ratesYear = ratesYearFor(opts);
+  if (ratesYear) {
+    const rules = getUkTaxYearRules(ratesYear);
+    const scottish = scottishRatesRefusal(rules, scenario.region);
+    if (scottish) return figureRefused(scottish);
+    const loans = scenario.studentLoans ?? [];
+    const kept = loans.filter((p) => !studentLoanThresholdRefusal(rules, p));
+    if (kept.length < loans.length) {
+      refusalNotes.push(studentLoanThresholdNotPublishedNotice(ratesYear));
+      const { studentLoans: _dropped, ...rest } = scenario;
+      scenario = kept.length > 0 ? { ...rest, studentLoans: kept } : rest;
+    }
+  }
 
   const next = whatIfGrossChange(scenario, NEXT, { now: opts.now });
   const { before } = next;
@@ -143,9 +179,11 @@ export function selectMarginalRate(
   const ani = before.adjustedNetIncome;
   const taperInView =
     ani >= rules.ewni.personalAllowanceTaperStart - TAPER_SURFACE_WINDOW && ani <= rules.taperEnd;
-  const assumptions = before.assumptions.some((a) => a.code === "regionAssumed")
-    ? [ASSUMED_REGION_NOTE]
-    : undefined;
+  const notes = [
+    ...(before.assumptions.some((a) => a.code === "regionAssumed") ? [ASSUMED_REGION_NOTE] : []),
+    ...refusalNotes,
+  ];
+  const assumptions = notes.length > 0 ? notes : undefined;
 
   return figureKnown<MarginalRate>(
     {

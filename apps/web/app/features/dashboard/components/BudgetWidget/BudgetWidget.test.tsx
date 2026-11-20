@@ -46,3 +46,14 @@ describe("BudgetWidget", () => {
     expect(screen.getByRole("link", { name: /Add your budget/ })).toBeTruthy();
   });
 });
+
+describe("<BudgetWidget /> with a refused take-home line", () => {
+  it("says why the budget is unknown instead of asking for a budget", () => {
+    const notice =
+      "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.";
+    renderWidget({ monthlyExpenses: 0, budgetKnown: false, budgetNotice: notice });
+    expect(screen.getByText(notice)).toBeDefined();
+    expect(screen.queryByText("Add your budget to see what you spend each month.")).toBeNull();
+    expect(screen.getByRole("link", { name: "Open budget" })).toBeDefined();
+  });
+});

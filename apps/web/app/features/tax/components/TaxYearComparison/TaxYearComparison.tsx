@@ -100,7 +100,15 @@ export interface TaxYearComparisonProps {
   results: Record<string, TaxCalculationResult>;
   /** False when no salary is saved, so the salary line shows the "add your salary" prompt. */
   salaryKnown?: boolean;
+  /**
+   * Years with no estimate because the year's rates for this person are not published (Scottish
+   * 2027/28), each with its notice. Their cells say "Not available", never £0 or "Not set".
+   */
+  refusedYears?: Record<string, string>;
 }
+
+/** A refused year's cell: the figure is not available, and the line below the table says why. */
+export const NOT_AVAILABLE_CELL = "Not available";
 
 const SECTION_OPTIONS = GROUPS.map((g) => ({ value: g.heading, label: g.heading }));
 
@@ -114,7 +122,10 @@ export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
   selectedYear,
   results,
   salaryKnown = true,
+  refusedYears = {},
 }) => {
+  // One line for the refused years, under the table (the notices are the same sentence per year).
+  const refusalNotes = [...new Set(years.flatMap((y) => refusedYears[y] ?? []))];
   const col = (year: string) => (year === selectedYear ? selectedCol() : undefined);
   const {
     filteredRows: groups,
@@ -169,7 +180,9 @@ export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
                     </Th>
                     {years.map((year) => (
                       <Td key={year} numeric className={cx(col(year))}>
-                        {line.value(results[year], salaryKnown)}
+                        {refusedYears[year] !== undefined
+                          ? NOT_AVAILABLE_CELL
+                          : line.value(results[year], salaryKnown)}
                       </Td>
                     ))}
                   </tr>
@@ -178,6 +191,11 @@ export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
             ))}
           </TBody>
         </Table>
+        {refusalNotes.map((note) => (
+          <p key={note} className={intro()} data-testid="tax-year-comparison-refusal">
+            {note}
+          </p>
+        ))}
       </div>
     </Card>
   );

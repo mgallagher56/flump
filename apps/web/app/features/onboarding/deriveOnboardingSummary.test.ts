@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { deriveOnboardingSummary } from "./deriveOnboardingSummary";
 import { INITIAL_VALUES, type OnboardingValues } from "./types";
 
@@ -119,5 +119,37 @@ describe("onboarding take-home is the engine's one selector (E16 PR 3)", () => {
       deriveOnboardingSummary(v({ incomeMode: "net", monthlyTakeHome: 2000, pensionPercent: 5 }))
         .takeHomeNote,
     ).toBeNull();
+  });
+});
+
+describe("deriveOnboardingSummary in 2027/28 (refused rates)", () => {
+  // Fixed date: 1 May 2027 is in tax year 2027/28, when Scottish rates and the Plan 1 and Plan 4
+  // thresholds are not published (owner decision: refused, never carried forward).
+  const IN_2027_28 = new Date("2027-05-01T12:00:00Z");
+  afterEach(() => vi.useRealTimers());
+
+  it("gives a Scottish taxpayer the refusal line, not a take-home figure", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(IN_2027_28);
+    const s = deriveOnboardingSummary(v({ grossSalary: 40000, taxRegion: "SCOTLAND" }));
+    expect(s.takeHomeRefusal).toBe(
+      "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+    );
+    expect(s.takeHomeNote).toBeNull();
+    // The rest still works: Finish is allowed once income and a region are given.
+    expect(s.canFinish).toBe(true);
+  });
+
+  it("says a Plan 1 loan is left out instead of 'Now includes your student loan'", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(IN_2027_28);
+    const s = deriveOnboardingSummary(
+      v({ grossSalary: 40000, taxRegion: "ENGLAND", studentLoanPlan: "PLAN_1", pensionPercent: 0 }),
+    );
+    expect(s.takeHomeRefusal).toBeNull();
+    expect(s.monthlyTakeHome).toBeGreaterThan(0);
+    expect(s.takeHomeNote).toBe(
+      "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.",
+    );
   });
 });

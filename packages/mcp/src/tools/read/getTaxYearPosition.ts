@@ -10,11 +10,12 @@ import {
   isSelfEmployedType,
   MCP_NOTICE,
   payeSalaryForTax,
+  scottishRatesRefusal,
   type TaxEstimateMissingFact,
 } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
-import { type Missing, round2 } from "./common.js";
+import { type Missing, refusalMissing, round2 } from "./common.js";
 import { loadTaxYearRecords, resolveTaxYear, taxYearInput } from "./tax-common.js";
 
 const result = z.object({
@@ -38,20 +39,23 @@ const result = z.object({
     /** Where total income sits against the taper: below it, inside it, or past the point it is fully lost. */
     position: z.enum(["below_taper", "in_taper", "above_taper"]),
   }),
-  incomeTaxBands: z.object({
-    /** Taxable non-savings income (salary, self-employment and rental profit after the allowance). */
-    taxableGbp: z.number(),
-    bands: z.array(
-      z.object({
-        name: z.string(),
-        ratePct: z.number(),
-        taxableGbp: z.number(),
-        taxGbp: z.number(),
-      }),
-    ),
-    /** Band holding the last pound of taxable non-savings income, or null when none is taxable. */
-    topBand: z.string().nullable(),
-  }),
+  /** null when the year's rates for this person are not published (missing[] says why). */
+  incomeTaxBands: z
+    .object({
+      /** Taxable non-savings income (salary, self-employment and rental profit after the allowance). */
+      taxableGbp: z.number(),
+      bands: z.array(
+        z.object({
+          name: z.string(),
+          ratePct: z.number(),
+          taxableGbp: z.number(),
+          taxGbp: z.number(),
+        }),
+      ),
+      /** Band holding the last pound of taxable non-savings income, or null when none is taxable. */
+      topBand: z.string().nullable(),
+    })
+    .nullable(),
   childBenefitCharge: z.object({
     thresholdGbp: z.number(),
     /** Income at which the charge reaches 100% of Child Benefit. */
@@ -61,10 +65,10 @@ const result = z.object({
   }),
   section24: z.object({
     financeCostsShareGbp: z.number(),
-    /** Basic-rate tax credit on finance costs. */
-    taxCreditGbp: z.number(),
-    rentalTaxBeforeCreditGbp: z.number(),
-    rentalTaxAfterCreditGbp: z.number(),
+    /** Basic-rate tax credit on finance costs. The three tax figures are null when the year's rates for this person are not published. */
+    taxCreditGbp: z.number().nullable(),
+    rentalTaxBeforeCreditGbp: z.number().nullable(),
+    rentalTaxAfterCreditGbp: z.number().nullable(),
     /** Finance costs not used this year, which carry forward to the next (ITTOIA 2005 s.274AA(4)). */
     financeCostsCarriedForwardGbp: z.number(),
   }),
@@ -116,6 +120,13 @@ export const getTaxYearPosition = defineFlumpTool({
             annualSalary: facts.annualSalary,
           });
 
+    const rules = getUkTaxYearRules(taxYear);
+    // Refused, never carried forward: a Scottish taxpayer in a year with no Scottish rates gets
+    // no bands, tax or estimate. Income and the Personal Allowance do not depend on the region,
+    // so they are read from the ledger under the other UK bands; no rate from it is returned.
+    const refusal = scottishRatesRefusal(rules, region);
+    const options = estimateOptionsFor({ taxRegion: facts.taxRegion, accounts });
+
     // The Tax page's own calculation, so the figures match the app.
     // A legacy PAYE salary record never stands in for the saved salary (slice 6).
     const ledger = calculateUKTax(
@@ -123,9 +134,8 @@ export const getTaxYearPosition = defineFlumpTool({
       records.filter((r) => !isLegacySalaryRecord(r)),
       salary,
       100,
-      estimateOptionsFor({ taxRegion: facts.taxRegion, accounts }),
+      refusal ? { ...options, region: "ENGLAND_NI_WALES" } : options,
     );
-    const rules = getUkTaxYearRules(taxYear);
 
     const total = ledger.totalGrossIncome;
     const standard = rules.ewni.personalAllowance;
@@ -136,8 +146,8 @@ export const getTaxYearPosition = defineFlumpTool({
     const nonSavings =
       ledger.effectivePayeSalary + ledger.seProfit + ledger.rentalProfitBeforeInterestShare;
     const taxable = Math.max(0, nonSavings - ledger.personalAllowance);
-    const bandResult = calculateIncomeTaxOnTaxable(taxable, rules, region);
-    const bands = bandResult.bands.map((b) => ({
+    const bandResult = refusal ? null : calculateIncomeTaxOnTaxable(taxable, rules, region);
+    const bands = (bandResult?.bands ?? []).map((b) => ({
       name: b.name,
       ratePct: round2(b.rate * 100),
       taxableGbp: round2(b.taxable),
@@ -147,9 +157,9 @@ export const getTaxYearPosition = defineFlumpTool({
 
     const { hicbcThresholdStart, hicbcStepWidth } = rules.hicbc;
 
-    const missing: Missing[] = [];
+    const missing: Missing[] = refusal ? [refusalMissing("taxRates", refusal.notice)] : [];
     const estimateMissing: TaxEstimateMissingFact[] =
-      inputs.status === "known" ? [] : inputs.missing;
+      inputs.status === "unknown" ? inputs.missing : [];
     if (salary === 0 && records.length === 0 && !selfEmployed) {
       missing.push({
         field: "annualSalary",
@@ -224,7 +234,9 @@ export const getTaxYearPosition = defineFlumpTool({
           taperEndGbp: rules.taperEnd,
           position,
         },
-        incomeTaxBands: { taxableGbp: round2(taxable), bands, topBand: top?.name ?? null },
+        incomeTaxBands: refusal
+          ? null
+          : { taxableGbp: round2(taxable), bands, topBand: top?.name ?? null },
         childBenefitCharge: {
           thresholdGbp: hicbcThresholdStart,
           fullChargeAtGbp: hicbcThresholdStart + 100 * hicbcStepWidth,
@@ -232,9 +244,11 @@ export const getTaxYearPosition = defineFlumpTool({
         },
         section24: {
           financeCostsShareGbp: round2(ledger.rentalMortgageInterestShare),
-          taxCreditGbp: round2(ledger.rentalPropertyTaxCredit),
-          rentalTaxBeforeCreditGbp: round2(ledger.rentalPropertyTaxDueBeforeCredit),
-          rentalTaxAfterCreditGbp: round2(ledger.rentalPropertyTaxDueAfterCredit),
+          taxCreditGbp: refusal ? null : round2(ledger.rentalPropertyTaxCredit),
+          rentalTaxBeforeCreditGbp: refusal
+            ? null
+            : round2(ledger.rentalPropertyTaxDueBeforeCredit),
+          rentalTaxAfterCreditGbp: refusal ? null : round2(ledger.rentalPropertyTaxDueAfterCredit),
           financeCostsCarriedForwardGbp: round2(ledger.financeCostsCarriedForward),
         },
         estimate:
@@ -250,7 +264,7 @@ export const getTaxYearPosition = defineFlumpTool({
         notes: [
           "Total income here is salary plus self-employed profit, rental profit share before finance costs, taxable savings interest and dividends. Pension contributions and Gift Aid, which lower adjusted net income, are deducted only if recorded.",
           "The Child Benefit charge is worked out on the individual's own income only.",
-          ...(region === "SCOTLAND"
+          ...(region === "SCOTLAND" && !refusal
             ? [
                 "The bands use Scottish rates. The tax and Self Assessment estimates use the tax page calculation, which applies England, Wales and Northern Ireland rates.",
               ]

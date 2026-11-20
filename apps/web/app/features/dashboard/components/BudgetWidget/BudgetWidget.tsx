@@ -12,6 +12,11 @@ export interface BudgetWidgetData {
   monthlyExpenses: number;
   /** From the loader's picture: whether any budget row exists. Sample data may omit it. */
   budgetKnown?: boolean;
+  /**
+   * Why an unknown budget is unknown when it is not for want of a budget: its linked take-home
+   * line is refused because the year's rates are not published. Shown in place of the figure.
+   */
+  budgetNotice?: string | null;
   /** The engine's months of cover, shown as "Breathing room". Null or missing when not known. */
   monthsOfCover?: number | null;
 }
@@ -34,6 +39,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
   const budgetKnown =
     typeof data?.budgetKnown === "boolean" ? data.budgetKnown : income > 0 || expenses > 0;
   const months = data && finite(data.monthsOfCover) ? data.monthsOfCover : null;
+  const notice = budgetKnown ? null : (data?.budgetNotice ?? null);
 
   return (
     <WidgetCard
@@ -48,7 +54,9 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
       id="budget"
       label="Spending each month"
       line={
-        !budgetKnown ? (
+        notice ? (
+          notice
+        ) : !budgetKnown ? (
           "Add your budget to see what you spend each month."
         ) : months === null ? (
           "Bills and living costs in your budget."
@@ -62,7 +70,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
         )
       }
       link={
-        budgetKnown
+        budgetKnown || notice
           ? { to: "/app/budget", label: "Open budget" }
           : { to: "/app/budget", label: "Add your budget" }
       }
