@@ -1,11 +1,13 @@
 import type { Locator, Page } from "@playwright/test";
+import { recordDestructive } from "../../support/destructive-budget";
 
 /**
  * Shared steps for the budget link tests (audit slice 5). Each test changes the one user's saved
  * data through the same-origin /api proxy, as the pages do, and puts it back in a finally block.
  */
-export const api = (page: Page, path: string, method = "GET", body?: unknown) =>
-  page.evaluate(
+export const api = (page: Page, path: string, method = "GET", body?: unknown) => {
+  recordDestructive(method, path);
+  return page.evaluate(
     async ({ path, method, body }) => {
       const response = await fetch(`/api${path}`, {
         method,
@@ -17,6 +19,7 @@ export const api = (page: Page, path: string, method = "GET", body?: unknown) =>
     },
     { path, method, body },
   );
+};
 
 export type Account = { id: string; name: string; monthlyContribution?: number | null };
 export type Entry = {

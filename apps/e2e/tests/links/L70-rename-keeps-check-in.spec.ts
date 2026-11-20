@@ -4,25 +4,12 @@ import { backendCall } from "../../support/backend";
 import { linkSpecHeaders } from "../../support/client-address";
 import { waitForHydration } from "../../support/page";
 import { applyPersona } from "../../support/personas";
+import { api } from "./budget-links.helpers";
 
 // Its own client address, so the per-address ceiling counts this file alone (client-address.ts).
 test.use({ storageState: AUTH_STATE, extraHTTPHeaders: linkSpecHeaders(import.meta.filename) });
 
 type Account = { id: string; name: string };
-
-const api = (page: Page, path: string, method = "GET", body?: unknown) =>
-  page.evaluate(
-    async ({ path, method, body }) => {
-      const response = await fetch(`/api${path}`, {
-        method,
-        headers: { "Content-Type": "application/json", "x-flump-request": "1" },
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-      if (!response.ok) throw new Error(`${method} ${path} ${response.status}`);
-      return (await response.json()) as unknown;
-    },
-    { path, method, body },
-  );
 
 const startRow = (page: Page) =>
   page

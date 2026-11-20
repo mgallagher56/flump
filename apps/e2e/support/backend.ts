@@ -1,3 +1,4 @@
+import { recordDestructive } from "./destructive-budget";
 import { BACKEND_URL } from "./env";
 
 /**
@@ -15,6 +16,7 @@ export async function backendCall<T = unknown>(
   method = "GET",
   body?: unknown,
 ): Promise<T> {
+  recordDestructive(method, path);
   const response = await fetch(`${BACKEND_URL}${path}`, {
     method,
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${DEV_TOKEN}` },

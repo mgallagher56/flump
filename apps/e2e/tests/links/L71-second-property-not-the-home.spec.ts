@@ -1,6 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
 import { AUTH_STATE } from "../../support/auth";
-import { backendCall } from "../../support/backend";
 import { linkSpecHeaders } from "../../support/client-address";
 import { applyPersona } from "../../support/personas";
 
@@ -47,7 +46,12 @@ test("L71 a second property does not change loan to value", async ({ page }) => 
     ).toBeVisible();
     await expect(saved).not.toContainText("36.5%");
   } finally {
-    await backendCall(`/accounts/${rental.id}`, "DELETE");
+    // No delete (the suite shares 10 destructive calls an hour): the property becomes the next
+    // test's subject, a rental called "Flat 2", and the renter switch's reset clears it later.
+    await api(page, `/accounts/${rental.id}`, "PATCH", {
+      name: "Flat 2",
+      accountSubtype: "rental",
+    });
   }
 });
 
@@ -57,14 +61,23 @@ test("L71 a second property does not change loan to value", async ({ page }) => 
 // Before slice 4 there was no property kind to save (the subtype was refused).
 test("L71 a property saved as a rental is not the home", async ({ page }) => {
   await page.goto("/app");
-  await applyPersona(page, "homeowner");
-
-  const rental = (await api(page, "/accounts", "POST", {
-    name: "Flat 2",
-    type: "Property",
-    accountSubtype: "rental",
-    balance: 200000,
-  })) as { id: string };
+  // The test above leaves its second property saved as the rental "Flat 2" (no delete). Reuse it;
+  // run on its own, seed the homeowner and add the rental here. applyPersona is not called when
+  // reusing, since the extra property would make it reset (a destructive call).
+  type Row = { id: string; name: string; type: string; accountSubtype?: string | null };
+  const existing = ((await api(page, "/accounts")) as Row[]).find(
+    (a) => a.name === "Flat 2" && a.type === "Property" && a.accountSubtype === "rental",
+  );
+  let rental = existing;
+  if (!rental) {
+    await applyPersona(page, "homeowner");
+    rental = (await api(page, "/accounts", "POST", {
+      name: "Flat 2",
+      type: "Property",
+      accountSubtype: "rental",
+      balance: 200000,
+    })) as Row;
+  }
   // The last homeowner spec: no delete, since the renter specs after it start with a reset that
   // clears it, and deletes share the backend's "destructive" limit of 10 an hour.
   expect(rental.id).toBeTruthy();

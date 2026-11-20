@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { FROZEN_NOW, SERVER_CLOCK_FROZEN } from "./clock";
+import { recordDestructive } from "./destructive-budget";
 import { BACKEND_URL } from "./env";
 import { allowRateLimitRetry } from "./rate-limit-retry";
 
@@ -961,6 +962,7 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
     { seed: plan, binding },
   );
 
+  if (outcome.reset) recordDestructive("POST", "/user-profile/reset-financial-data");
   if (outcome.failures.length > 0) {
     throw new Error(
       `Seeding the ${name} persona through /api failed: ${outcome.failures.join(", ")}`,
@@ -1068,6 +1070,7 @@ async function seedExtras(extras: PersonaExtras): Promise<void> {
  * project in playwright.config.ts). Spends one of the ten resets an hour.
  */
 export async function clearToNewUser(page: Page): Promise<void> {
+  recordDestructive("POST", "/user-profile/reset-financial-data");
   const status = await page.evaluate(async () => {
     const response = await fetch("/api/user-profile/reset-financial-data", {
       method: "POST",
