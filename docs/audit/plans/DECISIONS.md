@@ -391,3 +391,15 @@ The thirteen decisions in [E41-mutation-testing-and-test-speed-plan.md](./E41-mu
 
 - No outside service is adopted. Decision 6 keeps reports inside CI.
 - Decision 8 changes no tax figure by itself; any test that asserts one waits for the owner's tax vector sign-off (round 1, E4).
+
+# Owner decisions, round 13 (2026-11-19): how a relief-at-source pension contribution is read
+
+Two questions put to the owner on 19 November 2026 through the coordinator, after E41 M2 (PR 822) found that no decision said how the engine should read a relief-at-source contribution.
+
+| # | Question | Owner's answer | What it means |
+|---|---|---|---|
+| 1 | "For a relief-at-source pension, should '5%' mean 5% including tax relief?" | "Yes, including relief" | A relief-at-source percentage is the total going into the pension. On £30,000 at 5%, £1,500 goes in: the member pays £1,200 from take-home and the scheme claims £300 of basic-rate relief. The gross £1,500 extends the basic rate band and lowers adjusted net income |
+| 2 | "In the public calculators, should a relief-at-source £ amount mean what you pay from take-home?" | "Yes, what you pay" | A relief-at-source £ amount is what the member pays; relief is added on top (x 1.25). £1,200 paid is £1,500 in the pension. The calculators' label says so |
+
+- The two readings differ on purpose, and each input says which it is: `UkPensionInput` in `packages/finance-engine/src/uk-take-home.ts`, and the calculator label "What you pay into your pension a year (tax relief is added on top)".
+- No stored value changes: the app stores no relief-at-source method, so no saved answer is read differently. The 17 unsigned what-if vectors that use a £ amount are unchanged.

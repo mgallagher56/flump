@@ -7,6 +7,7 @@ import {
   MarginalRateExplorer,
   MarginalRateExplorerStandalone,
   parseStudentLoanPlans,
+  pensionAmountLabel,
 } from "./MarginalRateExplorer";
 
 const DEFAULTS_2026 = { ...getMarginalRateExplorerDefaults(), taxYear: "2026/27" };
@@ -96,6 +97,19 @@ describe("MarginalRateExplorer inside a ScenarioZone", () => {
       screen.getByTestId("explorer-outcomes").querySelector("[data-kpi-value]"),
     ).not.toBeNull();
     expect(screen.getAllByTestId("marginal-rate-threshold").length).toBeGreaterThan(2);
+  });
+});
+
+describe("pensionAmountLabel", () => {
+  it("says a relief-at-source amount is what you pay, with relief added on top", () => {
+    expect(pensionAmountLabel("relief-at-source")).toBe(
+      "What you pay into your pension a year (tax relief is added on top)",
+    );
+  });
+
+  it("keeps the plain label for the other methods", () => {
+    expect(pensionAmountLabel("salary-sacrifice")).toBe("Pension contribution a year");
+    expect(pensionAmountLabel("net-pay")).toBe("Pension contribution a year");
   });
 });
 

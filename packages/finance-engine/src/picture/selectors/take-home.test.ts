@@ -394,10 +394,10 @@ describe("typed take-home: when it is used", () => {
 // basic rate 20% on the first 37,700 of taxable income, higher rate 40% (GOV.UK Income Tax rates
 // and Personal Allowances, 2026/27); Class 1 employee NI 8% from 12,570 to 50,270 (GOV.UK Rates and
 // thresholds for employers 2026 to 2027); Class 4 NI 6% from 12,570 to 50,270 and 2% above (GOV.UK
-// Self-employed National Insurance rates, 2026/27). Relief at source: the engine reads the
-// percentage as the net payment and grosses it up x 1.25 (FA 2004 s.192). Many schemes quote the
-// percentage including the relief, and no owner decision settles which reading the app uses, so
-// figures that depend on that reading are not asserted here (E41 M2, owner sign-off 19 Nov 2026).
+// Self-employed National Insurance rates, 2026/27). Relief at source: a percentage is the total
+// going into the pension, including basic-rate relief (owner decision, 19 Nov 2026: "Yes,
+// including relief"). The member pays 80% of it from take-home and the gross extends the basic
+// rate band (FA 2004 s.192; ITA 2007 s.414 by analogy).
 describe("pension method answers", () => {
   const selfEmployed80k: ProfileFacts = {
     annualSalary: 80000,
@@ -408,25 +408,19 @@ describe("pension method answers", () => {
     isSalarySacrifice: null,
   };
 
-  it("keeps a self-employed relief-at-source answer: it lowers income tax, not Class 4", () => {
-    // Relief at source extends the basic rate band, so a higher-rate taxpayer pays less income
-    // tax than with no pension, whichever reading of the percentage is right. Class 4 is charged
-    // on profit and does not depend on the pension:
-    // 37,700 x 6% = 2,262 plus (80,000 - 50,270) x 2% = 594.60, total 2,856.60.
-    const ras = value(
+  it("keeps a self-employed relief-at-source answer: income tax 18,632 on 80,000 profit", () => {
+    // Gross 5% x 80,000 = 4,000 in the pension; paid from take-home 4,000 x 0.8 = 3,200.
+    // Taxable 80,000 - 12,570 = 67,430. Basic band 37,700 + 4,000 = 41,700 x 20% = 8,340;
+    // 67,430 - 41,700 = 25,730 x 40% = 10,292. Income tax 8,340 + 10,292 = 18,632.
+    // Class 4 is on profit, not the pension: 37,700 x 6% = 2,262 plus (80,000 - 50,270) x 2% =
+    // 594.60, total 2,856.60.
+    const v = value(
       selectTakeHome({ ...selfEmployed80k, pensionMethod: "relief-at-source" }, opts),
     );
-    const none = value(selectTakeHome({ ...selfEmployed80k, pensionPercent: 0 }, opts));
-    expect(ras.incomeTax).toBeLessThan(none.incomeTax);
-    // It is not read as net pay: net pay takes 4,000 off taxable profit at 40% (income tax 17,832,
-    // the next test), while relief at source moves at most 4,000 x 1.25 = 5,000 of income from
-    // 40% to 20%, saving at most 1,000 against net pay's 1,600. So relief at source leaves more tax.
-    const netPay = value(
-      selectTakeHome({ ...selfEmployed80k, pensionMethod: "salary-sacrifice" }, opts),
-    );
-    expect(ras.incomeTax).toBeGreaterThan(netPay.incomeTax);
+    expect(v.incomeTax).toBe(18632);
     // Floating point: 2,856.60 to the penny.
-    expect(ras.nationalInsurance).toBeCloseTo(2856.6, 2);
+    expect(v.nationalInsurance).toBeCloseTo(2856.6, 2);
+    expect(v.pension).toBe(3200);
   });
 
   it("treats a self-employed salary sacrifice answer as net pay: income tax 17,832", () => {
@@ -441,9 +435,9 @@ describe("pension method answers", () => {
   });
 
   it("keeps an employee's relief-at-source answer over the salary sacrifice answer", () => {
-    // Employee 30,000, 5% relief at source. Tax is on the full pay, whatever the pension:
-    // (30,000 - 12,570) x 20% = 3,486. The pension paid and take-home depend on how the 5% is
-    // read (see the note above the describe), so they are not asserted.
+    // Employee 30,000, 5% relief at source: 1,500 in the pension, 1,500 x 0.8 = 1,200 paid from
+    // take-home. Tax is on the full pay: (30,000 - 12,570) x 20% = 3,486. NI 17,430 x 8% = 1,394.40.
+    // Take-home 30,000 - 3,486 - 1,394.40 - 1,200 = 23,919.60; a month 1,993.30, so 1,993.
     const v = value(
       selectTakeHome(
         {
@@ -459,5 +453,7 @@ describe("pension method answers", () => {
       ),
     );
     expect(v.incomeTax).toBe(3486);
+    expect(v.pension).toBe(1200);
+    expect(v.monthly).toBe(1993);
   });
 });

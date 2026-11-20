@@ -46,8 +46,13 @@ export type UkPensionMethod = "salary-sacrifice" | "net-pay" | "relief-at-source
  * excluded); `amount` wins when both are set.
  * - salary-sacrifice: salary given up. Lowers taxable pay, NI pay and student loan pay.
  * - net-pay: gross contribution taken before tax. Lowers taxable pay only.
- * - relief-at-source: the net contribution paid from take-home. The provider adds basic-rate relief
- *   (x 1.25), and the grossed-up figure extends the tax bands and lowers adjusted net income.
+ * - relief-at-source: the gross figure extends the tax bands and lowers adjusted net income, and the
+ *   net part is paid from take-home. The two inputs are read differently (owner decisions,
+ *   19 November 2026):
+ *   - `pct` is the total going in, including basic-rate relief: 5% of 30,000 is 1,500 in the
+ *     pension, of which 1,200 is paid from take-home and 300 is relief.
+ *   - `amount` is what is paid from take-home; relief is added on top (x 1.25): 1,200 paid is
+ *     1,500 in the pension.
  */
 export interface UkPensionInput {
   method: UkPensionMethod;
@@ -296,7 +301,14 @@ export function computeUkTakeHome(
   // A contribution cannot exceed the pay it comes out of. For relief at source, tax relief is limited to
   // relevant earnings, so the grossed-up figure is capped at gross pay. The GBP3,600 minimum for people
   // with low earnings is not in the sourced registry and is not modelled.
-  const rawContribution = pensionContribution(salary, s.pension);
+  // A relief-at-source percentage is the total going in, including relief (owner decision,
+  // 19 November 2026), so the member pays the net part: gross / 1.25. A £ amount is already the net
+  // amount paid (owner decision, same date). Other methods use the contribution as given.
+  const rasPctIsGross =
+    method === "relief-at-source" && s.pension !== undefined && s.pension.amount === undefined;
+  const rawContribution = rasPctIsGross
+    ? pensionContribution(salary, s.pension) / rasGrossUp
+    : pensionContribution(salary, s.pension);
   const cap =
     method === "relief-at-source" ? grossPay / rasGrossUp : method === null ? 0 : grossPay;
   const contribution = Math.min(rawContribution, cap);

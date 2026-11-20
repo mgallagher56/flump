@@ -228,12 +228,13 @@ describe("marginalRateCurve", () => {
   });
 
   it("joins your pay's assumptions with the top of the range's, each once, yours first", () => {
-    // Your pay: salary 10,000 plus a 50,000 bonus, relief at source at 90% of salary = 9,000 net.
+    // Your pay: salary 10,000 plus a 50,000 bonus, relief at source at 110% of salary. A
+    // percentage is the total including relief, so 11,000 gross and 11,000 / 1.25 = 8,800 net.
     // The cap is gross pay / 1.25 = 48,000, so nothing is capped.
-    // Top of the range (10,000 as salary, no bonus): 9,000 net is over 10,000 / 1.25 = 8,000, so the
+    // Top of the range (10,000 as salary, no bonus): 8,800 net is over 10,000 / 1.25 = 8,000, so the
     // contribution is capped at earnings there only.
     const c = marginalRateCurve(
-      base(10_000, { bonus: 50_000, pension: { method: "relief-at-source", pct: 90 } }),
+      base(10_000, { bonus: 50_000, pension: { method: "relief-at-source", pct: 110 } }),
       { from: 10_000, to: 10_000 },
     );
     expect(c.assumptions.map((a) => a.code)).toEqual([

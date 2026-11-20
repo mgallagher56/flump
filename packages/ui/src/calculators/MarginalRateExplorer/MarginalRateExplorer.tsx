@@ -87,6 +87,16 @@ export type MarginalRateExplorerValues = {
  * Example starting values. The tax year is worked out when this is called (not at module load), so
  * a server render and the browser agree on the day they render.
  */
+/**
+ * The pension amount's label. For relief at source the amount is what the person pays from
+ * take-home and relief is added on top (owner decision, 19 November 2026), so the label says so.
+ */
+export function pensionAmountLabel(method: MarginalRateExplorerPensionMethod): string {
+  return method === "relief-at-source"
+    ? EXPLORER_COPY.pensionAmountReliefAtSource
+    : EXPLORER_COPY.pensionAmount;
+}
+
 export function getMarginalRateExplorerDefaults(now?: Date): MarginalRateExplorerValues {
   return {
     grossPay: 39_000,
@@ -401,7 +411,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
           {pensionMethod !== "none" ? (
             <SliderField
               format="currency"
-              label={EXPLORER_COPY.pensionAmount}
+              label={pensionAmountLabel(pensionMethod)}
               max={40_000}
               min={0}
               step={100}

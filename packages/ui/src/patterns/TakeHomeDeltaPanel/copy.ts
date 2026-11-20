@@ -140,6 +140,8 @@ export const EXPLORER_COPY = {
     "relief-at-source": "Relief at source",
   },
   pensionAmount: "Pension contribution a year",
+  /** Relief at source: the amount is what the person pays; the scheme adds basic-rate relief on top. */
+  pensionAmountReliefAtSource: "What you pay into your pension a year (tax relief is added on top)",
   moreDetails: "Salary and deduction options",
   studentLoans: "Student loan plans",
   childBenefit: "Include Child Benefit",

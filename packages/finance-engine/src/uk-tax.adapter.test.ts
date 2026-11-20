@@ -13,16 +13,19 @@ const Y = "2026/27" as const;
 describe("pension methods on a 60,000 salary paying 5% (3,000)", () => {
   const base = { grossSalary: 60000, pensionContributionPct: 5, taxYear: Y };
 
-  it("relief at source: paid from take-home, the grossed-up 3,750 widens the basic rate band", () => {
+  it("relief at source: 5% is 3,000 in total, 2,400 paid from take-home, and 3,000 widens the band", () => {
     const r = calculateUkTax({ ...base, pensionMethod: "relief-at-source" });
-    // Taxable 47,430: (37,700 + 3,750) x 20% = 8,290; 5,980 x 40% = 2,392. Income Tax 10,682.
-    expect(r.incomeTaxGbp).toBe(10682);
+    // A relief-at-source percentage is the total including relief (owner decision, 19 Nov 2026):
+    // gross 3,000, paid from take-home 3,000 x 0.8 = 2,400.
+    // Taxable 47,430: (37,700 + 3,000) x 20% = 8,140; 6,730 x 40% = 2,692. Income Tax 10,832.
+    expect(r.incomeTaxGbp).toBe(10832);
     // Class 1 on the full 60,000: 37,700 x 8% + 9,730 x 2% = 3,210.60.
     expect(r.nationalInsuranceGbp).toBe(3210.6);
-    expect(r.employeePensionDeductionGbp).toBe(3000);
-    expect(r.netTakeHomePayAnnualGbp).toBe(43107.4);
-    // What reaches the pot counts towards the annual allowance: 3,000 x 1.25.
-    expect(r.allowances.pensionAllowanceUsedGbp).toBe(3750);
+    expect(r.employeePensionDeductionGbp).toBe(2400);
+    // 60,000 - 10,832 - 3,210.60 - 2,400 = 43,557.40.
+    expect(r.netTakeHomePayAnnualGbp).toBe(43557.4);
+    // What reaches the pot counts towards the annual allowance: 3,000.
+    expect(r.allowances.pensionAllowanceUsedGbp).toBe(3000);
   });
 
   it("net pay: taken before Income Tax, Class 1 on the full salary", () => {
@@ -48,11 +51,15 @@ describe("pension methods on a 60,000 salary paying 5% (3,000)", () => {
     expect(calculateUkTax({ ...base }).netTakeHomePayAnnualGbp).toBe(43557.4);
   });
 
-  it("gives the three methods three different take-home figures", () => {
-    const figures = (["relief-at-source", "net-pay", "salary-sacrifice"] as const).map(
-      (pensionMethod) => calculateUkTax({ ...base, pensionMethod }).netTakeHomePayAnnualGbp,
-    );
-    expect(new Set(figures).size).toBe(3);
+  it("gives relief at source and net pay the same take-home here, and salary sacrifice more", () => {
+    // The whole 3,000 gross gets relief at 40% either way: net pay takes it off taxable pay,
+    // relief at source moves 3,000 of income from 40% to 20% and the scheme adds 20%. Both leave
+    // 43,557.40 (worked above). Salary sacrifice also saves 2% NI on 3,000 = 60: 43,617.40.
+    const figure = (pensionMethod: "relief-at-source" | "net-pay" | "salary-sacrifice") =>
+      calculateUkTax({ ...base, pensionMethod }).netTakeHomePayAnnualGbp;
+    expect(figure("relief-at-source")).toBe(43557.4);
+    expect(figure("net-pay")).toBe(43557.4);
+    expect(figure("salary-sacrifice")).toBe(43617.4);
   });
 });
 
