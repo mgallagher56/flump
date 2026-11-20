@@ -86,11 +86,11 @@ export const finalCtaBody = cva({
 });
 
 /**
- * The closing scene: no figures follow it, so it never pushes one down on a phone (B10). 192px
+ * The closing scene: no figures follow it, so it never pushes one down on a phone (B10). 160px
  * on a phone, 320px from `md` (was 112px and 140px).
  */
 export const finalCtaIllustration = cva({
-  base: { width: "full", maxWidth: { base: "48", md: "xs" } },
+  base: { width: "full", maxWidth: { base: "40", md: "xs" } },
 });
 
 /**

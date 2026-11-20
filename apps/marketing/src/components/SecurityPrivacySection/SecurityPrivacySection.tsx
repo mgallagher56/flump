@@ -12,7 +12,7 @@ import {
 } from "./SecurityPrivacySection.styles";
 
 /**
- * The home page's short security strip (E16 PR 12, D13): one sentence of facts on a sunken band and
+ * The home page's short security strip (E16 PR 12, D13): one sentence of facts on a teal band and
  * a link to `/security`, which holds the detail. It promises no feature that does not exist today.
  */
 export const SecurityPrivacySection: FC = () => (
@@ -21,7 +21,7 @@ export const SecurityPrivacySection: FC = () => (
     id="security"
     labelledBy="security-title"
     size="compact"
-    tone="sunken"
+    tone="teal"
   >
     <div className={stripRow()}>
       <IconTile icon={ShieldCheck} tone="neutral" />

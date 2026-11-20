@@ -123,7 +123,7 @@ export const HomePage: FC = () => {
           id="features"
           subtitle="The same five areas as the app. Use one or all five."
           title={FEATURES_INDEX.title}
-          tone="sunken"
+          tone="teal"
         >
           <FeatureTiles headingLevel={3} />
           <p className={bandFooter()}>
@@ -156,7 +156,7 @@ export const HomePage: FC = () => {
           id="more-detail"
           subtitle="Each area starts simple and has more underneath for when you want it."
           title="More detail when you want it"
-          tone="sunken"
+          tone="teal"
         >
           <ul className={depthList()}>
             {HOME_DEPTH.map((item) => {

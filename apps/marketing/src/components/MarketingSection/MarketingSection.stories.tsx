@@ -12,7 +12,7 @@ const meta: Meta<typeof MarketingSection> = {
     subtitle: "A short line under the section title.",
     children: <p>Section content.</p>,
   },
-  argTypes: { tone: { control: "select", options: ["canvas", "sunken"] } },
+  argTypes: { tone: { control: "select", options: ["canvas", "teal"] } },
 };
 
 export default meta;
@@ -28,8 +28,8 @@ export const CanvasLight: Story = {
   globals: { theme: "light" },
   play: assertSection,
 };
-export const SunkenLight: Story = {
-  args: { tone: "sunken" },
+export const TealLight: Story = {
+  args: { tone: "teal" },
   globals: { theme: "light" },
   play: assertSection,
 };
@@ -39,8 +39,8 @@ export const CanvasDark: Story = {
   parameters: { backgrounds: { default: "dark" } },
   play: assertSection,
 };
-export const SunkenDark: Story = {
-  args: { tone: "sunken" },
+export const TealDark: Story = {
+  args: { tone: "teal" },
   globals: { theme: "dark" },
   parameters: { backgrounds: { default: "dark" } },
   play: assertSection,

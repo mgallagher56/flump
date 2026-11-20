@@ -5,13 +5,13 @@ import { MarketingSection } from "./MarketingSection";
 describe("MarketingSection", () => {
   it("labels the section with its h2", () => {
     render(
-      <MarketingSection id="example" subtitle="One line." title="A section" tone="sunken">
+      <MarketingSection id="example" subtitle="One line." title="A section" tone="teal">
         <p>Body</p>
       </MarketingSection>,
     );
     const section = screen.getByRole("region", { name: "A section" });
     expect(section.getAttribute("id")).toBe("example");
-    expect(section.getAttribute("data-tone-band")).toBe("sunken");
+    expect(section.getAttribute("data-tone-band")).toBe("teal");
     expect(screen.getByRole("heading", { level: 2, name: "A section" })).toBeDefined();
     expect(screen.getByText("One line.")).toBeDefined();
   });

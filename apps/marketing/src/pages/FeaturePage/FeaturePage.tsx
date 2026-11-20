@@ -178,7 +178,7 @@ export const FeaturePage: FC<FeaturePageProps> = ({
           id="one-picture"
           subtitle="Use one area or all five. Together they make one picture of your money, on your Home page."
           title="Part of one picture"
-          tone="sunken"
+          tone="teal"
         >
           <AreaStrip current={currentArea} />
         </MarketingSection>

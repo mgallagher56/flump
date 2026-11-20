@@ -433,3 +433,11 @@ Given by the owner in session on 20 November 2026. Owner's words: "I confirm: I 
 - `bun run tax:signoff apply --signer <name>` writes the signer's name to `signedOffBy` exactly as given, with a version 2 hash that also binds the signer, status, ruling and reason; a decider signs as `fable-decider`. Who may run it: the coordinator, applying a recorded decider decision, or the owner. It still refuses to run in CI. A lane agent never signs its own figures.
 - The 37 signatures the owner made on 20 November 2026 (2027/28, `signedOffBy: "owner"`) stay as they are and still validate.
 - What users and the AI read says the figures are checked against the published rates (or, for a provisional year, the announced rates). It never says a person or an accountant checked them. A year in `PROVISIONAL_UK_TAX_YEARS` still never reports verified (ruling B).
+
+# Owner decision (2026-11-20): marketing bands alternate the canvas with a soft brand-teal tint
+
+Given by the owner and relayed by the coordinator on 20 November 2026. On the E42 home page the owner said: "I don't like this orange/peach background color. And the brown background, the green background and the dark background with a hint of brown are not nice at all", then: "I still want colors to differentiate between sections, jsut not these colors". Offered three palettes, the owner chose "A": soft tints of the brand teal alternating with the plain background.
+
+- Supersedes D16 (b) in `docs/design/e16-polish/PLAN.md` for marketing section bands: no sage or apricot bands, and no `surface.subtle` strip.
+- Marketing bands alternate `surface.canvas` with `surface.tint.teal` (the `SectionBand` tones `canvas` and `teal`), in light and dark, on every marketing page. This is a marketing exception to "at most one tinted section per page", as D16 (b) was; the web app keeps that rule.
+- No shared token changed. `surface.tint.teal` keeps its values (light #dcede6, dark #1d3932).
