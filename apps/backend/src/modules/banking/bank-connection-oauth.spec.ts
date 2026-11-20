@@ -21,7 +21,7 @@ function createFakeOAuthStateManager() {
       if (normalized.startsWith('DELETE FROM "bank_oauth_states" WHERE "user_id" = $1')) {
         const [userId, now] = parameters as [string, Date];
         for (const [key, row] of rows.entries()) {
-          if (row.user_id === userId && row.expires_at.getTime() < now.getTime()) {
+          if (row.user_id === userId && row.expires_at.getTime() <= now.getTime()) {
             rows.delete(key);
           }
         }

@@ -664,6 +664,65 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
       expect(await consumeOAuthState(ds.manager, issued.state, "monzo")).toBeNull();
     });
 
+    it("a new issue prunes this user's states from their exact expiry instant", async () => {
+      // A state is refused once now reaches its expiry (verifyOAuthStateRecord in
+      // @flump/banking, "at and after the 10-minute TTL boundary"), so at that instant it is
+      // useless and the prune on the next issue removes it. TTL is 10 minutes: issued at t0, it
+      // expires at t0 + 600,000 ms. Issuing again at exactly that time must leave only the new row.
+      await ds.query("DELETE FROM bank_oauth_states");
+      const t0 = new Date("2026-11-20T12:00:00.000Z");
+      const tenMinutes = 10 * 60 * 1000;
+      await issueOAuthState(ds.manager, {
+        userId: PERSON,
+        institutionId: "monzo",
+        redirectUri: "https://api.test/cb",
+        now: t0,
+      });
+      await issueOAuthState(ds.manager, {
+        userId: PERSON,
+        institutionId: "monzo",
+        redirectUri: "https://api.test/cb",
+        now: new Date(t0.getTime() + tenMinutes),
+      });
+      const rows: { expires_at: Date }[] = await ds.query(
+        "SELECT expires_at FROM bank_oauth_states WHERE user_id = $1",
+        [PERSON],
+      );
+      expect(rows.map((row) => new Date(row.expires_at).toISOString())).toEqual([
+        "2026-11-20T12:20:00.000Z",
+      ]);
+    });
+
+    it("the prune keeps a state one millisecond before its expiry, and another user's expired state", async () => {
+      // PERSON's state issued at t0 expires at t0 + 600,000 ms, so at t0 + 599,999 ms it is still
+      // valid and stays. OTHER_PERSON's state was issued ten minutes before t0, so it expired at t0
+      // and is expired by then; it is not PERSON's, so PERSON's issue must leave it alone.
+      await ds.query("DELETE FROM bank_oauth_states");
+      const t0 = new Date("2026-11-20T12:00:00.000Z");
+      await issueOAuthState(ds.manager, {
+        userId: PERSON,
+        institutionId: "monzo",
+        redirectUri: "https://api.test/cb",
+        now: t0,
+      });
+      await issueOAuthState(ds.manager, {
+        userId: OTHER_PERSON,
+        institutionId: "monzo",
+        redirectUri: "https://api.test/cb",
+        now: new Date(t0.getTime() - 10 * 60 * 1000),
+      });
+      await issueOAuthState(ds.manager, {
+        userId: PERSON,
+        institutionId: "monzo",
+        redirectUri: "https://api.test/cb",
+        now: new Date(t0.getTime() + 10 * 60 * 1000 - 1),
+      });
+      const rows: { user_id: string }[] = await ds.query(
+        "SELECT user_id FROM bank_oauth_states ORDER BY user_id",
+      );
+      expect(rows.map((row) => row.user_id).sort()).toEqual([PERSON, PERSON, OTHER_PERSON].sort());
+    });
+
     it("connectBank's OAuth redirect has a random state and PKCE, and needs a configured redirect URI", async () => {
       config.BACKEND_URL = "https://api.test";
       const finance = financeWith(scriptedProvider(() => []));
