@@ -59,9 +59,8 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
     // D1: the band is "Flump features", never "What Flump covers".
     expect(screen.getByRole("heading", { level: 2, name: "Flump features" })).toBeDefined();
     expect(container.textContent ?? "").not.toMatch(/what flump covers/i);
-    // The final call to action sits inside the FAQ band, which is the page's one sage band.
+    // The final call to action sits inside the FAQ band.
     const faq = container.querySelector("#faq") as HTMLElement;
-    expect(faq.getAttribute("data-tone-band")).toBe("sage");
     expect(within(faq).getByTestId("home-final-cta").id).toBe("get-started");
     expect(
       within(screen.getByTestId("home-final-cta"))
@@ -75,9 +74,16 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
     const faqHeader = within(faq).getByRole("heading", { level: 2 }).parentElement as HTMLElement;
     expect(faqHeader.className).toContain("ta_left");
     expect(faqHeader.className).not.toContain("ta_center");
-    // At most one sage and one apricot band (D16 b).
-    expect(container.querySelectorAll('[data-tone-band="sage"]')).toHaveLength(1);
-    expect(container.querySelectorAll('[data-tone-band="apricot"]')).toHaveLength(1);
+    // Neutral bands only, alternating canvas and sunken after the canvas hero (owner, 2026-11-20:
+    // no peach, brown or green band fills). The hero is a plain section, so it has no tone mark.
+    expect(sections.slice(1).map((s) => s.getAttribute("data-tone-band"))).toEqual([
+      "sunken",
+      "canvas",
+      "sunken",
+      "canvas",
+      "sunken",
+      "canvas",
+    ]);
   });
 
   it("states the tagline in the title, never in the h1", async () => {
@@ -181,7 +187,11 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
     const scenes = [...container.querySelectorAll("svg[data-scene]")];
     expect(scenes.map((svg) => svg.getAttribute("data-scene"))).toEqual(["check-in", "onboarding"]);
     expect(screen.getByTestId("home-hero").querySelector("svg[data-scene]")).toBeNull();
-    for (const svg of scenes) expect(svg.getAttribute("aria-hidden")).toBe("true");
+    for (const svg of scenes) {
+      expect(svg.getAttribute("aria-hidden")).toBe("true");
+      // The owner found the 140px scenes far too small: both are the 320px spot size now.
+      expect(svg.getAttribute("class")).toContain("max-w_xs");
+    }
     expect(
       within(screen.getByTestId("home-final-cta")).getByTestId("home-final-cta-illustration"),
     ).toBeDefined();

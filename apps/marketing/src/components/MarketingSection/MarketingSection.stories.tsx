@@ -12,7 +12,7 @@ const meta: Meta<typeof MarketingSection> = {
     subtitle: "A short line under the section title.",
     children: <p>Section content.</p>,
   },
-  argTypes: { tone: { control: "select", options: ["canvas", "subtle", "sage", "apricot"] } },
+  argTypes: { tone: { control: "select", options: ["canvas", "sunken"] } },
 };
 
 export default meta;
@@ -23,24 +23,24 @@ const assertSection: Story["play"] = async ({ canvasElement }) => {
   await expect(canvas.getByRole("heading", { level: 2, name: "What you can see" })).toBeVisible();
 };
 
-export const SageLight: Story = {
-  args: { tone: "sage" },
+export const CanvasLight: Story = {
+  args: { tone: "canvas" },
   globals: { theme: "light" },
   play: assertSection,
 };
-export const ApricotLight: Story = {
-  args: { tone: "apricot" },
+export const SunkenLight: Story = {
+  args: { tone: "sunken" },
   globals: { theme: "light" },
   play: assertSection,
 };
-export const SageDark: Story = {
-  args: { tone: "sage" },
+export const CanvasDark: Story = {
+  args: { tone: "canvas" },
   globals: { theme: "dark" },
   parameters: { backgrounds: { default: "dark" } },
   play: assertSection,
 };
-export const ApricotDark: Story = {
-  args: { tone: "apricot" },
+export const SunkenDark: Story = {
+  args: { tone: "sunken" },
   globals: { theme: "dark" },
   parameters: { backgrounds: { default: "dark" } },
   play: assertSection,

@@ -57,3 +57,22 @@ export const Large: Story = {
   args: { scene: "not-found", size: "lg" },
   globals: { theme: "light" },
 };
+
+const assertSpot: Story["play"] = async ({ canvasElement }) => {
+  const svg = canvasElement.querySelector('svg[aria-hidden="true"]') as SVGElement;
+  // xl caps the scene at 20rem (320px); the story canvas is wider, so it renders at the cap.
+  await expect(svg.getBoundingClientRect().width).toBeLessThanOrEqual(320);
+  await expect(svg.getBoundingClientRect().width).toBeGreaterThan(260);
+};
+
+export const ExtraLarge: Story = {
+  args: { scene: "check-in", size: "xl", settle: false },
+  globals: { theme: "light" },
+  play: assertSpot,
+};
+
+export const ExtraLargeDark: Story = {
+  args: { scene: "onboarding", size: "xl", settle: false },
+  globals: { theme: "dark" },
+  play: assertSpot,
+};

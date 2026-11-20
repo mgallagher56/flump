@@ -23,7 +23,7 @@ const meta: Meta<typeof SectionBand> = {
     subtitle: "A short line under the section title.",
     children: <div className={placeholder}>Section content</div>,
   },
-  argTypes: { tone: { control: "select", options: ["canvas", "subtle", "sage", "apricot"] } },
+  argTypes: { tone: { control: "select", options: ["canvas", "sunken"] } },
 };
 
 export default meta;
@@ -39,14 +39,12 @@ const assertBand: Story["play"] = async ({ canvasElement }) => {
 const dark = { globals: { theme: "dark" }, parameters: { backgrounds: { default: "dark" } } };
 
 export const Canvas: Story = { args: { tone: "canvas" }, play: assertBand };
-export const Subtle: Story = { args: { tone: "subtle" }, play: assertBand };
-export const Sage: Story = { args: { tone: "sage" }, play: assertBand };
-export const Apricot: Story = { args: { tone: "apricot" }, play: assertBand };
-export const SageDark: Story = { ...dark, args: { tone: "sage" }, play: assertBand };
-export const ApricotDark: Story = { ...dark, args: { tone: "apricot" }, play: assertBand };
+export const Sunken: Story = { args: { tone: "sunken" }, play: assertBand };
+export const CanvasDark: Story = { ...dark, args: { tone: "canvas" }, play: assertBand };
+export const SunkenDark: Story = { ...dark, args: { tone: "sunken" }, play: assertBand };
 
 export const CentredNarrow: Story = {
-  args: { tone: "subtle", align: "center", width: "narrow", size: "compact" },
+  args: { tone: "sunken", align: "center", width: "narrow", size: "compact" },
   play: assertBand,
 };
 

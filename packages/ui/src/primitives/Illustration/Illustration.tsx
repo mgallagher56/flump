@@ -8,7 +8,11 @@ export type { IllustrationScene } from "./Illustration.scenes";
 export interface IllustrationProps {
   /** Which scene to draw. One scene per view. */
   scene: IllustrationScene;
-  size?: "sm" | "md" | "lg";
+  /**
+   * The largest width the scene may take (it fills its container up to this): sm 140px, md 200px,
+   * lg 260px, xl 320px. `xl` is for a marketing spot scene on a wide screen.
+   */
+  size?: "sm" | "md" | "lg" | "xl";
   id?: string;
   /**
    * E17 Demo 7: Settle animation on first view.

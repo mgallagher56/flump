@@ -5,31 +5,28 @@ import { SectionBand, type SectionBandTone } from "./SectionBand";
 describe("SectionBand", () => {
   it("labels a marketing band with its h2 and marks its tone", () => {
     render(
-      <SectionBand id="example" subtitle="One line." title="A section" tone="sage">
+      <SectionBand id="example" subtitle="One line." title="A section" tone="sunken">
         <p>Body</p>
       </SectionBand>,
     );
     const section = screen.getByRole("region", { name: "A section" });
     expect(section.getAttribute("id")).toBe("example");
-    expect(section.getAttribute("data-tone-band")).toBe("sage");
+    expect(section.getAttribute("data-tone-band")).toBe("sunken");
     expect(screen.getByRole("heading", { level: 2, name: "A section" })).toBeDefined();
     expect(screen.getByText("One line.")).toBeDefined();
     expect(screen.getByText("Body")).toBeDefined();
   });
 
-  it.each<SectionBandTone>(["canvas", "subtle", "sage", "apricot"])(
-    "renders the %s tone",
-    (tone) => {
-      render(
-        <SectionBand id={`band-${tone}`} title={`Band ${tone}`} tone={tone}>
-          <p>Body</p>
-        </SectionBand>,
-      );
-      expect(
-        screen.getByRole("region", { name: `Band ${tone}` }).getAttribute("data-tone-band"),
-      ).toBe(tone);
-    },
-  );
+  it.each<SectionBandTone>(["canvas", "sunken"])("renders the %s tone", (tone) => {
+    render(
+      <SectionBand id={`band-${tone}`} title={`Band ${tone}`} tone={tone}>
+        <p>Body</p>
+      </SectionBand>,
+    );
+    expect(
+      screen.getByRole("region", { name: `Band ${tone}` }).getAttribute("data-tone-band"),
+    ).toBe(tone);
+  });
 
   it("uses a heading inside the children as the label when there is no title", () => {
     render(

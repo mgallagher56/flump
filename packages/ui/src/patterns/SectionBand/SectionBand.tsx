@@ -12,7 +12,7 @@ import {
   sectionBandTitle,
 } from "./SectionBand.styles";
 
-export type SectionBandTone = "canvas" | "subtle" | "sage" | "apricot";
+export type SectionBandTone = "canvas" | "sunken";
 
 export interface SectionBandProps {
   /** Anchor id. The title gets `${id}-title` and labels the section. */
@@ -23,7 +23,7 @@ export interface SectionBandProps {
    * one-line description, no band padding and no tone.
    */
   variant?: "marketing" | "app";
-  /** Marketing only. At most one sage and one apricot band per page. */
+  /** Marketing only. Neutral bands: alternate `canvas` with `sunken`. */
   tone?: SectionBandTone;
   /** Marketing only. `compact` trims the vertical padding, for a short strip. */
   size?: "default" | "compact";

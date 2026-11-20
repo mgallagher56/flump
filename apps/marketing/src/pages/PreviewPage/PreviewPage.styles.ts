@@ -122,16 +122,22 @@ export const sectionIllustration = cva({
   base: {
     display: { base: "none", lg: "block" },
     flexShrink: 0,
-    width: "36",
+    // 256px beside the intro (was 144px), matching the home page's larger scenes.
+    width: "64",
   },
 });
 
-/** The page's one phone-width illustration: above the closing call to action, with no figures. */
+/**
+ * The page's one phone-width illustration: above the closing call to action, with no figures.
+ * 192px on a phone, 320px from `md` (was 140px), as on the home page.
+ */
 export const ctaIllustration = cva({
   base: {
     display: "flex",
     justifyContent: "center",
     width: "full",
+    maxWidth: { base: "48", md: "xs" },
+    mx: "auto",
   },
 });
 
