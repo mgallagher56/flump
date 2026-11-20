@@ -5,6 +5,9 @@ import { WEB_URL } from "./support/env";
 import { webServers } from "./support/servers";
 
 const isCI = Boolean(process.env.CI);
+// The smoke suite (this config only) retries a seeding call once after a 429 within one minute's
+// Retry-After (support/rate-limit-retry.ts). Set here so the runner and its workers both see it.
+process.env.E2E_RATE_LIMIT_RETRY = "1";
 const NEW_USER_SPEC = /new-user-journey\.spec\.ts$/;
 // Cross-page link tests (docs/system/generated/links.md). They change the one user's saved data
 // and put it back, so they run one at a time, after the read-only persona specs. Files run in name

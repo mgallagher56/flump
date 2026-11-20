@@ -1,5 +1,5 @@
-import { appendFileSync } from "node:fs";
-import { MAX_RETRIES_PER_RUN, readRetries } from "./rate-limit-retry";
+import { appendFileSync, rmSync } from "node:fs";
+import { MAX_RETRIES_PER_RUN, RETRY_LOG, readRetries } from "./rate-limit-retry";
 
 /**
  * After the smoke run: prints how many seeding calls were refused with 429 and retried after the
@@ -8,6 +8,8 @@ import { MAX_RETRIES_PER_RUN, readRetries } from "./rate-limit-retry";
  */
 export default function rateLimitTeardown(): void {
   const retries = readRetries();
+  // Removed once read, so a later run (or one with --output elsewhere) never counts these again.
+  rmSync(RETRY_LOG, { force: true });
   const lines = [
     `### E2E: seeding calls retried after a 429: ${retries.length} (allowed: ${MAX_RETRIES_PER_RUN})`,
     ...retries.map(

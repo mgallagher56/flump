@@ -1,5 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
-import { allowRateLimitRetry, RATE_LIMIT_BINDING, RETRY_WINDOW_MS } from "./rate-limit-retry";
+import { allowRateLimitRetry } from "./rate-limit-retry";
 
 /**
  * A call through the same-origin `/api` proxy from the signed-in page, as the web app makes it
@@ -11,35 +11,33 @@ export const pageApi = async <T = unknown>(
   method = "GET",
   body?: unknown,
 ): Promise<T> => {
-  await allowRateLimitRetry(page);
+  const binding = await allowRateLimitRetry(page);
   return page.evaluate(
-    async ({ path, method, body, windowMs, binding }) => {
+    async ({ path, method, body, binding }) => {
       const init: RequestInit = {
         method,
         headers: { "Content-Type": "application/json", "x-flump-request": "1" },
         body: body === undefined ? undefined : JSON.stringify(body),
       };
       let response = await fetch(`/api${path}`, init);
-      // One retry after a 429 whose Retry-After is within one window (rate-limit-retry.ts).
-      const retryAfter = response.status === 429 ? response.headers.get("Retry-After") : null;
-      const waitMs =
-        retryAfter && Number.isInteger(Number(retryAfter)) && Number(retryAfter) >= 0
-          ? Number(retryAfter) * 1000 + 500
-          : 0;
-      if (waitMs > 0 && waitMs <= windowMs) {
-        const report = (window as unknown as Record<string, unknown>)[binding] as (
+      // On a 429, the Node side decides whether to wait and retry once (rate-limit-retry.ts,
+      // onRateLimited). No binding: this suite does not retry.
+      if (response.status === 429 && binding) {
+        const decide = (window as unknown as Record<string, unknown>)[binding] as (
           method: string,
           path: string,
-          waitMs: number,
-        ) => Promise<void>;
-        await report(method, path, waitMs);
-        await new Promise((resolve) => setTimeout(resolve, waitMs));
-        response = await fetch(`/api${path}`, init);
+          retryAfter: string | null,
+        ) => Promise<number | null>;
+        const waitMs = await decide(method, path, response.headers.get("Retry-After"));
+        if (waitMs !== null) {
+          await new Promise((resolve) => setTimeout(resolve, waitMs));
+          response = await fetch(`/api${path}`, init);
+        }
       }
       if (!response.ok) throw new Error(`${method} ${path} ${response.status}`);
       return (await response.json()) as unknown;
     },
-    { path, method, body, windowMs: RETRY_WINDOW_MS, binding: RATE_LIMIT_BINDING },
+    { path, method, body, binding },
   ) as Promise<T>;
 };
 
