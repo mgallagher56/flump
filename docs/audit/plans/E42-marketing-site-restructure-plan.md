@@ -44,6 +44,26 @@ Who can use it:
 | Settings | `/app/profile` | Tabs: Profile (age and pay, check-in day, net worth choices, which sections are on), Security (how you sign in, AI connection, imports), Data | Everyone | Nothing |
 | Data export and deletion | Settings, Data tab; `/account/export` | "Download your data" (JSON checked; a CSV export merged in #754 but was not found in the settings UI in this check), "Delete your financial data", account deletion | Everyone. Deletion answers 503 until the owner sets `DELETION_TOMBSTONE_KEY` (EPICS table row 1); not verifiable here | Nothing. `/security` does not say you can download or delete your data |
 
+### 2.1 Facts that two open pull requests may change
+
+The inventory was read from `origin/main` at `da6284f0c`. Two pull requests were open on 2026-11-20 and touch what this plan relies on. Re-read these facts from `main` before building.
+
+**PR 838 (dead code removal, `knip` gate).** No visible copy changes. What it changes for the build:
+
+- Default exports are removed from marketing pages and components (`HomePage`, `PreviewPage`, `SecurityPage`, `ToolPage`, `HomeFAQ`, `MarketingSection`, `SecurityPrivacySection`, `BaselineSnapshotPreview`) and `pages/PreviewPage/index.ts` loses its default re-export. New pages and components use named exports only.
+- `TOOL_SHORT_LABELS` is removed from `apps/marketing/src/utils/toolSlugs.ts`. Slice S1 reads calculator names from `TOOL_CATALOGUE` in `@repo/ui/tools` directly.
+- `BETA_INVITE_PATH` and `PRIVACY_EMAIL` stop being exported from `utils/site.ts` (`PRIVACY_EMAIL` is deleted). Pages keep using `signupCta()` for the call to action, as this plan already assumes.
+- `apps/marketing/src/app-shell/index.ts` loses its entry re-exports and `react-icons` leaves the marketing package. Neither is used by this plan.
+- Unused exports now fail CI. Every export a slice adds must be imported somewhere in the same pull request, so S1's data file lands with the page that reads it (already the case in PR 1).
+
+**PR 845 (invite-only beta with invite links).** It does not touch `apps/marketing`. What it may change in this plan:
+
+- "Everyone" in the inventory: access becomes membership through a redeemed invite link (`beta_members`) or the admin list, next to the existing allowlists. The meaning for marketing is the same: invited accounts only.
+- The Settings row: the Security tab and the settings page change, and an admin-only invites page (`/app/invites`) is added. That page is not a feature to market.
+- The web app's signed-out pages stop offering "Sign up" while the beta is invite-only. The marketing call to action stays "Request an invite" and still points at `/contact#beta`; this plan adds no link to the web app's sign-up path (the claims guard forbids one outside `utils/site.ts`).
+- Draft copy that describes what happens after a request (the `/mcp` line "say so when you request an invite", the Contact page) should match the flow that PR ships: a person asks by email and receives an invite link. Check the final wording of PR 845 before S6.
+- The AI connection: PR 845 ties an access token to its owner still being a beta member. That does not change who the AI connection is offered to (named users), so decision D5 stands.
+
 ## 3. Gap list
 
 **Areas with no page or mention**
