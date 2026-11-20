@@ -71,6 +71,26 @@ describe("root secret handling", () => {
     );
   });
 
+  it("does not treat a whitespace-only or absent RAILWAY variable as Railway", () => {
+    // A RAILWAY_* variable counts only when it has a value; blank after trimming is no value.
+    const devRoot = rateLimitStorageKey("x|1", {});
+    expect(rateLimitStorageKey("x|1", { RAILWAY_ENVIRONMENT: "  \t" })).toBe(devRoot);
+    expect(rateLimitStorageKey("x|1", { RAILWAY_SERVICE_ID: undefined })).toBe(devRoot);
+  });
+
+  it("keeps stored bucket keys and log references the same across releases", () => {
+    // The labels are fixed and versioned, written out here rather than imported: changing one
+    // would silently reset every stored bucket and break log correlation.
+    const bucketDerived = createHmac("sha256", ROOT).update("flump:rate-limit-bucket:v1").digest();
+    expect(rateLimitStorageKey("x|1", ENV)).toBe(
+      `rl1:${createHmac("sha256", bucketDerived).update("x|1").digest("hex").slice(0, 32)}`,
+    );
+    const logDerived = createHmac("sha256", ROOT).update("flump:log-user-ref:v1").digest();
+    expect(logUserRef(USER, ENV)).toBe(
+      createHmac("sha256", logDerived).update(USER).digest("hex").slice(0, 16),
+    );
+  });
+
   it("uses a configured key in production and on Railway", () => {
     const env = { ...ENV, NODE_ENV: "production", RAILWAY_ENVIRONMENT: "p" };
     expect(rateLimitStorageKey("x|1", env)).toBe(rateLimitStorageKey("x|1", ENV));

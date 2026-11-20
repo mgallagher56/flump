@@ -57,6 +57,35 @@ describe("signed client IP (M9)", () => {
     expect(verifiedClientIp(headers("203.0.113.7", sig), null, NOW)).toBeNull();
   });
 
+  it("refuses a signature with anything before or after the v1=<seconds>.<hex> form", () => {
+    const sig = signClientIp(KEY, "203.0.113.7", NOW);
+    expect(verifiedClientIp(headers("203.0.113.7", `x${sig}`), KEY, NOW)).toBeNull();
+    expect(verifiedClientIp(headers("203.0.113.7", `${sig}0`), KEY, NOW)).toBeNull();
+    expect(verifiedClientIp(headers("203.0.113.7", `${sig}x`), KEY, NOW)).toBeNull();
+  });
+
+  it("refuses a signature without an address, without throwing", () => {
+    const sig = signClientIp(KEY, "203.0.113.7", NOW);
+    expect(verifiedClientIp({ [CLIENT_IP_SIG_HEADER]: sig }, KEY, NOW)).toBeNull();
+  });
+
+  it("accepts an address of up to 64 characters and refuses a longer one", () => {
+    // Node accepts an IPv6 address with a zone id, so a long zone id makes a long valid address.
+    const at64 = `fe80::1%${"a".repeat(56)}`; // 8 + 56 = 64 characters
+    const at65 = `fe80::1%${"a".repeat(57)}`; // 65 characters
+    expect(verifiedClientIp(headers(at64, signClientIp(KEY, at64, NOW)), KEY, NOW)).toBe(at64);
+    expect(verifiedClientIp(headers(at65, signClientIp(KEY, at65, NOW)), KEY, NOW)).toBeNull();
+  });
+
+  it("accepts a key of exactly 32 characters and ignores a 31 character key with a warning", () => {
+    expect(resolveClientIpHmacKey({ [CLIENT_IP_KEY_ENV]: "k".repeat(32) })).toEqual({
+      key: "k".repeat(32),
+    });
+    const short = resolveClientIpHmacKey({ [CLIENT_IP_KEY_ENV]: "k".repeat(31) });
+    expect(short.key).toBeNull();
+    expect(short.warning).toContain(CLIENT_IP_KEY_ENV);
+  });
+
   it("ignores an unset or short key, naming only the variable", () => {
     expect(resolveClientIpHmacKey({}).key).toBeNull();
     expect(resolveClientIpHmacKey({}).warning).toContain(CLIENT_IP_KEY_ENV);

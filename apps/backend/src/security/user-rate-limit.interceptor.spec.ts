@@ -2,7 +2,7 @@ import { HttpException, Logger, ServiceUnavailableException } from "@nestjs/comm
 import { Reflector } from "@nestjs/core";
 import { lastValueFrom, of } from "rxjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RATE_LIMIT_CLASS, type RateLimitClass } from "./rate-limit.decorator";
+import { RATE_LIMIT_CLASS, RATE_LIMIT_SKIP, type RateLimitClass } from "./rate-limit.decorator";
 import {
   MemorySharedRateLimitStore,
   RateLimitStore,
@@ -106,6 +106,19 @@ describe("UserRateLimitInterceptor shared buckets (M10)", () => {
     },
   );
 
+  it.each(["bank", "bulkWrite", "dataExport"] as const)(
+    "counts %s in the shared store, not in process memory",
+    async (cls) => {
+      const shared = new MemorySharedRateLimitStore();
+      const hit = vi.spyOn(shared, "hit");
+      const memory = new RateLimitStore();
+      const { ctx, reflector } = context(cls);
+      await run(new UserRateLimitInterceptor(reflector, memory, shared), ctx);
+      expect(hit).toHaveBeenCalledTimes(1);
+      expect(memory.size()).toBe(0);
+    },
+  );
+
   it("falls back to memory for every class when the table is missing (unmigrated dev schema)", async () => {
     const { ctx, reflector } = context("credential");
     const memory = new RateLimitStore();
@@ -173,5 +186,94 @@ describe("UserRateLimitInterceptor inviteRedeem (per user and per address)", () 
       ctx,
     ).catch((e) => e);
     expect(err).toBeInstanceOf(ServiceUnavailableException);
+  });
+});
+
+describe("UserRateLimitInterceptor: which requests are counted", () => {
+  type Req = { method: string; path?: string; url?: string; user?: { id?: unknown } };
+
+  function setUp(req: Req, opts: { type?: string; skip?: boolean } = {}) {
+    const res = { setHeader: vi.fn() };
+    const ctx = {
+      getType: () => opts.type ?? "http",
+      getHandler: () => handler,
+      getClass: () => class {},
+      switchToHttp: () => ({
+        getRequest: () => ({ route: { path: "/x" }, ...req }),
+        getResponse: () => res,
+      }),
+    };
+    const reflector = new Reflector();
+    vi.spyOn(reflector, "getAllAndOverride").mockImplementation((key) =>
+      key === RATE_LIMIT_SKIP ? opts.skip : undefined,
+    );
+    const memory = new RateLimitStore();
+    const shared = new MemorySharedRateLimitStore();
+    const interceptor = new UserRateLimitInterceptor(reflector, memory, shared);
+    return { ctx: ctx as never, interceptor, memory };
+  }
+
+  beforeEach(() => {
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  const user = { id: "user-1" };
+
+  it("leaves a context that is not HTTP alone", async () => {
+    const { ctx, interceptor, memory } = setUp(
+      { method: "POST", path: "/x", user },
+      { type: "rpc" },
+    );
+    await expect(run(interceptor, ctx)).resolves.toBe("ok");
+    expect(memory.size()).toBe(0);
+  });
+
+  it("leaves a handler marked to skip rate limiting alone", async () => {
+    const { ctx, interceptor, memory } = setUp(
+      { method: "POST", path: "/x", user },
+      { skip: true },
+    );
+    await expect(run(interceptor, ctx)).resolves.toBe("ok");
+    expect(memory.size()).toBe(0);
+  });
+
+  it("leaves /mcp alone, reading the URL when there is no path", async () => {
+    const { ctx, interceptor, memory } = setUp({ method: "POST", url: "/mcp", user });
+    await expect(run(interceptor, ctx)).resolves.toBe("ok");
+    expect(memory.size()).toBe(0);
+  });
+
+  it("leaves requests with no user, or an empty user id, to the IP guard", async () => {
+    for (const req of [
+      { method: "POST", path: "/x" },
+      { method: "POST", path: "/x", user: { id: "" } },
+    ]) {
+      const { ctx, interceptor, memory } = setUp(req);
+      await expect(run(interceptor, ctx)).resolves.toBe("ok");
+      expect(memory.size()).toBe(0);
+    }
+  });
+
+  it.each(["GET", "HEAD", "OPTIONS"])(
+    "counts %s against the read limit (600 a minute), not the write limit (120)",
+    async (method) => {
+      const { ctx, interceptor } = setUp({ method, path: "/x", user });
+      // 121 requests: over the write limit of 120, well under the read limit of 600.
+      for (let i = 0; i < 121; i++) await expect(run(interceptor, ctx)).resolves.toBe("ok");
+    },
+  );
+
+  it("counts POST against the write limit of 120 a minute", async () => {
+    const { ctx, interceptor } = setUp({ method: "POST", path: "/x", user });
+    for (let i = 0; i < 120; i++) await run(interceptor, ctx);
+    // An in-memory class refuses as the interceptor is called, before any observable exists.
+    let err: unknown;
+    try {
+      run(interceptor, ctx);
+    } catch (e) {
+      err = e;
+    }
+    expect((err as HttpException).getStatus()).toBe(429);
   });
 });
