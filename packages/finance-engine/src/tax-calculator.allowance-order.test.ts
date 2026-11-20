@@ -209,3 +209,79 @@ describe("tax on rent when the allowance moves", () => {
     expect(r.allowanceOnDividends).toBe(570);
   });
 });
+
+/**
+ * 2027/28 (Finance Act 2026 s.5 to s.7, announced 24/44/49): property and savings income have
+ * their own rates, 24% basic, 44% higher, 49% additional, on the same limits; dividends 10.75% /
+ * 35.75%, allowance 500. Property income sits immediately above other non-savings income (ITA
+ * 2007 s.16A), and the allowance goes against other income (employment, trading, pension) first
+ * (s.25(3A)); only what is left is set where it gives the lowest bill (s.25(2)).
+ */
+describe("2027/28: other income first, then the lowest bill", () => {
+  const y = "2027/28";
+
+  it("case 1: property 10,000, interest 6,000, dividends 6,000, no other income", () => {
+    // No other income, so all 12,570 may be shared. Taxable 9,430: basic rate, PSA 1,000.
+    // Today: 10,000 to property, 2,570 to interest; the interest left, 3,430, is in the 5,000
+    //   starting rate; dividends 6,000 - 500 = 5,500 x 10.75% = 591.25.
+    // Lowest: 10,000 to property, 2,570 to dividends. Interest 6,000 = 5,000 starting rate +
+    //   1,000 PSA; dividends 3,430 - 500 = 2,930 x 10.75% = 314.975. No property is taxable
+    //   either way, so the 24% rate does not come in. Without the rent there is no tax, so the
+    //   rent line is all of it.
+    const r = calculateUKTax(
+      y,
+      [...rentProfit(y, 10000), interest(y, 6000), dividends(y, 6000)],
+      0,
+      100,
+    );
+    expect(r.allowanceOnNonSavings).toBe(10000);
+    expect(r.allowanceOnSavings).toBe(0);
+    expect(r.allowanceOnDividends).toBe(2570);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(314.975, 6);
+    expect(r.rentalPropertyTaxDueBeforeCredit).toBeCloseTo(314.975, 6);
+  });
+
+  it("case 3b: salary 50,000, dividends 10,000: the salary takes the whole allowance", () => {
+    // s.25(3A): the salary is other income and takes all 12,570 before the dividends. Nothing
+    // moves: salary 37,430 x 20% = 7,486; the dividend allowance sits on 37,430 to 37,930 and
+    // 9,500 x 35.75% = 3,396.25. Total 10,882.25 (2026/27 would move 270: case 3a).
+    const r = calculateUKTax(y, [dividends(y, 10000)], 50000, 100);
+    expect(r.allowanceOnNonSavings).toBe(12570);
+    expect(r.allowanceOnDividends).toBe(0);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(10882.25, 6);
+  });
+
+  it("case 5: property 50,000, interest 3,000: a tie from 270 to 2,500 keeps 270", () => {
+    // No other income. Taxable 40,430: PSA 500.
+    // Today: property 37,430 x 24% = 8,983.20; the PSA sits on 37,430 to 37,930, so the other
+    //   2,500 of interest is above 37,700 at 44% = 1,100. Total 10,083.20.
+    // x moved from property to interest: x from 0 to 270, property +24% and interest -44%:
+    //   -20% x 270 = -54, total 10,029.20 (property 37,700 x 24% = 9,048; interest 2,730 - 500
+    //   = 2,230 x 44% = 981.20). From 270 to 2,500 property pays 44%: a tie. The move closest
+    //   to today's is 270.
+    const r = calculateUKTax(y, [...rentProfit(y, 50000), interest(y, 3000)], 0, 100);
+    expect(r.allowanceOnNonSavings).toBe(12300);
+    expect(r.allowanceOnSavings).toBe(270);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(10029.2, 6);
+  });
+
+  it("salary below the allowance: only the allowance left after it is shared", () => {
+    // Salary 8,000, property 2,000, interest 6,000, dividends 6,000. Taxable 9,430: PSA 1,000.
+    // s.25(3A): the salary takes 8,000 first; 4,570 is left for the rest.
+    // Today: 2,000 to property, 2,570 to interest; the interest left, 3,430, is in the starting
+    //   rate; dividends 5,500 x 10.75% = 591.25.
+    // Lowest: 2,000 to property, 2,570 to dividends. Interest 6,000 = 5,000 starting rate + 1,000
+    //   PSA; dividends 2,930 x 10.75% = 314.975. Taking allowance off the property would cost
+    //   24% and shrink the starting rate, so it stays.
+    const r = calculateUKTax(
+      y,
+      [...rentProfit(y, 2000), interest(y, 6000), dividends(y, 6000)],
+      8000,
+      100,
+    );
+    expect(r.allowanceOnNonSavings).toBe(10000);
+    expect(r.allowanceOnSavings).toBe(0);
+    expect(r.allowanceOnDividends).toBe(2570);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(314.975, 6);
+  });
+});

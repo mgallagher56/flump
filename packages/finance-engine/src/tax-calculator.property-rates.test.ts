@@ -152,8 +152,13 @@ describe("2026/27 is unchanged: property and savings at the main rates, credit a
       40000,
       100,
     );
-    // 5,486 + 10,000 x 20% + 1,500 x 40% = 5,486 + 2,000 + 600 = 8,086.
-    expect(r.totalIncomeTaxDue).toBeCloseTo(8086, 2);
+    // Taxable 39,430: PSA 500. With the allowance all on non-savings income (the old order):
+    // 5,486 + 10,000 x 20% + 1,500 x 40% = 5,486 + 2,000 + 600 = 8,086. Before 2027/28 the
+    // allowance goes where the bill is lowest (ITA 2007 s.25(2); s.25(3A) starts in 2027/28):
+    // moving 270 onto the interest takes non-savings taxable to 37,700 x 20% = 7,540 (+54) and
+    // puts the PSA on 37,700 to 38,200, leaving 1,730 - 500 = 1,230 x 40% = 492 (-108). Total
+    // 8,032. Moving more is a tie (40% against 40%), so 270 is kept.
+    expect(r.totalIncomeTaxDue).toBeCloseTo(8032, 2);
   });
 });
 

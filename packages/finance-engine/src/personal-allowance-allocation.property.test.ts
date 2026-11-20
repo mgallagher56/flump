@@ -84,12 +84,23 @@ function exactTax(i: PersonalAllowanceAllocationInput, a: PersonalAllowanceAlloc
   const d = Math.round(i.dividends - a.onDividends);
   const startingRate = Math.min(Math.max(0, r.savings.startingRateBand - n), s);
   const psa = Math.min(i.personalSavingsAllowance, s - startingRate);
-  const uk = ukBands(r, ext, [r.ewni.basicRate, r.ewni.higherRate, r.ewni.additionalRate]);
+  // Savings at the year's savings rates: the main rates to 2026/27, 24/44/49 from 2027/28.
+  const sr = r.savingsRates;
+  const uk = ukBands(r, ext, [sr.basicRate, sr.higherRate, sr.additionalRate]);
   const div = r.dividends;
   const nil = Math.min(div.allowance, d);
   const dividendBands = ukBands(r, ext, [div.basicRate, div.higherRate, div.additionalRate]);
+  // From 2027/28 (England, Wales and NI) other income comes first at the main rates, less the
+  // allowance (s.25(3A)), and property sits above it at the property rates (s.16A, s.11CA).
+  const pr = i.region === "SCOTLAND" ? null : r.propertyRates;
+  const used = Math.min(i.allowance, i.nonSavings + i.savings + i.dividends);
+  const otherTaxable = Math.max(0, (i.otherIncomeFirst ?? 0) - used);
+  const nonSavingsTax = pr
+    ? slice(nonSavingsBands(r, i.region, ext), 0, otherTaxable) +
+      slice(ukBands(r, ext, [pr.basicRate, pr.higherRate, pr.additionalRate]), otherTaxable, n)
+    : slice(nonSavingsBands(r, i.region, ext), 0, n);
   return (
-    slice(nonSavingsBands(r, i.region, ext), 0, n) +
+    nonSavingsTax +
     slice(uk, n + startingRate + psa, n + s) +
     slice(dividendBands, n + s + nil, n + s + d)
   );
@@ -164,9 +175,15 @@ function gridMinimum(i: PersonalAllowanceAllocationInput): number {
 }
 
 function randomCase(rnd: () => number): PersonalAllowanceAllocationInput {
-  const year = SUPPORTED_UK_TAX_YEARS[Math.floor(rnd() * SUPPORTED_UK_TAX_YEARS.length)]!;
+  // A third of the cases in 2027/28, the year with property and savings rates of its own.
+  const year =
+    rnd() < 0.33
+      ? "2027/28"
+      : SUPPORTED_UK_TAX_YEARS[Math.floor(rnd() * SUPPORTED_UK_TAX_YEARS.length)]!;
   const rules = getUkTaxYearRules(year);
-  const region: UkTaxRegion = rnd() < 0.35 ? "SCOTLAND" : "ENGLAND_NI_WALES";
+  const propertyYear = rules.propertyRates !== null;
+  // A Scottish 2027/28 estimate is refused upstream (no Scottish table), so none is drawn.
+  const region: UkTaxRegion = !propertyYear && rnd() < 0.35 ? "SCOTLAND" : "ENGLAND_NI_WALES";
   const pick = (max: number) => Math.round(rnd() * max);
   const mode = rnd();
   // Four mixes: the starting rate zone, around the basic rate limit, anywhere (taper included),
@@ -190,7 +207,13 @@ function randomCase(rnd: () => number): PersonalAllowanceAllocationInput {
       : taxable > rules.ewni.basicRateBandWidth + bandExtension
         ? rules.savings.psaHigher
         : rules.savings.psaBasic;
-  const otherIncomeFirst = rnd() < 0.2 ? pick(nonSavings) : undefined;
+  // From 2027/28 s.25(3A) always applies: other income (often under the allowance, so some is left
+  // to share) and the rest property. Before, a lock is drawn now and then to test the mechanism.
+  const otherIncomeFirst = propertyYear
+    ? Math.min(nonSavings, pick(rnd() < 0.6 ? 12570 : nonSavings))
+    : rnd() < 0.2
+      ? pick(nonSavings)
+      : undefined;
   return {
     rules,
     region,

@@ -3,6 +3,7 @@ import {
   dividendBandLimits,
   type IncomeTaxBandLimit,
   incomeTaxBandLimits,
+  propertyRatesFor,
   type UkTaxYearRules,
   ukIncomeTaxBandLimits,
 } from "./uk-tax-year.js";
@@ -35,7 +36,9 @@ export interface PersonalAllowanceAllocationInput {
   bandExtension?: number;
   /**
    * s.25(3A), 2027/28 on: the part of `nonSavings` that is not property income. The allowance
-   * goes against it first. Left out before 2027/28. Never more than `nonSavings`.
+   * goes against it first. Left out before 2027/28; always given from 2027/28, where the search
+   * charges the non-savings income it can move at the property rates. Never more than
+   * `nonSavings`.
    */
   otherIncomeFirst?: number;
 }
@@ -77,8 +80,17 @@ export function allocatePersonalAllowance(
   const used = Math.min(i.allowance, nonSavings + savings + dividends);
   const total = nonSavings + savings + dividends - used;
   const lock = Math.min(used, i.otherIncomeFirst ?? 0);
-  const nonSavingsBands = incomeTaxBandLimits(rules, i.region, i.bandExtension);
-  const ukBands = ukIncomeTaxBandLimits(rules, i.bandExtension);
+  // From 2027/28 (England, Wales and NI) the allowance can only move off property income: other
+  // income takes it first (s.25(3A)), so when any is left to share, other income is not taxable
+  // and every taxable pound of non-savings income is property, at the property rates (s.11CA).
+  const nonSavingsBands = incomeTaxBandLimits(
+    rules,
+    i.region,
+    i.bandExtension,
+    propertyRatesFor(rules, i.region) ?? undefined,
+  );
+  // Savings at the savings rates: the main rates to 2026/27, their own from 2027/28 (FA 2026 s.5).
+  const ukBands = ukIncomeTaxBandLimits(rules, i.bandExtension, rules.savingsRates);
   const dividendBands = dividendBandLimits(rules, i.bandExtension);
   const dividendAllowance = rules.dividends.allowance;
   const startingRate = rules.savings.startingRateBand;
