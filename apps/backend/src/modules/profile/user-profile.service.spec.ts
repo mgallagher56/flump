@@ -1,4 +1,5 @@
-import { Logger, ServiceUnavailableException } from "@nestjs/common";
+import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "@flump/api-contract";
+import { BadRequestException, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
 import { at } from "../../testing/must";
@@ -649,5 +650,189 @@ describe("UserProfileService (Deep Module)", () => {
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "user-123", kind: "terms", version: "2026-11-01" }),
     );
+  });
+
+  describe("every profile read and write is scoped to the caller", () => {
+    type Row = Record<string, unknown>;
+    /** A findOne over `table` that honours `where`, as the database would. */
+    const findOneOver =
+      (table: Row[]) =>
+      async (options?: { where?: Row }): Promise<Row | null> =>
+        table.find((row) =>
+          Object.entries(options?.where ?? {}).every(([key, value]) => row[key] === value),
+        ) ?? null;
+    // Another user's row sits first, so a lookup that dropped the owner filter would return it.
+    const theirs = (): Row => ({ id: "profile-theirs", userId: "user-999", currency: "USD" });
+
+    it("re-reads the caller's own row after losing the first-insert race", async () => {
+      const table = [theirs()];
+      mockUserProfileRepo.findOne.mockImplementation(findOneOver(table));
+      mockUserProfileRepo.save.mockImplementationOnce(async () => {
+        // The concurrent request's insert lands first; this one hits the unique user_id.
+        table.push({ id: "profile-own", userId: "user-123", currency: "GBP" });
+        throw Object.assign(new Error("duplicate key"), { code: "23505" });
+      });
+
+      const result = await service.getProfile("user-123");
+
+      expect(result).toMatchObject({ id: "profile-own", userId: "user-123" });
+    });
+
+    it("claims, reads and writes only the caller's row on a conditional update", async () => {
+      const table = [theirs(), { id: "profile-own", userId: "user-123", currency: "GBP" }];
+      const qb = {
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        execute: vi.fn().mockResolvedValue({ affected: 1 }),
+      };
+      const scoped = {
+        createQueryBuilder: vi.fn().mockReturnValue(qb),
+        findOne: vi.fn(findOneOver(table)),
+        save: vi.fn(async (row: Row) => row),
+      };
+      Object.assign(mockUserProfileRepo, {
+        manager: {
+          transaction: async (work: (em: unknown) => Promise<unknown>) =>
+            work({ getRepository: () => scoped }),
+        },
+      });
+
+      const result = await service.updateProfile(
+        "user-123",
+        { currency: "EUR" },
+        undefined,
+        new Date("2026-11-20T09:00:00.000Z"),
+      );
+
+      expect(result).toMatchObject({ id: "profile-own", userId: "user-123", currency: "EUR" });
+      expect(table[0]).toEqual(theirs());
+      // The version claim is an UPDATE: its owner filter is the tenancy contract.
+      const [clause, params] = qb.where.mock.calls[0] ?? [];
+      expect(clause).toContain('"user_id" = :user_id');
+      expect(params).toMatchObject({ user_id: "user-123" });
+    });
+
+    it("refuses a reset for an erased account before anything is touched", async () => {
+      const guarded = build({ accountDeletion: { isErased: vi.fn().mockResolvedValue(true) } });
+      await expect(guarded.resetFinancialData("user-gone")).rejects.toThrow(
+        "This account has been deleted.",
+      );
+      expect(mockDataSource.transaction).not.toHaveBeenCalled();
+      expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("reset with a migration before-image table that was never created", () => {
+    it("skips that table instead of failing the reset", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce({ id: "profile-9", userId: "user-123" });
+      // to_regclass answers null for a missing table, and a DELETE on it would fail in Postgres.
+      mockUserProfileRepo.query.mockImplementation(async (sql: string) => {
+        if (sql.startsWith("SELECT")) return [{ t: null }];
+        throw new Error("relation does not exist");
+      });
+
+      await expect(service.resetFinancialData("user-123")).resolves.toMatchObject({
+        success: true,
+      });
+    });
+  });
+
+  describe("name sync with the identity provider", () => {
+    it("sends the saved first name when only the last name changes", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce({
+        userId: "user-123",
+        firstName: "Jane",
+        lastName: "Doe",
+      });
+      await service.updateProfile("user-123", { lastName: "Smith" });
+      expect(identityAdapter.updatedNames).toEqual([
+        { userId: "user-123", firstName: "Jane", lastName: "Smith" },
+      ]);
+    });
+
+    it("sends the saved last name when only the first name changes", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce({
+        userId: "user-123",
+        firstName: "Jane",
+        lastName: "Doe",
+      });
+      await service.updateProfile("user-123", { firstName: "Janet" });
+      expect(identityAdapter.updatedNames).toEqual([
+        { userId: "user-123", firstName: "Janet", lastName: "Doe" },
+      ]);
+    });
+  });
+
+  describe("fields an update saves", () => {
+    beforeEach(() => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+    });
+
+    it("saves a sent avatar address and rental income", async () => {
+      const result = await service.updateProfile("user-123", {
+        avatarUrl: "https://example.test/avatar.png",
+        rentalIncomeMonthly: 500,
+      });
+      expect(result).toMatchObject({
+        avatarUrl: "https://example.test/avatar.png",
+        rentalIncomeMonthly: 500,
+      });
+    });
+
+    it("saves the custom budget categories, and a non-list clears them", async () => {
+      const saved = await service.updateProfile("user-123", {
+        customBudgetCategories: ["holidays", "gifts"],
+      });
+      expect(saved.customBudgetCategories).toEqual(["holidays", "gifts"]);
+      const cleared = await service.updateProfile("user-123", {
+        customBudgetCategories: null,
+      } as never);
+      expect(cleared.customBudgetCategories).toEqual([]);
+    });
+
+    it("accepts the category limits exactly and refuses one over either", async () => {
+      // At the limits: MAX categories, each MAX characters long.
+      const atLimit = Array.from({ length: MAX_CUSTOM_BUDGET_CATEGORIES }, (_, i) =>
+        `${i}`.padStart(MAX_BUDGET_CATEGORY_NAME_LENGTH, "c"),
+      );
+      const saved = await service.updateProfile("user-123", { customBudgetCategories: atLimit });
+      expect(saved.customBudgetCategories).toHaveLength(MAX_CUSTOM_BUDGET_CATEGORIES);
+
+      const refusals = [
+        [...atLimit, "one more"],
+        ["c".repeat(MAX_BUDGET_CATEGORY_NAME_LENGTH + 1)],
+        [42],
+      ];
+      for (const customBudgetCategories of refusals) {
+        await expect(
+          service.updateProfile("user-123", { customBudgetCategories } as never),
+        ).rejects.toBeInstanceOf(BadRequestException);
+      }
+    });
+  });
+
+  describe("checklist changes", () => {
+    it("returns the caller's email with a dismissal, and null without one", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+      const email = ["person", "example.test"].join("@");
+      const withEmail = await service.updateChecklist("user-123", { dismissed: true }, email);
+      expect(withEmail.email).toBe(email);
+      const without = await service.updateChecklist("user-123", { dismissed: true });
+      expect(without.email).toBeNull();
+    });
+
+    it("leaves the list as it is when a step that was never done is marked not done", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({
+        id: "profile-1",
+        userId: "user-123",
+        setupChecklistCompletedSteps: ["profile", "accounts"],
+      });
+      const result = await service.updateChecklist("user-123", {
+        step: "budget",
+        completed: false,
+      });
+      expect(result.setupChecklistCompletedSteps).toEqual(["profile", "accounts"]);
+    });
   });
 });

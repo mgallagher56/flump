@@ -2,7 +2,7 @@ import { decryptReceiptData, encryptReceiptData, isEncryptedToken } from "@flump
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
-import { annualRecordEndDate, TaxService } from "./tax.service";
+import { annualRecordEndDate, MAX_BULK_TAX_RECORDS, TaxService } from "./tax.service";
 
 const base = {
   type: "income",
@@ -578,6 +578,211 @@ describe("TaxService when the linked account goes between the check and the save
         date: "2026-06-01",
         accountId: ACCOUNT,
       } as never)
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(BadRequestException);
+    expect((error as BadRequestException).getResponse()).toMatchObject({
+      issues: [{ path: "body.accountId" }],
+    });
+  });
+});
+
+describe("TaxService input checks before anything is written", () => {
+  const CAP_ID = "00000000-0000-4000-8000-000000000001";
+  const service = (outside = createInMemoryRepository()) =>
+    new TaxService(outside as never, createInMemoryRepository() as never);
+
+  it("refuses a date with anything before or after YYYY-MM-DD", async () => {
+    // Postgres would 500 on these; the service answers 400 first.
+    for (const date of ["2026-05-01junk", "x2026-05-01", "2026-05-01T00:00:00Z"]) {
+      await expect(
+        service().createRecord("u1", { ...base, frequency: "monthly", date } as never),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+  });
+
+  it("refuses a cap id with anything before or after the uuid", async () => {
+    const { outside, transaction } = withManager();
+    for (const id of [`${CAP_ID}x`, `x${CAP_ID}`]) {
+      await expect(
+        service(outside).createBulk("u1", {
+          records: [],
+          capPreviousRecordIds: [{ id, endDate: "2026-04-05" }],
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it("refuses a cap end date that is not a real calendar date", async () => {
+    const { outside, transaction } = withManager();
+    await expect(
+      service(outside).createBulk("u1", {
+        records: [],
+        capPreviousRecordIds: [{ id: CAP_ID, endDate: "2026-02-30" }],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it("refuses more caps than the bulk limit, each one valid on its own", async () => {
+    const { outside, transaction } = withManager();
+    // One over the limit; the ids are distinct valid uuids, so only the count can refuse them.
+    const caps = Array.from({ length: MAX_BULK_TAX_RECORDS + 1 }, (_, i) => ({
+      id: `00000000-0000-4000-8000-${i.toString(16).padStart(12, "0")}`,
+      endDate: "2026-04-05",
+    }));
+    await expect(
+      service(outside).createBulk("u1", { records: [], capPreviousRecordIds: caps }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing for a bulk body with neither records nor caps", async () => {
+    const { outside, transaction } = withManager();
+    await expect(service(outside).createBulk("u1", {} as never)).resolves.toEqual([]);
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it("refuses an account id that is not a uuid without looking it up", async () => {
+    const accounts = createInMemoryRepository();
+    const tax = new TaxService(createInMemoryRepository() as never, accounts as never);
+    await expect(
+      tax.createRecord("u1", {
+        type: "income",
+        source: "savings",
+        category: "savings_interest",
+        name: "Interest",
+        amount: 120,
+        date: "2026-05-01",
+        accountId: "not-a-uuid",
+      } as never),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(accounts.findOne).not.toHaveBeenCalled();
+  });
+});
+
+describe("TaxService stores receipts encrypted on every write path (SEC-D)", () => {
+  // A minimal PDF: the magic bytes are all the sniffer checks.
+  const pdfDataUrl = `data:application/pdf;base64,${Buffer.from("%PDF-1.4\n").toString("base64")}`;
+  const withReceipt = {
+    ...base,
+    frequency: "monthly",
+    date: "2026-05-01",
+    receiptFilename: "receipt.pdf",
+    receiptData: pdfDataUrl,
+  };
+
+  it("encrypts a bulk record's receipt under the id the row is saved with", async () => {
+    const { outside, inside } = withManager();
+    const service = new TaxService(outside as never, createInMemoryRepository() as never);
+
+    const [created] = await service.createBulk("u1", { records: [withReceipt as never] });
+
+    const row = inside.rows[0] as { id: string; receiptData: string };
+    expect(isEncryptedToken(row.receiptData)).toBe(true);
+    // The key is bound to the record id, so it must decrypt with the id the row carries.
+    expect(decryptReceiptData(row.receiptData, row.id)).toBe(pdfDataUrl);
+    expect(created).toMatchObject({ id: row.id, hasReceipt: true });
+    expect(created).not.toHaveProperty("receiptData");
+  });
+
+  it("encrypts a receipt added by an update under the record's id", async () => {
+    const records = createInMemoryRepository([{ ...base, id: "rec-1", userId: "u1" }]);
+    const service = new TaxService(records as never, createInMemoryRepository() as never);
+
+    await service.updateRecord(
+      "u1",
+      "rec-1",
+      { receiptFilename: "receipt.pdf", receiptData: pdfDataUrl } as never,
+      undefined,
+    );
+
+    const row = records.rows[0] as { receiptData: string };
+    expect(isEncryptedToken(row.receiptData)).toBe(true);
+    expect(decryptReceiptData(row.receiptData, "rec-1")).toBe(pdfDataUrl);
+  });
+});
+
+describe("TaxService legacy receipt write-back is scoped to the caller's row", () => {
+  it("rewrites only the row with that id, owned by that user, still holding that plaintext", async () => {
+    const RECORD_ID = "00000000-0000-4000-8000-0000000000aa";
+    const pdfDataUrl = `data:application/pdf;base64,${Buffer.from("%PDF-1.4\n").toString("base64")}`;
+    const qb = {
+      update: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      execute: vi.fn().mockResolvedValue({ affected: 1 }),
+    };
+    const repo = {
+      findOne: vi.fn().mockResolvedValue({
+        id: RECORD_ID,
+        receiptFilename: "receipt.pdf",
+        receiptMimeType: "application/pdf",
+        receiptData: pdfDataUrl,
+      }),
+      createQueryBuilder: vi.fn().mockReturnValue(qb),
+    };
+    const service = new TaxService(repo as never, createInMemoryRepository() as never);
+
+    await service.readReceipt("u1", RECORD_ID);
+
+    // The owner filter is the tenancy contract: the update names the user column and binds it.
+    const [clause, params] = qb.where.mock.calls[0] ?? [];
+    expect(clause).toContain('"id" = :id');
+    expect(clause).toContain('"user_id" = :userId');
+    expect(clause).toContain('"receipt_data" = :plaintext');
+    expect(params).toMatchObject({ id: RECORD_ID, userId: "u1" });
+  });
+});
+
+describe("TaxService errors from a failed save", () => {
+  const ACCOUNT = "00000000-0000-4000-8000-0000000000c1";
+  const rentalAccount = () =>
+    createInMemoryRepository([
+      { id: ACCOUNT, userId: "u1", type: "Property", accountSubtype: "rental" },
+    ]);
+  const rent = {
+    type: "income",
+    source: "rental",
+    category: "rental_income",
+    name: "Rent",
+    amount: 1000,
+    date: "2026-06-01",
+  };
+
+  const failedCreate = async (err: unknown) => {
+    const records = createInMemoryRepository();
+    vi.spyOn(records, "save").mockRejectedValue(err as never);
+    const service = new TaxService(records as never, rentalAccount() as never);
+    return service.createRecord("u1", rent as never).catch((e: unknown) => e);
+  };
+
+  it("returns an error that is not the account foreign key unchanged", async () => {
+    const plain = new Error("connection lost");
+    expect(await failedCreate(plain)).toBe(plain);
+    // The right code on another constraint is some other foreign key, not the account link.
+    const otherKey = Object.assign(new Error("fk"), {
+      driverError: { code: "23503", constraint: "FK_something_else" },
+    });
+    expect(await failedCreate(otherKey)).toBe(otherKey);
+    // The account link's name under another code is not a foreign key failure.
+    const notNull = Object.assign(new Error("not null"), {
+      driverError: { code: "23502", constraint: "FK_tax_records_account" },
+    });
+    expect(await failedCreate(notNull)).toBe(notNull);
+  });
+
+  it("answers an update that loses its account before the save with the link 400", async () => {
+    const records = createInMemoryRepository([{ ...rent, id: "rec-1", userId: "u1" }]);
+    vi.spyOn(records, "save").mockRejectedValue(
+      Object.assign(new Error("fk"), {
+        code: "23503",
+        constraint: "FK_tax_records_account",
+      }) as never,
+    );
+    const service = new TaxService(records as never, rentalAccount() as never);
+    const error = await service
+      .updateRecord("u1", "rec-1", { accountId: ACCOUNT } as never, undefined)
       .catch((e: unknown) => e);
     expect(error).toBeInstanceOf(BadRequestException);
     expect((error as BadRequestException).getResponse()).toMatchObject({
