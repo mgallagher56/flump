@@ -2,16 +2,16 @@
 
 Decisions: open
 
-> Status: plan for owner approval. No code. Written 2026-11-20 against `origin/main` (`da6284f0c`). Paths are relative to the repository root. All copy in this document is a draft for the owner to react to (E7: the owner signs off all marketing copy).
+> Status: plan for owner approval. Nine of ten decisions were answered on 2026-11-20 (section 7.1); D9 is open. No code. Written 2026-11-20 against `origin/main` (`da6284f0c`). Paths are relative to the repository root. All copy in this document is a draft for the owner to react to (E7: the owner signs off all marketing copy).
 
 ## 1. Summary
 
 - The owner's brief (20 November 2026): the marketing site feels out of touch with the app. Pages should be geared to the features Flump offers and split the way the app is split. The message: Flump is a whole, 360 degree personal finance manager; it keeps things simple and removes the fog for everyone; it has more depth for people who want or need it.
 - Today the site has eight page types and none is about an app area. The app has five navigation entries (Accounts, Budget, Pay, Savings and pension, Debt and borrowing) plus Home, the monthly check-in, calculators and settings. The site names none of them.
-- Proposal: a "What Flump covers" hub and five area pages named exactly as the app names them, a rebuilt home page that shows all five areas in one picture, and a top navigation of three links. Existing pages stay, with small corrections.
-- Retirement is on the site, inside Savings and pension (owner, 20 November 2026: it should be open to everyone; this supersedes RD9). The AI connection stays a labelled preview. Imports and bank connections are not mentioned.
+- Proposal: a "Flump features" page (navigation label "Features") and five area pages named exactly as the app names them, a rebuilt home page that shows all five areas in one picture, and a top navigation of three links. Existing pages stay, with small corrections.
+- Retirement is on the site, inside Savings and pension (owner, 20 November 2026: it should be open to everyone; this supersedes RD9). The AI connection is presented as a feature like the others, with plain words on how a tester gets it (owner, 20 November 2026). Imports and bank connections are not mentioned.
 - Calculators leave the top navigation. A few plain ones sit inside the area page they belong to; the rest are a numbered decision (D9).
-- Ten decisions for the owner are in section 7. One is answered: the home headline (D2), "All your money. One clear picture." Nine are open. Nothing is built until they are answered (AGENTS.md section 13).
+- Ten decisions are in section 7. The owner has answered nine (section 7.1). One is open: which calculators stay (D9), which the owner is choosing. Nothing is built until they are answered (AGENTS.md section 13).
 
 **Revision 2 (20 November 2026), after the owner read the first version.** Three changes: the home headline has eight snappier options, each checked against the guards (section 5.1, decision D2); Retirement moves from "not mentioned" to part of the Savings and pension page (sections 2, 2.1, 4, 5.2, decision D5); calculators are assessed one by one and demoted (section 4.4, decision D9).
 
@@ -65,7 +65,7 @@ The inventory was read from `origin/main` at `da6284f0c`. Two pull requests were
 - The Settings row: the Security tab and the settings page change, and an admin-only invites page (`/app/invites`) is added. That page is not a feature to market.
 - The web app's signed-out pages stop offering "Sign up" while the beta is invite-only. The marketing call to action stays "Request an invite" and still points at `/contact#beta`; this plan adds no link to the web app's sign-up path (the claims guard forbids one outside `utils/site.ts`).
 - Draft copy that describes what happens after a request (the `/mcp` line "say so when you request an invite", the Contact page) should match the flow that PR ships: a person asks by email and receives an invite link. Check the final wording of PR 845 before S6.
-- The AI connection: PR 845 ties an access token to its owner still being a beta member. That does not change who the AI connection is offered to (named users), so its part of decision D5 stands.
+- The AI connection: PR 845 ties an access token to its owner still being a beta member. That does not change who the AI connection is switched on for (named accounts, which the owner confirmed on 20 November 2026).
 - **Retirement.** The owner said on 20 November 2026 that Retirement should be open to everyone, because invites are only for testing. That supersedes RD9. PR 845's diff, read on 20 November, opens the backend rule to beta admins and to active members who joined through an invite link, while the beta is invite-only. Two things to check on `main` before building the Retirement copy:
   - Whether an account let in by the older email or user id allowlists, with no invite link, can open Retirement. In the diff as read, it cannot unless it is also in `RETIREMENT_ALLOWED_USER_IDS`.
   - Whether Retirement is in the app's navigation. In the diff as read, `HIDDEN_PAGE_KEYS` and `navConfig.ts` were unchanged, so the page is open but reachable by URL only. A marketing page should not describe something a tester cannot find. Unhiding it belongs to the app (E33 or PR 845), not to this epic; the Retirement copy ships only once it is in the navigation.
@@ -109,18 +109,18 @@ One rule: an area page has the same name, order and grouping as the app's naviga
 
 ### 4.1 Top navigation (three links and the call to action)
 
-`What Flump covers` (menu: the five areas) · `Preview` · `Pricing` · **Request an invite** · Sign in
+`Features` (menu: the five areas, then AI connection) · `Preview` · `Pricing` · **Request an invite** · Sign in
 
 Calculators are not in the top navigation (owner, 20 November 2026). The few that stay are reached from the area page they belong to (section 4.4).
 
-Security and privacy, AI connection and Contact move to the footer. The "What Flump covers" menu ends with a link to "Security and privacy", so it is still one press from every page. The mobile drawer lists the five areas under the same heading.
+Security and privacy and Contact move to the footer. The AI connection is in the Features menu, on the Flump features page and on the home page, like any other feature (owner, 20 November 2026; this supersedes E16 D13). The Features menu ends with a link to "Security and privacy", so it is still one press from every page. The mobile drawer lists the five areas under the same heading.
 
 ### 4.2 Pages
 
 | Page | Path | Purpose | Covers (app area) | The one thing to understand | Calculators linked | Preview link |
 | --- | --- | --- | --- | --- | --- | --- |
 | Home | `/` | Carry all three messages and send people to an area, the preview or the invite | Home dashboard, all five areas | Flump shows all your money in one picture, from a few rough figures | Pay-rise teaser stays as the one working tool on the page | Sample dashboard in the hero, link to `/preview` |
-| What Flump covers (new) | `/features` | The map: five areas, one paragraph each | All | The site and the app are laid out the same way; use one area or all five | None | Link to `/preview` |
+| Flump features (new; navigation label "Features") | `/features` | The map: five areas and the AI connection, one paragraph each | All | The site and the app are laid out the same way; use one area or all five | None | Link to `/preview` |
 | Accounts (new) | `/features/accounts` | Net worth and the monthly check-in | Accounts, monthly check-in, history | Every account in one list, and a short check-in once a month | None fits today | Dashboard and Check-in sections |
 | Budget (new) | `/features/budget` | Left over each month and breathing room | Budget, housing costs | What comes in, what goes out, what is left, whether you rent or pay a mortgage | None fits today | Breathing room section |
 | Pay (new) | `/features/pay` | Take-home pay, and Self Assessment for those who need it | Take-home pay, Self Assessment | What you keep from your pay, and a tax bill estimate if you are self-employed or let property | The two-slider pay rise tool, on the page; the student loan calculator, linked only if D9 is answered B | Pay-rise tool embedded (it exists) |
@@ -130,7 +130,7 @@ Security and privacy, AI connection and Contact move to the footer. The "What Fl
 | Preview | `/preview` | Unchanged, plus a link from each section to its area page, named for where it goes ("About accounts and the monthly check-in"; guide 5.3 bans "Read more") | Home, check-in, budget | See it working on sample data | n/a | n/a |
 | Pricing | `/pricing` | Stays (decision D8). The list of what the beta includes names the five areas | n/a | Free during the beta; the price of any paid plan is not set | None | n/a |
 | Security and privacy | `/security` | Stays, footer and menu link. Adds two facts once verified: download your data, delete your data | Settings, Data tab | What Flump can and cannot do with your money and figures | n/a | n/a |
-| AI connection | `/mcp` | Stays at the same path, footer link only. Badge and setup steps reworded (decision D5) | AI connection | A preview for invited testers; Flump does the sums, not the AI model | n/a | n/a |
+| AI connection | `/features/ai-connection` (`/mcp` redirects) | A feature page like the area pages, in the Features menu and on the home page (decision D5, as the owner changed it) | AI connection | Ask an AI assistant about your saved figures; Flump does the sums, not the AI model; switched on for an account on request during testing | n/a | n/a |
 | Contact | `/contact` | Unchanged | n/a | How to ask for an invite | n/a | n/a |
 | Not found | any other path | Unchanged | n/a | n/a | n/a | n/a |
 
@@ -200,7 +200,7 @@ Names come from the shared catalogue (`packages/ui/src/tools/toolCatalog.ts`), w
 
 ### 5.1 Home page: layout and headline
 
-**Layout (one proposal).** Hero with the headline, one subheadline, "Request an invite", "Interactive preview" and the sample dashboard; "What Flump covers" (five area tiles); "Start with rough figures" (three steps: enter rough figures, see where you stand, check in once a month); "More detail when you want it"; the two-slider pay rise tool; the security strip; FAQ and the final call to action. The first version of this plan called a band "Start simple"; copy guide 2.3 lists "simply", "easy" and "quick" as minimisers, so the band is named for what the reader does.
+**Layout (one proposal).** Hero with the headline, one subheadline, "Request an invite", "Interactive preview" and the sample dashboard; "Flump features" (the five area tiles and an AI connection tile); "Start with rough figures" (three steps: enter rough figures, see where you stand, check in once a month); "More detail when you want it"; the two-slider pay rise tool; the security strip; FAQ and the final call to action. The first version of this plan called a band "Start simple"; copy guide 2.3 lists "simply", "easy" and "quick" as minimisers, so the band is named for what the reader does.
 
 **Decided by the owner, 20 November 2026 (decision D2).**
 
@@ -250,9 +250,9 @@ Every line below is a draft. Sentences are 25 words or fewer, with no em dashes,
 
 How each block maps to the page: the h1 is 2 to 6 words and at most 40 characters (guide 3.1); the lead is the one sentence under it (guide 5.2); the copy that follows is shown here as one block for reading and is split on the page into the three "What you see" facts, so no paragraph on screen is longer than three sentences (guide 3.1).
 
-**What Flump covers (`/features`)**
+**Flump features (`/features`)**
 
-- h1: "What Flump covers". Lead: "Five areas, laid out the same way here and in the app."
+- h1: "Flump features". Lead: "Five areas, laid out the same way here and in the app."
 - "Flump is laid out the same way here and in the app: accounts, budget, pay, savings and pension, and debt and borrowing. Use one area or all five. Each starts from a few rough figures. Each has more detail underneath for when you want it. Together they make one picture of your money, on your Home page."
 - Carries: (1) the whole list on one page; (2) "a few rough figures"; (3) "more detail underneath".
 
@@ -303,17 +303,28 @@ How each block maps to the page: the h1 is 2 to 6 words and at most 40 character
 
 - Unchanged facts, plus two once verified in staging: "You can download the figures you have saved as a file, from Settings." and "You can delete your financial data, or your whole account, from Settings."
 
-**AI connection (`/mcp`)**
+**AI connection (`/features/ai-connection`; `/mcp` redirects to it)**
 
-- Badge: "Preview, by invitation". h1 unchanged: "Ask an AI assistant about your figures".
-- Setup section retitled "How it works for testers who have it": "The AI connection is switched on for a small number of testers during the preview. If you would like to try it, say so when you request an invite."
+Owner, 20 November 2026: "AI connection can be used in places other than the footer. it's a genuine feature that users can access and use, so it should appear in the marketing like any other feature." The owner also confirmed that access stays with the accounts the owner switches on ("Keep it to named accounts"). So every line has to be true for a tester whose account has not been switched on. Draft wording for the owner:
+
+- Where it appears: the Features menu, a sixth tile on the home page and on the Flump features page, and its own page built from the same template as the area pages. The "Part of one picture" strip stays at the five money areas.
+- No "by invitation" badge.
+- h1: "AI connection". Lead: "Ask an AI assistant about the figures you have saved in Flump."
+- Body: "Connect an AI assistant such as Claude Desktop to Flump and ask questions in your own words. Tax and debt figures are calculated by Flump, not by the AI model." Then the fixed sentence the site already uses: "Saving imported figures through the AI connection is off by default, and nothing is saved until you confirm it in Flump."
+- Section "How to get it", two versions for the owner to choose between:
+  - **Version 1 (recommended):** "While Flump is being tested, the AI connection is switched on one account at a time. Ask us to switch it on for yours. Once it is on, create an access token in Settings and add Flump to your AI assistant."
+  - **Version 2:** "While Flump is being tested, we switch the AI connection on for your account when you ask. Then create an access token in Settings and add Flump to your AI assistant." This promises that every request is granted; use it only if that is true.
+- Home and features tile: "AI connection. Ask an AI assistant about your saved figures. Switched on for your account on request during testing."
+- Home FAQ answer (replaces "Yes, as a preview."): "Yes. The AI connection lets an AI assistant such as Claude Desktop answer questions from the figures you have saved. During testing it is switched on one account at a time, so ask us to switch it on for yours."
+- The collapsed "Technical details" section stays as it is.
+- One question for the owner: the page has a small "Preview" badge today, from E17 D1-A (the AI connection is a preview until Phase 5 and the evaluation targets are met). Keep that one word, or drop it now that it is presented as a feature? Recommendation: keep "Preview" as a small label on its own page only, because E17 D1-A still stands, and leave it off the menu and the tiles.
 
 ### 5.3 SEO titles and descriptions (draft)
 
 | Path | Title | Description |
 | --- | --- | --- |
 | `/` | Flump: finance without the fog (fixed, `SITE_TAGLINE`) | Flump: finance without the fog. Your accounts, budget, pay, savings, pension and debts in one picture, under UK rules, from figures you type in. |
-| `/features` | What Flump covers \| Flump | The five areas of Flump: accounts, budget, pay, savings and pension, and debt and borrowing. Start with rough figures and add detail when you want it. |
+| `/features` | Flump features \| Flump | The five areas of Flump: accounts, budget, pay, savings and pension, and debt and borrowing. Start with rough figures and add detail when you want it. |
 | `/features/accounts` | Accounts and net worth \| Flump | Every account in one list, your net worth, and a short monthly check-in that shows how it changes. You type the figures in; no bank login is needed. |
 | `/features/budget` | Budget and breathing room \| Flump | See what is left over each month and how long your savings would cover the essentials, whether you rent or pay a mortgage. |
 | `/features/pay` | Take-home pay and Self Assessment \| Flump | See your take-home pay under UK rules and how much of a pay rise you would keep. Self-employed or letting property: see an estimate of your tax bill. |
@@ -353,14 +364,33 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | "Free during the beta" | Exact required form | No payment path | Already approved wording |
 | "You can download the figures you have saved" | Passes | JSON export in `features/settings` and `routes/account.export.ts` | Verified in code; **not verified in staging** |
 | "You can delete your financial data, or your whole account" | "permanent erasure" is banned and not used | `DataTab`, `DeleteAccountSection`. Deletion answers 503 until `DELETION_TOMBSTONE_KEY` is set | **Unverifiable here. Ship only after the owner confirms it works in staging** |
-| AI connection "switched on for a small number of testers" | No present-tense setup promise (guide 7.4) | `McpAllowlistGuard` | Verified in code; whether staging runs open access is unverifiable |
+| AI connection: "switched on one account at a time. Ask us to switch it on for yours." | Guide 7.4: copy for an allowlisted feature must not read as if every account has it. Version 1 says how a tester gets it and promises nothing; version 2 promises every request is granted | `McpAllowlistGuard`; the owner confirmed access stays with named accounts | Verified in code. **Wording is a draft for the owner (section 5.2)** |
 | Any regulatory, security-level or compliance statement | Banned | n/a | **None drafted.** None will be added without the owner's wording |
 
 ## 7. Decisions for the owner
 
+### 7.1 The owner's answers (20 November 2026, relayed by the coordinator)
+
+| # | Answer | The owner's words | What changes |
+| --- | --- | --- | --- |
+| D1 | Structure accepted (option A), with a name change | "'what flump covers' should not be the copy used on the page, FLump features or similar is better." | The navigation label is "Features" and the page title is "Flump features", at `/features`. "What Flump covers" is not used anywhere, including the home band heading and the menu |
+| D2 | Decided | "I like headline 1 combined with line underneath 2"; then "in one place is better" | h1 "All your money. One clear picture." Lead "Accounts, budget, pay, savings, pension and debts in one place." |
+| D3 | Settled by the headline choice (option A) | As D2 | "All", with the parts listed in the lead |
+| D4 | Settled by the headline choice (option A) | As D2 | Fog wording stays in the tagline only |
+| D5 | Changed | "AI connection can be used in places other than the footer. it's a genuine feature that users can access and use, so it should appear in the marketing like any other feature." On access: "Keep it to named accounts" | The AI connection is in the Features menu, on the features page and the home page, with its own page. No "by invitation" badge. The copy says how a tester gets it and does not imply every account has it (draft wording in 5.2, for the owner). Supersedes E16 D13. Imports and bank connections as recommended |
+| D6 | Accepted as recommended (option B) | "the other decisions are good to go." | Working samples where they exist, two new sample previews as a later slice, no screenshots |
+| D7 | Accepted as recommended (option A) | As D6 | The titles in 5.3, with "Flump features" for `/features` |
+| D8 | Accepted as recommended (option A) | As D6 | Pricing stays, with its navigation link |
+| D9 | **Open** | The owner is choosing the calculators from the list of eight | Section 4.4 stands as the assessment. Nothing about calculators is built until the picks arrive |
+| D10 | Accepted as recommended (option A) | As D6 | Both MoneyHelper lines appear word for word on marketing pages. The guard change still goes to the coordinator for sign-off when it is built |
+
+Still to confirm with the owner: the AI connection wording and the "Preview" label (section 5.2), and that choosing the headline allows its two full stops and slogan shape for the marketing home h1 only (section 5.1, ruling R-a).
+
+The table below is the record of the options and recommendations as they were put to the owner.
+
 | # | Decision | Options | Recommendation |
 | --- | --- | --- | --- |
-| D1 | Page list and navigation | **A.** A hub (`/features`) and five area pages named as the app names them; top navigation of three links (What Flump covers, Preview, Pricing); Security, AI connection and Contact in the footer. **B.** Three combined pages (Everyday money; Pay and tax; Long-term). **C.** One long page with five anchored sections | **A.** It is the only option where the site and the app share names and order. C is the fallback if six pages feels like too much to keep true |
+| D1 | Page list and navigation | **A.** A hub (`/features`) and five area pages named as the app names them; top navigation of three links (the features page, Preview, Pricing); Security, AI connection and Contact in the footer. **B.** Three combined pages (Everyday money; Pay and tax; Long-term). **C.** One long page with five anchored sections | **A.** It is the only option where the site and the app share names and order. C is the fallback if six pages feels like too much to keep true |
 | D2 | Home headline (section 5.1) | One of **H1 to H8**, with its subheadline. Six of them need ruling **R-a** (a slogan-shaped h1 on the marketing home page only); H3 also needs R-b ("Sorted"); H4 also needs R-c (fog in the h1). H6 and H7 need no ruling | **Decided, 20 November 2026:** h1 "All your money. One clear picture." with the lead "Accounts, budget, pay, savings, pension and debts in one place." (owner: "I like headline 1 combined with line underneath 2"; "in one place is better"). It replaces the h1 that E31 and E16 PR 12 set |
 | D3 | The words for the 360 message | **A.** "All" or "everything" in the headline, with the parts listed in the subheadline beside it; no "360", "complete" or "holistic" in copy. **B.** Say it only by listing the parts, with no "all". **C.** Use "complete" or "360" as the owner's brief words it | **A.** "All" with the list beside it is plain and can be checked against the list. C breaks copy guide 2.2 and cannot be evidenced |
 | D4 | Fog wording | **A.** Keep the 14 November ruling: the tagline only, in the places listed. **B.** Allow one body line on the home page. **C.** Fog in the h1 (headline H4, ruling R-c) | **A.** The plain copy does the clearing; the tagline names it |
@@ -371,7 +401,7 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | D9 | Calculators (section 4.4) | Which stay: **A.** Three (pay rise in its two-slider form, 0% deal, overdraft), each on its area page under a plain new name. **B.** Those three and the student loan one. **C.** Only the two-slider pay rise tool. What happens to the rest: **1.** keep the URL alive but unlinked and out of the sitemap; **2.** remove, with a redirect to the area page; **3.** keep all linked from the footer | **A with 1.** Three pass the tests cleanly; the student loan one answers a question the app does not. Keeping the old addresses alive costs nothing and can be undone. Search traffic today is unknown and probably near nothing, because the site is `noindex` until launch; review once page views are counted |
 | D10 | The two fixed MoneyHelper lines (debt help; pension guidance) on marketing pages | **A.** Show both, word for word, on the Debt and borrowing and the Savings and pension pages, from one shared component each, and record the guard change with sign-off. **B.** Leave both off the marketing site; they stay in the app, where they are approved. **C.** Show them with a plain link and no "free" (this rewords fixed wording, so it needs the owner's own words) | **A.** A page that describes debts or a retirement estimate should carry the same signpost the app does. It needs two things from the owner: that the lines may appear on marketing pages, and sign-off for the guard change |
 
-Decisions already made that this plan keeps: E7 (owner signs off copy), RD11 (the MoneyHelper pensions line, unchanged in wording), E16 D10 b (no example price), E16 D13 (AI connection is a footer link and one FAQ answer on the home page), E24 (invite-only call to action), the tagline ruling. Decisions it would change, only with the owner's yes: the home h1 and the five-band home layout from E16 PR 12 (D2); copy guide 5.1 for the marketing home h1 (ruling R-a); the public calculators index from E16 PR 11 and D11 (D9). Superseded by the owner on 20 November 2026: RD9 (Retirement unseen).
+Decisions already made that this plan keeps: E7 (owner signs off copy), RD11 (the MoneyHelper pensions line, unchanged in wording), E16 D10 b (no example price), E24 (invite-only call to action), the tagline ruling. Decisions it would change, only with the owner's yes: the home h1 and the five-band home layout from E16 PR 12 (D2); copy guide 5.1 for the marketing home h1 (ruling R-a); the public calculators index from E16 PR 11 and D11 (D9). Superseded by the owner on 20 November 2026: RD9 (Retirement unseen) and E16 D13 (AI connection as a footer link and one FAQ answer only).
 
 ## 8. Build slices (after acceptance)
 
@@ -379,12 +409,12 @@ All new components follow AGENTS.md section 1 (colocated directory; the five-fil
 
 | Slice | Work | Size |
 | --- | --- | --- |
-| S1 | `apps/marketing/src/utils/featureAreas.ts`: one data file for the five areas (name, path, h1, lead, facts, depth list, calculator slugs, preview anchor, meta). Area names are checked against `apps/web/public/locales/en/common.json` by a test, so the site cannot drift from the app | S |
+| S1 | `apps/marketing/src/utils/featureAreas.ts`: one data file for the five areas and the AI connection (name, path, h1, lead, facts, depth list, calculator slugs, preview anchor, meta). Area names are checked against `apps/web/public/locales/en/common.json` by a test, so the site cannot drift from the app | S |
 | S2 | `FeaturePage` template and `AreaStrip` ("Part of one picture") components; five routes under `/features`; `STATIC_PATHS`, sitemap, 404 handling, `PageMeta`, social meta test | M |
 | S3 | `FeaturesIndexPage` (`/features`) | S |
-| S4 | Header (the "What Flump covers" menu, mobile drawer) and Footer (Product, Company, room for Legal) | M |
+| S4 | Header (the "Features" menu, mobile drawer) and Footer (Product, Company, room for Legal) | M |
 | S5 | Home page with the accepted headline: area tiles, "Start with rough figures", "More detail when you want it"; FAQ answers corrected to the app's names | M |
-| S6 | Existing pages: Pricing list, `/mcp` badge and setup wording, `/security` data facts (only once verified), `/preview` sections linked to area pages | S |
+| S6 | Existing pages: Pricing list, the AI connection page rebuilt on the feature template at `/features/ai-connection` with a redirect from `/mcp` and the wording the owner approves, the home FAQ answer, `/security` data facts (only once verified), `/preview` sections linked to area pages | S |
 | S6b | Calculators as decided in D9: new names in the shared catalogue (this renames them in the web app too), the kept ones placed on their area pages, the rest unlinked and dropped from the index, footer and sitemap, each with one line linking to its area page. Tool slugs and the copy test that ties slugs to the catalogue stay | S to M |
 | S6c | Retirement section on the Savings and pension page, only once Retirement is in the app's navigation. If D10 is A: promote `MoneyHelperGuidance` and `DebtHelpLink` to `@repo/ui` (five-file set each) so both apps render the one fixed line each | S |
 | S7 | Guards: add every new file to `PR12_SOURCES` in `copy.test.ts`; the claims guard already scans all of `src` | S |
