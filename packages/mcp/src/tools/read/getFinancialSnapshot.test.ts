@@ -8,7 +8,7 @@ import { connectTestClient } from "../../testing/client.js";
 import { emptyUser, mixedAccountsWithHistory } from "../../testing/personas.js";
 
 type Env = {
-  result: Record<string, any> & { notes: string[] };
+  result: Record<string, unknown> & { notes: string[] };
   missing: Array<{ field: string; why: string; askUser: string }>;
   assumptions: Array<{ field: string; source: string; reason: string }>;
   provenance: Record<string, string>;

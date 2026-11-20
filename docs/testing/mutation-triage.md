@@ -866,3 +866,772 @@ The class counts are rows, not faults: one row may cover several faults on a lin
 | L114 | OptionalChaining `profile.isSalarySacrificeEmployerNi`               | Equivalent | profile is non-null past L101                                                                                                                                           |
 | L136 | ConditionalExpression `false` (`annualSalary == null`)               | Equivalent | null becomes 0, caught by `salary <= 0`; undefined becomes NaN, caught by Number.isFinite                                                                               |
 | L167 | ConditionalExpression `false` (`pay === null`)                       | Equivalent | when pay is null, `pay <= 0` is `null <= 0`, which is true, so it still returns null                                                                                    |
+
+## Contract, MCP and small packages (E41 M3, 19 November 2026)
+
+Measured by forced runs on a laptop on 19 November 2026 after the kill tests. Faults killed by a test have no row. Timeouts count as not caught. Runtime errors (the mutated module fails to load) are left out of the score by Stryker and have no row. Line numbers are those of the measured source.
+
+One more class appears here. Timed out under load: a test killed the fault in an earlier run, and it timed out in the final run on a loaded machine. It counts as not caught until a calmer run kills it again.
+
+### `packages/api-contract`
+
+1,255 faults: 1,163 killed, 0 timed out, 68 survived, 6 no coverage, 18 runtime errors (not scored). Re-measured by a forced run on 20 November 2026, after `main` changed `src/domains/mcp-tokens.ts`, `src/domains/profile.ts` and `src/domains/tax.ts` (retired profile fields removed, tax category lists added). Line numbers are those of that run's source. Three faults in `taxCategoryError` (`tax.ts` L20, L114, L115: the legacy salary id and the trim) are real gaps reported for a test, so they have no row.
+
+Not worth killing for want of a documented rule (the bound is written only in the schema; coordinator to decide): avatar https URL length 2048 (`profile.ts` L15), validation message cap of 200 characters (`validate.ts` L34), the float tolerance in the decimal-place checks (`primitives.ts` L6, L49).
+
+| File                        | Faults | Not caught | Equivalent | Not worth killing | Tax gate | Possible bug |
+| --------------------------- | ------ | ---------- | ---------- | ----------------- | -------- | ------------ |
+| `src/domains/accounts.ts`   | 73     | 1          | 0          | 1                 | 0        | 0            |
+| `src/domains/imports.ts`    | 49     | 3          | 0          | 1                 | 0        | 0            |
+| `src/domains/mcp-tokens.ts` | 161    | 2          | 0          | 2                 | 0        | 0            |
+| `src/domains/profile.ts`    | 142    | 18         | 0          | 3                 | 0        | 0            |
+| `src/domains/retirement.ts` | 84     | 2          | 1          | 1                 | 0        | 0            |
+| `src/domains/snapshots.ts`  | 14     | 1          | 0          | 1                 | 0        | 0            |
+| `src/domains/tax.ts`        | 88     | 10         | 0          | 3                 | 0        | 0            |
+| `src/http-headers.ts`       | 49     | 2          | 0          | 1                 | 0        | 0            |
+| `src/manifest.ts`           | 32     | 1          | 1          | 0                 | 0        | 0            |
+| `src/openapi.ts`            | 285    | 15         | 4          | 2                 | 0        | 0            |
+| `src/pagination.ts`         | 11     | 1          | 0          | 1                 | 0        | 0            |
+| `src/primitives.ts`         | 82     | 17         | 2          | 3                 | 0        | 1            |
+| `src/validate.ts`           | 60     | 1          | 0          | 1                 | 0        | 0            |
+
+The class counts are rows, not faults: one row may cover several faults on a line.
+
+#### `src/domains/accounts.ts`
+
+| Line | Fault                                          | Class             | Reason                                                  |
+| ---- | ---------------------------------------------- | ----------------- | ------------------------------------------------------- |
+| L179 | StringLiteral `""` ("balance must be above 0") | Not worth killing | Error message copy; the rule itself (above 0) is tested |
+
+#### `src/domains/imports.ts`
+
+| Line          | Fault                                     | Class             | Reason                                                 |
+| ------------- | ----------------------------------------- | ----------------- | ------------------------------------------------------ |
+| L25; L30; L62 | StringLiteral `""` (regex error messages) | Not worth killing | Error message copy; the patterns themselves are tested |
+
+#### `src/domains/mcp-tokens.ts`
+
+| Line | Fault                                           | Class             | Reason                                                                                                                                                             |
+| ---- | ----------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L14  | StringLiteral `""` ("must be 7, 30, 90 or 365") | Not worth killing | Error message copy; the allowed expiry days are tested                                                                                                             |
+| L29  | StringLiteral `""` (`WRITE_STAGE_SCOPE`)        | Not worth killing | A backend test asserts it equals `WRITE_STAGE_SCOPE` in `@flump/mcp`, the source of truth, outside this package; a test here would assert a constant equals itself |
+
+#### `src/domains/profile.ts`
+
+| Line                                                                   | Fault                                                    | Class             | Reason                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------- | -------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L15                                                                    | EqualityOperator `v.length < 2048`                       | Not worth killing | No documented length for an https avatar URL (E20 sets only the 256 kB data URL cap); a test at exactly 2048 would copy the number off the schema. Listed for the coordinator                                                        |
+| L16; L41; L114                                                         | StringLiteral `""`; ObjectLiteral `{}` (refine messages) | Not worth killing | Error message copy; the rules (avatar scheme, section order, checklist shape) are tested                                                                                                                                             |
+| L285; L331; L360; L373; L407; L435; L454; L460; L489; L507; L526; L535 | ObjectLiteral `{}` (export row shape emptied)            | Not worth killing | Each export row schema is checked field for field against the backend's real table projection by `apps/backend/src/modules/privacy/user-data-registry.spec.ts`, outside this package's run; a copy here would restate the field list |
+
+#### `src/domains/retirement.ts`
+
+| Line | Fault                                                    | Class             | Reason                                                                                                                          |
+| ---- | -------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| L77  | ConditionalExpression `false` (`retirementAge === null`) | Equivalent        | With a null retirement age the last test is `planToAge > null`, which is `planToAge > 0`, true for every planToAge (minimum 19) |
+| L82  | StringLiteral `""` (message)                             | Not worth killing | Error message copy; the rule and its path are tested                                                                            |
+
+#### `src/domains/snapshots.ts`
+
+| Line | Fault                                  | Class             | Reason                                    |
+| ---- | -------------------------------------- | ----------------- | ----------------------------------------- |
+| L5   | StringLiteral `""` ("must be YYYY-MM") | Not worth killing | Error message copy; the pattern is tested |
+
+#### `src/domains/tax.ts`
+
+| Line               | Fault                                                          | Class             | Reason                                                                                                                                           |
+| ------------------ | -------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L46; L49; L52; L95 | StringLiteral `""` (rule messages)                             | Not worth killing | Error message copy; the rule's path for each case is tested                                                                                      |
+| L123               | StringLiteral `""` (issue code "custom")                       | Not worth killing | Changes only the issue code from zod's own "custom" to empty; the request is still refused on the same path, and no client branches on this code |
+| L134; L135         | ObjectLiteral `{}`; StringLiteral `""` (legacy salary message) | Not worth killing | Error message copy; the refusal of the legacy salary category is tested                                                                          |
+
+#### `src/http-headers.ts`
+
+| Line     | Fault                         | Class             | Reason                                       |
+| -------- | ----------------------------- | ----------------- | -------------------------------------------- |
+| L23; L28 | StringLiteral `""` (messages) | Not worth killing | Error message copy; both patterns are tested |
+
+#### `src/manifest.ts`
+
+| Line | Fault                                              | Class      | Reason                                                                                                          |
+| ---- | -------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------- |
+| L148 | ConditionalExpression `true` (`method === "POST"`) | Equivalent | No route that is not a POST answers 201 (checked over `allRoutes`), so the 201 test alone picks the same routes |
+
+#### `src/openapi.ts`
+
+| Line             | Fault                                                                                                            | Class             | Reason                                                                                                                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L17              | StringLiteral `""` (default `io`)                                                                                | Equivalent        | zod reads any `io` other than "output" as input; every route schema gives byte-identical JSON Schema with `io: ""` (checked over `allRoutes`)                                             |
+| L42              | ConditionalExpression `false`; LogicalOperator `&&`; StringLiteral `""`; ArrayDeclaration `["Stryker was here"]` | Equivalent        | Every path-params schema lists all its fields as required (checked over `allRoutes`), so `required` comes out true for path params either way; no query field is named "Stryker was here" |
+| L78              | ConditionalExpression `true` (`auth === "public"`)                                                               | Equivalent        | Every route whose path starts with "health" is public (checked over `allRoutes`)                                                                                                          |
+| L175             | ConditionalExpression `false`; StringLiteral `""`; ObjectLiteral `{}` and StringLiteral `""` (NoCo)              | Not worth killing | No route answers 204 today (checked over `allRoutes`), so the no-body branch is unreachable from the manifest; `successResponseFor` is private                                            |
+| L195; L196; L197 | ObjectLiteral `{}`; BooleanLiteral `false`; StringLiteral (NoCo)                                                 | Not worth killing | No route has `aliasOf` today (checked over `allRoutes`), so the deprecated-alias branch is unreachable from the manifest                                                                  |
+| L244             | StringLiteral `""` (ErrorResponse `io` "output")                                                                 | Equivalent        | ErrorResponse has no defaults or transforms, so its input and output JSON Schema are the same; the committed openapi.json comparison still passes                                         |
+
+#### `src/pagination.ts`
+
+| Line | Fault                        | Class             | Reason                                           |
+| ---- | ---------------------------- | ----------------- | ------------------------------------------------ |
+| L39  | StringLiteral `""` (message) | Not worth killing | Error message copy; the cursor pattern is tested |
+
+#### `src/primitives.ts`
+
+| Line                                   | Fault                                                                                                | Class             | Reason                                                                                                                                                                                                                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L6; L49                                | EqualityOperator `<` for `<=`                                                                        | Not worth killing | Differs only when the float error equals the tolerance exactly; no value on the 2-place grid (±200,000,000 in pennies) or the 4-place grid (±100) does (checked by enumeration). The tolerance has no documented value. Listed for the coordinator             |
+| L20; L21; L28; L44; L61; L74; L78; L83 | StringLiteral `""`; ObjectLiteral `{}` at L77 (messages)                                             | Not worth killing | Error message copy; every rule is tested                                                                                                                                                                                                                       |
+| L28                                    | ObjectLiteral `{}` (MoneyNonNegative `.meta`)                                                        | Equivalent        | The refined schema keeps Money's description through zod's parent link, so the generated openapi.json is unchanged (the committed-document test passes)                                                                                                        |
+| L49                                    | MethodExpression `Math.min` for `Math.max`                                                           | Not worth killing | Every 4-place value from -100 to 100 is still accepted (checked by enumeration); only values within about 1e-10 of a 4-place value, inside the undocumented float tolerance, could change                                                                      |
+| L72                                    | ConditionalExpression `true` (month check, col 39); ConditionalExpression `true` (day check, col 75) | Equivalent        | Any month or day overflow (month 00 or 13, day 00 or past the month end) also moves the year or the month, so the remaining checks refuse the same dates                                                                                                       |
+| L72                                    | ConditionalExpression `true` (year check); LogicalOperator `year \|\| month`                         | Possible bug      | `IsoDate` refuses years 0000 to 0099, because Date.UTC maps them to 1900 to 1999, so the year check fails on real calendar dates such as "0050-01-01". These two faults differ from the code only on those years. Reported to the coordinator; not fixed in M3 |
+
+#### `src/validate.ts`
+
+| Line | Fault                                                   | Class             | Reason                                                                                                                        |
+| ---- | ------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| L34  | MethodExpression `issue.message` (no 200-character cap) | Not worth killing | The 200-character cap is a private constant with no documented rule; a test would copy the number. Listed for the coordinator |
+
+### `packages/mcp`
+
+4,212 faults: 3,870 killed, 114 timed out, 188 survived, 34 no coverage, 6 runtime errors (not scored). Four lanes triaged their own files from runs over those files alone; this is one forced run over the whole package afterwards, on a loaded laptop. Each fault took longer, so 72 faults that an earlier run killed timed out here (class Timed out under load). The fault in `src/auth/token-verifier.ts` that a lane reported to the coordinator (a token accepted at its exact expiry instant) was fixed and is now killed.
+
+| File                                                   | Faults | Not caught | Equivalent | Not worth killing | Tax gate | Timed out under load |
+| ------------------------------------------------------ | ------ | ---------- | ---------- | ----------------- | -------- | -------------------- |
+| `src/assumptions.ts`                                   | 25     | 2          | 0          | 1                 | 0        | 0                    |
+| `src/audit.ts`                                         | 84     | 8          | 7          | 0                 | 0        | 1                    |
+| `src/auth/failed-auth-limiter.ts`                      | 102    | 12         | 5          | 5                 | 0        | 0                    |
+| `src/auth/limit-store.ts`                              | 122    | 7          | 2          | 4                 | 0        | 0                    |
+| `src/auth/rate-limiter.ts`                             | 40     | 2          | 0          | 2                 | 0        | 0                    |
+| `src/auth/scopes.ts`                                   | 106    | 4          | 1          | 2                 | 0        | 0                    |
+| `src/auth/token-verifier.ts`                           | 92     | 2          | 2          | 0                 | 0        | 0                    |
+| `src/define-tool.ts`                                   | 132    | 12         | 9          | 1                 | 0        | 0                    |
+| `src/envelope.ts`                                      | 114    | 14         | 1          | 5                 | 0        | 3                    |
+| `src/policy/output-policy.ts`                          | 114    | 3          | 3          | 0                 | 0        | 0                    |
+| `src/prompts/import-prompts.ts`                        | 104    | 21         | 3          | 5                 | 0        | 1                    |
+| `src/provider/in-memory.ts`                            | 172    | 12         | 3          | 4                 | 0        | 1                    |
+| `src/resources/schema.resource.ts`                     | 33     | 14         | 0          | 0                 | 0        | 1                    |
+| `src/server.ts`                                        | 22     | 1          | 0          | 1                 | 0        | 0                    |
+| `src/tools/read/common.ts`                             | 201    | 26         | 3          | 0                 | 0        | 1                    |
+| `src/tools/read/getBalanceHistory.ts`                  | 426    | 27         | 5          | 4                 | 0        | 0                    |
+| `src/tools/read/getBudgetSummary.ts`                   | 99     | 5          | 3          | 0                 | 0        | 0                    |
+| `src/tools/read/getDataCoverage.ts`                    | 94     | 2          | 0          | 1                 | 0        | 0                    |
+| `src/tools/read/getDebtOverview.ts`                    | 99     | 6          | 3          | 3                 | 0        | 0                    |
+| `src/tools/read/getFinancialSnapshot.ts`               | 154    | 7          | 3          | 2                 | 0        | 0                    |
+| `src/tools/read/getRetirementPicture.ts`               | 176    | 20         | 1          | 1                 | 0        | 1                    |
+| `src/tools/read/getTaxYearPosition.ts`                 | 178    | 29         | 1          | 2                 | 6        | 0                    |
+| `src/tools/read/listAccounts.ts`                       | 102    | 9          | 2          | 2                 | 0        | 1                    |
+| `src/tools/read/listTaxRecords.ts`                     | 190    | 7          | 2          | 1                 | 0        | 0                    |
+| `src/tools/simulate/common.ts`                         | 27     | 4          | 2          | 0                 | 0        | 1                    |
+| `src/tools/simulate/compareMortgageOverpayVsInvest.ts` | 144    | 5          | 2          | 2                 | 0        | 0                    |
+| `src/tools/simulate/projectNetWorth.ts`                | 188    | 16         | 6          | 3                 | 0        | 0                    |
+| `src/tools/simulate/simulateDebtPayoff.ts`             | 270    | 17         | 7          | 4                 | 0        | 0                    |
+| `src/tools/simulate/simulateRetirement.ts`             | 47     | 1          | 0          | 1                 | 0        | 0                    |
+| `src/tools/write/common.ts`                            | 40     | 4          | 0          | 0                 | 0        | 1                    |
+| `src/tools/write/stageImport.ts`                       | 77     | 4          | 0          | 1                 | 0        | 1                    |
+| `src/transports/http.ts`                               | 254    | 20         | 3          | 17                | 0        | 0                    |
+| `src/transports/stdio.ts`                              | 90     | 13         | 0          | 10                | 0        | 0                    |
+
+The class counts are rows, not faults: one row may cover several faults on a line.
+
+#### `src/assumptions.ts`
+
+| Line | Fault                                                   | Class                | Reason                                                                                                                                                 |
+| ---- | ------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L33  | StringLiteral `""` (the tax notice constant, timed out) | Timed out under load | A module-level fault, so every mcp test runs for it; the lane run over this file killed it, and the final full run timed out under load                |
+| L72  | StringLiteral `""` (assumption reason)                  | Not worth killing    | Reason text in the catch branch, reached only when the engine no longer supports the current tax year; no test can reach it without mocking the engine |
+
+#### `src/audit.ts`
+
+| Line | Fault                                                                                 | Class                | Reason                                                                                                  |
+| ---- | ------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------- |
+| L13  | ConditionalExpression `false` (`if (!sink)`; timed out in the final run)              | Equivalent           | Calling an undefined sink throws inside the `try`, which swallows it: nothing is sent either way        |
+| L16  | ConditionalExpression `true` (`if (pending)`; timed out in the final run)             | Equivalent           | `undefined.catch` throws inside the same `try`, which swallows it                                       |
+| L16  | ConditionalExpression `false` (`if (pending)`, Timeout)                               | Timed out under load | Killed in the lane run (no row in its ledger); timed out in the final run                               |
+| L45  | ConditionalExpression `false` (length > 64; timed out in the final run)               | Equivalent           | `AUDIT_TOOL_NAME` allows at most 64 characters itself, so a longer name still falls back to the prefix  |
+| L51  | StringLiteral `""` (encoding `"utf8"`)                                                | Equivalent           | Node treats an empty encoding as UTF-8: `Buffer.byteLength("é£€", "")` is 7, the same as with `"utf8"`  |
+| L77  | ConditionalExpression `true` (`typeof prop === "string"`; timed out in the final run) | Equivalent           | `KINDS` has no symbol keys, so a symbol property still finds no kind                                    |
+| L107 | StringLiteral `"Stryker was here!"` (non-Error message, NoCo)                         | Equivalent           | Neither `""` nor the replacement starts with `INSUFFICIENT_SCOPE`, so the outcome is `error` either way |
+| L109 | StringLiteral `""` (encoding `"utf8"`)                                                | Equivalent           | As L51: an empty encoding is UTF-8                                                                      |
+
+#### `src/auth/failed-auth-limiter.ts`
+
+| Line | Fault                                                            | Class             | Reason                                                                                                                              |
+| ---- | ---------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| L32  | Regex without the `$` anchor                                     | Not worth killing | Differs only for text after the dotted quad, which a socket address (`req.ip`) never has                                            |
+| L34  | ConditionalExpression `false`; StringLiteral `""`                | Equivalent        | An address with no colon splits into one group, fails the eight-group check and is returned unchanged                               |
+| L35  | LogicalOperator `&&` (zone suffix kept)                          | Equivalent        | A zone suffix sits on the last group only, and the key reads the first four groups                                                  |
+| L38  | ConditionalExpression `false`; ArrayDeclaration (tail undefined) | Equivalent        | With no `::`, `tail ? … : []` gives `[]` anyway, and `tailParts` is not read on that branch                                         |
+| L38  | ArrayDeclaration `["Stryker was here"]` (empty tail, NoCo)       | Equivalent        | An extra tail group lands after the four prefix groups; it differs only for a head of eight or more groups, which is not an address |
+| L44  | StringLiteral `""` (fill value)                                  | Equivalent        | `g \|\| "0"` turns an empty group into `"0"` before parsing                                                                         |
+| L48  | StringLiteral `""` (`g \|\| "0"`, NoCo)                          | Not worth killing | An empty group only comes from a stray colon in malformed input                                                                     |
+| L90  | StringLiteral `""`                                               | Not worth killing | Log wording                                                                                                                         |
+| L120 | StringLiteral `""`                                               | Not worth killing | Log wording                                                                                                                         |
+| L141 | StringLiteral `""`                                               | Not worth killing | Log wording                                                                                                                         |
+
+#### `src/auth/limit-store.ts`
+
+| Line | Fault                                                                 | Class             | Reason                                                                                                                                                  |
+| ---- | --------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L76  | EqualityOperator `>=`                                                 | Not worth killing | Only a tie on the wait changes, where which window is named is unspecified; the retry time is the same                                                  |
+| L121 | ConditionalExpression `true`; EqualityOperator `<=` (`now < resetAt`) | Equivalent        | A refund on an expired bucket is never seen: any later read at or after `resetAt` starts the window again, and the store's clock does not run backwards |
+| L126 | ConditionalExpression `false`                                         | Equivalent        | Dropping expired buckets before the cap is reached changes nothing: an expired bucket already reads as empty                                            |
+| L130 | BlockStatement `{}` (Timeout)                                         | Not worth killing | The eviction loop never ends; caught only as a timeout, which is not counted as caught                                                                  |
+| L132 | ConditionalExpression `false`                                         | Not worth killing | Reachable only with a cap of 0 or less, and the fault then loops forever                                                                                |
+| L133 | CallExpression (Timeout)                                              | Not worth killing | As L130: the eviction loop never ends                                                                                                                   |
+
+#### `src/auth/rate-limiter.ts`
+
+| Line | Fault              | Class             | Reason      |
+| ---- | ------------------ | ----------------- | ----------- |
+| L62  | StringLiteral `""` | Not worth killing | Log wording |
+| L68  | StringLiteral      | Not worth killing | Log wording |
+
+#### `src/auth/scopes.ts`
+
+| Line | Fault                                                     | Class             | Reason                                                               |
+| ---- | --------------------------------------------------------- | ----------------- | -------------------------------------------------------------------- |
+| L138 | StringLiteral `""` (both join separators)                 | Not worth killing | Message wording; a test checks every needed scope is named           |
+| L152 | MethodExpression `toLowerCase`                            | Not worth killing | Developer error text for a missing table entry                       |
+| L196 | ConditionalExpression `true` (timed out in the final run) | Equivalent        | `KINDS` has no symbol keys, so a symbol property still finds no kind |
+
+#### `src/auth/token-verifier.ts`
+
+| Line | Fault                                  | Class      | Reason                                                                          |
+| ---- | -------------------------------------- | ---------- | ------------------------------------------------------------------------------- |
+| L87  | Regex `\s` for `\s+`                   | Equivalent | Extra spaces go into the capture and are removed by `trim()`                    |
+| L94  | StringLiteral (`match[1] ?? ""`, NoCo) | Equivalent | The `(.*)` group always takes part in a match, so `match[1]` is never undefined |
+
+#### `src/define-tool.ts`
+
+| Line | Fault                                                   | Class             | Reason                                                                                                                                                                              |
+| ---- | ------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L74  | ConditionalExpression `true` (Timeout)                  | Equivalent        | Wrapping `validateToolInput` again on each registration nests wrappers, each with its own registry; tool names are unique per server, so a rejection still reaches exactly one hook |
+| L88  | OptionalChaining `registry.get(toolName)(err)`          | Equivalent        | A tool with no hook throws a TypeError inside the try, whose catch swallows it: the same as calling nothing                                                                         |
+| L96  | CallExpression (no `set`; Timeout)                      | Equivalent        | Same as L74: every registration wraps again with a fresh registry, and each rejection reaches one hook                                                                              |
+| L145 | StringLiteral `""` (Timeout)                            | Equivalent        | `Buffer.byteLength` with an empty or unknown encoding counts UTF-8 bytes                                                                                                            |
+| L153 | OptionalChaining; StringLiteral fallback (NoCo)         | Equivalent        | `errorResult` always returns exactly one text block, so the first block's text is always there                                                                                      |
+| L173 | OptionalChaining; StringLiteral fallback message (NoCo) | Equivalent        | A failed zod `safeParse` always carries at least one issue, so `issue` is never undefined                                                                                           |
+| L176 | OptionalChaining `issue.path`                           | Equivalent        | As L173: `issue` is always defined                                                                                                                                                  |
+| L181 | OptionalChaining `ctx.fingerprintArgs(...)` (Timeout)   | Equivalent        | With no `fingerprintArgs` the call throws inside the try; the catch swallows it and the fingerprint stays undefined, as before                                                      |
+| L193 | StringLiteral `""`                                      | Not worth killing | The internal message is caught at once and replaced by the INTERNAL body; it never leaves the handler                                                                               |
+| L235 | StringLiteral `""`                                      | Equivalent        | As L145                                                                                                                                                                             |
+
+#### `src/envelope.ts`
+
+| Line | Fault                                                             | Class                | Reason                                                                                                                                                                          |
+| ---- | ----------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L90  | ConditionalExpression `false` (Timeout)                           | Timed out under load | Killed in the earlier run by "leaves out taxYear, verification and notice" (`envelope.test.ts`); timed out in the final run                                                     |
+| L98  | ConditionalExpression `false` (Timeout)                           | Timed out under load | As L90                                                                                                                                                                          |
+| L99  | ConditionalExpression `false` (Timeout)                           | Timed out under load | As L90                                                                                                                                                                          |
+| L108 | ArithmeticOperator `a.length * 2`; MethodExpression `a` (Timeout) | Not worth killing    | Halving returns the whole array, so the fit loop never ends; only observable as a hang, which Stryker records as a timeout                                                      |
+| L112 | ConditionalExpression `true`; EqualityOperator `>= 0`             | Not worth killing    | Unreachable: an empty array result serialises shorter than the bare (null) form, so an over-budget envelope with one already returned "overhead"; the mutant would loop forever |
+| L113 | ConditionalExpression `false` (twice); LogicalOperator `&&`       | Equivalent           | A null result cannot get here (same overhead argument as L112), and for any other non-object `Object.entries` yields no arrays, so the function returns undefined either way    |
+| L116 | ConditionalExpression `true`; EqualityOperator `>= 0` (Timeout)   | Not worth killing    | Picks an empty array and halves it forever; "reports unshortenable when every array in the result is already empty" exercises it, but the only symptom is a hang (timeout)      |
+| L116 | EqualityOperator `v.length >= best[1].length`                     | Not worth killing    | Changes only which of two equally largest arrays is halved first; the contract says "the largest", so a test would pin an arbitrary tie-break                                   |
+| L140 | BlockStatement `{}` (Timeout)                                     | Not worth killing    | Empty loop body never ends; only observable as a hang                                                                                                                           |
+
+#### `src/policy/output-policy.ts`
+
+| Line | Fault                                                                   | Class      | Reason                                                                                                                                           |
+| ---- | ----------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L58  | StringLiteral `""` (in place of the `"\\$&"` escape)                    | Equivalent | No name in PROVIDER_NAMES contains a regex special character, so the escape never changes a name                                                 |
+| L86  | ConditionalExpression `true` (in place of `typeof value === "object"`)  | Equivalent | Strings are handled first; any other truthy primitive (a number or `true`) gives `Object.entries` an empty list, so nothing is walked either way |
+| L101 | ConditionalExpression `true` (in place of `typeof output === "object"`) | Equivalent | A truthy primitive result has no `notice` property, so it reads undefined either way and the same notice violation is reported                   |
+
+#### `src/prompts/import-prompts.ts`
+
+| Line          | Fault                                                                                    | Class                | Reason                                                                                                                                                                                                                                 |
+| ------------- | ---------------------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L6            | ObjectLiteral `{}` (formatter options)                                                   | Not worth killing    | The existing BST case (`2026-06-30T23:30Z` is July in London) kills it on a runner whose zone is not London; on this laptop (zone GMT/BST) the default formatter gives the same month and year parts                                   |
+| L11; L12      | OptionalChaining; StringLiteral `""` (the `"1970"` and `"01"` fallbacks, NoCo)           | Equivalent           | A formatter asked for year and month always returns both parts, so the fallbacks and the optional chain are never used                                                                                                                 |
+| L12           | ConditionalExpression `true` (month part finder)                                         | Equivalent           | en-GB orders year-and-month as month first ("11/2026"), so the first part is the month part either way                                                                                                                                 |
+| L22; L25; L29 | Regex (month pattern, three); StringLiteral `""` (category list, framing text) (Timeout) | Timed out under load | Killed in the lane run (no row in its ledger); timed out in the final run                                                                                                                                                              |
+| L36; L52      | StringLiteral `""` (opening sentence); `"Stryker was here!"` (blank line)                | Not worth killing    | Prompt copy and layout; the only test would pin the exact wording                                                                                                                                                                      |
+| L37; L39; L54 | StringLiteral `"Stryker was here!"` (blank separator lines)                              | Not worth killing    | Blank lines between sections; a test would pin layout, not a fact the prompt must carry                                                                                                                                                |
+| L40; L55      | StringLiteral `""` ("Steps:" header)                                                     | Not worth killing    | A heading word; the numbered steps themselves are tested                                                                                                                                                                               |
+| L65           | ArrowFunction `() => undefined` (default `now`; timed out in the final run)              | Equivalent           | `londonMonth(undefined)` takes its own default of `new Date()`, the same instant                                                                                                                                                       |
+| L96           | BlockStatement `{}` (Timeout)                                                            | Not worth killing    | An empty prompt handler leaves the request unanswered, so the existing prompt tests wait until Stryker's limit (Timeout). The tests do fail on it; a test that ends sooner would need its own wall-clock limit, which the rules forbid |
+| L101          | ConditionalExpression `true` (`typeof month === "string"`)                               | Equivalent           | An absent month makes `MONTH.test(undefined)` test the text "undefined", which fails, so it falls back to last month either way                                                                                                        |
+
+#### `src/provider/in-memory.ts`
+
+| Line | Fault                                                                                   | Class                | Reason                                                                                                  |
+| ---- | --------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------- |
+| L43  | ArrayDeclaration (two); ArrowFunction `() => undefined` (accounts and details, Timeout) | Timed out under load | Killed in the lane run (no row in its ledger); timed out in the final run                               |
+| L60  | ArrayDeclaration `["Stryker was here"]`                                                 | Not worth killing    | Adds the id `"undefined"` to the owned set, matched only by a row whose account id is that literal text |
+| L62  | ArrayDeclaration `["Stryker was here"]`                                                 | Not worth killing    | A string in place of a row gets account id `""`, which matters only if an account had an empty id       |
+| L63  | StringLiteral (NoCo)                                                                    | Not worth killing    | As L62: only an account with an empty id would tell the difference                                      |
+| L117 | MethodExpression (sort removed)                                                         | Equivalent           | `rowsOf` already sorts each account's rows by month, so the months are in order                         |
+| L118 | ArrowFunction; ArithmeticOperator `a + b`                                               | Equivalent           | As L117: the input is already ascending, and neither comparator reorders it                             |
+| L121 | EqualityOperator `<=`                                                                   | Equivalent           | The extra step compares with `undefined` (NaN), which adds no gap                                       |
+| L121 | EqualityOperator `>=`; UpdateOperator `i--` (Timeout)                                   | Not worth killing    | The gap loop never ends; caught only as a timeout                                                       |
+
+#### `src/resources/schema.resource.ts`
+
+| Line           | Fault                                                                                                                 | Class                | Reason                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------- |
+| L8; L10 to L20 | ArrayDeclaration and StringLiteral (liability set); ObjectLiteral and StringLiteral (category meanings) (14, Timeout) | Timed out under load | The lane run killed every fault in this file; all 14 timed out in the final run |
+
+#### `src/server.ts`
+
+| Line | Fault                                           | Class             | Reason                                                    |
+| ---- | ----------------------------------------------- | ----------------- | --------------------------------------------------------- |
+| L68  | StringLiteral `""` (timed out in the final run) | Not worth killing | Display name sent to clients; a test would pin a constant |
+
+#### `src/tools/read/common.ts`
+
+| Line                                                                                             | Fault                                                                                        | Class                | Reason                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L28; L29; L31 to L34; L236; L270; L271; L275; L276; L278 to L280; L282; L284 to L286; L288; L300 | StringLiteral `""`; ObjectLiteral `{}` (category labels and missing-entry text, 20, Timeout) | Timed out under load | Killed in the lane run (no row in its ledger); timed out in the final run                                                                                                                  |
+| L43; L44; L48                                                                                    | ConditionalExpression `false` (U+2028, U+2029, U+FEFF checks)                                | Equivalent           | All three are in JavaScript's `\s`, so the `/\s+/g` replace that follows turns them into one space whether or not `isUnsafe` does first                                                    |
+| L156; L165                                                                                       | ArrayDeclaration `["Stryker was here"]` (account details)                                    | Equivalent           | `PortfolioSnapshot` skips a detail with no `accountId`, so a stray string row is ignored; on L165 the fault only applies when the provider sent no details at all                          |
+| L177                                                                                             | ArrayDeclaration `["Stryker was here"]` (saved budget entries)                               | Equivalent           | Only reached when the provider sent no entries; `listedBudgetEntries` lists from the picture's rows and looks a saved row up by id, and the string has no id, so nothing is listed from it |
+
+#### `src/tools/read/getBalanceHistory.ts`
+
+| Line                                           | Fault                                                                            | Class             | Reason                                                                                                                                                               |
+| ---------------------------------------------- | -------------------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L32                                            | StringLiteral `""` (month format message; timed out in the final run)            | Not worth killing | Validation message copy; the refusal itself is tested                                                                                                                |
+| L93; L105; L106; L110; L115                    | BlockStatement `{}`; ArithmeticOperator (seven) in `periods()` (Timeout)         | Not worth killing | Each fault stops the loop cursor advancing, so the period loop never ends; only a time limit stops it, and Stryker reports a timeout, which is not counted as caught |
+| L165; L179; L180                               | OptionalChaining removed on `saved.get(...)`                                     | Equivalent        | `saved` is keyed `String(a.id \|\| \`acc_${i}\`)`, the same rule `PortfolioSnapshot` uses for the resolved ids, so every selected account has an entry               |
+| L273; L275; L283; L284; L316; L318; L391; L394 | StringLiteral `""` or template (error messages and hints)                        | Not worth killing | Error copy; the code and `field` of each refusal are tested                                                                                                          |
+| L293                                           | ArrayDeclaration `["Stryker was here"]`                                          | Equivalent        | `PortfolioSnapshot` skips a detail with no `accountId`; the details are not used here                                                                                |
+| L294                                           | StringLiteral (fallback key `acc_${i}`, NoCo)                                    | Not worth killing | Only for a stored account with no id; backend accounts always carry one                                                                                              |
+| L329                                           | ArrayDeclaration `["Stryker was here"]`                                          | Equivalent        | Only when no account is selected: no group is built, so the rows never reach the output                                                                              |
+| L363                                           | BooleanLiteral `true` (`members[0] ? ... : false`, NoCo)                         | Equivalent        | The line above returns early for an empty category, so `members[0]` always exists                                                                                    |
+| L420                                           | LogicalOperator `delta === null && !prev`; ConditionalExpression `false` (twice) | Equivalent        | `delta` is null exactly when `prev` is null (L416), so either test alone decides the same                                                                            |
+
+#### `src/tools/read/getBudgetSummary.ts`
+
+| Line       | Fault                                                        | Class      | Reason                                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L114       | ConditionalExpression `true`; EqualityOperator `>= 0`        | Equivalent | With no linked line unset, the picture's budget is unknown only when there are no rows (`selectBudgetTotals`), and re-selecting over the same empty rows is unknown too |
+| L144; L155 | StringLiteral `""` (fallbacks `"Entry"`, `"rent"`, NoCo)     | Equivalent | Unreachable: the anonymous labels have one per entry, and an offer has a null `kind` only for take-home, which takes the other branch                                   |
+| L145       | LogicalOperator `categories[i] && categoryLabel(e.category)` | Equivalent | The labeller gives the same name the same label every time, so labelling the category again returns the same string                                                     |
+
+#### `src/tools/read/getDataCoverage.ts`
+
+| Line     | Fault                                                        | Class             | Reason                                      |
+| -------- | ------------------------------------------------------------ | ----------------- | ------------------------------------------- |
+| L64; L67 | StringLiteral template or `""` (page error message and hint) | Not worth killing | Error copy; the code and `field` are tested |
+
+#### `src/tools/read/getDebtOverview.ts`
+
+| Line | Fault                                                     | Class             | Reason                                                                                                    |
+| ---- | --------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
+| L51  | StringLiteral `""` (NoCo)                                 | Not worth killing | Unreachable: every debt item comes from a resolved account, so the account lookup always succeeds         |
+| L52  | StringLiteral `""` (NoCo)                                 | Not worth killing | As L51                                                                                                    |
+| L63  | StringLiteral `""` (NoCo)                                 | Not worth killing | Unreachable: `toDebtItems` always sets `type`                                                             |
+| L64  | LogicalOperator `d.balanceGbp && d.balance`               | Equivalent        | `toDebtItems` sets `balanceGbp` and `balance` to the same value, so `a && a` equals `a ?? a` (0 included) |
+| L65  | LogicalOperator `d.interestRateApr && d.apr`              | Equivalent        | As L64: both are the same `apr`                                                                           |
+| L67  | LogicalOperator `d.minimumPaymentGbp && d.minimumPayment` | Equivalent        | As L64: both are the same `minimumPayment`                                                                |
+
+#### `src/tools/read/getFinancialSnapshot.ts`
+
+| Line       | Fault                                                                 | Class             | Reason                                                                                                                |
+| ---------- | --------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| L73        | StringLiteral `""` (month format message; timed out in the final run) | Not worth killing | Validation message copy                                                                                               |
+| L184; L186 | StringLiteral `""` (future month message and hint)                    | Not worth killing | Error copy; the current month being accepted is tested                                                                |
+| L193; L218 | ArrayDeclaration `["Stryker was here"]`                               | Equivalent        | `PortfolioSnapshot` skips a detail with no `accountId`                                                                |
+| L201       | ArrayDeclaration `["Stryker was here"]`                               | Equivalent        | Only with no accounts, where the answer is `ASK_NO_ACCOUNTS` and every total is 0 from an empty snapshot              |
+| L235       | ArrayDeclaration `["Stryker was here"]`                               | Equivalent        | Only when there is no point for the month; filtering a string for `.carried` gives none, so the count is 0 either way |
+
+#### `src/tools/read/getRetirementPicture.ts`
+
+| Line                   | Fault                                                                        | Class                | Reason                                                                                                                                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L78 to L106            | StringLiteral `""`; ObjectLiteral `{}` (the missing-entry asks, 15, Timeout) | Timed out under load | Killed in the lane run (no row in its ledger); timed out in the final run                                                                                                                                             |
+| L208; L209; L210; L211 | ObjectLiteral `{}`; StringLiteral `""` (the cap's summary entry)             | Not worth killing    | Unreachable: at most five missing entries can arise (accounts, the salary and three plan details, or accounts, the salary, two State Pension details and the target), and the cap of five only acts on more than five |
+| L249                   | ArrayDeclaration `["Stryker was here"]`                                      | Equivalent           | `toSnapshotRows` skips a row with no account id, so a string row adds nothing, the same as `[]`                                                                                                                       |
+
+#### `src/tools/read/getTaxYearPosition.ts`
+
+| Line | Fault                                                       | Class             | Reason                                                                                                                         |
+| ---- | ----------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| L105 | 16 faults on the ownership share guard (6 NoCo)             | Tax gate          | The share sets the rental profit share and every tax figure after it; a test must assert an engine tax figure (E41 decision 8) |
+| L109 | ConditionalExpression `false`; StringLiteral `""`           | Tax gate          | Chooses the salary the engine taxes; only visible in tax figures                                                               |
+| L133 | ConditionalExpression `true`; EqualityOperator `<=` and `<` | Tax gate          | Personal Allowance taper position at its boundaries is a tax-year position computed from engine rules                          |
+| L136 | ArithmeticOperator (two)                                    | Tax gate          | Taxable non-savings income and its band split are tax figures                                                                  |
+| L141 | ArithmeticOperator `b.rate / 100`                           | Tax gate          | A band's rate in per cent is a tax figure                                                                                      |
+| L145 | MethodExpression `[...bands]`                               | Tax gate          | Shows only as the wrong `topBand` for income spanning two bands, a tax figure                                                  |
+| L151 | ArrayDeclaration `["Stryker was here"]`                     | Equivalent        | Used only when the estimate is known; no branch looks for that placeholder, so it behaves as `[]`                              |
+| L152 | ConditionalExpression `true` (`records.length === 0`)       | Not worth killing | Only swaps which `annualSalary` missing entry's wording is shown; the field is the same, so a test would pin copy              |
+| L159 | ConditionalExpression `false`; StringLiteral `""`           | Not worth killing | Falls through to the later `annualSalary` entry with the same field and question; only the why wording differs                 |
+
+#### `src/tools/read/listAccounts.ts`
+
+| Line          | Fault                                                    | Class                | Reason                                                                                                                                                  |
+| ------------- | -------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L38           | Regex without `^`; Regex without `$` (Timeout)           | Timed out under load | Killed in the lane run (no row in its ledger); timed out in the final run                                                                               |
+| L42; L43; L45 | OptionalChaining removed on `raw`                        | Not worth killing    | `raw` is missing only for a stored account with no id (its resolved id is `acc_${i}`); backend accounts always carry one                                |
+| L46           | ConditionalExpression `true` (`typeof end === "string"`) | Equivalent           | The stored field is a string, null or missing; `String(null)` and `String(undefined)` never match the date pattern, so the pattern alone gives null too |
+| L68           | ArrayDeclaration `["Stryker was here"]`                  | Equivalent           | Only when the provider sent no accounts, so there is no mortgage row to look up                                                                         |
+| L95; L96      | StringLiteral `""` (fallback `"Debt account"`, NoCo)     | Not worth killing    | Unreachable guard: every row's id is in `refs`, built from the same accounts                                                                            |
+
+#### `src/tools/read/listTaxRecords.ts`
+
+| Line | Fault                                                                                 | Class             | Reason                                                                                                                                                     |
+| ---- | ------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L136 | ConditionalExpression `false` (twice); LogicalOperator `&&`; EqualityOperator `v < 0` | Equivalent        | Month grouping presets every month, so `g` always exists, and a record that passed `inYear > 0` has no negative month value; adding a zero changes nothing |
+| L155 | StringLiteral `""` (NoCo)                                                             | Not worth killing | Unreachable: the engine month rule gives 0 for an unknown frequency, so such a record is dropped at `inYear <= 0` before this line                         |
+| L183 | ConditionalExpression `false`; StringLiteral `""` (the `"month"` comparison)          | Equivalent        | A month key holds no `\|`, so `indexOf` gives -1 and `slice(0)` returns the key unchanged                                                                  |
+
+#### `src/tools/simulate/common.ts`
+
+| Line     | Fault                                                                 | Class                | Reason                                                                                                                  |
+| -------- | --------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| L15      | ObjectLiteral `{}` (SIMULATE_ANNOTATIONS; timed out in the final run) | Equivalent           | defineFlumpTool spreads the tool's annotations over DEFAULT_ANNOTATIONS, which hold the same four values                |
+| L46      | ConditionalExpression `false` (omit `value`)                          | Equivalent           | At the tool boundary the result is JSON, and `JSON.stringify` drops a `value: undefined` key, so the output is the same |
+| L59; L61 | ArrowFunction `() => undefined` (`pctInput`, `gbpInput`, Timeout)     | Timed out under load | Killed in the lane run (no row in its ledger); timed out in the final run                                               |
+
+#### `src/tools/simulate/compareMortgageOverpayVsInvest.ts`
+
+| Line     | Fault                                          | Class             | Reason                                                                                       |
+| -------- | ---------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------- |
+| L71; L75 | StringLiteral `""` (assumption reasons)        | Not worth killing | Reason text for the echoed inputs; the field, value and source are tested                    |
+| L133     | ArrayDeclaration `["Stryker was here"]` (NoCo) | Equivalent        | The tool only gets here with an account from `m.accounts`, so `m.raw.accounts` is always set |
+| L134     | OptionalChaining `raw.termMonths`              | Equivalent        | The raw row for a resolved account always exists, so `raw` is never undefined here           |
+| L171     | StringLiteral `""` (mortgageTerms reason)      | Not worth killing | Reason text; the `mortgageTerms` field and `derived` source are tested                       |
+
+#### `src/tools/simulate/projectNetWorth.ts`
+
+| Line                   | Fault                                                                    | Class             | Reason                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------ |
+| L142; L146; L156; L168 | StringLiteral `""` (assumption reasons)                                  | Not worth killing | Reason text; every field, value and source is tested                                                   |
+| L198; L199             | StringLiteral `""` (rate assumption reasons)                             | Not worth killing | Reason text; the default and supplied sources and values are tested                                    |
+| L206; L207             | OptionalChaining `base.pensionContributionPct`, `base.annualGrossSalary` | Equivalent        | `BuildContextPackInput.baseline` is required, so `m.raw.baseline` is always set                        |
+| L217                   | StringLiteral `""` (pension contribution reason)                         | Not worth killing | Reason text; the field, value and `user_profile` source are tested                                     |
+| L228                   | StringLiteral; ArithmeticOperator `i - 1` (scenario id)                  | Equivalent        | `calculateForecast` never reads a scenario's id and the tool does not output it                        |
+| L230                   | StringLiteral `""` (in place of `"HAVE_CHILD"`)                          | Equivalent        | The engine treats only `BUY_HOME` specially; any other type is a plain cost                            |
+| L256                   | ConditionalExpression `false` (`t.year === 0`)                           | Equivalent        | Year 0 also passes `t.year % 5 === 0`                                                                  |
+| L270                   | EqualityOperator `heldFlat <= 0`                                         | Equivalent        | The note is built only when `heldFlat !== 0`, so `< 0` and `<= 0` agree on every value that reaches it |
+| L281; L282             | OptionalChaining `last.baselineNetWorthGbp`, `last.scenarioNetWorthGbp`  | Equivalent        | The horizon is at least 1 year, so the trajectory always has a last point                              |
+
+#### `src/tools/simulate/simulateDebtPayoff.ts`
+
+| Line                   | Fault                                                                         | Class             | Reason                                                                                                                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L94                    | AssignmentOperator `i -= 12` (Timeout)                                        | Not worth killing | Loops forever, so every yearly-schedule test hangs until Stryker's limit. The tests do fail on it; ending sooner would need a wall-clock limit in a test, which the rules forbid |
+| L94                    | EqualityOperator `i <= schedule.length`                                       | Equivalent        | The extra pass slices an empty chunk, which the `if (!last) continue` guard skips                                                                                                |
+| L97                    | ConditionalExpression `false`                                                 | Equivalent        | With `i < schedule.length` every chunk has at least one month, so `last` is always set                                                                                           |
+| L106                   | MethodExpression `rows`; ConditionalExpression `false`                        | Equivalent        | The engine stops at 360 months, at most 30 yearly rows, so the 30-row cap never cuts and `rows.length > 30` is never true (the 30-row case is tested)                            |
+| L161; L162; L186; L193 | StringLiteral `""` (assumption reasons)                                       | Not worth killing | Reason text; the fields, values and sources are tested                                                                                                                           |
+| L172                   | StringLiteral `""` (`"Debt account"` fallback, NoCo)                          | Not worth killing | Unreachable fallback: every debt item comes from a recorded account, so `acctByUuid` always finds it (the numbered reference is tested)                                          |
+| L199                   | LogicalOperator `d.balanceGbp && d.balance`                                   | Equivalent        | `toDebtItems` sets `balance` and `balanceGbp` to the same figure, so both forms give it (and 0 for 0)                                                                            |
+| L235                   | ConditionalExpression `false` (`sim.length === 0`)                            | Equivalent        | With no debts in `sim`, `startingDebtGbp` is 0, so the second test `startingDebtGbp <= 0` is true anyway                                                                         |
+| L263; L266             | StringLiteral `""` (in place of `"SNOWBALL"`)                                 | Equivalent        | `sortDebtsByStrategy` treats any strategy other than `"AVALANCHE"` as snowball                                                                                                   |
+| L283                   | ConditionalExpression `false`; ArrayDeclaration `["Stryker was here"]` (NoCo) | Equivalent        | Every debt the engine models is pushed from `items` with its own id, and `idByUuid` holds every item's id, so the lookup never misses and the `[]` branch never runs             |
+| L292                   | StringLiteral (assumed promo rate reason)                                     | Not worth killing | Reason text; the field and value of the assumed rate after a 0% deal are tested                                                                                                  |
+
+#### `src/tools/simulate/simulateRetirement.ts`
+
+| Line | Fault                            | Class             | Reason                                              |
+| ---- | -------------------------------- | ----------------- | --------------------------------------------------- |
+| L70  | StringLiteral `""` (echo reason) | Not worth killing | Reason text; every echoed field and value is tested |
+
+#### `src/tools/write/common.ts`
+
+| Line               | Fault                                                                | Class                | Reason                                                                            |
+| ------------------ | -------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------- |
+| L18; L20; L79; L82 | StringLiteral `""` (pattern messages and batch status text, Timeout) | Timed out under load | The lane run killed every fault in this file; all four timed out in the final run |
+
+#### `src/tools/write/stageImport.ts`
+
+| Line          | Fault                                      | Class                | Reason                                                                                                                                                                                                           |
+| ------------- | ------------------------------------------ | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L17           | EqualityOperator `<= 1e-6` (two decimals)  | Not worth killing    | Moves a floating-point tolerance by its edge: only a value whose scaled error is exactly 1e-6 (a balance carrying exactly a millionth of a penny) changes side; whole pence and a third decimal place are tested |
+| L21; L22; L51 | StringLiteral `""` (messages) (3, Timeout) | Timed out under load | Killed in the lane run (no row in its ledger); timed out in the final run                                                                                                                                        |
+
+#### `src/transports/http.ts`
+
+| Line | Fault                                        | Class             | Reason                                                                                                                     |
+| ---- | -------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| L89  | StringLiteral `""`                           | Not worth killing | Display copy; the error code is tested                                                                                     |
+| L91  | StringLiteral `""`                           | Not worth killing | Display copy; the error code is tested                                                                                     |
+| L96  | StringLiteral `""`                           | Not worth killing | Display copy; the error code is tested                                                                                     |
+| L106 | OptionalChaining `.pop().trim`               | Equivalent        | `split` always returns at least one element, so `pop()` is never undefined                                                 |
+| L107 | StringLiteral `""`                           | Not worth killing | The name of the one shared bucket for requests with no forwarded address; any fixed name behaves the same                  |
+| L117 | StringLiteral `"Stryker was here!"`          | Equivalent        | Both `""` and the replacement fail `JSON.parse`, so the body is undefined either way                                       |
+| L121 | BlockStatement `{}` (Timeout)                | Not worth killing | The read loop never ends; caught only as a timeout                                                                         |
+| L138 | StringLiteral `""`                           | Not worth killing | Display copy; the error code is tested                                                                                     |
+| L168 | ArrayDeclaration `["Stryker was here"]`      | Not worth killing | Only an Origin equal to the replacement text would pass                                                                    |
+| L205 | StringLiteral                                | Not worth killing | Log wording                                                                                                                |
+| L231 | OptionalChaining `req.headers.origin`        | Not worth killing | Node and Express requests always carry `headers`                                                                           |
+| L233 | StringLiteral `""`                           | Not worth killing | As L107, for the Express path                                                                                              |
+| L244 | StringLiteral `""`                           | Not worth killing | Display copy; the error code is tested                                                                                     |
+| L253 | OptionalChaining `req.headers.authorization` | Not worth killing | As L231                                                                                                                    |
+| L286 | StringLiteral                                | Not worth killing | Log wording                                                                                                                |
+| L308 | OptionalChaining `req.headers["user-agent"]` | Not worth killing | As L231                                                                                                                    |
+| L315 | StringLiteral                                | Not worth killing | Log wording                                                                                                                |
+| L340 | StringLiteral `""`                           | Not worth killing | Display copy; the error code is tested                                                                                     |
+| L380 | ConditionalExpression `true`                 | Not worth killing | Affects a dev token only (no token id): its body would be read and could get a 413; dev tokens are never set in production |
+| L385 | BlockStatement `{}`                          | Equivalent        | `body` is already undefined when the parse fails                                                                           |
+
+#### `src/transports/stdio.ts`
+
+| Line | Fault                                                | Class             | Reason                                                                                                                |
+| ---- | ---------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| L57  | BlockStatement `{}` (NoCo)                           | Not worth killing | The default connect opens the real process stdio; tests inject their own                                              |
+| L92  | ConditionalExpression `false`                        | Not worth killing | `callBackend` wraps every failure in `BackendError` unless the caller's own abort signal fires, and stdio passes none |
+| L95  | StringLiteral `""` (NoCo)                            | Not worth killing | Message wording when the cause is not an Error                                                                        |
+| L100 | StringLiteral `"Stryker was here!"`                  | Not worth killing | Message wording; a test checks the request id is named when there is one                                              |
+| L139 | StringLiteral `""`                                   | Not worth killing | Nothing on the stdio path reads the token type                                                                        |
+| L152 | ConditionalExpression `false`; BooleanLiteral (both) | Not worth killing | Entry-point check: runs only when the file is executed as a CLI                                                       |
+| L153 | ConditionalExpression `false`; BlockStatement (NoCo) | Not worth killing | As L152                                                                                                               |
+| L154 | BlockStatement (NoCo)                                | Not worth killing | As L152                                                                                                               |
+| L156 | StringLiteral (NoCo)                                 | Not worth killing | As L152                                                                                                               |
+| L158 | CallExpression (NoCo)                                | Not worth killing | As L152                                                                                                               |
+
+### `packages/banking`
+
+1,203 faults: 1,136 killed, 8 timed out, 53 survived, 6 no coverage, 0 runtime errors. The credit card amount owed that was not rounded to pence, found here, was fixed in PR 818.
+
+| File                            | Faults | Not caught | Equivalent | Not worth killing | Tax gate | Possible bug |
+| ------------------------------- | ------ | ---------- | ---------- | ----------------- | -------- | ------------ |
+| `src/client/index.ts`           | 145    | 1          | 0          | 0                 | 0        | 1            |
+| `src/core/sign-enforcement.ts`  | 69     | 4          | 2          | 2                 | 0        | 0            |
+| `src/server/adapters/csv.ts`    | 377    | 21         | 7          | 1                 | 0        | 0            |
+| `src/server/crypto.ts`          | 225    | 14         | 3          | 3                 | 0        | 0            |
+| `src/server/oauth-state.ts`     | 67     | 2          | 1          | 0                 | 0        | 0            |
+| `src/server/orchestrator.ts`    | 26     | 2          | 1          | 1                 | 0        | 0            |
+| `src/server/provider-errors.ts` | 35     | 3          | 0          | 2                 | 0        | 0            |
+| `src/server/provider-fetch.ts`  | 259    | 20         | 7          | 4                 | 0        | 0            |
+
+The class counts are rows, not faults: one row may cover several faults on a line.
+
+#### `src/client/index.ts`
+
+| Line | Fault                                | Class        | Reason                                                                                                              |
+| ---- | ------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| L22  | EqualityOperator `daysRemaining < 7` | Possible bug | The doc comment says fewer than 7 days left is expiring soon, but the code uses `<= 7`. Reported to the coordinator |
+
+#### `src/core/sign-enforcement.ts`
+
+| Line | Fault                         | Class             | Reason                                                                                                                               |
+| ---- | ----------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| L50  | ConditionalExpression `true`  | Equivalent        | `STORED_NEGATIVE.has(null)` and `.has(undefined)` are false, so the null check changes nothing                                       |
+| L104 | ConditionalExpression `true`  | Equivalent        | Every FlumpAccountCategory is in the asset set (handled at L101) or the liability set, so the liability branch is reached either way |
+| L108 | EqualityOperator `<= 0.001`   | Not worth killing | Only a sum of exactly a tenth of a penny differs; a test would pin the private tolerance                                             |
+| L111 | BooleanLiteral `false` (NoCo) | Not worth killing | Unreachable for typed input: every category is an asset or a liability                                                               |
+
+#### `src/server/adapters/csv.ts`
+
+| Line                   | Fault                                                                                                   | Class             | Reason                                                                                                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L23                    | StringLiteral `"Stryker was here!"`                                                                     | Equivalent        | "stryker was here!" contains none of the merchant keywords, so it files the same as ""                                                                                         |
+| L131                   | UpdateOperator `i--` (Timeout)                                                                          | Not worth killing | The loop never ends; every parse test hangs, which only a time limit reveals                                                                                                   |
+| L136; L142             | Regex `/"\|"$/g`; Regex `/^"\|"/g`; StringLiteral `"Stryker was here!"`                                 | Equivalent        | A quote character only toggles inQuotes and is never added to `current`, so the quote-stripping replace never matches anything                                                 |
+| L165                   | StringLiteral `"Stryker was here!"` (in place of `cell ?? ""`)                                          | Equivalent        | The stand-in has no digit, dot or minus, so it cleans to "" and throws CsvAmountError the same as ""                                                                           |
+| L203; L204             | StringLiteral `"Stryker was here!"`                                                                     | Equivalent        | `date` and `merchant` are assigned in every format branch before they are read                                                                                                 |
+| L210; L216; L222; L231 | StringLiteral `"Stryker was here!"` (NoCo, `?? ""`)                                                     | Equivalent        | Rows with fewer than three cells are skipped, so cells 0 and 1 are always defined                                                                                              |
+| L240                   | ConditionalExpression `true`; StringLiteral `""`                                                        | Equivalent        | A date with no "/" splits into one part, which fails the three-part check, so it is left unchanged either way                                                                  |
+| L279                   | ConditionalExpression `false`; ConditionalExpression `true`; EqualityOperator `!==`; StringLiteral `""` | Equivalent        | `enforceSignConvention` sets the amount owed to 0 for an asset and, for a debt given 0, to the absolute balance, so passing `Math.abs(balanceGbp)` or 0 gives the same account |
+
+#### `src/server/crypto.ts`
+
+| Line                               | Fault                                                       | Class             | Reason                                                                                                                                                               |
+| ---------------------------------- | ----------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L95                                | MethodExpression `entries[i]!` (no trim)                    | Not worth killing | Version and secret are trimmed again at L101 and L102; only an entry like " :secret" differs, and it is rejected either way, with another message                    |
+| L98                                | EqualityOperator `sep < 0`                                  | Not worth killing | An entry starting with ":" is still rejected at L103 (empty version); only the message differs                                                                       |
+| L103                               | Regex `/^[1-9][0-9]*/` (no `$`)                             | Not worth killing | A version like "2x" passes the pattern but Number gives NaN, which L109 rejects; only the message differs                                                            |
+| L181                               | ConditionalExpression `false` (twice); LogicalOperator `&&` | Equivalent        | The pattern's exec coerces its input to text, and "" or the text of a non-string never starts with `v1:` and hex, so parseToken returns null either way              |
+| L202; L230                         | ObjectLiteral `{}`                                          | Equivalent        | 16 bytes is the GCM default tag length, the same as the explicit option                                                                                              |
+| L203; L205; L206; L232; L236; L237 | StringLiteral `""` (encodings)                              | Equivalent        | Node reads an empty encoding as UTF-8; an output encoding of "" returns a Buffer, and `+=` turns it back into the same UTF-8 text (GCM final output is always empty) |
+
+#### `src/server/oauth-state.ts`
+
+| Line | Fault                      | Class      | Reason                                               |
+| ---- | -------------------------- | ---------- | ---------------------------------------------------- |
+| L91  | StringLiteral `""` (twice) | Equivalent | Node reads an empty encoding as UTF-8 in Buffer.from |
+
+#### `src/server/orchestrator.ts`
+
+| Line | Fault                        | Class             | Reason                                                                                                             |
+| ---- | ---------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
+| L41  | ConditionalExpression `true` | Equivalent        | `new Date(date).getTime()` equals `date.getTime()` for a Date                                                      |
+| L42  | EqualityOperator `<=`        | Not worth killing | Only an expiry exactly 5 minutes away to the millisecond differs; refreshing a millisecond earlier changes nothing |
+
+#### `src/server/provider-errors.ts`
+
+| Line      | Fault                                                          | Class             | Reason                                                                                                      |
+| --------- | -------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| L36       | ConditionalExpression `false`                                  | Not worth killing | Passes `{ cause: undefined }`, so `error.cause` reads undefined either way; only `"cause" in error` differs |
+| L92; L103 | StringLiteral `"Stryker was here!"`; StringLiteral `""` (NoCo) | Not worth killing | Message wording for an absent field or status; the only test would pin the exact text                       |
+
+#### `src/server/provider-fetch.ts`
+
+| Line                   | Fault                                                                                               | Class             | Reason                                                                                                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L79                    | ConditionalExpression `false`; StringLiteral `"Stryker was here!"`                                  | Equivalent        | An empty value fails both the digits pattern and the three-letter check, so it is undefined either way                                                                                                                        |
+| L104                   | ObjectLiteral `{}`; BooleanLiteral `false`                                                          | Equivalent        | The listener is removed in the finally block whatever `once` says                                                                                                                                                             |
+| L117; L120             | StringLiteral `""` (kind); StringLiteral `"Stryker was here!"` (failed text)                        | Equivalent        | The kind is only compared with "deadline", "timeout" and "network", and a non-2xx answer's text is never read                                                                                                                 |
+| L127                   | StringLiteral `""`                                                                                  | Not worth killing | The deadline listener is left attached; it only aborts a controller whose call has finished, which does nothing                                                                                                               |
+| L148                   | BlockStatement `{}` (Timeout)                                                                       | Not worth killing | The loop body is gone, so the call never returns; only a time limit reveals it                                                                                                                                                |
+| L148; L158; L179; L191 | UpdateOperator `attemptNo--`; ConditionalExpression `true` (four); LogicalOperator `\|\|` (Timeout) | Not worth killing | Remove the one-retry limit. The new retry-limit tests fail on each of them, but earlier tests in the same file repeat their last answer and so retry forever first; Stryker records a timeout, which is not counted as caught |
+| L165                   | ConditionalExpression `true`                                                                        | Equivalent        | A timeout outcome has no cause, so the cause is undefined either way                                                                                                                                                          |
+| L171                   | ConditionalExpression `true` (`status >= 200`)                                                      | Equivalent        | fetch never returns a status below 200                                                                                                                                                                                        |
+| L179                   | ConditionalExpression `true` (`retryAfterMs !== undefined`)                                         | Equivalent        | `undefined <= maxRetryAfterMs` is false, so there is no retry either way                                                                                                                                                      |
+| L180                   | ArithmeticOperator `random() / RETRY_BASE_MS`                                                       | Not worth killing | Shrinks the jitter on a 429 retry to under a millisecond; the Retry-After wait is still honoured (tested), and the jitter's size is not documented                                                                            |
+| L254                   | ConditionalExpression `true`                                                                        | Equivalent        | Number.isFinite does not coerce, so a non-number still fails and goes on to the string check                                                                                                                                  |
+
+### `packages/observability`
+
+877 faults: 841 killed, 3 timed out, 30 survived, 3 no coverage, 0 runtime errors. Re-measured by a forced run on 20 November 2026, after PR 818 fixed the userinfo leak found here and the tests for its new code (`cutAtBoundary` and the new `splitUrl`) were added. Line numbers are those of that run's source.
+
+| File                    | Faults | Not caught | Equivalent | Not worth killing | Tax gate |
+| ----------------------- | ------ | ---------- | ---------- | ----------------- | -------- |
+| `src/redact.ts`         | 237    | 7          | 1          | 3                 | 0        |
+| `src/scrub-event.ts`    | 358    | 22         | 11         | 4                 | 0        |
+| `src/sentry-options.ts` | 282    | 7          | 4          | 0                 | 0        |
+
+The class counts are rows, not faults: one row may cover several faults on a line.
+
+#### `src/redact.ts`
+
+| Line | Fault                                                                                  | Class             | Reason                                                                                                                                                                                                                                         |
+| ---- | -------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L5   | Regex `sort.code` (in place of `sort.?code`)                                           | Equivalent        | Any key containing "sortcode" also contains "code", which is its own entry in the same pattern, so every key still matches                                                                                                                     |
+| L11  | MethodExpression `text` (no slice to MAX_STRING_LENGTH)                                | Not worth killing | The slice is a cost cap; the only difference is that the fault also finds an email after 8192 characters, which is stricter, and the bounded email pattern is linear either way                                                                |
+| L121 | LogicalOperator `\|\|`; ConditionalExpression `true`; UpdateOperator `end++` (Timeout) | Not worth killing | With no boundary before the limit the loop never ends: `end` falls below 0, or with `end++` runs past the end of the text, where `charAt` gives "" and no boundary. Only a time limit stops it, and Stryker's timeout is not counted as caught |
+| L171 | EqualityOperator `depth > MAX_DEPTH`; EqualityOperator `state.nodes >= MAX_NODES`      | Not worth killing | Off by one in the walk's cost caps: one level or node more or less is walked, and every string and sensitive key in it is still redacted, so nothing leaves unredacted; a test would only pin the private constants                            |
+
+#### `src/scrub-event.ts`
+
+| Line             | Fault                                                                     | Class             | Reason                                                                                                                                                             |
+| ---------------- | ------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L40              | StringLiteral `""` (in place of `"version"`)                              | Equivalent        | "version" never matches the sensitive key pattern, so whether it is a safe software key changes nothing                                                            |
+| L46              | ConditionalExpression `true`                                              | Not worth killing | Writes keys whose value is undefined; they vanish when the event is serialised to JSON for sending, so nothing different reaches Sentry                            |
+| L57              | Regex `/[?#].*/s` (no `$`)                                                | Equivalent        | `.*` with the s flag runs to the end of the string with or without `$`                                                                                             |
+| L61              | Regex without `$`                                                         | Equivalent        | The last group `(.*)` with the s flag always runs to the end of the string                                                                                         |
+| L67              | EqualityOperator `i <= 2`; UpdateOperator `i--`                           | Not worth killing | Both decode one or more extra levels, which is stricter (a deeper encoded @ is also redacted); the function documents two levels (%40 and %2540)                   |
+| L78              | ConditionalExpression `true` (first operand)                              | Not worth killing | A segment with a partial match is redacted whole instead of in part: stricter, nothing leaks, only the shape of an already-redacted segment changes                |
+| L99              | StringLiteral `"Stryker was here!"` (three, NoCo, destructuring defaults) | Equivalent        | All three groups of URL_PARTS take part in every match (the last can be empty but not undefined), so the defaults are never used                                   |
+| L100             | Regex `/.*@/s` (no `^`)                                                   | Equivalent        | `.*` can start at position 0, so the leftmost match is the same with or without the anchor                                                                         |
+| L121             | Regex `/(\s)/`; Regex `/(\S+)/`                                           | Equivalent        | With the separator captured, the pieces are the same whitespace and non-whitespace runs (or empty strings, which map to themselves) and join back to the same text |
+| L138             | Regex `/file:\/\//i` (no `^`)                                             | Not worth killing | Differs only when "file://" appears in the middle of a frame path, which runtimes do not produce                                                                   |
+| L139; L140       | Regex without `^`                                                         | Equivalent        | `.*` and `.*?` can start at position 0, so the leftmost match and the replaced text are the same                                                                   |
+| L249             | ArrayDeclaration `["Stryker was here"]`                                   | Equivalent        | The fallback is filtered with isObject, and a string is not an object, so the values are [] either way                                                             |
+| L276             | StringLiteral `"Stryker was here!"`                                       | Equivalent        | Neither "" nor the stand-in is a network category, so the breadcrumb is dropped either way                                                                         |
+| L281; L283; L291 | ConditionalExpression `true` (first operand)                              | Equivalent        | The second operand already refuses a non-string or non-number: `/^[A-Z]+$/.test(undefined)` tests "undefined", which fails, and Number.isFinite does not coerce    |
+| L300             | ConditionalExpression `false`                                             | Equivalent        | A non-object crumb either throws on property access (null, undefined), which the catch turns into null, or has no string category, which returns null              |
+
+#### `src/sentry-options.ts`
+
+| Line | Fault                                                        | Class      | Reason                                                                                                                                                                                            |
+| ---- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L30  | ConditionalExpression `true` (three); LogicalOperator `\|\|` | Equivalent | deepFreeze is private and only called on PRIVATE_DATA_COLLECTION, whose leaves are booleans, 0 and an empty array: Object.values of a boolean or number is [] and Object.freeze of one is a no-op |
+| L62  | ConditionalExpression `true` (`value !== null`)              | Equivalent | Number(null) is 0, so a null rate is still not positive                                                                                                                                           |
+| L70  | StringLiteral `"Stryker was here!"`                          | Equivalent | The stand-in names no forbidden integration, the same as ""                                                                                                                                       |
+| L132 | EqualityOperator `rate >= 0`                                 | Equivalent | The branch runs only when isPositive is true, so the rate is never 0 here                                                                                                                         |
+
+### `packages/api-client`
+
+496 faults: 451 killed, 1 timed out, 39 survived, 5 no coverage, 0 runtime errors.
+
+| File               | Faults | Not caught | Equivalent | Not worth killing | Tax gate |
+| ------------------ | ------ | ---------- | ---------- | ----------------- | -------- |
+| `src/client.ts`    | 169    | 13         | 7          | 3                 | 0        |
+| `src/transport.ts` | 294    | 32         | 14         | 6                 | 0        |
+
+The class counts are rows, not faults: one row may cover several faults on a line.
+
+#### `src/client.ts`
+
+| Line | Fault                                                                          | Class             | Reason                                                                                                                                                                                                                                                                            |
+| ---- | ------------------------------------------------------------------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L81  | Regex `/v/i` (unanchored)                                                      | Not worth killing | Differs only for a "v" inside the numeric core (for example "1.v2.0"), which is not a version format any client sends; a leading "v" and a "-dev" suffix give the same result                                                                                                     |
+| L81  | StringLiteral `"Stryker was here!"` in `?? ""` (NoCo)                          | Equivalent        | `split` always returns at least one element, so `[0]` is never undefined and the fallback is unreachable                                                                                                                                                                          |
+| L93  | EqualityOperator `i <= len`                                                    | Equivalent        | The extra index is past both arrays, so `(a[i] ?? 0) - (b[i] ?? 0)` is 0 and the loop goes on to `return false`, the same result                                                                                                                                                  |
+| L93  | UpdateOperator `i--` (Timeout)                                                 | Not worth killing | An endless loop when the leading parts are equal (for example 1.0.0 against 1.0.0): `i` falls below 0 and stays under `len`. `isBelowMin` is synchronous and takes no callback, so only a time limit can stop it; Stryker reports it as a timeout, which is not counted as caught |
+| L95  | EqualityOperator `diff <= 0`                                                   | Equivalent        | Reached only when `diff !== 0`, where `diff <= 0` and `diff < 0` agree                                                                                                                                                                                                            |
+| L135 | OptionalChaining `signal.reason`                                               | Equivalent        | `onAbort` is only called or registered when `signal` is defined                                                                                                                                                                                                                   |
+| L138 | StringLiteral `""` (event name in `removeEventListener`)                       | Not worth killing | The listener left on the caller's signal can only call `finish` on a promise that has already settled: a second reject is ignored, so nothing observable changes                                                                                                                  |
+| L142 | ObjectLiteral `{}`; BooleanLiteral `false` (`once: true`)                      | Equivalent        | An AbortSignal dispatches "abort" at most once, and `finish` removes the listener anyway                                                                                                                                                                                          |
+| L149 | ArrowFunction `() => undefined` (rejection handler)                            | Equivalent        | `refreshOnce` returns a promise with `.catch(() => "retryable")`, so it never rejects and the handler never runs                                                                                                                                                                  |
+| L150 | ArrowFunction `() => undefined`; StringLiteral `""`; ObjectLiteral `{}` (NoCo) | Equivalent        | Inside the same unreachable rejection handler as L149                                                                                                                                                                                                                             |
+
+#### `src/transport.ts`
+
+| Line       | Fault                                                                                                                         | Class             | Reason                                                                                                                                                                                                                          |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L160       | ConditionalExpression `false`; MethodExpression `text` (no trim); StringLiteral `"Stryker was here!"`                         | Equivalent        | An empty or whitespace text makes `JSON.parse` throw, and the catch sets `body = null`, the same as the `null` branch                                                                                                           |
+| L161       | BlockStatement `{}` (catch body)                                                                                              | Equivalent        | `body` is still its initial `null` when the catch runs, since it is assigned only after a successful parse                                                                                                                      |
+| L177       | ConditionalExpression `true`                                                                                                  | Equivalent        | `code` is a declared class field of BackendError (ES2022 define semantics), so it is already an own property set to undefined; assigning undefined changes nothing                                                              |
+| L182       | ConditionalExpression `true` (`res.status >= 400`)                                                                            | Not worth killing | A non-ok status below 400 is a 3xx; fetch follows redirects, so only a bodiless 304 or an opaque redirect could reach here, and neither carries a message                                                                       |
+| L184       | ConditionalExpression `true`                                                                                                  | Equivalent        | `detail` is a declared class field, already undefined; assigning undefined changes nothing                                                                                                                                      |
+| L235       | OptionalChaining `signal.reason`                                                                                              | Equivalent        | `onCallerAbort` is only called or registered when `signal` is defined                                                                                                                                                           |
+| L237       | ObjectLiteral `{}`; BooleanLiteral `false` (`once: true`)                                                                     | Equivalent        | An AbortSignal dispatches "abort" at most once, and the `finally` removes the listener anyway                                                                                                                                   |
+| L238       | StringLiteral `""` (timeout reason `new Error("timeout")`)                                                                    | Not worth killing | Internal abort reason text: it reaches callers only as the message of a `cause`, which nothing reads                                                                                                                            |
+| L261       | ConditionalExpression `false`                                                                                                 | Equivalent        | `JSON.stringify(undefined)` is `undefined`, the same as the other branch                                                                                                                                                        |
+| L283; L284 | ConditionalExpression `true`                                                                                                  | Equivalent        | `requestId` and `issuePaths` are declared class fields, already undefined; assigning undefined changes nothing                                                                                                                  |
+| L289       | ConditionalExpression `true`                                                                                                  | Equivalent        | A 204 Response has a null body, so `res.text()` gives "", the value `text` already has                                                                                                                                          |
+| L317       | StringLiteral `""` (event name in `removeEventListener`)                                                                      | Not worth killing | The listener left on the caller's signal calls `abort` on a controller whose call has finished; nothing observable changes                                                                                                      |
+| L333       | EqualityOperator `round <= MAX_STRIP_ROUNDS`                                                                                  | Not worth killing | One extra strip round on a schema that never converges still ends in the same failure; the only test would pin the private round limit                                                                                          |
+| L335       | ConditionalExpression `false` (`issues.length === 0`)                                                                         | Equivalent        | With no issues, `every` on an empty list is true, so nothing is stripped, the reparse fails the same way and the loop returns that same failure                                                                                 |
+| L335       | LogicalOperator `i.code === "unrecognized_keys" \|\| i.keys`; ConditionalExpression `true` (`i.code === "unrecognized_keys"`) | Equivalent        | Only `unrecognized_keys` issues carry `keys`, and one without keys strips nothing, so the loop returns the same failure                                                                                                         |
+| L343       | ConditionalExpression `true` (three); LogicalOperator `\|\|`                                                                  | Not worth killing | An `unrecognized_keys` issue's path always leads through objects to the object that holds the keys, so the walk never meets null or a primitive; the guard only protects against a schema whose issue path contradicts the body |
+| L347       | ConditionalExpression `false` (three); LogicalOperator `&&`                                                                   | Not worth killing | Same as L343: the target of an `unrecognized_keys` issue is always an object                                                                                                                                                    |
+| L348       | ArrayDeclaration `["Stryker was here"]` (NoCo)                                                                                | Equivalent        | L335 lets only issues with `keys` through, so `?? []` never applies                                                                                                                                                             |
+| L378       | OptionalChaining `last.status`                                                                                                | Equivalent        | MAX_PAGES is 100, so the loop runs at least once and `last` is always set here                                                                                                                                                  |
+| L379       | ConditionalExpression `true`; OptionalChaining `last.requestId`                                                               | Equivalent        | `last` is always set (L378), and `requestId` is a declared class field, so assigning undefined changes nothing                                                                                                                  |
+
+### `packages/format`
+
+402 faults: 374 killed, 0 timed out, 28 survived, 0 no coverage, 0 runtime errors. `src/fixtures.ts` is not mutated (it is the cross-platform snapshot data); `fixtures.bun.test.ts` runs under Bun only, so it kills nothing.
+
+| File              | Faults | Not caught | Equivalent | Not worth killing | Tax gate | Possible bug |
+| ----------------- | ------ | ---------- | ---------- | ----------------- | -------- | ------------ |
+| `src/currency.ts` | 201    | 16         | 11         | 1                 | 0        | 0            |
+| `src/date.ts`     | 201    | 12         | 10         | 0                 | 0        | 1            |
+
+The class counts are rows, not faults: one row may cover several faults on a line.
+
+#### `src/currency.ts`
+
+| Line | Fault                                                                                                                                      | Class             | Reason                                                                                                                                                                                                                |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L36  | ConditionalExpression `true` (`typeof value === "number"`)                                                                                 | Equivalent        | `Number.isFinite` does not coerce, so it is false for every non-number on its own                                                                                                                                     |
+| L44  | ConditionalExpression `true` (`!f`)                                                                                                        | Equivalent        | Always building a fresh formatter with the same locale and options formats identically; only speed differs                                                                                                            |
+| L46  | ConditionalExpression `true`; ConditionalExpression `false`; EqualityOperator `>`; EqualityOperator `<`; CallExpression `;` (no `clear()`) | Not worth killing | These change only when the private cache is emptied, a memory bound with no effect on any output; the new cache test shows output stays right after a clear, but the cache size is not visible at the public boundary |
+| L48  | CallExpression `;` (no `formatterCache.set`)                                                                                               | Equivalent        | Not storing the formatter means it is rebuilt each call with the same options: same output                                                                                                                            |
+| L91  | EqualityOperator `value <= 0`                                                                                                              | Equivalent        | At `value === 0` the absolute value is 0, so `abs !== 0` is false and the sign is "" either way                                                                                                                       |
+| L123 | StringLiteral `""` (default currency code)                                                                                                 | Equivalent        | L128 turns an empty code into "GBP" with `currencyCode \|\| "GBP"`                                                                                                                                                    |
+| L128 | StringLiteral `""` (in `currencyCode \|\| "GBP"`)                                                                                          | Equivalent        | An empty code reaches `safeCurrency("")`; Intl throws "Invalid currency code" on it, so it falls back to "GBP" (checked on Node)                                                                                      |
+| L132 | EqualityOperator `value <= 0`                                                                                                              | Equivalent        | At `value === 0` the scaled figure is 0, so `scaled !== 0` is false and the sign is "" either way                                                                                                                     |
+| L147 | StringLiteral `""` (default currency code)                                                                                                 | Equivalent        | It passes "" to `formatCurrency`, which turns it into "GBP" at L128                                                                                                                                                   |
+| L177 | StringLiteral `""` (default currency)                                                                                                      | Equivalent        | L183 turns an empty code into "GBP" with `currency \|\| "GBP"`                                                                                                                                                        |
+| L190 | EqualityOperator `value <= 0`                                                                                                              | Equivalent        | At `value === 0` there are 0 minor units, so `totalMinor !== 0` is false and no "minus" is said either way                                                                                                            |
+| L193 | ConditionalExpression `false` (maximum fraction digits)                                                                                    | Equivalent        | When `minor === 0` the amount `totalMinor / 100` is a whole number, so a maximum of 2 digits still prints none (the minimum is 0)                                                                                     |
+
+#### `src/date.ts`
+
+| Line | Fault                                                                       | Class        | Reason                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---- | --------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L13  | ConditionalExpression `false` (`input === undefined`)                       | Equivalent   | `undefined` then reaches `new Date(undefined)`, an invalid date, so L32 returns null all the same                                                                                                                                                                                                                                                                                                                                         |
+| L14  | ConditionalExpression `true` (`typeof input === "string"`)                  | Equivalent   | `DATE_ONLY.exec` coerces a Date or number to its string, which never matches `YYYY-MM-DD` (a Date prints as "Wed Nov 11 2026 ...", a number has no hyphens between digit groups), so it falls through to the same `new Date` path                                                                                                                                                                                                         |
+| L22  | ConditionalExpression `false`; LogicalOperator `&&` (year and month checks) | Possible bug | Years 0000 to 0099 are refused, because Date.UTC maps them to 1900 to 1999 and the year check fails: `formatDate("0050-01-01")` gives "Not set", where the rule ("date-only strings are calendar dates") reads it as 1 Jan 50, which is what the faulty code returns. These faults differ from the code only on those years; from 0100 the day or month check catches what they let through. Reported to the coordinator; not fixed in M3 |
+| L23  | ConditionalExpression `false` (month check)                                 | Equivalent   | A month of 13 to 99 or 00 moves the year, and a day of 00 or past the month's end moves the day, so the year or day check always catches what the month check would                                                                                                                                                                                                                                                                       |
+| L24  | ConditionalExpression `false` (day check)                                   | Equivalent   | A day of 00 or past the month's end (at most 99) always moves the month, so the month check catches it                                                                                                                                                                                                                                                                                                                                    |
+| L45  | ConditionalExpression `false` (`input === undefined`)                       | Equivalent   | `new Date(undefined).getTime()` is NaN, the same as the early return                                                                                                                                                                                                                                                                                                                                                                      |
+| L79  | StringLiteral `""` (fallback unit)                                          | Equivalent   | With no matching unit the amount is 0 and L83 returns "just now" before the unit is read                                                                                                                                                                                                                                                                                                                                                  |
+| L87  | EqualityOperator `amount <= 0`                                              | Equivalent   | L83 has already returned for `amount === 0`                                                                                                                                                                                                                                                                                                                                                                                               |
+| L90  | EqualityOperator `amount <= 0`                                              | Equivalent   | L83 has already returned for `amount === 0`                                                                                                                                                                                                                                                                                                                                                                                               |
+| L121 | StringLiteral `""` (default `month`)                                        | Equivalent   | Only `month === "long"` picks the long names; "" and "short" both pick the short ones                                                                                                                                                                                                                                                                                                                                                     |
+| L138 | ConditionalExpression `false` (`typeof months !== "number"`)                | Equivalent   | `Number.isFinite` is false for every non-number without coercion, so the next check returns the placeholder                                                                                                                                                                                                                                                                                                                               |
+
+### `packages/business-details`
+
+67 faults: 65 killed, 0 timed out, 2 survived, 0 no coverage, 0 runtime errors.
+
+| File           | Faults | Not caught | Equivalent | Not worth killing | Tax gate |
+| -------------- | ------ | ---------- | ---------- | ----------------- | -------- |
+| `src/index.ts` | 67     | 2          | 0          | 2                 | 0        |
+
+The class counts are rows, not faults: one row may cover several faults on a line.
+
+#### `src/index.ts`
+
+| Line | Fault                                                              | Class             | Reason                                                                                                                                                   |
+| ---- | ------------------------------------------------------------------ | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L118 | StringLiteral `""` (the `", "` join separator in the launch error) | Not worth killing | Message text: every remaining field name still appears in the error, only run together; a test would pin the exact wording of a developer-facing message |
+| L119 | StringLiteral `""` (the runbook pointer in the launch error)       | Not worth killing | Developer-facing hint text; the guard still throws with the field names and "Launch blocked", which the tests check. A test would pin the wording        |

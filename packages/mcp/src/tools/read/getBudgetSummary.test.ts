@@ -4,7 +4,7 @@ import { connectTestClient } from "../../testing/client.js";
 import { emptyUser } from "../../testing/personas.js";
 
 type Env = {
-  result: Record<string, any> & {
+  result: Record<string, unknown> & {
     notes: string[];
     categories: Array<{ category: string; monthlyGbp: number; essential: boolean }>;
   };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  cutAtBoundary,
   isSensitiveKey,
   MAX_STRING_LENGTH,
   redactCredentials,
@@ -175,6 +176,12 @@ describe("redactString exact shapes", () => {
     expect(redactString("card 4111-1111-1111-1111 ok")).toBe("card [redacted] ok");
   });
 
+  it("redacts a query string that has no fragment", () => {
+    // "?q=hello" runs from the "?" to the space; "q" is not a credential key, so only the query
+    // rule removes it.
+    expect(redactString("GET /p?q=hello done")).toBe("GET /p[redacted] done");
+  });
+
   it("redacts the whole query string and fragment", () => {
     expect(redactString("GET /p?code=zzz#frag done")).toBe("GET /p[redacted] done");
   });
@@ -189,5 +196,34 @@ describe("redactDeep arrays", () => {
     let deep: unknown = "leaf";
     for (let i = 0; i < 20; i++) deep = [deep];
     expect(JSON.stringify(redactDeep(deep))).not.toContain("leaf");
+  });
+});
+
+describe("cutAtBoundary", () => {
+  const isSpace = (char: string) => char === " ";
+
+  it("keeps text that is exactly at the limit whole", () => {
+    // "abcd" is 4 characters and the limit is 4, so nothing is cut.
+    expect(cutAtBoundary("abcd", 4, isSpace)).toBe("abcd");
+  });
+
+  it("cuts back to the last boundary before the limit", () => {
+    // The limit of 5 keeps "ab cd"; the cut falls inside "cd", so that part-word goes and
+    // the text ends at the space after "ab".
+    expect(cutAtBoundary("ab cd ef", 5, isSpace)).toBe("ab ");
+  });
+
+  it("gives an empty string when no boundary comes before the limit", () => {
+    // "abc" (the first 3 characters) holds no space, so the whole of it is a part-word.
+    expect(cutAtBoundary("abcdef", 3, isSpace)).toBe("");
+  });
+});
+
+describe("redactString keeps the words before the length limit", () => {
+  it("cuts long text at the last whitespace before 8,192 characters", () => {
+    // 3,000 copies of "ab " are 9,000 characters. Character 8,192 (index 8,191) is the "b" of a
+    // copy, so the cut drops that "ab" and ends after 2,730 whole copies (8,190 characters).
+    const out = redactString("ab ".repeat(3000));
+    expect(out).toBe(`${"ab ".repeat(2730)}[truncated]`);
   });
 });

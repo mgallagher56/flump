@@ -7,7 +7,7 @@ import type { McpServerContext } from "../../types.js";
 import { runRetirementPlan } from "./getRetirementPicture.js";
 
 type Env = {
-  result: Record<string, any> & {
+  result: Record<string, unknown> & {
     monthlySeries: Array<{
       month: string;
       totalCountedGbp: number;
