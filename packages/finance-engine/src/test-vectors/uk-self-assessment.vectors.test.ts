@@ -16,9 +16,9 @@ import { UK_TAX_VECTOR_YEARS } from "./uk-tax.vectors.js";
 
 /**
  * Signed vectors are read from `signedOffBy`; no second list of ids is kept. The hash check in
- * `evaluateSignoff` stops an unreviewed edit that signs a vector: `signedOffHash` must match the
- * vector's current content, so a hand-written signature or an edit after signing is invalid and
- * fails below. Signatures come from `bun run tax:signoff apply --signer <name>`.
+ * `evaluateSignoff` catches an edit made after signing, and fails below. The hash is unkeyed, so a
+ * signature computed by hand is caught in review, by the vector diff and its baseline diff (see
+ * uk-tax.vectors.test.ts). Signatures come from `bun run tax:signoff apply --signer <name>`.
  */
 const GOV_URL = /^https:\/\/www\.gov\.uk\//;
 const KINDS: UkSelfAssessmentVectorKind[] = [

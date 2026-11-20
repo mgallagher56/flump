@@ -1,7 +1,8 @@
 /**
  * Sign-off validation for UK tax vectors (E22). Since 20 Nov 2026 a Fable decider decides the figures
  * and is recorded as the signer (DECISIONS, owner rule of 20 Nov 2026, superseding round 3 item 13);
- * signatures made earlier by the owner (`signedOffBy: "owner"`) stay valid unchanged.
+ * signatures made earlier by the owner (`signedOffBy: "owner"`, version 1 hash) stay valid unchanged.
+ * New signatures use the version 2 hash, which also binds the signer, status, ruling and reason.
  * Pure (own sha256, no Node types needed): used by tests and scripts/tax-signoff.ts, never by app code.
  */
 import type { UkTaxVector } from "./uk-tax.vectors.js";
@@ -31,23 +32,54 @@ function stableInput(input: UkTaxVector["input"]): string {
   );
 }
 
+function v1Fields(v: SignableVector) {
+  return [v.id, v.taxYear, v.region, v.kind, stableInput(v.input), v.expected, v.source] as const;
+}
+
 /**
- * Hash of everything that gives a vector its meaning. Changing any of it invalidates a sign-off.
- * The signer, date and ruling are not in it, so earlier signatures keep their hashes. This hash is
- * what stops an unreviewed edit: a vector signed without running `tax:signoff apply` on its current
- * content has no matching hash, and `evaluateSignoff` reports it invalid.
+ * Version 1 hash (no marker): id, year, region, kind, input, expected value and source. Used by the
+ * owner's signatures of 20 Nov 2026, which stay byte for byte; it is accepted only with
+ * `signedOffBy: "owner"`, since it does not bind the signer, status or ruling.
+ */
+export function vectorSignoffHashV1(v: SignableVector): string {
+  return sha256Hex(v1Fields(v).join("|"));
+}
+
+const V2 = "v2:";
+
+/**
+ * Version 2 hash, written by `tax:signoff apply`: "v2:" plus the sha256 of the version 1 fields and
+ * the signer, status, ruling and UNVERIFIED reason. Changing any of them after signing invalidates
+ * the signature. The hash is unkeyed: it catches an edit made after signing, but it cannot stop
+ * someone computing a valid signature by hand. That is caught in review, by the vector diff and
+ * the tax-signoff baseline diff that must come with it.
  */
 export function vectorSignoffHash(v: SignableVector): string {
-  const canonical = [
-    v.id,
-    v.taxYear,
-    v.region,
-    v.kind,
-    stableInput(v.input),
-    v.expected,
-    v.source,
-  ].join("|");
-  return sha256Hex(canonical);
+  const canonical = JSON.stringify([
+    "v2",
+    ...v1Fields(v),
+    v.signedOffBy ?? "",
+    v.status,
+    v.rulingRef ?? "",
+    v.unverifiedReason ?? "",
+  ]);
+  return `${V2}${sha256Hex(canonical)}`;
+}
+
+/** The vector signed by `signer` on `isoDate`, with any ruling, and its version 2 hash. */
+export function signVector<T extends SignableVector>(
+  v: T,
+  signer: string,
+  isoDate: string,
+  rulingRef?: string,
+): T {
+  const signed: T = {
+    ...v,
+    signedOffBy: signer,
+    signedOffAt: isoDate,
+    ...(rulingRef === undefined ? {} : { rulingRef }),
+  };
+  return { ...signed, signedOffHash: vectorSignoffHash(signed) };
 }
 
 export type SignoffState =
@@ -72,7 +104,14 @@ export function evaluateSignoff(v: SignableVector): SignoffState {
   ) {
     return { state: "invalid", reason: "signedOffAt must be an ISO date (YYYY-MM-DD)" };
   }
-  if (v.signedOffHash !== vectorSignoffHash(v)) {
+  const isV2 = v.signedOffHash?.startsWith(V2) === true;
+  if (!isV2 && v.signedOffBy !== "owner") {
+    return {
+      state: "invalid",
+      reason: 'a signature without the v2: marker is valid only for signedOffBy "owner"',
+    };
+  }
+  if (v.signedOffHash !== (isV2 ? vectorSignoffHash(v) : vectorSignoffHashV1(v))) {
     return {
       state: "invalid",
       reason: "vector changed after sign-off (hash mismatch): sign it off again",

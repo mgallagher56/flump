@@ -10,12 +10,14 @@ import {
 } from "./uk-tax.vectors.js";
 
 /**
- * Signed vectors are read from `signedOffBy`; no second list of ids is kept. What stops an
- * unreviewed edit that signs a vector is the hash check in `evaluateSignoff`: `signedOffHash` must
- * equal `vectorSignoffHash` of the vector's current id, year, region, kind, input, expected value
- * and source, so a hand-written signature, or any edit made after signing, is reported invalid and
- * fails the sign-off test below. Signatures come from `bun run tax:signoff apply --signer <name>`,
- * run by the coordinator applying a recorded Fable decider decision, or by the owner.
+ * Signed vectors are read from `signedOffBy`; no second list of ids is kept. The hash check in
+ * `evaluateSignoff` catches an edit made after signing: a version 2 signature binds the id, year,
+ * region, kind, input, expected value, source, signer, status, ruling and reason; the owner's
+ * version 1 signatures bind the first seven and are valid only for signedOffBy "owner". The hash is
+ * unkeyed, so it cannot stop someone computing a valid signature by hand: that is caught in review,
+ * by the vector diff and the tax-signoff baseline diff that must come with it. Signatures come from
+ * `bun run tax:signoff apply --signer <name>`, run by the coordinator applying a recorded Fable
+ * decider decision, or by the owner.
  */
 const GOV_URL = /^https:\/\/www\.(gov\.(uk|scot)|legislation\.gov\.uk)\//;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { getTaxFeatureVerification, getTaxYearVerification } from "./tax-year-verification.js";
-import { type SignableVector, vectorSignoffHash } from "./test-vectors/signoff.js";
+import { type SignableVector, signVector } from "./test-vectors/signoff.js";
 import { UK_SELF_ASSESSMENT_VECTORS } from "./test-vectors/uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 
@@ -10,13 +10,12 @@ import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 // 2024/25 only. So 2024/25 is fully signed and 2023/24 is signed except for Self Assessment.
 
 function sign<T extends SignableVector>(v: T): T {
-  return {
-    ...v,
-    signedOffBy: "fable-decider",
-    signedOffAt: "2026-12-01",
-    signedOffHash: vectorSignoffHash(v),
-    ...(v.status === "UNVERIFIED" ? { rulingRef: "fixture-ruling" } : {}),
-  };
+  return signVector(
+    v,
+    "fable-decider",
+    "2026-12-01",
+    v.status === "UNVERIFIED" ? "fixture-ruling" : undefined,
+  );
 }
 
 vi.mock("./test-vectors/uk-tax.vectors.js", async (importOriginal) => {
@@ -26,13 +25,12 @@ vi.mock("./test-vectors/uk-tax.vectors.js", async (importOriginal) => {
     ...actual,
     UK_TAX_VECTORS: actual.UK_TAX_VECTORS.map((v) =>
       v.taxYear === "2023/24" || v.taxYear === "2024/25"
-        ? {
-            ...v,
-            signedOffBy: "fable-decider",
-            signedOffAt: "2026-12-01",
-            signedOffHash: signoff.vectorSignoffHash(v),
-            ...(v.status === "UNVERIFIED" ? { rulingRef: "fixture-ruling" } : {}),
-          }
+        ? signoff.signVector(
+            v,
+            "fable-decider",
+            "2026-12-01",
+            v.status === "UNVERIFIED" ? "fixture-ruling" : undefined,
+          )
         : v,
     ),
   };
@@ -46,13 +44,12 @@ vi.mock("./test-vectors/uk-self-assessment.vectors.js", async (importOriginal) =
     ...actual,
     UK_SELF_ASSESSMENT_VECTORS: actual.UK_SELF_ASSESSMENT_VECTORS.map((v) =>
       v.taxYear === "2024/25"
-        ? {
-            ...v,
-            signedOffBy: "fable-decider",
-            signedOffAt: "2026-12-01",
-            signedOffHash: signoff.vectorSignoffHash(v),
-            ...(v.status === "UNVERIFIED" ? { rulingRef: "fixture-ruling" } : {}),
-          }
+        ? signoff.signVector(
+            v,
+            "fable-decider",
+            "2026-12-01",
+            v.status === "UNVERIFIED" ? "fixture-ruling" : undefined,
+          )
         : v,
     ),
   };

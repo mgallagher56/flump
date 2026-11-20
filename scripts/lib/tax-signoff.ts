@@ -7,7 +7,7 @@
 import {
   isValidSigner,
   type SignableVector,
-  vectorSignoffHash,
+  signVector,
 } from "../../packages/finance-engine/src/test-vectors/signoff";
 
 /** Core (`uk-tax.vectors.ts`) and E25 what-if (`uk-whatif.vectors.ts`) vectors are both accepted. */
@@ -115,7 +115,7 @@ export function applySignoff(
     const block = [
       `signedOffBy: ${JSON.stringify(signer)},`,
       `${indent}signedOffAt: "${isoDate}",`,
-      `${indent}signedOffHash: "${vectorSignoffHash(v)}",`,
+      `${indent}signedOffHash: "${signVector(v, signer, isoDate, ruling).signedOffHash}",`,
       ...(ruling ? [`${indent}rulingRef: ${JSON.stringify(ruling)},`] : []),
     ].join("\n");
     text = text.slice(0, spot) + block + text.slice(spot + VECTOR_FILE_SIGNED_NULL.length);
