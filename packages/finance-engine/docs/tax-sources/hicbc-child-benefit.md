@@ -15,7 +15,7 @@ Page: https://www.gov.uk/child-benefit-tax-charge
 
 | Year    | Rate          | Status     | Source                                                                                                                                                              |
 | ------- | ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2020/21 | 21.05 / 13.95 | UNVERIFIED | No GOV.UK page reached; recalled from the uprating chain                                                                                                            |
+| 2020/21 | 21.05 / 13.95 | VERIFIED   | SI 2020/298 reg 5 (https://www.legislation.gov.uk/uksi/2020/298/made), in force 6 April 2020                                                                        |
 | 2021/22 | 21.15 / 14.00 | UNVERIFIED | No GOV.UK page reached; recalled from the uprating chain                                                                                                            |
 | 2022/23 | 21.80 / 14.45 | verified   | The 2023 uprating regulations name 21.80 and 14.45 as the rates they replace: https://www.legislation.gov.uk/uksi/2023/237/made                                     |
 | 2023/24 | 24.00 / 15.90 | verified   | Same regulations (in force 10 April 2023)                                                                                                                           |

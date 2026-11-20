@@ -181,7 +181,7 @@ describe("UK rule sources registry (E25-T1)", () => {
     }
   });
 
-  it("HICBC thresholds are verified for every year; Child Benefit rates are unverified for 2020/21 and 2021/22 only (E25-T2)", () => {
+  it("HICBC thresholds are verified for every year; Child Benefit rates are unverified for 2021/22 only (E25-T2; 2020/21 from SI 2020/298)", () => {
     for (const year of SUPPORTED_UK_TAX_YEARS) {
       expect(UK_RULE_SOURCES[year].hicbc.status, year).toBe("verified");
       expect(UK_RULE_SOURCES[year].hicbc.url, year).toBe(
@@ -189,11 +189,7 @@ describe("UK rule sources registry (E25-T1)", () => {
       );
       // 2027/28 weekly rates come from the Budget 2026 rates annex: announced, not yet law.
       const expected =
-        year === "2020/21" || year === "2021/22"
-          ? "unverified"
-          : year === "2027/28"
-            ? "announced"
-            : "verified";
+        year === "2021/22" ? "unverified" : year === "2027/28" ? "announced" : "verified";
       expect(UK_RULE_SOURCES[year].childBenefit.status, year).toBe(expected);
     }
   });

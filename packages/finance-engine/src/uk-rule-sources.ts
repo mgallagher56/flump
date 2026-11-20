@@ -115,12 +115,16 @@ const CHILD_BENEFIT_RATES =
   "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance";
 // Uprating regulations (read 2026-11-13): 2023 regs 21.80 -> 24.00 and 14.45 -> 15.90 (so 2022/23 was 21.80 / 14.45);
 // 2024 regs 24.00 -> 25.60 and 15.90 -> 16.95.
+// SI 2020/298 reg 5 (read 2026-11-20): enhanced rate 20.70 -> 21.05, other cases 13.70 -> 13.95,
+// in force 6 April 2020 (reg 1(2)).
+const CHILD_BENEFIT_REGS_2020 = "https://www.legislation.gov.uk/uksi/2020/298/made";
 const CHILD_BENEFIT_REGS_2023 = "https://www.legislation.gov.uk/uksi/2023/237/made";
 const CHILD_BENEFIT_REGS_2024 = "https://www.legislation.gov.uk/uksi/2024/247/made";
 
 function childBenefitSource(year: UkTaxYear): UkRuleSource {
   switch (year) {
     case "2020/21":
+      return verified(CHILD_BENEFIT_REGS_2020, [CHILD_BENEFIT_RATES]);
     case "2021/22":
       return unverified(
         CHILD_BENEFIT_RATES,

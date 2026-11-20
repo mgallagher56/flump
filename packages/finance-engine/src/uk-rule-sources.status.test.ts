@@ -33,7 +33,6 @@ const UNVERIFIED_BY_YEAR: Record<string, readonly UkRuleKey[]> = {
     "niClass4",
     "studentLoan",
     "statePension",
-    "childBenefit",
     ...ALWAYS_UNVERIFIED_BEFORE_2026,
   ],
   "2021/22": [
