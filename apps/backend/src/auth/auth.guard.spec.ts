@@ -19,6 +19,10 @@ type Req = { path?: string; headers: Record<string, string | undefined>; user?: 
 const ctx = (request: Req): ExecutionContext =>
   ({ switchToHttp: () => ({ getRequest: () => request }) }) as unknown as ExecutionContext;
 
+// Sample ids are built at runtime, never written as literals (AGENTS.md section 15).
+const ADMIN_ID = ["user", "admin"].join("_");
+const OTHER_ID = ["user", "someone", "else"].join("_");
+
 describe("AuthGuard", () => {
   let guard: AuthGuard;
   let validToken: string;
@@ -168,7 +172,7 @@ describe("AuthGuard", () => {
 
     it("an admin list alone makes the beta invite-only: admins and active members pass", async () => {
       local();
-      process.env.BETA_ADMIN_USER_IDS = "user_admin";
+      process.env.BETA_ADMIN_USER_IDS = ADMIN_ID;
       members.clear();
       members.add("user_member");
       await expect(run({ id: "user_admin" })).resolves.toBe(true);
@@ -190,14 +194,14 @@ describe("AuthGuard", () => {
 
     it("treats nobody as a member when the membership check cannot be resolved", async () => {
       local();
-      process.env.BETA_ADMIN_USER_IDS = "user_admin";
+      process.env.BETA_ADMIN_USER_IDS = ADMIN_ID;
       const guard = new AuthGuard(verifierFor({ id: "user_member" }));
       await refusal(guard.canActivate(withHandler(() => {})));
     });
 
     it("lets an uninvited caller through only on a handler marked AllowUninvited", async () => {
       local();
-      process.env.BETA_ADMIN_USER_IDS = "user_admin";
+      process.env.BETA_ADMIN_USER_IDS = ADMIN_ID;
       members.clear();
       class Probe {
         @AllowUninvited()
@@ -258,7 +262,7 @@ describe("AuthGuard erased-account check (BE-04)", () => {
     let before: string | undefined;
     beforeEach(() => {
       before = process.env.BETA_ALLOWED_USER_IDS;
-      process.env.BETA_ALLOWED_USER_IDS = "user_someone_else";
+      process.env.BETA_ALLOWED_USER_IDS = OTHER_ID;
     });
     afterEach(() => {
       if (before === undefined) delete process.env.BETA_ALLOWED_USER_IDS;
