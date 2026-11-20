@@ -202,7 +202,7 @@ describe("MortgageVsIsaCalculator", () => {
       expect(slider(MORTGAGE_ISA_COPY.rate)).toBeDefined();
       expect(slider(MORTGAGE_ISA_COPY.extra)).toBeDefined();
       expect(screen.queryByRole("button", { name: MORTGAGE_ISA_COPY.moreOptions })).toBeNull();
-      const toggle = screen.getByRole("button", { name: "Change the details" });
+      const toggle = screen.getByRole("button", { name: "Change the mortgage details" });
       expect(toggle.getAttribute("aria-expanded")).toBe("false");
       fireEvent.click(toggle);
       expect(toggle.getAttribute("aria-expanded")).toBe("true");
@@ -241,7 +241,7 @@ describe("MortgageVsIsaCalculator", () => {
       render(<MortgageVsIsaCalculator shortForm />);
       const line = () => screen.getByTestId("mortgage-isa-assumptions").textContent;
       expect(line()).toBe("Assumes ISA growth of 7% a year and 20 years left on the mortgage.");
-      fireEvent.click(screen.getByRole("button", { name: "Change the details" }));
+      fireEvent.click(screen.getByRole("button", { name: "Change the mortgage details" }));
       fireEvent.change(slider(MORTGAGE_ISA_COPY.isaGrowth), { target: { value: "5.25" } });
       fireEvent.change(slider(MORTGAGE_ISA_COPY.term), { target: { value: "1" } });
       expect(line()).toBe("Assumes ISA growth of 5.25% a year and 1 year left on the mortgage.");
@@ -251,7 +251,7 @@ describe("MortgageVsIsaCalculator", () => {
 
     it("never says better, best or should", () => {
       render(<MortgageVsIsaCalculator shortForm />);
-      fireEvent.click(screen.getByRole("button", { name: "Change the details" }));
+      fireEvent.click(screen.getByRole("button", { name: "Change the mortgage details" }));
       fireEvent.click(screen.getByRole("button", { name: MORTGAGE_ISA_COPY.explainerTitle }));
       expect(toolText()).not.toMatch(/\b(better|best|should)\b/i);
     });

@@ -60,7 +60,7 @@ describe.each(MONEY_AREAS.map((area) => [area.name, area] as const))(
 
     it("links to no calculator page and no old address", () => {
       const { container } = renderArea(area);
-      expect(container.querySelector('a[href^="/mcp"]')).toBeNull();
+      expect(container.querySelector('a[href^="/mcp"], a[href^="/tools"]')).toBeNull();
       expect(within(main()).queryByRole("link", { name: /read more/i })).toBeNull();
     });
   },

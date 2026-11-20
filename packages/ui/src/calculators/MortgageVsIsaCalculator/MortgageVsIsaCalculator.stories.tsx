@@ -87,4 +87,8 @@ export const ShortFormLight: Story = {
   play: shortFormPlay,
 };
 
-export const ShortFormDark: Story = { ...ShortFormLight, globals: { theme: "dark" } };
+export const ShortFormDark: Story = {
+  ...ShortFormLight,
+  globals: { theme: "dark" },
+  parameters: { backgrounds: { default: "dark" } },
+};

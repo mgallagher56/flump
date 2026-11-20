@@ -236,7 +236,7 @@ export const RETIREMENT_SECTION = {
   title: "Retirement plan",
   body: [
     "Set a retirement target of your own. Flump shows an estimate of your yearly income in retirement, in today's prices and before tax, and which accounts count towards it.",
-    "The assumptions are listed year by year and you can change them. It is an estimate from your figures, not a prediction.",
+    "The assumptions are listed beside a year-by-year breakdown, and you can change them. It is an estimate from your figures, not a prediction.",
   ],
 } as const;
 

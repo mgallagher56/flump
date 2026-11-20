@@ -90,7 +90,7 @@ export const DEBT_SNOWBALL_COPY = {
   /** Short form (E42): the starting debts are sample data, labelled "Example" (copy guide 7.4). */
   shortFormLegend: (n: number, kind?: string) =>
     kind ? `Example debt ${n}: ${kind}` : `Debt ${n}`,
-  changeDetails: "Change the details",
+  changeDetails: "Change the debt details",
   /** "Estimated interest £1,864" */
   shortFormInterest: (amount: string) => `Estimated interest ${amount}`,
 } as const;

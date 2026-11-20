@@ -60,7 +60,7 @@ export const MORTGAGE_ISA_COPY = {
   controlsLabel: "Mortgage and ISA details",
   contentLabel: "Estimated interest saved and ISA growth",
   /** Short form (E42): the drawer that holds the two assumptions. */
-  changeDetails: "Change the details",
+  changeDetails: "Change the mortgage details",
   /** "Assumes ISA growth of 7% a year and 20 years left on the mortgage." */
   assumptions: (growth: string, years: number) =>
     `Assumes ISA growth of ${growth}% a year and ${years} ${years === 1 ? "year" : "years"} left on the mortgage.`,
