@@ -6,15 +6,48 @@ import { type SignableVector, yearVerification } from "./test-vectors/signoff.js
 import { UK_SELF_ASSESSMENT_VECTORS } from "./test-vectors/uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 import { selectUkWhatIfVectors, type UkTaxFeature } from "./test-vectors/uk-whatif.vectors.js";
+import { PROVISIONAL_UK_TAX_YEARS } from "./types.js";
 
 export type { UkTaxFeature };
 export { yearVerification };
 
 export type TaxVerification = { status: "verified" | "unverified"; detail: string };
 
-export function getTaxYearVerification(year: string): TaxVerification {
+/**
+ * The one rule (ruling B, 20 Nov 2026): a provisional year's rates are announced, not yet law, so
+ * it never reports "verified", however many of its vectors are signed. The marker is
+ * PROVISIONAL_UK_TAX_YEARS, the one the tax-year calendar check reads, so removing a year from it
+ * at Royal Assent flips this with no second edit. `provisionalYears` is for tests.
+ */
+function signoffStatus(
+  year: string,
+  vectors: readonly SignableVector[],
+  provisionalYears: readonly string[],
+): TaxVerification["status"] {
+  return provisionalYears.includes(year) ? "unverified" : yearVerification(year, vectors);
+}
+
+export function getTaxYearVerification(
+  year: string,
+  provisionalYears: readonly string[] = PROVISIONAL_UK_TAX_YEARS,
+): TaxVerification {
   // The year is verified only when the Self Assessment vectors are signed too.
-  const status = yearVerification(year, [...UK_TAX_VECTORS, ...UK_SELF_ASSESSMENT_VECTORS]);
+  const vectors = [...UK_TAX_VECTORS, ...UK_SELF_ASSESSMENT_VECTORS];
+  const status = signoffStatus(year, vectors, provisionalYears);
+  const allSigned = yearVerification(year, vectors) === "verified";
+  if (status === "unverified" && allSigned) {
+    // Signed but held back: only a provisional year gets here.
+    return {
+      status,
+      detail: `${year} figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.`,
+    };
+  }
+  if (status === "unverified" && provisionalYears.includes(year)) {
+    return {
+      status,
+      detail: `${year} figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.`,
+    };
+  }
   return status === "verified"
     ? {
         status,
@@ -53,6 +86,7 @@ export function getTaxFeatureVerification(
   year: string,
   feature: UkTaxFeature,
   catalogues: TaxVectorCatalogues = DEFAULT_CATALOGUES,
+  provisionalYears: readonly string[] = PROVISIONAL_UK_TAX_YEARS,
 ): TaxVerification["status"] {
-  return yearVerification(year, vectorsForFeature(feature, catalogues));
+  return signoffStatus(year, vectorsForFeature(feature, catalogues), provisionalYears);
 }

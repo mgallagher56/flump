@@ -9,6 +9,17 @@ import {
   type UkPensionMethod,
 } from "./uk-take-home.js";
 import { calculateUkTax, toStudentLoanPlanKey } from "./uk-tax.js";
+
+describe("computeUkTakeHome in a provisional year (ruling B)", () => {
+  it("keeps the unverified estimate flag for 2027/28, whose core vectors are signed", () => {
+    // 2027/28 rates are announced, not yet law, so the year is provisional and its core feature
+    // stays unverified even though every core vector is signed.
+    const b = computeUkTakeHome({ taxYear: "2027/28", region: "ENGLAND_NI_WALES", salary: 39_000 });
+    expect(b.verification.core).toBe("unverified");
+    expect(b.isUnverifiedEstimate).toBe(true);
+  });
+});
+
 import {
   getUkTaxYearRules,
   type UkStudentLoanPlanKey,
