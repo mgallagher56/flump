@@ -173,7 +173,6 @@ const lineBase = {
   strokeLinejoin: "round",
 } as const;
 export const chartLine = css({ ...lineBase, stroke: "chart.primary" });
-const chartWealthLine = css({ ...lineBase, stroke: "chart.wealth" });
 export const chartProjectionLine = css({
   ...lineBase,
   stroke: "chart.projection",

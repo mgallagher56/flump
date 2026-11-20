@@ -12,12 +12,12 @@
   "workspaces": {
     ".": {
       "ignoreDependencies": ["pg"],
-      "ignoreUnresolved": ["scripts/check-launch-readiness.ts"],
       "entry": [
         "scripts/backend-laws/check-*.ts",
         "scripts/ops/backup-run.ts",
         "scripts/test-timings.ts"
-      ]
+      ],
+      "ignoreUnresolved": ["scripts/check-launch-readiness.ts"]
     },
     "apps/backend": {
       "entry": ["src/data-source.ts", "src/migrations/*.ts", "src/scripts/*.ts"],
@@ -32,7 +32,10 @@
         "react-router.config.ts",
         "vite.config.mts",
         "app/**/components/*/index.ts",
-        ".storybook/*.{ts,tsx}"
+        ".storybook/*.{ts,tsx}",
+        "app/entry.server.tsx",
+        "app/entry.client.tsx",
+        "app/root.tsx"
       ],
       "ignoreBinaries": ["server.ts"],
       "ignoreDependencies": ["react-router-real", "vitest-sonar-reporter"],

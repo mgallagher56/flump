@@ -1,4 +1,4 @@
-import { TOOL_CATALOGUE, TOOL_SLUGS, type ToolSlug } from "@repo/ui/tools";
+import { TOOL_SLUGS } from "@repo/ui/tools";
 
 /** Pure data (no React) so the Express server can read it for the sitemap. */
 export const STATIC_PATHS = [
@@ -17,8 +17,3 @@ export const STATIC_PATHS = [
  */
 export const CANONICAL_TOOL_SLUGS = TOOL_SLUGS;
 export { isKnownToolSlug, TOOL_SLUG_ALIASES } from "@repo/ui/tools";
-
-/** Short names for the footer and other compact lists, from the shared catalogue (D11). */
-const TOOL_SHORT_LABELS: Record<ToolSlug, string> = Object.fromEntries(
-  TOOL_CATALOGUE.map((tool) => [tool.slug, tool.shortTitle]),
-) as Record<ToolSlug, string>;
