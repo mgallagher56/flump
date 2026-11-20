@@ -168,8 +168,10 @@ describe("marginalRateCurve", () => {
   // 601 points: 1,803 calls of computeUkTakeHome, plus the what-if at your pay. Its cost is checked
   // against those same 1,803 calls timed straight after it, not against a fixed number of
   // milliseconds: CPU contention from tests running beside it slows both alike, so the check does
-  // not flake, but a curve that did more work per point (a re-sweep, a table rebuilt per call)
-  // would cost many times the reference and fail. The time itself is reported as an annotation.
+  // not flake. What it catches: work added in the curve's own loop that grows four-fold or more,
+  // such as a re-sweep per point. What it does not catch: a slowdown inside computeUkTakeHome
+  // itself, which slows the reference equally (no test in this package guards that cost now; see
+  // E41 P4). The time itself is reported as an annotation.
   // (E41: a wall-clock limit here failed when the backend specs began running in parallel.)
   it("defaults to about 600 points from 0 to 150,000 at the cost of three take-home calls each", async ({
     annotate,
@@ -206,8 +208,8 @@ describe("marginalRateCurve", () => {
     expect(c.points.at(-1)?.gross).toBe(150_000);
     // Measured ratio of curve to reference on a loaded laptop: 0.83 to 2.05 over nine rounds (the
     // curve also builds 601 point objects and the what-if at your pay). Four times the reference
-    // leaves room for that and for noise; work that grows several-fold, such as a re-sweep per
-    // point or a rules table rebuilt per call, fails.
+    // leaves room for that and for noise. A reviewer's probe: twice the per-point work passed,
+    // four times failed, a quadratic re-sweep fails clearly.
     expect(curveMs).toBeLessThan(4 * referenceMs);
     await annotate(
       `curve ${curveMs.toFixed(1)} ms; the same 1,803 take-home calls ${referenceMs.toFixed(1)} ms (plan budget 50 ms in the browser)`,
