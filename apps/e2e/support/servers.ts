@@ -40,6 +40,7 @@ export function webServers(
   return [
     {
       name: "backend",
+      stdout: "pipe",
       cwd: "../backend",
       command: "bun run migration:run && bun dist/main.js",
       url: `${BACKEND_URL}/health/ready`,

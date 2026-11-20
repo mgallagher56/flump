@@ -1,3 +1,4 @@
+import { createHmac, randomBytes } from "node:crypto";
 import {
   type CanActivate,
   type ExecutionContext,
@@ -6,6 +7,13 @@ import {
   Logger,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+
+// DIAG ONLY (throwaway branch, never merged): a keyed reference of the bucket, never the address.
+const DIAG_KEY = randomBytes(32);
+const diagRef = (key: string) =>
+  createHmac("sha256", DIAG_KEY).update(key).digest("hex").slice(0, 8);
+const diagLog = new Logger("IpBucketDiag");
+
 import { clientKey } from "./client-key";
 import { IP_RATE_LIMIT, isExemptPath, RATE_LIMIT_SKIP } from "./rate-limit.decorator";
 import { rejectRateLimited } from "./rate-limit.http";
@@ -48,8 +56,12 @@ export class IpRateLimitGuard implements CanActivate {
     const req = http.getRequest();
     if (isExemptPath(req.path ?? req.url)) return true;
 
-    const ip = verifiedClientIp(req.headers, this.clientIpKey) ?? req.ip;
+    const verified = verifiedClientIp(req.headers, this.clientIpKey);
+    const ip = verified ?? req.ip;
     const decision = this.store.hit(`ip:${clientKey(ip)}`, IP_RATE_LIMIT);
+    diagLog.log(
+      `ipdiag signed=${verified !== null && verified !== undefined} sigHeader=${Object.keys(req.headers).some((h) => h.startsWith("x-flump-client-ip"))} ref=${diagRef(clientKey(ip))} allowed=${decision.allowed} ${req.method} ${req.route?.path ?? req.path}`,
+    );
     if (!decision.allowed) {
       rejectRateLimited(
         http.getResponse(),
