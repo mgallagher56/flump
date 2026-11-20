@@ -63,17 +63,20 @@ describe("check-tax-year-calendar CLI", () => {
       cwd: `${import.meta.dir}/..`,
       env: { ...process.env, TAX_CALENDAR_NOW: now },
     }).exitCode;
-  test("exits 0 today, 3 in December, 1 on 1 March 2027 without a 2027/28 table", () => {
+  test("with 2027/28 present but provisional: 0 until 15 March 2027, 3 from then, 1 from 1 April", () => {
     expect(run("2026-11-12T12:00:00Z")).toBe(0);
-    expect(run("2026-12-02T12:00:00Z")).toBe(3);
-    expect(run("2027-03-01T12:00:00Z")).toBe(1);
+    expect(run("2026-12-02T12:00:00Z")).toBe(0);
+    expect(run("2027-03-01T12:00:00Z")).toBe(0);
+    expect(run("2027-03-15T12:00:00Z")).toBe(3);
+    expect(run("2027-04-01T12:00:00Z")).toBe(1);
   });
   test("uses the Europe/London date, not UTC", () => {
     // 22:30Z on 5 April is 23:30 BST on 5 April (still 2026/27); 23:30Z is 00:30 BST on 6 April (2027/28).
     const yearAt = (iso: string) => getUkTaxYearForDate(getUkCalendarDate(new Date(iso)));
     expect(yearAt("2027-04-05T22:30:00Z")).toBe("2026/27");
     expect(yearAt("2027-04-05T23:30:00Z")).toBe("2027/28");
-    // Either way 2027/28 is missing in this repo state, so the CLI fails in both.
+    // Either way 2027/28 is still provisional past its 1 April 2027 confirm-by date in this repo
+    // state, so the CLI fails in both.
     expect(run("2027-04-05T22:30:00Z")).toBe(1);
     expect(run("2027-04-05T23:30:00Z")).toBe(1);
   });
