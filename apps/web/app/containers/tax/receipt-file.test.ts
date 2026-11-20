@@ -23,6 +23,14 @@ describe("isAcceptableReceiptFile", () => {
     expect(isAcceptableReceiptFile({ ...ok, name: "x".repeat(256) })).toBe(false);
   });
 
+  it("rejects a file with no name", () => {
+    expect(isAcceptableReceiptFile({ ...ok, name: "" })).toBe(false);
+  });
+
+  it("accepts a name of exactly 255 characters, the longest allowed", () => {
+    expect(isAcceptableReceiptFile({ ...ok, name: "x".repeat(255) })).toBe(true);
+  });
+
   it("limits the picker to the allowed types", () => {
     expect(RECEIPT_ACCEPT).toBe("image/png,image/jpeg,image/webp,application/pdf");
   });
