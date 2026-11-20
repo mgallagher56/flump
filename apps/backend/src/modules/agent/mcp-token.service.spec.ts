@@ -1,5 +1,5 @@
 import { Logger } from "@nestjs/common";
-import { describe, expect, it, type Mock, vi } from "vitest";
+import { afterEach, describe, expect, it, type Mock, vi } from "vitest";
 import { fakeBetaMembership } from "../../testing/fake-beta-membership";
 import { at } from "../../testing/must";
 import { McpTokenService } from "./mcp-token.service";
@@ -232,5 +232,41 @@ describe("McpTokenService.recordRequest (E17-N6)", () => {
     await expect(
       new McpTokenService(repo as never, fakeBetaMembership()).recordRequest("tok_1", 1),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("McpTokenService.listTokens expiry label", () => {
+  // The MCP verifier refuses a token once now has reached its expiry (token-verifier.ts:
+  // `expiresAtMs <= Date.now()`), as a JWT exp works. The list must label the same token expired
+  // at that same instant, or for one millisecond the page says "active" for a token that is refused.
+  const expiresAt = new Date("2026-11-20T12:00:00.000Z");
+  const token = {
+    id: "tok_1",
+    userId: "u_1",
+    name: "Laptop",
+    tokenPrefix: "flp_abc",
+    scopes: [],
+    anonymizeInstitutions: true,
+    expiresAt,
+    lastUsedAt: null,
+    totalToolCalls: 0,
+    createdAt: new Date("2026-11-01T00:00:00.000Z"),
+    revokedAt: null,
+  };
+  const service = () =>
+    new McpTokenService({ find: vi.fn().mockResolvedValue([token]) } as never, fakeBetaMembership());
+
+  afterEach(() => vi.useRealTimers());
+
+  it("labels a token expired at its exact expiry instant", async () => {
+    vi.useFakeTimers({ now: expiresAt, toFake: ["Date"] });
+    const [item] = await service().listTokens("u_1");
+    expect(item?.isExpired).toBe(true);
+  });
+
+  it("labels it not expired one millisecond before", async () => {
+    vi.useFakeTimers({ now: expiresAt.getTime() - 1, toFake: ["Date"] });
+    const [item] = await service().listTokens("u_1");
+    expect(item?.isExpired).toBe(false);
   });
 });

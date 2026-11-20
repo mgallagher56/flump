@@ -267,6 +267,7 @@ function toTokenListItem(tok: McpToken) {
     totalToolCalls: tok.totalToolCalls,
     createdAt: tok.createdAt,
     isRevoked: !!tok.revokedAt,
-    isExpired: !!(tok.expiresAt && new Date(tok.expiresAt).getTime() < now),
+    // Expired from the instant itself, as the MCP verifier refuses it (token-verifier.ts).
+    isExpired: !!(tok.expiresAt && new Date(tok.expiresAt).getTime() <= now),
   };
 }

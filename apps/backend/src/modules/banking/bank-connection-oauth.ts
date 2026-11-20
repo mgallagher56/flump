@@ -26,9 +26,10 @@ export async function issueOAuthState(
 ): Promise<IssuedOAuthState> {
   const now = input.now ?? new Date();
   const { issued, record } = createOAuthStateRecord({ ...input, now });
-  // Expired rows are useless; clearing this user's on each issue keeps the table small.
+  // Expired rows are useless; clearing this user's on each issue keeps the table small. A state
+  // is refused from its expiry instant on (verifyOAuthStateRecord), so that instant prunes it too.
   await manager.query(
-    `DELETE FROM "bank_oauth_states" WHERE "user_id" = $1 AND "expires_at" < $2`,
+    `DELETE FROM "bank_oauth_states" WHERE "user_id" = $1 AND "expires_at" <= $2`,
     [input.userId, now],
   );
   await manager.query(
