@@ -8,21 +8,44 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ModuleRef } from "@nestjs/core";
-import { isBetaUserAllowed } from "./beta-access";
+import { ALLOW_UNINVITED } from "./allow-uninvited";
+import {
+  BETA_MEMBERSHIP_CHECK,
+  type BetaMembershipCheck,
+  isBetaUserAllowedByEnv,
+} from "./beta-access";
 import { ALLOW_ERASED, ERASED_ACCOUNT_CHECK, type ErasedAccountCheck } from "./erased-account";
 import { accountDeletedException } from "./recent-login";
-import { TOKEN_VERIFIER, type TokenVerifier } from "./token-verifier";
+import { type AuthenticatedUser, TOKEN_VERIFIER, type TokenVerifier } from "./token-verifier";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   private erasedCheck: ErasedAccountCheck | null | undefined;
+  private membershipCheck: BetaMembershipCheck | null | undefined;
 
   constructor(
     @Inject(TOKEN_VERIFIER) private readonly verifier: TokenVerifier,
     @Optional() private readonly moduleRef?: ModuleRef,
     @Optional() @Inject(ERASED_ACCOUNT_CHECK) erasedCheck?: ErasedAccountCheck,
+    @Optional() @Inject(BETA_MEMBERSHIP_CHECK) membershipCheck?: BetaMembershipCheck,
   ) {
     this.erasedCheck = erasedCheck;
+    this.membershipCheck = membershipCheck;
+  }
+
+  /**
+   * The beta_members lookup, resolved lazily from the whole app (the beta module provides it),
+   * once. Null when absent (some unit tests): nobody counts as a member then.
+   */
+  private resolveMembershipCheck(): BetaMembershipCheck | null {
+    if (this.membershipCheck !== undefined) return this.membershipCheck;
+    try {
+      this.membershipCheck =
+        this.moduleRef?.get<BetaMembershipCheck>(BETA_MEMBERSHIP_CHECK, { strict: false }) ?? null;
+    } catch {
+      this.membershipCheck = null;
+    }
+    return this.membershipCheck;
   }
 
   /** Resolved lazily from the whole app (AppModule provides it), once; null when absent. */
@@ -35,6 +58,16 @@ export class AuthGuard implements CanActivate {
       this.erasedCheck = null;
     }
     return this.erasedCheck;
+  }
+
+  /**
+   * Admin, env allowlist or open beta first (no database read); otherwise one primary-key read of
+   * beta_members. Never cached, so removing a member refuses their very next request.
+   */
+  private async isBetaAllowed(user: AuthenticatedUser): Promise<boolean> {
+    if (isBetaUserAllowedByEnv(process.env, user)) return true;
+    const membership = this.resolveMembershipCheck();
+    return membership ? membership.isActiveMember(user.id) : false;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -55,8 +88,11 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException("Authentication failed");
     }
-    // Closed beta (E19 A7): a valid sign-in is not enough when an allowlist is configured.
-    if (!isBetaUserAllowed(process.env, request.user)) {
+    const handler = typeof context.getHandler === "function" ? context.getHandler() : undefined;
+    // Closed beta (E19 A7, invite links): a valid sign-in is not enough while the beta is
+    // invite-only. Only the redeem route lets an uninvited caller through, so they can join.
+    const allowUninvited = handler ? Reflect.getMetadata(ALLOW_UNINVITED, handler) === true : false;
+    if (!allowUninvited && !(await this.isBetaAllowed(request.user))) {
       throw new ForbiddenException({
         statusCode: 403,
         error: "not_invited",
@@ -67,7 +103,6 @@ export class AuthGuard implements CanActivate {
     // a re-sign-in is possible while the WorkOS step is pending). Refuse it everywhere except the
     // deletion route itself, so no write can recreate data for the erased user. /mcp is not behind
     // this guard: its PATs are deleted with the account, which revokes them.
-    const handler = typeof context.getHandler === "function" ? context.getHandler() : undefined;
     const allowErased = handler ? Reflect.getMetadata(ALLOW_ERASED, handler) === true : false;
     const check = allowErased ? null : this.resolveErasedCheck();
     if (check && (await check.isErased(request.user.id))) {

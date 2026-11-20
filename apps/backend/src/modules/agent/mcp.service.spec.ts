@@ -2,6 +2,7 @@ import { type BuildContextPackInput, DEFAULT_FINANCIAL_BASELINE } from "@flump/f
 import type { HttpTransportOptions } from "@flump/mcp";
 import { Logger } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeBetaMembership } from "../../testing/fake-beta-membership";
 
 const handlerOptions: HttpTransportOptions[] = [];
 
@@ -38,13 +39,30 @@ function agentData(
   plans: never,
 ): AgentDataService {
   const picture = new FinancialPictureService(budget, tax, finance, profile);
-  return new AgentDataService(tax, transactions, profile, accounts, details, plans, picture);
+  return new AgentDataService(
+    tax,
+    transactions,
+    profile,
+    accounts,
+    details,
+    plans,
+    picture,
+    fakeBetaMembership(),
+  );
 }
 
 function build(mode: "workos" | "dev") {
   const config = { get: vi.fn().mockReturnValue(undefined) };
   const nothing = {} as never;
-  return new McpService(nothing, nothing, config as never, mode, nothing, nothing);
+  return new McpService(
+    nothing,
+    nothing,
+    config as never,
+    mode,
+    nothing,
+    nothing,
+    fakeBetaMembership(),
+  );
 }
 
 describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
@@ -63,6 +81,7 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
       "workos",
       audit as never,
       adapter as never,
+      fakeBetaMembership(),
     );
     return { service, audit, adapter, options: at(handlerOptions, 0) };
   };
@@ -76,6 +95,7 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
       "workos",
       {} as never,
       {} as never,
+      fakeBetaMembership(),
       store as never,
     );
     expect(at(handlerOptions, 0).limitStore).toBe(store);
@@ -290,6 +310,7 @@ describe("McpService.getInput (GET /mcp/input) anonymises as the remote tools do
       "workos",
       audit as never,
       {} as never,
+      fakeBetaMembership(),
     );
     return { service, agentData };
   };
@@ -412,12 +433,13 @@ describe("McpService.getContextPack for a brand-new user", () => {
       retirementPlans as never,
     );
     const service = new McpService(
-      new McpTokenService(mcpTokens as never),
+      new McpTokenService(mcpTokens as never, fakeBetaMembership()),
       dataService,
       config as never,
       "workos",
       {} as never,
       {} as never,
+      fakeBetaMembership(),
     );
 
     const { pack, markdown } = await service.getContextPack(userId);

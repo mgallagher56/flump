@@ -5,11 +5,12 @@ import { at } from "../../testing/must";
 import { LoggingBankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountDeletionService } from "./account-deletion.service";
 import { TOMBSTONE_KEY_ENV_VAR } from "./tombstone-key";
-import { USER_DATA_REGISTRY } from "./user-data-registry";
+import { USER_DATA_REGISTRY, USER_LINKED_TABLES } from "./user-data-registry";
 
 /** A DataSource stand-in: every delete reports one row; one tombstone row is kept in memory. */
 function fakeDataSource() {
   const deletes: string[] = [];
+  const updates: Array<{ entity: string; where: unknown; patch: unknown }> = [];
   let tombstone: { id: string; deletedAt: Date; identityDeletedAt: Date | null } | null = null;
   const auditInsert = vi.fn(async () => undefined);
   let pending: Date | null = null;
@@ -50,6 +51,10 @@ function fakeDataSource() {
         deletes.push(entity.name);
         return { affected: 1 };
       },
+      update: async (where: unknown, patch: unknown) => {
+        updates.push({ entity: entity.name, where, patch });
+        return { affected: 1 };
+      },
       find: async () =>
         entity.name === "BankConnection"
           ? [{ id: "c1", institutionId: "monzo", authType: "oauth" }]
@@ -65,7 +70,15 @@ function fakeDataSource() {
     ),
     getRepository: repoFor,
   };
-  return { ds, deletes, tombstoneRepo, auditInsert, managerQuery, current: () => tombstone };
+  return {
+    ds,
+    deletes,
+    updates,
+    tombstoneRepo,
+    auditInsert,
+    managerQuery,
+    current: () => tombstone,
+  };
 }
 
 describe("AccountDeletionService", () => {
@@ -97,8 +110,18 @@ describe("AccountDeletionService", () => {
     await expect(service.deleteAccount("user_A")).resolves.toEqual({ status: "deleted" });
 
     // The sweep runs in the deletion transaction and once more after it commits.
-    const order = USER_DATA_REGISTRY.map((t) => t.entity.name);
+    // Then the beta tables: the member row is deleted, the redeemed invite's link blanked.
+    const order = [
+      ...USER_DATA_REGISTRY.map((t) => t.entity.name),
+      ...USER_LINKED_TABLES.filter((t) => t.erasure === "delete-rows").map((t) => t.entity.name),
+    ];
+    expect(order.slice(-1)).toEqual(["BetaMember"]);
     expect(f.deletes).toEqual([...order, ...order]);
+    const blank = { entity: "BetaInvite", where: { redeemedByUserId: "user_A" } };
+    expect(f.updates).toEqual([
+      { ...blank, patch: { redeemedByUserId: null } },
+      { ...blank, patch: { redeemedByUserId: null } },
+    ]);
     expect(f.ds.transaction).toHaveBeenCalledTimes(2);
     // SEC-F: each sweep declares the erasure reason inside its own transaction.
     expect(f.managerQuery.mock.calls).toEqual([
@@ -122,6 +145,11 @@ describe("AccountDeletionService", () => {
     expect(deleted).toHaveLength(1);
     expect(Object.keys(at(deleted, 0)).sort()).toEqual(["event", "removed", "tombstoneId"]);
     expect(JSON.stringify(deleted[0])).not.toContain("user_A");
+    // The beta tables' counts go on their own line: the tombstone id and counts, no user id.
+    const beta = events.map(String).filter((e) => e.startsWith("account_deleted_beta_access"));
+    expect(beta).toEqual([
+      "account_deleted_beta_access tombstoneId=11111111-1111-4111-8111-111111111111 members=2 invitesUnlinked=2",
+    ]);
   });
 
   it("answers identity_pending when WorkOS fails, and a retry finishes the job", async () => {

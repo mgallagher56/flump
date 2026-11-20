@@ -80,6 +80,26 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     reason: "a stored create response is only replayable for its TTL; after that it is dead weight",
   },
   {
+    // Before beta_invites: an invite goes once no member row points at it.
+    name: "beta_members_removed",
+    table: "beta_members",
+    where: `"removed_at" < $1::timestamptz - interval '30 days'`,
+    reason:
+      "a member removed from the invite-only beta is kept 30 days (so a removal can be checked and undone with a new link), then deleted",
+  },
+  {
+    name: "beta_invites_closed",
+    table: "beta_invites",
+    // Closed = cancelled, used or expired, whichever applies. A used invite stays while a member
+    // row (active, or removed under 30 days) still points at it, for the admin's member list.
+    where: `COALESCE("revoked_at", "redeemed_at", "expires_at") < $1::timestamptz - interval '30 days'
+            AND NOT EXISTS (
+              SELECT 1 FROM "beta_members" m WHERE m."invite_id" = "beta_invites"."id"
+            )`,
+    reason:
+      "an invite link is kept 30 days after it was cancelled, used or expired (the admin's list shows that long), and a used one while its member row exists",
+  },
+  {
     name: "account_deletion_tombstones",
     table: "account_deletion_tombstones",
     where: `"expires_at" < $1::timestamptz`,

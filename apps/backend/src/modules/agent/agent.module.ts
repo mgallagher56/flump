@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { BetaModule } from "../../beta/beta.module";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { AgentAuditEvent } from "../../entities/agent-audit-event.entity";
@@ -37,6 +38,8 @@ import { McpTokenService } from "./mcp-token.service";
     FinanceModule,
     ImportsModule,
     ProfileModule,
+    // The beta membership lookup: AI tokens and the Retirement tools follow the invite-only beta.
+    BetaModule,
     // RateLimitStore and SHARED_RATE_LIMIT_STORE for the import adapter and the MCP limiters.
     SecurityModule,
   ],

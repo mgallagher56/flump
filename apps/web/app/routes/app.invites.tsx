@@ -76,12 +76,20 @@ export const action = async (args: ActionFunctionArgs) => {
       );
     }
     if (intent === "cancel" || intent === "remove") {
-      const id = String(form.get("id") ?? "");
-      const path =
-        intent === "cancel"
-          ? `/beta/admin/invites/${encodeURIComponent(id)}`
-          : `/beta/admin/members/${encodeURIComponent(id)}`;
-      await backendFetch(path, { accessToken, method: "DELETE", schema: BetaAdminDeleteResponse });
+      const id = encodeURIComponent(String(form.get("id") ?? ""));
+      if (intent === "cancel") {
+        await backendFetch(`/beta/admin/invites/${id}`, {
+          accessToken,
+          method: "DELETE",
+          schema: BetaAdminDeleteResponse,
+        });
+      } else {
+        await backendFetch(`/beta/admin/members/${id}`, {
+          accessToken,
+          method: "DELETE",
+          schema: BetaAdminDeleteResponse,
+        });
+      }
       return data<InvitesActionData>({ intent, success: true });
     }
   } catch (error) {

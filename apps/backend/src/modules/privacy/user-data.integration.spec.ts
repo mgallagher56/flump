@@ -38,6 +38,7 @@ import {
   CASCADE_ONLY_TABLES,
   NOT_USER_LINK_COLUMNS,
   USER_DATA_REGISTRY,
+  USER_LINKED_TABLES,
 } from "./user-data-registry";
 
 // BE-04 on real Postgres: erasure completeness, two-user isolation, rollback, retry after a WorkOS
@@ -242,6 +243,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     await m.save(
       m.create(Consent, { userId, kind: "ai_access", version: "mcp:simulate", targetId: token.id }),
     );
+    // Invite-only beta: the link they used (the admin's row) and their member row.
+    const [invite] = await m.query(
+      `INSERT INTO beta_invites (token_hash, label, created_by, expires_at, redeemed_by_user_id, redeemed_at)
+       VALUES ($1, $2, 'user_admin', now() + interval '14 days', $3, '2026-11-01T10:00:00Z')
+       RETURNING id`,
+      [createHash("sha256").update(`invite-SECRET-${label}`).digest("hex"), `For ${label}`, userId],
+    );
+    await m.query(
+      `INSERT INTO beta_members (user_id, invite_id, added_at) VALUES ($1, $2, '2026-11-01T10:00:00Z')`,
+      [userId, invite.id],
+    );
     await m.save(
       m.create(UserProfile, {
         userId,
@@ -275,8 +287,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       ),
     );
 
-  it("the catalogue's user_id tables are exactly the registry's tables", async () => {
-    const registryTables = USER_DATA_REGISTRY.map((t) => ds.getMetadata(t.entity).tableName).sort();
+  it("the catalogue's user_id tables are exactly the registry's and linked tables'", async () => {
+    const registryTables = [
+      ...USER_DATA_REGISTRY.map((t) => ds.getMetadata(t.entity).tableName),
+      ...USER_LINKED_TABLES.filter((t) => t.userColumn === "userId").map(
+        (t) => ds.getMetadata(t.entity).tableName,
+      ),
+    ].sort();
     expect(await userIdTables()).toEqual(registryTables);
   });
 
@@ -287,13 +304,24 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
        WHERE table_schema = 'public' AND table_name <> 'migrations'
          AND column_name ~* '(user|owner)' ORDER BY table_name, column_name`,
     );
-    // Inside the registry, user_id is the only user link.
+    // Inside the registry, user_id is the only user link; a linked table's link is its one
+    // declared user column.
     const notLinks = Object.values(NOT_USER_LINK_COLUMNS).map((c) => c.column);
+    const linked = USER_LINKED_TABLES.map((t) => {
+      const meta = ds.getMetadata(t.entity);
+      const column = meta.findColumnWithPropertyName(t.userColumn)?.databaseName;
+      return { table: meta.tableName, column };
+    });
+    const isLinkedColumn = (c: { table_name: string; column_name: string }) =>
+      linked.some((l) => l.table === c.table_name && l.column === c.column_name);
     expect(
-      userLike.filter((c) => c.column_name !== "user_id" && !notLinks.includes(c.column_name)),
+      userLike.filter(
+        (c) =>
+          c.column_name !== "user_id" && !notLinks.includes(c.column_name) && !isLinkedColumn(c),
+      ),
     ).toEqual([]);
     expect([...new Set(userLike.map((c) => c.table_name))].sort()).toEqual(
-      [...registryTables].sort(),
+      [...registryTables, ...linked.map((l) => l.table)].sort(),
     );
     // A foreign key into a registry table from outside it would make that table user data too.
     const fks: { child: string; parent: string }[] = await ds.query(
@@ -342,6 +370,14 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(months).toBe(24);
     await expect(deletion.isErased(USER_A)).resolves.toBe(true);
     await expect(deletion.isErased(USER_B)).resolves.toBe(false);
+    // The invite A used stays (the admin's record) with its link to A blanked; B's is untouched.
+    const invites: { label: string; redeemed_by_user_id: string | null }[] = await ds.query(
+      `SELECT label, redeemed_by_user_id FROM beta_invites ORDER BY label`,
+    );
+    expect(invites).toEqual([
+      { label: "For A", redeemed_by_user_id: null },
+      { label: "For B", redeemed_by_user_id: USER_B },
+    ]);
   });
 
   it("erases cascade-only rows (the BE-05 sign before-image) with the user's accounts", async () => {
@@ -805,6 +841,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(doc.accounts[0]).toMatchObject({ name: "A saver", balance: 1234.5 });
     expect(at(doc.taxRecords, 0).receiptData).toBe("data:image/png;base64,AAAA");
     expect(doc.mcpTokens[0]).toMatchObject({ name: "A Claude", tokenPrefix: "flp_abcd" });
+    // Beta access is in the notes: joined, and the invite used with its label.
+    expect(doc.notes).toContain("Beta access: you joined the beta on 2026-11-01.");
+    expect(doc.notes).toContain(
+      'Beta invite link: you used it on 2026-11-01. Its label was "For A".',
+    );
+    expect(text).not.toContain("For B");
 
     // Nothing of B's, and no secret of anyone's.
     expect(text).not.toContain(USER_B);
@@ -958,6 +1000,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       audit_events: 2,
       bank_connections: 0,
       bank_oauth_states: 0,
+      // Beta access is not financial data: a reset keeps it.
+      beta_members: 1,
       budget_entries: 0,
       idempotency_keys: 0,
       consents: 1,

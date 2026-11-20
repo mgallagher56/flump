@@ -42,8 +42,17 @@ describe("AppController", () => {
   });
 
   describe("GET /app/beta", () => {
+    // A local run with no beta variables unless a case sets them.
+    const BASE = {
+      NODE_ENV: "test",
+      RAILWAY_ENVIRONMENT: "",
+      BETA_ALLOWED_EMAILS: "",
+      BETA_ALLOWED_USER_IDS: "",
+      BETA_ADMIN_USER_IDS: "",
+      BETA_OPEN: "",
+    };
     const read = (env: Record<string, string>) => {
-      for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+      for (const [key, value] of Object.entries({ ...BASE, ...env })) vi.stubEnv(key, value);
       try {
         const setHeader = vi.fn();
         const body = new AppController(new AppService(), bootConfig()).getBetaMode({
@@ -56,10 +65,27 @@ describe("AppController", () => {
     };
     const EMAIL = ["invited", "example.test"].join("@");
 
-    it("is open when neither allowlist is set, even with BETA_OPEN", () => {
+    it("is open when no allowlist is set and BETA_OPEN=true, even with admins or in production", () => {
+      expect(read({ BETA_OPEN: "true" }).body).toEqual({ inviteOnly: false });
       expect(
-        read({ BETA_ALLOWED_EMAILS: "", BETA_ALLOWED_USER_IDS: "", BETA_OPEN: "true" }).body,
+        read({ BETA_OPEN: "true", BETA_ADMIN_USER_IDS: "user_admin", NODE_ENV: "production" }).body,
       ).toEqual({ inviteOnly: false });
+    });
+
+    it("is open on a local run with no allowlist and no admin", () => {
+      expect(read({}).body).toEqual({ inviteOnly: false });
+    });
+
+    it("is invite-only once an admin is set, or in a production-like process", () => {
+      expect(read({ BETA_ADMIN_USER_IDS: "user_admin" }).body).toEqual({ inviteOnly: true });
+      expect(read({ NODE_ENV: "production" }).body).toEqual({ inviteOnly: true });
+      expect(read({ RAILWAY_ENVIRONMENT: "staging" }).body).toEqual({ inviteOnly: true });
+    });
+
+    it("an env allowlist makes it invite-only even with BETA_OPEN=true", () => {
+      expect(read({ BETA_ALLOWED_USER_IDS: "user_a", BETA_OPEN: "true" }).body).toEqual({
+        inviteOnly: true,
+      });
     });
 
     it("is invite-only when an email list or a user id list is set", () => {
@@ -75,11 +101,15 @@ describe("AppController", () => {
       const { body, setHeader } = read({
         BETA_ALLOWED_EMAILS: `${EMAIL}, other@example.test`,
         BETA_ALLOWED_USER_IDS: "user_a,user_b",
+        BETA_ADMIN_USER_IDS: "user_admin",
       });
       expect(Object.keys(body)).toEqual(["inviteOnly"]);
       const text = JSON.stringify(body);
       for (const leak of ["@", "example", "user_", "2", "4"]) expect(text).not.toContain(leak);
       expect(setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
+      // The only header it sets: never a cookie.
+      expect(setHeader).toHaveBeenCalledTimes(1);
+      expect(typeof body.inviteOnly).toBe("boolean");
     });
   });
 });

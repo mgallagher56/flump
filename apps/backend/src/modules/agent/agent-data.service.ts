@@ -18,7 +18,7 @@ import {
   monthLabel,
   parseMonth,
 } from "@flump/mcp";
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import {
   Between,
@@ -29,6 +29,7 @@ import {
   MoreThanOrEqual,
   Repository,
 } from "typeorm";
+import { BETA_MEMBERSHIP_CHECK, type BetaMembershipCheck } from "../../auth/beta-access";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { RetirementPlan } from "../../entities/retirement-plan.entity";
@@ -146,6 +147,7 @@ export class AgentDataService implements McpUserDataProvider {
     @InjectRepository(RetirementPlan)
     private readonly retirementPlanRepository: Repository<RetirementPlan>,
     private readonly financialPicture: FinancialPictureService,
+    @Inject(BETA_MEMBERSHIP_CHECK) private readonly betaMembership: BetaMembershipCheck,
   ) {}
 
   // --- Ranged reads for the MCP query tools (E17 re-plan PR B) ---------------------------------
@@ -317,7 +319,7 @@ export class AgentDataService implements McpUserDataProvider {
 
     // Read only: no row means no saved plan (null), never a created default (E33). RD9: outside
     // the friends beta the plan is not read and the key is left out.
-    const retirementAllowed = isRetirementAllowed(process.env, userId);
+    const retirementAllowed = await isRetirementAllowed(process.env, userId, this.betaMembership);
     const planRow = retirementAllowed
       ? await this.retirementPlanRepository.findOne({ where: { userId } })
       : null;

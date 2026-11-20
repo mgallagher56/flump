@@ -18,7 +18,7 @@ import {
   tombstoneExpiry,
   tombstoneSubjectHash,
 } from "./tombstone-key";
-import { type RemovedCounts, USER_DATA_REGISTRY } from "./user-data-registry";
+import { type RemovedCounts, USER_DATA_REGISTRY, USER_LINKED_TABLES } from "./user-data-registry";
 
 /** Bound on the in-process cache of erased user ids (cleared whole when full). */
 const ERASED_CACHE_MAX = 10_000;
@@ -111,6 +111,25 @@ export class AccountDeletionService implements ErasedAccountCheck {
     return removed;
   }
 
+  /**
+   * The beta tables (USER_LINKED_TABLES): the member row is deleted, and any invite the user
+   * redeemed keeps its row (it is the admin's record) with its link to the user blanked. Counts
+   * per table, logged on their own line so the audit counts stay one per export section.
+   */
+  private async sweepLinked(manager: EntityManager, userId: string): Promise<number[]> {
+    const counts: number[] = [];
+    for (const t of USER_LINKED_TABLES) {
+      const repo = manager.getRepository(t.entity);
+      const where = { [t.userColumn]: userId };
+      const result =
+        t.erasure === "delete-rows"
+          ? await repo.delete(where)
+          : await repo.update(where, { [t.userColumn]: null });
+      counts.push(result.affected ?? 0);
+    }
+    return counts;
+  }
+
   async deleteAccount(userId: string): Promise<DeleteUserResponse> {
     const key = this.key;
     if (!key) {
@@ -129,8 +148,9 @@ export class AccountDeletionService implements ErasedAccountCheck {
     await this.revokeBankConsent(userId);
 
     // (b) One transaction: every registry table, children first, then the tombstone.
-    const { tombstone, removed } = await this.dataSource.transaction(async (manager) => {
+    const { tombstone, removed, linked } = await this.dataSource.transaction(async (manager) => {
       const removed = await this.sweep(manager, userId);
+      const linked = await this.sweepLinked(manager, userId);
       const now = new Date();
       const tombstones = manager.getRepository(AccountDeletionTombstone);
       // A retry keeps the first deletion time: ON CONFLICT DO NOTHING, then read the row back.
@@ -160,22 +180,31 @@ export class AccountDeletionService implements ErasedAccountCheck {
           metadata: { removed },
         });
       }
-      return { tombstone, removed };
+      return { tombstone, removed, linked };
     });
 
     // (b2) Sweep again now the tombstone is committed. A request that passed the AuthGuard before
     // the commit could still insert rows while the transaction ran; from here on the guard refuses
     // the user, so this second pass (also run on every retry) removes any such stragglers.
-    const stragglers = await this.dataSource.transaction((manager) => this.sweep(manager, userId));
-    for (const [k, n] of Object.entries(stragglers) as [AccountExportKey, number][]) {
+    const stragglers = await this.dataSource.transaction(async (manager) => ({
+      removed: await this.sweep(manager, userId),
+      linked: await this.sweepLinked(manager, userId),
+    }));
+    for (const [k, n] of Object.entries(stragglers.removed) as [AccountExportKey, number][]) {
       removed[k] = (removed[k] ?? 0) + n;
     }
+    const [betaMembers = 0, betaInvitesUnlinked = 0] = linked.map(
+      (n, i) => n + (stragglers.linked[i] ?? 0),
+    );
     this.erasedCache.add(userId);
 
     // Audit (after commit): the tombstone id and row counts only. No user id: the account is gone,
     // and the scrubber passes this exact shape through (isAuditEventEntry).
     try {
       this.logger.log({ event: "account_deleted", tombstoneId: tombstone.id, removed });
+      this.logger.log(
+        `account_deleted_beta_access tombstoneId=${tombstone.id} members=${betaMembers} invitesUnlinked=${betaInvitesUnlinked}`,
+      );
     } catch {
       // logging failure is ignored
     }

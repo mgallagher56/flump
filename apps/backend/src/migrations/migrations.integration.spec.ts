@@ -127,6 +127,8 @@ const ENTITY_TABLES = [
   "audit_events",
   "bank_connections",
   "bank_oauth_states",
+  "beta_invites",
+  "beta_members",
   "budget_entries",
   "consents",
   "idempotency_keys",

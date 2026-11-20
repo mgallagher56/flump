@@ -70,6 +70,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         "idempotency_keys",
         "user_profiles",
         "accounts",
+        "beta_members",
+        "beta_invites",
       ]);
     });
 
@@ -221,6 +223,46 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [profile.id],
         );
       }
+      // Invite links: closed (cancelled, used or expired) 30 days ago goes, unless a member row
+      // still points at it; a member removed 30 days ago goes first, freeing its invite.
+      const invite = async (
+        name: string,
+        cols: { expires?: string; redeemed?: string; revoked?: string },
+      ): Promise<string> => {
+        const [row]: { id: string }[] = await ds.query(
+          `INSERT INTO beta_invites (token_hash, created_by, created_at, expires_at, redeemed_at, revoked_at)
+           VALUES ($1, $2, ${ago("90 days")}, ${cols.expires ? ago(cols.expires) : ago("-14 days")},
+                   ${cols.redeemed ? ago(cols.redeemed) : "NULL"}, ${cols.revoked ? ago(cols.revoked) : "NULL"})
+           RETURNING id`,
+          [`hash-${name}`, OWNER_ID],
+        );
+        return row?.id as string;
+      };
+      const member = (userId: string, inviteId: string, removed?: string) =>
+        ds.query(
+          `INSERT INTO beta_members (user_id, invite_id, added_at, removed_at)
+           VALUES ($1, $2, ${ago("60 days")}, ${removed ? ago(removed) : "NULL"})`,
+          [userId, inviteId],
+        );
+      await member(
+        "user_removed_old",
+        await invite("used-removed-old", { redeemed: "60 days" }),
+        "31 days",
+      );
+      await member(
+        "user_removed_recent",
+        await invite("used-removed-recent", { redeemed: "60 days" }),
+        "29 days",
+      );
+      await member("user_active", await invite("used-active", { redeemed: "60 days" }));
+      await invite("cancelled-old", { revoked: "31 days" });
+      await invite("cancelled-recent", { revoked: "29 days" });
+      await invite("expired-old", { expires: "31 days" });
+      await invite("expired-recent", { expires: "29 days" });
+      await invite("unused", {});
+      // Used by an account since erased: its member row is gone and the link to the user blanked.
+      await invite("used-erased-old", { redeemed: "31 days" });
+      await invite("used-erased-recent", { redeemed: "29 days" });
       // The slice 9 column-drop before-image is kept 30 days: one row past it and one inside it.
       for (const [age, column] of [
         ["31 days", "monthly_savings_target"],
@@ -246,6 +288,10 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           mcp_tokens_closed: 2,
           bank_oauth_states: 1,
           idempotency_keys: 1,
+          // The member removed 31 days ago.
+          beta_members_removed: 1,
+          // Its freed invite, the old cancelled and expired links, and the old erased user's link.
+          beta_invites_closed: 4,
           account_deletion_tombstones: 1,
           liability_sign_backfill: 1,
           pension_rates_backfill: 1,
@@ -278,6 +324,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("take_home_salary_backfill")).toBe(1);
       expect(await count("reset_pension_zeros_backfill")).toBe(1);
       expect(await count("rental_share_onto_property_backfill")).toBe(1);
+      expect(await count("beta_members")).toBe(2);
+      expect(await count("beta_invites")).toBe(6);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
     });

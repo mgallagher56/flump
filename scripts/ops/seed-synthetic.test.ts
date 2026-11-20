@@ -191,6 +191,7 @@ describe.skipIf(!DB_TESTS_ENABLED)("seed-synthetic (real Postgres, all migration
         if (table.endsWith("_backfill")) continue; // slice 4 and 6 images: keyed by account or profile id, no user_id
         if (table === "account_deletion_tombstones") continue; // a keyed hash, no user_id
         if (table === "rate_limit_buckets") continue; // counters by key, no user_id; emptied
+        if (table === "beta_invites") continue; // the admin's links, no user_id; emptied
         const { rows } = await client.query(
           `SELECT count(*)::int AS n FROM "${table}" WHERE NOT (user_id = ANY($1::text[]))`,
           [ids],

@@ -6,6 +6,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { LastActiveInterceptor } from "./audit/last-active.interceptor";
 import { AuthModule } from "./auth/auth.module";
+import { BetaModule } from "./beta/beta.module";
 import { AppConfigModule, BOOT_CONFIG } from "./config/config.module";
 import { typeOrmOptionsFromEnv } from "./config/typeorm.options";
 import { ContractShadowInterceptor } from "./contract/contract-shadow.interceptor";
@@ -55,6 +56,7 @@ import { SecurityModule } from "./security/security.module";
     ImportsModule,
     AgentModule,
     PrivacyModule,
+    BetaModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

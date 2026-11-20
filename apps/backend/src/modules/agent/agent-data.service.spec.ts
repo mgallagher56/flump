@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeBetaMembership } from "../../testing/fake-beta-membership";
 import { AgentDataService } from "./agent-data.service";
 import { FinancialPictureService } from "./financial-picture.service";
 
@@ -14,7 +15,16 @@ function agentData(
   plans: never,
 ): AgentDataService {
   const picture = new FinancialPictureService(budget, tax, finance, profile);
-  return new AgentDataService(tax, transactions, profile, accounts, details, plans, picture);
+  return new AgentDataService(
+    tax,
+    transactions,
+    profile,
+    accounts,
+    details,
+    plans,
+    picture,
+    fakeBetaMembership(),
+  );
 }
 
 describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16, E17-N7)", () => {

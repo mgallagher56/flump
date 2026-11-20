@@ -114,3 +114,64 @@ describe("UserRateLimitInterceptor shared buckets (M10)", () => {
     expect(memory.size()).toBe(2);
   });
 });
+
+describe("UserRateLimitInterceptor inviteRedeem (per user and per address)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  /** A redeem request from `userId` at `ip`. */
+  function redeemContext(userId: string, ip: string) {
+    const req = { method: "POST", path: "/x", route: { path: "/x" }, user: { id: userId }, ip };
+    const res = { setHeader: vi.fn() };
+    const ctx = {
+      getType: () => "http",
+      getHandler: () => handler,
+      getClass: () => class {},
+      switchToHttp: () => ({ getRequest: () => req, getResponse: () => res }),
+    };
+    const reflector = new Reflector();
+    vi.spyOn(reflector, "getAllAndOverride").mockImplementation((key) =>
+      key === RATE_LIMIT_CLASS ? "inviteRedeem" : undefined,
+    );
+    return { ctx: ctx as never, reflector };
+  }
+
+  it("counts both keys in the shared store and refuses the sixth try from one address", async () => {
+    const shared = new MemorySharedRateLimitStore();
+    const hit = vi.spyOn(shared, "hit");
+    const memory = new RateLimitStore();
+    // Five tries an hour: five different accounts from one address use the address up.
+    for (let i = 1; i <= 5; i += 1) {
+      const { ctx, reflector } = redeemContext(`user-${i}`, "203.0.113.7");
+      await expect(run(new UserRateLimitInterceptor(reflector, memory, shared), ctx)).resolves.toBe(
+        "ok",
+      );
+    }
+    expect(hit.mock.calls.map((c) => c[0]).slice(0, 2)).toEqual([
+      "user:user-1:inviteRedeem",
+      "ip:203.0.113.7:inviteRedeem",
+    ]);
+    const { ctx, reflector } = redeemContext("user-6", "203.0.113.7");
+    const err = await run(new UserRateLimitInterceptor(reflector, memory, shared), ctx).catch(
+      (e) => e,
+    );
+    expect(err).toBeInstanceOf(HttpException);
+    expect((err as HttpException).getStatus()).toBe(429);
+    // Another address is unaffected.
+    const other = redeemContext("user-6", "198.51.100.9");
+    await expect(
+      run(new UserRateLimitInterceptor(other.reflector, memory, shared), other.ctx),
+    ).resolves.toBe("ok");
+    // Nothing touched the in-memory store.
+    expect(memory.size()).toBe(0);
+  });
+
+  it("fails closed with 503 when the shared store is down", async () => {
+    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    const { ctx, reflector } = redeemContext("user-1", "203.0.113.7");
+    const err = await run(
+      new UserRateLimitInterceptor(reflector, new RateLimitStore(), broken()),
+      ctx,
+    ).catch((e) => e);
+    expect(err).toBeInstanceOf(ServiceUnavailableException);
+  });
+});

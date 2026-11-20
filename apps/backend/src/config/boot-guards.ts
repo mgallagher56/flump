@@ -1,15 +1,19 @@
-import { isBetaOpen, isBetaRestricted } from "../auth/beta-access";
+import { hasBetaAdmins, isBetaOpen, isBetaRestricted } from "../auth/beta-access";
+import { isProductionLike } from "../auth/mcp-access";
 import { type BackendEnv, isProduction, parseBackendEnv } from "./env.schema";
 import { BANK_LAUNCH_GATE_PASSED } from "./launch-gate";
 
 type Raw = Record<string, string | undefined>;
 
-/** Production with no beta allow-list and no `BETA_OPEN=true` (M12, D8). */
+/**
+ * A production-like process (NODE_ENV=production or Railway, `isProductionLike`) with no beta
+ * allow-list, no beta admin and no `BETA_OPEN=true` (M12, D8).
+ */
 export class OpenBetaNotConfirmedError extends Error {
   override readonly name = "OpenBetaNotConfirmedError";
   constructor() {
     super(
-      "Production needs BETA_ALLOWED_EMAILS or BETA_ALLOWED_USER_IDS, or BETA_OPEN=true to open the beta to every sign-up",
+      "Production and Railway need BETA_ADMIN_USER_IDS (invite links), BETA_ALLOWED_EMAILS or BETA_ALLOWED_USER_IDS, or BETA_OPEN=true to open the beta to every sign-up",
     );
   }
 }
@@ -43,8 +47,12 @@ export function assertBootGuards(env: Raw, options: BootGuardOptions = {}): void
   if (env.BANK_CONNECTIONS_ENABLED?.trim().toLowerCase() === "true" && !gatePassed) {
     throw new BankLaunchGateError();
   }
+  // The same production-like test the open-beta rule uses (isBetaInviteOnly), so a deployment
+  // can never boot into the local "open with no variables" branch: NODE_ENV=production or Railway.
+  if (isProductionLike(env) && !isBetaRestricted(env) && !hasBetaAdmins(env) && !isBetaOpen(env)) {
+    throw new OpenBetaNotConfirmedError();
+  }
   if (!isProduction(env)) return;
-  if (!isBetaRestricted(env) && !isBetaOpen(env)) throw new OpenBetaNotConfirmedError();
   const mode = env.CONTRACT_MODE?.trim().toLowerCase();
   if (mode && mode !== "enforce") throw new ContractModeNotEnforcedError();
 }

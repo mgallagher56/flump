@@ -11,6 +11,7 @@ import {
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AUTH_MODE } from "../../auth/auth.module";
+import { BETA_MEMBERSHIP_CHECK, type BetaMembershipLookup } from "../../auth/beta-access";
 import { DEV_BYPASS_TOKEN, DEV_USER } from "../../auth/dev-bypass.verifier";
 import {
   isProductionLike,
@@ -21,7 +22,11 @@ import {
 import type { SharedRateLimitStore } from "../../security/rate-limit.store";
 import { SHARED_RATE_LIMIT_STORE } from "../../security/shared-rate-limit";
 import { webOriginBootWarning } from "../imports/review-url";
-import { isRetirementAllowed, RETIREMENT_TOOL_NAMES } from "../retirement/retirement.access";
+import {
+  isRetirementAllowed,
+  isRetirementToolAvailable,
+  RETIREMENT_TOOL_NAMES,
+} from "../retirement/retirement.access";
 import { AgentAuditService } from "./agent-audit.service";
 import { AgentDataService } from "./agent-data.service";
 import { McpImportsAdapter } from "./mcp-imports.adapter";
@@ -43,6 +48,7 @@ export class McpService {
     @Inject(AUTH_MODE) authMode: "workos" | "dev",
     private readonly audit: AgentAuditService,
     private readonly importsAdapter: McpImportsAdapter,
+    @Inject(BETA_MEMBERSHIP_CHECK) private readonly betaMembership: BetaMembershipLookup,
     // BE-07 (M10): the shared Postgres counters, so the MCP limits hold across replicas and
     // restarts. Optional only for unit tests that build the service by hand (in-memory default).
     @Inject(SHARED_RATE_LIMIT_STORE)
@@ -70,8 +76,10 @@ export class McpService {
       isEnabled: () => readMcpAccessConfig(process.env).enabled,
       allowedOrigins: readMcpAccessConfig(process.env).allowedOrigins,
       // RD9: the retirement tools exist only for the friends beta (or open testing), per caller.
+      // Synchronous: membership comes from the token check this same request has just made.
       isToolAvailable: (toolName, verified) =>
-        !RETIREMENT_TOOL_NAMES.has(toolName) || isRetirementAllowed(process.env, verified.userId),
+        !RETIREMENT_TOOL_NAMES.has(toolName) ||
+        isRetirementToolAvailable(process.env, verified.userId, this.betaMembership),
       ...(this.limitStore ? { limitStore: this.limitStore } : {}),
       tokenStore: this.tokenService,
       // Defence in depth: the dev bypass token is never emitted in a production-like process,
@@ -142,7 +150,11 @@ export class McpService {
       const body = {
         token: toMcpInputToken(token),
         // RD9: the local server hides the retirement tools unless this says they are available.
-        retirementAvailable: isRetirementAllowed(process.env, token.userId),
+        retirementAvailable: await isRetirementAllowed(
+          process.env,
+          token.userId,
+          this.betaMembership,
+        ),
         // The same rule the remote tools use: only a token with the full-read scope and the
         // flag off gets real names (a legacy row with the flag off but only the anonymised scope does not).
         input: toMcpInputWire(raw, effectiveAnonymize(token.anonymizeInstitutions, token.scopes)),

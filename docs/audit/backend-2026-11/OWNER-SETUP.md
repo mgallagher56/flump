@@ -283,7 +283,7 @@ The migration `AuditActionUserExported1795000000000` lets `audit_events` hold th
 
 ### Notes
 
-- While `BETA_ALLOWED_EMAILS` is set, removing someone from the beta does not stop their existing AI connection tokens. Revoke the tokens, or use the MCP allow-list.
+- An AI connection token works only while its owner is allowed by user id: an admin (`BETA_ADMIN_USER_IDS`), on `BETA_ALLOWED_USER_IDS`, or a member who joined through an invite link. Someone listed only by email in `BETA_ALLOWED_EMAILS` cannot use AI connection tokens; add their user id too. Removing a member stops their tokens at once.
 - Optional: rate-limit rows written before this release keep raw keys until they expire (about a day).
 
 ### How to know it worked
