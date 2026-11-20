@@ -8,7 +8,6 @@ import type { McpImportBatch, McpImportProvider, McpStageImportInput } from "../
 export const FAKE_MAX_OPEN_BATCHES = 3;
 /** A committed batch every fake starts with, owned by `TEST_TOKEN`'s user. */
 export const SEEDED_BATCH_ID = "6f1c2b8e-4a3d-4e5f-9a7b-1c2d3e4f5a6b";
-const SEEDED_BATCH_USER = "user_test";
 const FAKE_STAGE_CALLS_PER_HOUR = 30;
 
 interface FakeBatch {
@@ -52,7 +51,7 @@ export function createFakeImports(now: () => Date = () => new Date()): FakeImpor
   };
 
   batches.set(SEEDED_BATCH_ID, {
-    userId: SEEDED_BATCH_USER,
+    userId: "user_test",
     keys: new Set(["seeded-key-0001"]),
     accounts: new Map([["acc1", "Seeded account"]]),
     balances: new Map([["acc1:2026-01", 100]]),
