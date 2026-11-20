@@ -75,6 +75,7 @@ export const SavingsPensionPreview: FC<SavingsPensionPreviewProps> = ({
       figure: gbp(account.nominalBalance),
     }));
   // Each account as stored: the engine reads the balance, AER, monthly saving and share itself.
+  // The spread turns the fixture's optional balance into the field the engine's type requires.
   const interest = estimateSavingsInterestNext12Months(
     fixture.accounts.map((account) => ({ ...account, balance: account.balance })),
   );
@@ -105,8 +106,8 @@ export const SavingsPensionPreview: FC<SavingsPensionPreviewProps> = ({
       ? gbp(contributions.monthlyEmployer)
       : NOT_SET;
   const paidInRows: PreviewRow[] = [
-    { id: "you", name: "You pay in each month", figure: youPayIn },
-    { id: "employer", name: "Your employer pays in each month", figure: employerPaysIn },
+    { id: "you", name: "Paid in by the employee each month", figure: youPayIn },
+    { id: "employer", name: "Paid in by the employer each month", figure: employerPaysIn },
   ];
 
   const renderRows = (rows: PreviewRow[], listId: string, label: string) => (
@@ -140,7 +141,7 @@ export const SavingsPensionPreview: FC<SavingsPensionPreviewProps> = ({
           {renderRows(savingsRows, `${id}-savings-list`, "Savings accounts")}
           <div className={savingsPensionSummary()} data-testid={`${id}-interest`}>
             <p className={savingsPensionSummaryLabel()}>
-              Estimated interest over the next 12 months, before tax
+              Estimated interest over the next 12 months
             </p>
             <p className={savingsPensionSummaryFigure()}>
               {interest ? gbp(interest.total) : NOT_SET}
@@ -161,9 +162,9 @@ export const SavingsPensionPreview: FC<SavingsPensionPreviewProps> = ({
           </h3>
         </div>
         {potRows.length > 0 && renderRows(potRows, `${id}-pots`, "Pension pots")}
-        {renderRows(paidInRows, `${id}-paid-in`, "Paid into your workplace pension")}
+        {renderRows(paidInRows, `${id}-paid-in`, "Paid into the workplace pension")}
         <p className={savingsPensionNote()}>
-          Estimated from your salary and the contribution rates you saved.
+          Estimated from the salary and contribution rates saved.
         </p>
       </section>
     </div>

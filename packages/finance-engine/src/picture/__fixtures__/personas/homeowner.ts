@@ -11,7 +11,7 @@ import type { PersonaFixture } from "../types.js";
  * E42 S8 adds what the savings and debt sample previews read: a 3.5% AER on the cash savings, a
  * 4.19% rate and a fixed rate that ends on 30 September 2028 on the mortgage, and a credit card
  * (GBP 1,800 at 22.9% APR, GBP 60 a month) and a personal loan (GBP 7,200 at 6.9% APR, GBP 220 a
- * month). Test data only.
+ * month). Their payments (60 + 220 = 280) are an essential budget row. Test data only.
  */
 export const homeowner: PersonaFixture = {
   netWorthBasis: DEFAULT_NET_WORTH_BASIS,
@@ -73,6 +73,8 @@ export const homeowner: PersonaFixture = {
     budgetEntry("homeowner-b4", "food", "Groceries", 400, { isEssential: true }),
     budgetEntry("homeowner-b5", "savings", "Cash saving", 300),
     budgetEntry("homeowner-b6", "leisure", "Going out", 250),
+    // The card and loan minimums (60 + 220), as debt-stressed and heavy model debt payments.
+    budgetEntry("homeowner-b7", "debt", "Card and loan payments", 280, { isEssential: true }),
   ],
   taxRecords: [],
 };

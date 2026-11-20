@@ -36,6 +36,19 @@ export interface DebtBorrowingPreviewProps {
 
 const NOT_SET = "Not set";
 
+/**
+ * The engine gives no date in two cases: a rate is not saved ("Not set": the figure is missing),
+ * or minimum payments never clear the debts (the figure exists, so it is said in words, as the
+ * debt calculator says it).
+ */
+export const debtFreeDateText = (
+  summary: { debtFreeDate: string | null; debts: readonly { apr?: number | null }[] } | null,
+): string => {
+  if (summary?.debtFreeDate) return summary.debtFreeDate;
+  const rateMissing = !summary || summary.debts.some((debt) => debt.apr == null);
+  return rateMissing ? NOT_SET : "Not paid off at minimum payments";
+};
+
 interface PreviewRow {
   id: string;
   name: string;
@@ -185,12 +198,10 @@ export const DebtBorrowingPreview: FC<DebtBorrowingPreviewProps> = ({
             <>
               <div className={debtBorrowingSummary()} data-testid={`${id}-debt-free-date`}>
                 <p className={debtBorrowingSummaryLabel()}>Estimated debt-free date</p>
-                <p className={debtBorrowingSummaryFigure()}>
-                  {debtSummary?.debtFreeDate ?? NOT_SET}
-                </p>
+                <p className={debtBorrowingSummaryFigure()}>{debtFreeDateText(debtSummary)}</p>
               </div>
               <p className={debtBorrowingNote()}>
-                An estimate, if each debt is paid at its minimum payment.
+                An estimate, paying each minimum and moving a cleared debt's payment to the next.
               </p>
             </>
           )}

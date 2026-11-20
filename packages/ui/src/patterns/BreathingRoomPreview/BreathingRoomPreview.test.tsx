@@ -11,8 +11,9 @@ import {
 // renter (sam.ts): liquid cash 1,850 current + 4,200 cash ISA = 6,050; essentials 850 rent
 //   + 120 bills + 220 groceries + 90 travel = 1,280 a month; 6,050 / 1,280 = 4.73, so 4.7 months.
 // homeowner (homeowner.ts): liquid cash 21,000; essentials 1,050 mortgage + 330 council tax and
-//   energy + 400 groceries = 1,780, plus the card and loan minimums 60 + 220 = 280 (no debt rows
-//   in the budget), so 2,060 a month; 21,000 / 2,060 = 10.19, so 10.2 months.
+//   energy + 400 groceries = 1,780, plus the larger of the card and loan minimums (60 + 220 = 280)
+//   and the 280 debt budget row, so the 280 counts once: 2,060 a month; 21,000 / 2,060 = 10.19,
+//   so 10.2 months.
 const EXPECTED = {
   renter: { value: "About 4.7 months", essentials: "£1,280 a month", savings: "£6,050" },
   homeowner: { value: "About 10.2 months", essentials: "£2,060 a month", savings: "£21,000" },

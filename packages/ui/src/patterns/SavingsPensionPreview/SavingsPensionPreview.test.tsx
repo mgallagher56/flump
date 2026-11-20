@@ -10,15 +10,15 @@ import { SavingsPensionPreview } from "./SavingsPensionPreview";
 //   savings: Cash ISA 4,200 at 4.1% AER (the current account is not a savings account).
 //   interest over 12 months: 4,200 x 0.041 = 172.20, shown as £172.
 //   no pension pot account, so no pots list.
-//   you pay in: 38,000 x 5% = 1,900 a year / 12 = 158.33, shown as £158.
-//   your employer pays in: 38,000 x 3% = 1,140 a year / 12 = 95.
+//   paid in by the employee: 38,000 x 5% = 1,900 a year / 12 = 158.33, shown as £158.
+//   paid in by the employer: 38,000 x 3% = 1,140 a year / 12 = 95.
 //
 // homeowner (homeowner.ts, employer rate 4%):
 //   savings: Cash and emergency savings 21,000 at 3.5% AER.
 //   interest over 12 months: 21,000 x 0.035 = 735.
 //   pension pot: Workplace and personal pension 96,000.
-//   you pay in: 52,000 x 5% = 2,600 a year / 12 = 216.67, shown as £217.
-//   your employer pays in: 52,000 x 4% = 2,080 a year / 12 = 173.33, shown as £173.
+//   paid in by the employee: 52,000 x 5% = 2,600 a year / 12 = 216.67, shown as £217.
+//   paid in by the employer: 52,000 x 4% = 2,080 a year / 12 = 173.33, shown as £173.
 describe("SavingsPensionPreview", () => {
   it("shows the renter's savings, the interest estimate and what is paid in", () => {
     render(<SavingsPensionPreview household="renter" id="sp" />);
@@ -30,9 +30,7 @@ describe("SavingsPensionPreview", () => {
     expect(screen.queryByText("Monzo current")).toBeNull();
 
     const interest = within(screen.getByTestId("sp-interest"));
-    expect(
-      interest.getByText("Estimated interest over the next 12 months, before tax"),
-    ).toBeDefined();
+    expect(interest.getByText("Estimated interest over the next 12 months")).toBeDefined();
     expect(interest.getByText("£172")).toBeDefined();
 
     expect(screen.queryByTestId("sp-pots")).toBeNull();
@@ -53,8 +51,15 @@ describe("SavingsPensionPreview", () => {
     expect(pot.getByText("Workplace and personal pension")).toBeDefined();
     expect(pot.getByText("£96,000")).toBeDefined();
 
-    expect(within(screen.getByTestId("sp-owner-paid-in-you")).getByText("£217")).toBeDefined();
-    expect(within(screen.getByTestId("sp-owner-paid-in-employer")).getByText("£173")).toBeDefined();
+    const you = within(screen.getByTestId("sp-owner-paid-in-you"));
+    expect(you.getByText("Paid in by the employee each month")).toBeDefined();
+    expect(you.getByText("£217")).toBeDefined();
+    const employer = within(screen.getByTestId("sp-owner-paid-in-employer"));
+    expect(employer.getByText("Paid in by the employer each month")).toBeDefined();
+    expect(employer.getByText("£173")).toBeDefined();
+    expect(
+      screen.getByText("Estimated from the salary and contribution rates saved."),
+    ).toBeDefined();
   });
 
   it("sets no target, suggests nothing and keeps to one headline at most", () => {

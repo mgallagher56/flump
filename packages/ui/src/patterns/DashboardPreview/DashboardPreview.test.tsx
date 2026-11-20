@@ -22,10 +22,10 @@ import { DashboardPreview } from "./DashboardPreview";
 //   the home is the "Home (your estimate)" account, so the hero says it includes the estimate.
 //   what you owe outside a mortgage: 1,800 card + 7,200 loan = 9,000. Pension pots: 96,000.
 //   budget: income 3,249; essentials 1,050 mortgage + 330 council tax and energy + 400 groceries
-//     = 1,780; savings 300; discretionary 250.
-//     spending each month = 1,780 + 250 = 2,030. left over = 3,249 - 1,780 - 250 - 300 = 919.
-//   breathing room: liquid cash 21,000 / (1,780 essentials + 60 + 220 card and loan minimums
-//     = 2,060) = 10.19, so about 10.2 months.
+//     + 280 card and loan payments (60 + 220) = 2,060; savings 300; discretionary 250.
+//     spending each month = 2,060 + 250 = 2,310. left over = 3,249 - 2,060 - 250 - 300 = 639.
+//   breathing room: liquid cash 21,000 / (1,780 non-debt essentials + the larger of the 280
+//     minimums and the 280 debt row, counted once = 2,060) = 10.19, so about 10.2 months.
 //   mortgage card: 186,000 balance; loan to value 186,000 / 310,000 = 60%.
 //   accounts tracked: 6.
 const EXPECTED = {
@@ -39,10 +39,10 @@ const EXPECTED = {
   },
   homeowner: {
     netWorth: "£232,000",
-    leftOver: "£919",
+    leftOver: "£639",
     owed: "£9,000",
     pensions: "£96,000",
-    spending: "£2,030",
+    spending: "£2,310",
     breathingRoom: "Breathing room: about 10.2 months",
     accounts: "6",
     mortgage: "£186,000",
