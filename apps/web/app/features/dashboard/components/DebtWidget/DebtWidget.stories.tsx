@@ -27,6 +27,10 @@ type Story = StoryObj<typeof DebtWidget>;
 export const Populated: Story = {
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getAllByText("December 2027")[0]).toBeDefined();
+    // The engine moves a cleared debt's payment onto the next one; the note says so.
+    await expect(
+      within(canvasElement).getByText(/moving a cleared debt's payment to the next/),
+    ).toBeDefined();
   },
 };
 

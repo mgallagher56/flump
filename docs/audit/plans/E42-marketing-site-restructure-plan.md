@@ -2,7 +2,7 @@
 
 Decisions: accepted on 2026-11-20
 
-> Status: accepted; build waits for the coordinator. All ten decisions were answered on 2026-11-20 (section 7.1). Points still to confirm are listed at the end of section 7.1; the build leaves the parts they touch until they are settled (AGENTS.md section 13). No code. Written 2026-11-20 against `origin/main` (`da6284f0c`). Paths are relative to the repository root. All copy in this document is a draft for the owner to react to (E7: the owner signs off all marketing copy).
+> Status: built. PR 1 (#848), PR 2 (#850) and S8 (#852) merged on 2026-11-20, and a closing PR records ruling R-a. One item waits for the owner: the two data facts on the Security page (download and delete your data), which ship once the owner confirms both work in staging (section 7.1). Written 2026-11-20 against `origin/main` (`da6284f0c`). Paths are relative to the repository root. All copy in this document is a draft for the owner to react to (E7: the owner signs off all marketing copy).
 
 ## 1. Summary
 
@@ -423,7 +423,7 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | --- | --- | --- |
 | ~~The AI connection page's "How to get it" wording~~ | Decided by the coordinator, 20 November 2026: version 1 (above) | Built in PR 2 |
 | ~~Whether the AI connection page keeps the small "Preview" label~~ | Decided by the coordinator, 20 November 2026: it stays (above) | Kept |
-| That choosing the headline allows its two full stops and slogan shape for the marketing home h1 only (ruling R-a, section 5.1), and the copy guide exception that records it | Owner | The copy guide edit; the h1 text itself is decided |
+| ~~That choosing the headline allows its two full stops and slogan shape for the marketing home h1 only (ruling R-a)~~ | Decided, 20 November 2026: the owner's own choice outranks the guide (coordinator ruling on it); copy guide 5.1 and 5.4 record the exception for that one string | Built in the closing PR |
 | That downloading and deleting data work in staging | Owner | The two data facts on the Security page |
 | The list of account kinds named on the Accounts page | Build lane, checked against the code | One sentence of the Accounts page |
 | ~~Names for calculators 5 and 6~~ | Decided by the coordinator, 20 November 2026 (above) | Built in PR 2 |

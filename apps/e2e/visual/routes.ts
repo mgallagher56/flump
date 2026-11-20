@@ -63,6 +63,7 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   marketing("features", "/features"),
   marketing("feature-accounts", "/features/accounts"),
   marketing("feature-debt-and-borrowing", "/features/debt-and-borrowing"),
+  marketing("feature-savings-and-pension", "/features/savings-and-pension"),
   marketing("ai-connection", "/features/ai-connection"),
 ];
 
