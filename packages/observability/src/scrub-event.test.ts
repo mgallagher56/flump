@@ -354,3 +354,41 @@ describe("scrubBreadcrumb method check", () => {
     ).toEqual({});
   });
 });
+
+describe("long values keep the whole parts before the cut", () => {
+  it("cuts a long path back to the last forward slash", () => {
+    // The path is "/" then 700 copies of "ab/" then "end": 2,104 characters. Character 2,048
+    // (index 2,047) is the "a" of a copy, so the cut drops it and ends after 682 whole copies
+    // (1 + 682 * 3 = 2,047 characters).
+    const url = `/${"ab/".repeat(700)}end`;
+    expect(scrubEvent({ request: { url } })?.request?.url).toBe(`/${"ab/".repeat(682)}`);
+  });
+
+  it("cuts a long Windows file path back to the last backslash", () => {
+    // "C:" and a backslash are 3 characters, then 700 copies of "ab" and a backslash, then
+    // "a.ts": 2,107 characters. Index 2,047 is a "b" and index 2,046 an "a", so the cut ends
+    // after 681 whole copies (3 + 681 * 3 = 2,046 characters).
+    const filename = `C:\\${"ab\\".repeat(700)}a.ts`;
+    const out = scrubEvent({ exception: { values: [{ stacktrace: { frames: [{ filename }] } }] } });
+    const values = out?.exception?.values as
+      | Array<{ stacktrace?: { frames?: Array<{ filename?: string }> } }>
+      | undefined;
+    expect(values?.[0]?.stacktrace?.frames?.[0]?.filename).toBe(`C:\\${"ab\\".repeat(681)}`);
+  });
+
+  it("keeps a full URL within 2,048 characters after its origin is added back", () => {
+    // The path is cut to 2,047 characters as above; "https://h.test" adds 14, so the cleaned URL
+    // would be 2,061 characters without the final cut.
+    const url = `https://h.test/${"ab/".repeat(700)}end`;
+    const out = scrubEvent({ request: { url } })?.request?.url ?? "";
+    expect(out.startsWith("https://h.test/ab/ab/")).toBe(true);
+    expect(out).toHaveLength(2048);
+  });
+
+  it("cuts a long transaction name back to the last whitespace", () => {
+    // 3,000 copies of "ab " are 9,000 characters; the 8,192-character cut ends after 2,730
+    // whole copies (8,190 characters), as in redactString.
+    const out = scrubEvent({ transaction: "ab ".repeat(3000) })?.transaction;
+    expect(out).toBe("ab ".repeat(2730));
+  });
+});

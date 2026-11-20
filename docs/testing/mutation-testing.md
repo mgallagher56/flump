@@ -2,7 +2,7 @@
 
 Mutation testing makes one small fault at a time in the code (a `>` becomes `>=`, a `-` becomes `+`) and runs the tests. If no test fails, the fault "survived": the tests would not notice that mistake. The tool is [StrykerJS](https://stryker-mutator.io/). The plan is [E41](../audit/plans/E41-mutation-testing-and-test-speed-plan.md).
 
-Status: slice M2 done. The whole of `packages/finance-engine` is mutation-tested once a week in CI, and its score is checked against a floor. Pull requests that change engine source get an advisory list of faults no test caught. M2 added kill tests for every engine file (part A outside tax and pay, part B tax and pay) and recorded every fault left over in the [triage ledger](./mutation-triage.md). Other packages come in M3 to M5.
+Status: slice M3. Eight packages are mutation-tested once a week in CI, each against its own floor: `packages/finance-engine` (M1 and M2) and, from M3, `packages/mcp`, `api-contract`, `banking`, `observability`, `format`, `api-client` and `business-details`. Pull requests that change the source of any of them get an advisory list of faults no test caught. Faults left over after the kill tests are in the [triage ledger](./mutation-triage.md). Backend guards and services come in M4, web and UI logic in M5.
 
 ## Run it locally
 
@@ -17,22 +17,23 @@ This runs Stryker in `packages/finance-engine` with [`stryker.config.json`](../.
 - `--mutate` also takes a line range: `--mutate "src/mortgage.ts:32-44"`.
 - The config uses `inPlace` (see below). Stryker writes the faults into the real source files, and adds `// @ts-nocheck` to every file in the package, test files included. It puts the originals back at the end, from a backup in `packages/finance-engine/.stryker-tmp/`. Do not edit or commit engine files while a run is going.
 - To stop a run, press Ctrl+C or send it SIGINT. In M1 this put every file back and saved a partial incremental file. It leaves `stryker-setup-*.js` files in the package folder, which are git-ignored and safe to delete. The main process renames itself `stryker`, so `pkill -f "stryker.js run"` does not find it.
+- Other packages: run Stryker from the package folder, for example `cd packages/mcp && node ../../node_modules/@stryker-mutator/core/bin/stryker.js run --mutate "src/auth/scopes.ts"`. Packages that import another workspace package (`mcp`, `api-client`) read its built `dist`, so build those first from the repository root, with unmutated source: `bunx turbo run build --filter="{./packages/mcp}^..."`.
 - The script is not part of `turbo run test`. CI runs Stryker from its own workflow (next section).
 
 ## The weekly run and the ratchet
 
 [`.github/workflows/mutation.yml`](../../.github/workflows/mutation.yml), its own workflow file, not a required check (E41 decisions 3 to 6).
 
-| Job           | When                                                                   | What it does                                                                                                                                                                                       | Blocks a merge?               |
-| ------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| Pick packages | Weekly run and manual start                                            | Chooses the packages: by cron for the weekly run, or the `package` input (a folder, or `all`) for a manual start                                                                                   | No                            |
-| Shards 1 to 8 | After it                                                               | Each mutates about an eighth of the package's files, by size, and uploads its HTML and JSON report. Each shard saves its own incremental file to the Actions cache                                 | No                            |
-| Score         | After all shards                                                       | Joins the eight JSON reports and runs the ratchet. Fails when a shard report is missing or the score is under the floor. Writes the score and the files with the most survivors to the job summary | No. It fails only its own job |
-| Changed files | Pull requests that touch engine source or its Stryker or Vitest config | Mutates the changed source files only and lists every survivor in the job summary. Advisory (decision 4)                                                                                           | No                            |
+| Job           | When                                                                                | What it does                                                                                                                                                                                                                                                         | Blocks a merge?               |
+| ------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Pick packages | Weekly run and manual start                                                         | Chooses the packages: by cron for the weekly run, or the `package` input (a folder, or `all`) for a manual start                                                                                                                                                     | No                            |
+| Shards        | After it                                                                            | Builds the package's workspace dependencies, then each shard mutates its share of the package's files, by size, and uploads its HTML and JSON report. The engine has 8 shards, `mcp` 4, the others 1. Each shard saves its own incremental file to the Actions cache | No                            |
+| Score         | After all shards                                                                    | One per package. Joins its shard reports and runs the ratchet. Fails when a shard report is missing or the score is under the floor. Writes the score and the files with the most survivors to the job summary                                                       | No. It fails only its own job |
+| Changed files | Pull requests that touch a covered package's source or its Stryker or Vitest config | Mutates the changed source files only, package by package, and lists every survivor in the job summary. Advisory (decision 4)                                                                                                                                        | No                            |
 
-- Schedule: Sunday at 02:17 UTC for the engine. The weekly run always reruns every fault (`--force`). Stryker's incremental mode reuses a fault's result when its own file and the test files are unchanged, but it does not see a change to another source file that a test imports, so reused results could go stale. A manual start (Actions, "🧬 Mutation testing", Run workflow) reuses the latest saved results unless `force` is ticked. It then runs in a few minutes: the M1 rerun took under a minute per shard.
+- Schedule: one night per package at 02:17 UTC: the engine on Sunday, `mcp` Monday, `api-contract` Tuesday, `banking` Wednesday, `observability` Thursday, `format` Friday, `api-client` Saturday, and `business-details` on Sunday at 03:47 after the engine. The weekly run always reruns every fault (`--force`). Stryker's incremental mode reuses a fault's result when its own file and the test files are unchanged, but it does not see a change to another source file that a test imports, so reused results could go stale. A manual start (Actions, "🧬 Mutation testing", Run workflow) reuses the latest saved results unless `force` is ticked. It then runs in a few minutes: the M1 rerun took under a minute per shard.
 - Node 24 from `actions/setup-node`, because Stryker 10 needs 22 or later. Bun runs the scripts.
-- Reports are artifacts named `mutation-report-finance-engine-shard1` to `shard8`, kept for 30 days. There is no hosted dashboard (decision 6).
+- Reports are artifacts named `mutation-report-<package>-shard<n>` (for example `mutation-report-finance-engine-shard1` to `shard8`, or `mutation-report-format-shard1`), kept for 30 days. A download pattern that matches one artifact only is unpacked with no folder of its own, so for a one-shard package the score job reads `shard-reports/mutation.json`. There is no hosted dashboard (decision 6).
 - Why shards: they run side by side, so the run finishes in about 20 minutes instead of over an hour. That leaves room as M3 to M5 add packages. Each shard runs only the tests Vitest finds related to its own files. The M1 comparison below found the same results as an unsharded run, apart from tests that time themselves.
 - Files are split by size, so a file can move to another shard when files change. Its results then start again in the new shard. Stryker also keeps the moved file's old results in the old shard's report, carried over from that shard's incremental file, so the score job keeps from each report only the files that shard was given this run. Without that, the second CI run on the branch failed with `src/picture/figure.ts is in more than one shard report`.
 - The pull request job compares GitHub's merge commit with its first parent, so changes that reached `main` after the pull request opened are not mutated as its own. It does not use the weekly incremental files. Each shard's file covers only that shard's files, and Stryker numbers tests from 0 in every run, so the files cannot be joined. Mutating only the changed files keeps the job short: M0 measured 22 to 70 seconds for all of `mortgage.ts`.
@@ -45,7 +46,7 @@ The ratchet, [`scripts/check-mutation-score.ts`](../../scripts/check-mutation-sc
 - Survivors recorded as equivalent or not worth killing (decision 2, the triage ledger M2 adds) stay in the count. The floor sits below 100 to allow for them. Nothing is suppressed.
 - A red weekly run is the coordinator's to pick up (plan section 9). Open the score job's summary, then the shard reports.
 - Run the check by hand on any report: `bun scripts/check-mutation-score.ts check packages/finance-engine path/to/mutation.json`. `survivors` lists the faults no test caught; `shard` and `targets` print the file lists the workflow uses.
-- Adding a package (M3 onwards): give it a `stryker.config.json`, a cron in `on.schedule`, an entry in the "Pick packages" step, and a floor. `scripts/check-mutation-score.test.ts` checks that every cron picks a package and that every picked package has a floor.
+- Adding a package: give it a `stryker.config.json`, a cron in `on.schedule`, a target with its shard count in the "Pick packages" step (and a line for a manual start), its folder in `PACKAGES` in the "Changed files" job, its `src`, Stryker and Vitest config paths in the pull request filter, and a floor. `scripts/check-mutation-score.test.ts` checks that every cron picks a package, that every package with a Stryker config is picked, watched on pull requests and has a floor, and that each package's shard count reaches the shard and score jobs.
 
 ## Versions
 
@@ -117,6 +118,54 @@ Both runs were forced, on branch `e41-m2-kill-tests-b` after PRs 807, 808 and 81
 - The floor. `scripts/mutation-baseline.json` sets the engine floor at **92%**: floor(93.04) - 1. CI's figure without timeouts is also 93.04%.
 - After the independent review, two assertions that pinned possible bugs were removed (investment fees taken off savings interest before tax; a Plan 1 and Plan 2 repayment put wholly on Plan 1). That leaves two more faults not caught, so the honest figure is 93.03% and the floor stays at 92.
 - The ledger's "Timeout" class records faults a test does catch but that Stryker reported as timeouts; its "Tax gate" class now holds only the Scottish personal savings allowance band edge, which awaits a ruling (E25).
+
+## What M3 measured (19 and 20 November 2026)
+
+M3 added seven packages: `packages/mcp`, `api-contract`, `banking`, `observability`, `format`, `api-client` and `business-details`. Each has its own `stryker.config.json` like the engine's (Vitest runner, `inPlace`, the explicit `plugins` list, no type checker). What each mutates:
+
+- Every `src/**/*.ts` file except tests and type declarations.
+- Barrels that only re-export are left out by name. Files named `index.ts` that hold logic stay in: `banking/src/client/index.ts`, `business-details/src/index.ts` and the `mcp` tool lists.
+- `mcp` also leaves out `src/testing/**` (test helpers) and `src/evals/**` (the AI evaluation harness and its persona data, used only by tests).
+- `format` leaves out `src/fixtures.ts`, the cross-platform formatter snapshot data.
+
+Two things were new for these packages:
+
+- `api-client` and `mcp` import other workspace packages through their built `dist`, so the first `api-client` run stopped with `Failed to resolve entry for package "@flump/api-contract"`. The workflow now builds each package's dependencies (`turbo run build --filter="{./<package>}^..."`) from unmutated source before Stryker runs. The form with braces matters: `./packages/mcp^...` also built `mcp` itself.
+- One-shard packages: `download-artifact` unpacks a single matched artifact with no folder of its own, so the first CI run failed every one-shard score job with "No report from shard 1". The score step now looks for `shard-reports/mutation.json` in that case.
+
+Before and after the kill tests, on the laptop (the 8-core Apple laptop of M0, Node 22.12.0, 7 test runner processes). "Honest" counts timeouts as not caught, and no kill came from a test's own time limit. Errors (the module fails to load) are left out of the score, as Stryker leaves them out.
+
+| Package            | Faults | Score before | After: killed / timed out / survived / no coverage / errors | Score after | Honest after | Floor | Laptop time after |
+| ------------------ | -----: | -----------: | ----------------------------------------------------------- | ----------: | -----------: | ----: | ----------------: |
+| `mcp`              |  4,212 |       71.12% | 3,870 / 114 / 188 / 34 / 6                                  |      94.72% |       92.01% |    91 |       24 min 45 s |
+| `api-contract`     |  1,255 |       86.37% | 1,166 / 0 / 65 / 6 / 18                                     |      94.26% |       94.26% |    93 |        3 min 17 s |
+| `banking`          |  1,203 |       69.24% | 1,136 / 8 / 53 / 6 / 0                                      |      95.10% |       94.43% |    93 |              29 s |
+| `observability`    |    877 |       88.01% | 841 / 3 / 30 / 3 / 0                                        |      96.24% |       95.90% |    94 |              29 s |
+| `api-client`       |    496 |       80.44% | 451 / 1 / 39 / 5 / 0                                        |      91.13% |       90.93% |    89 |       about 2 min |
+| `format`           |    402 |       83.33% | 374 / 0 / 28 / 0 / 0                                        |      93.03% |       93.03% |    92 |       about 1 min |
+| `business-details` |     67 |       85.07% | 65 / 0 / 2 / 0 / 0                                          |      97.01% |       97.01% |    96 |        about 20 s |
+
+- Each floor is floor(honest after) - 1 (decision 3).
+- Fault counts before were a little different for `api-contract` (1,243), `mcp` (4,175) and `observability` (851): main changed their source between the runs (PR 818 and other merges).
+- The first `api-contract` run is skewed low. A git hook briefly put the original source back in the middle of it (see below), and the forced rerun killed many of its survivors with the tests already there.
+- First-run times were taken with the machine's load average between 50 and 190 from other sessions: `mcp` took 75 minutes and `api-contract` 13.5 minutes. The final runs had a load of 9 to 20.
+- `mcp`'s 114 timeouts are mostly load. CI, on the same tests one commit earlier, timed out 53 and killed 3,920. Most were killed in the earlier per-file runs; the ledger lists those as "Timed out under load".
+
+On CI, workflow run 44642006734 (a forced manual start of all packages on this branch, at commit `d937a3116`, before the last few tests), each shard took: `mcp` 6 min 33 s to 9 min 0 s across 4 shards, `api-contract` 6 min 5 s, `banking` 1 min 44 s, `observability` 2 min 1 s, `api-client` 1 min 56 s, `format` 54 s, `business-details` 30 s. Its scores were the laptop's at that commit, apart from timeouts: `mcp` 94.51% (3,920 killed, 53 timed out, 197 survived, 34 no coverage), `api-contract` 94.02%, `banking` 95.10%, `observability` 94.64%, `api-client` 91.13%, `format` 93.03%, `business-details` 97.01%. FINAL_CI_LINE
+
+What the triage found, besides missing tests:
+
+- `observability`: Sentry event scrubbing cut a URL to 2,048 characters before it removed userinfo. Fixed in PR 818, with the same class of problem elsewhere in the package.
+- `banking`: a CSV credit card's amount owed was not rounded to pence. Fixed in PR 818.
+- `mcp`: an AI connection token was still accepted in the millisecond of its expiry. Fixed on this branch (`token-verifier.ts`, `<=`), with a fake-timer test.
+- `format` (`date.ts`) and `api-contract` (`IsoDate` in `primitives.ts`) refuse dates in the years 0000 to 0099, because `Date.UTC` maps them to 1900 to 1999. Recorded as Possible bug in the ledger and not fixed.
+- `banking/src/client/index.ts`: the doc comment says fewer than 7 days is "expiring soon", while the code uses 7 days or fewer. Recorded as Possible bug.
+
+Lessons for later slices:
+
+- Never commit while an in-place run is going. The commit hook (lint-staged) stashes unstaged changes and restores them, so for a moment the real source is back under the running tests. That is what skewed the first `api-contract` run.
+- Two Stryker runs in the same package at once would overwrite each other's faults. For `mcp`, four triage agents each worked in their own git worktree on their own files, and their test commits were cherry-picked onto the branch.
+- A run with `--mutate` on a few files keeps the other files' results in the report only through the incremental file. Use `--force` on the whole package for the figures that set a floor.
 
 ## What M2 part A measured (19 November 2026)
 
@@ -238,6 +287,7 @@ A likely way back to the sandbox, not tried: make the engine's `tsconfig.json` e
 
 - `inPlace` writes into real source files during a run. Fine on a CI runner. Locally it means not editing the mutated file mid-run.
 - No type checking of faults (TypeScript 7).
+- Incremental mode can keep a stale result for a module-level (static) fault after a new test is added: in M3 a fault in `api-contract`'s `tax.ts` stayed "Survived" in an incremental run and was killed by the same test under `--force`. Use `--force` (a line range keeps it short) to confirm a new test's kills.
 - Browser-mode Vitest (the Storybook project) cannot be mutation-tested; this is Stryker's documented limit and was not retested.
 - The `related` option relies on test files importing the source file. For the engine this held: the first run picked 564 related tests. Backend specs that reach code over HTTP may not be found this way (M4).
 - Timings are from one laptop under load from other work, so they vary by a factor of three.

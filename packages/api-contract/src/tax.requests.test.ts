@@ -196,6 +196,13 @@ describe("known tax record categories", () => {
     });
   });
 
+  it("leave the legacy salary category to its own message, even with spaces around it", () => {
+    // Salary is refused by the category field's own rule ("saved on your profile"), so the
+    // unknown-category check gives no second error for it. The field trims first, so the check
+    // must trim too: " paye_salary " is the legacy salary category, not an unknown one.
+    expect(taxCategoryError({ source: "paye", category: " paye_salary " })).toBeNull();
+  });
+
   it("still accept a stored record with any category in a response", () => {
     expect(TaxRecordDto.shape.category.safeParse("Rent").success).toBe(true);
   });

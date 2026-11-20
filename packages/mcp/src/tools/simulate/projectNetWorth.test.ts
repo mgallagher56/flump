@@ -225,6 +225,42 @@ describe("project_net_worth behaviour", () => {
       expect(saving?.why).toContain("zero saving");
       expect(saving?.askUser).toContain("monthly saving");
     });
+
+    it("asks for the salary when a pension rate is saved without one", async () => {
+      // A 5% rate and no salary: the contribution in pounds is unknown, so it is left out and the
+      // salary is asked for. Saving is supplied, so nothing else is missing.
+      h = await connectTestClient(
+        user([acc("cash", "Current", 1000)], {
+          profileFacts: { ...profileFactsFromProfile(null), pensionPercent: 5 },
+        }),
+      );
+      const e = await call(oneYear);
+      expect(e.missing.map((m) => m.field)).toEqual(["salary"]);
+    });
+
+    it("asks for the salary once when both the take-home line and the pension rate need it", async () => {
+      // Two rules want the salary here. The income row is linked to take-home pay and no salary is
+      // saved, so the budget lists "salary" as missing. A 5% pension rate is saved with no salary,
+      // so the pension rule wants "salary" too. Each missing input is asked for once, so the list
+      // holds one "salary" entry, then the saving (none supplied, and the budget has no known income).
+      h = await connectTestClient(
+        user([acc("cash", "Current", 1000)], {
+          profileFacts: { ...profileFactsFromProfile(null), pensionPercent: 5 },
+          budgetEntries: [
+            entry({
+              id: "pay",
+              category: "income",
+              name: "Pay",
+              isIncome: true,
+              linkKind: "take_home",
+            }),
+          ],
+        }),
+      );
+      const e = await call({ expectedReturnPct: 5, horizonYears: 1 });
+      expect(e.missing.map((m) => m.field)).toEqual(["salary", "monthlySavingGbp"]);
+      expect(e.missing.filter((m) => m.field === "salary")).toHaveLength(1);
+    });
   });
 
   describe("property and events", () => {

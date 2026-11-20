@@ -1135,7 +1135,7 @@ describe("HttpMcpHandler responses and limiter wiring", () => {
     it("answers a generic 400 when the request fails after authentication", async () => {
       let status = 0;
       let sent: unknown;
-      const res: any = {
+      const res = {
         status(code: number) {
           status = code;
           return this;
@@ -1155,7 +1155,10 @@ describe("HttpMcpHandler responses and limiter wiring", () => {
         isToolAvailable: () => {
           throw new Error("flag service down");
         },
-      }).handleExpressRequest(req(), res);
+      }).handleExpressRequest(
+        req(),
+        res as unknown as Parameters<HttpMcpHandler["handleExpressRequest"]>[1],
+      );
       expect(status).toBe(400);
       expect(sent).toMatchObject({ error: "bad_request" });
     });

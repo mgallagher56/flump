@@ -8,8 +8,8 @@
     },
     "packages/api-contract": {
       "floor": 93,
-      "measured": 94.29,
-      "measuredOn": "2026-11-19"
+      "measured": 94.26,
+      "measuredOn": "2026-11-20"
     },
     "packages/banking": {
       "floor": 93,
@@ -17,9 +17,9 @@
       "measuredOn": "2026-11-19"
     },
     "packages/observability": {
-      "floor": 93,
-      "measured": 94.3,
-      "measuredOn": "2026-11-19"
+      "floor": 94,
+      "measured": 95.9,
+      "measuredOn": "2026-11-20"
     },
     "packages/format": {
       "floor": 92,
@@ -37,9 +37,9 @@
       "measuredOn": "2026-11-19"
     },
     "packages/mcp": {
-      "floor": 90,
-      "measured": 91.85,
-      "measuredOn": "2026-11-19"
+      "floor": 91,
+      "measured": 92.01,
+      "measuredOn": "2026-11-20"
     }
   }
 }
