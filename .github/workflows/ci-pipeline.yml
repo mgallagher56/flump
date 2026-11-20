@@ -57,9 +57,6 @@ jobs:
       - name: 🔬 Lint
         run: bun run lint
 
-      - name: 🧹 Dead code (knip)
-        run: bun run knip
-
       - name: 🔐 Check no mock auth literals
         run: bun run check:auth
 
@@ -113,6 +110,11 @@ jobs:
       - name: 🔎 Type check all packages
         if: ${{ !cancelled() }}
         run: bun run check-types
+
+      # After the type check: knip loads the Panda configs, which need @flump/tokens built.
+      - name: 🧹 Dead code (knip)
+        if: ${{ !cancelled() }}
+        run: bun run knip
 
   # Vitest runs as two parallel shards (web, backend + packages) so neither is the critical path.
   # Both need the throwaway Postgres: the web unit project includes the backend contract suite
