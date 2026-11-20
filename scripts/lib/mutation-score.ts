@@ -9,7 +9,7 @@
  * faults are left out, as Stryker leaves them out. Survivors recorded in the triage ledger
  * (decision 2) stay in the count: nothing here reads the ledger.
  */
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 export type MutantStatus =
@@ -133,7 +133,7 @@ export function readBaseline(path: string): Baseline {
 
 const pct = (score: number | null) => (score === null ? "n/a" : `${score.toFixed(2)}%`);
 
-/** Markdown for the job summary: the package line, then files ordered by faults left uncaught. */
+/** Markdown summary of a run: the package line, then files ordered by faults left uncaught. */
 export function formatSummary(
   pkg: string,
   result: ReportScore,
@@ -187,7 +187,7 @@ export function formatSummary(
   return `${lines.join("\n")}\n`;
 }
 
-/** Markdown listing every survivor and uncovered fault, for the advisory pull request job. */
+/** Markdown listing every survivor and uncovered fault, for triage after a local run. */
 export function formatSurvivors(pkg: string, report: MutationReport, limit = 200): string {
   const rows: string[] = [];
   let count = 0;
@@ -208,9 +208,9 @@ export function formatSurvivors(pkg: string, report: MutationReport, limit = 200
     }
   const score = scoreReport(report);
   const head = [
-    `### Mutation testing (changed files): ${pkg}`,
+    `### Faults no test caught: ${pkg}`,
     "",
-    "Advisory only (E41 decision 4). Faults in the changed files that no test caught. Triage them as in docs/testing/mutation-testing.md; a survivor is not always a missing test.",
+    "Triage them as in docs/testing/mutation-testing.md; a survivor is not always a missing test, and recorded ones are in docs/testing/mutation-triage.md.",
     "",
     `Score on these files ${pct(score.score)}: ${score.counts.total} faults, ${count} not caught.`,
   ];
@@ -222,32 +222,9 @@ export function formatSurvivors(pkg: string, report: MutationReport, limit = 200
     "| --- | --- | --- | --- |",
     ...rows,
     ...(count > rows.length
-      ? ["", `${count - rows.length} more not shown; see the report artifact.`]
+      ? ["", `${count - rows.length} more not shown; see the HTML report.`]
       : []),
   ].join("\n")}\n`;
-}
-
-/**
- * The changed files a pull request run should mutate: paths from `git diff --name-only` (relative
- * to the repository root) that fall inside the package and match its Stryker `mutate` globs.
- * Negated globs (`!pattern`) exclude, as they do in Stryker.
- */
-export function selectMutateTargets(
-  changedPaths: string[],
-  packageDir: string,
-  mutate: string[],
-): string[] {
-  const matches = mutateMatcher(mutate);
-  const prefix = `${packageDir.replace(/\/+$/, "")}/`;
-  return [
-    ...new Set(
-      changedPaths
-        .map((p) => p.trim())
-        .filter((p) => p.startsWith(prefix))
-        .map((p) => p.slice(prefix.length))
-        .filter(matches),
-    ),
-  ].sort();
 }
 
 /** True for a package-relative path that Stryker's `mutate` globs select. */
@@ -257,72 +234,14 @@ function mutateMatcher(mutate: string[]): (path: string) => boolean {
   return (p) => include.some((g) => g.match(p)) && !exclude.some((g) => g.match(p));
 }
 
-export type SizedFile = { path: string; size: number };
-
-/** Every file in the package that the `mutate` globs select, with its size in bytes. */
-export function listMutateFiles(root: string, packageDir: string, mutate: string[]): SizedFile[] {
+/** Every file in the package that the `mutate` globs select, package-relative and sorted. */
+export function listMutateFiles(root: string, packageDir: string, mutate: string[]): string[] {
   const cwd = join(root, packageDir);
   const matches = mutateMatcher(mutate);
   const paths = new Set<string>();
   for (const pattern of mutate.filter((p) => !p.startsWith("!")))
     for (const path of new Bun.Glob(pattern).scanSync({ cwd })) if (matches(path)) paths.add(path);
-  return [...paths].sort().map((path) => ({ path, size: statSync(join(cwd, path)).size }));
-}
-
-/**
- * Splits the files into `count` shards of similar total size, so the weekly run fits in GitHub's
- * job time limit. Largest file first, each into the lightest shard so far (ties go to the lower
- * shard). Size stands in for run time, which it tracks only roughly. A file whose size changes can
- * move to another shard, so the score job cuts each report to its shard's files (joinShardReports).
- */
-export function partitionFiles(files: SizedFile[], count: number): string[][] {
-  if (!Number.isInteger(count) || count < 1)
-    throw new Error(`shard count must be 1 or more, got ${count}`);
-  const shards = Array.from({ length: count }, () => ({ size: 0, paths: [] as string[] }));
-  const ordered = [...files].sort((a, b) => b.size - a.size || a.path.localeCompare(b.path));
-  for (const file of ordered) {
-    let lightest = 0;
-    for (let i = 1; i < count; i++)
-      if ((shards[i]?.size ?? 0) < (shards[lightest]?.size ?? 0)) lightest = i;
-    const shard = shards[lightest];
-    if (!shard) continue;
-    shard.size += file.size;
-    shard.paths.push(file.path);
-  }
-  return shards.map((s) => s.paths.sort());
-}
-
-/**
- * Keeps only the given files. A shard's report can also hold files that were in that shard on an
- * earlier run: Stryker carries results over from the restored incremental file. Measured on CI
- * when a file's size changed and files moved between shards.
- */
-function restrictReport(report: MutationReport, files: string[]): MutationReport {
-  const keep = new Set(files);
-  return {
-    files: Object.fromEntries(Object.entries(report.files).filter(([file]) => keep.has(file))),
-  };
-}
-
-/**
- * The shard reports, each cut down to the files that shard was given this run, joined into one.
- * `reports[i]` must be the report of shard i + 1 of `reports.length`.
- */
-export function joinShardReports(reports: MutationReport[], files: SizedFile[]): MutationReport {
-  const shards = partitionFiles(files, reports.length);
-  return mergeReports(reports.map((report, i) => restrictReport(report, shards[i] ?? [])));
-}
-
-/** Joins the shard reports into one. A file reported by two shards is an error, not a merge. */
-export function mergeReports(reports: MutationReport[]): MutationReport {
-  const files: MutationReport["files"] = {};
-  for (const report of reports)
-    for (const [file, result] of Object.entries(report.files)) {
-      if (files[file]) throw new Error(`${file} is in more than one shard report`);
-      files[file] = result;
-    }
-  // Faults only: each shard numbers its tests from 0, so test ids from different shards clash.
-  return { files };
+  return [...paths].sort();
 }
 
 export function readMutateGlobs(root: string, packageDir: string): string[] {
@@ -334,4 +253,14 @@ export function readMutateGlobs(root: string, packageDir: string): string[] {
       `${relative(root, join(root, packageDir))}/stryker.config.json has no mutate list`,
     );
   return config.mutate;
+}
+
+/**
+ * Every package with a Stryker config, as folders relative to the repository root
+ * (`packages/mcp`, `apps/backend`), sorted. These are the packages `bun run mutation all` runs.
+ */
+export function configuredPackages(root: string): string[] {
+  return [...new Bun.Glob("{packages,apps}/*/stryker.config.json").scanSync({ cwd: root })]
+    .map((path) => path.replace(/\/stryker\.config\.json$/, ""))
+    .sort();
 }
