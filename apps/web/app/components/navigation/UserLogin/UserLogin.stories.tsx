@@ -16,12 +16,30 @@ export const LoggedOut: Story = {
     router: {
       loaderData: {
         user: null,
+        inviteOnly: false,
       },
     },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("link", { name: /sign up/i })).toHaveAttribute("href", "/signup");
+    await expect(canvas.getByRole("link", { name: /sign in/i })).toHaveAttribute("href", "/login");
+  },
+};
+
+/** While the beta is invite-only a visitor is offered "Sign in" only. */
+export const LoggedOutInviteOnly: Story = {
+  parameters: {
+    router: {
+      loaderData: {
+        user: null,
+        inviteOnly: true,
+      },
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByRole("link", { name: /sign up/i })).toBeNull();
     await expect(canvas.getByRole("link", { name: /sign in/i })).toHaveAttribute("href", "/login");
   },
 };

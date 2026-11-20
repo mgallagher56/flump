@@ -58,8 +58,8 @@ function copyFor(kind: RouteErrorStateProps["kind"]): Copy {
       };
     case "not-invited":
       return {
-        heading: "Flump is invite-only for now",
-        body: "You are signed in, but this account has not been invited to the beta. Sign out and use an invited account, or ask the person who invited you.",
+        heading: "This account has not been invited yet",
+        body: "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to.",
         scene: "onboarding",
       };
     case "not-found":
@@ -123,7 +123,9 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
       </Heading>
       <p className={errorStateBody()}>{copy.body}</p>
       {/* "Not found" is said once, by the heading; other failures keep their code for support. */}
-      {status && kind !== "not-found" ? <p className={errorStateStatus()}>Error {status}</p> : null}
+      {status && kind !== "not-found" && kind !== "not-invited" ? (
+        <p className={errorStateStatus()}>Error {status}</p>
+      ) : null}
       <div className={errorStateActions()}>
         {kind === "unauthorised" ? (
           <form method="post" action={signInAction}>
@@ -145,7 +147,8 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
           </Button>
         ) : null}
         {/* One way back (P12.3): a retryable failure offers "Try again", and the header has Home. */}
-        {primaryHref && !(showRetry && onRetry) ? (
+        {/* Not invited, every page is this one, so the only way on is "Sign out". */}
+        {primaryHref && kind !== "not-invited" && !(showRetry && onRetry) ? (
           <Button asChild variant="outline">
             <a href={primaryHref}>{primaryLabel}</a>
           </Button>

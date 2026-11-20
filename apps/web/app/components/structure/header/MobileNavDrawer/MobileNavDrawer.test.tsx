@@ -7,6 +7,8 @@ import customRender from "~/testUtils/customRender";
 import MobileNavDrawer, { currentFooterRow } from "./MobileNavDrawer";
 
 const mockLocation = { pathname: "/", search: "" };
+const beta = vi.hoisted(() => ({ inviteOnly: false }));
+vi.mock("~/hooks/useInviteOnly", () => ({ useInviteOnly: () => beta.inviteOnly }));
 
 vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
@@ -177,6 +179,16 @@ describe("<MobileNavDrawer /> sandbox", () => {
     last.focus();
     fireEvent.keyDown(document, { key: "Tab" });
     expect(document.activeElement).toBe(focusable[0]);
+  });
+
+  test("offers no Sign up link in the sandbox while the beta is invite-only", () => {
+    beta.inviteOnly = true;
+    try {
+      customRender(<MobileNavDrawer sandbox isOpen={true} user={null} onClose={vi.fn()} />);
+      expect(screen.queryByRole("link", { name: /signUp/ })).toBeNull();
+    } finally {
+      beta.inviteOnly = false;
+    }
   });
 
   test("shows only Home when signed out outside the sandbox", () => {

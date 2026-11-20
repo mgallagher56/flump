@@ -9,6 +9,7 @@ export {
   UpdateAccountResponse,
 } from "./domains/accounts.js";
 export {
+  BetaModeResponse,
   ClientPolicyResponse,
   HealthResponse,
   ReadinessResponse,

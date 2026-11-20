@@ -3197,6 +3197,52 @@
         "tags": ["accounts"]
       }
     },
+    "/v1/app/beta": {
+      "get": {
+        "operationId": "app.betaMode",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "inviteOnly": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["inviteOnly"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          }
+        },
+        "security": [],
+        "tags": ["app"]
+      }
+    },
     "/v1/app/client-policy": {
       "get": {
         "operationId": "app.clientPolicy",

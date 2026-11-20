@@ -6,11 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // The global test setup stubs parts of react-router; the root boundary needs the real router.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
+vi.mock("./services/beta-mode.server", () => ({ isInviteOnly: vi.fn() }));
 
 import { jsonResponse, profileFixture } from "~/test/fixtures/contractResponses";
 import { resetRememberedRootUser, useRootUser } from "./hooks/useRootUser";
 import App, { ErrorBoundary, loader } from "./root";
 import * as splatRoute from "./routes/$";
+import { isInviteOnly } from "./services/beta-mode.server";
 import { getAuthSession } from "./utils/auth.server";
 
 const ENV = { SENTRY_DSN: "", SENTRY_ENVIRONMENT: "", SENTRY_RELEASE: "" };
@@ -80,6 +82,25 @@ describe("root ErrorBoundary", () => {
     expect(document.querySelectorAll("[style]")).toHaveLength(0);
     expect(document.body.textContent).not.toMatch(/Uh oh/);
     expect(document.documentElement.getAttribute("data-theme")).toBeTruthy();
+  });
+
+  it("shows the one not-invited page with no header, nav or Sign up, and a Sign out", async () => {
+    renderRootBoundary(data({ kind: "not-invited", endpoint: "/user-profile" }, { status: 403 }));
+    expect(
+      await screen.findByRole("heading", { name: "This account has not been invited yet" }),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.queryByRole("banner")).toBeNull();
+    expect(screen.queryByRole("link", { name: /sign ?up/i })).toBeNull();
+    expect(screen.queryByText("Error 403")).toBeNull();
+    const signOut = screen.getByRole("button", { name: "Sign out" });
+    expect(signOut.closest("form")?.getAttribute("action")).toBe("/logout");
+    expect(document.title).toBe("This account has not been invited yet");
   });
 
   it("keeps the normal header, signed out, when the root loader itself failed", async () => {
@@ -292,7 +313,9 @@ describe("root App landmarks", () => {
 });
 
 describe("root loader", () => {
-  const args = { request: new Request("http://localhost/"), params: {}, context: {} } as any;
+  // A fresh router context per call, as React Router gives each request (the profile read is
+  // shared per context).
+  let args: any;
 
   const realFetch = globalThis.fetch;
   afterEach(() => {
@@ -300,8 +323,26 @@ describe("root loader", () => {
   });
 
   beforeEach(() => {
+    args = { request: new Request("http://localhost/"), params: {}, context: {} };
     vi.mocked(getAuthSession).mockResolvedValue({ user: { id: "u" }, accessToken: "tok" } as any);
+    vi.mocked(isInviteOnly).mockResolvedValue(false);
     vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("returns the beta mode for the chrome", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse(profileFixture));
+    expect((await loader(args)).inviteOnly).toBe(false);
+    vi.mocked(isInviteOnly).mockResolvedValue(true);
+    args = { ...args, context: {} };
+    expect((await loader(args)).inviteOnly).toBe(true);
+  });
+
+  it("throws the not-invited route error instead of keeping the shell up", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(new Response('{"error":"not_invited"}', { status: 403 }));
+    const thrown = await loader(args).catch((e: unknown) => e);
+    expect(thrown).toMatchObject({ init: { status: 403 }, data: { kind: "not-invited" } });
   });
 
   it("keeps the shell up with a null profile when the backend is 503", async () => {

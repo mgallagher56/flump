@@ -3,6 +3,7 @@ import { cx } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link } from "react-router";
+import { useInviteOnly } from "~/hooks/useInviteOnly";
 import { useRootUser } from "~/hooks/useRootUser";
 import { userLoginButton, userLoginGroup, userLoginSignUp } from "./UserLogin.styles";
 
@@ -12,6 +13,7 @@ export interface UserLoginProps {
   /**
    * Where "Sign up" shows: `always` (default, the drawer), `fromSm` (the top bar: on a phone the
    * drawer offers it instead) or `never` (the sandbox has its own in the bar and at the page end).
+   * While the beta is invite-only it never shows, whatever this says.
    */
   signUp?: "always" | "fromSm" | "never";
 }
@@ -21,6 +23,8 @@ const UserLogin: FC<UserLoginProps> = ({ className, size = "sm", signUp = "alway
   const { t } = useTranslation();
   // The root loader's user from any route and the root error boundary (see useRootUser).
   const user = useRootUser();
+  const inviteOnly = useInviteOnly();
+  const showSignUp = signUp !== "never" && !inviteOnly;
 
   return (
     <div className={cx(userLoginGroup(), className)}>
@@ -32,7 +36,7 @@ const UserLogin: FC<UserLoginProps> = ({ className, size = "sm", signUp = "alway
         </Form>
       ) : (
         <>
-          {signUp !== "never" && (
+          {showSignUp && (
             // The wrapper owns the display swap, so it never competes with the button's display.
             <span className={signUp === "fromSm" ? userLoginSignUp() : undefined}>
               <ButtonLink asChild className={userLoginButton()} size={size} variant="ghost">

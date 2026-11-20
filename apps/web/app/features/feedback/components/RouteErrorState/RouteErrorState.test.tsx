@@ -61,11 +61,28 @@ describe("RouteErrorState", () => {
     ).toBeDefined();
   });
 
-  it("renders an invite-only state with a sign out action", () => {
-    render(<RouteErrorState kind="not-invited" onRetry={() => {}} />);
-    expect(screen.getByRole("heading", { name: "Flump is invite-only for now" })).toBeDefined();
+  it("renders the not-invited state with Sign out as its only way on", () => {
+    render(
+      <RouteErrorState
+        kind="not-invited"
+        onRetry={() => {}}
+        primaryHref="/"
+        primaryLabel="Go to the home page"
+        status={403}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "This account has not been invited yet" }),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to.",
+      ),
+    ).toBeDefined();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Go to the home page" })).toBeNull();
+    expect(screen.queryByText("Error 403")).toBeNull();
   });
 
   it("never renders an exclamation mark", () => {

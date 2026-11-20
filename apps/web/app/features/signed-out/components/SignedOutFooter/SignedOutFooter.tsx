@@ -2,6 +2,7 @@ import { companyLine } from "@flump/business-details";
 import { SiteFooter, type SiteFooterRenderLink } from "@repo/ui";
 import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
+import { useInviteOnly } from "~/hooks/useInviteOnly";
 import { APP_VERSION, feedbackMailto } from "~/utils/support";
 
 const renderLink: SiteFooterRenderLink = (link, className, children) => (
@@ -12,33 +13,37 @@ const renderLink: SiteFooterRenderLink = (link, className, children) => (
 
 /**
  * Footer for the public calculator pages: the shared `SiteFooter` with the app's links. One "All
- * calculators" link and no per-tool links, the same rule as the marketing footer.
+ * calculators" link and no per-tool links, the same rule as the marketing footer. While the beta
+ * is invite-only it offers "Sign in" and no "Sign up".
  */
-export const SignedOutFooter: FC = () => (
-  <SiteFooter
-    blurb="UK debt, mortgage, student loan and tax calculators."
-    bottom={companyLine(new Date().getFullYear())}
-    columns={[
-      {
-        heading: "Calculators",
-        links: [{ key: "all", label: "All calculators", href: "/tools" }],
-      },
-      {
-        heading: "Account and support",
-        links: [
-          { key: "signup", label: "Sign up", href: "/signup" },
-          { key: "signin", label: "Sign in", href: "/login" },
-          {
-            key: "feedback",
-            label: "Send feedback",
-            href: feedbackMailto("tools", APP_VERSION),
-            external: true,
-          },
-        ],
-      },
-    ]}
-    renderLink={renderLink}
-  />
-);
+export const SignedOutFooter: FC = () => {
+  const inviteOnly = useInviteOnly();
+  return (
+    <SiteFooter
+      blurb="UK debt, mortgage, student loan and tax calculators."
+      bottom={companyLine(new Date().getFullYear())}
+      columns={[
+        {
+          heading: "Calculators",
+          links: [{ key: "all", label: "All calculators", href: "/tools" }],
+        },
+        {
+          heading: "Account and support",
+          links: [
+            ...(inviteOnly ? [] : [{ key: "signup", label: "Sign up", href: "/signup" }]),
+            { key: "signin", label: "Sign in", href: "/login" },
+            {
+              key: "feedback",
+              label: "Send feedback",
+              href: feedbackMailto("tools", APP_VERSION),
+              external: true,
+            },
+          ],
+        },
+      ]}
+      renderLink={renderLink}
+    />
+  );
+};
 
 export default SignedOutFooter;

@@ -1,6 +1,7 @@
 import { configure, getSignUpUrl } from "@workos-inc/authkit-react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { isInviteOnly } from "~/services/beta-mode.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const reqUrl = new URL(request.url);
@@ -9,6 +10,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (reqUrl.pathname !== "/signup") {
     return redirect(`/signup${reqUrl.search}`, 301);
   }
+  // Invite-only: never open the provider's sign-up screen; an invited person signs in instead.
+  if (await isInviteOnly()) return redirect("/login");
   if (
     process.env.NODE_ENV === "development" &&
     (reqUrl.hostname === "localhost" || reqUrl.hostname === "127.0.0.1")
