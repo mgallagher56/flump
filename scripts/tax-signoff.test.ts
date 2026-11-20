@@ -146,8 +146,9 @@ describe("E25 what-if catalogue sign-off", () => {
     const all = [...UK_TAX_VECTORS, ...UK_WHATIF_VECTORS];
     const sheet = generateSheet(w.taxYear, all);
     expect(sheet).toContain(`\`${w.id}\``);
+    // Unticked boxes are the year's unsigned vectors; signed ones are marked and skipped.
     expect(sheet.match(/^- \[ \] /gm)?.length).toBe(
-      all.filter((x) => x.taxYear === w.taxYear).length,
+      all.filter((x) => x.taxYear === w.taxYear && x.signedOffBy === null).length,
     );
   });
   test("an UNVERIFIED what-if vector is skipped without a ruling and signed with one", () => {
