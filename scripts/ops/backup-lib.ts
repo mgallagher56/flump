@@ -232,7 +232,7 @@ export function latestBackup(objectNames: string[], label = "prod"): string | un
 // no large string is built. The session settings below pin the text form of dates, times,
 // floats and bytea so the same data gives the same checksum on any server.
 
-export const FINGERPRINT_SETTINGS = [
+const FINGERPRINT_SETTINGS = [
   "SET LOCAL TimeZone = 'UTC'",
   "SET LOCAL DateStyle = 'ISO, YMD'",
   "SET LOCAL IntervalStyle = 'postgres'",
@@ -251,7 +251,7 @@ WHERE c.relkind IN ('r', 'p') AND n.nspname NOT IN ('pg_catalog', 'information_s
   AND n.nspname NOT LIKE 'pg\\_%'
 ORDER BY 1, 2`;
 
-export function quoteIdent(name: string): string {
+function quoteIdent(name: string): string {
   return `"${name.replaceAll('"', '""')}"`;
 }
 

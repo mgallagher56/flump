@@ -23,5 +23,3 @@ export const NavigationProgress: FC = () => {
     />
   );
 };
-
-export default NavigationProgress;

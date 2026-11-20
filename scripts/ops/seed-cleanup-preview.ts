@@ -27,7 +27,7 @@ const textArray = (values: readonly string[]): string =>
 const jsonLiteral = (value: unknown): string => `${literal(JSON.stringify(value))}::jsonb`;
 
 // Verbatim from the migration (jsonb_to_recordset ... WHERE), as a SELECT of matching ids.
-export const ACCOUNT_MATCH_FROM = `"accounts" a, jsonb_to_recordset(${jsonLiteral(SEEDED_ACCOUNTS)}) AS s(
+const ACCOUNT_MATCH_FROM = `"accounts" a, jsonb_to_recordset(${jsonLiteral(SEEDED_ACCOUNTS)}) AS s(
            "name" text, "type" text, "balance" numeric, "interestRate" numeric,
            "monthlyContribution" numeric, "isCurrent" boolean)
          WHERE a."name" = s."name" AND a."type" = s."type" AND a."balance" = s."balance"
@@ -39,7 +39,7 @@ export const ACCOUNT_MATCH_FROM = `"accounts" a, jsonb_to_recordset(${jsonLitera
            AND NOT EXISTS (SELECT 1 FROM "account_details" d WHERE d."account_id"::text = a."id"::text)
            AND NOT EXISTS (SELECT 1 FROM "transactions" t WHERE t."account_id"::text = a."id"::text)`;
 
-export const BUDGET_MATCH_FROM = `"budget_entries" b, jsonb_to_recordset(${jsonLiteral(SEEDED_BUDGET_ENTRIES)}) AS s(
+const BUDGET_MATCH_FROM = `"budget_entries" b, jsonb_to_recordset(${jsonLiteral(SEEDED_BUDGET_ENTRIES)}) AS s(
            "category" text, "name" text, "amount" numeric, "isIncome" boolean,
            "isPrimaryIncome" boolean, "isEssential" boolean)
          WHERE b."is_default" = true AND b."category" = s."category" AND b."name" = s."name"

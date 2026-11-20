@@ -25,11 +25,8 @@ export {
   type AccountDetailInput,
   buildCheckInRows,
   buildSnapshotPayload,
-  type CheckInRow,
-  type CheckInStatus,
   type SnapshotAccountInput,
   type SnapshotPayload,
-  toSnapshotRows,
 } from "@flump/finance-engine";
 
 import type { MonthKey } from "~/utils/londonMonth";
@@ -38,7 +35,7 @@ export { londonMonth, type MonthKey } from "~/utils/londonMonth";
 
 const MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;
 
-export const isMonthKey: (value: unknown) => value is MonthKey = isCheckInMonth;
+const isMonthKey: (value: unknown) => value is MonthKey = isCheckInMonth;
 
 export const addMonths: (month: MonthKey, n: number) => MonthKey = addCheckInMonths;
 
@@ -56,7 +53,7 @@ export function formatMonth(month: MonthKey): string {
 }
 
 /** "Nov 26" and "Sep 26" (never "Sept"), for chart axes (copy audit 4.3). */
-export function formatMonthShort(month: MonthKey): string {
+function formatMonthShort(month: MonthKey): string {
   if (!MONTH_RE.test(month)) return month;
   return formatMonthTick(month, "2-digit");
 }
@@ -97,7 +94,7 @@ export function nextCheckInDate(input: CheckInScheduleInput): string {
 }
 
 /** History length decides what the page can show (E30 PR2 empty states). */
-export type HistoryStage = "none" | "single" | "pair" | "trend";
+type HistoryStage = "none" | "single" | "pair" | "trend";
 
 export interface AccountChange {
   accountId: string;

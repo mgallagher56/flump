@@ -7,7 +7,7 @@ import type {
   PreviewRow,
 } from "./importModel";
 
-export const BATCH_ID = "b0000000-0000-4000-8000-000000000001";
+const BATCH_ID = "b0000000-0000-4000-8000-000000000001";
 
 export const EXISTING_ACCOUNTS: ExistingAccount[] = [
   { id: "a0000000-0000-4000-8000-000000000001", name: "Current account", type: "Current" },

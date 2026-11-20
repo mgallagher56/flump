@@ -57,10 +57,7 @@ export function placeholderConfigFields(
 /** The guard is active for a public launch (ALLOW_INDEXING or FLUMP_LAUNCH exactly "true"). */
 export const isLaunchGuardActive = isPublicLaunch;
 
-export const PLACEHOLDER_PATTERNS: PlaceholderPattern[] = [
-  ...BASE_PATTERNS,
-  ...businessDetailPatterns(),
-];
+const PLACEHOLDER_PATTERNS: PlaceholderPattern[] = [...BASE_PATTERNS, ...businessDetailPatterns()];
 
 export interface AllowEntry {
   /** Matched against the scanned file path. */
@@ -75,7 +72,7 @@ export interface AllowEntry {
  * Allow-list by file and pattern only, each with a reason. Font binaries are handled by
  * SKIP_FILE instead.
  */
-export const ALLOW_LIST: AllowEntry[] = [
+const ALLOW_LIST: AllowEntry[] = [
   {
     file: /(?:^|\/)build\/(?:client|server)\/stats\.html$/,
     pattern: "PLACEHOLDER",

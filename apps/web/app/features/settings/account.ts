@@ -30,7 +30,7 @@ export const REAUTH_RETURN_PATH = "/app/profile?tab=data";
 export const ACCOUNT_DELETION_PENDING_PATH = ACCOUNT_ERASED_PATH;
 
 /** The only return paths `/logout` and `/login` accept, so neither is an open redirect. */
-export const ALLOWED_RETURN_PATHS = [REAUTH_RETURN_PATH, ACCOUNT_DELETION_PENDING_PATH] as const;
+const ALLOWED_RETURN_PATHS = [REAUTH_RETURN_PATH, ACCOUNT_DELETION_PENDING_PATH] as const;
 export type AllowedReturnPath = (typeof ALLOWED_RETURN_PATHS)[number];
 
 /** True only for one of the allowed return paths, compared exactly. */

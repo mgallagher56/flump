@@ -80,7 +80,7 @@ const COMPILED = API_ALLOW_LIST.map((rule) => ({
 }));
 
 export const MAX_BODY_BYTES = 64 * 1024;
-export const PROXY_TIMEOUT_MS = 10_000;
+const PROXY_TIMEOUT_MS = 10_000;
 
 const WRITE_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
@@ -175,12 +175,12 @@ export interface ProxySession {
   cookies: string[];
 }
 
-export type SessionResolver = (
+type SessionResolver = (
   args: LoaderFunctionArgs | ActionFunctionArgs,
 ) => Promise<ProxySession | null>;
 
 /** Default resolver: reuses the loader auth helper. No session means null, never a redirect. */
-export const resolveSession: SessionResolver = async (args) => {
+const resolveSession: SessionResolver = async (args) => {
   const { user, accessToken, headers } = await getAuthSession(args, { ensureSignedIn: false });
   if (!user || !accessToken) return null;
   return { userId: String(user.id), accessToken, cookies: readSetCookies(headers) };

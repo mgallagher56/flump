@@ -42,7 +42,7 @@ const TYPED_NUMBER = /^(\s*[£]?\s*-?)([\d,]*)(\.\d*)?(\s*)$/;
  * Strips redundant leading zeros from the whole-number part ("0840" -> "840", "00" -> "0")
  * while keeping a single zero before a decimal point ("0.50", "0.") intact.
  */
-export const stripLeadingZeros = (raw: string): string => {
+const stripLeadingZeros = (raw: string): string => {
   const match = TYPED_NUMBER.exec(raw);
   if (!match) return raw;
   const [, lead = "", whole = "", decimals = "", trail = ""] = match;

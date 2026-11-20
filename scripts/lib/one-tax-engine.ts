@@ -25,11 +25,11 @@ export const REMOVED_IMPLEMENTATIONS = [
  * access: `.mainRate`, destructured `mainRate`, `["mainRate"]`), the Scottish band list, and the
  * current thresholds typed as numbers (12,570, 37,700, 50,270, 125,140).
  */
-export const RATE_FIELD =
+const RATE_FIELD =
   /\b(?:mainRate|upperRate|primaryThreshold|upperEarningsLimit|lowerProfitsLimit|upperProfitsLimit|basicRateBandWidth|additionalRateThreshold)\b|\.(?:basicRate|higherRate|additionalRate)\b|\bscotland\.bands\b|\b(?:12_?570|37_?700|50_?270|125_?140)\b/g;
 
 /** The rules: the tables and the functions that apply them. No ceiling. */
-export const RULES_FILES: readonly string[] = [
+const RULES_FILES: readonly string[] = [
   "packages/finance-engine/src/tax-rules.ts",
   "packages/finance-engine/src/uk-tax-year.ts",
 ];

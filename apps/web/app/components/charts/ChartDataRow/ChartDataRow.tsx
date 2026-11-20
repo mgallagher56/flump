@@ -34,5 +34,3 @@ export const ChartDataRow: FC<ChartDataRowProps> = ({ table, actions, note }) =>
     </div>
   );
 };
-
-export default ChartDataRow;

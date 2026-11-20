@@ -1,4 +1,4 @@
-export const SEVERITIES = ["low", "moderate", "high", "critical"] as const;
+const SEVERITIES = ["low", "moderate", "high", "critical"] as const;
 export type Severity = (typeof SEVERITIES)[number];
 
 export type AllowEntry = {
@@ -13,7 +13,7 @@ export type AllowEntry = {
 
 export type AuditResult = { failures: string[]; warnings: string[] };
 
-export const MAX_ALLOW_DAYS = 90;
+const MAX_ALLOW_DAYS = 90;
 
 type Advisory = {
   ids: string[];
@@ -38,7 +38,7 @@ function isSeverity(value: unknown): value is Severity {
 }
 
 /** Parses the `bun audit --json` shape (package name -> advisory[]); throws on anything else. */
-export function parseReport(report: unknown): Advisory[] {
+function parseReport(report: unknown): Advisory[] {
   if (typeof report !== "object" || report === null || Array.isArray(report)) {
     throw new Error("Unrecognised audit report: expected an object keyed by package name");
   }

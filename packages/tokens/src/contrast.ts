@@ -10,7 +10,7 @@
 
 export type Theme = "light" | "dark";
 export type Rgb = [number, number, number];
-export type Role = "text" | "ui" | "graphic";
+type Role = "text" | "ui" | "graphic";
 
 export interface Pair {
   fg: string;
@@ -83,13 +83,13 @@ export function pairLabel(pair: Pair, theme: Theme): string {
 }
 
 export const BOTH: Theme[] = ["light", "dark"];
-export const SURFACES = ["DEFAULT", "canvas", "card", "sunken", "subtle", "overlay"].map(
+const SURFACES = ["DEFAULT", "canvas", "card", "sunken", "subtle", "overlay"].map(
   (s) => `surface.${s}`,
 );
 export const TEXTS = ["primary", "secondary", "muted"].map((t) => `text.${t}`);
 export const STATUSES = ["positive", "warning", "danger", "info", "neutral"];
 export const CHART_SERIES = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `chart.series${n}`);
-export const CHART_LINES = [
+const CHART_LINES = [
   "chart.primary",
   "chart.wealth",
   "chart.debt",

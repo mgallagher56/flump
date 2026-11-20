@@ -95,7 +95,7 @@ export function parseRestoreArgs(argv: string[]): RestoreArgs {
 
 class RefusedError extends Error {}
 
-export async function runRestore(
+async function runRestore(
   cfg: RestoreConfig,
   args: RestoreArgs,
   env: Record<string, string | undefined>,

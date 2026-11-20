@@ -10,8 +10,6 @@ import {
   stringField,
 } from "./transport.js";
 
-export type { HttpMethod } from "./transport.js";
-
 export type ClientPlatform = "ios" | "android";
 
 export interface ClientInfo {

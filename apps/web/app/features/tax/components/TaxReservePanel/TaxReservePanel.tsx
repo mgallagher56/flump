@@ -238,5 +238,3 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
     </div>
   );
 };
-
-export default TaxReservePanel;

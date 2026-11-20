@@ -3,7 +3,7 @@ import { type FC, useEffect, useState } from "react";
 import { type UserProfile, useSavedProfile } from "~/hooks/useUserProfile";
 import { resolveUserInitials } from "~/utils/avatar";
 
-export interface UserAvatarProps {
+interface UserAvatarProps {
   user?: any;
   profile?: Partial<UserProfile> | null;
   size?: number;
@@ -12,7 +12,7 @@ export interface UserAvatarProps {
   bordered?: boolean;
 }
 
-export const UserAvatar: FC<UserAvatarProps> = ({
+const UserAvatar: FC<UserAvatarProps> = ({
   user,
   profile: propProfile,
   size = 28,

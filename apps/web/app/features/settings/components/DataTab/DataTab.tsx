@@ -19,7 +19,7 @@ import { dialogBody, wipeList } from "./DataTab.styles";
 /** How long the success message shows before sending the person back to onboarding. */
 const SUCCESS_REDIRECT_MS = 1500;
 
-export const RESET_FAILED_MESSAGE =
+const RESET_FAILED_MESSAGE =
   "We could not delete your financial data. Nothing has changed. Try again.";
 
 /**

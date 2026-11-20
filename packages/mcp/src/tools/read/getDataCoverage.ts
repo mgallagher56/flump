@@ -7,9 +7,9 @@ import { ACCOUNT_CATEGORIES, ASK_NO_ACCOUNTS, loadAccountIndex, type Missing } f
 import { SNAPSHOT_SOURCES, safeSnapshotSource } from "./getBalanceHistory.js";
 
 /** Most gap ranges listed per account; the count still covers them all. */
-export const MAX_GAPS_PER_ACCOUNT = 12;
+const MAX_GAPS_PER_ACCOUNT = 12;
 /** Accounts per response page. */
-export const ACCOUNTS_PER_PAGE = 25;
+const ACCOUNTS_PER_PAGE = 25;
 
 const SOURCES = [...SNAPSHOT_SOURCES, "other"] as const;
 

@@ -15,5 +15,3 @@ export interface MarketingSectionProps extends Omit<SectionBandProps, "variant" 
 export const MarketingSection: FC<MarketingSectionProps> = (props) => (
   <SectionBand {...props} variant="marketing" />
 );
-
-export default MarketingSection;

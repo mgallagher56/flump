@@ -262,5 +262,3 @@ export const MonthLinePlot: FC<MonthLinePlotProps> = ({
     </div>
   );
 };
-
-export default MonthLinePlot;

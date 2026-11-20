@@ -90,7 +90,7 @@ export const promptTitle = cva({
   base: { textStyle: "heading.sm", color: "text.primary", margin: 0 },
 });
 
-export const promptText = cva({
+const promptText = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
 

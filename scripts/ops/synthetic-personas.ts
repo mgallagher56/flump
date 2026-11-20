@@ -9,7 +9,7 @@
 export const PERSONA_KEYS = ["P1", "P2", "P3", "P5"] as const;
 export type PersonaKey = (typeof PERSONA_KEYS)[number];
 
-export interface SyntheticAccount {
+interface SyntheticAccount {
   name: string;
   type: "Current" | "Saving" | "Mortgage" | "Loan" | "Credit Card" | "Investment" | "Pension";
   balance: number;
@@ -22,7 +22,7 @@ export interface SyntheticAccount {
   history?: Array<{ year: number; month: number; value: number }>;
 }
 
-export interface SyntheticBudgetEntry {
+interface SyntheticBudgetEntry {
   category: string;
   name: string;
   amount: number;
@@ -32,7 +32,7 @@ export interface SyntheticBudgetEntry {
   frequency?: "monthly" | "annual";
 }
 
-export interface SyntheticTaxRecord {
+interface SyntheticTaxRecord {
   type: "income" | "expense";
   source: string;
   category: string;

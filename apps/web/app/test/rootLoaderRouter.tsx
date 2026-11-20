@@ -33,13 +33,7 @@ function ChildrenOfWrapper() {
 type LoaderDataSource = RootLoaderData | (() => RootLoaderData);
 
 /** One router per render tree, so a revalidation keeps its state; new children pass through. */
-export function RootLoaderWrapper({
-  data,
-  children,
-}: {
-  data: LoaderDataSource;
-  children: ReactNode;
-}) {
+function RootLoaderWrapper({ data, children }: { data: LoaderDataSource; children: ReactNode }) {
   const [router] = useState(() => rootLoaderRouter(<ChildrenOfWrapper />, data));
   return (
     <WrappedChildren.Provider value={children}>

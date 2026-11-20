@@ -4,7 +4,7 @@ import type { PluginOption } from "vite";
 type Env = Record<string, string | undefined>;
 
 /** Where the client build writes its files; the upload deletes every map under it afterwards. */
-export const CLIENT_BUILD_DIR = "build/client";
+const CLIENT_BUILD_DIR = "build/client";
 
 export interface SentrySourceMapSettings {
   /** Vite `build.sourcemap` for this build. */

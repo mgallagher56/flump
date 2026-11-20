@@ -21,7 +21,7 @@ import {
 } from "./tax-common.js";
 
 /** Rows returned per call; totals always cover every record. */
-export const MAX_TAX_ROWS = { concise: 25, detailed: 100 } as const;
+const MAX_TAX_ROWS = { concise: 25, detailed: 100 } as const;
 
 const SOURCE = z.enum([...TAX_SOURCES, "other"]);
 

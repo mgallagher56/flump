@@ -9,7 +9,7 @@ const plural = (n: number, one: string, other: string) =>
   `${formatCount(n)} ${n === 1 ? one : other}`;
 
 export const balancesLabel = (n: number) => plural(n, "monthly balance", "monthly balances");
-export const accountsLabel = (n: number) => plural(n, "account", "accounts");
+const accountsLabel = (n: number) => plural(n, "account", "accounts");
 
 export const STATUS_LABEL: Record<ImportStatus, string> = {
   staged: "Ready to review",

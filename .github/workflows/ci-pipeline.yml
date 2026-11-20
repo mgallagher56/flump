@@ -57,6 +57,9 @@ jobs:
       - name: 🔬 Lint
         run: bun run lint
 
+      - name: 🧹 Dead code (knip)
+        run: bun run knip
+
       - name: 🔐 Check no mock auth literals
         run: bun run check:auth
 

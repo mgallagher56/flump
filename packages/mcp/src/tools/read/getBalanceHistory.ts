@@ -23,9 +23,9 @@ import {
 } from "./common.js";
 
 /** Most periods one series may have; past this the caller must widen the interval or narrow the range. */
-export const MAX_PERIODS = 120;
+const MAX_PERIODS = 120;
 /** Most points in one response page, across all series (detailed points carry more fields). */
-export const MAX_POINTS_PER_PAGE = { concise: 200, detailed: 120 } as const;
+const MAX_POINTS_PER_PAGE = { concise: 200, detailed: 120 } as const;
 
 const MONTH = z
   .string()

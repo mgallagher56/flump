@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 /** Below the `md` breakpoint (48rem, 768px): the phone layout. */
-export const BELOW_MD_QUERY = "not all and (min-width: 48rem)";
+const BELOW_MD_QUERY = "not all and (min-width: 48rem)";
 
 function mediaQueryList(): MediaQueryList | undefined {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;

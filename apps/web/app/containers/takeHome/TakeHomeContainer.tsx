@@ -7,7 +7,7 @@ import { salaryProfileFirst } from "~/utils/profileFirst";
 import { pageRoot } from "./TakeHomeContainer.styles";
 
 /** Take-home pay from saved figures, and what a pay rise would change. */
-export const TakeHomeContainer: FC = () => {
+const TakeHomeContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const navigate = useNavigate();
   const { profile: rootProfile } = useUserProfile();

@@ -24,11 +24,11 @@ export function fullCspHeaderName(env: Env = process.env): string {
 }
 
 /** Same-origin endpoint that receives violation reports (`routes/csp-report.ts`). */
-export const CSP_REPORT_PATH = "/csp-report";
+const CSP_REPORT_PATH = "/csp-report";
 
 /** The `report-to` group name, declared by `Reporting-Endpoints` on the same response. */
-export const CSP_REPORT_GROUP = "csp-endpoint";
-export const REPORTING_ENDPOINTS = `${CSP_REPORT_GROUP}="${CSP_REPORT_PATH}"`;
+const CSP_REPORT_GROUP = "csp-endpoint";
+const REPORTING_ENDPOINTS = `${CSP_REPORT_GROUP}="${CSP_REPORT_PATH}"`;
 
 /** Per-request nonce, written by the root middleware and read by `entry.server.tsx`. */
 export const nonceContext = createContext<string>("");

@@ -24,7 +24,7 @@ function startYear(label: string): number {
   return Number.parseInt(label.slice(0, 4), 10);
 }
 
-export function taxYearLabel(start: number): string {
+function taxYearLabel(start: number): string {
   return `${start}/${String((start + 1) % 100).padStart(2, "0")}`;
 }
 

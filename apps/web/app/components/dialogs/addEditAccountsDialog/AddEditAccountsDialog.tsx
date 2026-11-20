@@ -82,11 +82,11 @@ const studentLoanPlans = {
 };
 const PLAN_REQUIRED_MESSAGE = "Choose a repayment plan";
 /** Shown before saving a type change that turns a debt into something you own (CH-4). */
-export const TYPE_FLIPS_SIGN_NOTE =
+const TYPE_FLIPS_SIGN_NOTE =
   "This turns the debt into something you own, so net worth this month and in every past month rises by twice its balance.";
 
 /** The link select's "no property" choice. */
-export const NOT_LINKED_LABEL = "Not linked";
+const NOT_LINKED_LABEL = "Not linked";
 
 /** Hidden copy of the property value's info text, named in that field's aria-describedby. */
 const HOME_VALUE_NOTE_ID = "account-home-value-note";
@@ -121,7 +121,7 @@ const newRequestId = (): string => {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 };
 
-export interface AccountOption {
+interface AccountOption {
   id?: string;
   name?: string;
   type?: AccountType;
@@ -143,7 +143,7 @@ export interface AccountOption {
 }
 
 /** A mortgage the new property is for: after the property saves, the action links them. */
-export interface LinkMortgageTarget {
+interface LinkMortgageTarget {
   id: string;
   /** The mortgage's version, so the link never overwrites a change made elsewhere. */
   updatedAt?: string;

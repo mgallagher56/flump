@@ -42,7 +42,7 @@ const isObject = (value: unknown): value is Json =>
  * Folds `allOf` members into one schema: properties and `required` are unioned, and any other
  * keyword is taken from the first schema that sets it (the outer schema first).
  */
-export const mergeAllOf = (schema: Json): Json => {
+const mergeAllOf = (schema: Json): Json => {
   if (!Array.isArray(schema.allOf)) return schema;
   const { allOf, ...outer } = schema;
   const merged: Json = { ...outer };
@@ -78,7 +78,7 @@ const typeOfValue = (value: unknown): string =>
   value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
 
 /** The JSON types a schema allows, or null when it allows anything. */
-export const typesOf = (schema: Json): Set<string> | null => {
+const typesOf = (schema: Json): Set<string> | null => {
   const out = new Set<string>();
   for (const branch of branches(schema)) {
     if (typeof branch.type === "string") out.add(branch.type);

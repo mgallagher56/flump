@@ -25,7 +25,7 @@ export const STUDENT_LOAN_PLAN_OPTIONS = [
 
 export type AccountType = `${AccountTypeEnum}` | string;
 
-export const isAccountTypeValid = (accountType: AccountTypeEnum, accounts: Account[]) =>
+const isAccountTypeValid = (accountType: AccountTypeEnum, accounts: Account[]) =>
   !!accounts?.map(({ type }) => type).some((type) => type === accountType);
 
 const LIABILITY_TYPES: string[] = [

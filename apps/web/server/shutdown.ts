@@ -1,7 +1,7 @@
 import type { Server } from "node:http";
 import type { NextFunction, Request, Response } from "express";
 
-export const FORCE_EXIT_MS = 14_000;
+const FORCE_EXIT_MS = 14_000;
 
 const state = { draining: false };
 

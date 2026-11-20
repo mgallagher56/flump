@@ -30,7 +30,7 @@ const WRITE_TOOL_PATTERN = /^(propose_|confirm_change$)/;
  * `packages/finance-engine/src/compliance/advice-lexicon.ts` and `assertDescriptionPolicy`
  * (packages/mcp/src/policy) once those land, so there is one source of truth.
  */
-export const ADVICE_PATTERNS: readonly RegExp[] = [
+const ADVICE_PATTERNS: readonly RegExp[] = [
   /\byou should\b/i,
   /\b(we )?recommend(s|ed|ation|ations)?\b/i,
   /\boptimal\b/i,

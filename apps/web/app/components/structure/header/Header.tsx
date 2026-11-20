@@ -17,7 +17,7 @@ import { isPageEnabled } from "~/utils/pageConfig";
 import { compactOnly, wideOnly } from "./Header.styles";
 import MobileNavDrawer from "./MobileNavDrawer";
 
-export interface HeaderProps {
+interface HeaderProps {
   /** Kept for callers and stories; the header lays itself out with the shared nav conditions. */
   isMobile?: boolean;
   variant?: "desktop" | "mobile";

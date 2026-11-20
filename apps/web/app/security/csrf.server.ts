@@ -25,7 +25,7 @@ export function expectedOrigin(request: Request): string {
   return `${proto}://${host}`;
 }
 
-export function isSafeMethod(method: string): boolean {
+function isSafeMethod(method: string): boolean {
   return SAFE_METHODS.has(method.toUpperCase());
 }
 

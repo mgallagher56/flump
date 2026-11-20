@@ -2,11 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /** Sections compared across workspaces. peerDependencies are deliberately left out (they are ranges, not pins). */
-export const COMPARED_SECTIONS = [
-  "dependencies",
-  "devDependencies",
-  "optionalDependencies",
-] as const;
+const COMPARED_SECTIONS = ["dependencies", "devDependencies", "optionalDependencies"] as const;
 
 export type WorkspaceManifest = {
   /** Workspace directory relative to the repo root ("." for the root). */

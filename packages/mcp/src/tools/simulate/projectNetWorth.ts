@@ -52,7 +52,7 @@ function netWorthBasisLeavesOutNotes(
   }
   return notes;
 }
-export const MAX_HORIZON_YEARS = 40;
+const MAX_HORIZON_YEARS = 40;
 
 const event = z.object({
   label: z.string().min(1).max(40).describe("Short name, for example Car"),

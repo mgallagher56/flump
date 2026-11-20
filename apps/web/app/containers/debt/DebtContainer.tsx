@@ -41,7 +41,7 @@ const OVERPAY_OR_SAVE_SLUG: ToolSlug = "mortgage-overpayment-vs-isa-calculator";
 
 const SAVED_SCENARIO = { extraPayment: 0, strategy: "avalanche" as "avalanche" | "snowball" };
 
-export const SAVE_ERROR_FALLBACK = "We could not save that debt. Nothing has changed. Try again.";
+const SAVE_ERROR_FALLBACK = "We could not save that debt. Nothing has changed. Try again.";
 
 export const DebtContainer: FC = () => {
   const loaderData = useLoaderData<any>();

@@ -65,7 +65,7 @@ export function snapshotIfMatch(
 }
 
 /** A 400 validation error about `source` (an older backend's unrecognised key). */
-export function rejectsSource(err: unknown): boolean {
+function rejectsSource(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const { status, detail } = err as { status?: number; detail?: string };
   if (status !== 400) return false;

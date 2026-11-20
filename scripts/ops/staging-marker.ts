@@ -8,7 +8,7 @@
 
 export const STAGING_MARKER = "flump-staging";
 
-export const STAGING_MARKER_SQL =
+const STAGING_MARKER_SQL =
   "SELECT coalesce(shobj_description(d.oid, 'pg_database'), '') AS comment " +
   "FROM pg_database d WHERE d.datname = current_database()";
 

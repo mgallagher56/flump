@@ -171,7 +171,7 @@ export function checkInNetWorthChange(change: number | null, since: MonthKey): s
   return `${direction} ${gbp(0).format(Math.abs(rounded))} on ${formatMonth(since)}.`;
 }
 
-export type WarmSetupStepKey = "budget" | "accounts" | "savings" | "pension" | "mortgage" | "tax";
+type WarmSetupStepKey = "budget" | "accounts" | "savings" | "pension" | "mortgage" | "tax";
 
 export type WarmConfirmationInput =
   | { kind: "checkInFinished"; month: MonthKey }

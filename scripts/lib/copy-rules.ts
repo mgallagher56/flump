@@ -33,7 +33,7 @@ const banned = (id: string, guide: string, source: string, use: string, flags = 
 };
 
 /** Phrases that contain a flagged word but are correct. Each needs a reason. */
-export const ALLOWED_PHRASES: Array<{ phrase: RegExp; reason: string }> = [
+const ALLOWED_PHRASES: Array<{ phrase: RegExp; reason: string }> = [
   { phrase: /\bNational Insurance\b/g, reason: "statutory name" },
   { phrase: /\bPersonal Allowance\b/g, reason: "statutory name" },
   { phrase: /\bSelf Assessment\b/g, reason: "statutory name" },

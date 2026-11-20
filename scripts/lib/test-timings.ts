@@ -25,7 +25,7 @@ export interface DurationSplit {
   parts: { name: string; ms: number }[];
 }
 
-export interface Stats {
+interface Stats {
   count: number;
   min: number;
   median: number;
@@ -40,7 +40,7 @@ export interface JobInfo {
   steps: StepInfo[];
 }
 
-export interface StepInfo {
+interface StepInfo {
   name: string;
   conclusion: string | null;
   startedAt: string;
@@ -53,7 +53,7 @@ export interface RunInfo {
   jobs: JobInfo[];
 }
 
-export interface NamedStats extends Stats {
+interface NamedStats extends Stats {
   name: string;
 }
 
@@ -81,7 +81,7 @@ export function median(values: number[]): number {
   return ((sorted[mid - 1] as number) + a) / 2;
 }
 
-export function stats(values: number[]): Stats | null {
+function stats(values: number[]): Stats | null {
   if (values.length === 0) return null;
   return {
     count: values.length,
@@ -91,7 +91,7 @@ export function stats(values: number[]): Stats | null {
   };
 }
 
-export function relativeFile(file: string, root: string): string {
+function relativeFile(file: string, root: string): string {
   const prefix = root.endsWith("/") ? root : `${root}/`;
   return file.startsWith(prefix) ? file.slice(prefix.length) : file;
 }
@@ -278,7 +278,7 @@ interface RawPlaywrightSuite {
   }[];
 }
 
-export interface PlaywrightProject {
+interface PlaywrightProject {
   project: string;
   tests: number;
   /** Sum of test durations (not wall time: workers overlap). */
@@ -342,7 +342,7 @@ export function formatSeconds(valueMs: number): string {
   return `${m} min ${Math.round(s - m * 60)} s`;
 }
 
-export function statsRow(name: string, s: Stats): string {
+function statsRow(name: string, s: Stats): string {
   return `| ${name} | ${s.count} | ${formatSeconds(s.min)} | ${formatSeconds(s.median)} | ${formatSeconds(s.max)} |`;
 }
 

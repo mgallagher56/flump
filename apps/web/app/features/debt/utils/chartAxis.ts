@@ -1,10 +1,10 @@
 import { CHART_AXIS_DEFAULTS, niceStep, niceYDomain } from "@repo/ui";
 
 /** Below this plot width (px) the x axis keeps to a few short ticks so labels never touch. */
-export const NARROW_CHART_WIDTH = 480;
+const NARROW_CHART_WIDTH = 480;
 
 /** Over this many months the axis is labelled with years only ("2027"). */
-export const YEAR_TICKS_FROM_MONTHS = 24;
+const YEAR_TICKS_FROM_MONTHS = 24;
 
 const STEPS = [1, 2, 3, 4, 5, 10, 20, 25, 50] as const;
 

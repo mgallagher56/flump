@@ -94,7 +94,7 @@ function singleQuoteOpens(source: string, i: number): boolean {
 // Small tokenizer: yields string literals, skipping // and /* */ comments.
 // Known limits: a "//" in JSX text (not after ":") is read as a comment; template
 // literals are read to the next backtick without parsing `${}`.
-export function extractStringLiterals(source: string): Literal[] {
+function extractStringLiterals(source: string): Literal[] {
   const out: Literal[] = [];
   let i = 0;
   while (i < source.length) {

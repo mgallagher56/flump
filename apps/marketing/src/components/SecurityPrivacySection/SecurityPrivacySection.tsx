@@ -40,5 +40,3 @@ export const SecurityPrivacySection: FC = () => (
     </div>
   </MarketingSection>
 );
-
-export default SecurityPrivacySection;

@@ -28,7 +28,7 @@ export interface ImportBatch {
   revertedAt?: string | null;
 }
 
-export type RowStatus = "new" | "overwrite" | "unchanged";
+type RowStatus = "new" | "overwrite" | "unchanged";
 
 export interface PreviewRow {
   key: string;

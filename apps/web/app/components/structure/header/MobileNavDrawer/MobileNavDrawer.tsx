@@ -21,7 +21,7 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import { isPageEnabled } from "~/utils/pageConfig";
 import { footerRow, signOutForm, signUpLink } from "./MobileNavDrawer.styles";
 
-export interface MobileNavDrawerProps {
+interface MobileNavDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   user?: unknown;
@@ -62,7 +62,7 @@ const BAR_KEYS = new Set([...BOTTOM_BAR_TABS.map((tab) => tab.key), "takeHome"])
  * second list of Home, Accounts, Budget and Pay. A group keeps its pages the bar cannot reach (Self
  * Assessment under Pay).
  */
-export function withoutBarPages(routes: NavRouteItem[]): NavRouteItem[] {
+function withoutBarPages(routes: NavRouteItem[]): NavRouteItem[] {
   return routes.flatMap((route) => {
     if (!route.children) return BAR_KEYS.has(route.key) ? [] : [route];
     const children = route.children.filter((child) => !BAR_KEYS.has(child.key));

@@ -88,15 +88,15 @@ const NAME_FIELD_ID = "tax-record-name";
 type Errors = Partial<Record<"name" | "amount" | "date" | "receipt" | "category", string>>;
 
 /** A saved record whose category no list holds (saved before categories were checked). */
-export const UNLISTED_CATEGORY_ERROR = "Choose a category from the list.";
+const UNLISTED_CATEGORY_ERROR = "Choose a category from the list.";
 
 // The page lists records by tax year and offers only the years the engine supports, so a record
 // dated outside them could be saved and then never shown. Its date must fall inside them.
 const firstStart = Number(SUPPORTED_UK_TAX_YEARS[0].slice(0, 4));
 const lastStart = Number(SUPPORTED_UK_TAX_YEARS[SUPPORTED_UK_TAX_YEARS.length - 1].slice(0, 4));
 /** The first and last days of the supported tax years, as ISO dates. */
-export const EARLIEST_RECORD_DATE = `${firstStart}-04-06`;
-export const LATEST_RECORD_DATE = `${lastStart + 1}-04-05`;
+const EARLIEST_RECORD_DATE = `${firstStart}-04-06`;
+const LATEST_RECORD_DATE = `${lastStart + 1}-04-05`;
 export const RECORD_DATE_RANGE_ERROR = `Enter a date between 6 April ${firstStart} and 5 April ${lastStart + 1}.`;
 
 const validate = (draft: TaxRecordDraft): Errors => {
@@ -486,5 +486,3 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
     </Dialog>
   );
 };
-
-export default TaxRecordDialog;

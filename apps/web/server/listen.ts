@@ -1,7 +1,7 @@
 import type { Server } from "node:http";
 import type { Express } from "express";
 
-export const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 3000;
 
 /** PORT unset or empty gives 3000. An explicit value must be an integer from 1 to 65535. */
 export function resolvePort(raw: string | undefined): number {

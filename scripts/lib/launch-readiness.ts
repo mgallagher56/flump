@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-export type Attestation = { by: string; date: string; note: string };
+type Attestation = { by: string; date: string; note: string };
 
 export type Evidence =
   | { kind: "file"; path: string }
@@ -19,7 +19,7 @@ export type Evidence =
 export type ReadinessItem = { id: string; text: string; epic: string; evidence: Evidence[] };
 export type Readiness = { items: ReadinessItem[] };
 
-export type ItemStatus = "pass" | "fail" | "unattested";
+type ItemStatus = "pass" | "fail" | "unattested";
 export type EvidenceResult = { evidence: Evidence; status: ItemStatus; detail: string };
 export type ItemResult = { item: ReadinessItem; status: ItemStatus; results: EvidenceResult[] };
 
@@ -60,7 +60,7 @@ function collectFiles(root: string, relPath: string, out: string[]): void {
  * Default flags are "im"; set `flags` on the evidence to override (e.g. "" for case-sensitive).
  * A multi-path `present` passes when any one file matches: use one evidence per path to require all.
  */
-export function findMatches(
+function findMatches(
   root: string,
   pattern: string,
   paths: string[],
@@ -76,7 +76,7 @@ export function findMatches(
   );
 }
 
-export function isAttested(attestation: Partial<Attestation>): boolean {
+function isAttested(attestation: Partial<Attestation>): boolean {
   return [attestation.by, attestation.date, attestation.note].every(
     (value) => typeof value === "string" && value.trim() !== "",
   );
@@ -173,7 +173,7 @@ export function isStrict(argv: string[], env: Record<string, string | undefined>
 
 const LABEL: Record<ItemStatus, string> = { pass: "PASS", fail: "FAIL", unattested: "UNATTESTED" };
 
-export function summarise(results: ItemResult[]): string {
+function summarise(results: ItemResult[]): string {
   const count = (s: ItemStatus) => results.filter((r) => r.status === s).length;
   return `${count("pass")} pass, ${count("fail")} fail, ${count("unattested")} unattested of ${results.length}`;
 }

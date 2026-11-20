@@ -7,7 +7,7 @@ import { useInviteOnly } from "~/hooks/useInviteOnly";
 import { useRootUser } from "~/hooks/useRootUser";
 import { userLoginButton, userLoginGroup, userLoginSignUp } from "./UserLogin.styles";
 
-export interface UserLoginProps {
+interface UserLoginProps {
   className?: string;
   size?: "sm" | "md";
   /**

@@ -19,7 +19,7 @@ export interface Assumption {
   reason: string;
 }
 
-export function assumption(field: string, value: number | string, reason: string): Assumption {
+function assumption(field: string, value: number | string, reason: string): Assumption {
   return { field, value, reason };
 }
 

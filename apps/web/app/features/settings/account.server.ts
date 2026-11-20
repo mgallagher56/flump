@@ -18,7 +18,7 @@ import {
 /** Deleting every row can take longer than an ordinary write. */
 export const DELETE_TIMEOUT_MS = 30_000;
 /** Bound on waiting for the export's response headers; the body then streams without a timer. */
-export const EXPORT_HEADERS_TIMEOUT_MS = 15_000;
+const EXPORT_HEADERS_TIMEOUT_MS = 15_000;
 
 const EXPORT_FILENAME = /^flump-export-\d{4}-\d{2}-\d{2}\.json$/;
 

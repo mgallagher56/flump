@@ -9,7 +9,7 @@ import {
 import { resetSchema, runInTransaction } from "./db-test-support";
 
 export const OWNER = "user_owner_synthetic";
-export const OTHER = "user_other_synthetic";
+const OTHER = "user_other_synthetic";
 export const SENTINEL_NAME = "SENTINEL-NAME-XYZ";
 export const SENTINEL_TOKEN = "SENTINEL-TOKEN-XYZ";
 
@@ -163,7 +163,7 @@ export async function seedLikeFingerprints(client: Client): Promise<string[]> {
   return result.rows.map((row) => row.fp as string);
 }
 
-export const TABLES = [
+const TABLES = [
   "account_details",
   "accounts",
   "bank_connections",

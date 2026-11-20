@@ -52,5 +52,3 @@ export const AppFooter: FC = () => (
     variant="compact"
   />
 );
-
-export default AppFooter;

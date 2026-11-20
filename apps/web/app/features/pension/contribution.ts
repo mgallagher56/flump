@@ -7,7 +7,7 @@
 export const MAX_CONTRIBUTION_PERCENT = 40;
 
 /** Helper text under a what-if contribution slider once it has been moved. */
-export const CONTRIBUTION_EDITED_TEXT = "Edited. Not saved.";
+const CONTRIBUTION_EDITED_TEXT = "Edited. Not saved.";
 
 /** Shown wherever a pension answer has not been given (owner decision 3). Never 0 or 5%. */
 export const NOT_SET = "Not set";

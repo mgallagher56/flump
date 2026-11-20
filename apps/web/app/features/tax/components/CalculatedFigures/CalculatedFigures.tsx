@@ -97,5 +97,3 @@ export const CalculatedFigures: FC<CalculatedFiguresProps> = ({
     </PageSection>
   );
 };
-
-export default CalculatedFigures;

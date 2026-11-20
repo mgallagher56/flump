@@ -34,7 +34,7 @@ const EMPLOYMENT_TYPES = ["employed", "self-employed", "other"] as const;
  * The saved workplace pension from the profile's pension fields, or null without a salary or for
  * a self-employed or other employment type.
  */
-export function workplacePensionFromLoader(
+function workplacePensionFromLoader(
   profile: RetirementLoaderData["userProfile"],
 ): WorkplacePensionInput | null {
   if (!profile) return null;

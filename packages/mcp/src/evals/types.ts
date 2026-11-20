@@ -22,7 +22,7 @@ export type AccountCategory =
 /** Categories that count against net worth. */
 export const LIABILITY_CATEGORIES: readonly AccountCategory[] = ["mortgage", "consumer_debt"];
 
-export interface PersonaAccount {
+interface PersonaAccount {
   id: string;
   name: string;
   category: AccountCategory;
@@ -34,7 +34,7 @@ export interface PersonaAccount {
   monthlyContributionGbp?: number;
 }
 
-export interface PersonaProfile {
+interface PersonaProfile {
   annualSalaryGbp?: number;
   bonusGbp?: number;
   region?: "england" | "scotland" | "wales" | "northern_ireland";
@@ -42,7 +42,7 @@ export interface PersonaProfile {
   studentLoanBalanceGbp?: number;
 }
 
-export interface PersonaBudget {
+interface PersonaBudget {
   monthlyIncomeGbp: number;
   monthlyEssentialsGbp: number;
   monthlyDiscretionaryGbp: number;

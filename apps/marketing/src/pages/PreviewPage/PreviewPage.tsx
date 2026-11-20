@@ -160,5 +160,3 @@ export const PreviewPage: FC = () => {
     </div>
   );
 };
-
-export default PreviewPage;

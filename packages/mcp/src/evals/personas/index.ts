@@ -5,8 +5,6 @@ import { landlordSection24 } from "./landlord-section-24.js";
 import { mortgageIsa } from "./mortgage-isa.js";
 import { renterCreditCard } from "./renter-credit-card.js";
 
-export { emptyNewUser, highEarnerBonus, landlordSection24, mortgageIsa, renterCreditCard };
-
 export const PERSONAS: readonly Persona[] = [
   emptyNewUser,
   renterCreditCard,

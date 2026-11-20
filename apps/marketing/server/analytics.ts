@@ -3,7 +3,7 @@ import { canonicalPath } from "./sitemap";
 
 type Env = Record<string, string | undefined>;
 
-export interface PageviewLine {
+interface PageviewLine {
   type: "pageview";
   key: string;
   ref: string | null;
@@ -69,7 +69,7 @@ export function createRateLimiter(perSecond: number, nowMs: () => number = Date.
   };
 }
 
-export const MAX_LINES_PER_SECOND = 20;
+const MAX_LINES_PER_SECOND = 20;
 
 const isPrefetch = (h: Record<string, string | string[] | undefined>): boolean =>
   /prefetch|prerender/i.test(String(h["sec-purpose"] ?? "")) ||

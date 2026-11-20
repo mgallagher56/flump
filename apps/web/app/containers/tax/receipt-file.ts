@@ -1,10 +1,5 @@
 /** Receipt types the API accepts (mirrors @flump/api-contract RECEIPT_MIME_TYPES). */
-export const RECEIPT_MIME_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "application/pdf",
-] as const;
+const RECEIPT_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "application/pdf"] as const;
 export const RECEIPT_ACCEPT = RECEIPT_MIME_TYPES.join(",");
 
 /** Decoded size cap enforced by the API (E20-N14). */

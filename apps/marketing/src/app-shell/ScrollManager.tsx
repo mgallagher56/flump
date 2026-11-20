@@ -53,7 +53,7 @@ export function positionKey(
 }
 
 /** The first load is a reload or back/forward (restore), not a fresh visit (leave at the top). */
-export function isReturnVisit(): boolean {
+function isReturnVisit(): boolean {
   try {
     const [entry] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
     return entry?.type === "reload" || entry?.type === "back_forward";

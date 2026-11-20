@@ -58,12 +58,12 @@ const isSavingsType = (acc: Account) => acc.type === "Saving" || acc.type === "I
 type Tool = "forecast" | "deposit";
 
 /** The drawer and the zone share one name, so the drawer's button is named for what it opens. */
-export const SCENARIO_TITLE = "Model a change to your savings";
+const SCENARIO_TITLE = "Model a change to your savings";
 
 /** The text with a full stop at the end, unless it already ends with one. */
 export const withFullStop = (text: string): string => (text.endsWith(".") ? text : `${text}.`);
 
-export const SavingsContainer: FC = () => {
+const SavingsContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const { formatCurrency } = useFormatCurrency();
   const accounts: Account[] = loaderData?.accounts || [];

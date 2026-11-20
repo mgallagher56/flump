@@ -70,8 +70,8 @@ type BudgetView = "budget" | "editing" | "wizard";
  * `?setup=common` opens the wizard once on load (the onboarding finish step links here). It
  * carries no money: on an empty budget it opens first-time setup, otherwise "add common items".
  */
-export const SETUP_PARAM = "setup";
-export const SETUP_COMMON = "common";
+const SETUP_PARAM = "setup";
+const SETUP_COMMON = "common";
 
 const STANDARD_CATEGORIES: string[] = ["housing", "bills", "expenses", "savings", "income"];
 

@@ -7,13 +7,10 @@ import {
   BOTTOM_BAR_TABS,
   filterNavRoutes,
   HOME_NAV_ROUTE,
-  isSandboxPath,
   type NavRouteItem,
   SANDBOX_HOME_NAV_ROUTE,
   SANDBOX_ROUTE,
 } from "./navConfig";
-
-export { isSandboxPath };
 
 export const MORE_NAV_KEY = "more";
 

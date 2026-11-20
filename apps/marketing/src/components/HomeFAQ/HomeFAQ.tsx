@@ -95,5 +95,3 @@ export const HomeFAQ: FC = () => {
     </ul>
   );
 };
-
-export default HomeFAQ;

@@ -19,7 +19,7 @@ export interface AppPageConfig {
   badgeColor: string;
 }
 
-export interface DashboardWidgetMeta {
+interface DashboardWidgetMeta {
   key: DashboardWidgetKey;
   label: string;
   route: string;
@@ -119,7 +119,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
 };
 
-export const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetMeta> = {
+const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetMeta> = {
   accounts: APP_PAGES.accounts,
   budget: APP_PAGES.budget,
   debt: APP_PAGES.debt,
@@ -141,7 +141,7 @@ export const DEFAULT_ENABLED_PAGES: AppPageKey[] = ALL_PAGE_KEYS.filter(
   (k) => !OPT_IN_PAGE_KEYS.includes(k),
 );
 export const DEFAULT_DASHBOARD_WIDGETS: DashboardWidgetKey[] = [...DEFAULT_ENABLED_PAGES];
-export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
+const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
   accounts: "normal",
   budget: "normal",
   debt: "normal",
@@ -165,7 +165,7 @@ export function isPageEnabled(enabledPages: string[] | null | undefined, key: Ap
  * Module keys that no longer exist. `forecast` was a dashboard module until the growth forecaster
  * became a tab inside Savings (E16 D5-B); stored profiles may still carry it.
  */
-export const RETIRED_PAGE_KEYS: readonly string[] = ["forecast"];
+const RETIRED_PAGE_KEYS: readonly string[] = ["forecast"];
 
 /** Drops retired module keys from a stored key list. */
 export function stripRetiredKeys<T extends string>(keys: readonly T[]): T[] {

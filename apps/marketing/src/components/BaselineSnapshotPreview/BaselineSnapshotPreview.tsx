@@ -90,5 +90,3 @@ export const BaselineSnapshotPreview: FC = () => (
     </figcaption>
   </figure>
 );
-
-export default BaselineSnapshotPreview;

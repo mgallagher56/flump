@@ -5,7 +5,7 @@ import type { McpUserDataProvider } from "../types.js";
 // biome-ignore lint/complexity/noBannedTypes: no options yet; kept so call sites stay stable.
 export type FakeProviderOptions = {};
 
-export interface FakeProviderCall {
+interface FakeProviderCall {
   userId: string;
   anonymizeInstitutions?: boolean;
 }
