@@ -1,6 +1,6 @@
 name: 🧬 Mutation testing
 
-# E41 M1 and M3 (docs/audit/plans/E41-mutation-testing-and-test-speed-plan.md, decisions 3 to 6).
+# E41 M1, M3 and M4 (docs/audit/plans/E41-mutation-testing-and-test-speed-plan.md, decisions 3 to 6).
 # Stryker makes one small fault at a time in a package's source and runs its tests; a fault no
 # test fails on has "survived". See docs/testing/mutation-testing.md.
 #
@@ -25,10 +25,11 @@ on:
     - cron: "17 2 * * 5" # Friday: packages/format
     - cron: "17 2 * * 6" # Saturday: packages/api-client
     - cron: "47 3 * * 0" # Sunday, after the engine: packages/business-details
+    - cron: "47 3 * * 3" # Wednesday, after banking: apps/backend
   workflow_dispatch:
     inputs:
       package:
-        description: "Package to mutation-test (a folder such as packages/finance-engine), or all"
+        description: "Package to mutation-test (a folder such as packages/finance-engine or apps/backend), or all"
         type: string
         default: packages/finance-engine
       force:
@@ -63,6 +64,10 @@ on:
       - "packages/business-details/src/**"
       - "packages/business-details/stryker.config.json"
       - "packages/business-details/vitest.config.ts"
+      - "apps/backend/src/**"
+      - "apps/backend/stryker.config.json"
+      - "apps/backend/vitest.config.ts"
+      - "apps/backend/vitest.stryker.config.ts"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -99,7 +104,8 @@ jobs:
           format='{"package":"packages/format","slug":"format","shards":1}'
           client='{"package":"packages/api-client","slug":"api-client","shards":1}'
           business='{"package":"packages/business-details","slug":"business-details","shards":1}'
-          all="[$engine,$mcp,$contract,$banking,$observability,$format,$client,$business]"
+          backend='{"package":"apps/backend","slug":"backend","shards":4}'
+          all="[$engine,$mcp,$contract,$banking,$observability,$format,$client,$business,$backend]"
           if [ "$EVENT" = "schedule" ]; then
             case "$SCHEDULE" in
               "17 2 * * 0") targets="[$engine]" ;;
@@ -110,6 +116,7 @@ jobs:
               "17 2 * * 5") targets="[$format]" ;;
               "17 2 * * 6") targets="[$client]" ;;
               "47 3 * * 0") targets="[$business]" ;;
+              "47 3 * * 3") targets="[$backend]" ;;
               *) echo "::error::No package is set for the schedule '$SCHEDULE'"; exit 1 ;;
             esac
           else
@@ -123,6 +130,7 @@ jobs:
               packages/format) targets="[$format]" ;;
               packages/api-client) targets="[$client]" ;;
               packages/business-details) targets="[$business]" ;;
+              apps/backend) targets="[$backend]" ;;
               *) echo "::error::'$INPUT' has no mutation config. Use all or a package folder from: $all"; exit 1 ;;
             esac
           fi
@@ -279,6 +287,7 @@ jobs:
       PACKAGES: >-
         packages/finance-engine packages/mcp packages/api-contract packages/banking
         packages/observability packages/format packages/api-client packages/business-details
+        apps/backend
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -353,5 +362,7 @@ jobs:
           path: |
             packages/*/reports/mutation/mutation.html
             packages/*/reports/mutation/mutation.json
+            apps/backend/reports/mutation/mutation.html
+            apps/backend/reports/mutation/mutation.json
           retention-days: 14
           if-no-files-found: warn
