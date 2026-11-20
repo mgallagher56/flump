@@ -311,3 +311,319 @@ describe("DatePicker", () => {
     );
   });
 });
+
+describe("DatePicker values that are not a real date", () => {
+  it.each([
+    // Not anchored: extra digits before or text after the date.
+    "12026-11-16",
+    "2026-11-16T10:00",
+    // 30 February does not exist; JavaScript would roll it to 2 March.
+    "2026-02-30",
+    // Month 13 does not exist; JavaScript would roll it to January 2027.
+    "2026-13-01",
+    // A two-digit year: JavaScript would read year 26 as 1926.
+    "0026-01-01",
+    "not a date",
+  ])("shows the placeholder for %j", (value) => {
+    render(<DatePicker aria-label="Date" value={value} />);
+    expect(screen.getByRole("button", { name: "Date" }).textContent).toContain("Select date");
+  });
+});
+
+describe("DatePicker calendar details", () => {
+  const open = (props: Partial<Parameters<typeof DatePicker>[0]> = {}) => {
+    const onValueChange = vi.fn();
+    render(
+      <DatePicker aria-label="Date" onValueChange={onValueChange} value="2026-11-16" {...props} />,
+    );
+    const trigger = screen.getByRole("button", { name: /^Date/ });
+    fireEvent.click(trigger);
+    return { onValueChange, trigger };
+  };
+  const button = (name: string | RegExp) =>
+    screen.getByRole("button", { name }) as HTMLButtonElement;
+  const heading = () => {
+    const live = document.querySelector("[aria-live='polite']");
+    return live?.textContent;
+  };
+  const focused = () => document.activeElement as HTMLElement;
+
+  it("names the month button by the full month and shows the weekdays Monday first", () => {
+    open();
+    expect(button("Choose month, November").textContent).toBe("November");
+    const headers = screen.getAllByRole("columnheader");
+    expect(
+      headers.map((header) => header.querySelector("[aria-hidden='true']")?.textContent),
+    ).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
+    expect(headers.map((header) => header.textContent?.replace(/^\w{3}/, ""))).toEqual([
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ]);
+  });
+
+  it("lays the month out as six weeks of seven days", () => {
+    open();
+    const rows = screen.getByRole("table").querySelectorAll("tbody tr");
+    expect(rows).toHaveLength(6);
+    for (const row of rows) expect(row.querySelectorAll("button")).toHaveLength(7);
+  });
+
+  it("gives every day other than the tab stop a tabindex of -1", () => {
+    open();
+    const days = Array.from(screen.getByRole("table").querySelectorAll("tbody button"));
+    expect(days.filter((day) => day.getAttribute("tabindex") === "0")).toHaveLength(1);
+    expect(days.filter((day) => day.getAttribute("tabindex") === "-1")).toHaveLength(41);
+  });
+
+  it("moves the tab stop to a day of the month that takes focus, but not to a day outside it", () => {
+    open();
+    const tabStop = () => screen.getByRole("table").querySelector("button[tabindex='0']");
+    // November 2026 starts on a Sunday, so the grid opens on Monday 26 Oct 2026.
+    fireEvent.focus(button("26 Oct 2026"));
+    expect(tabStop()?.getAttribute("aria-label")).toBe("16 Nov 2026, selected");
+    fireEvent.focus(button("10 Nov 2026"));
+    expect(tabStop()?.getAttribute("aria-label")).toBe("10 Nov 2026");
+  });
+
+  it("marks today with aria-current and no other day", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 18));
+    try {
+      open();
+      expect(button("18 Nov 2026").getAttribute("aria-current")).toBe("date");
+      const current = screen.getByRole("table").querySelectorAll("[aria-current]");
+      expect(current).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("End goes to the Sunday of the week from a midweek day", () => {
+    open({ value: "2026-11-18" });
+    // 16 Nov 2026 is a Monday, so 18 Nov is a Wednesday and that week's Sunday is 22 Nov.
+    fireEvent.keyDown(focused(), { key: "End" });
+    expect(focused().getAttribute("aria-label")).toBe("22 Nov 2026");
+  });
+
+  it("stops the page scrolling for the keys it handles and leaves other keys alone", () => {
+    open();
+    expect(fireEvent.keyDown(focused(), { key: "ArrowDown" })).toBe(false);
+    expect(fireEvent.keyDown(focused(), { key: "Tab" })).toBe(true);
+  });
+
+  it("steps a month back and forward with the arrow buttons", () => {
+    open();
+    expect(button("Previous month").disabled).toBe(false);
+    expect(button("Next month").disabled).toBe(false);
+    fireEvent.click(button("Next month"));
+    expect(heading()).toBe("December 2026");
+    fireEvent.click(button("Previous month"));
+    fireEvent.click(button("Previous month"));
+    expect(heading()).toBe("October 2026");
+  });
+
+  it.each([
+    // The day before 1 Nov is 31 Oct, which is min, so October still has a day to pick.
+    [{ min: "2026-10-31" }, false],
+    // 31 Oct is before min 1 Nov, so October has nothing to pick.
+    [{ min: "2026-11-01" }, true],
+    // A min years earlier leaves October open.
+    [{ min: "2020-01-01" }, false],
+  ])("Previous month with %j is disabled: %s", (props, disabled) => {
+    open(props);
+    expect(button("Previous month").disabled).toBe(disabled);
+  });
+
+  it.each([
+    // The last day of November, 30 Nov, is max, so December has nothing to pick.
+    [{ max: "2026-11-30" }, true],
+    [{ max: "2026-11-20" }, true],
+    // 1 Dec is max, so December still has a day to pick.
+    [{ max: "2026-12-01" }, false],
+    [{ max: "2030-01-01" }, false],
+  ])("Next month with %j is disabled: %s", (props, disabled) => {
+    open(props);
+    expect(button("Next month").disabled).toBe(disabled);
+  });
+
+  it("announces the view: month and year, then the year, then the page of years", () => {
+    open();
+    expect(heading()).toBe("November 2026");
+    fireEvent.click(button(/^Choose month/));
+    expect(heading()).toBe("2026");
+    fireEvent.click(button(/^Choose year/));
+    // 2026 / 12 = 168.8, so the page starts at 168 x 12 = 2016 and runs 12 years to 2027.
+    expect(heading()).toBe("2016 to 2027");
+  });
+
+  it("marks the shown month and year as pressed", () => {
+    open();
+    fireEvent.click(button(/^Choose month/));
+    expect(button("Nov").getAttribute("aria-pressed")).toBe("true");
+    expect(button("Oct").getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(button(/^Choose year/));
+    expect(button("2026").getAttribute("aria-pressed")).toBe("true");
+    expect(button("2025").getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("pages through years and goes back to the page of the shown year next time", () => {
+    open();
+    fireEvent.click(button(/^Choose year/));
+    expect(button("Previous years").disabled).toBe(false);
+    expect(button("Next years").disabled).toBe(false);
+    fireEvent.click(button("Next years"));
+    expect(heading()).toBe("2028 to 2039");
+    fireEvent.click(button("Previous years"));
+    fireEvent.click(button("Previous years"));
+    expect(heading()).toBe("2004 to 2015");
+    fireEvent.click(button("Back to calendar"));
+    expect(heading()).toBe("November 2026");
+    fireEvent.click(button(/^Choose year/));
+    expect(heading()).toBe("2016 to 2027");
+  });
+
+  it("disables the year pages at min and max years", () => {
+    // Page 2016 to 2027 holds min year 2016 and max year 2027, so neither page button is needed.
+    open({ min: "2016-05-01", max: "2027-03-01" });
+    fireEvent.click(button(/^Choose year/));
+    expect(button("Previous years").disabled).toBe(true);
+    expect(button("Next years").disabled).toBe(true);
+  });
+
+  it("leaves the year pages on when min and max are years away", () => {
+    open({ min: "2000-01-01", max: "2050-12-31" });
+    fireEvent.click(button(/^Choose year/));
+    expect(button("Previous years").disabled).toBe(false);
+    expect(button("Next years").disabled).toBe(false);
+  });
+
+  it("disables years after max and months after max, keeping the month that holds max", () => {
+    open({ max: "2026-06-01" });
+    fireEvent.click(button(/^Choose year/));
+    expect(button("2027").disabled).toBe(true);
+    expect(button("2026").disabled).toBe(false);
+    fireEvent.click(button("2026"));
+    fireEvent.click(button(/^Choose month/));
+    expect(button("Jun").disabled).toBe(false);
+    expect(button("Jul").disabled).toBe(true);
+  });
+
+  it("keeps the month whose last day is min", () => {
+    open({ value: "2025-03-16", min: "2025-02-28" });
+    fireEvent.click(button(/^Choose month/));
+    expect(button("Feb").disabled).toBe(false);
+    expect(button("Jan").disabled).toBe(true);
+  });
+
+  it("goes back from the year view to the calendar", () => {
+    open();
+    fireEvent.click(button(/^Choose year/));
+    fireEvent.click(button("Back to calendar"));
+    expect(screen.getByTestId("datepicker-days")).toBeDefined();
+  });
+
+  it("opens again on the day view at the chosen date after moving away", () => {
+    const { trigger } = open();
+    // PageDown: 16 Dec 2026. Shift+PageDown: 16 Dec 2027.
+    fireEvent.keyDown(focused(), { key: "PageDown" });
+    fireEvent.keyDown(focused(), { key: "PageDown", shiftKey: true });
+    expect(heading()).toBe("December 2027");
+    fireEvent.click(button(/^Choose month/));
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "Escape" });
+    expect(screen.queryByText("Calendar")).toBeNull();
+    fireEvent.click(trigger);
+    expect(screen.getByTestId("datepicker-days")).toBeDefined();
+    expect(heading()).toBe("November 2026");
+    expect(focused().getAttribute("aria-label")).toBe("16 Nov 2026, selected");
+  });
+
+  it("keeps focus on a header button that was clicked", () => {
+    open();
+    const next = button("Next month");
+    next.focus();
+    fireEvent.click(next);
+    expect(heading()).toBe("December 2026");
+    expect(focused()).toBe(next);
+  });
+
+  it("picks today with the Today button", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 18));
+    try {
+      const { onValueChange } = open();
+      fireEvent.click(button("Today"));
+      expect(onValueChange).toHaveBeenCalledWith("2026-11-18");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("offers Clear only when clearable and a date is set, and closes after it", () => {
+    const { unmount } = render(<DatePicker aria-label="Empty" value="" />);
+    fireEvent.click(button(/^Empty/));
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+    unmount();
+    const fixed = render(<DatePicker aria-label="Fixed" clearable={false} value="2026-11-16" />);
+    fireEvent.click(button(/^Fixed/));
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+    fixed.unmount();
+    open();
+    fireEvent.click(button("Clear"));
+    expect(screen.queryByTestId("datepicker-days")).toBeNull();
+  });
+});
+
+describe("DatePicker trigger states", () => {
+  it("sets aria-invalid only when invalid", () => {
+    const { rerender } = render(<DatePicker aria-label="Date" />);
+    const trigger = screen.getByRole("button", { name: "Date" });
+    expect(trigger.hasAttribute("aria-invalid")).toBe(false);
+    rerender(<DatePicker aria-label="Date" invalid />);
+    expect(trigger.getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it("has no aria-describedby when it is neither required nor described", () => {
+    render(<DatePicker aria-label="Date" />);
+    expect(screen.getByRole("button", { name: "Date" }).hasAttribute("aria-describedby")).toBe(
+      false,
+    );
+  });
+
+  it("names the trigger by a label element that has no id, keeping one that has", () => {
+    render(
+      <>
+        <label htmlFor="start">Start</label>
+        <label htmlFor="start" id="start-hint">
+          (UK)
+        </label>
+        <DatePicker id="start" value="2026-11-16" />
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "Start (UK) 16 Nov 2026" })).toBeTruthy();
+    expect(document.getElementById("start-hint")?.textContent).toBe("(UK)");
+  });
+
+  it("selects a day and clears without an error when no onValueChange is given", () => {
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+    window.addEventListener("error", onError);
+    try {
+      render(<DatePicker aria-label="Date" value="2026-11-16" />);
+      fireEvent.click(screen.getByRole("button", { name: /^Date/ }));
+      fireEvent.click(screen.getByRole("button", { name: "20 Nov 2026" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Date/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    } finally {
+      window.removeEventListener("error", onError);
+    }
+    expect(errors).toEqual([]);
+  });
+});

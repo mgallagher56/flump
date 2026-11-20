@@ -66,3 +66,10 @@ describe("TextInput", () => {
     expect(container.querySelector("[style]")).toBeNull();
   });
 });
+
+describe("TextInput default", () => {
+  it("is not marked invalid by default", () => {
+    render(<TextInput aria-label="Name" />);
+    expect(screen.getByRole("textbox").hasAttribute("aria-invalid")).toBe(false);
+  });
+});

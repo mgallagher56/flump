@@ -304,3 +304,30 @@ describe("ButtonLink", () => {
     );
   });
 });
+
+describe("Button with no onClick", () => {
+  it("can be clicked without an error", () => {
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+    window.addEventListener("error", onError);
+    try {
+      render(<Button>Save</Button>);
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    } finally {
+      window.removeEventListener("error", onError);
+    }
+    expect(errors).toEqual([]);
+  });
+
+  it("gives an asChild link the primary data-variant by default", () => {
+    render(
+      <Button asChild>
+        <a href="/next">Next</a>
+      </Button>,
+    );
+    expect(screen.getByRole("link", { name: "Next" }).getAttribute("data-variant")).toBe("primary");
+  });
+});

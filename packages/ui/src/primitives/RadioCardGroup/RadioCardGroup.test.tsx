@@ -89,3 +89,49 @@ describe("RadioCardGroup", () => {
     expect(screen.getByRole("alert").textContent).toContain("Choose a strategy to continue");
   });
 });
+
+describe("RadioCardGroup defaults and ids", () => {
+  it("is not required by default and gives the radios a real shared name", () => {
+    render(<RadioCardGroup legend="Payoff strategy" options={options} />);
+    const radios = screen.getAllByRole("radio") as HTMLInputElement[];
+    expect(radios.some((radio) => radio.required)).toBe(false);
+    expect(radios[0]?.name).not.toBe("");
+  });
+
+  it("has no aria-describedby without a hint or an error", () => {
+    render(<RadioCardGroup legend="Payoff strategy" options={options} />);
+    expect(screen.getByRole("group").hasAttribute("aria-describedby")).toBe(false);
+  });
+
+  it("gives each group without an id its own hint", () => {
+    render(
+      <>
+        <RadioCardGroup hint="First hint" legend="One" options={options} />
+        <RadioCardGroup hint="Second hint" legend="Two" options={options} />
+      </>,
+    );
+    const hintOf = (name: string) => {
+      const ref = screen.getByRole("group", { name }).getAttribute("aria-describedby");
+      return document.getElementById(ref ?? "")?.textContent;
+    };
+    expect(hintOf("One")).toBe("First hint");
+    expect(hintOf("Two")).toBe("Second hint");
+  });
+
+  it("can be chosen without an error when no onValueChange is given", () => {
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+    window.addEventListener("error", onError);
+    try {
+      render(<RadioCardGroup legend="Payoff strategy" options={options} />);
+      fireEvent.click(screen.getByRole("radio", { name: /Snowball/ }));
+      expect(isChecked(/Snowball/)).toBe(true);
+    } finally {
+      window.removeEventListener("error", onError);
+    }
+    expect(errors).toEqual([]);
+  });
+});

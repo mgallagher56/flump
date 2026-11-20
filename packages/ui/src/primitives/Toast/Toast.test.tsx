@@ -341,3 +341,101 @@ describe("useOptionalToast", () => {
     expect(cls).toContain("env(safe-area-inset-right,_0px)");
   });
 });
+
+const Controls = () => {
+  const { toast, dismissAll } = useToast();
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          toast({ title: "Could not save", tone: "danger" });
+          toast("Copied");
+        }}
+      >
+        Two
+      </button>
+      <button type="button" onClick={dismissAll}>
+        Clear all
+      </button>
+    </>
+  );
+};
+
+describe("Toast timing and dismissal details", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("auto-dismisses a title of exactly the long-text limit, 80 characters", () => {
+    setup("A".repeat(80));
+    show();
+    advance(5100);
+    expect(screen.queryByRole("list")).toBeNull();
+  });
+
+  it("counts the description towards long text", () => {
+    // 10 + 75 = 85 characters, over the 80 limit, so the toast stays.
+    setup({ title: "B".repeat(10), description: "C".repeat(75) });
+    show();
+    advance(60_000);
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  it("starts paused when the document is already hidden", () => {
+    Object.defineProperty(document, "hidden", { configurable: true, value: true });
+    try {
+      setup("Copied");
+      show();
+      advance(60_000);
+      expect(screen.queryByRole("list")).not.toBeNull();
+    } finally {
+      Object.defineProperty(document, "hidden", { configurable: true, value: false });
+    }
+  });
+
+  it("stays paused while focus moves between controls inside the toast", () => {
+    setup({ title: "Copied", durationMs: 5000, action: <button type="button">Undo</button> });
+    show();
+    const undo = screen.getByRole("button", { name: "Undo" });
+    fireEvent.focus(undo);
+    fireEvent.blur(undo, { relatedTarget: screen.getByRole("button", { name: "Dismiss" }) });
+    advance(60_000);
+    expect(screen.queryByRole("list")).not.toBeNull();
+  });
+
+  it("dismisses on Escape only, not on other keys", () => {
+    setup({ title: "Could not save", tone: "danger" });
+    show();
+    fireEvent.keyDown(screen.getByRole("button", { name: "Dismiss" }), { key: "Enter" });
+    expect(screen.queryByRole("list")).not.toBeNull();
+  });
+
+  it("drops an older error rather than the new toast when only errors are older", () => {
+    render(
+      <ToastProvider maxVisible={1}>
+        <Controls />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Two" }));
+    const items = screen.getAllByRole("listitem");
+    expect(items).toHaveLength(1);
+    expect(items[0]?.textContent).toContain("Copied");
+  });
+
+  it("dismisses one toast and leaves the others, and clears them all", () => {
+    render(
+      <ToastProvider>
+        <Controls />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Two" }));
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    fireEvent.click(screen.getAllByRole("button", { name: "Dismiss" })[0] as HTMLElement);
+    const left = screen.getAllByRole("listitem");
+    expect(left).toHaveLength(1);
+    expect(left[0]?.textContent).toContain("Copied");
+    fireEvent.click(screen.getByRole("button", { name: "Two" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(screen.queryByRole("listitem")).toBeNull();
+  });
+});

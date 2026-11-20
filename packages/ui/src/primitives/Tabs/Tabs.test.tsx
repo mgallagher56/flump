@@ -301,3 +301,109 @@ describe("Tabs Primitive", () => {
     });
   });
 });
+
+describe("Tabs edges and panels", () => {
+  const two = [
+    { value: "a", label: "Controls" },
+    { value: "b", label: "Text" },
+  ];
+
+  it("allows a pixel of rounding at either end before showing an overflow cue", () => {
+    const scroller = document.createElement("div");
+    Object.defineProperty(scroller, "scrollWidth", { value: 310, configurable: true });
+    Object.defineProperty(scroller, "clientWidth", { value: 300, configurable: true });
+    // 310 - 300 = 10 to scroll. At 1 the start is within a pixel, at 9 the end is.
+    scroller.scrollLeft = 1;
+    updateOverflowCue(scroller);
+    expect(scroller.hasAttribute("data-overflow-start")).toBe(false);
+    scroller.scrollLeft = 9;
+    updateOverflowCue(scroller);
+    expect(scroller.hasAttribute("data-overflow-end")).toBe(false);
+  });
+
+  it("does nothing for a list with no selected tab", () => {
+    const scroller = document.createElement("div");
+    scroller.innerHTML = '<button role="tab" data-state="inactive"></button>';
+    expect(() => scrollSelectedTabIntoView(scroller)).not.toThrow();
+  });
+
+  it("drops aria-controls when a tab's panel is removed", () => {
+    const { rerender } = render(
+      <Tabs items={two} value="a" onValueChange={vi.fn()}>
+        <Tabs.Panel value="a">First</Tabs.Panel>
+      </Tabs>,
+    );
+    const tab = screen.getByRole("tab", { name: "Controls" });
+    expect(tab.hasAttribute("aria-controls")).toBe(true);
+    rerender(<Tabs items={two} value="a" onValueChange={vi.fn()} />);
+    expect(tab.hasAttribute("aria-controls")).toBe(false);
+  });
+
+  it("renders no panel for an item missing from panels", () => {
+    render(<Tabs items={two} value="a" onValueChange={vi.fn()} panels={{ a: "A" }} />);
+    expect(screen.getByRole("tab", { name: "Text" }).hasAttribute("aria-controls")).toBe(false);
+  });
+
+  it("puts a given id on the panel", () => {
+    render(
+      <Tabs items={two} value="a" onValueChange={vi.fn()}>
+        <Tabs.Panel id="controls-panel" value="a">
+          First
+        </Tabs.Panel>
+      </Tabs>,
+    );
+    expect(screen.getByRole("tabpanel").id).toBe("controls-panel");
+  });
+
+  it("re-checks the tab stop when nested content changes or a button is enabled", async () => {
+    const { rerender } = render(
+      <Tabs
+        items={two}
+        value="a"
+        onValueChange={vi.fn()}
+        panels={{
+          a: (
+            <div>
+              <p>Loading</p>
+            </div>
+          ),
+        }}
+      />,
+    );
+    const panel = screen.getByRole("tabpanel", { name: "Controls" });
+    await waitFor(() => expect(panel.getAttribute("tabindex")).toBe("0"));
+    rerender(
+      <Tabs
+        items={two}
+        value="a"
+        onValueChange={vi.fn()}
+        panels={{
+          a: (
+            <div>
+              <a href="#next">Next step</a>
+            </div>
+          ),
+        }}
+      />,
+    );
+    await waitFor(() => expect(panel.hasAttribute("tabindex")).toBe(false));
+
+    rerender(
+      <Tabs
+        items={two}
+        value="a"
+        onValueChange={vi.fn()}
+        panels={{
+          a: (
+            <button disabled type="button">
+              Save
+            </button>
+          ),
+        }}
+      />,
+    );
+    await waitFor(() => expect(panel.getAttribute("tabindex")).toBe("0"));
+    (screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled = false;
+    await waitFor(() => expect(panel.hasAttribute("tabindex")).toBe(false));
+  });
+});

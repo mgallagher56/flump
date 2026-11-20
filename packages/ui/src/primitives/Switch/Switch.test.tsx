@@ -44,3 +44,20 @@ describe("Switch", () => {
     expect((screen.getByRole("switch") as HTMLInputElement).disabled).toBe(true);
   });
 });
+
+describe("Switch ids", () => {
+  it("gives each switch without an id its own hint", () => {
+    render(
+      <>
+        <Switch hint="First hint" label="One" />
+        <Switch hint="Second hint" label="Two" />
+      </>,
+    );
+    const hintOf = (name: string) => {
+      const ref = screen.getByRole("switch", { name }).getAttribute("aria-describedby");
+      return document.getElementById(ref ?? "")?.textContent;
+    };
+    expect(hintOf("One")).toBe("First hint");
+    expect(hintOf("Two")).toBe("Second hint");
+  });
+});

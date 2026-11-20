@@ -75,3 +75,22 @@ describe("DataList", () => {
     expect(screen.queryByText("£5")).toBeNull();
   });
 });
+
+describe("DataList focus and values", () => {
+  it("does not move focus when it starts expanded", () => {
+    render(<DataList defaultExpanded items={makeItems(10)} label="Accounts" />);
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it("gives no row a tabindex until rows are revealed", () => {
+    render(<DataList items={makeItems(10)} label="Accounts" />);
+    const rows = screen.getAllByRole("listitem");
+    expect(rows.filter((row) => row.hasAttribute("tabindex"))).toHaveLength(0);
+  });
+
+  it("shows a valueDisplay when there is no value", () => {
+    const items: DataListItem[] = [{ id: "x", label: "Pensions", valueDisplay: "3 accounts" }];
+    render(<DataList items={items} label="Accounts" />);
+    expect(screen.getByText("3 accounts")).toBeDefined();
+  });
+});

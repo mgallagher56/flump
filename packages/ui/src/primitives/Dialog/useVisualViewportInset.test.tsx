@@ -126,4 +126,62 @@ describe("useVisualViewportInset", () => {
     second.unmount();
     expect(read(KEYBOARD_INSET_VAR)).toBe("");
   });
+
+  it("follows the page panning under the keyboard", () => {
+    const { unmount } = renderHook(() => useVisualViewportInset(true));
+    // Panned 120px with 476 visible: 812 - (120 + 476) = 216 covered.
+    act(() => {
+      viewport.height = 476;
+      viewport.offsetTop = 120;
+      viewport.dispatchEvent(new Event("scroll"));
+    });
+    expect(read(KEYBOARD_INSET_VAR)).toBe("216px");
+    unmount();
+  });
+
+  it("stops listening once closed", () => {
+    const { unmount } = renderHook(() => useVisualViewportInset(true));
+    unmount();
+    act(() => {
+      viewport.height = 476;
+      viewport.dispatchEvent(new Event("resize"));
+      viewport.dispatchEvent(new Event("scroll"));
+    });
+    expect(read(KEYBOARD_INSET_VAR)).toBe("");
+  });
+
+  it("stops listening once the second of two modals closes", () => {
+    const first = renderHook(() => useVisualViewportInset(true));
+    const second = renderHook(() => useVisualViewportInset(true));
+    second.unmount();
+    first.unmount();
+    act(() => {
+      viewport.height = 476;
+      viewport.dispatchEvent(new Event("resize"));
+    });
+    expect(read(KEYBOARD_INSET_VAR)).toBe("");
+  });
+
+  it("removes the variables when the modal closes without unmounting", () => {
+    const { rerender, unmount } = renderHook(({ open }) => useVisualViewportInset(open), {
+      initialProps: { open: true },
+    });
+    expect(read(KEYBOARD_INSET_VAR)).toBe("0px");
+    rerender({ open: false });
+    expect(read(KEYBOARD_INSET_VAR)).toBe("");
+    unmount();
+  });
+
+  it("asks for one frame per burst of events and cancels it on close", () => {
+    vi.mocked(window.requestAnimationFrame).mockImplementation(() => 7);
+    const cancel = vi.spyOn(window, "cancelAnimationFrame");
+    const { unmount } = renderHook(() => useVisualViewportInset(true));
+    act(() => {
+      viewport.dispatchEvent(new Event("resize"));
+      viewport.dispatchEvent(new Event("scroll"));
+    });
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1);
+    unmount();
+    expect(cancel).toHaveBeenCalledWith(7);
+  });
 });

@@ -340,3 +340,201 @@ describe("SliderField Primitive", () => {
     expect(suffix.className).toContain("white-space_pre");
   });
 });
+
+describe("SliderField entry and edges", () => {
+  const pill = (label = "Rate") => screen.getByLabelText(`${label} input`) as HTMLInputElement;
+
+  it("parses grouped numbers and pence, and rejects malformed grouping", () => {
+    expect(parseSliderEntry("2.55")).toBe(2.55);
+    expect(parseSliderEntry("1,250,000")).toBe(1250000);
+    expect(parseSliderEntry("1,250.55")).toBe(1250.55);
+    // A first group of four digits, or a group of one after the last comma, is not en-GB grouping.
+    expect(parseSliderEntry("1234,567")).toBeNull();
+    expect(parseSliderEntry("1,250,5")).toBeNull();
+  });
+
+  it("reads a value that is not a number as Not set", () => {
+    render(<SliderField label="Rate" max={100} min={0} value={Number.NaN} onChange={vi.fn()} />);
+    expect(screen.getByRole("slider").getAttribute("aria-valuetext")).toBe("Not set");
+  });
+
+  it("shows pence in a currency pill when the step has decimals", () => {
+    render(
+      <SliderField
+        format="currency"
+        label="Rate"
+        max={100}
+        min={0}
+        step={0.01}
+        value={12.5}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(pill().value).toBe("£12.50");
+  });
+
+  it("fills the track from min, not from zero", () => {
+    // Range 10 to 110 is 100 wide; 35 is 25 above min, so 25%.
+    render(<SliderField label="Rate" max={110} min={10} value={35} onChange={vi.fn()} />);
+    expect(
+      (screen.getByRole("slider") as HTMLInputElement).style.getPropertyValue("--slider-fill"),
+    ).toBe("25%");
+  });
+
+  it("fills nothing when min and max are the same", () => {
+    render(<SliderField label="Rate" max={10} min={10} value={10} onChange={vi.fn()} />);
+    expect(
+      (screen.getByRole("slider") as HTMLInputElement).style.getPropertyValue("--slider-fill"),
+    ).toBe("0%");
+  });
+
+  it("pages by a tenth of the range when min is not zero", () => {
+    const onChange = vi.fn();
+    // Range 10 to 110: a tenth of 100 is 10, so PageUp from 50 gives 60.
+    render(<SliderField label="Rate" max={110} min={10} value={50} onChange={onChange} />);
+    fireEvent.keyDown(screen.getByRole("slider"), { key: "PageUp" });
+    expect(onChange).toHaveBeenLastCalledWith(60);
+  });
+
+  it("stops the page scrolling for the keys it handles and leaves other keys alone", () => {
+    const onChange = vi.fn();
+    render(<SliderField label="Rate" max={100} min={0} value={50} onChange={onChange} />);
+    const slider = screen.getByRole("slider");
+    expect(fireEvent.keyDown(slider, { key: "Tab" })).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(fireEvent.keyDown(slider, { key: "ArrowRight" })).toBe(false);
+  });
+
+  it("shows the slider value in the pill after a drag, dropping what was typed", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <SliderField label="Rate" max={100} min={0} value={50} onChange={onChange} />,
+    );
+    fireEvent.focus(pill());
+    fireEvent.change(pill(), { target: { value: "40" } });
+    fireEvent.change(screen.getByRole("slider"), { target: { value: "70" } });
+    rerender(<SliderField label="Rate" max={100} min={0} value={70} onChange={onChange} />);
+    expect(pill().value).toBe("70");
+  });
+
+  it("applies typed entries live only from min to max inclusive", () => {
+    const onChange = vi.fn();
+    render(<SliderField label="Rate" max={100} min={10} value={50} onChange={onChange} />);
+    fireEvent.focus(pill());
+    for (const text of ["", "abc", "5", "500"]) {
+      fireEvent.change(pill(), { target: { value: text } });
+    }
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.change(pill(), { target: { value: "10" } });
+    expect(onChange).toHaveBeenLastCalledWith(10);
+    fireEvent.change(pill(), { target: { value: "100" } });
+    expect(onChange).toHaveBeenLastCalledWith(100);
+  });
+
+  it("selects the pill text a frame after focus, unless something was typed first", async () => {
+    render(<SliderField label="Rate" max={100} min={0} value={25} onChange={vi.fn()} />);
+    const input = pill();
+    input.focus();
+    fireEvent.focus(input);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(2);
+
+    fireEvent.blur(input);
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "3", selectionStart: 1, selectionEnd: 1 } });
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(input.selectionStart).toBe(1);
+  });
+
+  it("clears only an empty pill on blur, and puts back the value after text that is not a number", () => {
+    const onClear = vi.fn();
+    const onChange = vi.fn();
+    render(
+      <SliderField
+        label="Rate"
+        max={100}
+        min={0}
+        value={25}
+        onChange={onChange}
+        onClear={onClear}
+      />,
+    );
+    fireEvent.focus(pill());
+    fireEvent.change(pill(), { target: { value: "abc" } });
+    fireEvent.blur(pill());
+    expect(onClear).not.toHaveBeenCalled();
+    expect(pill().value).toBe("25");
+    fireEvent.focus(pill());
+    fireEvent.change(pill(), { target: { value: "  " } });
+    fireEvent.blur(pill());
+    expect(onClear).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not report an unchanged value on blur", () => {
+    const onChange = vi.fn();
+    render(<SliderField label="Rate" max={100} min={0} value={25} onChange={onChange} />);
+    fireEvent.focus(pill());
+    fireEvent.blur(pill());
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("clears an empty pill without an error when no onClear is given", () => {
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+    window.addEventListener("error", onError);
+    try {
+      render(<SliderField label="Rate" max={100} min={0} value={25} onChange={vi.fn()} />);
+      fireEvent.focus(pill());
+      fireEvent.change(pill(), { target: { value: "" } });
+      fireEvent.blur(pill());
+    } finally {
+      window.removeEventListener("error", onError);
+    }
+    expect(errors).toEqual([]);
+  });
+
+  it("shows unit affixes beside a plain number and not beside a percentage, which has its own sign", () => {
+    const { unmount } = render(
+      <SliderField
+        label="Rate"
+        max={100}
+        min={0}
+        unitPrefix="~"
+        unitSuffix=" yrs"
+        value={5}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("~")).toBeDefined();
+    expect(screen.getByText("yrs", { exact: false })).toBeDefined();
+    unmount();
+    render(
+      <SliderField
+        format="percent"
+        label="Rate"
+        max={100}
+        min={0}
+        unitPrefix="~"
+        unitSuffix=" yrs"
+        value={5}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText("~")).toBeNull();
+    expect(screen.queryByText("yrs", { exact: false })).toBeNull();
+    expect(pill().value).toBe("5%");
+  });
+
+  it.each([
+    [{ min: 0, step: 1 }, "numeric"],
+    [{ min: -10, step: 1 }, "decimal"],
+    [{ min: 0, step: 0.5 }, "decimal"],
+  ])("asks phones for a keypad that fits %j: %s", (props, mode) => {
+    render(<SliderField label="Rate" max={100} value={5} onChange={vi.fn()} {...props} />);
+    expect(pill().getAttribute("inputmode")).toBe(mode);
+  });
+});

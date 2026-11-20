@@ -155,4 +155,38 @@ describe("PercentInput", () => {
     expect(input.value).toBe("0.50");
     expect(onValueChange).toHaveBeenLastCalledWith(0.5);
   });
+
+  it("keeps the caret at the start each time a 0 typed there is dropped", () => {
+    render(<PercentInput aria-label="Interest rate" value={5} />);
+    const input = screen.getByLabelText("Interest rate") as HTMLInputElement;
+    input.focus();
+    for (let i = 0; i < 2; i += 1) {
+      // "|5" + "0" gives "0|5"; dropping the zero leaves "|5", the same text as before.
+      fireEvent.change(input, { target: { value: "05", selectionStart: 1, selectionEnd: 1 } });
+      expect(input.value).toBe("5");
+      expect(input.selectionStart).toBe(0);
+    }
+  });
+});
+
+describe("PercentInput with no callbacks supplied", () => {
+  it("handles typing and blur without an error", () => {
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+    window.addEventListener("error", onError);
+    try {
+      render(<PercentInput aria-label="Interest rate" />);
+      const input = screen.getByLabelText("Interest rate") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "4.567" } });
+      fireEvent.blur(input);
+      // 4.567 at 2 decimal places rounds to 4.57.
+      expect(input.value).toBe("4.57");
+    } finally {
+      window.removeEventListener("error", onError);
+    }
+    expect(errors).toEqual([]);
+  });
 });
