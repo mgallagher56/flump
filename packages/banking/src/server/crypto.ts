@@ -137,6 +137,55 @@ export function resolveBankingKeyring(env: Record<string, string | undefined>): 
   return resolveVersionedKeyring(env, KEYS_ENV_VAR, KEY_ENV_VAR, DEFAULT_DEV_KEY);
 }
 
+/** 32 bytes as hex (`openssl rand -hex 32`). */
+const HEX_32_BYTES = /^[0-9a-f]{64}$/i;
+/** 32 bytes as base64 or base64url (`openssl rand -base64 32`): 43 characters, then optional `=`. */
+const BASE64_32_BYTES = /^(?:[A-Za-z0-9+/]{43}|[A-Za-z0-9_-]{43})=?$/;
+
+/** True when a secret looks like 32 generated random bytes: 64 hex characters or base64 of 32 bytes. */
+export function looksLikeGeneratedKey(secret: string): boolean {
+  const s = secret.trim();
+  return HEX_32_BYTES.test(s) || BASE64_32_BYTES.test(s);
+}
+
+/** A configured banking key that works but is not in the generated form. Names only, no secret. */
+export interface BankingKeyFormatWarning {
+  variable: string;
+  version: number;
+}
+
+/**
+ * The configured banking keys (E3 D-11) that are accepted but are not 32 generated random bytes,
+ * for a warning at boot. Never refuses anything: a key the resolvers accept today keeps booting.
+ * Only configured values are checked (the development default is not); an invalid list is left to
+ * `resolveBankingKeyring`, which refuses it at boot. Carries the variable and version only.
+ */
+export function bankingKeyFormatWarnings(
+  env: Record<string, string | undefined>,
+): BankingKeyFormatWarning[] {
+  if (env[KEYS_ENV_VAR]?.trim()) {
+    let keyring: BankingKeyring;
+    try {
+      keyring = resolveBankingKeyring(env);
+    } catch {
+      return [];
+    }
+    return [...keyring.keys]
+      .filter(([, secret]) => !looksLikeGeneratedKey(secret))
+      .map(([version]) => ({ variable: KEYS_ENV_VAR, version }));
+  }
+  const single = env[KEY_ENV_VAR];
+  if (single && !looksLikeGeneratedKey(single)) {
+    return [{ variable: KEY_ENV_VAR, version: DEFAULT_KEY_VERSION }];
+  }
+  return [];
+}
+
+/** The boot log line for one warning: what form is expected and where rotation is described. */
+export function bankingKeyFormatWarningMessage(warning: BankingKeyFormatWarning): string {
+  return `${warning.variable} key version ${warning.version} is not 32 generated random bytes (expected 64 hex characters from "openssl rand -hex 32", or base64 of 32 bytes). It still works; rotate to a generated key as in docs/runbooks/bank-token-key-rotation.md.`;
+}
+
 /**
  * Resolves the receipt encryption keyring (SEC-D, finding L4). Uses `RECEIPT_ENCRYPTION_KEYS`
  * or falls back to `resolveReceiptKey(env)` as version 1.
