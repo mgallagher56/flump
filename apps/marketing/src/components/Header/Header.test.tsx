@@ -11,7 +11,7 @@ describe("Header", () => {
     document.cookie = "flump_has_session=; path=/; max-age=0";
   });
 
-  it("starts with a skip link to the main landmark and gives each menu item a one-line hint", () => {
+  it("starts with a skip link and lists the Features group first in the menu, then each page with a hint", () => {
     render(
       <HelmetProvider>
         <ThemeProvider>
@@ -25,13 +25,28 @@ describe("Header", () => {
     expect(skip.getAttribute("href")).toBe(`#${MAIN_ID}`);
     fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
     const drawer = screen.getByRole("navigation", { name: "Mobile navigation" });
+    // E42 S4: the five areas under the "Features" heading, as in the app, then the AI connection
+    // and Security and privacy.
+    const group = within(drawer).getByRole("list", { name: "Features" });
+    expect(
+      within(group)
+        .getAllByRole("link")
+        .map((link) => [link.textContent, link.getAttribute("href")]),
+    ).toEqual([
+      ["Flump features", "/features"],
+      ["Accounts", "/features/accounts"],
+      ["Budget", "/features/budget"],
+      ["Pay", "/features/pay"],
+      ["Savings and pension", "/features/savings-and-pension"],
+      ["Debt and borrowing", "/features/debt-and-borrowing"],
+      ["AI connection", "/features/ai-connection"],
+      ["Security and privacy", "/security"],
+    ]);
+    expect(within(drawer).queryByRole("link", { name: /calculators/i })).toBeNull();
     // Each hint adds meaning rather than repeating its label (P71).
     for (const [label, hint] of [
-      ["Calculators", "No sign-in needed"],
-      ["Pricing", "Free during the beta"],
-      ["Security", "What Flump can see"],
-      ["AI connection", "Use with Claude"],
       ["Preview", "Sample figures"],
+      ["Pricing", "Free during the beta"],
       ["Contact", "Email us"],
     ]) {
       const link = within(drawer).getByRole("link", { name: new RegExp(`^${label}`) });
@@ -47,7 +62,7 @@ describe("Header", () => {
     expect(within(primary).queryByRole("link", { name: /Contact/ })).toBeNull();
   });
 
-  it("renders desktop navigation links, 'Sign in', the invite CTA, and theme toggle when no session", () => {
+  it("renders three top links (a Features menu, Preview, Pricing), 'Sign in', the invite CTA, and theme toggle when no session", () => {
     render(
       <HelmetProvider>
         <ThemeProvider>
@@ -58,15 +73,38 @@ describe("Header", () => {
       </HelmetProvider>,
     );
 
-    expect(screen.getByRole("link", { name: /calculators/i })).toBeDefined();
-    expect(screen.getByRole("link", { name: /pricing/i })).toBeDefined();
-    expect(screen.getByRole("link", { name: /security/i })).toBeDefined();
+    const primary = screen.getByRole("navigation", { name: "Primary" });
+    expect(
+      within(primary)
+        .getAllByRole("listitem")
+        .filter((li) => li.parentElement?.parentElement === primary)
+        .map((li) => li.textContent),
+    ).toEqual(["Features", "Preview", "Pricing"]);
+    expect(screen.queryByRole("link", { name: /calculators/i })).toBeNull();
+    expect(within(primary).queryByRole("link", { name: "AI connection" })).toBeNull();
+    // The Features menu opens on press and lists the areas, the AI connection and Security.
+    const features = within(primary).getByRole("button", { name: "Features" });
+    expect(features.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(features);
+    expect(features.getAttribute("aria-expanded")).toBe("true");
+    for (const [name, href] of [
+      ["Flump features", "/features"],
+      ["Debt and borrowing", "/features/debt-and-borrowing"],
+      ["AI connection", "/features/ai-connection"],
+      ["Security and privacy", "/security"],
+    ]) {
+      expect(
+        within(primary)
+          .getByRole("link", { name: new RegExp(`^${name}`) })
+          .getAttribute("href"),
+      ).toBe(href);
+    }
     // /sandbox now redirects to sign-up, so the try-it link goes to the interactive preview.
     const preview = screen.getByRole("link", { name: "Preview" });
     expect(preview.getAttribute("href")).toBe("/preview");
     expect(preview.getAttribute("target")).toBeNull();
     expect(document.querySelector('a[href*="/sandbox"]')).toBeNull();
-    expect(screen.getByRole("link", { name: "AI connection" })).toBeDefined();
+    expect(document.querySelector('a[href^="/mcp"], a[href^="/tools"]')).toBeNull();
 
     expect(screen.getAllByText("Sign in").length).toBeGreaterThan(0);
     // Rule B15: "Request an invite" everywhere signed out.
@@ -103,6 +141,29 @@ describe("Header", () => {
       </HelmetProvider>,
     );
     expect(screen.getByRole("link", { name: "Pricing" }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it.each([
+    ["/features/budget", "Budget"],
+    ["/features/ai-connection/", "AI connection"],
+    ["/security", "Security and privacy"],
+  ])("on %s marks the Features menu and, in the phone menu, the page's own link", (path, label) => {
+    render(
+      <HelmetProvider>
+        <ThemeProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <Header />
+          </MemoryRouter>
+        </ThemeProvider>
+      </HelmetProvider>,
+    );
+    const primary = screen.getByRole("navigation", { name: "Primary" });
+    expect(
+      within(primary).getByRole("button", { name: "Features" }).getAttribute("aria-current"),
+    ).toBe("page");
+    fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
+    const group = screen.getByRole("list", { name: "Features" });
+    expect(within(group).getByRole("link", { current: "page" }).textContent).toBe(label);
   });
 
   it("renders 'Go to dashboard' when flump_has_session=1 cookie is present", () => {
@@ -204,7 +265,7 @@ describe("Header", () => {
     expect(screen.getAllByText("Go to dashboard").length).toBeGreaterThan(0);
   });
 
-  it("shows the Security sub-label in the mobile drawer without FCA wording", () => {
+  it("links Security and privacy in the mobile drawer without FCA wording", () => {
     render(
       <HelmetProvider>
         <ThemeProvider>
@@ -215,7 +276,10 @@ describe("Header", () => {
       </HelmetProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
-    expect(screen.getByText("What Flump can see")).toBeDefined();
+    const drawer = screen.getByRole("navigation", { name: "Mobile navigation" });
+    expect(
+      within(drawer).getByRole("link", { name: "Security and privacy" }).getAttribute("href"),
+    ).toBe("/security");
     expect(screen.queryByText("FCA AISP")).toBeNull();
   });
 
@@ -258,11 +322,7 @@ describe("Header", () => {
     // linksFrom="wide" hides the nav itself below navWide.
     expect(primary.className).toContain("navInline:d_none");
     expect(primary.className).toContain("navWide:d_block");
-    for (const name of [/AI connection/, /^Preview$/]) {
-      expect(within(primary).getByRole("link", { name }).closest("li")?.className).toContain(
-        "navWide:d_list-item",
-      );
-    }
+    expect(within(primary).getByRole("link", { name: /^Preview$/ })).toBeDefined();
     expect(screen.getAllByRole("link", { name: /Sign in/ })[0]?.parentElement?.className).toContain(
       "navWide:d_inline-flex",
     );

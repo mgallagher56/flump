@@ -145,7 +145,19 @@ const MARKETING_PAGES: PhonePage[] = [
     name: `mkt-${stem(`/tools/${slug}`)}`,
     url: `${MARKETING_URL}/tools/${slug}`,
   })),
-  ...["/pricing", "/security", "/mcp", "/contact", "/preview"].map((path) => ({
+  ...[
+    "/features",
+    "/features/accounts",
+    "/features/budget",
+    "/features/pay",
+    "/features/savings-and-pension",
+    "/features/debt-and-borrowing",
+    "/features/ai-connection",
+    "/pricing",
+    "/security",
+    "/contact",
+    "/preview",
+  ].map((path) => ({
     name: `mkt-${stem(path)}`,
     url: `${MARKETING_URL}${path}`,
     main: path === "/pricing",
@@ -448,7 +460,19 @@ export const PHONE_SETS: PhoneSet[] = [
         name: stem(`/tools/${slug}`),
         url: `${MARKETING_URL}/tools/${slug}`,
       })),
-      ...["/pricing", "/security", "/mcp", "/contact", "/preview"].map((path) => ({
+      ...[
+        "/features",
+        "/features/accounts",
+        "/features/budget",
+        "/features/pay",
+        "/features/savings-and-pension",
+        "/features/debt-and-borrowing",
+        "/features/ai-connection",
+        "/pricing",
+        "/security",
+        "/contact",
+        "/preview",
+      ].map((path) => ({
         name: stem(path),
         url: `${MARKETING_URL}${path}`,
         main: path === "/pricing",

@@ -63,7 +63,7 @@ describe("McpConnectionCard", () => {
   });
 
   it("has no inner tabs and offers the setup steps in a closed How to connect disclosure", () => {
-    render(<McpConnectionCard guideUrl="https://example.test/mcp#setup" />);
+    render(<McpConnectionCard guideUrl="https://example.test/features/ai-connection#setup" />);
     expect(screen.queryByRole("tab")).toBeNull();
     expect(screen.queryByRole("tablist")).toBeNull();
     const toggle = screen.getByRole("button", { name: HOW_TO_CONNECT_TITLE });
@@ -72,7 +72,7 @@ describe("McpConnectionCard", () => {
     const panel = screen.getByTestId("set-up-panel");
     expect(within(panel).getAllByRole("listitem")).toHaveLength(HOW_TO_CONNECT_STEPS.length);
     const link = within(panel).getByRole("link", { name: /AI connections on the Flump website/ });
-    expect(link.getAttribute("href")).toBe("https://example.test/mcp#setup");
+    expect(link.getAttribute("href")).toBe("https://example.test/features/ai-connection#setup");
     expect(screen.queryByText(/no setup guide/)).toBeNull();
     expect(screen.queryByText(/npx/)).toBeNull();
     expect(screen.queryByText(/OAuth 2\.1/)).toBeNull();

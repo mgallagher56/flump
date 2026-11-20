@@ -6,14 +6,14 @@ import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { AI_STAGING_SENTENCE } from "../../utils/aiConnection";
-import { EXAMPLE_QUESTIONS, McpPage } from "./McpPage";
+import { AiConnectionPage, EXAMPLE_QUESTIONS } from "./AiConnectionPage";
 import { MCP_TOOLS } from "./mcpTools";
 
 const renderPage = () =>
   render(
     <HelmetProvider>
-      <MemoryRouter>
-        <McpPage />
+      <MemoryRouter initialEntries={["/features/ai-connection"]}>
+        <AiConnectionPage />
       </MemoryRouter>
     </HelmetProvider>,
   );
@@ -33,39 +33,59 @@ const registeredToolNames = (): string[] => {
   return names.sort();
 };
 
-describe("Marketing McpPage (E16 PR 12)", () => {
-  it("leads with two plain sentences and a 'Request an invite' primary button", () => {
+describe("Marketing AI connection page (E42 S2b)", () => {
+  it("is a feature page: name, h1, lead, how a tester gets it, and two calls to action", () => {
     renderPage();
+    const hero = screen.getByTestId("feature-hero");
+    expect(screen.getByRole("heading", { level: 1, name: "AI connection" })).toBeDefined();
     expect(
-      screen.getByRole("heading", { level: 1, name: "Ask an AI assistant about your figures" }),
+      within(hero).getByText("Ask an AI assistant about the figures you have saved in Flump."),
     ).toBeDefined();
+    // The decided tile wording: true for a tester whose account is not switched on (D5).
+    expect(
+      within(hero).getByText("Switched on for an account on request during testing."),
+    ).toBeDefined();
+    // Kept until the owner rules on it (plan section 7.1).
     expect(screen.getByTestId("mcp-preview-badge").textContent).toMatch(/preview/i);
-    const main = screen.getByRole("main");
-    const invites = within(main).getAllByRole("link", { name: "Request an invite" });
-    expect(invites[0]?.getAttribute("href")).toBe("/contact#beta");
-    expect(invites[0]?.getAttribute("data-variant")).toBe("primary");
-    expect(invites).toHaveLength(1);
-    expect(screen.getByText(/^The AI connection links an AI assistant/)).toBeDefined();
-    // Developer words wait behind "Show technical details" (R2-10).
-    expect(within(main).getByRole("heading", { level: 1 }).parentElement?.textContent).not.toMatch(
-      /Model Context Protocol|Claude Desktop|Cursor/,
-    );
-    expect(within(main).queryByText(/Open your profile/)).toBeNull();
-    expectPageRules(main, { projectionNotices: 0 });
+    const invite = within(hero).getByRole("link", { name: "Request an invite" });
+    expect(invite.getAttribute("href")).toBe("/contact#beta");
+    expect(invite.getAttribute("data-variant")).toBe("primary");
+    expect(within(hero).getByRole("link", { name: "Interactive preview" })).toBeDefined();
+    expectPageRules(hero, { projectionNotices: 0 });
   });
 
-  it("shows three example questions and how to turn it on", () => {
+  it("says what it does in three facts and shows three example questions", () => {
     renderPage();
+    expect(
+      screen.getByText(
+        "Connect an AI assistant such as Claude Desktop to Flump and ask questions in your own words.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText("Tax and debt figures are calculated by Flump, not by the AI model."),
+    ).toBeDefined();
+    expect(screen.getByText(AI_STAGING_SENTENCE)).toBeDefined();
     for (const q of EXAMPLE_QUESTIONS) expect(screen.getByText(q)).toBeDefined();
+    expect(EXAMPLE_QUESTIONS).toHaveLength(3);
     // Plain question cards: no repeated decorative icon.
     expect(screen.getByRole("main").querySelectorAll("li [data-tile-tone]")).toHaveLength(0);
-    expect(EXAMPLE_QUESTIONS).toHaveLength(3);
-    expect(screen.getByRole("heading", { level: 2, name: "How to turn it on" })).toBeDefined();
-    expect(screen.getByText(/you can revoke it any time/)).toBeDefined();
+  });
+
+  it("does not read as if every invited account can turn it on", () => {
+    renderPage();
     const main = screen.getByRole("main").textContent ?? "";
-    expect(main).not.toMatch(/source code/);
-    expect(main).not.toMatch(/coming soon/i);
-    expect(main).toMatch(/Request an invite and sign in to Flump\./);
+    // "How to get it" waits for the owner (version 1 or 2); the old present-tense steps are gone.
+    expect(screen.queryByRole("heading", { name: /how to (turn it on|get it)/i })).toBeNull();
+    expect(main).not.toMatch(/Request an invite and sign in to Flump/);
+    expect(main).not.toMatch(/source code|coming soon|by invitation/i);
+  });
+
+  it("keeps the #setup anchor the web app links to, and marks no area in the strip", () => {
+    renderPage();
+    expect(document.getElementById("setup")).not.toBeNull();
+    const strip = screen.getByTestId("area-strip");
+    expect(within(strip).getAllByRole("link")).toHaveLength(5);
+    expect(within(strip).queryByRole("link", { current: "page" })).toBeNull();
   });
 
   it("keeps the technical details collapsed until asked", () => {

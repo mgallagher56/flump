@@ -185,6 +185,9 @@ describe("server.ts wiring", () => {
     const body = await res.text();
     expect(body).toContain("<loc>https://flump.example/</loc>");
     expect(body).toContain("<loc>https://flump.example/pricing</loc>");
+    expect(body).toContain("<loc>https://flump.example/features</loc>");
+    expect(body).toContain("<loc>https://flump.example/features/ai-connection</loc>");
+    expect(body).not.toContain("<loc>https://flump.example/mcp</loc>");
     expect(body).toContain("<loc>https://flump.example/tools/uk-100k-tax-trap-calculator</loc>");
     expect(body).not.toContain("overdraft-interest-calculator");
   });

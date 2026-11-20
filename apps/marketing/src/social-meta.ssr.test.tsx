@@ -11,7 +11,13 @@ const PAGES = [
   "/tools/section-24-landlord-tax-calculator",
   "/pricing",
   "/security",
-  "/mcp",
+  "/features",
+  "/features/accounts",
+  "/features/budget",
+  "/features/pay",
+  "/features/savings-and-pension",
+  "/features/debt-and-borrowing",
+  "/features/ai-connection",
   "/contact",
 ];
 

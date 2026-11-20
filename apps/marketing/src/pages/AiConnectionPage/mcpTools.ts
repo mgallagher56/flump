@@ -1,6 +1,6 @@
 /**
  * The tools Flump MCP registers today, in the order `packages/mcp/src/server.ts` lists them
- * (`READ_TOOLS`, `SIMULATE_TOOLS`, `WRITE_TOOLS`). `McpPage.test.tsx` reads the tool names from
+ * (`READ_TOOLS`, `SIMULATE_TOOLS`, `WRITE_TOOLS`). `AiConnectionPage.test.tsx` reads the tool names from
  * the `packages/mcp` source and fails if this list drifts from it.
  */
 type McpToolKind = "read" | "calculate" | "stage";

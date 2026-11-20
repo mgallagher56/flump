@@ -131,7 +131,18 @@ export const SWEEP_SETS: SweepSet[] = [
       { name: "home", url: `${MARKETING_URL}/` },
       { name: "tools", url: `${MARKETING_URL}/tools` },
       ...toolPages(MARKETING_URL),
-      ...["/pricing", "/security", "/mcp", "/contact"].map((p) => ({
+      ...[
+        "/features",
+        "/features/accounts",
+        "/features/budget",
+        "/features/pay",
+        "/features/savings-and-pension",
+        "/features/debt-and-borrowing",
+        "/features/ai-connection",
+        "/pricing",
+        "/security",
+        "/contact",
+      ].map((p) => ({
         name: stem(p),
         url: `${MARKETING_URL}${p}`,
       })),

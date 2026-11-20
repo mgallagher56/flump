@@ -60,7 +60,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       netWorthChoices,
       isBetaAdmin,
       user,
-      aiGuideUrl: `${getMarketingUrl(args.request.url)}/mcp#setup`,
+      aiGuideUrl: `${getMarketingUrl(args.request.url)}/features/ai-connection#setup`,
       mcpServerUrl: `${apiConfig.apiBaseUrl.replace(/\/$/, "")}/mcp`,
     });
   } catch (error) {

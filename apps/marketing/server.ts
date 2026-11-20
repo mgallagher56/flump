@@ -12,6 +12,7 @@ import { applyServerHardening } from "./server/hardening";
 import { buildHeadMeta, splitHoistables } from "./server/headMeta";
 import { registerOps } from "./server/ops";
 import { rateLimit } from "./server/rateLimit";
+import { redirectMiddleware } from "./server/redirects";
 import {
   buildCsp,
   genericServerError,
@@ -57,6 +58,11 @@ async function createServer() {
   // (so they get HSTS, nosniff etc.) but MUST stay before vite middlewares, sirv and the SPA
   // catch-all, or the catch-all serves HTML for them.
   registerOps(app);
+
+  // 301s from old addresses (E42: /mcp to the AI connection page). After the security headers so
+  // each redirect carries them, before vite, analytics and SSR so an old address is never rendered
+  // or counted. Development and production alike.
+  app.use(redirectMiddleware());
 
   let vite: ViteDevServer | undefined;
   if (!isProd) {

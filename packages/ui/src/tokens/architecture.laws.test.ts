@@ -310,7 +310,9 @@ describe("Architecture & Design System Laws", () => {
     });
 
     it("enforces colocated structure for new marketing pages", () => {
-      verifyColocatedStructure(MARKETING_PAGES_DIR, "McpPage");
+      verifyColocatedStructure(MARKETING_PAGES_DIR, "AiConnectionPage");
+      verifyColocatedStructure(MARKETING_PAGES_DIR, "FeaturePage");
+      verifyColocatedStructure(MARKETING_PAGES_DIR, "FeaturesIndexPage");
       verifyColocatedStructure(MARKETING_PAGES_DIR, "PreviewPage");
     });
 
@@ -398,7 +400,7 @@ describe("Architecture & Design System Laws", () => {
     it("ensures colocated MCP components in web and marketing contain zero inline style props, raw hex colours, or primitive token scales", () => {
       const strictDirs = [
         path.join(AI_CONNECTIONS_FEATURES_DIR, "McpConnectionCard"),
-        path.join(MARKETING_PAGES_DIR, "McpPage"),
+        path.join(MARKETING_PAGES_DIR, "AiConnectionPage"),
       ];
       const forbiddenTokens = ["var(--colors-", "style={{"];
       const primitiveTokenRegex = /\b(slate|indigo|emerald|amber|red|purple|cyan)\.[0-9]{2,3}\b/;

@@ -11,7 +11,7 @@ const meta: Meta<typeof McpConnectionCard> = {
   component: McpConnectionCard,
   parameters: { layout: "padded" },
   args: {
-    guideUrl: "https://example.test/mcp#setup",
+    guideUrl: "https://example.test/features/ai-connection#setup",
     onGenerateToken: fn(async () => ({
       id: "tok_play_1",
       name: "Cursor",

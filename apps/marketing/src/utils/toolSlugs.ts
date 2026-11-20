@@ -1,15 +1,21 @@
 import { TOOL_SLUGS } from "@repo/ui/tools";
+import { FEATURES, FEATURES_INDEX } from "./featureAreas";
 
-/** Pure data (no React) so the Express server can read it for the sitemap. */
-export const STATIC_PATHS = [
+/**
+ * Every real page that is not a calculator. Pure data (no React) so the Express server can read it
+ * for the sitemap, the 404 status and the analytics route keys. `/mcp` is not here: it answers 301
+ * to the AI connection page (`server/redirects.ts`).
+ */
+export const STATIC_PATHS: readonly string[] = [
   "/",
+  FEATURES_INDEX.path,
+  ...FEATURES.map((feature) => feature.path),
   "/preview",
   "/tools",
   "/pricing",
   "/security",
-  "/mcp",
   "/contact",
-] as const;
+];
 
 /**
  * Tool slugs, order and aliases come from the shared catalogue in `@repo/ui/tools`, which the

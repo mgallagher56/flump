@@ -44,7 +44,7 @@ const SECURITY_FACTS: SecurityFact[] = [
     text: (
       <>
         The{" "}
-        <Link className={factLink()} to="/mcp">
+        <Link className={factLink()} to="/features/ai-connection">
           AI connection
         </Link>{" "}
         (preview) answers questions from the figures you have saved. {AI_STAGING_SENTENCE}

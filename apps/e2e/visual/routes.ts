@@ -60,7 +60,10 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   marketing("home", "/"),
   marketing("pricing", "/pricing"),
   marketing("tools", "/tools"),
-  marketing("mcp", "/mcp"),
+  marketing("features", "/features"),
+  marketing("feature-accounts", "/features/accounts"),
+  marketing("feature-debt-and-borrowing", "/features/debt-and-borrowing"),
+  marketing("ai-connection", "/features/ai-connection"),
 ];
 
 /** Tags the renter-pass tests; the homeowner projects leave them out, the renter projects keep only them. */

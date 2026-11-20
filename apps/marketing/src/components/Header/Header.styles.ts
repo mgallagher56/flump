@@ -51,3 +51,24 @@ export const drawerCta = cva({ base: { width: "100%", textDecoration: "none" } }
  */
 export const wideOnly = cva({ base: { display: "none", _navWide: { display: "inline-flex" } } });
 export const belowWide = cva({ base: { _navWide: { display: "none" } } });
+
+/** The Features group in the phone menu: its heading, then its links, set apart by a hairline. */
+export const drawerGroup = cva({
+  base: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: "1",
+    pb: "3",
+    mb: "3",
+    borderBottomWidth: "1px",
+    borderBottomStyle: "solid",
+    borderBottomColor: "border.subtle",
+  },
+});
+
+export const drawerGroupHeading = cva({
+  base: { textStyle: "label.sm", color: "text.secondary", margin: 0, px: "4", py: "2" },
+});

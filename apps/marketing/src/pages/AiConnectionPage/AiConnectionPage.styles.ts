@@ -1,40 +1,7 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const pageShell = cva({
-  base: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: "surface.canvas",
-  },
-});
-
-export const mainContent = cva({
-  base: { flex: "1", px: "4", py: { base: "12", md: "16" }, _focus: { outline: "none" } },
-});
-
-export const container = cva({
-  base: { maxWidth: "3xl", mx: "auto", display: "flex", flexDirection: "column", gap: "10" },
-});
-
-export const heroBlock = cva({
-  base: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "4" },
-});
-
-export const heading = cva({
-  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
-});
-
-export const lead = cva({
-  base: { textStyle: { base: "body.md", md: "body.lg" }, color: "text.secondary", margin: 0 },
-});
-
 export const section = cva({
   base: { display: "flex", flexDirection: "column", gap: "4" },
-});
-
-export const sectionHeading = cva({
-  base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
 });
 
 export const body = cva({
@@ -54,19 +21,6 @@ export const questionList = cva({
 
 export const questionCard = cva({
   base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3",
-    textStyle: "body.md",
-    color: "text.primary",
-  },
-});
-
-export const stepList = cva({
-  base: {
-    margin: 0,
-    paddingLeft: "6",
-    listStyleType: "decimal",
     display: "flex",
     flexDirection: "column",
     gap: "3",

@@ -50,7 +50,7 @@ export const HOME_FAQS: HomeFaqEntry[] = [
       <>
         Yes, as a preview. An AI assistant such as Claude Desktop can answer questions from the
         figures you have saved in Flump.{" "}
-        <Link className={faqLink()} to="/mcp">
+        <Link className={faqLink()} to="/features/ai-connection">
           About the AI connection
         </Link>
       </>

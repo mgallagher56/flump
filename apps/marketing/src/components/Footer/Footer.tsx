@@ -2,6 +2,7 @@ import { BUSINESS_DETAILS, companyLine } from "@flump/business-details";
 import { SiteFooter, type SiteFooterRenderLink, siteFooterLink } from "@repo/ui";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
+import { FEATURES, FEATURES_INDEX } from "../../utils/featureAreas";
 import { mailto, signupCta, TAGLINE } from "../../utils/site";
 import { getAppUrl } from "../../utils/url";
 import { footerBottomRow, footerCompanyLine, footerSpacing } from "./Footer.styles";
@@ -39,19 +40,31 @@ export const Footer: FC = () => {
         {
           heading: "Product",
           links: [
+            { key: "features", label: FEATURES_INDEX.title, href: FEATURES_INDEX.path },
+            ...FEATURES.map((feature) => ({
+              key: feature.key,
+              label: feature.name,
+              href: feature.path,
+            })),
             { key: "preview", label: "Interactive preview", href: "/preview" },
             { key: "tools", label: "All calculators", href: "/tools" },
-            { key: "mcp", label: "AI connection", href: "/mcp" },
             { key: "pricing", label: "Pricing", href: "/pricing" },
+          ],
+        },
+        // A "Legal" column joins these once the privacy, terms, cookie and accessibility pages
+        // exist (EPICS table row 2); none is linked before its page is written.
+        {
+          heading: "Company",
+          links: [
+            { key: "security", label: "Security and privacy", href: "/security" },
+            { key: "contact", label: "Contact", href: "/contact" },
+            { key: "cta", label: cta.label, href: cta.href, external: cta.external },
             {
               key: "signin",
               label: "Sign in",
               href: `${appUrl}/login`,
               external: true,
             },
-            { key: "cta", label: cta.label, href: cta.href, external: cta.external },
-            { key: "security", label: "Security and privacy", href: "/security" },
-            { key: "contact", label: "Contact", href: "/contact" },
           ],
         },
       ]}
