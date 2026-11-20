@@ -134,6 +134,19 @@ describe("MortgageVsIsaCalculator", () => {
     expect(toolText()).not.toMatch(/£-|-£|−£/);
   });
 
+  it("says the mortgage is paid off sooner only when something is overpaid", () => {
+    const explainer = () => {
+      fireEvent.click(screen.getByRole("button", { name: MORTGAGE_ISA_COPY.explainerTitle }));
+      return screen.getByText(new RegExp(MORTGAGE_ISA_COPY.explainer.slice(0, 30))).textContent;
+    };
+    const { unmount } = render(<MortgageVsIsaCalculator />);
+    expect(screen.getByText(MORTGAGE_ISA_COPY.kpiInterestSavedSubtext)).toBeDefined();
+    expect(explainer()).toMatch(/^Overpaying pays the mortgage off .+ sooner/);
+    unmount();
+    render(<MortgageVsIsaCalculator initialExtra={0} />);
+    expect(explainer()).not.toContain("sooner");
+  });
+
   it("shows a neutral subtext, not years sooner, when nothing is overpaid", () => {
     const { unmount } = render(<MortgageVsIsaCalculator initialExtra={0} />);
     expect(screen.getByText(MORTGAGE_ISA_COPY.kpiInterestSavedNoExtra)).toBeDefined();

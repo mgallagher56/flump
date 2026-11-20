@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DebtSnowballCalculator,
+  MarginalRateExplorerStandalone,
   MortgageVsIsaCalculator,
   OverdraftCostCalculator,
   Section24Calculator,
@@ -189,6 +190,101 @@ describe("UI Calculators", () => {
       render(<Calculator ctaText="Save and continue" onSaveAndContinue={vi.fn()} />);
       fireEvent.click(screen.getByRole("button", { name: /Save and continue/i }));
       expect(localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY)).not.toBeNull();
+    });
+  });
+
+  describe("sliders feed the estimate", () => {
+    const sliders = [
+      ["StudentLoanCalculator", StudentLoanCalculator, "Student loan balance", "30000"],
+      ["MortgageVsIsaCalculator", MortgageVsIsaCalculator, "Mortgage interest rate", "6.5"],
+      ["Section24Calculator", Section24Calculator, "Mortgage interest a year", "9000"],
+      [
+        "ZeroPercentCliffCalculator",
+        ZeroPercentCliffCalculator,
+        "Rate after the deal (APR)",
+        "29.9",
+      ],
+    ] as const;
+
+    it.each(sliders)("%s keeps the value moved to on %s", (_name, Calculator, label, value) => {
+      render(<Calculator persistSeed={false} />);
+      const slider = screen.getByRole("slider", { name: label }) as HTMLInputElement;
+      fireEvent.change(slider, { target: { value } });
+      expect(slider.value).toBe(value);
+    });
+  });
+
+  describe("sign-up payload", () => {
+    it.each([
+      ["DebtSnowballCalculator", DebtSnowballCalculator],
+      ["OverdraftCostCalculator", OverdraftCostCalculator],
+      ["ZeroPercentCliffCalculator", ZeroPercentCliffCalculator],
+    ] as const)(
+      "%s asks onboarding for the accounts, debt and budget modules",
+      (_n, Calculator) => {
+        const onSave = vi.fn();
+        render(
+          <Calculator ctaText="Save and continue" onSaveAndContinue={onSave} persistSeed={false} />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+        expect(onSave).toHaveBeenCalledWith(
+          expect.objectContaining({
+            mode: "DEBT",
+            inferredModules: ["accounts", "debt", "budget"],
+          }),
+        );
+      },
+    );
+
+    it("MarginalRateExplorerStandalone asks onboarding for the tax and pension modules", () => {
+      const onSave = vi.fn();
+      render(
+        <MarginalRateExplorerStandalone
+          ctaText="Save and continue"
+          initialValues={{ grossPay: 52_000 }}
+          onSaveAndContinue={onSave}
+          persistSeed={false}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ annualIncome: 52_000, inferredModules: ["tax", "pension"] }),
+      );
+    });
+
+    it("MarginalRateExplorerStandalone writes the onboarding seed by default", () => {
+      localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
+      render(
+        <MarginalRateExplorerStandalone ctaText="Save and continue" onSaveAndContinue={vi.fn()} />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+      expect(localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY)).not.toBeNull();
+      localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
+    });
+  });
+
+  describe("sign-up button with no callback", () => {
+    const calculators = [
+      ["DebtSnowballCalculator", DebtSnowballCalculator],
+      ["MortgageVsIsaCalculator", MortgageVsIsaCalculator],
+      ["OverdraftCostCalculator", OverdraftCostCalculator],
+      ["Section24Calculator", Section24Calculator],
+      ["StudentLoanCalculator", StudentLoanCalculator],
+      ["TaxTrapCalculator", TaxTrapCalculator],
+      ["ZeroPercentCliffCalculator", ZeroPercentCliffCalculator],
+      ["MarginalRateExplorerStandalone", MarginalRateExplorerStandalone],
+    ] as const;
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it.each(calculators)("%s sends the visitor to the sign-up page", (_name, Calculator) => {
+      const location = { href: "http://localhost:3000/tools" } as Location;
+      vi.spyOn(window, "location", "get").mockReturnValue(location);
+      render(<Calculator ctaText="Request an invite" persistSeed={false} />);
+      fireEvent.click(screen.getByRole("button", { name: "Request an invite" }));
+      expect(location.href).toBe("/signup");
     });
   });
 });
