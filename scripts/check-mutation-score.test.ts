@@ -450,7 +450,8 @@ describe("the committed files", () => {
     expect(targets.length).toBeGreaterThan(0);
     for (const t of targets) {
       expect(Number.isInteger(t.shards) && t.shards >= 1, t.package).toBe(true);
-      expect(t.slug, t.package).toBe(t.package.replace("packages/", ""));
+      // The slug is the folder name: packages/mcp is "mcp", apps/backend is "backend".
+      expect(t.slug, t.package).toBe(t.package.split("/").at(-1));
     }
     const full = workflow.jobs.full;
     expect(full?.strategy?.matrix).toEqual({

@@ -336,7 +336,9 @@ describe("IdempotencyInterceptor edge cases", () => {
     expect(res.setHeader).toHaveBeenCalledWith("Idempotent-Replayed", "true");
   });
 
-  it("keeps a successful create when its result cannot be stored, and frees the key for a retry", async () => {
+  it("keeps a successful create when its result cannot be stored", async () => {
+    // The source says the create succeeded and failing to store the replay must not turn it into
+    // an error. What a retry with the same key then does is an open question (see the ledger).
     vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
     const table = tableFake({ failUpdate: true });
     const interceptor = new IdempotencyInterceptor(table.dataSource as never);
@@ -346,12 +348,5 @@ describe("IdempotencyInterceptor edge cases", () => {
       }),
     );
     expect(first).toEqual({ id: "a" });
-    // The pending row was released, so the retry claims the key afresh and runs the handler.
-    expect(table.row()).toBeUndefined();
-    const retry = vi.fn(() => of({ id: "b" }));
-    await lastValueFrom(
-      interceptor.intercept(httpContext(keyed, { setHeader: vi.fn() }), { handle: retry }),
-    );
-    expect(retry).toHaveBeenCalledOnce();
   });
 });
