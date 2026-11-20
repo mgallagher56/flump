@@ -325,6 +325,7 @@ Each has options and a recommendation. A flag says when it names an outside serv
     - B. Included in the scheduled run.
     - Recommendation: A, then decide from M4's figures.
     - **Accepted on 19 November 2026: option A**.
+    - **Confirmed on 20 November 2026 from the M4 figures (PR 847): option A.** Asked "Keep mutation testing on the fast unit tests only, as recommended?", the owner answered: "Keep unit only".
 
 12. **A new law.** Flag: `AGENTS.md` edit, made by the coordinator, not a lane.
     - A. None. The how-to document is enough.
