@@ -26,11 +26,11 @@ describe("assumption helpers", () => {
   });
 
   it("gives a provisional year as unverified, with rates announced but not yet law (ruling B)", () => {
-    // 2027/28: every core and Self Assessment vector is signed, but the rates are not yet law.
+    // 2027/28: the rates are not yet law, and 7 of its vectors are still unsigned.
     expect(taxVerificationFields("2027/28").verification).toEqual({
       status: "unverified",
       detail:
-        "2027/28 figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.",
+        "2027/28 figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.",
     });
   });
 });

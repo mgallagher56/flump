@@ -26,13 +26,30 @@ describe("a provisional year never reports verified", () => {
   });
 
   it("is unverified while provisional, and says the rates are announced, not yet law", () => {
+    // The 5 HICBC and 2 relief-at-source 2027/28 vectors are unsigned, so it does not say "checked".
     const v = getTaxYearVerification(Y);
     expect(v.status).toBe("unverified");
     expect(v.detail).toBe(
-      "2027/28 figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.",
+      "2027/28 figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.",
     );
     expect(v.detail).not.toMatch(/verified|owner/i);
     expect(getTaxFeatureVerification(Y, "core")).toBe("unverified");
+    expect(getTaxFeatureVerification(Y, "hicbc", undefined, [])).toBe("unverified");
+  });
+
+  it("says the figures were checked only when every vector for the year is signed, what-if ones included", () => {
+    // Fixture: the what-if catalogue without its unsigned 2027/28 vectors, so all that is left is signed.
+    const whatIf = selectUkWhatIfVectors().filter(
+      (v) => v.taxYear !== Y || evaluateSignoff(v).state === "signed",
+    );
+    const all = { core: UK_TAX_VECTORS, selfAssessment: UK_SELF_ASSESSMENT_VECTORS, whatIf };
+    const v = getTaxYearVerification(Y, undefined, all);
+    expect(v).toEqual({
+      status: "unverified",
+      detail:
+        "2027/28 figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.",
+    });
+    expect(v.detail).not.toMatch(/verified|owner/i);
   });
 
   it("is verified once the provisional marker is removed", () => {
@@ -44,9 +61,8 @@ describe("a provisional year never reports verified", () => {
     expect(getTaxFeatureVerification(Y, "core", undefined, [])).toBe("verified");
   });
 
-  it("a provisional year with unsigned vectors says the rates are not yet law, not that they were checked", () => {
-    // HICBC 2027/28 has unsigned vectors; with no marker it is unverified on the vectors alone.
-    expect(getTaxFeatureVerification(Y, "hicbc", undefined, [])).toBe("unverified");
+  it("a year marked provisional in a fixture, with unsigned core vectors, is not said to be checked", () => {
+    // 2026/27 core vectors are unsigned; marking it provisional here gives the not-yet-law wording.
     const fixtureYear = "2026/27";
     const v = getTaxYearVerification(fixtureYear, [fixtureYear]);
     expect(v.status).toBe("unverified");

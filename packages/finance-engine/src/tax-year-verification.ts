@@ -27,25 +27,36 @@ function signoffStatus(
   return provisionalYears.includes(year) ? "unverified" : yearVerification(year, vectors);
 }
 
+/** The catalogues a year's status and wording are read from. Tests pass fixtures. */
+export interface TaxYearCatalogues {
+  core: readonly SignableVector[];
+  selfAssessment: readonly SignableVector[];
+  whatIf: readonly SignableVector[];
+}
+
 export function getTaxYearVerification(
   year: string,
   provisionalYears: readonly string[] = PROVISIONAL_UK_TAX_YEARS,
+  catalogues: TaxYearCatalogues = {
+    core: UK_TAX_VECTORS,
+    selfAssessment: UK_SELF_ASSESSMENT_VECTORS,
+    whatIf: selectUkWhatIfVectors(),
+  },
 ): TaxVerification {
   // The year is verified only when the Self Assessment vectors are signed too.
-  const vectors = [...UK_TAX_VECTORS, ...UK_SELF_ASSESSMENT_VECTORS];
+  const vectors = [...catalogues.core, ...catalogues.selfAssessment];
   const status = signoffStatus(year, vectors, provisionalYears);
-  const allSigned = yearVerification(year, vectors) === "verified";
-  if (status === "unverified" && allSigned) {
-    // Signed but held back: only a provisional year gets here.
+  if (provisionalYears.includes(year)) {
+    // Wording only (signoffStatus decides the status). "Checked" is said only when every vector
+    // for the year is signed, the what-if ones (HICBC, relief at source) included, since the
+    // figures shown beside this detail include them.
+    const everyVectorSigned =
+      yearVerification(year, [...vectors, ...catalogues.whatIf]) === "verified";
     return {
       status,
-      detail: `${year} figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.`,
-    };
-  }
-  if (status === "unverified" && provisionalYears.includes(year)) {
-    return {
-      status,
-      detail: `${year} figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.`,
+      detail: everyVectorSigned
+        ? `${year} figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.`
+        : `${year} figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.`,
     };
   }
   return status === "verified"
