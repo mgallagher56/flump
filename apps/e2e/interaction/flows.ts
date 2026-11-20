@@ -80,17 +80,21 @@ export const FLOWS: Flow[] = [
       const { page } = actor;
       await actor.press(page.getByRole("button", { name: "Edit budget" }));
       const moneyIn = page.getByRole("region", { name: "Money in" });
+      // The add row opens with the focus on its name field, and Enter in the row adds the entry.
       await actor.press(moneyIn.getByRole("button", { name: "Add income" }));
-      await actor.type(moneyIn.getByRole("textbox", { name: /^New entry name in/ }), "Side work");
+      await actor.typeFocused(
+        moneyIn.getByRole("textbox", { name: /^New entry name in/ }),
+        "Side work",
+      );
       await actor.type(moneyIn.getByRole("textbox", { name: /^New entry amount in/ }), "200");
-      await actor.press(moneyIn.getByRole("button", { name: /^Add to / }));
+      await actor.key("Enter");
       await expect(moneyIn.getByLabel("Amount for Side work")).toBeVisible();
 
       const expenses = page.getByRole("region", { name: "Expenses" });
       await actor.press(expenses.getByRole("button", { name: "Add to expenses" }));
-      await actor.type(expenses.getByRole("textbox", { name: /^New entry name in/ }), "Gym");
+      await actor.typeFocused(expenses.getByRole("textbox", { name: /^New entry name in/ }), "Gym");
       await actor.type(expenses.getByRole("textbox", { name: /^New entry amount in/ }), "35");
-      await actor.press(expenses.getByRole("button", { name: "Add to Expenses" }));
+      await actor.key("Enter");
       const essential = expenses.getByRole("switch", { name: "Essential: Gym" });
       const wasEssential = await essential.isChecked();
       await actor.press(essential);
@@ -163,9 +167,11 @@ export const FLOWS: Flow[] = [
       await actor.press(edit.getByRole("button", { name: "Save", exact: true }));
       await expect(page.getByRole("heading", { level: 1, name: "Holiday savings" })).toBeVisible();
 
-      await actor.press(page.getByRole("button", { name: "Edit", exact: true }));
-      await actor.type(edit.getByRole("textbox", { name: "Balance" }), "750");
-      await actor.press(edit.getByRole("button", { name: "Save", exact: true }));
+      // The balance is updated in place under the figure (E38 S2): the field opens with the focus
+      // and the saved figure selected, and Enter saves.
+      await actor.press(page.getByRole("button", { name: "Update balance" }));
+      await actor.typeFocused(page.getByRole("textbox", { name: "New balance" }), "750");
+      await actor.key("Enter");
       await expect(page.getByRole("group", { name: "Current balance" })).toContainText("£750");
 
       await actor.press(page.getByRole("button", { name: "Edit", exact: true }));
@@ -223,14 +229,15 @@ export const FLOWS: Flow[] = [
       await actor.press(page.getByRole("menuitem", { name: "Self-employed income" }));
       await actor.type(record.getByRole("textbox", { name: "Name" }), "Design work");
       await actor.type(record.getByRole("textbox", { name: "Amount" }), "800");
-      await actor.press(record.getByRole("button", { name: "Add record" }));
-      await expect(record).toBeHidden();
-
-      const sources = page.getByRole("region", { name: "Income sources" });
-      await actor.press(sources.getByRole("button", { name: "Add income" }));
-      await actor.press(page.getByRole("menuitem", { name: "Expense", exact: true }));
-      await actor.type(record.getByRole("textbox", { name: "Name" }), "Software");
+      // The dialog stays open for the next record, on the same source, with the focus on Name
+      // (E38 S2); the second record is an expense, so its type changes.
+      await actor.press(record.getByRole("button", { name: "Add and start another" }));
+      await expect(record.getByRole("status")).toHaveText(
+        "Design work added. Add the next record.",
+      );
+      await actor.typeFocused(record.getByRole("textbox", { name: "Name" }), "Software");
       await actor.type(record.getByRole("textbox", { name: "Amount" }), "30");
+      await actor.choose(record.getByRole("combobox", { name: "Type" }), "Expense");
       await actor.press(record.getByRole("button", { name: "Add record" }));
       await expect(record).toBeHidden();
 

@@ -1,5 +1,5 @@
 import type { TaxRecord, TaxSource } from "@flump/finance-engine";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
@@ -99,17 +99,37 @@ export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRe
   );
   const [recordToDelete, setRecordToDelete] = useState<TaxRecord | null>(null);
   const [receiptRecord, setReceiptRecord] = useState<TaxRecord | null>(null);
+  // The record just added with "Add and start another" (E38 S2), said in the dialog.
+  const [savedName, setSavedName] = useState<string | null>(null);
+  // The draft saved with "Add and start another", until its save lands.
+  const another = useRef<TaxRecordDraft | null>(null);
 
   const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setRecordToDelete(null) });
   // A failed add or edit is said on the page, never dropped silently. The dialog closes only once
-  // the save lands, so a failed save keeps what the user entered.
-  const saveOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setIsRecordDialogOpen(false) });
+  // the save lands, so a failed save keeps what the user entered. After "Add and start another"
+  // it stays open on a blank record with the same source, type, date and frequency.
+  const saveOutcome = useFetcherOutcome(fetcher, {
+    onSuccess: () => {
+      const saved = another.current;
+      another.current = null;
+      if (!saved) {
+        setIsRecordDialogOpen(false);
+        return;
+      }
+      setDraft({
+        ...emptyTaxRecordDraft(saved.source, saved.type, saved.date),
+        frequency: saved.frequency,
+      });
+      setSavedName(saved.name);
+    },
+  });
 
   const openAdd = (source: TaxSource, type: "income" | "expense") => {
     setEditingRecord(null);
     setDraft(emptyTaxRecordDraft(source, type, firstDayOf(taxYear)));
     // A new dialog never opens with the alert from an earlier failed save.
     saveOutcome.dismiss();
+    setSavedName(null);
     setIsRecordDialogOpen(true);
   };
 
@@ -117,6 +137,7 @@ export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRe
     setEditingRecord(record);
     setDraft(draftFromTaxRecord(record));
     saveOutcome.dismiss();
+    setSavedName(null);
     setIsRecordDialogOpen(true);
   };
 
@@ -154,10 +175,20 @@ export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRe
     fetcher.submit(formData, { method: "POST" });
   };
 
-  const save = (values: TaxRecordDraft) => submit(values, editingRecord);
+  const save = (values: TaxRecordDraft) => {
+    another.current = null;
+    submit(values, editingRecord);
+  };
+
+  /** Adds this record and keeps the dialog open for the next one. */
+  const saveAndAddAnother = (values: TaxRecordDraft) => {
+    another.current = values;
+    submit(values, null);
+  };
 
   /** Adds a confirmed "Calculated" figure as a record, with no dialog (owner decision 5). */
   const addCalculated = (offer: CalculatedInterestOffer) => {
+    another.current = null;
     setIsRecordDialogOpen(false);
     submit(draftFromCalculatedOffer(offer, taxYear), null);
   };
@@ -174,12 +205,17 @@ export function useTaxRecordEditor({ records, taxYear, accounts = [] }: UseTaxRe
         open={isRecordDialogOpen}
         onOpenChange={(open) => {
           setIsRecordDialogOpen(open);
-          if (!open) saveOutcome.dismiss();
+          if (!open) {
+            saveOutcome.dismiss();
+            another.current = null;
+          }
         }}
         mode={editingRecord ? "edit" : "add"}
         initial={draft}
         accounts={accounts}
         onSave={save}
+        onSaveAndAddAnother={saveAndAddAnother}
+        savedName={savedName}
         saveError={saveOutcome.error}
       />
       <TaxReceiptDialog record={receiptRecord} onClose={() => setReceiptRecord(null)} />

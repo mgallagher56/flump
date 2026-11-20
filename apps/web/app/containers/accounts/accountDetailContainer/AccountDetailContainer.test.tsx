@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import AccountDetailContainer, {
@@ -280,6 +281,61 @@ describe("<AccountDetailContainer />", () => {
     const { queryAllByText } = customRender(<AccountDetailContainer />);
     expect(queryAllByText("£1,200").length).toBeGreaterThan(0);
     expect(queryAllByText("£-1,200").length).toBe(0);
+  });
+
+  describe("quick balance update (E38 S2)", () => {
+    beforeEach(() => mocks.mockFetcherSubmit.mockClear());
+
+    test("posts the new balance to the route's update action, with no dialog", async () => {
+      const { getByRole, queryByRole } = customRender(<AccountDetailContainer />);
+      await userEvent.click(getByRole("button", { name: "Update balance" }));
+      expect(queryByRole("dialog")).toBeNull();
+      const field = getByRole("textbox", { name: "New balance" });
+      await userEvent.clear(field);
+      await userEvent.type(field, "750{Enter}");
+      expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+        { intent: "update", accountId: "123456", balance: "750" },
+        { method: "POST" },
+      );
+    });
+
+    test("sends a debt's amount owed as minus the figure, with the record's version", async () => {
+      const original = mocks.mockUseLoaderData.getMockImplementation();
+      mocks.mockUseLoaderData.mockImplementation(
+        () =>
+          ({
+            account: {
+              id: "d1",
+              name: "Barclaycard",
+              type: "Credit Card",
+              balance: -1200,
+              updatedAt: "2026-11-01T10:00:00.000Z",
+            },
+            accountDetails: [],
+          }) as never,
+      );
+      try {
+        const { getByRole } = customRender(<AccountDetailContainer />);
+        await userEvent.click(getByRole("button", { name: "Update amount owed" }));
+        const field = getByRole("textbox", { name: "Amount owed now" });
+        // Opens on the saved amount owed, shown positive: 1200.
+        expect((field as HTMLInputElement).value).toBe("1,200");
+        await userEvent.clear(field);
+        await userEvent.type(field, "900{Enter}");
+        // 900 owed is stored as -900.
+        expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({
+            intent: "update",
+            accountId: "d1",
+            balance: "-900",
+            version: "2026-11-01T10:00:00.000Z",
+          }),
+          { method: "POST" },
+        );
+      } finally {
+        if (original) mocks.mockUseLoaderData.mockImplementation(original);
+      }
+    });
   });
 
   describe("hero balance", () => {

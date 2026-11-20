@@ -58,6 +58,20 @@ export class Actor {
     await this.page.keyboard.type(text);
   }
 
+  /**
+   * Types into a field that already has the focus (the page put it there, as a person would find
+   * it), replacing any text that is not already selected. No click or Tab: a person would not
+   * press a field they are already in. Throws when the field does not have the focus, so a flow
+   * can never claim a saving the page does not give.
+   */
+  async typeFocused(field: Locator, text: string): Promise<void> {
+    await field.waitFor({ state: "visible" });
+    if (!(await hasFocus(field))) throw new Error(`Expected the focus in ${field}`);
+    await nextFrames(this.page);
+    if (!(await fullySelected(field))) await this.page.keyboard.press("ControlOrMeta+a");
+    await this.page.keyboard.type(text);
+  }
+
   /** Picks the option labelled `label` in a native select. */
   async choose(select: Locator, label: string): Promise<void> {
     if (!this.keyboardOnly) {
