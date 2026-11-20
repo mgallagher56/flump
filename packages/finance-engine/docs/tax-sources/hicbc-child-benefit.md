@@ -27,7 +27,7 @@ The regulations call the two rates "enhanced rate" and "other cases". Reading th
 
 ## Open ruling
 
-Annual Child Benefit is taken as weekly rate x 52. Some tax years contain 53 Mondays, so the real annual amount, and the charge, can differ. Every HICBC vector is UNVERIFIED for this reason until a Fable decider rules (ITEPA s.681H(3) counts a week whose Monday falls in the tax year).
+Annual Child Benefit is the weekly rate x the Mondays in the tax year, 52 or 53 (ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H: a week counts in the tax year in which its Monday falls; decider ruling adopted 20 November 2026). The count is worked from the calendar by `childBenefitWeeksInTaxYear`: 2020/21 and 2026/27 have 53, 2021/22 to 2025/26 and 2027/28 have 52. The engine holds one weekly rate per tax year; Child Benefit is uprated from the first Monday on or after 6 April, so every week that counts in a year is paid at that year's rate. Weekly rates for 2020/21 to 2024/25 are cited from archived copies of the GOV.UK rates table (captured 31 May 2022 and 7 June 2024) and, from 2022/23, the uprating SIs.
 
 ## Not sourced here
 

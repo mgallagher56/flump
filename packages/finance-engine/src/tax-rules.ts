@@ -660,8 +660,8 @@ export interface UKChildBenefitYear {
   eldestWeekly: number;
   /** Weekly rate for each other child ("other cases"), GBP. */
   otherWeekly: number;
-  /** Weeks of Child Benefit assumed per year. 52 pending the owner ruling on 52 or 53 Mondays. */
-  weeksPerYear: number;
+  // One weekly rate per tax year: it applies to every week whose Monday falls in the year. The
+  // week count (52 or 53) is worked from the calendar by `childBenefitWeeksInTaxYear` (uk-hicbc.ts).
   /** Adjusted net income above which the High Income Child Benefit Charge starts. */
   hicbcThresholdStart: number;
   /** The charge is 1% of Child Benefit per full step of adjusted net income over the start. */
@@ -678,49 +678,42 @@ export const UK_CHILD_BENEFIT: Record<string, UKChildBenefitYear> = {
   "2020/21": {
     eldestWeekly: 21.05,
     otherWeekly: 13.95,
-    weeksPerYear: 52,
     hicbcThresholdStart: 50000,
     hicbcStepWidth: 100,
   },
   "2021/22": {
     eldestWeekly: 21.15,
     otherWeekly: 14.0,
-    weeksPerYear: 52,
     hicbcThresholdStart: 50000,
     hicbcStepWidth: 100,
   },
   "2022/23": {
     eldestWeekly: 21.8,
     otherWeekly: 14.45,
-    weeksPerYear: 52,
     hicbcThresholdStart: 50000,
     hicbcStepWidth: 100,
   },
   "2023/24": {
     eldestWeekly: 24.0,
     otherWeekly: 15.9,
-    weeksPerYear: 52,
     hicbcThresholdStart: 50000,
     hicbcStepWidth: 100,
   },
   "2024/25": {
     eldestWeekly: 25.6,
     otherWeekly: 16.95,
-    weeksPerYear: 52,
     hicbcThresholdStart: 60000,
     hicbcStepWidth: 200,
   },
   "2025/26": {
     eldestWeekly: 26.05,
     otherWeekly: 17.25,
-    weeksPerYear: 52,
     hicbcThresholdStart: 60000,
     hicbcStepWidth: 200,
   },
   "2026/27": {
     eldestWeekly: 27.05,
     otherWeekly: 17.9,
-    weeksPerYear: 52,
     hicbcThresholdStart: 60000,
     hicbcStepWidth: 200,
   },
@@ -729,7 +722,6 @@ export const UK_CHILD_BENEFIT: Record<string, UKChildBenefitYear> = {
   "2027/28": {
     eldestWeekly: 28,
     otherWeekly: 18.55,
-    weeksPerYear: 52,
     hicbcThresholdStart: 60000,
     hicbcStepWidth: 200,
   },

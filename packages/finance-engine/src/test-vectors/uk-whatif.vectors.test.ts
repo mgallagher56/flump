@@ -106,10 +106,23 @@ describe("E25 what-if vector catalogue", () => {
     }
   });
 
-  it("every HICBC vector is UNVERIFIED until the 52 or 53 week ruling", () => {
+  it("every HICBC vector is UNVERIFIED until the decider reviews the week-count figures", () => {
     for (const v of selectUkWhatIfVectors({ kind: "hicbc" })) {
       expect(v.status, v.id).toBe("UNVERIFIED");
-      expect(v.unverifiedReason, v.id).toContain("53 Mondays");
+      expect(v.unverifiedReason, v.id).toContain("s.681H(3)");
+    }
+  });
+
+  it("HICBC vectors for 2020/21 to 2024/25 cite a source for that year's weekly rates", () => {
+    // The live GOV.UK rates table starts at 2025/26, so each earlier year cites an archived copy
+    // of that table (webarchive.nationalarchives.gov.uk) and, where one exists, the uprating SI.
+    const ARCHIVE =
+      /^https:\/\/webarchive\.nationalarchives\.gov\.uk\/ukgwa\/\d{14}\/https:\/\/www\.gov\.uk\//;
+    for (const y of ["2020/21", "2021/22", "2022/23", "2023/24", "2024/25"] as const) {
+      for (const v of selectUkWhatIfVectors({ kind: "hicbc", taxYear: y })) {
+        expect(v.archiveUrl, v.id).toMatch(ARCHIVE);
+        expect(v.derivation, v.id).toContain(v.archiveUrl as string);
+      }
     }
   });
 
@@ -130,11 +143,14 @@ describe("E25 what-if vector catalogue", () => {
     expect(get("scottishMarginal.2026-27.35000.plus1000")?.expected).toBe(710);
     expect(get("scottishMarginal.2026-27.45000.plus1000")?.expected).toBe(500);
     expect(get("scottishMarginal.2026-27.85000.plus1000")?.expected).toBe(530);
-    // HICBC 2026/27, three children (27.05 + 2 x 17.90) x 52 = 3,268.20, rounded down to 3,268
-    // (ITEPA 2003 s.681C(3)); 100% at 80,000 = 3,268.
-    expect(get("hicbc.2026-27.ani80000.children3")?.expected).toBe(3268);
-    // One child 1,406.60 -> 1,406; 99% at 79,800 = 1,391.94, rounded down to 1,391.
-    expect(get("hicbc.2026-27.ani79800.children1")?.expected).toBe(1391);
+    // HICBC 2026/27 has 53 weeks (6 April 2026 and 5 April 2027 are Mondays, ITEPA s.681H(3)).
+    // Three children (27.05 + 2 x 17.90) x 53 = 3,331.05, rounded down to 3,331 (s.681C(3));
+    // 100% at 80,000 = 3,331.
+    expect(get("hicbc.2026-27.ani80000.children3")?.expected).toBe(3331);
+    // One child 27.05 x 53 = 1,433.65 -> 1,433; 99% at 79,800 = 1,418.67, rounded down to 1,418.
+    expect(get("hicbc.2026-27.ani79800.children1")?.expected).toBe(1418);
+    // 2025/26 has 52 weeks: one child 26.05 x 52 = 1,354.60 -> 1,354; 99% = 1,340.46 -> 1,340.
+    expect(get("hicbc.2025-26.ani79800.children1")?.expected).toBe(1340);
     // Plan 2 (45,000 - 29,385) x 9% + postgrad (45,000 - 21,000) x 6% = 1,405.35 + 1,440.
     expect(get("studentLoanMulti.2026-27.plan2+postgrad.45000")?.expected).toBe(2845.35);
     // Plan 5 (30,000 - 25,000) x 9% + postgrad (30,000 - 21,000) x 6% = 450 + 540.

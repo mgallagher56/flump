@@ -28,7 +28,8 @@ export const ASSUMPTION_COPY = {
     "The Child Benefit charge assumes you are the higher earner in your household.",
   hicbcPartnerNotModelled:
     "The Child Benefit charge would fall on your partner, so it is not included.",
-  childBenefitWeeks: "Child Benefit is counted for 52 weeks a year.",
+  childBenefitWeeks:
+    "Child Benefit is counted for each week that starts in the tax year, 52 or 53.",
   pensionPctOfSalary: "A pension percentage is taken from salary, not bonus.",
   pensionCappedAtEarnings: "The pension contribution is limited to your pay.",
   pensionMethodAssumed: "The pension contribution is modelled as salary sacrifice.",

@@ -12,9 +12,8 @@
  * total Child Benefit is rounded down to whole pounds, the percentage down to a whole number, and the
  * charge down to whole pounds, in that order.
  *
- * Child Benefit is weekly rate x `weeksPerYear` (52; ITEPA s.681H(3) counts a week whose Monday is in
- * the tax year, and some years have 53 Mondays, a ruling still open). Figures are UNVERIFIED until the
- * `hicbc` vectors are signed off.
+ * Child Benefit is weekly rate x the Mondays in the tax year (52 or 53, `childBenefitWeeksInTaxYear`,
+ * ITEPA s.681H(3)). Figures are UNVERIFIED until the `hicbc` vectors are signed off.
  */
 
 import { roundPence, type UkTaxYearRules } from "./uk-tax-year.js";
@@ -30,12 +29,39 @@ export interface HicbcResult {
   netChildBenefit: number;
 }
 
-/** Annual Child Benefit for a number of children: eldest at the enhanced rate, the rest at the other rate. */
+const DAY_MS = 86_400_000;
+
+/**
+ * Weeks of Child Benefit in a tax year: the Mondays from 6 April to the next 5 April. ITEPA 2003
+ * s.681H(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681H) counts a week in the tax
+ * year in which its Monday falls (decider ruling adopted 20 Nov 2026). Worked from the calendar for
+ * any year, so 53-week years (2020/21, 2026/27, 2031/32, ...) need no table. The one home of the
+ * week count.
+ */
+export function childBenefitWeeksInTaxYear(year: string): number {
+  const m = /^(\d{4})\/(\d{2})$/.exec(year);
+  const start = Number(m?.[1]);
+  if (!m || (start + 1) % 100 !== Number(m[2])) throw new Error(`not a tax year: ${year}`);
+  const first = Date.UTC(start, 3, 6);
+  const last = Date.UTC(start + 1, 3, 5);
+  // getUTCDay: 0 Sunday, 1 Monday. Days from 6 April to its first Monday on or after it.
+  const toMonday = (8 - new Date(first).getUTCDay()) % 7;
+  return Math.floor((last - first - toMonday * DAY_MS) / (7 * DAY_MS)) + 1;
+}
+
+/**
+ * Annual Child Benefit for a number of children: eldest at the enhanced rate, the rest at the other
+ * rate, for each week whose Monday falls in the tax year. The engine holds one weekly rate per tax
+ * year: Child Benefit is uprated from the first Monday on or after 6 April, so every week that
+ * counts in a tax year is paid at that year's rate.
+ */
 export function calculateChildBenefitAnnual(children: number, rules: UkTaxYearRules): number {
   const count = Number.isFinite(children) ? Math.max(0, Math.floor(children)) : 0;
   if (count === 0) return 0;
-  const { eldestWeekly, otherWeekly, weeksPerYear } = rules.hicbc;
-  return roundPence((eldestWeekly + (count - 1) * otherWeekly) * weeksPerYear);
+  const { eldestWeekly, otherWeekly } = rules.hicbc;
+  return roundPence(
+    (eldestWeekly + (count - 1) * otherWeekly) * childBenefitWeeksInTaxYear(rules.year),
+  );
 }
 
 /** Whole per cent of Child Benefit charged at an adjusted net income. */
