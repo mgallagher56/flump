@@ -12,11 +12,13 @@ import { ADVICE_ALLOWLIST } from "./advice-allowlist";
  * Identifier-style schema keys such as `guaranteedInterestSavedGbp` are not matched (no word
  * boundary) and are tracked by E17.
  */
+// The claim is banned, not the word: the privacy notice has to name UK GDPR.
+const GDPR_CLAIM = /fully GDPR|GDPR[- ](compliant|ready|certified)/i;
 const BANNED: Array<[RegExp, string]> = [
   [/\bguarantee[ds]?\b/i, "promises an outcome"],
   [/\bFCA\b/, "refers to the FCA"],
   [/256-bit|bank[- ]grade/i, "claims a security level (E7 W1, W5)"],
-  [/GDPR/, "claims data-protection compliance without the owner's wording (E7 D0)"],
+  [GDPR_CLAIM, "claims data-protection compliance without the owner's wording (E7 D0)"],
   [/Open Banking/i, "claims Open Banking status (E7 W1 to W6)"],
   [/flump\.app|flump\.co\.uk/i, "names a domain we do not own (E24-T5)"],
   [/message has been received/i, "claims a message was sent when nothing is (E24-T5)"],
@@ -99,5 +101,24 @@ describe("advice-language guard", () => {
 
   it("has no stale allow-list entries (remove the entry once the hit is gone)", () => {
     expect([...allowed].filter((k) => !found.has(k))).toEqual([]);
+  });
+});
+
+describe("GDPR claim pattern", () => {
+  it.each([
+    "We are GDPR compliant.",
+    "GDPR-compliant by design",
+    "GDPR ready",
+    "Fully GDPR",
+    "GDPR certified",
+    "gdpr-compliant",
+  ])("fails the claim %j", (text) => {
+    expect(GDPR_CLAIM.test(text)).toBe(true);
+  });
+
+  it("passes a plain factual sentence that names UK GDPR", () => {
+    expect(
+      GDPR_CLAIM.test("Under UK GDPR you can ask us for a copy of the data we hold about you."),
+    ).toBe(false);
   });
 });

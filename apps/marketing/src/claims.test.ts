@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest";
  * Claims regression guard (E7 T14, marketing only). Each phrase maps to a row in
  * docs/audit/plans/E7-claims-design.md. A match means a removed claim has come back.
  */
+// The claim is banned, not the word: the privacy notice has to name UK GDPR.
+const GDPR_CLAIM = /fully GDPR|GDPR[- ](compliant|ready|certified)/i;
 const BANNED: Array<[RegExp, string]> = [
   [/TLS 1\.3/, "S3/S5/H1"],
   [/HSTS preload/i, "S5"],
@@ -30,7 +32,7 @@ const BANNED: Array<[RegExp, string]> = [
   [/encrypted at rest/i, "A"],
   [/256-bit/, "A"],
   [/bank[- ]grade/i, "A (no security-level claim we cannot back)"],
-  [/GDPR/, "S2/S7 (no compliance claim without the owner's wording, D0)"],
+  [GDPR_CLAIM, "S2/S7 (no compliance claim without the owner's wording, D0)"],
   [/Open Banking/i, "S1/S4 (E7: no regulated-status or Open Banking claim)"],
   [/\bFCA\b/, "B"],
   [/hallucinat/i, "E"],
@@ -146,5 +148,24 @@ describe("advice-language guard", () => {
 
   it("has no stale allow-list entries", () => {
     expect([...allowed].filter((k) => !found.has(k))).toEqual([]);
+  });
+});
+
+describe("GDPR claim pattern", () => {
+  it.each([
+    "We are GDPR compliant.",
+    "GDPR-compliant by design",
+    "GDPR ready",
+    "Fully GDPR",
+    "GDPR certified",
+    "gdpr-compliant",
+  ])("fails the claim %j", (text) => {
+    expect(GDPR_CLAIM.test(text)).toBe(true);
+  });
+
+  it("passes a plain factual sentence that names UK GDPR", () => {
+    expect(
+      GDPR_CLAIM.test("Under UK GDPR you can ask us for a copy of the data we hold about you."),
+    ).toBe(false);
   });
 });
