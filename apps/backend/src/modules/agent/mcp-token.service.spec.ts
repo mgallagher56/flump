@@ -278,7 +278,7 @@ describe("McpTokenService.listTokens expiry label", () => {
     // Tenancy contract: the lookup is filtered by the caller's user id, so one user never sees
     // another's tokens; the list reads newest first.
     const find = vi.fn().mockResolvedValue([]);
-    await new McpTokenService({ find } as never).listTokens("u_1");
+    await new McpTokenService({ find } as never, fakeBetaMembership()).listTokens("u_1");
     expect(find).toHaveBeenCalledWith({ where: { userId: "u_1" }, order: { createdAt: "DESC" } });
   });
 });
@@ -300,7 +300,10 @@ describe("McpTokenService.listTokensPage (GET /mcp-tokens, BE-09)", () => {
 
   it("filters by the caller and orders newest first with the id as tiebreak", async () => {
     const { repo, calls } = builder();
-    const page = await new McpTokenService(repo as never).listTokensPage("u_1", { limit: 10 });
+    const page = await new McpTokenService(repo as never, fakeBetaMembership()).listTokensPage(
+      "u_1",
+      { limit: 10 },
+    );
     expect(calls).toContainEqual(["where", ["t.userId = :userId", { userId: "u_1" }]]);
     // Documented order: created_at descending, then id descending for equal times.
     expect(calls).toContainEqual(["orderBy", ['"t"."created_at"', "DESC"]]);
@@ -316,7 +319,10 @@ describe("McpTokenService.listTokensPage (GET /mcp-tokens, BE-09)", () => {
       "0b6f4e1a-9c2d-4e3f-a1b2-c3d4e5f60711",
     ]);
     await expect(
-      new McpTokenService(repo as never).listTokensPage("u_1", { limit: 10, cursor }),
+      new McpTokenService(repo as never, fakeBetaMembership()).listTokensPage("u_1", {
+        limit: 10,
+        cursor,
+      }),
     ).resolves.toEqual({ items: [], nextCursor: null });
   });
 });
