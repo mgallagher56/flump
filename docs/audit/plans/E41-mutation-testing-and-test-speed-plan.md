@@ -232,8 +232,7 @@ On Playwright workers: the backend allows 300 requests a minute per address (`ap
 ## 10. What the owner will notice
 
 - Nothing changes in the app.
-- Pull requests gain one advisory check, "Mutation testing (changed files)", with a short list of faults no test caught.
-- A weekly report per package, as a downloadable file on the workflow run.
+- Superseded on 20 November 2026 (section 12): there is no pull request check and no weekly report. Whoever runs the monthly local check (`bun run mutation all`) gets a pass or fail per package and an HTML report in each package's `reports/mutation/` folder.
 - Pull request checks finish sooner and vary less once P1 and P2 land.
 - PR descriptions for speed work carry a before and after table.
 

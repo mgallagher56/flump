@@ -222,7 +222,7 @@ describe("formatSurvivors", () => {
     expect(md).not.toContain("`src/a.ts:3`");
   });
 
-  test("says when every fault in the changed files was caught", () => {
+  test("says when every fault in the report was caught", () => {
     const md = formatSurvivors("packages/x", {
       files: { "src/a.ts": { mutants: many("Killed", 2) } },
     });
