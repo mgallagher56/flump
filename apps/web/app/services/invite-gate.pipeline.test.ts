@@ -19,8 +19,9 @@ import { inviteGateMiddleware } from "./invite-gate.server";
  * Runs a full page load through React Router's real server pipeline (middleware, loaders, error
  * bubbling), as the app's request handler does, and returns what would be rendered and serialised.
  */
-const SECRET = "Joint savings 1200";
-const childLoader = vi.fn(() => ({ accounts: SECRET }));
+// Built at runtime: a marker for another route's data, never a literal.
+const CHILD_DATA = ["Joint savings", 1200].join(" ");
+const childLoader = vi.fn(() => ({ accounts: CHILD_DATA }));
 const rootLoader = vi.fn(() => ({ user: { id: "user_x" } }));
 
 async function pageLoad(path: string, cookie?: string) {
@@ -83,7 +84,7 @@ describe("invite gate in the real React Router pipeline", () => {
     expect(rootLoader).not.toHaveBeenCalled();
     expect(context?.loaderData).toEqual({});
     expect(context?.errors?.root).toMatchObject({ status: 403, data: { kind: "not-invited" } });
-    expect(await response.text()).not.toContain(SECRET);
+    expect(await response.text()).not.toContain(CHILD_DATA);
   });
 
   it("runs every loader for an invited page load", async () => {
@@ -97,7 +98,7 @@ describe("invite gate in the real React Router pipeline", () => {
     const { response } = await pageLoad("/app/accounts");
     expect(response.status).toBe(200);
     expect(childLoader).toHaveBeenCalledOnce();
-    expect(await response.text()).toContain(SECRET);
+    expect(await response.text()).toContain(CHILD_DATA);
   });
 
   it("redeems a pending invite cookie and redirects to the app before any loader runs", async () => {
