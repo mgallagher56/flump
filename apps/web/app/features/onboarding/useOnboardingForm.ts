@@ -106,7 +106,7 @@ export function useOnboardingForm(initial: OnboardingValues = INITIAL_VALUES) {
   };
 }
 
-export type OnboardingForm = ReturnType<typeof useOnboardingForm>;
+type OnboardingForm = ReturnType<typeof useOnboardingForm>;
 
 /**
  * Stepper overrides from what the user actually did, so a skipped or never-visited step is never
@@ -138,7 +138,7 @@ const STEP_FIELDS: Partial<Record<StepId, (keyof OnboardingValues)[]>> = {
 };
 
 /** True when an optional step holds any answer (a field that is not null). */
-export function stepHasEntries(id: StepId | undefined, values: OnboardingValues): boolean {
+function stepHasEntries(id: StepId | undefined, values: OnboardingValues): boolean {
   if (!id) return false;
   return (STEP_FIELDS[id] ?? []).some((field) => values[field] !== null);
 }

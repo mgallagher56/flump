@@ -95,7 +95,7 @@ export const recordAmount = (record: Pick<TaxRecord, "amount">): number =>
  * Short names for the record dialog's category list, so no option truncates at 375px (R2-8). The
  * saved value is still the category id; finance-engine keeps the long HMRC-style names.
  */
-export const CATEGORY_SHORT_LABEL: Readonly<Record<string, string>> = {
+const CATEGORY_SHORT_LABEL: Readonly<Record<string, string>> = {
   rental_income: "Rental income",
   rent_rates_insurance: "Rent, rates and insurance",
   legal_management_fees: "Legal and management fees",

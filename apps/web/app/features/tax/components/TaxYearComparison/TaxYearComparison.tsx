@@ -182,5 +182,3 @@ export const TaxYearComparison: FC<TaxYearComparisonProps> = ({
     </Card>
   );
 };
-
-export default TaxYearComparison;

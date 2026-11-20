@@ -145,5 +145,3 @@ export const TaxHeadline: FC<TaxHeadlineProps> = ({
     </section>
   );
 };
-
-export default TaxHeadline;

@@ -63,7 +63,7 @@ export interface Sample {
   status: number;
 }
 
-export interface RouteStats {
+interface RouteStats {
   count: number;
   errors: number;
   p50Ms: number;

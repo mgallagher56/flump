@@ -88,7 +88,7 @@ function walk(value: unknown, out: Array<number | string>): void {
 }
 
 /** Default values the tools substitute silently when the user's data is missing. */
-export const KNOWN_DEFAULTS: ReadonlyArray<number | string> = [
+const KNOWN_DEFAULTS: ReadonlyArray<number | string> = [
   45000,
   5000,
   15000,
@@ -113,13 +113,4 @@ export function detectDefaultLeaks(output: unknown): Array<number | string> {
     typeof v === "string" ? v.toLowerCase().replace(/_/g, "") : v;
   const seen = values.map(norm);
   return KNOWN_DEFAULTS.filter((d) => seen.includes(norm(d)));
-}
-
-/** Drops the interim `assumptions[]` (E17-N5) so omitted-input and explicit-input outputs compare. */
-export function omitAssumptions(output: unknown): unknown {
-  if (output && typeof output === "object" && !Array.isArray(output)) {
-    const { assumptions: _assumptions, ...rest } = output as Record<string, unknown>;
-    return rest;
-  }
-  return output;
 }

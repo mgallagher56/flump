@@ -134,12 +134,12 @@ export function checkCoverage(input: {
 // ---------------------------------------------------------------------------------------------
 
 /** One known problem, keyed `rule:subject`, with the audit finding(s) that explain it. */
-export interface BaselineProblem {
+interface BaselineProblem {
   findings: string[];
   note?: string;
 }
 /** Known second-formula warnings in one file: a ceiling per rule, and the finding(s). */
-export interface BaselineFormulaFile {
+interface BaselineFormulaFile {
   counts: Partial<Record<string, number>>;
   findings: string[];
 }
@@ -148,7 +148,7 @@ export interface Baseline {
   secondFormulas: Record<string, BaselineFormulaFile>;
 }
 
-export const problemKey = (p: Pick<Problem, "rule" | "subject">) => `${p.rule}:${p.subject}`;
+const problemKey = (p: Pick<Problem, "rule" | "subject">) => `${p.rule}:${p.subject}`;
 
 /** Finding ids are the `### XX-n` headings of the audit's FINDINGS.md. */
 export const findingIdsIn = (markdown: string): Set<string> =>

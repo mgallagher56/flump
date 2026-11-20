@@ -62,5 +62,3 @@ export const AddIncomeMenu: FC<AddIncomeMenuProps> = ({
     />
   );
 };
-
-export default AddIncomeMenu;

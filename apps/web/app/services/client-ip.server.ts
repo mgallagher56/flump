@@ -32,7 +32,7 @@ export function clientIpFromRequest(request: Request): string | null {
 }
 
 /** Signed headers for `ip`, or nothing when the key is missing or `ip` is not an address. */
-export function signedHeadersForIp(
+function signedHeadersForIp(
   ip: string | null | undefined,
   env: Record<string, string | undefined> = process.env,
   nowMs: number = Date.now(),

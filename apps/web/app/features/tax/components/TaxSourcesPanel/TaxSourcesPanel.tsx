@@ -24,7 +24,7 @@ const SOURCE_ICON: Record<(typeof SOURCE_OPTIONS)[number]["value"], LucideIcon> 
 /** Non-PAYE sources first: they are what the page is for. */
 const ORDER = ["self-employed", "rental", "savings", "paye"] as const;
 
-export interface BtlSourceAccount {
+interface BtlSourceAccount {
   id: string;
   name: string;
 }
@@ -108,5 +108,3 @@ export const TaxSourcesPanel: FC<TaxSourcesPanelProps> = ({
     </PageSection>
   );
 };
-
-export default TaxSourcesPanel;

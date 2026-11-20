@@ -71,7 +71,7 @@ export function getDaysUntilContractEnd(contractEndDate?: string | null): number
   return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
 }
 
-export const BASE_CATEGORY_LABELS: Record<string, string> = {
+const BASE_CATEGORY_LABELS: Record<string, string> = {
   housing: "Housing",
   bills: "Bills",
   expenses: "Expenses",
@@ -87,7 +87,7 @@ export const BASE_CATEGORY_COLOURS: Record<string, string> = {
   income: seriesColor(3),
 };
 
-export const BASE_CATEGORY_ICONS: Record<string, string> = {
+const BASE_CATEGORY_ICONS: Record<string, string> = {
   housing: "🏠",
   bills: "⚡",
   expenses: "💳",

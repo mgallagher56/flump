@@ -7,7 +7,7 @@ import {
   SAVINGS_SUBTYPE_OPTIONS,
 } from "./accountSubtypes";
 
-export interface FieldOption {
+interface FieldOption {
   readonly value: string;
   readonly label: string;
 }

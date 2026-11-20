@@ -1,11 +1,9 @@
 import { type ThemePreferenceState, useThemePreference } from "@repo/ui";
 import { createContext, type FC, type ReactNode, useContext } from "react";
 
-export type { Theme, ThemePreference } from "@repo/ui";
-
 export type ThemeContextValue = ThemePreferenceState;
 
-export const ThemeContext = createContext<ThemeContextValue>({
+const ThemeContext = createContext<ThemeContextValue>({
   theme: "light",
   preference: "system",
   setPreference: () => {},

@@ -554,5 +554,3 @@ export async function loadWorkspacePicture(
     picture: loaded.picture,
   };
 }
-
-export { throwRouteError } from "./route-error.server";

@@ -20,7 +20,7 @@ import {
 } from "./common.js";
 
 export const MAX_DEBTS = 20;
-export const MAX_MONTHLY_ROWS = 24;
+const MAX_MONTHLY_ROWS = 24;
 const MAX_YEARLY_ROWS = 30;
 
 const STRATEGY_NAMES = ["avalanche", "snowball", "minimum_only"] as const;

@@ -6,8 +6,6 @@ import {
   type TransportConfig,
 } from "@flump/api-client";
 
-export type { HttpMethod } from "@flump/api-client";
-
 interface ApiFetchBase {
   method?: HttpMethod;
   body?: unknown;

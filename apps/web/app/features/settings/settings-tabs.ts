@@ -1,4 +1,4 @@
-export const SETTINGS_TABS = ["profile", "security", "data"] as const;
+const SETTINGS_TABS = ["profile", "security", "data"] as const;
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 
 export const SETTINGS_TAB_ITEMS: ReadonlyArray<{ value: SettingsTab; label: string }> = [

@@ -22,14 +22,14 @@ export function onboardingTakeHomeFacts(values: OnboardingValues): ProfileFacts 
 }
 
 /** Under the live take-home while the pension field is blank: it is worked out with none. */
-export const BEFORE_PENSION_NOTE = "Before any pension contribution";
+const BEFORE_PENSION_NOTE = "Before any pension contribution";
 
 /**
  * One sentence naming the deductions the take-home includes, or null when there are none. While
  * the pension is blank the figure has no pension in it, so the note says so plainly: the Dashboard
  * shows take-home as not set until a rate is saved.
  */
-export function takeHomeIncludesNote(values: OnboardingValues): string | null {
+function takeHomeIncludesNote(values: OnboardingValues): string | null {
   const pension = (values.pensionPercent ?? 0) > 0;
   const loan = values.studentLoanPlan !== "NONE";
   if (values.pensionPercent === null) {

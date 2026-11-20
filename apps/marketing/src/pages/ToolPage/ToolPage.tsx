@@ -110,5 +110,3 @@ export const ToolPage: FC = () => {
     </div>
   );
 };
-
-export default ToolPage;

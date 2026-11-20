@@ -8,11 +8,11 @@
 //   inlineStyle a JSX `style=` prop in apps/web or apps/marketing.
 
 export const STYLE_RULES = ["fontSize", "fontWeight", "duration", "inlineStyle"] as const;
-export type StyleRule = (typeof STYLE_RULES)[number];
+type StyleRule = (typeof STYLE_RULES)[number];
 export type StyleCounts = Record<StyleRule, number>;
 
 /** `fontSizes` keys from packages/tokens/src/index.ts, plus CSS-wide keywords. */
-export const FONT_SIZE_KEYS = new Set([
+const FONT_SIZE_KEYS = new Set([
   "xs",
   "sm",
   "md",

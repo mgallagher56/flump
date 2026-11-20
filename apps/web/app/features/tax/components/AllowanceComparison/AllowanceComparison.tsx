@@ -20,7 +20,7 @@ import {
 } from "./AllowanceComparison.styles";
 
 /** Who cannot use each allowance, from GOV.UK's guidance (read 18 November 2026). */
-export const ALLOWANCE_EXCLUSION_TEXT: Record<
+const ALLOWANCE_EXCLUSION_TEXT: Record<
   TradingAllowanceExclusion | PropertyAllowanceExclusion,
   string
 > = {
@@ -181,5 +181,3 @@ export const AllowanceComparison: FC<AllowanceComparisonProps> = ({
     </PageSection>
   );
 };
-
-export default AllowanceComparison;

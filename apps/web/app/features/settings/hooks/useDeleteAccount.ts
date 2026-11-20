@@ -7,7 +7,7 @@ import {
 } from "~/features/settings/account";
 
 /** The settings route that handles the delete-account action. */
-export const DELETE_ACCOUNT_ACTION_ROUTE = "/app/profile";
+const DELETE_ACCOUNT_ACTION_ROUTE = "/app/profile";
 
 /**
  * Sends the delete-account request to the settings route action and reports its outcome. On

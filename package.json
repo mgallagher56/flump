@@ -16,6 +16,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "biome ci .",
+    "knip": "knip --no-progress",
     "lint:fix": "biome check --write .",
     "format": "biome check --write .",
     "test": "turbo run test && bun test ./scripts",

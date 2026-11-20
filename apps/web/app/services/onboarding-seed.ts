@@ -25,7 +25,7 @@ interface SeedJobBase {
 }
 
 /** One account or budget entry. */
-export interface OnboardingRecordJob extends SeedJobBase {
+interface OnboardingRecordJob extends SeedJobBase {
   endpoint: "/accounts" | "/budget-entries";
   payload: Record<string, unknown>;
 }
@@ -35,7 +35,7 @@ export interface OnboardingRecordJob extends SeedJobBase {
  * slice 4). Its key is the mortgage's, as a lone mortgage job's would be, so a retry that finds
  * the mortgage saved never adds a second one.
  */
-export interface OnboardingMortgageWithHomeJob extends SeedJobBase {
+interface OnboardingMortgageWithHomeJob extends SeedJobBase {
   endpoint: "/accounts/mortgage-with-property";
   payload: {
     mortgage: Record<string, unknown>;
@@ -46,7 +46,7 @@ export interface OnboardingMortgageWithHomeJob extends SeedJobBase {
 export type OnboardingSeedJob = OnboardingRecordJob | OnboardingMortgageWithHomeJob;
 
 /** The name onboarding gives the mortgage it seeds. */
-export const ONBOARDING_MORTGAGE_NAME = "Residential Mortgage";
+const ONBOARDING_MORTGAGE_NAME = "Residential Mortgage";
 
 const account = (
   name: string,

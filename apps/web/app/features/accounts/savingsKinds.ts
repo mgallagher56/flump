@@ -7,7 +7,7 @@
  */
 import { INVESTMENT_SUBTYPE_OPTIONS, SAVINGS_SUBTYPE_OPTIONS } from "./accountSubtypes";
 
-export type SavingsAccountType = "Saving" | "Investment";
+type SavingsAccountType = "Saving" | "Investment";
 
 export interface SavingsKind {
   /** The value of the one select: `${type}:${subtype}`, with an empty subtype for "Other". */

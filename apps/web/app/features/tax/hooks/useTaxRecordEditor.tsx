@@ -9,7 +9,7 @@ import { TaxRecordDialog, type TaxRecordDraft } from "../components/TaxRecordDia
 import type { CalculatedInterestOffer, TaxAccount } from "../linkedAccounts";
 import { recordAmount, selectableCategories } from "../tax-labels";
 
-export const emptyTaxRecordDraft = (
+const emptyTaxRecordDraft = (
   source: TaxSource,
   type: "income" | "expense",
   date: string,
@@ -31,7 +31,7 @@ export const emptyTaxRecordDraft = (
   accountId: null,
 });
 
-export const draftFromTaxRecord = (record: TaxRecord): TaxRecordDraft => ({
+const draftFromTaxRecord = (record: TaxRecord): TaxRecordDraft => ({
   name: record.name,
   source: record.source,
   type: record.type,
@@ -56,7 +56,7 @@ const firstDayOf = (taxYear: string): string =>
  * The record a confirmed "Calculated" figure becomes (owner decision 5): one yearly record dated
  * the tax year's 6 April, linked to the account it was worked out from.
  */
-export const draftFromCalculatedOffer = (
+const draftFromCalculatedOffer = (
   offer: CalculatedInterestOffer,
   taxYear: string,
 ): TaxRecordDraft => {

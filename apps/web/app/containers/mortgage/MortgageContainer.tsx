@@ -141,7 +141,7 @@ const isPropertyRow = (row: PropertyRow): boolean => categorizeAccountType(row.t
  * no other mortgage is linked to. More than one candidate is ambiguous, and nothing is offered or
  * written (HM-3, HM-4).
  */
-export const propertyForMortgage = (
+const propertyForMortgage = (
   rows: readonly PropertyRow[],
   mortgage: PropertyRow | null,
   category: "residential" | "btl",

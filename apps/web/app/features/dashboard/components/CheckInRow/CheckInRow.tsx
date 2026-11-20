@@ -65,5 +65,3 @@ export const CheckInRow: FC<CheckInRowProps> = (props) => {
     </section>
   );
 };
-
-export default CheckInRow;

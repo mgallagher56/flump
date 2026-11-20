@@ -1,4 +1,4 @@
-export const NOINDEX_VALUE = "noindex, nofollow";
+const NOINDEX_VALUE = "noindex, nofollow";
 
 type Env = Record<string, string | undefined>;
 

@@ -23,13 +23,13 @@ import {
 export type Theme = "light" | "dark";
 
 /** Pixels (points on iOS, dp on Android) per rem. The platform font scale multiplies type sizes. */
-export const REM = 16;
+const REM = 16;
 
 /**
  * Panda's own breakpoints (from `@pandacss/preset-panda`, not authored here). Mirrored so mobile
  * gets the same steps as numbers; the contract test in packages/ui fails if Panda's change.
  */
-export const pandaBreakpoints = {
+const pandaBreakpoints = {
   sm: "40rem",
   md: "48rem",
   lg: "64rem",
@@ -130,7 +130,7 @@ export function toNumber(value: string): number {
 
 const round = (n: number): number => Math.round(n * 100) / 100;
 
-export type Fluid = { min: number; max: number };
+type Fluid = { min: number; max: number };
 type Size = number | Fluid;
 
 /** A fixed rem size, or a fluid `clamp(min, preferred, max)` as its two ends. */
@@ -164,7 +164,7 @@ interface TextStyleValue {
   fontVariantNumeric?: string;
 }
 
-export function nativeTextStyle(style: TextStyleValue) {
+function nativeTextStyle(style: TextStyleValue) {
   const role = FAMILY_ROLES.find(([, stack]) => stack === style.fontFamily)?.[0];
   if (!role) throw new Error(`Unknown font family: ${style.fontFamily}`);
   const fontSize = toSize(style.fontSize);
@@ -188,13 +188,13 @@ export function nativeTextStyle(style: TextStyleValue) {
 /** Semantic colour paths, sorted: the `ColorKey` union. */
 export const colorKeys = sorted(flatten(semanticTokens.colors as Node)).map(([k]) => k);
 
-export function themeColors(theme: Theme): Record<string, string> {
+function themeColors(theme: Theme): Record<string, string> {
   return Object.fromEntries(
     colorKeys.map((key) => [key, resolve(semantic.get(`colors.${key}`), theme)]),
   );
 }
 
-export function themeShadows(theme: Theme): Record<string, string> {
+function themeShadows(theme: Theme): Record<string, string> {
   return Object.fromEntries(
     sorted(flatten(semanticTokens.shadows as Node))
       .filter(([key]) => !LEGACY_SHADOWS.has(key))
@@ -221,7 +221,7 @@ function lengths(category: "spacing" | "radii" | "sizes"): Record<string, number
 const numbers = (tree: Node, convert: (v: string) => number): Record<string, number> =>
   Object.fromEntries(sorted(flatten(tree)).map(([k, v]) => [k, convert(String(v))]));
 
-export function buildTheme() {
+function buildTheme() {
   return {
     light: { colors: themeColors("light"), shadows: themeShadows("light") },
     dark: { colors: themeColors("dark"), shadows: themeShadows("dark") },

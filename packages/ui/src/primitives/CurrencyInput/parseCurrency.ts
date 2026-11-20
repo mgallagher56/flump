@@ -2,7 +2,7 @@ import { formatNumber } from "../Money/Money";
 
 const GROUPED = /^-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d*)?$/;
 const DECIMAL_ONLY = /^-?\.\d+$/;
-export const ALLOWED_CHARS = /^[\d,.\s£%-]*$/;
+const ALLOWED_CHARS = /^[\d,.\s£%-]*$/;
 /** Per-field allowed characters: a money field takes £ only, a percentage field % only. */
 export const MONEY_CHARS = /^[\d,.\s£-]*$/;
 export const PERCENT_CHARS = /^[\d,.\s%-]*$/;

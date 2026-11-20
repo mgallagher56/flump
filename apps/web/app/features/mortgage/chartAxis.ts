@@ -1,7 +1,7 @@
 import { CHART_AXIS_DEFAULTS } from "@repo/ui";
 
 /** Below this plot width (px) the x axis keeps to a few short ticks so labels never touch. */
-export const NARROW_CHART_WIDTH = 480;
+const NARROW_CHART_WIDTH = 480;
 
 /** Most year ticks for a plot this wide: 4 when narrow, else the figure's limit (at most 6). */
 export const maxYearTicks = (width: number, figureMax: number): number => {

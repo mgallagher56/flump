@@ -2,13 +2,10 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 export const repoRoot = resolve(import.meta.dir, "../..");
-export const SCAN_DIRS = ["packages/ui/src", "apps/web/app", "apps/marketing/src"];
+const SCAN_DIRS = ["packages/ui/src", "apps/web/app", "apps/marketing/src"];
 // Files that legitimately define primitives/hex. The token source moved to packages/tokens
 // (outside SCAN_DIRS); packages/ui/src/tokens now only re-exports it.
-export const TOKEN_DEFINITION_FILES = [
-  "packages/tokens/src/index.ts",
-  "packages/tokens/src/elevation.ts",
-];
+const TOKEN_DEFINITION_FILES = ["packages/tokens/src/index.ts", "packages/tokens/src/elevation.ts"];
 const SKIP_DIRS = new Set(["node_modules", "styled-system", "dist", "build", ".storybook"]);
 const SKIP_FILE = /\.(?:test|spec|stories)\.tsx?$|\.d\.ts$/;
 

@@ -11,7 +11,7 @@ import type { DashboardWidgetKey } from "~/utils/pageConfig";
 export type SectionColour = "teal" | "sage" | "apricot" | "sky" | "rose" | "violet" | "damson";
 
 /** The area each home section belongs to. The retired retirement section shares pension. */
-export const SECTION_DOMAIN: Record<DashboardWidgetKey, IconTileDomain> = {
+const SECTION_DOMAIN: Record<DashboardWidgetKey, IconTileDomain> = {
   debt: "debt",
   mortgage: "mortgage",
   savings: "savings",

@@ -38,7 +38,7 @@ import {
 } from "~/utils/taxTrapCopy";
 import { retirementLine, retirementLink, trapLine, trapText } from "./PensionContainer.styles";
 
-export const RETIREMENT_PATH = "/app/retirement";
+const RETIREMENT_PATH = "/app/retirement";
 
 /**
  * The pension page (E16 PR 7, decision RD6): saved facts first (hero "Total in your pots", what
@@ -46,7 +46,7 @@ export const RETIREMENT_PATH = "/app/retirement";
  * one ScenarioZone for the effect of a contribution change on take-home pay. Pension projections
  * live on the Retirement page. Headline figures read saved loader data only (ruling D2).
  */
-export const PensionContainer: FC = () => {
+const PensionContainer: FC = () => {
   const loaderData = useLoaderData<typeof loader>();
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];

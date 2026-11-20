@@ -9,7 +9,7 @@ import { CONNECT_AI_ROUTE } from "../navConfig";
 import UserAvatar from "../UserAvatar";
 import { container, divider, item, panel, srOnly, trigger } from "./AvatarMenu.styles";
 
-export interface AvatarMenuProps {
+interface AvatarMenuProps {
   user: unknown;
 }
 

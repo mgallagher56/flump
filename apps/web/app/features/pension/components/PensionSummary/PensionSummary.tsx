@@ -94,5 +94,3 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
     </>
   );
 };
-
-export default PensionSummary;

@@ -213,7 +213,7 @@ export function netWorthBasisNotes(basis: NetWorthBasis, leftOut: readonly NetWo
   return notes;
 }
 
-export const MAX_MISSING = 5;
+const MAX_MISSING = 5;
 
 /** Keeps at most `MAX_MISSING` entries; past that, folds them into one aggregate entry. */
 export function capMissing(
@@ -303,7 +303,7 @@ export const MISSING_INCOME: Missing = {
 };
 
 /** Category and entry names are free text: scrub them when anonymised. */
-export function safeText(text: string, anonymise: boolean): string {
+function safeText(text: string, anonymise: boolean): string {
   return sanitiseText(anonymise ? anonymiseDescription(text) : text);
 }
 

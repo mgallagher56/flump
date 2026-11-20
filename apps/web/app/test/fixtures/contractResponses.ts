@@ -143,9 +143,9 @@ export const jsonResponse = (body: unknown, status = 200, headers: Record<string
     headers: { "Content-Type": "application/json", ...headers },
   });
 
-export const IMPORT_BATCH_ID = "b0000000-0000-4000-8000-000000000001";
+const IMPORT_BATCH_ID = "b0000000-0000-4000-8000-000000000001";
 
-export const importBatchFixture = {
+const importBatchFixture = {
   batchId: IMPORT_BATCH_ID,
   status: "committed",
   counts: { staged: 6, new: 3, overwrite: 1, unchanged: 1, skipped: 1, errors: 0 },
@@ -159,7 +159,7 @@ export const importBatchFixture = {
   revertedAt: null,
 };
 
-export const importPreviewFixture = {
+const importPreviewFixture = {
   batchId: IMPORT_BATCH_ID,
   status: "staged",
   expiresAt: "2026-11-02T09:00:00.000Z",
@@ -176,7 +176,7 @@ export const importPreviewFixture = {
   totals: { new: 0, overwrite: 0, unchanged: 0, needsTick: 0, errors: 0 },
 };
 
-export const mcpTokenFixture = {
+const mcpTokenFixture = {
   id: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
   name: "Claude",
   // Built at runtime with zeros so secret scanners do not read it as a token.
@@ -191,7 +191,7 @@ export const mcpTokenFixture = {
   isExpired: false,
 };
 
-export const snapshotResponseFixture = { month: "2026-11", values: [], completed: true };
+const snapshotResponseFixture = { month: "2026-11", values: [], completed: true };
 
 export const retirementPlanFixture = {
   id: "44444444-4444-4444-8444-444444444444",

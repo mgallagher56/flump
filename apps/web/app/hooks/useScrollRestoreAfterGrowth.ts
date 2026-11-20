@@ -2,7 +2,7 @@ import { useContext, useEffect } from "react";
 import { UNSAFE_DataRouterStateContext, useLocation } from "react-router";
 
 /** How long after Back or Forward the saved place is held while the page grows (P80, P13). */
-export const RESTORE_HOLD_MS = 2000;
+const RESTORE_HOLD_MS = 2000;
 
 /** Any of these means the reader has taken over, so the saved place stops being held. */
 const USER_INPUT_EVENTS = ["wheel", "touchstart", "pointerdown", "keydown"] as const;

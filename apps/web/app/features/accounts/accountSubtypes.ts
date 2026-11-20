@@ -46,6 +46,4 @@ export const ACCOUNT_SUBTYPE_LABEL: Record<string, string> = Object.fromEntries(
     ...LOAN_SUBTYPE_OPTIONS,
   ].map((o) => [o.value, o.label]),
 );
-
 /** The subtypes that are ISAs: one list, shared with the engine's joint-ownership rule. */
-export { ISA_ACCOUNT_SUBTYPES as ISA_SUBTYPES } from "@flump/finance-engine";

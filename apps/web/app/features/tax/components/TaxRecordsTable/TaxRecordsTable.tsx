@@ -354,5 +354,3 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
     </div>
   );
 };
-
-export default TaxRecordsTable;

@@ -41,7 +41,7 @@ export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise
 }
 
 // Just enough of TypeORM's QueryRunner for the migrations under test.
-export function pgQueryRunner(client: Client) {
+function pgQueryRunner(client: Client) {
   return {
     connection: {
       options: { migrationsTableName: "migrations" },

@@ -3,7 +3,7 @@
  * (`READ_TOOLS`, `SIMULATE_TOOLS`, `WRITE_TOOLS`). `McpPage.test.tsx` reads the tool names from
  * the `packages/mcp` source and fails if this list drifts from it.
  */
-export type McpToolKind = "read" | "calculate" | "stage";
+type McpToolKind = "read" | "calculate" | "stage";
 
 export interface McpToolEntry {
   name: string;

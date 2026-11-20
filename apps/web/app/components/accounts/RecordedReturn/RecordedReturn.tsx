@@ -21,7 +21,7 @@ import {
   recordedReturnWrap,
 } from "./RecordedReturn.styles";
 
-export interface RecordedReturnProps {
+interface RecordedReturnProps {
   /** Recorded monthly balances (any order). Leave out any month that is not recorded yet. */
   balances: readonly RecordedBalance[];
   /** The account's monthly contribution setting, assumed paid in every month. */
@@ -88,13 +88,13 @@ const monthYear = new Intl.DateTimeFormat("en-GB", {
 });
 
 /** "March 2026" for year 2026, month 3. */
-export const monthYearLabel = (m: { year: number; month: number }): string =>
+const monthYearLabel = (m: { year: number; month: number }): string =>
   monthYear.format(new Date(Date.UTC(m.year, m.month - 1, 1)));
 
-export const UNRELIABLE_LEAD = "Not enough reliable history.";
+const UNRELIABLE_LEAD = "Not enough reliable history.";
 
 /** Why the recorded balances give no figure, in plain words: a fact and what to check. */
-export const unreliableReason = (
+const unreliableReason = (
   result: Extract<RecordedReturnResult, { status: "unreliable" }>,
   formatMoney: (n: number) => string,
 ): string => {

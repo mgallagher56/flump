@@ -13,5 +13,3 @@ export function useHydrated(): boolean {
     () => false,
   );
 }
-
-export default useHydrated;

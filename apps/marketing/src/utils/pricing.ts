@@ -13,7 +13,7 @@ import { BUSINESS_DETAILS, formatPrice } from "@flump/business-details";
  * "true") while `status` is "not-set". PricingPage reads it inline so the bundler drops the card.
  * Unset (dev, tests) means shown.
  */
-export type PricingStatus = "not-set" | "set";
+type PricingStatus = "not-set" | "set";
 
 export interface Pricing {
   status: PricingStatus;

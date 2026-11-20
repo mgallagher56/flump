@@ -23,7 +23,7 @@ export interface SafeOptionsInput {
 }
 
 /** Highest trace sample rate allowed (D7 sets 0.02 in production). */
-export const MAX_TRACES_SAMPLE_RATE = 0.05;
+const MAX_TRACES_SAMPLE_RATE = 0.05;
 
 /** Freezes an object graph so no Sentry init can mutate a shared constant. Typed as the input. */
 function deepFreeze<T>(value: T): T {

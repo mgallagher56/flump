@@ -15,7 +15,7 @@ import {
 } from "./NotFoundPage.styles";
 
 /** Same words as the web app's not-found state, so both sites read as one product (R2-10). */
-export const NOT_FOUND_COPY = {
+const NOT_FOUND_COPY = {
   heading: "We cannot find that page",
   body: "The page may have moved, or the link may be out of date.",
   action: "Go to the home page",

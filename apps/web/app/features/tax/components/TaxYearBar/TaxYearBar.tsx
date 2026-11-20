@@ -32,5 +32,3 @@ export const TaxYearBar: FC<TaxYearBarProps> = ({ years, selectedYear, onSelectY
     </div>
   );
 };
-
-export default TaxYearBar;

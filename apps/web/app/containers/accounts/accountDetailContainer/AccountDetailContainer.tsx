@@ -52,7 +52,7 @@ export const balanceDateLine = ({ current, latest }: BalanceDateInput): string |
 };
 
 /** "Not counted in your net worth.": said under the hero when the user's choices leave it out. */
-export const NOT_COUNTED_TEXT = "Not counted in your net worth.";
+const NOT_COUNTED_TEXT = "Not counted in your net worth.";
 
 /**
  * Whether the user's net worth choices count this account (a student loan is left out by default).

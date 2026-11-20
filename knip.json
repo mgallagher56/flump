@@ -1,26 +1,68 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    ".claude/skills/**",
+    ".agents/**",
+    "scripts/__fixtures__/**",
+    "apps/web/app/features/dashboard/components/MortgageWidget/MortgageWidget.styles.ts",
+    "apps/web/app/features/dashboard/components/PensionWidget/PensionWidget.styles.ts",
+    "apps/web/app/features/feedback/components/ConfirmDialog/ConfirmDialog.styles.ts",
+    "apps/marketing/src/components/MarketingSection/MarketingSection.styles.ts"
+  ],
   "workspaces": {
+    ".": {
+      "ignoreDependencies": ["pg"],
+      "ignoreUnresolved": ["scripts/check-launch-readiness.ts"],
+      "entry": [
+        "scripts/backend-laws/check-*.ts",
+        "scripts/ops/backup-run.ts",
+        "scripts/test-timings.ts"
+      ]
+    },
     "apps/backend": {
       "entry": ["src/data-source.ts", "src/migrations/*.ts", "src/scripts/*.ts"],
       "project": ["src/**/*.ts", "test/**/*.ts"],
       "ignoreDependencies": ["@nestjs/schematics", "@typescript/typescript6"]
     },
     "apps/web": {
+      "entry": [
+        "app/routes.ts",
+        "app/routes/**/*.{ts,tsx}",
+        "test/*.ts",
+        "react-router.config.ts",
+        "vite.config.mts",
+        "app/**/components/*/index.ts",
+        ".storybook/*.{ts,tsx}"
+      ],
+      "ignoreBinaries": ["server.ts"],
+      "ignoreDependencies": ["react-router-real", "vitest-sonar-reporter"],
       "react-router": false,
-      "vite": false,
-      "ignoreDependencies": ["@react-router/remix-routes-option-adapter", "remix-flat-routes"]
+      "vite": false
+    },
+    "apps/marketing": {
+      "ignoreDependencies": ["@storybook/react", "@storybook/test", "storybook"],
+      "entry": ["postcss.config.cjs", "src/**/components/*/index.ts"]
     },
     "packages/ui": {
       "ignoreDependencies": [
+        "@storybook/react",
+        "@storybook/test",
+        "storybook",
         "@fontsource-variable/inter",
-        "@fontsource-variable/plus-jakarta-sans",
-        "@repo/typescript-config",
-        "react-icons"
-      ]
+        "@fontsource-variable/plus-jakarta-sans"
+      ],
+      "entry": ["postcss.config.cjs", "src/foundations/*/index.ts"]
     },
     "packages/*": {
       "ignoreDependencies": ["@repo/typescript-config"]
+    },
+    "apps/e2e": {
+      "entry": ["visual/*.setup.ts"]
     }
+  },
+  "exclude": ["duplicates"],
+  "ignoreIssues": {
+    "apps/e2e/**": ["exports", "types"],
+    "packages/finance-engine/src/test-vectors/**": ["exports", "types"]
   }
 }

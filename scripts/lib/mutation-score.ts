@@ -32,7 +32,7 @@ export type Mutant = {
 
 export type MutationReport = { files: Record<string, { mutants: Mutant[] }> };
 
-export type Counts = {
+type Counts = {
   killed: number;
   timeout: number;
   survived: number;
@@ -43,7 +43,7 @@ export type Counts = {
   total: number;
 };
 
-export type FileScore = { file: string; counts: Counts; score: number | null };
+type FileScore = { file: string; counts: Counts; score: number | null };
 
 export type ReportScore = { counts: Counts; score: number | null; files: FileScore[] };
 
@@ -82,7 +82,7 @@ function add(counts: Counts, status: MutantStatus): void {
 }
 
 /** Stryker's mutation score in percent, or null when no fault counts towards it. */
-export function scoreOf(counts: Counts): number | null {
+function scoreOf(counts: Counts): number | null {
   const detected = counts.killed + counts.timeout;
   const valid = detected + counts.survived + counts.noCoverage;
   return valid === 0 ? null : (detected / valid) * 100;
@@ -251,7 +251,7 @@ export function selectMutateTargets(
 }
 
 /** True for a package-relative path that Stryker's `mutate` globs select. */
-export function mutateMatcher(mutate: string[]): (path: string) => boolean {
+function mutateMatcher(mutate: string[]): (path: string) => boolean {
   const include = mutate.filter((p) => !p.startsWith("!")).map((p) => new Bun.Glob(p));
   const exclude = mutate.filter((p) => p.startsWith("!")).map((p) => new Bun.Glob(p.slice(1)));
   return (p) => include.some((g) => g.match(p)) && !exclude.some((g) => g.match(p));
@@ -297,7 +297,7 @@ export function partitionFiles(files: SizedFile[], count: number): string[][] {
  * earlier run: Stryker carries results over from the restored incremental file. Measured on CI
  * when a file's size changed and files moved between shards.
  */
-export function restrictReport(report: MutationReport, files: string[]): MutationReport {
+function restrictReport(report: MutationReport, files: string[]): MutationReport {
   const keep = new Set(files);
   return {
     files: Object.fromEntries(Object.entries(report.files).filter(([file]) => keep.has(file))),

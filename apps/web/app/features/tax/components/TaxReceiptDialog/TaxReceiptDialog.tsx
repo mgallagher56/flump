@@ -91,5 +91,3 @@ export const TaxReceiptDialog: FC<TaxReceiptDialogProps> = ({ record, onClose })
     </Dialog>
   );
 };
-
-export default TaxReceiptDialog;

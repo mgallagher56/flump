@@ -27,8 +27,8 @@ import {
 } from "../../packages/mcp/src/evals";
 
 export const MAX_GBP_CEILING = 2;
-export const DEFAULT_MODEL = "claude-haiku-4-5";
-export const HAIKU_MODEL_PATTERN = /^claude-haiku-[\w.-]+$/;
+const DEFAULT_MODEL = "claude-haiku-4-5";
+const HAIKU_MODEL_PATTERN = /^claude-haiku-[\w.-]+$/;
 const API_URL = "https://api.anthropic.com/v1/messages";
 const MAX_OUTPUT_TOKENS = 1024;
 

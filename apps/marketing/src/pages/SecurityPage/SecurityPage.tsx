@@ -86,5 +86,3 @@ export const SecurityPage: FC = () => (
     <Footer />
   </div>
 );
-
-export default SecurityPage;

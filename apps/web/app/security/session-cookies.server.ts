@@ -59,7 +59,7 @@ export function applyRefreshedCookies(key: object, response: Response): Response
 type Env = Record<string, string | undefined>;
 
 /** The non-HttpOnly marker the client reads to know a session may exist. */
-export const PRESENCE_COOKIE_NAME = "flump_has_session";
+const PRESENCE_COOKIE_NAME = "flump_has_session";
 
 /** True when the request reached us over https, directly or through the trusted proxy. */
 function isHttpsRequest(request: Request): boolean {

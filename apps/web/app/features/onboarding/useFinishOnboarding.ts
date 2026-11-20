@@ -23,7 +23,7 @@ export const FINISH_ERROR =
 /** The profile saved but some accounts or budget entries did not. */
 export const PARTIAL_FINISH_ERROR =
   "We saved some of your details, but not all. Check your connection, then finish again to save the rest.";
-export const SAVED_MESSAGE = "Details saved";
+const SAVED_MESSAGE = "Details saved";
 
 /** The route action that creates a mortgage and its home in one call (routes/app.onboarding.mortgage-with-property.ts). */
 export const MORTGAGE_WITH_PROPERTY_ACTION = "/app/onboarding/mortgage-with-property";
@@ -33,7 +33,7 @@ export const MORTGAGE_WITH_PROPERTY_ACTION = "/app/onboarding/mortgage-with-prop
  * open to add common budget items (`?setup=common`, no money in the URL).
  */
 export type FinishDestination = "dashboard" | "budget";
-export const FINISH_PATHS: Record<FinishDestination, string> = {
+const FINISH_PATHS: Record<FinishDestination, string> = {
   dashboard: "/",
   budget: "/app/budget?setup=common",
 };

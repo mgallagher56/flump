@@ -14,7 +14,7 @@ import ts from "@typescript/typescript6";
 // Entities
 // ---------------------------------------------------------------------------------------------
 
-export interface EntityColumn {
+interface EntityColumn {
   /** The TypeScript property. */
   property: string;
   /** The database column name (the decorator's `name`, else the property). */
@@ -443,7 +443,7 @@ export const SECOND_FORMULA_RULES = [
     hint: "converts a saved amount between monthly and yearly",
   },
 ] as const;
-export type SecondFormulaRuleId = (typeof SECOND_FORMULA_RULES)[number]["id"];
+type SecondFormulaRuleId = (typeof SECOND_FORMULA_RULES)[number]["id"];
 
 export interface SecondFormulaHit {
   file: string;
