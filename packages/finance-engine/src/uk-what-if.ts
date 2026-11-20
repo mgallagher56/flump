@@ -87,7 +87,8 @@ export function whatIfGrossChange(
 /**
  * Take-home before and after the employee pension contribution changes by `deltaContribution` pounds a
  * year (for relief at source, the net amount paid). A percentage pension is converted to its amount
- * first. With no pension in the scenario, salary sacrifice is assumed.
+ * first; for relief at source that is the net amount paid, 80% of the gross percentage (owner
+ * decision, 19 November 2026). With no pension in the scenario, salary sacrifice is assumed.
  */
 export function whatIfSacrificeChange(
   s: UkIncomeScenario,
