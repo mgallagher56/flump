@@ -39,15 +39,36 @@ describe("applySignoff", () => {
     expect(r.signed).toEqual([v.id]);
     expect(r.text.match(/signedOffBy: null/g)?.length).toBe(2);
     expect(r.text).toContain('signedOffBy: "fable-decider",');
-    const hash = /signedOffHash: "([0-9a-f]{64})"/.exec(r.text)?.[1];
-    expect(
-      evaluateSignoff({
-        ...v,
-        signedOffBy: "fable-decider",
-        signedOffAt: "2026-12-01",
-        signedOffHash: hash,
-      }).state,
-    ).toBe("signed");
+    // apply writes the version 2 hash, which binds the signer.
+    const hash = /signedOffHash: "(v2:[0-9a-f]{64})"/.exec(r.text)?.[1];
+    const signed = {
+      ...v,
+      signedOffBy: "fable-decider",
+      signedOffAt: "2026-12-01",
+      signedOffHash: hash,
+    };
+    expect(evaluateSignoff(signed).state).toBe("signed");
+    expect(evaluateSignoff({ ...signed, signedOffBy: "owner" }).state).toBe("invalid");
+  });
+  test("an UNVERIFIED vector signed with a ruling validates with that rulingRef only", () => {
+    const r = applySignoff(
+      fake(u.id),
+      u.taxYear,
+      [{ id: u.id, ruling: "R1" }],
+      UK_TAX_VECTORS,
+      "2026-12-01",
+      "fable-decider",
+    );
+    const hash = /signedOffHash: "(v2:[0-9a-f]{64})"/.exec(r.text)?.[1];
+    const signed = {
+      ...u,
+      signedOffBy: "fable-decider",
+      signedOffAt: "2026-12-01",
+      signedOffHash: hash,
+      rulingRef: "R1",
+    };
+    expect(evaluateSignoff(signed).state).toBe("signed");
+    expect(evaluateSignoff({ ...signed, rulingRef: "R2" }).state).toBe("invalid");
   });
   test("writes the signer exactly as given, and refuses a name that is not plain", () => {
     const r = applySignoff(
