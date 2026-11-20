@@ -21,18 +21,18 @@ import { applyRobotsHeader } from "./utils/indexing.server";
 assertLaunchReady(process.env);
 
 // Loader, action and middleware errors (render errors go through onError below).
-function handleError(error: unknown, { request }: { request: Request }): void {
+export function handleError(error: unknown, { request }: { request: Request }): void {
   reportServerError(error, request);
 }
 
 // Runs on every `.data` response. Single-fetch builds some of them outside the middleware
 // pipeline (its own CSRF 400, last-resort 500), which would otherwise miss these headers.
-function handleDataRequest(response: Response): Response {
+export function handleDataRequest(response: Response): Response {
   return applySecurityHeaders(applyCachePolicy(response));
 }
 
 // Reject/cancel all pending promises after 5 seconds
-const streamTimeout = 5000;
+export const streamTimeout = 5000;
 
 export default async function handleRequest(
   request: Request,

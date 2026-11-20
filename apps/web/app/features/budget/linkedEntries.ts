@@ -48,9 +48,6 @@ export function pageBudgetEntries(
   return rows;
 }
 
-/** True for a row the engine added from a saved detail. Such a row has no stored id to change. */
-const isLinkedEntry = (entry: Pick<BudgetEntry, "linked">): boolean => entry.linked !== undefined;
-
 /** True for a linked line whose saved fact is not set. Its amount is unknown, never £0. */
 export const isNotSetEntry = (entry: Pick<BudgetEntry, "notSet">): boolean => entry.notSet === true;
 

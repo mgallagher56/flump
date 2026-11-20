@@ -19,14 +19,6 @@ export interface AppPageConfig {
   badgeColor: string;
 }
 
-interface DashboardWidgetMeta {
-  key: DashboardWidgetKey;
-  label: string;
-  route: string;
-  description: string;
-  badgeColor: string;
-}
-
 /**
  * Modules that are never offered as a toggle of their own (the dashboard's "Choose what shows
  * here" panel, Profile toggles, onboarding defaults) and instead follow another page: on when that
@@ -119,17 +111,6 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
 };
 
-const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetMeta> = {
-  accounts: APP_PAGES.accounts,
-  budget: APP_PAGES.budget,
-  debt: APP_PAGES.debt,
-  savings: APP_PAGES.savings,
-  pension: APP_PAGES.pension,
-  retirement: APP_PAGES.retirement,
-  mortgage: APP_PAGES.mortgage,
-  tax: APP_PAGES.tax,
-};
-
 export const ALL_DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [...ALL_PAGE_KEYS];
 
 /**
@@ -141,16 +122,6 @@ export const DEFAULT_ENABLED_PAGES: AppPageKey[] = ALL_PAGE_KEYS.filter(
   (k) => !OPT_IN_PAGE_KEYS.includes(k),
 );
 export const DEFAULT_DASHBOARD_WIDGETS: DashboardWidgetKey[] = [...DEFAULT_ENABLED_PAGES];
-const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
-  accounts: "normal",
-  budget: "normal",
-  debt: "normal",
-  savings: "normal",
-  pension: "normal",
-  retirement: "normal",
-  mortgage: "normal",
-  tax: "normal",
-};
 
 export function isPageEnabled(enabledPages: string[] | null | undefined, key: AppPageKey): boolean {
   const followed = FOLLOWING_PAGE_KEYS[key];

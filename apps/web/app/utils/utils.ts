@@ -46,13 +46,3 @@ export function validateEmail(email: unknown): email is string {
 }
 
 export const noop = () => {}; //nosonar
-const emptyObject = {};
-const emptyArray = [];
-
-enum FallbackEnums {
-  NA = "N/A",
-}
-
-enum AuthErrorEnums {
-  USER_ALREADY_REGISTERED = "User already registered",
-}

@@ -106,8 +106,6 @@ export function useOnboardingForm(initial: OnboardingValues = INITIAL_VALUES) {
   };
 }
 
-type OnboardingForm = ReturnType<typeof useOnboardingForm>;
-
 /**
  * Stepper overrides from what the user actually did, so a skipped or never-visited step is never
  * shown as complete. Steps after the current one with no outcome keep the Stepper default.

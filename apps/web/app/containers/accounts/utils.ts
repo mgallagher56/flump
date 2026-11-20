@@ -1,5 +1,3 @@
-import type { Account } from "./types";
-
 export enum AccountTypeEnum {
   CURRENT = "Current",
   SAVING = "Saving",
@@ -24,9 +22,6 @@ export const STUDENT_LOAN_PLAN_OPTIONS = [
 ] as const;
 
 export type AccountType = `${AccountTypeEnum}` | string;
-
-const isAccountTypeValid = (accountType: AccountTypeEnum, accounts: Account[]) =>
-  !!accounts?.map(({ type }) => type).some((type) => type === accountType);
 
 const LIABILITY_TYPES: string[] = [
   AccountTypeEnum.MORTGAGE,

@@ -3,7 +3,6 @@ import {
   addCheckInMonths,
   type CheckInScheduleInput,
   compareCheckInMonths,
-  isCheckInMonth,
   type NetWorthBasis,
   type NetWorthPoint,
   nextCheckInDate as nextCheckInDay,
@@ -34,8 +33,6 @@ import type { MonthKey } from "~/utils/londonMonth";
 export { londonMonth, type MonthKey } from "~/utils/londonMonth";
 
 const MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;
-
-const isMonthKey: (value: unknown) => value is MonthKey = isCheckInMonth;
 
 export const addMonths: (month: MonthKey, n: number) => MonthKey = addCheckInMonths;
 

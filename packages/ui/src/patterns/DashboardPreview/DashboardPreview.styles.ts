@@ -86,9 +86,3 @@ export const sectionCardLine = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
-
-const previewFigureTabular = cva({
-  base: {
-    fontVariantNumeric: "tabular-nums",
-  },
-});
