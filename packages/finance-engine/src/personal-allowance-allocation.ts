@@ -94,8 +94,10 @@ export function allocatePersonalAllowance(
       taxBetween(dividendBands, Math.min(m + dividendAllowance, total), total)
     );
   };
-  // Rounded to pence here and nowhere else in the search.
-  const pence = (n: number, m: number): number => Math.round(tax(n, m) * 100);
+  // Rounded to pence here and nowhere else in the search. The float sum is first snapped to a
+  // millionth of a pound, so an exact half penny reached two ways (x.4999... and x.5000...)
+  // rounds the same way and an equal corner is never counted as a penny lower.
+  const pence = (n: number, m: number): number => Math.round(Math.round(tax(n, m) * 1e6) / 1e4);
 
   // Feasible region: allowance on each income between nothing and the whole income, and at
   // least `lock` on non-savings income.
