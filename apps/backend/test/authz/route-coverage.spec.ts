@@ -46,7 +46,7 @@ describe("authz route coverage", () => {
   });
 
   it("detects an unguarded route (self-test of the detector)", () => {
-    const fake: RegisteredRoute[] = [{ key: "GET /secret", guarded: false }];
+    const fake: RegisteredRoute[] = [{ key: "GET /secret", guarded: false, allowUninvited: false }];
     const offenders = fake.filter((r) => !r.guarded && !UNGUARDED_ALLOWLIST.includes(r.key));
     expect(offenders).toHaveLength(1);
   });
