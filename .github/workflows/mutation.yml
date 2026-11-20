@@ -314,12 +314,14 @@ jobs:
           fi
 
       # As in the weekly shards: dependencies are built from unmutated source before any run.
+      # Every command inside a `while read` loop takes its stdin from /dev/null, so none of them can
+      # swallow the rest of the target list.
       - name: 🏗️ Build the packages' dependencies
         if: steps.targets.outputs.any == 'true'
         shell: bash # -eo pipefail
         run: |
           while read -r package _; do
-            bunx turbo run build --filter="{./$package}^..."
+            bunx turbo run build --filter="{./$package}^..." < /dev/null
           done < "$RUNNER_TEMP/mutation-targets.txt"
 
       # No incremental cache here: each weekly shard's file covers only its own files, and test ids
@@ -331,7 +333,7 @@ jobs:
           node --version
           while read -r package targets; do
             (cd "$package" && node "$GITHUB_WORKSPACE/node_modules/@stryker-mutator/core/bin/stryker.js" run \
-              --mutate "$targets" --reporters clear-text,html,json,progress-append-only)
+              --mutate "$targets" --reporters clear-text,html,json,progress-append-only < /dev/null)
           done < "$RUNNER_TEMP/mutation-targets.txt"
 
       - name: 📋 List the faults no test caught
@@ -339,7 +341,7 @@ jobs:
         shell: bash # -eo pipefail
         run: |
           while read -r package _; do
-            bun scripts/check-mutation-score.ts survivors "$package" >> "$GITHUB_STEP_SUMMARY"
+            bun scripts/check-mutation-score.ts survivors "$package" < /dev/null >> "$GITHUB_STEP_SUMMARY"
           done < "$RUNNER_TEMP/mutation-targets.txt"
 
       - name: 📎 Upload report

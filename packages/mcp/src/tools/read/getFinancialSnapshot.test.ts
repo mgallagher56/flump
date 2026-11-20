@@ -1,9 +1,5 @@
-import {
-  type BuildContextPackInput,
-  getUkCalendarDate,
-  profileFactsFromProfile,
-} from "@flump/finance-engine";
-import { describe, expect, it, vi } from "vitest";
+import { type BuildContextPackInput, profileFactsFromProfile } from "@flump/finance-engine";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { connectTestClient } from "../../testing/client.js";
 import { emptyUser, mixedAccountsWithHistory } from "../../testing/personas.js";
 
@@ -151,7 +147,13 @@ describe("get_financial_snapshot: current figures", () => {
 });
 
 describe("get_financial_snapshot: a past month", () => {
-  const now = getUkCalendarDate(new Date()).slice(0, 7);
+  // The clock is pinned to 15 November 2026 (noon UTC, also 15 November in the UK), so the
+  // current month is 2026-11.
+  beforeEach(() =>
+    vi.useFakeTimers({ now: new Date("2026-11-15T12:00:00.000Z"), toFake: ["Date"] }),
+  );
+  afterEach(() => vi.useRealTimers());
+  const now = "2026-11";
   /** Current recorded in August 2024, saver last recorded in June 2024, card never recorded. */
   const history: BuildContextPackInput = {
     ...emptyUser,

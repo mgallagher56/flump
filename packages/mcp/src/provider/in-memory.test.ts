@@ -4,6 +4,7 @@ import { emptyUser } from "../testing/personas.js";
 import {
   inMemoryPictureSource,
   inMemoryQueries,
+  monthLabel,
   parseMonth,
   withFinancialPicture,
 } from "./in-memory.js";
@@ -13,9 +14,42 @@ const data = (extra: Record<string, unknown>) =>
 const queriesOver = (input: BuildContextPackInput) => inMemoryQueries(async () => input);
 
 describe("parseMonth", () => {
-  it("reads YYYY-MM as a month index (year * 12 + month - 1)", () => {
-    // 2026-03: 2026 * 12 + 2 = 24,314.
-    expect(parseMonth("2026-03")).toBe(24_314);
+  it("reads YYYY-MM back as the same month", () => {
+    // monthLabel turns an index back into "YYYY-MM"; a parsed month must name the same month.
+    for (const value of ["2026-03", "2026-01", "2026-12", "1999-07"]) {
+      expect(monthLabel(parseMonth(value) as number)).toBe(value);
+    }
+  });
+
+  it("orders months by calendar, one step per month, across a year end", () => {
+    const at = (value: string) => parseMonth(value) as number;
+    // Calendar order: June 2025 < January 2026 < March 2026.
+    expect(at("2025-06")).toBeLessThan(at("2026-01"));
+    expect(at("2026-01")).toBeLessThan(at("2026-03"));
+    // Consecutive months are one step apart, December 2026 to January 2027 included.
+    expect(at("2026-04") - at("2026-03")).toBe(1);
+    expect(at("2027-01") - at("2026-12")).toBe(1);
+    // A year is twelve steps: March 2025 to March 2026.
+    expect(at("2026-03") - at("2025-03")).toBe(12);
+  });
+
+  it("selects saved rows by month in a snapshot range, carrying the latest earlier one", async () => {
+    // Rows in Nov 2025, Dec 2025, Jan 2026 and Feb 2026; the range is Dec 2025 to Jan 2026.
+    // Dec and Jan fall inside; Nov is the latest row before the range (the seed); Feb is after.
+    const rows = [
+      { accountId: "a", year: 2025, month: 11, value: 1 },
+      { accountId: "a", year: 2025, month: 12, value: 2 },
+      { accountId: "a", year: 2026, month: 1, value: 3 },
+      { accountId: "a", year: 2026, month: 2, value: 4 },
+    ];
+    const q = queriesOver(
+      data({
+        accounts: [{ id: "a", name: "A", type: "Current", balance: 1 }],
+        accountDetails: rows,
+      }),
+    );
+    const got = await q.getAccountSnapshots("u", { from: "2025-12", to: "2026-01" });
+    expect(got.map((r) => r.value)).toEqual([1, 2, 3]);
   });
 
   it("refuses anything around or after the month", () => {

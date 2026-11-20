@@ -137,19 +137,19 @@ Before and after the kill tests, on the laptop (the 8-core Apple laptop of M0, N
 
 | Package            | Faults | Score before | After: killed / timed out / survived / no coverage / errors | Score after | Honest after | Floor | Laptop time after |
 | ------------------ | -----: | -----------: | ----------------------------------------------------------- | ----------: | -----------: | ----: | ----------------: |
-| `mcp`              |  4,212 |       71.12% | 3,870 / 114 / 188 / 34 / 6                                  |      94.72% |       92.01% |    91 |       24 min 45 s |
+| `mcp`              |  4,212 |       71.12% | 3,893 / 91 / 188 / 34 / 6                                   |      94.72% |       92.56% |    91 |       24 min 45 s |
 | `api-contract`     |  1,255 |       86.37% | 1,166 / 0 / 65 / 6 / 18                                     |      94.26% |       94.26% |    93 |        3 min 17 s |
-| `banking`          |  1,203 |       69.24% | 1,136 / 8 / 53 / 6 / 0                                      |      95.10% |       94.43% |    93 |              29 s |
+| `banking`          |  1,203 |       69.24% | 1,129 / 8 / 60 / 6 / 0                                      |      94.51% |       93.85% |    92 |              29 s |
 | `observability`    |    877 |       88.01% | 841 / 3 / 30 / 3 / 0                                        |      96.24% |       95.90% |    94 |              29 s |
 | `api-client`       |    496 |       80.44% | 451 / 1 / 39 / 5 / 0                                        |      91.13% |       90.93% |    89 |       about 2 min |
 | `format`           |    402 |       83.33% | 374 / 0 / 28 / 0 / 0                                        |      93.03% |       93.03% |    92 |       about 1 min |
 | `business-details` |     67 |       85.07% | 65 / 0 / 2 / 0 / 0                                          |      97.01% |       97.01% |    96 |        about 20 s |
 
-- Each floor is floor(honest after) - 1 (decision 3).
+- Each floor is floor(honest after) - 1 (decision 3). `banking` is lower than its tests first gave (94.43%): the review removed assertions that pinned what the CSV reader does with malformed dates, which is not documented, and those 7 faults are now in the ledger.
 - Fault counts before were a little different for `api-contract` (1,243), `mcp` (4,175) and `observability` (851): main changed their source between the runs (PR 818 and other merges).
 - The first `api-contract` run is skewed low. A git hook briefly put the original source back in the middle of it (see below), and the forced rerun killed many of its survivors with the tests already there.
 - First-run times were taken with the machine's load average between 50 and 190 from other sessions: `mcp` took 75 minutes and `api-contract` 13.5 minutes. The final runs had a load of 9 to 20.
-- `mcp`'s 114 timeouts are mostly load. CI, on the same tests one commit earlier, timed out 53 and killed 3,920. Most were killed in the earlier per-file runs; the ledger lists those as "Timed out under load".
+- `mcp`'s 91 timeouts are mostly load (the last forced run of two files after review fixes killed 23 that had timed out before). CI, on the same tests one commit earlier, timed out 53 and killed 3,920. Most were killed in the earlier per-file runs; the ledger lists those as "Timed out under load".
 
 On CI, workflow run 44642006734 (a forced manual start of all packages on this branch, at commit `d937a3116`, before the last few tests), each shard took: `mcp` 6 min 33 s to 9 min 0 s across 4 shards, `api-contract` 6 min 5 s, `banking` 1 min 44 s, `observability` 2 min 1 s, `api-client` 1 min 56 s, `format` 54 s, `business-details` 30 s. Its scores were the laptop's at that commit, apart from timeouts: `mcp` 94.51% (3,920 killed, 53 timed out, 197 survived, 34 no coverage), `api-contract` 94.02%, `banking` 95.10%, `observability` 94.64%, `api-client` 91.13%, `format` 93.03%, `business-details` 97.01%. FINAL_CI_LINE
 
