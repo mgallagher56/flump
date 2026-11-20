@@ -40,7 +40,8 @@ const RETIRED_PROFILE_FIELDS: Record<string, unknown> = {
 
 /**
  * System audit slice 9 part three: profile fields whose only reader was the deleted mobile app.
- * The responses no longer carry them; PATCH accepts and ignores them for one release.
+ * PATCH accepted and ignored them for one release after PR 827; that release is out, so they are
+ * now unknown keys like any other.
  */
 const RETIRED_PART_THREE_FIELDS: Record<string, unknown> = {
   displayName: "Sam Taylor",
@@ -49,23 +50,21 @@ const RETIRED_PART_THREE_FIELDS: Record<string, unknown> = {
 
 describe("UpdateProfileRequest", () => {
   it.each(Object.entries(RETIRED_PART_THREE_FIELDS))(
-    "still accepts %s for one release (system audit slice 9 part three)",
+    "refuses %s as an unknown key now the one-release grace is over",
     (key, value) => {
-      expect(UpdateProfileRequest.safeParse({ [key]: value }).success).toBe(true);
+      const parsed = UpdateProfileRequest.safeParse({ [key]: value });
+      expect(parsed.success).toBe(false);
+      expect(parsed.error?.issues.map((issue) => issue.code)).toEqual(["unrecognized_keys"]);
     },
   );
 
-  it("accepts an old-shaped payload with displayName, hasSecondIncome and current fields", () => {
+  it("refuses an old-shaped payload that mixes displayName with current fields", () => {
     const parsed = UpdateProfileRequest.safeParse({
-      ...RETIRED_PART_THREE_FIELDS,
       displayName: null,
       secondIncomeMonthly: 400,
       annualSalary: 41000,
     });
-    expect(parsed.success).toBe(true);
-    expect(
-      UpdateProfileRequest.safeParse({ ...RETIRED_PART_THREE_FIELDS, annualSalary: 41000 }).success,
-    ).toBe(true);
+    expect(parsed.success).toBe(false);
   });
 
   it.each(Object.entries(RETIRED_PROFILE_FIELDS))(

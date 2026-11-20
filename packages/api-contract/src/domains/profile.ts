@@ -91,12 +91,6 @@ export const UpdateProfileRequest = z.strictObject({
   /** Net worth choices: count property less its mortgage; count student loans as a debt. */
   netWorthCountsProperty: z.boolean().optional(),
   netWorthCountsStudentLoan: z.boolean().optional(),
-  // Retired (system audit slice 9 part three): accepted and ignored on write for one release, so
-  // a browser tab still running the previous web bundle can save. Their only reader was the
-  // deleted apps/mobile-companion. Nothing writes or returns them (the columns stay, and stay in
-  // the export, until the column-drop PR, which removes them here too).
-  displayName: ShortText.nullish(),
-  hasSecondIncome: z.boolean().optional(),
 });
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
 
