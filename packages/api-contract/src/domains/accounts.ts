@@ -343,6 +343,8 @@ export const ResolvedAccountDto = z.strictObject({
   /** Contribution to net worth under the user's own choices (0 when left out). */
   netWorthBalance: Amount,
   latestBalance: Amount,
+  /** The person's share (0-100) the balances are already taken at: 100 when sole (E34). */
+  sharePercent: z.number().min(0).max(100),
   overdrawnAmount: Amount,
   interestRate: Rate,
   interestRateKnown: z.boolean(),

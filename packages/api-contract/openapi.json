@@ -8338,6 +8338,11 @@
                                       "Overdraft"
                                     ],
                                     "type": "string"
+                                  },
+                                  "sharePercent": {
+                                    "maximum": 100,
+                                    "minimum": 0,
+                                    "type": "number"
                                   }
                                 },
                                 "required": [
@@ -8350,6 +8355,7 @@
                                   "nominalBalance",
                                   "netWorthBalance",
                                   "latestBalance",
+                                  "sharePercent",
                                   "overdrawnAmount",
                                   "interestRate",
                                   "interestRateKnown",

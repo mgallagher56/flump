@@ -134,7 +134,8 @@ function contextPackLines(
   const listed: BudgetEntryItem[] = [];
   const notSet: ContextPackBudgetLineNotSet[] = [];
   for (const entry of listedBudgetEntries(entries, resolved)) {
-    const { linkedRowId: _id, notSet: isNotSet, ...line } = entry;
+    // The pack's amount is already the person's; the display-only source share stays out (E34 C1).
+    const { linkedRowId: _id, notSet: isNotSet, sourceSharePercent: _share, ...line } = entry;
     if (isNotSet) {
       const { amount: _amount, ...rest } = line;
       notSet.push({ ...rest, notSet: true });
