@@ -1,10 +1,11 @@
 // @vitest-environment node
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/config.server", () => ({ apiConfig: { apiBaseUrl: "https://backend.test" } }));
 vi.mock("~/utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
 import { runWithRequestId } from "~/security/request-id.server";
+import { getAuthSession } from "~/utils/auth.server";
 import {
   API_ALLOW_LIST,
   forwardedQuery,
@@ -651,5 +652,295 @@ describe("v1 write conventions and paging (BE-10)", () => {
       fetchImpl: ok({ "X-Next-Cursor": "not a cursor" }) as never,
     });
     expect(res.headers.get("X-Next-Cursor")).toBeNull();
+  });
+});
+
+describe("query and path checks", () => {
+  it("forwards a limit of one to four digits only", () => {
+    const q = (text: string) => forwardedQuery(new URLSearchParams(text), "GET", "/accounts");
+    expect(q("limit=9999")).toBe("?limit=9999");
+    expect(q("limit=12345")).toBeNull();
+    expect(q("limit=x1")).toBeNull();
+    expect(q("limit=1x")).toBeNull();
+  });
+
+  it("refuses any query string on a write", async () => {
+    expect(forwardedQuery(new URLSearchParams("limit=10"), "POST", "/accounts")).toBeNull();
+    const fetchImpl = vi.fn();
+    const res = await run(req("POST", "/api/accounts?limit=10", { body: "{}" }), {
+      fetchImpl: fetchImpl as never,
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ kind: "client" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("rejects a path with a control character", () => {
+    expect(normaliseApiPath("/api/accounts\u0000")).toBeNull();
+    expect(normaliseApiPath("/api/accounts\u001f")).toBeNull();
+    expect(normaliseApiPath("/api/accounts ")).toBe("/accounts ");
+  });
+
+  it("keeps the bare root rather than trimming it to nothing", () => {
+    expect(normaliseApiPath("/api/")).toBe("/");
+  });
+});
+
+describe("response headers", () => {
+  it("marks every refusal as JSON that is never cached", async () => {
+    const refusals = [
+      await run(req("GET", "/api/nope")),
+      await run(req("GET", "/api/accounts", { headers: { "X-Flump-Request": null } })),
+      await run(req("GET", "/api/accounts"), { resolveSession: async () => null }),
+    ];
+    expect(refusals.map((r) => r.status)).toEqual([404, 403, 401]);
+    for (const res of refusals) {
+      expect(res.headers.get("Content-Type")).toBe("application/json");
+      expect(res.headers.get("Cache-Control")).toBe("no-store");
+    }
+  });
+
+  it("marks a successful body as uncached JSON, with no paging or version header it was not sent", async () => {
+    const res = await run(req("GET", "/api/accounts"), {
+      fetchImpl: vi.fn(async () => new Response("[]", { status: 200 })) as never,
+    });
+    expect(res.headers.get("Content-Type")).toBe("application/json");
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+    expect(res.headers.get("X-Next-Cursor")).toBeNull();
+    expect(res.headers.get("ETag")).toBeNull();
+  });
+
+  it("passes a valid ETag back and drops one that is not this API's", async () => {
+    const etag = '"2026-11-14T09:30:00.000Z"';
+    const withEtag = (value: string) =>
+      run(req("GET", "/api/accounts"), {
+        fetchImpl: vi.fn(
+          async () => new Response("[]", { status: 200, headers: { ETag: value } }),
+        ) as never,
+      });
+    expect((await withEtag(etag)).headers.get("ETag")).toBe(etag);
+    expect((await withEtag('"not-a-date"')).headers.get("ETag")).toBeNull();
+  });
+
+  it("answers 502 bad-response when the backend body cannot be read", async () => {
+    const broken = new ReadableStream({
+      start(controller) {
+        controller.error(new Error("connection reset"));
+      },
+    });
+    const res = await run(req("GET", "/api/accounts"), {
+      fetchImpl: vi.fn(async () => new Response(broken, { status: 200 })) as never,
+    });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ kind: "bad-response" });
+  });
+});
+
+describe("body cap and forwarding", () => {
+  const streamed = (parts: string[]) =>
+    new Request(`${ORIGIN}/api/accounts`, {
+      method: "POST",
+      headers: { "X-Flump-Request": "1", Origin: ORIGIN, "Content-Type": "application/json" },
+      body: new ReadableStream({
+        start(controller) {
+          for (const part of parts) controller.enqueue(new TextEncoder().encode(part));
+          controller.close();
+        },
+      }),
+      // @ts-expect-error duplex is required for stream bodies in Node
+      duplex: "half",
+    });
+  const sentBody = (fetchImpl: ReturnType<typeof vi.fn>) =>
+    (fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body;
+
+  it("refuses a body whose declared length is over the cap without reading it", async () => {
+    const fetchImpl = vi.fn();
+    const res = await run(
+      req("POST", "/api/accounts", {
+        body: "{}",
+        headers: { "Content-Length": String(MAX_BODY_BYTES + 1) },
+      }),
+      { fetchImpl: fetchImpl as never },
+    );
+    expect(res.status).toBe(413);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("accepts a body of exactly the cap, declared or streamed, and forwards it unchanged", async () => {
+    // {"p":"xxx...x"} is 8 characters of wrapping plus the padding, so the padding is the cap less 8.
+    const body = JSON.stringify({ p: "x".repeat(MAX_BODY_BYTES - 8) });
+    expect(body.length).toBe(MAX_BODY_BYTES);
+
+    const declared = vi.fn(async () => new Response("{}", { status: 200 }));
+    const one = await run(
+      req("POST", "/api/accounts", { body, headers: { "Content-Length": String(body.length) } }),
+      { fetchImpl: declared as never },
+    );
+    expect(one.status).toBe(200);
+    expect(sentBody(declared)).toBe(body);
+
+    const streamedFetch = vi.fn(async () => new Response("{}", { status: 200 }));
+    const two = await run(streamed([body]), { fetchImpl: streamedFetch as never });
+    expect(two.status).toBe(200);
+    expect(sentBody(streamedFetch)).toBe(body);
+  });
+
+  it("joins a body sent in several pieces in order", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 200 }));
+    const res = await run(streamed(['{"name":', '"Joint ', 'savings"}']), {
+      fetchImpl: fetchImpl as never,
+    });
+    expect(res.status).toBe(200);
+    expect(sentBody(fetchImpl)).toBe('{"name":"Joint savings"}');
+  });
+
+  it.each([
+    ["application/json;charset=utf-8", 200],
+    ["application/json ; charset=utf-8", 200],
+    ["Application/JSON", 200],
+    ["application/jsonp; charset=utf-8", 415],
+    ["text/x-application/json", 415],
+  ])("Content-Type %s gives %i", async (type, status) => {
+    const res = await run(
+      req("POST", "/api/accounts", { body: "{}", headers: { "Content-Type": type } }),
+    );
+    expect(res.status).toBe(status);
+  });
+});
+
+describe("the default session resolver", () => {
+  afterEach(() => vi.mocked(getAuthSession).mockReset());
+
+  const runDefault = (request: Request, fetchImpl = vi.fn(async () => new Response("{}"))) =>
+    handleApiProxy({ request, params: {}, context: {} } as never, {
+      fetchImpl: fetchImpl as never,
+    });
+
+  it("asks the auth helper without forcing a sign-in, and forwards its token and refreshed cookie", async () => {
+    const token = ["access", "token", String(Date.now())].join("-");
+    vi.mocked(getAuthSession).mockResolvedValue({
+      user: { id: 42 },
+      accessToken: token,
+      headers: new Headers({ "Set-Cookie": "wos-session=refreshed; Path=/" }),
+    } as never);
+    const fetchImpl = vi.fn(async () => new Response("{}"));
+    const res = await runDefault(req("GET", "/api/accounts"), fetchImpl);
+    expect(res.status).toBe(200);
+    expect(getAuthSession).toHaveBeenCalledWith(expect.anything(), { ensureSignedIn: false });
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${token}`);
+    expect(res.headers.getSetCookie()).toEqual(["wos-session=refreshed; Path=/"]);
+  });
+
+  it.each([
+    ["no user", { user: null, accessToken: "tok" }],
+    ["no access token", { user: { id: "user_1" }, accessToken: undefined }],
+  ])("401 with %s, without calling the backend", async (_label, auth) => {
+    vi.mocked(getAuthSession).mockResolvedValue({ ...auth, headers: undefined } as never);
+    const fetchImpl = vi.fn();
+    const res = await runDefault(req("GET", "/api/accounts"), fetchImpl);
+    expect(res.status).toBe(401);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("refusal bodies and upstream failures", () => {
+  it("names a refused write-convention header as a client error", async () => {
+    const etag = '"2026-11-14T09:30:00.000Z"';
+    for (const request of [
+      req("PATCH", `/api/accounts/${UUID}`, { body: "{}", headers: { "Idempotency-Key": "k" } }),
+      req("PATCH", `/api/accounts/${UUID}`, { body: "{}", headers: { "If-Match": "*" } }),
+      req("POST", "/api/accounts", { body: "{}", headers: { "If-Match": etag } }),
+    ]) {
+      const fetchImpl = vi.fn();
+      const res = await run(request, { fetchImpl: fetchImpl as never });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ kind: "client" });
+      expect(fetchImpl).not.toHaveBeenCalled();
+    }
+  });
+
+  it("turns any 3xx, including 300, into a server error", async () => {
+    for (const status of [300, 302, 500]) {
+      const res = await run(req("GET", "/api/accounts"), {
+        fetchImpl: vi.fn(async () => new Response(null, { status })) as never,
+      });
+      expect(res.status).toBe(502);
+      expect(await res.json()).toEqual({ kind: "server" });
+    }
+  });
+
+  it("keeps Retry-After only on a 429 and only as a whole number of seconds", async () => {
+    const answer = (status: number, retryAfter?: string) =>
+      run(req("GET", "/api/accounts"), {
+        fetchImpl: vi.fn(
+          async () =>
+            new Response("{}", {
+              status,
+              headers: retryAfter === undefined ? {} : { "Retry-After": retryAfter },
+            }),
+        ) as never,
+      });
+    expect((await answer(429, "120")).headers.get("Retry-After")).toBe("120");
+    expect((await answer(400, "42")).headers.get("Retry-After")).toBeNull();
+    expect((await answer(429)).headers.get("Retry-After")).toBeNull();
+    expect((await answer(429, "in 42")).headers.get("Retry-After")).toBeNull();
+    expect((await answer(429, "42s")).headers.get("Retry-After")).toBeNull();
+    expect((await answer(429, "1234567")).headers.get("Retry-After")).toBeNull();
+  });
+});
+
+describe("cancellation and clean-up", () => {
+  afterEach(() => vi.useRealTimers());
+
+  const hanging = (seen: { signal?: AbortSignal }) =>
+    vi.fn(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          seen.signal = init.signal ?? undefined;
+          if (init.signal?.aborted) reject(init.signal.reason);
+          init.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+        }),
+    );
+  const withSignal = (signal: AbortSignal) =>
+    new Request(`${ORIGIN}/api/accounts`, {
+      headers: { "X-Flump-Request": "1", Origin: ORIGIN },
+      signal,
+    });
+
+  it("cancels the backend call when the browser has already gone", async () => {
+    const browser = new AbortController();
+    browser.abort(new Error("navigated away"));
+    const seen: { signal?: AbortSignal } = {};
+    const res = await run(withSignal(browser.signal), { fetchImpl: hanging(seen) as never });
+    expect(seen.signal?.aborted).toBe(true);
+    expect(res.status).toBe(503);
+  });
+
+  it("cancels the backend call when the browser goes mid-request", async () => {
+    const browser = new AbortController();
+    const seen: { signal?: AbortSignal } = {};
+    const pending = run(withSignal(browser.signal), { fetchImpl: hanging(seen) as never });
+    await vi.waitFor(() => expect(seen.signal).toBeDefined());
+    expect(seen.signal?.aborted).toBe(false);
+    browser.abort(new Error("navigated away"));
+    expect((await pending).status).toBe(503);
+    expect(seen.signal?.aborted).toBe(true);
+  });
+
+  it("leaves no timer running and stops listening to the browser once it has answered", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const browser = new AbortController();
+    let upstream: AbortSignal | undefined;
+    const res = await run(withSignal(browser.signal), {
+      fetchImpl: vi.fn(async (_url: string, init: RequestInit) => {
+        upstream = init.signal ?? undefined;
+        return new Response("{}", { status: 200 });
+      }) as never,
+    });
+    expect(res.status).toBe(200);
+    expect(vi.getTimerCount()).toBe(0);
+    browser.abort(new Error("closed the tab later"));
+    expect(upstream?.aborted).toBe(false);
   });
 });
