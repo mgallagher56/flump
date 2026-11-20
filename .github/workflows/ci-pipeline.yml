@@ -12,6 +12,7 @@ on:
     - cron: "17 6 * * 1"
 
 env:
+  TURBO_FORCE: "true"
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
