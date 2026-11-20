@@ -846,6 +846,11 @@ export const CASCADE_ONLY_TABLES: Readonly<Record<string, { parent: string; reas
     reason:
       "system audit slice 5 migration before-image (the ownership and share of renters' linked rent lines it set to sole) kept 90 days so its down() can restore them; rows go with the budget line by ON DELETE CASCADE; not exported, as it is a rollback copy and the current lines are in the export",
   },
+  budget_entry_share_backfill: {
+    parent: "budget_entries",
+    reason:
+      "E34 C1 migration before-image (the ownership and share of budget lines it set to sole with no share) kept 90 days so its down() can restore them; rows go with the budget line by ON DELETE CASCADE; not exported, as it is a rollback copy and the current lines are in the export",
+  },
   rental_share_onto_property_backfill: {
     parent: "accounts",
     reason:

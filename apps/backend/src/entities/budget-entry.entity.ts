@@ -13,9 +13,16 @@ import {
 // E34 C1 (migration AddBudgetEntryJointShare1795350000000). Declared here too so a
 // synchronize-built dev database keeps them.
 @Check("CHK_budget_entries_ownership", `"ownership" IN ('sole', 'joint')`)
+// One home per value (migration BudgetEntryShareOneHome1795570000000): a joint share is 1 to 99,
+// a sole line holds no share, and a take-home, savings or debt line takes its share from its link.
 @Check(
   "CHK_budget_entries_share_percent",
-  `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 100)`,
+  `"share_percent" IS NULL OR ("share_percent" >= 1 AND "share_percent" <= 99)`,
+)
+@Check("CHK_budget_entries_sole_no_share", `"ownership" = 'joint' OR "share_percent" IS NULL`)
+@Check(
+  "CHK_budget_entries_linked_no_share",
+  `"link_kind" IS NULL OR "link_kind" = 'housing' OR ("ownership" = 'sole' AND "share_percent" IS NULL)`,
 )
 // System audit decision 1 (migrations AddBudgetEntryLinkKind1795440000000 and, for the savings
 // and debt kinds, LinkBudgetLinesToAccounts1795490000000).
@@ -83,7 +90,10 @@ export class BudgetEntry {
   @Column({ type: "varchar", default: "sole" })
   ownership: "sole" | "joint";
 
-  /** E34 C1: the user's percentage share (1-100) when joint; null when sole. */
+  /**
+   * E34 C1: the user's percentage share (1-99) when joint; null when sole, and always null on a
+   * line linked to take-home pay, a savings account or a debt (it takes its share from there).
+   */
   @Column({ name: "share_percent", type: "smallint", nullable: true })
   sharePercent: number | null;
 

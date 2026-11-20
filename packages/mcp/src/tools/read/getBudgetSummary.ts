@@ -57,8 +57,12 @@ const result = z.object({
         monthlyGbp: z.number(),
         isIncome: z.boolean(),
         isEssential: z.boolean(),
-        /** The percentage of the entry counted: 100 when sole, the user's share when joint. */
-        sharePercent: z.number(),
+        /**
+         * The percentage monthlyGbp is taken at: 100 when sole, the user's share when joint. A line
+         * linked to an account or the housing payment shows that source's share (E34 C1); null
+         * when the housing payment adds mortgages held at different shares.
+         */
+        sharePercent: z.number().nullable(),
       }),
     )
     .optional(),
@@ -146,7 +150,9 @@ export const getBudgetSummary = defineFlumpTool({
             monthlyGbp: round2(budgetRowMonthly(e)),
             isIncome: e.isIncome,
             isEssential: e.isEssential,
-            sharePercent: resolveBudgetEntrySharePercent(e),
+            sharePercent: e.linked
+              ? (e.sourceSharePercent ?? null)
+              : resolveBudgetEntrySharePercent(e),
           }))
         : undefined;
 

@@ -4191,7 +4191,8 @@
                       "sharePercent": {
                         "anyOf": [
                           {
-                            "maximum": 100,
+                            "description": "Your share of a joint line, 1 to 99. Absent or null for a sole line, and for a line linked to take-home pay or an account, which takes its share from there.",
+                            "maximum": 99,
                             "minimum": 1,
                             "type": "integer"
                           },
@@ -4398,6 +4399,7 @@
                   "sharePercent": {
                     "anyOf": [
                       {
+                        "description": "Your share of a joint line, 1 to 99. Absent or null for a sole line, and for a line linked to take-home pay or an account, which takes its share from there. The server refuses 100 on a joint line: mark the line sole instead.",
                         "maximum": 100,
                         "minimum": 1,
                         "type": "integer"
@@ -4497,7 +4499,8 @@
                     "sharePercent": {
                       "anyOf": [
                         {
-                          "maximum": 100,
+                          "description": "Your share of a joint line, 1 to 99. Absent or null for a sole line, and for a line linked to take-home pay or an account, which takes its share from there.",
+                          "maximum": 99,
                           "minimum": 1,
                           "type": "integer"
                         },
@@ -5020,6 +5023,7 @@
                   "sharePercent": {
                     "anyOf": [
                       {
+                        "description": "Your share of a joint line, 1 to 99. Absent or null for a sole line, and for a line linked to take-home pay or an account, which takes its share from there. The server refuses 100 on a joint line: mark the line sole instead.",
                         "maximum": 100,
                         "minimum": 1,
                         "type": "integer"
@@ -5118,7 +5122,8 @@
                     "sharePercent": {
                       "anyOf": [
                         {
-                          "maximum": 100,
+                          "description": "Your share of a joint line, 1 to 99. Absent or null for a sole line, and for a line linked to take-home pay or an account, which takes its share from there.",
+                          "maximum": 99,
                           "minimum": 1,
                           "type": "integer"
                         },

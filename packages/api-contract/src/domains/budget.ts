@@ -19,6 +19,29 @@ export const BUDGET_ENTRY_LINK_KINDS = ["take_home", "housing", "savings", "debt
 export const BudgetEntryLinkKind = z.enum(BUDGET_ENTRY_LINK_KINDS);
 export type BudgetEntryLinkKind = z.infer<typeof BudgetEntryLinkKind>;
 
+const BUDGET_SHARE_DESCRIPTION =
+  "Your share of a joint line, 1 to 99. Absent or null for a sole line, and for a line linked to take-home pay or an account, which takes its share from there.";
+
+/**
+ * A budget line's stored share (E34 C1, one home per value): 1 to 99 on a joint line. A line
+ * linked to take-home pay, a savings account or a debt is always sole with no share.
+ */
+export const BudgetSharePercent = z
+  .number()
+  .int()
+  .min(1)
+  .max(99)
+  .meta({ description: BUDGET_SHARE_DESCRIPTION });
+
+/**
+ * The share a request may send. Its bound stays at the accounts' 100 so older clients are not
+ * broken by the wire contract; the server refuses 100 on a joint line (mark it sole instead), and
+ * any share on a line linked to take-home pay or an account.
+ */
+const BudgetSharePercentRequest = SharePercent.meta({
+  description: `${BUDGET_SHARE_DESCRIPTION} The server refuses 100 on a joint line: mark the line sole instead.`,
+});
+
 export const CreateBudgetEntryRequest = z.strictObject({
   category: BudgetCategory,
   name: z.string().trim().min(1).max(120).optional(),
@@ -29,9 +52,12 @@ export const CreateBudgetEntryRequest = z.strictObject({
   isIncome: z.boolean().optional(),
   isEssential: z.boolean().optional(),
   notes: Notes.nullish(),
-  /** E34 C1: as on accounts. Joint without a share stores 50; sole stores no share. */
+  /**
+   * E34 C1: joint without a share stores 50; sole stores no share. A line linked to take-home pay
+   * or an account is always sole and refuses a share of its own.
+   */
   ownership: AccountOwnership.optional(),
-  sharePercent: SharePercent.nullish(),
+  sharePercent: BudgetSharePercentRequest.nullish(),
   /**
    * Create the line linked to a saved fact ("Add your take-home pay"): its stored amount is set to
    * 0 and never read. Null or omitted for an ordinary line.
@@ -56,7 +82,7 @@ export const UpdateBudgetEntryRequest = z.strictObject({
   notes: Notes.nullish(),
   /** Omitted ownership and share stay as saved. */
   ownership: AccountOwnership.optional(),
-  sharePercent: SharePercent.nullish(),
+  sharePercent: BudgetSharePercentRequest.nullish(),
   /**
    * Link the row to a saved fact (its stored amount is then set to 0 and never read), or null to
    * unlink it: send the figure the row keeps as `amount` with the null.
@@ -101,8 +127,8 @@ export const BudgetEntryDto = z.strictObject({
   isDefault: z.boolean(),
   /** E34 C1: "sole" or "joint"; rows from before the columns existed read as sole. */
   ownership: AccountOwnership.default("sole"),
-  /** The user's share (1-100) of a joint entry; null when sole. */
-  sharePercent: SharePercent.nullable().default(null),
+  /** The user's share (1-99) of a joint entry; null when sole or linked to take-home pay or an account. */
+  sharePercent: BudgetSharePercent.nullable().default(null),
   /**
    * The saved fact the row is linked to, or null; rows from before the column read null. When set,
    * `amount` is a stored 0 that is never read: the engine resolves the line.

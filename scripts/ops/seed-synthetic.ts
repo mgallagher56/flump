@@ -53,6 +53,9 @@ export const USER_DATA_TABLES = [
   // System audit slice 5 before-image (renters' linked rent lines it set to sole; child of
   // budget_entries, ON DELETE CASCADE).
   "rent_share_backfill",
+  // E34 C1 before-image (budget lines set to sole with no share; child of budget_entries,
+  // ON DELETE CASCADE).
+  "budget_entry_share_backfill",
   "budget_entries",
   "agent_audit_events",
   // BE-06 sensitive-action records and consents (user_id is null only for user.deleted rows).

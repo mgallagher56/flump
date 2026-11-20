@@ -162,6 +162,13 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     reason:
       "system audit slice 7 before-image, kept 90 days so its migration can be rolled back; after that its down() restores nothing",
   },
+  {
+    name: "budget_entry_share_backfill",
+    table: "budget_entry_share_backfill",
+    where: `"backfilled_at" < $1::timestamptz - interval '90 days'`,
+    reason:
+      "E34 C1 one-home share before-image, kept 90 days so its migration can be rolled back; after that its down() restores nothing",
+  },
 ];
 
 /** Profiles with no authenticated request for this long are due for erasure (D4). */

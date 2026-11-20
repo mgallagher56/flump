@@ -232,6 +232,9 @@ export interface RetirementBudgetTargetLine {
   frequency?: BudgetEntryItem["frequency"];
   isIncome?: boolean;
   isHousing?: boolean;
+  /** E34 C1 (audit JO-4): a joint line counts at `sharePercent` (50 when unset), as on Budget. */
+  ownership?: BudgetEntryItem["ownership"];
+  sharePercent?: BudgetEntryItem["sharePercent"];
   status: BudgetLineRetirementStatus;
 }
 
@@ -266,6 +269,8 @@ function resolveLineMonthlyAmount(line: RetirementBudgetTargetLine): number {
     budgetRowMonthly({
       amount: line.amount ?? 0,
       frequency: line.frequency ?? "monthly",
+      ownership: line.ownership,
+      sharePercent: line.sharePercent,
     }),
   );
 }

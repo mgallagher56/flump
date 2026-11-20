@@ -4,6 +4,7 @@ import type {
 } from "@flump/api-contract";
 import {
   type AccountDetailInput,
+  applyBudgetEntryShare,
   type BuildRetirementPlanInputArgs,
   buildRetirementPlanInput,
   calculateEvenRealDrawdown,
@@ -17,6 +18,7 @@ import {
   type RetirementInputBuildResult,
   type RetirementInputOverrides,
   type RetirementPlanResult,
+  resolveBudgetEntrySharePercent,
   resolveUkTaxYear,
   retirementBudgetLines,
   selectRetirementCountedSeries,
@@ -917,8 +919,17 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                         <div key={entry.id} className={budgetLineItem()}>
                           <div>
                             <div className={budgetLineName()}>{entry.name}</div>
-                            <div className={budgetLineAmount()}>
-                              {formatWholeGbp(entry.amount)} / {entry.frequency}
+                            {/* E34 C1 (JO-4): a joint line shows the person's share, as the plan counts it. */}
+                            <div
+                              className={budgetLineAmount()}
+                              data-testid={`retirement-budget-line-amount-${entry.id}`}
+                              id={`retirement-budget-line-amount-${entry.id}`}
+                            >
+                              {formatWholeGbp(applyBudgetEntryShare(entry.amount, entry))} /{" "}
+                              {entry.frequency}
+                              {entry.ownership === "joint"
+                                ? `, your ${resolveBudgetEntrySharePercent(entry)}% share`
+                                : null}
                             </div>
                           </div>
                           <div className={toggleRow()}>

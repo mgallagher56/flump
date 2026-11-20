@@ -61,25 +61,64 @@ function validateOwnership(value: unknown): AccountOwnership | undefined {
   throw new BadRequestException(`ownership must be one of ${ACCOUNT_OWNERSHIPS.join(", ")}`);
 }
 
+/**
+ * A share as sent: a whole number from 0 to 100, or null. 0 and 100 pass here so the reply can say
+ * what they mean (storedShare refuses them on a joint line); a sole line drops whatever share it
+ * is sent.
+ */
 function validateSharePercent(value: unknown): number | null | undefined {
   if (value === undefined || value === null) return value;
-  if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100) {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 100) {
     return value;
   }
-  throw new BadRequestException("sharePercent must be an integer between 1 and 100, or null");
+  throw new BadRequestException("sharePercent must be an integer between 1 and 99, or null");
+}
+
+/** The 400 for a share sent on a line that takes its share from its link (E34 C1, one home). */
+export const LINKED_LINE_SHARE_MESSAGE =
+  "A line linked to your take-home pay or to an account takes its share from there, so it cannot have its own share";
+/** The 400 for a joint line at 0%. */
+export const ZERO_SHARE_MESSAGE =
+  "A share of 0% means none of this line is yours, so leave it out of your budget instead";
+/** The 400 for a joint line at 100%. */
+export const FULL_SHARE_MESSAGE =
+  "A share of 100% means all of this line is yours, so mark it sole instead";
+
+/**
+ * True for a line whose share lives elsewhere (E34 C1, one home per value): take-home pay is the
+ * person's own, and a savings or debt line reads its account's monthly amount already at the
+ * account's share. A housing line keeps its own share (it is the home of a shared rent's share,
+ * audit JO-8), and so does an unlinked line.
+ */
+function takesShareFromLink(linkKind: BudgetEntry["linkKind"] | undefined): boolean {
+  return linkKind === "take_home" || linkKind === "savings" || linkKind === "debt";
 }
 
 /**
- * The stored pair for an entry (E34 C1, the accounts rule): joint keeps its share, or 50 when
- * none is given; sole never keeps a share.
+ * The stored pair for an entry (E34 C1). A line that takes its share from its link stores sole
+ * with no share, and refuses one sent with it. Otherwise joint keeps its share (1 to 99), or 50
+ * when none is given, and sole never keeps a share.
  */
 function storedShare(
+  linkKind: BudgetEntry["linkKind"] | undefined,
   ownership: AccountOwnership,
   sharePercent: number | null | undefined,
+  sent: { ownership: AccountOwnership | undefined; sharePercent: number | null | undefined },
 ): { ownership: AccountOwnership; sharePercent: number | null } {
-  return ownership === "joint"
-    ? { ownership, sharePercent: sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT }
-    : { ownership: "sole", sharePercent: null };
+  if (takesShareFromLink(linkKind)) {
+    if (
+      sent.ownership === "joint" ||
+      (sent.sharePercent !== undefined && sent.sharePercent !== null)
+    ) {
+      throw new BadRequestException(LINKED_LINE_SHARE_MESSAGE);
+    }
+    return { ownership: "sole", sharePercent: null };
+  }
+  if (ownership !== "joint") return { ownership: "sole", sharePercent: null };
+  const share = sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT;
+  if (share === 0) throw new BadRequestException(ZERO_SHARE_MESSAGE);
+  if (share === 100) throw new BadRequestException(FULL_SHARE_MESSAGE);
+  return { ownership: "joint", sharePercent: share };
 }
 
 /** Budget entries and custom categories (BE-13, audit M19): the logic the controller used to hold. */
@@ -147,10 +186,12 @@ export class BudgetService {
     if (name === undefined) {
       throw new BadRequestException("Budget entry name is required");
     }
-    const share = storedShare(
-      validateOwnership(body.ownership) ?? "sole",
-      validateSharePercent(body.sharePercent),
-    );
+    const ownership = validateOwnership(body.ownership);
+    const sharePercent = validateSharePercent(body.sharePercent);
+    const share = storedShare(body.linkKind, ownership ?? "sole", sharePercent, {
+      ownership,
+      sharePercent,
+    });
     const entry = this.budgetEntryRepository.create({
       userId,
       category: body.category,
@@ -209,6 +250,15 @@ export class BudgetService {
     if (!entry) {
       throw new NotFoundException("Budget entry not found");
     }
+    // Worked out before any field changes so a refused share never reaches the row. Omitted
+    // ownership and share stay as saved; an explicit null share on a joint entry is 50. Linking a
+    // joint row to take-home pay or an account clears its share (the link's share replaces it).
+    const share = storedShare(
+      body.linkKind !== undefined ? body.linkKind : entry.linkKind,
+      (ownership ?? entry.ownership) === "joint" ? "joint" : "sole",
+      sharePercent !== undefined ? sharePercent : entry.sharePercent,
+      { ownership, sharePercent },
+    );
 
     if (body.category !== undefined) entry.category = body.category;
     if (body.name !== undefined || body.title !== undefined) {
@@ -245,11 +295,7 @@ export class BudgetService {
       // A linked line stores no amount of its own: the stored 0 is never read.
       entry.amount = 0;
     }
-    // Omitted ownership and share stay as saved; an explicit null share on a joint entry is 50.
-    const nextOwnership: AccountOwnership =
-      (ownership ?? entry.ownership) === "joint" ? "joint" : "sole";
-    const nextShare = sharePercent !== undefined ? sharePercent : entry.sharePercent;
-    Object.assign(entry, storedShare(nextOwnership, nextShare));
+    Object.assign(entry, share);
 
     try {
       return await repository.save(entry);

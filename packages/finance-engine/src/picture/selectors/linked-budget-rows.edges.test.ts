@@ -96,6 +96,7 @@ describe("withLinkedBudgetRows: a further row linked to a fact already read", ()
       isEssential: false,
       ownership: "sole",
       sharePercent: null,
+      sourceSharePercent: null,
       linked: "housing",
       linkedRowId: "h2",
       notSet: true,
@@ -117,6 +118,7 @@ describe("withLinkedBudgetRows: a further row linked to a fact already read", ()
         isEssential: true,
         ownership: "sole",
         sharePercent: null,
+        sourceSharePercent: null,
         linked: "take_home",
         linkedRowId: "x",
         notSet: true,
@@ -202,6 +204,7 @@ describe("withLinkedBudgetRows: the lines the engine adds", () => {
       isEssential: true,
       ownership: "sole",
       sharePercent: null,
+      sourceSharePercent: 100,
       linked: "take_home",
     });
   });
@@ -246,6 +249,7 @@ describe("withLinkedBudgetRows: the lines the engine adds", () => {
       isEssential: true,
       ownership: "sole",
       sharePercent: null,
+      sourceSharePercent: 100,
       linked: "housing",
     });
   });

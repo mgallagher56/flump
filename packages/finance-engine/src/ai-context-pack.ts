@@ -86,6 +86,13 @@ export interface BudgetEntryItem {
   ownership?: "sole" | "joint" | string | null;
   sharePercent?: number | null;
   /**
+   * A linked line only: the share (0-100) its figure was already taken at, set by
+   * `withLinkedBudgetRows`. The account's share for a savings or debt line, the shared rent's for
+   * a housing line, 100 for take-home pay; null when the housing figure adds mortgages held at
+   * different shares. Shown only: the line counts at 100%, so it is never applied again.
+   */
+  sourceSharePercent?: number | null;
+  /**
    * Set only on a line the engine makes from a saved fact (owner items 7 and 33b, audit slice 5):
    * "take_home" from the profile's salary, "housing" from the housing details, "savings" and
    * "debt" from one account's monthly amount. Never stored.

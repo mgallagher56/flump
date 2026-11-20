@@ -654,7 +654,7 @@ links:
   - {
       id: L56,
       group: J. Joint ownership,
-      verdict: broken,
+      verdict: holds,
       checked: code,
       findings: [JO-4],
       statement: "A joint budget entry counts at its share in every budget figure.",
@@ -1162,6 +1162,11 @@ facts:
           note: "the page deliberately shows whole balances",
         }
       - { surface: mcp-read, path: apps/backend/src/modules/agent/agent-data.service.ts }
+      - {
+          surface: mcp-read,
+          path: packages/mcp/src/tools/read/listAccounts.ts,
+          note: "sharePercent beside a balance already at the share (E34 C1)",
+        }
     links: [L18, L23, L55, L67]
     verdict: broken
     findings: [JO-5, JO-6, JO-9, JO-10, SA-5]
@@ -1671,8 +1676,8 @@ facts:
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
     links: [L33, L34, L35, L36, L39, L56, L58]
     verdict: broken
-    findings: [BU-1, BU-3, BU-7, BU-10, JO-4]
-    note: The Retirement page loads these rows.
+    findings: [BU-1, BU-3, BU-7, BU-10]
+    note: "The Retirement page loads these rows. A line's share (E34 C1) has one home: an unlinked line stores its own ownership and share (1 to 99); a line linked to take-home pay or to an account stores none (CHECK CHK_budget_entries_linked_no_share) and counts its source at the source's share, the account's for a savings or debt line; a linked housing line stores the share of a shared rent (JO-8). Retirement's budget target counts a joint line at its share (JO-4 fixed)."
 
   - id: budget-entry-link-kind
     name: Which saved fact a budget line is linked to
@@ -2547,7 +2552,7 @@ figures:
       - { surface: mcp-simulate, path: packages/mcp/src/tools/simulate/simulateRetirement.ts }
     links: [L58, L59]
     verdict: broken
-    findings: [HM-6, JO-4]
+    findings: [HM-6]
     note: One calculation. The web page feeds it the saved budget rows. A single rental with an ordinary name can still be taken as the home loan.
 
   - id: check-in-calculated-balance
