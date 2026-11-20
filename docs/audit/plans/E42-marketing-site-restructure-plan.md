@@ -2,7 +2,7 @@
 
 Decisions: open
 
-> Status: plan for owner approval. Nine of ten decisions were answered on 2026-11-20 (section 7.1); D9 is open. No code. Written 2026-11-20 against `origin/main` (`da6284f0c`). Paths are relative to the repository root. All copy in this document is a draft for the owner to react to (E7: the owner signs off all marketing copy).
+> Status: plan for owner approval. All ten decisions were answered on 2026-11-20 (section 7.1). Three follow-up points wait for the owner (the AI connection wording, the "Preview" label, the headline's punctuation). No code. Written 2026-11-20 against `origin/main` (`da6284f0c`). Paths are relative to the repository root. All copy in this document is a draft for the owner to react to (E7: the owner signs off all marketing copy).
 
 ## 1. Summary
 
@@ -10,10 +10,12 @@ Decisions: open
 - Today the site has eight page types and none is about an app area. The app has five navigation entries (Accounts, Budget, Pay, Savings and pension, Debt and borrowing) plus Home, the monthly check-in, calculators and settings. The site names none of them.
 - Proposal: a "Flump features" page (navigation label "Features") and five area pages named exactly as the app names them, a rebuilt home page that shows all five areas in one picture, and a top navigation of three links. Existing pages stay, with small corrections.
 - Retirement is on the site, inside Savings and pension (owner, 20 November 2026: it should be open to everyone; this supersedes RD9). The AI connection is presented as a feature like the others, with plain words on how a tester gets it (owner, 20 November 2026). Imports and bank connections are not mentioned.
-- Calculators leave the top navigation. A few plain ones sit inside the area page they belong to; the rest are a numbered decision (D9).
-- Ten decisions are in section 7. The owner has answered nine (section 7.1). One is open: which calculators stay (D9), which the owner is choosing. Nothing is built until they are answered (AGENTS.md section 13).
+- Calculators leave the top navigation and the marketing site stops having a calculators section. The owner keeps three (D9), each in a short form on the area page it belongs to. All eight stay in the app.
+- Ten decisions are in section 7 and the owner has answered all ten (section 7.1). Nothing is built until the coordinator says so: the build is first in line once the other open work has merged.
 
 **Revision 2 (20 November 2026), after the owner read the first version.** Three changes: the home headline has eight snappier options, each checked against the guards (section 5.1, decision D2); Retirement moves from "not mentioned" to part of the Savings and pension page (sections 2, 2.1, 4, 5.2, decision D5); calculators are assessed one by one and demoted (section 4.4, decision D9).
+
+**Revisions 3 and 4 (20 November 2026).** The owner answered every decision (section 7.1). The page is "Flump features"; the AI connection is presented as a feature like the others; the owner kept calculators 1, 5 and 6, each in a short form (section 4.4); and Retirement is open and in the app's navigation, so its copy ships with the Savings and pension page.
 
 ## 2. Inventory: what a tester can use today
 
@@ -36,7 +38,7 @@ Who can use it:
 | Pay: Self Assessment | `/app/self-assessment`, `/app/tax/*` | Self-employed and rental income and costs by tax year, receipts, a tax bill estimate, payments on account, year comparison. Opt-in: off until switched on in Settings or by onboarding | Everyone (opt-in) | Nothing, apart from the public landlord tax calculator |
 | Savings and pension: Savings | `/app/savings` | Savings accounts with AER, an estimate of growth, ISA allowance used, investment returns, a deposit timeline, a pay rise scenario | Everyone | FAQ: "forecast tools" (a name the app retired in E16 D5-B). One calculator (mortgage or ISA) |
 | Savings and pension: Pension | `/app/pension` | Pension pots, what you and your employer pay in, salary sacrifice, the effect of a contribution change on take-home pay | Everyone | Half of one home card; one calculator |
-| Retirement plan | `/app/retirement` | A target the user sets, an estimated yearly income in today's prices before tax, the accounts that count towards it, assumptions shown year by year, and one MoneyHelper guidance line (`RetirementPlanner`, `MoneyHelperGuidance`) | On `main`: friends beta. The owner's intent (20 November 2026): every invited account. PR 845 as read: beta admins and members who joined through an invite link; accounts let in by the older allowlists are not covered (section 2.1). Still hidden from the app's navigation and section lists (`HIDDEN_PAGE_KEYS` in `pageConfig.ts`), which PR 845's diff did not change when read | Nothing. Now a gap (section 3) |
+| Retirement plan | `/app/retirement` | A target the user sets, an estimated yearly income in today's prices before tax, the accounts that count towards it, assumptions shown year by year, and one MoneyHelper guidance line (`RetirementPlanner`, `MoneyHelperGuidance`) | Everyone. On `main` at `9d6cac605` the friends-beta gate is gone (`retirement.access.ts` no longer exists) and Retirement is in the navigation under Savings and pension (`navConfig.ts`). It was friends beta at `da6284f0c` | Nothing. Now a gap (section 3) |
 | Debt and borrowing: Cards and loans | `/app/debt` | List of debts, estimated debt-free date, when a 0% deal ends, a pay extra tool comparing highest rate first with smallest balance first, a MoneyHelper line | Everyone | One sentence in a home card; three calculators |
 | Debt and borrowing: Mortgage | `/app/mortgage` | Repayment schedule, overpayments, overpay or save comparison, LTV milestones, an estimate for when a fixed rate ends, buy-to-let overview | Everyone | One sentence in a home card; one calculator |
 | Calculators | `/tools`, `/tools/:slug` (both sites, shared catalogue `packages/ui/src/tools/toolCatalog.ts`) | Eight public calculators, no sign-in | Public | `/tools` index and one page per calculator. In the top navigation. Not grouped by app area |
@@ -47,14 +49,14 @@ Who can use it:
 | Settings | `/app/profile` | Tabs: Profile (age and pay, check-in day, net worth choices, which sections are on), Security (how you sign in, AI connection, imports), Data | Everyone | Nothing |
 | Data export and deletion | Settings, Data tab; `/account/export` | "Download your data" (JSON checked; a CSV export merged in #754 but was not found in the settings UI in this check), "Delete your financial data", account deletion | Everyone. Deletion answers 503 until the owner sets `DELETION_TOMBSTONE_KEY` (EPICS table row 1); not verifiable here | Nothing. `/security` does not say you can download or delete your data |
 
-### 2.1 Facts that two open pull requests may change
+### 2.1 Facts that two pull requests changed (both merged on 2026-11-20)
 
-The inventory was read from `origin/main` at `da6284f0c`. Two pull requests were open on 2026-11-20 and touch what this plan relies on. Re-read these facts from `main` before building.
+The inventory was first read from `origin/main` at `da6284f0c`, when PRs 838 and 845 were open. Both have merged, and this plan was rebased onto `9d6cac605`. The notes below were written from the open diffs; the Retirement note is corrected from `main`. Re-read the rest from `main` before building.
 
 **PR 838 (dead code removal, `knip` gate).** No visible copy changes. What it changes for the build:
 
 - Default exports are removed from marketing pages and components (`HomePage`, `PreviewPage`, `SecurityPage`, `ToolPage`, `HomeFAQ`, `MarketingSection`, `SecurityPrivacySection`, `BaselineSnapshotPreview`) and `pages/PreviewPage/index.ts` loses its default re-export. New pages and components use named exports only.
-- `TOOL_SHORT_LABELS` is removed from `apps/marketing/src/utils/toolSlugs.ts`. Slice S1 reads calculator names from `TOOL_CATALOGUE` in `@repo/ui/tools` directly.
+- `TOOL_SHORT_LABELS` is removed from `apps/marketing/src/utils/toolSlugs.ts`. After D9 the marketing site no longer lists calculators from the catalogue at all.
 - `BETA_INVITE_PATH` and `PRIVACY_EMAIL` stop being exported from `utils/site.ts` (`PRIVACY_EMAIL` is deleted). Pages keep using `signupCta()` for the call to action, as this plan already assumes.
 - `apps/marketing/src/app-shell/index.ts` loses its entry re-exports and `react-icons` leaves the marketing package. Neither is used by this plan.
 - Unused exports now fail CI. Every export a slice adds must be imported somewhere in the same pull request, so S1's data file lands with the page that reads it (already the case in PR 1).
@@ -66,9 +68,7 @@ The inventory was read from `origin/main` at `da6284f0c`. Two pull requests were
 - The web app's signed-out pages stop offering "Sign up" while the beta is invite-only. The marketing call to action stays "Request an invite" and still points at `/contact#beta`; this plan adds no link to the web app's sign-up path (the claims guard forbids one outside `utils/site.ts`).
 - Draft copy that describes what happens after a request (the `/mcp` line "say so when you request an invite", the Contact page) should match the flow that PR ships: a person asks by email and receives an invite link. Check the final wording of PR 845 before S6.
 - The AI connection: PR 845 ties an access token to its owner still being a beta member. That does not change who the AI connection is switched on for (named accounts, which the owner confirmed on 20 November 2026).
-- **Retirement.** The owner said on 20 November 2026 that Retirement should be open to everyone, because invites are only for testing. That supersedes RD9. PR 845's diff, read on 20 November, opens the backend rule to beta admins and to active members who joined through an invite link, while the beta is invite-only. Two things to check on `main` before building the Retirement copy:
-  - Whether an account let in by the older email or user id allowlists, with no invite link, can open Retirement. In the diff as read, it cannot unless it is also in `RETIREMENT_ALLOWED_USER_IDS`.
-  - Whether Retirement is in the app's navigation. In the diff as read, `HIDDEN_PAGE_KEYS` and `navConfig.ts` were unchanged, so the page is open but reachable by URL only. A marketing page should not describe something a tester cannot find. Unhiding it belongs to the app (E33 or PR 845), not to this epic; the Retirement copy ships only once it is in the navigation.
+- **Retirement.** The owner said on 20 November 2026 that Retirement should be open to everyone, because invites are only for testing. That supersedes RD9. Checked on `main` at `9d6cac605` after PR 845 merged: the Retirement access gate is removed (`apps/backend/src/modules/retirement/retirement.access.ts` no longer exists), `HIDDEN_PAGE_KEYS` is gone from `pageConfig.ts`, and Retirement is a navigation entry under Savings and pension. So the two conditions an earlier version of this plan set (every invited account can open it; it is in the navigation) are met, and the Retirement copy can ship with the Savings and pension page.
 
 ## 3. Gap list
 
@@ -123,10 +123,10 @@ Security and privacy and Contact move to the footer. The AI connection is in the
 | Flump features (new; navigation label "Features") | `/features` | The map: five areas and the AI connection, one paragraph each | All | The site and the app are laid out the same way; use one area or all five | None | Link to `/preview` |
 | Accounts (new) | `/features/accounts` | Net worth and the monthly check-in | Accounts, monthly check-in, history | Every account in one list, and a short check-in once a month | None fits today | Dashboard and Check-in sections |
 | Budget (new) | `/features/budget` | Left over each month and breathing room | Budget, housing costs | What comes in, what goes out, what is left, whether you rent or pay a mortgage | None fits today | Breathing room section |
-| Pay (new) | `/features/pay` | Take-home pay, and Self Assessment for those who need it | Take-home pay, Self Assessment | What you keep from your pay, and a tax bill estimate if you are self-employed or let property | The two-slider pay rise tool, on the page; the student loan calculator, linked only if D9 is answered B | Pay-rise tool embedded (it exists) |
+| Pay (new) | `/features/pay` | Take-home pay, and Self Assessment for those who need it | Take-home pay, Self Assessment | What you keep from your pay, and a tax bill estimate if you are self-employed or let property | The two-slider pay rise tool, on the page (D9) | Pay-rise tool embedded (it exists) |
 | Savings and pension (new) | `/features/savings-and-pension` | Savings growth estimate, pension contributions and the retirement plan | Savings, Pension, Retirement plan | Your savings and pension sit beside everything else, and a retirement plan shows an estimate against a target you set | None | None today (decision D6) |
-| Debt and borrowing (new) | `/features/debt-and-borrowing` | Cards and loans, then mortgage | Cards and loans, Mortgage | What you owe, when it could be paid off, and what a change would do | The 0% deal and overdraft calculators, on the page (D9) | None today (decision D6) |
-| Calculators | `/tools`, `/tools/:slug` | No longer a destination. Out of the top navigation and the footer's main links; the home page keeps only the two-slider pay rise tool it has today. See section 4.4 and decision D9 for which stay and what happens to the rest | Calculators | n/a | n/a | n/a |
+| Debt and borrowing (new) | `/features/debt-and-borrowing` | Cards and loans, then mortgage | Cards and loans, Mortgage | What you owe, when it could be paid off, and what a change would do | "Two ways to pay off debts" and "Mortgage overpayment or ISA, compared", in their short forms, on the page (D9) | None today (decision D6) |
+| Calculators | `/tools`, `/tools/:slug` | Removed from the marketing site; every old address redirects to an area page (section 4.4, D9). All eight stay in the web app | Calculators | n/a | n/a | n/a |
 | Preview | `/preview` | Unchanged, plus a link from each section to its area page, named for where it goes ("About accounts and the monthly check-in"; guide 5.3 bans "Read more") | Home, check-in, budget | See it working on sample data | n/a | n/a |
 | Pricing | `/pricing` | Stays (decision D8). The list of what the beta includes names the five areas | n/a | Free during the beta; the price of any paid plan is not set | None | n/a |
 | Security and privacy | `/security` | Stays, footer and menu link. Adds two facts once verified: download your data, delete your data | Settings, Data tab | What Flump can and cannot do with your money and figures | n/a | n/a |
@@ -134,7 +134,7 @@ Security and privacy and Contact move to the footer. The AI connection is in the
 | Contact | `/contact` | Unchanged | n/a | How to ask for an invite | n/a | n/a |
 | Not found | any other path | Unchanged | n/a | n/a | n/a | n/a |
 
-Not on the site: Imports beyond the existing fixed sentence, and bank connections. Retirement is on the site, inside Savings and pension, once it is in the app's navigation (section 2.1).
+Not on the site: Imports beyond the existing fixed sentence, and bank connections. Retirement is on the site, inside Savings and pension (section 2.1).
 
 ### 4.3 The area page template
 
@@ -145,7 +145,7 @@ One template renders all five area pages from one data file, so the pages cannot
 3. **See it:** a working sample (where a preview or calculator component exists) or an illustration (decision D6).
 4. **More detail when you want it:** three or four deeper tools in that area. This is where the third message lives.
 5. **Part of one picture:** a strip of all five areas with this one marked, each a link. This is where the first message lives on every page.
-6. **Try it with your own numbers:** on the Pay and the Debt and borrowing pages only, the one or two plain calculators that belong there (section 4.4). The other three pages have no calculator section.
+6. **Try it with your own numbers:** on the Pay and the Debt and borrowing pages only, the kept calculators in their short forms (section 4.4). The other pages have no calculator section.
 7. **Final call to action.**
 
 ### 4.4 Calculators: which stay, and where
@@ -169,26 +169,38 @@ Each of the eight was put to three tests. Inputs were counted from the component
 | Section 24 landlord tax calculator | Fail: a statute number | Fail: 5 | Pay (Self Assessment), for landlords only | **Go** |
 | Pension contributions and income above £100,000 | Fail: describes inputs, not an answer | Pass: 3 | Pay and Pension, for a narrow income band. E31 already moved it out of the lead | **Go** |
 
-**Recommended set: three, or four with the student loan one.** Plain new names (drafts):
+**Decided by the owner, 20 November 2026 (decision D9): "keep calculators 1,5 and 6".** From the list of eight the coordinator showed the owner, that is:
 
-| Today | Draft new name | Where it lives |
-| --- | --- | --- |
-| What you keep from a pay rise | Unchanged: "What you keep from a pay rise" (the copy guide's own example of a good heading) | On the Pay page and the home page, two sliders |
-| When a 0% balance transfer ends | "When a 0% deal ends" (the app's own words; the result keeps its label "Estimated monthly payment") | On the Debt and borrowing page |
-| Overdraft interest cost calculator | "What an overdraft costs over a year" (the copy guide's wording, 7.4) | On the Debt and borrowing page |
-| Student loan repayment calculator (only if D9 is B) | "Student loan: paid off or written off" | Linked from the Pay page |
+- 1: What you keep from a pay rise, in its two-slider form only.
+- 5: Debt payoff methods compared (highest rate first against smallest balance first).
+- 6: Mortgage overpayment or Stocks and Shares ISA.
 
-A name here describes what the page shows and never tells the reader what to do with money (guide 5.1, advice boundary R2). The guide's heading target is 2 to 6 words and 40 characters (3.1); the pay rise and overdraft names run to seven words, as the guide's own examples do.
+Not kept on the marketing site: the 0% balance transfer, overdraft, student loan, Section 24 and income above £100,000 calculators. The table above is this plan's own assessment and its verdict column is superseded: the plan had picked the pay rise, 0% deal and overdraft calculators.
 
-Names come from the shared catalogue (`packages/ui/src/tools/toolCatalog.ts`), which the web app's own calculators page also reads, so a rename changes both. The web app's calculators page and its "Calculators" link are outside this epic; the owner's point about names applies there too (section 9).
+**Keeping the three simple.** The owner cut calculators because they were functionally complex, unclearly named and too many. Calculators 5 and 6 ask for more than the two the plan had picked, so each kept calculator is shown in a short form: three fields or fewer on first view, a name that says what it does, and starting values that give an answer before anything is typed. Starting values are sample data and carry the label "Example" (guide 7.4).
 
-**The rest (four, or five without the student loan one).** Options, decision D9:
+| # | Name on the marketing site | Where | Fields on first view | Starting values | What it shows | Behind "Change the details" |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | "What you keep from a pay rise" (unchanged; the copy guide's own example of a good heading) | Pay page and home page | 2: salary before tax, pay rise a year | As `PayRiseTeaser` has today | An estimate of how much of the rise reaches your pay | Nothing. The ten-field version is not on the marketing site |
+| 5 | "Two ways to pay off debts" | Debt and borrowing page | 3: two example debts showing their balances, and one slider, "Extra payment a month" | The component's own: a credit card at £4,500 and a personal loan at £1,500, with £75 extra a month | The estimated debt-free date and the interest for each way, side by side | Each debt's rate and minimum payment (the rows already start closed), and adding or removing a debt |
+| 6 | "Mortgage overpayment or ISA, compared" | Debt and borrowing page, in the mortgage part | 3: mortgage balance, mortgage interest rate, extra money a month | The component's own: £240,000, 4.5%, £350 a month | Estimated interest saved by overpaying, estimated ISA growth, and the difference between them | The two assumptions: ISA growth a year (starts at 7%) and years left (starts at 20). Both are stated in a line under the result whether or not the section is open |
 
-- **1. Keep the URL alive, unlinked.** The page still answers at its address. It leaves the navigation, the home page, the footer, the `/tools` index and the sitemap. It gains one line linking to its area page. Nothing is lost if anyone has the address, and it can be removed later with evidence.
-- **2. Remove from the marketing site.** The address redirects to the matching area page. Less to keep true; the calculators still exist in the web app for signed-in testers.
-- **3. Keep all eight linked from the footer only.** Smallest change; does not answer "too many".
+Rules that hold for the three:
 
-**Search traffic, honestly.** Unknown, and probably close to nothing today. The marketing server sends `noindex, nofollow` on every response and serves no sitemap unless both `ALLOW_INDEXING` and `FLUMP_LAUNCH` are exactly `true` (`apps/marketing/server/ops.ts`, `sitemap.ts`). Flump is pre-launch, so the pages should not be in search results yet; whether those switches are set in the deployed environment cannot be checked from the repository. Page-view counting (E24-T9) is planned and there is no rollup to read. After launch, single-purpose calculator pages are the kind of page that can bring search visitors, which is the case for option 1 over option 2: it keeps that door open at no cost until there are numbers.
+- **Names.** Each says what the tool shows, in six words or fewer for 5 and 6 (guide 3.1), and none tells the reader what to do with money. "Two ways to pay off debts" replaces "methods", which means nothing until explained. The one line under it names the two ways in the approved words: "Highest rate first or smallest balance first: see an estimated debt-free date and the interest for each." Routine wording: the coordinator approves these names.
+- **Calculator 5, no judgement.** The two ways are shown with the same weight, in the same colours, and neither is marked as better (guide 2.3, advice boundary R2). No "high APR" label on a debt; the rate is shown as a figure. The example debts are labelled "Example" and are never worded as the reader's own. No statistic about other people.
+- **Calculator 6, compares and does not recommend.** It shows two estimates and the difference, in that order, and picks neither. The ISA figure is "estimated growth at the rate you entered"; the growth rate is an assumption the reader can change, stated beside the result. No "better", "best" or "should". It sits under the page's mortgage part, which opens "If you have a mortgage", so the page reads the same for someone who rents.
+- **How it is built.** The names above are headings on the marketing page, held in the marketing features data, so the shared catalogue and the web app's names do not change. Calculators 5 and 6 get a short form through one new prop each on the existing components in `packages/ui/src/calculators/` (the detail fields collapsed, the component's own title hidden), with a story and a test for the short form. No formula changes, so there is nothing new to work out by hand (AGENTS.md section 14).
+- Each ends with one link into the area page's call to action; none ends with "Continue to sign up", because sign-up is invite-only.
+
+**The five that are not kept, and the full-size pages.**
+
+- The marketing site stops having a calculators section. `ToolsIndexPage` and `ToolPage` are removed from `apps/marketing`, with their links in the header, footer, home page and sitemap.
+- Every old address redirects, so nothing answers 404: `/tools` to `/features`; the pay rise, student loan, Section 24 and income above £100,000 pages to `/features/pay`; the debt payoff, 0% balance transfer, overdraft and mortgage or ISA pages to `/features/debt-and-borrowing`. The three kept calculators have no full-size page on the marketing site either; they live on their area page in the short form. This last point is the plan's reading of "two-slider form only on the marketing site", applied to all three, for the coordinator to confirm.
+- **Nothing in the app is removed.** All eight calculators stay in the web app at its own `/tools` pages (`apps/web/app/routes/tools._index.tsx` and `tools.$slug.tsx`), with the shared catalogue, guides and components in `packages/ui`. The web app's calculators page and its "Calculators" link are outside this epic; the owner's points about names, complexity and number apply there too (section 9).
+- Guard changes this brings, each needing sign-off before it is made (AGENTS.md section 15): the "public calculator copy guard" in `claims.test.ts` reads `ToolPage.tsx` and `ToolsIndexPage.tsx`, and `copy.test.ts` checks the marketing tool slugs against the catalogue. With those pages gone, the guard's source list shrinks to the shared files in `packages/ui/src/tools` and the slug check has nothing left to check on marketing.
+
+**Search traffic, honestly.** Unknown, and probably close to nothing today. The marketing server sends `noindex, nofollow` on every response and serves no sitemap unless both `ALLOW_INDEXING` and `FLUMP_LAUNCH` are exactly `true` (`apps/marketing/server/ops.ts`, `sitemap.ts`). Flump is pre-launch, so the pages should not be in search results yet; whether those switches are set in the deployed environment cannot be checked from the repository. Page-view counting (E24-T9) is planned and there is no rollup to read. After launch, single-purpose calculator pages are the kind of page that can bring search visitors, which is the one cost of redirecting the old addresses. It can be revisited after launch, once page views are counted: the calculators still exist in the web app and a marketing page can be put back.
 
 ## 5. Message hierarchy
 
@@ -281,8 +293,8 @@ How each block maps to the page: the h1 is 2 to 6 words and at most 40 character
 
 - h1: "Savings and pension". Lead: "Your savings and pension, beside the rest of your figures."
 - "See each savings account with its interest rate (AER) and an estimate of how it could grow. Add your pension pots and what you and your employer pay in. See how a change to your contributions, including salary sacrifice, would change your take-home pay. Every future figure is an estimate, and the assumptions are shown."
-- Retirement plan (its own section on this page, shown once Retirement is in the app's navigation): "Set a retirement target of your own. Flump shows an estimate of your yearly income in retirement, in today's prices and before tax, and which accounts count towards it. The assumptions are listed year by year and you can change them. It is an estimate from your figures, not a prediction and not advice."
-- Under the retirement section, if D10 is A, the MoneyHelper line exactly as the app has it (owner decision RD11, fixed wording, guide 7.3): "MoneyHelper offers free, impartial guidance on pensions, backed by the government." with the link "Pension guidance from MoneyHelper". Flump sets no target and suggests no contribution (guide 2.3 item 6, advice boundary R1 to R8).
+- Retirement plan (its own section on this page): "Set a retirement target of your own. Flump shows an estimate of your yearly income in retirement, in today's prices and before tax, and which accounts count towards it. The assumptions are listed year by year and you can change them. It is an estimate from your figures, not a prediction and not advice."
+- Under the retirement section (D10, accepted), the MoneyHelper line exactly as the app has it (owner decision RD11, fixed wording, guide 7.3): "MoneyHelper offers free, impartial guidance on pensions, backed by the government." with the link "Pension guidance from MoneyHelper". Flump sets no target and suggests no contribution (guide 2.3 item 6, advice boundary R1 to R8).
 - More detail: how much of this tax year's ISA allowance you have used; a deposit timeline; investment returns.
 - Carries: (1) savings, pension and the retirement estimate beside the rest of your figures; (2) a list with rates; (3) contribution changes, the deposit timeline and the retirement plan's assumptions.
 
@@ -291,7 +303,7 @@ How each block maps to the page: the h1 is 2 to 6 words and at most 40 character
 - h1: "Debt and borrowing". Lead: "What you owe, and an estimate of when it could be paid off."
 - "List your cards, loans and overdrafts with their rates. Flump shows an estimated debt-free date and when any 0% deal ends. Compare paying the highest rate first with paying the smallest balance first. If you have a mortgage, see your repayment schedule and an estimate of what an overpayment would do."
 - More detail: an estimate of your payment when your fixed rate ends; overpay or save, compared; loan to value (LTV) milestones.
-- If D10 is A, the page carries the MoneyHelper debt line exactly as the app's debt page has it (copy guide 7.3 and 7.5, fixed wording).
+- The page carries (D10, accepted) the MoneyHelper debt line exactly as the app's debt page has it (copy guide 7.3 and 7.5, fixed wording).
 - Carries: (1) debts and mortgage in the same net worth figure; (2) one date; (3) the comparison tools, which show both options and pick neither.
 
 **Pricing (`/pricing`)**
@@ -331,7 +343,7 @@ Owner, 20 November 2026: "AI connection can be used in places other than the foo
 | `/features/savings-and-pension` | Savings and pension \| Flump | Savings accounts with their rates and an estimate of growth, and your pension pots with what you and your employer pay in. |
 | `/features/debt-and-borrowing` | Debt and borrowing: cards, loans and mortgage \| Flump | List what you owe to see an estimated debt-free date, when a 0% deal ends, and what a mortgage overpayment would do. |
 
-The home description follows the decided lead (D2): "Flump: finance without the fog. Accounts, budget, pay, savings, pension and debts in one place, under UK rules, from figures you type in." The Savings and pension description gains "and a retirement estimate against a target you set" once Retirement is in the app's navigation. Existing titles for `/preview`, `/pricing`, `/security`, `/mcp` and `/contact` stay; the kept calculators take their new names (D9). Each new path joins `STATIC_PATHS` (sitemap) and the social meta test.
+The home description follows the decided lead (D2): "Flump: finance without the fog. Accounts, budget, pay, savings, pension and debts in one place, under UK rules, from figures you type in." The Savings and pension description gains "and a retirement estimate against a target you set". Existing titles for `/preview`, `/pricing`, `/security`, `/mcp` and `/contact` stay; the kept calculators take their new names (D9). Each new path joins `STATIC_PATHS` (sitemap) and the social meta test.
 
 ## 6. Constraints check
 
@@ -358,7 +370,7 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | Retirement: a target you set, an estimated yearly income in today's prices before tax, accounts that count, assumptions year by year | "estimate", never "forecast", "prediction" or "will" (guide 6.1); no target set by Flump (2.3); no recommendation (R1 to R8) | `RetirementPlanner` (page subtitle "Estimates in today's prices, before tax."; sections "Counted towards retirement", "Assumptions, pots and year by year") | Verified in code. **Who can open it and whether it is in the navigation: depends on PR 845 and the app (section 2.1)** |
 | The MoneyHelper pensions line, word for word | Fixed wording (RD11, guide 7.3). It contains a bare "free", which `copy.test.ts` rejects in marketing sources unless it is "free during the beta" | `MoneyHelperGuidance` in `apps/web/app/features/retirement` | **Owner decision D10.** The fixed line is approved for the Retirement page in the app ("same note, same place", guide 7.3), not yet for a marketing page. Showing it on marketing either puts a bare "free" in a marketing source or moves the string to a shared component the marketing copy test does not read. Both narrow what that guard checks, so either is a guard change needing sign-off first (AGENTS.md section 15) |
 | The MoneyHelper debt line on the Debt and borrowing page: "Free, impartial debt help is available from MoneyHelper" | The same: fixed wording (guide 7.3, R3 exception), approved for `DebtHelpLink` in the app, and it starts with a bare "Free" | `DebtHelpLink` in `apps/web/app/features/debt` | **Owner decision D10**, with the pensions line |
-| The three or four kept calculators and their new names | Guide 7.4: a title names only the inputs the tool has and the outputs it shows | Inputs counted from the components (section 4.4) | Verified in code; the new names are drafts for D9 |
+| The three kept calculators and their names (D9) | Guide 7.4: a title names only the inputs the tool has and the outputs it shows. "Two ways to pay off debts" and "Mortgage overpayment or ISA, compared" name what is shown and pick no option (R2) | Fields and starting values read from the components (section 4.4) | Verified in code. The short forms do not exist yet; they are slice S6b |
 | Estimated debt-free date; when a 0% deal ends; highest rate first compared with smallest balance first | Approved terms; "compare", neither option picked (R2) | `DebtSummary`, `PayExtraTool` | Verified in code |
 | Mortgage: repayment schedule, overpayment estimate, fixed rate end estimate, overpay or save, LTV | Approved terms | `OverpaymentSimulator`, `RemortgageShockSim`, `OverpayVsSaveCompare`, `LtvMilestones` | Verified in code |
 | "Free during the beta" | Exact required form | No payment path | Already approved wording |
@@ -381,7 +393,7 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | D6 | Accepted as recommended (option B) | "the other decisions are good to go." | Working samples where they exist, two new sample previews as a later slice, no screenshots |
 | D7 | Accepted as recommended (option A) | As D6 | The titles in 5.3, with "Flump features" for `/features` |
 | D8 | Accepted as recommended (option A) | As D6 | Pricing stays, with its navigation link |
-| D9 | **Open** | The owner is choosing the calculators from the list of eight | Section 4.4 stands as the assessment. Nothing about calculators is built until the picks arrive |
+| D9 | Decided | "keep calculators 1,5 and 6" | Kept on the marketing site, each in a short form on its area page: What you keep from a pay rise (two sliders); Debt payoff methods compared, as "Two ways to pay off debts"; Mortgage overpayment or Stocks and Shares ISA, as "Mortgage overpayment or ISA, compared". The other five and every full-size calculator page leave the marketing site, with redirects. All eight stay in the app. This replaces the plan's own pick (section 4.4) |
 | D10 | Accepted as recommended (option A) | As D6 | Both MoneyHelper lines appear word for word on marketing pages. The guard change still goes to the coordinator for sign-off when it is built |
 
 Still to confirm with the owner: the AI connection wording and the "Preview" label (section 5.2), and that choosing the headline allows its two full stops and slogan shape for the marketing home h1 only (section 5.1, ruling R-a).
@@ -415,21 +427,19 @@ All new components follow AGENTS.md section 1 (colocated directory; the five-fil
 | S4 | Header (the "Features" menu, mobile drawer) and Footer (Product, Company, room for Legal) | M |
 | S5 | Home page with the accepted headline: area tiles, "Start with rough figures", "More detail when you want it"; FAQ answers corrected to the app's names | M |
 | S6 | Existing pages: Pricing list, the AI connection page rebuilt on the feature template at `/features/ai-connection` with a redirect from `/mcp` and the wording the owner approves, the home FAQ answer, `/security` data facts (only once verified), `/preview` sections linked to area pages | S |
-| S6b | Calculators as decided in D9: new names in the shared catalogue (this renames them in the web app too), the kept ones placed on their area pages, the rest unlinked and dropped from the index, footer and sitemap, each with one line linking to its area page. Tool slugs and the copy test that ties slugs to the catalogue stay | S to M |
-| S6c | Retirement section on the Savings and pension page, only once Retirement is in the app's navigation. If D10 is A: promote `MoneyHelperGuidance` and `DebtHelpLink` to `@repo/ui` (five-file set each) so both apps render the one fixed line each | S |
+| S6b | Calculators as decided in D9: a short form of `DebtSnowballCalculator` and `MortgageVsIsaCalculator` in `packages/ui` (one prop each, with a story and a test); the three placed on their area pages; `ToolsIndexPage` and `ToolPage` removed from `apps/marketing` with redirects for `/tools` and all eight `/tools/:slug` addresses, and their sitemap, header and footer entries. Nothing changes in the web app or the shared catalogue | M |
+| S6c | Retirement section on the Savings and pension page. Promote `MoneyHelperGuidance` and `DebtHelpLink` to `@repo/ui` (five-file set each) so both apps render the one fixed line each (D10, accepted) | S |
 | S7 | Guards: add every new file to `PR12_SOURCES` in `copy.test.ts`; the claims guard already scans all of `src` | S |
 | S8 (if D6 is B) | Two sample previews in `packages/ui` (savings and pension; debt and borrowing), sample data only, labelled as sample data | M to L |
 
 Two pull requests: **PR 1** is S1, S2, S3, S4 and S7 (the structure). **PR 2** is S5, S6, S6b and S6c (the home page, existing pages, calculators and Retirement), and S8 if chosen. Each gets an independent `opus` review and a `ui-compliance-reviewer` pass, and screenshots for the owner at phone and desktop widths in light and dark.
 
-Guard changes expected: one, if D10 is A. The two fixed MoneyHelper lines contain a bare "free", which the marketing copy test allows only as "free during the beta"; showing them on marketing narrows that check for those two sentences, whichever way it is built. It needs sign-off before the change is made and goes under "Guard changes" in the PR. Otherwise none loosened: `PR12_SOURCES` grows. Home page tests that pin today's h1 and band order change with D2; they are listed under "Guard changes" in the PR if any numeric limit moves.
+Guard changes expected: two groups, each needing the coordinator's sign-off before it is made. First, the calculator guards whose marketing source files are removed (section 4.4). Second, D10, which the owner accepted: The two fixed MoneyHelper lines contain a bare "free", which the marketing copy test allows only as "free during the beta"; showing them on marketing narrows that check for those two sentences, whichever way it is built. It needs sign-off before the change is made and goes under "Guard changes" in the PR. Otherwise none loosened: `PR12_SOURCES` grows. Home page tests that pin today's h1 and band order change with D2; they are listed under "Guard changes" in the PR if any numeric limit moves.
 
 Mobile parity: the marketing site is not a flow the mobile app shares, so no parity log row is expected. If a token or shared component changes, a row is added.
 
 ## 9. Follow-ups noticed, not part of this epic
 
-- Retirement is still hidden from the app's navigation and section lists (`HIDDEN_PAGE_KEYS` in `pageConfig.ts`, the comment in `navConfig.ts`), and the code comments still cite RD9. Now that the owner has opened it, unhiding it and updating those comments belongs to E33 or PR 845. The marketing Retirement section waits for it.
-- Accounts let in by the older email or user id allowlists may not get Retirement under PR 845's rule as read (section 2.1). For the PR 845 lane to confirm.
 - The web app's own calculators page and its "Calculators" link read the same catalogue. The owner's points about names, complexity and number apply there too; D9 only decides the marketing site.
 - The EPICS summary table still says E38 S1 to S3 are not started; recent commits on `main` show them merged.
 - Whether the CSV export from #754 is reachable in the settings UI was not confirmed in this check.
