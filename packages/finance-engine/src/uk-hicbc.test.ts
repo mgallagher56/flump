@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { selectUkWhatIfVectors } from "./test-vectors/uk-whatif.vectors.js";
 import type { UkTaxYear } from "./types.js";
-import { calculateChildBenefitAnnual, calculateHicbc, calculateHicbcPercent } from "./uk-hicbc.js";
+import {
+  calculateChildBenefitAnnual,
+  calculateHicbc,
+  calculateHicbcPercent,
+  childBenefitWeeksInTaxYear,
+} from "./uk-hicbc.js";
 import { getUkTaxYearRules } from "./uk-tax-year.js";
 
 const rules = (y: UkTaxYear) => getUkTaxYearRules(y);
@@ -22,10 +27,45 @@ describe("hicbc vectors (E25-T2, hand-derived, UNVERIFIED)", () => {
   }
 });
 
+/**
+ * ITEPA 2003 s.681H(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681H): a week counts in
+ * a tax year if its Monday falls in the year (decider ruling adopted 20 Nov 2026). Counted by hand
+ * from the calendar: 6 April 2020 and 5 April 2021 were both Mondays, so 2020/21 has 53; 6 April
+ * 2026 and 5 April 2027 are both Mondays, so 2026/27 has 53. 2021/22: first Monday 12 April 2021,
+ * last 4 April 2022, 52. 2027/28: first Monday 12 April 2027, last 3 April 2028, 52.
+ */
+describe("Child Benefit weeks in a tax year (ITEPA 2003 s.681H(3))", () => {
+  it("is the number of Mondays from 6 April to the next 5 April", () => {
+    expect(childBenefitWeeksInTaxYear("2020/21")).toBe(53);
+    for (const y of ["2021/22", "2022/23", "2023/24", "2024/25", "2025/26"]) {
+      expect(childBenefitWeeksInTaxYear(y), y).toBe(52);
+    }
+    expect(childBenefitWeeksInTaxYear("2026/27")).toBe(53);
+    expect(childBenefitWeeksInTaxYear("2027/28")).toBe(52);
+  });
+  it("counts from the calendar, not a table of special years", () => {
+    // 2032/33: 6 April 2032 is a Tuesday; first Monday 12 April 2032; 5 April 2033 is a Tuesday,
+    // last Monday 4 April 2033; (357 days / 7) + 1 = 52.
+    expect(childBenefitWeeksInTaxYear("2032/33")).toBe(52);
+    // 2037/38: 6 April 2037 is a Monday and 5 April 2038 is a Monday: 53.
+    expect(childBenefitWeeksInTaxYear("2037/38")).toBe(53);
+    // 2031/32: 6 April 2031 is a Sunday, so 7 April 2031 is the first Monday; 5 April 2032 is a
+    // Monday (2032 is a leap year): (364 / 7) + 1 = 53.
+    expect(childBenefitWeeksInTaxYear("2031/32")).toBe(53);
+  });
+  it("rejects a malformed year", () => {
+    expect(() => childBenefitWeeksInTaxYear("2026-27")).toThrow();
+    expect(() => childBenefitWeeksInTaxYear("2026/28")).toThrow();
+  });
+});
+
 describe("Child Benefit annual amount", () => {
-  it("is eldest plus other children, times 52", () => {
-    expect(calculateChildBenefitAnnual(1, rules("2026/27"))).toBe(1406.6);
-    expect(calculateChildBenefitAnnual(3, rules("2026/27"))).toBe(3268.2);
+  it("is eldest plus other children, times the weeks in the year", () => {
+    // 2026/27 has 53 weeks: 27.05 x 53 = 1,433.65; (27.05 + 2 x 17.90) x 53 = 62.85 x 53 = 3,331.05.
+    expect(calculateChildBenefitAnnual(1, rules("2026/27"))).toBe(1433.65);
+    expect(calculateChildBenefitAnnual(3, rules("2026/27"))).toBe(3331.05);
+    // 2025/26 has 52: 26.05 x 52 = 1,354.60.
+    expect(calculateChildBenefitAnnual(1, rules("2025/26"))).toBe(1354.6);
   });
   it("is zero for no or invalid children", () => {
     expect(calculateChildBenefitAnnual(0, rules("2026/27"))).toBe(0);

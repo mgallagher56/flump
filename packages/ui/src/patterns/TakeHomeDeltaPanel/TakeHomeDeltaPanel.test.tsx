@@ -116,7 +116,11 @@ describe("TakeHomeDeltaPanel", () => {
     expect(drawer.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(drawer);
     expect(screen.getByText("(not yet confirmed)")).toBeDefined();
-    expect(screen.getByText(/Child Benefit is counted for 52 weeks a year/)).toBeDefined();
+    expect(
+      screen.getByText(
+        /Child Benefit is counted for each week that starts in the tax year, 52 or 53/,
+      ),
+    ).toBeDefined();
   });
 
   it("puts the explainer drawer above the notice", () => {

@@ -256,7 +256,6 @@ describe("2027/28 Child Benefit, pensions", () => {
     expect(UK_CHILD_BENEFIT[Y]).toEqual({
       eldestWeekly: 28,
       otherWeekly: 18.55,
-      weeksPerYear: 52,
       hicbcThresholdStart: 60000,
       hicbcStepWidth: 200,
     });
