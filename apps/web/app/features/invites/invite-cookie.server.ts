@@ -6,7 +6,7 @@ import { BetaInviteToken } from "@flump/api-contract";
  * come back to `/invite` (an email check opened in another tab, a later sign-in from `/login`): the
  * invite gate redeems it wherever a signed-in, not-yet-invited person lands.
  */
-export const INVITE_COOKIE_NAME = "flump_invite";
+const INVITE_COOKIE_NAME = "flump_invite";
 const MAX_AGE_SECONDS = 60 * 60;
 
 function secureFlag(request: Request): string {
