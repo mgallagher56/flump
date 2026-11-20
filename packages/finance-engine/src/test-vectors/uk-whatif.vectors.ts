@@ -2175,7 +2175,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Undergraduate Plan 2 (9% over 29,385) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 29385) = 15615 x 9% = 1405.35; postgrad (45000 - 21000) = 24000 x 6% = 1440. Total 2845.35. 2027/28 figures: Plan 2 threshold 29385 and postgraduate threshold 21000 are announced, not yet law.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "owner",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "1de628338dc997acae023e478697b6274119430e0d8f3fc188ad9ed0bd2ff4ea",
   },
   {
     id: "studentLoanMulti.2027-28.plan5+postgrad.24000",
@@ -2191,7 +2193,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Plan 5 (9% over 26,025) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 income 24000 is below 26025, so 0; postgrad (24000 - 21000) = 3000 x 6% = 180. Total 180. 2027/28 figures: Plan 5 threshold 26025 and postgraduate threshold 21000 are announced, not yet law.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "owner",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "2f1bc21511fcadad33cf7190d7732d8eda866b634b81ec30212217c3b4d9bea7",
   },
   {
     id: "studentLoanMulti.2027-28.plan5+postgrad.30000",
@@ -2207,7 +2211,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Plan 5 (9% over 26,025) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 (30000 - 26025) = 3975 x 9% = 357.75; postgrad (30000 - 21000) = 9000 x 6% = 540. Total 897.75. 2027/28 figures: Plan 5 threshold 26025 and postgraduate threshold 21000 are announced, not yet law.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "owner",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "26224c3f573ea9042bd3963ed523c3d8347f56346e3b57f53f8eded46bf4cb32",
   },
   {
     id: "studentLoanMulti.2027-28.plan5+postgrad.45000",
@@ -2223,7 +2229,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Plan 5 (9% over 26,025) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 (45000 - 26025) = 18975 x 9% = 1707.75; postgrad (45000 - 21000) = 24000 x 6% = 1440. Total 3147.75. 2027/28 figures: Plan 5 threshold 26025 and postgraduate threshold 21000 are announced, not yet law.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "owner",
+    signedOffAt: "2026-11-20",
+    signedOffHash: "7b8198f2f2a362ace09375eb4f6606d8caf9aa8fc56f2141c5990f081826a60a",
   },
   {
     id: "reliefAtSource.ewni.2027-28.60000.net4000",
