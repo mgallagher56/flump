@@ -290,6 +290,13 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       annualSalary: 41000,
     });
     expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ code: "validation_failed" });
+    expect(res.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "body.displayName", code: "unrecognized_keys" }),
+        expect.objectContaining({ path: "body.hasSecondIncome", code: "unrecognized_keys" }),
+      ]),
+    );
     // Refused whole: nothing in the request is saved.
     const after = await profiles().findOneByOrFail({ userId: USER_A });
     expect(after.annualSalary).toBe(before.annualSalary);

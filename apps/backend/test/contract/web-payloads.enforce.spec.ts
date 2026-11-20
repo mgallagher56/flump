@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { Logger } from "@nestjs/common";
+import { BadRequestException, Logger } from "@nestjs/common";
 import { of } from "rxjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContractShadowInterceptor } from "../../src/contract/contract-shadow.interceptor";
@@ -95,7 +95,9 @@ describe("web payloads in enforce mode", () => {
     };
     // Accepted and ignored for one release (part two); that release has happened.
     for (const [key, value] of Object.entries(retired)) {
-      expect(() => passes("PATCH", "/user-profile", { [key]: value }), key).toThrow();
+      expect(() => passes("PATCH", "/user-profile", { [key]: value }), key).toThrow(
+        BadRequestException,
+      );
     }
     expect(() => passes("PATCH", "/user-profile", { annualSalary: 41000 })).not.toThrow();
   });
@@ -105,7 +107,9 @@ describe("web payloads in enforce mode", () => {
     // PR 827; that release has happened.
     const retired: Record<string, unknown> = { displayName: "Sam Taylor", hasSecondIncome: true };
     for (const [key, value] of Object.entries(retired)) {
-      expect(() => passes("PATCH", "/user-profile", { [key]: value }), key).toThrow();
+      expect(() => passes("PATCH", "/user-profile", { [key]: value }), key).toThrow(
+        BadRequestException,
+      );
     }
     expect(() =>
       passes("PATCH", "/user-profile", { secondIncomeMonthly: 400, annualSalary: 41000 }),
