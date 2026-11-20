@@ -39,30 +39,13 @@ function agentData(
   plans: never,
 ): AgentDataService {
   const picture = new FinancialPictureService(budget, tax, finance, profile);
-  return new AgentDataService(
-    tax,
-    transactions,
-    profile,
-    accounts,
-    details,
-    plans,
-    picture,
-    fakeBetaMembership(),
-  );
+  return new AgentDataService(tax, transactions, profile, accounts, details, plans, picture);
 }
 
 function build(mode: "workos" | "dev") {
   const config = { get: vi.fn().mockReturnValue(undefined) };
   const nothing = {} as never;
-  return new McpService(
-    nothing,
-    nothing,
-    config as never,
-    mode,
-    nothing,
-    nothing,
-    fakeBetaMembership(),
-  );
+  return new McpService(nothing, nothing, config as never, mode, nothing, nothing);
 }
 
 describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
@@ -81,7 +64,6 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
       "workos",
       audit as never,
       adapter as never,
-      fakeBetaMembership(),
     );
     return { service, audit, adapter, options: at(handlerOptions, 0) };
   };
@@ -95,7 +77,6 @@ describe("McpService audit and staging wiring (E17 re-plan PR D)", () => {
       "workos",
       {} as never,
       {} as never,
-      fakeBetaMembership(),
       store as never,
     );
     expect(at(handlerOptions, 0).limitStore).toBe(store);
@@ -259,27 +240,9 @@ describe("McpService dev token wiring", () => {
     expect(at(handlerOptions, 0).allowedOrigins).toEqual([]);
   });
 
-  it("offers the retirement tools only to the RD9 friends beta, per caller", () => {
-    const original = process.env;
-    const token = (userId: string) =>
-      ({ userId, scopes: [], anonymizeInstitutions: true, type: "pat" }) as never;
-    try {
-      const { BETA_OPEN: _open, ...rest } = original;
-      process.env = { ...rest, RETIREMENT_ALLOWED_USER_IDS: "friend" };
-      build("workos");
-      const available = at(handlerOptions, 0).isToolAvailable;
-      if (!available) throw new Error("isToolAvailable not wired");
-      for (const name of ["get_retirement_picture", "simulate_retirement"]) {
-        expect(available(name, token("friend")), name).toBe(true);
-        expect(available(name, token("stranger")), name).toBe(false);
-      }
-      expect(available("list_accounts", token("stranger"))).toBe(true);
-      // Open testing: everyone. Read per request, so a change needs no restart.
-      process.env = { ...rest, BETA_OPEN: "true" };
-      expect(available("simulate_retirement", token("stranger"))).toBe(true);
-    } finally {
-      process.env = original;
-    }
+  it("offers every tool to every caller, the retirement ones included (owner, 20 Nov 2026)", () => {
+    build("workos");
+    expect(at(handlerOptions, 0).isToolAvailable).toBeUndefined();
   });
 
   it("passes no dev options in workos mode", () => {
@@ -310,7 +273,6 @@ describe("McpService.getInput (GET /mcp/input) anonymises as the remote tools do
       "workos",
       audit as never,
       {} as never,
-      fakeBetaMembership(),
     );
     return { service, agentData };
   };
@@ -338,20 +300,10 @@ describe("McpService.getInput (GET /mcp/input) anonymises as the remote tools do
     });
   });
 
-  it("says whether the retirement tools are available, with the friends-beta rule", async () => {
-    const original = process.env;
-    try {
-      const { BETA_OPEN: _open, ...rest } = original;
-      process.env = { ...rest, RETIREMENT_ALLOWED_USER_IDS: "someone_else" };
-      const { service } = make();
-      const refused = await service.getInput(caller(false, ["mcp:read:full"]) as never);
-      expect(refused.retirementAvailable).toBe(false);
-      process.env = { ...rest, RETIREMENT_ALLOWED_USER_IDS: "user_real" };
-      const allowed = await service.getInput(caller(false, ["mcp:read:full"]) as never);
-      expect(allowed.retirementAvailable).toBe(true);
-    } finally {
-      process.env = original;
-    }
+  it("tells an older local server the retirement tools are available, for everyone", async () => {
+    const { service } = make();
+    const body = await service.getInput(caller(false, ["mcp:read:full"]) as never);
+    expect(body.retirementAvailable).toBe(true);
   });
 });
 
@@ -439,7 +391,6 @@ describe("McpService.getContextPack for a brand-new user", () => {
       "workos",
       {} as never,
       {} as never,
-      fakeBetaMembership(),
     );
 
     const { pack, markdown } = await service.getContextPack(userId);

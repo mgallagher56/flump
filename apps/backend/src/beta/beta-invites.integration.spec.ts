@@ -58,7 +58,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("beta invites (real P
       delete process.env[name];
     }
     membership = new BetaMembershipService(ds.getRepository(BetaMember));
-    invites = new BetaInvitesService(ds, membership);
+    invites = new BetaInvitesService(ds);
   });
 
   afterEach(() => {
@@ -144,7 +144,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("beta invites (real P
     await invites.redeem(user(USER_1), first.token);
     expect(await invites.removeMember(USER_1)).toEqual({ success: true });
     await expect(membership.isActiveMember(USER_1)).resolves.toBe(false);
-    expect(membership.wasActiveMemberRecently(USER_1)).toBe(false);
     await expect(invites.removeMember(USER_1)).rejects.toMatchObject({ status: 404 });
 
     const again = await invites.createInvite(ADMIN, "Again");

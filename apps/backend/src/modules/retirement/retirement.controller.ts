@@ -4,12 +4,11 @@ import type { Response } from "express";
 import { AuthGuard } from "../../auth/auth.guard";
 import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { expectedVersion, setEtag } from "../../contract/etag";
-import { RetirementAccessGuard } from "./retirement.access";
 import { RetirementService } from "./retirement.service";
 
 @Controller()
-// RD9: friends beta. Refused callers get the unknown-route 404, so the feature stays unseen.
-@UseGuards(AuthGuard, RetirementAccessGuard)
+// Open to everyone the beta gate allows (owner, 20 Nov 2026, superseding RD9): AuthGuard only.
+@UseGuards(AuthGuard)
 export class RetirementController {
   constructor(private readonly retirementService: RetirementService) {}
 

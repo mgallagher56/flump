@@ -18,7 +18,7 @@ import {
   monthLabel,
   parseMonth,
 } from "@flump/mcp";
-import { Inject, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import {
   Between,
@@ -29,14 +29,12 @@ import {
   MoreThanOrEqual,
   Repository,
 } from "typeorm";
-import { BETA_MEMBERSHIP_CHECK, type BetaMembershipCheck } from "../../auth/beta-access";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfileService } from "../profile/user-profile.service";
-import { isRetirementAllowed } from "../retirement/retirement.access";
 import { savedPlanInputFromRow } from "../retirement/retirement.service";
 import { FinancialPictureService, wireProfile } from "./financial-picture.service";
 
@@ -147,7 +145,6 @@ export class AgentDataService implements McpUserDataProvider {
     @InjectRepository(RetirementPlan)
     private readonly retirementPlanRepository: Repository<RetirementPlan>,
     private readonly financialPicture: FinancialPictureService,
-    @Inject(BETA_MEMBERSHIP_CHECK) private readonly betaMembership: BetaMembershipCheck,
   ) {}
 
   // --- Ranged reads for the MCP query tools (E17 re-plan PR B) ---------------------------------
@@ -317,12 +314,9 @@ export class AgentDataService implements McpUserDataProvider {
     const profile = loaded.rows.profile ?? {};
     const baseline = userProfileToSavedBaseline(profile, userId);
 
-    // Read only: no row means no saved plan (null), never a created default (E33). RD9: outside
-    // the friends beta the plan is not read and the key is left out.
-    const retirementAllowed = await isRetirementAllowed(process.env, userId, this.betaMembership);
-    const planRow = retirementAllowed
-      ? await this.retirementPlanRepository.findOne({ where: { userId } })
-      : null;
+    // Read only: no row means no saved plan (null), never a created default (E33). Retirement is
+    // open to everyone the beta lets in (owner, 20 Nov 2026, superseding RD9).
+    const planRow = await this.retirementPlanRepository.findOne({ where: { userId } });
 
     return {
       baseline,
@@ -350,12 +344,8 @@ export class AgentDataService implements McpUserDataProvider {
       // anonymiser keeps them as it keeps the baseline age (which is derived from the same year).
       // The saved salary and pension rates go with the plan (E33 RD6): they are for the
       // retirement tools only, the same workplace contributions the web Retirement page counts.
-      ...(retirementAllowed
-        ? {
-            retirementPlan: planRow ? savedPlanInputFromRow(planRow) : null,
-            workplacePension: workplacePensionFromProfile(profile),
-          }
-        : {}),
+      retirementPlan: planRow ? savedPlanInputFromRow(planRow) : null,
+      workplacePension: workplacePensionFromProfile(profile),
       birthYear: birthYearOf(profile.birthYear),
       picture: loaded.picture,
     };

@@ -53,15 +53,6 @@ export interface CreateMcpServerOptions {
   isToolAvailable?: (toolName: string) => boolean;
 }
 
-/**
- * The MCP tools that read or simulate the retirement plan. Retirement is a friends-beta feature
- * (RD9), so a host hides these through `isToolAvailable` for anyone outside it.
- */
-export const RETIREMENT_TOOL_NAMES: ReadonlySet<string> = new Set([
-  "get_retirement_picture",
-  "simulate_retirement",
-]);
-
 /** Creates a Flump McpServer with its one resource, its tools and the two import prompts. */
 export function createFlumpMcpServer(options: CreateMcpServerOptions): McpServer {
   const server = new McpServer({

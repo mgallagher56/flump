@@ -19,9 +19,6 @@ vi.mock("~/utils/auth.server", () => ({
 }));
 vi.mock("~/containers/pension/PensionContainer", () => ({ default: () => null }));
 
-import { RetirementPlanResponse } from "@flump/api-contract";
-import { BackendError } from "~/services/backend-error";
-import { retirementPlanFixture } from "~/test/fixtures/contractResponses";
 import { loader } from "./app.pension";
 
 const args = () =>
@@ -29,7 +26,7 @@ const args = () =>
 const run = async () =>
   ((await loader(args())) as unknown as { data: Record<string, unknown> }).data;
 
-describe("app.pension loader: retirementAvailable (RD9)", () => {
+describe("app.pension loader (Retirement open to everyone, owner 20 Nov 2026)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getAuthSession.mockResolvedValue({ user: { id: "u1" }, accessToken: "tok" });
@@ -42,34 +39,11 @@ describe("app.pension loader: retirementAvailable (RD9)", () => {
     });
   });
 
-  it("is true when the backend serves the retirement plan", async () => {
-    backendFetch.mockResolvedValue({ plan: retirementPlanFixture });
+  it("no longer asks the backend whether Retirement is available, and never returns the token", async () => {
     const payload = await run();
-    expect(payload.retirementAvailable).toBe(true);
-    expect(backendFetch).toHaveBeenCalledWith(
-      "/retirement-plan",
-      expect.objectContaining({
-        method: "GET",
-        schema: RetirementPlanResponse,
-        accessToken: "tok",
-      }),
-    );
-    expect(JSON.stringify(payload)).not.toContain("server-only-token");
-  });
-
-  it("is false when the backend answers 404", async () => {
-    backendFetch.mockRejectedValue(new BackendError("not-found", "/retirement-plan", 404));
-    expect((await run()).retirementAvailable).toBe(false);
-  });
-
-  it("is false on any other failure, and never fails the pension page", async () => {
-    backendFetch.mockRejectedValue(new BackendError("server", "/retirement-plan", 500));
-    expect((await run()).retirementAvailable).toBe(false);
-    backendFetch.mockRejectedValue(new TypeError("network"));
-    expect((await run()).retirementAvailable).toBe(false);
-    getAuthSession.mockResolvedValue({ user: { id: "u1" }, accessToken: undefined });
-    const payload = await run();
-    expect(payload.retirementAvailable).toBe(false);
+    expect(backendFetch).not.toHaveBeenCalled();
+    expect(payload).not.toHaveProperty("retirementAvailable");
     expect(payload.accounts).toEqual([]);
+    expect(JSON.stringify(payload)).not.toContain("server-only-token");
   });
 });

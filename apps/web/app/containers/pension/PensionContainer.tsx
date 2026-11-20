@@ -51,7 +51,6 @@ export const PensionContainer: FC = () => {
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];
   const userProfile = loaderData?.userProfile;
-  const retirementAvailable = loaderData?.retirementAvailable === true;
 
   const { formatCurrency } = useFormatCurrency();
   const { profile: rootProfile, updateProfile } = useUserProfile();
@@ -302,18 +301,16 @@ export const PensionContainer: FC = () => {
         onAddPot={openAddPot}
       />
 
-      {retirementAvailable && (
-        <p
-          className={retirementLine}
-          data-testid="pension-retirement-link"
-          id="pension-retirement-link"
-        >
-          Your retirement plan shows what your pots could give you each year.{" "}
-          <Link className={retirementLink} to={RETIREMENT_PATH}>
-            Open your retirement plan
-          </Link>
-        </p>
-      )}
+      <p
+        className={retirementLine}
+        data-testid="pension-retirement-link"
+        id="pension-retirement-link"
+      >
+        Your retirement plan shows what your pots could give you each year.{" "}
+        <Link className={retirementLink} to={RETIREMENT_PATH}>
+          Open your retirement plan
+        </Link>
+      </p>
 
       <PensionDetails
         annualSalary={annualSalary}

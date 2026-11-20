@@ -45,7 +45,7 @@ async function caught(p: Promise<unknown>) {
 
 const notFound = () => new BackendError("not-found", "/retirement-plan", 404);
 
-describe("app.retirement friends-beta gate (RD9)", () => {
+describe("app.retirement (open to everyone the beta lets in; owner, 20 Nov 2026)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     loadWorkspaceSnapshot.mockResolvedValue({
@@ -56,7 +56,7 @@ describe("app.retirement friends-beta gate (RD9)", () => {
     });
   });
 
-  it("loads the plan for an account that has the feature", async () => {
+  it("loads the plan for any signed-in, allowed account", async () => {
     backendFetch.mockResolvedValue({ plan: retirementPlanFixture });
     const result = (await loader(loaderArgs())) as { retirementPlan: unknown };
     expect(result.retirementPlan).toEqual(retirementPlanFixture);
@@ -82,25 +82,19 @@ describe("app.retirement friends-beta gate (RD9)", () => {
     expect(result.budgetEntries).toEqual([food]);
   });
 
-  it("loader: a backend 404 renders the normal not-found page", async () => {
+  it("loader: a backend failure, a 404 included, is the shared route error (no special not-found)", async () => {
     backendFetch.mockRejectedValue(notFound());
-    const err = await caught(loader(loaderArgs()));
-    expect(err).toBeInstanceOf(Response);
-    expect((err as Response).status).toBe(404);
-    expect((err as Response).statusText).toBe("Not Found");
-    expect(await (err as Response).text()).toBe("Not Found");
+    expect(await caught(loader(loaderArgs()))).toMatchObject({
+      init: { status: 404 },
+      data: { kind: "not-found", endpoint: "/retirement-plan" },
+    });
+    backendFetch.mockRejectedValue(new BackendError("server", "/retirement-plan", 500));
+    expect(await caught(loader(loaderArgs()))).toMatchObject({ init: { status: 502 } });
   });
 
-  it("loader: other backend failures are not turned into a 404", async () => {
-    const boom = new BackendError("server", "/retirement-plan", 500);
-    backendFetch.mockRejectedValue(boom);
-    expect(await caught(loader(loaderArgs()))).toBe(boom);
-  });
-
-  it("action: a backend 404 renders the normal not-found page", async () => {
+  it("action: a backend 404 is an ordinary failed save, not a not-found page", async () => {
     backendFetch.mockRejectedValue(notFound());
-    const err = await caught(action(actionArgs()));
-    expect(err).toBeInstanceOf(Response);
-    expect((err as Response).status).toBe(404);
+    const result = (await action(actionArgs())) as { data: { success: boolean } };
+    expect(result.data.success).toBe(false);
   });
 });

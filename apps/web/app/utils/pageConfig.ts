@@ -28,12 +28,16 @@ export interface DashboardWidgetMeta {
 }
 
 /**
- * Modules that exist but are never offered in a list a user sees (the dashboard's "Choose what
- * shows here" panel, Profile toggles, onboarding defaults). Retirement is a friends-beta feature
- * (decision RD9), reachable by URL only for the accounts it is open to, so it is never named here.
- * The key stays in `AppPageKey` and `APP_PAGES` so stored profiles still parse.
+ * Modules that are never offered as a toggle of their own (the dashboard's "Choose what shows
+ * here" panel, Profile toggles, onboarding defaults) and instead follow another page: on when that
+ * page is on. Retirement is open to everyone the beta lets in (owner, 20 Nov 2026, superseding
+ * RD9); it builds on the pension pots, so it shows wherever Pension does. It has no dashboard
+ * section. The key stays in `AppPageKey` and `APP_PAGES`.
  */
-export const HIDDEN_PAGE_KEYS: readonly AppPageKey[] = ["retirement"];
+export const FOLLOWING_PAGE_KEYS: Readonly<Partial<Record<AppPageKey, AppPageKey>>> = {
+  retirement: "pension",
+};
+const isFollowingPage = (key: AppPageKey): boolean => key in FOLLOWING_PAGE_KEYS;
 
 export const ALL_PAGE_KEYS: AppPageKey[] = (
   [
@@ -46,7 +50,7 @@ export const ALL_PAGE_KEYS: AppPageKey[] = (
     "mortgage",
     "tax",
   ] as AppPageKey[]
-).filter((k) => !HIDDEN_PAGE_KEYS.includes(k));
+).filter((k) => !isFollowingPage(k));
 
 export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   accounts: {
@@ -149,6 +153,8 @@ export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
 };
 
 export function isPageEnabled(enabledPages: string[] | null | undefined, key: AppPageKey): boolean {
+  const followed = FOLLOWING_PAGE_KEYS[key];
+  if (followed) return isPageEnabled(enabledPages, followed);
   if (!enabledPages || !Array.isArray(enabledPages) || enabledPages.length === 0) {
     return DEFAULT_ENABLED_PAGES.includes(key); // Nothing stored: the default set, without opt-in modules
   }

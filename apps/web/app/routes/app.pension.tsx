@@ -1,18 +1,14 @@
 import {
   CreateAccountResponse,
   DeleteAccountResponse,
-  RetirementPlanResponse,
   UpdateAccountResponse,
-  UpdateChecklistResponse,
-  UpdateProfileResponse,
 } from "@flump/api-contract";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import PensionContainer from "~/containers/pension/PensionContainer";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { BackendError } from "~/services/backend-error";
-import { ifMatchFromForm, PROFILE_VERSION_FIELD, revalidateOnConflict } from "~/services/conflict";
+import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { roundTo2dp } from "~/utils/roundTo2dp";
@@ -103,31 +99,9 @@ export const action = async (args: ActionFunctionArgs) => {
 // A save refused with 412 reloads the saved data, so the form shows and sends the latest version.
 export const shouldRevalidate = revalidateOnConflict;
 
-/**
- * RD9: whether this account can see Retirement (friends beta or open testing). The backend answers
- * /retirement-plan with its unknown-route 404 otherwise. Any failure counts as not available and
- * never fails the pension page.
- */
-async function isRetirementAvailable(args: LoaderFunctionArgs): Promise<boolean> {
-  try {
-    const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
-    await backendFetch("/retirement-plan", {
-      schema: RetirementPlanResponse,
-      accessToken: requireAccessToken({ accessToken }),
-      method: "GET",
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export const loader = async (args: LoaderFunctionArgs) => {
-  const [{ accounts, accountDetails, userProfile, user }, retirementAvailable] = await Promise.all([
-    loadWorkspaceSnapshot(args),
-    isRetirementAvailable(args),
-  ]);
-  return data({ accounts, accountDetails, userProfile, user, retirementAvailable });
+  const { accounts, accountDetails, userProfile, user } = await loadWorkspaceSnapshot(args);
+  return data({ accounts, accountDetails, userProfile, user });
 };
 
 const PensionRoute = (): ReactElement => {

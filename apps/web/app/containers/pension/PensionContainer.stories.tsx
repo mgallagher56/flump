@@ -13,15 +13,10 @@ const workplacePot = {
   isCurrent: true,
 };
 
-const loaderData = (
-  acc: unknown[],
-  userProfile: Record<string, unknown>,
-  retirementAvailable = false,
-) => ({
+const loaderData = (acc: unknown[], userProfile: Record<string, unknown>) => ({
   accounts: acc,
   accountDetails: [],
   userProfile: { setupChecklistCompletedSteps: ["pension"], ...userProfile },
-  retirementAvailable,
 });
 
 /** The onboarded user from the E16 audit: £58,000, 8% and 3%, one £96,000 pot. */
@@ -85,7 +80,7 @@ export const NoSalary: Story = {
 };
 
 export const WithRetirementPlan: Story = {
-  parameters: { router: { loaderData: loaderData([workplacePot], onboarded, true) } },
+  parameters: { router: { loaderData: loaderData([workplacePot], onboarded) } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const links = await canvas.findAllByRole("link", { name: "Open your retirement plan" });

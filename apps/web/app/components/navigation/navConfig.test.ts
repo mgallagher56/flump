@@ -26,15 +26,17 @@ describe("navConfig", () => {
     const group = (key: string) =>
       AUTH_NAV_ROUTES.find((r) => r.key === key)?.children?.map((c) => c.key);
     expect(group("borrowing")).toEqual(["debt", "mortgage"]);
-    expect(group("savingsAndPension")).toEqual(["savings", "pension"]);
+    expect(group("savingsAndPension")).toEqual(["savings", "pension", "retirement"]);
   });
 
-  it("keeps Retirement out of the main navigation while the route stays reachable by URL (RD9: friends beta only)", () => {
-    expect(keys(AUTH_NAV_ROUTES)).not.toContain("retirement");
-    const routes = AUTH_NAV_ROUTES.flatMap((r) =>
-      r.children ? r.children.map((c) => c.route) : [r.route],
-    );
-    expect(routes).not.toContain("/app/retirement");
+  it("lists Retirement in the navigation wherever Pension is on (owner, 20 Nov 2026)", () => {
+    expect(keys(AUTH_NAV_ROUTES)).toContain("retirement");
+    const routesFor = (pages: string[]) =>
+      filterNavRoutes(AUTH_NAV_ROUTES, pages, isPageEnabled).flatMap((r) =>
+        r.children ? r.children.map((c) => c.route) : [r.route],
+      );
+    expect(routesFor(["accounts", "pension"])).toContain("/app/retirement");
+    expect(routesFor(["accounts"])).not.toContain("/app/retirement");
     const routeFiles = Object.keys(import.meta.glob("../../routes/app.retirement.tsx"));
     expect(routeFiles).toEqual(["../../routes/app.retirement.tsx"]);
   });

@@ -6,7 +6,7 @@ import {
   APP_PAGES,
   DEFAULT_DASHBOARD_WIDGETS,
   DEFAULT_ENABLED_PAGES,
-  HIDDEN_PAGE_KEYS,
+  FOLLOWING_PAGE_KEYS,
   isPageEnabled,
   OPT_IN_PAGE_KEYS,
   stripRetiredKeys,
@@ -39,9 +39,9 @@ describe("retired module keys", () => {
   });
 });
 
-describe("hidden modules (RD9 friends beta)", () => {
-  it("never lists Retirement where a user can see or pick it", () => {
-    expect(HIDDEN_PAGE_KEYS).toEqual(["retirement"]);
+describe("modules that follow another page (owner, 20 Nov 2026: Retirement open to everyone, superseding RD9)", () => {
+  it("never offers Retirement as a toggle, and shows it wherever Pension shows", () => {
+    expect(FOLLOWING_PAGE_KEYS).toEqual({ retirement: "pension" });
     for (const list of [
       ALL_PAGE_KEYS,
       ALL_DASHBOARD_WIDGET_KEYS,
@@ -50,7 +50,11 @@ describe("hidden modules (RD9 friends beta)", () => {
     ]) {
       expect(list).not.toContain("retirement");
     }
-    expect(isPageEnabled([], "retirement")).toBe(false);
+    // Nothing stored: the default set, which includes Pension.
+    expect(isPageEnabled([], "retirement")).toBe(true);
+    expect(isPageEnabled(null, "retirement")).toBe(true);
+    expect(isPageEnabled(["accounts", "pension"], "retirement")).toBe(true);
+    expect(isPageEnabled(["accounts"], "retirement")).toBe(false);
   });
 
   it("keeps the key and its page config, so stored profiles still parse", () => {
