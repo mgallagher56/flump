@@ -11,8 +11,8 @@ import { retryEnabled } from "./rate-limit-retry";
  * load can be refused (E41: PRs 829 and 839). The limit is a security setting and is unchanged.
  *
  * The smoke config keeps a timestamped copy of the backend's output (BACKEND_LOG, written by
- * stamp-log.ts). From its access log this module rebuilds the user's read windows the way the
- * backend counts them, so:
+ * stamp-log.ts). From its access log this module rebuilds the user's read windows as the backend
+ * counts them (with the small, deliberate over-count described at userReads), so:
  * - paceReads(), called before a link spec seeds its persona, waits for the next window when the
  *   current one is nearly spent (PACE_AT reads), instead of letting a page load be refused. It
  *   waits only on a measured count, never retries a refused request.
@@ -102,14 +102,21 @@ export function parseBackendLog(text: string): { access: AccessEvent[]; refusals
   return { access, refusals };
 }
 
-/** The reads the backend counts against the user: authenticated GETs (not health, not 401s). */
+/**
+ * The reads the backend counts against the user: GETs and HEADs that were not refused (a refused
+ * hit burns no quota in RateLimitStore.hit), not health checks and not 401s. Deliberately a slight
+ * over-count, so pacing errs early: it also counts GETs with a class of their own (receipt
+ * downloads, data export), exempt /mcp paths and unauthenticated GETs that were not refused with
+ * 401. OPTIONS preflights are answered by CORS before any guard, so they are left out.
+ */
 export function userReads(access: AccessEvent[]): number[] {
   return access
     .filter(
       (e) =>
         (e.method === "GET" || e.method === "HEAD") &&
         !e.route.startsWith("/health") &&
-        e.status !== 401,
+        e.status !== 401 &&
+        e.status !== 429,
     )
     .map((e) => e.at)
     .sort((a, b) => a - b);

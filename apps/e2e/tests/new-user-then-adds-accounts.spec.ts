@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { openAddAccount, saveAddAccount } from "../support/add-account-dialog";
 import { AUTH_STATE } from "../support/auth";
 import { waitForHydration } from "../support/page";
+import { paceReads } from "../support/read-budget";
 
 /**
  * The new user adds more accounts (E11): a savings account and a credit card through the Add
@@ -27,6 +28,8 @@ const NET_WORTH = "£5,950";
 test("a new user adds a savings account and a credit card, and net worth counts both", async ({
   page,
 }) => {
+  // Wait for the next read window if this one is nearly spent (read-budget.ts).
+  await paceReads();
   await test.step("the journey's account is there", async () => {
     await page.goto("/app/accounts");
     await waitForHydration(page);
