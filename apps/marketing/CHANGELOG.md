@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.37.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.4...flump/marketing-v1.37.0) (2026-11-20)
+
+
+### Features ✨
+
+* **marketing:** feature pages, Features menu and the AI connection page (E42 PR 1) ([58f534d](https://github.com/mgallagher56/flump/commit/58f534da779c2c25501a3ad743236e0975ebfd35))
+* **marketing:** home page, kept calculators, Retirement and the /tools redirects (E42 PR 2) ([28f2833](https://github.com/mgallagher56/flump/commit/28f283391edaa1e7be3b959c54bca65590ced612))
+* **marketing:** sample previews for Savings and pension and for Debt and borrowing (E42 S8) ([eff0cf9](https://github.com/mgallagher56/flump/commit/eff0cf9e5cdc2431ec100248d8ffcc55aae13737))
+
+
+### Bug Fixes 🪲
+
+* **knip:** keep React Router entry.server exports, delete locals left unused by un-exporting ([ae3a8e7](https://github.com/mgallagher56/flump/commit/ae3a8e77bed2a2d302ce434c6960de7594294720))
+* **marketing:** no request data reaches the redirect, and no hash comparison ([959c55e](https://github.com/mgallagher56/flump/commit/959c55e37068034ac549eb763ec3eafe310bf15a))
+* **marketing:** review fixes for PR 2 ([18ebc43](https://github.com/mgallagher56/flump/commit/18ebc43108b82c9604f0414b9ec222ad72f98d91))
+* **marketing:** review fixes for the feature pages ([5bba65b](https://github.com/mgallagher56/flump/commit/5bba65b6e1ec2beccb2f0228f8cb6ff4f42bb2ad))
+* **marketing:** the #setup anchor lands below the sticky header ([9a75859](https://github.com/mgallagher56/flump/commit/9a758593d502955e8fe03b693f9860fca92393ce))
+* **marketing:** the home story checks the decided headline ([5d87ec9](https://github.com/mgallagher56/flump/commit/5d87ec9da4107006d46ef529a09561dca4b9f1c1))
+* **ui:** review fixes for the S8 sample previews ([9c15212](https://github.com/mgallagher56/flump/commit/9c15212cc871d30010d509498770fc1486bf6bbd))
+
+
+### Tests 🧪
+
+* **copy:** ban 256-bit, bank-grade, GDPR and Open Banking in marketing and web copy guards ([acd820f](https://github.com/mgallagher56/flump/commit/acd820f741f5eee87cf8ef2e083e68d290191522))
+* **copy:** ban GDPR compliance claims, not the word GDPR ([eeaef8f](https://github.com/mgallagher56/flump/commit/eeaef8ffea9e02f09187a0bde0ae52c1fb96f9e8))
+* **marketing:** the calculator and copy guards follow the calculators (E42 PR 2) ([8bb0355](https://github.com/mgallagher56/flump/commit/8bb035593f05e9e2c911b747a4842015195707d9))
+
+
+### Miscellaneous 🙃
+
+* make knip trustworthy, remove dead code and gate it in CI ([5c99fda](https://github.com/mgallagher56/flump/commit/5c99fda2bee1b506d77c3ea6b83ccc4a635e69b8))
+
 ## [1.36.4](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.3...flump/marketing-v1.36.4) (2026-11-20)
 
 

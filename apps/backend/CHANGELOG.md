@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.43.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.42.0...flump/backend-v1.43.0) (2026-11-20)
+
+
+### Features ✨
+
+* **api-contract:** PATCH /user-profile refuses displayName and hasSecondIncome now the one-release grace is over ([795779b](https://github.com/mgallagher56/flump/commit/795779b72459026bdd7a454862384e3cacf7746e))
+* **backend:** invite links and membership for the invite-only beta ([913c2f7](https://github.com/mgallagher56/flump/commit/913c2f70f137c1671b4deb7b56b0a4c9f2aad103))
+* **banking,backend:** E3 D-11 boot warning for a banking key that is not 32 generated random bytes ([514742b](https://github.com/mgallagher56/flump/commit/514742ba753abfd6b883c20cfd3fc132f40eab1b))
+* **e34:** finish C1: joint lines at the person's share everywhere, one home per share ([ac6a40e](https://github.com/mgallagher56/flump/commit/ac6a40e6a4ac4e26967a616e4643b0cc1f31782d))
+* Retirement open to everyone the beta allows (owner, 20 Nov 2026) ([9947cc7](https://github.com/mgallagher56/flump/commit/9947cc782e4d24f137dd6afb929c7693ee666874))
+* **web:** hide sign-up and gate uninvited sessions while the beta is invite-only ([21c6ad7](https://github.com/mgallagher56/flump/commit/21c6ad79b6faa0453e3db87ab41b21696ec717d4))
+
+
+### Bug Fixes 🪲
+
+* **backend:** CI: tests expect the retired profile fields refused; rollback spec ids built at runtime (Semgrep) ([87260a6](https://github.com/mgallagher56/flump/commit/87260a66d5c7f49ced4114692894540eba7c27bc))
+* **backend:** keep tsc build info inside dist so a clean build emits every file ([4fecf17](https://github.com/mgallagher56/flump/commit/4fecf17fc9c2abb11fa8e157662f4fd4362359d9))
+* **e41:** expiry instant counts as expired in the MCP token list and the OAuth state prune ([de164ad](https://github.com/mgallagher56/flump/commit/de164ad6a16bf3a9d3042acc8adf2fcb29794542))
+* **e41:** one rate-limit key per client address, however the address is written ([93f014b](https://github.com/mgallagher56/flump/commit/93f014bd67d4e1414dc7986b0023d90b9cddbc71))
+* **migrations:** take ACCESS EXCLUSIVE up front in BudgetEntryShareOneHome (review) ([0940860](https://github.com/mgallagher56/flump/commit/09408600d19643509add63bc868595990471e3c0))
+* review findings (receipt re-encryption wording, rollback spec comment, lint in key-format tests) ([5d854b6](https://github.com/mgallagher56/flump/commit/5d854b6ec7e5103da7466835bb3fa998cd64b026))
+* review findings on the invite flow ([8e6897a](https://github.com/mgallagher56/flump/commit/8e6897a4b726bcd0db4e50d9b3139674506737c8))
+
+
+### Tests 🧪
+
+* **backend,web:** a balance-only account update leaves every other field as saved ([68c42dc](https://github.com/mgallagher56/flump/commit/68c42dc86eadd14436ac884a04d7fe6f83596c97))
+* **backend:** E1 real-Postgres rollback tests for the financial data reset and bank disconnect ([010ab66](https://github.com/mgallagher56/flump/commit/010ab66d2687abacda45f336cad61f60f5a3189d))
+* **backend:** name the guard test for what it checks; type the detector self-test ([c70d4fc](https://github.com/mgallagher56/flump/commit/c70d4fc73ef859ddbd6b6ba2c4ef82cd28ebbb48))
+* **backend:** the retired-field refusals assert the contract error, not any error ([d9097a9](https://github.com/mgallagher56/flump/commit/d9097a95be82f508131ccef6d9757da75a89e519))
+* build sample ids and markers at runtime (Semgrep node_username, node_secret) ([0c85f4c](https://github.com/mgallagher56/flump/commit/0c85f4cd741d342f065dfc5be9ddf705e4b9b058))
+* **e41:** an IPv6 address that ends with :: keys to its /64 ([05b47fe](https://github.com/mgallagher56/flump/commit/05b47fe78837a9e8c174d1a2e0cb685790a5e78b))
+* **e41:** budget joint share test follows the 1 to 99 rule from main; mutate the beta invite services too ([775a517](https://github.com/mgallagher56/flump/commit/775a517208411bf643e2e4385ec0e83b66758f38))
+* **e41:** build sample user ids at runtime in three M4 specs ([0805e47](https://github.com/mgallagher56/flump/commit/0805e47c1c3860ff7a9bee274fa1a635cf575864))
+* **e41:** M4 agent, imports, privacy and snapshots kill tests ([0bf37ea](https://github.com/mgallagher56/flump/commit/0bf37eac5d2332e2220e1a281bdd5c7b913d7295))
+* **e41:** M4 area F kill tests ([3a46e3c](https://github.com/mgallagher56/flump/commit/3a46e3c4dce13c7e150b1f708422404891b126c7))
+* **e41:** M4 auth and guards kill tests ([01ebcb8](https://github.com/mgallagher56/flump/commit/01ebcb8e5cf3e682c2b7fc561f8d130f05771d9d))
+* **e41:** M4 contract kill tests ([040ce19](https://github.com/mgallagher56/flump/commit/040ce19796a62bc160eca7e0f2bdf696104ce34a))
+* **e41:** M4 finance kill tests ([cd0b775](https://github.com/mgallagher56/flump/commit/cd0b775b5656e99e74d975e746c529c781da820d))
+* **e41:** M4 profile, tax, budget and retirement service kill tests ([0447339](https://github.com/mgallagher56/flump/commit/04473397bd6907c7ded6b661d8f5210283f019dc))
+* **e41:** M4 review fixes: golden HMAC values, bank messages checked as facts, escaped invisible characters, no pin on the idempotency retry question, slug test for apps ([34a34a5](https://github.com/mgallagher56/flump/commit/34a34a51b1ca066cc6ff58d94e26540f07126976))
+* **e41:** M4 security kill tests ([5b8eed4](https://github.com/mgallagher56/flump/commit/5b8eed4b6232e403b4de7950e027cfdf245381e9))
+* **e41:** pass the beta membership check to the token service in the M4 token list tests ([436489d](https://github.com/mgallagher56/flump/commit/436489d93ab4f0602b259de5426c3f5db73d6956))
+
+
+### Miscellaneous 🙃
+
+* **e41:** M4 Stryker config for backend guards, interceptors, auth, security, contract and services ([42394d4](https://github.com/mgallagher56/flump/commit/42394d48ccaa9ce6a75bc7ee2216aa42107bca12))
+
 ## [1.42.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.41.0...flump/backend-v1.42.0) (2026-11-20)
 
 
