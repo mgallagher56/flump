@@ -9,8 +9,8 @@ const isCI = Boolean(process.env.CI);
 /**
  * Interaction cost (E38 S0): drives the seven core flows as a mouse user at 1280, a touch user at
  * 375 and a keyboard-only user at 1280, counting clicks or taps, keystrokes, Tab hops and
- * transitions, and compares them with docs/audit/interaction-cost/baseline.json. Warn-only
- * (ED1 option (a)). One worker, in file order: the flows share the single dev user, and
+ * transitions, and compares them with docs/audit/interaction-cost/baseline.json. A rise above
+ * its budget fails the run; a smaller one is a warning (ED1 option (b)). One worker, in file order: the flows share the single dev user, and
  * onboarding (which clears it) runs last. See README "Interaction cost".
  */
 export default defineConfig({

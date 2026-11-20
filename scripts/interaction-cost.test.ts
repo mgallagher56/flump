@@ -5,6 +5,7 @@ import {
   baselineTable,
   compareResults,
   comparisonSummary,
+  costLimit,
   type FlowCost,
   type InteractionBaseline,
   mergeResults,
@@ -38,7 +39,7 @@ describe("interaction cost comparison (E38 S0)", () => {
       compareResults(baseline, [
         { flow: "1-budget", title: "1. Budget", mode: "desktop-pointer", cost: cost() },
       ]),
-    ).toEqual({ regressions: [], improvements: [], unbaselined: [], missing: [] });
+    ).toEqual({ regressions: [], overBudget: [], improvements: [], unbaselined: [], missing: [] });
   });
 
   test("a rise in any compared metric is a regression, a fall an improvement", () => {
@@ -59,6 +60,41 @@ describe("interaction cost comparison (E38 S0)", () => {
     expect(result.improvements.map((c) => [c.metric, c.baseline, c.actual])).toEqual([
       ["keystrokes", 10, 7],
     ]);
+  });
+
+  test("the budget: one click more, no extra transition, 10% more keys or hops rounded up", () => {
+    // Clicks 4 -> limit 5. Transitions 3 -> limit 3. Keystrokes 27 -> 27 x 1.1 = 29.7, up to 30.
+    // Tab hops 100 -> exactly 110 (not 111 from floating point). Tab hops 0 -> 0.
+    expect(costLimit("clicks", 4)).toBe(5);
+    expect(costLimit("transitions", 3)).toBe(3);
+    expect(costLimit("keystrokes", 27)).toBe(30);
+    expect(costLimit("tabHops", 100)).toBe(110);
+    expect(costLimit("tabHops", 0)).toBe(0);
+  });
+
+  test("a rise within budget is a regression only; above it, over budget too", () => {
+    // Baseline clicks 4, keystrokes 10, transitions 3. Clicks 5 is +1 (within), keystrokes 12 is
+    // above 10 x 1.1 = 11 (over), transitions 4 is +1 (over: no extra transition is allowed).
+    const result = compareResults(baseline, [
+      {
+        flow: "1-budget",
+        title: "1. Budget",
+        mode: "desktop-pointer",
+        cost: cost({ clicks: 5, keystrokes: 12, transitions: 4 }),
+      },
+    ]);
+    expect(result.regressions.map((c) => c.metric)).toEqual([
+      "clicks",
+      "keystrokes",
+      "transitions",
+    ]);
+    expect(result.overBudget.map((c) => [c.metric, c.baseline, c.actual])).toEqual([
+      ["keystrokes", 10, 12],
+      ["transitions", 3, 4],
+    ]);
+    const summary = comparisonSummary(result, baseline, { recorded: false });
+    expect(summary).toContain("2 over budget: this fails the job.");
+    expect(summary).toContain("transitions: 4 (baseline 3, +1) **over budget (limit 3)**");
   });
 
   test("a flow or mode with no baseline entry is listed, not compared", () => {
@@ -113,7 +149,7 @@ describe("interaction cost comparison (E38 S0)", () => {
     expect(serializeBaseline(JSON.parse(text))).toBe(text);
   });
 
-  test("the summary says the job is warn-only when a cost rises", () => {
+  test("the summary says a rise within budget is a warning only", () => {
     const summary = comparisonSummary(
       compareResults(baseline, [
         {
@@ -127,7 +163,9 @@ describe("interaction cost comparison (E38 S0)", () => {
       { recorded: false },
     );
     expect(summary).toContain("1 cost increase(s)");
-    expect(summary).toContain("does not fail the job");
+    // Clicks 4 -> 5 is +1, inside the one-click budget.
+    expect(summary).toContain("all within budget");
+    expect(summary).toContain("a warning only");
     expect(summary).toContain("1-budget [desktop-pointer] clicks: 5 (baseline 4, +1)");
   });
 

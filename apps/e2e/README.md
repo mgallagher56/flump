@@ -339,9 +339,12 @@ errors: recreate the database or wait.
 `baseline.md` beside it the same as a table. A run compares itself with the baseline and writes
 `test-results-interaction-cost/summary.md` (and the GitHub job summary): any flow whose clicks,
 keystrokes, Tab hops or transitions rise is listed, and each one is printed as a warning.
-**It never fails the run** (ED1 option (a), a coordinator ruling under the owner's delegation of
-low-stakes decisions: warn-only until E38 S1 and S2 set the
-target baselines). A run that finds lower costs lists them as improvements. A flow that fails
+**A rise above its budget fails the run** (ED1 option (b), coordinator sign-off for the owner on
+20 November 2026, PR 841). The budget is `costLimit` in `interaction/report.ts`: one click more
+than the baseline, no extra transition, and keystrokes or Tab hops up to 10% more, rounded up.
+A smaller rise is a warning only. The job itself is still `continue-on-error` and not a required
+check (a repository setting, not changed here), so a failing run shows red without blocking a
+merge until that setting changes. A run that finds lower costs lists them as improvements. A flow that fails
 (most often because a page changed under it) is listed as "Not measured" and warned about, so it
 never passes as "no change".
 

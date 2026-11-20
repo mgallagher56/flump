@@ -9,7 +9,8 @@ import { writeFragment } from "./store";
 /**
  * The seven core flows in each mode (E38 S0). One worker, in this order: the flows share the
  * single dev user (see flows.ts). Each test records its cost as a fragment; global teardown
- * compares the run with docs/audit/interaction-cost/baseline.json and never fails it.
+ * compares the run with docs/audit/interaction-cost/baseline.json and fails it only for a cost
+ * above its budget (report.ts, costLimit).
  */
 const DEVICE: Record<RunMode, Parameters<typeof test.use>[0]> = {
   "desktop-pointer": { viewport: { width: 1280, height: 800 } },

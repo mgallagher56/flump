@@ -5,11 +5,11 @@ name: 👆 Interaction cost
 # transitions, and compares them with docs/audit/interaction-cost/baseline.json. See
 # apps/e2e/README.md "Interaction cost".
 #
-# Warn-only (ED1 option (a), coordinator ruling under the owner's delegation of low-stakes
-# decisions, until E38 S1 and S2 land): a cost increase is written
-# to the job summary and as a warning, and never fails the job. continue-on-error and not a
-# required check, so a flow that breaks while a page is redesigned never blocks a pull request
-# either. Its own workflow, pull requests and manual runs only, so it cannot hold up deploys.
+# Budgets (ED1 option (b), coordinator sign-off 20 November 2026, PR 841): a cost increase is
+# written to the job summary as a warning, and one above its budget (one click more, no extra
+# transition, 10% more keystrokes or Tab hops) fails the run. The job stays continue-on-error and
+# not a required check (whether to change that is the coordinator's), so a flow that breaks while
+# a page is redesigned does not block a pull request. Its own workflow, pull requests and manual runs only, so it cannot hold up deploys.
 on:
   pull_request:
     branches:
@@ -37,7 +37,7 @@ jobs:
     name: 👆 Interaction cost
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Warn-only until E38 S1 and S2 set the target baselines (ED1 option (a), coordinator ruling).
+    # Not blocking yet: a run over budget fails this job, which does not fail the workflow.
     continue-on-error: true
 
     # Same image as the visual and accessibility suites. Keep the tag equal to @playwright/test
