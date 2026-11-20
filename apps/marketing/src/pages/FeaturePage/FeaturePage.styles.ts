@@ -117,3 +117,16 @@ export const finalCtaTitle = cva({
 export const finalCtaBody = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
+
+/** Under the debt facts: the app's fixed MoneyHelper debt line (D10). */
+export const factFooter = cva({
+  base: { mt: "6" },
+});
+
+export const retirementBody = cva({
+  base: { display: "flex", flexDirection: "column", gap: "4", maxWidth: "3xl" },
+});
+
+export const retirementText = cva({
+  base: { textStyle: "body.md", color: "text.primary", margin: 0 },
+});

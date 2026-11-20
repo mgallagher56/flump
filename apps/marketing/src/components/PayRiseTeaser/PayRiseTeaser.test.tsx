@@ -3,14 +3,7 @@ import { expectPageRules } from "@repo/ui/testing";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isKnownToolSlug } from "../../utils/toolSlugs";
-import {
-  DEFAULT_SALARY_GBP,
-  PAY_RISE_TOOL_PATH,
-  PayRiseTeaser,
-  payRiseResult,
-  taxYearInWords,
-} from "./PayRiseTeaser";
+import { DEFAULT_SALARY_GBP, PayRiseTeaser, payRiseResult, taxYearInWords } from "./PayRiseTeaser";
 
 const renderTeaser = () =>
   render(
@@ -90,11 +83,11 @@ describe("PayRiseTeaser", () => {
     expectPageRules(container, { projectionNotices: 1 });
   });
 
-  it("invite-only: links to the full calculator, no invite button and nothing stored", () => {
+  it("invite-only: links to the Pay page, no invite button and nothing stored", () => {
     renderTeaser();
-    const link = screen.getByRole("link", { name: "Open the full calculator" });
-    expect(link.getAttribute("href")).toBe(PAY_RISE_TOOL_PATH);
-    expect(isKnownToolSlug(PAY_RISE_TOOL_PATH.replace("/tools/", ""))).toBe(true);
+    const link = screen.getByRole("link", { name: "About pay in Flump" });
+    expect(link.getAttribute("href")).toBe("/features/pay");
+    expect(document.querySelector('a[href^="/tools"]')).toBeNull();
     expect(screen.queryByText(/Request an invite/)).toBeNull();
     expect(persistOnboardingSeed).not.toHaveBeenCalled();
   });
@@ -106,5 +99,18 @@ describe("PayRiseTeaser", () => {
     expect(persistOnboardingSeed).toHaveBeenCalledWith(
       expect.objectContaining({ annualGrossSalary: DEFAULT_SALARY_GBP }),
     );
+  });
+
+  it("on the Pay page: an h3 inside the page's own section, and no link", () => {
+    render(
+      <MemoryRouter>
+        <PayRiseTeaser embedded link="none" />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("heading", { level: 3, name: "What you keep from a pay rise" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
   });
 });

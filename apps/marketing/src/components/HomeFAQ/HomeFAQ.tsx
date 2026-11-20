@@ -19,18 +19,19 @@ export interface HomeFaqEntry {
 }
 
 /**
- * The home FAQ (E16 PR 12). The pricing answer matches the pricing page; the AI answer is the one
- * place the home page mentions MCP (D13). No answer promises a feature that does not exist today.
+ * The home FAQ (E16 PR 12, E42 S5). Answers use the app's own area names. The pricing answer
+ * matches the pricing page; the AI answer says how a tester gets the AI connection (D5). No answer
+ * promises a feature that does not exist today.
  */
 export const HOME_FAQS: HomeFaqEntry[] = [
   {
     id: "bank",
     q: "Do I have to connect my bank accounts?",
-    a: "No. You type in your own figures. Rough totals for income, spending and savings are enough to use the tax, debt, mortgage and forecast tools.",
+    a: "No. You type in your own figures. Rough totals are enough to start in each area: accounts, budget, pay, savings and pension, and debt and borrowing.",
   },
   {
     id: "cover",
-    q: "What does Flump cover?",
+    q: "Which UK rules does Flump use?",
     a: "Flump is built for UK personal finance. It covers Income Tax bands, National Insurance, student loan plans 1, 2, 4, 5 and Postgraduate, pension contributions and salary sacrifice. It also shows the thresholds where take-home pay changes. It works the same whether you rent or pay a mortgage.",
   },
   {
@@ -48,8 +49,9 @@ export const HOME_FAQS: HomeFaqEntry[] = [
     q: "Can I ask an AI assistant about my figures?",
     a: (
       <>
-        Yes, as a preview. An AI assistant such as Claude Desktop can answer questions from the
-        figures you have saved in Flump.{" "}
+        Yes. The AI connection lets an AI assistant such as Claude Desktop answer questions from the
+        figures you have saved. During testing it is switched on one account at a time, so ask us to
+        switch it on for yours.{" "}
         <Link className={faqLink()} to="/features/ai-connection">
           About the AI connection
         </Link>

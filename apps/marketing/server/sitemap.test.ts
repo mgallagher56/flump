@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { CANONICAL_TOOL_SLUGS, STATIC_PATHS } from "../src/utils/toolSlugs";
+import { STATIC_PATHS } from "../src/utils/toolSlugs";
 import {
   buildSitemap,
   canonicalLinkTag,
@@ -57,13 +57,10 @@ describe("buildSitemap", () => {
     expect(xml.trimEnd().endsWith("</urlset>")).toBe(true);
   });
 
-  it("lists every static path and canonical tool slug exactly once", () => {
+  it("lists every static path exactly once, and no calculator page", () => {
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-    const expected = [
-      ...STATIC_PATHS.map((p) => `https://flump.example${p}`),
-      ...CANONICAL_TOOL_SLUGS.map((s) => `https://flump.example/tools/${s}`),
-    ];
-    expect(locs).toEqual(expected);
+    expect(locs).toEqual(STATIC_PATHS.map((p) => `https://flump.example${p}`));
+    expect(xml).not.toContain("/tools");
   });
 
   it("lists the features page, the five areas and the AI connection, and not /mcp (E42)", () => {
@@ -105,20 +102,10 @@ describe("canonicalLinkTag", () => {
     expect(tag("/%70ricing")).toBe(link("/pricing"));
   });
 
-  it("maps tool aliases to the canonical slug", () => {
-    expect(tag("/tools/overdraft-interest-calculator")).toBe(
-      link("/tools/overdraft-cost-and-payoff-calculator"),
-    );
-    expect(tag("/tools/uk-100k-tax-trap-calculator")).toBe(
-      link("/tools/uk-100k-tax-trap-calculator"),
-    );
-    // Former web app slugs, from the shared catalogue in @repo/ui/tools.
-    expect(tag("/tools/mortgage-overpay-vs-isa")).toBe(
-      link("/tools/mortgage-overpayment-vs-isa-calculator"),
-    );
-    expect(tag("/tools/section-24-landlord-calculator")).toBe(
-      link("/tools/section-24-landlord-tax-calculator"),
-    );
+  it("gives the feature pages a canonical, and the former calculator pages none (they answer 301)", () => {
+    expect(tag("/Features/Debt-And-Borrowing/")).toBe(link("/features/debt-and-borrowing"));
+    expect(tag("/tools/uk-100k-tax-trap-calculator")).toBe("");
+    expect(tag("/tools")).toBe("");
   });
 
   it("emits nothing for unknown pages and cannot be broken out of the attribute", () => {
@@ -126,6 +113,6 @@ describe("canonicalLinkTag", () => {
     expect(tag("/tools/nope")).toBe("");
     expect(tag('/a"><script>')).toBe("");
     expect(tag("/%E0%A4%A")).toBe("");
-    expect(canonicalPath("/tools")).toBe("/tools");
+    expect(canonicalPath("/tools")).toBeUndefined();
   });
 });

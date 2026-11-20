@@ -90,8 +90,20 @@ export const techDisclosure = cva({
     borderBlockWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",
-    // The web app links to #setup: land below the sticky header, not under it.
-    scrollMarginTop: "24",
     "& > div > button": { textStyle: "body.md", fontWeight: "semibold", color: "text.primary" },
+  },
+});
+
+/** "How to get it": the web app's Settings link lands here (#setup), below the sticky header. */
+export const setupSection = cva({ base: { scrollMarginTop: "24" } });
+
+export const inlineLink = cva({
+  base: {
+    color: "primary",
+    fontWeight: "semibold",
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+    _hover: { color: "primary.hover" },
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });

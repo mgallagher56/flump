@@ -1,5 +1,5 @@
 import express, { type Router } from "express";
-import { CANONICAL_TOOL_SLUGS, STATIC_PATHS, TOOL_SLUG_ALIASES } from "../src/utils/toolSlugs";
+import { STATIC_PATHS } from "../src/utils/toolSlugs";
 
 type Env = Record<string, string | undefined>;
 
@@ -40,8 +40,7 @@ export function normaliseSiteUrl(raw: string | undefined): string | undefined {
 }
 
 export function buildSitemap(origin: string): string {
-  const paths = [...STATIC_PATHS, ...CANONICAL_TOOL_SLUGS.map((s) => `/tools/${s}`)];
-  const urls = paths.map((p) => `  <url><loc>${origin}${p}</loc></url>`).join("\n");
+  const urls = STATIC_PATHS.map((p) => `  <url><loc>${origin}${p}</loc></url>`).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
 
@@ -50,8 +49,8 @@ const escapeAttr = (s: string) =>
 
 /**
  * The canonical path for a request URL, or undefined when it is not a real page. Query, hash,
- * duplicate and trailing slashes, case and percent-encoding are normalised, and tool-slug aliases
- * map to their canonical slug. The result always comes from the known route list.
+ * duplicate and trailing slashes, case and percent-encoding are normalised. The result always comes
+ * from the known route list.
  */
 export function canonicalPath(requestUrl: string): string | undefined {
   let raw = requestUrl.split(/[?#]/)[0] || "/";
@@ -62,13 +61,7 @@ export function canonicalPath(requestUrl: string): string | undefined {
   }
   const lower = raw.toLowerCase().replace(/\/{2,}/g, "/");
   const path = lower.length > 1 ? lower.replace(/\/+$/, "") || "/" : lower;
-  if ((STATIC_PATHS as readonly string[]).includes(path)) return path;
-  const match = /^\/tools\/([^/]+)$/.exec(path);
-  const slug = match?.[1];
-  if (!slug) return undefined;
-  if ((CANONICAL_TOOL_SLUGS as readonly string[]).includes(slug)) return path;
-  const target = Object.hasOwn(TOOL_SLUG_ALIASES, slug) ? TOOL_SLUG_ALIASES[slug] : undefined;
-  return target ? `/tools/${target}` : undefined;
+  return STATIC_PATHS.includes(path) ? path : undefined;
 }
 
 /**

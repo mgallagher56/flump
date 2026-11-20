@@ -21,7 +21,7 @@ describe("HomeFAQ", () => {
     expect(firstButton.getAttribute("aria-expanded")).toBe("false");
 
     const secondButton = screen.getByRole("button", {
-      name: /What does Flump cover\?/i,
+      name: /Which UK rules does Flump use\?/i,
     });
     expect(secondButton.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(secondButton);
@@ -63,9 +63,19 @@ describe("HomeFAQ", () => {
     );
   });
 
-  it("is the home page's one mention of MCP, with a link to the AI connection page (D13, E42)", () => {
+  it("names the app's areas, never the retired 'forecast tools' (E16 D5-B, E42)", () => {
+    const { container } = renderFaq();
+    expect(container.textContent ?? "").toMatch(
+      /accounts, budget, pay, savings and pension, and debt and borrowing/,
+    );
+    expect(container.textContent ?? "").not.toMatch(/forecast|what does flump cover/i);
+  });
+
+  it("says how a tester gets the AI connection and links its page (D5, E42)", () => {
     renderFaq();
     fireEvent.click(screen.getByRole("button", { name: /AI assistant/i }));
+    expect(screen.getByText(/switched on one account at a time/)).toBeDefined();
+    expect(screen.queryByText(/as a preview/)).toBeNull();
     expect(screen.getByRole("link", { name: "About the AI connection" }).getAttribute("href")).toBe(
       "/features/ai-connection",
     );

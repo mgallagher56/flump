@@ -3,6 +3,16 @@ import { describe, expect, it } from "vitest";
 import { MONEYHELPER_PENSIONS_URL, MoneyHelperGuidance } from "./MoneyHelperGuidance";
 
 describe("MoneyHelperGuidance", () => {
+  it("pins the fixed line and link word for word (copy guide 7.3, owner R3 exception RD11)", () => {
+    const { container } = render(<MoneyHelperGuidance />);
+    expect(container.textContent).toBe(
+      "MoneyHelper offers free, impartial guidance on pensions, backed by the government. Pension guidance from MoneyHelper (opens in a new tab)",
+    );
+    expect(screen.getByRole("link").textContent).toBe(
+      "Pension guidance from MoneyHelper (opens in a new tab)",
+    );
+  });
+
   it("links to MoneyHelper's pensions and retirement page in a new tab", () => {
     render(<MoneyHelperGuidance />);
     const link = screen.getByRole("link", {

@@ -134,3 +134,19 @@ export const ctaIllustration = cva({
     width: "full",
   },
 });
+
+/** Under each sample: one link to the feature page that explains it (E42 S6; never "Read more"). */
+export const sectionLinkRow = cva({
+  base: { textStyle: "body.md", margin: 0 },
+});
+
+export const sectionLink = cva({
+  base: {
+    color: "primary",
+    fontWeight: "semibold",
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+    _hover: { color: "primary.hover" },
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  },
+});

@@ -27,16 +27,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@repo/ui/styled-system": path.resolve(__dirname, "./styled-system"),
       "@repo/ui/calculators": path.resolve(__dirname, "../../packages/ui/src/calculators/index.ts"),
-      // Subpaths before "@repo/ui/tools", which would otherwise swallow them as a prefix.
-      "@repo/ui/tools/icons": path.resolve(__dirname, "../../packages/ui/src/tools/toolIcons.ts"),
-      "@repo/ui/tools/guide": path.resolve(
-        __dirname,
-        "../../packages/ui/src/tools/ToolGuide/index.ts",
-      ),
-      "@repo/ui/tools/breadcrumbs": path.resolve(
-        __dirname,
-        "../../packages/ui/src/tools/ToolBreadcrumbs/index.ts",
-      ),
+      // The calculator pages left the marketing site (E42 PR 2); the redirects still read the
+      // shared catalogue's slugs.
       "@repo/ui/tools": path.resolve(__dirname, "../../packages/ui/src/tools/index.ts"),
       "@repo/ui/fonts.css": path.resolve(__dirname, "../../packages/ui/src/fonts/fonts.css"),
       "@repo/ui": path.resolve(__dirname, "../../packages/ui/src/index.tsx"),

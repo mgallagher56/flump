@@ -77,10 +77,43 @@ describe("FeaturePage samples (D6)", () => {
     expect(document.getElementById("feature-breathing-room-preview")).not.toBeNull();
   });
 
-  it("embeds the two-slider pay rise tool on Pay", () => {
-    renderArea(byKey("pay"));
-    expect(screen.getByRole("heading", { name: "What you keep from a pay rise" })).toBeDefined();
-    expect(screen.queryByTestId("feature-illustration")).toBeNull();
+  it("puts the kept calculators on Pay and on Debt and borrowing only, after the area strip (D9)", () => {
+    for (const area of MONEY_AREAS) {
+      const { unmount } = renderArea(area);
+      const headings = within(main())
+        .getAllByRole("heading", { level: 2 })
+        .map((h) => h.textContent);
+      const tryIt = headings.indexOf("Try it with your own numbers");
+      if (area.key === "pay" || area.key === "debt-and-borrowing") {
+        expect(tryIt, area.key).toBeGreaterThan(headings.indexOf("Part of one picture"));
+      } else {
+        expect(tryIt, area.key).toBe(-1);
+      }
+      unmount();
+    }
+  });
+
+  it("adds the Retirement plan to Savings and pension, with the MoneyHelper line word for word (D10)", () => {
+    renderArea(byKey("savings-and-pension"));
+    const section = screen.getByRole("region", { name: "Retirement plan" });
+    expect(within(section).getByText(/^Set a retirement target of your own\./)).toBeDefined();
+    expect(section.textContent).toContain(
+      "MoneyHelper offers free, impartial guidance on pensions, backed by the government.",
+    );
+    expect(
+      within(section).getByRole("link", { name: /Pension guidance from MoneyHelper/ }),
+    ).toBeDefined();
+    expect(section.textContent).not.toMatch(/forecast|will have|should/i);
+  });
+
+  it("carries the MoneyHelper debt line on Debt and borrowing only (D10)", () => {
+    const { unmount } = renderArea(byKey("debt-and-borrowing"));
+    expect(screen.getByRole("complementary", { name: "Debt advice" }).textContent).toContain(
+      "Free, impartial debt help is available from",
+    );
+    unmount();
+    renderArea(byKey("budget"));
+    expect(screen.queryByRole("complementary", { name: "Debt advice" })).toBeNull();
   });
 
   it.each(["savings-and-pension", "debt-and-borrowing"] as const)(

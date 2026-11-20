@@ -16,13 +16,15 @@ const renderHome = () =>
 
 const main = () => screen.getByRole("main");
 
-describe("Marketing HomePage (E16 PR 12)", () => {
-  it("has a hero with one h1, one sentence and the example preview", () => {
+describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
+  it("has a hero with the decided h1 and lead (D2) and the example preview", () => {
     renderHome();
     expect(
-      screen.getByRole("heading", { level: 1, name: "See where you stand each month" }),
+      screen.getByRole("heading", { level: 1, name: "All your money. One clear picture." }),
     ).toBeDefined();
-    expect(screen.getByText(/^Enter a few rough numbers/)).toBeDefined();
+    expect(
+      screen.getByText("Accounts, budget, pay, savings, pension and debts in one place."),
+    ).toBeDefined();
     const preview = screen.getByTestId("baseline-snapshot-preview");
     expect(within(preview).getByText("Example")).toBeDefined();
     // /sandbox now redirects to sign-up, so the second hero button opens the interactive preview.
@@ -42,16 +44,21 @@ describe("Marketing HomePage (E16 PR 12)", () => {
     expectPageRules(screen.getByTestId("home-final-cta"), { projectionNotices: 0 });
   });
 
-  it("has five bands: hero, what you can see, pay rise, security, then FAQ with the final CTA", () => {
+  it("has the E42 bands: hero, features, rough figures, more detail, pay rise, security, then FAQ with the final CTA", () => {
     const { container } = renderHome();
     const sections = Array.from(main().children).filter((el) => el.tagName === "SECTION");
     expect(sections.map((s) => s.id || s.getAttribute("data-testid"))).toEqual([
       "home-hero",
-      "what-you-can-see",
+      "features",
+      "rough-figures",
+      "more-detail",
       "pay-rise",
       "security",
       "faq",
     ]);
+    // D1: the band is "Flump features", never "What Flump covers".
+    expect(screen.getByRole("heading", { level: 2, name: "Flump features" })).toBeDefined();
+    expect(container.textContent ?? "").not.toMatch(/what flump covers/i);
     // The final call to action sits inside the FAQ band, which is the page's one sage band.
     const faq = container.querySelector("#faq") as HTMLElement;
     expect(faq.getAttribute("data-tone-band")).toBe("sage");
@@ -89,6 +96,59 @@ describe("Marketing HomePage (E16 PR 12)", () => {
     ).toBeDefined();
   });
 
+  it("shows the five area tiles and the AI connection tile, each linked to its page", () => {
+    renderHome();
+    const tiles = within(screen.getByRole("region", { name: "Flump features" })).getByRole("list", {
+      name: "Flump features",
+    });
+    expect(
+      within(tiles)
+        .getAllByRole("link")
+        .map((a) => a.getAttribute("href")),
+    ).toEqual([
+      "/features/accounts",
+      "/features/budget",
+      "/features/pay",
+      "/features/savings-and-pension",
+      "/features/debt-and-borrowing",
+      "/features/ai-connection",
+    ]);
+    expect(
+      within(tiles).getByText("Switched on for an account on request during testing."),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("link", { name: "All Flump features on one page" }).getAttribute("href"),
+    ).toBe("/features");
+  });
+
+  it("starts with rough figures, then offers more detail, each linked to its area", () => {
+    renderHome();
+    const steps = within(screen.getByRole("region", { name: "Start with rough figures" }));
+    expect(steps.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
+      "Enter rough figures",
+      "See where you stand",
+      "Check in once a month",
+    ]);
+    const detail = within(screen.getByRole("region", { name: "More detail when you want it" }));
+    expect(detail.getAllByRole("link").map((a) => [a.textContent, a.getAttribute("href")])).toEqual(
+      [
+        ["About pay in Flump", "/features/pay"],
+        ["About savings and pension in Flump", "/features/savings-and-pension"],
+        ["About debt and borrowing in Flump", "/features/debt-and-borrowing"],
+        ["About accounts in Flump", "/features/accounts"],
+      ],
+    );
+  });
+
+  it("links the pay rise tool to the Pay page, and links no calculator page", () => {
+    const { container } = renderHome();
+    const payRise = within(container.querySelector("#pay-rise") as HTMLElement);
+    expect(payRise.getByRole("link", { name: "About pay in Flump" }).getAttribute("href")).toBe(
+      "/features/pay",
+    );
+    expect(container.querySelector('a[href^="/tools"], a[href^="/mcp"]')).toBeNull();
+  });
+
   it("has no MCP section, code block, monospace pill or off-system colour (D13)", () => {
     renderHome();
     const body = main();
@@ -119,10 +179,7 @@ describe("Marketing HomePage (E16 PR 12)", () => {
   it("adds illustrations only where no figure follows, and none in the hero", () => {
     const { container } = renderHome();
     const scenes = [...container.querySelectorAll("svg[data-scene]")];
-    expect(scenes.map((svg) => svg.getAttribute("data-scene"))).toEqual([
-      "empty-savings",
-      "onboarding",
-    ]);
+    expect(scenes.map((svg) => svg.getAttribute("data-scene"))).toEqual(["check-in", "onboarding"]);
     expect(screen.getByTestId("home-hero").querySelector("svg[data-scene]")).toBeNull();
     for (const svg of scenes) expect(svg.getAttribute("aria-hidden")).toBe("true");
     expect(

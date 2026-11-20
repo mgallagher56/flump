@@ -9,6 +9,7 @@ import {
   type SampleHouseholdKey,
 } from "@repo/ui";
 import { type FC, useState } from "react";
+import { Link } from "react-router-dom";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
@@ -27,6 +28,8 @@ import {
   sectionHeading,
   sectionIllustration,
   sectionIntro,
+  sectionLink,
+  sectionLinkRow,
   sections,
 } from "./PreviewPage.styles";
 
@@ -79,6 +82,11 @@ export const PreviewPage: FC = () => {
               >
                 <DashboardPreview household={household} id="marketing-dashboard-preview" />
               </PreviewFrame>
+              <p className={sectionLinkRow()}>
+                <Link className={sectionLink()} to="/features/accounts">
+                  About accounts and net worth
+                </Link>
+              </p>
             </section>
 
             {/* Moment 2: Monthly Check-In card interactive preview */}
@@ -111,6 +119,11 @@ export const PreviewPage: FC = () => {
               >
                 <CheckInPreview household={household} id="marketing-checkin-preview" />
               </PreviewFrame>
+              <p className={sectionLinkRow()}>
+                <Link className={sectionLink()} to="/features/accounts">
+                  About accounts and the monthly check-in
+                </Link>
+              </p>
             </section>
 
             {/* Moment 3: Model a change scenario slider & Breathing room live preview */}
@@ -137,6 +150,11 @@ export const PreviewPage: FC = () => {
               >
                 <BreathingRoomPreview household={household} id="marketing-breathing-room-preview" />
               </PreviewFrame>
+              <p className={sectionLinkRow()}>
+                <Link className={sectionLink()} to="/features/budget">
+                  About budget and breathing room
+                </Link>
+              </p>
             </section>
 
             {/* Call to action */}

@@ -75,9 +75,10 @@ describe("Marketing AI connection page (E42 S2b)", () => {
   it("does not read as if every invited account can turn it on", () => {
     renderPage();
     const main = screen.getByRole("main").textContent ?? "";
-    // "How to get it" waits for the owner (version 1 or 2); the old present-tense steps are gone.
-    expect(screen.queryByRole("heading", { name: /how to (turn it on|get it)/i })).toBeNull();
+    // The old present-tense steps are gone; "How to get it" (version 1) promises nothing.
+    expect(screen.queryByRole("heading", { name: /how to turn it on/i })).toBeNull();
     expect(main).not.toMatch(/Request an invite and sign in to Flump/);
+    expect(main).not.toMatch(/we switch|when you ask/i);
     expect(main).not.toMatch(/source code|coming soon|by invitation/i);
   });
 
@@ -89,10 +90,16 @@ describe("Marketing AI connection page (E42 S2b)", () => {
     expect(within(strip).queryByRole("link", { current: "page" })).toBeNull();
   });
 
-  it("opens the technical details on arrival at #setup, the web app's link", () => {
-    renderPage("/features/ai-connection#setup");
-    expect(screen.getByTestId("mcp-technical-details")).toBeDefined();
-    expect(screen.getByText(/The steps to connect are in the Flump app/)).toBeDefined();
+  it("says how to get it in the decided words (version 1), with 'Ask us' linking to Contact", () => {
+    renderPage();
+    const section = screen.getByRole("region", { name: "How to get it" });
+    expect(section.id).toBe("setup");
+    expect(screen.getByTestId("mcp-how-to-get-it").textContent).toBe(
+      "While Flump is being tested, the AI connection is switched on one account at a time. Ask us to switch it on for yours. Once it is on, create an access token in Settings and add Flump to your AI assistant.",
+    );
+    expect(within(section).getByRole("link", { name: "Ask us" }).getAttribute("href")).toBe(
+      "/contact",
+    );
   });
 
   it("keeps the technical details collapsed until asked", () => {

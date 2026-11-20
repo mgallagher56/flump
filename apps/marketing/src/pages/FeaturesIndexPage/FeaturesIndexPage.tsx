@@ -1,25 +1,14 @@
-import { Button, Card } from "@repo/ui";
+import { Button } from "@repo/ui";
 import type { FC } from "react";
-import { Link } from "react-router-dom";
+import { FeatureTiles } from "../../components/FeatureTiles";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
-import {
-  AI_CONNECTION,
-  AI_CONNECTION_ACCESS,
-  FEATURES,
-  FEATURES_INDEX,
-} from "../../utils/featureAreas";
+import { FEATURES_INDEX } from "../../utils/featureAreas";
 import { signupCta } from "../../utils/site";
 import {
   container,
   ctaRow,
-  featureCard,
-  featureGrid,
-  featureLead,
-  featureLink,
-  featureName,
-  featureNote,
   headerBlock,
   heading,
   introText,
@@ -63,23 +52,7 @@ export const FeaturesIndexPage: FC = () => {
             </div>
           </section>
 
-          <ul aria-label="Flump features" className={featureGrid()}>
-            {FEATURES.map((feature) => (
-              <Card as="li" key={feature.key} padding="lg">
-                <div className={featureCard()}>
-                  <h2 className={featureName()}>
-                    <Link className={featureLink()} to={feature.path}>
-                      {feature.name}
-                    </Link>
-                  </h2>
-                  <p className={featureLead()}>{feature.lead}</p>
-                  {feature.key === AI_CONNECTION.key && (
-                    <p className={featureNote()}>{AI_CONNECTION_ACCESS}</p>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </ul>
+          <FeatureTiles headingLevel={2} />
         </div>
       </main>
 

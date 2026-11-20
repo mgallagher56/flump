@@ -30,10 +30,9 @@ import {
  */
 export const BETA_STATEMENT = "One plan you can use today.";
 
-/** What the beta includes: three things that exist today (E7, copy guide 7.4). */
+/** What the beta includes: the five areas, as the app names them, and how figures get in (E42 S6). */
 export const BETA_FEATURES = [
-  "The Flump app: breathing room, what is left over and what a change would do",
-  "Every calculator on the tools page",
+  "All five areas of the Flump app: accounts, budget, pay, savings and pension, and debt and borrowing",
   "Your own figures, typed in. No bank login is needed",
 ] as const;
 

@@ -38,6 +38,7 @@ import {
   KpiCard,
   KpiStrip,
   type KpiStripItems,
+  MoneyHelperGuidance,
   PageBody,
   PageHeader,
   PageSection,
@@ -60,7 +61,6 @@ import {
 } from "~/features/pension/contribution";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { formatEstimate, roundEstimate } from "~/utils/roundEstimate";
-import { MoneyHelperGuidance } from "../MoneyHelperGuidance";
 import { RetirementPotChart } from "../RetirementPotChart";
 import { WorkplaceSalaryNotSet } from "../WorkplaceSalaryNotSet";
 import {

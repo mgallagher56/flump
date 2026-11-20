@@ -3,7 +3,9 @@ import {
   Button,
   Card,
   DashboardPreview,
+  DebtHelpLink,
   Illustration,
+  MoneyHelperGuidance,
   PreviewFrame,
   type SampleHouseholdKey,
 } from "@repo/ui";
@@ -13,13 +15,14 @@ import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { MarketingSection } from "../../components/MarketingSection";
 import { PageMeta } from "../../components/PageMeta";
-import { PayRiseTeaser } from "../../components/PayRiseTeaser";
-import { type Feature, MONEY_AREAS } from "../../utils/featureAreas";
+import { TryItSection } from "../../components/TryItSection";
+import { type Feature, MONEY_AREAS, RETIREMENT_SECTION } from "../../utils/featureAreas";
 import { signupCta } from "../../utils/site";
 import {
   areaLabel,
   ctaRow,
   depthList,
+  factFooter,
   factGrid,
   factText,
   finalCta,
@@ -34,6 +37,8 @@ import {
   heroText,
   mainContent,
   pageShell,
+  retirementBody,
+  retirementText,
 } from "./FeaturePage.styles";
 
 export interface FeaturePageProps {
@@ -51,7 +56,6 @@ export interface FeaturePageProps {
 /** The working sample for an area (D6, option A): the same components the preview page uses. */
 const SampleSection: FC<{ sample: Feature["sample"] }> = ({ sample }) => {
   const [household, setHousehold] = useState<SampleHouseholdKey>("renter");
-  if (sample === "pay-rise") return <PayRiseTeaser />;
   if (sample === "none") return null;
   return (
     <MarketingSection
@@ -93,8 +97,10 @@ const HERO_SCENES = {
 /**
  * One template for every feature page (E42 S2, plan section 4.3), rendered from
  * `utils/featureAreas.ts` so the pages cannot drift apart: the hero, "What you see", a working
- * sample where one exists, "More detail when you want it", "Part of one picture" and a final call
- * to action. The calculators section (section 6 of the template) arrives with PR 2.
+ * sample where one exists, "More detail when you want it", "Part of one picture", the kept
+ * calculators on Pay and Debt and borrowing (D9), and a final call to action. Savings and pension
+ * adds its Retirement plan section; it and Debt and borrowing carry the app's fixed MoneyHelper
+ * line word for word (D10).
  */
 export const FeaturePage: FC<FeaturePageProps> = ({
   feature,
@@ -152,9 +158,27 @@ export const FeaturePage: FC<FeaturePageProps> = ({
               </Card>
             ))}
           </ul>
+          {feature.key === "debt-and-borrowing" && (
+            <div className={factFooter()}>
+              <DebtHelpLink />
+            </div>
+          )}
         </MarketingSection>
 
         {sample ?? <SampleSection sample={feature.sample} />}
+
+        {feature.key === "savings-and-pension" && (
+          <MarketingSection id="retirement" title={RETIREMENT_SECTION.title}>
+            <div className={retirementBody()}>
+              {RETIREMENT_SECTION.body.map((paragraph) => (
+                <p className={retirementText()} key={paragraph}>
+                  {paragraph}
+                </p>
+              ))}
+              <MoneyHelperGuidance />
+            </div>
+          </MarketingSection>
+        )}
 
         <MarketingSection id="more-detail" title="More detail when you want it">
           {moreDetail ?? (
@@ -174,6 +198,10 @@ export const FeaturePage: FC<FeaturePageProps> = ({
         >
           <AreaStrip current={currentArea} />
         </MarketingSection>
+
+        {(feature.key === "pay" || feature.key === "debt-and-borrowing") && (
+          <TryItSection area={feature.key} />
+        )}
 
         <section
           aria-labelledby="feature-cta-title"

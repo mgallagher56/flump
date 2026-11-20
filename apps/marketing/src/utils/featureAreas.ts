@@ -18,7 +18,7 @@ export type MoneyAreaKey =
 type FeatureKey = MoneyAreaKey | "ai-connection";
 
 /** Which sample the "See it" section shows. `none` shows an illustration in the hero instead. */
-type FeatureSample = "dashboard" | "breathing-room" | "pay-rise" | "none";
+type FeatureSample = "dashboard" | "breathing-room" | "none";
 
 export interface Feature {
   key: FeatureKey;
@@ -117,7 +117,7 @@ export const MONEY_AREAS: readonly MoneyArea[] = [
       "Receipts kept with each record",
       "Compare one tax year with another",
     ],
-    sample: "pay-rise",
+    sample: "none",
     previewHref: "/preview",
     meta: {
       title: "Take-home pay and Self Assessment | Flump",
@@ -148,7 +148,7 @@ export const MONEY_AREAS: readonly MoneyArea[] = [
     meta: {
       title: "Savings and pension | Flump",
       description:
-        "Savings accounts with their rates and an estimate of growth, and your pension pots with what you and your employer pay in.",
+        "Savings accounts with their rates and an estimate of growth, and your pension pots. See a retirement estimate against a target you set.",
     },
   },
   {
@@ -224,5 +224,42 @@ export const FEATURES_INDEX = {
     title: "Flump features | Flump",
     description:
       "The five areas of Flump: accounts, budget, pay, savings and pension, and debt and borrowing. Start with rough figures and add detail when you want it.",
+  },
+} as const;
+
+/**
+ * The Retirement plan section on the Savings and pension page (E42 S6c). Retirement is open to
+ * every tester and sits under Savings and pension in the app. Flump sets no target and suggests no
+ * contribution (copy guide 2.3, advice boundary R1 to R8).
+ */
+export const RETIREMENT_SECTION = {
+  title: "Retirement plan",
+  body: [
+    "Set a retirement target of your own. Flump shows an estimate of your yearly income in retirement, in today's prices and before tax, and which accounts count towards it.",
+    "The assumptions are listed year by year and you can change them. It is an estimate from your figures, not a prediction.",
+  ],
+} as const;
+
+/**
+ * "Try it with your own numbers" (D9, plan section 4.4): the three kept calculators, each in a short
+ * form on its area page. The names are the marketing site's own; the shared catalogue's do not
+ * change. Each says in one line where the app does the same job with saved figures.
+ */
+export const TRY_IT = {
+  title: "Try it with your own numbers",
+  subtitle: "Nothing you enter here is saved. The starting figures are examples.",
+  payRise: {
+    inApp: "In the app, the pay rise tool on Take-home pay uses your saved salary.",
+  },
+  debtPayoff: {
+    title: "Two ways to pay off debts",
+    line: "Highest rate first or smallest balance first: see an estimate of when each clears the debts, and the interest for each.",
+    inApp: "In the app, the pay extra tool on Cards and loans does this with your saved debts.",
+  },
+  mortgageIsa: {
+    lead: "If you have a mortgage",
+    title: "Mortgage overpayment or ISA, compared",
+    line: "See the interest an overpayment could save beside what the same money could grow to in an ISA, at a rate you choose.",
+    inApp: "In the app, the overpay or save comparison on Mortgage uses your saved mortgage.",
   },
 } as const;

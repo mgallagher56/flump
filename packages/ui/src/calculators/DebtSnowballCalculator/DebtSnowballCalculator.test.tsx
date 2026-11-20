@@ -319,4 +319,84 @@ describe("DebtSnowballCalculator", () => {
     expect(tsx).not.toContain("style={{");
     expect(`${tsx}${styles}`).not.toMatch(/status\.(danger|warning)|#[0-9a-f]{3,6}\b/i);
   });
+
+  describe("short form (E42 section 4.4)", () => {
+    const engineStart = () =>
+      compareAvalancheAndSnowball(
+        STARTING_DEBTS.map((d) => ({
+          id: d.id,
+          name: d.kind ?? d.id,
+          type: d.type,
+          balance: d.balance ?? 0,
+          apr: d.apr ?? 0,
+          minimumPayment: d.minimum ?? 0,
+        })),
+        75,
+      );
+    const toggle = () => screen.getByRole("button", { name: "Change the details" });
+
+    it("shows only the two example balances and the extra payment on first view", () => {
+      render(<DebtSnowballCalculator shortForm />);
+      expect(screen.getByRole("group", { name: "Example debt 1: credit card" })).toBeDefined();
+      expect(screen.getByRole("group", { name: "Example debt 2: personal loan" })).toBeDefined();
+      expect(screen.getAllByLabelText("Balance")).toHaveLength(2);
+      expect(screen.queryByLabelText("Interest rate (APR)")).toBeNull();
+      expect(screen.queryByLabelText("Minimum payment a month")).toBeNull();
+      expect(extraSlider()).toBeDefined();
+      expect(screen.queryByRole("button", { name: /^Edit debt/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: /^Remove debt/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Add a debt" })).toBeNull();
+    });
+
+    it("has no title, intro, sign-up button or details table, and writes no seed", () => {
+      window.localStorage.clear();
+      render(<DebtSnowballCalculator shortForm />);
+      expect(screen.queryByText("Debt payoff methods compared")).toBeNull();
+      expect(screen.queryByRole("button", { name: /Continue to sign up/ })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Show details" })).toBeNull();
+      fireEvent.click(toggle());
+      enter(screen.getAllByLabelText("Balance")[0] as HTMLElement, "5000");
+      expect(window.localStorage.length).toBe(0);
+      // The explainer drawer and the projection notice stay.
+      expect(screen.getByRole("button", { name: "How the two methods differ" })).toBeDefined();
+    });
+
+    it("opens every row's rate, minimum and Remove, and Add a debt, behind one toggle", () => {
+      render(<DebtSnowballCalculator shortForm />);
+      const button = toggle();
+      expect(button.getAttribute("aria-expanded")).toBe("false");
+      const panel = document.getElementById(button.getAttribute("aria-controls") ?? "");
+      expect(panel).not.toBeNull();
+      fireEvent.click(button);
+      expect(button.getAttribute("aria-expanded")).toBe("true");
+      expect(screen.getAllByLabelText("Interest rate (APR)")).toHaveLength(2);
+      expect(screen.getAllByLabelText("Minimum payment a month")).toHaveLength(2);
+      expect(screen.getAllByRole("button", { name: /^Remove debt/ })).toHaveLength(2);
+      fireEvent.click(screen.getByRole("button", { name: "Add a debt" }));
+      expect(screen.getByRole("group", { name: "Debt 3" })).toBeDefined();
+      // With one debt left there is nothing to remove.
+      fireEvent.click(screen.getByRole("button", { name: "Remove debt 3" }));
+      fireEvent.click(screen.getByRole("button", { name: "Remove debt 2" }));
+      expect(screen.queryByRole("button", { name: /^Remove debt/ })).toBeNull();
+      fireEvent.click(button);
+      expect(screen.queryByLabelText("Interest rate (APR)")).toBeNull();
+    });
+
+    it("shows each way's date and interest in two equal cards, neither marked as better", () => {
+      render(<DebtSnowballCalculator shortForm />);
+      const engine = engineStart();
+      const cards = outcomes();
+      const labels = within(screen.getByTestId("debt-snowball-outcomes"))
+        .getAllByText(/first$/)
+        .map((el) => el.textContent);
+      expect(labels).toEqual(["Highest rate first", "Smallest balance first"]);
+      expect(cards.getByText(engine.avalanche.debtFreeDate)).toBeDefined();
+      expect(cards.getByText(engine.snowball.debtFreeDate)).toBeDefined();
+      // Engine: £1,863.89 highest rate first, £2,130.69 smallest balance first, in whole pounds.
+      expect(cards.getByText("Estimated interest £1,864")).toBeDefined();
+      expect(cards.getByText("Estimated interest £2,131")).toBeDefined();
+      expect(cards.queryByText(DEBT_SNOWBALL_COPY.kpiDate)).toBeNull();
+      expect(toolText()).not.toMatch(/sooner|better|best|should/i);
+    });
+  });
 });

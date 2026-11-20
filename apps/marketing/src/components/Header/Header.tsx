@@ -28,6 +28,7 @@ import {
   drawerCtas,
   drawerGroup,
   drawerGroupHeading,
+  drawerLinkCurrent,
   drawerLinkHint,
   drawerLinkLabel,
   drawerLinkRow,
@@ -261,7 +262,10 @@ export const Header: FC = () => {
               <li key={link.key}>
                 <Link
                   aria-current={link.key === activeKey ? "page" : undefined}
-                  className={navDrawerLink()}
+                  className={cx(
+                    navDrawerLink(),
+                    link.key === activeKey ? drawerLinkCurrent() : undefined,
+                  )}
                   to={link.href}
                   onClick={closeMenu}
                 >

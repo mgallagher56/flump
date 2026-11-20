@@ -129,8 +129,6 @@ export const SWEEP_SETS: SweepSet[] = [
     name: "mkt",
     pages: [
       { name: "home", url: `${MARKETING_URL}/` },
-      { name: "tools", url: `${MARKETING_URL}/tools` },
-      ...toolPages(MARKETING_URL),
       ...[
         "/features",
         "/features/accounts",

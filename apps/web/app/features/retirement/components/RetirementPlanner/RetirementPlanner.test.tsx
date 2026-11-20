@@ -1,5 +1,6 @@
 import { RetirementPlanResponse } from "@flump/api-contract";
 import type { BuildRetirementPlanInputArgs, RetirementSavedPlanInput } from "@flump/finance-engine";
+import { MONEYHELPER_PENSIONS_URL } from "@repo/ui";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
@@ -7,7 +8,6 @@ import { describe, expect, it, vi } from "vitest";
 import { MAX_CONTRIBUTION_PERCENT } from "~/features/pension/contribution";
 import { retirementPlanUnsavedFixture } from "~/test/fixtures/contractResponses";
 import { retirementArgsFromLoader } from "../../retirementInput";
-import { MONEYHELPER_PENSIONS_URL } from "../MoneyHelperGuidance";
 import { RetirementPlanner, type RetirementPlannerProps } from "./RetirementPlanner";
 
 // Router links as plain anchors, so their targets can be checked.

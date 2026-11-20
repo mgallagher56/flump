@@ -59,7 +59,7 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   web("tools-100k-trap", "/tools/uk-100k-tax-trap-calculator", false),
   marketing("home", "/"),
   marketing("pricing", "/pricing"),
-  marketing("tools", "/tools"),
+  marketing("feature-pay", "/features/pay"),
   marketing("features", "/features"),
   marketing("feature-accounts", "/features/accounts"),
   marketing("feature-debt-and-borrowing", "/features/debt-and-borrowing"),

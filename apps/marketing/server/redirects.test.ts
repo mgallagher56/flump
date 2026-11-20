@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { fileURLToPath } from "node:url";
+import { TOOL_SLUG_ALIASES, TOOL_SLUGS } from "@repo/ui/tools";
 import express from "express";
 import { afterEach, describe, expect, it } from "vitest";
 import { redirectMiddleware, redirectTarget } from "./redirects";
@@ -38,13 +39,50 @@ describe("redirectTarget", () => {
     },
   );
 
+  it.each(["/tools", "/tools/", "/TOOLS"])("sends %s to the features page", (url) => {
+    expect(redirectTarget(url)).toBe("/features");
+  });
+
+  // Written out by hand (plan section 4.4), so the table cannot pass by agreeing with itself.
+  const PAY = "/features/pay";
+  const DEBT = "/features/debt-and-borrowing";
+  it.each([
+    // The eight canonical slugs.
+    ["uk-pay-rise-take-home-calculator", PAY],
+    ["uk-student-loan-overpay-or-invest-calculator", PAY],
+    ["section-24-landlord-tax-calculator", PAY],
+    ["uk-100k-tax-trap-calculator", PAY],
+    ["uk-debt-snowball-vs-avalanche-calculator", DEBT],
+    ["0-percent-balance-transfer-payoff-calculator", DEBT],
+    ["overdraft-cost-and-payoff-calculator", DEBT],
+    ["mortgage-overpayment-vs-isa-calculator", DEBT],
+    // Every alias, to its canonical slug's page.
+    ["mortgage-overpay-vs-isa", DEBT],
+    ["section-24-landlord-calculator", PAY],
+    ["mortgage-overpay-vs-isa-calculator", DEBT],
+    ["zero-percent-balance-transfer-calculator", DEBT],
+    ["landlord-section-24-tax-calculator", PAY],
+    ["overdraft-interest-calculator", DEBT],
+    ["student-loan-plan-2-calculator", PAY],
+  ])("sends /tools/%s to %s", (slug, target) => {
+    expect(redirectTarget(`/tools/${slug}`)).toBe(target);
+    expect(redirectTarget(`/tools/${slug.toUpperCase()}/`)).toBe(target);
+  });
+
+  it("covers every catalogue slug and alias, so none can answer 404", () => {
+    for (const slug of [...TOOL_SLUGS, ...Object.keys(TOOL_SLUG_ALIASES)]) {
+      expect(redirectTarget(`/tools/${slug}`), slug).toMatch(/^\/features\//);
+    }
+  });
+
   it.each([
     "/",
     "/features/ai-connection",
     "/mcp/setup",
     "/mcpx",
     "/pricing",
-    "/tools",
+    "/tools/nope",
+    "/tools/uk-pay-rise-take-home-calculator/extra",
     "/%E0%A4%A",
     "//evil.example/mcp",
   ])("leaves %s alone", (url) => {
@@ -67,6 +105,16 @@ describe("redirectMiddleware", () => {
     const res = await fetch(`${base}/MCP/`, { method: "HEAD", redirect: "manual" });
     expect(res.status).toBe(301);
     expect(res.headers.get("location")).toBe("/features/ai-connection");
+  });
+
+  it("answers a former calculator page with a 301 to its area page", async () => {
+    const base = await start();
+    const res = await fetch(`${base}/tools/overdraft-interest-calculator?x=1`, {
+      redirect: "manual",
+    });
+    expect(res.status).toBe(301);
+    expect(res.headers.get("location")).toBe("/features/debt-and-borrowing");
+    expect((await fetch(`${base}/tools/nope`, { redirect: "manual" })).status).toBe(200);
   });
 
   it("passes other methods and other paths through", async () => {

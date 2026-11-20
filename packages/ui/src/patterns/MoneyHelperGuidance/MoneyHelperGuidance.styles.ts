@@ -1,11 +1,11 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { cva } from "../../../styled-system/css";
 
 /** A quiet note: no border, no fill, no card, so it never reads as a banner or a call to action. */
-export const text = cva({
+export const moneyHelperGuidanceText = cva({
   base: { textStyle: "body.sm", color: "text.muted", margin: 0 },
 });
 
-export const link = cva({
+export const moneyHelperGuidanceLink = cva({
   base: {
     color: "primary",
     textDecoration: "underline",
@@ -13,4 +13,4 @@ export const link = cva({
   },
 });
 
-export const srOnly = cva({ base: { srOnly: true } });
+export const moneyHelperGuidanceSrOnly = cva({ base: { srOnly: true } });

@@ -56,3 +56,35 @@ export const Embedded: Story = {
 export const Mobile: Story = {
   parameters: { viewport: { defaultViewport: "mobile1" } },
 };
+
+/** Short form on a marketing page: three sliders, the assumptions behind "Change the details". */
+const shortFormPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.queryByText(MORTGAGE_ISA_COPY.title)).not.toBeInTheDocument();
+  await expect(
+    canvas.queryByRole("button", { name: /Continue to sign up/ }),
+  ).not.toBeInTheDocument();
+  const assumptions = canvas.getByTestId("mortgage-isa-assumptions");
+  await expect(assumptions).toHaveTextContent(
+    "Assumes ISA growth of 7% a year and 20 years left on the mortgage.",
+  );
+
+  const toggle = canvas.getByRole("button", { name: MORTGAGE_ISA_COPY.changeDetails });
+  await userEvent.click(toggle);
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  const term = canvas.getByLabelText(`${MORTGAGE_ISA_COPY.term} input`);
+  await userEvent.clear(term);
+  await userEvent.type(term, "25");
+  await userEvent.tab();
+  await expect(assumptions).toHaveTextContent(
+    "Assumes ISA growth of 7% a year and 25 years left on the mortgage.",
+  );
+};
+
+export const ShortFormLight: Story = {
+  args: { shortForm: true },
+  globals: { theme: "light" },
+  play: shortFormPlay,
+};
+
+export const ShortFormDark: Story = { ...ShortFormLight, globals: { theme: "dark" } };

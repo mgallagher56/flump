@@ -41,14 +41,10 @@ describe("Footer", () => {
     );
   });
 
-  it("links to the calculators once, through the tools index", () => {
+  it("links to no calculator page: the marketing site has none (D9)", () => {
     renderFooter();
-    expect(screen.getByRole("link", { name: "All calculators" }).getAttribute("href")).toBe(
-      "/tools",
-    );
-    const toolLinks = Array.from(document.querySelectorAll('a[href^="/tools/"]'));
-    expect(toolLinks).toHaveLength(0);
-    expect(screen.queryByRole("heading", { name: "Calculators" })).toBeNull();
+    expect(document.querySelector('a[href^="/tools"]')).toBeNull();
+    expect(screen.queryByRole("link", { name: /calculators/i })).toBeNull();
   });
 
   it("states the tagline as the brand line under the name", () => {

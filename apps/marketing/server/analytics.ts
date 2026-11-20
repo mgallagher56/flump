@@ -32,7 +32,7 @@ const BOT_PATTERN =
 export const isBot = (userAgent: string | undefined): boolean =>
   !userAgent || BOT_PATTERN.test(userAgent);
 
-/** An allow-listed route key (`/`, `/pricing`, `/tools/<known-slug>`, ...), otherwise `other`. */
+/** An allow-listed route key (`/`, `/pricing`, `/features/<area>`, ...), otherwise `other`. */
 export const routeKey = (requestUrl: string): string => canonicalPath(requestUrl) ?? "other";
 
 /** Referrer host only (no path, query, port or credentials); null when absent, invalid or internal. */

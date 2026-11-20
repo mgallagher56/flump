@@ -130,6 +130,17 @@ export const debtOutcomes = cva({
     // A lone supporting figure takes the whole row instead of leaving a half-width gap.
     "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
   },
+  variants: {
+    /** Short form: the two ways share one row from `sm`, with equal weight. */
+    shortForm: {
+      true: {
+        "& > :first-child": { gridColumn: "auto" },
+        "& > :nth-child(2):last-child": { gridColumn: "auto" },
+      },
+      false: {},
+    },
+  },
+  defaultVariants: { shortForm: false },
 });
 
 /** A worded outcome (no balance) at the same size as a figure, so the card keeps its rhythm. */
