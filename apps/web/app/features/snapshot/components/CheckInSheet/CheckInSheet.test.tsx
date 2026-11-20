@@ -60,6 +60,93 @@ describe("CheckInSheet", () => {
     Reflect.deleteProperty(window, "matchMedia");
   });
 
+  describe("one-press keep (E38 S1, owner approved 20 November 2026)", () => {
+    const ISA = "a0000000-0000-4000-8000-000000000005";
+    const withIsa = {
+      accounts: [...accounts, { id: ISA, name: "Stocks ISA", type: "ISA", balance: 5000 }],
+      accountDetails: [...details, { accountId: ISA, year: 2026, month: 10, value: 4800 }],
+    };
+
+    it("keeps every balance in one save, says how many, and shows the summary", async () => {
+      const { onSave } = setup();
+      await userEvent.click(
+        screen.getByRole("button", { name: "Keep all 2 balances as they are" }),
+      );
+      await screen.findByRole("heading", { name: "November is checked in." });
+      // One save: the saved current balance £1,500, and the mortgage's £180,000 owed (saved as
+      // -£180,000, shown positive). Every step then has a figure, so the month is complete.
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledWith({
+        month: "2026-11",
+        payload: {
+          values: [
+            { accountId: CURRENT, value: 1500, source: "confirmed" },
+            { accountId: MORTGAGE, value: 180000, source: "confirmed" },
+          ],
+          complete: true,
+        },
+        saved: 2,
+        skipped: 0,
+        quiet: true,
+      });
+      expect(screen.getByTestId("checkin-kept").textContent).toBe(
+        "2 balances kept as they are. You can still change any of them.",
+      );
+      // Still correctable from the summary.
+      expect(screen.getByRole("button", { name: "Change a balance" })).toBeDefined();
+    });
+
+    it("leaves a row with a typed figure open, keeps the others and moves the focus to it", async () => {
+      const { onSave } = setup(withIsa);
+      await userEvent.type(field(/New balance.*Current account/), "1600");
+      await userEvent.click(
+        screen.getByRole("button", { name: "Keep the other 2 balances as they are" }),
+      );
+      await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+      const sent = onSave.mock.calls[0]?.[0].payload.values.map((v) => v.accountId);
+      expect(sent).toEqual([MORTGAGE, ISA]);
+      expect(screen.getByTestId("checkin-kept").textContent).toBe(
+        "2 balances kept as they are. You can still change any of them.",
+      );
+      const current = field(/New balance.*Current account/);
+      expect(current.value).toBe("1,600");
+      await waitFor(() => expect(document.activeElement).toBe(current));
+    });
+
+    it("is not offered for fewer than two balances", async () => {
+      setup();
+      await userEvent.click(screen.getAllByRole("button", { name: "No change" })[0] as HTMLElement);
+      await waitFor(() =>
+        expect(screen.queryByRole("button", { name: /^Keep (all|the other)/ })).toBeNull(),
+      );
+    });
+
+    it("on a failed save keeps nothing and shows Try again on each row", async () => {
+      const onSave = Object.assign(
+        vi.fn(async (_args: SaveSnapshotArgs) => false),
+        { refresh: vi.fn() },
+      );
+      setup({ onSave });
+      await userEvent.click(
+        screen.getByRole("button", { name: "Keep all 2 balances as they are" }),
+      );
+      await waitFor(() =>
+        expect(screen.getAllByRole("button", { name: "Try again" })).toHaveLength(2),
+      );
+      expect(screen.getByTestId("checkin-kept").textContent).toBe("");
+    });
+
+    it("is offered under the card on a phone too", async () => {
+      phoneWidth();
+      const { onSave } = setup();
+      await userEvent.click(
+        screen.getByRole("button", { name: "Keep all 2 balances as they are" }),
+      );
+      await screen.findByRole("heading", { name: "November is checked in." });
+      expect(onSave).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("monthly check-in", () => {
     it("goes account by account in one list from md, skipping connected accounts", () => {
       setup();

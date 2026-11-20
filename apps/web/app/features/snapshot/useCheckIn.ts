@@ -52,6 +52,19 @@ export interface CheckInController {
   retry: (step: CheckInStep) => Promise<boolean>;
   /** The first open step after `from` (wrapping to the start), or -1 when every step is done. */
   nextOpen: (from: number, skip?: string) => number;
+  /**
+   * The open steps one press can keep as they are (E38 S1, owner approved 20 November 2026): a
+   * saved balance to repeat, no calculated figure on offer, and nothing typed in the field. Any
+   * other step stays open for its own answer.
+   */
+  keepable: CheckInStep[];
+  /**
+   * Saves No change for every keepable step in one save. Resolves to how many it kept, or 0 when
+   * the save failed (each of those steps then shows its own error and Try again).
+   */
+  keepRest: () => Promise<number>;
+  /** How many steps the last keepRest kept in this opening, or null. */
+  kept: number | null;
   /** Every step is saved and the summary shows. */
   finished: boolean;
   /**
@@ -105,6 +118,7 @@ export function useCheckIn({
   const [index, setIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [openedFinished, setOpenedFinished] = useState(false);
+  const [kept, setKept] = useState<number | null>(null);
 
   const answersRef = useRef(answers);
   const stepsRef = useRef(steps);
@@ -134,6 +148,7 @@ export function useCheckIn({
     const firstOpen = steps.findIndex((s) => !hasFigure(s));
     setEditing({});
     setFailed({});
+    setKept(null);
     setIndex(firstOpen === -1 ? 0 : firstOpen);
     const done = steps.length > 0 && firstOpen === -1 && checkedIn;
     setFinished(done);
@@ -246,6 +261,43 @@ export function useCheckIn({
     [steps, isDone],
   );
 
+  const keepable = useMemo(
+    () =>
+      steps.filter(
+        (s) =>
+          !isDone(s.accountId) &&
+          !pending[s.accountId] &&
+          !s.calculated &&
+          s.lastValue !== null &&
+          (drafts[s.accountId] ?? null) === null,
+      ),
+    [steps, isDone, pending, drafts],
+  );
+
+  const keepRest = useCallback(async () => {
+    const targets = keepable;
+    const values = targets
+      .map((s) => answerValue(s, { kind: "noChange" }))
+      .filter((v): v is CheckInValue => v !== null);
+    if (values.length === 0) return 0;
+    const ids = values.map((v) => v.accountId);
+    const without = <T>(record: Record<string, T>) => ids.reduce((r, id) => omit(r, id), record);
+    setPending((p) => ({ ...p, ...Object.fromEntries(values.map((v) => [v.accountId, v])) }));
+    setFailed(without);
+    setEditing(without);
+    const ok = await save(values);
+    setPending(without);
+    if (!ok) {
+      setFailed((f) => ({
+        ...f,
+        ...Object.fromEntries(ids.map((id) => [id, { kind: "noChange" } as CheckInAnswer])),
+      }));
+      return 0;
+    }
+    setKept(values.length);
+    return values.length;
+  }, [keepable, save]);
+
   return {
     month,
     steps,
@@ -265,6 +317,9 @@ export function useCheckIn({
     confirm,
     retry,
     nextOpen,
+    keepable,
+    keepRest,
+    kept,
     finished,
     openedFinished,
     allAnswered: steps.length > 0 && steps.every((s) => hasFigure(s, false)),
@@ -288,6 +343,7 @@ export function useCheckIn({
       return ok;
     },
     reopen: () => {
+      setKept(null);
       setFinished(false);
       setOpenedFinished(false);
       setIndex(0);

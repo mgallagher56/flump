@@ -95,6 +95,23 @@ export const CHECK_IN_COPY = {
   empty: "Add an account first, then its balance appears here.",
 } as const;
 
+/**
+ * The one-press keep (E38 S1, owner approved 20 November 2026): "Keep all 6 balances as they
+ * are" when it covers every account, otherwise "Keep the other 4 balances as they are".
+ */
+export function keepRestLabel(count: number, all: boolean): string {
+  const noun = count === 1 ? "balance" : "balances";
+  return all
+    ? `Keep all ${count} ${noun} as they are`
+    : `Keep the other ${count} ${noun} as they are`;
+}
+
+/** Said once the keep is saved: "6 balances kept as they are. You can still change any of them." */
+export function keptText(count: number): string {
+  const noun = count === 1 ? "balance" : "balances";
+  return `${count} ${noun} kept as they are. You can still change any of them.`;
+}
+
 /** "£3,360", or "£3,412.50" when the figure has pence (a true minus when negative). */
 export function checkInMoney(value: number): string {
   const pence = Math.round(Math.abs(value) * 100) % 100 !== 0;

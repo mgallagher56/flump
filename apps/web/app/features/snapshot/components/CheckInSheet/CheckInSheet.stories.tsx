@@ -59,6 +59,23 @@ export const CompleteCheckIn: Story = {
 
 export const CompleteCheckInDark: Story = { ...CompleteCheckIn, globals: { theme: "dark" } };
 
+/**
+ * The one-press keep (E38 S1, owner approved 20 November 2026): every balance that can repeat its
+ * saved figure is kept in one save; a calculated figure stays for its own answer.
+ */
+export const KeepTheRest: Story = {
+  play: async ({ args }) => {
+    const body = within(document.body);
+    await userEvent.click(
+      await body.findByRole("button", { name: /^Keep (all|the other) \d+ balances as they are$/ }),
+    );
+    await expect(await body.findByText(/balances kept as they are\./)).toBeDefined();
+    await expect(args.onSave).toHaveBeenCalledTimes(1);
+  },
+};
+
+export const KeepTheRestDark: Story = { ...KeepTheRest, globals: { theme: "dark" } };
+
 /** Every account already recorded this month: the short summary in a dialog from md. */
 export const AlreadyRecorded: Story = {
   args: {

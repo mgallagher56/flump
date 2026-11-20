@@ -241,6 +241,7 @@ const AccountDetailContainer: FC = () => {
           isLiability ? "amount owed" : "balance",
         )}
         isLiability={isLiability}
+        onOpen={balanceOutcome.dismiss}
         onSave={(shown) => {
           // Stored as minus the amount owed for a debt, as the Edit dialog sends it.
           const stored = isLiability ? (shown === 0 ? 0 : -Math.abs(shown)) : shown;
