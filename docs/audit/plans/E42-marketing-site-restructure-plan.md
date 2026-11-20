@@ -1,8 +1,8 @@
 # E42. Marketing site restructure: the site mirrors the app
 
-Decisions: open
+Decisions: accepted on 2026-11-20
 
-> Status: plan for owner approval. All ten decisions were answered on 2026-11-20 (section 7.1). Three follow-up points wait for the owner (the AI connection wording, the "Preview" label, the headline's punctuation). No code. Written 2026-11-20 against `origin/main` (`da6284f0c`). Paths are relative to the repository root. All copy in this document is a draft for the owner to react to (E7: the owner signs off all marketing copy).
+> Status: plan for owner approval. All ten decisions were answered on 2026-11-20 (section 7.1). Points still to confirm are listed at the end of section 7.1; the build leaves the parts they touch until they are settled (AGENTS.md section 13). No code. Written 2026-11-20 against `origin/main` (`da6284f0c`). Paths are relative to the repository root. All copy in this document is a draft for the owner to react to (E7: the owner signs off all marketing copy).
 
 ## 1. Summary
 
@@ -158,16 +158,16 @@ Each of the eight was put to three tests. Inputs were counted from the component
 2. **Three inputs or fewer:** can they get an answer with three inputs or fewer?
 3. **Leads into the app:** does it lead naturally into an app area that does the same job with saved figures?
 
-| Calculator (name today) | Name test | Inputs | Leads into | Verdict |
+| Calculator (name today) | Name test | Inputs | Leads into | Owner's decision (D9) |
 | --- | --- | --- | --- | --- |
-| What you keep from a pay rise | Pass | Fail on the full page: about ten (pay, bonus, region, pension method and amount, student loan plans, Child Benefit, children, tax year, extra pension). **Pass** in the two-slider version already on the home page (`PayRiseTeaser`: salary, pay rise) | Pay (the app's pay rise tool) | **Keep, the two-slider version only**, on the Pay page and the home page |
-| When a 0% balance transfer ends | Partly: reads like an article title | Pass: 3 (balance, months left, rate after) | Debt and borrowing (the app shows when a 0% deal ends) | **Keep**, on the Debt and borrowing page, renamed |
-| Overdraft interest cost calculator | Pass | Pass: 2 (balance, rate) | Debt and borrowing (an overdraft is a debt in the list) | **Keep**, on the Debt and borrowing page, renamed |
-| Student loan repayment calculator | Partly: it answers "paid off or written off", which the name does not say | Pass: 3 (plan, salary, balance) | Partly: Pay shows the student loan deduction, not the write-off question | **Optional fourth.** Linked from the Pay page, renamed. Leave out if the owner wants three |
-| Debt payoff methods compared | Fail: "methods" means nothing until explained | Fail: three fields for each debt, plus an extra payment | Debt and borrowing (the app's pay extra tool does this with saved debts) | **Go.** The app does it better with saved figures; the area page says so in a sentence |
-| Mortgage overpayment or Stocks and Shares ISA | Fail: two things joined by "or", no outcome named | Fail: 5 | Debt and borrowing (the app's overpay or save comparison) | **Go** |
-| Section 24 landlord tax calculator | Fail: a statute number | Fail: 5 | Pay (Self Assessment), for landlords only | **Go** |
-| Pension contributions and income above £100,000 | Fail: describes inputs, not an answer | Pass: 3 | Pay and Pension, for a narrow income band. E31 already moved it out of the lead | **Go** |
+| What you keep from a pay rise | Pass | Fail on the full page: about ten (pay, bonus, region, pension method and amount, student loan plans, Child Benefit, children, tax year, extra pension). **Pass** in the two-slider version already on the home page (`PayRiseTeaser`: salary, pay rise) | Pay (the app's pay rise tool) | **Kept**, two-slider form only |
+| When a 0% balance transfer ends | Partly: reads like an article title | Pass: 3 (balance, months left, rate after) | Debt and borrowing (the app shows when a 0% deal ends) | Not kept on the marketing site |
+| Overdraft interest cost calculator | Pass | Pass: 2 (balance, rate) | Debt and borrowing (an overdraft is a debt in the list) | Not kept on the marketing site |
+| Student loan repayment calculator | Partly: it answers "paid off or written off", which the name does not say | Pass: 3 (plan, salary, balance) | Partly: Pay shows the student loan deduction, not the write-off question | Not kept on the marketing site |
+| Debt payoff methods compared | Fail: "methods" means nothing until explained | Fail: three fields for each debt, plus an extra payment | Debt and borrowing (the app's pay extra tool does this with saved debts) | **Kept**, in a short form |
+| Mortgage overpayment or Stocks and Shares ISA | Fail: two things joined by "or", no outcome named | Fail: 5 | Debt and borrowing (the app's overpay or save comparison) | **Kept**, in a short form |
+| Section 24 landlord tax calculator | Fail: a statute number | Fail: 5 | Pay (Self Assessment), for landlords only | Not kept on the marketing site |
+| Pension contributions and income above £100,000 | Fail: describes inputs, not an answer | Pass: 3 | Pay and Pension, for a narrow income band. E31 already moved it out of the lead | Not kept on the marketing site |
 
 **Decided by the owner, 20 November 2026 (decision D9): "keep calculators 1,5 and 6".** From the list of eight the coordinator showed the owner, that is:
 
@@ -175,7 +175,7 @@ Each of the eight was put to three tests. Inputs were counted from the component
 - 5: Debt payoff methods compared (highest rate first against smallest balance first).
 - 6: Mortgage overpayment or Stocks and Shares ISA.
 
-Not kept on the marketing site: the 0% balance transfer, overdraft, student loan, Section 24 and income above £100,000 calculators. The table above is this plan's own assessment and its verdict column is superseded: the plan had picked the pay rise, 0% deal and overdraft calculators.
+Not kept on the marketing site: the 0% balance transfer, overdraft, student loan, Section 24 and income above £100,000 calculators. The three tests above are this plan's assessment; the last column is the owner's decision.
 
 **Keeping the three simple.** The owner cut calculators because they were functionally complex, unclearly named and too many. Calculators 5 and 6 ask for more than the two the plan had picked, so each kept calculator is shown in a short form: three fields or fewer on first view, a name that says what it does, and starting values that give an answer before anything is typed. Starting values are sample data and carry the label "Example" (guide 7.4).
 
@@ -191,16 +191,26 @@ Rules that hold for the three:
 - **Calculator 5, no judgement.** The two ways are shown with the same weight, in the same colours, and neither is marked as better (guide 2.3, advice boundary R2). No "high APR" label on a debt; the rate is shown as a figure. The example debts are labelled "Example" and are never worded as the reader's own. No statistic about other people.
 - **Calculator 6, compares and does not recommend.** It shows two estimates and the difference, in that order, and picks neither. The ISA figure is "estimated growth at the rate you entered"; the growth rate is an assumption the reader can change, stated beside the result. No "better", "best" or "should". It sits under the page's mortgage part, which opens "If you have a mortgage", so the page reads the same for someone who rents.
 - **How it is built.** The names above are headings on the marketing page, held in the marketing features data, so the shared catalogue and the web app's names do not change. Calculators 5 and 6 get a short form through one new prop each on the existing components in `packages/ui/src/calculators/` (the detail fields collapsed, the component's own title hidden), with a story and a test for the short form. No formula changes, so there is nothing new to work out by hand (AGENTS.md section 14).
-- Each ends with one link into the area page's call to action; none ends with "Continue to sign up", because sign-up is invite-only.
+- **Layout laws (AGENTS.md section 3), as the coordinator ruled on 20 November 2026.** Every slider in a short form is a `<SliderField>`. `<SimulatorSplitLayout>` applies where a short form shows a chart. The short forms of 5 and 6 keep the split layout their components already render in (controls on the left, the outcome on the right). The two-slider pay rise tool has no chart and is exempt: the law exists to stop sliders being stacked full-width above the chart they control, and this tool is two sliders and one result line inside a page section, with no chart to sit beside.
+- **The full versions are in-app features (coordinator, 20 November 2026).** The marketing site shows the short form only. Where the app does the same job with saved figures, the section says so in one line and links to that area's page, not to a calculator page: the pay rise tool on the app's Take-home pay page, the pay extra tool on Cards and loans, and the overpay or save comparison on Mortgage.
+- `PayRiseTeaser` today links "Open the full calculator" to `/tools/uk-pay-rise-take-home-calculator` (`PAY_RISE_TOOL_PATH`), a page this plan removes. On the home page the link becomes "About pay in Flump", to `/features/pay`. On the Pay page itself the link is removed. `PAY_RISE_TOOL_PATH` is deleted and `PayRiseTeaser.test.tsx`, which asserts that address, is updated.
+- None ends with "Continue to sign up", because sign-up is invite-only.
 
 **The five that are not kept, and the full-size pages.**
 
 - The marketing site stops having a calculators section. `ToolsIndexPage` and `ToolPage` are removed from `apps/marketing`, with their links in the header, footer, home page and sitemap.
-- Every old address redirects, so nothing answers 404: `/tools` to `/features`; the pay rise, student loan, Section 24 and income above £100,000 pages to `/features/pay`; the debt payoff, 0% balance transfer, overdraft and mortgage or ISA pages to `/features/debt-and-borrowing`. The three kept calculators have no full-size page on the marketing site either; they live on their area page in the short form. This last point is the plan's reading of "two-slider form only on the marketing site", applied to all three, for the coordinator to confirm.
+- Every old address redirects with a 301, so nothing answers 404. Today the marketing server has no redirect layer: `routes.ts` (`isKnownPath`) sends unknown paths to the 404 page, and `server/sitemap.ts` (`canonicalPath`) maps alias slugs to their canonical page. The redirects are a new Express middleware, `apps/marketing/server/redirects.ts`, mounted in `server.ts` before the analytics middleware and the SSR handler, in development and production alike. It is one pure function from a path to a target, matched without regard to case or a trailing slash:
+  - `/mcp` to `/features/ai-connection`. The web app links to `/mcp#setup` (`apps/web/app/routes/app.profile.tsx`); a browser keeps the fragment across a redirect, so the new page keeps an element with the id `setup`, and that link is updated to the new address in the same pull request.
+  - `/tools` and `/tools/` to `/features`.
+  - The eight canonical slugs: the pay rise, student loan, Section 24 and income above £100,000 pages to `/features/pay`; the debt payoff, 0% balance transfer, overdraft and mortgage or ISA pages to `/features/debt-and-borrowing`.
+  - Every alias slug in `TOOL_SLUG_ALIASES`, resolved through `resolveToolSlug` from `@repo/ui/tools` so an alias cannot be missed, to the same target as its canonical slug.
+  - Any other `/tools/...` path still answers 404.
+- With the redirects in place, `canonicalPath` and `buildSitemap` in `server/sitemap.ts` and `isKnownPath` in `routes.ts` drop their tool branch, and `utils/toolSlugs.ts` keeps only `STATIC_PATHS`. A test asserts that no marketing source links to `/tools` or `/mcp`.
+- The three kept calculators have no full-size page on the marketing site; they live on their area page in the short form. The coordinator confirmed this on 20 November 2026.
 - **Nothing in the app is removed.** All eight calculators stay in the web app at its own `/tools` pages (`apps/web/app/routes/tools._index.tsx` and `tools.$slug.tsx`), with the shared catalogue, guides and components in `packages/ui`. The web app's calculators page and its "Calculators" link are outside this epic; the owner's points about names, complexity and number apply there too (section 9).
 - Guard changes this brings, each needing sign-off before it is made (AGENTS.md section 15): the "public calculator copy guard" in `claims.test.ts` reads `ToolPage.tsx` and `ToolsIndexPage.tsx`, and `copy.test.ts` checks the marketing tool slugs against the catalogue. With those pages gone, the guard's source list shrinks to the shared files in `packages/ui/src/tools` and the slug check has nothing left to check on marketing.
 
-**Search traffic, honestly.** Unknown, and probably close to nothing today. The marketing server sends `noindex, nofollow` on every response and serves no sitemap unless both `ALLOW_INDEXING` and `FLUMP_LAUNCH` are exactly `true` (`apps/marketing/server/ops.ts`, `sitemap.ts`). Flump is pre-launch, so the pages should not be in search results yet; whether those switches are set in the deployed environment cannot be checked from the repository. Page-view counting (E24-T9) is planned and there is no rollup to read. After launch, single-purpose calculator pages are the kind of page that can bring search visitors, which is the one cost of redirecting the old addresses. It can be revisited after launch, once page views are counted: the calculators still exist in the web app and a marketing page can be put back.
+**Search traffic, honestly.** Unknown, and probably close to nothing today. The marketing server sends `noindex, nofollow` on every response and serves no sitemap unless both `ALLOW_INDEXING` and `FLUMP_LAUNCH` are exactly `true` (`apps/marketing/server/ops.ts`, `sitemap.ts`). Flump is pre-launch, so the pages should not be in search results yet; whether those switches are set in the deployed environment cannot be checked from the repository. Cookieless page counting already exists (`apps/marketing/server/analytics.ts`, E24-T9). It is on only when `ANALYTICS_MODE` is exactly `log` and the published notice address is set; whether it is on in the deployed environment, and any counts, cannot be read from the repository. Its route keys come from `canonicalPath`, so the redirected addresses stop being counted and the new pages are counted in their place. This plan adds no analytics and collects nothing new. After launch, single-purpose calculator pages are the kind of page that can bring search visitors, which is the one cost of redirecting the old addresses. It can be revisited after launch, once page views are counted: the calculators still exist in the web app and a marketing page can be put back.
 
 ## 5. Message hierarchy
 
@@ -326,7 +336,7 @@ Owner, 20 November 2026: "AI connection can be used in places other than the foo
 - Section "How to get it", two versions for the owner to choose between:
   - **Version 1 (recommended):** "While Flump is being tested, the AI connection is switched on one account at a time. Ask us to switch it on for yours. Once it is on, create an access token in Settings and add Flump to your AI assistant."
   - **Version 2:** "While Flump is being tested, we switch the AI connection on for your account when you ask. Then create an access token in Settings and add Flump to your AI assistant." This promises that every request is granted; use it only if that is true.
-- Home and features tile: "AI connection. Ask an AI assistant about your saved figures. Switched on for your account on request during testing."
+- Home and features tile (wording decided by the coordinator, 20 November 2026): "AI connection. Ask an AI assistant about your saved figures. Switched on for an account on request during testing."
 - Home FAQ answer (replaces "Yes, as a preview."): "Yes. The AI connection lets an AI assistant such as Claude Desktop answer questions from the figures you have saved. During testing it is switched on one account at a time, so ask us to switch it on for yours."
 - The collapsed "Technical details" section stays as it is.
 - One question for the owner: the page has a small "Preview" badge today, from E17 D1-A (the AI connection is a preview until Phase 5 and the evaluation targets are met). Keep that one word, or drop it now that it is presented as a feature? Recommendation: keep "Preview" as a small label on its own page only, because E17 D1-A still stands, and leave it off the menu and the tiles.
@@ -367,7 +377,7 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | Self Assessment: income and costs by tax year, tax bill estimate, payments on account, receipts, year comparison | "estimate" used; no "files your return" | `features/tax` (`PaymentsOnAccountCard`, `TaxReceiptDialog`, `TaxYearComparison`) | Verified in code |
 | Savings with AER and an estimate of growth; ISA allowance used; deposit timeline; investment returns | "estimate", not "forecast" | `SavingsForecast`, `AnnualAllowancePill`, `DepositTimeline`, `InvestmentReturns` | Verified in code; what each shows to confirm when building |
 | Pension pots, employer contributions, salary sacrifice, effect on take-home pay | Passes | `PensionDetails`, `PensionContributionScenario`, `PensionTakeHomeEffect` | Verified in code |
-| Retirement: a target you set, an estimated yearly income in today's prices before tax, accounts that count, assumptions year by year | "estimate", never "forecast", "prediction" or "will" (guide 6.1); no target set by Flump (2.3); no recommendation (R1 to R8) | `RetirementPlanner` (page subtitle "Estimates in today's prices, before tax."; sections "Counted towards retirement", "Assumptions, pots and year by year") | Verified in code. **Who can open it and whether it is in the navigation: depends on PR 845 and the app (section 2.1)** |
+| Retirement: a target you set, an estimated yearly income in today's prices before tax, accounts that count, assumptions year by year | "estimate", never "forecast", "prediction" or "will" (guide 6.1); no target set by Flump (2.3); no recommendation (R1 to R8) | `RetirementPlanner` (page subtitle "Estimates in today's prices, before tax."; sections "Counted towards retirement", "Assumptions, pots and year by year") | Verified in code. PR 845 has merged: Retirement is open to every tester and in the app's navigation (section 2.1) |
 | The MoneyHelper pensions line, word for word | Fixed wording (RD11, guide 7.3). It contains a bare "free", which `copy.test.ts` rejects in marketing sources unless it is "free during the beta" | `MoneyHelperGuidance` in `apps/web/app/features/retirement` | **Owner decision D10.** The fixed line is approved for the Retirement page in the app ("same note, same place", guide 7.3), not yet for a marketing page. Showing it on marketing either puts a bare "free" in a marketing source or moves the string to a shared component the marketing copy test does not read. Both narrow what that guard checks, so either is a guard change needing sign-off first (AGENTS.md section 15) |
 | The MoneyHelper debt line on the Debt and borrowing page: "Free, impartial debt help is available from MoneyHelper" | The same: fixed wording (guide 7.3, R3 exception), approved for `DebtHelpLink` in the app, and it starts with a bare "Free" | `DebtHelpLink` in `apps/web/app/features/debt` | **Owner decision D10**, with the pensions line |
 | The three kept calculators and their names (D9) | Guide 7.4: a title names only the inputs the tool has and the outputs it shows. "Two ways to pay off debts" and "Mortgage overpayment or ISA, compared" name what is shown and pick no option (R2) | Fields and starting values read from the components (section 4.4) | Verified in code. The short forms do not exist yet; they are slice S6b |
@@ -396,7 +406,24 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | D9 | Decided | "keep calculators 1,5 and 6" | Kept on the marketing site, each in a short form on its area page: What you keep from a pay rise (two sliders); Debt payoff methods compared, as "Two ways to pay off debts"; Mortgage overpayment or Stocks and Shares ISA, as "Mortgage overpayment or ISA, compared". The other five and every full-size calculator page leave the marketing site, with redirects. All eight stay in the app. This replaces the plan's own pick (section 4.4) |
 | D10 | Accepted as recommended (option A) | As D6 | Both MoneyHelper lines appear word for word on marketing pages. The guard change still goes to the coordinator for sign-off when it is built |
 
-Still to confirm with the owner: the AI connection wording and the "Preview" label (section 5.2), and that choosing the headline allows its two full stops and slogan shape for the marketing home h1 only (section 5.1, ruling R-a).
+**Decided by the coordinator (20 November 2026), no owner decision needed**
+
+- The three kept calculators have no full-size page on the marketing site. It shows the short form only; where the full version exists in the app, the page points to it as an in-app feature.
+- AGENTS.md section 3 on the short forms: `<SliderField>` for every slider; `<SimulatorSplitLayout>` where a short form has a chart; a chartless short form is exempt (section 4.4 says why).
+- The AI connection tile reads "Switched on for an account on request during testing."
+- The plain names for calculators 5 and 6 are routine wording for the coordinator to approve: "Two ways to pay off debts" and "Mortgage overpayment or ISA, compared".
+
+**Still to confirm.** The build leaves each part alone until its item is settled.
+
+| Item | Who | Part of the build it holds |
+| --- | --- | --- |
+| The AI connection page's "How to get it" wording: version 1 or version 2 (section 5.2) | Owner | That section of the AI connection page |
+| Whether the AI connection page keeps the small "Preview" label (E17 D1-A) | Owner | The label on that page |
+| That choosing the headline allows its two full stops and slogan shape for the marketing home h1 only (ruling R-a, section 5.1), and the copy guide exception that records it | Owner | The copy guide edit; the h1 text itself is decided |
+| That downloading and deleting data work in staging | Owner | The two data facts on the Security page |
+| The list of account kinds named on the Accounts page | Build lane, checked against the code | One sentence of the Accounts page |
+| Names for calculators 5 and 6 | Coordinator | The two section headings |
+| Each guard change in section 8, before it is made | Coordinator | The tests named there |
 
 The table below is the record of the options and recommendations as they were put to the owner.
 
@@ -410,31 +437,73 @@ The table below is the record of the options and recommendations as they were pu
 | D6 | Working samples or screenshots on area pages | **A.** Working sample components where one exists today (dashboard, check-in, breathing room, pay-rise tool), an illustration on the two pages without one. **B.** As A now, then build two new sample previews (savings and pension; debt and borrowing) as a later slice. **C.** Screenshots of the app | **B.** Screenshots go stale, need four variants each (phone, desktop, light, dark) and are a picture of text for screen readers |
 | D7 | SEO titles and descriptions | **A.** The table in 5.3: the app's area name plus a plain descriptor. **B.** Search-led titles (for example "UK take-home pay calculator and budget planner") | **A.** B drifts from the app's names and invites claims the pages cannot back |
 | D8 | Pricing while the price is not set | **A.** Keep the page and the navigation link; list the five areas as what the beta includes. **B.** Keep the page, footer link only, until a price is set. **C.** Remove the page; the FAQ answers it | **A.** People look for a pricing link; a clear "free during the beta, price not set" answers it honestly |
-| D9 | Calculators (section 4.4) | Which stay: **A.** Three (pay rise in its two-slider form, 0% deal, overdraft), each on its area page under a plain new name. **B.** Those three and the student loan one. **C.** Only the two-slider pay rise tool. What happens to the rest: **1.** keep the URL alive but unlinked and out of the sitemap; **2.** remove, with a redirect to the area page; **3.** keep all linked from the footer | **A with 1.** Three pass the tests cleanly; the student loan one answers a question the app does not. Keeping the old addresses alive costs nothing and can be undone. Search traffic today is unknown and probably near nothing, because the site is `noindex` until launch; review once page views are counted |
+| D9 | Calculators (section 4.4) | The options first put to the owner are withdrawn; the owner chose from the list of eight | Superseded: see D9 in section 7.1 |
 | D10 | The two fixed MoneyHelper lines (debt help; pension guidance) on marketing pages | **A.** Show both, word for word, on the Debt and borrowing and the Savings and pension pages, from one shared component each, and record the guard change with sign-off. **B.** Leave both off the marketing site; they stay in the app, where they are approved. **C.** Show them with a plain link and no "free" (this rewords fixed wording, so it needs the owner's own words) | **A.** A page that describes debts or a retirement estimate should carry the same signpost the app does. It needs two things from the owner: that the lines may appear on marketing pages, and sign-off for the guard change |
 
 Decisions already made that this plan keeps: E7 (owner signs off copy), RD11 (the MoneyHelper pensions line, unchanged in wording), E16 D10 b (no example price), E24 (invite-only call to action), the tagline ruling. Decisions it would change, only with the owner's yes: the home h1 and the five-band home layout from E16 PR 12 (D2); copy guide 5.1 for the marketing home h1 (ruling R-a); the public calculators index from E16 PR 11 and D11 (D9). Superseded by the owner on 20 November 2026: RD9 (Retirement unseen) and E16 D13 (AI connection as a footer link and one FAQ answer only).
 
 ## 8. Build slices (after acceptance)
 
-All new components follow AGENTS.md section 1 (colocated directory; the five-file set for anything in `packages/ui`), section 2 (semantic tokens only; at most one tinted section per page) and section 4 (stories in light and dark, no a11y violations). No financial calculation is added, so section 14 has nothing to test by hand.
+All new components follow AGENTS.md section 1 (colocated directory; the five-file set for anything in `packages/ui`), section 2 (semantic tokens only; at most one tinted section per page) and section 4 (stories in light and dark, no a11y violations). No financial calculation is added, so section 14 has nothing to test by hand. PR 838 has merged, so unused exports fail CI and every export a slice adds is imported in the same pull request.
+
+The "Affected files" lists were checked against the code on 2026-11-20 at `9d6cac605`, by searching `apps/marketing` and `apps/e2e` for every reference to `/tools`, `/mcp` and the tool slugs. Paths are under `apps/marketing/` unless they say otherwise. Search again before building: other work is merging.
+
+### PR 1: the structure
 
 | Slice | Work | Size |
 | --- | --- | --- |
-| S1 | `apps/marketing/src/utils/featureAreas.ts`: one data file for the five areas and the AI connection (name, path, h1, lead, facts, depth list, calculator slugs, preview anchor, meta). Area names are checked against `apps/web/public/locales/en/common.json` by a test, so the site cannot drift from the app | S |
-| S2 | `FeaturePage` template and `AreaStrip` ("Part of one picture") components; five routes under `/features`; `STATIC_PATHS`, sitemap, 404 handling, `PageMeta`, social meta test | M |
-| S3 | `FeaturesIndexPage` (`/features`) | S |
-| S4 | Header (the "Features" menu, mobile drawer) and Footer (Product, Company, room for Legal) | M |
-| S5 | Home page with the accepted headline: area tiles, "Start with rough figures", "More detail when you want it"; FAQ answers corrected to the app's names | M |
-| S6 | Existing pages: Pricing list, the AI connection page rebuilt on the feature template at `/features/ai-connection` with a redirect from `/mcp` and the wording the owner approves, the home FAQ answer, `/security` data facts (only once verified), `/preview` sections linked to area pages | S |
-| S6b | Calculators as decided in D9: a short form of `DebtSnowballCalculator` and `MortgageVsIsaCalculator` in `packages/ui` (one prop each, with a story and a test); the three placed on their area pages; `ToolsIndexPage` and `ToolPage` removed from `apps/marketing` with redirects for `/tools` and all eight `/tools/:slug` addresses, and their sitemap, header and footer entries. Nothing changes in the web app or the shared catalogue | M |
-| S6c | Retirement section on the Savings and pension page. Promote `MoneyHelperGuidance` and `DebtHelpLink` to `@repo/ui` (five-file set each) so both apps render the one fixed line each (D10, accepted) | S |
-| S7 | Guards: add every new file to `PR12_SOURCES` in `copy.test.ts`; the claims guard already scans all of `src` | S |
-| S8 (if D6 is B) | Two sample previews in `packages/ui` (savings and pension; debt and borrowing), sample data only, labelled as sample data | M to L |
+| S1 | One data file for the five areas and the AI connection (name, path, h1, lead, facts, depth list, preview anchor, meta). Area names are checked against the app's labels by a test | S |
+| S2 | `FeaturePage` template and `AreaStrip` ("Part of one picture"); the five area pages; routes, sitemap, 404 handling, `PageMeta`, social meta | M |
+| S2b | The AI connection page on the same template at `/features/ai-connection`, the redirect middleware, and the `/mcp` redirect. In PR 1 so that the Features menu never links to a page that does not exist | M |
+| S3 | `FeaturesIndexPage` (`/features`, "Flump features") | S |
+| S4 | Header (the "Features" menu, the mobile drawer; the "Calculators" and "AI connection" top links go) and Footer (Product, Company, room for Legal) | M |
+| S7 | Guards: every new source file joins `PR12_SOURCES` in `copy.test.ts` | S |
 
-Two pull requests: **PR 1** is S1, S2, S3, S4 and S7 (the structure). **PR 2** is S5, S6, S6b and S6c (the home page, existing pages, calculators and Retirement), and S8 if chosen. Each gets an independent `opus` review and a `ui-compliance-reviewer` pass, and screenshots for the owner at phone and desktop widths in light and dark.
+Affected files, PR 1:
 
-Guard changes expected: two groups, each needing the coordinator's sign-off before it is made. First, the calculator guards whose marketing source files are removed (section 4.4). Second, D10, which the owner accepted: The two fixed MoneyHelper lines contain a bare "free", which the marketing copy test allows only as "free during the beta"; showing them on marketing narrows that check for those two sentences, whichever way it is built. It needs sign-off before the change is made and goes under "Guard changes" in the PR. Otherwise none loosened: `PR12_SOURCES` grows. Home page tests that pin today's h1 and band order change with D2; they are listed under "Guard changes" in the PR if any numeric limit moves.
+- **S1:** new `src/utils/featureAreas.ts` and its test.
+- **S2:** new `src/pages/FeaturePage/` and `src/components/AreaStrip/` (colocated sets); `src/App.tsx` (routes); `src/utils/toolSlugs.ts` (`STATIC_PATHS`); `src/routes.ts`; `server/sitemap.test.ts` and `server/ops.test.ts` (both assert the sitemap body); `server/analytics.test.ts` (route keys; `analytics.ts` itself follows `canonicalPath`); `src/social-meta.ssr.test.tsx`; `src/pages/NotFoundPage/NotFoundPage.test.tsx`.
+- **S2b:** new `server/redirects.ts` and its test; `server.ts` (mount it); `src/pages/McpPage/` (`McpPage.tsx`, `.styles.ts`, `.stories.tsx`, `.test.tsx`, `mcpTools.ts`, `index.ts`: rebuilt on the template, and moved or renamed); `src/App.tsx` (the `/mcp` route goes); `src/copy.test.ts` (its source list pins `pages/McpPage/McpPage.tsx` and `pages/McpPage/mcpTools.ts`); `src/pages/SecurityPage/SecurityPage.tsx` (links to `/mcp`); `src/components/HomeFAQ/HomeFAQ.tsx` and `HomeFAQ.test.tsx` (the test asserts the `/mcp` link and names D13); `src/pages/HomePage/HomePage.test.tsx` (asserts `/mcp` in the footer); `NotFoundPage.test.tsx` (expects `/mcp` to render); `social-meta.ssr.test.tsx`; `apps/web/app/routes/app.profile.tsx` (`aiGuideUrl` points at `/mcp#setup`); `apps/e2e/visual/routes.ts` (`marketing("mcp", "/mcp")`) with its screenshots; `apps/e2e/sweep/sets.ts` and `apps/e2e/sweep/phoneSets.ts` (marketing path lists that include `/mcp`).
+- **S3:** new `src/pages/FeaturesIndexPage/`; `App.tsx`; `STATIC_PATHS`.
+- **S4:** `src/components/Header/Header.tsx` with its test and stories; `src/components/Footer/Footer.tsx` and `Footer.test.tsx`; `HomePage.test.tsx`; the e2e visual baselines for every marketing page, since the header changes on all of them.
+- **S7:** `src/copy.test.ts`.
+
+Done for PR 1: the tests above updated and passing; `/mcp` answers 301 to `/features/ai-connection`, with a test; the sitemap lists the new paths and not `/mcp`; no link on the site leads to a 404; visual baselines regenerated; lint, types, `check:laws`, the marketing tests and the build green in CI; an independent `opus` review and a `ui-compliance-reviewer` pass; screenshots for the owner at phone and desktop widths in light and dark.
+
+### PR 2: the home page, calculators, Retirement and existing pages
+
+| Slice | Work | Size |
+| --- | --- | --- |
+| S5 | Home page with the decided headline and lead: the area tiles and the AI connection tile, "Start with rough figures", "More detail when you want it"; FAQ answers corrected to the app's names | M |
+| S6 | Existing pages: the Pricing list, the Security data facts (only once verified), `/preview` sections linked to area pages | S |
+| S6b | Calculators as decided in D9: the short forms of 5 and 6 in `packages/ui`, the three placed on their area pages, the marketing calculator pages removed, the `/tools` redirects | M |
+| S6c | The Retirement section on the Savings and pension page; `MoneyHelperGuidance` and `DebtHelpLink` promoted to `@repo/ui` so both apps render the one fixed line each (D10) | S |
+
+Affected files, PR 2:
+
+- **S5:** `src/pages/HomePage/` (page, styles, test); `src/components/MonthlyPictureSection/` (replaced by the tiles; its component and test go, with its link to `/tools`); `src/components/HomeFAQ/HomeFAQ.tsx` and test; `src/components/PayRiseTeaser/PayRiseTeaser.tsx` and test (the link, section 4.4); `src/copy.test.ts` (source lists that name `MonthlyPictureSection.tsx`); the home visual baseline.
+- **S6:** `src/pages/PricingPage/PricingPage.tsx` and `PricingPage.test.tsx` (the test imports `TOOL_CATALOGUE` and has a comment about `/tools`); `src/pages/SecurityPage/SecurityPage.tsx`; `src/pages/PreviewPage/PreviewPage.tsx`.
+- **S6b:** `packages/ui/src/calculators/DebtSnowballCalculator/` and `MortgageVsIsaCalculator/` (one prop each, a story and a test); `src/pages/ToolPage/` and `src/pages/ToolsIndexPage/` removed (pages, styles, stories, tests); `src/App.tsx`; `src/routes.ts` (`isKnownPath` drops the tool branch); `src/utils/toolSlugs.ts`; `server/sitemap.ts` (`canonicalPath` and `buildSitemap` drop the tool branch) and `sitemap.test.ts`; `server/ops.test.ts` (asserts a tool address in the sitemap); `server/analytics.ts` (a comment names `/tools/<known-slug>`) and `analytics.test.ts`; `server/redirects.ts` and its test (the `/tools` entries); `src/claims.test.ts` and `src/copy.test.ts` (the calculator guards, below); `NotFoundPage.test.tsx` (expects `/tools` to render); `social-meta.ssr.test.tsx`; `Footer.tsx` and test ("All calculators"); `apps/e2e/visual/routes.ts` (`marketing("tools", "/tools")`) with its screenshots; `apps/e2e/sweep/sets.ts` and `phoneSets.ts` (the marketing tool entries only; the web app's `/tools` entries stay).
+- **S6c:** `apps/web/app/features/retirement/components/MoneyHelperGuidance/` and `apps/web/app/features/debt/components/DebtHelpLink/` move to `packages/ui` with their importers updated; the "where" column for both lines in copy guide 7.3.
+
+Not affected, checked: `apps/e2e/tests/security-headers.spec.ts`, `phone-nav-current.spec.ts` and `nav-label-fit.spec.ts` use `/tools` on the web app, which keeps its calculators.
+
+Done for PR 2: the tests above updated and passing; `/tools`, `/tools/`, all eight canonical slugs and every alias slug answer 301 to the right page, each tested; the sitemap lists only the new paths; no marketing source links to `/tools` or `/mcp`; the web app's calculators still work; visual baselines regenerated; lint, types, `check:laws`, the marketing and `packages/ui` tests and the build green in CI; an independent `opus` review and a `ui-compliance-reviewer` pass; screenshots for the owner at phone and desktop widths in light and dark.
+
+### Later: sample previews (D6, option B)
+
+| Slice | Work | Size |
+| --- | --- | --- |
+| S8 | Two sample previews in `packages/ui` (savings and pension; debt and borrowing), sample data only, labelled as sample data. Its own pull request after PR 2 | M to L |
+
+### Guard changes expected
+
+Each needs the coordinator's sign-off before it is made, and goes under "Guard changes" in its pull request (AGENTS.md section 15).
+
+- **Calculator guards (PR 2).** The "public calculator copy guard" in `claims.test.ts` reads `ToolPage.tsx` and `ToolsIndexPage.tsx`; with those removed its source list shrinks to the shared files in `packages/ui/src/tools`. `copy.test.ts` checks the marketing tool slugs against the catalogue and lists `ToolsIndexPage.tsx` in its over-claim check; both lose their subject.
+- **The MoneyHelper lines (PR 2, D10 accepted).** The two fixed lines contain a bare "free", which the marketing copy test allows only as "free during the beta". Rendering them from a shared component keeps the string out of the files that test reads, which narrows the check for those two sentences.
+- **Home page tests (PR 2).** Tests that pin today's h1 and band order change with D2. They are listed if any numeric limit moves.
+- Otherwise none loosened: `PR12_SOURCES` grows.
 
 Mobile parity: the marketing site is not a flow the mobile app shares, so no parity log row is expected. If a token or shared component changes, a row is added.
 
