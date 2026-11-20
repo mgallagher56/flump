@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Table, TBody, Td, THead, Th, Tr } from "./Table";
 
@@ -380,5 +380,68 @@ describe("Table Primitive", () => {
     expect(header.className).toBe("feature-header");
     expect(header.getAttribute("aria-sort")).toBe("descending");
     expect(screen.getByRole("button", { name: "Age" })).toBeDefined();
+  });
+});
+
+describe("Table sideways overflow", () => {
+  const renderTable = () =>
+    render(
+      <Table caption="Estimated figures">
+        <TBody>
+          <Tr>
+            <Td>£1</Td>
+          </Tr>
+        </TBody>
+      </Table>,
+    );
+
+  it("treats one pixel of rounding as fitting and two as overflowing", () => {
+    const client = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(300);
+    const widths = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(301);
+    try {
+      const fits = renderTable();
+      expect((fits.container.firstElementChild as HTMLElement).hasAttribute("role")).toBe(false);
+      fits.unmount();
+      widths.mockReturnValue(302);
+      const { container } = renderTable();
+      expect((container.firstElementChild as HTMLElement).getAttribute("role")).toBe("region");
+    } finally {
+      widths.mockRestore();
+      client.mockRestore();
+    }
+  });
+
+  it("measures again when the wrapper or the table resizes, and stops when unmounted", () => {
+    const observers: { callback: () => void; observed: Element[]; disconnect: () => void }[] = [];
+    class StubResizeObserver {
+      observed: Element[] = [];
+      disconnect = vi.fn();
+      constructor(public callback: () => void) {
+        observers.push(this);
+      }
+      observe(el: Element) {
+        this.observed.push(el);
+      }
+      unobserve() {}
+    }
+    vi.stubGlobal("ResizeObserver", StubResizeObserver);
+    const client = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(300);
+    const widths = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(300);
+    try {
+      const { container, unmount } = renderTable();
+      const wrapper = container.firstElementChild as HTMLElement;
+      expect(wrapper.hasAttribute("role")).toBe(false);
+      const observer = observers[0];
+      expect(observer?.observed).toEqual([wrapper, wrapper.firstElementChild]);
+      widths.mockReturnValue(800);
+      act(() => observer?.callback());
+      expect(wrapper.getAttribute("role")).toBe("region");
+      unmount();
+      expect(observer?.disconnect).toHaveBeenCalled();
+    } finally {
+      widths.mockRestore();
+      client.mockRestore();
+      vi.unstubAllGlobals();
+    }
   });
 });

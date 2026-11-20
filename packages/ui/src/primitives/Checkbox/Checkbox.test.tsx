@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Checkbox } from "./Checkbox";
 
@@ -51,5 +52,36 @@ describe("Checkbox", () => {
       />,
     );
     expect(node).toBeInstanceOf(HTMLInputElement);
+  });
+});
+
+describe("Checkbox defaults and ids", () => {
+  it("is neither indeterminate nor invalid by default, and has no description", () => {
+    render(<Checkbox label="Agree" />);
+    const box = screen.getByRole("checkbox") as HTMLInputElement;
+    expect(box.indeterminate).toBe(false);
+    expect(box.hasAttribute("aria-invalid")).toBe(false);
+    expect(box.hasAttribute("aria-describedby")).toBe(false);
+  });
+
+  it("gives each checkbox without an id its own hint", () => {
+    render(
+      <>
+        <Checkbox hint="First hint" label="One" />
+        <Checkbox hint="Second hint" label="Two" />
+      </>,
+    );
+    const hintOf = (name: string) => {
+      const ref = screen.getByRole("checkbox", { name }).getAttribute("aria-describedby");
+      return document.getElementById(ref ?? "")?.textContent;
+    };
+    expect(hintOf("One")).toBe("First hint");
+    expect(hintOf("Two")).toBe("Second hint");
+  });
+
+  it("sets an object ref to the input", () => {
+    const ref = createRef<HTMLInputElement>();
+    render(<Checkbox label="Ref" ref={ref} />);
+    expect(ref.current).toBe(screen.getByRole("checkbox"));
   });
 });

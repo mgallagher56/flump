@@ -177,3 +177,60 @@ describe("CollapsibleDrawer Primitive", () => {
     });
   });
 });
+
+describe("quietOpenLabel word boundary", () => {
+  it.each([
+    // A letter, digit or underscore straight after "Show" makes a longer word, kept as it is,
+    // matching regex \w. The first and last of each range are checked.
+    "Showa",
+    "Showz",
+    "ShowA",
+    "ShowZ",
+    "Show0",
+    "Show9",
+  ])("keeps %j as it is", (title) => {
+    expect(quietOpenLabel(title)).toBe(title);
+  });
+
+  it.each([
+    // "[" sits just after "Z" and "’" well after "z", so neither is a word character.
+    ["Show[x]", "Hide[x]"],
+    ["Show’s details", "Hide’s details"],
+  ])("swaps the Show word in %j", (title, expected) => {
+    expect(quietOpenLabel(title)).toBe(expected);
+  });
+});
+
+describe("CollapsibleDrawer card labels", () => {
+  it("names the trigger by the default action text", () => {
+    render(
+      <CollapsibleDrawer title="Schedule">
+        <div>Body</div>
+      </CollapsibleDrawer>,
+    );
+    expect(screen.getByRole("button", { name: /View full schedule/ })).toBeDefined();
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.getByRole("button", { name: /Hide schedule/ })).toBeDefined();
+  });
+
+  it("hides a custom open label from the name, and shows it while open", () => {
+    render(
+      <CollapsibleDrawer openLabel="Hide details" title="Schedule">
+        <div>Body</div>
+      </CollapsibleDrawer>,
+    );
+    const trigger = screen.getByRole("button");
+    fireEvent.click(trigger);
+    expect(screen.getByText("Hide details").getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("shows a badge and a subtitle", () => {
+    render(
+      <CollapsibleDrawer badge={<span>Estimate</span>} subtitle="36 months" title="Schedule">
+        <div>Body</div>
+      </CollapsibleDrawer>,
+    );
+    expect(screen.getByText("Estimate")).toBeDefined();
+    expect(screen.getByText("36 months")).toBeDefined();
+  });
+});

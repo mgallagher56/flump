@@ -177,6 +177,12 @@ describe("Popover", () => {
       header.remove();
     });
 
+    it("ignores a header with no height even when its edge sits down the page", () => {
+      const header = addHeader({ top: 50, bottom: 50, height: 0 });
+      expect(stickyHeaderInset()).toBe(0);
+      header.remove();
+    });
+
     it("still opens the panel when a sticky header is on the page", async () => {
       const header = addHeader({ top: 0, bottom: 61, height: 61 });
       render(

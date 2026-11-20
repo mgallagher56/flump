@@ -103,3 +103,26 @@ describe("LiveRegion Primitive", () => {
     expect(screen.getByRole("status").className).toContain("pos_absolute");
   });
 });
+
+describe("LiveRegion debounce", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("speaks only the last of messages that change within the debounce", () => {
+    const { rerender } = render(<LiveRegion message="Ready" />);
+    rerender(<LiveRegion message="Saving" />);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    rerender(<LiveRegion message="Saved" />);
+    // 300 + 250 = 550ms after "Saving": past its 500ms, but "Saving" was replaced, so nothing yet.
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    expect(screen.getByRole("status").textContent).toBe("");
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    expect(screen.getByRole("status").textContent).toBe("Saved");
+  });
+});

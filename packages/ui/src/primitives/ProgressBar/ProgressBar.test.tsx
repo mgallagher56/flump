@@ -76,3 +76,23 @@ describe("ProgressBar Primitive", () => {
     expect(screen.getByRole("progressbar").hasAttribute("style")).toBe(false);
   });
 });
+
+describe("ProgressBar names and text", () => {
+  it("names the bar by its label, or Progress without one", () => {
+    const { unmount } = render(<ProgressBar label="Saving" value={30} />);
+    expect(screen.getByRole("progressbar").getAttribute("aria-label")).toBe("Saving");
+    unmount();
+    render(<ProgressBar value={30} />);
+    expect(screen.getByRole("progressbar").getAttribute("aria-label")).toBe("Progress");
+  });
+
+  it("speaks a text valueDisplay as it is shown", () => {
+    render(<ProgressBar label="Steps" value={3} max={5} valueDisplay="3 of 5 done" />);
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("3 of 5 done");
+  });
+
+  it("shows no value text when there is no label, valueDisplay or percentage", () => {
+    const { container } = render(<ProgressBar value={30} />);
+    expect(container.textContent).toBe("");
+  });
+});

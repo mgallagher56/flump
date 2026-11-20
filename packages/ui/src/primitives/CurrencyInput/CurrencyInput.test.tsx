@@ -1,7 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { CurrencyInput } from "./CurrencyInput";
-import { formatCurrencyInput, parseCurrencyInput } from "./parseCurrency";
+import {
+  formatCurrencyInput,
+  parseCurrencyInput,
+  roundToDecimals,
+  roundToPennies,
+} from "./parseCurrency";
 
 describe("parseCurrencyInput", () => {
   it.each([
@@ -23,6 +29,41 @@ describe("parseCurrencyInput", () => {
     [".", null],
   ])("parses %j as %j", (raw, expected) => {
     expect(parseCurrencyInput(raw)).toBe(expected);
+  });
+
+  it.each([
+    // Two thousands groups: 1 million, 234 thousand and 567.
+    ["1,234,567", 1234567],
+    // Pence with no pounds, two digits: 55p.
+    [".55", 0.55],
+    // The largest whole number a double holds exactly (2^53 - 1) is still a number.
+    ["9,007,199,254,740,991", 9007199254740991],
+  ])("parses %j as %j", (raw, expected) => {
+    expect(parseCurrencyInput(raw)).toBe(expected);
+  });
+
+  it.each([
+    // Exponent and plus-sign forms are not en-GB money text, even where Number() would read them.
+    ".5e3",
+    "+.5",
+  ])("does not read %j as a number", (raw) => {
+    expect(parseCurrencyInput(raw)).toBeNull();
+  });
+});
+
+describe("roundToPennies and roundToDecimals", () => {
+  it("keeps the sign of a negative amount", () => {
+    // |-12.5| x 100 = 1250, already whole, / 100 = 12.5, sign restored: -12.5.
+    expect(roundToPennies(-12.5)).toBe(-12.5);
+    // |-2.25| x 10 = 22.5, rounds half up to 23, / 10 = 2.3, sign restored: -2.3.
+    expect(roundToDecimals(-2.25, 1)).toBe(-2.3);
+  });
+
+  it("gives plain 0, not negative zero, for a negative amount that rounds away", () => {
+    // |-0.004| x 100 = 0.4 rounds to 0; the result must be +0.
+    expect(Object.is(roundToPennies(-0.004), 0)).toBe(true);
+    // |-0.04| x 10 = 0.4 rounds to 0; the result must be +0.
+    expect(Object.is(roundToDecimals(-0.04, 1), 0)).toBe(true);
   });
 });
 
@@ -290,5 +331,186 @@ describe("leading zero handling", () => {
     fireEvent.change(input, { target: { value: "0.50", selectionStart: 4 } });
     expect(input.value).toBe("0.50");
     expect(onValueChange).toHaveBeenLastCalledWith(0.5);
+  });
+});
+
+describe("the caret while typing", () => {
+  const focused = (value: number) => {
+    render(<CurrencyInput aria-label="Balance" value={value} />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    input.focus();
+    return input;
+  };
+
+  it("stays after the digit just typed when regrouping adds a comma before it", () => {
+    const input = focused(123456);
+    expect(input.value).toBe("123,456");
+    // "|123,456" + "9" gives "9|123,456", which regroups to "9|,123,456": still 1 from the start.
+    fireEvent.change(input, { target: { value: "9123,456", selectionStart: 1, selectionEnd: 1 } });
+    expect(input.value).toBe("9,123,456");
+    expect(input.selectionStart).toBe(1);
+  });
+
+  it("stays after the digit just typed when a leading zero is dropped", () => {
+    const input = focused(0.5);
+    expect(input.value).toBe("0.5");
+    // "0|.5" + "7" gives "07|.5"; dropping the zero leaves "7|.5", so the caret is 1 from the start.
+    fireEvent.change(input, { target: { value: "07.5", selectionStart: 2, selectionEnd: 2 } });
+    expect(input.value).toBe("7.5");
+    expect(input.selectionStart).toBe(1);
+  });
+
+  it("stays at the start each time a 0 typed there is dropped and the text is unchanged", () => {
+    const input = focused(5000);
+    expect(input.value).toBe("5,000");
+    for (let i = 0; i < 2; i += 1) {
+      // "|5,000" + "0" gives "0|5,000"; dropping the zero leaves "|5,000" again.
+      fireEvent.change(input, { target: { value: "05,000", selectionStart: 1, selectionEnd: 1 } });
+      expect(input.value).toBe("5,000");
+      expect(input.selectionStart).toBe(0);
+    }
+  });
+});
+
+describe("more than one leading zero", () => {
+  it("drops all of them", () => {
+    const onValueChange = vi.fn();
+    render(<CurrencyInput aria-label="Balance" onValueChange={onValueChange} value={0} />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "0084", selectionStart: 4 } });
+    expect(input.value).toBe("84");
+    expect(onValueChange).toHaveBeenLastCalledWith(84);
+  });
+});
+
+describe("editing around a thousands comma (R2-5)", () => {
+  const setup = (value: number | null) => {
+    const onValueChange = vi.fn();
+    const onInvalid = vi.fn();
+    render(
+      <CurrencyInput
+        aria-label="Balance"
+        onInvalid={onInvalid}
+        onValueChange={onValueChange}
+        value={value}
+      />,
+    );
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    input.focus();
+    return { input, onValueChange, onInvalid };
+  };
+
+  it("Delete just before the comma deletes the digit after it", () => {
+    const { input, onValueChange } = setup(1234);
+    // "1|,234" + Delete removes the comma in the raw value; the person meant the 2.
+    input.setSelectionRange(1, 1);
+    fireEvent.input(input, {
+      target: { value: "1234", selectionStart: 1, selectionEnd: 1 },
+      inputType: "deleteContentForward",
+    });
+    expect(input.value).toBe("134");
+    expect(onValueChange).toHaveBeenLastCalledWith(134);
+  });
+
+  it("a digit typed just before a comma is kept", () => {
+    const { input, onValueChange } = setup(12345);
+    // "1|2,345" + "9" gives "19|2,345" -> 192,345.
+    fireEvent.change(input, { target: { value: "192,345", selectionStart: 2, selectionEnd: 2 } });
+    expect(input.value).toBe("192,345");
+    expect(onValueChange).toHaveBeenLastCalledWith(192345);
+  });
+
+  it("typing over a digit and its comma keeps the new digit", () => {
+    const { input, onValueChange } = setup(1234);
+    // Select "1," in "1,234" and type 9: "9|234" -> 9,234.
+    fireEvent.change(input, { target: { value: "9234", selectionStart: 1, selectionEnd: 1 } });
+    expect(input.value).toBe("9,234");
+    expect(onValueChange).toHaveBeenLastCalledWith(9234);
+  });
+
+  it("typing over a comma and the digit after it with that same digit keeps the number", () => {
+    const { input, onValueChange } = setup(1234);
+    // Select ",2" in "1,234" and type 2: "12|34" regroups to 1,234.
+    fireEvent.change(input, { target: { value: "1234", selectionStart: 2, selectionEnd: 2 } });
+    expect(input.value).toBe("1,234");
+    expect(onValueChange).toHaveBeenLastCalledWith(1234);
+  });
+
+  it("a comma typed at the start stays as typed and is reported", () => {
+    const { input, onInvalid, onValueChange } = setup(1234);
+    fireEvent.change(input, { target: { value: ",1,234", selectionStart: 1, selectionEnd: 1 } });
+    expect(input.value).toBe(",1,234");
+    expect(onInvalid).toHaveBeenLastCalledWith(",1,234");
+    expect(onValueChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it("Backspace on a stray comma at the start removes only that comma", () => {
+    const { input, onValueChange } = setup(null);
+    fireEvent.change(input, { target: { value: ",234", selectionStart: 4, selectionEnd: 4 } });
+    expect(input.value).toBe(",234");
+    // ",|234" + Backspace leaves "|234".
+    fireEvent.change(input, { target: { value: "234", selectionStart: 0, selectionEnd: 0 } });
+    expect(input.value).toBe("234");
+    expect(onValueChange).toHaveBeenLastCalledWith(234);
+  });
+});
+
+/** A parent that stores whatever the field reports, starting at 12. */
+const ControlledBalance = () => {
+  const [value, setValue] = useState<number | null>(12);
+  return <CurrencyInput aria-label="Balance" onValueChange={setValue} value={value} />;
+};
+
+describe("following the value from the parent", () => {
+  it("empties the field when the parent clears the value to null", () => {
+    const { rerender } = render(<CurrencyInput aria-label="Balance" value={50} />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    expect(input.value).toBe("50");
+    rerender(<CurrencyInput aria-label="Balance" value={null} />);
+    expect(input.value).toBe("");
+  });
+
+  it("keeps text that is not a number when the parent stores the null it was given", () => {
+    render(<ControlledBalance />);
+    const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "12.3." } });
+    expect(input.value).toBe("12.3.");
+  });
+});
+
+describe("whitespace only", () => {
+  it("counts as empty, not as invalid", () => {
+    const onInvalid = vi.fn();
+    const onValueChange = vi.fn();
+    render(
+      <CurrencyInput aria-label="Balance" onInvalid={onInvalid} onValueChange={onValueChange} />,
+    );
+    fireEvent.change(screen.getByLabelText("Balance"), { target: { value: "  " } });
+    expect(onInvalid).not.toHaveBeenCalled();
+    expect(onValueChange).toHaveBeenLastCalledWith(null);
+  });
+});
+
+describe("with no callbacks supplied", () => {
+  it("handles typing, invalid text, rounding and blur without an error", () => {
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+    window.addEventListener("error", onError);
+    try {
+      render(<CurrencyInput aria-label="Balance" />);
+      const input = screen.getByRole("textbox", { name: "Balance" }) as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "abc" } });
+      fireEvent.change(input, { target: { value: "1.2.3" } });
+      // 1.234 rounds to 1.23 on blur, so the settled value differs from what was typed.
+      fireEvent.change(input, { target: { value: "1.234" } });
+      fireEvent.blur(input);
+      expect(input.value).toBe("1.23");
+    } finally {
+      window.removeEventListener("error", onError);
+    }
+    expect(errors).toEqual([]);
   });
 });

@@ -64,3 +64,12 @@ describe("InfoTip", () => {
     expect(described?.textContent).toBe("The most you can borrow on the card.");
   });
 });
+
+describe("InfoTip panel", () => {
+  it("has no close button of its own", async () => {
+    render(<InfoTip term="ISA">A tax-free savings wrapper.</InfoTip>);
+    fireEvent.click(screen.getByRole("button", { name: "About ISA" }));
+    await screen.findByRole("dialog");
+    expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
+  });
+});

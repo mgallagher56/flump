@@ -106,3 +106,32 @@ describe("SavedFigure", () => {
     expect(root.getAttribute("data-wash")).toBe("false");
   });
 });
+
+describe("SavedFigure children", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(window, "matchMedia");
+  });
+
+  it("renders a function child with the value, and a plain child as given", () => {
+    mockMatchMedia(false);
+    const { unmount } = render(
+      <SavedFigure label="Savings" value={1000}>
+        {(value: number) => `£${value} saved`}
+      </SavedFigure>,
+    );
+    expect(screen.getByText("£1000 saved")).toBeDefined();
+    unmount();
+    render(
+      <SavedFigure label="Savings" value={1000}>
+        <span>One thousand</span>
+      </SavedFigure>,
+    );
+    expect(screen.getByText("One thousand")).toBeDefined();
+  });
+});

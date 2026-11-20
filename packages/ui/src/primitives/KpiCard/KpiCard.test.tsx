@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { deltaTone, KpiCard } from "./KpiCard";
+import { deltaTone, isKpiCardUnset, KpiCard } from "./KpiCard";
 
 describe("KpiCard Primitive", () => {
   it("renders label, value, and delta badge", () => {
@@ -280,5 +280,31 @@ describe("KpiCard value size (R2-2)", () => {
     render(<KpiCard label="National Insurance" notSetLabel="None" unset value={0} />);
     expect(screen.getByText("None")).toBeDefined();
     expect(screen.queryByText("£0")).toBeNull();
+  });
+});
+
+describe("KpiCard unset and empty states", () => {
+  it.each([
+    [undefined, true],
+    [Number.NaN, true],
+    [0, false],
+  ])("isKpiCardUnset reads %s as unset: %s", (value, expected) => {
+    expect(isKpiCardUnset({ value })).toBe(expected);
+  });
+
+  it("does not show the empty action when a value is known", () => {
+    render(
+      <KpiCard
+        emptyAction={<button type="button">Add balance</button>}
+        label="Savings"
+        value={1200}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Add balance" })).toBeNull();
+  });
+
+  it("is not marked busy when not loading", () => {
+    const { container } = render(<KpiCard label="Net worth" value="£1,000" />);
+    expect(container.firstElementChild?.hasAttribute("aria-busy")).toBe(false);
   });
 });

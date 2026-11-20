@@ -74,3 +74,30 @@ describe("Menu", () => {
     await waitFor(() => expect(document.activeElement).not.toBe(edit));
   });
 });
+
+describe("Menu labels and page", () => {
+  it("shows a group label as a label, not as an item", async () => {
+    const items: MenuEntry[] = [
+      { type: "label", label: "Account" },
+      { id: "edit", label: "Edit account" },
+    ];
+    render(<Menu aria-label="Account actions" items={items} trigger={trigger} />);
+    fireEvent.keyDown(screen.getByRole("button", { name: "More" }), { key: "Enter" });
+    await screen.findByRole("menu", { name: "Account actions" });
+    expect(screen.getByText("Account")).toBeDefined();
+    expect(screen.getAllByRole("menuitem")).toHaveLength(1);
+  });
+
+  it("leaves the rest of the page in the accessibility tree while open", async () => {
+    render(
+      <>
+        <button type="button">Elsewhere</button>
+        <Menu aria-label="Account actions" items={build()} trigger={trigger} />
+      </>,
+    );
+    fireEvent.keyDown(screen.getByRole("button", { name: "More" }), { key: "Enter" });
+    await screen.findByRole("menu", { name: "Account actions" });
+    expect(document.querySelector("[aria-hidden='true'] button")).toBeNull();
+    expect(screen.getByRole("button", { name: "Elsewhere" })).toBeDefined();
+  });
+});

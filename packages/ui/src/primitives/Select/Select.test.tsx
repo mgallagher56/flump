@@ -76,3 +76,10 @@ describe("Select", () => {
     expect(screen.getByRole("combobox").className).not.toContain("tabular-nums");
   });
 });
+
+describe("Select default", () => {
+  it("is not marked invalid by default", () => {
+    render(<Select aria-label="Region" options={[{ value: "uk", label: "UK" }]} />);
+    expect(screen.getByRole("combobox").hasAttribute("aria-invalid")).toBe(false);
+  });
+});

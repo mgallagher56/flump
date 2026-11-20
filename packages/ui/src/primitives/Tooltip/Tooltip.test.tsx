@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeAll, describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Tooltip, TooltipProvider } from "./Tooltip";
 
 beforeAll(() => {
@@ -47,5 +47,37 @@ describe("Tooltip", () => {
       </Tooltip>,
     );
     expect(await screen.findByRole("tooltip")).toBeDefined();
+  });
+});
+
+describe("Tooltip under a provider", () => {
+  it("opens on hover after the provider's delay, not the 300ms default", () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <TooltipProvider delayDuration={50}>
+          <Tooltip label="Help text">
+            <button type="button">?</button>
+          </Tooltip>
+        </TooltipProvider>,
+      );
+      fireEvent.pointerMove(screen.getByRole("button", { name: "?" }), { pointerType: "mouse" });
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      expect(screen.queryByRole("tooltip")).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("puts its id on the content as data-testid", async () => {
+    render(
+      <Tooltip defaultOpen id="help-tip" label="Help">
+        <button type="button">?</button>
+      </Tooltip>,
+    );
+    await screen.findByRole("tooltip");
+    expect(document.querySelector("[data-testid='help-tip']")).not.toBeNull();
   });
 });

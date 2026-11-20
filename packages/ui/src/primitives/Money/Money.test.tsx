@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { formatMoney, Money, Num } from "./Money";
+import { formatMoney, formatNumber, Money, Num } from "./Money";
 
 const text = (container: HTMLElement) => container.textContent;
 
@@ -174,5 +174,38 @@ describe("Num compact", () => {
   it("formats 97800 as 97.8k", () => {
     const { container } = render(<Num compact value={97800} />);
     expect(container.textContent).toBe("97.8k");
+  });
+});
+
+describe("compact signs and kinds", () => {
+  it("drops the sign of a negative compact figure when signDisplay is never", () => {
+    expect(formatMoney(-97800, { compact: true, signDisplay: "never" })).toEqual({
+      text: "£97.8k",
+    });
+  });
+
+  it("adds a plus to a positive compact figure when signDisplay is always", () => {
+    expect(formatMoney(97800, { compact: true, signDisplay: "always" })).toEqual({
+      text: "+£97.8k",
+      spoken: "plus £97.8k",
+    });
+  });
+
+  it.each([
+    0,
+    // 0.01 at one decimal at most rounds to 0.0, so it shows as £0 with no sign.
+    0.01,
+  ])("shows %d as £0 with no plus when signDisplay is always", (value) => {
+    expect(formatMoney(value, { compact: true, signDisplay: "always" }).text).toBe("£0");
+  });
+
+  it("formats a compact percentage as a percentage, not as a compact number", () => {
+    // Percent ignores compact: 4.5 at 0 decimal places rounds half up to 5, then "%".
+    expect(formatNumber(4.5, { kind: "percent", compact: true }).text).toBe("5%");
+  });
+
+  it("pairs id and data-testid on a value that is not set", () => {
+    const { container } = render(<Money id="net-worth" value={null} />);
+    expect(container.querySelector("#net-worth")?.getAttribute("data-testid")).toBe("net-worth");
   });
 });
