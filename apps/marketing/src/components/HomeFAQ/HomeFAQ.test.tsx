@@ -63,11 +63,11 @@ describe("HomeFAQ", () => {
     );
   });
 
-  it("is the home page's one mention of MCP, with a link to /mcp (D13)", () => {
+  it("is the home page's one mention of MCP, with a link to the AI connection page (D13, E42)", () => {
     renderFaq();
     fireEvent.click(screen.getByRole("button", { name: /AI assistant/i }));
     expect(screen.getByRole("link", { name: "About the AI connection" }).getAttribute("href")).toBe(
-      "/mcp",
+      "/features/ai-connection",
     );
   });
 });

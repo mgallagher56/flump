@@ -16,7 +16,7 @@ import { headerAndTabs } from "./SettingsPage.styles";
 export interface SettingsPageProps {
   /** The profile from the route loader. */
   initialProfile: UserProfile;
-  /** The public AI connections page (marketing `/mcp#setup`), for the Security tab's steps. */
+  /** The public AI connections page (marketing `/features/ai-connection#setup`), for the Security tab's steps. */
   aiGuideUrl?: string;
   /** The address an AI assistant connects to (the backend's `/mcp`). */
   mcpServerUrl?: string;

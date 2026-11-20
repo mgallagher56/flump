@@ -99,7 +99,9 @@ describe("Marketing HomePage (E16 PR 12)", () => {
     expect(body.textContent ?? "").not.toMatch(/Model Context Protocol|MCP server|Local CLI/);
     // The one MCP mention is the FAQ answer, and the footer links the page.
     expect(screen.getByRole("button", { name: /AI assistant/ })).toBeDefined();
-    expect(screen.getByRole("contentinfo").querySelector('a[href="/mcp"]')).not.toBeNull();
+    expect(
+      screen.getByRole("contentinfo").querySelector('a[href="/features/ai-connection"]'),
+    ).not.toBeNull();
   });
 
   it("keeps the £100k tax trap out of the home page body", () => {

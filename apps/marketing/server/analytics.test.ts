@@ -79,6 +79,10 @@ describe("helpers", () => {
       "/tools/uk-100k-tax-trap-calculator",
     );
     expect(routeKey("/tools/secret-user-slug")).toBe("other");
+    // E42: the feature pages are counted; /mcp is a 301 now, so it is never a page view.
+    expect(routeKey("/features/Budget/")).toBe("/features/budget");
+    expect(routeKey("/features/ai-connection")).toBe("/features/ai-connection");
+    expect(routeKey("/mcp")).toBe("other");
     expect(routeKey("/random?email=a@b.c")).toBe("other");
   });
 

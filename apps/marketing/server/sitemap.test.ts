@@ -65,6 +65,22 @@ describe("buildSitemap", () => {
     ];
     expect(locs).toEqual(expected);
   });
+
+  it("lists the features page, the five areas and the AI connection, and not /mcp (E42)", () => {
+    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+    for (const path of [
+      "/features",
+      "/features/accounts",
+      "/features/budget",
+      "/features/pay",
+      "/features/savings-and-pension",
+      "/features/debt-and-borrowing",
+      "/features/ai-connection",
+    ]) {
+      expect(locs).toContain(`https://flump.example${path}`);
+    }
+    expect(locs).not.toContain("https://flump.example/mcp");
+  });
 });
 
 describe("canonicalLinkTag", () => {

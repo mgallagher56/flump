@@ -70,9 +70,32 @@ describe("Footer", () => {
     expect(screen.queryByRole("link", { name: /sample data/i })).toBeNull();
   });
 
-  it("links to the AI connection page, which has left the home page (D13)", () => {
+  it("lists Flump features, the five areas and the AI connection under Product (E42 S4)", () => {
     renderFooter();
-    expect(screen.getByRole("link", { name: "AI connection" }).getAttribute("href")).toBe("/mcp");
+    const product = screen.getByRole("navigation", { name: "Product" });
+    const hrefs = Array.from(product.querySelectorAll("a")).map((a) => a.getAttribute("href"));
+    expect(hrefs.slice(0, 7)).toEqual([
+      "/features",
+      "/features/accounts",
+      "/features/budget",
+      "/features/pay",
+      "/features/savings-and-pension",
+      "/features/debt-and-borrowing",
+      "/features/ai-connection",
+    ]);
+    expect(document.querySelector('a[href^="/mcp"]')).toBeNull();
+  });
+
+  it("puts Security and privacy, Contact, the invite and Sign in under Company", () => {
+    renderFooter();
+    const company = screen.getByRole("navigation", { name: "Company" });
+    expect(Array.from(company.querySelectorAll("a")).map((a) => a.textContent)).toEqual([
+      "Security and privacy",
+      "Contact",
+      "Request an invite",
+      expect.stringMatching(/^Sign in/),
+    ]);
+    expect(screen.queryByRole("heading", { name: "Legal" })).toBeNull();
   });
 
   it("shows placeholder business details as quiet text, with no warning colour or outline", () => {

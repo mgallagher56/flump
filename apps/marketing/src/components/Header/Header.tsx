@@ -1,5 +1,6 @@
 import { hasSessionPresenceCookie } from "@flump/finance-engine";
 import {
+  type AppNavChild,
   type AppNavItem,
   type AppNavRenderLink,
   Button,
@@ -18,12 +19,15 @@ import { ExternalLink } from "lucide-react";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useThemeContext } from "../../context/ThemeContext";
+import { FEATURES, FEATURES_INDEX } from "../../utils/featureAreas";
 import { signupCta } from "../../utils/site";
 import { getAppUrl } from "../../utils/url";
 import {
   belowWide,
   drawerCta,
   drawerCtas,
+  drawerGroup,
+  drawerGroupHeading,
   drawerLinkHint,
   drawerLinkLabel,
   drawerLinkRow,
@@ -42,19 +46,52 @@ interface MarketingNavItem extends AppNavItem {
 }
 
 const DRAWER_ID = "mobile-nav-drawer";
+const FEATURES_INDEX_KEY = "features-index";
+
+/**
+ * The Features menu (E42 S4): the features page, the five areas in the app's order, the AI
+ * connection, then Security and privacy, so it stays one press from every page.
+ */
+const FEATURE_LINKS: AppNavChild[] = [
+  {
+    key: FEATURES_INDEX_KEY,
+    label: FEATURES_INDEX.title,
+    href: FEATURES_INDEX.path,
+    description: "All five areas on one page",
+  },
+  ...FEATURES.map((feature) => ({
+    key: feature.key,
+    label: feature.name,
+    href: feature.path,
+    description: feature.menuDescription,
+  })),
+  {
+    key: "security",
+    label: "Security and privacy",
+    href: "/security",
+    description: "What Flump can see",
+  },
+];
 
 /** `id` of every page's `<main>`, target of the skip link. */
 export const MAIN_ID = "main";
 
 const renderHomeLogoLink = (props: HomeLogoLinkProps) => <Link to="/" {...props} />;
 
+/** Feature paths and the menu key each one marks (the Features group then shows as current). */
+const MENU_KEYS: Readonly<Record<string, string>> = {
+  [FEATURES_INDEX.path]: FEATURES_INDEX_KEY,
+  ...Object.fromEntries(FEATURES.map((feature) => [feature.path, feature.key])),
+  "/security": "security",
+  "/preview": "preview",
+  "/pricing": "pricing",
+  "/contact": "contact",
+};
+
 const activeKeyFor = (pathname: string): string | undefined => {
-  if (pathname.startsWith("/tools")) return "tools";
-  if (pathname === "/pricing") return "pricing";
-  if (pathname === "/security") return "security";
-  if (pathname === "/mcp") return "mcp";
-  if (pathname === "/contact") return "contact";
-  return undefined;
+  const lower = pathname.toLowerCase();
+  const path = lower.length > 1 ? lower.replace(/\/+$/, "") : lower;
+  return Object.hasOwn(MENU_KEYS, path) ? MENU_KEYS[path] : undefined;
 };
 
 /**
@@ -70,39 +107,31 @@ export const Header: FC = () => {
   const appUrl = getAppUrl();
   const cta = signupCta();
 
-  const items = useMemo<MarketingNavItem[]>(
+  // Three links (E42 S4): Features (a menu), Preview, Pricing. Calculators and the AI connection
+  // no longer have top links; the AI connection is in the Features menu like every other feature.
+  const items = useMemo<AppNavItem[]>(
     () => [
       {
-        key: "tools",
-        label: "Calculators",
-        href: "/tools",
-        hint: "No sign-in needed",
+        key: "features",
+        label: FEATURES_INDEX.navLabel,
+        href: FEATURES_INDEX.path,
+        children: FEATURE_LINKS,
       },
-      { key: "pricing", label: "Pricing", href: "/pricing", hint: "Free during the beta" },
-      { key: "security", label: "Security", href: "/security", hint: "What Flump can see" },
-      // Inline from 1024px (navWide) with every other link; below that all links are in the menu.
-      {
-        key: "mcp",
-        label: "AI connection",
-        href: "/mcp",
-        hint: "Use with Claude",
-        wideOnly: true,
-      },
-      {
-        key: "preview",
-        wideOnly: true,
-        label: "Preview",
-        href: "/preview",
-        hint: "Sample figures",
-      },
+      { key: "preview", label: "Preview", href: "/preview" },
+      { key: "pricing", label: "Pricing", href: "/pricing" },
     ],
     [],
   );
 
-  // The phone menu also offers Contact; the top bar has no room for it, and the footer links it.
+  // The phone menu: the Features group under its heading, then the other pages with a hint each.
+  // Contact is here and in the footer; the top bar has no room for it.
   const drawerItems = useMemo<MarketingNavItem[]>(
-    () => [...items, { key: "contact", label: "Contact", href: "/contact", hint: "Email us" }],
-    [items],
+    () => [
+      { key: "preview", label: "Preview", href: "/preview", hint: "Sample figures" },
+      { key: "pricing", label: "Pricing", href: "/pricing", hint: "Free during the beta" },
+      { key: "contact", label: "Contact", href: "/contact", hint: "Email us" },
+    ],
+    [],
   );
 
   useEffect(() => {
@@ -224,6 +253,23 @@ export const Header: FC = () => {
         onClose={closeMenu}
       >
         <nav aria-label="Mobile navigation" className={navDrawerBody()}>
+          <p className={drawerGroupHeading()} id="drawer-features-heading">
+            {FEATURES_INDEX.navLabel}
+          </p>
+          <ul aria-labelledby="drawer-features-heading" className={drawerGroup()}>
+            {FEATURE_LINKS.map((link) => (
+              <li key={link.key}>
+                <Link
+                  aria-current={link.key === activeKey ? "page" : undefined}
+                  className={navDrawerLink()}
+                  to={link.href}
+                  onClick={closeMenu}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
           {drawerItems.map((item) => {
             const className = cx(navDrawerLink(), drawerLinkRow());
             const content = (

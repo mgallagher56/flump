@@ -78,7 +78,10 @@ describe("resolveStatus", () => {
     "/tools/",
     "/pricing",
     "/security?x=1",
-    "/mcp",
+    "/features",
+    "/features/accounts",
+    "/Features/Debt-And-Borrowing/",
+    "/features/ai-connection",
     "/contact",
     "/Pricing",
     "/TOOLS/UK-100k-Tax-Trap-Calculator",
@@ -89,10 +92,17 @@ describe("resolveStatus", () => {
     expect(resolveStatus(url)).toBe(200);
   });
 
-  it.each(["/nope", "/tools/nope", "/tools/a/b", "/sitemap.xml", "/pricing/extra"])(
-    "404 for %s",
-    (url) => {
-      expect(resolveStatus(url)).toBe(404);
-    },
-  );
+  it.each([
+    "/nope",
+    "/tools/nope",
+    "/tools/a/b",
+    "/sitemap.xml",
+    "/pricing/extra",
+    // Answers 301 before SSR (server/redirects.ts); were it ever rendered it would be a 404.
+    "/mcp",
+    "/features/nope",
+    "/features/accounts/extra",
+  ])("404 for %s", (url) => {
+    expect(resolveStatus(url)).toBe(404);
+  });
 });
