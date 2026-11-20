@@ -1,4 +1,10 @@
-import type { BuildContextPackInput, ProfileFacts, TaxRecord } from "@flump/finance-engine";
+import {
+  type BuildContextPackInput,
+  calculateUKTax,
+  type ProfileFacts,
+  type TaxRecord,
+  type TaxRecordFields,
+} from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 import { connectTestClient } from "../../testing/client.js";
 import { emptyUser } from "../../testing/personas.js";
@@ -130,6 +136,26 @@ describe("get_tax_year_position notes, provenance and bands", () => {
     expect(e.result.notes).toHaveLength(2);
     for (const n of e.result.notes) expect(n.length).toBeGreaterThan(0);
     expect(e.result.notes.join(" ")).not.toMatch(/Scottish/);
+  });
+
+  it("reads taxable non-savings income from the engine's allowance split", async () => {
+    // Plumbing only: the tool must not take the whole allowance off non-savings income itself.
+    // With dividends beside a salary near the basic rate limit the engine may set part of the
+    // allowance against the dividends (ITA 2007 s.25(2)), so the two can differ.
+    const dividends = rent({
+      id: "div1",
+      source: "savings",
+      category: "dividend_income",
+      amount: 10000,
+      frequency: "annual",
+      date: "2025-06-06",
+    } as Partial<TaxRecord>);
+    const e = (await position(facts({ employmentType: "employed", annualSalary: 50000 }), [
+      dividends,
+    ])) as Env & { result: { incomeTaxBands: { taxableGbp: number } } };
+    const ledger = calculateUKTax("2025/26", [dividends as unknown as TaxRecordFields], 50000, 100);
+    expect(ledger.allowanceOnNonSavings).not.toBe(ledger.personalAllowance);
+    expect(e.result.incomeTaxBands.taxableGbp).toBe(50000 - ledger.allowanceOnNonSavings);
   });
 
   it("lists the bands from the lowest rate up", async () => {

@@ -65,6 +65,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Savings interest over the next 12 months](#savings-interest)                                                 | figure | accounts    | Holds                                     |
 | [ISA allowance used this tax year](#isa-allowance-used)                                                       | figure | accounts    | Holds                                     |
 | [Estimated Self Assessment tax](#estimated-tax)                                                               | figure | tax         | Holds                                     |
+| [Where the Personal Allowance is set (non-savings, savings, dividends)](#personal-allowance-allocation)       | figure | tax         | Holds                                     |
 | [Mortgage interest carried forward to next year](#finance-costs-carried-forward)                              | figure | tax         | Holds                                     |
 | [Paid into pensions each month](#pension-going-in)                                                            | figure | pay         | Duplicated (two stores that can disagree) |
 | [Estimated income in retirement](#retirement-income)                                                          | figure | retirement  | Broken                                    |
@@ -1440,6 +1441,24 @@ Shown on:
 - AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
 - Public calculators: `packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx` (tax on rental income, entered figures only)
+
+### Where the Personal Allowance is set (non-savings, savings, dividends)
+
+<a id="personal-allowance-allocation"></a>
+
+- Id: `personal-allowance-allocation` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `allocatePersonalAllowance` in `packages/finance-engine/src/personal-allowance-allocation.ts`
+- Built from: `tax-records`, `salary`, `employment-type`, `tax-region`, `rental-share-for-tax`
+- Note: The allowance goes where it gives the lowest bill (ITA 2007 s.25(2); from 2027/28 against other income first, s.25(3A)). get_tax_year_position reads the split for taxable non-savings income instead of taking the whole allowance off non-savings income itself.
+
+Other code paths that compute it:
+
+- `calculateUKTax` [wrapper] in `packages/finance-engine/src/tax-calculator.ts` (exposes the split as allowanceOnNonSavings, allowanceOnSavings and allowanceOnDividends)
+
+Shown on:
+
+- AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
 
 ### Mortgage interest carried forward to next year
 

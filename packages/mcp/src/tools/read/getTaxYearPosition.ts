@@ -145,7 +145,9 @@ export const getTaxYearPosition = defineFlumpTool({
 
     const nonSavings =
       ledger.effectivePayeSalary + ledger.seProfit + ledger.rentalProfitBeforeInterestShare;
-    const taxable = Math.max(0, nonSavings - ledger.personalAllowance);
+    // The engine sets the allowance where it gives the lowest bill (ITA 2007 s.25(2)), which is
+    // not always all against non-savings income, so read its split rather than assume it.
+    const taxable = Math.max(0, nonSavings - ledger.allowanceOnNonSavings);
     const bandResult = refusal ? null : calculateIncomeTaxOnTaxable(taxable, rules, region);
     const bands = (bandResult?.bands ?? []).map((b) => ({
       name: b.name,

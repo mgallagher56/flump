@@ -109,21 +109,31 @@ function savings(taxYear: string, category: string, amount: number): TaxRecordFi
  */
 describe("rent with savings or dividends", () => {
   it.each([
-    // [year, dividend line without rent, dividend line before this change]
-    ["2025/26", 4138.75, 6581.25],
-    ["2026/27", 4528.75, 6971.25],
-  ] as const)("dividends pushed into the higher band, %s", (year, divWithout, divWith) => {
+    // [year, dividend line without rent, rent line, total bill]
+    ["2025/26", 4138.75, 4405.375, 14030.125],
+    ["2026/27", 4528.75, 4399.975, 14414.725],
+  ] as const)("dividends pushed into the higher band, %s", (year, divWithout, rentLine, bill) => {
     // Salary 40,000; dividends 20,000; rent 11,000 less 1,000 of costs, profit 10,000 (no interest;
     // the property allowance gives the same profit, and costs are kept on a tie).
     // Without rent: non-savings taxable 27,430, tax 5,486. Basic band left 10,270: the 500
     //   dividend allowance takes 500 of it, 9,770 at the ordinary rate, 9,730 at the upper rate.
     //   2025/26: 9,770 x 8.75% + 9,730 x 33.75% = 854.875 + 3,283.875 = 4,138.75.
     //   2026/27: 9,770 x 10.75% + 9,730 x 35.75% = 1,050.275 + 3,478.475 = 4,528.75.
-    // With rent: non-savings taxable 37,430, tax 7,486. Basic band left 270, so the allowance
-    //   sits in 270 basic + 230 higher and 19,500 is at the upper rate:
-    //   2025/26: 6,581.25; 2026/27: 6,971.25.
-    // Rent: 2,000 non-savings + (divWith - divWithout) = 2,000 + 2,442.50 = 4,442.50 both years
-    //   (9,770 moves up 25 points either year).
+    //   Moving allowance off the salary would cost 20% and save the 8.75% / 10.75% ordinary rate
+    //   for the first 9,770, so the old order stays the lowest without the rent.
+    // With rent, old order: non-savings taxable 37,430, tax 7,486. Basic band left 270, so the
+    //   allowance sits in 270 basic + 230 higher and 19,500 is at the upper rate:
+    //   2025/26: 6,581.25 (bill 14,067.25); 2026/27: 6,971.25 (bill 14,457.25).
+    // With rent, lowest (ITA 2007 s.25(2)): move 270 of allowance to the dividends, so the
+    //   non-savings taxable is 37,700 (+54) and the dividend allowance sits wholly above the basic
+    //   rate limit: 19,230 at the upper rate, 270 fewer.
+    //   2025/26: gain 270 x 33.75% - 54 = 37.125; bill 14,067.25 - 37.125 = 14,030.125.
+    //   2026/27: gain 270 x 35.75% - 54 = 42.525; bill 14,457.25 - 42.525 = 14,414.725.
+    //   The non-savings line stays 7,486; the dividend line with rent is 6,581.25 - 37.125 =
+    //   6,544.125 (2025/26) and 6,971.25 - 42.525 = 6,928.725 (2026/27).
+    // Rent: 2,000 non-savings + (dividend line with rent - divWithout):
+    //   2025/26: 2,000 + 6,544.125 - 4,138.75 = 4,405.375.
+    //   2026/27: 2,000 + 6,928.725 - 4,528.75 = 4,399.975.
     const r = calculateUKTax(
       year,
       [
@@ -134,12 +144,12 @@ describe("rent with savings or dividends", () => {
       40000,
       100,
     );
-    expect(r.rentalPropertyTaxDueBeforeCredit).toBeCloseTo(4442.5, 2);
-    expect(r.rentalPropertyTaxDueAfterCredit).toBeCloseTo(4442.5, 2);
+    expect(r.rentalPropertyTaxDueBeforeCredit).toBeCloseTo(rentLine, 2);
+    expect(r.rentalPropertyTaxDueAfterCredit).toBeCloseTo(rentLine, 2);
     expect(r.dividendTaxDue).toBeCloseTo(divWithout, 2);
     expect(r.savingsTaxDue).toBe(0);
-    // The bill: 7,486 + divWith, unchanged.
-    expect(r.totalIncomeTaxDue).toBeCloseTo(7486 + divWith, 2);
+    expect(r.allowanceOnDividends).toBe(270);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(bill, 2);
   });
 
   it.each(YEARS)("Personal Savings Allowance falls from 1,000 to 500, %s", (year) => {

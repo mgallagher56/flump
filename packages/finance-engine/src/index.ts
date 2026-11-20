@@ -20,6 +20,7 @@ export * from "./mortgage.js";
 export * from "./net-worth-basis.js";
 export * from "./paye-salary-for-tax.js";
 export * from "./persistence.js";
+export * from "./personal-allowance-allocation.js";
 export * from "./picture/index.js";
 export * from "./portfolio.js";
 export * from "./profile.js";
