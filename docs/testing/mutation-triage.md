@@ -1634,3 +1634,505 @@ The class counts are rows, not faults: one row may cover several faults on a lin
 | ---- | ------------------------------------------------------------------ | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | L118 | StringLiteral `""` (the `", "` join separator in the launch error) | Not worth killing | Message text: every remaining field name still appears in the error, only run together; a test would pin the exact wording of a developer-facing message |
 | L119 | StringLiteral `""` (the runbook pointer in the launch error)       | Not worth killing | Developer-facing hint text; the guard still throws with the field names and "Launch blocked", which the tests check. A test would pin the wording        |
+
+## Backend guards, auth, security, contract and services (E41 M4, 20 November 2026)
+
+Measured on a laptop on 20 November 2026 with the unit Vitest project only (owner decision 11: database specs are left out of mutation runs at first). Line numbers are those of the measured source. Faults killed by a test have no row, and timeouts count as not caught.
+
+Two kinds of fault that no unit test catches are recorded here:
+
+- Faults that a database spec catches. A second laptop run added the database specs (a throwaway Postgres in Docker, each Stryker worker on its own database). Writing unit tests for these would only repeat the database specs, so they are counted per file below, not triaged row by row. "Killed" means a database spec failed on the fault. "Errored" means the database run stopped with an error or timed out on it, which Stryker leaves out of the score: likely caught, but not proved.
+
+- Faults that neither run catches. These were triaged; each one left has a row in the area tables below.
+
+### Not caught by unit tests, caught by database specs
+
+| File                                              | Killed by a database spec | Errored or timed out in the database run |
+| ------------------------------------------------- | ------------------------: | ---------------------------------------: |
+| `src/audit/last-active.interceptor.ts`            |                         1 |                                       13 |
+| `src/auth/auth.guard.ts`                          |                         2 |                                        2 |
+| `src/auth/beta-access.ts`                         |                         0 |                                        4 |
+| `src/auth/mcp-access.ts`                          |                         0 |                                        8 |
+| `src/auth/recent-login.ts`                        |                         2 |                                        2 |
+| `src/auth/workos-jwt.verifier.ts`                 |                         1 |                                        6 |
+| `src/contract/api-exception.filter.ts`            |                         6 |                                       40 |
+| `src/contract/contract-shadow.interceptor.ts`     |                         2 |                                       20 |
+| `src/contract/deprecation.interceptor.ts`         |                         0 |                                        8 |
+| `src/contract/etag.ts`                            |                         6 |                                        3 |
+| `src/contract/idempotency.interceptor.ts`         |                         9 |                                        0 |
+| `src/contract/pagination.ts`                      |                        17 |                                       12 |
+| `src/modules/agent/agent-audit.service.ts`        |                        15 |                                        4 |
+| `src/modules/agent/agent-data.service.ts`         |                        27 |                                       18 |
+| `src/modules/agent/financial-picture.service.ts`  |                         0 |                                        2 |
+| `src/modules/agent/mcp-token.service.ts`          |                        22 |                                       11 |
+| `src/modules/agent/mcp.service.ts`                |                         2 |                                       35 |
+| `src/modules/budget/budget.service.ts`            |                        16 |                                       27 |
+| `src/modules/finance/account-intake.service.ts`   |                        67 |                                       74 |
+| `src/modules/finance/finance.service.ts`          |                        36 |                                       16 |
+| `src/modules/imports/imports.service.ts`          |                       198 |                                       69 |
+| `src/modules/privacy/account-deletion.service.ts` |                        13 |                                       29 |
+| `src/modules/privacy/account-export.service.ts`   |                        25 |                                       20 |
+| `src/modules/profile/user-profile.service.ts`     |                        44 |                                       84 |
+| `src/modules/retirement/retirement.service.ts`    |                         4 |                                        2 |
+| `src/modules/snapshots/snapshots.service.ts`      |                       121 |                                       44 |
+| `src/modules/tax/tax.service.ts`                  |                        11 |                                       39 |
+| `src/security/ip-rate-limit.guard.ts`             |                         0 |                                        7 |
+| `src/security/keyed-ref.ts`                       |                         0 |                                        2 |
+| `src/security/pg-rate-limit.store.ts`             |                        36 |                                        4 |
+| `src/security/rate-limit.store.ts`                |                         0 |                                        5 |
+| `src/security/receipt-validation.ts`              |                         1 |                                       12 |
+| `src/security/signed-client-ip.ts`                |                         1 |                                        1 |
+| `src/security/user-rate-limit.interceptor.ts`     |                         0 |                                        5 |
+| **Total**                                         |                   **685** |                                  **628** |
+
+### Auth and guards
+
+Line numbers are those of commit 016d3d721. The list gave the OAuth state faults as line 61; at 016d3d721 that check is on line 62, which is used below.
+
+| File                                           | Faults in list | Killed by new tests | Equivalent | Not worth killing | Possible bug |
+| ---------------------------------------------- | -------------- | ------------------- | ---------- | ----------------- | ------------ |
+| `src/audit/last-active.interceptor.ts`         | 5              | 3                   | 0          | 2                 | 0            |
+| `src/auth/auth.guard.ts`                       | 15             | 13                  | 1          | 1                 | 0            |
+| `src/auth/beta-access.ts`                      | 2              | 2                   | 0          | 0                 | 0            |
+| `src/auth/dev-bypass.verifier.ts`              | 1              | 0                   | 0          | 1                 | 0            |
+| `src/auth/erased-account.ts`                   | 2              | 0                   | 2          | 0                 | 0            |
+| `src/auth/mcp-access.ts`                       | 5              | 5                   | 0          | 0                 | 0            |
+| `src/auth/recent-login.ts`                     | 1              | 0                   | 0          | 1                 | 0            |
+| `src/auth/workos-jwt.verifier.ts`              | 14             | 6                   | 2          | 6                 | 0            |
+| `src/modules/agent/mcp-token.service.ts`       | 29             | 21                  | 1          | 7                 | 0            |
+| `src/modules/banking/bank-connection-oauth.ts` | 4              | 3                   | 1          | 0                 | 0            |
+| `src/modules/imports/imports-access.guard.ts`  | 1              | 1                   | 0          | 0                 | 0            |
+| `src/security/ip-rate-limit.guard.ts`          | 8              | 3                   | 1          | 4                 | 0            |
+| **Total**                                      | **87**         | **57**              | **8**      | **22**            | **0**        |
+
+#### `src/audit/last-active.interceptor.ts`
+
+| Line | Fault                                    | Class             | Reason                                                                          |
+| ---- | ---------------------------------------- | ----------------- | ------------------------------------------------------------------------------- |
+| L55  | StringLiteral `` and `""` (warning text) | Not worth killing | Log text only; the write failure is already shown by the retry behaviour tests. |
+
+#### `src/auth/auth.guard.ts`
+
+| Line | Fault                                        | Class             | Reason                                                                                                                        |
+| ---- | -------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| L49  | OptionalChaining `scheme.toLowerCase`        | Equivalent        | `split` always returns at least one element, so `scheme` is always a string and `?.` never short-circuits.                    |
+| L63  | StringLiteral `""` (403 not_invited message) | Not worth killing | The web app keys on `error: "not_invited"` and shows its own copy (`route-error.server.ts`); the body's message is not shown. |
+
+#### `src/auth/dev-bypass.verifier.ts`
+
+| Line | Fault                           | Class             | Reason                                                                                                 |
+| ---- | ------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------ |
+| L9   | StringLiteral `""` (error text) | Not worth killing | The AuthGuard replaces any verifier error with its generic 401, so this text never leaves the process. |
+
+#### `src/auth/erased-account.ts`
+
+| Line | Fault                                       | Class      | Reason                                                                                             |
+| ---- | ------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------- |
+| L11  | StringLiteral `""` (`ERASED_ACCOUNT_CHECK`) | Equivalent | A provider token used only through this constant on both sides; any unique value behaves the same. |
+| L13  | StringLiteral `""` (`ALLOW_ERASED`)         | Equivalent | A metadata key written and read only through this constant; no other metadata uses `""`.           |
+
+#### `src/auth/recent-login.ts`
+
+| Line | Fault                            | Class             | Reason                                                                                                        |
+| ---- | -------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| L10  | StringLiteral `""` (403 message) | Not worth killing | The web app keys on `error: "recent_login_required"` and shows its own copy (`features/settings/account.ts`). |
+
+#### `src/auth/workos-jwt.verifier.ts`
+
+| Line | Fault                                                                       | Class             | Reason                                                                                                                                                                                                         |
+| ---- | --------------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L43  | BlockStatement `{}` (`workosJwksFromUrl`)                                   | Not worth killing | Remote JWKS wiring; a unit test would need a network fetch. An empty body leaves no key source, so every token fails at once in any deployed environment.                                                      |
+| L76  | StringLiteral `""` ("missing sub")                                          | Not worth killing | Internal error text, caught and replaced by "invalid token".                                                                                                                                                   |
+| L79  | StringLiteral `""` (x2), ObjectLiteral `{}` (client_id error and claim tag) | Not worth killing | Feed only the diagnostic warning line; the rejection itself is tested.                                                                                                                                         |
+| L85  | ConditionalExpression `true`, LogicalOperator `\|\|`                        | Equivalent        | `Number.isFinite` is false for every non-number, and a JSON number is always finite, so `typeof x === "number" && Number.isFinite(x)`, `Number.isFinite(x)` and the `\|\|` form agree for every decoded claim. |
+| L93  | StringLiteral `""` ("unknown")                                              | Not worth killing | Log text for a thrown non-Error value.                                                                                                                                                                         |
+
+#### `src/modules/agent/mcp-token.service.ts`
+
+| Line | Fault                                   | Class             | Reason                                                                                                                            |
+| ---- | --------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| L105 | StringLiteral `""` (400 message)        | Not worth killing | Developer-facing API text: the web app never shows the backend's text (`useMcpTokens.ts`), and the 400 status is tested.          |
+| L109 | StringLiteral `""` (400 message)        | Not worth killing | As L105.                                                                                                                          |
+| L112 | StringLiteral `""` (400 message)        | Not worth killing | As L105.                                                                                                                          |
+| L118 | ConditionalExpression `false`           | Equivalent        | Every allowed expiry is a number, so `includes` is false for any non-number and the same 400 is thrown without the `typeof` test. |
+| L122 | StringLiteral `` and `""` (400 message) | Not worth killing | As L105.                                                                                                                          |
+| L130 | StringLiteral `""` (400 message)        | Not worth killing | As L105.                                                                                                                          |
+| L140 | StringLiteral `""` (400 message)        | Not worth killing | As L105.                                                                                                                          |
+
+#### `src/modules/banking/bank-connection-oauth.ts`
+
+| Line | Fault                 | Class      | Reason                                                                                                                                                              |
+| ---- | --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L62  | EqualityOperator `>=` | Equivalent | Issued states are 43 characters (32 random bytes, base64url), so a 128-character state never matches a stored hash: the early return and the lookup both give null. |
+
+#### `src/security/ip-rate-limit.guard.ts`
+
+| Line | Fault                                                    | Class             | Reason                                                                                                                         |
+| ---- | -------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| L34  | StringLiteral `""` (logger context)                      | Not worth killing | Log context name only.                                                                                                         |
+| L49  | LogicalOperator `req.path && req.url`                    | Equivalent        | Express derives `req.path` from `req.url`'s pathname, and `isExemptPath` drops the query string, so both give the same answer. |
+| L57  | LogicalOperator, StringLiteral `` and `""` (route label) | Not worth killing | The label goes only into the rate-limit warning line; the 429 and Retry-After are tested.                                      |
+
+### `src/security/`
+
+Measured by one forced run of all ten files on commit 016d3d721 plus the new tests (unit Vitest project only). Rows only for faults from the A2 list that the new tests do not catch; `client-key.ts` was then rewritten and re-triaged (its rows below).
+
+| File                                          | Faults in list | Killed by new tests | Equivalent | Not worth killing | Possible bug |
+| --------------------------------------------- | -------------- | ------------------- | ---------- | ----------------- | ------------ |
+| `src/security/client-key.ts`                  | 18             | 12                  | 6          | 0                 | 0            |
+| `src/security/keyed-ref.ts`                   | 11             | 5                   | 2          | 4                 | 0            |
+| `src/security/pg-rate-limit.store.ts`         | 18             | 10                  | 0          | 8                 | 0            |
+| `src/security/rate-limit.decorator.ts`        | 9              | 5                   | 4          | 0                 | 0            |
+| `src/security/rate-limit.http.ts`             | 2              | 0                   | 0          | 2                 | 0            |
+| `src/security/rate-limit.store.ts`            | 59             | 52                  | 3          | 4                 | 0            |
+| `src/security/receipt-validation.ts`          | 14             | 4                   | 2          | 8                 | 0            |
+| `src/security/shared-rate-limit.ts`           | 14             | 7                   | 0          | 7                 | 0            |
+| `src/security/signed-client-ip.ts`            | 10             | 7                   | 3          | 0                 | 0            |
+| `src/security/user-rate-limit.interceptor.ts` | 24             | 11                  | 0          | 13                | 0            |
+| **Total**                                     | **179**        | **113**             | **20**     | **46**            | **0**        |
+
+"Killed" counts Killed or Timeout in the forced run.
+
+#### `src/security/client-key.ts`
+
+Rewritten in this slice (one key per address, however it is written), so these rows replace the triage of the old code and their line numbers are those of the new source. Every row is defensive code after `isIPv6` has accepted the address: the WHATWG URL parser accepts every address `isIPv6` accepts and writes it as eight hex groups or with one `::`.
+
+| Line | Fault                                                                            | Class      | Reason                                                                                                                                 |
+| ---- | -------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| L21  | ConditionalExpression `false` (`zone === 0`)                                     | Equivalent | A leading `%` leaves the address part empty, and `isIPv6("")` is false, so the same condition still returns "invalid"                  |
+| L24  | ConditionalExpression `false` (`!groups`)                                        | Equivalent | expandIPv6 returns null only when the URL parser refuses the text, and it accepts every address `isIPv6` has accepted                  |
+| L44  | BlockStatement `{}` (the catch)                                                  | Equivalent | Unreachable for the same reason: the URL parser never throws on an address `isIPv6` accepted (no coverage)                             |
+| L47  | StringLiteral `"Stryker was here!"` (both defaults)                              | Equivalent | `split("::")` always gives a first part, and the tail default is read only when there is no `::`, where tailGroups is empty either way |
+| L49  | StringLiteral `""` (in `includes("::")`)                                         | Equivalent | `includes("")` is always true; without `::` the tail is the empty default, so `true && ""` still gives no tail groups                  |
+| L52  | ConditionalExpression `true` (x5); LogicalOperator (x2); MethodExpression `some` | Equivalent | The canonical form always has eight groups, each 0 to ffff, so the validity check is always true                                       |
+
+#### `src/security/keyed-ref.ts`
+
+| Line          | Fault                                          | Class             | Reason                                                                                                                            |
+| ------------- | ---------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| L33           | StringLiteral dev root `""`                    | Not worth killing | Changes only development and test keys; a fixed public root of any value meets the rule, and the only test would pin the constant |
+| L66, L68, L69 | StringLiteral (logger context, message text)   | Not worth killing | Log text; the existing test checks the line names the variable and holds no values                                                |
+| L90           | ConditionalExpression `false` (skip the cache) | Equivalent        | The derived key is recomputed from the same root and label, giving the same bytes; only speed changes                             |
+| L92           | ObjectLiteral `{}` cached                      | Equivalent        | The cache entry never matches, so the key is recomputed each time with the same result                                            |
+
+#### `src/security/pg-rate-limit.store.ts`
+
+| Line               | Fault                                                          | Class             | Reason                                                                                                                                                                    |
+| ------------------ | -------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L22, L40, L46, L50 | StringLiteral SQL text emptied                                 | Not worth killing | SQL text only a database can check (covered by `pg-rate-limit.store.integration.spec.ts`); a unit fake would only restate the string                                      |
+| L142, L143         | BlockStatement `{}` in the sweep catch; StringLiteral log text | Not worth killing | Log line only; the sweep swallows the error either way                                                                                                                    |
+| L169               | EqualityOperator `retry >= blocked.retry`                      | Not worth killing | Differs only when two refusing windows have the same wait; the wait reported is the same, only which window is named as `exceeded` changes, and either meets the contract |
+
+#### `src/security/rate-limit.decorator.ts`
+
+| Line     | Fault                                         | Class      | Reason                                                                                                                                    |
+| -------- | --------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| L65, L66 | StringLiteral metadata key `""`               | Equivalent | Every writer (`RateLimit`, `SkipRateLimit`) and reader (interceptor, IP guard) uses the exported constant, and the two keys stay distinct |
+| L76      | StringLiteral `?? "Stryker was here!"` (both) | Equivalent | `undefined` path and `split("?")[0]` (always defined) both give a value that is neither `/mcp` nor under `/mcp/`                          |
+
+#### `src/security/rate-limit.http.ts`
+
+| Line | Fault                              | Class             | Reason                                                            |
+| ---- | ---------------------------------- | ----------------- | ----------------------------------------------------------------- |
+| L5   | StringLiteral logger context `""`  | Not worth killing | Log context only                                                  |
+| L19  | StringLiteral no-user log fragment | Not worth killing | Log text only; the existing spec checks the user id never appears |
+
+#### `src/security/rate-limit.store.ts`
+
+| Line | Fault                                                                                | Class             | Reason                                                                                                                                                                                                     |
+| ---- | ------------------------------------------------------------------------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L55  | ConditionalExpression `true`; EqualityOperator `!== 0`; UpdateOperator `--this.hits` | Not worth killing | Change only how often the background sweep runs; a sweep drops only buckets every reader already treats as expired, so decisions never change. The every-500 test still catches "never sweeps"             |
+| L66  | EqualityOperator `retryMs >= blocked.retryMs`                                        | Not worth killing | As pg L169: only the `exceeded` window on an exact tie changes; the wait is the same                                                                                                                       |
+| L109 | ConditionalExpression `true`; EqualityOperator `now <= bucket.resetAt`               | Equivalent        | Differ only for a refund at or after the window end; that bucket is already expired for `hit`, `peek` and `sweep` (all use `now >= resetAt`), so the changed count is never read on a forward-moving clock |
+| L114 | ConditionalExpression `false` (makeRoom always runs)                                 | Equivalent        | Under the cap the eviction loop exits at once, and the extra sweep drops only expired buckets                                                                                                              |
+
+#### `src/security/receipt-validation.ts`
+
+| Line                                   | Fault                                  | Class             | Reason                                                                                                                              |
+| -------------------------------------- | -------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| L49, L51, L56, L75, L78, L81, L83, L92 | StringLiteral error message `""`       | Not worth killing | Error wording only; every case still throws `BadRequestException` (400), which the spec checks                                      |
+| L79, L80                               | StringLiteral `?? "Stryker was here!"` | Equivalent        | When the pattern matches, both capture groups always take part (group 2 may be empty but is defined), so the fallback is never used |
+
+#### `src/security/shared-rate-limit.ts`
+
+| Line          | Fault                                  | Class             | Reason                                                                  |
+| ------------- | -------------------------------------- | ----------------- | ----------------------------------------------------------------------- |
+| L20, L21, L22 | NODE_ENV condition, block and log text | Not worth killing | Decide only whether a warning is logged; the store returned is the same |
+
+#### `src/security/signed-client-ip.ts`
+
+| Line     | Fault                                          | Class      | Reason                                                                                                                              |
+| -------- | ---------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| L67, L70 | MethodExpression (no `trim()` on the header)   | Equivalent | Node's HTTP parser strips leading and trailing whitespace from header values, so the trim never changes a value the guard receives  |
+| L78      | ConditionalExpression `true` (no length check) | Equivalent | The format accepts exactly 64 hex characters, which decode to 32 bytes, the length of a SHA-256 digest, so the lengths always match |
+
+#### `src/security/user-rate-limit.interceptor.ts`
+
+| Line               | Fault                                                | Class             | Reason                                                                                                                 |
+| ------------------ | ---------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| L29                | StringLiteral 503 message `""`                       | Not worth killing | Message wording; the 503 itself is checked                                                                             |
+| L71, L92           | StringLiteral log fallbacks                          | Not worth killing | Log text only                                                                                                          |
+| L93, L94, L95, L96 | Missing-table warning block, once-only flag, message | Not worth killing | Decide only whether and how often the warning is logged; the request still falls back to memory, which the spec checks |
+| L99, L101, L102    | Log text and the fail-open warn block                | Not worth killing | Log line only; the fail-open outcome is checked                                                                        |
+
+### `src/contract/`
+
+Measured by a forced run of the six files on 20 November 2026 after the new tests. Source at 016d3d721.
+
+| File                                          | Faults in list | Killed by new tests | Equivalent | Not worth killing | Possible bug |
+| --------------------------------------------- | -------------- | ------------------- | ---------- | ----------------- | ------------ |
+| `src/contract/api-exception.filter.ts`        | 31             | 29                  | 0          | 2                 | 0            |
+| `src/contract/contract-shadow.interceptor.ts` | 25             | 17                  | 3          | 5                 | 0            |
+| `src/contract/deprecation.interceptor.ts`     | 10             | 2                   | 8          | 0                 | 0            |
+| `src/contract/etag.ts`                        | 5              | 3                   | 2          | 0                 | 0            |
+| `src/contract/idempotency.interceptor.ts`     | 45             | 25                  | 10         | 10                | 0            |
+| `src/contract/pagination.ts`                  | 28             | 21                  | 3          | 4                 | 0            |
+
+The class counts are faults, not rows.
+
+#### `src/contract/api-exception.filter.ts`
+
+| Line | Fault                                                    | Class             | Reason                                                                                                                     |
+| ---- | -------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| L175 | ConditionalExpression `true` (on `clientStatus === 400`) | Not worth killing | Only differs for a SyntaxError carrying an http-errors status other than 400; body-parser raises SyntaxError only with 400 |
+| L206 | StringLiteral `""` (Logger context)                      | Not worth killing | Log context name                                                                                                           |
+
+#### `src/contract/contract-shadow.interceptor.ts`
+
+| Line | Fault                                              | Class             | Reason                                                                                                              |
+| ---- | -------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------- |
+| L35  | ArrayDeclaration `["Stryker was here"]`            | Equivalent        | No contract group has that name, so the held-back filter removes nothing either way                                 |
+| L130 | StringLiteral `""` (Logger context)                | Not worth killing | Log context name                                                                                                    |
+| L146 | BlockStatement `{}`                                | Not worth killing | The catch only logs; emptied, the error is still swallowed and the request is unchanged                             |
+| L148 | StringLiteral `` ` ` `` and `""`                   | Not worth killing | Log text                                                                                                            |
+| L205 | StringLiteral `""`                                 | Not worth killing | Log text                                                                                                            |
+| L211 | Regex `/\//`                                       | Equivalent        | Express `route.path` always starts with "/", so removing the first "/" and the leading "/" are the same             |
+| L212 | ConditionalExpression `false` (on `path === null`) | Equivalent        | With no route path, `findRoute(method, null)` matches no route and returns undefined, so `check` still returns null |
+
+#### `src/contract/deprecation.interceptor.ts`
+
+| Line | Fault                                                           | Class      | Reason                                                                                                                   |
+| ---- | --------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| L40  | ConditionalExpression `true`, OptionalChaining `req.route.path` | Equivalent | A missing or non-string route path now throws inside the try; the catch sets no header, as the original null branch does |
+| L40  | Regex `/\//`                                                    | Equivalent | Express `route.path` always starts with "/"                                                                              |
+| L41  | ConditionalExpression `true` (x2), LogicalOperator `\|\|`       | Equivalent | `findRoute(method, null)` matches nothing, and a missing method throws inside the try: no header either way, as before   |
+| L42  | OptionalChaining `route.aliasOf`                                | Equivalent | A null route throws inside the try; the catch sets no header, as the original undefined branch does                      |
+| L43  | ConditionalExpression `true`                                    | Equivalent | With no successor, `successorPath(undefined)` throws before any header is set, and the catch swallows it                 |
+
+#### `src/contract/etag.ts`
+
+| Line | Fault                                                        | Class      | Reason                                                                                                                                                          |
+| ---- | ------------------------------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L23  | StringLiteral `""` (array join)                              | Equivalent | Node gives If-Match as one string; for an array of whole ETags, one element joins the same and two or more are a list `parseEtag` rejects with either separator |
+| L49  | ConditionalExpression `false` (on `updatedAt === undefined`) | Equivalent | `new Date(undefined)` is an invalid date, so the NaN check sets no header, as the early return does                                                             |
+
+#### `src/contract/idempotency.interceptor.ts`
+
+| Line       | Fault                                                                                                | Class             | Reason                                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| L90        | EqualityOperator `a <= b` (col 26); ConditionalExpression `true`, EqualityOperator `a >= b` (col 39) | Equivalent        | Object keys are distinct, so `a === b` never happens and each comparison returns the same value                       |
+| L90        | ConditionalExpression `false`, EqualityOperator `a <= b` (col 39)                                    | Equivalent        | Returns 0 instead of 1 when `a > b`; V8's sort only tests whether the result is below 0, so the order is the same     |
+| L102       | StringLiteral `""` (array join)                                                                      | Not worth killing | Node joins repeated Idempotency-Key headers into one string; an array never arrives                                   |
+| L107       | StringLiteral `""` (Logger context)                                                                  | Not worth killing | Log context name                                                                                                      |
+| L123, L128 | StringLiteral `""`                                                                                   | Not worth killing | Message wording; the code, issue path and issue code are tested                                                       |
+| L160       | Regex `/\//`                                                                                         | Equivalent        | Express `route.path` always starts with "/"                                                                           |
+| L161       | ConditionalExpression `false` (on `path === null`)                                                   | Equivalent        | `findRoute(method, null)` matches no route, so the request passes through as before                                   |
+| L203       | StringLiteral `""`                                                                                   | Not worth killing | Message wording; the 409 status and `conflict` code are tested                                                        |
+| L206       | MethodExpression `row.request_hash` (no trim)                                                        | Equivalent        | `request_hash` is `character(64)` and every stored value is a 64-character hex digest, so there is no padding to trim |
+| L233, L248 | StringLiteral `` ` ` `` and `""`                                                                     | Not worth killing | Log text                                                                                                              |
+| L246       | BlockStatement `{}`                                                                                  | Not worth killing | Emptied, the catch still swallows the failed release; only the warning log is lost                                    |
+| L256, L257 | StringLiteral `""` (encoding)                                                                        | Equivalent        | `Buffer.from(s, "")` falls back to utf8 (checked: same byte length for "é")                                           |
+
+#### `src/contract/pagination.ts`
+
+| Line       | Fault                                                         | Class             | Reason                                                                                                                                       |
+| ---------- | ------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| L65        | OptionalChaining `parsed.error.issues[0].path`                | Equivalent        | A failed zod parse always has at least one issue                                                                                             |
+| L94        | ConditionalExpression `true` (on `typeof value === "number"`) | Equivalent        | `Number.isSafeInteger` is false for any non-number                                                                                           |
+| L119       | StringLiteral `""` (`SQL_CAST.timestamp`)                     | Equivalent        | Never read: `keyParam` has its own timestamp branch                                                                                          |
+| L120, L121 | StringLiteral `""` (`date`, `integer` casts)                  | Not worth killing | SQL cast text only a database can check; a unit test would restate SQL_CAST. No database spec pages a date- or int-keyed list after a cursor |
+| L137, L139 | StringLiteral `""` (`case "date"`, `case "int"` in keyText)   | Not worth killing | Changes the SQL select of the cursor key, which only a database can show; same database gap as L120                                          |
+
+### Finance services
+
+Forced Stryker run of both files after the new tests (2026-11-20), commit 2afaad049.
+
+| File                                            | Faults in list | Killed by new tests | Equivalent | Not worth killing | Possible bug |
+| ----------------------------------------------- | -------------- | ------------------- | ---------- | ----------------- | ------------ |
+| `src/modules/finance/account-intake.service.ts` | 94             | 40                  | 15         | 39                | 0            |
+| `src/modules/finance/finance.service.ts`        | 72             | 52                  | 4          | 16                | 0            |
+
+#### `src/modules/finance/account-intake.service.ts`
+
+| Line                                                                                                                                              | Fault                                                                    | Class             | Reason                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L102                                                                                                                                              | ConditionalExpression `false` (`typeof value !== "number"`)              | Equivalent        | `Number.isInteger` is false for every non-number, so the next clause refuses the same values.                                                                                                                                                                                |
+| L118                                                                                                                                              | ConditionalExpression `true` (x3); LogicalOperator `\|\|`                | Equivalent        | The value must then equal `toISOString().slice(0, 10)` with `===`, which is only true for a 10-character string, so a non-string or another length is refused either way.                                                                                                    |
+| L128; L137; L164; L169; L174; L180; L183; L193; L205; L244; L261; L333; L344; L352; L359; L457; L633; L664; L693; L701; L811 (col 62); L848; L926 | StringLiteral (error message text)                                       | Not worth killing | Only changes the wording of a 400/404/500 message; the status and the refusal are asserted.                                                                                                                                                                                  |
+| L238                                                                                                                                              | ConditionalExpression `false` (`typeof value !== "number"`)              | Equivalent        | `Number.isFinite` is false for every non-number, so the next clause refuses it.                                                                                                                                                                                              |
+| L311; L312; L320; L321; L322                                                                                                                      | StringLiteral `""` (key column name)                                     | Not worth killing | SQL column text in the keyset order and cursor predicate; the unit query builder ignores it. The key kinds are now asserted through cursors. No database spec catches it either (a database-spec gap).                                                                       |
+| L314; L324                                                                                                                                        | StringLiteral `""` (direction "ASC")                                     | Not worth killing | Changes only the SQL order and the cursor comparison; needs a database paging over two pages. No database spec catches it either.                                                                                                                                            |
+| L358                                                                                                                                              | ConditionalExpression `false` (`typeof value !== "number"`)              | Equivalent        | `Number.isFinite` is false for every non-number, so the next clause refuses it.                                                                                                                                                                                              |
+| L396                                                                                                                                              | BooleanLiteral `true` (default `isCreate`)                               | Equivalent        | Both callers pass `isCreate` explicitly, so the default is never used.                                                                                                                                                                                                       |
+| L416; L418                                                                                                                                        | StringLiteral `""` (field name for the date error)                       | Not worth killing | Only the field name inside the 400 message.                                                                                                                                                                                                                                  |
+| L637                                                                                                                                              | ObjectLiteral `{}`; StringLiteral `""` (x2) (order year, month ASC)      | Not worth killing | Row order is applied by the database; the in-memory fake ignores `order`. No database spec calls this path either.                                                                                                                                                           |
+| L811 (cols 13, 23)                                                                                                                                | ConditionalExpression `false`; StringLiteral `""` ("missing")            | Equivalent        | When the claim finds no row, the `findOne` just after uses the same id and user id, finds nothing and throws the same 404.                                                                                                                                                   |
+| L903                                                                                                                                              | ConditionalExpression `true`; EqualityOperator `!==`; StringLiteral `""` | Equivalent        | Only changes whether the plan write runs after a type change. The write does nothing unless the account is a Student Loan with a plan, and an account that was not a Student Loan always stores a null plan (pickAccountFields), so both choices leave the profile the same. |
+| L925                                                                                                                                              | BlockStatement `{}`                                                      | Equivalent        | Without the guard, `manager.transaction` on a missing manager throws a TypeError, so the delete still fails before any write; only the error text differs.                                                                                                                   |
+
+#### `src/modules/finance/finance.service.ts`
+
+| Line                         | Fault                                                         | Class             | Reason                                                                                                                        |
+| ---------------------------- | ------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| L41; L42                     | StringLiteral `""` (key column name)                          | Not worth killing | SQL column text in the keyset order; the key kinds are asserted through a cursor. No database spec catches it either.         |
+| L44                          | StringLiteral `""` (direction "DESC")                         | Not worth killing | Changes only the SQL order and cursor comparison; needs a database paging over two pages. No database spec catches it either. |
+| L101                         | ObjectLiteral `{}`; StringLiteral `""` (order createdAt DESC) | Not worth killing | Row order is applied by the database; the in-memory fake ignores `order`. No database spec catches it either.                 |
+| L117                         | OptionalChaining                                              | Equivalent        | Nest always injects the registry (FinanceModule), so `?.` and `.` behave the same.                                            |
+| L124 (col 66)                | StringLiteral `""` ("External Bank")                          | Not worth killing | Unreachable: every provider the registry holds has an INSTITUTION_NAMES entry, so the fallback never runs.                    |
+| L144                         | StringLiteral `""` (status "connected")                       | Not worth killing | Masked: the sync that follows always writes the final status; it differs only if that status write fails too.                 |
+| L171; L215; L242; L290; L356 | StringLiteral (message text)                                  | Not worth killing | Only the wording of a 400/404/409 message or the failure text; status and `success: false` are asserted.                      |
+| L281; L282; L349             | BlockStatement `{}`; StringLiteral (log text)                 | Not worth killing | Log line only; the empty catch still swallows the error.                                                                      |
+| L292 (col 71)                | StringLiteral `""` ("failed")                                 | Equivalent        | The kind is read by a switch whose default branch gives the failed response, so `""` gives the same response.                 |
+| L308                         | StringLiteral `""` ("no_token")                               | Not worth killing | Unreachable: the registry is always injected.                                                                                 |
+| L345; L347                   | OptionalChaining                                              | Equivalent        | Nest always injects ConfigService, so `?.` and `.` behave the same.                                                           |
+
+### Profile, tax, budget and retirement services
+
+Measured by a forced run of the four files on 20 November 2026 (unit Vitest project), after the new tests. Rows only for faults from the M4 area D list that are still not caught. Several faults on one line with the same class and reason share a row. No figure in these services is a tax amount: none of the new tests asserts one (owner decision 8).
+
+| File                                           | Faults in list | Killed by new tests | Equivalent | Not worth killing | Possible bug |
+| ---------------------------------------------- | -------------- | ------------------- | ---------- | ----------------- | ------------ |
+| `src/modules/budget/budget.service.ts`         | 46             | 17                  | 5          | 24                | 0            |
+| `src/modules/profile/user-profile.service.ts`  | 59             | 35                  | 4          | 20                | 0            |
+| `src/modules/retirement/retirement.service.ts` | 19             | 12                  | 2          | 5                 | 0            |
+| `src/modules/tax/tax.service.ts`               | 49             | 18                  | 7          | 24                | 0            |
+
+Class columns count faults, not rows.
+
+#### `src/modules/budget/budget.service.ts`
+
+| Line                                           | Fault                                                                                                 | Class             | Reason                                                                                                                                                    |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L38-L42                                        | ArrayDeclaration `[]`; ObjectLiteral `{}`; StringLiteral `""` (BUDGET_ORDER keys, columns, direction) | Not worth killing | The keyset order is SQL ORDER BY text; only a database shows the row order, and a unit test could only restate the column strings                         |
+| L58                                            | ConditionalExpression `true` (the `typeof value === "string"` operand)                                | Equivalent        | `ACCOUNT_OWNERSHIPS` holds strings only, so `includes` is false for any non-string and the 400 is still thrown                                            |
+| L66                                            | ConditionalExpression `true` (the `typeof value === "number"` operand)                                | Equivalent        | `Number.isInteger` is false for every non-number, so the same 400 follows                                                                                 |
+| L111; L115; L134; L148; L193; L216; L322; L382 | StringLiteral (error message text)                                                                    | Not worth killing | The status and exception class are tested; only a test pinning the exact wording could catch an empty message                                             |
+| L142                                           | ArrayDeclaration `["Stryker was here"]`                                                               | Equivalent        | L142 is reached only after L129 to L140 have set `customBudgetCategories` to an array or found the name in one, so `?? []` never applies                  |
+| L228                                           | ConditionalExpression `true` (the `body.linkAccountId === undefined` operand)                         | Equivalent        | When the body names an account, L232 sets `linkAccountId` from it straight after, whatever L229 did                                                       |
+| L320                                           | ConditionalExpression `true`                                                                          | Not worth killing | Only chooses which of two refusal messages a wrong-category account link gets; the 400 is the same                                                        |
+| L331; L343                                     | ObjectLiteral `{}`; BooleanLiteral `false` (the `select` of the account and sibling lookups)          | Not worth killing | `select` narrows the columns Postgres returns; the checks read only `id` and `type`, which a full row also carries, and a fake cannot tell the difference |
+| L355                                           | ConditionalExpression `false` (second operand)                                                        | Equivalent        | A non-object, non-null error has no `code`, `constraint` or `driverError`, so the result is `{}` either way                                               |
+| L355                                           | ConditionalExpression `false` (first operand); LogicalOperator `&&`                                   | Not worth killing | Differs only when a save rejects with `null`, which TypeORM and the pg driver never do                                                                    |
+
+#### `src/modules/profile/user-profile.service.ts`
+
+| Line                          | Fault                                                           | Class             | Reason                                                                                                                                                                                                                         |
+| ----------------------------- | --------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L91                           | ArrayDeclaration `["Stryker was here"]`                         | Not worth killing | TypeORM `find` always resolves to an array; `?? []` only guards a malformed fake                                                                                                                                               |
+| L92-L93; L208-L210; L227-L228 | BlockStatement `{}` (catch body); StringLiteral (warning text)  | Not worth killing | Each catch still swallows the error as designed; only the warning line is lost or its text changes                                                                                                                             |
+| L193                          | ConditionalExpression `false`                                   | Not worth killing | Unreachable: the version claim just updated this row inside the same transaction, so the read inside it always finds the row                                                                                                   |
+| L220; L223                    | ConditionalExpression `false`                                   | Equivalent        | The body name has already been written to the row, so the row's value equals the body's; they differ only for an empty name, sent as "" instead of undefined, and the adapter sends `name \|\| undefined` to WorkOS either way |
+| L284; L290                    | StringLiteral (error message text)                              | Not worth killing | The 400 is tested; only exact wording could catch it                                                                                                                                                                           |
+| L351                          | ArrayDeclaration `["Stryker was here"]`                         | Not worth killing | TypeORM `find` always resolves to an array                                                                                                                                                                                     |
+| L374                          | OptionalChaining `exists.t`                                     | Equivalent        | `SELECT to_regclass($1) AS t` always returns exactly one row, so `exists` is never undefined                                                                                                                                   |
+| L467                          | StringLiteral `"Stryker was here!"`                             | Not worth killing | The contract requires `step` when `dismissed` is absent; the fallback is reached only with the contract off, and both values are step ids nothing reads                                                                        |
+| L471                          | ArrayDeclaration `["Stryker was here"]`                         | Equivalent        | `setup_checklist_completed_steps` is a NOT NULL simple-array (default ""), which TypeORM always reads as an array                                                                                                              |
+| L498                          | StringLiteral (503 message)                                     | Not worth killing | The 503 is tested; only exact wording could catch it                                                                                                                                                                           |
+| L504; L512                    | StringLiteral; LogicalOperator; OptionalChaining (warning text) | Not worth killing | Log text only; the optional chains differ only for an adapter rejecting with `null`, which neither adapter does                                                                                                                |
+| L509                          | ConditionalExpression `false`                                   | Not worth killing | Neither identity adapter throws ServiceUnavailableException, so the only one caught is the service's own `fail()`; rethrown or re-made, the client gets the same 503 and only an extra warning line differs                    |
+
+#### `src/modules/retirement/retirement.service.ts`
+
+| Line       | Fault                                                               | Class             | Reason                                                                                                                                             |
+| ---------- | ------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L17        | StringLiteral `""`                                                  | Not worth killing | The 400 is tested; only exact wording could catch it                                                                                               |
+| L61        | ConditionalExpression `false` (second operand)                      | Equivalent        | A non-object, non-null error has no code fields, so the result is `{}` either way                                                                  |
+| L61        | ConditionalExpression `false` (first operand); LogicalOperator `&&` | Not worth killing | Differs only when a save rejects with `null`, which TypeORM never does                                                                             |
+| L106; L113 | ObjectLiteral `{}`; ArrayDeclaration `["Stryker was here"]`         | Not worth killing | `growth_rates` and `excluded_account_ids` are NOT NULL jsonb columns with defaults, and the contract refuses null, so a loaded row always has them |
+| L109       | ConditionalExpression `false` (the `=== undefined` operand)         | Equivalent        | A loaded row carries the nullable decimal column as null or text, never undefined; text still reaches `Number`                                     |
+
+#### `src/modules/tax/tax.service.ts`
+
+| Line                                          | Fault                                                                                              | Class             | Reason                                                                                                                                                                            |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L30-L34                                       | ArrayDeclaration `[]`; ObjectLiteral `{}`; StringLiteral `""` (TAX_ORDER keys, columns, direction) | Not worth killing | The keyset order is SQL ORDER BY text; only a database shows the row order                                                                                                        |
+| L90; L106; L203; L296; L303; L306; L309; L313 | StringLiteral (message text)                                                                       | Not worth killing | The status, code and issue path are tested; only exact wording could catch these                                                                                                  |
+| L140                                          | ConditionalExpression `false` (second operand)                                                     | Equivalent        | A non-object, non-null error has no code fields, so it is returned unchanged either way                                                                                           |
+| L140                                          | ConditionalExpression `false` (first operand); LogicalOperator `&&`                                | Not worth killing | Differs only when a save rejects with `null`, which TypeORM never does                                                                                                            |
+| L170; L171                                    | ConditionalExpression `true`; BooleanLiteral `true`                                                | Equivalent        | L267 refuses every source other than rental and savings before `accountFitsSource` is called, and rental returns at L165, so these lines only ever see savings                    |
+| L305                                          | BlockStatement `{}`                                                                                | Not worth killing | Every item this check refuses (a missing or non-string id or end date) is refused by the uuid check at L308 or the date check at L311 with the same 400; only the message differs |
+| L320; L458                                    | ConditionalExpression `true`; EqualityOperator `>= 0`                                              | Equivalent        | `validateReceipt` refuses an empty string (it is not a data URL), so any string receipt here is non-empty                                                                         |
+| L415-L417                                     | BlockStatement `{}`; StringLiteral (warning text)                                                  | Not worth killing | The write-back failure is still swallowed as designed; only the warning line is lost or its text changes                                                                          |
+| L487-L488                                     | BlockStatement `{}`; StringLiteral                                                                 | Not worth killing | Without a manager, both versions throw (the mutant a TypeError on `undefined.transaction`); only the developer-facing message differs, and every real repository has a manager    |
+
+### Agent, imports, privacy and snapshots services
+
+Measured by a forced Stryker run of the eight files on 20 November 2026 after the new tests (snapshots.service.ts L90 re-measured after its last test). Faults killed by a test have no row. Counts are faults from the "caught by neither run" list.
+
+| File                                              | Faults in list | Killed by new tests | Equivalent | Not worth killing | Possible bug |
+| ------------------------------------------------- | -------------- | ------------------- | ---------- | ----------------- | ------------ |
+| `src/modules/agent/agent-audit.service.ts`        | 31             | 29                  | 1          | 1                 | 0            |
+| `src/modules/agent/agent-data.service.ts`         | 55             | 38                  | 8          | 9                 | 0            |
+| `src/modules/agent/financial-picture.service.ts`  | 5              | 5                   | 0          | 0                 | 0            |
+| `src/modules/agent/mcp.service.ts`                | 9              | 6                   | 0          | 3                 | 0            |
+| `src/modules/imports/imports.service.ts`          | 30             | 28                  | 1          | 1                 | 0            |
+| `src/modules/privacy/account-deletion.service.ts` | 13             | 11                  | 0          | 2                 | 0            |
+| `src/modules/privacy/account-export.service.ts`   | 17             | 7                   | 3          | 7                 | 0            |
+| `src/modules/snapshots/snapshots.service.ts`      | 15             | 14                  | 1          | 0                 | 0            |
+
+The class counts in this summary are faults, not rows.
+
+#### `src/modules/agent/agent-audit.service.ts`
+
+| Line | Fault                                            | Class             | Reason                                                                                                                                                                                                                                                        |
+| ---- | ------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L71  | StringLiteral `""` (object entry joiner)         | Equivalent        | Each entry starts with a JSON-quoted key, which ends at an unescaped quote, so entries joined with nothing still decode one way: distinct arguments keep distinct canonical text, and a fingerprint is only ever compared with one made by the same function. |
+| L73  | StringLiteral `""` (in place of `"null"`) (NoCo) | Not worth killing | `JSON.stringify` returns undefined only for undefined, a function or a symbol; tool arguments arrive as JSON, and undefined is already filtered out (top level, object values) or mapped to null (array items).                                               |
+
+#### `src/modules/agent/agent-data.service.ts`
+
+| Line       | Fault                                                                   | Class             | Reason                                                                                                                                                                                              |
+| ---------- | ----------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L45        | ConditionalExpression `true` (`value !== undefined`)                    | Equivalent        | `Number(undefined)` is NaN, which fails `Number.isInteger`, so the result is still null.                                                                                                            |
+| L72-L79    | StringLiteral `""` (each `t.*` select column)                           | Not worth killing | The query builder's select list: a missing column shows only against a real database (the unit fake returns whatever it is given); the privacy rule, no receipt or notes column, is already tested. |
+| L113       | Regex `/\{\|\}$/g`; Regex `/^\{\|\}/g`                                  | Equivalent        | The array holds snapshot source names, plain lower-case words from a fixed set; no element contains a brace, so dropping either anchor removes the same characters.                                 |
+| L115       | Regex `/"\|"$/g`; Regex `/^"\|"/g`; StringLiteral `"Stryker was here!"` | Equivalent        | Postgres quotes an array element only when it holds a space, comma, quote, brace or backslash; source names never do, so no element has a quote to strip.                                           |
+| L131       | StringLiteral `` ` ` `` (MONTH_INDEX SQL)                               | Not worth killing | SQL text; only a database can show it.                                                                                                                                                              |
+| L373; L374 | ConditionalExpression `true`                                            | Equivalent        | With no filter given the mutant sets `where.accountId` (or `category`) to undefined, and TypeORM skips undefined properties in a find `where`, so the query is the same.                            |
+
+#### `src/modules/agent/mcp.service.ts`
+
+| Line     | Fault                                             | Class             | Reason                                                                                                                    |
+| -------- | ------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| L54; L56 | CallExpression (boot warning call removed)        | Not worth killing | Operator log lines at boot (allowed origins, web origin); the settings themselves are tested through the handler options. |
+| L107     | StringLiteral `""` (in place of `"error"`) (NoCo) | Not worth killing | Log text for a non-Error rejection; the line still says the audit write failed.                                           |
+
+#### `src/modules/imports/imports.service.ts`
+
+| Line | Fault                                   | Class             | Reason                                                                                        |
+| ---- | --------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------- |
+| L414 | StringLiteral `""` (NoCo)               | Not worth killing | Developer message in a guard that cannot fire: `save` returns one entity per input, in order. |
+| L555 | ArrayDeclaration `["Stryker was here"]` | Equivalent        | Reached only when the batch has no rows and no balances, so `typeById` is never read.         |
+
+#### `src/modules/privacy/account-deletion.service.ts`
+
+| Line       | Fault                   | Class             | Reason                                                                            |
+| ---------- | ----------------------- | ----------------- | --------------------------------------------------------------------------------- |
+| L190; L209 | StringLiteral `` ` ` `` | Not worth killing | Operator log text; that a warning is logged (and never names the user) is tested. |
+
+#### `src/modules/privacy/account-export.service.ts`
+
+| Line      | Fault                                                         | Class             | Reason                                                                                                                                            |
+| --------- | ------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L31; L32  | StringLiteral `""` (error message, error name)                | Not worth killing | Developer-facing; callers tell the error apart with `instanceof`, never by name or message.                                                       |
+| L86; L122 | StringLiteral `` ` ` `` (NoCo)                                | Not worth killing | Developer message in a guard that cannot fire: the registry has a table for every export section (user-data-registry.spec).                       |
+| L107      | BlockStatement `{}`; StringLiteral `` ` ` `` (L108) (NoCo)    | Not worth killing | Unreachable: `section` is an `AccountExportKey` and the controller checks it with `isAccountExportKey` first, and every key has a registry table. |
+| L114      | ConditionalExpression `false`; StringLiteral `` ` ` `` (NoCo) | Equivalent        | L107 has already thrown for a section with no table, so `table` is always found here.                                                             |
+| L199      | BlockStatement `{}` (Timeout)                                 | Not worth killing | Empties the paging loop body, so the loop never ends; only a timeout can stop it.                                                                 |
+| L259      | ConditionalExpression `true` (`typeof row.id === "string"`)   | Equivalent        | `id` is in the taxRecords export columns and is the uuid primary key, so it is always a string.                                                   |
+
+#### `src/modules/snapshots/snapshots.service.ts`
+
+| Line | Fault                                      | Class      | Reason                                                                                                                                                 |
+| ---- | ------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L165 | StringLiteral `"Stryker was here!"` (NoCo) | Equivalent | Every row's account id was found among the owned accounts at L160 (the lowercased id matches the stored lower-case uuid), so `types.get` never misses. |
