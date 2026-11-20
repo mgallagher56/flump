@@ -1,0 +1,42 @@
+{
+  "$schema": "../../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.stryker.config.ts",
+    "related": true
+  },
+  "inPlace": true,
+  "mutate": [
+    "src/**/*.guard.ts",
+    "src/**/*.interceptor.ts",
+    "src/**/*.filter.ts",
+    "src/auth/*.ts",
+    "src/security/**/*.ts",
+    "src/contract/**/*.ts",
+    "src/modules/**/*.service.ts",
+    "src/modules/banking/bank-connection-oauth.ts",
+    "!src/**/*.{test,spec}.ts",
+    "!src/**/*.d.ts",
+    "!src/**/*.module.ts",
+    "!src/security/index.ts",
+    "!src/migrations/**",
+    "!src/entities/**",
+    "!src/scripts/**",
+    "!src/testing/**",
+    "!src/auth/testing/**",
+    "!src/main.ts",
+    "!src/instrument.ts"
+  ],
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/mutation.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "incremental": true,
+  "incrementalFile": "reports/mutation/stryker-incremental.json",
+  "tempDirName": ".stryker-tmp",
+  "cleanTempDir": true
+}
