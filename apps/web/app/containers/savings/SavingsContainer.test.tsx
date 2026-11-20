@@ -1,5 +1,5 @@
 import { expectPageRules } from "@repo/ui/testing";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockNavigate = vi.hoisted(() => vi.fn());
@@ -28,7 +28,12 @@ const FILLED = [
   },
 ];
 
-const loader = vi.hoisted(() => ({ accounts: [] as unknown[] }));
+const loader = vi.hoisted(() => ({
+  accounts: [] as unknown[],
+  accountDetails: [] as unknown[],
+  /** Loader fields to send as they are, in place of the ones built from the picture. */
+  overrides: {} as Record<string, unknown>,
+}));
 
 vi.mock("react-router", async () => {
   // The loader sends the shared picture's savings figures (audit slice 3); built here the same
@@ -42,11 +47,12 @@ vi.mock("react-router", async () => {
       const picture = buildWorkspacePicture({ accounts: loader.accounts as never });
       return {
         accounts: loader.accounts,
-        accountDetails: [],
+        accountDetails: loader.accountDetails,
         budgetEntries: [],
         userProfile: { setupChecklistCompletedSteps: [] },
         savingsBalance: picture.savings.balance,
         isaAllowanceUsed: picture.isaAllowanceUsed,
+        ...loader.overrides,
       };
     },
     useNavigate: () => mockNavigate,
@@ -101,6 +107,8 @@ const savedFacts = () =>
 describe("SavingsContainer", () => {
   afterEach(() => {
     loader.accounts = FILLED;
+    loader.accountDetails = [];
+    loader.overrides = {};
     mockLocation.current = { pathname: "/app/savings", hash: "", state: null };
     mockSubmit.mockClear();
   });
@@ -344,6 +352,202 @@ describe("SavingsContainer", () => {
       expect(screen.getByTestId("deposit-timeline-outcome").textContent).toBe("2 years 10 months");
       expect(screen.getByText("Time to your target, not counting interest")).toBeDefined();
       expect(mockSubmit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("which accounts count and what the page shows", () => {
+    /** The one-line summary the closed zone shows. */
+    const summaryText = () =>
+      document.querySelector('[data-testid="scenario-zone-summary"]')?.textContent ?? "";
+    const selectTab = (name: string) => {
+      const tab = screen.getByRole("tab", { name });
+      fireEvent.pointerDown(tab, { button: 0 });
+      fireEvent.keyDown(tab, { key: "Enter", code: "Enter" });
+      fireEvent.mouseDown(tab);
+      return tab;
+    };
+
+    it("counts an investment account as savings, so the page is not empty", () => {
+      loader.accounts = [
+        { id: "inv", name: "Stocks and Shares ISA", type: "Investment", balance: 8000 },
+      ];
+      render(<SavingsContainer />);
+      expect(screen.queryByText("No savings accounts yet")).toBeNull();
+      expect(screen.getByTestId("hero-figure").textContent).toContain("£8,000");
+      expect(screen.getAllByText("Stocks and Shares ISA").length).toBeGreaterThan(0);
+    });
+
+    it("leaves a current account off the savings page", () => {
+      loader.accounts = [
+        ...FILLED,
+        { id: "cur", name: "Everyday current account", type: "Current", balance: 1500 },
+      ];
+      const { container } = render(<SavingsContainer />);
+      expect(container.textContent).not.toContain("Everyday current account");
+    });
+
+    it("works out an investment's recorded return from the loader's monthly rows", () => {
+      loader.accounts = [
+        { id: "inv", name: "Stocks and Shares ISA", type: "Investment", balance: 1020 },
+      ];
+      // 1,000 -> 1,010 -> 1,020.10 with nothing paid in: +1% a month twice, over 2 months.
+      loader.accountDetails = [
+        { accountId: "inv", year: 2026, month: 1, value: 1000 },
+        { accountId: "inv", year: 2026, month: 2, value: 1010 },
+        { accountId: "inv", year: 2026, month: 3, value: 1020.1 },
+      ];
+      render(<SavingsContainer />);
+      expect(screen.getByText("Overall, over 2 months")).toBeDefined();
+    });
+
+    it("shows the ISA allowance used that the loader sends", () => {
+      loader.overrides = { isaAllowanceUsed: 2400 };
+      render(<SavingsContainer />);
+      const card = screen.getByText("Paid into ISAs this tax year").closest("[data-density]");
+      expect(card?.textContent).toContain("£2,400");
+    });
+
+    it("follows the loader when an account is added, in the figures and the model's starting point", () => {
+      const { rerender } = render(<SavingsContainer />);
+      expect(screen.getByTestId("hero-figure").textContent).toContain("£21,000");
+      loader.accounts = [
+        ...FILLED,
+        {
+          id: "acc-3",
+          name: "Regular saver",
+          type: "Saving",
+          balance: 6000,
+          interestRate: 4,
+          monthlyContribution: 100,
+        },
+      ];
+      rerender(<SavingsContainer />);
+      // 9,000 + 12,000 + 6,000 = £27,000; 100 + 200 + 100 = £400 a month.
+      expect(screen.getByTestId("hero-figure").textContent).toContain("£27,000");
+      expect(screen.getAllByText("Regular saver").length).toBeGreaterThan(0);
+      openModel();
+      expect((screen.getByLabelText("Monthly amount") as HTMLInputElement).value).toMatch(/400/);
+      selectTab("Time to a target");
+      // The default target is the next round £5,000 above £27,000: (floor(27,000 / 5,000) + 1)
+      // x 5,000 = £30,000.
+      expect((screen.getByLabelText("Target amount") as HTMLInputElement).value).toBe("30000");
+      expect((screen.getByLabelText("Monthly saving") as HTMLInputElement).value).toMatch(/400/);
+    });
+
+    it("seeds the forecast rate with the balance-weighted rate, to one decimal place", () => {
+      // £9,000 at 4% and £12,000 at 5%: (360 + 600) / 21,000 = 4.571...%, shown as 4.6%.
+      loader.accounts = [
+        { ...FILLED[0], interestRate: 4 },
+        { ...FILLED[1], interestRate: 5 },
+      ];
+      render(<SavingsContainer />);
+      openModel();
+      expect((screen.getByLabelText("Rate (AER)") as HTMLInputElement).value).toBe("4.6");
+    });
+
+    it("starts the forecast in future money, not today's money", () => {
+      render(<SavingsContainer />);
+      openModel();
+      fireEvent.click(screen.getByRole("button", { name: /Goal and inflation options/ }));
+      expect((screen.getByLabelText("Show in today's money") as HTMLInputElement).checked).toBe(
+        false,
+      );
+    });
+
+    it("sums up the closed model with the saved total and the monthly amount going in", () => {
+      render(<SavingsContainer />);
+      const summary = summaryText();
+      expect(summary).toContain("£21,000");
+      expect(summary).toContain("£300 a month going in");
+    });
+
+    it("leaves the monthly amount out of the summary when nothing is saved each month", () => {
+      loader.accounts = [{ id: "a", name: "Saver", type: "Saving", balance: 5000 }];
+      render(<SavingsContainer />);
+      const summary = summaryText();
+      expect(summary).toContain("£5,000");
+      expect(summary).not.toContain("a month going in");
+    });
+
+    it("sums up the outcome of the tool in view once closed, and switches tab when asked", () => {
+      const hide = () => fireEvent.click(screen.getByRole("button", { name: "Hide what-if" }));
+      render(<SavingsContainer />);
+      openModel();
+      fireEvent.change(screen.getByLabelText("Monthly amount"), { target: { value: "800" } });
+      hide();
+      expect(summaryText()).toMatch(/^Your illustration: ~£[\d,]+ in 5 years/);
+
+      openModel();
+      const tab = selectTab("Time to a target");
+      expect(tab.getAttribute("aria-selected")).toBe("true");
+      hide();
+      // The target tool is untouched, so the summary is the saved starting point again.
+      expect(summaryText()).toMatch(/^Starts from your savings of £21,000/);
+
+      openModel();
+      fireEvent.change(screen.getByLabelText("Target amount"), { target: { value: "31000" } });
+      hide();
+      // (31,000 - 21,000) / 300 = 33.3, so 34 months: 2 years 10 months.
+      expect(summaryText()).toMatch(/^Your illustration: .*2 years 10 months/);
+    });
+
+    it("resets the model without touching the address when no pay rise was handed over", () => {
+      render(<SavingsContainer />);
+      openModel();
+      mockNavigate.mockClear();
+      fireEvent.change(screen.getByLabelText("Monthly amount"), { target: { value: "800" } });
+      fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+      expect((screen.getByLabelText("Monthly amount") as HTMLInputElement).value).toMatch(/300/);
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("resets the target tool to the saved figures too", () => {
+      render(<SavingsContainer />);
+      openModel();
+      selectTab("Time to a target");
+      const target = () => screen.getByLabelText("Target amount") as HTMLInputElement;
+      fireEvent.change(target(), { target: { value: "31000" } });
+      fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+      // The default target for £21,000 saved: (floor(21,000 / 5,000) + 1) x 5,000 = £25,000.
+      expect(target().value).toBe("25000");
+    });
+
+    it("does not leave the page on load without the old #takehome link", () => {
+      mockNavigate.mockClear();
+      render(<SavingsContainer />);
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("keeps the hash when a pay rise is removed, so the reader stays at the forecast", () => {
+      mockLocation.current = {
+        pathname: "/app/savings",
+        hash: "#forecast",
+        state: { payRise: 230 },
+      };
+      render(<SavingsContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Remove pay rise" }));
+      expect(mockNavigate).toHaveBeenCalledWith("/app/savings#forecast", {
+        replace: true,
+        state: null,
+        preventScrollReset: true,
+      });
+    });
+
+    it("keeps a handed-over pay rise when the router state later changes without one", () => {
+      mockLocation.current = { pathname: "/app/savings", hash: "", state: { payRise: 230 } };
+      const { rerender } = render(<SavingsContainer />);
+      expect(zone().textContent).toContain("Pay rise from the take-home pay tool:");
+      mockLocation.current = { pathname: "/app/savings", hash: "", state: {} };
+      rerender(<SavingsContainer />);
+      expect(zone().textContent).toContain("Pay rise from the take-home pay tool:");
+    });
+
+    it("opens and closes the add account dialog from the header button", () => {
+      render(<SavingsContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Add account" }));
+      const dialog = screen.getByRole("dialog", { name: "Add a savings account" });
+      fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+      expect(screen.queryByRole("dialog", { name: "Add a savings account" })).toBeNull();
     });
   });
 

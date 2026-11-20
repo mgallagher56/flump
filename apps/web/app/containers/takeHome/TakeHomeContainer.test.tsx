@@ -62,6 +62,17 @@ describe("<TakeHomeContainer /> with saved figures", () => {
     expect(container.textContent).toContain("£3,750");
   });
 
+  it("follows the loader when it brings a new saved salary, as after saving pay elsewhere", () => {
+    const { container, rerender } = render(<TakeHomeContainer />);
+    // £45,000 a year is £3,750 a month before tax.
+    expect(container.textContent).toContain("£3,750");
+    profileState.profile = { ...SAVED_PROFILE, annualSalary: 60000 };
+    rerender(<TakeHomeContainer />);
+    // £60,000 a year is £5,000 a month before tax.
+    expect(container.textContent).toContain("£5,000");
+    expect(container.textContent).not.toContain("£3,750");
+  });
+
   it("meets the page rules: figure budget, one hero, one notice, at most one primary button", () => {
     const { container } = render(<TakeHomeContainer />);
     // The scenario zone starts closed, so its one notice is behind the disclosure.
