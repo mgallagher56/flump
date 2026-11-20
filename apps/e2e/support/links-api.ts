@@ -1,4 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
+import { recordDestructive } from "./destructive-budget";
 import { allowRateLimitRetry } from "./rate-limit-retry";
 
 /**
@@ -11,6 +12,7 @@ export const pageApi = async <T = unknown>(
   method = "GET",
   body?: unknown,
 ): Promise<T> => {
+  recordDestructive(method, path);
   const binding = await allowRateLimitRetry(page);
   return page.evaluate(
     async ({ path, method, body, binding }) => {

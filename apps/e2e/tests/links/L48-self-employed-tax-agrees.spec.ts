@@ -80,7 +80,9 @@ test("L48 a self-employed estimate is the same on Self Assessment and the Dashbo
     await page.goto("/app");
     await expect(page.locator('[data-figure="tax.estimatedDue"]')).toContainText(pageFigure);
   } finally {
-    if (recordId) await backendCall(`/tax-records/${recordId}`, "DELETE");
+    // No delete: the record moves to the previous tax year, where no current estimate reads it
+    // (moveToPreviousTaxYear below; the suite shares 10 destructive calls an hour).
+    if (recordId) await moveToPreviousTaxYear(recordId);
     await api(page, "/user-profile", "PATCH", {
       employmentType: before.employmentType ?? "employed",
       enabledPages: before.enabledPages ?? null,
@@ -132,7 +134,9 @@ test("L48 a self-employed estimate with no self-employed record is not set on bo
     await expect(card).toContainText(prompt);
     await expect(page.locator('[data-figure="tax.estimatedDue"]')).toHaveCount(0);
   } finally {
-    if (recordId) await backendCall(`/tax-records/${recordId}`, "DELETE");
+    // No delete: the record moves to the previous tax year, where no current estimate reads it
+    // (moveToPreviousTaxYear below; the suite shares 10 destructive calls an hour).
+    if (recordId) await moveToPreviousTaxYear(recordId);
     await api(page, "/user-profile", "PATCH", {
       employmentType: before.employmentType ?? "employed",
       enabledPages: before.enabledPages ?? null,
