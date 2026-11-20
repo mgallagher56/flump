@@ -270,6 +270,22 @@ describe("McpService dev token wiring", () => {
     expect(at(handlerOptions, 0).devToken).toBeUndefined();
     expect(at(handlerOptions, 0).devUserId).toBeUndefined();
   });
+
+  it("advertises the configured audience and auth server, and the defaults when unset", () => {
+    const settings: Record<string, string> = {
+      MCP_AUDIENCE: "https://mcp.example.test",
+      AUTH_SERVER_URL: "https://auth.example.test",
+    };
+    const nothing = {} as never;
+    const configured = { get: vi.fn((name: string) => settings[name]) };
+    new McpService(nothing, nothing, configured as never, "workos", nothing, nothing);
+    expect(at(handlerOptions, 0).expectedAudience).toBe("https://mcp.example.test");
+    expect(at(handlerOptions, 0).authServerUrl).toBe("https://auth.example.test");
+    // Unset (or empty): the documented defaults, the "flump-mcp" audience and WorkOS's API.
+    build("workos");
+    expect(at(handlerOptions, 1).expectedAudience).toBe("flump-mcp");
+    expect(at(handlerOptions, 1).authServerUrl).toBe("https://api.workos.com");
+  });
 });
 
 describe("McpService.getInput (GET /mcp/input) anonymises as the remote tools do", () => {

@@ -8,6 +8,7 @@ import {
   RateLimitStore,
   type SharedRateLimitStore,
 } from "./rate-limit.store";
+import { signClientIp } from "./signed-client-ip";
 import { UserRateLimitInterceptor } from "./user-rate-limit.interceptor";
 
 const handler = () => undefined;
@@ -176,6 +177,65 @@ describe("UserRateLimitInterceptor inviteRedeem (per user and per address)", () 
     ).resolves.toBe("ok");
     // Nothing touched the in-memory store.
     expect(memory.size()).toBe(0);
+  });
+
+  it("refuses when the user's tries are spent even though the address still has some", async () => {
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    // The user bucket is full (retry in 20 minutes); the address bucket, counted second, is not.
+    // The rule: a request is refused when either bucket is spent, so this is a 429 that carries
+    // the user bucket's wait, 1,200 seconds.
+    const shared: SharedRateLimitStore = {
+      hit: (key) =>
+        Promise.resolve(
+          key.startsWith("user:")
+            ? { allowed: false, retryAfterSeconds: 1200 }
+            : { allowed: true, retryAfterSeconds: 0 },
+        ),
+      peek: () => Promise.reject(new Error("unused")),
+      reset: () => Promise.reject(new Error("unused")),
+      refund: () => Promise.reject(new Error("unused")),
+    };
+    const { ctx, reflector } = redeemContext("user-1", "203.0.113.7");
+    const err = await run(
+      new UserRateLimitInterceptor(reflector, new RateLimitStore(), shared),
+      ctx,
+    ).catch((e) => e);
+    expect(err).toBeInstanceOf(HttpException);
+    expect((err as HttpException).getStatus()).toBe(429);
+    const res = (
+      ctx as unknown as {
+        switchToHttp(): { getResponse(): { setHeader: ReturnType<typeof vi.fn> } };
+      }
+    )
+      .switchToHttp()
+      .getResponse();
+    expect(res.setHeader).toHaveBeenCalledWith("Retry-After", "1200");
+  });
+
+  it("keys the address bucket on the web server's signed client address when the key is set", async () => {
+    // Built at runtime: a 40-character key, over the 32-character minimum.
+    const key = "k".repeat(40);
+    vi.stubEnv("WEB_CLIENT_IP_HMAC_KEY", key);
+    try {
+      const shared = new MemorySharedRateLimitStore();
+      const hit = vi.spyOn(shared, "hit");
+      // The socket address is the web server's; the signed header names the browser's address.
+      const { ctx, reflector } = redeemContext("user-1", "10.0.0.1");
+      const req = (ctx as unknown as { switchToHttp(): { getRequest(): Record<string, unknown> } })
+        .switchToHttp()
+        .getRequest();
+      req.headers = {
+        "x-flump-client-ip": "203.0.113.7",
+        "x-flump-client-ip-sig": signClientIp(key, "203.0.113.7"),
+      };
+      await run(new UserRateLimitInterceptor(reflector, new RateLimitStore(), shared), ctx);
+      expect(hit.mock.calls.map((c) => c[0])).toEqual([
+        "user:user-1:inviteRedeem",
+        "ip:203.0.113.7:inviteRedeem",
+      ]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("fails closed with 503 when the shared store is down", async () => {

@@ -381,6 +381,13 @@ describe("BudgetController", () => {
       const full = controller.createBudgetEntry(req, { ...base, sharePercent: 100 });
       await expect(full).rejects.toBeInstanceOf(BadRequestException);
       await expect(full).rejects.toThrow(FULL_SHARE_MESSAGE);
+      // The replies explain what each end means, so the person can choose instead.
+      await expect(zero).rejects.toThrow(
+        "A share of 0% means none of this line is yours, so leave it out of your budget instead",
+      );
+      await expect(full).rejects.toThrow(
+        "A share of 100% means all of this line is yours, so mark it sole instead",
+      );
       expect(budgetRepo.rows).toEqual([]);
     });
 
@@ -544,6 +551,33 @@ describe("BudgetController", () => {
         ).rejects.toThrow(LINKED_LINE_SHARE_MESSAGE);
       }
       expect(budgetRepo.rows).toEqual([]);
+    });
+
+    it("tells the person why a linked line cannot have its own share", async () => {
+      const { controller } = setup();
+      // The reply explains the rule (E34 C1): the share comes from the link.
+      await expect(
+        controller.createBudgetEntry(me, {
+          ...savingsLine,
+          linkKind: "savings",
+          linkAccountId: MY_SAVER,
+          ownership: "joint",
+        }),
+      ).rejects.toThrow(
+        "A line linked to your take-home pay or to an account takes its share from there, so it cannot have its own share",
+      );
+    });
+
+    it("accepts a linked line sent with no share (null), as sole", async () => {
+      const { controller } = setup();
+      // null means "no share", which is what a linked line has, so it is not a share of its own.
+      const line = await controller.createBudgetEntry(me, {
+        ...savingsLine,
+        linkKind: "savings",
+        linkAccountId: MY_SAVER,
+        sharePercent: null,
+      });
+      expect(line).toMatchObject({ linkKind: "savings", ownership: "sole", sharePercent: null });
     });
 
     it("refuses joint on an update to a linked line and leaves it as saved", async () => {

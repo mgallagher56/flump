@@ -231,6 +231,45 @@ describe("AccountExportService JSON envelope", () => {
     expect(doc.notes.length).toBeGreaterThan(0);
     for (const note of doc.notes) expect(note).toMatch(/\w+ \w+/);
   });
+
+  it("notes the person's beta membership and each invite link they used, with dates", async () => {
+    const { dataSource } = createMockDataSource({});
+    dataSource.manager.query.mockImplementation((async (sql: string) => {
+      if (sql.includes('FROM "beta_members"')) {
+        return [
+          {
+            added_at: new Date("2026-10-01T08:00:00.000Z"),
+            removed_at: new Date("2026-11-10T17:00:00.000Z"),
+          },
+        ];
+      }
+      if (sql.includes('FROM "beta_invites"')) {
+        return [
+          { label: null, redeemed_at: new Date("2026-09-15T12:00:00.000Z") },
+          { label: "Book club", redeemed_at: new Date("2026-10-01T08:00:00.000Z") },
+        ];
+      }
+      return [];
+    }) as never);
+    const service = new AccountExportService(dataSource as never);
+    const json: string[] = [];
+    await service.writeExport(
+      "user-1",
+      async (chunk) => {
+        json.push(chunk);
+      },
+      new Date("2026-11-20T09:30:00.000Z"),
+    );
+    const { notes } = JSON.parse(json.join("")) as { notes: string[] };
+    // Dates are the UTC calendar day of each stored time, written YYYY-MM-DD.
+    expect(notes).toContain(
+      "Beta access: you joined the beta on 2026-10-01 and your access was removed on 2026-11-10.",
+    );
+    expect(notes).toContain("Beta invite link: you used it on 2026-09-15. It had no label.");
+    expect(notes).toContain(
+      'Beta invite link: you used it on 2026-10-01. Its label was "Book club".',
+    );
+  });
 });
 
 describe("AccountExportService linked budget lines", () => {
