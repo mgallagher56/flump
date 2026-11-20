@@ -11,7 +11,7 @@ Decisions: open
 - Proposal: a "What Flump covers" hub and five area pages named exactly as the app names them, a rebuilt home page that shows all five areas in one picture, and a top navigation of three links. Existing pages stay, with small corrections.
 - Retirement is on the site, inside Savings and pension (owner, 20 November 2026: it should be open to everyone; this supersedes RD9). The AI connection stays a labelled preview. Imports and bank connections are not mentioned.
 - Calculators leave the top navigation. A few plain ones sit inside the area page they belong to; the rest are a numbered decision (D9).
-- Nine decisions for the owner are in section 7. Nothing is built until they are answered (AGENTS.md section 13).
+- Ten decisions for the owner are in section 7. One is answered: the home headline (D2), "All your money. One clear picture." Nine are open. Nothing is built until they are answered (AGENTS.md section 13).
 
 **Revision 2 (20 November 2026), after the owner read the first version.** Three changes: the home headline has eight snappier options, each checked against the guards (section 5.1, decision D2); Retirement moves from "not mentioned" to part of the Savings and pension page (sections 2, 2.1, 4, 5.2, decision D5); calculators are assessed one by one and demoted (section 4.4, decision D9).
 
@@ -29,14 +29,14 @@ Who can use it:
 | App area (app's own name) | Route | What it does today (checked in code) | Who | What the marketing site says now |
 | --- | --- | --- | --- | --- |
 | Home ("Your money") | `/` | KPI strip (net worth, what you owe, pension pots), "Your sections" with one section per area, a setup checklist, the check-in row, a panel to choose which sections show | Everyone | Home hero shows a sample dashboard (`BaselineSnapshotPreview`); `/preview` has a sample dashboard. Never named as "Home" or described as the place the areas meet |
-| Accounts | `/app/accounts`, `/app/accounts/:account` | List of accounts in groups, a quick balance update, joint ownership with your share, the basis of the net worth figure | Everyone | Nothing. The FAQ mentions "net worth" once |
+| Accounts | `/app/accounts`, `/app/accounts/:account` | List of accounts in groups, a quick balance update, joint ownership with your share, the basis of the net worth figure | Everyone | No page. "Net worth" appears as a figure in the sample previews and once in the FAQ, never as an area |
 | Monthly check-in and history | Check-in sheet on Home; `/app/accounts/history` | A prefilled monthly check-in, net worth over time, monthly change, changes by account, a chosen check-in day in Settings | Everyone | `/preview` has a "Check-in" section. No page explains it. The reminder email is not built (E30 PR3) |
 | Budget | `/app/budget` | Income and spending lists, a setup wizard, what is left over each month, breathing room, housing costs (rent or mortgage) as a linked line, an illustration of income stopping | Everyone | Home: "breathing room and what is left over each month". `/preview` has a "Breathing room" section. The word "Budget" does not appear on the site |
 | Pay: Take-home pay | `/app/take-home` | Take-home pay breakdown (Income Tax, National Insurance, pension, student loan), a pay rise tool, the next pound explorer | Everyone | Home pay-rise teaser (a working tool); one "Your pay and pension" card; two public calculators |
 | Pay: Self Assessment | `/app/self-assessment`, `/app/tax/*` | Self-employed and rental income and costs by tax year, receipts, a tax bill estimate, payments on account, year comparison. Opt-in: off until switched on in Settings or by onboarding | Everyone (opt-in) | Nothing, apart from the public landlord tax calculator |
 | Savings and pension: Savings | `/app/savings` | Savings accounts with AER, an estimate of growth, ISA allowance used, investment returns, a deposit timeline, a pay rise scenario | Everyone | FAQ: "forecast tools" (a name the app retired in E16 D5-B). One calculator (mortgage or ISA) |
 | Savings and pension: Pension | `/app/pension` | Pension pots, what you and your employer pay in, salary sacrifice, the effect of a contribution change on take-home pay | Everyone | Half of one home card; one calculator |
-| Retirement plan | `/app/retirement` | A target the user sets, an estimated yearly income in today's prices before tax, the accounts that count towards it, assumptions shown year by year, and one MoneyHelper guidance line (`RetirementPlanner`, `MoneyHelperGuidance`) | On `main`: friends beta. After PR 845: every invited account (owner, 20 November 2026). Still hidden from the app's navigation and section lists (`HIDDEN_PAGE_KEYS` in `pageConfig.ts`), which PR 845's diff did not change when read | Nothing. Now a gap (section 3) |
+| Retirement plan | `/app/retirement` | A target the user sets, an estimated yearly income in today's prices before tax, the accounts that count towards it, assumptions shown year by year, and one MoneyHelper guidance line (`RetirementPlanner`, `MoneyHelperGuidance`) | On `main`: friends beta. The owner's intent (20 November 2026): every invited account. PR 845 as read: beta admins and members who joined through an invite link; accounts let in by the older allowlists are not covered (section 2.1). Still hidden from the app's navigation and section lists (`HIDDEN_PAGE_KEYS` in `pageConfig.ts`), which PR 845's diff did not change when read | Nothing. Now a gap (section 3) |
 | Debt and borrowing: Cards and loans | `/app/debt` | List of debts, estimated debt-free date, when a 0% deal ends, a pay extra tool comparing highest rate first with smallest balance first, a MoneyHelper line | Everyone | One sentence in a home card; three calculators |
 | Debt and borrowing: Mortgage | `/app/mortgage` | Repayment schedule, overpayments, overpay or save comparison, LTV milestones, an estimate for when a fixed rate ends, buy-to-let overview | Everyone | One sentence in a home card; one calculator |
 | Calculators | `/tools`, `/tools/:slug` (both sites, shared catalogue `packages/ui/src/tools/toolCatalog.ts`) | Eight public calculators, no sign-in | Public | `/tools` index and one page per calculator. In the top navigation. Not grouped by app area |
@@ -123,11 +123,11 @@ Security and privacy, AI connection and Contact move to the footer. The "What Fl
 | What Flump covers (new) | `/features` | The map: five areas, one paragraph each | All | The site and the app are laid out the same way; use one area or all five | None | Link to `/preview` |
 | Accounts (new) | `/features/accounts` | Net worth and the monthly check-in | Accounts, monthly check-in, history | Every account in one list, and a short check-in once a month | None fits today | Dashboard and Check-in sections |
 | Budget (new) | `/features/budget` | Left over each month and breathing room | Budget, housing costs | What comes in, what goes out, what is left, whether you rent or pay a mortgage | None fits today | Breathing room section |
-| Pay (new) | `/features/pay` | Take-home pay, and Self Assessment for those who need it | Take-home pay, Self Assessment | What you keep from your pay, and a tax bill estimate if you are self-employed or let property | The two-slider pay rise tool, on the page; the student loan calculator, linked (D9) | Pay-rise tool embedded (it exists) |
+| Pay (new) | `/features/pay` | Take-home pay, and Self Assessment for those who need it | Take-home pay, Self Assessment | What you keep from your pay, and a tax bill estimate if you are self-employed or let property | The two-slider pay rise tool, on the page; the student loan calculator, linked only if D9 is answered B | Pay-rise tool embedded (it exists) |
 | Savings and pension (new) | `/features/savings-and-pension` | Savings growth estimate, pension contributions and the retirement plan | Savings, Pension, Retirement plan | Your savings and pension sit beside everything else, and a retirement plan shows an estimate against a target you set | None | None today (decision D6) |
 | Debt and borrowing (new) | `/features/debt-and-borrowing` | Cards and loans, then mortgage | Cards and loans, Mortgage | What you owe, when it could be paid off, and what a change would do | The 0% deal and overdraft calculators, on the page (D9) | None today (decision D6) |
-| Calculators | `/tools`, `/tools/:slug` | No longer a destination. Out of the top navigation, the home page and the footer's main links. See section 4.4 and decision D9 for which stay and what happens to the rest | Calculators | n/a | n/a | n/a |
-| Preview | `/preview` | Unchanged, plus a "Read more" link from each section to its area page | Home, check-in, budget | See it working on sample data | n/a | n/a |
+| Calculators | `/tools`, `/tools/:slug` | No longer a destination. Out of the top navigation and the footer's main links; the home page keeps only the two-slider pay rise tool it has today. See section 4.4 and decision D9 for which stay and what happens to the rest | Calculators | n/a | n/a | n/a |
+| Preview | `/preview` | Unchanged, plus a link from each section to its area page, named for where it goes ("About accounts and the monthly check-in"; guide 5.3 bans "Read more") | Home, check-in, budget | See it working on sample data | n/a | n/a |
 | Pricing | `/pricing` | Stays (decision D8). The list of what the beta includes names the five areas | n/a | Free during the beta; the price of any paid plan is not set | None | n/a |
 | Security and privacy | `/security` | Stays, footer and menu link. Adds two facts once verified: download your data, delete your data | Settings, Data tab | What Flump can and cannot do with your money and figures | n/a | n/a |
 | AI connection | `/mcp` | Stays at the same path, footer link only. Badge and setup steps reworded (decision D5) | AI connection | A preview for invited testers; Flump does the sums, not the AI model | n/a | n/a |
@@ -173,20 +173,22 @@ Each of the eight was put to three tests. Inputs were counted from the component
 
 | Today | Draft new name | Where it lives |
 | --- | --- | --- |
-| What you keep from a pay rise | "How much of a pay rise would you keep?" | On the Pay page and the home page, two sliders |
-| When a 0% balance transfer ends | "What to pay each month before a 0% deal ends" | On the Debt and borrowing page |
-| Overdraft interest cost calculator | "What an overdraft costs in a year" | On the Debt and borrowing page |
-| Student loan repayment calculator (optional) | "Will your student loan be paid off or written off?" | Linked from the Pay page |
+| What you keep from a pay rise | Unchanged: "What you keep from a pay rise" (the copy guide's own example of a good heading) | On the Pay page and the home page, two sliders |
+| When a 0% balance transfer ends | "When a 0% deal ends" (the app's own words; the result keeps its label "Estimated monthly payment") | On the Debt and borrowing page |
+| Overdraft interest cost calculator | "What an overdraft costs over a year" (the copy guide's wording, 7.4) | On the Debt and borrowing page |
+| Student loan repayment calculator (only if D9 is B) | "Student loan: paid off or written off" | Linked from the Pay page |
+
+A name here describes what the page shows and never tells the reader what to do with money (guide 5.1, advice boundary R2). The guide's heading target is 2 to 6 words and 40 characters (3.1); the pay rise and overdraft names run to seven words, as the guide's own examples do.
 
 Names come from the shared catalogue (`packages/ui/src/tools/toolCatalog.ts`), which the web app's own calculators page also reads, so a rename changes both. The web app's calculators page and its "Calculators" link are outside this epic; the owner's point about names applies there too (section 9).
 
 **The rest (four, or five without the student loan one).** Options, decision D9:
 
-- **A. Keep the URL alive, unlinked.** The page still answers at its address. It leaves the navigation, the home page, the footer, the `/tools` index and the sitemap. It gains one line linking to its area page. Nothing is lost if anyone has the address, and it can be removed later with evidence.
-- **B. Remove from the marketing site.** The address redirects to the matching area page. Less to keep true; the calculators still exist in the web app for signed-in testers.
-- **C. Keep all eight linked from the footer only.** Smallest change; does not answer "too many".
+- **1. Keep the URL alive, unlinked.** The page still answers at its address. It leaves the navigation, the home page, the footer, the `/tools` index and the sitemap. It gains one line linking to its area page. Nothing is lost if anyone has the address, and it can be removed later with evidence.
+- **2. Remove from the marketing site.** The address redirects to the matching area page. Less to keep true; the calculators still exist in the web app for signed-in testers.
+- **3. Keep all eight linked from the footer only.** Smallest change; does not answer "too many".
 
-**Search traffic, honestly.** Unknown, and probably close to nothing today. The marketing server sends `noindex, nofollow` on every response and serves no sitemap unless both `ALLOW_INDEXING` and `FLUMP_LAUNCH` are exactly `true` (`apps/marketing/server/ops.ts`, `sitemap.ts`). Flump is pre-launch, so the pages should not be in search results yet; whether those switches are set in the deployed environment cannot be checked from the repository. Page-view counting (E24-T9) is planned and there is no rollup to read. After launch, single-purpose calculator pages are the kind of page that can bring search visitors, which is the case for option A over B: it keeps that door open at no cost until there are numbers.
+**Search traffic, honestly.** Unknown, and probably close to nothing today. The marketing server sends `noindex, nofollow` on every response and serves no sitemap unless both `ALLOW_INDEXING` and `FLUMP_LAUNCH` are exactly `true` (`apps/marketing/server/ops.ts`, `sitemap.ts`). Flump is pre-launch, so the pages should not be in search results yet; whether those switches are set in the deployed environment cannot be checked from the repository. Page-view counting (E24-T9) is planned and there is no rollup to read. After launch, single-purpose calculator pages are the kind of page that can bring search visitors, which is the case for option 1 over option 2: it keeps that door open at no cost until there are numbers.
 
 ## 5. Message hierarchy
 
@@ -200,7 +202,20 @@ Names come from the shared catalogue (`packages/ui/src/tools/toolCatalog.ts`), w
 
 **Layout (one proposal).** Hero with the headline, one subheadline, "Request an invite", "Interactive preview" and the sample dashboard; "What Flump covers" (five area tiles); "Start with rough figures" (three steps: enter rough figures, see where you stand, check in once a month); "More detail when you want it"; the two-slider pay rise tool; the security strip; FAQ and the final call to action. The first version of this plan called a band "Start simple"; copy guide 2.3 lists "simply", "easy" and "quick" as minimisers, so the band is named for what the reader does.
 
-**Headline.** The owner read the first version's headline ("Your whole money picture in one place") and said it does not grab attention. The options below follow the approach the coordinator put to the owner: a short headline that says what it is, what you get or what you can do, aimed at "you"; a subheadline that carries the detail; a reader should be able to say what Flump is and who it is for within five seconds; any outcome the headline names is shown on the page. Here the sample dashboard in the hero is that proof, labelled as sample data.
+**Decided by the owner, 20 November 2026 (decision D2).**
+
+- h1: "All your money. One clear picture."
+- Lead, the one line under it: "Accounts, budget, pay, savings, pension and debts in one place."
+- The owner's words: "I like headline 1 combined with line underneath 2", then, on the lead's ending, "in one place is better".
+
+What follows from it:
+
+- The lead lists six parts, and each is an app area or page a tester has today, so "All" can be checked against the list (decision D3, option A).
+- The headline is two short parts, each ending in a full stop. Copy guide 5.1 would call that a slogan, and 5.4 says no full stop on a heading. The owner's choice is read as allowing both for the marketing home h1 only (ruling R-a below); the coordinator should confirm that reading with the owner. The build pull request then adds the exception to the copy guide in the same change, and app headings stay as they are. At six words and 34 characters it is inside the guide's length target (3.1).
+- The whole-picture layout above is built round it. The first band after the hero is the five area tiles, so the page shows the list the lead names.
+- The options below stay in the plan as considered and not chosen.
+
+**How the options were drawn up.** The owner read the first version's headline ("Your whole money picture in one place") and said it does not grab attention. The options below follow the approach the coordinator put to the owner: a short headline that says what it is, what you get or what you can do, aimed at "you"; a subheadline that carries the detail; a reader should be able to say what Flump is and who it is for within five seconds; any outcome the headline names is shown on the page. Here the sample dashboard in the hero is that proof, labelled as sample data.
 
 Every subheadline is one sentence of 25 words or fewer (copy guide 5.2 allows one sentence under an h1). None uses a time or number claim, and none blames the reader.
 
@@ -219,13 +234,13 @@ Checked against: `claims.test.ts` (banned claims and the advice lexicon), `copy.
 
 H6 to H8 are this plan's own additions. The other five came from the coordinator.
 
-**Rulings the owner would need to give**
+**Rulings the options needed** (R-a is taken as given by the owner's choice of H1; R-b and R-c no longer arise)
 
-- **R-a. A slogan-shaped h1 on the marketing home page.** Guide 5.1 says no heading is a slogan, and 2.1 says the home h1 is the plain line that says what Flump does. H1 to H5 and H8 need the owner to allow a short two-part headline on the marketing home page only, with the subheadline doing the plain saying. App headings stay as they are.
+- **R-a. A slogan-shaped h1 on the marketing home page.** Guide 5.1 says no heading is a slogan, 5.4 says no full stop on a heading (H1, H2, H3 and H5 have them), and 2.1 says the home h1 is the plain line that says what Flump does. Guide 3.1 also sets a heading at 2 to 6 words and 40 characters: H2, H3, H5 and H6 are longer, and H7, at seven words, is one over, so "no ruling needed" in the table holds for H7 only on the slogan rule. H1 to H5 and H8 need the owner to allow a short two-part headline on the marketing home page only, with the subheadline doing the plain saying. App headings stay as they are.
 - **R-b. "Sorted".** Not recommended: it is the one word here that promises an outcome.
 - **R-c. Fog in the h1.** Changes the 14 November tagline ruling. If the owner wants it, the tagline and the h1 become near-duplicates on the same screen.
 
-**Recommendation: H1, "All your money. One clear picture."** It carries the first message (all of it) and the second (clear) in six words, and the subheadline passes the five-second check and lists the scope so "all" can be checked. It needs R-a only. If the owner would rather not relax guide 5.1, **H7** is the best option that needs no ruling. The third message (depth) is carried by the "More detail when you want it" band in every case; no short headline carries all three well.
+**Recommendation before the owner chose: H1, "All your money. One clear picture."** It carries the first message (all of it) and the second (clear) in six words, and the subheadline passes the five-second check and lists the scope so "all" can be checked. It needs R-a only. If the owner would rather not relax guide 5.1, **H7** is the best option that needs no ruling. The third message (depth) is carried by the "More detail when you want it" band in every case; no short headline carries all three well.
 
 All of these replace the h1 that E31 and E16 PR 12 set ("See where you stand each month"), so the choice is the owner's. H5 and H7 stay closest to it.
 
@@ -233,48 +248,50 @@ All of these replace the h1 that E31 and E16 PR 12 set ("See where you stand eac
 
 Every line below is a draft. Sentences are 25 words or fewer, with no em dashes, ampersands or exclamation marks.
 
+How each block maps to the page: the h1 is 2 to 6 words and at most 40 characters (guide 3.1); the lead is the one sentence under it (guide 5.2); the copy that follows is shown here as one block for reading and is split on the page into the three "What you see" facts, so no paragraph on screen is longer than three sentences (guide 3.1).
+
 **What Flump covers (`/features`)**
 
-- h1: "Everything Flump covers"
+- h1: "What Flump covers". Lead: "Five areas, laid out the same way here and in the app."
 - "Flump is laid out the same way here and in the app: accounts, budget, pay, savings and pension, and debt and borrowing. Use one area or all five. Each starts from a few rough figures. Each has more detail underneath for when you want it. Together they make one picture of your money, on your Home page."
 - Carries: (1) the whole list on one page; (2) "a few rough figures"; (3) "more detail underneath".
 
 **Accounts (`/features/accounts`)**
 
-- h1: "Every account and your net worth in one list"
+- h1: "Accounts and net worth". Lead: "Every account in one list, added up into your net worth."
 - "Add what you own and what you owe, from current accounts and savings to pensions, cards and loans. Flump adds them up into your net worth. Once a month, a short check-in asks for the new balances. The history page shows how your net worth has changed, month by month. You type the figures in yourself, so no bank login is needed."
 - More detail: your share of a joint account; choose what counts towards net worth; changes by account.
 - Carries: (1) everything owned and owed in one figure; (2) a short check-in once a month; (3) joint shares and net worth choices.
 
 **Budget (`/features/budget`)**
 
-- h1: "What comes in, what goes out and what is left over each month"
+- h1: "Budget and breathing room". Lead: "What comes in, what goes out and what is left over each month."
 - "List your income and your regular spending. Rent and mortgage payments are counted the same way. Flump shows what is left over each month, or how much you are short. It also shows your breathing room: how long your savings would cover the essentials. Rough totals are enough to start."
 - More detail: split spending into essential and flexible; see an illustration of your income stopping; link your housing cost to your saved details.
 - Carries: (1) income and spending beside the rest of your figures; (2) two plain figures; (3) the income-stopping illustration.
 
 **Pay (`/features/pay`)**
 
-- h1: "Your take-home pay, and what a change would do to it"
+- h1: "Take-home pay and Self Assessment". Lead: "Your take-home pay, and an estimate of what a change would do to it."
 - "Enter your salary to see your take-home pay after Income Tax, National Insurance, pension and student loan. Model a pay rise to see how much of it you would keep. If you are self-employed or let property, switch on Self Assessment. It keeps your income and costs for each tax year and shows an estimate of your tax bill."
 - More detail: payments on account; receipts kept with each record; compare one tax year with another.
 - Carries: (1) pay feeds the budget and the pension figures; (2) one take-home figure from one salary; (3) Self Assessment as an opt-in area.
 
 **Savings and pension (`/features/savings-and-pension`)**
 
-- h1: "Your savings and pension, beside everything else"
+- h1: "Savings and pension". Lead: "Your savings and pension, beside the rest of your figures."
 - "See each savings account with its interest rate (AER) and an estimate of how it could grow. Add your pension pots and what you and your employer pay in. See how a change to your contributions, including salary sacrifice, would change your take-home pay. Every future figure is an estimate, and the assumptions are shown."
 - Retirement plan (its own section on this page, shown once Retirement is in the app's navigation): "Set a retirement target of your own. Flump shows an estimate of your yearly income in retirement, in today's prices and before tax, and which accounts count towards it. The assumptions are listed year by year and you can change them. It is an estimate from your figures, not a prediction and not advice."
-- Under the retirement section, the MoneyHelper line exactly as the app has it (owner decision RD11, fixed wording, guide 7.3): "MoneyHelper offers free, impartial guidance on pensions, backed by the government." with the link "Pension guidance from MoneyHelper". Flump sets no target and suggests no contribution (guide 2.3 item 6, advice boundary R1 to R8).
+- Under the retirement section, if D10 is A, the MoneyHelper line exactly as the app has it (owner decision RD11, fixed wording, guide 7.3): "MoneyHelper offers free, impartial guidance on pensions, backed by the government." with the link "Pension guidance from MoneyHelper". Flump sets no target and suggests no contribution (guide 2.3 item 6, advice boundary R1 to R8).
 - More detail: how much of this tax year's ISA allowance you have used; a deposit timeline; investment returns.
 - Carries: (1) savings, pension and the retirement estimate beside the rest of your figures; (2) a list with rates; (3) contribution changes, the deposit timeline and the retirement plan's assumptions.
 
 **Debt and borrowing (`/features/debt-and-borrowing`)**
 
-- h1: "What you owe and when it could be paid off"
+- h1: "Debt and borrowing". Lead: "What you owe, and an estimate of when it could be paid off."
 - "List your cards, loans and overdrafts with their rates. Flump shows an estimated debt-free date and when any 0% deal ends. Compare paying the highest rate first with paying the smallest balance first. If you have a mortgage, see your repayment schedule and an estimate of what an overpayment would do."
 - More detail: an estimate of your payment when your fixed rate ends; overpay or save, compared; loan to value (LTV) milestones.
-- The page carries the MoneyHelper line exactly as the app's debt page has it (copy guide 7.3 and 7.5, fixed wording).
+- If D10 is A, the page carries the MoneyHelper debt line exactly as the app's debt page has it (copy guide 7.3 and 7.5, fixed wording).
 - Carries: (1) debts and mortgage in the same net worth figure; (2) one date; (3) the comparison tools, which show both options and pick neither.
 
 **Pricing (`/pricing`)**
@@ -303,7 +320,7 @@ Every line below is a draft. Sentences are 25 words or fewer, with no em dashes,
 | `/features/savings-and-pension` | Savings and pension \| Flump | Savings accounts with their rates and an estimate of growth, and your pension pots with what you and your employer pay in. |
 | `/features/debt-and-borrowing` | Debt and borrowing: cards, loans and mortgage \| Flump | List what you owe to see an estimated debt-free date, when a 0% deal ends, and what a mortgage overpayment would do. |
 
-The home description changes with the headline chosen in D2. The Savings and pension description gains "and a retirement estimate against a target you set" once Retirement is in the app's navigation. Existing titles for `/preview`, `/pricing`, `/security`, `/mcp` and `/contact` stay; the kept calculators take their new names (D9). Each new path joins `STATIC_PATHS` (sitemap) and the social meta test.
+The home description follows the decided lead (D2): "Flump: finance without the fog. Accounts, budget, pay, savings, pension and debts in one place, under UK rules, from figures you type in." The Savings and pension description gains "and a retirement estimate against a target you set" once Retirement is in the app's navigation. Existing titles for `/preview`, `/pricing`, `/security`, `/mcp` and `/contact` stay; the kept calculators take their new names (D9). Each new path joins `STATIC_PATHS` (sitemap) and the social meta test.
 
 ## 6. Constraints check
 
@@ -328,7 +345,8 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | Savings with AER and an estimate of growth; ISA allowance used; deposit timeline; investment returns | "estimate", not "forecast" | `SavingsForecast`, `AnnualAllowancePill`, `DepositTimeline`, `InvestmentReturns` | Verified in code; what each shows to confirm when building |
 | Pension pots, employer contributions, salary sacrifice, effect on take-home pay | Passes | `PensionDetails`, `PensionContributionScenario`, `PensionTakeHomeEffect` | Verified in code |
 | Retirement: a target you set, an estimated yearly income in today's prices before tax, accounts that count, assumptions year by year | "estimate", never "forecast", "prediction" or "will" (guide 6.1); no target set by Flump (2.3); no recommendation (R1 to R8) | `RetirementPlanner` (page subtitle "Estimates in today's prices, before tax."; sections "Counted towards retirement", "Assumptions, pots and year by year") | Verified in code. **Who can open it and whether it is in the navigation: depends on PR 845 and the app (section 2.1)** |
-| The MoneyHelper pensions line, word for word | Fixed wording (RD11, guide 7.3). It contains a bare "free", which `copy.test.ts` rejects in marketing sources unless it is "free during the beta" | `MoneyHelperGuidance` in `apps/web/app/features/retirement` | **Needs a build choice, not a rewording:** render the line from one shared component (promoted to `@repo/ui`, so the string is not in a marketing source), which also keeps one copy of the fixed wording. No guard is loosened |
+| The MoneyHelper pensions line, word for word | Fixed wording (RD11, guide 7.3). It contains a bare "free", which `copy.test.ts` rejects in marketing sources unless it is "free during the beta" | `MoneyHelperGuidance` in `apps/web/app/features/retirement` | **Owner decision D10.** The fixed line is approved for the Retirement page in the app ("same note, same place", guide 7.3), not yet for a marketing page. Showing it on marketing either puts a bare "free" in a marketing source or moves the string to a shared component the marketing copy test does not read. Both narrow what that guard checks, so either is a guard change needing sign-off first (AGENTS.md section 15) |
+| The MoneyHelper debt line on the Debt and borrowing page: "Free, impartial debt help is available from MoneyHelper" | The same: fixed wording (guide 7.3, R3 exception), approved for `DebtHelpLink` in the app, and it starts with a bare "Free" | `DebtHelpLink` in `apps/web/app/features/debt` | **Owner decision D10**, with the pensions line |
 | The three or four kept calculators and their new names | Guide 7.4: a title names only the inputs the tool has and the outputs it shows | Inputs counted from the components (section 4.4) | Verified in code; the new names are drafts for D9 |
 | Estimated debt-free date; when a 0% deal ends; highest rate first compared with smallest balance first | Approved terms; "compare", neither option picked (R2) | `DebtSummary`, `PayExtraTool` | Verified in code |
 | Mortgage: repayment schedule, overpayment estimate, fixed rate end estimate, overpay or save, LTV | Approved terms | `OverpaymentSimulator`, `RemortgageShockSim`, `OverpayVsSaveCompare`, `LtvMilestones` | Verified in code |
@@ -343,7 +361,7 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | # | Decision | Options | Recommendation |
 | --- | --- | --- | --- |
 | D1 | Page list and navigation | **A.** A hub (`/features`) and five area pages named as the app names them; top navigation of three links (What Flump covers, Preview, Pricing); Security, AI connection and Contact in the footer. **B.** Three combined pages (Everyday money; Pay and tax; Long-term). **C.** One long page with five anchored sections | **A.** It is the only option where the site and the app share names and order. C is the fallback if six pages feels like too much to keep true |
-| D2 | Home headline (section 5.1) | One of **H1 to H8**, with its subheadline. Six of them need ruling **R-a** (a slogan-shaped h1 on the marketing home page only); H3 also needs R-b ("Sorted"); H4 also needs R-c (fog in the h1). H6 and H7 need no ruling | **H1, "All your money. One clear picture."**, with R-a. **H7, "Know where you stand with your money."**, if the owner would rather not relax guide 5.1. Either replaces the h1 that E31 and E16 PR 12 set |
+| D2 | Home headline (section 5.1) | One of **H1 to H8**, with its subheadline. Six of them need ruling **R-a** (a slogan-shaped h1 on the marketing home page only); H3 also needs R-b ("Sorted"); H4 also needs R-c (fog in the h1). H6 and H7 need no ruling | **Decided, 20 November 2026:** h1 "All your money. One clear picture." with the lead "Accounts, budget, pay, savings, pension and debts in one place." (owner: "I like headline 1 combined with line underneath 2"; "in one place is better"). It replaces the h1 that E31 and E16 PR 12 set |
 | D3 | The words for the 360 message | **A.** "All" or "everything" in the headline, with the parts listed in the subheadline beside it; no "360", "complete" or "holistic" in copy. **B.** Say it only by listing the parts, with no "all". **C.** Use "complete" or "360" as the owner's brief words it | **A.** "All" with the list beside it is plain and can be checked against the list. C breaks copy guide 2.2 and cannot be evidenced |
 | D4 | Fog wording | **A.** Keep the 14 November ruling: the tagline only, in the places listed. **B.** Allow one body line on the home page. **C.** Fog in the h1 (headline H4, ruling R-c) | **A.** The plain copy does the clearing; the tagline names it |
 | D5 | Features not open to every tester | Retirement is no longer part of this decision: the owner has opened it, and it goes on the Savings and pension page once it is in the app's navigation (sections 2.1 and 5.2). For the rest: **A.** AI connection stays, labelled "Preview, by invitation", setup steps reworded, footer link only. Imports and bank connections: not mentioned beyond the existing fixed sentence. **B.** As A, but remove the AI connection page until it is open to every tester. **C.** A "Coming later" list | **A.** C is ruled out for bank connections by the claims guard. One question for the owner inside this: should the AI connection be opened to every invited tester as Retirement was? If yes, the "by invitation" label goes |
@@ -351,8 +369,9 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 | D7 | SEO titles and descriptions | **A.** The table in 5.3: the app's area name plus a plain descriptor. **B.** Search-led titles (for example "UK take-home pay calculator and budget planner") | **A.** B drifts from the app's names and invites claims the pages cannot back |
 | D8 | Pricing while the price is not set | **A.** Keep the page and the navigation link; list the five areas as what the beta includes. **B.** Keep the page, footer link only, until a price is set. **C.** Remove the page; the FAQ answers it | **A.** People look for a pricing link; a clear "free during the beta, price not set" answers it honestly |
 | D9 | Calculators (section 4.4) | Which stay: **A.** Three (pay rise in its two-slider form, 0% deal, overdraft), each on its area page under a plain new name. **B.** Those three and the student loan one. **C.** Only the two-slider pay rise tool. What happens to the rest: **1.** keep the URL alive but unlinked and out of the sitemap; **2.** remove, with a redirect to the area page; **3.** keep all linked from the footer | **A with 1.** Three pass the tests cleanly; the student loan one answers a question the app does not. Keeping the old addresses alive costs nothing and can be undone. Search traffic today is unknown and probably near nothing, because the site is `noindex` until launch; review once page views are counted |
+| D10 | The two fixed MoneyHelper lines (debt help; pension guidance) on marketing pages | **A.** Show both, word for word, on the Debt and borrowing and the Savings and pension pages, from one shared component each, and record the guard change with sign-off. **B.** Leave both off the marketing site; they stay in the app, where they are approved. **C.** Show them with a plain link and no "free" (this rewords fixed wording, so it needs the owner's own words) | **A.** A page that describes debts or a retirement estimate should carry the same signpost the app does. It needs two things from the owner: that the lines may appear on marketing pages, and sign-off for the guard change |
 
-Decisions already made that this plan keeps: E7 (owner signs off copy), RD11 (the MoneyHelper pensions line), E16 D10 b (no example price), E16 D13 (AI connection is a footer link and one FAQ answer on the home page), E24 (invite-only call to action), the tagline ruling. Decisions it would change, only with the owner's yes: the home h1 and the five-band home layout from E16 PR 12 (D2); copy guide 5.1 for the marketing home h1 (ruling R-a); the public calculators index from E16 PR 11 and D11 (D9). Superseded by the owner on 20 November 2026: RD9 (Retirement unseen).
+Decisions already made that this plan keeps: E7 (owner signs off copy), RD11 (the MoneyHelper pensions line, unchanged in wording), E16 D10 b (no example price), E16 D13 (AI connection is a footer link and one FAQ answer on the home page), E24 (invite-only call to action), the tagline ruling. Decisions it would change, only with the owner's yes: the home h1 and the five-band home layout from E16 PR 12 (D2); copy guide 5.1 for the marketing home h1 (ruling R-a); the public calculators index from E16 PR 11 and D11 (D9). Superseded by the owner on 20 November 2026: RD9 (Retirement unseen).
 
 ## 8. Build slices (after acceptance)
 
@@ -367,13 +386,13 @@ All new components follow AGENTS.md section 1 (colocated directory; the five-fil
 | S5 | Home page with the accepted headline: area tiles, "Start with rough figures", "More detail when you want it"; FAQ answers corrected to the app's names | M |
 | S6 | Existing pages: Pricing list, `/mcp` badge and setup wording, `/security` data facts (only once verified), `/preview` sections linked to area pages | S |
 | S6b | Calculators as decided in D9: new names in the shared catalogue (this renames them in the web app too), the kept ones placed on their area pages, the rest unlinked and dropped from the index, footer and sitemap, each with one line linking to its area page. Tool slugs and the copy test that ties slugs to the catalogue stay | S to M |
-| S6c | Retirement section on the Savings and pension page, only once Retirement is in the app's navigation. Promote `MoneyHelperGuidance` to `@repo/ui` (five-file set) so both apps render the one fixed line | S |
+| S6c | Retirement section on the Savings and pension page, only once Retirement is in the app's navigation. If D10 is A: promote `MoneyHelperGuidance` and `DebtHelpLink` to `@repo/ui` (five-file set each) so both apps render the one fixed line each | S |
 | S7 | Guards: add every new file to `PR12_SOURCES` in `copy.test.ts`; the claims guard already scans all of `src` | S |
 | S8 (if D6 is B) | Two sample previews in `packages/ui` (savings and pension; debt and borrowing), sample data only, labelled as sample data | M to L |
 
 Two pull requests: **PR 1** is S1, S2, S3, S4 and S7 (the structure). **PR 2** is S5, S6, S6b and S6c (the home page, existing pages, calculators and Retirement), and S8 if chosen. Each gets an independent `opus` review and a `ui-compliance-reviewer` pass, and screenshots for the owner at phone and desktop widths in light and dark.
 
-Guard changes expected: none loosened. `PR12_SOURCES` grows. Home page tests that pin today's h1 and band order change with D2; they are listed under "Guard changes" in the PR if any numeric limit moves.
+Guard changes expected: one, if D10 is A. The two fixed MoneyHelper lines contain a bare "free", which the marketing copy test allows only as "free during the beta"; showing them on marketing narrows that check for those two sentences, whichever way it is built. It needs sign-off before the change is made and goes under "Guard changes" in the PR. Otherwise none loosened: `PR12_SOURCES` grows. Home page tests that pin today's h1 and band order change with D2; they are listed under "Guard changes" in the PR if any numeric limit moves.
 
 Mobile parity: the marketing site is not a flow the mobile app shares, so no parity log row is expected. If a token or shared component changes, a row is added.
 
