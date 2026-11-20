@@ -278,22 +278,21 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     }
   });
 
-  it("PATCH /user-profile: displayName and hasSecondIncome are accepted and ignored for one release, and GET carries neither (system audit slice 9 part three)", async () => {
+  it("PATCH /user-profile: displayName and hasSecondIncome are refused now the one-release grace is over, and GET carries neither (system audit slice 9 part three)", async () => {
     await profiles().update(
       { userId: USER_A },
       { displayName: "Stored Name", hasSecondIncome: true },
     );
+    const before = await profiles().findOneByOrFail({ userId: USER_A });
     const res = await h.call("patch", "/user-profile", h.tokens.a, {
       displayName: "Changed Name",
       hasSecondIncome: false,
       annualSalary: 41000,
     });
-    expect(res.status).toBe(200);
-    expect(res.body.annualSalary).toBe(41000);
-    expect(res.body).not.toHaveProperty("displayName");
-    expect(res.body).not.toHaveProperty("hasSecondIncome");
+    expect(res.status).toBe(400);
+    // Refused whole: nothing in the request is saved.
     const after = await profiles().findOneByOrFail({ userId: USER_A });
-    expect(Number(after.annualSalary)).toBe(41000);
+    expect(after.annualSalary).toBe(before.annualSalary);
     expect(after.displayName).toBe("Stored Name");
     expect(after.hasSecondIncome).toBe(true);
     const got = await h.call("get", "/user-profile", h.tokens.a);

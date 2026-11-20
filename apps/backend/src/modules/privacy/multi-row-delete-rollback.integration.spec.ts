@@ -29,8 +29,9 @@ import { AccountDeletionService } from "./account-deletion.service";
 // transaction have already been deleted from. Drops the public schema: a throwaway database only.
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_rollback_test \
 //     bunx vitest run src/modules/privacy/multi-row-delete-rollback.integration.spec.ts
-const USER = "user-rollback-a";
-const OTHER = "user-rollback-b";
+// Made-up ids, built at runtime.
+const PERSON_A = ["rollback", "person", "a"].join("-");
+const PERSON_B = ["rollback", "person", "b"].join("-");
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")(
   "multi-row deletes roll back whole (real Postgres)",
@@ -175,25 +176,25 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       );
 
     it("a financial data reset that fails part-way leaves every row and the profile as they were", async () => {
-      await seed(USER);
-      const before = await snapshot(USER);
+      await seed(PERSON_A);
+      const before = await snapshot(PERSON_A);
       // Sanity: transactions and account_details come before accounts in the registry order, so the
       // reset has really deleted them when the accounts trigger fires.
       expect(before).toMatchObject({ transactions: 1, account_details: 1 });
 
       await withFailingAccountDelete(() =>
-        expect(profileService().resetFinancialData(USER)).rejects.toThrow(/e1 forced failure/),
+        expect(profileService().resetFinancialData(PERSON_A)).rejects.toThrow(/e1 forced failure/),
       );
 
-      expect(await snapshot(USER)).toEqual(before);
-      const profile = await ds.getRepository(UserProfile).findOneByOrFail({ userId: USER });
+      expect(await snapshot(PERSON_A)).toEqual(before);
+      const profile = await ds.getRepository(UserProfile).findOneByOrFail({ userId: PERSON_A });
       expect(Number(profile.annualSalary)).toBe(50000);
     });
 
     it("the same reset without the failure clears the rows, so the rollback above is real", async () => {
-      await seed(USER);
-      await profileService().resetFinancialData(USER);
-      const after = await snapshot(USER);
+      await seed(PERSON_A);
+      await profileService().resetFinancialData(PERSON_A);
+      const after = await snapshot(PERSON_A);
       expect(after).toMatchObject({
         bank_connections: 0,
         accounts: 0,
@@ -204,20 +205,20 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("a bank disconnect that fails part-way keeps the connection, its accounts, history and transactions", async () => {
-      const mine = await seed(USER);
-      await seed(OTHER);
-      const before = await snapshot(USER);
-      const otherBefore = await snapshot(OTHER);
+      const mine = await seed(PERSON_A);
+      await seed(PERSON_B);
+      const before = await snapshot(PERSON_A);
+      const otherBefore = await snapshot(PERSON_B);
 
       await withFailingAccountDelete(() =>
-        expect(financeService().deleteBankConnection(USER, mine.connectionId)).rejects.toThrow(
+        expect(financeService().deleteBankConnection(PERSON_A, mine.connectionId)).rejects.toThrow(
           /e1 forced failure/,
         ),
       );
 
       // account_details and transactions were deleted before accounts in the same transaction.
-      expect(await snapshot(USER)).toEqual(before);
-      expect(await snapshot(OTHER)).toEqual(otherBefore);
+      expect(await snapshot(PERSON_A)).toEqual(before);
+      expect(await snapshot(PERSON_B)).toEqual(otherBefore);
       // No audit row for a disconnect that did not happen.
       expect(
         await ds.getRepository(AuditEvent).countBy({ action: "bank_connection.disconnected" }),
@@ -225,9 +226,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("the same disconnect without the failure removes the connection's rows and records it", async () => {
-      const mine = await seed(USER);
-      await financeService().deleteBankConnection(USER, mine.connectionId);
-      expect(await snapshot(USER)).toMatchObject({
+      const mine = await seed(PERSON_A);
+      await financeService().deleteBankConnection(PERSON_A, mine.connectionId);
+      expect(await snapshot(PERSON_A)).toMatchObject({
         bank_connections: 0,
         accounts: 0,
         account_details: 0,
