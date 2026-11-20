@@ -10,6 +10,13 @@ There are no unprefixed legacy values any more. The `ClearBankTokens179435530000
 - `BANKING_TOKEN_ENCRYPTION_KEYS` is an optional comma-separated list of `<version>:<secret>` entries. The first entry is the active key, which encrypts every new value. Every listed key can still decrypt.
 - Versions are positive whole numbers and must be unique. Outside development and test, every secret must be at least 32 characters. A malformed list stops the backend at boot, and the error names the variable but never the key.
 - While `BANKING_TOKEN_ENCRYPTION_KEYS` is set it takes over from `BANKING_TOKEN_ENCRYPTION_KEY`. Keep `BANKING_TOKEN_ENCRYPTION_KEY` set too, because backend config validation still checks it.
+- The version is the key id. It is written in clear at the start of every stored value (`v2:...`), so a value always says which key made it, and decryption picks that key from the list. A value whose version is not in the list fails to decrypt, and the connection is marked as needing the user to reconnect.
+- The secret is not used as the AES key directly. The AES-256 key is the SHA-256 of the secret, so any secret of 32 or more characters gives a 32-byte key. Generate it as in step 1 below, so the secret itself carries 32 random bytes.
+- Tax receipts use the same scheme with their own variables, `RECEIPT_ENCRYPTION_KEY` and `RECEIPT_ENCRYPTION_KEYS`. The list works the same way, but nothing re-encrypts a receipt on its own: a stored receipt stays under the key that wrote it until the record is saved again. So never drop an old receipt key while `tax_records.receipt_data` still holds a value under its version (check with the same `NOT LIKE 'v<active>:%'` query against that column).
+
+## Development keys
+
+`@flump/banking` has committed development keys for bank tokens and receipts. They are used only when the variable is unset, `NODE_ENV` is exactly `development` or `test`, and `RAILWAY_ENVIRONMENT` is unset. Any other `NODE_ENV`, or no `NODE_ENV` at all, needs a real key, and so does every Railway service whatever its `NODE_ENV`. Production boot also refuses to start without `BANKING_TOKEN_ENCRYPTION_KEY` and `RECEIPT_ENCRYPTION_KEY` (or its list). Never run a server that holds real tokens with `NODE_ENV=development` or `test`.
 
 ## Rotate to a new key
 
