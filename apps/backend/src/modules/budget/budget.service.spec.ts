@@ -54,9 +54,11 @@ describe("BudgetService ownership and share (E34 C1)", () => {
     expect(budget.save).not.toHaveBeenCalled();
   });
 
-  it("accepts a joint share at each end of 1 to 100 and refuses 0, 101 and a fraction", async () => {
+  it("accepts a joint share at each end of 1 to 99 and refuses 0, 100, 101 and a fraction", async () => {
     const { service } = build();
-    // Inclusive range 1..100: 1 and 100 are kept as sent.
+    // A joint line keeps a whole-number share from 1 to 99 (E34 C1): 0% means none of the line is
+    // the person's and 100% means all of it (mark it sole), so both ends are refused, as are values
+    // outside 0 to 100 and fractions.
     const low = await service.createEntry(USER, {
       ...spending,
       ownership: "joint",
@@ -66,10 +68,10 @@ describe("BudgetService ownership and share (E34 C1)", () => {
     const high = await service.createEntry(USER, {
       ...spending,
       ownership: "joint",
-      sharePercent: 100,
+      sharePercent: 99,
     } as never);
-    expect(high).toMatchObject({ ownership: "joint", sharePercent: 100 });
-    for (const sharePercent of [0, 101, 12.5]) {
+    expect(high).toMatchObject({ ownership: "joint", sharePercent: 99 });
+    for (const sharePercent of [0, 100, 101, 12.5]) {
       await expect(
         service.createEntry(USER, { ...spending, ownership: "joint", sharePercent } as never),
       ).rejects.toBeInstanceOf(BadRequestException);

@@ -15,6 +15,7 @@
     "src/security/**/*.ts",
     "src/contract/**/*.ts",
     "src/modules/**/*.service.ts",
+    "src/beta/**/*.service.ts",
     "src/modules/banking/bank-connection-oauth.ts",
     "!src/**/*.{test,spec}.ts",
     "!src/**/*.d.ts",
