@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { UK_TAX_VECTORS } from "../../test-vectors/uk-tax.vectors.js";
-import { type Figure, isFigureKnown } from "../figure.js";
+import { type Figure, figureUnknown, isFigureKnown } from "../figure.js";
 import type { ProfileFacts } from "../input.js";
 import { profileFactsFromProfile } from "../input.js";
 import {
@@ -8,6 +8,7 @@ import {
   ASSUMED_REGION_NOTE,
   selectTakeHome,
   type TakeHome,
+  takeHomeLeavesOut,
 } from "./take-home.js";
 
 const FACTS: ProfileFacts = {
@@ -455,5 +456,30 @@ describe("pension method answers", () => {
     expect(v.incomeTax).toBe(3486);
     expect(v.pension).toBe(1200);
     expect(v.monthly).toBe(1993);
+  });
+});
+
+describe("takeHomeLeavesOut", () => {
+  const LOAN_NOTE =
+    "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.";
+
+  it("is empty for an unknown take-home", () => {
+    expect(takeHomeLeavesOut(figureUnknown(["annualSalary"], "not-set"))).toEqual([]);
+  });
+
+  it("keeps only the refused-plan notice, not the other assumptions", () => {
+    // 2027/28 with Plan 1 (no published threshold) and no region saved: two assumptions, and
+    // only the loan notice says what the take-home leaves out.
+    const fig = selectTakeHome(
+      { ...FACTS, taxRegion: null, studentLoanPlans: ["PLAN_1"] },
+      { taxYear: "2027/28" },
+    );
+    expect(fig.assumptions).toEqual([ASSUMED_REGION_NOTE, LOAN_NOTE]);
+    expect(takeHomeLeavesOut(fig)).toEqual([LOAN_NOTE]);
+  });
+
+  it("is empty when the take-home leaves nothing out", () => {
+    expect(takeHomeLeavesOut(selectTakeHome({ ...FACTS, taxRegion: null }, opts))).toEqual([]);
+    expect(takeHomeLeavesOut(selectTakeHome(FACTS, opts))).toEqual([]);
   });
 });

@@ -153,3 +153,38 @@ describe("selectBudgetTotals income flag (BU-8)", () => {
     expect(fig.value.income).toBe(1500);
   });
 });
+
+describe("selectBudgetTotals carries what the take-home leaves out", () => {
+  const NOTE = "A loan is left out.";
+  const rent = row({ category: "housing", name: "Rent", amount: 900, isEssential: true });
+  const linkedPay = (amount: number) =>
+    row({ category: "income", name: "Pay", amount, isIncome: true, linked: "take_home" });
+
+  it("adds the note as an assumption when the linked take-home line is counted", () => {
+    const fig = selectBudgetTotals([linkedPay(2000), rent], [NOTE]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.provenance).toBe("assumption");
+    expect(fig.assumptions).toEqual([NOTE]);
+  });
+
+  it("stays derived when the take-home leaves nothing out", () => {
+    const fig = selectBudgetTotals([linkedPay(2000), rent], []);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.provenance).toBe("derived");
+    expect(fig.assumptions).toBeUndefined();
+  });
+
+  it("adds no note when the linked take-home line counts £0", () => {
+    const fig = selectBudgetTotals([linkedPay(0), rent], [NOTE]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.provenance).toBe("derived");
+    expect(fig.assumptions).toBeUndefined();
+  });
+
+  it("adds no note when no line is linked to the take-home", () => {
+    const pay = row({ category: "income", name: "Pay", amount: 2000, isIncome: true });
+    const fig = selectBudgetTotals([pay, rent], [NOTE]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.provenance).toBe("derived");
+  });
+});
