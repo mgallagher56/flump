@@ -30,6 +30,13 @@ describe("looksLikeGeneratedKey", () => {
     expect(looksLikeGeneratedKey(randomBytes(16).toString("hex"))).toBe(false);
     expect(looksLikeGeneratedKey(randomBytes(33).toString("hex"))).toBe(false);
   });
+
+  it("does not take any 43 letters for base64: the last character must be one a 32-byte encoding can end in", () => {
+    // "a" is base64 index 26, not a multiple of 4, so no 32-byte value encodes to this.
+    expect(looksLikeGeneratedKey("a".repeat(43))).toBe(false);
+    // "A" is index 0: 42 zero characters then "A" is the encoding of 32 zero bytes.
+    expect(looksLikeGeneratedKey(Buffer.alloc(32).toString("base64"))).toBe(true);
+  });
 });
 
 describe("bankingKeyFormatWarnings", () => {
@@ -77,6 +84,7 @@ describe("bankingKeyFormatWarningMessage", () => {
   it("names the variable, version, expected form and runbook, and never the secret or its length", () => {
     const secret = passphrase();
     const [warning] = bankingKeyFormatWarnings(strict({ BANKING_TOKEN_ENCRYPTION_KEY: secret }));
+    expect(warning).toEqual({ variable: "BANKING_TOKEN_ENCRYPTION_KEY", version: 1 });
     const message = bankingKeyFormatWarningMessage({
       variable: "BANKING_TOKEN_ENCRYPTION_KEY",
       version: 1,

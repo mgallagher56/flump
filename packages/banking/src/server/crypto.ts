@@ -139,8 +139,12 @@ export function resolveBankingKeyring(env: Record<string, string | undefined>): 
 
 /** 32 bytes as hex (`openssl rand -hex 32`). */
 const HEX_32_BYTES = /^[0-9a-f]{64}$/i;
-/** 32 bytes as base64 or base64url (`openssl rand -base64 32`): 43 characters, then optional `=`. */
-const BASE64_32_BYTES = /^(?:[A-Za-z0-9+/]{43}|[A-Za-z0-9_-]{43})=?$/;
+/**
+ * 32 bytes as base64 or base64url (`openssl rand -base64 32`): 43 characters, then optional `=`.
+ * 43 characters hold 258 bits, so the last one carries the final 4 bits and two zero bits: its
+ * alphabet index is a multiple of 4.
+ */
+const BASE64_32_BYTES = /^(?:[A-Za-z0-9+/]{42}|[A-Za-z0-9_-]{42})[AEIMQUYcgkosw048]=?$/;
 
 /** True when a secret looks like 32 generated random bytes: 64 hex characters or base64 of 32 bytes. */
 export function looksLikeGeneratedKey(secret: string): boolean {
