@@ -1,11 +1,4 @@
 import {
-  calculateUkTax,
-  getLatestSupportedUkTaxYear,
-  getUkTaxYearRules,
-  type OnboardingSeedPayload,
-  persistOnboardingSeed,
-} from "@flump/finance-engine";
-import {
   Button,
   Card,
   DELTA_PANEL_COPY,
@@ -34,6 +27,7 @@ import {
   teaserControls,
   teaserOutcome,
 } from "./PayRiseTeaser.styles";
+import { payRiseResult, seedSalaryForOnboarding, taxYearInWords } from "./payRise";
 
 /** Illustrative starting salary (E31): a typical full-time UK salary, not the £100k band. */
 export const DEFAULT_SALARY_GBP = 39_000;
@@ -46,50 +40,8 @@ const PAY_RISE_SUBTITLE =
 /** The Pay page, where the home page's teaser points (E42: the marketing site has no calculator pages). */
 const PAY_PAGE_PATH = "/features/pay";
 
-/** The Personal Allowance taper band, used only to explain the rate a visitor's own figures hit. */
-const LATEST_RULES = getUkTaxYearRules(getLatestSupportedUkTaxYear());
-const TAPER_START_GBP = LATEST_RULES.ewni.personalAllowanceTaperStart;
-const TAPER_END_GBP = LATEST_RULES.taperEnd;
-
-/** "2026/27" as "2026 to 2027" (copy guide 4.3: tax years in words). */
-export const taxYearInWords = (taxYear: string): string => {
-  const start = Number.parseInt(taxYear.slice(0, 4), 10);
-  return Number.isFinite(start) ? `${start} to ${start + 1}` : taxYear;
-};
-
 const gbp = (value: number) => formatMoney(value, { fractionDigits: 0 }).text;
 
-export interface PayRiseResult {
-  keptAnnual: number;
-  keptMonthly: number;
-  extraIncomeTax: number;
-  extraNationalInsurance: number;
-  keptPct: number;
-  entersTaperBand: boolean;
-  taxYear: string;
-}
-
-/** What an employee on PAYE keeps from a rise, England, Wales and NI bands, no pension or loan. */
-export function payRiseResult(salary: number, rise: number): PayRiseResult {
-  const before = calculateUkTax({ grossSalary: Math.max(0, salary) });
-  const after = calculateUkTax({ grossSalary: Math.max(0, salary + rise) });
-  const keptAnnual = after.netTakeHomePayAnnualGbp - before.netTakeHomePayAnnualGbp;
-  const top = salary + rise;
-  return {
-    keptAnnual,
-    keptMonthly: keptAnnual / 12,
-    extraIncomeTax: after.incomeTaxGbp - before.incomeTaxGbp,
-    extraNationalInsurance: after.nationalInsuranceGbp - before.nationalInsuranceGbp,
-    keptPct: rise > 0 ? (keptAnnual / rise) * 100 : 0,
-    entersTaperBand: top > TAPER_START_GBP && salary < TAPER_END_GBP,
-    taxYear: after.taxYear,
-  };
-}
-
-/**
- * The home page's one live teaser (E16 PR 12): two sliders, one outcome figure and two supporting
- * rows (P1), and the page's single notice, with the "Unverified estimate" lead (ruling 3, R6).
- */
 export interface PayRiseTeaserProps {
   /** `area` (the home page): a link to the Pay page. `none`: the Pay page itself, which needs none. */
   link?: "area" | "none";
@@ -97,20 +49,18 @@ export interface PayRiseTeaserProps {
   embedded?: boolean;
 }
 
+/**
+ * The two-slider pay rise tool (E16 PR 12; on the home and Pay pages since E42): two sliders, one outcome figure and two supporting
+ * rows (P1), and the page's single notice, with the "Unverified estimate" lead (ruling 3, R6).
+ */
 export const PayRiseTeaser: FC<PayRiseTeaserProps> = ({ link = "area", embedded = false }) => {
   const [salary, setSalary] = useState<number>(DEFAULT_SALARY_GBP);
   const [rise, setRise] = useState<number>(DEFAULT_RISE_GBP);
   const cta = signupCta();
   const result = useMemo(() => payRiseResult(salary, rise), [salary, rise]);
 
-  // Open sign-up only: hand the visitor's own salary to onboarding. Invite-only stores nothing.
   const handleStart = () => {
-    const payload: OnboardingSeedPayload = {
-      timestamp: Date.now(),
-      annualGrossSalary: salary,
-      inferredModules: ["budget", "tax", "forecast"],
-    };
-    persistOnboardingSeed(payload);
+    seedSalaryForOnboarding(salary);
     window.location.href = cta.href;
   };
 

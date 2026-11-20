@@ -1,18 +1,20 @@
 // @vitest-environment node
 import fs from "node:fs";
 import path from "node:path";
-import { TOOL_CATALOGUE } from "@repo/ui/tools";
 import { describe, expect, it } from "vitest";
-import { CANONICAL_TOOL_SLUGS } from "./utils/toolSlugs";
 
 const read = (rel: string) => fs.readFileSync(path.resolve(__dirname, rel), "utf-8");
 
 describe("marketing copy (R-10)", () => {
   it.each([
-    "pages/ToolsIndexPage/ToolsIndexPage.tsx",
     "components/BaselineSnapshotPreview/BaselineSnapshotPreview.tsx",
-    "components/MonthlyPictureSection/MonthlyPictureSection.tsx",
     "components/PayRiseTeaser/PayRiseTeaser.tsx",
+    // E42 PR 2: the home bands and the short-form calculators (coordinator sign-off).
+    "pages/HomePage/HomePage.tsx",
+    "components/FeatureTiles/FeatureTiles.tsx",
+    "components/TryItSection/TryItSection.tsx",
+    "pages/FeaturePage/FeaturePage.tsx",
+    "utils/featureAreas.ts",
   ])("%s does not over-claim", (file) => {
     expect(read(file)).not.toMatch(/\bexact\b|guaranteed|gross take-home/i);
   });
@@ -37,8 +39,9 @@ const PR12_SOURCES = [
   "pages/ContactPage/ContactPage.tsx",
   "pages/NotFoundPage/NotFoundPage.tsx",
   "components/BaselineSnapshotPreview/BaselineSnapshotPreview.tsx",
-  "components/MonthlyPictureSection/MonthlyPictureSection.tsx",
   "components/PayRiseTeaser/PayRiseTeaser.tsx",
+  "components/FeatureTiles/FeatureTiles.tsx",
+  "components/TryItSection/TryItSection.tsx",
   "components/SecurityPrivacySection/SecurityPrivacySection.tsx",
   "components/HomeFAQ/HomeFAQ.tsx",
   "components/DisclosurePolicySection/DisclosurePolicySection.tsx",
@@ -87,11 +90,8 @@ describe("E16 PR 12 page copy", () => {
   });
 });
 
-describe("tool slugs", () => {
-  it("canonical slugs match the tools catalogue", () => {
-    expect(TOOL_CATALOGUE.map((t) => t.slug).sort()).toEqual([...CANONICAL_TOOL_SLUGS].sort());
-  });
-});
+// "tool slugs" left with E42 PR 2: the marketing site lists no calculator slugs. Every slug and
+// alias in the shared catalogue is now asserted to answer 301 in server/redirects.test.ts.
 
 describe("index.html (R-13)", () => {
   const html = read("../index.html");
