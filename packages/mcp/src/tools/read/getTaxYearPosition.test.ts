@@ -161,6 +161,70 @@ describe("get_tax_year_position notes, provenance and bands", () => {
   });
 });
 
+describe("get_tax_year_position bands for 2027/28 property income (ITA 2007 s.16A)", () => {
+  it("shows property income at the property rates, stacked above other non-savings income", async () => {
+    // Signed row 2 of tax-calculator.property-rates.test.ts. 2027/28, England: salary 45,000,
+    // rent 25,000 less 5,000 repairs = profit 20,000 (finance costs 6,000 only give the credit).
+    // Allowance 12,570 against the salary first (ITA 2007 s.25(3A)): salary taxable 32,430,
+    // all basic at 20% = 6,486. Property is the top slice, 32,430 to 52,430, at 24/44/49:
+    // 37,700 - 32,430 = 5,270 x 24% = 1,264.80; 20,000 - 5,270 = 14,730 x 44% = 6,481.20.
+    // Total property tax 7,746, the ledger's rental tax before the credit.
+    const at = { date: "2027-06-06", frequency: "annual" } as Partial<TaxRecord>;
+    const records = [
+      rent({ ...at, amount: 25000 }),
+      rent({
+        ...at,
+        id: "rep1",
+        type: "expense",
+        category: "repairs_maintenance",
+        amount: 5000,
+      } as Partial<TaxRecord>),
+      rent({
+        ...at,
+        id: "int1",
+        type: "expense",
+        category: "mortgage_interest",
+        amount: 6000,
+      } as Partial<TaxRecord>),
+    ];
+    const h = await connectTestClient({
+      ...emptyUser,
+      profileFacts: facts({
+        employmentType: "employed",
+        annualSalary: 45000,
+        taxRegion: "ENGLAND_NI_WALES",
+      }),
+      taxRecords: records as never,
+    });
+    try {
+      const e = (await h.callJson("get_tax_year_position", { taxYear: "2027/28" })) as {
+        result: {
+          incomeTaxBands: {
+            taxableGbp: number;
+            topBand: string | null;
+            bands: Array<{ name: string; ratePct: number; taxableGbp: number; taxGbp: number }>;
+          };
+          section24: { rentalTaxBeforeCreditGbp: number };
+        };
+      };
+      const { incomeTaxBands, section24 } = e.result;
+      expect(incomeTaxBands.taxableGbp).toBe(52430);
+      expect(incomeTaxBands.bands).toEqual([
+        { name: "Basic", ratePct: 20, taxableGbp: 32430, taxGbp: 6486 },
+        { name: "Higher", ratePct: 40, taxableGbp: 0, taxGbp: 0 },
+        { name: "Additional", ratePct: 45, taxableGbp: 0, taxGbp: 0 },
+        { name: "Property basic", ratePct: 24, taxableGbp: 5270, taxGbp: 1264.8 },
+        { name: "Property higher", ratePct: 44, taxableGbp: 14730, taxGbp: 6481.2 },
+        { name: "Property additional", ratePct: 49, taxableGbp: 0, taxGbp: 0 },
+      ]);
+      expect(incomeTaxBands.topBand).toBe("Property higher");
+      expect(section24.rentalTaxBeforeCreditGbp).toBe(7746);
+    } finally {
+      await h.close();
+    }
+  });
+});
+
 describe("get_tax_year_position verification for a provisional year (ruling B)", () => {
   it("gives 2027/28 as unverified: rates announced but not yet law", async () => {
     const h = await connectTestClient({ ...emptyUser, profileFacts: facts() });

@@ -10,8 +10,12 @@ import {
   isSelfEmployedType,
   MCP_NOTICE,
   payeSalaryForTax,
+  propertyRatesFor,
   scottishRatesRefusal,
   type TaxEstimateMissingFact,
+  type UkIncomeRates,
+  type UkTaxRegion,
+  type UkTaxYearRules,
 } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
@@ -44,6 +48,11 @@ const result = z.object({
     .object({
       /** Taxable non-savings income (salary, self-employment and rental profit after the allowance). */
       taxableGbp: z.number(),
+      /**
+       * Main-rate bands, lowest rate first. From 2027/28 in England, Wales and Northern Ireland,
+       * property income follows as "Property basic", "Property higher" and "Property additional"
+       * at the property rates, stacked above the other non-savings income.
+       */
       bands: z.array(
         z.object({
           name: z.string(),
@@ -90,11 +99,29 @@ const result = z.object({
   notes: z.array(z.string()),
 });
 
+/** The property slice, `from` to `to` of taxable income, at the property rates, band by band. */
+function propertySliceBands(
+  rules: UkTaxYearRules,
+  region: UkTaxRegion,
+  rates: UkIncomeRates,
+  from: number,
+  to: number,
+) {
+  const upTo = calculateIncomeTaxOnTaxable(to, rules, region, { rates }).bands;
+  const below = calculateIncomeTaxOnTaxable(from, rules, region, { rates }).bands;
+  return upTo.map((b, i) => ({
+    name: `Property ${b.name.toLowerCase()}`,
+    rate: b.rate,
+    taxable: b.taxable - (below[i]?.taxable ?? 0),
+    tax: b.tax - (below[i]?.tax ?? 0),
+  }));
+}
+
 export const getTaxYearPosition = defineFlumpTool({
   name: "get_tax_year_position",
   title: "Tax year position",
   description:
-    "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (£100,000 to £125,140 in recent years), the Income Tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the tax and Self Assessment estimates shown on the Flump tax page. The estimate is null when a fact it depends on is not saved, and missing names that fact. When the year's rates for the user's region are not published (Scottish rates for 2027/28), the Income Tax bands and the tax figures are null and missing says why. Facts and estimates only.",
+    "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (£100,000 to £125,140 in recent years), the Income Tax bands for their region (including Scottish bands; from 2027/28 in England, Wales and Northern Ireland, property income at the property rates above other income), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the tax and Self Assessment estimates shown on the Flump tax page. The estimate is null when a fact it depends on is not saved, and missing names that fact. When the year's rates for the user's region are not published (Scottish rates for 2027/28), the Income Tax bands and the tax figures are null and missing says why. Facts and estimates only.",
   input: { taxYear: taxYearInput },
   result,
   maxTokens: 3000,
@@ -148,13 +175,27 @@ export const getTaxYearPosition = defineFlumpTool({
     // The engine sets the allowance where it gives the lowest bill (ITA 2007 s.25(2)), which is
     // not always all against non-savings income, so read its split rather than assume it.
     const taxable = Math.max(0, nonSavings - ledger.allowanceOnNonSavings);
-    const bandResult = refusal ? null : calculateIncomeTaxOnTaxable(taxable, rules, region);
-    const bands = (bandResult?.bands ?? []).map((b) => ({
+    // From 2027/28 (England, Wales and NI) property income has its own rates and is the top slice
+    // of non-savings income (ITA 2007 s.11CA, s.16A), as the ledger charges it: other income at
+    // the main rates up to `otherTaxable`, then property at the property rates above it.
+    const propertyRates = refusal ? null : propertyRatesFor(rules, region);
+    const otherTaxable = propertyRates
+      ? Math.min(
+          taxable,
+          Math.max(0, ledger.effectivePayeSalary + ledger.seProfit - ledger.allowanceOnNonSavings),
+        )
+      : taxable;
+    const bandResult = refusal ? null : calculateIncomeTaxOnTaxable(otherTaxable, rules, region);
+    const toBand = (b: { name: string; rate: number; taxable: number; tax: number }) => ({
       name: b.name,
       ratePct: round2(b.rate * 100),
       taxableGbp: round2(b.taxable),
       taxGbp: round2(b.tax),
-    }));
+    });
+    const propertyBands = propertyRates
+      ? propertySliceBands(rules, region, propertyRates, otherTaxable, taxable)
+      : [];
+    const bands = [...(bandResult?.bands ?? []), ...propertyBands].map(toBand);
     const top = [...bands].reverse().find((b) => b.taxableGbp > 0);
 
     const { hicbcThresholdStart, hicbcStepWidth } = rules.hicbc;
