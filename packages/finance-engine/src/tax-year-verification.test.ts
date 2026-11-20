@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getTaxFeatureVerification, getTaxYearVerification } from "./tax-year-verification.js";
-import {
-  evaluateSignoff,
-  SIGNOFF_OWNER,
-  vectorSignoffHash,
-  yearVerification,
-} from "./test-vectors/signoff.js";
+import { evaluateSignoff, vectorSignoffHash, yearVerification } from "./test-vectors/signoff.js";
 import { UK_SELF_ASSESSMENT_VECTORS } from "./test-vectors/uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 import { selectUkWhatIfVectors, UK_WHATIF_VECTORS } from "./test-vectors/uk-whatif.vectors.js";
@@ -56,7 +51,7 @@ describe("a provisional year never reports verified", () => {
     expect(getTaxYearVerification(Y, [])).toEqual({
       status: "verified",
       detail:
-        "The signed-off test vectors for 2027/28 all pass owner sign-off. Feature-level verification is not reported yet.",
+        "2027/28 figures have been checked against the published rates. Checks of separate features, such as the Child Benefit charge, are not reported here.",
     });
     expect(getTaxFeatureVerification(Y, "core", undefined, [])).toBe("verified");
   });
@@ -84,7 +79,7 @@ describe("getTaxYearVerification", () => {
     const v = getTaxYearVerification("1999/00");
     expect(v.status).toBe("unverified");
     expect(v.detail).toBe(
-      "1999/00 tax rules are not yet fully signed off by the owner. Treat figures as an estimate and check them against HMRC.",
+      "1999/00 figures have not yet all been checked against the published rates. Treat them as an estimate and check them against HMRC.",
     );
   });
 
@@ -92,6 +87,21 @@ describe("getTaxYearVerification", () => {
     for (const y of SUPPORTED_UK_TAX_YEARS) {
       expect(getTaxYearVerification(y).detail.length).toBeGreaterThan(10);
     }
+  });
+
+  it("never says a person signed the figures off", () => {
+    // Figures are checked against the published (or announced) rates; no wording may suggest an
+    // owner, an accountant or a sign-off by a person.
+    const details = [
+      ...SUPPORTED_UK_TAX_YEARS.flatMap((y) => [
+        getTaxYearVerification(y).detail,
+        getTaxYearVerification(y, []).detail,
+        getTaxYearVerification(y, [y]).detail,
+      ]),
+      getTaxYearVerification("2027/28", []).detail,
+      getTaxYearVerification("1999/00").detail,
+    ];
+    for (const d of details) expect(d).not.toMatch(/owner|accountant|sign(ed)?[- ]?off|—/i);
   });
 });
 
@@ -122,7 +132,7 @@ describe("getTaxFeatureVerification isolation (E25-T8)", () => {
     const year = "2026/27";
     const whatIf = selectUkWhatIfVectors({ taxYear: year, feature: "whatIf" }).map((v) => ({
       ...v,
-      signedOffBy: SIGNOFF_OWNER,
+      signedOffBy: "fable-decider",
       signedOffAt: "2026-12-01",
       signedOffHash: vectorSignoffHash(v),
       ...(v.status === "UNVERIFIED" ? { rulingRef: "fixture-ruling" } : {}),

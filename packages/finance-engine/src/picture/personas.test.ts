@@ -32,9 +32,9 @@ import { HOME_ESTIMATE_LABEL } from "./selectors/portfolio-totals.js";
 import { selectTakeHome, type TakeHome } from "./selectors/take-home.js";
 
 /**
- * Engine-level persona tests (E23 section 9.2). Tax amounts are never asserted: no tax vector
- * is owner-signed (E23 section 10; OWNER_SIGNED_IDS is empty in uk-tax.vectors.test.ts), so tax
- * figures assert status, provenance, region and relationships. Record sums are plain addition.
+ * Engine-level persona tests (E23 section 9.2). Tax amounts are never asserted: no 2026/27 tax
+ * vector is signed (E23 section 10), so tax figures assert status, provenance, region and
+ * relationships. Record sums are plain addition.
  */
 
 const TAX_YEAR = "2026/27";

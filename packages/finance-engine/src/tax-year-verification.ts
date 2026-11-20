@@ -1,5 +1,6 @@
 /**
- * Owner sign-off status of a UK tax year's rules (E17-N5, D4-B). Built on `yearVerification`.
+ * Sign-off status of a UK tax year's rules (E17-N5, D4-B). Built on `yearVerification`. Since
+ * 20 Nov 2026 vectors are signed on a Fable decider decision (DECISIONS); older ones by the owner.
  * E25-T8 appends `getTaxFeatureVerification(year, feature)` to this file.
  */
 import { type SignableVector, yearVerification } from "./test-vectors/signoff.js";
@@ -59,14 +60,16 @@ export function getTaxYearVerification(
         : `${year} figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.`,
     };
   }
+  // Wording says what is true: the year's test cases are checked against the published rates. It
+  // never suggests that a person or an accountant checked the figures.
   return status === "verified"
     ? {
         status,
-        detail: `The signed-off test vectors for ${year} all pass owner sign-off. Feature-level verification is not reported yet.`,
+        detail: `${year} figures have been checked against the published rates. Checks of separate features, such as the Child Benefit charge, are not reported here.`,
       }
     : {
         status,
-        detail: `${year} tax rules are not yet fully signed off by the owner. Treat figures as an estimate and check them against HMRC.`,
+        detail: `${year} figures have not yet all been checked against the published rates. Treat them as an estimate and check them against HMRC.`,
       };
 }
 
@@ -90,7 +93,7 @@ const DEFAULT_CATALOGUES: TaxVectorCatalogues = { core: UK_TAX_VECTORS, whatIf: 
 
 /**
  * Sign-off status of one feature in one tax year (E25-T8, DECISIONS round 4 addendum D1 (b)).
- * A feature is "verified" only when it has vectors for the year and the owner has signed every one.
+ * A feature is "verified" only when it has vectors for the year and every one is validly signed.
  * Features are independent, so adding E25 vectors never un-signs a year whose `core` vectors are signed.
  */
 export function getTaxFeatureVerification(

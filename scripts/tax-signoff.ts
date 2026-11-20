@@ -1,14 +1,16 @@
 /**
- * Owner sign-off tooling for tax vectors (E22). See docs/runbooks/tax-year-update.md.
+ * Sign-off tooling for tax vectors (E22). See docs/runbooks/tax-year-update.md.
  *
  *   bun run tax:signoff sheet --year 2026/27 [--out docs/tax-vector-signoff-2026-27.md]
- *   bun run tax:signoff apply --year 2026/27 --sheet <ticked sheet>
+ *   bun run tax:signoff apply --year 2026/27 --sheet <ticked sheet> --signer <name>
  *
- * `apply` is the owner's command: it refuses to run in CI and needs --i-am-the-owner.
- * Agents must never run it (DECISIONS round 3 item 13).
+ * `apply` writes `--signer` to `signedOffBy` exactly as given (a decider signs as "fable-decider").
+ * Who may run it: the coordinator, applying a recorded Fable decider decision, or the owner (owner
+ * rule of 20 Nov 2026 in DECISIONS, superseding round 3 item 13). It refuses to run in CI.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { isValidSigner } from "../packages/finance-engine/src/test-vectors/signoff";
 import { UK_SELF_ASSESSMENT_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-self-assessment.vectors";
 import { UK_TAX_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-tax.vectors";
 import { UK_WHATIF_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-whatif.vectors";
@@ -47,8 +49,17 @@ if (cmd === "sheet") {
   writeFileSync(out, generateSheet(String(year), allVectors));
   console.log(`Wrote ${out}`);
 } else if (cmd === "apply") {
-  if (process.env.CI) die("Refusing to sign off in CI. Sign-off is the owner's task.");
-  if (!rest.includes("--i-am-the-owner")) die("Pass --i-am-the-owner to confirm you are signing.");
+  if (process.env.CI) {
+    die(
+      "Refusing to sign off in CI. Sign-off is run by the coordinator, applying a recorded Fable decider decision, or by the owner.",
+    );
+  }
+  const signer = flag("signer");
+  if (!signer || !isValidSigner(signer)) {
+    die(
+      "--signer <name> is required: letters, digits, dot, underscore or hyphen, such as fable-decider.",
+    );
+  }
   const sheet = flag("sheet") ?? die("--sheet <file> is required");
   const ticked = parseTicked(readFileSync(String(sheet), "utf8"));
   let signed = 0;
@@ -61,6 +72,7 @@ if (cmd === "sheet") {
       ticked.filter((t) => ids.has(t.id)),
       vectors,
       new Date().toISOString().slice(0, 10),
+      String(signer),
     );
     writeFileSync(file, result.text);
     signed += result.signed.length;
@@ -72,5 +84,7 @@ if (cmd === "sheet") {
   }
   console.log(`Signed ${signed}. Skipped ${skipped}.`);
 } else {
-  die("usage: tax-signoff.ts sheet|apply --year YYYY/YY [...]");
+  die(
+    "usage: tax-signoff.ts sheet|apply --year YYYY/YY [--out <file>] [--sheet <file> --signer <name>]",
+  );
 }

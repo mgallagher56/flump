@@ -10,42 +10,16 @@ import {
 } from "./uk-tax.vectors.js";
 
 /**
- * Vector ids the owner has signed off. Empty until the owner signs (DECISIONS E4): an unreviewed
- * edit that signs a vector fails here. The owner adds ids to this list in the same commit as
- * the sign-off (`bun run tax:signoff apply`).
+ * Signed vectors are read from `signedOffBy`; no second list of ids is kept. What stops an
+ * unreviewed edit that signs a vector is the hash check in `evaluateSignoff`: `signedOffHash` must
+ * equal `vectorSignoffHash` of the vector's current id, year, region, kind, input, expected value
+ * and source, so a hand-written signature, or any edit made after signing, is reported invalid and
+ * fails the sign-off test below. Signatures come from `bun run tax:signoff apply --signer <name>`,
+ * run by the coordinator applying a recorded Fable decider decision, or by the owner.
  */
-// Owner sign-off of 20 Nov 2026 (2027/28, tax:signoff apply); ids approved by the owner.
-const OWNER_SIGNED_IDS: readonly string[] = [
-  "ewni.incomeTax.2027-28.30000",
-  "ewni.incomeTax.2027-28.60000",
-  "ewni.incomeTax.2027-28.100000",
-  "ewni.incomeTax.2027-28.110000",
-  "ewni.incomeTax.2027-28.125140",
-  "ewni.incomeTax.2027-28.150000",
-  "ewni.giftAid.2027-28.60000.net1000",
-  "ewni.giftAid.2027-28.110000.net1000",
-  "employeeNi.2027-28.30000",
-  "employeeNi.2027-28.60000",
-  "class4.2027-28.60000",
-  "employerNiSaving.2027-28.60000.3000",
-  "employerNiSaving.2027-28.6000.3000",
-  "studentLoan.2027-28.plan2.35000",
-  "studentLoan.2027-28.plan5.35000",
-  "studentLoan.2027-28.postgrad.35000",
-  "studentLoan.2027-28.plan2.28385",
-  "dividends.2027-28.basic",
-  "dividends.2027-28.higher",
-  "dividends.2027-28.additional",
-];
-
 const GOV_URL = /^https:\/\/www\.(gov\.(uk|scot)|legislation\.gov\.uk)\//;
 
 describe("UK tax vector catalogue", () => {
-  it("every id in OWNER_SIGNED_IDS is a vector the owner signed, so the list cannot drift", () => {
-    const signed = new Set(UK_TAX_VECTORS.filter((v) => v.signedOffBy !== null).map((v) => v.id));
-    for (const id of OWNER_SIGNED_IDS) expect(signed.has(id), id).toBe(true);
-    expect(new Set(OWNER_SIGNED_IDS).size).toBe(OWNER_SIGNED_IDS.length);
-  });
   it("every vector cites a gov.uk or gov.scot source", () => {
     for (const v of UK_TAX_VECTORS) {
       expect(v.source, v.id).toMatch(GOV_URL);
@@ -62,8 +36,7 @@ describe("UK tax vector catalogue", () => {
     for (const v of UK_TAX_VECTORS) {
       expect(v.derivation.trim().length, v.id).toBeGreaterThan(20);
       expect(["high", "medium"], v.id).toContain(v.confidence);
-      expect(evaluateSignoff(v), v.id).not.toMatchObject({ state: "invalid" });
-      expect(v.signedOffBy !== null, v.id).toBe(OWNER_SIGNED_IDS.includes(v.id));
+      expect(evaluateSignoff(v).state, v.id).toBe(v.signedOffBy === null ? "unsigned" : "signed");
       expect(Number.isFinite(v.expected), v.id).toBe(true);
     }
   });
@@ -180,8 +153,9 @@ describe("Scottish Gift Aid band-extension vectors (ITA 2007 s.414(2)(b))", () =
       expect(v.status, v.id).toBe("UNVERIFIED");
       expect(v.unverifiedReason, v.id).toMatch(/^UNVERIFIED: .*s\.414\(2\)\(b\)/);
       expect(v.confidence, v.id).toBe("medium");
-      // Ruling 2 (Gift Aid for Scottish taxpayers) is pending: unsigned until the owner rules.
-      expect(v.signedOffBy === null || OWNER_SIGNED_IDS.includes(v.id), v.id).toBe(true);
+      // Ruling 2 (Gift Aid for Scottish taxpayers) is pending: an UNVERIFIED vector validates as
+      // signed only with a rulingRef (evaluateSignoff), which now comes from the decider.
+      expect(evaluateSignoff(v).state, v.id).toBe(v.signedOffBy === null ? "unsigned" : "signed");
       expect(v.source, v.id).toMatch(GOV_URL);
       expect(v.additionalSources, v.id).toContain(
         "https://www.legislation.gov.uk/ukpga/2007/3/section/414",

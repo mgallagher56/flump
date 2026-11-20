@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { getTaxFeatureVerification, getTaxYearVerification } from "./tax-year-verification.js";
-import { SIGNOFF_OWNER, type SignableVector, vectorSignoffHash } from "./test-vectors/signoff.js";
+import { type SignableVector, vectorSignoffHash } from "./test-vectors/signoff.js";
 import { UK_SELF_ASSESSMENT_VECTORS } from "./test-vectors/uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 
@@ -12,7 +12,7 @@ import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 function sign<T extends SignableVector>(v: T): T {
   return {
     ...v,
-    signedOffBy: SIGNOFF_OWNER,
+    signedOffBy: "fable-decider",
     signedOffAt: "2026-12-01",
     signedOffHash: vectorSignoffHash(v),
     ...(v.status === "UNVERIFIED" ? { rulingRef: "fixture-ruling" } : {}),
@@ -28,7 +28,7 @@ vi.mock("./test-vectors/uk-tax.vectors.js", async (importOriginal) => {
       v.taxYear === "2023/24" || v.taxYear === "2024/25"
         ? {
             ...v,
-            signedOffBy: signoff.SIGNOFF_OWNER,
+            signedOffBy: "fable-decider",
             signedOffAt: "2026-12-01",
             signedOffHash: signoff.vectorSignoffHash(v),
             ...(v.status === "UNVERIFIED" ? { rulingRef: "fixture-ruling" } : {}),
@@ -48,7 +48,7 @@ vi.mock("./test-vectors/uk-self-assessment.vectors.js", async (importOriginal) =
       v.taxYear === "2024/25"
         ? {
             ...v,
-            signedOffBy: signoff.SIGNOFF_OWNER,
+            signedOffBy: "fable-decider",
             signedOffAt: "2026-12-01",
             signedOffHash: signoff.vectorSignoffHash(v),
             ...(v.status === "UNVERIFIED" ? { rulingRef: "fixture-ruling" } : {}),

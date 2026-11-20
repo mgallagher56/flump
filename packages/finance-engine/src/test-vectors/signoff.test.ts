@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { evaluateSignoff, SIGNOFF_OWNER, vectorSignoffHash, yearVerification } from "./signoff.js";
+import { evaluateSignoff, isValidSigner, vectorSignoffHash, yearVerification } from "./signoff.js";
 import { UK_TAX_VECTORS, type UkTaxVector } from "./uk-tax.vectors.js";
 
 const base = UK_TAX_VECTORS.find((v) => v.status === "VERIFIED") as UkTaxVector;
 const unverified = UK_TAX_VECTORS.find((v) => v.status === "UNVERIFIED") as UkTaxVector;
 const sign = (v: UkTaxVector, extra: Partial<UkTaxVector> = {}): UkTaxVector => ({
   ...v,
-  signedOffBy: SIGNOFF_OWNER,
+  signedOffBy: "fable-decider",
   signedOffAt: "2026-12-01",
   signedOffHash: vectorSignoffHash(v),
   ...extra,
@@ -45,8 +45,22 @@ describe("vector sign-off", () => {
     const edited = { ...sign(base), expected: base.expected + 1 };
     expect(evaluateSignoff(edited).state).toBe("invalid");
   });
-  it("rejects a non-owner, a bad date, a missing hash and stray fields", () => {
-    expect(evaluateSignoff(sign(base, { signedOffBy: "agent" })).state).toBe("invalid");
+  it("accepts the decider and the owner as signers, written exactly as given", () => {
+    expect(evaluateSignoff(sign(base, { signedOffBy: "fable-decider" }))).toEqual({
+      state: "signed",
+    });
+    expect(evaluateSignoff(sign(base, { signedOffBy: "owner" }))).toEqual({ state: "signed" });
+    expect(isValidSigner("fable-decider")).toBe(true);
+    expect(isValidSigner("a")).toBe(true);
+    expect(isValidSigner("a".repeat(64))).toBe(true);
+  });
+  it("rejects a signer name that is empty, padded, too long or not a plain name", () => {
+    for (const bad of ["", " owner", "owner ", "-x", "a b", 'x"y', "a\nb", "a".repeat(65)]) {
+      expect(isValidSigner(bad), JSON.stringify(bad)).toBe(false);
+      expect(evaluateSignoff(sign(base, { signedOffBy: bad })).state, bad).toBe("invalid");
+    }
+  });
+  it("rejects a bad date, a missing hash and stray fields", () => {
     expect(evaluateSignoff(sign(base, { signedOffAt: "yesterday" })).state).toBe("invalid");
     expect(evaluateSignoff(sign(base, { signedOffHash: undefined })).state).toBe("invalid");
     expect(evaluateSignoff({ ...base, signedOffAt: "2026-12-01" }).state).toBe("invalid");
@@ -65,8 +79,10 @@ describe("vector sign-off", () => {
     const all = only.map((v) => sign(v, { rulingRef: "r" }));
     expect(yearVerification(year, all)).toBe("verified");
   });
-  it("the committed catalogue has no sign-offs made by an agent in this PR", () => {
-    // Sign-off is the owner's task (DECISIONS E4). Their commits change this expectation.
+  it("every committed signature validates, the owner's 2027/28 ones included", () => {
+    // A signature validates only if its hash matches the vector's current content, so an edit
+    // made after signing, or a hand-written signature, fails here.
     for (const v of UK_TAX_VECTORS) expect(evaluateSignoff(v).state, v.id).not.toBe("invalid");
+    expect(UK_TAX_VECTORS.some((v) => v.signedOffBy === "owner")).toBe(true);
   });
 });

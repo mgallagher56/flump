@@ -3,9 +3,10 @@
  * `signedOffBy: null` (core, what-if and Self Assessment catalogues) against scripts/tax-signoff-baseline.json.
  *
  *   bun scripts/check-tax-signoff.ts                   # fail on new unsigned IDs or a stale baseline
- *   bun scripts/check-tax-signoff.ts --write-baseline  # after the owner signs vectors off
+ *   bun scripts/check-tax-signoff.ts --write-baseline  # after vectors are signed
  *
- * Signing off is the owner's task (bun run tax:signoff apply); agents never sign vectors off.
+ * Vectors are signed with bun run tax:signoff apply --signer <name>, run by the coordinator applying a
+ * recorded Fable decider decision, or by the owner. Lane agents never sign their own figures.
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -32,7 +33,7 @@ const baseline: string[] = existsSync(baselinePath)
   : [];
 const { added, stale } = compareUnsignedToBaseline(unsigned, baseline);
 for (const id of added)
-  console.error(`FAIL ${id}: new tax vector without owner sign-off (bun run tax:signoff)`);
+  console.error(`FAIL ${id}: new tax vector without sign-off (bun run tax:signoff)`);
 for (const id of stale)
   console.error(`STALE ${id} (run: bun scripts/check-tax-signoff.ts --write-baseline)`);
 if (added.length || stale.length) process.exit(1);
