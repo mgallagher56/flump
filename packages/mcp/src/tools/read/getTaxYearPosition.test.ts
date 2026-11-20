@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import { connectTestClient } from "../../testing/client.js";
 import { emptyUser } from "../../testing/personas.js";
 
-// Tool plumbing only: field names, missing-data entries, notes and provenance. No assertion here
-// is a UK tax figure (E41 decision 8 keeps those behind the tax vector sign-off).
+// Mostly tool plumbing: field names, missing-data entries, notes and provenance. The tax figures
+// asserted here (the 2025/26 allowance split and the 2027/28 property bands) are worked by hand
+// in the test comments; the property bands repeat the owner-signed row 2 of
+// tax-calculator.property-rates.test.ts.
 
 type Env = {
   result: {

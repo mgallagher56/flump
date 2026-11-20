@@ -52,6 +52,10 @@ describe("Child Benefit weeks in a tax year (ITEPA 2003 s.681H(3))", () => {
     // 2031/32: 6 April 2031 is a Sunday, so 7 April 2031 is the first Monday; 5 April 2032 is a
     // Monday (2032 is a leap year): (364 / 7) + 1 = 53.
     expect(childBenefitWeeksInTaxYear("2031/32")).toBe(53);
+    // 2036/37: starts on a Sunday (6 April 2036) and ends on a Sunday (5 April 2037), with no
+    // 29 February (2037 is not a leap year), so 365 days. First Monday 7 April 2036, last Monday
+    // 30 March 2037: (357 / 7) + 1 = 52. A Sunday start alone does not give 53 weeks.
+    expect(childBenefitWeeksInTaxYear("2036/37")).toBe(52);
   });
   it("rejects a malformed year", () => {
     for (const bad of ["2026-27", "2026/28", "x2026/27", "2026/27x"]) {
