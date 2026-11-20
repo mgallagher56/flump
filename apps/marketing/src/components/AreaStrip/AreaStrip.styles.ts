@@ -36,7 +36,9 @@ export const stripLink = cva({
     transitionProperty: "border-color, background-color",
     transitionDuration: "fast",
     transitionTimingFunction: "standard",
-    _hover: { borderColor: "primary.border", backgroundColor: "surface.subtle" },
+    // Hover changes the edge only: the tile sits on a teal band or the canvas, and a fill would
+    // either vanish into the band or bring back the warm grey the owner disliked (2026-11-20).
+    _hover: { borderColor: "primary.border" },
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
   variants: {
@@ -47,7 +49,7 @@ export const stripLink = cva({
         outline: "1px solid",
         outlineColor: "primary",
         outlineOffset: "-2px",
-        backgroundColor: "primary.subtle",
+        // The card surface, as the other tiles: `primary.subtle` all but matched the teal band.
         fontWeight: "bold",
       },
     },

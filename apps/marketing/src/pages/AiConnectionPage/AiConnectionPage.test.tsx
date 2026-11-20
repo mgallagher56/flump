@@ -90,6 +90,19 @@ describe("Marketing AI connection page (E42 S2b)", () => {
     expect(within(strip).queryByRole("link", { current: "page" })).toBeNull();
   });
 
+  it("alternates the band tones after the canvas hero (owner choice A)", () => {
+    renderPage();
+    // By hand: what-you-see teal, questions canvas, setup teal, more-detail canvas, one-picture teal.
+    const bands = [...screen.getByRole("main").querySelectorAll(":scope > [data-tone-band]")];
+    expect(bands.map((band) => [band.id, band.getAttribute("data-tone-band")])).toEqual([
+      ["what-you-see", "teal"],
+      ["questions", "canvas"],
+      ["setup", "teal"],
+      ["more-detail", "canvas"],
+      ["one-picture", "teal"],
+    ]);
+  });
+
   it("says how to get it in the decided words (version 1), with 'Ask us' linking to Contact", () => {
     renderPage();
     const section = screen.getByRole("region", { name: "How to get it" });
