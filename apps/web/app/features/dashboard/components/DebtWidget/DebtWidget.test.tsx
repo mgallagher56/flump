@@ -30,7 +30,11 @@ describe("DebtWidget", () => {
     expect(screen.getByText("December 2027")).toBeTruthy();
     expect(screen.queryByText(/high APR/i)).toBeNull();
     expect(screen.queryByText("£8,200")).toBeNull();
-    expect(screen.getByText("Assumes you pay the minimum on each debt every month.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "An estimate, paying each minimum and moving a cleared debt's payment to the next.",
+      ),
+    ).toBeTruthy();
     expect(screen.getAllByRole("link")).toHaveLength(1);
     expect(debtCardShowsEstimate(summary)).toBe(true);
   });
@@ -39,7 +43,7 @@ describe("DebtWidget", () => {
     renderWidget({ ...summary, promoRevertAssumed: [{ debtId: "c", aprPct: 24.9 }] });
     expect(
       screen.getByText(
-        "Assumes you pay the minimum on each debt every month, and an assumed APR once a 0% deal ends.",
+        "An estimate, paying each minimum and moving a cleared debt's payment to the next, with an assumed APR once a 0% deal ends.",
       ),
     ).toBeTruthy();
   });

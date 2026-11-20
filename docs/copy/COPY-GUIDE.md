@@ -41,7 +41,7 @@ Write to "you". Call ourselves "Flump" or "we". Use contractions where they soun
 
 - Use the exact wording, in sentence case, with a colon after the name. Never a dash.
 - It goes only where the site states a tagline: the home page title and meta description, the Open Graph and Twitter titles, the footer brand line, and, once they exist, the share image and the web manifest description. Marketing reads it from `TAGLINE` and `SITE_TAGLINE` in `apps/marketing/src/utils/site.ts`.
-- It never replaces the home h1. The h1 stays the plain line that says what Flump does.
+- It never replaces the home h1. The h1 stays the plain line that says what Flump does (see the one exception under 5.1).
 - Do not scatter fog metaphors through body copy. The tagline is said where it is listed above and nowhere else.
 
 ### 2.2 No hype
@@ -228,6 +228,8 @@ This is where finance copy most often misleads. Rules:
 
 **Page headings.** The h1 names the thing in the reader's words: "Debt", "Your mortgage", "Take-home pay". A heading is a noun phrase or a plain question the page answers ("What you keep from a pay rise"). No heading is a slogan, an instruction about money, or a stage ("Stage 1: Stabilise").
 
+**One exception (owner's choice, 20 November 2026).** The marketing home page h1 is "All your money. One clear picture." It is two short sentences with full stops, which 5.1 and 5.4 would otherwise not allow. The owner chose it in their own words ("I like headline 1 combined with line underneath 2", then "in one place is better"), with the one-sentence lead "Accounts, budget, pay, savings, pension and debts in one place." under it (5.2). An owner's explicit request outranks this guide. The exception covers that one string on that one page: no other heading, in the app or on the marketing site, may use a slogan shape or a full stop. Recorded in `docs/audit/plans/E42-marketing-site-restructure-plan.md`, ruling R-a.
+
 **Saved and scenario zones** (unchanged from the scenario spec, `docs/design/e15/scenario-zone.md`):
 
 | Element               | Approved copy                                                                          | Never                                  |
@@ -261,7 +263,7 @@ One sentence under the h1 at most, and only if the heading alone does not say wh
 - No exclamation marks.
 - No em dashes. Do not use a dash for an aside: write two sentences or use a comma.
 - "and", not "&", except in a registered name.
-- No full stop on a heading, button, label or single-sentence tooltip. Full stops on body sentences, error messages and anything with two sentences.
+- No full stop on a heading, button, label or single-sentence tooltip. Full stops on body sentences, error messages and anything with two sentences. The marketing home page h1 is the one exception (5.1).
 - Straight quotes in code; in prose, quote a label exactly as it appears on screen, in double quotes.
 - No "(s)": write the plural rule properly ("1 debt", "3 debts").
 - No emoji.

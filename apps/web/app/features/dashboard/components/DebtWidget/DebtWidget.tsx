@@ -34,8 +34,8 @@ export const DebtWidget: FC<DebtWidgetProps> = ({ data = null }) => {
       : date
         ? // The line carries no figure (E16 P1.8), so the assumed rate itself is on the Debt page.
           (data?.promoRevertAssumed?.length ?? 0) > 0
-          ? "Assumes you pay the minimum on each debt every month, and an assumed APR once a 0% deal ends."
-          : "Assumes you pay the minimum on each debt every month."
+          ? "An estimate, paying each minimum and moving a cleared debt's payment to the next, with an assumed APR once a 0% deal ends."
+          : "An estimate, paying each minimum and moving a cleared debt's payment to the next."
         : "Not paid off at the minimum payments you have added.";
 
   return (
