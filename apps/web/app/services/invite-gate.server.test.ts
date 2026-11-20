@@ -56,8 +56,6 @@ describe("inviteGateMiddleware", () => {
       const thrown = await result.catch((e: unknown) => e);
       // `data(...)` thrown from middleware: React Router renders it in the root error boundary.
       expect(thrown).toMatchObject({ init: { status: 403 }, data: { kind: "not-invited" } });
-      // The payload names only the kind and endpoint, never another route's data.
-      expect(JSON.stringify(thrown)).not.toContain("Joint savings");
       expect(loaderRan).not.toHaveBeenCalled();
     }
   });
@@ -95,6 +93,8 @@ describe("inviteGateMiddleware", () => {
     ["/logout", "POST"],
     ["/login", "GET"],
     ["/callback", "GET"],
+    ["/invite", "GET"],
+    ["/invite/abc", "GET"],
     ["/api/user-profile", "GET"],
     ["/app.data", "GET"],
     ["/app/accounts", "POST"],

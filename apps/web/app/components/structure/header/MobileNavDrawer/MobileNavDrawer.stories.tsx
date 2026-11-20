@@ -25,7 +25,25 @@ export const SignedIn: Story = {
   },
 };
 
-export const SignedOut: Story = { args: { user: null } };
+export const SignedOut: Story = {
+  args: { user: null },
+  parameters: { router: { loaderData: { user: null, inviteOnly: false } } },
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await expect(body.getByRole("link", { name: /sign up/i })).toHaveAttribute("href", "/signup");
+  },
+};
+
+/** While the beta is invite-only the drawer offers "Sign in" and no "Sign up". */
+export const SignedOutInviteOnly: Story = {
+  args: { user: null },
+  parameters: { router: { loaderData: { user: null, inviteOnly: true } } },
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await expect(body.queryByRole("link", { name: /sign up/i })).toBeNull();
+    await expect(body.getByRole("link", { name: /sign in/i })).toHaveAttribute("href", "/login");
+  },
+};
 
 export const Dark: Story = {
   globals: { theme: "dark" },

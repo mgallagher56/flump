@@ -6,14 +6,16 @@ import { loadRootProfile } from "./root-profile.server";
 import { throwRouteError } from "./route-error.server";
 
 /**
- * Paths the gate never checks: signing in and out, the erased-account page, and resource routes
- * that answer for themselves (the `/api` proxy passes the backend's own 403 on).
+ * Paths the gate never checks: signing in and out, invite links (an uninvited person must reach
+ * them to join), the erased-account page, and resource routes that answer for themselves (the
+ * `/api` proxy passes the backend's own 403 on).
  */
 const UNGATED = [
   /^\/login\/?$/,
   /^\/logout\/?$/,
   /^\/callback\/?$/,
   /^\/signup\/?$/i,
+  /^\/invite(\/|$)/,
   /^\/sandbox\/?$/,
   /^\/account-deleted\/?$/,
   /^\/account\/export\/?$/,

@@ -76,7 +76,7 @@ describe("RouteErrorState", () => {
     ).toBeDefined();
     expect(
       screen.getByText(
-        "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to.",
+        "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to. If you were sent an invite link, open it again while signed in.",
       ),
     ).toBeDefined();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeDefined();
@@ -117,7 +117,7 @@ describe("RouteErrorState", () => {
     unmount();
 
     render(<RouteErrorState kind="not-invited" />);
-    expect(screen.getByRole("link", { name: "Report this problem by email" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Contact us by email" })).toBeDefined();
   });
 
   it("does not offer the report link on the signed-out state", () => {

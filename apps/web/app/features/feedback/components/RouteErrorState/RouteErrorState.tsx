@@ -59,7 +59,7 @@ function copyFor(kind: RouteErrorStateProps["kind"]): Copy {
     case "not-invited":
       return {
         heading: "This account has not been invited yet",
-        body: "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to.",
+        body: "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to. If you were sent an invite link, open it again while signed in.",
         scene: "onboarding",
       };
     case "not-found":
@@ -154,12 +154,15 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
           </Button>
         ) : null}
         {kind === "not-invited" || showRetry ? (
+          // Not being invited is not a fault, so that page offers contact rather than a report.
           <a
-            aria-label="Report this problem by email"
+            aria-label={
+              kind === "not-invited" ? "Contact us by email" : "Report this problem by email"
+            }
             className={errorStateReport()}
             href={feedbackMailto(routeKey, APP_VERSION)}
           >
-            Report this problem
+            {kind === "not-invited" ? "Contact us" : "Report this problem"}
           </a>
         ) : null}
       </div>

@@ -9,6 +9,7 @@ vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 vi.mock("./services/beta-mode.server", () => ({ isInviteOnly: vi.fn() }));
 
 import { jsonResponse, profileFixture } from "~/test/fixtures/contractResponses";
+import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
 import { resetRememberedRootUser, useRootUser } from "./hooks/useRootUser";
 import App, { ErrorBoundary, loader } from "./root";
 import * as splatRoute from "./routes/$";
@@ -48,6 +49,11 @@ function SlowPage() {
 }
 
 const neverResolves = () => new Promise(() => {});
+
+/** A page's own boundary, as the app routes export it. */
+function ChildBoundary() {
+  return <RouteErrorBoundary />;
+}
 
 function RouteContent() {
   return <p>Route content</p>;
@@ -91,7 +97,7 @@ describe("root ErrorBoundary", () => {
     ).toBeDefined();
     expect(
       screen.getByText(
-        "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to.",
+        "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to. If you were sent an invite link, open it again while signed in.",
       ),
     ).toBeDefined();
     expect(screen.queryByRole("navigation")).toBeNull();
@@ -101,6 +107,35 @@ describe("root ErrorBoundary", () => {
     const signOut = screen.getByRole("button", { name: "Sign out" });
     expect(signOut.closest("form")?.getAttribute("action")).toBe("/logout");
     expect(document.title).toBe("This account has not been invited yet");
+  });
+
+  it("passes a page's not-invited error up to the root page, without the signed-in chrome", async () => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        loader: rootData(mockUser),
+        Component: ShellOutlet,
+        ErrorBoundary,
+        HydrateFallback: NullFallback,
+        children: [
+          {
+            path: "/",
+            loader: () => {
+              throw data({ kind: "not-invited", endpoint: "/accounts" }, { status: 403 });
+            },
+            Component: RouteContent,
+            ErrorBoundary: ChildBoundary,
+          },
+        ],
+      },
+    ]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<Stub initialEntries={["/"]} />, { container: document });
+    expect(
+      await screen.findByRole("heading", { name: "This account has not been invited yet" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.queryByText("Route content")).toBeNull();
   });
 
   it("keeps the normal header, signed out, when the root loader itself failed", async () => {
@@ -335,6 +370,16 @@ describe("root loader", () => {
     vi.mocked(isInviteOnly).mockResolvedValue(true);
     args = { ...args, context: {} };
     expect((await loader(args)).inviteOnly).toBe(true);
+  });
+
+  it("on an invite link, marks the person not invited instead of throwing, with no user", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(new Response('{"error":"not_invited"}', { status: 403 }));
+    args = { ...args, request: new Request("http://localhost/invite") };
+    const result = await loader(args);
+    expect(result.notInvited).toBe(true);
+    expect(result.user).toBeNull();
   });
 
   it("throws the not-invited route error instead of keeping the shell up", async () => {

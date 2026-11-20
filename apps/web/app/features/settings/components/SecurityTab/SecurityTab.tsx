@@ -1,6 +1,7 @@
 import { Button, Card, Icon, PageSection, useOptionalToast } from "@repo/ui";
-import { Inbox, KeyRound, Mail } from "lucide-react";
+import { Inbox, KeyRound, Mail, UserPlus } from "lucide-react";
 import { type FC, useState } from "react";
+import { Link } from "react-router";
 import {
   McpConnectionCard,
   STAGE_SCOPE,
@@ -28,10 +29,17 @@ export interface SecurityTabProps {
   guideUrl?: string;
   /** The MCP server address shown in the card's steps. */
   serverUrl?: string;
+  /** True for a beta admin: a section links to the invites page. */
+  isBetaAdmin?: boolean;
 }
 
 /** Sign-in security and AI access: password reset by email and the MCP connection card. */
-export const SecurityTab: FC<SecurityTabProps> = ({ email, guideUrl, serverUrl }) => {
+export const SecurityTab: FC<SecurityTabProps> = ({
+  email,
+  guideUrl,
+  serverUrl,
+  isBetaAdmin = false,
+}) => {
   const { sendPasswordResetEmail } = useUserProfile();
   // A toast as well as the status line; a no-op when rendered without a ToastProvider.
   const toast = useOptionalToast()?.toast;
@@ -124,6 +132,22 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email, guideUrl, serverUrl }
           ) : null}
         </Card>
       </PageSection>
+
+      {isBetaAdmin ? (
+        <PageSection
+          description="Create invite links and choose who can use Flump during the private test."
+          icon={UserPlus}
+          id="settings-invites"
+          title="Invites"
+          tone="neutral"
+        >
+          <Card className={sectionCard()}>
+            <Button asChild variant="outline">
+              <Link to="/app/invites">Manage invites</Link>
+            </Button>
+          </Card>
+        </PageSection>
+      ) : null}
 
       <McpConnectionCard
         initialTokens={mcp.tokens ?? []}

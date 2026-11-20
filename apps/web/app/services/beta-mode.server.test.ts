@@ -35,12 +35,24 @@ describe("isInviteOnly", () => {
     expect(await isInviteOnly(60_000)).toBe(false);
   });
 
-  it("answers invite-only when the backend fails or answers off contract, and keeps nothing", async () => {
+  it("answers invite-only when the backend fails, and asks again after ten seconds", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("down")) as unknown as typeof fetch;
     expect(await isInviteOnly(0)).toBe(true);
-    globalThis.fetch = answer({ inviteOnly: "no" });
-    expect(await isInviteOnly(1)).toBe(true);
     globalThis.fetch = answer({ inviteOnly: false });
-    expect(await isInviteOnly(2)).toBe(false);
+    expect(await isInviteOnly(9_999)).toBe(true);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(await isInviteOnly(10_000)).toBe(false);
+  });
+
+  it("answers invite-only for a body off contract", async () => {
+    globalThis.fetch = answer({ inviteOnly: "no" });
+    expect(await isInviteOnly(0)).toBe(true);
+  });
+
+  it("shares one read between concurrent callers", async () => {
+    globalThis.fetch = answer({ inviteOnly: false });
+    const answers = await Promise.all([isInviteOnly(0), isInviteOnly(0), isInviteOnly(0)]);
+    expect(answers).toEqual([false, false, false]);
+    expect(globalThis.fetch).toHaveBeenCalledOnce();
   });
 });

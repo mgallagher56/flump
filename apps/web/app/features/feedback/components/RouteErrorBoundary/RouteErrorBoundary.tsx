@@ -75,13 +75,21 @@ export interface RouteErrorBoundaryProps {
    * h1 of its own, so the error heading is the page h1 by default.
    */
   headingLevel?: "h1" | "h2";
+  /**
+   * The root boundary draws the not-invited page itself. Every other boundary passes a
+   * not-invited error up to it, so the page never shows inside the app chrome (for example when an
+   * invite is withdrawn while the app is open and a client navigation is refused).
+   */
+  isRoot?: boolean;
 }
 
 /** Shared route ErrorBoundary: reads the thrown payload and never renders raw error messages. */
 export function RouteErrorBoundary({
   headingLevel = "h1",
+  isRoot = false,
 }: RouteErrorBoundaryProps = {}): ReactElement {
   const error = useRouteError();
+  if (!isRoot && kindFromError(error) === "not-invited") throw error;
   const revalidator = useRevalidator();
   const { pathname } = useLocation();
   // Signed-out visitors have no dashboard, so the home link gets a neutral label for them.

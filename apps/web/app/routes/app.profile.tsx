@@ -1,4 +1,8 @@
-import { AccountListResponse, UserProfileResponse } from "@flump/api-contract";
+import {
+  AccountListResponse,
+  BetaAdminStatusResponse,
+  UserProfileResponse,
+} from "@flump/api-contract";
 import { type NetWorthChoicesAvailable, netWorthChoicesAvailable } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type {
@@ -27,7 +31,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   try {
     // The accounts only decide which net worth choices are offered. If they cannot be read the
     // page still loads and offers both (null: unknown is not "no").
-    const [userProfile, netWorthChoices] = await Promise.all([
+    const [userProfile, netWorthChoices, isBetaAdmin] = await Promise.all([
       backendFetch("/user-profile", {
         accessToken,
         signal: args.request.signal,
@@ -41,10 +45,20 @@ export const loader = async (args: LoaderFunctionArgs) => {
         (accounts): NetWorthChoicesAvailable | null => netWorthChoicesAvailable(accounts),
         () => null,
       ),
+      // Admins (BETA_ADMIN_USER_IDS) get a link to the invites page; anyone else gets a 404.
+      backendFetch("/beta/admin", {
+        accessToken,
+        signal: args.request.signal,
+        schema: BetaAdminStatusResponse,
+      }).then(
+        () => true,
+        () => false,
+      ),
     ]);
     return data({
       userProfile,
       netWorthChoices,
+      isBetaAdmin,
       user,
       aiGuideUrl: `${getMarketingUrl(args.request.url)}/mcp#setup`,
       mcpServerUrl: `${apiConfig.apiBaseUrl.replace(/\/$/, "")}/mcp`,
@@ -68,7 +82,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 }) => (formData?.get("intent") === DELETE_ACCOUNT_INTENT ? false : defaultShouldRevalidate);
 
 const ProfileRoute = (): ReactElement => {
-  const { userProfile, user, aiGuideUrl, mcpServerUrl, netWorthChoices } =
+  const { userProfile, user, aiGuideUrl, mcpServerUrl, netWorthChoices, isBetaAdmin } =
     useLoaderData<typeof loader>();
 
   return (
@@ -76,6 +90,7 @@ const ProfileRoute = (): ReactElement => {
       aiGuideUrl={aiGuideUrl}
       initialProfile={userProfile}
       mcpServerUrl={mcpServerUrl}
+      isBetaAdmin={isBetaAdmin}
       netWorthChoices={netWorthChoices}
       user={user}
     />

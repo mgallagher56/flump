@@ -79,9 +79,16 @@ function redactSegment(segment: string): string {
   return redactString(segment);
 }
 
+/**
+ * Secret path segments: the segment after `invite` is a single-use invite token (web
+ * `/invite/<token>`), so it is replaced whatever it looks like.
+ */
+const SECRET_SEGMENT_AFTER = /(^|[\\/])(invite)([\\/])[^\\/]+/gi;
+
 /** Redacts each path segment on its own, so long but harmless paths keep their shape. */
 function redactPath(path: string): string {
   return path
+    .replace(SECRET_SEGMENT_AFTER, `$1$2$3${REDACTED}`)
     .split(/([\\/])/)
     .map((part) => redactSegment(part))
     .join("");
