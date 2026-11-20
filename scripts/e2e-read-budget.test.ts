@@ -5,6 +5,7 @@ import {
   READ_LIMIT,
   readsPerSpec,
   readWindows,
+  unexplainedReadRefusals,
   userReads,
 } from "../apps/e2e/support/read-budget";
 
@@ -86,4 +87,19 @@ test("pacing starts with room left for a link spec, inside the backend's limit",
   expect(READ_LIMIT).toBe(600);
   expect(PACE_AT).toBeLessThan(READ_LIMIT);
   expect(READ_LIMIT - PACE_AT).toBeGreaterThanOrEqual(100);
+});
+
+test("a refused read fails the run unless a seeding retry accounts for it", () => {
+  const refusal = (line: string) => ({ at: 1, line, perUser: line.includes("userRef=") });
+  const refusals = [
+    refusal("ratelimit_exceeded route=GET /accounts userRef=ab retryAfter=3"),
+    refusal("ratelimit_exceeded route=POST /budget-entries userRef=ab retryAfter=3"),
+    refusal("ratelimit_exceeded route=GET /user-profile retryAfter=9"),
+  ];
+  // Two refused reads (the POST is a write, guarded elsewhere): none retried means both fail the run,
+  // one seeding retry leaves one, two leave none.
+  expect(unexplainedReadRefusals(refusals, 0)).toHaveLength(2);
+  expect(unexplainedReadRefusals(refusals, 1)).toHaveLength(1);
+  expect(unexplainedReadRefusals(refusals, 2)).toHaveLength(0);
+  expect(unexplainedReadRefusals([], 0)).toHaveLength(0);
 });

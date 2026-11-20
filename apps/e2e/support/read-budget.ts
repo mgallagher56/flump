@@ -197,3 +197,17 @@ export function readsPerSpec(reads: number[], marksText: string): SpecReads[] {
     };
   });
 }
+
+/**
+ * Reads the backend refused that no seeding retry accounts for (rate-limit-retry.ts retries a
+ * refused seeding call once and logs it). Any such refusal is a page or API read the suite leaned on
+ * the limit for, and fails the run. Writes are not counted here: the write and destructive limits
+ * have their own guards.
+ */
+export function unexplainedReadRefusals(refusals: Refusal[], retriedReads: number): Refusal[] {
+  const reads = refusals.filter((r) => {
+    const route = r.line.split("route=")[1] ?? "";
+    return route.startsWith("GET ") || route.startsWith("HEAD ");
+  });
+  return reads.slice(Math.max(0, retriedReads));
+}
