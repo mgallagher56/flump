@@ -9,6 +9,7 @@ import {
   readsPerSpec,
   readWindows,
   SPEC_MARKS,
+  unexplainedReadRefusals,
   userReads,
 } from "./read-budget";
 
@@ -33,9 +34,18 @@ export default function rateLimitTeardown(): void {
     ...destructive.map((d) => `- ${d.method} ${d.path}, in ${d.test}`),
     ...readBudgetLines(),
   ];
+  const refusedReads = unexplainedReadRefusals(
+    existsSync(BACKEND_LOG) ? parseBackendLog(readFileSync(BACKEND_LOG, "utf8")).refusals : [],
+    retries.filter((r) => r.method === "GET").length,
+  );
   console.log(lines.join("\n"));
   if (process.env.GITHUB_STEP_SUMMARY) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
+  }
+  if (refusedReads.length > 0) {
+    throw new Error(
+      `The backend refused ${refusedReads.length} read(s) with 429 that no seeding retry accounts for (${refusedReads.map((r) => r.line).join("; ")}): the suite leaned on the 600-reads-a-minute limit. Find what grew or pace it (read-budget.ts); never raise the limit.`,
+    );
   }
   if (destructive.length > MAX_DESTRUCTIVE_PER_RUN) {
     throw new Error(
