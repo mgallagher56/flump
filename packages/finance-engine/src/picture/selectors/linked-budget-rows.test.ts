@@ -421,7 +421,7 @@ describe("selectHousingPayment", () => {
         snapshot,
         [],
       ),
-    ).toEqual({ kind: "rent", monthly: 950, paymentEstimated: false });
+    ).toEqual({ kind: "rent", monthly: 950, paymentEstimated: false, sharePercent: 100 });
   });
 
   it("is null when nothing is saved", () => {
@@ -505,7 +505,7 @@ describe("selectHousingPayment: the estimate is the person's share", () => {
         new PortfolioSnapshot(accounts, []),
         accounts,
       ),
-    ).toEqual({ kind: "mortgage", monthly: 4303.32, paymentEstimated: true });
+    ).toEqual({ kind: "mortgage", monthly: 4303.32, paymentEstimated: true, sharePercent: 50 });
   });
 });
 

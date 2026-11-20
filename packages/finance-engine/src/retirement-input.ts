@@ -224,6 +224,12 @@ export interface RetirementBudgetLine {
   amount: number;
   frequency: BudgetEntryItem["frequency"];
   isIncome: boolean;
+  /**
+   * E34 C1 (audit JO-4): a joint line counts at the person's share, as the budget counts it. A
+   * linked debt line is already at the account's share, so it is always sole here.
+   */
+  ownership: BudgetEntryItem["ownership"];
+  sharePercent: BudgetEntryItem["sharePercent"];
 }
 
 /**
@@ -258,6 +264,8 @@ export function retirementBudgetLines(
         amount: row.amount,
         frequency: row.frequency,
         isIncome: false,
+        ownership: "sole",
+        sharePercent: null,
       });
       continue;
     }
@@ -268,6 +276,8 @@ export function retirementBudgetLines(
       amount: row.amount,
       frequency: row.frequency,
       isIncome: row.isIncome,
+      ownership: row.ownership,
+      sharePercent: row.sharePercent,
     });
   }
   return lines;

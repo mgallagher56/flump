@@ -44,13 +44,17 @@ describe("<EntryOwnershipField />", () => {
     expect(props.onChange).toHaveBeenLastCalledWith("sole", null);
   });
 
-  it("shows the joint label and saves a changed share on blur, clamped to 1 to 100", () => {
+  // A joint share is 1 to 99: 100% is all of it (mark it sole) and 0% none of it.
+  it("shows the joint label and saves a changed share on blur, clamped to 1 to 99", () => {
     const { props } = setup({ ownership: "joint", sharePercent: 50 });
     expect(screen.getByText("Joint, 50%")).toBeTruthy();
     const share = screen.getByLabelText("Your share of Rent");
     fireEvent.change(share, { target: { value: "140" } });
     fireEvent.blur(share);
-    expect(props.onChange).toHaveBeenLastCalledWith("joint", 100);
+    expect(props.onChange).toHaveBeenLastCalledWith("joint", 99);
+    fireEvent.change(share, { target: { value: "0" } });
+    fireEvent.blur(share);
+    expect(props.onChange).toHaveBeenLastCalledWith("joint", 1);
   });
 
   it("saves nothing when the share is unchanged or cleared", () => {

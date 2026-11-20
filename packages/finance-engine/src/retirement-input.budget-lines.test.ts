@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BudgetEntryItem } from "./ai-context-pack.js";
 import type { RawAccount } from "./portfolio.js";
+import { calculateTargetFromBudgetLines } from "./retirement.js";
 import { buildRetirementPlanInput, retirementBudgetLines } from "./retirement-input.js";
 
 const NOW = new Date("2026-11-17T12:00:00Z");
@@ -80,6 +81,8 @@ describe("retirementBudgetLines", () => {
         amount: 360,
         frequency: "monthly",
         isIncome: false,
+        ownership: "sole",
+        sharePercent: null,
       },
     ]);
   });
@@ -105,6 +108,26 @@ describe("buildRetirementPlanInput: target from budget lines", () => {
     if (typeof target !== "object" || target?.kind !== "budget")
       throw new Error("expected a budget target");
     expect(target.lines.map((l) => [l.id, l.status])).toEqual([["food", "continues"]]);
+  });
+
+  it("counts a joint line at the person's share, as the budget does (E34 C1, audit JO-4)", () => {
+    // Groceries £520 a month, joint at 50%: £520 x 50% = £260 a month, £260 x 12 = £3,120 a year.
+    const result = buildRetirementPlanInput({
+      plan,
+      birthYear: 1981,
+      now: NOW,
+      accounts: [],
+      budgetEntries: [
+        entry({ id: "food", category: "food", amount: 520, ownership: "joint", sharePercent: 50 }),
+      ],
+    });
+    if (!result.ok) throw new Error("expected a built input");
+    const target = result.input.target;
+    if (typeof target !== "object" || target?.kind !== "budget")
+      throw new Error("expected a budget target");
+    const totals = calculateTargetFromBudgetLines(target.lines);
+    expect(totals.monthlyAmount).toBe(260);
+    expect(totals.yearlyAmount).toBe(3120);
   });
 
   it("has no target when the budget has no line it can count", () => {

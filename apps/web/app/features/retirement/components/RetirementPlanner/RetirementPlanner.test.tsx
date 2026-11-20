@@ -547,4 +547,33 @@ describe("RetirementPlanner", () => {
     expect(screen.getByText("£180 / monthly")).toBeDefined();
     expect(screen.queryByText("Old card")).toBeNull();
   });
+
+  // E34 C1, audit JO-4: a joint grocery line of £520 at 50% shows and counts as £260, as on Budget.
+  it("lists a joint budget line at the person's share", async () => {
+    const user = userEvent.setup();
+    const id = "66666666-6666-4666-8666-666666666666";
+    renderPlanner({
+      planArgs: {
+        ...planArgs,
+        budgetEntries: [
+          ...(planArgs.budgetEntries ?? []),
+          {
+            id,
+            category: "food",
+            name: "Groceries together",
+            amount: 520,
+            frequency: "monthly",
+            isIncome: false,
+            isEssential: true,
+            ownership: "joint",
+            sharePercent: 50,
+          },
+        ],
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "From budget lines" }));
+    expect(screen.getByTestId(`retirement-budget-line-amount-${id}`).textContent).toBe(
+      "£260 / monthly, your 50% share",
+    );
+  });
 });

@@ -170,6 +170,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [rentLine?.id],
         );
       }
+      // The E34 C1 one-home share before-image: one row past 90 days and one inside it.
+      for (const age of ["91 days", "89 days"]) {
+        await ds.query(
+          `INSERT INTO budget_entry_share_backfill (budget_entry_id, old_sole_or_joint, old_share_percent, backfilled_at) VALUES ($1, 'joint', 100, ${ago(age)})`,
+          [rentLine?.id],
+        );
+      }
       // The slice 7 before-image: one row past 90 days and one inside it.
       for (const age of ["91 days", "89 days"]) {
         await ds.query(
@@ -251,6 +258,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           take_home_salary_backfill: 1,
           reset_pension_zeros_backfill: 1,
           rental_share_onto_property_backfill: 1,
+          budget_entry_share_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });

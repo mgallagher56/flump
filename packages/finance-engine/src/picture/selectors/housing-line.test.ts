@@ -74,7 +74,7 @@ describe("the mortgage payment saved on the mortgage account (L13, HM-1, BU-5)",
       payment(facts({ housingStatus: "mortgage", monthlyHousingCost: 1250 }), [
         mortgage({ monthlyContribution: 1400 }),
       ]),
-    ).toEqual({ kind: "mortgage", monthly: 1400, paymentEstimated: false });
+    ).toEqual({ kind: "mortgage", monthly: 1400, paymentEstimated: false, sharePercent: 100 });
   });
 
   it("counts a joint mortgage's saved payment at the person's share", () => {
@@ -90,7 +90,7 @@ describe("the mortgage payment saved on the mortgage account (L13, HM-1, BU-5)",
     // 200,000 at 4.5% over 300 months: r = 0.00375, 200,000 x r / (1 - (1 + r)^-300) = 1,111.66.
     expect(
       payment(facts({ housingStatus: "mortgage", monthlyHousingCost: 1250 }), [mortgage()]),
-    ).toEqual({ kind: "mortgage", monthly: 1111.66, paymentEstimated: true });
+    ).toEqual({ kind: "mortgage", monthly: 1111.66, paymentEstimated: true, sharePercent: 100 });
   });
 
   it("counts a saved payment on an interest-only mortgage, and never estimates one", () => {
@@ -104,6 +104,7 @@ describe("the mortgage payment saved on the mortgage account (L13, HM-1, BU-5)",
       kind: "mortgage",
       monthly: 750,
       paymentEstimated: false,
+      sharePercent: 100,
     });
   });
 

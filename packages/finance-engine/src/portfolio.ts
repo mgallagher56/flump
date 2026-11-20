@@ -3,7 +3,12 @@ import {
   categorizeAccountType,
   isLiabilityCategory,
 } from "./account-category.js";
-import { type AccountOwnership, type AccountShareInput, applyAccountShare } from "./joint-share.js";
+import {
+  type AccountOwnership,
+  type AccountShareInput,
+  applyAccountShare,
+  resolveAccountSharePercent,
+} from "./joint-share.js";
 import { countsTowardNetWorth, type NetWorthBasis } from "./net-worth-basis.js";
 import type { DebtItem, DebtType } from "./types.js";
 
@@ -83,6 +88,11 @@ export interface ResolvedAccount {
    */
   netWorthBalance: number;
   latestBalance: number; // Same as nominalBalance
+  /**
+   * The person's share (0-100) every figure above is already taken at (E34): 100 for a sole
+   * account, an ISA or a pension. Shown only; never apply it again.
+   */
+  sharePercent: number;
   /** Portion of a negative asset balance (overdrawn current account), as a positive amount. */
   overdrawnAmount: number;
   interestRate: number;
@@ -247,6 +257,7 @@ export class PortfolioSnapshot {
         nominalBalance,
         netWorthBalance,
         latestBalance: nominalBalance,
+        sharePercent: resolveAccountSharePercent(shareInput),
         overdrawnAmount,
         interestRate,
         interestRateKnown,

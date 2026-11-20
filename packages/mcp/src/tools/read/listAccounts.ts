@@ -19,6 +19,8 @@ const result = z.object({
       label: z.string(),
       category: z.enum(CATEGORIES),
       balanceGbp: z.number(),
+      /** The percentage balanceGbp is taken at: 100 when sole, the user's share when joint (E34). */
+      sharePercent: z.number(),
       isLiability: z.boolean(),
       interestRatePct: z.number().nullable(),
       /** Debts only. */
@@ -51,7 +53,7 @@ export const listAccounts = defineFlumpTool({
   name: "list_accounts",
   title: "List accounts",
   description:
-    "Lists the user's accounts with a short opaque id, a label, category and balance. Debts, mortgages and student loans show the amount owed as a positive number, with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
+    "Lists the user's accounts with a short opaque id, a label, category and balance. A joint account's balance is the user's share, given as sharePercent. Debts, mortgages and student loans show the amount owed as a positive number, with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
   input: {
     category: z
       .enum(CATEGORIES)
@@ -73,6 +75,7 @@ export const listAccounts = defineFlumpTool({
         label: m.labelOf(a),
         category: a.category,
         balanceGbp: round2(a.nominalBalance),
+        sharePercent: a.sharePercent,
         isLiability: a.isLiability,
         interestRatePct: a.interestRateKnown ? a.interestRate : null,
         ...(a.category === "debt"

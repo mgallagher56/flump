@@ -1041,7 +1041,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Lists the user's accounts with a short opaque id, a label, category and balance. Debts, mortgages and student loans show the amount owed as a positive number, with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
+    "description": "Lists the user's accounts with a short opaque id, a label, category and balance. A joint account's balance is the user's share, given as sharePercent. Debts, mortgages and student loans show the amount owed as a positive number, with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -1222,6 +1222,9 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                       "null",
                     ],
                   },
+                  "sharePercent": {
+                    "type": "number",
+                  },
                   "termMonths": {
                     "type": [
                       "number",
@@ -1234,6 +1237,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                   "label",
                   "category",
                   "balanceGbp",
+                  "sharePercent",
                   "isLiability",
                   "interestRatePct",
                 ],
@@ -1462,7 +1466,10 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                     "type": "string",
                   },
                   "sharePercent": {
-                    "type": "number",
+                    "type": [
+                      "number",
+                      "null",
+                    ],
                   },
                 },
                 "required": [

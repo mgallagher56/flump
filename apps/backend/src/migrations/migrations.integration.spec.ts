@@ -50,6 +50,10 @@ import { BackfillFirstHistoryRow1795470300000 } from "./BackfillFirstHistoryRow1
 import { BackfillMortgageRepaymentType1795530000000 } from "./BackfillMortgageRepaymentType1795530000000";
 import { BackfillPropertyKindAndMortgageLink1795470100000 } from "./BackfillPropertyKindAndMortgageLink1795470100000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
+import {
+  BUDGET_ENTRY_SHARE_BACKFILL_TABLE,
+  BudgetEntryShareOneHome1795570000000,
+} from "./BudgetEntryShareOneHome1795570000000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 import {
   ClearDefaultPensionRates1795480100000,
@@ -113,7 +117,7 @@ let MIGRATIONS: MigrationClass[] = [];
 // ClearTakeHomeSalaries1795530100000 and ClearResetPensionZeros1795530200000, and the slice 7
 // before-image (rental_share_onto_property_backfill, RentalShareOntoPropertyAccounts1795550100000).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill', 'budget_entry_share_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -3754,6 +3758,171 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       expect(await beforeImage()).toHaveLength(1);
       await ds.query("DELETE FROM accounts WHERE id = $1", [soleRental]);
+      expect(await beforeImage()).toEqual([]);
+    });
+  });
+
+  describe("BudgetEntryShareOneHome1795570000000 (E34 C1, one home per value)", () => {
+    const NAME = "BudgetEntryShareOneHome1795570000000";
+    const line = async (
+      userId: string,
+      linkKind: string | null,
+      ownership: string,
+      share: number | null,
+      category = "bills",
+    ): Promise<string> =>
+      at<{ id: string }>(
+        await ds.query(
+          `INSERT INTO budget_entries (user_id, category, name, amount, is_income, link_kind, ownership, share_percent)
+           VALUES ($1, $2, 'Line', 0, $3, $4, $5, $6) RETURNING id`,
+          [userId, category, linkKind === "take_home", linkKind, ownership, share],
+        ),
+        0,
+      ).id;
+    const share = async (id: string) =>
+      at(
+        await ds.query("SELECT ownership, share_percent FROM budget_entries WHERE id = $1", [id]),
+        0,
+      );
+    const beforeImage = async (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT budget_entry_id, old_sole_or_joint, old_share_percent FROM "${BUDGET_ENTRY_SHARE_BACKFILL_TABLE}" ORDER BY budget_entry_id`,
+      );
+    const imageExists = async (): Promise<boolean> =>
+      (
+        await ds.query(
+          `SELECT 1 FROM information_schema.tables WHERE table_name = '${BUDGET_ENTRY_SHARE_BACKFILL_TABLE}'`,
+        )
+      ).length > 0;
+
+    /** One line of each kind the migration changes, and three it leaves. */
+    const seedLines = async () => ({
+      jointSavings: await line("u1", "savings", "joint", 40, "savings"),
+      soleTakeHomeWithShare: await line("u1", "take_home", "sole", 30, "income"),
+      jointWhole: await line("u1", null, "joint", 100),
+      soleWithShare: await line("u1", null, "sole", 25),
+      jointDebt: await line("u2", "debt", "joint", 50, "debt"),
+      soleDebt: await line("u1", "debt", "sole", null, "debt"),
+      jointHousing: await line("u1", "housing", "joint", 50, "housing"),
+      jointUnlinked: await line("u1", null, "joint", 60),
+    });
+
+    it("sets each line that breaks the rules to sole with no share, keeps the rest, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      const lines = await seedLines();
+      const logged = vi.spyOn(Logger.prototype, "log");
+      await ds.runMigrations();
+      // Counts only: five lines changed, and no id in the message.
+      expect(logged).toHaveBeenCalledWith("Budget lines set to sole with no share: 5");
+      logged.mockRestore();
+      expect(await applied()).toContain(NAME);
+      const sole = { ownership: "sole", share_percent: null };
+      for (const id of [
+        lines.jointSavings,
+        lines.soleTakeHomeWithShare,
+        lines.jointWhole,
+        lines.soleWithShare,
+        lines.jointDebt,
+        lines.soleDebt,
+      ]) {
+        expect(await share(id)).toEqual(sole);
+      }
+      // A housing line is the home of a shared rent's share (JO-8); an unlinked line keeps its own.
+      expect(await share(lines.jointHousing)).toEqual({ ownership: "joint", share_percent: 50 });
+      expect(await share(lines.jointUnlinked)).toEqual({ ownership: "joint", share_percent: 60 });
+      const image = await beforeImage();
+      expect(image).toHaveLength(5);
+      expect(image).toEqual(
+        expect.arrayContaining([
+          {
+            budget_entry_id: lines.jointSavings,
+            old_sole_or_joint: "joint",
+            old_share_percent: 40,
+          },
+          {
+            budget_entry_id: lines.soleTakeHomeWithShare,
+            old_sole_or_joint: "sole",
+            old_share_percent: 30,
+          },
+          { budget_entry_id: lines.jointWhole, old_sole_or_joint: "joint", old_share_percent: 100 },
+          {
+            budget_entry_id: lines.soleWithShare,
+            old_sole_or_joint: "sole",
+            old_share_percent: 25,
+          },
+          { budget_entry_id: lines.jointDebt, old_sole_or_joint: "joint", old_share_percent: 50 },
+        ]),
+      );
+      // A share set after the migration is the person's choice: a second run leaves it.
+      await ds.query(
+        "UPDATE budget_entries SET ownership = 'joint', share_percent = 70 WHERE id = $1",
+        [lines.jointWhole],
+      );
+      await runUpInTransaction(new BudgetEntryShareOneHome1795570000000());
+      expect(await share(lines.jointWhole)).toEqual({ ownership: "joint", share_percent: 70 });
+      expect(await beforeImage()).toHaveLength(5);
+    });
+
+    it("refuses a joint share of 0 or 100, a share on a sole line, and a share on a take-home, savings or debt line", async () => {
+      await ds.runMigrations();
+      const refused: [string | null, string, number | null, string][] = [
+        [null, "joint", 100, "CHK_budget_entries_share_percent"],
+        [null, "joint", 0, "CHK_budget_entries_share_percent"],
+        [null, "sole", 10, "CHK_budget_entries_sole_no_share"],
+        ["savings", "joint", 50, "CHK_budget_entries_linked_no_share"],
+        ["debt", "joint", 50, "CHK_budget_entries_linked_no_share"],
+        ["take_home", "joint", 50, "CHK_budget_entries_linked_no_share"],
+      ];
+      for (const [linkKind, ownership, value, constraint] of refused) {
+        const category =
+          linkKind === "take_home" ? "income" : linkKind === null ? "bills" : linkKind;
+        await expect(line("u-check", linkKind, ownership, value, category)).rejects.toThrow(
+          constraint,
+        );
+      }
+      // Still allowed: a joint housing line, a joint line at 1 or 99, and a sole linked line.
+      await line("u-check", "housing", "joint", 50, "housing");
+      await line("u-check", null, "joint", 1);
+      await line("u-check", null, "joint", 99);
+      await line("u-check", "savings", "sole", null, "savings");
+    });
+
+    it("puts the old ownership and share back on revert, keeps a share set since, restores the 1 to 100 check and drops the before-image", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      const lines = await seedLines();
+      await ds.runMigrations();
+      // The person sets their own share on one line after the migration.
+      await ds.query(
+        "UPDATE budget_entries SET ownership = 'joint', share_percent = 70 WHERE id = $1",
+        [lines.jointWhole],
+      );
+      await undoThrough(NAME);
+      expect(await share(lines.jointSavings)).toEqual({ ownership: "joint", share_percent: 40 });
+      expect(await share(lines.soleTakeHomeWithShare)).toEqual({
+        ownership: "sole",
+        share_percent: 30,
+      });
+      expect(await share(lines.soleWithShare)).toEqual({ ownership: "sole", share_percent: 25 });
+      expect(await share(lines.jointDebt)).toEqual({ ownership: "joint", share_percent: 50 });
+      expect(await share(lines.jointWhole)).toEqual({ ownership: "joint", share_percent: 70 });
+      expect(await share(lines.soleDebt)).toEqual({ ownership: "sole", share_percent: null });
+      expect(await share(lines.jointHousing)).toEqual({ ownership: "joint", share_percent: 50 });
+      expect(await imageExists()).toBe(false);
+      // The old checks only: 100 on a joint line and a share on a sole line are accepted again.
+      await line("u-down", null, "joint", 100);
+      await line("u-down", null, "sole", 10);
+      await ds.runMigrations();
+    });
+
+    it("drops the before-image row with its budget line", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      const id = await line("u1", null, "joint", 100);
+      await ds.runMigrations();
+      expect(await beforeImage()).toHaveLength(1);
+      await ds.query("DELETE FROM budget_entries WHERE id = $1", [id]);
       expect(await beforeImage()).toEqual([]);
     });
   });

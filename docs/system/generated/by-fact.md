@@ -433,6 +433,7 @@ Read by:
 - Savings: `apps/web/app/containers/savings/SavingsContainer.tsx`
 - Mortgage: `apps/web/app/features/mortgage/jointMortgage.ts` (the page deliberately shows whole balances)
 - AI read tools: `apps/backend/src/modules/agent/agent-data.service.ts`
+- AI read tools: `packages/mcp/src/tools/read/listAccounts.ts` (sharePercent beside a balance already at the share (E34 C1))
 
 ### Interest rate on an account
 
@@ -1199,9 +1200,9 @@ Read by:
 <a id="budget-entries"></a>
 
 - Id: `budget-entries` (stored fact)
-- Verdict: Broken. Findings: BU-1, BU-3, BU-7, BU-10, JO-4. Links: L33, L34, L35, L36, L39, L56, L58.
+- Verdict: Broken. Findings: BU-1, BU-3, BU-7, BU-10. Links: L33, L34, L35, L36, L39, L56, L58.
 - Source of truth: `budget_entries` in `apps/backend/src/entities/budget-entry.entity.ts`
-- Note: The Retirement page loads these rows.
+- Note: The Retirement page loads these rows. A line's share (E34 C1) has one home: an unlinked line stores its own ownership and share (1 to 99); a line linked to take-home pay or to an account stores none (CHECK CHK_budget_entries_linked_no_share) and counts its source at the source's share, the account's for a savings or debt line; a linked housing line stores the share of a shared rent (JO-8). Retirement's budget target counts a joint line at its share (JO-4 fixed).
 
 Other stores:
 
@@ -1490,7 +1491,7 @@ Read by:
 <a id="retirement-income"></a>
 
 - Id: `retirement-income` (derived figure)
-- Verdict: Broken. Findings: HM-6, JO-4. Links: L58, L59.
+- Verdict: Broken. Findings: HM-6. Links: L58, L59.
 - Computed by: `calculateRetirementPlan` in `packages/finance-engine/src/retirement.ts`
 - Built from: `retirement-plan`, `account-balance`, `balance-history`, `salary`, `pension-rates`, `birth-year`, `housing-cost`, `housing-status`, `budget-entries`, `mortgage-term-and-fix-end`
 - Note: One calculation. The web page feeds it the saved budget rows. A single rental with an ordinary name can still be taken as the home loan.

@@ -6,9 +6,9 @@ Each line is a statement a user would expect to be true, with the verdict from t
 
 | Verdict                                   | Count |
 | ----------------------------------------- | ----- |
-| Holds                                     | 44    |
+| Holds                                     | 45    |
 | Holds with a manual step or a delay       | 6     |
-| Broken                                    | 12    |
+| Broken                                    | 11    |
 | Duplicated (two stores that can disagree) | 11    |
 | Not checked                               | 0     |
 
@@ -122,7 +122,7 @@ Each line is a statement a user would expect to be true, with the verdict from t
 | Id  | Statement                                                                            | Verdict | Checked in | Findings   |
 | --- | ------------------------------------------------------------------------------------ | ------- | ---------- | ---------- |
 | L55 | Marking an account joint at 40% changes every figure that counts it in the same way. | Broken  | browser    | JO-5, JO-9 |
-| L56 | A joint budget entry counts at its share in every budget figure.                     | Broken  | code       | JO-4       |
+| L56 | A joint budget entry counts at its share in every budget figure.                     | Holds   | code       | JO-4       |
 | L57 | A joint housing cost counts at its share.                                            | Holds   | browser    | JO-8       |
 
 ## K. Retirement

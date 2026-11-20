@@ -1,7 +1,8 @@
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
 import { BUDGET_HOUSING_CATEGORY } from "../../budget-entry-names.js";
-import { applyBudgetEntryShare } from "../../budget-entry-share.js";
+import { applyBudgetEntryShare, resolveBudgetEntrySharePercent } from "../../budget-entry-share.js";
 import { isBuyToLetAccount } from "../../buy-to-let.js";
+import { resolveAccountSharePercent } from "../../joint-share.js";
 import { calculateMonthlyMortgagePayment } from "../../mortgage.js";
 import type { PortfolioSnapshot, RawAccount } from "../../portfolio.js";
 import { type Figure, type FigureProvenance, figureKnown, figureUnknown } from "../figure.js";
@@ -46,15 +47,18 @@ function positive(value: unknown): number | null {
 function homeMortgagePayments(
   snapshot: PortfolioSnapshot,
   rawAccounts: readonly RawAccount[],
-): { monthly: number; estimated: boolean } | null {
+): { monthly: number; estimated: boolean; sharePercent: number | null } | null {
   const mortgages = rawAccounts.filter((a) => a.type === "Mortgage" && !isBuyToLetAccount(a));
   if (mortgages.length === 0) return null;
   const resolved = new Map(snapshot.getResolvedAccounts().map((a) => [a.id, a]));
   let total = 0;
   let estimated = false;
+  // The share each payment is already taken at, for display: one value, or null when they differ.
+  const shares = new Set<number>();
   for (const account of mortgages) {
     // The saved payment, already at the person's share of a joint mortgage.
     const saved = account.id ? resolved.get(String(account.id)) : undefined;
+    shares.add(saved?.sharePercent ?? resolveAccountSharePercent(account));
     if (saved?.monthlyContributionKnown && saved.monthlyContribution > 0) {
       total += saved.monthlyContribution;
       continue;
@@ -71,7 +75,28 @@ function homeMortgagePayments(
     if (!Number.isFinite(payment) || payment <= 0) return null;
     total += payment;
   }
-  return total > 0 ? { monthly: round2(total), estimated } : null;
+  if (!(total > 0)) return null;
+  return {
+    monthly: round2(total),
+    estimated,
+    sharePercent: shares.size === 1 ? [...shares][0]! : null,
+  };
+}
+
+/** The budget's linked housing line, which carries whether a rent is shared (JO-8). */
+function linkedHousingLine(budget: readonly BudgetEntryItem[]): BudgetEntryItem | undefined {
+  return budget.find(
+    (row) =>
+      row.linkKind === "housing" &&
+      row.isIncome !== true &&
+      row.category === BUDGET_HOUSING_CATEGORY,
+  );
+}
+
+/** The share (0-100) `rentAtShare` takes a rent at: the linked housing line's when joint, else 100. */
+function rentSharePercent(budget: readonly BudgetEntryItem[]): number {
+  const line = linkedHousingLine(budget);
+  return line && line.ownership === "joint" ? resolveBudgetEntrySharePercent(line) : 100;
 }
 
 /**
@@ -81,12 +106,7 @@ function homeMortgagePayments(
  * household contribution is already what the person pays, so it is never shared again.
  */
 export function rentAtShare(saved: number, budget: readonly BudgetEntryItem[]): number {
-  const line = budget.find(
-    (row) =>
-      row.linkKind === "housing" &&
-      row.isIncome !== true &&
-      row.category === BUDGET_HOUSING_CATEGORY,
-  );
+  const line = linkedHousingLine(budget);
   return line && line.ownership === "joint" ? applyBudgetEntryShare(saved, line) : saved;
 }
 
@@ -142,6 +162,12 @@ export interface HousingPayment {
   /** Pounds a month. */
   monthly: number;
   paymentEstimated: boolean;
+  /**
+   * The share (0-100) `monthly` is already taken at (E34 C1): the shared rent's, the mortgages'
+   * when they are held at one share, 100 for a household contribution or a sole cost; null when
+   * home mortgages are held at different shares. Shown only: never apply it again.
+   */
+  sharePercent?: number | null;
 }
 
 /*
@@ -164,14 +190,14 @@ export function selectHousingPayment(
   rawAccounts: readonly RawAccount[],
   budget: readonly BudgetEntryItem[] = [],
 ): HousingPayment | null {
-  const { kind, monthly, paymentEstimated, missing } = housingPayment(
+  const { kind, monthly, paymentEstimated, sharePercent, missing } = housingPayment(
     profile,
     snapshot,
     rawAccounts,
     budget,
   );
   if (missing.length > 0 || monthly === null) return null;
-  return { kind, monthly, paymentEstimated };
+  return { kind, monthly, paymentEstimated, sharePercent };
 }
 
 function housingPayment(
@@ -183,6 +209,7 @@ function housingPayment(
   kind: HousingCost["kind"];
   monthly: number | null;
   paymentEstimated: boolean;
+  sharePercent: number | null;
   missing: MissingKey[];
 } {
   const missing: MissingKey[] = [];
@@ -190,9 +217,11 @@ function housingPayment(
   let kind: HousingCost["kind"] = "rent";
   let monthly: number | null = null;
   let paymentEstimated = false;
+  let sharePercent: number | null = 100;
 
   if (profile.housingStatus === "renting") {
     monthly = saved === null ? null : rentAtShare(saved, budget);
+    sharePercent = rentSharePercent(budget);
     if (monthly === null) missing.push("monthlyHousingCost");
   } else if (profile.housingStatus === "mortgage") {
     kind = "mortgage";
@@ -201,6 +230,7 @@ function housingPayment(
     if (accounts !== null) {
       monthly = accounts.monthly;
       paymentEstimated = accounts.estimated;
+      sharePercent = accounts.sharePercent;
     } else {
       monthly = saved;
       if (monthly === null) missing.push("mortgageDetails");
@@ -212,7 +242,7 @@ function housingPayment(
   } else {
     missing.push("housingStatus");
   }
-  return { kind, monthly, paymentEstimated, missing };
+  return { kind, monthly, paymentEstimated, sharePercent, missing };
 }
 
 export interface FixedRateEndFact {

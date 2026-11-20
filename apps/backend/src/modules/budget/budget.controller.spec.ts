@@ -7,7 +7,12 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { createInMemoryRepository } from "../../testing/in-memory-repository";
 import { BudgetController } from "./budget.controller";
-import { BudgetService } from "./budget.service";
+import {
+  BudgetService,
+  FULL_SHARE_MESSAGE,
+  LINKED_LINE_SHARE_MESSAGE,
+  ZERO_SHARE_MESSAGE,
+} from "./budget.service";
 
 /** Test wiring (BE-13): the controller takes the service; the service takes the repositories. */
 const budgetController = (
@@ -353,18 +358,59 @@ describe("BudgetController", () => {
       expect(created).toMatchObject({ ownership: "sole", sharePercent: null });
     });
 
-    it("refuses an unknown ownership or a share outside 1 to 100, in the accounts wording", async () => {
+    it("refuses an unknown ownership or a share that is not a whole number up to 100", async () => {
       const { controller, budgetRepo } = entryController();
       const base = { category: "bills", name: "Energy", amount: 150 };
       await expect(
         controller.createBudgetEntry(req, { ...base, ownership: "shared" as never }),
       ).rejects.toThrow("ownership must be one of sole, joint");
-      for (const sharePercent of [0, 101, 33.5]) {
+      for (const sharePercent of [-1, 101, 33.5]) {
         await expect(
           controller.createBudgetEntry(req, { ...base, ownership: "joint", sharePercent }),
-        ).rejects.toThrow("sharePercent must be an integer between 1 and 100, or null");
+        ).rejects.toThrow("sharePercent must be an integer between 1 and 99, or null");
       }
       expect(budgetRepo.rows).toEqual([]);
+    });
+
+    it("refuses a joint share of 0 or 100, each saying what it means, and stores nothing", async () => {
+      const { controller, budgetRepo } = entryController();
+      const base = { category: "bills", name: "Energy", amount: 150, ownership: "joint" as const };
+      const zero = controller.createBudgetEntry(req, { ...base, sharePercent: 0 });
+      await expect(zero).rejects.toBeInstanceOf(BadRequestException);
+      await expect(zero).rejects.toThrow(ZERO_SHARE_MESSAGE);
+      const full = controller.createBudgetEntry(req, { ...base, sharePercent: 100 });
+      await expect(full).rejects.toBeInstanceOf(BadRequestException);
+      await expect(full).rejects.toThrow(FULL_SHARE_MESSAGE);
+      expect(budgetRepo.rows).toEqual([]);
+    });
+
+    it("accepts a joint share of 1 and of 99, the ends of the range", async () => {
+      const { controller } = entryController();
+      const base = { category: "bills", name: "Energy", amount: 150, ownership: "joint" as const };
+      expect(await controller.createBudgetEntry(req, { ...base, sharePercent: 1 })).toMatchObject({
+        ownership: "joint",
+        sharePercent: 1,
+      });
+      expect(
+        await controller.createBudgetEntry(req, { ...base, name: "Water", sharePercent: 99 }),
+      ).toMatchObject({ ownership: "joint", sharePercent: 99 });
+    });
+
+    it("refuses an update to a joint share of 100 and leaves the row as saved", async () => {
+      const row = {
+        id: "e1",
+        userId: "u1",
+        category: "bills",
+        name: "Energy",
+        amount: 150,
+        ownership: "joint",
+        sharePercent: 30,
+      };
+      const { controller, budgetRepo } = entryController([row]);
+      await expect(controller.updateBudgetEntry(req, "e1", { sharePercent: 100 })).rejects.toThrow(
+        FULL_SHARE_MESSAGE,
+      );
+      expect(budgetRepo.rows).toEqual([row]);
     });
 
     it("keeps ownership and share when an update leaves them out", async () => {
@@ -468,6 +514,95 @@ describe("BudgetController", () => {
         linkAccountId: MY_LOAN,
       });
       expect(debt).toMatchObject({ amount: 0, linkKind: "debt", linkAccountId: MY_LOAN });
+    });
+
+    it("refuses a share of its own on a take-home, savings or debt line, and stores nothing", async () => {
+      const { budgetRepo, controller } = setup();
+      const linkedBodies = [
+        { ...savingsLine, linkKind: "savings" as const, linkAccountId: MY_SAVER },
+        {
+          category: "debt",
+          name: "Car loan",
+          amount: 180,
+          linkKind: "debt" as const,
+          linkAccountId: MY_LOAN,
+        },
+        {
+          category: "income",
+          name: "Pay",
+          amount: 2000,
+          isIncome: true,
+          linkKind: "take_home" as const,
+        },
+      ];
+      for (const body of linkedBodies) {
+        const joint = controller.createBudgetEntry(me, { ...body, ownership: "joint" });
+        await expect(joint).rejects.toBeInstanceOf(BadRequestException);
+        await expect(joint).rejects.toThrow(LINKED_LINE_SHARE_MESSAGE);
+        await expect(
+          controller.createBudgetEntry(me, { ...body, ownership: "sole", sharePercent: 40 }),
+        ).rejects.toThrow(LINKED_LINE_SHARE_MESSAGE);
+      }
+      expect(budgetRepo.rows).toEqual([]);
+    });
+
+    it("refuses joint on an update to a linked line and leaves it as saved", async () => {
+      const { budgetRepo, controller } = setup();
+      const line = await controller.createBudgetEntry(me, {
+        ...savingsLine,
+        linkKind: "savings",
+        linkAccountId: MY_SAVER,
+      });
+      const before = { ...budgetRepo.rows[0] };
+      await expect(
+        controller.updateBudgetEntry(me, line.id, { ownership: "joint", sharePercent: 50 }),
+      ).rejects.toThrow(LINKED_LINE_SHARE_MESSAGE);
+      expect(budgetRepo.rows[0]).toEqual(before);
+    });
+
+    it("clears a joint row's share when it is linked to an account, and keeps it sole when unlinked", async () => {
+      const { controller } = setup();
+      const line = await controller.createBudgetEntry(me, {
+        ...savingsLine,
+        ownership: "joint",
+        sharePercent: 40,
+      });
+      expect(line).toMatchObject({ ownership: "joint", sharePercent: 40 });
+      const linked = await controller.updateBudgetEntry(me, line.id, {
+        linkKind: "savings",
+        linkAccountId: MY_SAVER,
+      });
+      // The account's share replaces the line's own.
+      expect(linked).toMatchObject({ linkKind: "savings", ownership: "sole", sharePercent: null });
+      const unlinked = await controller.updateBudgetEntry(me, line.id, {
+        linkKind: null,
+        linkAccountId: null,
+        amount: 250,
+      });
+      expect(unlinked).toMatchObject({ linkKind: null, ownership: "sole", sharePercent: null });
+    });
+
+    it("keeps the share of a joint housing line when it is linked to the saved rent", async () => {
+      const { controller } = setup();
+      const rent = await controller.createBudgetEntry(me, {
+        category: "housing",
+        name: "Rent",
+        amount: 1200,
+        ownership: "joint",
+        sharePercent: 50,
+      });
+      const linked = await controller.updateBudgetEntry(me, rent.id, { linkKind: "housing" });
+      expect(linked).toMatchObject({ linkKind: "housing", ownership: "joint", sharePercent: 50 });
+      const fresh = setup();
+      const created = await fresh.controller.createBudgetEntry(me, {
+        category: "housing",
+        name: "Rent",
+        amount: 0,
+        linkKind: "housing",
+        ownership: "joint",
+        sharePercent: 30,
+      });
+      expect(created).toMatchObject({ linkKind: "housing", ownership: "joint", sharePercent: 30 });
     });
 
     it("refuses another user's account on create, as not found, and stores nothing", async () => {

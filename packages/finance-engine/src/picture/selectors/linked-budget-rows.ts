@@ -182,6 +182,7 @@ export function withLinkedBudgetRows(
     isEssential: true,
     ownership: "sole",
     sharePercent: null,
+    sourceSharePercent: 100,
     linked: "take_home",
   };
   const incomeRows = budget.filter(isIncomeRow);
@@ -222,6 +223,11 @@ export function withLinkedBudgetRows(
     isEssential: true,
     ownership: "sole",
     sharePercent: null,
+    sourceSharePercent: housing
+      ? housing.sharePercent === undefined
+        ? 100
+        : housing.sharePercent
+      : null,
     linked: "housing",
   };
   if (chosenHousing) {
@@ -273,6 +279,7 @@ export function withLinkedBudgetRows(
       isEssential: row.isEssential,
       ownership: "sole",
       sharePercent: null,
+      sourceSharePercent: monthly !== null && account ? account.sharePercent : null,
       linked: kind,
       linkAccountId: accountId,
     };
@@ -302,6 +309,7 @@ export function withLinkedBudgetRows(
           isEssential: extra.isEssential,
           ownership: "sole",
           sharePercent: null,
+          sourceSharePercent: null,
           linked: kind,
         },
         extra,
@@ -349,6 +357,7 @@ export function listedBudgetEntries(
       frequency: row.frequency,
       ownership: row.ownership,
       sharePercent: row.sharePercent,
+      sourceSharePercent: row.sourceSharePercent ?? null,
       linked: row.linked,
       linkedRowId: saved.id,
       ...(row.notSet ? { notSet: true as const } : {}),

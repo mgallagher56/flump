@@ -78,7 +78,8 @@ export const EntryOwnershipField: FC<EntryOwnershipFieldProps> = ({
             data-testid={`${idPrefix}-share`}
             decimals={0}
             id={`${idPrefix}-share`}
-            max={100}
+            // 1 to 99, as the backend takes: 100% is all of it (sole) and 0% none of it.
+            max={99}
             min={1}
             size="sm"
             value={share}

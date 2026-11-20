@@ -498,6 +498,71 @@ describe("read tools v2: oversized fixtures", () => {
     }
   });
 
+  it("shows the share and the user's amount for joint accounts and linked lines (E34 C1)", async () => {
+    const accounts = [
+      // Joint saver £10,000 at 40%: £4,000 is the user's; £250 a month at 40% is £100.
+      {
+        id: "saver",
+        name: "Joint saver",
+        type: "Saving",
+        balance: 10000,
+        monthlyContribution: 250,
+        ownership: "joint",
+        sharePercent: 40,
+      },
+      // Sole card £500 owed, counted in full.
+      { id: "card", name: "Card", type: "Credit Card", balance: -500, interestRate: 20 },
+    ];
+    const budgetEntries = [
+      {
+        id: "pay",
+        name: "Pay",
+        category: "income",
+        amount: 2000,
+        frequency: "monthly",
+        isIncome: true,
+        isEssential: true,
+      },
+      {
+        id: "save",
+        name: "Saver",
+        category: "savings",
+        amount: 0,
+        frequency: "monthly",
+        isIncome: false,
+        isEssential: false,
+        linkKind: "savings",
+        linkAccountId: "saver",
+      },
+    ];
+    const client = await connectTestClient({ ...emptyUser, accounts, budgetEntries });
+    try {
+      const listed = await call(client, "list_accounts");
+      const balances = listed.result.accounts.map(
+        (a: { balanceGbp: number; sharePercent: number }) => [a.balanceGbp, a.sharePercent],
+      );
+      expect(balances).toEqual(
+        expect.arrayContaining([
+          [4000, 40],
+          [500, 100],
+        ]),
+      );
+      const budget = await call(client, "get_budget_summary", { responseFormat: "detailed" });
+      // The linked line reads the account's £100 (already at 40%) and shows that share.
+      expect(
+        budget.result.entries.map((x: { monthlyGbp: number; sharePercent: number | null }) => [
+          x.monthlyGbp,
+          x.sharePercent,
+        ]),
+      ).toEqual([
+        [2000, 100],
+        [100, 40],
+      ]);
+    } finally {
+      await client.close();
+    }
+  });
+
   it("truncates get_budget_summary and merges categories that scrub to the same name", async () => {
     const budgetEntries = Array.from({ length: 400 }, (_, i) => ({
       id: `b${i}`,

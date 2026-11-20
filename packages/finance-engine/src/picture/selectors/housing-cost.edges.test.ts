@@ -114,7 +114,7 @@ describe("the payment saved on a mortgage account", () => {
     // 200,000 x 0.00555832478 = 1,111.66.
     expect(
       payment(facts({ housingStatus: "mortgage" }), [mortgage({ monthlyContribution: 0 })]),
-    ).toEqual({ kind: "mortgage", monthly: 1111.66, paymentEstimated: true });
+    ).toEqual({ kind: "mortgage", monthly: 1111.66, paymentEstimated: true, sharePercent: 100 });
   });
 
   it("uses the profile figure for a mortgage account with no id", () => {
@@ -124,7 +124,7 @@ describe("the payment saved on a mortgage account", () => {
       payment(facts({ housingStatus: "mortgage", monthlyHousingCost: 900 }), [
         mortgage({ id: undefined }),
       ]),
-    ).toEqual({ kind: "mortgage", monthly: 900, paymentEstimated: false });
+    ).toEqual({ kind: "mortgage", monthly: 900, paymentEstimated: false, sharePercent: 100 });
   });
 
   it("uses the profile figure when a second mortgage's payment cannot be worked out", () => {
@@ -136,7 +136,7 @@ describe("the payment saved on a mortgage account", () => {
         mortgage({ monthlyContribution: 1000 }),
         mortgage({ id: "m2", balance: 20000, interestRate: 1e-300, termMonths: 60 }),
       ]),
-    ).toEqual({ kind: "mortgage", monthly: 1250, paymentEstimated: false });
+    ).toEqual({ kind: "mortgage", monthly: 1250, paymentEstimated: false, sharePercent: 100 });
   });
 });
 
