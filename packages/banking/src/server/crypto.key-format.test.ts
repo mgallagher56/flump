@@ -77,7 +77,11 @@ describe("bankingKeyFormatWarningMessage", () => {
   it("names the variable, version, expected form and runbook, and never the secret or its length", () => {
     const secret = passphrase();
     const [warning] = bankingKeyFormatWarnings(strict({ BANKING_TOKEN_ENCRYPTION_KEY: secret }));
-    const message = bankingKeyFormatWarningMessage(warning!);
+    const message = bankingKeyFormatWarningMessage({
+      variable: "BANKING_TOKEN_ENCRYPTION_KEY",
+      version: 1,
+      ...warning,
+    });
     expect(message).toContain("BANKING_TOKEN_ENCRYPTION_KEY key version 1");
     expect(message).toContain("openssl rand -hex 32");
     expect(message).toContain("docs/runbooks/bank-token-key-rotation.md");
@@ -87,6 +91,6 @@ describe("bankingKeyFormatWarningMessage", () => {
     const [longer] = bankingKeyFormatWarnings(
       strict({ BANKING_TOKEN_ENCRYPTION_KEY: secret.padEnd(47, "y") }),
     );
-    expect(bankingKeyFormatWarningMessage(longer!)).toBe(message);
+    expect(bankingKeyFormatWarningMessage({ variable: "", version: 0, ...longer })).toBe(message);
   });
 });
