@@ -103,8 +103,14 @@ test("L59 editing a budget line's amount and frequency moves Budget and the Dash
     expect(edited.amount).toBe(1800);
     expect(edited.frequency).toBe(EDITED.frequency);
   } finally {
-    // Put the seeded line back, so later specs see the same seeded totals.
-    await api(page, `/budget-entries/${row.id}`, "PATCH", saved);
+    // Put the seeded line back, so later specs see the same seeded totals. A failure here is
+    // reported without hiding the test's own error, if there was one; if the line is still
+    // changed, applyPersona (which compares amount and frequency) resets it in the next spec.
+    try {
+      await api(page, `/budget-entries/${row.id}`, "PATCH", saved);
+    } catch (restoreError) {
+      console.error(`L59 could not put "${LINE}" back:`, restoreError);
+    }
   }
 
   await test.step("after the line is put back, the figures are the seeded ones", async () => {
