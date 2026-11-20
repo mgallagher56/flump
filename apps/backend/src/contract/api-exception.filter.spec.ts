@@ -12,6 +12,7 @@ import {
   PreconditionFailedException,
   ServiceUnavailableException,
   UnauthorizedException,
+  UnsupportedMediaTypeException,
 } from "@nestjs/common";
 import { QueryFailedError } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -58,6 +59,8 @@ function run(exception: unknown, req?: Record<string, unknown>) {
   new ApiExceptionFilter().catch(exception, host);
   // Every body must be a valid ErrorResponse (strict: no statusCode, error or stack).
   expect(ErrorResponse.safeParse(res.body).success).toBe(true);
+  // Every error tells the user something: the message is never empty.
+  expect((res.body as ErrorResponse).message.length).toBeGreaterThan(0);
   return res as typeof res & { body: ErrorResponse };
 }
 
@@ -318,6 +321,74 @@ describe("ApiExceptionFilter", () => {
     new ApiExceptionFilter().catch(new Error("late"), host);
     expect(res.body).toBeUndefined();
     expect(res.end).toHaveBeenCalled();
+  });
+
+  it("only takes a request id made wholly of safe characters", () => {
+    // Ends in safe characters but starts with markup: the whole value must match, so a fresh id.
+    const res = run(new NotFoundException(), { headers: { "x-request-id": "<b>abc-1" } });
+    expect(res.body.requestId).not.toBe("<b>abc-1");
+    expect(res.body.requestId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("only keeps a code that is wholly snake_case, else uses the status's code", () => {
+    // "stale_row please reload" starts snake_case but has spaces, so the 409's own code is used.
+    const res = run(new ConflictException({ code: "stale_row please reload", message: "Stale" }));
+    expect(res.body.code).toBe("conflict");
+  });
+
+  it("joins a list of validation messages, skipping anything that is not text", () => {
+    const res = run(
+      new BadRequestException({ message: ["name must be a string", 5, "balance is required"] }),
+    );
+    // The two strings joined with "; ", the number dropped.
+    expect(res.body.message).toBe("name must be a string; balance is required");
+  });
+
+  it("trusts only a 4xx status from an http-errors client error", () => {
+    const httpError = (status: unknown) =>
+      Object.assign(new Error("x"), { status, type: "some.type", expose: true });
+    // 302 and 503 are not client errors, and "413" is not a number: all are our failure, a 500.
+    for (const status of [302, 503, "413"]) {
+      const res = run(httpError(status));
+      expect(res.statusCode).toBe(500);
+      expect(res.body.code).toBe("internal_error");
+    }
+    // 500 itself is not below 500: the generic message, not a client-error one.
+    expect(run(httpError(500)).body).toMatchObject({
+      code: "internal_error",
+      message: GENERIC_ERROR_MESSAGE,
+    });
+  });
+
+  it("words body-parser's own errors as Nest's wrapped forms are worded", () => {
+    const parserError = (status: number, type: string, error = new Error("x")) =>
+      Object.assign(error, { status, type, expose: true });
+    // Same status, same user message, whichever layer raised it.
+    expect(run(parserError(413, "entity.too.large")).body.message).toBe(
+      run(new PayloadTooLargeException("request entity too large")).body.message,
+    );
+    expect(run(parserError(415, "encoding.unsupported")).body).toMatchObject({
+      code: "unsupported_media_type",
+      message: run(new UnsupportedMediaTypeException("unsupported charset")).body.message,
+    });
+    expect(run(parserError(400, "entity.parse.failed", new SyntaxError("x"))).body.message).toBe(
+      run(new BadRequestException("Unexpected token in JSON")).body.message,
+    );
+    // A 400 that is not a JSON syntax error is not called invalid JSON.
+    expect(run(parserError(400, "request.aborted")).body.code).toBe("validation_failed");
+    // A 4xx with no wording of its own still gets a message.
+    expect(run(parserError(404, "not.found")).body.code).toBe("not_found");
+  });
+
+  it("answers on a response without setHeader or end", () => {
+    const { res, host } = setup();
+    const bare = res as Partial<typeof res>;
+    delete bare.setHeader;
+    delete bare.end;
+    new ApiExceptionFilter().catch(Object.assign(new Error("timeout"), { code: "57014" }), host);
+    expect(res.statusCode).toBe(503);
+    res.headersSent = true;
+    expect(() => new ApiExceptionFilter().catch(new Error("late"), host)).not.toThrow();
   });
 
   it("describeException never leaks a non-Error value", () => {

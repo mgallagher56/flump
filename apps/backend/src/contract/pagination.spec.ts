@@ -81,6 +81,27 @@ describe("resolvePage", () => {
     }
   });
 
+  it("names the field at fault and tells the client what it should be", () => {
+    const issueOf = (query: Record<string, unknown>) => {
+      try {
+        resolvePage(query, "activity");
+      } catch (error) {
+        const body = (error as BadRequestException).getResponse() as {
+          issues: { path: string; code: string; message: string }[];
+        };
+        return body.issues[0];
+      }
+      throw new Error("expected a 400");
+    };
+    const cursor = issueOf({ cursor: "a b" });
+    expect(cursor).toMatchObject({ path: "query.cursor", code: "invalid_cursor" });
+    expect(cursor?.message).toContain("X-Next-Cursor");
+    const limit = issueOf({ limit: "0" });
+    expect(limit).toMatchObject({ path: "query.limit", code: "invalid_limit" });
+    // The message gives the kind's own maximum.
+    expect(limit?.message).toContain(String(PAGE_LIMITS.activity.max));
+  });
+
   it("ignores the route's other query fields", () => {
     expect(resolvePage({ accountId: ID, limit: "3" }, "accountDetails")).toEqual({ limit: 3 });
   });
@@ -120,6 +141,34 @@ describe("cursor encoding", () => {
     }
     const ints = [{ column: "id", kind: "int" }] as const;
     expect(() => decodeCursor(encodeCursor([1.5]), ints)).toThrow(BadRequestException);
+  });
+
+  it("checks every key value as a whole, not only its start or end", () => {
+    // Each value has a valid key inside it with extra text before or after, so the database cast
+    // would fail on it: the whole value must be the key.
+    for (const forged of [
+      [`${TS}7`, ID],
+      [`${TS}${TS}`, ID],
+      [TS, `x${ID}`],
+      [TS, `${ID}x`],
+    ]) {
+      expect(() => decodeCursor(encodeCursor(forged), ORDER.keys)).toThrow(BadRequestException);
+    }
+    const dated = [
+      { column: "d", kind: "date" },
+      { column: "id", kind: "uuid" },
+    ] as const;
+    for (const forged of [
+      ["2026-04-05x", ID],
+      ["x2026-04-05", ID],
+      ["not-a-date", ID],
+      [20260405, ID],
+    ]) {
+      expect(() => decodeCursor(encodeCursor(forged), dated)).toThrow(BadRequestException);
+    }
+    // A list whose text is a date is not a date.
+    const nested = Buffer.from(JSON.stringify([["2026-04-05"], ID])).toString("base64url");
+    expect(() => decodeCursor(nested, dated)).toThrow(BadRequestException);
   });
 });
 

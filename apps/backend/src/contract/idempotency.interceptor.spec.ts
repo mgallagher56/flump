@@ -1,6 +1,6 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Logger } from "@nestjs/common";
 import { lastValueFrom, of } from "rxjs";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   canonicalJson,
   IdempotencyInterceptor,
@@ -129,5 +129,229 @@ describe("sameHash", () => {
     expect(sameHash("abc123", "abc123")).toBe(true);
     expect(sameHash("abc123", "abc124")).toBe(false);
     expect(sameHash("abc123", "abc1234")).toBe(false);
+  });
+});
+
+describe("canonicalJson edge values", () => {
+  it("writes a date as its ISO string and an undefined array item as null, as JSON.stringify does", () => {
+    // JSON.stringify(new Date("2026-11-14T09:30:00.000Z")) is the quoted ISO string.
+    expect(canonicalJson(new Date("2026-11-14T09:30:00.000Z"))).toBe('"2026-11-14T09:30:00.000Z"');
+    // JSON.stringify([undefined, 1]) is "[null,1]": an array keeps the slot.
+    expect(canonicalJson([undefined, 1])).toBe("[null,1]");
+    // A date nested in a body hashes by its instant, not as an empty object.
+    expect(requestHash({ at: new Date("2026-11-14T09:30:00.000Z") })).not.toBe(
+      requestHash({ at: {} }),
+    );
+  });
+});
+
+/** A fake of the idempotency_keys table holding one (user, route, key) row. */
+const tableFake = (options: { failUpdate?: boolean } = {}) => {
+  let row:
+    | {
+        request_hash: string;
+        status_code: number | null;
+        response_body: unknown;
+        response_headers: Record<string, string> | null;
+      }
+    | undefined;
+  const query = vi.fn(async (sql: string, params: unknown[]) => {
+    if (sql.includes("INSERT")) {
+      if (row) return [];
+      row = {
+        request_hash: params[3] as string,
+        status_code: null,
+        response_body: null,
+        response_headers: null,
+      };
+      return [{ id: "row" }];
+    }
+    if (sql.includes("UPDATE")) {
+      if (options.failUpdate) throw new Error("database unavailable");
+      if (row) {
+        row = {
+          ...row,
+          status_code: params[3] as number,
+          response_body: JSON.parse(params[4] as string),
+          response_headers: JSON.parse(params[5] as string),
+        };
+      }
+      return [];
+    }
+    if (sql.includes("SELECT")) return row ? [row] : [];
+    // The release DELETE frees a pending row; the claim's expiry sweep has nothing to expire here.
+    if (sql.includes("DELETE") && !sql.includes("make_interval") && row?.status_code === null) {
+      row = undefined;
+    }
+    return [];
+  });
+  return {
+    dataSource: { query },
+    setRow: (value: NonNullable<typeof row>) => {
+      row = value;
+    },
+    row: () => row,
+  };
+};
+
+const httpContext = (req: unknown, res: unknown) =>
+  ({
+    getType: () => "http",
+    switchToHttp: () => ({ getRequest: () => req, getResponse: () => res }),
+  }) as never;
+
+describe("IdempotencyInterceptor edge cases", () => {
+  const keyed = {
+    method: "POST",
+    route: { path: "/accounts" },
+    user: { id: "u1" },
+    body: {},
+    headers: { "idempotency-key": "k" },
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("passes a non-http context straight through", async () => {
+    const dataSource = { query: vi.fn() };
+    const interceptor = new IdempotencyInterceptor(dataSource as never);
+    const out = interceptor.intercept({ getType: () => "rpc" } as never, {
+      handle: () => of("rpc"),
+    });
+    expect(await lastValueFrom(out)).toBe("rpc");
+    expect(dataSource.query).not.toHaveBeenCalled();
+  });
+
+  it("passes through a request with no headers, no route, no method or no signed-in user", async () => {
+    const dataSource = { query: vi.fn() };
+    const interceptor = new IdempotencyInterceptor(dataSource as never);
+    const { headers: _headers, ...noHeaders } = keyed;
+    const { route: _route, ...noRoute } = keyed;
+    const { method: _method, ...noMethod } = keyed;
+    const { user: _user, ...noUser } = keyed;
+    for (const req of [noHeaders, noRoute, noMethod, noUser, { ...keyed, user: { id: 7 } }]) {
+      const out = interceptor.intercept(contextFor(req), { handle: () => of("ok") });
+      expect(await lastValueFrom(out)).toBe("ok");
+    }
+    // Without a user there is no owner to file the key under, so nothing is stored.
+    expect(dataSource.query).not.toHaveBeenCalled();
+  });
+
+  it("names the header field in the 400 for a malformed key", () => {
+    const interceptor = new IdempotencyInterceptor({ query: vi.fn() } as never);
+    let thrown: unknown;
+    try {
+      interceptor.intercept(contextFor({ ...keyed, headers: { "idempotency-key": "" } }), {
+        handle: () => of("ok"),
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(BadRequestException);
+    // The same validation_failed shape the contract interceptor uses for a bad field.
+    expect((thrown as BadRequestException).getResponse()).toMatchObject({
+      code: "validation_failed",
+      issues: [{ path: "headers.idempotency-key", code: "invalid_string" }],
+    });
+  });
+
+  it("answers 409 conflict while the first request with the key is still running", async () => {
+    const table = tableFake();
+    table.setRow({
+      request_hash: requestHash({}),
+      status_code: null,
+      response_body: null,
+      response_headers: null,
+    });
+    const interceptor = new IdempotencyInterceptor(table.dataSource as never);
+    const handle = vi.fn(() => of({ id: "b" }));
+    const out = interceptor.intercept(httpContext(keyed, { setHeader: vi.fn() }), { handle });
+    const error = await lastValueFrom(out).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ConflictException);
+    expect((error as ConflictException).getResponse()).toMatchObject({ code: "conflict" });
+    expect(handle).not.toHaveBeenCalled();
+  });
+
+  it("replays only ETag and Location from a stored result", async () => {
+    const table = tableFake();
+    table.setRow({
+      request_hash: requestHash({}),
+      status_code: 201,
+      response_body: { id: "a" },
+      response_headers: {
+        etag: '"2026-11-14T09:30:00.123Z"',
+        location: "/v1/accounts/a",
+        "set-cookie": "s=1",
+      },
+    });
+    const interceptor = new IdempotencyInterceptor(table.dataSource as never);
+    const res = { setHeader: vi.fn() };
+    const body = await lastValueFrom(
+      interceptor.intercept(httpContext(keyed, res), { handle: () => of({ id: "b" }) }),
+    );
+    expect(body).toEqual({ id: "a" });
+    expect(res.setHeader).toHaveBeenCalledWith("location", "/v1/accounts/a");
+    expect(res.setHeader).not.toHaveBeenCalledWith("set-cookie", expect.anything());
+  });
+
+  it("stores a numeric header value as text, and copes with a response that cannot read headers", async () => {
+    const numeric = tableFake();
+    const numericRes = {
+      setHeader: vi.fn(),
+      getHeader: (name: string) => (name === "etag" ? 42 : undefined),
+    };
+    await lastValueFrom(
+      new IdempotencyInterceptor(numeric.dataSource as never).intercept(
+        httpContext(keyed, numericRes),
+        { handle: () => of({ id: "a" }) },
+      ),
+    );
+    // String(42) is "42".
+    expect(numeric.row()?.response_headers).toEqual({ etag: "42" });
+
+    const bare = tableFake();
+    const body = await lastValueFrom(
+      new IdempotencyInterceptor(bare.dataSource as never).intercept(
+        httpContext(keyed, { setHeader: vi.fn() }),
+        { handle: () => of({ id: "a" }) },
+      ),
+    );
+    expect(body).toEqual({ id: "a" });
+    expect(bare.row()?.response_headers).toEqual({});
+  });
+
+  it("replays a create that returned no body instead of running it twice", async () => {
+    const table = tableFake();
+    const interceptor = new IdempotencyInterceptor(table.dataSource as never);
+    await lastValueFrom(
+      interceptor.intercept(httpContext(keyed, { setHeader: vi.fn() }), {
+        handle: () => of(undefined),
+      }),
+    );
+    const retry = vi.fn(() => of(undefined));
+    const res = { setHeader: vi.fn() };
+    await lastValueFrom(interceptor.intercept(httpContext(keyed, res), { handle: retry }));
+    expect(retry).not.toHaveBeenCalled();
+    expect(res.setHeader).toHaveBeenCalledWith("Idempotent-Replayed", "true");
+  });
+
+  it("keeps a successful create when its result cannot be stored, and frees the key for a retry", async () => {
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const table = tableFake({ failUpdate: true });
+    const interceptor = new IdempotencyInterceptor(table.dataSource as never);
+    const first = await lastValueFrom(
+      interceptor.intercept(httpContext(keyed, { setHeader: vi.fn() }), {
+        handle: () => of({ id: "a" }),
+      }),
+    );
+    expect(first).toEqual({ id: "a" });
+    // The pending row was released, so the retry claims the key afresh and runs the handler.
+    expect(table.row()).toBeUndefined();
+    const retry = vi.fn(() => of({ id: "b" }));
+    await lastValueFrom(
+      interceptor.intercept(httpContext(keyed, { setHeader: vi.fn() }), { handle: retry }),
+    );
+    expect(retry).toHaveBeenCalledOnce();
   });
 });
