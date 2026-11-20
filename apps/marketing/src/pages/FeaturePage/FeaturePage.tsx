@@ -3,11 +3,12 @@ import {
   Button,
   Card,
   DashboardPreview,
+  DebtBorrowingPreview,
   DebtHelpLink,
-  Illustration,
   MoneyHelperGuidance,
   PreviewFrame,
   type SampleHouseholdKey,
+  SavingsPensionPreview,
 } from "@repo/ui";
 import { type FC, type ReactNode, useState } from "react";
 import { AreaStrip } from "../../components/AreaStrip";
@@ -30,7 +31,6 @@ import {
   finalCtaTitle,
   hero,
   heroHeading,
-  heroIllustration,
   heroInner,
   heroLead,
   heroNote,
@@ -53,46 +53,36 @@ export interface FeaturePageProps {
   moreDetail?: ReactNode;
 }
 
-/** The working sample for an area (D6, option A): the same components the preview page uses. */
+/** The working sample for an area (D6): the same sample components the preview page uses. */
+const SAMPLES = {
+  dashboard: { title: "Home", Preview: DashboardPreview },
+  "breathing-room": { title: "Breathing room", Preview: BreathingRoomPreview },
+  "savings-pension": { title: "Savings and pension", Preview: SavingsPensionPreview },
+  "debt-borrowing": { title: "Debt and borrowing", Preview: DebtBorrowingPreview },
+} as const;
+
 const SampleSection: FC<{ sample: Feature["sample"] }> = ({ sample }) => {
   const [household, setHousehold] = useState<SampleHouseholdKey>("renter");
   if (sample === "none") return null;
+  const { title, Preview } = SAMPLES[sample];
   return (
     <MarketingSection
       id="see-it"
       subtitle="Sample figures for an example household. Switch between renting and paying a mortgage."
       title="See it with sample figures"
     >
-      {sample === "dashboard" ? (
-        <PreviewFrame
-          household={household}
-          id="feature-frame-dashboard"
-          onHouseholdChange={setHousehold}
-          title="Home"
-          titleAs="p"
-        >
-          <DashboardPreview household={household} id="feature-dashboard-preview" />
-        </PreviewFrame>
-      ) : (
-        <PreviewFrame
-          household={household}
-          id="feature-frame-breathing-room"
-          onHouseholdChange={setHousehold}
-          title="Breathing room"
-          titleAs="p"
-        >
-          <BreathingRoomPreview household={household} id="feature-breathing-room-preview" />
-        </PreviewFrame>
-      )}
+      <PreviewFrame
+        household={household}
+        id={`feature-frame-${sample}`}
+        onHouseholdChange={setHousehold}
+        title={title}
+        titleAs="p"
+      >
+        <Preview household={household} id={`feature-${sample}-preview`} />
+      </PreviewFrame>
     </MarketingSection>
   );
 };
-
-/** The two pages with no working sample yet show a scene instead (D6; previews follow in S8). */
-const HERO_SCENES = {
-  "savings-and-pension": "empty-savings",
-  "debt-and-borrowing": "empty-debt",
-} as const;
 
 /**
  * One template for every feature page (E42 S2, plan section 4.3), rendered from
@@ -111,7 +101,6 @@ export const FeaturePage: FC<FeaturePageProps> = ({
 }) => {
   const cta = signupCta();
   const titleId = `${feature.key}-title`;
-  const scene = HERO_SCENES[feature.key as keyof typeof HERO_SCENES];
   const currentArea = MONEY_AREAS.find((area) => area.key === feature.key)?.key;
 
   return (
@@ -142,11 +131,6 @@ export const FeaturePage: FC<FeaturePageProps> = ({
                 )}
               </div>
             </div>
-            {scene && (
-              <div className={heroIllustration()} data-testid="feature-illustration">
-                <Illustration scene={scene} size="md" settle={false} />
-              </div>
-            )}
           </div>
         </section>
 

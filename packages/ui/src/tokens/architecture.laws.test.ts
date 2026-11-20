@@ -168,12 +168,14 @@ describe("Architecture & Design System Laws", () => {
         "CoachCard",
         "ConfirmDialog",
         "DashboardPreview",
+        "DebtBorrowingPreview",
         "DebtHelpLink",
         "EmptyState",
         "HeroFigure",
         "KpiStrip",
         "MoneyHelperGuidance",
         "PreviewFrame",
+        "SavingsPensionPreview",
         "ScenarioZone",
       ]) {
         expect(patterns).toContain(expected);

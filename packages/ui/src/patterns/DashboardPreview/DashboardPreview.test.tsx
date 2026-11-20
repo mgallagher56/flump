@@ -17,15 +17,17 @@ import { DashboardPreview } from "./DashboardPreview";
 //   accounts tracked: 3.
 //
 // homeowner (homeowner.ts):
-//   net worth: 21,000 cash + 96,000 pension + 310,000 home - 186,000 mortgage = 241,000.
+//   net worth: 21,000 cash + 96,000 pension + 310,000 home - 186,000 mortgage - 1,800 card
+//     - 7,200 loan = 232,000.
 //   the home is the "Home (your estimate)" account, so the hero says it includes the estimate.
-//   no consumer debt or student loan, so no "What you owe" card. Pension pots: 96,000.
+//   what you owe outside a mortgage: 1,800 card + 7,200 loan = 9,000. Pension pots: 96,000.
 //   budget: income 3,249; essentials 1,050 mortgage + 330 council tax and energy + 400 groceries
 //     = 1,780; savings 300; discretionary 250.
 //     spending each month = 1,780 + 250 = 2,030. left over = 3,249 - 1,780 - 250 - 300 = 919.
-//   breathing room: liquid cash 21,000 / 1,780 = 11.80, so about 11.8 months.
+//   breathing room: liquid cash 21,000 / (1,780 essentials + 60 + 220 card and loan minimums
+//     = 2,060) = 10.19, so about 10.2 months.
 //   mortgage card: 186,000 balance; loan to value 186,000 / 310,000 = 60%.
-//   accounts tracked: 4.
+//   accounts tracked: 6.
 const EXPECTED = {
   renter: {
     netWorth: "£6,050",
@@ -36,12 +38,13 @@ const EXPECTED = {
     accounts: "3",
   },
   homeowner: {
-    netWorth: "£241,000",
+    netWorth: "£232,000",
     leftOver: "£919",
+    owed: "£9,000",
     pensions: "£96,000",
     spending: "£2,030",
-    breathingRoom: "Breathing room: about 11.8 months",
-    accounts: "4",
+    breathingRoom: "Breathing room: about 10.2 months",
+    accounts: "6",
     mortgage: "£186,000",
     ltv: "60% loan to value",
   },
@@ -88,7 +91,8 @@ describe("DashboardPreview", () => {
     expect(kpis.getByText(expected.leftOver)).toBeDefined();
     expect(kpis.getByText("Pension pots")).toBeDefined();
     expect(kpis.getByText(expected.pensions)).toBeDefined();
-    expect(kpis.queryByText("What you owe")).toBeNull();
+    expect(kpis.getByText("What you owe")).toBeDefined();
+    expect(kpis.getByText(expected.owed)).toBeDefined();
 
     const mortgage = within(screen.getByTestId("dash-owner-section-mortgage"));
     expect(mortgage.getByText(expected.mortgage)).toBeDefined();

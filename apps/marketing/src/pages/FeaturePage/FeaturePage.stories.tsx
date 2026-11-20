@@ -53,13 +53,13 @@ const assertSavings: Story["play"] = async ({ canvasElement }) => {
   ).toBeVisible();
 };
 
-export const WithoutSampleLight: Story = {
+export const SavingsLight: Story = {
   args: { feature: savings },
   globals: { theme: "light" },
   play: assertSavings,
 };
 
-export const WithoutSampleDark: Story = {
+export const SavingsDark: Story = {
   args: { feature: savings },
   globals: { theme: "dark" },
   parameters: { backgrounds: { default: "dark" } },

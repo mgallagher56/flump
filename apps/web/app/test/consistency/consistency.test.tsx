@@ -424,9 +424,10 @@ describe.each(NAMES)("persona %s: one figure, every surface", (name) => {
 describe("renter and homeowner: the figures E16 PR 3 fixed", () => {
   const pictureOf = (name: PersonaName) => buildFinancialPicture(PERSONAS[name].fixture);
 
-  it("the homeowner's net worth counts the home once, 241,000, and LTV is 60%", () => {
+  // 310,000 home + 21,000 cash + 96,000 pension - 186,000 mortgage - 1,800 card - 7,200 loan.
+  it("the homeowner's net worth counts the home once, 232,000, and LTV is 60%", () => {
     const p = pictureOf("homeowner");
-    expect(p.netWorth.netWorth).toBe(241000);
+    expect(p.netWorth.netWorth).toBe(232000);
     expect(p.netWorth.homeEstimate).toBe(310000);
     expect(isFigureKnown(p.loanToValue) && p.loanToValue.value.percent).toBe(60);
   });

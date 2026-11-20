@@ -7,6 +7,11 @@ import type { PersonaFixture } from "../types.js";
  * user estimates at GBP 310,000 (seeded as the "Home (your estimate)" Property account), a
  * GBP 186,000 repayment mortgage, GBP 21,000 cash and a GBP 96,000 pension pot. The home counts
  * in net worth once, labelled (D3), and loan to value is 186,000 / 310,000 = 60%.
+ *
+ * E42 S8 adds what the savings and debt sample previews read: a 3.5% AER on the cash savings, a
+ * 4.19% rate and a fixed rate that ends on 30 September 2028 on the mortgage, and a credit card
+ * (GBP 1,800 at 22.9% APR, GBP 60 a month) and a personal loan (GBP 7,200 at 6.9% APR, GBP 220 a
+ * month). Test data only.
  */
 export const homeowner: PersonaFixture = {
   netWorthBasis: DEFAULT_NET_WORTH_BASIS,
@@ -21,7 +26,13 @@ export const homeowner: PersonaFixture = {
     monthlyHousingCost: 1050,
   },
   accounts: [
-    { id: "homeowner-cash", name: "Cash and emergency savings", type: "Saving", balance: 21000 },
+    {
+      id: "homeowner-cash",
+      name: "Cash and emergency savings",
+      type: "Saving",
+      balance: 21000,
+      interestRate: 3.5,
+    },
     {
       id: "homeowner-pension",
       name: "Workplace and personal pension",
@@ -29,7 +40,30 @@ export const homeowner: PersonaFixture = {
       balance: 96000,
     },
     { id: "homeowner-home", name: "Home (your estimate)", type: "Property", balance: 310000 },
-    { id: "homeowner-mortgage", name: "Residential Mortgage", type: "Mortgage", balance: 186000 },
+    {
+      id: "homeowner-mortgage",
+      name: "Residential Mortgage",
+      type: "Mortgage",
+      balance: 186000,
+      interestRate: 4.19,
+      fixedRateEndDate: "2028-09-30",
+    },
+    {
+      id: "homeowner-card",
+      name: "Credit card",
+      type: "Credit Card",
+      balance: 1800,
+      interestRate: 22.9,
+      monthlyContribution: 60,
+    },
+    {
+      id: "homeowner-loan",
+      name: "Personal loan",
+      type: "Loan",
+      balance: 7200,
+      interestRate: 6.9,
+      monthlyContribution: 220,
+    },
   ],
   details: [],
   budget: [

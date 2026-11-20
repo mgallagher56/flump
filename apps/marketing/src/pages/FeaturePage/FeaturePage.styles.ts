@@ -66,11 +66,6 @@ export const ctaRow = cva({
   base: { display: "flex", flexWrap: "wrap", gap: "3" },
 });
 
-/** Pages with no working sample yet (D6): one decorative scene, from `md` up only (B10). */
-export const heroIllustration = cva({
-  base: { display: { base: "none", md: "block" }, width: "40", flexShrink: 0 },
-});
-
 export const factGrid = cva({
   base: {
     listStyle: "none",
