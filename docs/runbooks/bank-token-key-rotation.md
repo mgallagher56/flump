@@ -26,7 +26,7 @@ There are no unprefixed legacy values any more. The `ClearBankTokens179435530000
    openssl rand -hex 32
    ```
 
-   At boot the backend logs one warning for each configured banking key that is not in this form (64 hex characters, or base64 of 32 bytes). The warning names the variable and the key version only. Such a key still works, and boot never stops because of it; the warning is the prompt to rotate to a generated key with these steps.
+   At boot the backend logs one warning for each configured banking key that is not in this form (64 hex characters, or base64 or base64url of 32 bytes). The warning names the variable and the key version only. Such a key still works, and boot never stops because of it; the warning is the prompt to rotate to a generated key with these steps.
 
 2. In the hosting provider's variables for the backend, set the list with the new key first and the current key second. If you have never set the list before, the current key is the value of `BANKING_TOKEN_ENCRYPTION_KEY` and is version 1:
 
