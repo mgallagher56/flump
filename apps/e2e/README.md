@@ -146,8 +146,13 @@ three servers run under libfaketime, starting at `FROZEN_NOW` in `support/clock.
 (`E2E_FREEZE_CLOCK=1`), and the browser clock is installed at the same instant, so month labels,
 check-in prompts and chart axes never move. Animations are off, motion is reduced, fonts are
 awaited, and Playwright retakes a shot until two in a row match. The budget is `maxDiffPixels: 100`
-per shot (an absolute count, so a small but wrong logo still fails). To hide something that
-changes from run to run, give it a `data-visual-mask` attribute.
+per shot (an absolute count, so a small but wrong logo still fails), and a pixel counts as
+different when its colour moves more than `threshold: 0.015` (E11). Playwright's default per-pixel
+threshold, 0.2, ignored every pixel of PR 812's recoloured tiles and tints (pension's teal to sky
+tint is a colour distance of 10 on pixelmatch's scale; 0.2 ignores anything under 1,409), so those
+changes passed. At 0.015 three runs on unchanged code are steady, and the same sky-to-teal change
+fails about 1,200 pixels per shot. To hide something that changes from run to run, give it a
+`data-visual-mask` attribute.
 
 **Baselines** live in `visual/__screenshots__/<route>-<project>.png`. They are only valid when
 generated in that container on Linux x64: font rendering differs on macOS and on Apple Silicon,
@@ -155,7 +160,11 @@ so never commit baselines from your own machine.
 
 ### Updating baselines
 
-After an intended visual change (or a Playwright bump, which changes Chromium):
+After an intended visual change, a Playwright bump (which changes Chromium), or a new container
+or runner image. At `threshold: 0.015` a Chromium or font-rendering change can move many shots by
+a few colour levels at once: if a run fails on pages nobody touched, with similar pixel counts
+across them, refresh the baselines in CI as below in a pull request of its own, and check the diff
+images show rendering only, not a real change:
 
 1. Push the branch, then run the workflow on it:
    `gh workflow run visual-regression.yml --ref <branch> -f update=true`
