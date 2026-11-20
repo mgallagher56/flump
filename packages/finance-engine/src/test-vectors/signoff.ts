@@ -46,6 +46,8 @@ export function vectorSignoffHashV1(v: SignableVector): string {
 }
 
 const V2 = "v2:";
+/** The last day a v1 (owner) signature could be made: the owner's rule of 20 Nov 2026. */
+const LAST_V1_SIGNOFF_DATE = "2026-11-20";
 
 /**
  * Version 2 hash, written by `tax:signoff apply`: "v2:" plus the sha256 of the version 1 fields and
@@ -109,6 +111,13 @@ export function evaluateSignoff(v: SignableVector): SignoffState {
     return {
       state: "invalid",
       reason: 'a signature without the v2: marker is valid only for signedOffBy "owner"',
+    };
+  }
+  // The owner's rule of 20 Nov 2026 ended owner sign-off; every later signature is v2.
+  if (!isV2 && v.signedOffAt > LAST_V1_SIGNOFF_DATE) {
+    return {
+      state: "invalid",
+      reason: `a signature without the v2: marker must be dated on or before ${LAST_V1_SIGNOFF_DATE}`,
     };
   }
   if (v.signedOffHash !== (isV2 ? vectorSignoffHash(v) : vectorSignoffHashV1(v))) {
