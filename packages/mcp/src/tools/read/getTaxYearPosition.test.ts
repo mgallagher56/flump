@@ -4,7 +4,7 @@ import { connectTestClient } from "../../testing/client.js";
 import { emptyUser } from "../../testing/personas.js";
 
 // Tool plumbing only: field names, missing-data entries, notes and provenance. No assertion here
-// is a UK tax figure (E41 decision 8 keeps those behind the owner's tax vector sign-off).
+// is a UK tax figure (E41 decision 8 keeps those behind the tax vector sign-off).
 
 type Env = {
   result: {

@@ -1,9 +1,11 @@
 /**
- * Owner sign-off workflow for UK tax vectors (E22). Pure helpers; the CLI is scripts/tax-signoff.ts.
- * Agents never run `apply`: the owner does, and the CLI refuses in CI.
+ * Sign-off workflow for UK tax vectors (E22). Pure helpers; the CLI is scripts/tax-signoff.ts.
+ * Who may run `apply`: the coordinator, applying a recorded Fable decider decision, or the owner
+ * (owner rule of 20 Nov 2026, DECISIONS). The signer's name is written to `signedOffBy` as given.
+ * The CLI refuses in CI.
  */
 import {
-  SIGNOFF_OWNER,
+  isValidSigner,
   type SignableVector,
   vectorSignoffHash,
 } from "../../packages/finance-engine/src/test-vectors/signoff";
@@ -18,11 +20,12 @@ export function generateSheet(year: string, vectors: readonly UkTaxVector[]): st
   const lines = [
     `# Tax vector sign-off sheet: ${year}`,
     "",
-    "Tick `[x]` only the vectors you have checked against the source. UNVERIFIED vectors also need a",
-    "`ruling:` line (the written judgement call). Then run:",
+    "Tick `[x]` only the vectors the decider has checked against the source. UNVERIFIED vectors also",
+    "need a `ruling:` line (the decider's written judgement call). Then the coordinator, applying the",
+    "recorded decision, or the owner runs:",
     "",
     "```bash",
-    `bun run tax:signoff apply --year ${year} --sheet <this file>`,
+    `bun run tax:signoff apply --year ${year} --sheet <this file> --signer <name>`,
     "```",
     "",
     "Convention: takeHome vectors with children are net of the HICBC charge and exclude the Child Benefit received.",
@@ -78,7 +81,9 @@ export function applySignoff(
   ticked: readonly Ticked[],
   vectors: readonly UkTaxVector[],
   isoDate: string,
+  signer: string,
 ): ApplyResult {
+  if (!isValidSigner(signer)) throw new Error(`not a valid signer name: ${JSON.stringify(signer)}`);
   let text = fileText;
   const signed: string[] = [];
   const skipped: { id: string; reason: string }[] = [];
@@ -108,7 +113,7 @@ export function applySignoff(
     }
     const indent = "    ";
     const block = [
-      `signedOffBy: "${SIGNOFF_OWNER}",`,
+      `signedOffBy: ${JSON.stringify(signer)},`,
       `${indent}signedOffAt: "${isoDate}",`,
       `${indent}signedOffHash: "${vectorSignoffHash(v)}",`,
       ...(ruling ? [`${indent}rulingRef: ${JSON.stringify(ruling)},`] : []),
@@ -119,7 +124,7 @@ export function applySignoff(
   return { text, signed, skipped };
 }
 
-/** IDs of vectors with no owner sign-off (`signedOffBy: null`), sorted and de-duplicated. */
+/** IDs of vectors with no sign-off (`signedOffBy: null`), sorted and de-duplicated. */
 export function unsignedVectorIds(vectors: readonly Pick<UkTaxVector, "id" | "signedOffBy">[]) {
   return [...new Set(vectors.filter((v) => v.signedOffBy === null).map((v) => v.id))].sort();
 }
@@ -132,8 +137,9 @@ export interface UnsignedRatchetResult {
 }
 
 /**
- * BE-08 ratchet: the set of unsigned vectors may shrink (owner signs off) but never grow. New
- * vectors must be signed off by the owner before merge, or the baseline consciously regenerated.
+ * BE-08 ratchet: the set of unsigned vectors may shrink (vectors are signed) but never grow. New
+ * vectors must be signed (decider decision, applied with tax:signoff) before merge, or the baseline
+ * consciously regenerated.
  */
 export function compareUnsignedToBaseline(
   unsigned: readonly string[],

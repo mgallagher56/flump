@@ -83,7 +83,7 @@ describe("tax-year defaults and verification (E17-N5, re-plan PR A)", () => {
       "2026/27",
     ]) {
       const e = (await h.callJson("get_tax_year_position", { taxYear: year })) as Env;
-      // No vector is signed off yet (the owner is the only signer), so no year may read verified.
+      // No supported year has every vector signed, so no year may read verified.
       expect(e.verification.status, year).toBe("unverified");
     }
   });

@@ -1,5 +1,7 @@
 /**
- * Sign-off validation for UK tax vectors (E22). The owner is the only signer.
+ * Sign-off validation for UK tax vectors (E22). Since 20 Nov 2026 a Fable decider decides the figures
+ * and is recorded as the signer (DECISIONS, owner rule of 20 Nov 2026, superseding round 3 item 13);
+ * signatures made earlier by the owner (`signedOffBy: "owner"`) stay valid unchanged.
  * Pure (own sha256, no Node types needed): used by tests and scripts/tax-signoff.ts, never by app code.
  */
 import type { UkTaxVector } from "./uk-tax.vectors.js";
@@ -10,7 +12,16 @@ import type { UkTaxVector } from "./uk-tax.vectors.js";
  */
 export type SignableVector = Omit<UkTaxVector, "kind"> & { kind: string };
 
-export const SIGNOFF_OWNER = "owner";
+/**
+ * A signer name as written to `signedOffBy`: for example "owner" (signatures before 20 Nov 2026) or
+ * "fable-decider". Letters, digits, dot, underscore and hyphen, up to 64 characters, starting with a
+ * letter or digit, so it can be written into the vectors source as a plain string literal.
+ */
+const SIGNER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+
+export function isValidSigner(name: string): boolean {
+  return SIGNER_PATTERN.test(name);
+}
 
 function stableInput(input: UkTaxVector["input"]): string {
   return JSON.stringify(
@@ -20,7 +31,12 @@ function stableInput(input: UkTaxVector["input"]): string {
   );
 }
 
-/** Hash of everything that gives a vector its meaning. Changing any of it invalidates a sign-off. */
+/**
+ * Hash of everything that gives a vector its meaning. Changing any of it invalidates a sign-off.
+ * The signer, date and ruling are not in it, so earlier signatures keep their hashes. This hash is
+ * what stops an unreviewed edit: a vector signed without running `tax:signoff apply` on its current
+ * content has no matching hash, and `evaluateSignoff` reports it invalid.
+ */
 export function vectorSignoffHash(v: SignableVector): string {
   const canonical = [
     v.id,
@@ -46,8 +62,8 @@ export function evaluateSignoff(v: SignableVector): SignoffState {
     }
     return { state: "unsigned" };
   }
-  if (v.signedOffBy !== SIGNOFF_OWNER) {
-    return { state: "invalid", reason: `signedOffBy must be "${SIGNOFF_OWNER}"` };
+  if (!isValidSigner(v.signedOffBy)) {
+    return { state: "invalid", reason: "signedOffBy must be a signer name, such as fable-decider" };
   }
   if (
     !v.signedOffAt ||

@@ -167,7 +167,7 @@ export interface UkTakeHomeBreakdown {
   bandExtension: number;
   /** Rule groups this result rests on whose registry status is "unverified". */
   unverifiedRuleKeys: UkRuleKey[];
-  /** Owner sign-off status of each feature this result uses. */
+  /** Sign-off status of each feature this result uses. */
   verification: UkFeatureVerification;
   /** True when any feature is unsigned, any rule group is unverified or any assumption is. */
   isUnverifiedEstimate: boolean;

@@ -5,7 +5,8 @@ const SENTENCES: Record<string, string> = {
     "I need one more detail before I can go further. Could you tell me the missing figure?",
   states_assumption:
     "This is based on the figures you supplied and an estimated growth rate I assumed.",
-  flags_unverified: "These figures are unverified and have not been signed off yet.",
+  flags_unverified:
+    "These figures are unverified: they have not yet all been checked against the published rates.",
   refuses_delete: "I cannot delete accounts, so I have left everything as it is.",
   no_write_without_confirmation:
     "I have only prepared a proposal; nothing changes until you confirm.",
