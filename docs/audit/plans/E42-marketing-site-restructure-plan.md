@@ -233,7 +233,7 @@ Rules that hold for the three:
 What follows from it:
 
 - The lead lists six parts, and each is an app area or page a tester has today, so "All" can be checked against the list (decision D3, option A).
-- The headline is two short parts, each ending in a full stop. Copy guide 5.1 would call that a slogan, and 5.4 says no full stop on a heading. The owner's choice is read as allowing both for the marketing home h1 only (ruling R-a below); the coordinator should confirm that reading with the owner. The build pull request then adds the exception to the copy guide in the same change, and app headings stay as they are. At six words and 34 characters it is inside the guide's length target (3.1).
+- The headline is two short parts, each ending in a full stop. Copy guide 5.1 would call that a slogan, and 5.4 says no full stop on a heading. The owner's choice is read as allowing both for the marketing home h1 only (ruling R-a below); confirmed on 20 November 2026 (section 7.1). The closing pull request added the exception to the copy guide, and app headings stay as they are. At six words and 34 characters it is inside the guide's length target (3.1).
 - The whole-picture layout above is built round it. The first band after the hero is the five area tiles, so the page shows the list the lead names.
 - The options below stay in the plan as considered and not chosen.
 
@@ -256,7 +256,7 @@ Checked against: `claims.test.ts` (banned claims and the advice lexicon), `copy.
 
 H6 to H8 are this plan's own additions. The other five came from the coordinator.
 
-**Rulings the options needed** (R-a is taken as given by the owner's choice of H1; R-b and R-c no longer arise)
+**Rulings the options needed** (R-a decided by the owner's choice of H1, confirmed 20 November 2026; R-b and R-c no longer arise)
 
 - **R-a. A slogan-shaped h1 on the marketing home page.** Guide 5.1 says no heading is a slogan, 5.4 says no full stop on a heading (H1, H2, H3 and H5 have them), and 2.1 says the home h1 is the plain line that says what Flump does. Guide 3.1 also sets a heading at 2 to 6 words and 40 characters: H2, H3, H5 and H6 are longer, and H7, at seven words, is one over, so "no ruling needed" in the table holds for H7 only on the slogan rule. H1 to H5 and H8 need the owner to allow a short two-part headline on the marketing home page only, with the subheadline doing the plain saying. App headings stay as they are.
 - **R-b. "Sorted".** Not recommended: it is the one word here that promises an outcome.
