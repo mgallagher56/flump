@@ -76,6 +76,11 @@ export function allocatePersonalAllowance(
   i: PersonalAllowanceAllocationInput,
 ): PersonalAllowanceAllocation {
   const { rules, nonSavings, savings, dividends } = i;
+  if (allowanceGoesToOtherIncomeFirst(rules) && i.otherIncomeFirst === undefined) {
+    // From 2027/28 the search charges movable non-savings income at property rates, so the
+    // other income must be given; it is never guessed.
+    throw new Error(`otherIncomeFirst is required for ${rules.year} (ITA 2007 s.25(3A))`);
+  }
   const psa = i.personalSavingsAllowance;
   const used = Math.min(i.allowance, nonSavings + savings + dividends);
   const total = nonSavings + savings + dividends - used;

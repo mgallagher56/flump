@@ -298,8 +298,17 @@ describe("allocatePersonalAllowance", () => {
   });
 
   describe("s.25(3A): allowance against other income first (2027/28 on)", () => {
-    // 2027/28 is not a supported year on this branch, so these use 2026/27 rates and set the
-    // rule with the explicit input. They test the rule's mechanism, not 2027/28 figures.
+    // These use 2026/27 rates and set the rule with the explicit input, to test the mechanism on
+    // its own. The 2027/28 figures are tested through calculateUKTax in
+    // tax-calculator.allowance-order.test.ts.
+    it("throws for a 2027/28 call that leaves out the other income, never guessing it", () => {
+      expect(() =>
+        allocatePersonalAllowance({
+          ...input({ nonSavings: 50000, savings: 0, dividends: 10000 }),
+          rules: getUkTaxYearRules("2027/28"),
+        }),
+      ).toThrow(/otherIncomeFirst/);
+    });
     it("keeps the whole allowance on other income that is large enough (step A case 3b)", () => {
       // Salary 50,000 is other income; it takes the whole 12,570 before savings or dividends.
       expect(
