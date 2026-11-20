@@ -108,8 +108,8 @@ export function keepRestLabel(count: number, all: boolean): string {
 
 /** Said once the keep is saved: "6 balances kept as they are. You can still change any of them." */
 export function keptText(count: number): string {
-  const noun = count === 1 ? "balance" : "balances";
-  return `${count} ${noun} kept as they are. You can still change any of them.`;
+  if (count === 1) return "1 balance kept as it is. You can still change it.";
+  return `${count} balances kept as they are. You can still change any of them.`;
 }
 
 /** "£3,360", or "£3,412.50" when the figure has pence (a true minus when negative). */

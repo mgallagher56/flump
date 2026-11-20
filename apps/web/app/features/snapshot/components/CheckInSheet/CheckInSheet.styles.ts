@@ -88,7 +88,7 @@ export const footerRow = cva({
   },
 });
 
-/** The one-press keep: a quiet secondary button under the accounts, left aligned. */
+/** The one-press keep: a quiet secondary button above the accounts, left aligned. */
 export const keepRow = cva({
   base: { display: "flex", justifyContent: "flex-start" },
 });

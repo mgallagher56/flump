@@ -263,15 +263,16 @@ export function useCheckIn({
 
   const keepable = useMemo(
     () =>
+      // No figure this month at all (a row reopened with Change keeps the figure it was given, so
+      // it is never overwritten here), nothing saving, and nothing typed.
       steps.filter(
         (s) =>
-          !isDone(s.accountId) &&
-          !pending[s.accountId] &&
+          !hasFigure(s) &&
           !s.calculated &&
           s.lastValue !== null &&
           (drafts[s.accountId] ?? null) === null,
       ),
-    [steps, isDone, pending, drafts],
+    [steps, hasFigure, drafts],
   );
 
   const keepRest = useCallback(async () => {
@@ -292,6 +293,7 @@ export function useCheckIn({
         ...f,
         ...Object.fromEntries(ids.map((id) => [id, { kind: "noChange" } as CheckInAnswer])),
       }));
+      setKept(null);
       return 0;
     }
     setKept(values.length);
