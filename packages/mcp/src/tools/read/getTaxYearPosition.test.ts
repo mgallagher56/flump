@@ -237,7 +237,7 @@ describe("get_tax_year_position verification for a provisional year (ruling B)",
       expect(e.verification).toEqual({
         status: "unverified",
         detail:
-          "2027/28 figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.",
+          "2027/28 figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.",
       });
     } finally {
       await h.close();

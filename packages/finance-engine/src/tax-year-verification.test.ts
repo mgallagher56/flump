@@ -21,15 +21,17 @@ describe("a provisional year never reports verified", () => {
   });
 
   it("is unverified while provisional, and says the rates are announced, not yet law", () => {
-    // The 5 HICBC and 2 relief-at-source 2027/28 vectors are unsigned, so it does not say "checked".
+    // Every 2027/28 vector is signed (20 Nov 2026), so it says the figures were checked against
+    // the announced rates, and still reports unverified while the year is provisional.
     const v = getTaxYearVerification(Y);
     expect(v.status).toBe("unverified");
     expect(v.detail).toBe(
-      "2027/28 figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.",
+      "2027/28 figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.",
     );
     expect(v.detail).not.toMatch(/verified|owner/i);
     expect(getTaxFeatureVerification(Y, "core")).toBe("unverified");
-    expect(getTaxFeatureVerification(Y, "hicbc", undefined, [])).toBe("unverified");
+    expect(getTaxFeatureVerification(Y, "hicbc")).toBe("unverified");
+    expect(getTaxFeatureVerification(Y, "hicbc", undefined, [])).toBe("verified");
   });
 
   it("says the figures were checked only when every vector for the year is signed, what-if ones included", () => {

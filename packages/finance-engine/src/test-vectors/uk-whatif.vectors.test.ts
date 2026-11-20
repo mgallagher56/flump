@@ -126,9 +126,13 @@ describe("E25 what-if vector catalogue", () => {
     }
   });
 
-  it("adding these vectors leaves a year with no signed vectors unverified", () => {
+  it("a year is verified on these vectors only when every one of them is signed", () => {
+    // 20 Nov 2026: every 2027/28 what-if vector is signed (4 by the owner, 7 by the Fable
+    // decider); every other year still has unsigned what-if vectors.
     for (const y of UK_TAX_VECTOR_YEARS) {
-      expect(yearVerification(y, UK_WHATIF_VECTORS)).toBe("unverified");
+      expect(yearVerification(y, UK_WHATIF_VECTORS), y).toBe(
+        y === "2027/28" ? "verified" : "unverified",
+      );
     }
   });
 
