@@ -3,6 +3,7 @@ import { FROZEN_NOW, SERVER_CLOCK_FROZEN } from "./clock";
 import { recordDestructive } from "./destructive-budget";
 import { BACKEND_URL } from "./env";
 import { allowRateLimitRetry } from "./rate-limit-retry";
+import { paceReads } from "./read-budget";
 
 /**
  * Neutral sample households (two for the visual suite, three more for the phone audit) for the single dev-bypass user, written through the same-origin
@@ -854,6 +855,8 @@ export interface PersonaResult {
  * with a session (global setup signs in first). Throws with every failing status.
  */
 export async function applyPersona(page: Page, name: PersonaName): Promise<PersonaResult> {
+  // Smoke suite: wait for the user's next read window if this one is nearly spent (read-budget.ts).
+  await paceReads();
   const plan = planFor(PERSONAS[name], seedNow());
   const binding = await allowRateLimitRetry(page);
   const outcome = await page.evaluate(

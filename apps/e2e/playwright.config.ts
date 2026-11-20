@@ -1,13 +1,17 @@
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import { quarantinePattern } from "./quarantine";
 import { clientAddressHeaders } from "./support/client-address";
 import { WEB_URL } from "./support/env";
+import { BACKEND_LOG } from "./support/read-budget";
 import { webServers } from "./support/servers";
 
 const isCI = Boolean(process.env.CI);
 // The smoke suite (this config only) retries a seeding call once after a 429 within one minute's
 // Retry-After (support/rate-limit-retry.ts). Set here so the runner and its workers both see it.
 process.env.E2E_RATE_LIMIT_RETRY = "1";
+mkdirSync(dirname(BACKEND_LOG), { recursive: true });
 // The new-user project's specs: the journey (it clears the one user and sets it up again), then
 // new-user-then-adds-accounts.spec.ts on the state the journey left. One worker, files in name
 // order ("new-user-journey" sorts before "new-user-then-…"), so the journey always runs first.
@@ -80,5 +84,10 @@ export default defineConfig({
   // suites keep today's Pension page, without its retirement link. Test harness only.
   // The id is the backend's fixed dev-bypass user (dev-bypass.verifier.ts), built at runtime so
   // the no-mock-auth scan keeps passing.
-  webServer: webServers({}, { RETIREMENT_ALLOWED_USER_IDS: ["dev", "user", "123"].join("_") }),
+  webServer: webServers(
+    {},
+    { RETIREMENT_ALLOWED_USER_IDS: ["dev", "user", "123"].join("_") },
+    // A timestamped copy of the backend's output, for the read budget and its 429s.
+    { backendLog: BACKEND_LOG },
+  ),
 });
