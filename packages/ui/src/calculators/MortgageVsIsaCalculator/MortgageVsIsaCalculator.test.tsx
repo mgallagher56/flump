@@ -194,4 +194,66 @@ describe("MortgageVsIsaCalculator", () => {
     expect(tsx).not.toContain("style={{");
     expect(`${tsx}${styles}`).not.toMatch(/status\.(danger|warning|positive)|#[0-9a-f]{3,6}\b/i);
   });
+
+  describe("short form (E42 section 4.4)", () => {
+    it("shows balance, rate and extra a month, with the assumptions behind Change the details", () => {
+      render(<MortgageVsIsaCalculator shortForm />);
+      expect(slider(MORTGAGE_ISA_COPY.balance)).toBeDefined();
+      expect(slider(MORTGAGE_ISA_COPY.rate)).toBeDefined();
+      expect(slider(MORTGAGE_ISA_COPY.extra)).toBeDefined();
+      expect(screen.queryByRole("button", { name: MORTGAGE_ISA_COPY.moreOptions })).toBeNull();
+      const toggle = screen.getByRole("button", { name: "Change the details" });
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      fireEvent.click(toggle);
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      expect(pill(MORTGAGE_ISA_COPY.isaGrowth)).toBeDefined();
+      expect(pill(MORTGAGE_ISA_COPY.term)).toBeDefined();
+    });
+
+    it("has no title, intro or sign-up button, and writes no seed", () => {
+      window.localStorage.clear();
+      render(<MortgageVsIsaCalculator shortForm />);
+      expect(screen.queryByText(MORTGAGE_ISA_COPY.title)).toBeNull();
+      expect(screen.queryByText(MORTGAGE_ISA_COPY.intro)).toBeNull();
+      expect(screen.queryByRole("button", { name: /Continue to sign up/ })).toBeNull();
+      fireEvent.change(slider(MORTGAGE_ISA_COPY.extra), { target: { value: "500" } });
+      expect(window.localStorage.length).toBe(0);
+    });
+
+    it("reads interest saved, then ISA growth, then the difference", () => {
+      render(<MortgageVsIsaCalculator shortForm />);
+      const text = screen.getByTestId("mortgage-isa-outcomes").textContent ?? "";
+      const order = [
+        MORTGAGE_ISA_COPY.kpiInterestSaved,
+        MORTGAGE_ISA_COPY.kpiIsaGrowth,
+        MORTGAGE_ISA_COPY.kpiDifference,
+      ].map((label) => text.indexOf(label));
+      expect(order.every((i) => i >= 0)).toBe(true);
+      expect([...order].sort((a, b) => a - b)).toEqual(order);
+      // £240,000 at 4.5% over 20 years, £350 a month, 7% growth: £36,349 saved, £99,388 growth,
+      // £63,039 apart.
+      expect(outcomes().getByText("£36,349")).toBeDefined();
+      expect(outcomes().getByText("£99,388")).toBeDefined();
+      expect(outcomes().getByText("£63,039")).toBeDefined();
+    });
+
+    it("states both assumptions under the result and updates them as the sliders move", () => {
+      render(<MortgageVsIsaCalculator shortForm />);
+      const line = () => screen.getByTestId("mortgage-isa-assumptions").textContent;
+      expect(line()).toBe("Assumes ISA growth of 7% a year and 20 years left on the mortgage.");
+      fireEvent.click(screen.getByRole("button", { name: "Change the details" }));
+      fireEvent.change(slider(MORTGAGE_ISA_COPY.isaGrowth), { target: { value: "5.25" } });
+      fireEvent.change(slider(MORTGAGE_ISA_COPY.term), { target: { value: "1" } });
+      expect(line()).toBe("Assumes ISA growth of 5.25% a year and 1 year left on the mortgage.");
+      const res = calculateMortgageVsIsa(240000, 4.5, 1, 350, 5.25);
+      expect(outcomes().getByText(pounds(res.isaGrowth))).toBeDefined();
+    });
+
+    it("never says better, best or should", () => {
+      render(<MortgageVsIsaCalculator shortForm />);
+      fireEvent.click(screen.getByRole("button", { name: "Change the details" }));
+      fireEvent.click(screen.getByRole("button", { name: MORTGAGE_ISA_COPY.explainerTitle }));
+      expect(toolText()).not.toMatch(/\b(better|best|should)\b/i);
+    });
+  });
 });

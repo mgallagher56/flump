@@ -1,7 +1,12 @@
-import { Icon } from "@repo/ui";
 import { ExternalLink } from "lucide-react";
 import type { FC } from "react";
-import { link, root, srOnly, text } from "./DebtHelpLink.styles";
+import { Icon } from "../../primitives/Icon";
+import {
+  debtHelpLinkAnchor as link,
+  debtHelpLinkRoot as root,
+  debtHelpLinkSrOnly as srOnly,
+  debtHelpLinkText as text,
+} from "./DebtHelpLink.styles";
 
 /** MoneyHelper's free debt advice locator (government-backed). */
 export const MONEYHELPER_DEBT_ADVICE_URL =

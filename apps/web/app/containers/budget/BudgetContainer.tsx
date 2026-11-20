@@ -18,6 +18,7 @@ import {
 import {
   Button,
   DataList,
+  DebtHelpLink,
   EmptyState,
   Icon,
   InlineAlert,
@@ -46,7 +47,6 @@ import {
   pageBudgetEntries,
 } from "~/features/budget/linkedEntries";
 import { missingWizardCommonItems } from "~/features/budget/wizardCommonItems";
-import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import {
   HousingDetails,
   type HousingTenure,

@@ -413,13 +413,16 @@ Guards read: `apps/marketing/src/claims.test.ts` (banned claims, advice lexicon,
 - AGENTS.md section 3 on the short forms: `<SliderField>` for every slider; `<SimulatorSplitLayout>` where a short form has a chart; a chartless short form is exempt (section 4.4 says why).
 - The AI connection tile reads "Switched on for an account on request during testing."
 - The plain names for calculators 5 and 6 are routine wording for the coordinator to approve: "Two ways to pay off debts" and "Mortgage overpayment or ISA, compared".
+- The AI connection page's "How to get it" is version 1, word for word as section 5.2 has it, with "Ask us" linking to the Contact page (coordinator, 20 November 2026; reported to the owner).
+- The small "Preview" label on the AI connection page stays while access is limited to named accounts (coordinator, 20 November 2026; reported to the owner).
+- The features page lead keeps "Five areas": the AI connection is a way to use the areas, not a sixth area (coordinator, 20 November 2026).
 
 **Still to confirm.** The build leaves each part alone until its item is settled.
 
 | Item | Who | Part of the build it holds |
 | --- | --- | --- |
-| The AI connection page's "How to get it" wording: version 1 or version 2 (section 5.2) | Owner | That section of the AI connection page |
-| Whether the AI connection page keeps the small "Preview" label (E17 D1-A) | Owner | The label on that page |
+| ~~The AI connection page's "How to get it" wording~~ | Decided by the coordinator, 20 November 2026: version 1 (above) | Built in PR 2 |
+| ~~Whether the AI connection page keeps the small "Preview" label~~ | Decided by the coordinator, 20 November 2026: it stays (above) | Kept |
 | That choosing the headline allows its two full stops and slogan shape for the marketing home h1 only (ruling R-a, section 5.1), and the copy guide exception that records it | Owner | The copy guide edit; the h1 text itself is decided |
 | That downloading and deleting data work in staging | Owner | The two data facts on the Security page |
 | The list of account kinds named on the Accounts page | Build lane, checked against the code | One sentence of the Accounts page |

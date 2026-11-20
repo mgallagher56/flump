@@ -3,6 +3,16 @@ import { describe, expect, it } from "vitest";
 import { DebtHelpLink, MONEYHELPER_DEBT_ADVICE_URL } from "./DebtHelpLink";
 
 describe("DebtHelpLink", () => {
+  it("pins the fixed line and URL word for word (copy guide 7.3, owner R3 exception)", () => {
+    const { container } = render(<DebtHelpLink />);
+    expect(container.textContent).toBe(
+      "Free, impartial debt help is available from MoneyHelper (opens in a new tab).",
+    );
+    expect(MONEYHELPER_DEBT_ADVICE_URL).toBe(
+      "https://www.moneyhelper.org.uk/en/money-troubles/dealing-with-debt/debt-advice-locator",
+    );
+  });
+
   it("links to MoneyHelper's debt advice locator in a new tab, with an external-link cue", () => {
     render(<DebtHelpLink />);
     const link = screen.getByRole("link", { name: /MoneyHelper.*opens in a new tab/i });

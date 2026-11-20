@@ -9,8 +9,6 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { PreviewPage } from "./pages/PreviewPage";
 import { PricingPage } from "./pages/PricingPage";
 import { SecurityPage } from "./pages/SecurityPage";
-import { ToolPage } from "./pages/ToolPage";
-import { ToolsIndexPage } from "./pages/ToolsIndexPage";
 import { AI_CONNECTION, FEATURES_INDEX, MONEY_AREAS } from "./utils/featureAreas";
 
 export default function App() {
@@ -26,11 +24,10 @@ export default function App() {
             element={<FeaturePage feature={area} key={area.key} />}
           />
         ))}
-        {/* /mcp answers 301 here (server/redirects.ts). */}
+        {/* /mcp answers 301 here, and /tools and the former calculator pages to the features and
+            area pages (server/redirects.ts). */}
         <Route path={AI_CONNECTION.path} element={<AiConnectionPage />} />
         <Route path="/preview" element={<PreviewPage />} />
-        <Route path="/tools" element={<ToolsIndexPage />} />
-        <Route path="/tools/:slug" element={<ToolPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/contact" element={<ContactPage />} />

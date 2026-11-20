@@ -74,8 +74,6 @@ describe("NotFoundPage", () => {
 describe("resolveStatus", () => {
   it.each([
     "/",
-    "/tools",
-    "/tools/",
     "/pricing",
     "/security?x=1",
     "/features",
@@ -84,9 +82,6 @@ describe("resolveStatus", () => {
     "/features/ai-connection",
     "/contact",
     "/Pricing",
-    "/TOOLS/UK-100k-Tax-Trap-Calculator",
-    "/tools/uk-100k-tax-trap-calculator",
-    "/tools/overdraft-interest-calculator",
   ])("200 for %s", (url) => {
     expect(isKnownPath(url)).toBe(true);
     expect(resolveStatus(url)).toBe(200);
@@ -96,6 +91,9 @@ describe("resolveStatus", () => {
     "/nope",
     "/tools/nope",
     "/tools/a/b",
+    // Answer 301 before SSR (server/redirects.ts); were they ever rendered they would be 404s.
+    "/tools",
+    "/tools/uk-100k-tax-trap-calculator",
     "/sitemap.xml",
     "/pricing/extra",
     // Answers 301 before SSR (server/redirects.ts); were it ever rendered it would be a 404.

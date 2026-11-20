@@ -87,6 +87,12 @@ export const DEBT_SNOWBALL_COPY = {
     "Both methods pay every minimum and put the extra payment on one debt at a time. Highest rate first puts it on the debt with the highest interest rate; smallest balance first puts it on the smallest balance. When a debt is paid off, its payment moves to the next one.",
   controlsLabel: "Your debts",
   contentLabel: "Estimated payoff",
+  /** Short form (E42): the starting debts are sample data, labelled "Example" (copy guide 7.4). */
+  shortFormLegend: (n: number, kind?: string) =>
+    kind ? `Example debt ${n}: ${kind}` : `Debt ${n}`,
+  changeDetails: "Change the details",
+  /** "Estimated interest £1,864" */
+  shortFormInterest: (amount: string) => `Estimated interest ${amount}`,
 } as const;
 
 export const DEBT_SNOWBALL_DEFAULT_CTA = "Continue to sign up";
@@ -165,6 +171,12 @@ export interface DebtSnowballCalculatorProps {
   initialExtraPayment?: number;
   /** Inside a tool page that already shows the title and description: hide this calculator's own title and intro. */
   embedded?: boolean;
+  /**
+   * The short form for a marketing page (E42 section 4.4): no title, intro or button, the seed is
+   * never written, only the balances and the extra payment show until "Change the details" is
+   * opened, and the two ways sit side by side with equal weight. Default false.
+   */
+  shortForm?: boolean;
 }
 
 /**
@@ -178,13 +190,17 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
   persistSeed = true,
   initialExtraPayment = 75,
   embedded = false,
+  shortForm = false,
 }) => {
   const [debts, setDebts] = useState<DebtRowState[]>(() => STARTING_DEBTS.map((d) => ({ ...d })));
   const [extraPayment, setExtraPayment] = useState(Math.max(0, initialExtraPayment));
   // Rows whose rate and minimum are open. All start closed, so about three inputs show (P1.7).
   const [openRows, setOpenRows] = useState<ReadonlySet<string>>(() => new Set());
+  // Short form: one toggle opens every row's rate and minimum, Remove and Add a debt together.
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const nextId = useRef(STARTING_DEBTS.length + 1);
   const panelIdBase = useId();
+  const detailsPanelId = `${panelIdBase}-details`;
   // Keyboard focus follows the row that was added, or the row before one that was removed, so it
   // is never lost when a button unmounts.
   const rowRefs = useRef(new Map<string, HTMLFieldSetElement>());
@@ -259,7 +275,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
       inferredModules: ["accounts", "debt", "budget"],
       timestamp: Date.now(),
     };
-    if (persistSeed) persistOnboardingSeed(payload);
+    if (persistSeed && !shortForm) persistOnboardingSeed(payload);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
@@ -308,12 +324,38 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
     />
   );
 
+  // Short form: the "Change the details" toggle governs every row; otherwise each row's own Edit.
+  const showRowActions = !shortForm || detailsOpen;
+
+  // Short form: one card per way, the same fields and weight, neither marked as better (E42 4.4).
+  const shortFormCard = (label: string, result: PayoffResult) => (
+    <KpiCard
+      label={label}
+      subtext={
+        nothingOwed
+          ? DEBT_SNOWBALL_COPY.nothingOwedInterest
+          : result.payoffAchievable
+            ? DEBT_SNOWBALL_COPY.shortFormInterest(money(result.totalInterest))
+            : DEBT_SNOWBALL_COPY.notPaidOffDetail
+      }
+      value={
+        nothingOwed ? (
+          <span className={debtOutcomeText()}>{DEBT_SNOWBALL_COPY.nothingOwed}</span>
+        ) : result.payoffAchievable ? (
+          result.debtFreeDate
+        ) : (
+          DEBT_SNOWBALL_COPY.notPaidOff
+        )
+      }
+    />
+  );
+
   const controls = (
     <div className={debtControls()}>
-      <div className={debtList()}>
+      <div className={debtList()} id={shortForm ? detailsPanelId : undefined}>
         {debts.map((row, index) => {
           const n = index + 1;
-          const open = openRows.has(row.id);
+          const open = shortForm ? detailsOpen : openRows.has(row.id);
           const panelId = `${panelIdBase}-${row.id}`;
           return (
             <fieldset
@@ -326,21 +368,25 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
             >
               {/* The legend stays the fieldset's first child so it names the group. */}
               <legend className={debtRowLegend()}>
-                {DEBT_SNOWBALL_COPY.debtLegend(n, row.kind)}
+                {shortForm
+                  ? DEBT_SNOWBALL_COPY.shortFormLegend(n, row.kind)
+                  : DEBT_SNOWBALL_COPY.debtLegend(n, row.kind)}
               </legend>
               {/* Before the fields in the DOM, as on screen, so focus order matches. */}
               <div className={debtRowActions()}>
-                <Button
-                  aria-controls={panelId}
-                  aria-expanded={open}
-                  aria-label={DEBT_SNOWBALL_COPY.editLabel(n)}
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => toggleRow(row.id)}
-                >
-                  {DEBT_SNOWBALL_COPY.edit}
-                </Button>
-                {debts.length > 1 ? (
+                {shortForm ? null : (
+                  <Button
+                    aria-controls={panelId}
+                    aria-expanded={open}
+                    aria-label={DEBT_SNOWBALL_COPY.editLabel(n)}
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => toggleRow(row.id)}
+                  >
+                    {DEBT_SNOWBALL_COPY.edit}
+                  </Button>
+                )}
+                {showRowActions && debts.length > 1 ? (
                   <Button
                     aria-label={DEBT_SNOWBALL_COPY.removeLabel(n)}
                     size="sm"
@@ -404,9 +450,27 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
             </fieldset>
           );
         })}
+        {shortForm && detailsOpen && debts.length < MAX_DEBTS ? (
+          <Button className={debtAddButton()} size="sm" variant="outline" onClick={addDebt}>
+            <Icon icon={Plus} size="sm" /> {DEBT_SNOWBALL_COPY.add}
+          </Button>
+        ) : null}
       </div>
 
-      {debts.length < MAX_DEBTS ? (
+      {shortForm ? (
+        <Button
+          aria-controls={detailsPanelId}
+          aria-expanded={detailsOpen}
+          className={debtAddButton()}
+          size="sm"
+          variant="outline"
+          onClick={() => setDetailsOpen((open) => !open)}
+        >
+          {DEBT_SNOWBALL_COPY.changeDetails}
+        </Button>
+      ) : null}
+
+      {!shortForm && debts.length < MAX_DEBTS ? (
         <Button className={debtAddButton()} size="sm" variant="outline" onClick={addDebt}>
           <Icon icon={Plus} size="sm" /> {DEBT_SNOWBALL_COPY.add}
         </Button>
@@ -434,19 +498,34 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
     <div className={debtContent()}>
       {/* Illustration outcomes, not saved figures. One outcome, then the two methods with the
           same fields (COPY-AUDIT R1). */}
-      <div className={debtOutcomes()} data-density="compact" data-testid="debt-snowball-outcomes">
-        <KpiCard label={DEBT_SNOWBALL_COPY.kpiDate} subtext={dateSubtext} value={dateValue} />
-        {methodCard(DEBT_SNOWBALL_COPY.kpiAvalanche, avalanche)}
-        {methodCard(DEBT_SNOWBALL_COPY.kpiSnowball, snowball)}
+      <div
+        className={debtOutcomes({ shortForm })}
+        data-density="compact"
+        data-testid="debt-snowball-outcomes"
+      >
+        {shortForm ? (
+          <>
+            {shortFormCard(DEBT_SNOWBALL_COPY.avalancheRow, avalanche)}
+            {shortFormCard(DEBT_SNOWBALL_COPY.snowballRow, snowball)}
+          </>
+        ) : (
+          <>
+            <KpiCard label={DEBT_SNOWBALL_COPY.kpiDate} subtext={dateSubtext} value={dateValue} />
+            {methodCard(DEBT_SNOWBALL_COPY.kpiAvalanche, avalanche)}
+            {methodCard(DEBT_SNOWBALL_COPY.kpiSnowball, snowball)}
+          </>
+        )}
       </div>
 
-      <Button className={debtCta()} size="md" variant="primary" onClick={handleSave}>
-        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
-      </Button>
+      {shortForm ? null : (
+        <Button className={debtCta()} size="md" variant="primary" onClick={handleSave}>
+          {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+        </Button>
+      )}
 
       {/* Both quiet drawers in one column, so they sit with one even gap. */}
       <div className={debtDrawers()}>
-        {bothPaidOff && !nothingOwed ? (
+        {!shortForm && bothPaidOff && !nothingOwed ? (
           <CollapsibleDrawer title={DEBT_SNOWBALL_COPY.details} variant="quiet">
             <div className={debtDetails()}>
               <Table caption={DEBT_SNOWBALL_COPY.detailsCaption}>
@@ -497,7 +576,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
 
   return (
     <div className={debtRoot()} data-testid="debt-snowball-tool">
-      {embedded ? null : (
+      {embedded || shortForm ? null : (
         <div className={debtHeader()}>
           <h2 className={debtTitle()}>{DEBT_SNOWBALL_COPY.title}</h2>
           <p className={debtIntro()}>{DEBT_SNOWBALL_COPY.intro}</p>

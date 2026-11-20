@@ -39,6 +39,15 @@ describe("TopBar", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it("caps a flyout to the screen below the sticky bar and lets it scroll (E42 PR 2, short tablets)", () => {
+    render(<TopBar items={sampleNavItems} />);
+    const trigger = screen.getByRole("button", { name: "Plan" });
+    fireEvent.click(trigger);
+    const panel = document.getElementById(trigger.getAttribute("aria-controls") ?? "");
+    expect(panel?.className).toContain("max-h_calc(100dvh_-_5rem)");
+    expect(panel?.className).toContain("ov-y_auto");
+  });
+
   it("closes the flyout on outside pointer down", () => {
     render(<TopBar items={sampleNavItems} />);
     const trigger = screen.getByRole("button", { name: "Plan" });

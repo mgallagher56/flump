@@ -168,9 +168,11 @@ describe("Architecture & Design System Laws", () => {
         "CoachCard",
         "ConfirmDialog",
         "DashboardPreview",
+        "DebtHelpLink",
         "EmptyState",
         "HeroFigure",
         "KpiStrip",
+        "MoneyHelperGuidance",
         "PreviewFrame",
         "ScenarioZone",
       ]) {

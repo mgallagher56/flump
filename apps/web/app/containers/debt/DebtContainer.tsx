@@ -6,6 +6,7 @@ import {
 import {
   Button,
   CollapsibleDrawer,
+  DebtHelpLink,
   EmptyState,
   PageBody,
   PageHeader,
@@ -21,7 +22,6 @@ import {
   type DebtOwnership,
 } from "~/features/debt/components/AddDebtDialog";
 import { DebtAccountsList } from "~/features/debt/components/DebtAccountsList";
-import { DebtHelpLink } from "~/features/debt/components/DebtHelpLink";
 import { DebtSummary } from "~/features/debt/components/DebtSummary";
 import { PayExtraTool } from "~/features/debt/components/PayExtraTool";
 import { UkDebtInstrumentsCard } from "~/features/debt/components/UkDebtInstrumentsCard";

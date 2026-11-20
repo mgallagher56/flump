@@ -18,6 +18,7 @@ import { formatMoney, Money } from "../../primitives/Money/Money";
 import { SliderField } from "../../primitives/SliderField/SliderField";
 import { ctaLabel } from "../ctaLabel";
 import {
+  mortgageIsaAssumptions,
   mortgageIsaContent,
   mortgageIsaControls,
   mortgageIsaCta,
@@ -58,7 +59,14 @@ export const MORTGAGE_ISA_COPY = {
     "Both are compared over the years left that you set. This does not count investing the mortgage payment once the mortgage is paid off early, charges, or early repayment limits on your mortgage.",
   controlsLabel: "Mortgage and ISA details",
   contentLabel: "Estimated interest saved and ISA growth",
+  /** Short form (E42): the drawer that holds the two assumptions. */
+  changeDetails: "Change the details",
+  /** "Assumes ISA growth of 7% a year and 20 years left on the mortgage." */
+  assumptions: (growth: string, years: number) =>
+    `Assumes ISA growth of ${growth}% a year and ${years} ${years === 1 ? "year" : "years"} left on the mortgage.`,
 } as const;
+
+const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
 
 export const MORTGAGE_ISA_DEFAULT_CTA = "Continue to sign up";
 
@@ -97,6 +105,13 @@ export interface MortgageVsIsaCalculatorProps {
   initialTermYears?: number;
   /** Inside a tool page that already shows the title and description: hide this calculator's own title and intro. */
   embedded?: boolean;
+  /**
+   * The short form for a marketing page (E42 section 4.4): no title, intro or button, the seed is
+   * never written, the two assumptions sit behind "Change the details" and are stated in a line
+   * under the result, and the figures read interest saved, ISA growth, then the difference.
+   * Default false.
+   */
+  shortForm?: boolean;
 }
 
 /**
@@ -114,6 +129,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
   initialIsaGrowth = 7,
   initialTermYears = 20,
   embedded = false,
+  shortForm = false,
 }) => {
   // Clamped so a negative entry never reaches the engine.
   const [balance, setBalance] = useState(Math.max(0, initialBalance));
@@ -144,7 +160,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
       inferredModules: ["mortgage", "accounts", "forecast"],
       timestamp: Date.now(),
     };
-    if (persistSeed) persistOnboardingSeed(payload);
+    if (persistSeed && !shortForm) persistOnboardingSeed(payload);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
@@ -182,7 +198,11 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         value={extra}
         onChange={(v) => setExtra(Math.max(0, v))}
       />
-      <CollapsibleDrawer closedLabel="" openLabel="" title={MORTGAGE_ISA_COPY.moreOptions}>
+      <CollapsibleDrawer
+        closedLabel=""
+        openLabel=""
+        title={shortForm ? MORTGAGE_ISA_COPY.changeDetails : MORTGAGE_ISA_COPY.moreOptions}
+      >
         <div className={mortgageIsaDrawerBody()}>
           <SliderField
             format="percent"
@@ -207,21 +227,25 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
     </div>
   );
 
+  const differenceCard = (
+    <KpiCard
+      label={MORTGAGE_ISA_COPY.kpiDifference}
+      subtext={MORTGAGE_ISA_COPY.kpiDifferenceSubtext}
+      value={Math.abs(delta)}
+    />
+  );
+
   const showSooner = balance > 0 && extra > 0 && result.monthsShaved > 0;
   const content = (
     <div className={mortgageIsaContent()}>
       {/* Illustration outcomes, not saved figures. The headline is the difference between the
           two; the two options then sit side by side in the same neutral style. */}
       <div
-        className={mortgageIsaOutcomes()}
+        className={mortgageIsaOutcomes({ shortForm })}
         data-density="compact"
         data-testid="mortgage-isa-outcomes"
       >
-        <KpiCard
-          label={MORTGAGE_ISA_COPY.kpiDifference}
-          subtext={MORTGAGE_ISA_COPY.kpiDifferenceSubtext}
-          value={Math.abs(delta)}
-        />
+        {shortForm ? null : differenceCard}
         <KpiCard
           label={MORTGAGE_ISA_COPY.kpiInterestSaved}
           subtext={
@@ -238,11 +262,19 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
           subtext={MORTGAGE_ISA_COPY.kpiIsaGrowthSubtext}
           value={<Money size="lg" value={result.isaGrowth} />}
         />
+        {/* Short form: the two estimates first, then the difference between them (E42 4.4). */}
+        {shortForm ? differenceCard : null}
       </div>
 
-      <Button className={mortgageIsaCta()} size="md" variant="primary" onClick={handleSave}>
-        {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
-      </Button>
+      {shortForm ? (
+        <p className={mortgageIsaAssumptions()} data-testid="mortgage-isa-assumptions">
+          {MORTGAGE_ISA_COPY.assumptions(percentFormat.format(isaGrowth), termYears)}
+        </p>
+      ) : (
+        <Button className={mortgageIsaCta()} size="md" variant="primary" onClick={handleSave}>
+          {ctaLabel(ctaText)} <Icon icon={ArrowRight} size="sm" />
+        </Button>
+      )}
 
       {/* Closed by default so the first view keeps to the headline and two figures (P1). */}
       <CollapsibleDrawer title={MORTGAGE_ISA_COPY.explainerTitle} variant="quiet">
@@ -263,7 +295,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
   return (
     <div className={mortgageIsaRoot()} data-testid="mortgage-vs-isa-tool">
-      {embedded ? null : (
+      {embedded || shortForm ? null : (
         <div className={mortgageIsaHeader()}>
           <h2 className={mortgageIsaTitle()}>{MORTGAGE_ISA_COPY.title}</h2>
           <p className={mortgageIsaIntro()}>{MORTGAGE_ISA_COPY.intro}</p>

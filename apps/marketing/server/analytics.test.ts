@@ -75,9 +75,8 @@ describe("helpers", () => {
   it("maps paths to allow-listed keys", () => {
     expect(routeKey("/")).toBe("/");
     expect(routeKey("/pricing?utm=1")).toBe("/pricing");
-    expect(routeKey("/tools/uk-100k-tax-trap-calculator")).toBe(
-      "/tools/uk-100k-tax-trap-calculator",
-    );
+    // E42 PR 2: the calculator pages are 301s now, so never page views.
+    expect(routeKey("/tools/uk-100k-tax-trap-calculator")).toBe("other");
     expect(routeKey("/tools/secret-user-slug")).toBe("other");
     // E42: the feature pages are counted; /mcp is a 301 now, so it is never a page view.
     expect(routeKey("/features/Budget/")).toBe("/features/budget");

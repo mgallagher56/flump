@@ -1,5 +1,9 @@
 import type { FC } from "react";
-import { link, srOnly, text } from "./MoneyHelperGuidance.styles";
+import {
+  moneyHelperGuidanceLink as link,
+  moneyHelperGuidanceSrOnly as srOnly,
+  moneyHelperGuidanceText as text,
+} from "./MoneyHelperGuidance.styles";
 
 /** MoneyHelper's pensions and retirement guidance (government-backed). Verified 2026-11-17. */
 export const MONEYHELPER_PENSIONS_URL = "https://www.moneyhelper.org.uk/en/pensions-and-retirement";

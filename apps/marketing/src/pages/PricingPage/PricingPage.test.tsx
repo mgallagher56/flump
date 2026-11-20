@@ -71,16 +71,19 @@ describe("PricingPage (D10 b)", () => {
     expectPageRules(main, { projectionNotices: 0 });
   });
 
-  it("lists three short benefits, claims only shipped features and promises no bank feed", () => {
+  it("lists the five areas by the app's names, claims only shipped features and promises no bank feed", () => {
     const { container } = renderPage();
     const items = within(container.querySelector('[data-plan="beta"]') as HTMLElement).getAllByRole(
       "listitem",
     );
     expect(items.map((li) => li.textContent)).toEqual([...BETA_FEATURES]);
+    expect(items[0]?.textContent).toBe(
+      "All five areas of the Flump app: accounts, budget, pay, savings and pension, and debt and borrowing",
+    );
     const text = container.textContent ?? "";
     expect(text).not.toMatch(/CSV|auto-categorisation|FCA|real-time|trial|Pro\b|No credit card/i);
     expect(text).not.toMatch(/bank connection|bank feed|coming soon|planned/i);
-    // The calculator list lives on /tools, not here.
+    // No calculator is listed: the marketing site has none of its own (D9).
     for (const tool of TOOL_CATALOGUE) expect(screen.queryByText(tool.title)).toBeNull();
   });
 

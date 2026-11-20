@@ -89,3 +89,68 @@ export const finalCtaBody = cva({
 export const finalCtaIllustration = cva({
   base: { width: { base: "28", md: "36" } },
 });
+
+/** "Start with rough figures": three numbered steps, side by side from `md`. */
+export const stepGrid = cva({
+  base: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+    gap: { base: "4", md: "6" },
+  },
+});
+
+export const stepTitle = cva({
+  base: { textStyle: "heading.md", color: "text.primary", margin: 0, mb: "2" },
+});
+
+export const stepBody = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
+});
+
+/** A scene under a band with no figures (B10): from `md` up only. */
+export const bandIllustration = cva({
+  base: { display: { base: "none", md: "block" }, width: "36", mt: "6", mx: "auto" },
+});
+
+export const bandFooter = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: 0, mt: "6" },
+});
+
+export const bandLink = cva({
+  base: {
+    color: "primary",
+    fontWeight: "semibold",
+    textDecoration: "underline",
+    textUnderlineOffset: "3px",
+    _hover: { color: "primary.hover" },
+    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  },
+});
+
+export const depthList = cva({
+  base: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" },
+    gap: { base: "4", md: "6" },
+  },
+});
+
+export const depthItem = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2",
+    textStyle: "body.md",
+    color: "text.primary",
+    pl: "4",
+    borderLeftWidth: "2px",
+    borderLeftStyle: "solid",
+    borderLeftColor: "border",
+  },
+});

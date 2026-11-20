@@ -72,3 +72,8 @@ export const drawerGroup = cva({
 export const drawerGroupHeading = cva({
   base: { textStyle: "label.sm", color: "text.secondary", margin: 0, px: "4", py: "2" },
 });
+
+/** The page you are on, in the phone menu: a primary edge and a heavier label, beside aria-current. */
+export const drawerLinkCurrent = cva({
+  base: { borderColor: "primary", color: "primary", fontWeight: "semibold" },
+});

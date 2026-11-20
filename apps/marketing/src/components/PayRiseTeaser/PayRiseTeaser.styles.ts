@@ -81,3 +81,16 @@ export const teaserActions = cva({
 export const taperFigure = cva({
   base: { fontVariantNumeric: "tabular-nums" },
 });
+
+/** Inside a feature page's "Try it with your own numbers" section: no band, an h3. */
+export const embeddedRoot = cva({
+  base: { display: "flex", flexDirection: "column", gap: "3" },
+});
+
+export const embeddedTitle = cva({
+  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
+});
+
+export const embeddedSubtitle = cva({
+  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
+});

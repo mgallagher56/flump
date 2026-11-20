@@ -4,7 +4,7 @@ import { MONEYHELPER_PENSIONS_URL, MoneyHelperGuidance } from "./MoneyHelperGuid
 
 /** The Storybook preview renders every story side by side in light and dark. */
 const meta: Meta<typeof MoneyHelperGuidance> = {
-  title: "3. Patterns/Retirement/MoneyHelperGuidance",
+  title: "3. Patterns/MoneyHelperGuidance",
   component: MoneyHelperGuidance,
   parameters: { layout: "padded" },
 };

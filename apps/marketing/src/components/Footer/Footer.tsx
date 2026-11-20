@@ -47,7 +47,6 @@ export const Footer: FC = () => {
               href: feature.path,
             })),
             { key: "preview", label: "Interactive preview", href: "/preview" },
-            { key: "tools", label: "All calculators", href: "/tools" },
             { key: "pricing", label: "Pricing", href: "/pricing" },
           ],
         },

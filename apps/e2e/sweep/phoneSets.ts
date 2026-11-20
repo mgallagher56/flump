@@ -140,11 +140,6 @@ const BUDGET_OVERLAYS: PhoneOverlay[] = [
 
 const MARKETING_PAGES: PhonePage[] = [
   { name: "mkt-home", url: `${MARKETING_URL}/`, main: true },
-  { name: "mkt-tools", url: `${MARKETING_URL}/tools` },
-  ...TOOL_SLUGS.map((slug) => ({
-    name: `mkt-${stem(`/tools/${slug}`)}`,
-    url: `${MARKETING_URL}/tools/${slug}`,
-  })),
   ...[
     "/features",
     "/features/accounts",
@@ -455,11 +450,6 @@ export const PHONE_SETS: PhoneSet[] = [
     name: "mkt",
     pages: [
       { name: "home", url: `${MARKETING_URL}/`, main: true },
-      { name: "tools", url: `${MARKETING_URL}/tools` },
-      ...TOOL_SLUGS.map((slug) => ({
-        name: stem(`/tools/${slug}`),
-        url: `${MARKETING_URL}/tools/${slug}`,
-      })),
       ...[
         "/features",
         "/features/accounts",

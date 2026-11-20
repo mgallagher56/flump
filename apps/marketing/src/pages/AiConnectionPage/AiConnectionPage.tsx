@@ -1,15 +1,17 @@
 import { Card, CollapsibleDrawer, StatusBadge } from "@repo/ui";
-import { type FC, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import type { FC } from "react";
+import { Link } from "react-router-dom";
 import { MarketingSection } from "../../components/MarketingSection";
 import { AI_STAGING_SENTENCE } from "../../utils/aiConnection";
 import { AI_CONNECTION, AI_CONNECTION_ACCESS } from "../../utils/featureAreas";
 import { FeaturePage } from "../FeaturePage";
 import {
   body,
+  inlineLink,
   questionCard,
   questionList,
   section,
+  setupSection,
   techBody,
   techDisclosure,
   techHeading,
@@ -33,27 +35,17 @@ const STAGING = MCP_TOOLS.filter((tool) => tool.kind === "stage");
 
 const count = new Intl.NumberFormat("en-GB");
 
-/** The web app's Settings link lands here (`apps/web/app/routes/app.profile.tsx`). */
-const SETUP_FRAGMENT = "#setup";
-
 /**
  * The AI connection page (E42 S2b): a feature page like the five areas, at
  * `/features/ai-connection` (`/mcp` answers 301 here). Access stays with the accounts the owner
  * switches on, so the hero says how a tester gets it in the decided words and no line reads as if
  * every account has it.
  *
- * Left for the owner (plan section 7.1, "Still to confirm"): the "How to get it" section (version 1
- * or 2) is not built, and the small "Preview" label stays as it was until the owner rules on it.
- * The web app links to `#setup`; that anchor is on the technical details, which open on arrival
- * there (after hydration, since the server never sees the fragment).
+ * Decided by the coordinator on 20 November 2026 (plan section 7.1): "How to get it" is version 1,
+ * with "Ask us" linking to the Contact page, and the small "Preview" label stays while access is
+ * limited to named accounts. The web app's Settings link lands on "How to get it" (`#setup`).
  */
 export const AiConnectionPage: FC = () => {
-  const { hash: fragment } = useLocation();
-  const [openOnArrival, setOpenOnArrival] = useState(false);
-  useEffect(() => {
-    if (fragment === SETUP_FRAGMENT) setOpenOnArrival(true);
-  }, [fragment]);
-
   return (
     <FeaturePage
       badge={
@@ -64,13 +56,8 @@ export const AiConnectionPage: FC = () => {
       feature={AI_CONNECTION}
       heroNote={AI_CONNECTION_ACCESS}
       moreDetail={
-        <div className={techDisclosure()} id="setup">
-          <CollapsibleDrawer
-            defaultOpen={openOnArrival}
-            key={openOnArrival ? "open" : "closed"}
-            title="Show technical details"
-            variant="quiet"
-          >
+        <div className={techDisclosure()}>
+          <CollapsibleDrawer title="Show technical details" variant="quiet">
             <div className={techBody()} data-testid="mcp-technical-details">
               <div className={section()}>
                 <h3 className={techHeading()}>How it works</h3>
@@ -137,15 +124,28 @@ export const AiConnectionPage: FC = () => {
         </div>
       }
       sample={
-        <MarketingSection id="questions" title="Questions you could ask">
-          <ul className={questionList()}>
-            {EXAMPLE_QUESTIONS.map((question) => (
-              <Card as="li" className={questionCard()} key={question} padding="md">
-                {question}
-              </Card>
-            ))}
-          </ul>
-        </MarketingSection>
+        <>
+          <MarketingSection id="questions" title="Questions you could ask">
+            <ul className={questionList()}>
+              {EXAMPLE_QUESTIONS.map((question) => (
+                <Card as="li" className={questionCard()} key={question} padding="md">
+                  {question}
+                </Card>
+              ))}
+            </ul>
+          </MarketingSection>
+          {/* Version 1 (coordinator, 20 November 2026): promises nothing about who is switched on. */}
+          <MarketingSection className={setupSection()} id="setup" title="How to get it">
+            <p className={body()} data-testid="mcp-how-to-get-it">
+              While Flump is being tested, the AI connection is switched on one account at a time.{" "}
+              <Link className={inlineLink()} to="/contact">
+                Ask us
+              </Link>{" "}
+              to switch it on for yours. Once it is on, create an access token in Settings and add
+              Flump to your AI assistant.
+            </p>
+          </MarketingSection>
+        </>
       }
     />
   );

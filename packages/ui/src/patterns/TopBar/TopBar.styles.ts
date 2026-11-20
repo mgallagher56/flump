@@ -178,6 +178,11 @@ export const topBarFlyout = cva({
     borderColor: "border",
     borderRadius: "card",
     boxShadow: "overlay",
+    // The bar is sticky, so a flyout taller than the screen below it could never be scrolled into
+    // view (a tablet in landscape, about 560px tall): it scrolls itself instead.
+    maxHeight: "calc(100dvh - 5rem)",
+    overflowY: "auto",
+    overscrollBehavior: "contain",
   },
 });
 

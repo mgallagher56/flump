@@ -1,6 +1,6 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { cva } from "../../../styled-system/css";
 
-export const root = cva({
+export const debtHelpLinkRoot = cva({
   base: {
     paddingY: "3",
     paddingX: "4",
@@ -11,11 +11,11 @@ export const root = cva({
   },
 });
 
-export const text = cva({
+export const debtHelpLinkText = cva({
   base: { textStyle: "body.sm", color: "text.secondary", margin: 0 },
 });
 
-export const link = cva({
+export const debtHelpLinkAnchor = cva({
   base: {
     display: "inline-flex",
     alignItems: "center",
@@ -26,4 +26,4 @@ export const link = cva({
   },
 });
 
-export const srOnly = cva({ base: { srOnly: true } });
+export const debtHelpLinkSrOnly = cva({ base: { srOnly: true } });

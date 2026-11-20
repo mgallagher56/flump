@@ -57,6 +57,27 @@ export const mortgageIsaOutcomes = cva({
     // A lone supporting figure takes the whole row instead of leaving a half-width gap.
     "& > :nth-child(2):last-child": { gridColumn: "1 / -1" },
   },
+  variants: {
+    /** Short form: the two estimates share a row from `sm`; the difference below spans it. */
+    shortForm: {
+      true: {
+        "& > :first-child": { gridColumn: "auto" },
+        "& > :last-child": { gridColumn: "1 / -1" },
+      },
+      false: {},
+    },
+  },
+  defaultVariants: { shortForm: false },
+});
+
+/** Short form: the two assumptions, stated under the result whether or not the drawer is open. */
+export const mortgageIsaAssumptions = cva({
+  base: {
+    margin: "0",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+  },
 });
 
 export const mortgageIsaExplainer = cva({

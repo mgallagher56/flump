@@ -1,13 +1,43 @@
+import { resolveToolSlug, TOOL_SLUG_ALIASES, TOOL_SLUGS, type ToolSlug } from "@repo/ui/tools";
 import type { RequestHandler } from "express";
-import { AI_CONNECTION } from "../src/utils/featureAreas";
+import { AI_CONNECTION, FEATURES_INDEX, MONEY_AREAS } from "../src/utils/featureAreas";
+
+const areaPath = (key: "pay" | "debt-and-borrowing"): string =>
+  MONEY_AREAS.find((area) => area.key === key)?.path ?? FEATURES_INDEX.path;
 
 /**
- * Old marketing addresses and where they now live (E42), as [old, new] pairs. Old addresses are
- * normalised paths (lower case, no trailing slash). The address a request is sent to is always the
- * second item of a pair here, never anything read from the request, so the redirect cannot be
- * pointed at another site.
+ * Where each former marketing calculator page now points (D9): the area page that does the same
+ * job in the app. Typed over every canonical slug, so a new calculator cannot be left out.
  */
-const REDIRECTS: readonly (readonly [string, string])[] = [["/mcp", AI_CONNECTION.path]];
+const TOOL_AREAS: Readonly<Record<ToolSlug, string>> = {
+  "uk-pay-rise-take-home-calculator": areaPath("pay"),
+  "uk-student-loan-overpay-or-invest-calculator": areaPath("pay"),
+  "section-24-landlord-tax-calculator": areaPath("pay"),
+  "uk-100k-tax-trap-calculator": areaPath("pay"),
+  "uk-debt-snowball-vs-avalanche-calculator": areaPath("debt-and-borrowing"),
+  "0-percent-balance-transfer-payoff-calculator": areaPath("debt-and-borrowing"),
+  "overdraft-cost-and-payoff-calculator": areaPath("debt-and-borrowing"),
+  "mortgage-overpayment-vs-isa-calculator": areaPath("debt-and-borrowing"),
+};
+
+/** Every canonical slug and every alias, each resolved through the shared catalogue. */
+const TOOL_REDIRECTS = [...TOOL_SLUGS, ...Object.keys(TOOL_SLUG_ALIASES)].flatMap((slug) => {
+  const canonical = resolveToolSlug(slug);
+  return canonical ? [[`/tools/${slug.toLowerCase()}`, TOOL_AREAS[canonical]] as const] : [];
+});
+
+/**
+ * Old marketing addresses and where they now live (E42: the AI connection page in PR 1, the
+ * calculators in PR 2), as [old, new] pairs. Old addresses are normalised paths (lower case, no
+ * trailing slash). The address a request is sent to is always the second item of a pair here,
+ * never anything read from the request, so the redirect cannot be pointed at another site. Any
+ * other `/tools/...` path still answers 404.
+ */
+const REDIRECTS: readonly (readonly [string, string])[] = [
+  ["/mcp", AI_CONNECTION.path],
+  ["/tools", FEATURES_INDEX.path],
+  ...TOOL_REDIRECTS,
+];
 
 /**
  * A request path in the form the table uses: query and fragment dropped, percent-decoded, lower

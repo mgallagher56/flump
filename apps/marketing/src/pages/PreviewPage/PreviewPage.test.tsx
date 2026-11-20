@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -82,5 +82,18 @@ describe("PreviewPage", () => {
     expect(scenes).toHaveLength(2);
     expect(screen.getByTestId("preview-illustration-checkin").className).toMatch(/d_none/);
     expect(screen.getByTestId("preview-illustration-cta").className).not.toMatch(/d_none/);
+  });
+
+  it("links each sample to the feature page that explains it, named for where it goes (E42 S6)", () => {
+    renderPage();
+    for (const [testId, name, href] of [
+      ["preview-moment-dashboard", "About accounts and net worth", "/features/accounts"],
+      ["preview-moment-checkin", "About accounts and the monthly check-in", "/features/accounts"],
+      ["preview-moment-breathing-room", "About budget and breathing room", "/features/budget"],
+    ]) {
+      const link = within(screen.getByTestId(testId)).getByRole("link", { name });
+      expect(link.getAttribute("href")).toBe(href);
+    }
+    expect(screen.queryByRole("link", { name: /read more/i })).toBeNull();
   });
 });
