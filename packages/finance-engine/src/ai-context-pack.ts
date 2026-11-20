@@ -619,10 +619,16 @@ export function buildFlumpAiContextPack(
       studentLoanBalance,
       currentTaxYear,
     );
+    // A refused plan saved beside the charged one is left out, and the estimate says so.
     studentLoanEvaluation =
-      outcome.status === "known"
-        ? outcome.evaluation
-        : { notAvailable: "rates-not-published", notice: outcome.refusal.notice };
+      outcome.status !== "known"
+        ? { notAvailable: "rates-not-published", notice: outcome.refusal.notice }
+        : loanRefusal
+          ? {
+              ...outcome.evaluation,
+              reasoning: `${outcome.evaluation.reasoning} ${loanRefusal.notice}`,
+            }
+          : outcome.evaluation;
   }
 
   const observations = buildObservations({
