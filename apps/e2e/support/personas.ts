@@ -896,6 +896,7 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
         balance: number;
         amount?: number;
         isEssential?: boolean;
+        frequency?: string;
       };
       // A brand-new user has no profile row yet (404); the first PATCH creates it.
       const profile = (await call("/user-profile", "GET", undefined, true)) as Record<
@@ -922,8 +923,14 @@ export async function applyPersona(page: Page, name: PersonaName): Promise<Perso
           seed.accounts.map((a) => `${a.name}:${Math.abs(Number(a.balance))}`),
         ) &&
         sameSet(
-          entries.map((e) => `${e.name}:${e.amount}:${Boolean(e.isEssential)}`),
-          seed.budget.map((e) => `${e.name}:${e.amount}:${Boolean(e.isEssential)}`),
+          // Frequency too (E11): a line left at a changed frequency must not pass as the persona's.
+          entries.map(
+            (e) => `${e.name}:${e.amount}:${Boolean(e.isEssential)}:${e.frequency ?? "monthly"}`,
+          ),
+          seed.budget.map(
+            (e) =>
+              `${e.name}:${e.amount}:${Boolean(e.isEssential)}:${(e as { frequency?: string }).frequency ?? "monthly"}`,
+          ),
         );
       if (matches) return { failures, unchanged: true, reset: false };
 
