@@ -12,11 +12,11 @@ There are no unprefixed legacy values any more. The `ClearBankTokens179435530000
 - While `BANKING_TOKEN_ENCRYPTION_KEYS` is set it takes over from `BANKING_TOKEN_ENCRYPTION_KEY`. Keep `BANKING_TOKEN_ENCRYPTION_KEY` set too, because backend config validation still checks it.
 - The version is the key id. It is written in clear at the start of every stored value (`v2:...`), so a value always says which key made it, and decryption picks that key from the list. A value whose version is not in the list fails to decrypt, and the connection is marked as needing the user to reconnect.
 - The secret is not used as the AES key directly. The AES-256 key is the SHA-256 of the secret, so any secret of 32 or more characters gives a 32-byte key. Generate it as in step 1 below, so the secret itself carries 32 random bytes.
-- Tax receipts use the same scheme with their own variables, `RECEIPT_ENCRYPTION_KEY` and `RECEIPT_ENCRYPTION_KEYS`. The list works the same way, but nothing re-encrypts a receipt on its own: a stored receipt stays under the key that wrote it until the record is saved again. So never drop an old receipt key while `tax_records.receipt_data` still holds a value under its version (check with the same `NOT LIKE 'v<active>:%'` query against that column).
+- Tax receipts use the same scheme with their own variables, `RECEIPT_ENCRYPTION_KEY` and `RECEIPT_ENCRYPTION_KEYS`. The list works the same way, but nothing re-encrypts a receipt on its own: a stored receipt stays under the key that wrote it until the record is saved again. So never drop an old receipt key while `tax_records.receipt_data` still holds a value under its version (count rows where `receipt_data IS NOT NULL AND receipt_data NOT LIKE 'v<active>:%'`).
 
 ## Development keys
 
-`@flump/banking` has committed development keys for bank tokens and receipts. They are used only when the variable is unset, `NODE_ENV` is exactly `development` or `test`, and `RAILWAY_ENVIRONMENT` is unset. Any other `NODE_ENV`, or no `NODE_ENV` at all, needs a real key, and so does every Railway service whatever its `NODE_ENV`. Production boot also refuses to start without `BANKING_TOKEN_ENCRYPTION_KEY` and `RECEIPT_ENCRYPTION_KEY` (or its list). Never run a server that holds real tokens with `NODE_ENV=development` or `test`.
+`@flump/banking` has committed development keys for bank tokens and receipts. They are used only when the variable is unset, `NODE_ENV` is exactly `development` or `test`, and `RAILWAY_ENVIRONMENT` is unset. Any other `NODE_ENV`, or no `NODE_ENV` at all, needs a real key, and so does every Railway service whatever its `NODE_ENV`. Production boot also refuses to start without `BANKING_TOKEN_ENCRYPTION_KEY` and `RECEIPT_ENCRYPTION_KEY` (or its list). Never run a server that holds real tokens with `NODE_ENV=development` or `test`: a self-hosted server (not on Railway) with `NODE_ENV=test` and no key set would silently use the committed development key.
 
 ## Rotate to a new key
 
@@ -25,6 +25,8 @@ There are no unprefixed legacy values any more. The `ClearBankTokens179435530000
    ```sh
    openssl rand -hex 32
    ```
+
+   At boot the backend logs one warning for each configured banking key that is not in this form (64 hex characters, or base64 of 32 bytes). The warning names the variable and the key version only. Such a key still works, and boot never stops because of it; the warning is the prompt to rotate to a generated key with these steps.
 
 2. In the hosting provider's variables for the backend, set the list with the new key first and the current key second. If you have never set the list before, the current key is the value of `BANKING_TOKEN_ENCRYPTION_KEY` and is version 1:
 

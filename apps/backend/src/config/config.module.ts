@@ -1,5 +1,10 @@
 import type { ClientPolicyResponse } from "@flump/api-contract";
-import { resolveBankingKey, resolveBankingKeyring } from "@flump/banking/server";
+import {
+  bankingKeyFormatWarningMessage,
+  bankingKeyFormatWarnings,
+  resolveBankingKey,
+  resolveBankingKeyring,
+} from "@flump/banking/server";
 import { Global, Logger, Module } from "@nestjs/common";
 import { readClientPolicy } from "./client-policy.config";
 import { assertContractModeForEnv } from "./contract-mode.config";
@@ -32,6 +37,11 @@ export interface BootConfig {
         resolveBankingKeyring(process.env);
         assertContractModeForEnv(process.env);
         const logger = new Logger("AppConfigModule");
+        // E3 D-11: a working key that is not 32 generated random bytes is warned about, never
+        // refused, so a key that boots today keeps booting. Variable and version only.
+        for (const warning of bankingKeyFormatWarnings(process.env)) {
+          logger.warn(bankingKeyFormatWarningMessage(warning));
+        }
         for (const warning of db.warnings) {
           logger.warn(warning);
         }
