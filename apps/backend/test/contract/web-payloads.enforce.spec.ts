@@ -100,18 +100,15 @@ describe("web payloads in enforce mode", () => {
     expect(() => passes("PATCH", "/user-profile", { annualSalary: 41000 })).not.toThrow();
   });
 
-  it("still accepts PATCH /user-profile with displayName or hasSecondIncome for one release (system audit slice 9 part three)", () => {
-    // Their only reader was the deleted mobile app; the backend stores nothing for them.
+  it("refuses PATCH /user-profile with displayName or hasSecondIncome now the one-release grace is over (system audit slice 9 part three)", () => {
+    // Their only reader was the deleted mobile app. Accepted and ignored for one release after
+    // PR 827; that release has happened.
     const retired: Record<string, unknown> = { displayName: "Sam Taylor", hasSecondIncome: true };
     for (const [key, value] of Object.entries(retired)) {
-      expect(() => passes("PATCH", "/user-profile", { [key]: value })).not.toThrow();
+      expect(() => passes("PATCH", "/user-profile", { [key]: value }), key).toThrow();
     }
     expect(() =>
-      passes("PATCH", "/user-profile", {
-        ...retired,
-        secondIncomeMonthly: 400,
-        annualSalary: 41000,
-      }),
+      passes("PATCH", "/user-profile", { secondIncomeMonthly: 400, annualSalary: 41000 }),
     ).not.toThrow();
   });
 
