@@ -35,13 +35,18 @@ const clientIpEnv = { WEB_CLIENT_IP_HMAC_KEY: randomBytes(32).toString("hex") };
 export function webServers(
   extraEnv: Record<string, string> = {},
   backendEnv: Record<string, string> = {},
+  options: { backendLog?: string } = {},
 ): NonNullable<PlaywrightTestConfig["webServer"]> {
   const databaseUrl = resolveDatabaseUrl();
   return [
     {
       name: "backend",
       cwd: "../backend",
-      command: "bun run migration:run && bun dist/main.js",
+      // The smoke config keeps a timestamped copy of the backend's output (its access log and any
+      // 429), so the run can report its request rate and refusals (support/read-budget.ts).
+      command: options.backendLog
+        ? `bun run migration:run && bun dist/main.js 2>&1 | bun ../e2e/support/stamp-log.ts ${JSON.stringify(options.backendLog)}`
+        : "bun run migration:run && bun dist/main.js",
       url: `${BACKEND_URL}/health/ready`,
       reuseExistingServer: !isCI,
       timeout: 120_000,

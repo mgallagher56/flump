@@ -1,7 +1,9 @@
+import { rmSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { chromium, type FullConfig } from "@playwright/test";
 import { AUTH_STATE } from "./auth";
 import { applyPersona } from "./personas";
+import { SPEC_MARKS } from "./read-budget";
 
 /**
  * Signs in through the real `/login` route (test-only cookie session), seeds the homeowner persona
@@ -9,6 +11,9 @@ import { applyPersona } from "./personas";
  * authenticated tests. No token is read or written here: the proxy attaches it server-side.
  */
 export default async function globalSetup(config: FullConfig): Promise<void> {
+  // A fresh list of link-spec marks for this run (read-budget.ts; the backend log is truncated by
+  // stamp-log.ts when the server starts).
+  rmSync(SPEC_MARKS, { force: true });
   const baseURL = config.projects[0]?.use.baseURL;
   if (!baseURL) throw new Error("baseURL is required");
 
