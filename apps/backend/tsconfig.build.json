@@ -2,7 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    // Inside dist so the build info is removed with the output. Left outside, `rm -rf dist`
+    // kept it and the next incremental build skipped every file, emitting an empty dist.
+    "tsBuildInfoFile": "./dist/tsconfig.build.tsbuildinfo"
   },
   "include": ["src"],
   // Production emit only: test-support code and specs never ship in dist. Specs are excluded as

@@ -22,3 +22,6 @@ docs
 .husky
 .claude
 .agents
+
+# Incremental build info is rebuilt in the image; a stale local copy must not enter the context
+**/*.tsbuildinfo
