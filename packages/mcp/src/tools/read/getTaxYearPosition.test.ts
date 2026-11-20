@@ -139,3 +139,21 @@ describe("get_tax_year_position notes, provenance and bands", () => {
     expect(rates).toEqual([...rates].sort((a, b) => a - b));
   });
 });
+
+describe("get_tax_year_position verification for a provisional year (ruling B)", () => {
+  it("gives 2027/28 as unverified: rates announced but not yet law, checked against them", async () => {
+    const h = await connectTestClient({ ...emptyUser, profileFacts: facts() });
+    try {
+      const e = (await h.callJson("get_tax_year_position", { taxYear: "2027/28" })) as {
+        verification: { status: string; detail: string };
+      };
+      expect(e.verification).toEqual({
+        status: "unverified",
+        detail:
+          "2027/28 figures use rates that are announced but not yet law. They have been checked against the announced rates. Treat them as an estimate.",
+      });
+    } finally {
+      await h.close();
+    }
+  });
+});
