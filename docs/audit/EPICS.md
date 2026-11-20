@@ -71,7 +71,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 ## E1. Real authentication and authorisation, fail closed
 
-- **Status (2026-11-14, checked against `origin/main`):** partly. The fail-closed core merged in #369: JWKS verification, the dev bypass gated off production, the MCP verifier rejecting OAuth JWTs, and web redirecting to /login. D-01, D-02, D-04, B-01, D-03, F-01 and D-07 are done. Request validation (D-08, B-02) landed later through E21's global zod contract interceptor (#634). Still open: deleteAccount is not transactional (D-06, C-18); MCP auth coverage is below the 80% target (F-03); G-03 is resolved because `apps/mobile-companion` was deleted (#827).
+- **Status (2026-11-20, checked against `origin/main`):** partly. The fail-closed core merged in #369: JWKS verification, the dev bypass gated off production, the MCP verifier rejecting OAuth JWTs, and web redirecting to /login. D-01, D-02, D-04, B-01, D-03, F-01 and D-07 are done. Request validation (D-08, B-02) landed later through E21's global zod contract interceptor (#634). Still open: deleteAccount is not transactional (D-06, C-18); MCP auth coverage is below the 80% target (F-03); G-03 is resolved because `apps/mobile-companion` was deleted (#827).
 - **Severity:** P0
 - **Blocked by:** none
 - **Done when:** Backend, MCP and web reject unauthenticated or forged identities in every environment; no mock token or fallback user exists in production code; one user can never read or write another user's data.
@@ -522,7 +522,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 ## E8. Accessibility AA
 
-- **Status (2026-11-14, checked against `origin/main`):** mostly done. Token, field and component contrast fixes have merged (E8 web ledger; `tokens.a11y.test.ts`). J-01 and J-06 are done according to the ledger, but have only been partly spot-checked in code. The Storybook a11y CI job is blocking (since BE-01) and is a required-check name in `.github/required-checks.json`.
+- **Status (2026-11-20, checked against `origin/main`):** mostly done. Token, field and component contrast fixes have merged (E8 web ledger; `tokens.a11y.test.ts`). J-01 and J-06 are done according to the ledger, but have only been partly spot-checked in code. The Storybook a11y CI job is blocking (since BE-01) and is a required-check name in `.github/required-checks.json`.
 - **Severity:** P1
 - **Blocked by:** none
 - **Done when:** Dark-mode primary and form-field contrast meet WCAG 2.2 AA; Biome a11y warnings fixed; focus is visible everywhere.
@@ -942,7 +942,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** E29a for projection wording, and E29b before anyone beyond the friends beta; signed tax vectors for the tax slices (S6, S7).
 - **Done when:** a user can save a retirement age and a yearly target of their own (typed, or built from their budget entries); housing cost in retirement follows their saved housing details (a mortgage that ends, a mortgage that continues, or rent for life, each shown with the same weight); the Retirement page shows an estimated yearly income in today's money for three growth cases beside that target, with every assumption visible and editable; the pots that count are tracked month by month from the check-in; an MCP read tool and a simulate tool expose the same figures; no surface says what a user needs or should do.
 - **Notes:** E27 keeps its number and becomes slices S6 and S7 of this epic (withdrawal tax, the tax-free lump sum, UFPLS, inheritance tax on unused pensions from 6 April 2027, the MoneyHelper link, the self-employed view). The plan recommends that the Retirement Living Standards stay off the page, as E16 decision D6 left them. Plan: [E33-retirement-plan.md](plans/E33-retirement-plan.md). Companion research: [E34-shared-finances-research.md](plans/E34-shared-finances-research.md) (couples) and [E35-encouragement-and-wellbeing.md](plans/E35-encouragement-and-wellbeing.md) (encouragement and wellbeing). The owner accepted decisions RD1 to RD11 (E33) and CD1 to CD10 (E34) as the plans recommend on 2026-11-17; the MoneyHelper link (RD11) and the sharing-screen help line (CD10) still need owner-approved wording.
-- **Status (2026-11-17):** `S0`–`S5` merged (`#750`, `#758`, corrected by `#768`). `#770` delivers RD6 (one projection: the forecaster's what-if moved from Pension to the Retirement scenario on the engine projection, workplace contributions counted), RD9 (friends-beta gate: `BETA_OPEN` or `RETIREMENT_ALLOWED_USER_IDS`) and RD11 (MoneyHelper pension guidance line). Not re-checked on 2026-11-20 beyond the merged PR list. Remaining: the budget-built target's "changes" amount per line (S4), `S6`–`S9` (tax and withdrawal slices, inheritance tax, self-employed view, MCP evals, mobile and two-person views, gated by E29a/E29b).
+- **Status (2026-11-17):** `S0` to `S5` merged (`#750`, `#758`, corrected by `#768`). `#770` delivers RD6 (one projection: the forecaster's what-if moved from Pension to the Retirement scenario on the engine projection, workplace contributions counted), RD9 (friends-beta gate: `BETA_OPEN` or `RETIREMENT_ALLOWED_USER_IDS`) and RD11 (MoneyHelper pension guidance line). Not re-checked on 2026-11-20 beyond the merged PR list. Remaining: the budget-built target's "changes" amount per line (S4), `S6`–`S9` (tax and withdrawal slices, inheritance tax, self-employed view, MCP evals, mobile and two-person views, gated by E29a/E29b).
 - **Labels:** needs-triage
 
 ## E34. Shared finances for couples
@@ -982,7 +982,7 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** owner approval of the plan and its decisions D1 to D3.
 - **Done when:** a user can set a default hourly rate, log itemised work entries (`date`, `description`, `hoursWorked`, `hourlyRate` pre-filled and overridable, `amount`) linked to a Self Assessment income source, group/filter unbilled entries into numbered draft/issued/paid/void invoices with client details and totals, export invoices via PDF/print and formula-safe CSV, and optionally sync paid invoices into Self Assessment `tax_records` with `If-Match` concurrency, UK GDPR export/deletion coverage, and zero advice strings.
 - **Notes:** four slices (`S0` data model & pure engine calculations -> `S1` CRUD API -> `S2` Work log & Invoice Builder UI -> `S3` SA integration & PDF/CSV export). Plan: [E37-self-employed-invoicing-plan.md](plans/E37-self-employed-invoicing-plan.md).
-- **Status (2026-11-20):** plan merged (`#759`); nothing built (`S0`–`S3` have no PR).
+- **Status (2026-11-20):** plan merged (`#759`); nothing built (`S0` to `S3` have no PR).
 - **Labels:** needs-triage
 
 ## E38. User action friction & interaction-efficiency audit
