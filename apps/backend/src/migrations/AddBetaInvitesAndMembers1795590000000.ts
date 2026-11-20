@@ -33,6 +33,10 @@ export class AddBetaInvitesAndMembers1795590000000 implements MigrationInterface
     await queryRunner.query(
       `CREATE INDEX IF NOT EXISTS "IDX_beta_invites_created_at" ON "beta_invites" ("created_at")`,
     );
+    // Erasure blanks the invite a user redeemed: a lookup by redeemed_by_user_id.
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_beta_invites_redeemed_by" ON "beta_invites" ("redeemed_by_user_id")`,
+    );
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "beta_members" (
         "user_id" character varying NOT NULL,

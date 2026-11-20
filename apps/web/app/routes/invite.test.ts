@@ -109,13 +109,20 @@ describe("/invite", () => {
   });
 
   it("a used, cancelled or expired link gets one plain page and the cookie is cleared", async () => {
-    backendAnswers(410, { statusCode: 410, error: "invite_unusable" });
+    backendAnswers(410, { code: "invite_unusable", message: "This invite link cannot be used." });
     const result = (await callInvite(`flump_invite=${TOKEN}`)) as {
       data: { outcome: string };
       init: { headers: Record<string, string> };
     };
     expect(result.data.outcome).toBe("unusable");
     expect(result.init.headers["Set-Cookie"]).toContain("Max-Age=0");
+  });
+
+  it("an erased account goes to finish its deletion, not to the unusable-link page", async () => {
+    backendAnswers(410, { code: "account_deleted", message: "This account has been deleted." });
+    const thrown = (await callInvite(`flump_invite=${TOKEN}`).catch((e: unknown) => e)) as Response;
+    expect(thrown.status).toBe(302);
+    expect(thrown.headers.get("Location")).toContain("/account-deleted");
   });
 
   it("too many tries asks the person to wait", async () => {

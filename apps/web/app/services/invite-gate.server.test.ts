@@ -158,18 +158,26 @@ describe("inviteGateMiddleware", () => {
     });
 
     it("drops an unusable one and loads the page again, which then shows not invited", async () => {
-      answers(410, { error: "invite_unusable" });
+      answers(410, { code: "invite_unusable", message: "This invite link cannot be used." });
       const { result } = runGate("/app?x=1", "GET", cookie);
       const thrown = (await result.catch((e: unknown) => e)) as Response;
       expect(thrown.headers.get("Location")).toBe("/app?x=1");
       expect(thrown.headers.get("Set-Cookie")).toContain("Max-Age=0");
     });
 
-    it("keeps it when rate limited and shows the not-invited page", async () => {
+    it("drops it when rate limited, so it is not spent again on every page", async () => {
       answers(429, {});
       const { result } = runGate("/app", "GET", cookie);
-      const thrown = await result.catch((e: unknown) => e);
-      expect(thrown).toMatchObject({ init: { status: 403 }, data: { kind: "not-invited" } });
+      const thrown = (await result.catch((e: unknown) => e)) as Response;
+      expect(thrown.headers.get("Location")).toBe("/app");
+      expect(thrown.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    });
+
+    it("never redirects off the site from a path with leading slashes", async () => {
+      answers(410, { code: "invite_unusable", message: "This invite link cannot be used." });
+      const { result } = runGate("//evil.example/x", "GET", cookie);
+      const thrown = (await result.catch((e: unknown) => e)) as Response;
+      expect(thrown.headers.get("Location")).toBe("/evil.example/x");
     });
   });
 });

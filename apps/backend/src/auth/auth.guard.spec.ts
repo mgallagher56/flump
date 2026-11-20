@@ -5,7 +5,7 @@ import {
   Logger,
   UnauthorizedException,
 } from "@nestjs/common";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { AllowUninvited } from "./allow-uninvited";
 import { AuthGuard } from "./auth.guard";
 import { DEV_BYPASS_TOKEN, DevBypassVerifier } from "./dev-bypass.verifier";
@@ -251,6 +251,48 @@ describe("AuthGuard erased-account check (BE-04)", () => {
     await expect(guard.canActivate(withHandler(request(), Probe.prototype.redeem))).rejects.toThrow(
       GoneException,
     );
+  });
+
+  describe("while the beta is invite-only and the caller is not (or no longer) allowed", () => {
+    // Erasure deletes an invited person's membership row, so a retried deletion arrives uninvited.
+    let before: string | undefined;
+    beforeEach(() => {
+      before = process.env.BETA_ALLOWED_USER_IDS;
+      process.env.BETA_ALLOWED_USER_IDS = "user_someone_else";
+    });
+    afterEach(() => {
+      if (before === undefined) delete process.env.BETA_ALLOWED_USER_IDS;
+      else process.env.BETA_ALLOWED_USER_IDS = before;
+    });
+    class Probe {
+      @AllowErasedAccount()
+      retryDelete() {}
+      other() {}
+    }
+
+    it("still lets an erased account retry its deletion", async () => {
+      const guard = new AuthGuard(new DevBypassVerifier(), undefined, check);
+      await expect(
+        guard.canActivate(withHandler(request(), Probe.prototype.retryDelete)),
+      ).resolves.toBe(true);
+    });
+
+    it("answers 410 account_deleted elsewhere, not 403 not_invited", async () => {
+      const guard = new AuthGuard(new DevBypassVerifier(), undefined, check);
+      await expect(
+        guard.canActivate(withHandler(request(), Probe.prototype.other)),
+      ).rejects.toThrow(GoneException);
+    });
+
+    it("refuses a caller who is neither erased nor invited, even on the deletion route", async () => {
+      const guard = new AuthGuard(new DevBypassVerifier(), undefined, {
+        isErased: async () => false,
+      });
+      const err = await guard
+        .canActivate(withHandler(request(), Probe.prototype.retryDelete))
+        .catch((e) => e);
+      expect(err.getResponse()).toMatchObject({ statusCode: 403, error: "not_invited" });
+    });
   });
 
   it("passes accounts that are not erased, and resolves the check lazily from the app", async () => {

@@ -259,6 +259,10 @@ describe("routeKeyFor covers every dynamic route", () => {
       ["/app/tax/receipts/rcpt-42", "/app/tax/receipts/:id"],
       ["/app/tax/receipts/plain", "/app/tax/receipts/:id"],
     ],
+    "invite.$token": [
+      [`/invite/${"x".repeat(43)}`, "/invite/:id"],
+      ["/invite/plain", "/invite/:id"],
+    ],
     "tools.$slug": [
       ["/tools/uk-100k-tax-trap-calculator", "/tools/uk-100k-tax-trap-calculator"],
       [

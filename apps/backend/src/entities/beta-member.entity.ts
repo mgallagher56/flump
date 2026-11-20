@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryColumn } from "typeorm";
 
 /**
  * A person with access to the invite-only beta through an invite link
@@ -7,6 +7,7 @@ import { Column, Entity, PrimaryColumn } from "typeorm";
  * by a new link; retention deletes a removed row after 30 days. No email.
  */
 @Entity("beta_members")
+@Index("IDX_beta_members_invite_id", ["inviteId"])
 export class BetaMember {
   @PrimaryColumn({ name: "user_id" })
   userId: string;
