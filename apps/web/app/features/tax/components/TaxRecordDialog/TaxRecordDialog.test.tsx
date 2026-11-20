@@ -1,4 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { RECORD_DATE_RANGE_ERROR, TaxRecordDialog, type TaxRecordDraft } from "./TaxRecordDialog";
 
@@ -325,5 +327,73 @@ describe("TaxRecordDialog linked account (slice 7)", () => {
     expect(within(dialog).queryByLabelText("Linked account")).toBeNull();
     fireEvent.click(within(dialog).getByRole("button", { name: "Add record" }));
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ accountId: null }));
+  });
+});
+
+/** The dialog as the page uses it: a fresh blank record after each "Add and start another". */
+const Harness = ({ onSave }: { onSave: (d: TaxRecordDraft) => void }) => {
+  const [initial, setInitial] = useState(draft);
+  const [savedName, setSavedName] = useState<string | null>(null);
+  return (
+    <TaxRecordDialog
+      initial={initial}
+      mode="add"
+      onOpenChange={() => undefined}
+      onSave={onSave}
+      onSaveAndAddAnother={(d) => {
+        onSave(d);
+        // As the page does once the save lands: a blank record with the same source and type.
+        setInitial({ ...draft, source: d.source, type: d.type, date: d.date });
+        setSavedName(d.name);
+      }}
+      open
+      savedName={savedName}
+    />
+  );
+};
+
+describe("TaxRecordDialog add and start another (E38 S2)", () => {
+  it("saves, says what was added, clears the form and puts the focus on Name", async () => {
+    const onSave = vi.fn();
+    render(<Harness onSave={onSave} />);
+    const dialog = screen.getByRole("dialog");
+    await userEvent.type(within(dialog).getByLabelText(/^Name/), "Flat rent");
+    await userEvent.type(within(dialog).getByLabelText(/^Amount/), "900");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Add and start another" }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Flat rent", amount: 900 }),
+    );
+    expect(within(dialog).getByRole("status").textContent).toBe(
+      "Flat rent added. Add the next record.",
+    );
+    const name = within(dialog).getByLabelText(/^Name/) as HTMLInputElement;
+    expect(name.value).toBe("");
+    expect(document.activeElement).toBe(name);
+    expect((within(dialog).getByLabelText("Income source") as HTMLSelectElement).value).toBe(
+      "rental",
+    );
+  });
+
+  it("checks the record first: an empty one is not saved and shows its errors", async () => {
+    const onSave = vi.fn();
+    render(<Harness onSave={onSave} />);
+    const dialog = screen.getByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Add and start another" }));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(within(dialog).getByText("Enter a name for this record.")).toBeDefined();
+  });
+
+  it("is not offered when editing", () => {
+    render(
+      <TaxRecordDialog
+        initial={{ ...draft, name: "Flat rent", amount: 900 }}
+        mode="edit"
+        onOpenChange={() => undefined}
+        onSave={vi.fn()}
+        onSaveAndAddAnother={vi.fn()}
+        open
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Add and start another" })).toBeNull();
   });
 });

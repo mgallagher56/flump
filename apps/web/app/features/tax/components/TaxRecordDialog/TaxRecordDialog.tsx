@@ -12,7 +12,7 @@ import {
   TextInput,
 } from "@repo/ui";
 import { Camera, FileText, Image as ImageIcon, Upload } from "lucide-react";
-import { type ChangeEvent, type FC, type FormEvent, useState } from "react";
+import { type ChangeEvent, type FC, type FormEvent, useEffect, useRef, useState } from "react";
 import { isAcceptableReceiptFile, RECEIPT_ACCEPT } from "~/containers/tax/receipt-file";
 import { linkableAccountsFor, linkFits, type TaxAccount } from "../../linkedAccounts";
 import {
@@ -32,6 +32,7 @@ import {
   receiptHint,
   receiptLabel,
   receiptName,
+  savedLine,
   saveErrorText,
   uploadLabel,
   uploadRow,
@@ -68,7 +69,17 @@ export interface TaxRecordDialogProps {
   saveError?: string | null;
   /** The user's accounts, for the "Linked account" choice on rental and savings records. */
   accounts?: readonly TaxAccount[];
+  /**
+   * Adding only: saves this record and keeps the dialog open for the next one (E38 S2). The
+   * caller then passes a fresh `initial` and `savedName`; the dialog moves the focus to Name.
+   */
+  onSaveAndAddAnother?: (draft: TaxRecordDraft) => void;
+  /** The record just saved with "Add and start another", said quietly at the top of the form. */
+  savedName?: string | null;
 }
+
+/** The Name field's id, so the focus can return to it for the next record. */
+const NAME_FIELD_ID = "tax-record-name";
 
 type Errors = Partial<Record<"name" | "amount" | "date" | "receipt" | "category", string>>;
 
@@ -104,10 +115,14 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
   onSave,
   saveError,
   accounts = [],
+  onSaveAndAddAnother,
+  savedName,
 }) => {
   const [draft, setDraft] = useState<TaxRecordDraft>(initial);
   const [errors, setErrors] = useState<Errors>({});
   const [lastInitial, setLastInitial] = useState(initial);
+  // Set by "Add and start another": when the next blank record arrives, Name takes the focus.
+  const focusNameNext = useRef(false);
 
   // Reset when the dialog is reopened for a different record.
   if (initial !== lastInitial) {
@@ -167,14 +182,35 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
       receiptCleared: true,
     }));
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
+  /** The draft to save, or null (with the errors shown) when it is not complete. */
+  const checked = (): TaxRecordDraft | null => {
     const found = validate(draft);
     if (!categories.some((c) => c.id === draft.category)) found.category = UNLISTED_CATEGORY_ERROR;
     setErrors(found);
-    if (Object.keys(found).length > 0) return;
-    onSave({ ...draft, accountId: linkedAccountId || null });
+    if (Object.keys(found).length > 0) return null;
+    return { ...draft, accountId: linkedAccountId || null };
   };
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    focusNameNext.current = false;
+    const ready = checked();
+    if (ready) onSave(ready);
+  };
+
+  const saveAndAddAnother = () => {
+    const ready = checked();
+    if (!ready || !onSaveAndAddAnother) return;
+    focusNameNext.current = true;
+    onSaveAndAddAnother(ready);
+  };
+
+  // The next blank record has arrived after "Add and start another": start it at Name.
+  useEffect(() => {
+    if (!focusNameNext.current || !savedName) return;
+    focusNameNext.current = false;
+    document.getElementById(NAME_FIELD_ID)?.focus();
+  }, [savedName, lastInitial]);
 
   const isPdf = draft.receiptMimeType?.includes("pdf");
   // Open "Category and notes" when editing a record that already has notes, so they are never hidden.
@@ -195,8 +231,13 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
       id="tax-record-dialog"
     >
       <form className={form()} noValidate onSubmit={submit}>
+        {mode === "add" && savedName ? (
+          <p className={savedLine()} role="status">
+            {`${savedName} added. Add the next record.`}
+          </p>
+        ) : null}
         {/* Amount comes straight after the name; category and notes wait under a toggle named for them. */}
-        <FormField label="Name" required error={errors.name}>
+        <FormField id={NAME_FIELD_ID} label="Name" required error={errors.name}>
           {(field) => (
             <TextInput
               {...controlProps(field)}
@@ -421,6 +462,11 @@ export const TaxRecordDialog: FC<TaxRecordDialogProps> = ({
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
+          {mode === "add" && onSaveAndAddAnother ? (
+            <Button type="button" variant="secondary" onClick={saveAndAddAnother}>
+              Add and start another
+            </Button>
+          ) : null}
           <Button type="submit" variant="primary">
             {mode === "edit" ? "Save changes" : "Add record"}
           </Button>

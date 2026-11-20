@@ -2,18 +2,21 @@ import {
   categorizeAccountType,
   countsTowardNetWorth,
   DEFAULT_NET_WORTH_BASIS,
+  describeJointWholeValue,
   type NetWorthBasis,
 } from "@flump/finance-engine";
 import { Button, HeroFigure, Icon, PageBody, PageHeader } from "@repo/ui";
 import { ArrowLeft } from "lucide-react";
 import { type FC, useMemo } from "react";
-import { Link, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { type AccountType, isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { summariseAccountBalance } from "~/features/accounts/accountRows";
 import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
+import { QuickBalanceUpdate } from "~/features/accounts/components/QuickBalanceUpdate";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import type { loader } from "~/routes/app.accounts.$account";
 import { versionField } from "~/services/conflict";
@@ -105,6 +108,9 @@ const BackLink: FC = () => (
 
 const AccountDetailContainer: FC = () => {
   const { account, accountDetails = [], basis } = useLoaderData<typeof loader>();
+  // The quick balance update posts to this route's own action, as the Edit dialog does.
+  const balanceFetcher = useFetcher();
+  const balanceOutcome = useFetcherOutcome(balanceFetcher);
 
   // The hero shows the saved balance, the same figure as the accounts list and net worth (D22).
   const summary = useMemo(
@@ -162,6 +168,13 @@ const AccountDetailContainer: FC = () => {
   }
 
   const isLiability = isLiabilityType(account.type);
+  // The saved balance as the Edit dialog's field shows it: a debt as the positive amount owed.
+  const savedShown =
+    account.balance === undefined || account.balance === null
+      ? null
+      : isLiability
+        ? Math.abs(Number(account.balance))
+        : Number(account.balance);
   const subtype = account.accountSubtype;
   const typeLabel =
     (subtype && ACCOUNT_SUBTYPE_LABEL[subtype]) ||
@@ -216,6 +229,33 @@ const AccountDetailContainer: FC = () => {
         label={isLiability ? "Amount owed" : "Current balance"}
         subline={sentences(dateLine, notCounted)}
         value={current}
+      />
+
+      {/* A new figure without the Edit dialog (E38 S2): the header keeps its one action. */}
+      <QuickBalanceUpdate
+        accountName={account.name ?? "Account"}
+        current={savedShown}
+        error={balanceOutcome.error}
+        hint={describeJointWholeValue(
+          { type: account.type, ownership: account.ownership, sharePercent: account.sharePercent },
+          isLiability ? "amount owed" : "balance",
+        )}
+        isLiability={isLiability}
+        onSave={(shown) => {
+          // Stored as minus the amount owed for a debt, as the Edit dialog sends it.
+          const stored = isLiability ? (shown === 0 ? 0 : -Math.abs(shown)) : shown;
+          balanceOutcome.begin();
+          void balanceFetcher.submit(
+            {
+              intent: "update",
+              accountId: String(account.id ?? ""),
+              ...versionField(account),
+              balance: String(stored),
+            },
+            { method: "POST" },
+          );
+        }}
+        status={balanceOutcome.status}
       />
 
       <AccountDetails />

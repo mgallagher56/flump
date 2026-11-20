@@ -57,6 +57,11 @@ export const receiptHint = cva({
 });
 
 /** A failed save, inside the dialog. */
+/** "Design work added. Add the next record.": a plain statement, no colour or tone. */
+export const savedLine = cva({
+  base: { textStyle: "body.sm", color: "text.secondary", margin: 0 },
+});
+
 export const saveErrorText = cva({
   base: { textStyle: "body.sm", color: "text.primary", margin: 0 },
 });

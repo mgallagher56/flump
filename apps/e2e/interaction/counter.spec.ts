@@ -159,4 +159,33 @@ test.describe("interaction counter", () => {
       await context.close();
     }
   });
+  test("typeFocused: types where the focus already is, with no click or Tab", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext();
+    try {
+      const page = await context.newPage();
+      await page.route(`${FIXTURE_URL}**`, (route) =>
+        route.fulfill({ body: FIXTURE, contentType: "text/html" }),
+      );
+      const counter = await InteractionCounter.attach(page);
+      await page.goto(FIXTURE_URL);
+      const actor = new Actor(page, "desktop-pointer", counter);
+      const name = page.getByRole("textbox", { name: "Name" });
+      // The page put the focus in Name (as an add row or a dialog does) before counting starts.
+      await name.focus();
+      await counter.start();
+      // Name holds "ab" with only a caret, so Ctrl/Cmd+A first (2 keydowns), then "xyz" (3).
+      // No click and no Tab: 0 clicks, 5 keystrokes, 0 hops.
+      await actor.typeFocused(name, "xyz");
+      await expect(name).toHaveValue("xyz");
+      expect(await counter.stop()).toMatchObject({ clicks: 0, keystrokes: 5, tabHops: 0 });
+
+      // A field without the focus is refused, so a flow cannot claim a saving the page lacks.
+      await page.getByRole("button", { name: "Go" }).focus();
+      await expect(actor.typeFocused(name, "q")).rejects.toThrow(/Expected the focus/);
+    } finally {
+      await context.close();
+    }
+  });
 });
