@@ -426,9 +426,10 @@ Relayed by the coordinator during E41 M4 (PR 847). Owner's words: "mutation test
 
 Given by the owner in session on 20 November 2026. Owner's words: "I confirm: I no longer sign off tax figures. A fable agent decides them and is recorded as the signer. Change the sign-off tool and docs to match." An earlier relay of the same rule read: "remove the requirement for me to sign off on tax and similar things. a fable agent can handle these decisions".
 
-- Supersedes round 3 item 13 (tax vector sign-off: three passes, a paid accountant hour for judgement rulings, the owner's own P60s) and, for tax figures, round 1 E4 "The owner signs off the tax test vectors" and the owner sign-off notes on round 11 decisions 5, 7 and 15 and round 12 decision 8.
+- Supersedes the owner sign-off part of round 3 item 13 only, and, for tax figures, round 1 E4 "The owner signs off the tax test vectors" and the owner sign-off notes on round 11 decisions 5, 7 and 15 and round 12 decision 8.
+- The owner's words say nothing about the paid accountant hour in round 3 item 13. It is not changed by this decision and remains the owner's to decide before public launch.
 - Every new figure table (tax vectors, rulings on UNVERIFIED vectors) goes to a Fable decider, not the owner. The decider is independent of the lane that built the figures: a separate agent that wrote none of them.
 - An UNVERIFIED vector is still signed only with a written ruling. Rulings now come from the decider.
-- `bun run tax:signoff apply --signer <name>` writes the signer's name to `signedOffBy` exactly as given; a decider signs as `fable-decider`. Who may run it: the coordinator, applying a recorded decider decision, or the owner. It still refuses to run in CI. A lane agent never signs its own figures.
+- `bun run tax:signoff apply --signer <name>` writes the signer's name to `signedOffBy` exactly as given, with a version 2 hash that also binds the signer, status, ruling and reason; a decider signs as `fable-decider`. Who may run it: the coordinator, applying a recorded decider decision, or the owner. It still refuses to run in CI. A lane agent never signs its own figures.
 - The 37 signatures the owner made on 20 November 2026 (2027/28, `signedOffBy: "owner"`) stay as they are and still validate.
 - What users and the AI read says the figures are checked against the published rates (or, for a provisional year, the announced rates). It never says a person or an accountant checked them. A year in `PROVISIONAL_UK_TAX_YEARS` still never reports verified (ruling B).

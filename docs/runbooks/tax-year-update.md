@@ -36,7 +36,7 @@ show stale figures. Hard deadline for the first cycle: **6 April 2027** (2027/28
 
 ## Sign-off of vectors (a Fable decider decides)
 
-Owner rule of 20 November 2026 (DECISIONS, "a Fable decider signs off tax figures", superseding round 3 item 13): the owner no longer signs off tax figures. A Fable decider decides them and is recorded as the signer.
+Owner rule of 20 November 2026 (DECISIONS, "a Fable decider signs off tax figures", superseding the owner sign-off part of round 3 item 13): the owner no longer signs off tax figures. A Fable decider decides them and is recorded as the signer. The paid accountant hour in round 3 item 13 is not changed by that rule and remains the owner's to decide before public launch.
 
 1. The lane that built the figures writes a figure table (each vector or pinned test: old, new, working, source) and hands it to a Fable decider. The decider is independent of that lane: a separate agent that wrote none of the figures.
 2. The decider checks each figure against its source and rules. For an UNVERIFIED vector it writes the judgement call, its ruling (a vector cannot be signed without one).
@@ -54,7 +54,7 @@ Tick `[x]` only the vectors the decider signed, delete the rest, and copy each r
 bun run tax:signoff apply --year 2027/28 --sheet <sheet file> --signer fable-decider
 ```
 
-`--signer` is written to `signedOffBy` exactly as given. The tool refuses to run in CI. A lane agent never signs its own figures. This writes `signedOffBy`, `signedOffAt` and `signedOffHash` into the vectors file; review the diff, run `bun scripts/check-tax-signoff.ts --write-baseline` and commit. The owner's 2027/28 signatures of 20 November 2026 (`signedOffBy: "owner"`) stay valid.
+`--signer` is written to `signedOffBy` exactly as given. The tool refuses to run in CI. A lane agent never signs its own figures. This writes `signedOffBy`, `signedOffAt` and a version 2 `signedOffHash` ("v2:", binding the content, signer, status, ruling and reason) into the vectors file; review the diff, run `bun scripts/check-tax-signoff.ts --write-baseline` and commit. The owner's 2027/28 signatures of 20 November 2026 (`signedOffBy: "owner"`) stay valid.
 
 ## 6 April checklist
 
