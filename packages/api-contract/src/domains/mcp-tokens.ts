@@ -394,9 +394,9 @@ export const McpInputResponse = z.strictObject({
     anonymizeInstitutions: z.boolean(),
   }),
   /**
-   * Whether the token's owner may use the retirement tools (friends beta, RD9), so a local MCP
-   * server hides them as the remote one does. Kept beside `input`, not in it, because it is not
-   * engine input. Absent means not available.
+   * Legacy: always true. Retirement is open to everyone the beta lets in (owner, 20 Nov 2026,
+   * superseding RD9), and the local server ignores it; a local MCP server released before then
+   * hides the retirement tools unless this is true, so the backend still sends it.
    */
   retirementAvailable: z.boolean().optional(),
   input: z.strictObject({
