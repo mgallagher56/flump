@@ -17,7 +17,7 @@ export type MoneyAreaKey =
   | "debt-and-borrowing";
 type FeatureKey = MoneyAreaKey | "ai-connection";
 
-/** Which sample the "See it" section shows. `none` shows an illustration in the hero instead. */
+/** Which sample the "See it" section shows. `none` shows no sample section. */
 type FeatureSample = "dashboard" | "breathing-room" | "savings-pension" | "debt-borrowing" | "none";
 
 export interface Feature {

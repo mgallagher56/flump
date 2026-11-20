@@ -26,14 +26,15 @@ export const homeownerExpected: PersonaExpected = {
   },
   budget: {
     income: 3249, // net salary = engine take-home monthly for 52,000, 5% pension, 2026/27
-    essentials: 1780, // 1,050 + 330 + 400
+    essentials: 2060, // 1,050 + 330 + 400 + 280 card and loan payments
     savings: 300,
     discretionary: 250,
-    surplus: 919, // 3,249 - (1,780 + 300 + 250)
+    surplus: 639, // 3,249 - (2,060 + 300 + 250)
   },
   cover: {
     monthsOfCover: 10.2, // 21,000 / 2,060 = 10.19
-    // 1,780 essentials + the larger of debt minimums (60 + 220 = 280) and debt rows (none)
+    // 1,780 non-debt essentials + the larger of debt minimums (60 + 220 = 280) and the debt row
+    // (280), so the 280 counts once
     essentialCommitments: 2060,
     safeToSpendMonthly: 889, // 3,249 - 2,060 - 300 savings
   },

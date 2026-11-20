@@ -40,9 +40,15 @@ const switchPlay: Story["play"] = async ({ canvasElement }) => {
   await userEvent.click(canvas.getByRole("button", { name: "Paying a mortgage" }));
   await expect(canvas.getByText("Workplace and personal pension")).toBeVisible();
   await expect(canvas.getByRole("list", { name: "Pension pots" })).toBeVisible();
-  await expect(
-    canvas.getByText("Estimated interest over the next 12 months, before tax"),
-  ).toBeVisible();
+  await expect(canvas.getByText("Estimated interest over the next 12 months")).toBeVisible();
+};
+
+// Only the homeowner has the employer paying in at 4%: 52,000 x 4% / 12 = 173.33, shown as £173.
+const homeownerPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getByText("Cash and emergency savings")).toBeVisible();
+  await expect(canvas.getByText("Paid in by the employer each month")).toBeVisible();
+  await expect(canvas.getByText("£173")).toBeVisible();
 };
 
 export const Renter: Story = {
@@ -60,9 +66,11 @@ export const RenterDark: Story = {
 export const Homeowner: Story = {
   args: { id: "story-sp-owner", household: "homeowner" },
   globals: { theme: "light" },
+  play: homeownerPlay,
 };
 
 export const HomeownerDark: Story = {
   args: { id: "story-sp-owner-dark", household: "homeowner" },
   globals: { theme: "dark" },
+  play: homeownerPlay,
 };
