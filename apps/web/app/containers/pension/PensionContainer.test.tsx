@@ -122,6 +122,11 @@ const useFixture = (data: any) => {
   testLoaderData = data;
   testProfileData = data.userProfile;
 };
+/** The same as useFixture, for use inside loops and try blocks. */
+const loadFixture = (data: any) => {
+  testLoaderData = data;
+  testProfileData = data.userProfile;
+};
 const restore = () => {
   testLoaderData = defaultLoaderData;
   testProfileData = defaultProfileData;
@@ -576,6 +581,344 @@ describe("PensionContainer", () => {
       expect(screen.getByRole("link", { name: /set your region/i }).getAttribute("href")).toBe(
         "/app/profile",
       );
+    });
+  });
+
+  describe("which pots and facts the page reads", () => {
+    const strip = () => document.querySelector("[data-density='compact']") as HTMLElement | null;
+
+    it("lists only pension accounts as pots", () => {
+      useFixture({
+        ...FILLED,
+        accounts: [
+          ...FILLED.accounts,
+          { id: "s1", name: "Rainy day", type: "Savings", balance: 5000, isCurrent: true },
+        ],
+      });
+      render(<PensionContainer />);
+      openDetails();
+      const details = screen.getByRole("region", { name: "Your details" });
+      const pots = details.querySelectorAll("[data-list-row]");
+      expect(pots).toHaveLength(1);
+      expect(pots[0]?.textContent).toContain("Workplace pot");
+      expect(details.textContent).not.toContain("Rainy day");
+    });
+
+    it("opens a pot's edit form with its saved growth rate, and blank when none is saved", () => {
+      useFixture({
+        ...FILLED,
+        accounts: [
+          { ...FILLED.accounts[0], interestRate: 5 },
+          { ...FILLED.accounts[0], id: "w2", name: "Old pot", interestRate: null },
+        ],
+      });
+      render(<PensionContainer />);
+      openDetails();
+      const growth = () =>
+        (within(screen.getByRole("dialog")).getByLabelText(/growth/i) as HTMLInputElement).value;
+      fireEvent.click(screen.getByRole("button", { name: "Edit Workplace pot" }));
+      expect(growth()).toBe("5");
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel" }));
+      fireEvent.click(screen.getByRole("button", { name: "Edit Old pot" }));
+      expect(growth()).toBe("");
+    });
+
+    it("reads the root profile when the loader sends no profile", async () => {
+      const { calculateEmployerNISavings, getCurrentUKTaxYear } = await import(
+        "@flump/finance-engine"
+      );
+      const { normalizeProfile } =
+        await vi.importActual<typeof import("~/hooks/useUserProfile")>("~/hooks/useUserProfile");
+      testLoaderData = { accounts: FILLED.accounts, accountDetails: [] };
+      testProfileData = normalizeProfile({
+        ...FILLED.userProfile,
+        isSalarySacrifice: true,
+        isSalarySacrificeEmployerNi: true,
+      });
+      render(<PensionContainer />);
+      // The employer NI saving is the engine's figure, passed through: £58,000 salary, 8% sacrificed
+      // is 58,000 x 8 / 100 = 4,640 a year.
+      const ni = calculateEmployerNISavings(58_000, 4_640, getCurrentUKTaxYear());
+      expect(ni).toBeGreaterThan(0);
+      // You 4,640 + employer 3% of 58,000 = 1,740 + the NI saving, all over 12 months.
+      const monthly = Math.round((4_640 + 1_740 + ni) / 12);
+      expect(strip()?.textContent).toContain(`Going in each month£${monthly.toLocaleString()}`);
+      openDetails();
+      expect(screen.getByText("Method").nextElementSibling?.textContent).toContain(
+        "Salary sacrifice",
+      );
+    });
+
+    it("adds the employer's National Insurance saving only with salary sacrifice and the employer passing it on", async () => {
+      const { calculateEmployerNISavings, getCurrentUKTaxYear } = await import(
+        "@flump/finance-engine"
+      );
+      // £50,000 at 5% sacrificed: 50,000 x 5 / 100 = 2,500 a year.
+      const ni = calculateEmployerNISavings(50_000, 2_500, getCurrentUKTaxYear());
+      expect(ni).toBeGreaterThan(0);
+      useFixture({
+        ...defaultLoaderData,
+        userProfile: { ...defaultProfileData, isSalarySacrificeEmployerNi: true },
+      });
+      const passed = render(<PensionContainer />);
+      // You 2,500 + employer 3% = 1,500 + the NI saving a year, over 12, plus the current pot's £100.
+      const withNi = Math.round((2_500 + 1_500 + ni) / 12 + 100);
+      expect(strip()?.textContent).toContain(`Going in each month£${withNi.toLocaleString()}`);
+      passed.unmount();
+      useFixture({
+        ...defaultLoaderData,
+        userProfile: {
+          ...defaultProfileData,
+          isSalarySacrifice: false,
+          isSalarySacrificeEmployerNi: true,
+        },
+      });
+      render(<PensionContainer />);
+      // No sacrifice, so no NI saving: (2,500 + 1,500) / 12 = 333.33, plus £100, about £433.
+      expect(strip()?.textContent).toContain("Going in each month£433");
+    });
+
+    it("treats a saved salary of 0 as no salary", () => {
+      useFixture({
+        accounts: [],
+        accountDetails: [],
+        userProfile: { ...FILLED.userProfile, annualSalary: 0 },
+      });
+      render(<PensionContainer />);
+      expect(screen.getByRole("heading", { level: 2, name: "No pension pots yet" })).toBeDefined();
+    });
+
+    it("asks for the rates when either one is not set", () => {
+      for (const rates of [
+        { pensionPercent: 5, pensionEmployerPercent: null },
+        { pensionPercent: null, pensionEmployerPercent: 3 },
+      ]) {
+        loadFixture({ ...FILLED, userProfile: { ...FILLED.userProfile, ...rates } });
+        const view = render(<PensionContainer />);
+        expect(view.container.textContent).toContain(
+          "Add your contribution rates to see what goes in each month",
+        );
+        expect(strip()).toBeNull();
+        view.unmount();
+      }
+    });
+
+    it("with no salary, shows the payments into current pots, or a prompt when there are none", () => {
+      useFixture({
+        ...defaultLoaderData,
+        userProfile: {
+          ...defaultProfileData,
+          annualSalary: null,
+          pensionPercent: null,
+          pensionEmployerPercent: null,
+        },
+      });
+      const paying = render(<PensionContainer />);
+      // Only the current pot's £100 counts; the past pot's £50 does not, and no rate is asked for.
+      expect(strip()?.textContent).toContain("Going in each month£100");
+      expect(paying.container.textContent).not.toContain("Add your contribution rates");
+      paying.unmount();
+      useFixture({ ...FILLED, userProfile: { ...FILLED.userProfile, annualSalary: null } });
+      const none = render(<PensionContainer />);
+      expect(none.container.textContent).toContain(
+        "Add your salary to see what goes in each month",
+      );
+      expect(none.container.textContent).not.toContain("£0");
+    });
+
+    it("leaves what is paid in out of the rules when the rates are not set", () => {
+      useFixture({
+        ...FILLED,
+        userProfile: { ...FILLED.userProfile, pensionPercent: null, pensionEmployerPercent: null },
+      });
+      render(<PensionContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "UK pension rules" }));
+      expect(screen.getByTestId("pension-rules").textContent).not.toContain("a year is paid in");
+    });
+
+    it("shows the latest loader data after it changes", () => {
+      useFixture(FILLED);
+      const view = render(<PensionContainer />);
+      useFixture({
+        accounts: [
+          ...FILLED.accounts,
+          {
+            id: "w2",
+            name: "Old pot",
+            type: "Pension",
+            balance: 4000,
+            interestRate: null,
+            monthlyContribution: 25,
+            isCurrent: true,
+          },
+        ],
+        accountDetails: [],
+        userProfile: {
+          ...FILLED.userProfile,
+          annualSalary: 110_000,
+          pensionPercent: 0,
+          pensionEmployerPercent: 5,
+          taxRegion: "SCOTLAND",
+        },
+      });
+      view.rerender(<PensionContainer />);
+      // 96,000 + 4,000 = £100,000 in the pots.
+      expect(document.querySelector("[data-tone='hero']")?.textContent).toContain("£100,000");
+      // Employer 5% of 110,000 = 5,500 a year, 458.33 a month, plus the new pot's £25: about £483.
+      expect(strip()?.textContent).toContain("Going in each month£483");
+      // 110,000 with nothing sacrificed is inside the £100,000 band, with the saved region.
+      expect(document.getElementById("pension-trap-note")).not.toBeNull();
+      expect(screen.queryByRole("button", { name: "About Tax region" })).toBeNull();
+      openDetails();
+      expect(
+        screen.getByRole("region", { name: "Your details" }).querySelectorAll("[data-list-row]"),
+      ).toHaveLength(2);
+      openZone();
+      expect(slider("Your contribution").value).toBe("0");
+    });
+  });
+
+  describe("saving your details", () => {
+    beforeEach(() => mockUpdateProfile.mockClear());
+    const edit = () => {
+      render(<PensionContainer />);
+      openDetails();
+      fireEvent.click(screen.getByRole("button", { name: "Edit salary and contributions" }));
+    };
+    const save = async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Save details/i }));
+      await waitFor(() => expect(mockUpdateProfile).toHaveBeenCalled());
+      return mockUpdateProfile.mock.calls[0]?.[0] as Record<string, unknown>;
+    };
+
+    it("saves no salary when the salary is left blank", async () => {
+      edit();
+      fireEvent.change(screen.getByLabelText(/Yearly salary before tax/), {
+        target: { value: "" },
+      });
+      const sent = await save();
+      expect(sent).not.toHaveProperty("annualSalary");
+    });
+
+    it("saves a blank employee rate as not set and a typed employer rate as typed", async () => {
+      edit();
+      fireEvent.change(screen.getByLabelText(/Your contribution/), { target: { value: "" } });
+      fireEvent.change(screen.getByLabelText(/Employer contribution/), {
+        target: { value: "3.5" },
+      });
+      const sent = await save();
+      expect(sent.pensionPercent).toBeNull();
+      expect(sent.pensionEmployerPercent).toBe(3.5);
+    });
+
+    it("saves employer National Insurance as off when only salary sacrifice is ticked", async () => {
+      useFixture({
+        ...defaultLoaderData,
+        userProfile: { ...defaultProfileData, isSalarySacrifice: null },
+      });
+      edit();
+      fireEvent.click(screen.getByLabelText(/Paid by salary sacrifice/i));
+      const sent = await save();
+      expect(sent.isSalarySacrifice).toBe(true);
+      expect(sent.isSalarySacrificeEmployerNi).toBe(false);
+    });
+  });
+
+  describe("scrolling and the add pot dialog", () => {
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+    it("does not scroll or move focus without the #pension-details link", async () => {
+      const scrolled: string[] = [];
+      Element.prototype.scrollIntoView = function (this: Element) {
+        scrolled.push(this.id);
+      };
+      useFixture(FILLED);
+      render(<PensionContainer />);
+      await nextFrame();
+      await nextFrame();
+      expect(scrolled).not.toContain("pension-details");
+      expect(document.activeElement?.id).not.toBe("pension-details-title");
+      // The saved facts stay behind their closed drawer.
+      expect(screen.getByRole("region", { name: "Your details" }).querySelector("dl")).toBeNull();
+    });
+
+    it("opens the saved facts for the #pension-details link", () => {
+      mockHash = "#pension-details";
+      try {
+        loadFixture(FILLED);
+        render(<PensionContainer />);
+        expect(
+          screen.getByRole("region", { name: "Your details" }).querySelector("dl"),
+        ).not.toBeNull();
+      } finally {
+        mockHash = "";
+      }
+    });
+
+    it("scrolls to the details when the link arrives after the page has opened", async () => {
+      const scrolled: string[] = [];
+      Element.prototype.scrollIntoView = function (this: Element) {
+        scrolled.push(this.id);
+      };
+      useFixture(FILLED);
+      const view = render(<PensionContainer />);
+      mockHash = "#pension-details";
+      try {
+        view.rerender(<PensionContainer />);
+        await vi.waitFor(() => expect(scrolled).toContain("pension-details"));
+      } finally {
+        mockHash = "";
+      }
+    });
+
+    it("follows the #pension-details link without error when nothing is saved yet", async () => {
+      const errors: unknown[] = [];
+      const onError = (event: ErrorEvent) => errors.push(event.error);
+      window.addEventListener("error", onError);
+      mockHash = "#pension-details";
+      try {
+        loadFixture({ accounts: [], accountDetails: [], userProfile: { annualSalary: null } });
+        render(<PensionContainer />);
+        await nextFrame();
+        await nextFrame();
+        expect(errors).toEqual([]);
+        expect(
+          screen.getByRole("heading", { level: 2, name: "No pension pots yet" }),
+        ).toBeDefined();
+      } finally {
+        mockHash = "";
+        window.removeEventListener("error", onError);
+      }
+    });
+
+    it("scrolls to the scenario zone each time Model this contribution is pressed", () => {
+      useFixture({
+        ...FILLED,
+        userProfile: {
+          ...FILLED.userProfile,
+          annualSalary: 110_000,
+          pensionPercent: 5,
+          pensionEmployerPercent: 4,
+        },
+      });
+      render(<PensionContainer />);
+      const scrolled: string[] = [];
+      Element.prototype.scrollIntoView = function (this: Element) {
+        scrolled.push(this.id);
+      };
+      fireEvent.click(screen.getByRole("button", { name: "Model this contribution" }));
+      fireEvent.click(screen.getByRole("button", { name: "Model this contribution" }));
+      expect(scrolled.filter((id) => id === "pension-scenario-zone")).toHaveLength(2);
+    });
+
+    it("opens and closes the add pot dialog from the header button", () => {
+      useFixture(FILLED);
+      render(<PensionContainer />);
+      expect(screen.queryByRole("dialog", { name: "Add a pension pot" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Add pension pot" }));
+      const dialog = screen.getByRole("dialog", { name: "Add a pension pot" });
+      fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+      expect(screen.queryByRole("dialog", { name: "Add a pension pot" })).toBeNull();
     });
   });
 

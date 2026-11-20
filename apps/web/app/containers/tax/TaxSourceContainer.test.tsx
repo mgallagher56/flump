@@ -1,4 +1,9 @@
-import { getCurrentUKTaxYear, getPreviousTaxYear, type TaxRecord } from "@flump/finance-engine";
+import {
+  getCurrentUKTaxYear,
+  getNextTaxYear,
+  getPreviousTaxYear,
+  type TaxRecord,
+} from "@flump/finance-engine";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
@@ -53,7 +58,7 @@ const records: TaxRecord[] = [
 let mockSource = "self-employed";
 // The profile's share is no longer read for tax (owner decision 6): the rental property's is.
 const baseProfile = { annualSalary: 40000, propertyOwnershipShare: 100, enabledPages: ["tax"] };
-const mockAccounts = [
+const baseAccounts: Record<string, unknown>[] = [
   {
     id: "flat",
     name: "Flat 2",
@@ -63,11 +68,13 @@ const mockAccounts = [
     sharePercent: 50,
   },
 ];
-let mockProfile: Record<string, unknown> = baseProfile;
-let mockRecords: TaxRecord[] = records;
+let mockAccounts: Record<string, unknown>[] | undefined = baseAccounts;
+let mockProfile: Record<string, unknown> | undefined = baseProfile;
+let mockRecords: TaxRecord[] | undefined = records;
 let mockSearch = "";
 const mockSetSearchParams = vi.fn();
 const mockSubmit = vi.fn();
+const fetcherData = { current: null as unknown };
 
 vi.mock("react-router", () => ({
   Link: ({ children, to, className }: { children: ReactNode; to: string; className?: string }) => (
@@ -83,7 +90,7 @@ vi.mock("react-router", () => ({
     userProfile: mockProfile,
     accounts: mockAccounts,
   }),
-  useFetcher: () => ({ submit: mockSubmit, state: "idle", data: null }),
+  useFetcher: () => ({ submit: mockSubmit, state: "idle", data: fetcherData.current }),
 }));
 
 // A spy over the real calculateUKTax, to see what the fallback calculation passes it.
@@ -103,6 +110,8 @@ describe("TaxSourceContainer", () => {
     mockSearch = "";
     mockProfile = baseProfile;
     mockRecords = records;
+    mockAccounts = baseAccounts;
+    fetcherData.current = null;
     mockSubmit.mockClear();
     mockSetSearchParams.mockClear();
   });
@@ -257,5 +266,288 @@ describe("TaxSourceContainer", () => {
     render(<TaxSourceContainer />);
     expect(screen.getAllByRole("note")).toHaveLength(1);
     expect(within(screen.getByRole("note")).getByText(SCOTTISH_BANDS_NOTE)).toBeDefined();
+  });
+});
+
+describe("TaxSourceContainer, what the page decides (E41 M5)", () => {
+  const next = getNextTaxYear(current);
+  beforeEach(() => {
+    mockSource = "self-employed";
+    mockSearch = "";
+    mockProfile = baseProfile;
+    mockRecords = records;
+    mockAccounts = baseAccounts;
+    fetcherData.current = null;
+    mockSubmit.mockClear();
+  });
+
+  const strip = () => document.querySelector("[data-density='compact']") as HTMLElement | null;
+  const allowanceHeading = () => screen.queryByRole("heading", { name: /allowance/ });
+  // Twelve month-end balances across the tax year, April to March.
+  const yearOfBalances = (value: number) =>
+    Array.from({ length: 12 }, (_, i) => ({
+      year: Number(start) + (i < 9 ? 0 : 1),
+      month: ((i + 3) % 12) + 1,
+      value,
+    }));
+  const btlMortgage = {
+    id: "m1",
+    name: "Flat 2 mortgage",
+    type: "Mortgage",
+    accountSubtype: "btl_mortgage",
+    interestRate: 4.5,
+    balance: -150000,
+    details: yearOfBalances(-150000),
+  };
+  const saver = {
+    id: "s1",
+    name: "Easy saver",
+    type: "Saving",
+    interestRate: 4,
+    balance: 10000,
+    details: yearOfBalances(10000),
+  };
+
+  it("offers mortgage interest on the rental page and savings interest on the savings page only", () => {
+    mockAccounts = [...baseAccounts, btlMortgage, saver];
+    for (const [source, shown, hidden] of [
+      ["rental", "calculated-figure-m1", "calculated-figure-s1"],
+      ["savings", "calculated-figure-s1", "calculated-figure-m1"],
+    ] as const) {
+      mockSource = source;
+      const view = render(<TaxSourceContainer />);
+      expect(screen.getByTestId(shown)).toBeDefined();
+      expect(screen.queryByTestId(hidden)).toBeNull();
+      view.unmount();
+    }
+    mockSource = "self-employed";
+    render(<TaxSourceContainer />);
+    expect(screen.queryByTestId("calculated-figure-m1")).toBeNull();
+    expect(screen.queryByTestId("calculated-figure-s1")).toBeNull();
+  });
+
+  it("shows a failed add of a calculated figure on the page, and no alert before it", () => {
+    mockSource = "rental";
+    mockAccounts = [...baseAccounts, btlMortgage];
+    const view = render(<TaxSourceContainer />);
+    expect(screen.queryByRole("alert")).toBeNull();
+    const card = screen.getByTestId("calculated-figure-m1");
+    fireEvent.click(within(card).getByRole("button", { name: /^Add this estimate as a record/ }));
+    expect(mockSubmit).toHaveBeenCalled();
+    fetcherData.current = { success: false, error: "We could not add that record." };
+    view.rerender(<TaxSourceContainer />);
+    expect(screen.getByRole("alert").textContent).toBe("We could not add that record.");
+  });
+
+  it("says unlinked rent counts in full on the rental page only", () => {
+    mockAccounts = [];
+    mockSource = "rental";
+    const rental = render(<TaxSourceContainer />);
+    expect(screen.getByRole("note").textContent).toContain("Rental records are counted in full.");
+    rental.unmount();
+    mockSource = "self-employed";
+    render(<TaxSourceContainer />);
+    expect(screen.getByRole("note").textContent).not.toContain("Rental records");
+    expect(screen.getByRole("note").textContent).not.toContain(SCOTTISH_BANDS_NOTE);
+  });
+
+  it("shows the refusal line, with figures at your share, when the year's Scottish rates are not published", () => {
+    mockSource = "rental";
+    mockSearch = `year=${next.replace("/", "-")}`;
+    mockProfile = { ...baseProfile, taxRegion: "SCOTLAND" };
+    mockRecords = [
+      rec({
+        id: "rent-next",
+        source: "rental",
+        category: "rental_income",
+        amount: 12000,
+        frequency: "one-off",
+        date: `${next.slice(0, 4)}-05-01`,
+      }),
+      rec({
+        id: "cost-next",
+        source: "rental",
+        type: "expense",
+        category: "rent_rates_insurance",
+        amount: 2000,
+        frequency: "one-off",
+        date: `${next.slice(0, 4)}-05-01`,
+      }),
+    ];
+    const { container } = render(<TaxSourceContainer />);
+    expect(container.textContent).toContain(
+      `Scottish Income Tax rates for ${next} are not published yet`,
+    );
+    // The one rental property is held 50%: 2,000 of expenses x 50% = £1,000 recorded as yours.
+    const recorded = screen.getByText("Expenses you have recorded").nextElementSibling;
+    expect(recorded?.textContent).toBe("£1,000");
+  });
+
+  it("asks for the salary with a link to the salary setting when it is missing", () => {
+    mockSource = "rental";
+    mockProfile = { ...baseProfile, annualSalary: null };
+    render(<TaxSourceContainer />);
+    expect(screen.getByRole("link", { name: "Add salary" }).getAttribute("href")).toBe(
+      "/app/profile#settings-age-and-pay",
+    );
+  });
+
+  describe("the allowance comparison", () => {
+    it("shows for self-employed income alone or expenses alone, and not with neither", () => {
+      mockRecords = [rec({ id: "inc", amount: 500 })];
+      const income = render(<TaxSourceContainer />);
+      expect(allowanceHeading()).not.toBeNull();
+      income.unmount();
+      mockRecords = [rec({ id: "exp", type: "expense", category: "office_costs", amount: 50 })];
+      const expenses = render(<TaxSourceContainer />);
+      expect(allowanceHeading()).not.toBeNull();
+      expenses.unmount();
+      mockRecords = records.filter((r) => r.source === "rental");
+      render(<TaxSourceContainer />);
+      expect(allowanceHeading()).toBeNull();
+    });
+
+    it("shows for rent alone or rental expenses alone, and not with neither", () => {
+      mockSource = "rental";
+      mockRecords = [rec({ id: "rent", source: "rental", category: "rental_income" })];
+      const income = render(<TaxSourceContainer />);
+      expect(allowanceHeading()).not.toBeNull();
+      income.unmount();
+      mockRecords = [
+        rec({ id: "cost", source: "rental", type: "expense", category: "rent_rates_insurance" }),
+      ];
+      const expenses = render(<TaxSourceContainer />);
+      expect(allowanceHeading()).not.toBeNull();
+      expenses.unmount();
+      mockRecords = records.filter((r) => r.source === "self-employed");
+      render(<TaxSourceContainer />);
+      expect(allowanceHeading()).toBeNull();
+    });
+
+    it("is not shown on the savings page", () => {
+      mockSource = "savings";
+      mockRecords = [rec({ id: "int", source: "savings", category: "savings_interest" })];
+      render(<TaxSourceContainer />);
+      expect(allowanceHeading()).toBeNull();
+    });
+
+    it("says nothing about a property share on the self-employed page", () => {
+      const { container } = render(<TaxSourceContainer />);
+      expect(container.textContent).not.toContain("share of the property");
+    });
+
+    it("says when the property allowance and the expenses give the same tax", () => {
+      // Rent 10,000 with 1,000 of expenses, the whole property: the 1,000 property allowance and
+      // the 1,000 of expenses take the same off, so the total tax is the same either way.
+      mockSource = "rental";
+      mockAccounts = [];
+      mockRecords = [
+        rec({
+          id: "rent",
+          source: "rental",
+          category: "rental_income",
+          amount: 10000,
+          frequency: "one-off",
+        }),
+        rec({
+          id: "cost",
+          source: "rental",
+          type: "expense",
+          category: "rent_rates_insurance",
+          amount: 1000,
+          frequency: "one-off",
+        }),
+      ];
+      const { container } = render(<TaxSourceContainer />);
+      expect(container.textContent).toContain("The total tax is the same either way.");
+    });
+  });
+
+  describe("the strip", () => {
+    it("is not drawn for a source with no records", () => {
+      mockSource = "savings";
+      render(<TaxSourceContainer />);
+      expect(strip()).toBeNull();
+    });
+
+    it("rounds to whole pounds, says This tax year, and says when no expenses are recorded", () => {
+      mockRecords = [rec({ id: "inc", amount: 1000.4, frequency: "one-off" })];
+      render(<TaxSourceContainer />);
+      const cards = Array.from(strip()?.children ?? []).map((c) => c.textContent ?? "");
+      expect(cards[0]).toContain("£1,000");
+      expect(cards[0]).not.toContain("£1,000.40");
+      expect(cards[0]).toContain("This tax year");
+      expect(cards[0]).not.toContain("Whole property");
+      expect(cards[1]).toContain("No expenses recorded");
+      expect(cards[1]).not.toContain("£0");
+    });
+
+    it("rounds the expenses to whole pounds", () => {
+      mockRecords = [
+        rec({ id: "inc", amount: 500, frequency: "one-off" }),
+        rec({
+          id: "exp",
+          type: "expense",
+          category: "office_costs",
+          amount: 10.6,
+          frequency: "one-off",
+        }),
+      ];
+      render(<TaxSourceContainer />);
+      const expenses = strip()?.children[1]?.textContent ?? "";
+      expect(expenses).toContain("£11");
+      expect(expenses).not.toContain("£10.60");
+    });
+  });
+
+  it("starts the records drawer open with 8 records and closed with 9, and counts them", () => {
+    const many = (count: number) =>
+      Array.from({ length: count }, (_, i) =>
+        rec({ id: `se-${i}`, name: `Job ${i + 1}`, frequency: "one-off" }),
+      );
+    mockRecords = many(8);
+    const eight = render(<TaxSourceContainer />);
+    expect(screen.getByRole("table")).toBeDefined();
+    eight.unmount();
+    mockRecords = many(9);
+    render(<TaxSourceContainer />);
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.getByRole("button", { name: /9 records/ })).toBeDefined();
+  });
+
+  describe("loader data", () => {
+    it("shows the empty state when the loader sends no records, accounts or profile", () => {
+      mockRecords = undefined;
+      mockAccounts = undefined;
+      mockProfile = undefined;
+      render(<TaxSourceContainer />);
+      expect(screen.getByText(`No records for ${current}`)).toBeDefined();
+    });
+
+    it("shows the latest records and profile after the loader sends new ones", () => {
+      const view = render(<TaxSourceContainer />);
+      // 120 of expenses is less than the 1,000 trading allowance.
+      expect(screen.getByText(/uses the trading allowance, which is larger\./)).toBeDefined();
+      expect(screen.getAllByRole("note")).toHaveLength(1);
+      mockRecords = [
+        ...records,
+        rec({
+          id: "s3",
+          name: "Laptop",
+          type: "expense",
+          category: "office_costs",
+          amount: 3000,
+          frequency: "one-off",
+        }),
+      ];
+      mockProfile = { ...baseProfile, annualSalary: null };
+      view.rerender(<TaxSourceContainer />);
+      // 120 + 3,000 = 3,120 of expenses is now larger than the 1,000 allowance.
+      expect(
+        screen.getByText(/The expenses you have recorded are larger than the trading allowance\./),
+      ).toBeDefined();
+      // With no salary the estimate is unknown, so the notice goes.
+      expect(screen.queryByRole("note")).toBeNull();
+    });
   });
 });
