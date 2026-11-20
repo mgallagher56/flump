@@ -15,6 +15,9 @@ import { ADVICE_ALLOWLIST } from "./advice-allowlist";
 const BANNED: Array<[RegExp, string]> = [
   [/\bguarantee[ds]?\b/i, "promises an outcome"],
   [/\bFCA\b/, "refers to the FCA"],
+  [/256-bit|bank[- ]grade/i, "claims a security level (E7 W1, W5)"],
+  [/GDPR/, "claims data-protection compliance without the owner's wording (E7 D0)"],
+  [/Open Banking/i, "claims Open Banking status (E7 W1 to W6)"],
   [/flump\.app|flump\.co\.uk/i, "names a domain we do not own (E24-T5)"],
   [/message has been received/i, "claims a message was sent when nothing is (E24-T5)"],
 ];
