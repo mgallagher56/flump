@@ -2463,6 +2463,28 @@ figures:
     findings: [SA-3, SA-9]
     note: One calculator. Every caller goes through estimateInputsFor and calculateEstimatedTax, which pass the salary through payeSalaryForTax, the tax region (Scottish rates on non-savings income since slice 7) and each rental property's share from its account. The headline strip and the Dashboard's untaxed income both read incomeOutsidePaye.
 
+  - id: personal-allowance-allocation
+    name: Where the Personal Allowance is set (non-savings, savings, dividends)
+    area: tax
+    computed_by:
+      {
+        function: allocatePersonalAllowance,
+        path: packages/finance-engine/src/personal-allowance-allocation.ts,
+      }
+    other_paths:
+      - {
+          function: calculateUKTax,
+          status: wrapper,
+          path: packages/finance-engine/src/tax-calculator.ts,
+          note: "exposes the split as allowanceOnNonSavings, allowanceOnSavings and allowanceOnDividends",
+        }
+    inputs: [tax-records, salary, employment-type, tax-region, rental-share-for-tax]
+    shown_on:
+      - { surface: mcp-read, path: packages/mcp/src/tools/read/getTaxYearPosition.ts }
+    verdict: holds
+    findings: []
+    note: The allowance goes where it gives the lowest bill (ITA 2007 s.25(2); from 2027/28 against other income first, s.25(3A)). get_tax_year_position reads the split for taxable non-savings income instead of taking the whole allowance off non-savings income itself.
+
   - id: finance-costs-carried-forward
     name: Mortgage interest carried forward to next year
     area: tax

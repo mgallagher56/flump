@@ -769,6 +769,79 @@ export interface IncomeTaxResult {
   bands: IncomeTaxBandResult[];
 }
 
+export interface IncomeTaxBandLimit {
+  name: string;
+  rate: number;
+  /** Taxable-income figure where the band starts. */
+  lower: number;
+  /** Where it ends; Infinity for the top band. */
+  upper: number;
+}
+
+/**
+ * The UK (England, Wales and Northern Ireland) Income Tax bands as taxable-income limits, with
+ * any band extension (grossed-up Gift Aid, ITA 2007 s.414, or relief-at-source contributions,
+ * FA 2004 s.192(4)) added to the basic and higher rate limits. `rates` charges the bands at other
+ * rates (savings, property or dividend rates), which use the same limits (ITA 2007 s.11C, s.11CA,
+ * s.13). Savings and dividends use these limits in every region (ITA 2007 s.11A).
+ */
+export function ukIncomeTaxBandLimits(
+  rules: UkTaxYearRules,
+  bandExtension = 0,
+  rates: UkIncomeRates = rules.ewni,
+): IncomeTaxBandLimit[] {
+  const ext = Math.max(0, bandExtension);
+  const e = rules.ewni;
+  const basicTop = e.basicRateBandWidth + ext;
+  const higherTop = e.additionalRateThreshold + ext;
+  return [
+    { name: "Basic", rate: rates.basicRate, lower: 0, upper: basicTop },
+    { name: "Higher", rate: rates.higherRate, lower: basicTop, upper: higherTop },
+    {
+      name: "Additional",
+      rate: rates.additionalRate,
+      lower: higherTop,
+      upper: Number.POSITIVE_INFINITY,
+    },
+  ];
+}
+
+/**
+ * The year's Income Tax bands for non-savings income in a region, as taxable-income limits, with
+ * any band extension applied as described on calculateIncomeTaxOnTaxable. The one place the band
+ * limits are worked out. `rates` applies to England, Wales and NI bands only.
+ */
+export function incomeTaxBandLimits(
+  rules: UkTaxYearRules,
+  region: UkTaxRegion,
+  bandExtension = 0,
+  rates?: UkIncomeRates,
+): IncomeTaxBandLimit[] {
+  if (region !== "SCOTLAND") return ukIncomeTaxBandLimits(rules, bandExtension, rates);
+  const ext = Math.max(0, bandExtension);
+  const bands = requireScottishRules(rules).bands;
+  // The basic band is identified by its 20% rate, not its display name: the statute does
+  // not define Scottish band names, and a rename must not silently disable the extension.
+  const basicIdx = bands.findIndex((b) => b.rate === 0.2);
+  if (basicIdx < 0) {
+    throw new Error("Scottish income tax bands have no 20% (basic rate) band");
+  }
+  return bands.map((band, i) => ({
+    name: band.name,
+    rate: band.rate,
+    lower: band.from + (i > basicIdx ? ext : 0),
+    upper: band.to === null ? Number.POSITIVE_INFINITY : band.to + (i >= basicIdx ? ext : 0),
+  }));
+}
+
+/**
+ * The dividend bands: the UK band limits (any region, ITA 2007 s.13 and s.11A) at the year's
+ * dividend ordinary, upper and additional rates.
+ */
+export function dividendBandLimits(rules: UkTaxYearRules, bandExtension = 0): IncomeTaxBandLimit[] {
+  return ukIncomeTaxBandLimits(rules, bandExtension, rules.dividends);
+}
+
 /**
  * Income tax on taxable income (income after the personal allowance).
  *
@@ -790,46 +863,10 @@ export function calculateIncomeTaxOnTaxable(
   opts: { bandExtension?: number; rates?: UkIncomeRates } = {},
 ): IncomeTaxResult {
   const income = Math.max(0, taxable);
-  const raw: { name: string; rate: number; taxable: number; tax: number }[] = [];
-
-  if (region === "SCOTLAND") {
-    const ext = Math.max(0, opts.bandExtension ?? 0);
-    const bands = requireScottishRules(rules).bands;
-    // The basic band is identified by its 20% rate, not its display name: the statute does
-    // not define Scottish band names, and a rename must not silently disable the extension.
-    const basicIdx = bands.findIndex((b) => b.rate === 0.2);
-    if (basicIdx < 0) {
-      throw new Error("Scottish income tax bands have no 20% (basic rate) band");
-    }
-    for (const [i, band] of bands.entries()) {
-      const aboveBasic = basicIdx >= 0 && i > basicIdx;
-      const atOrAboveBasic = basicIdx >= 0 && i >= basicIdx;
-      const lower = band.from + (aboveBasic ? ext : 0);
-      const upper =
-        band.to === null ? Number.POSITIVE_INFINITY : band.to + (atOrAboveBasic ? ext : 0);
-      const inBand = Math.max(0, Math.min(income, upper) - lower);
-      raw.push({ name: band.name, rate: band.rate, taxable: inBand, tax: inBand * band.rate });
-    }
-  } else {
-    const ext = Math.max(0, opts.bandExtension ?? 0);
-    const e = rules.ewni;
-    const r = opts.rates ?? e;
-    const basicTop = e.basicRateBandWidth + ext;
-    const higherTop = e.additionalRateThreshold + ext;
-    const basic = Math.min(income, basicTop);
-    const higher = Math.max(0, Math.min(income, higherTop) - basicTop);
-    const additional = Math.max(0, income - higherTop);
-    raw.push(
-      { name: "Basic", rate: r.basicRate, taxable: basic, tax: basic * r.basicRate },
-      { name: "Higher", rate: r.higherRate, taxable: higher, tax: higher * r.higherRate },
-      {
-        name: "Additional",
-        rate: r.additionalRate,
-        taxable: additional,
-        tax: additional * r.additionalRate,
-      },
-    );
-  }
+  const raw = incomeTaxBandLimits(rules, region, opts.bandExtension, opts.rates).map((band) => {
+    const inBand = Math.max(0, Math.min(income, band.upper) - band.lower);
+    return { name: band.name, rate: band.rate, taxable: inBand, tax: inBand * band.rate };
+  });
 
   return {
     total: roundPence(raw.reduce((sum, b) => sum + b.tax, 0)),

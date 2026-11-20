@@ -238,11 +238,17 @@ describe("personal savings allowance band", () => {
     const at = calculateUKTax(Y, [interest(1000)], 49270, 100);
     expect(at.personalSavingsAllowance).toBe(1000);
     expect(at.savingsTaxDue).toBe(0);
-    // 49,271 + 1,000 - 12,570 = 37,701: higher rate, PSA 500. Non-savings taxable 36,701; the
-    // 500 PSA fills to 37,201; then 499 at 20% = 99.80 and 1 at 40% = 0.40: 100.20.
+    // 49,271 + 1,000 - 12,570 = 37,701: higher rate, PSA 500.
+    // Non-savings first (the old order): non-savings taxable 36,701 x 20% = 7,340.20; the 500 PSA
+    //   fills to 37,201; then 499 at 20% = 99.80 and 1 at 40% = 0.40: 100.20; total 7,440.40.
+    // Lowest (ITA 2007 s.25(2)): move 500 of allowance to the interest. Non-savings taxable
+    //   37,201 x 20% = 7,440.20; the 500 of interest left sits in the PSA: total 7,440.20.
+    // The non-savings line stays 7,340.20, so the savings line is 100.20 - 0.20 = 100.00.
     const over = calculateUKTax(Y, [interest(1000)], 49271, 100);
     expect(over.personalSavingsAllowance).toBe(500);
-    expect(over.savingsTaxDue).toBeCloseTo(100.2, 2);
+    expect(over.allowanceOnSavings).toBe(500);
+    expect(over.savingsTaxDue).toBeCloseTo(100, 2);
+    expect(over.totalIncomeTaxDue).toBeCloseTo(7440.2, 2);
   });
 });
 
@@ -257,20 +263,31 @@ describe("stacking savings and dividends", () => {
 
   it("the PSA uses band space below the taxed interest", () => {
     // 49,270 salary + 3,000 interest = 52,270; taxable 39,700, higher rate, PSA 500.
-    // Non-savings taxable 36,700; PSA to 37,200; 500 at 20% = 100; 2,000 at 40% = 800: 900.
+    // Non-savings first (the old order): non-savings taxable 36,700 x 20% = 7,340; PSA to
+    //   37,200; 500 at 20% = 100; 2,000 at 40% = 800: 900; total 8,240.
+    // Lowest (ITA 2007 s.25(2)): move 1,000 of allowance to the interest, so non-savings taxable
+    //   is 37,700 x 20% = 7,540 (+200) and the PSA sits on 37,700 to 38,200: 2,000 - 500 = 1,500
+    //   at 40% = 600 (-300). Total 8,140. Moving more ties (40% against 40%), so 1,000 is kept.
+    // The non-savings line stays 7,340, so the savings line is 900 - 100 = 800.
     const r = calculateUKTax(Y, [interest(3000)], 49270, 100);
-    expect(r.taxableSavingsInterest).toBe(2500);
-    expect(r.savingsTaxDue).toBeCloseTo(900, 2);
-    // Salary 36,700 x 20% = 7,340; plus 900 on the interest = 8,240.
-    expect(r.totalIncomeTaxDue).toBeCloseTo(8240, 2);
+    expect(r.allowanceOnSavings).toBe(1000);
+    expect(r.taxableSavingsInterest).toBe(1500);
+    expect(r.savingsTaxDue).toBeCloseTo(800, 2);
+    expect(r.totalIncomeTaxDue).toBeCloseTo(8140, 2);
   });
 
-  it("allowance left after interest goes to dividends", () => {
-    // No salary; 4,000 interest takes 4,000 of the 12,570 allowance, leaving 8,570 for
-    // 20,000 dividends: 11,430 left, less the 500 allowance = 10,930 at 8.75% = 956.375.
+  it("allowance goes to dividends when the starting rate already covers the interest", () => {
+    // No salary; 4,000 interest, 20,000 dividends; taxable 11,430, PSA 1,000.
+    // The old order set 4,000 of allowance against the interest, leaving 8,570 for dividends:
+    //   11,430 - 500 = 10,930 at 8.75% = 956.375.
+    // The 4,000 of interest is inside the 5,000 starting rate anyway, so the lowest bill puts all
+    // 12,570 against dividends (ITA 2007 s.25(2)): 7,430 - 500 = 6,930 at 8.75% = 606.375.
     const r = calculateUKTax(Y, [interest(4000), dividends(20000)], 0, 100);
-    expect(r.taxableDividends).toBe(10930);
-    expect(r.dividendTaxDue).toBeCloseTo(956.375, 2);
+    expect(r.allowanceOnSavings).toBe(0);
+    expect(r.allowanceOnDividends).toBe(12570);
+    expect(r.savingsTaxDue).toBe(0);
+    expect(r.taxableDividends).toBe(6930);
+    expect(r.dividendTaxDue).toBeCloseTo(606.375, 2);
   });
 
   it("dividends stack above the interest and cross into the higher rate", () => {

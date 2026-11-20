@@ -1,5 +1,10 @@
 import { resolveAccountSharePercent } from "./joint-share.js";
 import {
+  allocatePersonalAllowance,
+  allowanceGoesToOtherIncomeFirst,
+  type PersonalAllowanceAllocation,
+} from "./personal-allowance-allocation.js";
+import {
   calculatePropertyProfit,
   calculateSelfAssessmentPayments,
   calculateTradingProfit,
@@ -525,6 +530,15 @@ export interface TaxCalculationResult {
   // Combined taxable income
   totalGrossIncome: number; // PAYE + SE Profit + Rental Profit Before Interest Share + Savings + Dividends
   personalAllowance: number;
+  /**
+   * Where the Personal Allowance is set: the allocation with the lowest bill (ITA 2007 s.25(2);
+   * from 2027/28 against other income first, s.25(3A)). The three add up to the allowance used,
+   * which is the allowance or the total income if less. Taxable non-savings income is the
+   * non-savings income less `allowanceOnNonSavings`.
+   */
+  allowanceOnNonSavings: number;
+  allowanceOnSavings: number;
+  allowanceOnDividends: number;
   totalTaxableIncome: number;
 
   // Tax breakdowns
@@ -829,19 +843,6 @@ export function calculateUKTax(
     const payeTaxable = Math.max(0, effectivePayeSalary - taperedAllowance(effectivePayeSalary));
     const payeTaxDue = incomeTaxOn(payeTaxable);
 
-    // The allowance is set against non-savings income first, then savings, then dividends.
-    const allowanceOnNonSavings = Math.min(personalAllowance, nonSavingsGross);
-    const allowanceOnSavings = Math.min(
-      personalAllowance - allowanceOnNonSavings,
-      netTaxableSavingsInterest,
-    );
-    const allowanceOnDividends = Math.min(
-      personalAllowance - allowanceOnNonSavings - allowanceOnSavings,
-      dividendIncomeGross,
-    );
-    const savingsAfterAllowance = netTaxableSavingsInterest - allowanceOnSavings;
-    const dividendsAfterAllowance = dividendIncomeGross - allowanceOnDividends;
-
     // Personal Savings Allowance (PSA)
     // Basic rate taxpayers: £1,000; Higher rate: £500; Additional rate: £0
     let personalSavingsAllowance = yearRules.savings.psaBasic;
@@ -857,36 +858,113 @@ export function calculateUKTax(
     // Dividend Allowance (per-year table)
     const dividendAllowance = yearRules.dividends.allowance;
 
-    // Tax on non-savings + non-dividends
-    const nonSavingsTaxable = Math.max(0, nonSavingsGross - personalAllowance);
+    // Non-savings, savings and dividend tax with the allowance set as given, stacked in the
+    // ITA 2007 s.16 order.
+    const stack = (allocation: PersonalAllowanceAllocation) => {
+      const nonSavingsTaxable = nonSavingsGross - allocation.onNonSavings;
+      const savingsAfterAllowance = netTaxableSavingsInterest - allocation.onSavings;
+      const dividendsAfterAllowance = dividendIncomeGross - allocation.onDividends;
+      // Starting rate for savings (0%): 5,000 less taxable non-savings income. It and the PSA are
+      // 0% bands that still occupy band space, so the savings left over stack above them.
+      const startingRateUsed = Math.min(
+        Math.max(0, yearRules.savings.startingRateBand - nonSavingsTaxable),
+        savingsAfterAllowance,
+      );
+      const psaUsed = Math.min(personalSavingsAllowance, savingsAfterAllowance - startingRateUsed);
+      const taxableSavingsInterest = savingsAfterAllowance - startingRateUsed - psaUsed;
+      const dividendAllowanceUsed = Math.min(dividendsAfterAllowance, dividendAllowance);
+      const taxableDividends = dividendsAfterAllowance - dividendAllowanceUsed;
 
-    // Starting rate for savings (0%): 5,000 less non-savings income above the allowance. It and the
-    // PSA are 0% bands that still occupy band space, so the savings left over stack above them.
-    const startingRateUsed = Math.min(
-      Math.max(0, yearRules.savings.startingRateBand - nonSavingsTaxable),
-      savingsAfterAllowance,
-    );
-    const psaUsed = Math.min(personalSavingsAllowance, savingsAfterAllowance - startingRateUsed);
-    const taxableSavingsInterest = savingsAfterAllowance - startingRateUsed - psaUsed;
-    const dividendAllowanceUsed = Math.min(dividendsAfterAllowance, dividendAllowance);
-    const taxableDividends = dividendsAfterAllowance - dividendAllowanceUsed;
-    // From 2027/28 property income has its own rates and is the top slice of non-savings income,
-    // below savings and dividends (ITA 2007 s.11CA, s.16A). The allowance above already goes
-    // against other non-savings income first (s.25(3A)). A Scottish taxpayer's property income
-    // stays on their Scottish rates (Scotland Act 1998 s.80C(2B)), so no split for them.
-    const propertyRates = propertyRatesFor(yearRules, region);
-    const otherNonSavingsTaxable = Math.max(0, effectivePayeSalary + seProfit - personalAllowance);
-    const nonSavingsIncomeTaxBeforeCredit = propertyRates
-      ? incomeTaxOn(otherNonSavingsTaxable) +
-        ukIncomeTaxOn(nonSavingsTaxable, propertyRates) -
-        ukIncomeTaxOn(otherNonSavingsTaxable, propertyRates)
-      : incomeTaxOn(nonSavingsTaxable);
+      const propertyRates = propertyRatesFor(yearRules, region);
+      // From 2027/28 property income has its own rates and is the top slice of non-savings income,
+      // below savings and dividends (ITA 2007 s.11CA, s.16A). The allowance goes against other
+      // non-savings income first (s.25(3A)), so other income's taxable part is its income less the
+      // allowance, wherever the rest of the allowance is set. A Scottish taxpayer's property income
+      // stays on their Scottish rates (Scotland Act 1998 s.80C(2B)), so no split for them.
+      const otherNonSavingsTaxable = Math.max(0, effectivePayeSalary + seProfit - personalAllowance);
+      const nonSavingsTax = propertyRates
+        ? incomeTaxOn(otherNonSavingsTaxable) +
+          ukIncomeTaxOn(nonSavingsTaxable, propertyRates) -
+          ukIncomeTaxOn(otherNonSavingsTaxable, propertyRates)
+        : incomeTaxOn(nonSavingsTaxable);
 
-    // Section 24 Rental Property Finance Tax Credit
+      // Savings tax (stacked above non-savings income), at the savings rates: the main rates up
+      // to 2026/27, their own from 2027/28 (FA 2026 s.5).
+      let savingsTax = 0;
+      if (taxableSavingsInterest > 0) {
+        const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
+        const rates = yearRules.savingsRates;
+        savingsTax = Math.max(
+          0,
+          ukIncomeTaxOn(zeroRatedTop + taxableSavingsInterest, rates) -
+            ukIncomeTaxOn(zeroRatedTop, rates),
+        );
+      }
+      // Dividend tax (stacked at top of all income, taxed at the year's dividend rates)
+      const dividendTax = calculateDividendTaxForStack(
+        nonSavingsTaxable + savingsAfterAllowance,
+        taxableDividends,
+        dividendAllowanceUsed,
+        yearRules,
+      );
+      return {
+        nonSavingsTax,
+        savingsTax,
+        dividendTax,
+        taxableSavingsInterest,
+        taxableDividends,
+      };
+    };
+
+    // Today's order: non-savings income, then savings, then dividends. The lines keep its
+    // non-savings figures.
+    const used = Math.min(personalAllowance, totalGrossIncome);
+    const orderOnNonSavings = Math.min(used, nonSavingsGross);
+    const orderOnSavings = Math.min(used - orderOnNonSavings, netTaxableSavingsInterest);
+    const inOrder = stack({
+      onNonSavings: orderOnNonSavings,
+      onSavings: orderOnSavings,
+      onDividends: used - orderOnNonSavings - orderOnSavings,
+    });
+    // The allowance where it gives the lowest bill (ITA 2007 s.25(2); from 2027/28 against other
+    // income first, s.25(3A)).
+    const allocation = allocatePersonalAllowance({
+      rules: yearRules,
+      region,
+      allowance: personalAllowance,
+      nonSavings: nonSavingsGross,
+      savings: netTaxableSavingsInterest,
+      dividends: dividendIncomeGross,
+      personalSavingsAllowance,
+      otherIncomeFirst: allowanceGoesToOtherIncomeFirst(yearRules)
+        ? effectivePayeSalary + seProfit
+        : undefined,
+    });
+    const lowest = stack(allocation);
+    const { taxableSavingsInterest, taxableDividends } = lowest;
+    // Lines: the non-savings line stays as in today's order, and the net gain comes off the savings
+    // or dividend line whose tax fell, shared in proportion to each fall when both fell. So the
+    // lines add up to the lowest total and neither goes below zero (each falls by no more than
+    // its own fall, since the non-savings tax can only rise).
+    const nonSavingsIncomeTaxBeforeCredit = inOrder.nonSavingsTax;
+    const gain =
+      inOrder.nonSavingsTax +
+      inOrder.savingsTax +
+      inOrder.dividendTax -
+      (lowest.nonSavingsTax + lowest.savingsTax + lowest.dividendTax);
+    const savingsFall = Math.max(0, inOrder.savingsTax - lowest.savingsTax);
+    const dividendFall = Math.max(0, inOrder.dividendTax - lowest.dividendTax);
+    const savingsShare = gain > 0 ? savingsFall / (savingsFall + dividendFall) : 0;
+    const savingsTaxDue = inOrder.savingsTax - gain * savingsShare;
+    const dividendTaxDue = inOrder.dividendTax - (gain - gain * savingsShare);
+
+    // Section 24 Rental Property Finance Tax Credit. The limit is adjusted total income: net
+    // income less savings and dividends, less every allowance wherever it was set (ITTOIA 2005
+    // s.274AA(6), Step 3), so the allocation does not move it.
     const maxCreditBase = Math.min(
       creditableFinanceCosts,
       rentalProfitBeforeInterestShare,
-      nonSavingsTaxable,
+      Math.max(0, nonSavingsGross - personalAllowance),
     );
     // At the basic rate, or the property basic rate from 2027/28 (ITTOIA 2005 s.274AA(5)).
     const rentalPropertyTaxCredit = Math.max(0, maxCreditBase * financeCostCreditRate(yearRules));
@@ -929,37 +1007,14 @@ export function calculateUKTax(
     // upper profits limits, the upper rate above.
     const seClass4NIDue = calculateClass4Ni(seProfit, yearRules);
 
-    // Savings tax (stacked above non-savings income)
-    let savingsTaxDue = 0;
-    if (taxableSavingsInterest > 0) {
-      const zeroRatedTop = nonSavingsTaxable + startingRateUsed + psaUsed;
-      // At the savings rates: the main rates up to 2026/27, their own from 2027/28 (FA 2026 s.5).
-      const rates = yearRules.savingsRates;
-      savingsTaxDue = Math.max(
-        0,
-        ukIncomeTaxOn(zeroRatedTop + taxableSavingsInterest, rates) -
-          ukIncomeTaxOn(zeroRatedTop, rates),
-      );
-    }
-
-    // Dividend tax (stacked at top of all income, taxed at the year's dividend rates)
-    let dividendTaxDue = 0;
-    if (taxableDividends > 0) {
-      const priorTaxable = nonSavingsTaxable + savingsAfterAllowance;
-      dividendTaxDue = calculateDividendTaxForStack(
-        priorTaxable,
-        taxableDividends,
-        dividendAllowanceUsed,
-        yearRules,
-      );
-    }
-
     // The tax on rent is the tax with the rent minus the tax without it. The rent is non-savings
     // income, and savings and dividends stack above it (ITA 2007 s.16), so the rent can also push
     // them into a higher band, shrink the starting rate for savings (s.12) and lower the Personal
     // Savings Allowance (s.12B). That extra tax counts against the rent too, so the savings and
     // dividend lines show what they would be without the rent. The parts add up to the same
     // total. "Tax on rent" has no statutory definition: this split is a chosen convention.
+    // Each side uses its own lowest allocation, so the tax on rent can rise while the bill falls:
+    // the rent can take allowance that would otherwise have covered dividends.
     const withoutRental =
       property.rentalProfitBeforeInterestShare > 0 && !property.isWithoutRental
         ? assess({
@@ -1041,6 +1096,9 @@ export function calculateUKTax(
 
       totalGrossIncome,
       personalAllowance,
+      allowanceOnNonSavings: allocation.onNonSavings,
+      allowanceOnSavings: allocation.onSavings,
+      allowanceOnDividends: allocation.onDividends,
       totalTaxableIncome: totalTaxable,
       payeTaxDue,
       seTaxDue,

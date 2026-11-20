@@ -507,6 +507,13 @@ flowchart LR
   g_estimated_tax -.-> s_mcp_read
   g_estimated_tax -.-> s_context_pack
   g_estimated_tax -.-> s_public_tools
+  g_personal_allowance_allocation{{"Where the Personal Allowance is set (non-savings, savings, dividends)"}}
+  f_tax_records ==> g_personal_allowance_allocation
+  f_salary ==> g_personal_allowance_allocation
+  f_employment_type ==> g_personal_allowance_allocation
+  f_tax_region ==> g_personal_allowance_allocation
+  f_rental_share_for_tax ==> g_personal_allowance_allocation
+  g_personal_allowance_allocation -.-> s_mcp_read
   g_finance_costs_carried_forward{{"Mortgage interest carried forward to next year"}}
   f_tax_records ==> g_finance_costs_carried_forward
   f_rental_share_for_tax ==> g_finance_costs_carried_forward
