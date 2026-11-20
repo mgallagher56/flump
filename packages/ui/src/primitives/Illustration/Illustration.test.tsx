@@ -73,4 +73,13 @@ describe("Illustration primitive", () => {
     const svg = container.querySelector("svg");
     expect(svg?.hasAttribute("data-scene-settle")).toBe(false);
   });
+
+  it.each([
+    ["sm", "max-w_140px"],
+    ["lg", "max-w_260px"],
+    ["xl", "max-w_xs"],
+  ] as const)("caps the %s size with %s", (size, maxWidthClass) => {
+    const { container } = render(<Illustration scene="check-in" settle={false} size={size} />);
+    expect(container.querySelector("svg")?.getAttribute("class")).toContain(maxWidthClass);
+  });
 });

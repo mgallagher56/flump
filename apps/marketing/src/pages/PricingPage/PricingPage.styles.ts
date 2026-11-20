@@ -85,7 +85,7 @@ export const paidLine = cva({
     px: { base: "4", md: "5" },
     py: "4",
     borderRadius: "lg",
-    backgroundColor: "surface.subtle",
+    backgroundColor: "surface.sunken",
     textStyle: "body.md",
     color: "text.secondary",
   },

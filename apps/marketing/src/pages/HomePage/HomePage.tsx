@@ -32,6 +32,7 @@ import {
   pageShell,
   stepBody,
   stepGrid,
+  stepLayout,
   stepTitle,
 } from "./HomePage.styles";
 
@@ -122,7 +123,7 @@ export const HomePage: FC = () => {
           id="features"
           subtitle="The same five areas as the app. Use one or all five."
           title={FEATURES_INDEX.title}
-          tone="apricot"
+          tone="sunken"
         >
           <FeatureTiles headingLevel={3} />
           <p className={bandFooter()}>
@@ -133,19 +134,21 @@ export const HomePage: FC = () => {
         </MarketingSection>
 
         <MarketingSection id="rough-figures" title="Start with rough figures">
-          <ol className={stepGrid()}>
-            {ROUGH_FIGURE_STEPS.map((step) => (
-              <Card as="li" aria-labelledby={`step-${step.id}`} key={step.id} padding="lg">
-                <h3 className={stepTitle()} id={`step-${step.id}`}>
-                  {step.title}
-                </h3>
-                <p className={stepBody()}>{step.body}</p>
-              </Card>
-            ))}
-          </ol>
-          {/* No figures in this band, so the scene pushes nothing down on a phone (B10). */}
-          <div className={bandIllustration()} data-testid="rough-figures-illustration">
-            <Illustration scene="check-in" size="sm" settle={false} />
+          <div className={stepLayout()}>
+            <ol className={stepGrid()}>
+              {ROUGH_FIGURE_STEPS.map((step) => (
+                <Card as="li" aria-labelledby={`step-${step.id}`} key={step.id} padding="lg">
+                  <h3 className={stepTitle()} id={`step-${step.id}`}>
+                    {step.title}
+                  </h3>
+                  <p className={stepBody()}>{step.body}</p>
+                </Card>
+              ))}
+            </ol>
+            {/* Large screens only, beside the steps in the spare space (B10). */}
+            <div className={bandIllustration()} data-testid="rough-figures-illustration">
+              <Illustration scene="check-in" size="xl" settle={false} />
+            </div>
           </div>
         </MarketingSection>
 
@@ -153,6 +156,7 @@ export const HomePage: FC = () => {
           id="more-detail"
           subtitle="Each area starts simple and has more underneath for when you want it."
           title="More detail when you want it"
+          tone="sunken"
         >
           <ul className={depthList()}>
             {HOME_DEPTH.map((item) => {
@@ -177,11 +181,11 @@ export const HomePage: FC = () => {
 
         {/* The fifth band: FAQ, then the final call to action in the same band (R2-10). The
             heading starts at the left like every other band's (P74). */}
-        <MarketingSection id="faq" title="Frequently asked questions" tone="sage" width="narrow">
+        <MarketingSection id="faq" title="Frequently asked questions" width="narrow">
           <HomeFAQ />
           <div className={finalCta()} data-testid="home-final-cta" id="get-started">
             <div className={finalCtaIllustration()} data-testid="home-final-cta-illustration">
-              <Illustration scene="onboarding" size="sm" settle={false} />
+              <Illustration scene="onboarding" size="xl" settle={false} />
             </div>
             <h3 className={finalCtaTitle()} id="home-cta-title">
               Ready to see where you stand?

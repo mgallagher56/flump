@@ -85,20 +85,36 @@ export const finalCtaBody = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
 
-/** The closing scene: no figures follow it, so it never pushes one down on a phone (B10). */
+/**
+ * The closing scene: no figures follow it, so it never pushes one down on a phone (B10). 192px
+ * on a phone, 320px from `md` (was 112px and 140px).
+ */
 export const finalCtaIllustration = cva({
-  base: { width: { base: "28", md: "36" } },
+  base: { width: "full", maxWidth: { base: "48", md: "xs" } },
 });
 
-/** "Start with rough figures": three numbered steps, side by side from `md`. */
+/**
+ * "Start with rough figures": the steps and, from `lg`, the scene beside them, so it fills the
+ * spare space instead of floating alone under the cards.
+ */
+export const stepLayout = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", lg: "minmax(0, 7fr) minmax(0, 5fr)" },
+    alignItems: "center",
+    gap: { base: "6", lg: "12" },
+  },
+});
+
+/** Three numbered steps: side by side on a tablet, stacked beside the scene from `lg`. */
 export const stepGrid = cva({
   base: {
     listStyle: "none",
     margin: 0,
     padding: 0,
     display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-    gap: { base: "4", md: "6" },
+    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)", lg: "1fr" },
+    gap: { base: "4", md: "6", lg: "4" },
   },
 });
 
@@ -110,9 +126,9 @@ export const stepBody = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
 
-/** A scene under a band with no figures (B10): from `md` up only. */
+/** The steps' scene (B10): from `lg` up only, 320px wide beside the steps (was 140px). */
 export const bandIllustration = cva({
-  base: { display: { base: "none", md: "block" }, width: "36", mt: "6", mx: "auto" },
+  base: { display: { base: "none", lg: "block" }, width: "full", maxWidth: "xs", mx: "auto" },
 });
 
 export const bandFooter = cva({

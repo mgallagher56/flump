@@ -44,6 +44,8 @@ export const illustrationRecipe = cva({
       sm: { maxWidth: "140px" },
       md: { maxWidth: "200px" },
       lg: { maxWidth: "260px" },
+      // 20rem (320px): a marketing spot scene, about 2.3 times the `sm` scene it replaced.
+      xl: { maxWidth: "xs" },
     },
   },
   defaultVariants: { size: "md" },

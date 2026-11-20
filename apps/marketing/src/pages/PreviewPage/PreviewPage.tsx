@@ -107,7 +107,7 @@ export const PreviewPage: FC = () => {
                 </div>
                 {/* Large screens only: on a phone it would push the figures below it down (B10). */}
                 <div className={sectionIllustration()} data-testid="preview-illustration-checkin">
-                  <Illustration scene="check-in" size="sm" settle={false} />
+                  <Illustration scene="check-in" size="lg" settle={false} />
                 </div>
               </div>
               <PreviewFrame
@@ -160,7 +160,7 @@ export const PreviewPage: FC = () => {
             {/* Call to action */}
             <div className={ctaBlock()} data-testid="preview-cta">
               <div className={ctaIllustration()} data-testid="preview-illustration-cta">
-                <Illustration scene="onboarding" size="sm" settle={false} />
+                <Illustration scene="onboarding" size="xl" settle={false} />
               </div>
               <h2 className={ctaTitle()}>Ready to see your own figures?</h2>
               <p className={ctaText()}>

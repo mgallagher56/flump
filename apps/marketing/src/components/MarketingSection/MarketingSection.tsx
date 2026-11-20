@@ -10,7 +10,7 @@ export interface MarketingSectionProps extends Omit<SectionBandProps, "variant" 
 
 /**
  * One marketing band: the design system's `SectionBand` (variant `marketing`), with a required
- * anchor id. Use at most one sage and one apricot band per page (D16 b).
+ * anchor id. Bands are neutral: alternate `canvas` with `sunken`, with cards on `surface.card`.
  */
 export const MarketingSection: FC<MarketingSectionProps> = (props) => (
   <SectionBand {...props} variant="marketing" />
