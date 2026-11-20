@@ -7,6 +7,17 @@ import {
 } from "./domains/accounts.js";
 import { ConnectBankRequest } from "./domains/bank-connections.js";
 import {
+  BetaAdminDeleteResponse,
+  BetaAdminStatusResponse,
+  BetaInviteListResponse,
+  BetaMemberListResponse,
+  BetaMemberParams,
+  CreateBetaInviteRequest,
+  CreateBetaInviteResponse,
+  RedeemBetaInviteRequest,
+  RedeemBetaInviteResponse,
+} from "./domains/beta.js";
+import {
   AddBudgetCategoryRequest,
   CreateBudgetEntryRequest,
   UpdateBudgetEntryRequest,
@@ -132,12 +143,14 @@ export interface RouteDefinition {
  * - `imports.stage`: carries its own `idempotencyKey` in the body (E17).
  * - `mcpTokens.create`: the response holds the plaintext token, shown once; storing it to replay
  *   would keep a usable secret in the database.
+ * - `beta.createInvite`: the response holds the raw invite token, shown once, for the same reason.
  * - `bankConnections.connect`: the request body carries a bank token or OAuth code; storing an
  *   unkeyed hash of it would keep a guessable fingerprint of a credential.
  */
 export const IDEMPOTENCY_EXCLUDED_ROUTES = [
   "imports.stage",
   "mcpTokens.create",
+  "beta.createInvite",
   "bankConnections.connect",
 ] as const;
 
@@ -167,6 +180,7 @@ export const CONTRACT_GROUPS = [
   "snapshots",
   "imports",
   "mcp-tokens",
+  "beta",
   "app",
 ] as const;
 export type ContractGroup = (typeof CONTRACT_GROUPS)[number];
@@ -742,6 +756,82 @@ export const routes = {
       ownership: "user",
       group: "mcp-tokens",
       response: McpInputResponse,
+    }),
+  },
+  beta: {
+    /**
+     * Redeem an invite link as the signed-in caller. Exempt from the beta refusal (the caller is
+     * not a member yet); single use, strictly rate limited. Not idempotent by key: the token is a
+     * secret and must not be stored to replay.
+     */
+    redeem: defineRoute({
+      id: "beta.redeem",
+      method: "POST",
+      path: "beta/invites/redeem",
+      auth: "user",
+      ownership: "user",
+      body: RedeemBetaInviteRequest,
+      group: "beta",
+      response: RedeemBetaInviteResponse,
+    }),
+    /** Admin only (`BETA_ADMIN_USER_IDS`); everyone else gets the 404 of an unknown route. */
+    adminStatus: defineRoute({
+      id: "beta.adminStatus",
+      method: "GET",
+      path: "beta/admin",
+      auth: "user",
+      ownership: "none",
+      group: "beta",
+      response: BetaAdminStatusResponse,
+    }),
+    listInvites: defineRoute({
+      id: "beta.listInvites",
+      method: "GET",
+      path: "beta/admin/invites",
+      auth: "user",
+      ownership: "none",
+      group: "beta",
+      response: BetaInviteListResponse,
+    }),
+    createInvite: defineRoute({
+      id: "beta.createInvite",
+      method: "POST",
+      status: 201,
+      path: "beta/admin/invites",
+      auth: "user",
+      ownership: "none",
+      body: CreateBetaInviteRequest,
+      group: "beta",
+      response: CreateBetaInviteResponse,
+    }),
+    cancelInvite: defineRoute({
+      id: "beta.cancelInvite",
+      method: "DELETE",
+      path: "beta/admin/invites/:id",
+      auth: "user",
+      ownership: "none",
+      params: IdParams,
+      group: "beta",
+      response: BetaAdminDeleteResponse,
+    }),
+    listMembers: defineRoute({
+      id: "beta.listMembers",
+      method: "GET",
+      path: "beta/admin/members",
+      auth: "user",
+      ownership: "none",
+      group: "beta",
+      response: BetaMemberListResponse,
+    }),
+    removeMember: defineRoute({
+      id: "beta.removeMember",
+      method: "DELETE",
+      path: "beta/admin/members/:userId",
+      auth: "user",
+      ownership: "none",
+      params: BetaMemberParams,
+      group: "beta",
+      response: BetaAdminDeleteResponse,
     }),
   },
   app: {
