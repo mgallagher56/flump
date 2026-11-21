@@ -118,13 +118,6 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
         description: "navMortgageDesc",
         icon: Building2,
       },
-      {
-        key: "mortgageEstimates",
-        route: "/app/mortgage-estimates",
-        description: "navMortgageEstimatesDesc",
-        icon: Calculator,
-        alwaysOn: true,
-      },
     ],
   },
 ];
