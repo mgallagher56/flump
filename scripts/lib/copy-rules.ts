@@ -42,6 +42,8 @@ const ALLOWED_PHRASES: Array<{ phrase: RegExp; reason: string }> = [
   { phrase: /\bCapital Gains Tax\b/g, reason: "statutory name" },
   { phrase: /\bIncome Tax\b/g, reason: "statutory name" },
   { phrase: /\bStamp Duty( Land Tax)?\b/g, reason: "statutory name" },
+  { phrase: /\bLand and Buildings Transaction Tax\b/g, reason: "statutory name" },
+  { phrase: /\bLand Transaction Tax\b/g, reason: "statutory name" },
   { phrase: /\bCouncil Tax\b/g, reason: "statutory name" },
   { phrase: /\bUniversal Credit\b/g, reason: "statutory name" },
   { phrase: /\bChild Benefit\b/g, reason: "statutory name" },

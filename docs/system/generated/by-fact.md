@@ -83,6 +83,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Mortgage payment rate comparison](#mortgage-rate-comparison)                                                                            | figure | mortgage    | Holds                                     |
 | [Mortgage balance and payment at fix end](#mortgage-fix-end-estimate)                                                                    | figure | mortgage    | Holds                                     |
 | [Default mortgage rate band by LTV](#mortgage-ltv-rate-band)                                                                             | figure | mortgage    | Holds                                     |
+| [Estimated stamp duty (SDLT, LBTT, LTT)](#property-transaction-tax)                                                                      | figure | mortgage    | Holds                                     |
 
 ## Area: pay
 
@@ -1794,6 +1795,24 @@ Other code paths that compute it:
 Shown on:
 
 - Mortgage: `packages/finance-engine/src/mortgage-rate-assumptions.ts`
+
+### Estimated stamp duty (SDLT, LBTT, LTT)
+
+<a id="property-transaction-tax"></a>
+
+- Id: `property-transaction-tax` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `calculatePropertyTransactionTax` in `packages/finance-engine/src/uk-property-transaction-tax.ts`
+- Built from: `tax-region`
+- Note: E39 S1b (MA7): main-home SDLT (England & NI), LBTT (Scotland), and LTT (Wales) with first-time buyer relief where applicable.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Mortgage: `packages/finance-engine/src/uk-property-transaction-tax.ts`
 
 ## Browser storage and cookies
 

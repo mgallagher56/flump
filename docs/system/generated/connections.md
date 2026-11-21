@@ -630,4 +630,8 @@ flowchart LR
   g_mortgage_fix_end_estimate -.-> s_mortgage
   g_mortgage_ltv_rate_band{{"Default mortgage rate band by LTV"}}
   g_mortgage_ltv_rate_band -.-> s_mortgage
+  g_property_transaction_tax{{"Estimated stamp duty (SDLT, LBTT, LTT)"}}
+  f_tax_region(["Tax region"])
+  f_tax_region ==> g_property_transaction_tax
+  g_property_transaction_tax -.-> s_mortgage
 ```
