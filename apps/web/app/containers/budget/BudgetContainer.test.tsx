@@ -1131,11 +1131,12 @@ describe("BudgetContainer behaviour around saved data", () => {
     isEssential: true,
   });
   /** Each POST answers with the row it was sent, so the page holds what was saved. */
+  let createdCount = 0;
   const echoCreates = () =>
-    vi
-      .mocked(apiFetch)
-      .mockImplementation((async (url: string, init?: { body?: unknown }) =>
-        row({ id: `new-${url}-${Math.random()}`, ...(init?.body as object) })) as never);
+    vi.mocked(apiFetch).mockImplementation((async (url: string, init?: { body?: unknown }) => {
+      createdCount += 1;
+      return row({ id: `new-${url}-${createdCount}`, ...(init?.body as object) });
+    }) as never);
   const posted = () =>
     vi
       .mocked(apiFetch)

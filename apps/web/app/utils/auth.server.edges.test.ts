@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { randomBytes } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEV_ACCESS_TOKEN, DEV_SESSION_USER, getAuthSession } from "./auth.server";
 
@@ -22,7 +23,7 @@ beforeEach(() => {
 
 describe("getAuthSession reads the token from its own loader callback", () => {
   test("returns the access token the callback hands to authkit", async () => {
-    const token = `tok-${Math.random().toString(36).slice(2)}`;
+    const token = `tok-${randomBytes(8).toString("hex")}`;
     mockAuthkitLoader.mockImplementationOnce(authkitMerging({ id: "u1" }, token));
     const session = await getAuthSession({ context: {} } as any);
     expect(session.accessToken).toBe(token);
