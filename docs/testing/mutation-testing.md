@@ -129,6 +129,31 @@ Both runs were forced, on branch `e41-m2-kill-tests-b` after PRs 807, 808 and 81
 - After the independent review, two assertions that pinned possible bugs were removed (investment fees taken off savings interest before tax; a Plan 1 and Plan 2 repayment put wholly on Plan 1). That leaves two more faults not caught, so the honest figure is 93.03% and the floor stays at 92.
 - The ledger's "Timeout" class records faults a test does catch but that Stryker reported as timeouts; its "Tax gate" class now holds only the Scottish personal savings allowance band edge, which awaits a ruling (E25).
 
+## What M5 measured (20 and 21 November 2026)
+
+M5 added `apps/web` and `packages/ui`, local only like every package since 20 November (owner: "Yes, reinstate"). [`apps/web/stryker.config.json`](../../apps/web/stryker.config.json) mutates `app/utils`, `app/hooks`, `app/services`, `app/state`, `app/containers` and `server/` (70 files) and runs the `unit` project alone through [`vitest.stryker.config.mts`](../../apps/web/vitest.stryker.config.mts). [`packages/ui/stryker.config.json`](../../packages/ui/stryker.config.json) mutates `src/` without style files, stories, tests, barrels, `tokens/`, `fonts/`, `testing/` (a test helper) and `foundations/` (Storybook pages that display tokens; one of their tests reads its own source, which Stryker's instrumentation changes) (125 files). String faults are off in both (decision 7): 1,177 left out in web and 1,769 in UI, reported by Stryker as "Ignored".
+
+All runs were forced, on the laptop (8 cores, Node 22.12.0, concurrency 7).
+
+| Run                                   | Faults | Killed / timed out / survived / no coverage / errors | Stryker's score | Without timeouts |                          Time |
+| ------------------------------------- | -----: | ---------------------------------------------------- | --------------: | ---------------: | ----------------------------: |
+| `apps/web`, before                    |  6,836 | 3,551 / 11 / 1,863 / 234 / 0                         |          62.94% |           62.75% |                        85 min |
+| `apps/web`, after (rebased onto main) |  6,836 | 4,897 / 11 / 714 / 35 / 2                            |          86.76% |           86.57% |                        54 min |
+| `packages/ui`, before                 |  8,496 | 4,558 / 30 / 2,006 / 124 / 9                         |          68.29% |           67.85% |                        55 min |
+| `packages/ui`, after (rebased)        |  8,496 | 5,342 / 196 / 1,154 / 27 / 8                         |          82.42% |           79.51% | 71 min (load from other work) |
+
+- The floors. `scripts/mutation-baseline.json` sets `apps/web` at **85%** (floor(86.57) - 1) and `packages/ui` at **78%** (floor(79.51) - 1), from the figures without timeouts, as for the other packages.
+- The UI timeouts. 196 faults timed out on the after run, against 30 before: 159 of them are in six components (`SimulatorSplitLayout`, `KpiCard`, `Money`, `SliderField`, `LiveRegion`, `CollapsibleDrawer`) whose new tests wait for the screen to change. The triage agents saw these faults killed in single-file runs at concurrency 2; at concurrency 7 on a busy laptop the waiting tests ran past Stryker's limit. Stryker counts a timeout as caught; the floor does not.
+- Triage. Eight areas, each by its own agent in its own worktree, from the before reports: 4,227 faults not caught. New tests kill 2,279; the rest have rows in the [triage ledger](./mutation-triage.md). No survivor showed a bug in source.
+- What is mostly left: in UI, faults that only change a Panda style object, a chart's labels and SVG geometry, or Storybook-only page templates; in web, `getSandboxPersonaData` in `demoData.ts`, which has no production caller (171 faults).
+
+Lessons:
+
+- Stryker puts back the copies of every file it took at the start, test files included, when a run ends. A test edited while a run is going in that package is lost.
+- `related: true` misses tests that load the module with `await import(...)`: the older `useUserProfile` tests did, so its faults looked untested. The new tests import the hook statically.
+- Web tests that read source files as text pass on instrumented code (the text they look for is still there); UI's `TypographyScale` test did not, hence the `foundations/` exclusion.
+- `apps/web` is not an ES module package, so its Stryker Vitest config is `.mts` (it awaits the Vite config).
+
 ## What M4 measured (20 November 2026)
 
 M4 added `apps/backend`. [`stryker.config.json`](../../apps/backend/stryker.config.json) mutates the guards, interceptors and filters, `src/auth`, `src/security`, `src/contract`, every module service, the beta invite services and `bank-connection-oauth.ts` (49 files after the rebase onto main). It leaves out migrations, entities, scripts, testing helpers, `main.ts`, `instrument.ts` and module wiring. Stryker runs the unit Vitest project only, read from `vitest.config.ts` by [`vitest.stryker.config.ts`](../../apps/backend/vitest.stryker.config.ts), so the split between unit and database specs stays in one place.
