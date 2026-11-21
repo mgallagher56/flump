@@ -111,7 +111,7 @@ A per-spawn `model` parameter overrides both frontmatter and the default. In wor
 
 Every token an agent reads is paid for again on each later turn of that session, so keep contexts small.
 
-- **One task per session.** When a session's task is merged, it reports its follow-ups and stops. New work starts in a fresh session with a short brief, never in a long-running one.
+- **One task per working session.** When a session's or subagent's task is merged, it reports its follow-ups and stops. New work starts in a fresh session or subagent with a short brief, never in a long-running one. The thread that coordinates them (a coordinator session, or the main thread of an agent that hands tasks to subagents) may carry on from task to task; the rule is for the conversations that do the work (owner, 21 November 2026).
 - **Fewer, larger PRs.** Bundle related tickets into one PR and do not stack PRs on other open PRs.
 - **Lean subagent reports.** Ask subagents for conclusions with file paths and line numbers, with a word limit, not file dumps or full logs. Do not read a subagent's transcript file.
 - **Read narrowly.** Read the part of a file you need (offset and limit), search before reading, and do not re-read a file you just edited.
