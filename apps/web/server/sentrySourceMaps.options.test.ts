@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { randomBytes } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const pluginOptions = vi.hoisted(() => ({ calls: [] as Record<string, any>[] }));
@@ -13,7 +14,7 @@ vi.mock("@sentry/vite-plugin", () => ({
 import { sentrySourceMaps, sentryUploadConfigured } from "./sentrySourceMaps";
 
 // Built at runtime so no token-shaped literal sits in the source.
-const token = `test-${Math.random().toString(36).slice(2)}`;
+const token = `test-${randomBytes(8).toString("hex")}`;
 const FULL = { SENTRY_AUTH_TOKEN: token, SENTRY_ORG: "flump", SENTRY_PROJECT: "web" };
 
 const optionsFor = (env: Record<string, string | undefined>) => {
