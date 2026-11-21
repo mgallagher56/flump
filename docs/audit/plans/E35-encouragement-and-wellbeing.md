@@ -1,6 +1,8 @@
 # E35. Encouragement and financial wellbeing: options
 
-Decisions: open
+Decisions: accepted on 21 November 2026
+
+> Owner, 2026-11-21: "Accept the other decisions". W1 to W9 are accepted as recommended in section 9, including W9 (keep the measures, in aggregate and only against goals people set themselves). Sets 2 and 3 may be built.
 
 > **Status: options for owner approval. No code.** Written 2026-11-15 against `origin/main`, revised the same day after the owner clarified the aim. Facts marked **[U]** were not confirmed in a primary source today.
 
