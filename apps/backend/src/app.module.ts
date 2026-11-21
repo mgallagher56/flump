@@ -17,6 +17,7 @@ import { AgentModule } from "./modules/agent/agent.module";
 import { BudgetModule } from "./modules/budget/budget.module";
 import { FinanceModule } from "./modules/finance/finance.module";
 import { ImportsModule } from "./modules/imports/imports.module";
+import { InvoicingModule } from "./modules/invoicing/invoicing.module";
 import { PrivacyModule } from "./modules/privacy/privacy.module";
 import { ProfileModule } from "./modules/profile/profile.module";
 import { RetirementModule } from "./modules/retirement/retirement.module";
@@ -52,6 +53,7 @@ import { SecurityModule } from "./security/security.module";
     RetirementModule,
     BudgetModule,
     TaxModule,
+    InvoicingModule,
     SnapshotsModule,
     ImportsModule,
     AgentModule,

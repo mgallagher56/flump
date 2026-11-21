@@ -16,12 +16,15 @@ import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { Consent } from "../../entities/consent.entity";
 import { IdempotencyKey } from "../../entities/idempotency-key.entity";
 import { ImportBatch } from "../../entities/import-batch.entity";
+import { Invoice } from "../../entities/invoice.entity";
+import { InvoicingSettings } from "../../entities/invoicing-settings.entity";
 import { McpToken } from "../../entities/mcp-token.entity";
 import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
+import { WorkLogEntry } from "../../entities/work-log-entry.entity";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../testing/dbTestMode";
@@ -187,6 +190,44 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     );
     await m.save(
       m.create(BudgetEntry, { userId, category: "housing", name: `${label} rent`, amount: 900 }),
+    );
+    await m.save(
+      m.create(InvoicingSettings, {
+        userId,
+        defaultHourlyRate: 75,
+        businessName: `${label} Studio`,
+        vatNumber: "GB123456789",
+        invoicePrefix: "INV-",
+        nextInvoiceSequence: 2,
+        defaultPaymentTermsDays: 30,
+      }),
+    );
+    const invoice = await m.save(
+      m.create(Invoice, {
+        userId,
+        invoiceNumber: "INV-0001",
+        status: "issued",
+        clientName: `${label} Client`,
+        issueDate: "2026-05-01",
+        dueDate: "2026-05-31",
+        subtotal: 300,
+        vatRatePct: 20,
+        vatAmount: 60,
+        total: 360,
+      }),
+    );
+    await m.save(
+      m.create(WorkLogEntry, {
+        userId,
+        date: "2026-05-01",
+        description: `${label} consulting`,
+        hoursWorked: 4,
+        hourlyRate: 75,
+        amount: 300,
+        clientName: `${label} Client`,
+        incomeSource: "self-employed",
+        invoiceId: invoice.id,
+      }),
     );
     await m.save(
       m.create(TaxRecord, {
@@ -1006,12 +1047,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       idempotency_keys: 0,
       consents: 1,
       import_batches: 0,
+      invoices: 0,
+      invoicing_settings: 0,
       mcp_tokens: 0,
       retirement_plans: 0,
       snapshot_checkins: 0,
       tax_records: 0,
       transactions: 0,
       user_profiles: 1,
+      work_log_entries: 0,
     });
     const profile = await repo(UserProfile).findOneByOrFail({ userId: USER_A });
     expect(profile).toMatchObject({

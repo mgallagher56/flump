@@ -29,6 +29,9 @@ import { FinanceModule } from "./finance/finance.module";
 import { FinanceService } from "./finance/finance.service";
 import { ImportsController } from "./imports/imports.controller";
 import { ImportsModule } from "./imports/imports.module";
+import { InvoicingController } from "./invoicing/invoicing.controller";
+import { InvoicingModule } from "./invoicing/invoicing.module";
+import { InvoicingService } from "./invoicing/invoicing.service";
 import { AccountDeletionService } from "./privacy/account-deletion.service";
 import { AccountExportService } from "./privacy/account-export.service";
 import { PrivacyModule } from "./privacy/privacy.module";
@@ -54,6 +57,15 @@ describe("a missing provider fails at boot", () => {
     await expect(
       Test.createTestingModule({ controllers: [TaxController], providers: [verifier] }).compile(),
     ).rejects.toThrow(/TaxService/);
+  });
+
+  it("InvoicingController without InvoicingService", async () => {
+    await expect(
+      Test.createTestingModule({
+        controllers: [InvoicingController],
+        providers: [verifier],
+      }).compile(),
+    ).rejects.toThrow(/InvoicingService/);
   });
 
   it("BudgetController without BudgetService", async () => {
@@ -151,6 +163,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("each domain module b
     ["snapshots", SnapshotsModule, [SnapshotsController]],
     ["budget", BudgetModule, [BudgetController, BudgetService]],
     ["tax", TaxModule, [TaxController]],
+    ["invoicing", InvoicingModule, [InvoicingController, InvoicingService]],
     ["imports", ImportsModule, [ImportsController]],
     ["finance", FinanceModule, [FinanceController, FinanceService]],
     ["privacy", PrivacyModule, [AccountDeletionService, AccountExportService]],

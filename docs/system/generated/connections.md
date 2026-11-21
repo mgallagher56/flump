@@ -474,6 +474,7 @@ flowchart LR
   s_dashboard["Dashboard"]
   s_accounts["Accounts"]
   s_self_assessment["Self Assessment"]
+  s_invoicing["Invoicing and work log"]
   s_picture["Engine picture (headline figures)"]
   s_mcp_read["AI read tools"]
   s_context_pack["AI context pack"]
@@ -493,6 +494,18 @@ flowchart LR
   f_rental_share_for_tax -.-> s_picture
   f_rental_share_for_tax -.-> s_mcp_read
   f_rental_share_for_tax -.-> s_context_pack
+  f_invoicing_settings(["Self-employed invoicing settings (default hourly rate, business details, VAT number, invoice prefix and sequence)"])
+  s_invoicing --> f_invoicing_settings
+  f_invoicing_settings -.-> s_invoicing
+  f_invoicing_settings -.-> s_export
+  f_work_log_entries(["Self-employed billable work log entries"])
+  s_invoicing --> f_work_log_entries
+  f_work_log_entries -.-> s_invoicing
+  f_work_log_entries -.-> s_export
+  f_invoices(["Self-employed invoices (number, status, client details, dates, optional VAT rate and totals)"])
+  s_invoicing --> f_invoices
+  f_invoices -.-> s_invoicing
+  f_invoices -.-> s_export
   g_estimated_tax{{"Estimated Self Assessment tax"}}
   f_tax_records ==> g_estimated_tax
   f_salary(["Salary (yearly pay before tax)"])
@@ -520,6 +533,14 @@ flowchart LR
   g_finance_costs_carried_forward -.-> s_self_assessment
   g_finance_costs_carried_forward -.-> s_mcp_read
   g_finance_costs_carried_forward -.-> s_public_tools
+  g_invoice_totals{{"Invoice subtotal, VAT amount and total"}}
+  f_work_log_entries ==> g_invoice_totals
+  f_invoices ==> g_invoice_totals
+  g_invoice_totals -.-> s_invoicing
+  g_invoicing_kpis{{"Unbilled hours, unbilled amount, outstanding issued invoices and paid in tax year"}}
+  f_work_log_entries ==> g_invoicing_kpis
+  f_invoices ==> g_invoicing_kpis
+  g_invoicing_kpis -.-> s_invoicing
 ```
 
 ## retirement

@@ -81,6 +81,8 @@ describe("HTTP success status", () => {
         "budget.addCategory",
         "budget.create",
         "imports.stage",
+        "invoicing.createInvoice",
+        "invoicing.createWorkLog",
         "mcpTokens.create",
         "tax.bulkCreate",
         "tax.create",

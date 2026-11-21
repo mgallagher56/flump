@@ -15,6 +15,7 @@ export * from "./disclaimers.js";
 export * from "./forecast.js";
 export * from "./health-score.js";
 export * from "./home-equity.js";
+export * from "./invoicing/index.js";
 export * from "./joint-share.js";
 export * from "./mortgage.js";
 export * from "./net-worth-basis.js";

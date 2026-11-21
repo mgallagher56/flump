@@ -102,6 +102,13 @@ surfaces:
       path: apps/web/app/containers/tax/TaxContainer.tsx,
     }
   - {
+      id: invoicing,
+      name: Invoicing and work log,
+      kind: page,
+      route: /app/invoicing,
+      path: apps/web/app/routes/app.invoicing.tsx,
+    }
+  - {
       id: settings,
       name: Settings,
       kind: page,
@@ -1853,6 +1860,74 @@ facts:
     verdict: holds
     note: rentalSharesFromAccounts in packages/finance-engine/src/tax-calculator.ts reads each rental property's and buy-to-let mortgage's share. A rental record with no linked account uses the rental properties' share when there is one, or counts in full and the page says so.
 
+  - id: invoicing-settings
+    name: Self-employed invoicing settings (default hourly rate, business details, VAT number, invoice prefix and sequence)
+    area: tax
+    source_of_truth:
+      {
+        ref: "invoicing_settings.default_hourly_rate, business_name, business_address, business_email, vat_number, invoice_prefix, next_invoice_sequence, default_payment_terms_days",
+        path: apps/backend/src/entities/invoicing-settings.entity.ts,
+      }
+    writers:
+      - { surface: invoicing, path: apps/web/app/routes/app.invoicing.tsx }
+    readers:
+      - { surface: invoicing, path: apps/web/app/routes/app.invoicing.tsx }
+      - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
+    verdict: holds
+    note: "E37 S1 + section 10 (D1 a, D2 b): one invoicing settings record per user, including optional vat_number."
+
+  - id: work-log-entries
+    name: Self-employed billable work log entries
+    area: tax
+    source_of_truth:
+      {
+        ref: "work_log_entries.date, description, hours_worked, hourly_rate, client_name, income_source, invoice_id, notes",
+        path: apps/backend/src/entities/work-log-entry.entity.ts,
+      }
+    other_stores:
+      - {
+          ref: work_log_entries.amount,
+          status: derived,
+          path: apps/backend/src/entities/work-log-entry.entity.ts,
+          note: "derived from hours_worked and hourly_rate via calculateWorkLogAmount in packages/finance-engine/src/invoicing/index.ts",
+        }
+    writers:
+      - { surface: invoicing, path: apps/web/app/routes/app.invoicing.tsx }
+    readers:
+      - { surface: invoicing, path: packages/finance-engine/src/invoicing/index.ts }
+      - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
+    verdict: holds
+    note: "E37 S1: each entry links to an invoice through invoice_id; voiding an invoice sets invoice_id back to null in one transaction."
+
+  - id: invoices
+    name: Self-employed invoices (number, status, client details, dates, optional VAT rate and totals)
+    area: tax
+    source_of_truth:
+      {
+        ref: "invoices.invoice_number, status, client_name, client_email, client_address, issue_date, due_date, paid_date, vat_rate_pct, notes, tax_record_id",
+        path: apps/backend/src/entities/invoice.entity.ts,
+      }
+    other_stores:
+      - {
+          ref: invoices.vat_amount,
+          status: derived,
+          path: apps/backend/src/entities/invoice.entity.ts,
+          note: "derived copy (subtotal x vat_rate_pct / 100 rounded half-up to the nearest penny via calculateInvoiceTotals) kept so an issued invoice never changes (E37 section 10)",
+        }
+      - {
+          ref: "invoices.subtotal, total",
+          status: derived,
+          path: apps/backend/src/entities/invoice.entity.ts,
+          note: "derived from linked work_log_entries and vat_amount via calculateInvoiceTotals and stored on the invoice so an issued invoice never changes",
+        }
+    writers:
+      - { surface: invoicing, path: apps/web/app/routes/app.invoicing.tsx }
+    readers:
+      - { surface: invoicing, path: packages/finance-engine/src/invoicing/index.ts }
+      - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
+    verdict: holds
+    note: "E37 S1 + section 10 (D2 b): vat_rate_pct is typed by the user and never defaulted or suggested; vat_amount is stored with status derived."
+
   # ---------- retirement ----------
   - id: retirement-plan
     name: Retirement plan (ages, target, State Pension inputs, growth cases, excluded accounts)
@@ -2587,6 +2662,28 @@ figures:
       - { surface: check-in, path: packages/finance-engine/src/check-in.ts }
     links: [L54]
     verdict: holds
+
+  - id: invoice-totals
+    name: Invoice subtotal, VAT amount and total
+    area: tax
+    computed_by:
+      { function: calculateInvoiceTotals, path: packages/finance-engine/src/invoicing/index.ts }
+    inputs: [work-log-entries, invoices]
+    shown_on:
+      - { surface: invoicing, path: apps/web/app/routes/app.invoicing.tsx }
+    verdict: holds
+    note: "E37 S0 + section 10: single engine function for subtotal, half-up penny VAT rounding, and total."
+
+  - id: invoicing-kpis
+    name: Unbilled hours, unbilled amount, outstanding issued invoices and paid in tax year
+    area: tax
+    computed_by:
+      { function: summarizeInvoicingKpis, path: packages/finance-engine/src/invoicing/index.ts }
+    inputs: [work-log-entries, invoices]
+    shown_on:
+      - { surface: invoicing, path: apps/web/app/routes/app.invoicing.tsx }
+    verdict: holds
+    note: "E37 S0/S2: computes the 4 KPI strip figures for the invoicing workspace."
 
 # Every browser storage and cookie key the code writes, user data or not. A key that holds a copy of
 # a fact names it under fact:. A trailing * means every key with that prefix.

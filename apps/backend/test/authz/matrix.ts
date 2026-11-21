@@ -15,6 +15,7 @@ export type MatrixRow =
         | "finance"
         | "budget"
         | "tax"
+        | "invoicing"
         | "user-profile"
         | "mcp-tokens"
         | "snapshots"
@@ -26,6 +27,7 @@ export type MatrixRow =
 const finance = { status: "covered", spec: "finance" } as const;
 const budget = { status: "covered", spec: "budget" } as const;
 const tax = { status: "covered", spec: "tax" } as const;
+const invoicing = { status: "covered", spec: "invoicing" } as const;
 const userProfile = { status: "covered", spec: "user-profile" } as const;
 const mcpTokens = { status: "covered", spec: "mcp-tokens" } as const;
 const snapshots = { status: "covered", spec: "snapshots" } as const;
@@ -85,6 +87,22 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "POST /tax-records": tax,
   "PATCH /tax-records/:id": tax,
   "DELETE /tax-records/:id": tax,
+
+  // Self-employed work tracking and invoicing controller (E37 S1).
+  "GET /invoicing/settings": invoicing,
+  "PATCH /invoicing/settings": invoicing,
+  "GET /work-logs": invoicing,
+  "POST /work-logs": invoicing,
+  "PATCH /work-logs/:id": invoicing,
+  "DELETE /work-logs/:id": invoicing,
+  "GET /invoices": invoicing,
+  "GET /invoices/:id": invoicing,
+  "POST /invoices": invoicing,
+  "PATCH /invoices/:id": invoicing,
+  "DELETE /invoices/:id": invoicing,
+  "POST /invoices/:id/issue": invoicing,
+  "POST /invoices/:id/mark-paid": invoicing,
+  "POST /invoices/:id/void": invoicing,
 
   // User-profile controller (E20-N23).
   "GET /user-profile": userProfile,

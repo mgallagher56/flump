@@ -16,6 +16,8 @@ export const PAGE_LIMITS = {
   bankConnections: { default: 500, max: 500 },
   budget: { default: 500, max: 500 },
   tax: { default: 2000, max: 2000 },
+  workLogs: { default: 500, max: 500 },
+  invoices: { default: 500, max: 500 },
   mcpTokens: { default: 500, max: 500 },
   imports: { default: 500, max: 500 },
   activity: { default: 100, max: 500 },

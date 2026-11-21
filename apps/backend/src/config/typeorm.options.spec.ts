@@ -15,7 +15,7 @@ describe("typeOrmOptionsFromEnv", () => {
     expect(o.synchronize).toBe(false);
     expect(o.migrationsRun).toBe(true);
     expect(o.entities).toBe(ENTITIES);
-    expect(ENTITIES).toHaveLength(19);
+    expect(ENTITIES).toHaveLength(22);
     expect(ENTITIES).toContain(BankConnection);
   });
 

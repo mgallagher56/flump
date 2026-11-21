@@ -4,6 +4,7 @@ export * from "./domains/bank-connections.js";
 export * from "./domains/beta.js";
 export * from "./domains/budget.js";
 export * from "./domains/imports.js";
+export * from "./domains/invoicing.js";
 export * from "./domains/mcp-tokens.js";
 export * from "./domains/profile.js";
 export * from "./domains/retirement.js";

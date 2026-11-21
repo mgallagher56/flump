@@ -291,6 +291,9 @@ describe("AccountExportDocument (BE-04)", () => {
     idempotencyKeys: [],
     auditEvents: [],
     consents: [],
+    invoicingSettings: [],
+    workLogEntries: [],
+    invoices: [],
   };
 
   it("accepts an empty export and requires every section", () => {
