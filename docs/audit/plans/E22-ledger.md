@@ -7,9 +7,9 @@
 - PR 415: `TaxRatesStatusBanner` on the tax page; owner checklist for the 2027/28 figures.
 - No 2027/28 table added. No vector signed off.
 
-## Follow-ups (not done)
+## Follow-ups
 
-1. **Banner coverage.** The stale-rates banner shows on the tax page only. Add it to the pension, forecast/savings, budget and onboarding pages (and the home teaser), ideally via one shared place that is not the app header/nav owned by E15. Until then those pages use 2026/27 rates after 6 April 2027 without saying so.
+1. **Banner coverage (Done, verified 2026-11-21).** `TaxRatesStatusBanner` is wired to live `getUkTaxYearContext()` (`{...ratesContext}`) and tested for both fallback (`2028-06-01`) and provisional (`2027-06-01`) states on savings (with `/app/forecast` redirecting there), budget, onboarding and home, alongside tax and take-home. (`PensionTakeHomeEffect` inside the pension scenario result, `TakeHomeDeltaPanel` and `TaxTrapCalculator` still pass explicit props without `kind`.)
 2. **Unsupported-year state on the tax page.** Records dated outside 2020/21 to 2026/27 are listed but have no computed year view. Add an explicit empty state ("Tax for 20XX/YY isn't supported").
 3. **Future-clock CI job.** Run the test suite with the clock set to 6 April 2027 to find crash paths and clock-dependent tests.
 4. **Hard-coded years and figures outside the engine** (copy, MCP defaults `2024/25`, baseline `2025/26`): see the E22 plan section 10 (E17 and E23 interplay).
