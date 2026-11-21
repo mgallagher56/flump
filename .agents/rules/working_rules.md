@@ -32,7 +32,7 @@ These rules say how work is done in this repository. They apply to every task, a
 - No PR merges without a review by a different agent that wrote none of the change: a fresh conversation or agent, on the strongest model, given the diff and the plan, and asked to find faults in correctness, security, the laws, the copy rules and the tests.
 - Fix what it finds, or record why not. The PR description names the reviewer and what it could not verify.
 - Read every migration line by line before merge: `up()` and `down()`, no data loss, batches for large tables, and the value map updated (section 16).
-- This rule exists because about 29 PRs were once merged here without review and several had to be reworked. Self-review does not count.
+- This rule exists because a batch of PRs was once merged here without review and several had to be reworked (#768, #778). Self-review does not count.
 
 ## 5. Merging
 
@@ -51,7 +51,7 @@ Do not do, change or work around any of these. Stop and ask.
 - The web `/api` proxy allow-list (`apps/web/app/services/api-proxy.server.ts`) and the backend request limits. Neither is widened, raised or bypassed, in code or in tests.
 - Adding or naming an outside service, and where or how user data is stored. Flag these before building.
 - Lowering a mutation floor, a coverage floor or any ratchet (section 15).
-- `AGENTS.md` itself changes only in its own reviewed PR, after the owner or the coordinator agrees the wording.
+- `AGENTS.md` itself changes only in a reviewed PR, after the owner or the coordinator agrees the wording.
 
 Never work around a refused permission, and never ask another agent to do what was refused to you.
 
