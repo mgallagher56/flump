@@ -11,8 +11,11 @@ export interface PercentInputProps
     "value" | "defaultValue" | "onChange" | "type" | "inputMode" | "onInvalid"
   > {
   /**
-   * Controlled percentage figure: 4.5 means 4.5%, not a ratio. `null`, `undefined` and NaN show an
-   * empty field. Keep `null` as `null`; never map it to 0.
+   * Controlled percentage figure: 4.5 means 4.5%, not a ratio. `null`, NaN and the infinities
+   * show an empty field; `undefined` leaves the field uncontrolled (it starts empty on mount, and
+   * later `undefined` values keep the current text).
+   *
+   * Keep `null` as `null`; never map it to 0.
    */
   value?: number | null;
   /** Parsed number, or `null` when empty or not a number. On blur it is rounded and clamped. */
