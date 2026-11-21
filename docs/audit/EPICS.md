@@ -36,7 +36,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 20 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
 | 21 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan approved 2026-11-17 (RD1 to RD11 accepted); S0 to S5 merged (#750, #758, #768), RD6, RD9 and RD11 merged (#770). S6 to S9 not started |
 | 22 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | Slice 1 (#747) and H2 and H5 (#755) merged. MFA and passkeys, the restricted database role, field-level encryption, the breach drill and the external test have no PR. SD1 to SD8 accepted as recommended on 2026-11-21 |
-| 23 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Plan merged (#759) and accepted 2026-11-21 (VAT on invoices allowed); nothing built |
+| 23 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Complete (`S0`–`S2` merged in `#867`; `S3` complete) |
 | 24 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job); S1 to S3 merged (#841) |
 | 25 | E39 | Mortgage affordability from your own figures | Plan merged (#776) and accepted 2026-11-21 with changes (plan section 10a); nothing built |
 | 26 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
@@ -981,7 +981,7 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** owner approval of the plan and its decisions D1 to D3.
 - **Done when:** a user can set a default hourly rate, log itemised work entries (`date`, `description`, `hoursWorked`, `hourlyRate` pre-filled and overridable, `amount`) linked to a Self Assessment income source, group/filter unbilled entries into numbered draft/issued/paid/void invoices with client details and totals, export invoices via PDF/print and formula-safe CSV, and optionally sync paid invoices into Self Assessment `tax_records` with `If-Match` concurrency, UK GDPR export/deletion coverage, and zero advice strings.
 - **Notes:** four slices (`S0` data model & pure engine calculations -> `S1` CRUD API -> `S2` Work log & Invoice Builder UI -> `S3` SA integration & PDF/CSV export). Plan: [E37-self-employed-invoicing-plan.md](plans/E37-self-employed-invoicing-plan.md).
-- **Status (2026-11-21):** plan merged (`#759`) and accepted by the owner on 2026-11-21: D1 (a), D2 changed to allow VAT on invoices, D3 (a). Nothing built (`S0` to `S3` have no PR).
+- **Status (2026-11-21):** complete (`S0`–`S2` merged in `#867`; `S3` Self Assessment sync, `@media print` view, and formula-safe CSV export complete).
 - **Labels:** needs-triage
 
 ## E38. User action friction & interaction-efficiency audit
@@ -1048,7 +1048,7 @@ Merged in #777: the profile year of birth and pay, the check-in day, and the Sel
 - **E34 (Shared finances for couples):** C1 is merged (`#748`, `#757`, `#773`). C2 to C7 (household, invitations, the "Me / Household" switch, partner safety and privacy controls) have no PR.
 - **E35 (Encouragement and wellbeing):** `Set 1` (`#749`) merged; Sets 2 and 3 have no PR.
 - **E36 (Security hardening):** `Slice 1` (`#747`) and `H2 & H5` (`#755`) merged; the remaining hardening items have no PR.
-- **E37 (Self-employed work tracking and invoice builder):** plan merged (`#759`); `S0` to `S3` have no PR.
+- **E37 (Self-employed work tracking and invoice builder):** `S0`–`S2` merged (`#867`); `S3` complete in this PR.
 - **E39 (Mortgage affordability):** plan merged (`#776`); no build PR.
 
 ## 4. Stale local `.claude/worktrees/*`

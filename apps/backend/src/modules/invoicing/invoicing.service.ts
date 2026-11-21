@@ -29,6 +29,7 @@ import { claimVersion, preconditionFailed } from "../../contract/etag";
 import { keysetPage, type Page, type PageRequest } from "../../contract/pagination";
 import { Invoice } from "../../entities/invoice.entity";
 import { InvoicingSettings } from "../../entities/invoicing-settings.entity";
+import { TaxRecord } from "../../entities/tax-record.entity";
 import { WorkLogEntry } from "../../entities/work-log-entry.entity";
 
 const DEFAULT_INVOICE_PREFIX = "INV-";
@@ -832,6 +833,67 @@ export class InvoicingService {
       const saved = await invoiceRepo.save(invoice);
       return {
         invoice: toInvoiceDto(saved, []),
+        updatedAt: saved.updatedAt,
+      };
+    });
+  }
+
+  async syncInvoiceToTax(userId: string, id: string, expected?: Date): Promise<InvoiceView> {
+    return this.invoiceRepository.manager.transaction(async (em) => {
+      const workLogRepo = em.getRepository(WorkLogEntry);
+      const invoiceRepo = em.getRepository(Invoice);
+      const taxRecordRepo = em.getRepository(TaxRecord);
+
+      if (expected) {
+        const claim = await claimVersion(invoiceRepo, { id, userId }, expected);
+        if (claim === "missing") throw invoiceNotFound();
+        if (claim === "stale") throw preconditionFailed();
+      }
+
+      const invoice = await invoiceRepo.findOne({ where: { id, userId } });
+      if (!invoice) throw invoiceNotFound();
+
+      if (invoice.status !== "paid") {
+        throw invoiceStateConflict("Only paid invoices can be synced to Self Assessment.");
+      }
+
+      const entries = await workLogRepo.find({ where: { userId, invoiceId: invoice.id } });
+
+      if (invoice.taxRecordId) {
+        const existingTaxRecord = await taxRecordRepo.findOne({
+          where: { id: invoice.taxRecordId, userId },
+        });
+        if (existingTaxRecord) {
+          return {
+            invoice: toInvoiceDto(invoice, entries),
+            updatedAt: invoice.updatedAt,
+          };
+        }
+      }
+
+      const createdTaxRecord = await taxRecordRepo.save(
+        taxRecordRepo.create({
+          userId,
+          type: "income",
+          source: "self-employed",
+          category: "Freelance / Invoice",
+          name: `Invoice ${invoice.invoiceNumber} - ${invoice.clientName}`,
+          amount: Number(invoice.subtotal),
+          frequency: "one-off",
+          date: invoice.paidDate ?? invoice.issueDate,
+          endDate: null,
+          notes: null,
+          receiptFilename: null,
+          receiptMimeType: null,
+          receiptData: null,
+          accountId: null,
+        }),
+      );
+
+      invoice.taxRecordId = createdTaxRecord.id;
+      const saved = await invoiceRepo.save(invoice);
+      return {
+        invoice: toInvoiceDto(saved, entries),
         updatedAt: saved.updatedAt,
       };
     });

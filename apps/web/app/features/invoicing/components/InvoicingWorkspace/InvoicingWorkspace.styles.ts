@@ -342,3 +342,66 @@ export const emptyBox = cva({
     fontSize: "sm",
   },
 });
+
+export const printHide = cva({
+  base: {
+    "@media print": {
+      display: "none",
+    },
+  },
+});
+
+export const printSheet = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "5",
+    p: "6",
+    borderRadius: "xl",
+    bg: "surface.canvas",
+    color: "text.primary",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.strong",
+    fontVariantNumeric: "tabular-nums",
+    "@media print": {
+      borderWidth: "0",
+      p: "0",
+    },
+  },
+});
+
+export const printColumns = cva({
+  base: {
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+    gap: "4",
+  },
+});
+
+export const printTotalsBox = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2",
+    alignSelf: "flex-end",
+    minWidth: "64",
+    p: "4",
+    borderRadius: "md",
+    bg: "surface.subtle",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
+export const printTotalRow = cva({
+  base: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "4",
+    fontSize: "sm",
+    color: "text.primary",
+  },
+});

@@ -13,6 +13,8 @@ import {
   calculateInvoiceTotals,
   calculateWorkLogAmount,
   formatInvoiceNumber,
+  formatInvoicesCsv,
+  formatWorkLogsCsv,
   getUkTaxYearForDate,
   summarizeInvoicingKpis,
 } from "@flump/finance-engine";
@@ -25,7 +27,7 @@ import {
   PageHeader,
   Tabs,
 } from "@repo/ui";
-import { type FC, type FormEvent, useMemo, useState } from "react";
+import { type FC, type FormEvent, useEffect, useMemo, useState } from "react";
 import {
   actionRow,
   buttonGroup,
@@ -41,6 +43,11 @@ import {
   invoiceCardList,
   numericValue,
   primaryButton,
+  printColumns,
+  printHide,
+  printSheet,
+  printTotalRow,
+  printTotalsBox,
   secondaryButton,
   sectionCard,
   sectionHeaderRow,
@@ -71,6 +78,7 @@ export interface InvoicingWorkspaceProps {
   onIssueInvoice?: (id: string, ifMatch: string) => void;
   onMarkInvoicePaid?: (id: string, payload: MarkInvoicePaidRequest, ifMatch: string) => void;
   onVoidInvoice?: (id: string, ifMatch: string) => void;
+  onSyncInvoiceToTax?: (id: string, ifMatch: string) => void;
   onUpdateSettings?: (payload: UpdateInvoicingSettingsRequest, ifMatch: string | null) => void;
 }
 
@@ -93,6 +101,18 @@ function money(value: number): string {
   return formatMoney(value, { fractionDigits: Number.isInteger(value) ? 0 : 2 }).text;
 }
 
+function triggerCsvDownload(filename: string, csvContent: string): void {
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
   settings,
   settingsEtag,
@@ -110,10 +130,12 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
   onIssueInvoice,
   onMarkInvoicePaid,
   onVoidInvoice,
+  onSyncInvoiceToTax,
   onUpdateSettings,
 }) => {
   const currentTaxYear = useMemo(() => getUkTaxYearForDate(todayIso), [todayIso]);
   const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const [printingInvoiceId, setPrintingInvoiceId] = useState<string | null>(null);
 
   // Work log add form state
   const [entryDate, setEntryDate] = useState<string>(todayIso);
@@ -218,6 +240,63 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
     () => formatInvoiceNumber(settings.invoicePrefix, settings.nextInvoiceSequence),
     [settings.invoicePrefix, settings.nextInvoiceSequence],
   );
+
+  const invoiceNumberById = useMemo(
+    () => new Map(invoices.map((inv) => [inv.id, inv.invoiceNumber])),
+    [invoices],
+  );
+
+  const printingInvoice = useMemo(
+    () =>
+      printingInvoiceId ? (invoices.find((inv) => inv.id === printingInvoiceId) ?? null) : null,
+    [invoices, printingInvoiceId],
+  );
+
+  const handleExportWorkLogsCsv = () => {
+    const csv = formatWorkLogsCsv(
+      filteredWorkLogs.map((entry) => ({
+        date: entry.date,
+        description: entry.description,
+        hoursWorked: entry.hoursWorked,
+        hourlyRate: entry.hourlyRate,
+        amount: entry.amount,
+        invoiceNumber: entry.invoiceId ? (invoiceNumberById.get(entry.invoiceId) ?? null) : null,
+        status: entry.invoiceId ? "billed" : "unbilled",
+        clientName: entry.clientName,
+      })),
+    );
+    triggerCsvDownload(`work-log-${todayIso}.csv`, csv);
+  };
+
+  const handleExportInvoicesCsv = () => {
+    const csv = formatInvoicesCsv(
+      invoices.map((inv) => ({
+        invoiceNumber: inv.invoiceNumber,
+        status: inv.status,
+        clientName: inv.clientName,
+        issueDate: inv.issueDate,
+        dueDate: inv.dueDate,
+        paidDate: inv.paidDate,
+        taxYear: inv.taxYear,
+        totalHours: inv.totalHours,
+        subtotal: inv.subtotal,
+        vatRatePct: inv.vatRatePct,
+        vatAmount: inv.vatAmount,
+        total: inv.total,
+      })),
+    );
+    triggerCsvDownload(`invoices-${todayIso}.csv`, csv);
+  };
+
+  useEffect(() => {
+    if (printingInvoiceId && typeof window !== "undefined" && typeof window.print === "function") {
+      window.print();
+    }
+  }, [printingInvoiceId]);
+
+  const handleOpenPrintView = (invoiceId: string) => {
+    setPrintingInvoiceId(invoiceId);
+  };
 
   const handleToggleSelectEntry = (entryId: string) => {
     setSelectedEntryIds((prev) =>
@@ -605,6 +684,19 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
       </form>
 
       <section className={sectionCard()} aria-label="Recorded work log entries">
+        <div className={sectionHeaderRow()}>
+          <h2 className={sectionTitle()}>Recorded work log entries</h2>
+          <button
+            type="button"
+            id="export-work-logs-csv-btn"
+            data-testid="export-work-logs-csv-btn"
+            className={secondaryButton()}
+            disabled={filteredWorkLogs.length === 0}
+            onClick={handleExportWorkLogsCsv}
+          >
+            Export work log CSV
+          </button>
+        </div>
         <div className={filterBar()}>
           <div className={fieldGroup()}>
             <label className={fieldLabel()} htmlFor="work-log-filter-status">
@@ -821,6 +913,16 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
             Manage draft invoices, issue finalized bills, and record client payments.
           </p>
         </div>
+        <button
+          type="button"
+          id="export-invoices-csv-btn"
+          data-testid="export-invoices-csv-btn"
+          className={secondaryButton()}
+          disabled={invoices.length === 0}
+          onClick={handleExportInvoicesCsv}
+        >
+          Export invoices CSV
+        </button>
       </div>
 
       {invoices.length === 0 ? (
@@ -1019,6 +1121,56 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
                         </button>
                       </>
                     ) : null}
+                    {invoice.status === "paid" ? (
+                      invoice.taxRecordId ? (
+                        <>
+                          <span
+                            id={`synced-badge-${invoice.id}`}
+                            data-testid={`synced-badge-${invoice.id}`}
+                            className={statusPill({ tone: "paid" })}
+                          >
+                            Added to Self Assessment
+                          </span>
+                          <a
+                            id={`view-self-assessment-${invoice.id}`}
+                            data-testid={`view-self-assessment-${invoice.id}`}
+                            href="/app/self-assessment"
+                            className={secondaryButton()}
+                          >
+                            View in Self Assessment
+                          </a>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            id={`sync-to-tax-${invoice.id}`}
+                            data-testid={`sync-to-tax-${invoice.id}`}
+                            className={primaryButton()}
+                            disabled={isSubmitting}
+                            onClick={() =>
+                              onSyncInvoiceToTax?.(invoice.id, `"${invoice.updatedAt}"`)
+                            }
+                          >
+                            Add to Self Assessment
+                          </button>
+                          <span className={fieldHelper()}>
+                            Adds the subtotal before VAT to Self Assessment as one-off self-employed
+                            income.
+                          </span>
+                        </>
+                      )
+                    ) : null}
+
+                    <button
+                      type="button"
+                      id={`print-invoice-${invoice.id}`}
+                      data-testid={`print-invoice-${invoice.id}`}
+                      className={secondaryButton()}
+                      onClick={() => handleOpenPrintView(invoice.id)}
+                    >
+                      Print / Save as PDF
+                    </button>
                   </div>
                 </div>
               </article>
@@ -1181,7 +1333,128 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
 
   return (
     <PageBody>
-      <div className={workspaceStack()} id="invoicing-workspace" data-testid="invoicing-workspace">
+      {printingInvoice ? (
+        <section
+          id="invoice-print-sheet"
+          data-testid="invoice-print-sheet"
+          aria-label={`Printable invoice ${printingInvoice.invoiceNumber}`}
+          className={printSheet()}
+        >
+          <div className={`${sectionHeaderRow()} ${printHide()}`}>
+            <span className={sectionSubtitle()}>Print preview</span>
+            <div className={buttonGroup()}>
+              <button
+                type="button"
+                className={primaryButton()}
+                onClick={() => {
+                  if (typeof window !== "undefined" && typeof window.print === "function") {
+                    window.print();
+                  }
+                }}
+              >
+                Print now
+              </button>
+              <button
+                type="button"
+                id="close-print-sheet-btn"
+                data-testid="close-print-sheet-btn"
+                className={secondaryButton()}
+                onClick={() => setPrintingInvoiceId(null)}
+              >
+                Close print view
+              </button>
+            </div>
+          </div>
+
+          <div className={printColumns()}>
+            <div>
+              <h2 className={sectionTitle()}>{settings.businessName ?? "Self-employed invoice"}</h2>
+              {settings.businessAddress ? (
+                <div className={fieldHelper()}>{settings.businessAddress}</div>
+              ) : null}
+              {settings.businessEmail ? (
+                <div className={fieldHelper()}>{settings.businessEmail}</div>
+              ) : null}
+              {settings.vatNumber ? (
+                <div className={fieldHelper()}>VAT number: {settings.vatNumber}</div>
+              ) : null}
+            </div>
+
+            <div>
+              <div className={sectionTitle()}>Invoice {printingInvoice.invoiceNumber}</div>
+              <div className={fieldHelper()}>Status: {STATUS_LABELS[printingInvoice.status]}</div>
+              <div className={fieldHelper()}>Issue date: {printingInvoice.issueDate}</div>
+              <div className={fieldHelper()}>Due date: {printingInvoice.dueDate}</div>
+              {printingInvoice.paidDate ? (
+                <div className={fieldHelper()}>Paid date: {printingInvoice.paidDate}</div>
+              ) : null}
+            </div>
+          </div>
+
+          <div>
+            <div className={fieldLabel()}>Bill to</div>
+            <div className={sectionTitle()}>{printingInvoice.clientName}</div>
+            {printingInvoice.clientEmail ? (
+              <div className={fieldHelper()}>{printingInvoice.clientEmail}</div>
+            ) : null}
+            {printingInvoice.clientAddress ? (
+              <div className={fieldHelper()}>{printingInvoice.clientAddress}</div>
+            ) : null}
+          </div>
+
+          <div className={dataTableWrapper()}>
+            <table className={dataTable()}>
+              <thead>
+                <tr>
+                  <th className={tableHeaderCell()}>Date</th>
+                  <th className={tableHeaderCell()}>Description</th>
+                  <th className={tableHeaderCell()}>Hours</th>
+                  <th className={tableHeaderCell()}>Rate</th>
+                  <th className={tableHeaderCell()}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {printingInvoice.entries.map((line) => (
+                  <tr key={line.id}>
+                    <td className={tableCell()}>{line.date}</td>
+                    <td className={tableCell()}>{line.description}</td>
+                    <td className={tableCell()}>{line.hoursWorked.toFixed(2)}</td>
+                    <td className={tableCell()}>{money(line.hourlyRate)}</td>
+                    <td className={tableCell()}>{money(line.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className={printTotalsBox()}>
+            <div className={printTotalRow()}>
+              <span>Subtotal</span>
+              <span className={numericValue()}>{money(printingInvoice.subtotal)}</span>
+            </div>
+            {printingInvoice.vatRatePct !== null ? (
+              <div className={printTotalRow()}>
+                <span>VAT ({printingInvoice.vatRatePct}%)</span>
+                <span className={numericValue()}>{money(printingInvoice.vatAmount)}</span>
+              </div>
+            ) : null}
+            <div className={printTotalRow()}>
+              <strong>Total</strong>
+              <strong className={numericValue()}>{money(printingInvoice.total)}</strong>
+            </div>
+          </div>
+
+          {printingInvoice.notes ? (
+            <div className={fieldHelper()}>Payment notes: {printingInvoice.notes}</div>
+          ) : null}
+        </section>
+      ) : null}
+
+      <div
+        className={`${workspaceStack()} ${printingInvoice ? printHide() : ""}`}
+        id="invoicing-workspace"
+        data-testid="invoicing-workspace"
+      >
         <PageHeader
           title="Work log and invoicing"
           subtitle="Log self-employed hours, build numbered invoices, and track payments by UK tax year."

@@ -178,6 +178,16 @@ export const action = async (args: ActionFunctionArgs) => {
         });
         return { ok: true as const, invoice: result.invoice };
       }
+      case "sync-invoice-to-tax": {
+        const result = await backendFetch(`/invoices/${encodeURIComponent(id)}/sync-to-tax`, {
+          schema: InvoiceResponse,
+          accessToken: token,
+          method: "POST",
+          body: {},
+          ifMatch: ifMatchFromForm(formData),
+        });
+        return { ok: true as const, invoice: result.invoice };
+      }
       default: {
         throw new Error(`Unsupported invoicing action intent: ${intent}`);
       }
@@ -226,6 +236,7 @@ export default function InvoicingRoute(): ReactElement {
         submitAction("mark-invoice-paid", { id, payload, ifMatch })
       }
       onVoidInvoice={(id, ifMatch) => submitAction("void-invoice", { id, ifMatch })}
+      onSyncInvoiceToTax={(id, ifMatch) => submitAction("sync-invoice-to-tax", { id, ifMatch })}
       onUpdateSettings={(payload, ifMatch) => submitAction("update-settings", { payload, ifMatch })}
     />
   );

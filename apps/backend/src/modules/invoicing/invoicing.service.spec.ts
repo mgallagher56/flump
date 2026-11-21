@@ -2,6 +2,7 @@ import { ConflictException, NotFoundException, PreconditionFailedException } fro
 import { describe, expect, it, vi } from "vitest";
 import { Invoice } from "../../entities/invoice.entity";
 import { InvoicingSettings } from "../../entities/invoicing-settings.entity";
+import { TaxRecord } from "../../entities/tax-record.entity";
 import { WorkLogEntry } from "../../entities/work-log-entry.entity";
 import { InvoicingController } from "./invoicing.controller";
 import { InvoicingService } from "./invoicing.service";
@@ -15,6 +16,7 @@ function createInMemoryHarness() {
   const settingsRows: InvoicingSettings[] = [];
   const workLogRows: WorkLogEntry[] = [];
   const invoiceRows: Invoice[] = [];
+  const taxRecordRows: TaxRecord[] = [];
   let seq = 1;
   const nextUuid = () => `00000000-0000-4000-8000-${String(seq++).padStart(12, "0")}`;
 
@@ -84,6 +86,7 @@ function createInMemoryHarness() {
               if (t === InvoicingSettings) return settingsRepo;
               if (t === WorkLogEntry) return workLogRepo;
               if (t === Invoice) return invoiceRepo;
+              if (t === TaxRecord) return taxRecordRepo;
               throw new Error(`Unknown entity ${String(t)}`);
             },
           }),
@@ -135,6 +138,7 @@ function createInMemoryHarness() {
   const settingsRepo = makeRepo<InvoicingSettings>(InvoicingSettings, settingsRows);
   const workLogRepo = makeRepo<WorkLogEntry>(WorkLogEntry, workLogRows);
   const invoiceRepo = makeRepo<Invoice>(Invoice, invoiceRows);
+  const taxRecordRepo = makeRepo<TaxRecord>(TaxRecord, taxRecordRows);
 
   // Use plain array filtering in listWorkLogs / listInvoices while keeping claimVersion working
   const wrapForList = <T extends Record<string, unknown>>(repo: T): T =>
@@ -157,7 +161,7 @@ function createInMemoryHarness() {
   );
   const controller = new InvoicingController(service);
 
-  return { service, controller, settingsRows, workLogRows, invoiceRows };
+  return { service, controller, settingsRows, workLogRows, invoiceRows, taxRecordRows };
 }
 
 describe("InvoicingService & InvoicingController (E37 S1)", () => {
@@ -439,5 +443,89 @@ describe("InvoicingService & InvoicingController (E37 S1)", () => {
 
     const logs = (await controller.listWorkLogs(req, {})).entries;
     expect(logs[0]?.invoiceId).toBeNull();
+  });
+
+  it("syncInvoiceToTax creates a single Self Assessment income row using subtotal (ex-VAT), enforces paid status and If-Match, and is idempotent", async () => {
+    const { controller, taxRecordRows } = createInMemoryHarness();
+    const req = { user: { id: OWNER_A } } as never;
+    const otherReq = { user: { id: OWNER_B } } as never;
+
+    const entry = (
+      await controller.createWorkLog(req, {
+        date: "2026-11-18",
+        description: "System design",
+        hoursWorked: 12.5,
+        hourlyRate: 100,
+      })
+    ).entry;
+
+    // Subtotal 1250, 20% VAT -> 250 VAT, 1500 total
+    const draft = (
+      await controller.createInvoice(req, {
+        workLogEntryIds: [entry.id],
+        clientName: "Acme Ltd",
+        issueDate: "2026-11-18",
+        vatRatePct: 20,
+      })
+    ).invoice;
+    expect(draft.subtotal).toBe(1250);
+    expect(draft.total).toBe(1500);
+
+    // Rejects draft / issued invoices with 409 Conflict
+    await expect(controller.syncInvoiceToTax(req, draft.id)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    await controller.issueInvoice(req, draft.id);
+    await expect(controller.syncInvoiceToTax(req, draft.id)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+
+    const paid = (await controller.markInvoicePaid(req, draft.id, { paidDate: "2026-11-21" }))
+      .invoice;
+
+    // Rejects stale If-Match with 412 PreconditionFailedException
+    await expect(
+      controller.syncInvoiceToTax(req, paid.id, `"1999-01-01T00:00:00.000Z"`),
+    ).rejects.toBeInstanceOf(PreconditionFailedException);
+
+    // Rejects other user with 404 NotFoundException
+    await expect(controller.syncInvoiceToTax(otherReq, paid.id)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+
+    // Valid sync with current ETag creates one TaxRecord using subtotal (1250), not total (1500)
+    const setHeader = vi.fn();
+    const synced = (
+      await controller.syncInvoiceToTax(req, paid.id, `"${paid.updatedAt}"`, {
+        setHeader,
+      } as never)
+    ).invoice;
+    expect(setHeader).toHaveBeenCalledWith("ETag", expect.any(String));
+    expect(synced.taxRecordId).toBeTruthy();
+    expect(taxRecordRows).toHaveLength(1);
+    expect(taxRecordRows[0]).toMatchObject({
+      id: synced.taxRecordId,
+      userId: OWNER_A,
+      type: "income",
+      source: "self-employed",
+      category: "Freelance / Invoice",
+      name: "Invoice INV-0001 - Acme Ltd",
+      amount: 1250,
+      frequency: "one-off",
+      date: "2026-11-21",
+    });
+
+    // Idempotent second call does not create a duplicate TaxRecord
+    const syncedAgain = (await controller.syncInvoiceToTax(req, paid.id, `"${synced.updatedAt}"`))
+      .invoice;
+    expect(syncedAgain.taxRecordId).toBe(synced.taxRecordId);
+    expect(taxRecordRows).toHaveLength(1);
+
+    // If the referenced TaxRecord was deleted, re-syncing creates a fresh one
+    taxRecordRows.splice(0, taxRecordRows.length);
+    const resynced = (await controller.syncInvoiceToTax(req, paid.id, `"${syncedAgain.updatedAt}"`))
+      .invoice;
+    expect(taxRecordRows).toHaveLength(1);
+    expect(resynced.taxRecordId).toBe(taxRecordRows[0]?.id);
   });
 });

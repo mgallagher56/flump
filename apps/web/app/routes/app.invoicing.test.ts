@@ -122,5 +122,20 @@ describe("app.invoicing route loader and action (E37 S2)", () => {
         ifMatch: '"2026-11-06T09:00:00.000Z"',
       }),
     );
+
+    await action(
+      actionArgs("sync-invoice-to-tax", {
+        id: invoiceId,
+        version: "2026-11-06T09:00:00.000Z",
+      }),
+    );
+    expect(backendFetch).toHaveBeenCalledWith(
+      `/invoices/${invoiceId}/sync-to-tax`,
+      expect.objectContaining({
+        method: "POST",
+        body: {},
+        ifMatch: '"2026-11-06T09:00:00.000Z"',
+      }),
+    );
   });
 });
