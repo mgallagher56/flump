@@ -64,6 +64,9 @@ export const USER_DATA_TABLES = [
   "mcp_tokens",
   // BE-09 stored create responses for Idempotency-Key retries (they echo the rows they created).
   "idempotency_keys",
+  "work_log_entries",
+  "invoices",
+  "invoicing_settings",
   "tax_records",
   "retirement_plans",
   // Slice 6 migration before-images (children of user_profiles by profile_id, ON DELETE CASCADE).

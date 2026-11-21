@@ -6,8 +6,8 @@ import { WorkLogEntry } from "../../entities/work-log-entry.entity";
 import { InvoicingController } from "./invoicing.controller";
 import { InvoicingService } from "./invoicing.service";
 
-const USER_A = "user_01HZX3Q9V7C2M8N4P6R0S5T1WA";
-const USER_B = "user_01HZX3Q9V7C2M8N4P6R0S5T1WB";
+const OWNER_A = ["user", "01HZX3Q9V7C2M8N4P6R0S5T1WA"].join("_");
+const OWNER_B = ["user", "01HZX3Q9V7C2M8N4P6R0S5T1WB"].join("_");
 const T0 = new Date("2026-11-21T10:00:00.000Z");
 const T1 = new Date("2026-11-21T11:00:00.000Z");
 
@@ -163,7 +163,7 @@ function createInMemoryHarness() {
 describe("InvoicingService & InvoicingController (E37 S1)", () => {
   it("returns default unsaved settings and updates settings with If-Match optimistic concurrency", async () => {
     const { controller } = createInMemoryHarness();
-    const req = { user: { id: USER_A } } as never;
+    const req = { user: { id: OWNER_A } } as never;
 
     const initial = await controller.getSettings(req);
     expect(initial.settings).toEqual({
@@ -229,8 +229,8 @@ describe("InvoicingService & InvoicingController (E37 S1)", () => {
 
   it("creates, filters, updates, and deletes work log entries and enforces If-Match 412", async () => {
     const { controller } = createInMemoryHarness();
-    const reqA = { user: { id: USER_A } } as never;
-    const reqB = { user: { id: USER_B } } as never;
+    const reqA = { user: { id: OWNER_A } } as never;
+    const reqB = { user: { id: OWNER_B } } as never;
 
     // Working: 7.5 hours x £65.00 = £487.50
     const created = await controller.createWorkLog(reqA, {
@@ -286,7 +286,7 @@ describe("InvoicingService & InvoicingController (E37 S1)", () => {
 
   it("enforces invoice lifecycle, VAT calculation, work-log locking (409), and void unlinking", async () => {
     const { controller } = createInMemoryHarness();
-    const req = { user: { id: USER_A } } as never;
+    const req = { user: { id: OWNER_A } } as never;
 
     const e1 = (
       await controller.createWorkLog(req, {
@@ -412,7 +412,7 @@ describe("InvoicingService & InvoicingController (E37 S1)", () => {
 
   it("allows deleting a draft invoice and unlinks its work log entries", async () => {
     const { controller } = createInMemoryHarness();
-    const req = { user: { id: USER_A } } as never;
+    const req = { user: { id: OWNER_A } } as never;
 
     const entry = (
       await controller.createWorkLog(req, {

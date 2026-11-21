@@ -235,6 +235,67 @@ export const retirementPlanUnsavedFixture = {
   updatedAt: null,
 };
 
+const invoicingSettingsFixture = {
+  id: "11111111-1111-4111-8111-111111111111",
+  defaultHourlyRate: 85,
+  businessName: "Sam Consulting",
+  businessAddress: "10 High Street, London",
+  businessEmail: "sam@example.com",
+  vatNumber: null,
+  invoicePrefix: "INV-",
+  nextInvoiceSequence: 1,
+  defaultPaymentTermsDays: 30,
+  createdAt: "2026-11-16T10:00:00.000Z",
+  updatedAt: "2026-11-16T10:00:00.000Z",
+};
+
+const workLogEntryFixture = {
+  id: "22222222-2222-4222-8222-222222222222",
+  date: "2026-11-15",
+  description: "Product design sprint",
+  hoursWorked: 7.5,
+  hourlyRate: 85,
+  amount: 637.5,
+  clientName: "Northwind Studio",
+  incomeSource: "self-employed" as const,
+  invoiceId: null,
+  notes: null,
+  createdAt: "2026-11-16T10:00:00.000Z",
+  updatedAt: "2026-11-16T10:00:00.000Z",
+};
+
+const invoiceFixture = {
+  id: "33333333-3333-4333-8333-333333333333",
+  invoiceNumber: "INV-0001",
+  status: "draft" as const,
+  clientName: "Northwind Studio",
+  clientAddress: null,
+  clientEmail: null,
+  issueDate: "2026-11-16",
+  dueDate: "2026-12-16",
+  paidDate: null,
+  lineItems: [
+    {
+      workLogId: null,
+      date: "2026-11-15",
+      description: "Product design sprint",
+      hoursWorked: 7.5,
+      hourlyRate: 85,
+      amount: 637.5,
+    },
+  ],
+  subtotal: 637.5,
+  vatRatePct: null,
+  vatAmount: 0,
+  total: 637.5,
+  paymentMethod: null,
+  paymentReference: null,
+  notes: null,
+  taxRecordId: null,
+  createdAt: "2026-11-16T10:00:00.000Z",
+  updatedAt: "2026-11-16T10:00:00.000Z",
+};
+
 const success = { success: true };
 
 /**
@@ -245,6 +306,8 @@ export function contractBody(method: string, path: string): unknown {
   const p = path.replace(/^\/(v1|api)(?=\/)/, "");
   const m = method.toUpperCase();
   if (m === "DELETE") {
+    if (/^\/work-logs\/[^/]+$/.test(p)) return { id: workLogEntryFixture.id };
+    if (/^\/invoices\/[^/]+$/.test(p)) return { id: invoiceFixture.id };
     return /^\/bank-connections\//.test(p) ? { success: true, consentRevoked: false } : success;
   }
   if (p === "/accounts") return m === "GET" ? [accountWithDetailsFixture] : accountFixture;
@@ -291,6 +354,17 @@ export function contractBody(method: string, path: string): unknown {
   if (p === "/beta/admin/members") return { members: [] };
   if (p === "/beta/invites/redeem") return { status: "joined" };
   if (p === "/retirement-plan") return { plan: retirementPlanFixture };
+  if (p === "/invoicing/settings") return { settings: invoicingSettingsFixture };
+  if (p === "/work-logs") {
+    return m === "GET" ? { entries: [], nextCursor: null } : { entry: workLogEntryFixture };
+  }
+  if (/^\/work-logs\/[^/]+$/.test(p)) return { entry: workLogEntryFixture };
+  if (p === "/invoices") {
+    return m === "GET" ? { invoices: [], nextCursor: null } : { invoice: invoiceFixture };
+  }
+  if (/^\/invoices\/[^/]+(\/issue|\/mark-paid|\/void)?$/.test(p)) {
+    return { invoice: invoiceFixture };
+  }
   if (p === "/snapshots/check-ins") return { latestCompletedMonth: "2026-10" };
   if (/^\/snapshots\/[^/]+$/.test(p)) return snapshotResponseFixture;
   return success;
