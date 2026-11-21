@@ -152,4 +152,25 @@ describe("buildOnboardingSeedJobs", () => {
       expect(job?.enabled).toBe(true);
     }
   });
+
+  it("does not create a take-home income entry of zero", () => {
+    const jobs = buildOnboardingSeedJobs({ ...input, monthlyTakeHome: 0 });
+    expect(jobs.find((j) => j.key === "entry:Monthly Take-Home Income")?.enabled).toBe(false);
+  });
+
+  it("saves no home for an owner who gave no home value", () => {
+    const outright = buildOnboardingSeedJobs({
+      ...input,
+      housingStatus: "own_outright",
+      mortgageBalance: 0,
+      propertyValue: 0,
+    });
+    expect(outright.some((j) => j.key === "account:Home (your estimate)")).toBe(false);
+    // With a mortgage and no home value, the mortgage is saved on its own, not as a linked pair.
+    const mortgaged = buildOnboardingSeedJobs({ ...input, propertyValue: 0 });
+    expect(mortgaged.some((j) => j.endpoint === "/accounts/mortgage-with-property")).toBe(false);
+    expect(mortgaged.find((j) => j.key === "account:Residential Mortgage")?.endpoint).toBe(
+      "/accounts",
+    );
+  });
 });

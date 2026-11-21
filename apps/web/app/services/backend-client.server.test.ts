@@ -281,6 +281,124 @@ describe("backend-client.server", () => {
     expect(snapshot.user).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  describe("sessions and empty answers", () => {
+    const args = () => ({ request: new Request("http://x/") }) as any;
+    const auth = async () => vi.mocked((await import("~/utils/auth.server")).getAuthSession);
+    const emptyRows = {
+      accounts: [],
+      accountDetails: [],
+      userProfile: null,
+      budgetEntries: [],
+      taxRecords: [],
+      bankConnections: [],
+    };
+
+    it("asks for a signed-in session unless told otherwise", async () => {
+      const getAuthSession = await auth();
+      getAuthSession.mockClear();
+      const a = args();
+      await loadWorkspaceSnapshot(a);
+      expect(getAuthSession).toHaveBeenLastCalledWith(a, { ensureSignedIn: true });
+      const b = args();
+      await loadWorkspacePicture(b);
+      expect(getAuthSession).toHaveBeenLastCalledWith(b, { ensureSignedIn: true });
+    });
+
+    it("returns empty lists and no profile when nobody is signed in", async () => {
+      const getAuthSession = await auth();
+      getAuthSession.mockResolvedValueOnce({ user: null, accessToken: undefined } as any);
+      expect(await loadWorkspaceSnapshot(args(), { ensureSignedIn: false })).toEqual({
+        user: null,
+        accessToken: undefined,
+        ...emptyRows,
+      });
+      getAuthSession.mockResolvedValueOnce({ user: null, accessToken: undefined } as any);
+      expect(await loadWorkspacePicture(args(), { ensureSignedIn: false })).toEqual({
+        user: null,
+        accessToken: undefined,
+        ...emptyRows,
+        picture: null,
+      });
+    });
+
+    it("refuses a signed-in user with no access token as unauthorised, calling nothing", async () => {
+      const getAuthSession = await auth();
+      const fetchSpy = vi.fn();
+      globalThis.fetch = fetchSpy;
+      for (const load of [loadWorkspaceSnapshot, loadWorkspacePicture]) {
+        getAuthSession.mockResolvedValueOnce({ user: { id: "user_test" }, accessToken: "" } as any);
+        const err = await load(args()).catch((e) => e);
+        expect(err.init.status).toBe(401);
+        expect(err.data.kind).toBe("unauthorised");
+      }
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("loadWorkspacePicture rows and options", () => {
+    const args = () => ({ request: new Request("http://x/") }) as any;
+
+    it("keeps a tax record's notes and receipt details", async () => {
+      const record = {
+        ...taxRecordFixture,
+        notes: "Letting agent statement",
+        receiptFilename: "statement.pdf",
+        receiptMimeType: "application/pdf",
+        hasReceipt: true,
+      };
+      const inner = vi.mocked(globalThis.fetch).getMockImplementation() as (
+        url: string,
+      ) => Promise<Response>;
+      globalThis.fetch = vi
+        .fn()
+        .mockImplementation((url: string) =>
+          url.includes("/v1/tax-records") ? Promise.resolve(jsonResponse([record])) : inner(url),
+        );
+      const result = await loadWorkspacePicture(args());
+      expect(result.taxRecords[0]).toMatchObject({
+        notes: "Letting agent statement",
+        receiptFilename: "statement.pdf",
+        receiptMimeType: "application/pdf",
+      });
+    });
+
+    it("reads the check-in month only when asked", async () => {
+      const inner = vi.mocked(globalThis.fetch).getMockImplementation() as (
+        url: string,
+      ) => Promise<Response>;
+      globalThis.fetch = vi
+        .fn()
+        .mockImplementation((url: string) =>
+          url.includes("/v1/snapshots/check-ins")
+            ? Promise.resolve(jsonResponse({ latestCompletedMonth: "2026-10" }))
+            : inner(url),
+        );
+      const plain = await loadWorkspacePicture(args());
+      expect(plain).not.toHaveProperty("latestCheckInMonth");
+      const urls = () => vi.mocked(globalThis.fetch).mock.calls.map(([url]) => String(url));
+      expect(urls().some((u) => u.includes("check-ins"))).toBe(false);
+      const asked = await loadWorkspacePicture(args(), { includeCheckIns: true });
+      expect(asked.latestCheckInMonth).toBe("2026-10");
+    });
+
+    it("turns a failed read into a route error", async () => {
+      globalThis.fetch = vi
+        .fn()
+        .mockImplementation((url: string) =>
+          Promise.resolve(
+            url.includes("/v1/budget-entries")
+              ? new Response("boom", { status: 500 })
+              : url.includes("/v1/user-profile")
+                ? jsonResponse(profileFixture)
+                : jsonResponse([]),
+          ),
+        );
+      const err = await loadWorkspacePicture(args()).catch((e) => e);
+      expect(err.init.status).toBe(502);
+      expect(err.data.endpoint).toBe("/budget-entries");
+    });
+  });
 });
 
 describe("signed client IP on backend calls (BE-07, M9)", () => {
