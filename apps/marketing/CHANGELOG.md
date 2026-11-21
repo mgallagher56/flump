@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.38.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.37.0...flump/marketing-v1.38.0) (2026-11-21)
+
+
+### Features ✨
+
+* **marketing:** alternate bands with a soft brand-teal tint (owner choice A) ([7eb3650](https://github.com/mgallagher56/flump/commit/7eb3650f97ed90ec46d0c39d966eb58878d96cf8))
+
+
+### Bug Fixes 🪲
+
+* **marketing:** alternate every page's bands and address review findings ([04c7b4c](https://github.com/mgallagher56/flump/commit/04c7b4c438aad1ccaf9bb890aa2a5931390a2509))
+* **marketing:** neutral section bands and larger spot illustrations ([b319e8e](https://github.com/mgallagher56/flump/commit/b319e8e60b7101bc98177eab8a019b7f8e9708cf))
+
 ## [1.37.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.36.4...flump/marketing-v1.37.0) (2026-11-20)
 
 

@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.50.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.49.0...flump/web-v1.50.0) (2026-11-21)
+
+
+### Features ✨
+
+* **test:** Stryker configs for apps/web and packages/ui; M5 reinstated (E41 M5) ([98c6b2c](https://github.com/mgallagher56/flump/commit/98c6b2ccead4e00bc7e93cc61419ce178e2f4990))
+
+
+### Tests 🧪
+
+* review fixes for E41 M5 ([219a274](https://github.com/mgallagher56/flump/commit/219a2744662aa44fd4f15c49f58c6bf203c03fa2))
+* **web:** kill tests for client IP and invite gate (E41 M5) ([eca96f4](https://github.com/mgallagher56/flump/commit/eca96f41c22fdfdd4f1f1f0a5f0061f41bc7937b))
+* **web:** kill tests for containers budget, debt and accounts (E41 M5) ([47a0428](https://github.com/mgallagher56/flump/commit/47a04285e589b09009d68e6d4c334d84be40f640))
+* **web:** kill tests for savings, take-home and receipt file (E41 M5) ([6c7917f](https://github.com/mgallagher56/flump/commit/6c7917f21101583d9d4cc161eff190da7c48ebf0))
+* **web:** kill tests for the /api proxy (E41 M5) ([e4b60a3](https://github.com/mgallagher56/flump/commit/e4b60a3d687707da9d49c564e3da08255dda93d2))
+* **web:** kill tests for the backend client and smaller services (E41 M5) ([3aca315](https://github.com/mgallagher56/flump/commit/3aca315fa6fdb89da97a8dd42f4285a41321e1ac))
+* **web:** kill tests for the mortgage container (E41 M5) ([e9b5db2](https://github.com/mgallagher56/flump/commit/e9b5db2d0ecdee22c69c133c3c07cf3b2adec18d))
+* **web:** kill tests for the web hooks (E41 M5) ([efff85b](https://github.com/mgallagher56/flump/commit/efff85b840e28a31c26029e03eabb79ff07eee5b))
+* **web:** kill tests for utils, server and state (E41 M5) ([7c2acb5](https://github.com/mgallagher56/flump/commit/7c2acb507727e53514ab7e791c808b30c389cafb))
+* **web:** kill tests for web-containers-c (E41 M5) ([5e98234](https://github.com/mgallagher56/flump/commit/5e982347b5b774245ad2e740ee018fb2422db77c))
+* **web:** kill tests for web-containers-c, last gaps (E41 M5) ([4d6618a](https://github.com/mgallagher56/flump/commit/4d6618ae795ff61b47e930a310f1d02c411e716c))
+* **web:** kill tests for web-containers-c, loader edge cases (E41 M5) ([840177b](https://github.com/mgallagher56/flump/commit/840177baa7062ad3e679e21b7a821c11cf846e08))
+* **web:** kill tests for web-containers-c, root profile region (E41 M5) ([39464c1](https://github.com/mgallagher56/flump/commit/39464c156f77c3f6fdc5c49d29d19a5105e1cd8e))
+* **web:** more kill tests for the budget container (E41 M5) ([c60cfe5](https://github.com/mgallagher56/flump/commit/c60cfe5090228c30c259a149d48475efbd0e51ea))
+* **web:** sample ids from a counter and node:crypto, not Math.random (E41 M5) ([c3743cf](https://github.com/mgallagher56/flump/commit/c3743cfdc86602f18f03589c15fe3f05fbbf435a))
+* **web:** tighten hook kill tests (E41 M5) ([a10aba3](https://github.com/mgallagher56/flump/commit/a10aba32b4499f579015c68f1ed98a8f1054aee7))
+* **web:** type the missing matchMedia stand-in (E41 M5) ([7963579](https://github.com/mgallagher56/flump/commit/79635794565ea5ba4f9b4b66a054332d9a02c1b8))
+* **web:** type the pension fixture and drop a stray ts-nocheck (E41 M5) ([d006487](https://github.com/mgallagher56/flump/commit/d00648700d3ee13b41cccbe6ddf4f90e4ccf9be2))
+
 ## [1.49.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.48.0...flump/web-v1.49.0) (2026-11-20)
 
 
