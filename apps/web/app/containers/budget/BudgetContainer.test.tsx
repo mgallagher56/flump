@@ -1205,14 +1205,23 @@ describe("BudgetContainer behaviour around saved data", () => {
       .fn()
       .mockResolvedValueOnce(new Response(null, { status: 500 }))
       .mockResolvedValue(new Response(null, { status: 204 })) as any;
-    render(<BudgetContainer />);
+    render(
+      <ToastProvider>
+        <BudgetContainer />
+      </ToastProvider>,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete Vet" }));
     fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
     expect(await screen.findByText(/could not delete that entry/)).toBeDefined();
+    // A failed delete is not reported as done.
+    expect(screen.queryByText("Entry deleted")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Delete Vet" }));
     fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
     await waitFor(() => expect(screen.queryByTestId("budget-editor-amount-p-1")).toBeNull());
+    expect(await screen.findByText("Entry deleted")).toBeDefined();
+    // Only that entry goes.
+    expect(screen.getByTestId("budget-editor-amount-b-1")).toBeDefined();
     expect(screen.queryByText(/could not delete that entry/)).toBeNull();
     expect(mockRevalidate).toHaveBeenCalled();
     expect(editorHeadings()).toContain("Pets");
@@ -1244,6 +1253,85 @@ describe("BudgetContainer behaviour around saved data", () => {
     expect(screen.getByTestId("budget-category-pets")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
     expect(editorHeadings()).toContain("Gifts");
+    expect(editorHeadings()).toContain("Pets");
+  });
+
+  it("stops offering common items once a reload brings them all", () => {
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    const { rerender } = render(<BudgetContainer />);
+    expect(screen.getByTestId("add-common-items-btn")).toBeDefined();
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [
+        row({ id: "c-1", name: "Rent", category: "housing" }),
+        row({ id: "c-2", name: "Council tax", category: "bills", amount: 150 }),
+        row({ id: "c-3", name: "Energy", category: "bills", amount: 120 }),
+        row({ id: "c-4", name: "Water", category: "bills", amount: 40 }),
+        row({ id: "c-5", name: "Broadband", category: "bills", amount: 30 }),
+        row({ id: "c-6", name: "Groceries", category: "expenses", amount: 300 }),
+      ],
+    };
+    rerender(<BudgetContainer />);
+    expect(screen.queryByTestId("add-common-items-btn")).toBeNull();
+  });
+
+  it("the editor drops the take-home line once a reload brings an income row of the person's own", () => {
+    mockLoaderData = { ...baseLoaderData, budgetEntries: [groceries], userProfile: salaryProfile };
+    const { rerender } = render(<BudgetContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    expect(screen.getByTestId("budget-editor-name-linked-take-home")).toBeDefined();
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [
+        groceries,
+        row({
+          id: "i",
+          name: "Salary",
+          category: "income",
+          amount: 2000,
+          isIncome: true,
+          isEssential: false,
+        }),
+      ],
+      userProfile: salaryProfile,
+    };
+    rerender(<BudgetContainer />);
+    expect(screen.queryByTestId("budget-editor-name-linked-take-home")).toBeNull();
+  });
+
+  it("a linked saving names the account as it is after a reload", () => {
+    const saver = (name: string) => ({
+      id: "acc-s",
+      name,
+      type: "Saving",
+      balance: 2000,
+      monthlyContribution: 150,
+    });
+    const savingLine = row({
+      id: "ls",
+      name: "Saving",
+      category: "savings",
+      amount: 0,
+      isEssential: false,
+      linkKind: "savings",
+      linkAccountId: "acc-s",
+    });
+    mockLoaderData = {
+      ...baseLoaderData,
+      accounts: [saver("Rainy day saver")],
+      accountDetails: [],
+      budgetEntries: [...withBudget, savingLine],
+    };
+    const { rerender } = render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-category-savings"));
+    expect(screen.getByRole("list", { name: "Savings entries" }).textContent).toContain(
+      "From Rainy day saver",
+    );
+    mockLoaderData = { ...mockLoaderData, accounts: [saver("Holiday pot")] };
+    rerender(<BudgetContainer />);
+    expect(screen.getByRole("list", { name: "Savings entries" }).textContent).toContain(
+      "From Holiday pot",
+    );
   });
 
   it("a budget whose rows all store £0, none linked, is empty", () => {
@@ -1762,6 +1850,36 @@ describe("BudgetContainer behaviour around saved data", () => {
         fireEvent.click(screen.getByRole("button", { name: /Next/ }));
       }
       expect(await screen.findByText(/Rainy day saver/)).toBeDefined();
+    });
+
+    it("the first income entry of a new budget is saved alone, and can be removed", async () => {
+      echoCreates();
+      try {
+        mockLoaderData = { ...baseLoaderData, userProfile: salaryProfile };
+        render(<BudgetContainer />);
+        toIncomeStep();
+        fireEvent.click(await screen.findByRole("button", { name: "Add income entry" }));
+        fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Salary" } });
+        const amount = screen.getByLabelText("Amount a month");
+        fireEvent.focus(amount);
+        fireEvent.change(amount, { target: { value: "2000" } });
+        fireEvent.click(screen.getByRole("button", { name: "Add entry" }));
+        await waitFor(() => expect(posted().length).toBeGreaterThan(0));
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        // A budget with no rows yet gets no take-home line added beside it.
+        expect(posted()).toHaveLength(1);
+        expect(posted()[0]).toMatchObject({ name: "Salary", isIncome: true });
+
+        fireEvent.click(await screen.findByRole("button", { name: "Remove Salary" }));
+        fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
+        await waitFor(() =>
+          expect(vi.mocked(apiFetch).mock.calls.some(([, init]) => init?.method === "DELETE")).toBe(
+            true,
+          ),
+        );
+      } finally {
+        await restoreApiFetch();
+      }
     });
   });
 });
