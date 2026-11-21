@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.38.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.38.0...flump/marketing-v1.38.1) (2026-11-21)
+
+
+### Miscellaneous 🙃
+
+* **storybook:** align 13 story titles with numbered sidebar groups ([c240c42](https://github.com/mgallagher56/flump/commit/c240c42e5c546e449a586251cf36637c6495441f))
+
 ## [1.38.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.37.0...flump/marketing-v1.38.0) (2026-11-21)
 
 

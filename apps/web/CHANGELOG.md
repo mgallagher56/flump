@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.50.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.50.0...flump/web-v1.50.1) (2026-11-21)
+
+
+### Bug Fixes 🪲
+
+* **ui:** resolve remaining design-token violations and refresh E22/E9 status ([afc1202](https://github.com/mgallagher56/flump/commit/afc1202c4002187e3d4358540f20f44736398fe0))
+
+
+### Miscellaneous 🙃
+
+* bundle handoff small follow-ups ([96e4ee3](https://github.com/mgallagher56/flump/commit/96e4ee30ef0a8a5a0b8de30c445c5d4f16e053b6))
+* **storybook:** align 13 story titles with numbered sidebar groups ([c240c42](https://github.com/mgallagher56/flump/commit/c240c42e5c546e449a586251cf36637c6495441f))
+
 ## [1.50.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.49.0...flump/web-v1.50.0) (2026-11-21)
 
 
