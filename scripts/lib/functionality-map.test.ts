@@ -237,6 +237,28 @@ sections:
     ]);
   });
 
+  test("rejects non-array facts_read, facts_written, and figures_shown as malformed", () => {
+    const nonArrayYaml = VALID_PAGE_YAML.replace(
+      "facts_read: [retirement-plan]",
+      "facts_read: retirement-plan",
+    )
+      .replace("figures_shown: [retirement-income]", "figures_shown: retirement-income")
+      .replace("facts_written: [retirement-plan]", "facts_written: retirement-plan");
+    const problems = validateFunctionalityMap({
+      index: { version: 1, excluded_routes: [] },
+      pages: [makePageEntry(nonArrayYaml)],
+      repo: makeRepo(),
+      valueMap,
+      discoveredRoutes: ["apps/web/app/routes/app.retirement.tsx"],
+    });
+    const malformed = problems.filter((p) => p.rule === FM_RULES.malformed);
+    expect(malformed.map((m) => m.subject)).toEqual([
+      "web/retirement.hero.view-income.facts_read",
+      "web/retirement.hero.view-income.figures_shown",
+      "web/retirement.plan-details.save-plan.facts_written",
+    ]);
+  });
+
   test("warns on unmapped routes when unmapped_allowlist exists, errors when removed", () => {
     const discovered = [
       "apps/web/app/routes/app.retirement.tsx",
