@@ -1,7 +1,7 @@
 import { countFigures, expectPageRules } from "@repo/ui/testing";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue({});
 const mockRevalidate = vi.fn();
@@ -1102,5 +1102,666 @@ describe("BudgetContainer", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("BudgetContainer behaviour around saved data", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLoaderData = baseLoaderData;
+    mockSearchParams = new URLSearchParams();
+    vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
+    global.fetch = vi.fn().mockResolvedValue(new Response("[]", { status: 200 })) as any;
+  });
+
+  const salaryProfile = {
+    ...baseLoaderData.userProfile,
+    annualSalary: 30000,
+    employmentType: "employed",
+    pensionPercent: 5,
+    isSalarySacrifice: false,
+    taxRegion: "ENGLAND",
+    studentLoanPlans: [],
+  };
+  const groceries = row({
+    id: "g",
+    name: "Groceries",
+    category: "expenses",
+    amount: 300,
+    isEssential: true,
+  });
+  /** Each POST answers with the row it was sent, so the page holds what was saved. */
+  const echoCreates = () =>
+    vi
+      .mocked(apiFetch)
+      .mockImplementation((async (url: string, init?: { body?: unknown }) =>
+        row({ id: `new-${url}-${Math.random()}`, ...(init?.body as object) })) as never);
+  const posted = () =>
+    vi
+      .mocked(apiFetch)
+      .mock.calls.filter(([url, init]) => url === "/budget-entries" && init?.method === "POST")
+      .map(([, init]) => init?.body as Record<string, unknown>);
+  const addInEditor = (slug: string, name: string, amount: string) => {
+    fireEvent.click(screen.getByTestId(`budget-editor-open-add-${slug}`));
+    fireEvent.change(screen.getByTestId(`budget-editor-new-name-${slug}`), {
+      target: { value: name },
+    });
+    const field = screen.getByTestId(`budget-editor-new-amount-${slug}`);
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: amount } });
+    fireEvent.click(screen.getByTestId(`budget-editor-add-${slug}`));
+  };
+  const editAmount = (id: string, value: string) => {
+    const amount = screen.getByTestId(`budget-editor-amount-${id}`);
+    fireEvent.focus(amount);
+    fireEvent.change(amount, { target: { value } });
+    fireEvent.blur(amount);
+  };
+  const editorHeadings = () =>
+    within(screen.getByTestId("budget-editor"))
+      .getAllByRole("heading", { level: 3 })
+      .map((h) => h.textContent);
+  const restoreApiFetch = async () => {
+    const actual =
+      await vi.importActual<typeof import("~/services/api-client")>("~/services/api-client");
+    vi.mocked(apiFetch).mockImplementation(actual.apiFetch as never);
+  };
+
+  it("renders a budget from loader data that has only the entries", () => {
+    mockLoaderData = { budgetEntries: withBudget };
+    render(<BudgetContainer />);
+    expect(screen.getByRole("region", { name: "Breathing room" })).toBeDefined();
+    fireEvent.click(screen.getByTestId("budget-category-housing"));
+    expect(screen.getByTestId("housing-details")).toBeDefined();
+  });
+
+  it("a profile with no custom categories gives the standard editor sections only", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: withBudget,
+      userProfile: { monthlyTakeHome: 3500, customBudgetCategories: [] },
+    };
+    const { unmount } = render(<BudgetContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    const withEmptyList = editorHeadings();
+    unmount();
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: withBudget,
+      userProfile: { monthlyTakeHome: 3500 },
+    };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    expect(editorHeadings()).toEqual(withEmptyList);
+  });
+
+  it("a category that only an entry names stays, removable, once its last entry is deleted", async () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [...withBudget, row({ id: "p-1", name: "Vet", category: "pets", amount: 20 })],
+    };
+    // The first delete fails; the second answers 204 with no body.
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 500 }))
+      .mockResolvedValue(new Response(null, { status: 204 })) as any;
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Vet" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
+    expect(await screen.findByText(/could not delete that entry/)).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Delete Vet" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
+    await waitFor(() => expect(screen.queryByTestId("budget-editor-amount-p-1")).toBeNull());
+    expect(screen.queryByText(/could not delete that entry/)).toBeNull();
+    expect(mockRevalidate).toHaveBeenCalled();
+    expect(editorHeadings()).toContain("Pets");
+    fireEvent.click(screen.getByRole("button", { name: "Remove pets" }));
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith({
+        customBudgetCategories: ["subscriptions"],
+      }),
+    );
+    await waitFor(() => expect(editorHeadings()).not.toContain("Pets"));
+  });
+
+  it("follows reloaded loader data: new entries, new categories, and a first budget", () => {
+    const { rerender } = render(<BudgetContainer />);
+    expect(screen.getByText("No budget yet")).toBeDefined();
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    rerender(<BudgetContainer />);
+    expect(screen.queryByText("No budget yet")).toBeNull();
+    expect(screen.queryByTestId("budget-category-pets")).toBeNull();
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [...withBudget, row({ id: "p-1", name: "Vet", category: "pets", amount: 20 })],
+      userProfile: {
+        ...baseLoaderData.userProfile,
+        customBudgetCategories: ["subscriptions", "gifts"],
+      },
+    };
+    rerender(<BudgetContainer />);
+    expect(screen.getByTestId("budget-category-pets")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    expect(editorHeadings()).toContain("Gifts");
+  });
+
+  it("a budget whose rows all store £0, none linked, is empty", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [
+        row({ id: "z-1", amount: 0 }),
+        row({ id: "z-2", name: "Food", category: "expenses", amount: 0 }),
+      ],
+    };
+    render(<BudgetContainer />);
+    expect(screen.getByText("No budget yet")).toBeDefined();
+  });
+
+  it("one linked row among £0 rows makes a budget", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [
+        row({ id: "z-1", name: "Food", category: "expenses", amount: 0 }),
+        row({ id: "lh", name: "Rent", category: "housing", amount: 0, linkKind: "housing" }),
+      ],
+      userProfile: {
+        ...baseLoaderData.userProfile,
+        housingStatus: "renting",
+        monthlyHousingCost: 900,
+      },
+    };
+    render(<BudgetContainer />);
+    expect(screen.queryByText("No budget yet")).toBeNull();
+  });
+
+  it("marks the months-of-cover step once, however many what-if changes follow", () => {
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    render(<BudgetContainer />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show what-if: redundancy pay, a spending cut" }),
+    );
+    const outcome = () => document.getElementById("runway-outcome")?.textContent ?? "";
+    const before = outcome();
+    const lump = screen.getByLabelText("Redundancy pay or lump sum") as HTMLInputElement;
+    fireEvent.change(lump, { target: { value: "9000" } });
+    fireEvent.change(lump, { target: { value: "8000" } });
+    expect(mockMarkChecklistStep.mock.calls.filter(([step]) => step === "runway")).toEqual([
+      ["runway", true],
+    ]);
+    expect(lump.value.replace(/,/g, "")).toBe("8000");
+    // £8,000 more to draw on lasts longer, so the illustration changes.
+    expect(outcome()).not.toBe(before);
+    // The what-if is kept for the visit: it is still there after editing the budget.
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Finish editing" })[0] as HTMLElement);
+    const toggle = screen.queryByRole("button", {
+      name: "Show what-if: redundancy pay, a spending cut",
+    });
+    if (toggle) fireEvent.click(toggle);
+    expect(
+      (screen.getByLabelText("Redundancy pay or lump sum") as HTMLInputElement).value.replace(
+        /,/g,
+        "",
+      ),
+    ).toBe("8000");
+  });
+
+  it("clears the old saved months-of-cover preference from the browser", () => {
+    localStorage.setItem("flump_runway_calculator_settings", '{"accounts":[]}');
+    render(<BudgetContainer />);
+    expect(localStorage.getItem("flump_runway_calculator_settings")).toBeNull();
+  });
+
+  it("a saved rent shows at once and keeps the rest of the profile's figures", async () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [groceries],
+      userProfile: { ...salaryProfile, housingStatus: "renting", monthlyHousingCost: 1200 },
+    };
+    render(<BudgetContainer />);
+    const moneyIn = () => {
+      let card: HTMLElement | null = screen.getByText("Money in each month");
+      while (card && !card.textContent?.includes("£")) card = card.parentElement;
+      return card?.textContent ?? "";
+    };
+    const before = moneyIn();
+    fireEvent.click(screen.getByTestId("budget-category-housing"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit your rent" }));
+    fireEvent.change(await screen.findByLabelText("Rent each month"), {
+      target: { value: "950" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("budget-category-housing").textContent).toContain("£950"),
+    );
+    // The take-home from the salary is still counted.
+    expect(moneyIn()).toBe(before);
+  });
+
+  it("opening the housing row shows the saved rent", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: withBudget,
+      userProfile: {
+        ...baseLoaderData.userProfile,
+        housingStatus: "renting",
+        monthlyHousingCost: 1250,
+      },
+    };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-category-housing"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit your rent" }));
+    const field = screen.getByLabelText("Rent each month") as HTMLInputElement;
+    expect(field.value.replace(/,/g, "")).toBe("1250");
+  });
+
+  it("an opened category lists its own entries, each with its figure, and no housing details", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [
+        ...withBudget,
+        row({ id: "b-4", name: "Cinema", category: "expenses", amount: 40, isEssential: false }),
+      ],
+    };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-category-expenses"));
+    const list = screen.getByRole("list", { name: "Expenses entries" });
+    expect(within(list).getByText("Eating out")).toBeDefined();
+    expect(within(list).getByText("£300")).toBeDefined();
+    expect(within(list).getByText("£40")).toBeDefined();
+    expect(within(list).queryByText("Mortgage")).toBeNull();
+    expect(within(list).queryByText("Salary")).toBeNull();
+    expect(screen.queryByTestId("housing-details")).toBeNull();
+  });
+
+  it("an opened category with one entry shows its name only, as the row has its figure", () => {
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-category-housing"));
+    const list = screen.getByRole("list", { name: "Housing entries" });
+    expect(within(list).getByText("Mortgage")).toBeDefined();
+    expect(within(list).queryByText("£1,200")).toBeNull();
+    expect(within(list).queryByText("Eating out")).toBeNull();
+  });
+
+  it("a linked rent with no saved rent says Not set in the opened row", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [
+        groceries,
+        row({ id: "lh", name: "Rent", category: "housing", amount: 0, linkKind: "housing" }),
+        row({ id: "x", name: "Water", category: "housing", amount: 30 }),
+      ],
+      userProfile: { ...baseLoaderData.userProfile, housingStatus: "renting" },
+    };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-category-housing"));
+    const list = screen.getByRole("list", { name: "Housing entries" });
+    expect(within(list).getByText("Rent")).toBeDefined();
+    expect(within(list).getByText("Not set")).toBeDefined();
+  });
+
+  it("only the housing row links to the mortgage page or names the tenure", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: withBudget,
+      userProfile: {
+        ...baseLoaderData.userProfile,
+        housingStatus: "mortgage",
+        monthlyHousingCost: 1200,
+      },
+    };
+    const { unmount } = render(<BudgetContainer />);
+    expect(screen.getByTestId("budget-category-expenses").tagName).not.toBe("A");
+    unmount();
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: withBudget,
+      userProfile: {
+        ...baseLoaderData.userProfile,
+        housingStatus: "renting",
+        monthlyHousingCost: 1200,
+      },
+    };
+    render(<BudgetContainer />);
+    expect(
+      within(screen.getByTestId("budget-category-housing")).getByText("Renting"),
+    ).toBeDefined();
+    expect(
+      within(screen.getByTestId("budget-category-expenses")).queryByText("Renting"),
+    ).toBeNull();
+  });
+
+  it("Breathing room shows on the saved budget only: not while editing, not when empty", () => {
+    const { unmount } = render(<BudgetContainer />);
+    expect(screen.queryByRole("region", { name: "Breathing room" })).toBeNull();
+    unmount();
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    render(<BudgetContainer />);
+    expect(screen.getByRole("region", { name: "Breathing room" })).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+    expect(screen.queryByRole("region", { name: "Breathing room" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Show what-if: redundancy pay, a spending cut" }),
+    ).toBeNull();
+  });
+
+  it("the header offers no second way into the wizard while it is open", () => {
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("add-common-items-btn"));
+    expect(screen.queryByTestId("add-common-items-btn")).toBeNull();
+  });
+
+  it("Replace one of your entries instead opens the editor", () => {
+    mockLoaderData = {
+      ...baseLoaderData,
+      budgetEntries: [
+        groceries,
+        row({ id: "old-rent", name: "Rent", category: "housing", amount: 0 }),
+      ],
+      userProfile: {
+        ...baseLoaderData.userProfile,
+        housingStatus: "renting",
+        monthlyHousingCost: 900,
+      },
+    };
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-link-notice-choose"));
+    expect(screen.getByTestId("budget-editor")).toBeDefined();
+  });
+
+  it("switching an entry's Essential flag says Saved", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce(
+      row({ id: "b-3", name: "Eating out", category: "expenses", amount: 300, isEssential: true }),
+    );
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    render(
+      <ToastProvider>
+        <BudgetContainer />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /What Breathing room counts/ }));
+    fireEvent.click(screen.getByRole("switch", { name: /Eating out/ }));
+    expect(await screen.findByText("Saved")).toBeDefined();
+  });
+
+  it("?setup=common arriving on the open page opens the wizard", () => {
+    mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+    const { rerender } = render(<BudgetContainer />);
+    expect(screen.queryByText(/Step 1 of/)).toBeNull();
+    mockSearchParams = new URLSearchParams("setup=common");
+    rerender(<BudgetContainer />);
+    expect(screen.getByText(/Step 1 of/)).toBeDefined();
+  });
+
+  describe("adding entries in the editor", () => {
+    afterEach(restoreApiFetch);
+
+    it("the take-home line saved before an income entry is named, filed and counted as essential", async () => {
+      echoCreates();
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: [groceries],
+        userProfile: salaryProfile,
+      };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      addInEditor("income", "Child benefit", "100");
+      await waitFor(() => expect(posted()).toHaveLength(2));
+      expect(posted()[0]).toMatchObject({
+        category: "income",
+        name: "Take-home pay",
+        isIncome: true,
+        isEssential: true,
+        linkKind: "take_home",
+      });
+      expect(mockRevalidate).toHaveBeenCalled();
+    });
+
+    it("the household contribution line keeps its own name", async () => {
+      echoCreates();
+      mockLoaderData = {
+        ...baseLoaderData,
+        budgetEntries: [groceries],
+        userProfile: {
+          ...baseLoaderData.userProfile,
+          housingStatus: "living_with_family",
+          monthlyHousingCost: 200,
+        },
+      };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      addInEditor("housing", "Contents insurance", "10");
+      await waitFor(() => expect(posted()).toHaveLength(2));
+      expect(posted()[0]).toMatchObject({
+        category: "housing",
+        name: "Household contribution",
+        linkKind: "housing",
+      });
+    });
+
+    const addsOnlyTheEntry = async (
+      budgetEntries: unknown[],
+      userProfile: unknown,
+      slug: string,
+      name: string,
+    ) => {
+      echoCreates();
+      mockLoaderData = { ...baseLoaderData, budgetEntries, userProfile };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      addInEditor(slug, name, "25");
+      await waitFor(() => expect(posted().length).toBeGreaterThan(0));
+      // Let any second save land before counting.
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(posted()).toHaveLength(1);
+      expect(posted()[0]).toMatchObject({ name, amount: 25 });
+    };
+    const income = row({
+      id: "i",
+      name: "Salary",
+      category: "income",
+      amount: 2000,
+      isIncome: true,
+      isEssential: false,
+    });
+    const rentRow = row({ id: "r", name: "Rent", category: "housing", amount: 900 });
+    const renting = { ...salaryProfile, housingStatus: "renting", monthlyHousingCost: 900 };
+
+    it("a housing entry beside an existing housing row adds no rent line", () =>
+      addsOnlyTheEntry([groceries, rentRow], renting, "housing", "Insurance"));
+
+    it("a spending entry outside Housing adds no rent line", () =>
+      addsOnlyTheEntry(
+        [groceries],
+        { ...baseLoaderData.userProfile, housingStatus: "renting", monthlyHousingCost: 900 },
+        "expenses",
+        "Gym",
+      ));
+
+    it("an income entry beside an existing income row adds no take-home or rent line", () =>
+      addsOnlyTheEntry([groceries, income], renting, "income", "Bonus"));
+
+    it("an income entry with no salary saved adds no take-home line", () =>
+      addsOnlyTheEntry([groceries], { monthlyTakeHome: null }, "income", "Bonus"));
+
+    it("a failed add says so, and the next good add clears the message", async () => {
+      vi.mocked(apiFetch).mockRejectedValueOnce(new Error("offline"));
+      mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      addInEditor("expenses", "Gym", "25");
+      expect((await screen.findByRole("alert")).textContent).toMatch(
+        /could not add that entry\. Nothing has changed/,
+      );
+      echoCreates();
+      // The add row stays open with what was typed, so the same add is tried again.
+      fireEvent.click(screen.getByTestId("budget-editor-add-expenses"));
+      await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    });
+  });
+
+  describe("saving changes to entries", () => {
+    afterEach(restoreApiFetch);
+
+    it("sends the version of the entry being changed", async () => {
+      const read = withBudget.map((r, i) => ({
+        ...r,
+        updatedAt: `2026-06-0${i + 1}T08:00:00.000Z`,
+      }));
+      mockLoaderData = { ...baseLoaderData, budgetEntries: read };
+      vi.mocked(apiFetch).mockResolvedValueOnce({ ...read[2], amount: 350 } as never);
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      editAmount("b-3", "350");
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith(
+          "/budget-entries/b-3",
+          expect.objectContaining({ method: "PATCH", ifMatch: '"2026-06-03T08:00:00.000Z"' }),
+        ),
+      );
+      await waitFor(() => expect(mockRevalidate).toHaveBeenCalled());
+    });
+
+    it("a failed save that is not a conflict says so without reloading, and the next save clears it", async () => {
+      mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+      vi.mocked(apiFetch).mockRejectedValueOnce(
+        new BackendError(kindFromStatus(500), "/budget-entries/b-3", 500),
+      );
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      editAmount("b-3", "350");
+      expect((await screen.findByRole("alert")).textContent).toMatch(
+        /could not save your changes\. Nothing has changed/,
+      );
+      expect(apiFetchAll).not.toHaveBeenCalled();
+      vi.mocked(apiFetch).mockResolvedValueOnce({ ...withBudget[2], amount: 360 } as never);
+      editAmount("b-3", "360");
+      await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    });
+  });
+
+  describe("adding a category", () => {
+    afterEach(restoreApiFetch);
+
+    const addCategory = (name: string) => {
+      fireEvent.click(screen.getByRole("button", { name: "Edit budget" }));
+      fireEvent.click(screen.getByTestId("budget-editor-add-category-btn"));
+      fireEvent.change(screen.getByTestId("new-category-name-input"), { target: { value: name } });
+      fireEvent.click(screen.getByTestId("save-new-category-btn"));
+    };
+
+    it("saves the name trimmed and in lower case, and keeps the server's list on the profile", async () => {
+      vi.mocked(apiFetch).mockResolvedValueOnce({
+        categories: ["subscriptions", "holidays", "gifts"],
+      } as never);
+      mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+      render(<BudgetContainer />);
+      addCategory("  Holidays ");
+      await waitFor(() =>
+        expect(apiFetch).toHaveBeenCalledWith(
+          "/budget-entries/categories",
+          expect.objectContaining({ method: "POST", body: { category: "holidays" } }),
+        ),
+      );
+      await waitFor(() =>
+        expect(mockUpdateProfile).toHaveBeenCalledWith({
+          customBudgetCategories: ["subscriptions", "holidays", "gifts"],
+        }),
+      );
+    });
+
+    it("says so when the profile cannot be saved, and a later save clears it", async () => {
+      vi.mocked(apiFetch).mockResolvedValue({ categories: null } as never);
+      mockUpdateProfile.mockRejectedValueOnce(new Error("offline"));
+      mockLoaderData = { ...baseLoaderData, budgetEntries: withBudget };
+      render(<BudgetContainer />);
+      addCategory("Holidays");
+      expect((await screen.findByRole("alert")).textContent).toMatch(
+        /could not save your new category/,
+      );
+      // The local list is kept when the server gives none back.
+      expect(mockUpdateProfile).toHaveBeenCalledWith({
+        customBudgetCategories: ["subscriptions", "holidays"],
+      });
+      fireEvent.click(screen.getByTestId("budget-editor-add-category-btn"));
+      fireEvent.change(screen.getByTestId("new-category-name-input"), {
+        target: { value: "Gifts" },
+      });
+      fireEvent.click(screen.getByTestId("save-new-category-btn"));
+      // By text: the page alert is hidden from the role query while the modal is open.
+      await waitFor(() =>
+        expect(screen.queryByText(/could not save your new category/)).toBeNull(),
+      );
+    });
+  });
+
+  describe("the setup wizard", () => {
+    const toIncomeStep = () => {
+      // Welcome, then the start choice, then income.
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      fireEvent.click(screen.getByRole("button", { name: /Next/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Start blank" }));
+    };
+
+    it("finishing setup marks the budget step and returns to the page", async () => {
+      render(<BudgetContainer />);
+      fireEvent.click(screen.getByTestId("add-suggested-defaults-btn"));
+      for (let i = 0; i < 12; i += 1) {
+        const finish = screen.queryByRole("button", { name: /Finish setup/ });
+        if (finish) {
+          fireEvent.click(finish);
+          break;
+        }
+        fireEvent.click(screen.getByRole("button", { name: /Next/ }));
+        await waitFor(() =>
+          expect(screen.getByRole("button", { name: /Next|Finish setup/ })).toBeDefined(),
+        );
+      }
+      await waitFor(() => expect(mockMarkChecklistStep).toHaveBeenCalledWith("budget", true));
+      await waitFor(() => expect(screen.queryByText(/Step \d of/)).toBeNull());
+    });
+
+    it("the income step shows the take-home from the salary, with nothing after its last sentence", () => {
+      mockLoaderData = { ...baseLoaderData, userProfile: salaryProfile };
+      render(<BudgetContainer />);
+      toIncomeStep();
+      const callout = screen.getByTestId("wizard-linked-take-home");
+      expect(callout.textContent).toMatch(/Your take-home pay of £[\d,]+/);
+      expect(callout.textContent?.trim()).toMatch(/\.$/);
+    });
+
+    it("the income step has no take-home figure without a salary", () => {
+      mockLoaderData = { ...baseLoaderData, userProfile: { customBudgetCategories: [] } };
+      render(<BudgetContainer />);
+      toIncomeStep();
+      expect(screen.queryByTestId("wizard-linked-take-home")).toBeNull();
+    });
+
+    it("the savings step offers a saved account's monthly saving", async () => {
+      mockLoaderData = {
+        ...baseLoaderData,
+        accounts: [
+          {
+            id: "acc-s",
+            name: "Rainy day saver",
+            type: "Saving",
+            balance: 2000,
+            monthlyContribution: 150,
+          },
+        ],
+        accountDetails: [],
+      };
+      render(<BudgetContainer />);
+      toIncomeStep();
+      // Income, housing, bills and expenses come before savings.
+      for (let i = 0; i < 4; i += 1) {
+        await waitFor(() => expect(screen.getByRole("button", { name: /Next/ })).toBeDefined());
+        fireEvent.click(screen.getByRole("button", { name: /Next/ }));
+      }
+      expect(await screen.findByText(/Rainy day saver/)).toBeDefined();
+    });
   });
 });
