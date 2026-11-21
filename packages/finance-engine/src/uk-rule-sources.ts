@@ -236,6 +236,20 @@ export const UK_STATE_PENSION_RULE_SOURCES = {
   ),
 } as const;
 
+/**
+ * Primary sources for UK residential property transaction taxes (E39 S1b, MA7):
+ * - England & Northern Ireland SDLT: GOV.UK residential property rates (from 1 April 2025)
+ * - Scotland LBTT: Revenue Scotland residential property rates and first-time buyer relief
+ * - Wales LTT: Welsh Revenue Authority / GOV.WALES main residential rates (from 10 October 2022)
+ */
+export const UK_PROPERTY_TRANSACTION_TAX_SOURCES = {
+  sdlt: verified("https://www.gov.uk/stamp-duty-land-tax/residential-property-rates"),
+  lbtt: verified(
+    "https://www.revenue.scot/taxes/land-buildings-transaction-tax/residential-property",
+  ),
+  ltt: verified("https://www.gov.wales/land-transaction-tax-rates-and-bands"),
+} as const satisfies Record<"sdlt" | "lbtt" | "ltt", UkRuleSource>;
+
 function buildYear(year: UkTaxYear): UkRuleSources {
   const employer = employerPage(year);
   const is2026 = year === "2026/27";
