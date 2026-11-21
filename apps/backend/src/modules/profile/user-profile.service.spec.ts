@@ -13,6 +13,7 @@ describe("UserProfileService (Deep Module)", () => {
   let mockAccountRepo: { find: Mock; delete: Mock };
   let mockTransactionRepo: DeleteRepo;
   let mockAccountDetailRepo: DeleteRepo;
+  let mockAccountGoalRepo: DeleteRepo;
   let mockBankConnectionRepo: DeleteRepo & { find?: Mock };
   let mockBudgetEntryRepo: DeleteRepo;
   let mockTaxRecordRepo: DeleteRepo;
@@ -65,6 +66,9 @@ describe("UserProfileService (Deep Module)", () => {
     mockAccountDetailRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 2 }),
     };
+    mockAccountGoalRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 1 }),
+    };
     mockBankConnectionRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 1 }),
     };
@@ -110,6 +114,7 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "Account") return mockAccountRepo;
             if (entityClass.name === "Transaction") return mockTransactionRepo;
             if (entityClass.name === "AccountDetail") return mockAccountDetailRepo;
+            if (entityClass.name === "AccountGoal") return mockAccountGoalRepo;
             if (entityClass.name === "BankConnection") return mockBankConnectionRepo;
             if (entityClass.name === "BudgetEntry") return mockBudgetEntryRepo;
             if (entityClass.name === "TaxRecord") return mockTaxRecordRepo;
@@ -153,6 +158,7 @@ describe("UserProfileService (Deep Module)", () => {
     expect(mockBudgetEntryRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockTaxRecordRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockAccountDetailRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
+    expect(mockAccountGoalRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockCheckinRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockImportRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     // M-PRIV1: MCP tokens are revoked (deleted).

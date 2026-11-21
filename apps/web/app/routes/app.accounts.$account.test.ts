@@ -25,13 +25,14 @@ async function run() {
   return res.data;
 }
 
-/** Answers the account and the profile; `profile` is a value or an Error to reject with. */
-const respond = (profile: unknown) =>
-  backendFetch.mockImplementation(async (endpoint: string) => {
+/** Answers the account, goal and the profile; `profile` is a value or an Error to reject with. */
+const respond = (profile: unknown, goal: unknown = { goal: null }) =>
+  backendFetch.mockImplementation(async (endpoint: unknown) => {
     if (endpoint === "/user-profile") {
       if (profile instanceof Error) throw profile;
       return profile;
     }
+    if (typeof endpoint === "string" && endpoint.endsWith("/goal")) return goal;
     return account;
   });
 
@@ -49,10 +50,11 @@ describe("app.accounts.$account loader", () => {
   ] as const)(
     "shows a missing account as not found when the backend answers %s (%i, P18)",
     async (kind, status) => {
-      // The account first, then the profile (the loader asks for both at once).
+      // The account, profile, and goal are fetched together.
       backendFetch
         .mockRejectedValueOnce(new BackendError(kind, "/accounts/a1", status))
-        .mockResolvedValueOnce({});
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({ goal: null });
       const thrown = await loader(args).then(
         () => null,
         (e: unknown) => e as { init: { status: number }; data: { kind: string } },
@@ -67,7 +69,8 @@ describe("app.accounts.$account loader", () => {
     async (status) => {
       backendFetch
         .mockRejectedValueOnce(new BackendError("client", "/accounts/a1", status))
-        .mockResolvedValueOnce({});
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({ goal: null });
       const thrown = await loader(args).then(
         () => null,
         (e: unknown) => e as { init: { status: number }; data: { kind: string; endpoint: string } },
@@ -95,8 +98,12 @@ describe("app.accounts.$account loader", () => {
   it("lists the user's accounts for a mortgage, so its form can offer the property link", async () => {
     const mortgage = { ...account, type: "Mortgage", name: "Mortgage", balance: -200000 };
     const home = { id: "h1", name: "Home", type: "Property", balance: 300000 };
-    backendFetch.mockImplementation(async (endpoint: string) =>
-      endpoint === "/user-profile" ? {} : mortgage,
+    backendFetch.mockImplementation(async (endpoint: unknown) =>
+      endpoint === "/user-profile"
+        ? {}
+        : typeof endpoint === "string" && endpoint.endsWith("/goal")
+          ? { goal: null }
+          : mortgage,
     );
     backendFetchAll.mockReset();
     backendFetchAll.mockResolvedValue([mortgage, home]);
@@ -105,8 +112,12 @@ describe("app.accounts.$account loader", () => {
 
   it("leaves the list empty when it cannot be read, and still loads the mortgage", async () => {
     const mortgage = { ...account, type: "Mortgage" };
-    backendFetch.mockImplementation(async (endpoint: string) =>
-      endpoint === "/user-profile" ? {} : mortgage,
+    backendFetch.mockImplementation(async (endpoint: unknown) =>
+      endpoint === "/user-profile"
+        ? {}
+        : typeof endpoint === "string" && endpoint.endsWith("/goal")
+          ? { goal: null }
+          : mortgage,
     );
     backendFetchAll.mockReset();
     backendFetchAll.mockRejectedValue(new Error("list down"));
@@ -208,5 +219,37 @@ describe("app.accounts.$account action", () => {
     expect(res).not.toBeInstanceOf(Response);
     expect(res.data.success).toBe(false);
     expect(res.init.status).toBe(500);
+  });
+
+  it("upserts an account goal with If-Match", async () => {
+    const res = (await post({
+      intent: "upsert-goal",
+      accountId: "a1",
+      targetAmount: "500",
+      targetDate: "2027-06-01",
+      label: "Buffer",
+      version: "2026-11-01T00:00:00.000Z",
+    })) as unknown as { data: unknown };
+    expect(res.data).toEqual({ success: true });
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/accounts/a1/goal",
+      expect.objectContaining({
+        method: "PUT",
+        accessToken: "token",
+        ifMatch: '"2026-11-01T00:00:00.000Z"',
+        body: { targetAmount: 500, targetDate: "2027-06-01", label: "Buffer" },
+      }),
+    );
+  });
+
+  it("deletes an account goal", async () => {
+    const res = (await post({ intent: "delete-goal", accountId: "a1" })) as unknown as {
+      data: unknown;
+    };
+    expect(res.data).toEqual({ success: true });
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/accounts/a1/goal",
+      expect.objectContaining({ method: "DELETE", accessToken: "token" }),
+    );
   });
 });
