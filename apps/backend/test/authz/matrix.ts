@@ -103,6 +103,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "POST /invoices/:id/issue": invoicing,
   "POST /invoices/:id/mark-paid": invoicing,
   "POST /invoices/:id/void": invoicing,
+  "POST /invoices/:id/sync-to-tax": invoicing,
 
   // User-profile controller (E20-N23).
   "GET /user-profile": userProfile,
