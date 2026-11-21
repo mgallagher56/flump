@@ -17,7 +17,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 1 | E19 | Account deletion including the WorkOS user, and JSON data export | Done (BE-04, #668); export writes an audit row first (BE-15, #725). Until the owner sets `DELETION_TOMBSTONE_KEY`, deletion returns 503 and changes nothing |
 | 2 | E19 | Pages for the privacy policy, terms, cookie position and accessibility statement (text from owner and legal) | Not started |
 | 3 | E11 F-11, E23 | E2E test of the new-user journey: sign up, onboarding, add account, budget entry | Done (#701) |
-| 4 | E20 | Enforce the full web CSP (report-only since #603) | Partly |
+| 4 | E20 | Enforce the full web CSP (report-only since #603) | Done: enforced on `main` (`apps/web/app/security/csp.server.ts`, guarded by BE-07; `CSP_REPORT_ONLY=true` is rollback-only) |
 | 5 | E18 | A production environment separate from staging, so releases go to staging first | Not started |
 | 6 | E23, E4 C-11 | Compute the real estimated tax due (now `null`); verify C-17 | Done (`selectEstimatedTaxDue` feeds the dashboard; C-17 verified: providers throw, never report 0) |
 | 7 | E4 C-10 | A lone bonus record replaces the salary | Done (bfcb776a); one payslip no longer replaces the saved salary either (engine PR) |
@@ -29,7 +29,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 13 | E3 B-04, D-11, N-02 | Foreign keys and indexes; key id for bank tokens; zod env schema | Done in code per the backend re-score: foreign keys (BE-08, #675), indexes proven by a query-plan test, versioned bank token keys (BE-12, #672), `config/env.schema.ts` |
 | 14 | E7 M-09, I-07 | Widen the claims guard; mirror the copy changes in web | Done: the marketing claims guard and the web copy guard now also ban "256-bit", "bank-grade", "GDPR" and "Open Banking"; no source used them |
 | 15 | E2, E1 G-03 | Salary-sacrifice defaults; delete the mock token and fake accounts in the parked mobile app | Mobile part done: `apps/mobile-companion` was deleted (#827). Salary-sacrifice defaults not re-checked |
-| 16 | E15 | Pre-release visual pass | Not started |
+| 16 | E15 | Pre-release visual pass | Done (2026-11-21: checked all 23 web and marketing screens in light and dark at 375 and 1280 px; fixed the Take-home 3-card `KpiStrip` phone layout conflict) |
 | 17 | E9 H-03 | Last 17 design-token violations | Done (2026-11-21: 0 violations remain in `scripts/design-token-baseline.json`) |
 | 18 | E27, E28, E30 v2 | Pension projection epic; MTD decision (before April 2027); snapshot v2 | Not started |
 | 19 | Backend | Re-score follow-ups (backend-2026-11/RESCORE.md): BE-16 conditional writes, BE-17 performance and tests, BE-18 bank launch readiness, SEC-D receipt encryption, SEC-E CI and images, SEC-F audit-trail integrity; SEC-A waits for the owner's variables | Done in code: BE-01 to BE-14; BE-15 with SEC-B (#725); BE-16 (#733); BE-17 with SEC-E (#730); BE-18 (#752); SEC-D (#753); SEC-A and SEC-F (#738). SEC-A makes the keys required at production boot, so the owner's variables must be set before a production deploy |
@@ -622,11 +622,10 @@ Every ticket also requires: a test that fails before the change and passes after
 - **Blocked by:** the E8 web sweeps merge (for any task editing apps/web/app), the E9 adopt-or-relax decision, and the owner's visual direction decision (D1). Phases 0 to 2 (discovery, tokens, ui components) can start now.
 - **Done when:** one chosen visual direction expressed only through `packages/ui` tokens and components; every key screen rebuilt on them and owner-approved in light and dark at 375 and 1280 px; zero axe violations in gated stories; measured improvement against the Phase 0 baseline; visual regression guard and ratchets in CI.
 - **Notes:** Full plan in `plans/E15-plan-draft.md` (written by an Opus planner; about 115 to 145 agent-days, 3.5 to 5 months elapsed with 2 or 3 worktrees, 15 to 20 hours of owner time). Recommends E15 absorbs E9's remaining scope for each screen it touches. Run its discovery together with E16 discovery. E15 Phase 1 token names must be stable before E12 builds screens.
-- **Status (2026-11-14, checked against `origin/main`):** Direction C is chosen and phase 2 components have merged (#605, #610, #612, #630). Phase 3 screens merged: app shell and dashboard (#609), onboarding (#625), debt (#617, #623), pension (#620), mortgage (#621), take-home and tax leftovers (#616), accounts (#628), settings (#627), and error, empty and signed-out surfaces (#636). Shared chrome for marketing and the app merged as #645.
-  - In progress: the phase 8 visual regression guard (#651).
-  - Not started: the pre-release visual pass.
+- **Status (2026-11-21, checked against `origin/main`):** Direction C is chosen and phase 2 components have merged (#605, #610, #612, #630). Phase 3 screens merged: app shell and dashboard (#609), onboarding (#625), debt (#617, #623), pension (#620), mortgage (#621), take-home and tax leftovers (#616), accounts (#628), settings (#627), and error, empty and signed-out surfaces (#636). Shared chrome for marketing and the app merged as #645, and the phase 8 visual regression guard merged as #651.
+  - Done (2026-11-21): the pre-release visual pass across all 23 web and marketing routes in light and dark at 375 and 1280 px (fixed the Take-home 3-card `KpiStrip` phone layout conflict).
   - Owner action: approving the screens at 375 and 1280 px in light and dark.
-  - Overall: partly done.
+  - Overall: code done; waiting on owner screen sign-off.
 - **Labels:** needs-triage until owner decisions D1 to D4; Phase 0 ready-for-agent
 
 ## E16. Product and functionality review: value, journeys, bloat
@@ -705,9 +704,10 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
 
 ## E20. Session and application security hardening
 
-- **Status (2026-11-14, checked against `origin/main`):** mostly done.
+- **Status (2026-11-21, checked against `origin/main`):** done in code.
   - Done:
     - the access token stays on the server (#569, #578);
+    - the full nonce-bearing web CSP is enforced on `main` (`apps/web/app/security/csp.server.ts`, guarded by BE-07; `CSP_REPORT_ONLY=true` is rollback-only), alongside HSTS, X-Frame-Options and `frame-ancestors`;
     - rate limiting (#473, plus the MCP limiter);
     - MCP scopes enforced (#511);
     - receipt MIME validation (#515, #555);
@@ -715,7 +715,6 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
     - the cookie-domain check fixed;
     - D-09 and D-13 to D-16 (#390);
     - a threat model (`docs/security/threat-model.md`).
-  - Partly: the web nonce CSP is report-only (#603); only HSTS, X-Frame-Options and `frame-ancestors` are enforced.
   - The threat model's access-token row is out of date.
 - **Severity:** Critical.
 - **Blocked by:** none (E5 done).

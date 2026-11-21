@@ -51,20 +51,3 @@ export const zoneLink = cva({
     },
   },
 });
-
-/**
- * At phone width the take-home card takes the full row and the two cards that come off the pay
- * sit side by side under it, so the strip is not three tall stacked cards. From `sm` it is the
- * strip's own single row. The attribute selector outranks the strip's own column rule.
- */
-export const payStrip = cva({
-  base: {
-    "&[data-density]": {
-      gridTemplateColumns: {
-        base: "repeat(2, minmax(0, 1fr))",
-        sm: "repeat(3, minmax(0, 1fr))",
-      },
-    },
-    "&[data-density] > :first-child": { gridColumn: { base: "1 / -1", sm: "auto" } },
-  },
-});

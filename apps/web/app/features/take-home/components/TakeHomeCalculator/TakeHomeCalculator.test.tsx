@@ -64,6 +64,10 @@ describe("<TakeHomeCalculator /> saved figures", () => {
       Number((el.textContent ?? "").replace(/[£,]/g, "")),
     );
     expect(values).toHaveLength(3);
+    // The 3-card strip uses KpiStrip's standard 2+1 phone layout (never overriding :first-child to span alongside :nth-child(3)).
+    const stripClass = container.querySelector('[data-density="compact"]')?.className ?? "";
+    expect(stripClass).toContain("[&_>_:nth-child(3):last-child]:grid-c_1_/_-1");
+    expect(stripClass).not.toContain(":first-child");
     // Monthly pay before tax (£2,667) less tax and NI and pension is the hero's take-home.
     const takeHome = Number(/£([\d,]+)/.exec(heroText)?.[1]?.replace(/,/g, ""));
     expect(values[0]).toBe(2667);
