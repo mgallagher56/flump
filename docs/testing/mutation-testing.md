@@ -2,7 +2,7 @@
 
 Mutation testing makes one small fault at a time in the code (a `>` becomes `>=`, a `-` becomes `+`) and runs the tests. If no test fails, the fault "survived": the tests would not notice that mistake. The tool is [StrykerJS](https://stryker-mutator.io/). The plan is [E41](../audit/plans/E41-mutation-testing-and-test-speed-plan.md).
 
-Status: a local check, not a CI job. Owner decision, 20 November 2026: "mutation testing takes a long time, so we shouldn't be running it in a pipeline. It should just be a local check we do irregularly, maybe once per month, to verify our tests are in a good state". Nine packages have a Stryker config and a floor: `packages/finance-engine` (M1 and M2); from M3, `packages/mcp`, `api-contract`, `banking`, `observability`, `format`, `api-client` and `business-details`; and from M4, `apps/backend` (guards, interceptors, auth, `security/`, `contract/` and the services, unit specs only, owner decision 11: "Keep unit only"). Faults left over after the kill tests are in the [triage ledger](./mutation-triage.md). No workflow runs it, no job reminds anyone, and nothing checks how old a result is.
+Status: a local check, not a CI job. Owner decision, 20 November 2026: "mutation testing takes a long time, so we shouldn't be running it in a pipeline. It should just be a local check we do irregularly, maybe once per month, to verify our tests are in a good state". Nine packages have a Stryker config and a floor: `packages/finance-engine` (M1 and M2); from M3, `packages/mcp`, `api-contract`, `banking`, `observability`, `format`, `api-client` and `business-details`; from M4, `apps/backend` (guards, interceptors, auth, `security/`, `contract/` and the services, unit specs only, owner decision 11: "Keep unit only"); and from M5, `apps/web` (utils, hooks, services, state, containers and `server/`, the `unit` Vitest project only) and `packages/ui` (helpers and component logic). String faults are off in those last two (decision 7). Faults left over after the kill tests are in the [triage ledger](./mutation-triage.md). No workflow runs it, no job reminds anyone, and nothing checks how old a result is.
 
 ## The monthly check
 
@@ -23,6 +23,8 @@ How long each package took on the laptop (8 cores; the machine was often busy wi
 | Package                                                 | Laptop time for a full run |
 | ------------------------------------------------------- | -------------------------: |
 | `packages/finance-engine`                               |              56 to 106 min |
+| `apps/web`                                              |               about 85 min |
+| `packages/ui`                                           |               about 55 min |
 | `apps/backend`                                          |               20 to 29 min |
 | `packages/mcp`                                          |               about 25 min |
 | `packages/api-contract`                                 |                about 3 min |
@@ -30,7 +32,7 @@ How long each package took on the laptop (8 cores; the machine was often busy wi
 | `packages/format`                                       |                about 1 min |
 | `packages/banking`, `observability`, `business-details` |           under 1 min each |
 
-`all` takes about two to three hours. Run one package at a time if that suits better.
+`all` takes about four to five hours. Run one package at a time if that suits better.
 
 While a package runs:
 
@@ -43,6 +45,7 @@ Other commands:
 - One file while writing tests: `cd packages/mcp && node ../../node_modules/@stryker-mutator/core/bin/stryker.js run --mutate "src/auth/scopes.ts"` (a line range works too: `"src/x.ts:20-44"`). This reuses earlier results from `reports/mutation/stryker-incremental.json`; add `--force` to rerun everything. A module-level fault can keep a stale result in incremental mode, so confirm with `--force`.
 - Check a report again, or list what survived: `bun run mutation:score check apps/backend` and `bun run mutation:score survivors apps/backend` (each takes an optional report path).
 - The backend's Stryker config runs [`vitest.stryker.config.ts`](../../apps/backend/vitest.stryker.config.ts), the `unit` project of `vitest.config.ts` alone, with no database.
+- The web app's Stryker config runs [`vitest.stryker.config.mts`](../../apps/web/vitest.stryker.config.mts), the `unit` project of `vite.config.mts` alone. The `storybook` project runs in a browser, which Stryker cannot mutation-test.
 
 ## Recording a result
 
