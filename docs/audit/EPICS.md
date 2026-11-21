@@ -992,7 +992,7 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** none.
 - **Done when:** a repeatable Playwright interaction-cost harness (`S0`) measures clicks, keystrokes, modal hops, and scroll/focus friction at `1280px` and `375px`, and slices `S1`–`S3` ship targeted friction reductions across budget, check-in, accounts, and Self Assessment while preserving WCAG 2.2 AA and advice-boundary rules.
 - **Notes:** Plan merged (`#763`): [E38-interaction-efficiency-audit-plan.md](plans/E38-interaction-efficiency-audit-plan.md).
-- **Status (2026-11-21):** `S0` merged (`#780`: the interaction-cost harness, its baseline and a warn-only CI job, `.github/workflows/interaction-cost.yml`) and `S1`–`S3` merged (`#841`: friction reductions in the check-in, accounts and Self Assessment). Not re-checked: whether every item in the plan's S1 to S3 lists shipped.
+- **Status (2026-11-21):** `S0` merged (`#780`: the interaction-cost harness, its baseline and a warn-only CI job, `.github/workflows/interaction-cost.yml`) and `S1` to `S3` merged (`#841`: friction reductions in the check-in, accounts and Self Assessment). Not re-checked: whether every item in the plan's S1 to S3 lists shipped.
 - **Labels:** needs-triage
 
 ## E39. Mortgage affordability: estimates from your own figures

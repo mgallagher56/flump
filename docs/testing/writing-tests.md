@@ -2,7 +2,7 @@
 
 Read this before adding or changing any test. It is the detail behind [`AGENTS.md`](../../AGENTS.md) sections 14 and 17. It applies to every agent and every package.
 
-The rules come from what the mutation runs and the speed work measured: see [mutation-testing.md](./mutation-testing.md), the [triage ledger](./mutation-triage.md) and the [test speed baseline](./test-speed-baseline.md). In the first runs, tests that executed the code but did not check its result let 30 to 40% of small faults through in `apps/web` and `packages/ui`.
+The rules come from what the mutation runs and the speed work measured: see [mutation-testing.md](./mutation-testing.md), the [triage ledger](./mutation-triage.md) and the [test speed baseline](./test-speed-baseline.md). In the first runs on `apps/web` and `packages/ui`, about a third of small faults went uncaught, and about a quarter got past tests that did run the code but did not check its result.
 
 ## 1. A test must fail when the code is wrong
 
@@ -19,8 +19,8 @@ A mutation run makes one small fault at a time (`>` becomes `>=`, `+` becomes `-
 9. **For UI, assert what the user gets.** Find elements by role and name; assert the text, value or state shown, that the handler received the right value, and that something hidden is absent. Take each conditional render both ways. Do not assert class names, style objects or internal state.
 10. **See the test fail.** Before trusting a new or changed test, break the code it covers (flip the comparison, change the operator, return early) and watch it fail, then put the code back. A bug-fix test must fail before the fix.
 11. **Import the source statically.** Stryker finds a file's tests through static imports. A test that loads its subject with `await import(...)` is invisible to it unless the test is about module loading itself.
-12. **Do not test source text.** A test that reads a source file and searches it proves nothing about behaviour.
-13. **Never weaken a test to make it pass.** Loosening an assertion, widening a tolerance, deleting a case or adding `.skip` needs the reason in the PR description. `.only` and `.skip` are not committed.
+12. **Do not test behaviour through source text.** A test that reads a source file and searches it proves nothing about what the code does. Law and guard tests that check the text on purpose (the copy guards, `architecture.laws.test.ts`, the Sentry sources test) are the exception.
+13. **Never weaken a test to make it pass.** Loosening an assertion, widening a tolerance or deleting a case needs the reason in the PR description. `.only` and a bare `.skip` are never committed. `skipIf` on a stated condition (no database, no built server) is allowed, with the condition named in the test.
 
 ### When to run Stryker on your change
 
@@ -33,23 +33,25 @@ Mutation testing is a local check, never a CI job (owner decision, 20 November 2
 cd <package> && node ../../node_modules/@stryker-mutator/core/bin/stryker.js run --force --mutate "src/path/file.ts"
 ```
 
-A line range keeps it short (`"src/path/file.ts:20-44"`). Do not edit or commit files in that package while it runs: Stryker writes faults into the real files and restores them at the end. For every fault that survives, write the missing test, or add a row to the [triage ledger](./mutation-triage.md) with a proof that it is equivalent or a real reason it is not worth killing. "Hard to kill" is not a reason. The PR description says what was run and how many faults survived.
+A line range keeps it short (`"src/path/file.ts:20-44"`). Do not edit or commit files in that package while it runs: Stryker writes faults into the real files and restores them at the end. Stryker finds a file's tests through imports, so a backend spec that reaches the code only over HTTP is not found; a survivor there may need a unit test of its own. For every fault that survives, write the missing test, or add a row to the [triage ledger](./mutation-triage.md) with a proof that it is equivalent or a real reason it is not worth killing. "Hard to kill" is not a reason. The PR description says what was run and how many faults survived.
 
 Everywhere else, rule 10 is the check, and the PR description says it was done.
+
+This per-change run is the coordinator's rule (21 November 2026), made at the owner's request that new and changed tests pass a mutation test. It is separate from the whole-package run, which stays an occasional local check.
 
 ## 2. A test must be quick
 
 In `apps/web`, only about a fifth of test time is the tests themselves; the rest is imports, building the environment and set-up. So the rules are mostly about what a test file loads and waits for.
 
-1. **Use the node environment when there is no DOM.** A test file whose test and source touch no DOM starts with `// @vitest-environment node`. The exact conditions are in the [test speed baseline](./test-speed-baseline.md#test-environment-node-or-happy-dom-e41-p3). A file that later needs the DOM drops the line; do not stub the DOM.
-2. **No real waiting.** No `setTimeout` sleeps and no real timers: use fake timers and advance them. Use `findBy` and `waitFor` only for work that is truly asynchronous. Never raise a timeout to make a test pass.
+1. **Use the node environment when there is no DOM.** In `apps/web`, `packages/ui` and `apps/marketing`, a test file whose test and source touch no DOM, and whose source has no `typeof window` or `typeof document` check, starts with `// @vitest-environment node`. The exact conditions are in the [test speed baseline](./test-speed-baseline.md#test-environment-node-or-happy-dom-e41-p3). A file that later needs the DOM drops the line; do not stub the DOM.
+2. **No real waiting.** No `setTimeout` sleeps and no real timers: use fake timers and advance them (with Testing Library's user events, pass `advanceTimers` to `userEvent.setup`). Use `findBy` and `waitFor` only for work that is truly asynchronous. Never raise a timeout to make a test pass.
 3. **No real network, database or clock in a unit test.** Database specs belong to the backend's database project. Fix the date with fake timers where the code reads it.
 4. **Load only what the test needs.** Import the module under test directly, not through a barrel that pulls in a whole package. Render the component under test, not the page or the app shell, unless the page is the subject.
 5. **Test logic without rendering.** Put calculation and decision logic in plain functions and test those directly; keep render tests for what only a render can show.
 6. **Use tables for many inputs.** `test.each` over one cheap set-up, not a render per assertion.
 7. **Keep tests independent and repeatable.** No state shared between tests, no reliance on order, no `Math.random` or the current time. Property tests use a fixed seed and a bounded number of runs. Sample ids and tokens are built at run time from a counter or `node:crypto` (section 15); the security scan rejects `Math.random`.
 8. **No wall-clock assertions.** Do not assert that code finished within some number of milliseconds; it fails on a busy machine and proves nothing.
-9. **Measure a slow file.** Run `bunx vitest run <file>` in the package and read the time. A unit test file that takes more than 5 seconds on its own needs the reason in the PR description. `bun scripts/test-timings.ts run <package-dir>` lists the slowest files in a package.
+9. **Measure a slow file.** Run `bunx vitest run <file>` in the package (in `apps/web`, add `--project unit`) and read the time. A new or changed unit test file that takes more than 5 seconds on its own needs the reason in the PR description; older files over the mark are not failures, but do not make them slower. `bun scripts/test-timings.ts run <package-dir>` lists the slowest files in a package.
 
 ## 3. What the PR description says
 

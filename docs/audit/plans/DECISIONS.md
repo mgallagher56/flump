@@ -448,3 +448,11 @@ Given by the owner and relayed by the coordinator on 20 November 2026. On the E4
 - Supersedes D16 (b) in `docs/design/e16-polish/PLAN.md` for marketing section bands: no sage or apricot bands, and no `surface.subtle` strip.
 - Marketing bands alternate `surface.canvas` with `surface.tint.teal` (the `SectionBand` tones `canvas` and `teal`), in light and dark, on every marketing page that uses them (home, the feature pages, the AI connection page). A band that holds figures (a sample, a calculator, the pay rise tool) stays on the canvas, because a tint never goes around a chart. This is a marketing exception to "at most one tinted section per page", as D16 (b) was; the web app keeps that rule.
 - No shared token changed. `surface.tint.teal` keeps its values (light #dcede6, dark #1d3932).
+
+# Owner request (2026-11-21): rules for tests that catch faults and run fast
+
+Owner's words: "Add rules to the repo to ensure when test are edited or added they actually test what they intend so they will pass a mutation test and are also performant."
+
+- AGENTS.md section 17 and `docs/testing/writing-tests.md` hold the rules. The wording is the coordinator's.
+- Coordinator's rule, not the owner's words: a change to logic in `packages/finance-engine`, or in `apps/backend` guards, interceptors, auth or `security/`, runs Stryker on the changed files before its PR. The whole-package run stays the occasional local check of the 2026-11-20 decision, and nothing is added to CI.
+- Coordinator's limit, not the owner's words: a new or changed unit test file over 5 seconds on its own needs its reason in the PR description. Nothing enforces it in CI.
