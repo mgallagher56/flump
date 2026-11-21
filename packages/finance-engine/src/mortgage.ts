@@ -38,6 +38,32 @@ export function calculateMonthlyMortgagePayment(
 }
 
 /**
+ * Inverse of `repaymentPerMonth`: the repayment loan amount (rounded to the penny) that a monthly
+ * payment of `monthlyPaymentGbp` pays off over `termMonths` at `annualRatePct` (E39 section 4a).
+ * Formula: loan = payment * ((1 + r)^n - 1) / (r * (1 + r)^n), where r is a twelfth of the yearly
+ * rate and n is termMonths. At 0% (or a negative rate, treated as 0% like `repaymentPerMonth`),
+ * loan = payment * n. Returns 0 for a missing or non-positive payment or term, or a rate that is
+ * not a finite number.
+ */
+export function calculateLoanFromMonthlyPayment(
+  monthlyPaymentGbp: number,
+  annualRatePct: number,
+  termMonths: number,
+): number {
+  if (!(monthlyPaymentGbp > 0) || !(termMonths > 0) || !Number.isFinite(annualRatePct)) return 0;
+  if (annualRatePct <= 0) {
+    return Math.round(monthlyPaymentGbp * termMonths * 100) / 100;
+  }
+  const r = annualRatePct / 100 / 12;
+  const factor = (1 + r) ** termMonths;
+  if (!Number.isFinite(factor)) {
+    return Math.round((monthlyPaymentGbp / r) * 100) / 100;
+  }
+  const loan = (monthlyPaymentGbp * (factor - 1)) / (r * factor);
+  return Math.round(loan * 100) / 100;
+}
+
+/**
  * One month of a repayment loan: interest is added at a twelfth of the yearly rate, then the
  * payment comes off. The balance never goes below zero. Shared by the mortgage amortisation and
  * the check-in's calculated balance, so there is one calculation.
@@ -283,6 +309,195 @@ export function calculateMortgageVsIsa(
 }
 
 export type MortgageType = "repayment" | "interest-only";
+
+/** Accepts both the account entity's `"interest-only"` and `"interest_only"` spellings. */
+export type MortgageRepaymentKind = MortgageType | "interest_only";
+
+export interface CompareMortgageRatesInput {
+  loanGbp: number;
+  annualRatePct: number;
+  termMonths: number;
+  /** Change in percentage points above and below `annualRatePct`; defaults to 1 (E39 MA5). */
+  deltaPct?: number;
+  /** Repayment or interest-only; defaults to `"repayment"`. */
+  repaymentType?: MortgageRepaymentKind;
+}
+
+export interface CompareMortgageRatesResult {
+  baseRatePct: number;
+  higherRatePct: number;
+  /** Lower rate floored at 0% (E39 section 4c). */
+  lowerRatePct: number;
+  deltaPct: number;
+  baseMonthlyPaymentGbp: number;
+  higherMonthlyPaymentGbp: number;
+  lowerMonthlyPaymentGbp: number;
+  higherDeltaMonthlyGbp: number;
+  lowerDeltaMonthlyGbp: number;
+}
+
+function monthlyPaymentForKind(
+  loanGbp: number,
+  annualRatePct: number,
+  termMonths: number,
+  repaymentType: MortgageRepaymentKind,
+): number {
+  if (!(loanGbp > 0) || !(termMonths > 0)) return 0;
+  if (repaymentType === "interest-only" || repaymentType === "interest_only") {
+    return annualRatePct > 0 ? Math.round(((loanGbp * annualRatePct) / 100 / 12) * 100) / 100 : 0;
+  }
+  return calculateMonthlyMortgagePayment(loanGbp, annualRatePct, termMonths);
+}
+
+/**
+ * Compares monthly mortgage payments at `annualRatePct`, `annualRatePct + deltaPct`, and
+ * `Math.max(0, annualRatePct - deltaPct)` over `termMonths` (E39 section 4c).
+ */
+export function compareMortgageRates(input: CompareMortgageRatesInput): CompareMortgageRatesResult {
+  const loanGbp = input.loanGbp > 0 && Number.isFinite(input.loanGbp) ? input.loanGbp : 0;
+  const baseRatePct =
+    Number.isFinite(input.annualRatePct) && input.annualRatePct > 0 ? input.annualRatePct : 0;
+  const termMonths =
+    input.termMonths > 0 && Number.isFinite(input.termMonths) ? input.termMonths : 0;
+  const rawDelta = input.deltaPct ?? 1;
+  const deltaPct = Number.isFinite(rawDelta) && rawDelta >= 0 ? rawDelta : 0;
+  const repaymentType = input.repaymentType ?? "repayment";
+
+  const higherRatePct = Math.round((baseRatePct + deltaPct) * 10000) / 10000;
+  const lowerRatePct = Math.max(0, Math.round((baseRatePct - deltaPct) * 10000) / 10000);
+
+  const baseMonthlyPaymentGbp = monthlyPaymentForKind(
+    loanGbp,
+    baseRatePct,
+    termMonths,
+    repaymentType,
+  );
+  const higherMonthlyPaymentGbp = monthlyPaymentForKind(
+    loanGbp,
+    higherRatePct,
+    termMonths,
+    repaymentType,
+  );
+  const lowerMonthlyPaymentGbp = monthlyPaymentForKind(
+    loanGbp,
+    lowerRatePct,
+    termMonths,
+    repaymentType,
+  );
+
+  return {
+    baseRatePct,
+    higherRatePct,
+    lowerRatePct,
+    deltaPct,
+    baseMonthlyPaymentGbp,
+    higherMonthlyPaymentGbp,
+    lowerMonthlyPaymentGbp,
+    higherDeltaMonthlyGbp:
+      Math.round((higherMonthlyPaymentGbp - baseMonthlyPaymentGbp) * 100) / 100,
+    lowerDeltaMonthlyGbp: Math.round((lowerMonthlyPaymentGbp - baseMonthlyPaymentGbp) * 100) / 100,
+  };
+}
+
+export interface EstimateMortgageAtFixEndInput {
+  /** Current mortgage balance in pounds. */
+  balanceGbp: number;
+  /** Current annual interest rate in percent during the fixed period. */
+  currentAnnualRatePct: number;
+  /** Remaining term of the mortgage in whole months today. */
+  remainingTermMonths: number;
+  /** Whole months until the fixed rate ends (`0` if already ended). */
+  monthsUntilFixEnd: number;
+  /**
+   * Current monthly payment during the fix. When omitted or non-positive, estimated from
+   * `balanceGbp`, `currentAnnualRatePct` and `remainingTermMonths`.
+   */
+  currentMonthlyPaymentGbp?: number | null;
+  /**
+   * The annual rate to centre the post-fix comparison on; defaults to `currentAnnualRatePct`.
+   */
+  comparisonAnnualRatePct?: number;
+  /** Rate change step in percentage points; defaults to `1` (E39 MA5). */
+  deltaPct?: number;
+  /** Repayment or interest-only; defaults to `"repayment"`. */
+  repaymentType?: MortgageRepaymentKind;
+}
+
+export interface EstimateMortgageAtFixEndResult {
+  /** Estimated balance on the day the fixed rate ends (`projectAmortisedBalance`). */
+  balanceAtFixEndGbp: number;
+  /** Remaining term in months after the fixed period ends. */
+  remainingTermAtFixEndMonths: number;
+  /** Whole months projected during the fixed period. */
+  monthsProjected: number;
+  /** Monthly payment used during the fixed period. */
+  monthlyPaymentDuringFixGbp: number;
+  /** Payment comparison at the end of the fix over `remainingTermAtFixEndMonths`. */
+  rates: CompareMortgageRatesResult;
+}
+
+/**
+ * Projects a mortgage balance to the end of its fixed-rate period via `projectAmortisedBalance`
+ * and computes the monthly payments over the remaining term at the comparison rates (E39 section 4c,
+ * replacing gaps 2-4 in section 2).
+ */
+export function estimateMortgageAtFixEnd(
+  input: EstimateMortgageAtFixEndInput,
+): EstimateMortgageAtFixEndResult {
+  const balance = input.balanceGbp > 0 && Number.isFinite(input.balanceGbp) ? input.balanceGbp : 0;
+  const currentRate =
+    Number.isFinite(input.currentAnnualRatePct) && input.currentAnnualRatePct > 0
+      ? input.currentAnnualRatePct
+      : 0;
+  const totalTermMonths =
+    input.remainingTermMonths > 0 && Number.isFinite(input.remainingTermMonths)
+      ? Math.trunc(input.remainingTermMonths)
+      : 0;
+  const rawFixMonths =
+    input.monthsUntilFixEnd > 0 && Number.isFinite(input.monthsUntilFixEnd)
+      ? Math.trunc(input.monthsUntilFixEnd)
+      : 0;
+  const monthsProjected = Math.min(rawFixMonths, totalTermMonths);
+  const repaymentType = input.repaymentType ?? "repayment";
+  const isInterestOnly = repaymentType === "interest-only" || repaymentType === "interest_only";
+
+  const hasSavedPayment =
+    Number.isFinite(input.currentMonthlyPaymentGbp) &&
+    (input.currentMonthlyPaymentGbp as number) > 0;
+  const monthlyPaymentDuringFixGbp = hasSavedPayment
+    ? Math.round((input.currentMonthlyPaymentGbp as number) * 100) / 100
+    : monthlyPaymentForKind(balance, currentRate, totalTermMonths, repaymentType);
+
+  const balanceAtFixEndGbp = isInterestOnly
+    ? Math.round(balance * 100) / 100
+    : projectAmortisedBalance({
+        balanceGbp: balance,
+        interestRateApr: currentRate,
+        monthlyPaymentGbp: monthlyPaymentDuringFixGbp,
+        months: monthsProjected,
+      });
+
+  const remainingTermAtFixEndMonths = Math.max(0, totalTermMonths - monthsProjected);
+  const comparisonRate = Number.isFinite(input.comparisonAnnualRatePct)
+    ? Math.max(0, input.comparisonAnnualRatePct as number)
+    : currentRate;
+
+  const rates = compareMortgageRates({
+    loanGbp: balanceAtFixEndGbp,
+    annualRatePct: comparisonRate,
+    termMonths: remainingTermAtFixEndMonths,
+    deltaPct: input.deltaPct,
+    repaymentType,
+  });
+
+  return {
+    balanceAtFixEndGbp,
+    remainingTermAtFixEndMonths,
+    monthsProjected,
+    monthlyPaymentDuringFixGbp,
+    rates,
+  };
+}
 
 /**
  * Unrounded monthly mortgage payment for repayment and interest-only mortgages, over a term in

@@ -19,6 +19,10 @@ export const MCP_NOTICE =
 export const BETA_NOTICE =
   "Flump is a test service. It gives guidance and calculations, not advice. These terms are unreviewed.";
 
+/** Standing notice for standalone mortgage affordability and payment estimates (E39 section 6). */
+export const MORTGAGE_ESTIMATE_STANDALONE_NOTICE =
+  "This is an estimate from your figures and the assumptions shown. It is not a lender's decision or a mortgage offer.";
+
 const regulatoryStatusError = (): never => {
   throw new Error(
     "REGULATORY_STATUS is a placeholder: regulatory-status wording is owner-only (E7). Do not render it.",

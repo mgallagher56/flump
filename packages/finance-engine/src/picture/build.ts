@@ -21,6 +21,7 @@ import {
   selectHousingCost,
   selectHousingPayment,
 } from "./selectors/housing-cost.js";
+import { type HousingRoom, selectHousingRoom } from "./selectors/housing-room.js";
 import { selectIsaAllowanceUsed } from "./selectors/isa-allowance-used.js";
 import {
   type BudgetLinkOffer,
@@ -76,6 +77,8 @@ export interface FinancialPicture {
   debt: DebtTotals;
   /** Monthly rent or mortgage payment and its share of take-home pay (E32). */
   housingCost: Figure<HousingCost>;
+  /** Monthly room before housing: take-home less non-housing essentials and debt payments (E39). */
+  housingRoom: Figure<HousingRoom>;
   /** Mortgage accounts with a stored fix-end date, as of the build date (E32). */
   fixedRateEnds: AccountFixedRateEnd[];
   /** Mortgage balance over the home value net worth counts (E16 PR 3). */
@@ -118,6 +121,7 @@ export function buildFinancialPicture(
     accounts: snapshot,
   });
   const budget = linked.rows;
+  const safeToSpend = selectSafeToSpend(takeHome, budget, snapshot);
   const asOf = opts.asOf ?? new Date();
   return {
     takeHome,
@@ -127,11 +131,15 @@ export function buildFinancialPicture(
     budgetAccountLinkOffers: findBudgetAccountLinkOffers(input.budget, snapshot),
     housingPayment,
     budget: selectBudgetTotals(budget, takeHomeLeavesOut(takeHome)),
-    safeToSpend: selectSafeToSpend(takeHome, budget, snapshot),
+    safeToSpend,
     monthsOfCover: selectMonthsOfCover(budget, snapshot),
     netWorth: selectNetWorth(snapshot, input.netWorthBasis),
     debt: selectDebtTotals(snapshot),
     housingCost: selectHousingCost(input.profile, takeHome, snapshot, input.accounts, input.budget),
+    housingRoom: selectHousingRoom(
+      { takeHome, budgetRows: budget, safeToSpend, housingPayment },
+      { snapshot },
+    ),
     fixedRateEnds: selectFixedRateEnds(input.accounts, asOf),
     loanToValue: selectLoanToValue(snapshot),
     estimatedTaxDue: selectEstimatedTaxDue(input.profile, input.taxRecords, {
