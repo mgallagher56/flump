@@ -190,6 +190,13 @@ Changing an allow-list, a numeric limit in a test or law, a scanner suppression,
 - **Update the map in the same PR.** A PR that adds, moves or removes a database column, a profile field, a browser storage or cookie key, or a shared figure updates the map in the same PR. A new column also goes in its table's `valueMap` in `apps/backend/src/modules/privacy/user-data-registry.ts`. Then run `bun scripts/generate-value-map.ts`.
 - **Guard.** `bun scripts/check-value-map.ts` (part of `check:laws`) fails on a column or browser key with no entry, a path, function, table or column that no longer exists, a malformed entry, a fact with no source of truth, a figure outside the engine, and stale generated views. Known problems are in `scripts/value-map-baseline.json`, each tied to an audit finding. The baseline only shrinks; raising it falls under section 15. Arithmetic that may be a second formula prints as a warning and does not fail the run.
 
+### Functionality map (user-POV)
+
+> **Detailed Reference**: Before adding, changing, or removing a route, page section, capability, or user control, read [`docs/system/functionality-map/README.md`](./docs/system/functionality-map/README.md).
+
+- **Update the functionality map in the same PR.** Any PR that adds, removes, or changes a route, page section, capability, or user control (button, link, input, slider, toggle, drawer) updates the corresponding `docs/system/functionality-map/pages/{web|marketing}/<page-id>.yaml` (or `excluded_routes` in `docs/system/functionality-map/index.yaml` for non-UI routes) and runs `bun run functionality-map`.
+- **Guard.** `bun scripts/check-functionality-map.ts` (part of `check:laws`) fails on invalid schema, duplicate IDs, dead file paths, unknown `value-map.yaml` fact/figure IDs, stale generated views (`overview.md`, `actions-index.md`, `by-fact.md`), or unmapped routes.
+
 ## 17. TESTS THAT CATCH FAULTS AND RUN FAST LAW
 
 > **Detailed Reference**: Before adding or changing any test, read [`docs/testing/writing-tests.md`](./docs/testing/writing-tests.md).
