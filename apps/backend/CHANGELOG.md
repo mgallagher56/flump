@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.44.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.43.0...flump/backend-v1.44.0) (2026-11-21)
+
+
+### Features ✨
+
+* **e35:** implement encouragement Sets 2 and 3 (account goals and Month in brief) ([51f60cc](https://github.com/mgallagher56/flump/commit/51f60cc3fcf9ac8139242451c8365701a09823b6))
+* **invoicing:** E37 S0-S2 self-employed work log and invoice builder ([738472c](https://github.com/mgallagher56/flump/commit/738472c7321c57eaf443a6c942d49136f425284d))
+* **invoicing:** E37 S3 Self Assessment sync, print view, and CSV export ([9899f51](https://github.com/mgallagher56/flump/commit/9899f510f553a4982e7a7e3dce2f17f6393f8096))
+
+
+### Bug Fixes 🪲
+
+* **invoicing:** add leading FK indexes on invoice_id and tax_record_id ([3548ef9](https://github.com/mgallagher56/flump/commit/3548ef9ccd99deb78bd19d931d6af57ffed43400))
+* **invoicing:** update fixtures, profile reset mocks, and seed-synthetic tables for E37 ([c94845d](https://github.com/mgallagher56/flump/commit/c94845d1a36763461ee25d0b531ca9b16dd6761a))
+
+
+### Tests 🧪
+
+* **authz:** add POST /invoices/:id/sync-to-tax authn check ([041e667](https://github.com/mgallagher56/flump/commit/041e6676b016e99ab6a44de32bca3ee296f23314))
+* **authz:** add POST /invoices/:id/sync-to-tax to authz matrix and invoicing spec ([8882e6c](https://github.com/mgallagher56/flump/commit/8882e6c26491f192a36aae806f10b48da00be89f))
+* **e35:** add account_goals to ENTITY_TABLES in migrations integration spec ([7d91508](https://github.com/mgallagher56/flump/commit/7d9150831afaa5712af3d02afa9ed72bc21b4eb6))
+* **e35:** mock AccountGoal in profile reset and account detail route specs ([34f4db6](https://github.com/mgallagher56/flump/commit/34f4db6cd0556d38410e2f1836cf6b2d8f2fdd31))
+* **e35:** update backend entity count, reset counts, and PUT goal route check ([b46a54c](https://github.com/mgallagher56/flump/commit/b46a54ccefb063e416c16f75113ea38529eca08c))
+
 ## [1.43.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.42.0...flump/backend-v1.43.0) (2026-11-20)
 
 
