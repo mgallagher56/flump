@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.51.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.50.0...flump/web-v1.51.0) (2026-11-21)
+
+
+### Features ✨
+
+* **e35:** implement encouragement Sets 2 and 3 (account goals and Month in brief) ([51f60cc](https://github.com/mgallagher56/flump/commit/51f60cc3fcf9ac8139242451c8365701a09823b6))
+* **invoicing:** E37 S0-S2 self-employed work log and invoice builder ([738472c](https://github.com/mgallagher56/flump/commit/738472c7321c57eaf443a6c942d49136f425284d))
+* **invoicing:** E37 S3 Self Assessment sync, print view, and CSV export ([9899f51](https://github.com/mgallagher56/flump/commit/9899f510f553a4982e7a7e3dce2f17f6393f8096))
+* **web:** E39 S2 mortgage estimates page and RateChangeTool ([c0239fd](https://github.com/mgallagher56/flump/commit/c0239fdecaecec5b9ddb099f39690b72e4166c42))
+
+
+### Bug Fixes 🪲
+
+* **invoicing:** add leading FK indexes on invoice_id and tax_record_id ([3548ef9](https://github.com/mgallagher56/flump/commit/3548ef9ccd99deb78bd19d931d6af57ffed43400))
+* **invoicing:** update fixtures, profile reset mocks, and seed-synthetic tables for E37 ([c94845d](https://github.com/mgallagher56/flump/commit/c94845d1a36763461ee25d0b531ca9b16dd6761a))
+* **ui:** resolve remaining design-token violations and refresh E22/E9 status ([afc1202](https://github.com/mgallagher56/flump/commit/afc1202c4002187e3d4358540f20f44736398fe0))
+* **web:** keep borrowing nav group to debt/mortgage and update renter visual baselines ([ff26347](https://github.com/mgallagher56/flump/commit/ff263477f36054f66f4234b46ba0192430c45e7b))
+* **web:** remove stale Take-home KpiStrip phone override and refresh E15/E20 status ([3de7362](https://github.com/mgallagher56/flump/commit/3de7362f23a45de47f443fadfbbc220ee9559bb3))
+
+
+### Tests 🧪
+
+* **e35:** mock AccountGoal in profile reset and account detail route specs ([34f4db6](https://github.com/mgallagher56/flump/commit/34f4db6cd0556d38410e2f1836cf6b2d8f2fdd31))
+
+
+### Miscellaneous 🙃
+
+* bundle handoff small follow-ups ([96e4ee3](https://github.com/mgallagher56/flump/commit/96e4ee30ef0a8a5a0b8de30c445c5d4f16e053b6))
+* **storybook:** align 13 story titles with numbered sidebar groups ([c240c42](https://github.com/mgallagher56/flump/commit/c240c42e5c546e449a586251cf36637c6495441f))
+* **web:** remove unused re-exports in checkInModel.ts ([0f82e1c](https://github.com/mgallagher56/flump/commit/0f82e1c01045060570369fd25fc8364e257baf5b))
+
 ## [1.50.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.49.0...flump/web-v1.50.0) (2026-11-21)
 
 
