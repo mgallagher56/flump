@@ -97,6 +97,9 @@ describe("focusWithoutJump edges", () => {
     const button = document.createElement("button");
     document.body.appendChild(button);
     Object.defineProperty(button, "scrollIntoView", { value: undefined });
+    // Laid out below the 768px window, so it would need scrolling if it could be.
+    button.getBoundingClientRect = () =>
+      ({ top: 900, bottom: 940, left: 0, right: 100, width: 100, height: 40 }) as DOMRect;
     expect(() => focusWithoutJump(button)).not.toThrow();
     expect(document.activeElement).toBe(button);
   });

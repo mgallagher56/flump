@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Sheet } from "./Sheet";
 import { sheetBodyRecipe } from "./Sheet.styles";
 
@@ -171,5 +171,26 @@ describe("Sheet primitive", () => {
     expect(cls).toContain("env(safe-area-inset-left,_0px)");
     expect(cls).toContain("env(safe-area-inset-right,_0px)");
     expect(cls).toContain("env(safe-area-inset-top,_0px)");
+  });
+});
+
+describe("keyboard inset while open", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("publishes the space above the on-screen keyboard while open", () => {
+    // A stand-in visualViewport: 476 of an 812 tall page visible, so 812 - 476 = 336 covered.
+    const viewport = Object.assign(new EventTarget(), { height: 476, offsetTop: 0 });
+    vi.stubGlobal("visualViewport", viewport);
+    vi.spyOn(window, "innerHeight", "get").mockReturnValue(812);
+    const { unmount } = render(
+      <Sheet open onOpenChange={() => {}} title="Controls">
+        x
+      </Sheet>,
+    );
+    expect(document.documentElement.style.getPropertyValue("--keyboard-inset")).toBe("336px");
+    unmount();
   });
 });

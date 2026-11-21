@@ -471,6 +471,14 @@ describe("SliderField entry and edges", () => {
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
+  it("does not apply text that is not a number when min is 0", () => {
+    const onChange = vi.fn();
+    render(<SliderField label="Rate" max={100} min={0} value={50} onChange={onChange} />);
+    fireEvent.focus(pill());
+    fireEvent.change(pill(), { target: { value: "abc" } });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("does not report an unchanged value on blur", () => {
     const onChange = vi.fn();
     render(<SliderField label="Rate" max={100} min={0} value={25} onChange={onChange} />);

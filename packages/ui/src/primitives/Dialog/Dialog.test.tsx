@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Dialog } from "./Dialog";
 
 const Harness = () => {
@@ -209,5 +209,26 @@ describe("Dialog primitive", () => {
     const main = document.querySelector("main") as HTMLElement;
     await waitFor(() => expect(document.activeElement).toBe(main));
     expect(main.hasAttribute("tabindex")).toBe(false);
+  });
+});
+
+describe("keyboard inset while open", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("publishes the space above the on-screen keyboard while open", () => {
+    // A stand-in visualViewport: 476 of an 812 tall page visible, so 812 - 476 = 336 covered.
+    const viewport = Object.assign(new EventTarget(), { height: 476, offsetTop: 0 });
+    vi.stubGlobal("visualViewport", viewport);
+    vi.spyOn(window, "innerHeight", "get").mockReturnValue(812);
+    const { unmount } = render(
+      <Dialog open onOpenChange={() => {}} title="Controls">
+        x
+      </Dialog>,
+    );
+    expect(document.documentElement.style.getPropertyValue("--keyboard-inset")).toBe("336px");
+    unmount();
   });
 });
