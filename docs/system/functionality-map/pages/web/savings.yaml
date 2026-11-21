@@ -1,0 +1,247 @@
+id: savings
+app: web
+route: /app/savings
+title: Your savings
+auth: required
+purpose: View saved savings and investment balances, estimated 12-month interest, ISA allowance used, recorded investment returns, and test what-if growth or target-deposit timelines.
+entry_points:
+  - Main app navigation (Savings)
+  - Dashboard Savings widget or KPI strip link
+  - Budget Breathing Room link
+  - Take-home pay "Use this in savings forecast" (/app/savings#forecast)
+  - Redirect from /app/forecast
+route_file: apps/web/app/routes/app.savings.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/containers/savings/SavingsContainer.tsx
+    capabilities:
+      - id: open-add-account
+        goal: Open the dialog to add a new savings or investment account.
+        mode: write
+        actions:
+          - id: add-account
+            control: button
+            label: Add account
+            effect: Opens AddSavingsAccountDialog in create mode when at least one savings or investment account exists.
+
+  - id: tax-rates-banner
+    name: Tax rates status banner
+    kind: notice
+    component: apps/web/app/containers/savings/SavingsContainer.tsx
+    capabilities:
+      - id: view-tax-rates-status
+        goal: Show which UK tax year context applies to ISA and savings estimates.
+        mode: read
+        actions: []
+
+  - id: hero-and-kpis
+    name: Total savings hero and summary strip
+    kind: hero
+    component: apps/web/app/features/savings/components/SavingsSummaryCards/SavingsSummaryCards.tsx
+    when: when at least one savings or investment account exists
+    capabilities:
+      - id: view-savings-summary
+        goal: View total saved balance, monthly saving total, estimated 12-month interest (ISA and non-ISA), and ISA allowance used this tax year.
+        mode: read
+        facts_read:
+          - account-balance
+          - account-monthly-amount
+          - account-rate
+          - account-type
+          - ownership-share
+        figures_shown:
+          - savings-total
+          - savings-interest
+          - isa-allowance-used
+        actions: []
+
+  - id: accounts-list
+    name: Your accounts
+    kind: list
+    component: apps/web/app/features/savings/components/SavingsAccountsList/SavingsAccountsList.tsx
+    when: when at least one savings or investment account exists
+    capabilities:
+      - id: browse-and-edit-accounts
+        goal: Inspect each savings or investment account, open its detail page, expand overflow rows past 8, or open the edit dialog.
+        mode: read
+        facts_read:
+          - account-name
+          - account-balance
+          - account-type
+          - ownership-share
+        actions:
+          - id: open-account-detail
+            control: link
+            label: Account name link
+            effect: Navigates to /app/accounts/:account for the selected account.
+            target: /app/accounts/:account
+          - id: edit-account
+            control: button
+            label: Edit
+            effect: Opens AddSavingsAccountDialog prefilled with the whole saved account figures.
+          - id: toggle-more-accounts
+            control: drawer-toggle
+            label: Show more accounts
+            effect: Expands or collapses accounts beyond the first 8 rows.
+
+  - id: investment-returns
+    name: Recorded investment returns
+    kind: content
+    component: apps/web/app/features/savings/components/InvestmentReturns/InvestmentReturns.tsx
+    when: when at least one Investment account exists
+    capabilities:
+      - id: view-recorded-returns
+        goal: View yearly and overall returns calculated from recorded monthly balances for each investment account.
+        mode: read
+        facts_read:
+          - balance-history
+          - investment-return
+          - account-monthly-amount
+        actions: []
+
+  - id: scenario-zone
+    name: Model a change to your savings
+    kind: scenario-zone
+    component: apps/web/app/containers/savings/SavingsContainer.tsx
+    when: when at least one savings or investment account exists
+    capabilities:
+      - id: toggle-and-reset-scenario
+        goal: Expand or collapse the savings what-if zone, switch between growth forecast and deposit timeline tools, or reset scenario inputs.
+        mode: what-if
+        actions:
+          - id: toggle-scenario-drawer
+            control: drawer-toggle
+            label: "Show what-if: grow your savings"
+            effect: Expands or collapses the ScenarioZone without changing saved data.
+          - id: reset-scenario
+            control: button
+            label: Reset
+            effect: Restores forecast and deposit inputs to saved defaults and clears any handed-over pay rise.
+          - id: switch-scenario-tool
+            control: tab
+            label: How it could grow / Time to a target
+            effect: Switches between SavingsForecast and DepositTimeline.
+          - id: remove-pay-rise
+            control: button
+            label: Remove
+            effect: Removes a pay-rise monthly amount handed over from Take-home pay.
+
+      - id: model-savings-growth
+        goal: Adjust monthly saving, AER rate, projection years, inflation adjustment, and optional goal to see projected balance and year-by-year table.
+        mode: what-if
+        facts_read:
+          - account-balance
+          - account-monthly-amount
+          - account-rate
+        figures_shown:
+          - savings-total
+        actions:
+          - id: set-forecast-monthly
+            control: slider
+            label: Monthly amount
+            effect: Updates scenario monthly saving (£0 to £2,000, step £25).
+          - id: set-forecast-rate
+            control: slider
+            label: Rate (AER)
+            effect: Updates scenario annual interest rate (0% to 10%, step 0.1%).
+          - id: set-forecast-years
+            control: slider
+            label: Years ahead
+            effect: Updates projection horizon (1 to 40 years).
+          - id: toggle-goal-options
+            control: drawer-toggle
+            label: Goal and inflation options
+            effect: Expands or collapses today's-money and goal inputs.
+          - id: toggle-todays-money
+            control: checkbox
+            label: Show in today's money
+            effect: Adjusts projected values for assumed inflation.
+          - id: input-forecast-goal
+            control: input
+            label: Your own goal
+            effect: Calculates estimated months to reach the entered target amount.
+          - id: sort-forecast-table
+            control: sort-header
+            label: Year / Balance / Paid in / Interest
+            effect: Sorts the chart's year-by-year data table.
+
+      - id: model-deposit-timeline
+        goal: Estimate how many months it will take to reach a target amount at a chosen monthly saving, and follow the link to Mortgage estimates.
+        mode: what-if
+        facts_read:
+          - account-balance
+          - account-monthly-amount
+        actions:
+          - id: set-target-amount
+            control: slider
+            label: Target amount
+            effect: Updates target amount slider for the deposit timeline.
+          - id: set-deposit-monthly
+            control: slider
+            label: Monthly saving
+            effect: Updates monthly saving slider for the deposit timeline.
+          - id: open-mortgage-estimates
+            control: link
+            label: See mortgage estimates
+            effect: Navigates to /app/mortgage-estimates when the Time to a target tab is active.
+            target: /app/mortgage-estimates
+
+  - id: empty-state
+    name: No savings accounts yet
+    kind: content
+    component: apps/web/app/containers/savings/SavingsContainer.tsx
+    when: when no savings or investment accounts exist
+    capabilities:
+      - id: add-first-account
+        goal: Prompt the user to add their first savings or investment account.
+        mode: write
+        actions:
+          - id: add-first-savings-account
+            control: button
+            label: Add an account
+            effect: Opens AddSavingsAccountDialog in create mode.
+
+  - id: account-dialog
+    name: Add or edit savings account dialog
+    kind: form
+    component: apps/web/app/features/savings/components/AddSavingsAccountDialog/AddSavingsAccountDialog.tsx
+    when: when AddSavingsAccountDialog is open
+    capabilities:
+      - id: save-or-delete-savings-account
+        goal: Create, update, or delete a savings or investment account with optimistic concurrency and delete confirmation.
+        mode: write
+        facts_read:
+          - account-name
+          - account-type
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - ownership-share
+        facts_written:
+          - account-name
+          - account-type
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - ownership-share
+        actions:
+          - id: input-account-details
+            control: input
+            label: Name / Account kind / Balance / Interest rate / Monthly saving / Ownership
+            effect: Updates draft account fields before saving.
+            validation: Name and account kind are required.
+          - id: submit-account
+            control: submit
+            label: Add account / Save changes
+            effect: Creates or updates the account via POST /app/savings (POST /accounts or PATCH /accounts/:id).
+            target: PATCH /accounts/:id
+            if_match: true
+          - id: delete-account
+            control: button
+            label: Delete account
+            effect: Requests deletion and opens ConfirmDialog before calling DELETE /accounts/:id.
+            target: DELETE /accounts/:id
+            confirm: ConfirmDialog ("Delete <account>? Its history will be deleted too. This cannot be undone.")

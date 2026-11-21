@@ -9,8 +9,14 @@ excluded_routes:
     reason: Backend API proxy resource route for /api/*; no user-facing page.
   - route_file: apps/web/app/routes/app._index.tsx
     reason: Pure redirect route sending signed-in users to / (or /app/onboarding if incomplete, or /login / /sandbox if signed out).
+  - route_file: apps/web/app/routes/app.forecast.tsx
+    reason: Pure 301 redirect route sending old /app/forecast links to /app/savings#forecast.
   - route_file: apps/web/app/routes/app.onboarding.mortgage-with-property.ts
     reason: Onboarding resource action endpoint creating a linked mortgage and property.
+  - route_file: apps/web/app/routes/app.tax._index.tsx
+    reason: Pure 301 redirect route sending old /app/tax links to /app/self-assessment.
+  - route_file: apps/web/app/routes/app.tax.receipts.$id.tsx
+    reason: Resource route streaming one tax receipt file through the signed-in session; no UI.
   - route_file: apps/web/app/routes/csp-report.ts
     reason: Resource route receiving CSP violation reports; no UI.
   - route_file: apps/web/app/routes/healthz.ts
@@ -23,23 +29,11 @@ unmapped_allowlist:
   - apps/web/app/routes/$.tsx
   - apps/web/app/routes/$feature._index.tsx
   - apps/web/app/routes/account-deleted.tsx
-  - apps/web/app/routes/app.debt.tsx
-  - apps/web/app/routes/app.forecast.tsx
   - apps/web/app/routes/app.imports.$id.tsx
   - apps/web/app/routes/app.imports._index.tsx
   - apps/web/app/routes/app.invites.tsx
-  - apps/web/app/routes/app.invoicing.tsx
-  - apps/web/app/routes/app.mortgage-estimates.tsx
-  - apps/web/app/routes/app.mortgage.tsx
-  - apps/web/app/routes/app.pension.tsx
   - apps/web/app/routes/app.profile.tsx
   - apps/web/app/routes/app.sandbox.tsx
-  - apps/web/app/routes/app.savings.tsx
-  - apps/web/app/routes/app.self-assessment.tsx
-  - apps/web/app/routes/app.self-assessment_.$source.tsx
-  - apps/web/app/routes/app.take-home.tsx
-  - apps/web/app/routes/app.tax._index.tsx
-  - apps/web/app/routes/app.tax.receipts.$id.tsx
   - apps/web/app/routes/callback.tsx
   - apps/web/app/routes/invite.$token.tsx
   - apps/web/app/routes/invite._index.tsx

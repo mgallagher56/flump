@@ -1,0 +1,183 @@
+id: invoicing
+app: web
+route: /app/invoicing
+title: Work log and invoicing
+auth: required
+purpose: Log billable self-employed hours, build and issue numbered invoices, record payments, export CSVs, print invoices, and sync paid totals to Self Assessment.
+entry_points:
+  - Main app navigation (Invoicing)
+route_file: apps/web/app/routes/app.invoicing.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx
+    capabilities:
+      - id: orient
+        goal: Identify the work log and invoicing workspace.
+        mode: read
+        actions: []
+
+  - id: kpi-strip
+    name: Invoicing KPI strip
+    kind: kpi-strip
+    component: apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx
+    capabilities:
+      - id: view-invoicing-kpis
+        goal: View unbilled hours, unbilled amount, outstanding issued invoices, and paid totals for the current UK tax year.
+        mode: read
+        facts_read:
+          - work-log-entries
+          - invoices
+        figures_shown:
+          - invoicing-kpis
+          - invoice-totals
+        actions: []
+
+  - id: workspace-tabs
+    name: Workspace section tabs
+    kind: navigation
+    component: apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx
+    capabilities:
+      - id: switch-invoicing-tabs
+        goal: Switch between Work log, Invoices, and Invoicing settings tabs.
+        mode: navigate
+        actions:
+          - id: select-invoicing-tab
+            control: tab
+            label: Work log / Invoices / Invoicing settings
+            effect: Switches the active panel between work log, invoices, and settings.
+
+  - id: work-log-panel
+    name: Work log entry form and table
+    kind: form
+    component: apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx
+    when: when activeTab is work-log
+    capabilities:
+      - id: log-and-manage-work-entries
+        goal: Add, filter, edit, delete, select for invoicing, and export CSV of work log entries.
+        mode: write
+        facts_read:
+          - work-log-entries
+          - invoicing-settings
+        facts_written:
+          - work-log-entries
+        actions:
+          - id: submit-work-log
+            control: submit
+            label: Add work log entry
+            effect: Creates a new work log entry via POST /work-logs.
+            target: POST /work-logs
+          - id: filter-work-logs
+            control: select
+            label: Filter / Search
+            effect: Filters work log rows by billed status or search text.
+          - id: select-work-log-entry
+            control: checkbox
+            label: Select entry checkbox
+            effect: Selects unbilled entries to include in a new draft invoice.
+          - id: edit-work-log-entry
+            control: button
+            label: Edit / Save entry
+            effect: Edits an unbilled work log entry via PATCH /work-logs/:id.
+            target: PATCH /work-logs/:id
+            if_match: true
+          - id: delete-work-log-entry
+            control: button
+            label: Delete
+            effect: Deletes an unbilled work log entry via DELETE /work-logs/:id.
+            target: DELETE /work-logs/:id
+          - id: export-work-logs-csv
+            control: button
+            label: Export CSV
+            effect: Downloads filtered work log entries as a CSV file.
+
+  - id: invoices-panel
+    name: Draft invoice builder and invoices list
+    kind: table
+    component: apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx
+    when: when activeTab is invoices
+    capabilities:
+      - id: manage-invoice-lifecycle
+        goal: Create draft invoices from selected work log entries, edit or delete drafts, issue, mark paid, void, print, export CSV, and sync paid invoices to Self Assessment.
+        mode: write
+        facts_read:
+          - invoices
+          - work-log-entries
+          - invoicing-settings
+        facts_written:
+          - invoices
+          - tax-records
+        figures_shown:
+          - invoice-totals
+        actions:
+          - id: create-draft-invoice
+            control: submit
+            label: Create draft invoice
+            effect: Creates a draft invoice from selected unbilled entries via POST /invoices.
+            target: POST /invoices
+          - id: edit-draft-invoice
+            control: button
+            label: Edit / Save draft
+            effect: Updates a draft invoice via PATCH /invoices/:id.
+            target: PATCH /invoices/:id
+            if_match: true
+          - id: delete-draft-invoice
+            control: button
+            label: Delete
+            effect: Deletes a draft invoice via DELETE /invoices/:id.
+            target: DELETE /invoices/:id
+          - id: issue-invoice
+            control: button
+            label: Issue invoice
+            effect: Transitions a draft invoice to issued via POST /invoices/:id/issue.
+            target: POST /invoices/:id/issue
+            if_match: true
+          - id: mark-invoice-paid
+            control: button
+            label: Mark paid
+            effect: Marks an issued invoice as paid via POST /invoices/:id/mark-paid.
+            target: POST /invoices/:id/mark-paid
+            if_match: true
+          - id: void-invoice
+            control: button
+            label: Void
+            effect: Voids an invoice via POST /invoices/:id/void.
+            target: POST /invoices/:id/void
+            if_match: true
+          - id: sync-invoice-to-tax
+            control: button
+            label: Sync to Self Assessment
+            effect: Creates a Self Assessment income record from a paid invoice via POST /invoices/:id/sync-to-tax.
+            target: POST /invoices/:id/sync-to-tax
+            if_match: true
+          - id: print-invoice
+            control: button
+            label: Print / Save PDF
+            effect: Opens the printable invoice sheet view and triggers browser print.
+          - id: export-invoices-csv
+            control: button
+            label: Export CSV
+            effect: Downloads invoices as a CSV file.
+
+  - id: settings-panel
+    name: Invoicing settings form
+    kind: form
+    component: apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx
+    when: when activeTab is settings
+    capabilities:
+      - id: update-invoicing-settings
+        goal: Update default hourly rate, business details, VAT number, invoice prefix, next sequence number, and payment terms.
+        mode: write
+        facts_read:
+          - invoicing-settings
+        facts_written:
+          - invoicing-settings
+        actions:
+          - id: save-invoicing-settings
+            control: submit
+            label: Save settings
+            effect: Saves invoicing settings via PATCH /invoicing/settings.
+            target: PATCH /invoicing/settings
+            if_match: true

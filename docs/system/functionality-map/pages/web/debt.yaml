@@ -1,0 +1,222 @@
+id: debt
+app: web
+route: /app/debt
+title: Cards and loans
+auth: required
+purpose: Track saved credit cards, loans, and overdrafts, see estimated minimum-payment debt-free date, and model extra monthly payments with avalanche or snowball payoff order.
+entry_points:
+  - Main app navigation (Cards and loans)
+  - Dashboard Debt widget or KPI strip link
+route_file: apps/web/app/routes/app.debt.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/containers/debt/DebtContainer.tsx
+    when: when at least one debt exists
+    capabilities:
+      - id: open-add-debt
+        goal: Open the dialog to add a credit card, loan, or overdraft.
+        mode: write
+        actions:
+          - id: add-debt
+            control: button
+            label: Add a debt
+            effect: Opens AddDebtDialog in create mode.
+
+  - id: hero-and-kpis
+    name: Total owed hero and payoff summary strip
+    kind: hero
+    component: apps/web/app/features/debt/components/DebtSummary/DebtSummary.tsx
+    when: when at least one debt exists
+    capabilities:
+      - id: view-debt-summary
+        goal: View total amount owed, estimated minimum-payment debt-free date, and total monthly minimum payments, or jump to add a missing APR.
+        mode: read
+        facts_read:
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - card-limit-and-zero-percent-end
+          - ownership-share
+        figures_shown:
+          - total-debts
+          - debt-free-date
+        actions:
+          - id: add-missing-rate
+            control: button
+            label: Add a rate
+            effect: Opens the edit dialog for the first debt missing an APR.
+
+  - id: debts-list
+    name: Your debts
+    kind: list
+    component: apps/web/app/features/debt/components/DebtAccountsList/DebtAccountsList.tsx
+    when: when at least one debt exists
+    capabilities:
+      - id: browse-and-edit-debts
+        goal: Inspect saved debts (type, balance, credit limit, 0% end date, missing rate note) and open the edit dialog.
+        mode: read
+        facts_read:
+          - account-name
+          - account-balance
+          - account-type
+          - card-limit-and-zero-percent-end
+        actions:
+          - id: edit-debt
+            control: button
+            label: Edit
+            effect: Opens AddDebtDialog in edit mode for that debt.
+          - id: toggle-more-debts
+            control: drawer-toggle
+            label: Show more debts
+            effect: Expands or collapses debts beyond the first 8 rows.
+
+  - id: scenario-zone
+    name: Model a change to your debts
+    kind: scenario-zone
+    component: apps/web/app/features/debt/components/PayExtraTool/PayExtraTool.tsx
+    when: when at least one debt exists
+    capabilities:
+      - id: model-extra-debt-payments
+        goal: Test extra monthly payments and compare avalanche (highest rate first) versus snowball (smallest balance first) payoff curves locally.
+        mode: what-if
+        facts_read:
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - budget-entries
+        figures_shown:
+          - total-debts
+          - debt-free-date
+          - left-over
+        actions:
+          - id: toggle-debt-scenario
+            control: drawer-toggle
+            label: "Show what-if: pay more each month"
+            effect: Expands or collapses the ScenarioZone without changing saved data.
+          - id: reset-debt-scenario
+            control: button
+            label: Reset
+            effect: Resets extra payment to £0 and strategy to avalanche.
+          - id: set-extra-payment
+            control: slider
+            label: Extra a month
+            effect: Adjusts the extra monthly payment slider and updates payoff date, interest saved, and chart.
+          - id: use-left-over
+            control: button
+            label: Use what is left over
+            effect: Sets the extra payment slider to the monthly budget left-over figure when available.
+          - id: select-payoff-order
+            control: tab
+            label: Smallest balance first / Highest rate first
+            effect: Switches between snowball and avalanche payoff strategies.
+          - id: sort-payoff-table
+            control: sort-header
+            label: Month / With extra / Minimum only
+            effect: Sorts the year-by-year payoff chart data table.
+          - id: scroll-to-debts
+            control: button
+            label: Update your details
+            effect: Scrolls to and focuses the Your debts list heading.
+
+  - id: uk-debt-calculators
+    name: Overpay-or-save link and UK debt calculators
+    kind: drawer
+    component: apps/web/app/features/debt/components/UkDebtInstrumentsCard/UkDebtInstrumentsCard.tsx
+    when: when at least one debt exists
+    capabilities:
+      - id: open-overpay-or-save
+        goal: Navigate to the overpay-or-save calculator or use standalone UK debt reference calculators (0% cliff, overdraft, car finance balloon, student loan outlook).
+        mode: what-if
+        actions:
+          - id: link-overpay-or-save
+            control: link
+            label: Compare paying off early with saving
+            effect: Navigates to /tools/mortgage-overpayment-vs-isa-calculator.
+            target: /tools/mortgage-overpayment-vs-isa-calculator
+          - id: toggle-uk-debt-calculators
+            control: drawer-toggle
+            label: UK debt calculators
+            effect: Expands or collapses UkDebtInstrumentsCard.
+          - id: select-uk-debt-tool
+            control: tab
+            label: When a 0% deal ends / Arranged overdraft cost / Car finance final payment / Student loan outlook
+            effect: Switches between the four standalone UK debt reference calculators.
+          - id: input-uk-debt-tool-values
+            control: input
+            label: Calculator fields
+            effect: Updates local inputs in the active UK debt calculator without saving.
+
+  - id: debt-help
+    name: Free debt help links
+    kind: notice
+    component: apps/web/app/containers/debt/DebtContainer.tsx
+    capabilities:
+      - id: open-debt-help
+        goal: Provide impartial external links to free UK debt advice services.
+        mode: navigate
+        actions:
+          - id: debt-help-links
+            control: link
+            label: StepChange / National Debtline / Citizens Advice
+            effect: Opens external free UK debt advice pages in a new tab.
+
+  - id: empty-state
+    name: No debts added
+    kind: content
+    component: apps/web/app/containers/debt/DebtContainer.tsx
+    when: when no debts exist
+    capabilities:
+      - id: add-first-debt
+        goal: Prompt the user to add their first credit card, loan, or overdraft.
+        mode: write
+        actions:
+          - id: add-first-debt-button
+            control: button
+            label: Add a debt
+            effect: Opens AddDebtDialog in create mode.
+
+  - id: debt-dialog
+    name: Add or edit debt dialog and delete confirmation
+    kind: form
+    component: apps/web/app/features/debt/components/AddDebtDialog/AddDebtDialog.tsx
+    when: when AddDebtDialog or ConfirmDialog is open
+    capabilities:
+      - id: save-or-delete-debt
+        goal: Create, update, or delete a debt account with optimistic concurrency and confirmation before deletion.
+        mode: write
+        facts_read:
+          - account-name
+          - account-type
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - card-limit-and-zero-percent-end
+          - ownership-share
+        facts_written:
+          - account-name
+          - account-type
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - card-limit-and-zero-percent-end
+          - ownership-share
+        actions:
+          - id: input-debt-fields
+            control: input
+            label: Name / Type / Balance / APR / Minimum payment / Credit limit / 0% end date / Ownership
+            effect: Updates draft debt fields.
+          - id: submit-debt
+            control: submit
+            label: Add debt / Save changes
+            effect: Submits createDebt or updateDebt to POST /app/debt (POST /accounts or PATCH /accounts/:id).
+            target: PATCH /accounts/:id
+            if_match: true
+          - id: delete-debt
+            control: button
+            label: Delete debt
+            effect: Requests deletion and opens ConfirmDialog before calling DELETE /accounts/:id.
+            target: DELETE /accounts/:id
+            confirm: ConfirmDialog ("Delete <debt>? Its history will be deleted too. This cannot be undone.")

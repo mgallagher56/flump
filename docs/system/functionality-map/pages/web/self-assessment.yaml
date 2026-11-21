@@ -1,0 +1,214 @@
+id: self-assessment
+app: web
+route: /app/self-assessment
+title: Self Assessment
+auth: required
+purpose: Track income and expenses outside PAYE across tax years, view estimated Self Assessment tax bill, and manage records and receipts.
+entry_points:
+  - Main app navigation (Self Assessment)
+  - Dashboard Self Assessment widget
+  - Redirect from /app/tax
+  - Back link from /app/self-assessment/:source
+route_file: apps/web/app/routes/app.self-assessment.tsx
+
+sections:
+  - id: opt-in-gate
+    name: Self Assessment opt-in empty state
+    kind: content
+    component: apps/web/app/containers/tax/TaxContainer.tsx
+    when: when tax page is not enabled in user profile
+    capabilities:
+      - id: enable-self-assessment
+        goal: Enable Self Assessment in the user's profile and reload the workspace.
+        mode: write
+        facts_written:
+          - enabled-pages-and-widgets
+        actions:
+          - id: turn-on-self-assessment
+            control: button
+            label: Turn on Self Assessment
+            effect: Adds tax to enabledPages and dashboardWidgets via PATCH /user-profile.
+            target: PATCH /user-profile
+            if_match: true
+
+  - id: header
+    name: Page header and tax year selector
+    kind: header
+    component: apps/web/app/containers/tax/TaxContainer.tsx
+    when: when Self Assessment is enabled
+    capabilities:
+      - id: switch-or-delete-tax-year
+        goal: Switch between available UK tax years or delete all records dated in the selected tax year.
+        mode: delete
+        facts_read:
+          - tax-records
+        facts_written:
+          - tax-records
+        actions:
+          - id: select-tax-year
+            control: button
+            label: Tax year pill
+            effect: Switches the active UK tax year shown across the page.
+          - id: delete-tax-year-records
+            control: button
+            label: Delete all records for tax year
+            effect: Opens ConfirmDialog and deletes all records dated in the selected tax year.
+            confirm: ConfirmDialog ("Delete all <N> records for <taxYear>? This cannot be undone.")
+
+  - id: tax-rates-banner
+    name: Tax rates status banner
+    kind: notice
+    component: apps/web/app/containers/tax/TaxContainer.tsx
+    when: when Self Assessment is enabled and selected tax year is not refused
+    capabilities:
+      - id: view-tax-year-rates-status
+        goal: Show which UK tax year's published rates apply to the estimate.
+        mode: read
+        actions: []
+
+  - id: headline-or-empty
+    name: Estimated tax bill headline or empty state
+    kind: hero
+    component: apps/web/app/features/tax/components/TaxHeadline/TaxHeadline.tsx
+    when: when Self Assessment is enabled
+    capabilities:
+      - id: view-estimated-tax-bill
+        goal: View estimated Self Assessment tax bill for the selected year, or add income/missing facts when empty or incomplete.
+        mode: read
+        facts_read:
+          - tax-records
+          - salary
+          - tax-region
+          - employment-type
+          - rental-share-for-tax
+          - student-loan-plan
+        figures_shown:
+          - estimated-tax
+          - personal-allowance-allocation
+          - finance-costs-carried-forward
+        actions:
+          - id: open-add-income-menu
+            control: button
+            label: Add income
+            effect: Opens AddIncomeMenu to add a record for self-employment, rental, savings, or PAYE.
+          - id: add-expense-from-headline
+            control: button
+            label: Add expense
+            effect: Opens the tax record dialog in expense mode.
+          - id: add-missing-salary-link
+            control: link
+            label: Add your salary
+            effect: Navigates to Profile settings when salary is required for the estimate.
+            target: /app/profile#settings-age-and-pay
+
+  - id: calculation-drawer
+    name: How the estimate is worked out
+    kind: drawer
+    component: apps/web/app/features/tax/components/TaxReservePanel/TaxReservePanel.tsx
+    when: when Self Assessment has non-PAYE income in the selected year
+    capabilities:
+      - id: inspect-and-update-paye-salary
+        goal: Inspect the tax calculation breakdown, rental property shares, and optionally save PAYE salary.
+        mode: write
+        facts_read:
+          - tax-records
+          - salary
+          - rental-share-for-tax
+        facts_written:
+          - salary
+        figures_shown:
+          - estimated-tax
+          - personal-allowance-allocation
+          - finance-costs-carried-forward
+        actions:
+          - id: toggle-how-worked-out
+            control: drawer-toggle
+            label: How the estimate is worked out
+            effect: Expands or collapses TaxReservePanel.
+          - id: save-paye-salary
+            control: submit
+            label: Save
+            effect: Saves updated PAYE salary to PATCH /user-profile.
+            target: PATCH /user-profile
+            if_match: true
+
+  - id: sources-panel
+    name: Income sources summary
+    kind: list
+    component: apps/web/app/features/tax/components/TaxSourcesPanel/TaxSourcesPanel.tsx
+    when: when Self Assessment is enabled
+    capabilities:
+      - id: navigate-to-source-page
+        goal: View income and expenses by source and open a source's dedicated page, or copy records from a previous tax year.
+        mode: navigate
+        facts_read:
+          - tax-records
+          - account-balance
+        actions:
+          - id: open-source-page
+            control: link
+            label: Self-employment / Rental property / Savings & investments / PAYE
+            effect: Navigates to /app/self-assessment/:source?year=:taxYear.
+            target: /app/self-assessment/:source
+          - id: open-copy-tax-year
+            control: button
+            label: Copy from another year
+            effect: Opens CopyTaxYearModal to copy repeating or prior-year records into the selected tax year.
+
+  - id: calculated-figures
+    name: Calculated interest offers from Accounts
+    kind: list
+    component: apps/web/app/features/tax/components/CalculatedFigures/CalculatedFigures.tsx
+    when: when Accounts provide calculated savings or mortgage interest offers
+    capabilities:
+      - id: add-calculated-interest-record
+        goal: Add a calculated savings interest or buy-to-let mortgage interest figure from Accounts as a tax record.
+        mode: write
+        facts_read:
+          - account-balance
+          - account-rate
+        facts_written:
+          - tax-records
+        actions:
+          - id: add-calculated-offer
+            control: button
+            label: Add to tax year
+            effect: Creates a tax record from the calculated interest offer via POST /tax-records.
+            target: POST /tax-records
+
+  - id: records-and-years-drawers
+    name: Records and Year-by-year drawers
+    kind: drawer
+    component: apps/web/app/features/tax/components/TaxRecordsTable/TaxRecordsTable.tsx
+    when: when records exist for the selected year or multiple years exist
+    capabilities:
+      - id: manage-tax-records
+        goal: Expand Records or Year by year drawers, add/edit/delete individual tax records, or view attached receipts.
+        mode: write
+        facts_read:
+          - tax-records
+        facts_written:
+          - tax-records
+        actions:
+          - id: toggle-records-drawer
+            control: drawer-toggle
+            label: Records
+            effect: Expands or collapses the grouped tax records tables.
+          - id: edit-tax-record
+            control: button
+            label: Edit
+            effect: Opens the tax record edit dialog for the selected record.
+          - id: delete-tax-record
+            control: button
+            label: Delete
+            effect: Opens confirmation and deletes the tax record via DELETE /tax-records/:id.
+            target: DELETE /tax-records/:id
+          - id: view-receipt
+            control: button
+            label: View receipt
+            effect: Opens the stored receipt via /app/tax/receipts/:id.
+            target: /app/tax/receipts/:id
+          - id: toggle-year-by-year
+            control: drawer-toggle
+            label: Year by year
+            effect: Expands or collapses TaxYearComparison across available tax years.
