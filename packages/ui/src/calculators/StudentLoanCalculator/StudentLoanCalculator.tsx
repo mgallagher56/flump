@@ -152,7 +152,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
 
   const announcement = evaluation
     ? studentLoanAnnouncement(money(evaluation.monthlyRepayment), money(evaluation.annualRepayment))
-    : (refusalNotice ?? "");
+    : "";
 
   const handleSave = () => {
     const payload: StudentLoanSeedPayload = {
@@ -206,7 +206,12 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
 
   const content = !evaluation ? (
     <div className={studentLoanContent()}>
-      <p className={studentLoanExplainer()} data-testid="student-loan-refusal">
+      <p
+        aria-live="polite"
+        className={studentLoanExplainer()}
+        data-testid="student-loan-refusal"
+        role="status"
+      >
         {refusalNotice}
       </p>
       <Button className={studentLoanCta()} size="md" variant="primary" onClick={handleSave}>

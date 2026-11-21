@@ -12,8 +12,6 @@ test("L58 Retirement lists the saved budget lines under From budget lines", asyn
   await page.goto("/app");
   await applyPersona(page, "homeowner");
 
-  // Retirement is a friends-beta page; the e2e backend lets the dev user in
-  // (RETIREMENT_ALLOWED_USER_IDS in playwright.config.ts).
   await page.goto("/app/retirement");
   const details = page.locator("#retirement-plan-details");
   await details.getByRole("button", { name: "From budget lines" }).click();

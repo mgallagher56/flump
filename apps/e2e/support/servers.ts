@@ -29,8 +29,7 @@ const clientIpEnv = { WEB_CLIENT_IP_HMAC_KEY: randomBytes(32).toString("hex") };
 /**
  * The built backend, web app and marketing site, shared by the smoke and visual configs.
  * `extraEnv` is added to every server (the visual suite passes its frozen clock).
- * `backendEnv` is added to the backend only: the main config uses it to let the test user into
- * the friends-beta retirement page, which the visual, a11y, sweep and interaction suites must not see.
+ * `backendEnv` is added to the backend only.
  */
 export function webServers(
   extraEnv: Record<string, string> = {},

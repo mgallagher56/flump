@@ -174,4 +174,27 @@ describe("StudentLoanCalculator in 2027/28 (Plan 1 and Plan 4 thresholds not pub
       expect(screen.getByTestId("student-loan-outcomes")).toBeDefined();
     },
   );
+
+  it.each(["plan1", "plan4"] as const)(
+    "exposes the refusal line for %s in a polite status live region on initial render and plan switch",
+    (plan) => {
+      const { unmount } = render(
+        <StudentLoanCalculator initialPlan={plan} persistSeed={false} taxYear="2027/28" />,
+      );
+      const initialStatus = screen.getByRole("status");
+      expect(initialStatus).toBe(screen.getByTestId("student-loan-refusal"));
+      expect(initialStatus.getAttribute("aria-live")).toBe("polite");
+      expect(initialStatus.textContent).toBe(LINE);
+      unmount();
+
+      render(<StudentLoanCalculator initialPlan="plan2" persistSeed={false} taxYear="2027/28" />);
+      expect(screen.queryByTestId("student-loan-refusal")).toBeNull();
+
+      fireEvent.change(planSelect(), { target: { value: plan } });
+      const switchedStatus = screen.getByRole("status");
+      expect(switchedStatus).toBe(screen.getByTestId("student-loan-refusal"));
+      expect(switchedStatus.getAttribute("aria-live")).toBe("polite");
+      expect(switchedStatus.textContent).toBe(LINE);
+    },
+  );
 });

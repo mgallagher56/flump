@@ -243,11 +243,6 @@ about seven of the ten data resets allowed an hour. Build first, and use free po
 whose name contains `e2e`, as for the other suites. Desktop emulation shows no on-screen keyboard:
 the field walk catches script-driven jumps only.
 
-Retirement plan is a friends-beta page: the backend answers 404 unless the user is listed in
-`RETIREMENT_ALLOWED_USER_IDS`. To sweep it, set that variable to the dev-bypass user's id (see
-`apps/backend/src/auth/dev-bypass.verifier.ts`) in the environment; the web servers inherit it.
-Local test backend only.
-
 ## Accessibility gate
 
 `a11y/pages.spec.ts` (config `playwright.a11y.config.ts`, root script `bun run test:a11y`) runs
