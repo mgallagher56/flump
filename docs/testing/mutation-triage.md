@@ -2203,7 +2203,7 @@ No survivor showed a bug in source. Two notes for later work, neither a wrong fi
 
 Faults with status Survived or NoCoverage in the forced full run on commit 66c6fe131, for every file under `apps/web/app/utils/`, `apps/web/server/` and `apps/web/app/state/`. Kills were confirmed with `stryker run --force --concurrency 2 --mutate <file>` per file after the tests were added (commit af95a53b9), except `server/sentrySourceMaps.ts`: its Stryker dry run timed out twice on the shared laptop, so each of its 25 faults was applied by hand (a script that splices the report's replacement into the source), the two sentry test files run, and the source restored. Line numbers are those of commit 66c6fe131.
 
-The Equivalent and Not worth killing columns count rows, not faults; one row may cover several faults. In faults: 483 in the list, 201 killed by new tests, 63 equivalent, 219 not worth killing, 0 possible bugs.
+The Equivalent and Not worth killing columns count rows, not faults; one row may cover several faults. In faults: 483 in the list, 201 killed by new tests, 64 equivalent, 218 not worth killing, 0 possible bugs.
 
 | File                                | Faults in list | Killed by new tests | Equivalent | Not worth killing | Possible bug |
 | ----------------------------------- | -------------- | ------------------- | ---------- | ----------------- | ------------ |
@@ -2221,7 +2221,7 @@ The Equivalent and Not worth killing columns count rows, not faults; one row may
 | `app/utils/runwayStorage.ts`        | 2              | 1                   | 1          | 0                 | 0            |
 | `app/utils/safeErrorSummary.ts`     | 2              | 2                   | 0          | 0                 | 0            |
 | `app/utils/safeRedirectUrl.ts`      | 4              | 3                   | 1          | 0                 | 0            |
-| `app/utils/sessionCookie.server.ts` | 6              | 2                   | 1          | 2                 | 0            |
+| `app/utils/sessionCookie.server.ts` | 6              | 2                   | 2          | 1                 | 0            |
 | `app/utils/sessionPolicy.server.ts` | 5              | 4                   | 1          | 0                 | 0            |
 | `app/utils/support.ts`              | 4              | 3                   | 1          | 0                 | 0            |
 | `app/utils/taxTrapCopy.ts`          | 3              | 1                   | 0          | 1                 | 0            |
@@ -2236,7 +2236,7 @@ The Equivalent and Not worth killing columns count rows, not faults; one row may
 | `server/securityHeaders.ts`         | 4              | 1                   | 2          | 0                 | 0            |
 | `server/sentrySourceMaps.ts`        | 25             | 22                  | 1          | 0                 | 0            |
 | `server/shutdown.ts`                | 20             | 15                  | 2          | 2                 | 0            |
-| **Total**                           | **483**        | **201**             | **41**     | **29**            | **0**        |
+| **Total**                           | **483**        | **201**             | **42**     | **28**            | **0**        |
 
 Files where every fault is now killed (`baseline.store.ts`, `financialPicture.ts`, `pageConfig.ts`, `safeErrorSummary.ts`, `utils.ts`, `env.ts`, `requiredEnv.ts`) have no section.
 
@@ -2329,11 +2329,11 @@ Files where every fault is now killed (`baseline.store.ts`, `financialPicture.ts
 
 #### `app/utils/sessionCookie.server.ts`
 
-| Line     | Fault                                             | Class             | Reason                                                                                                                                                                                              |
-| -------- | ------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| L21      | ConditionalExpression `false`                     | Equivalent        | `getSession(null)` gives an empty session, and `has("jwt")` is false                                                                                                                                |
-| L23      | ConditionalExpression `false`                     | Not worth killing | With `secrets: [undefined]` no signed cookie verifies, so the session reads empty; the existing "password not configured" test runs this path and stays false. Not proved for every possible cookie |
-| L32; L33 | BlockStatement `{}`; BooleanLiteral `true` (NoCo) | Not worth killing | No input found that throws inside createCookieSessionStorage or getSession (a bad signature or encoding reads as an empty session); a defensive guard                                               |
+| Line     | Fault                                             | Class             | Reason                                                                                                                                                                                                                                                                                                                                          |
+| -------- | ------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L21      | ConditionalExpression `false`                     | Equivalent        | `getSession(null)` gives an empty session, and `has("jwt")` is false                                                                                                                                                                                                                                                                            |
+| L23      | ConditionalExpression `false`                     | Equivalent        | Without the guard, an empty or missing password becomes `secrets: [""]` or `[undefined]`. Web Crypto refuses a zero-length HMAC key ("Zero-length key is not supported"), so verifying any cookie throws, and the `catch` returns false: the same result for every cookie. Checked by hand on 21 November 2026 with a well-formed signed cookie |
+| L32; L33 | BlockStatement `{}`; BooleanLiteral `true` (NoCo) | Not worth killing | No input found that throws inside createCookieSessionStorage or getSession (a bad signature or encoding reads as an empty session); a defensive guard                                                                                                                                                                                           |
 
 #### `app/utils/sessionPolicy.server.ts`
 
