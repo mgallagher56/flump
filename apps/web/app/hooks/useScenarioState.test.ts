@@ -68,6 +68,43 @@ describe("useScenarioState", () => {
     expect(result.current.isModified).toBe(false);
   });
 
+  test("a saved input added later is followed, even when the others are unchanged", () => {
+    const { result, rerender } = renderHook(({ s }) => useScenarioState(s), {
+      initialProps: { s: { balance: 180000 } as Record<string, number> },
+    });
+    rerender({ s: { balance: 180000, rate: 4.5 } });
+    expect(result.current.values).toEqual({ balance: 180000, rate: 4.5 });
+  });
+
+  test("an input set back to its saved value follows a later saved change", () => {
+    const { result, rerender } = renderHook(({ s }) => useScenarioState(s), {
+      initialProps: { s: saved },
+    });
+    act(() => result.current.set("rate", 5.2));
+    act(() => result.current.set("rate", 4.5));
+    rerender({ s: { ...saved, rate: 4.0 } });
+    expect(result.current.values.rate).toBe(4.0);
+    expect(result.current.isModified).toBe(false);
+  });
+
+  test("an edit that the saved value catches up with is no longer an edit", () => {
+    const { result, rerender } = renderHook(({ s }) => useScenarioState(s), {
+      initialProps: { s: saved },
+    });
+    act(() => result.current.set("rate", 5.2));
+    rerender({ s: { ...saved, rate: 5.2 } });
+    expect(result.current.values.rate).toBe(5.2);
+    expect(result.current.isEdited("rate")).toBe(false);
+    expect(result.current.isModified).toBe(false);
+  });
+
+  test("setting an unedited input to its saved value keeps the same values object", () => {
+    const { result } = renderHook(() => useScenarioState(saved));
+    const before = result.current.values;
+    act(() => result.current.set("rate", 4.5));
+    expect(result.current.values).toBe(before);
+  });
+
   test("NaN is a distinct edit and -0 equals 0", () => {
     const { result } = renderHook(() => useScenarioState({ a: 0 as number | null, b: 5 }));
     act(() => result.current.set("a", -0));

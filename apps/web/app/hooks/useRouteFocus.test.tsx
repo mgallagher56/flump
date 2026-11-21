@@ -1,6 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { createMemoryRouter, Outlet, RouterProvider, useNavigate } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useRouteFocus } from "./useRouteFocus";
 
 function Shell() {
@@ -27,6 +27,16 @@ function Shell() {
         <Outlet />
       </main>
     </>
+  );
+}
+
+function NoMain() {
+  useRouteFocus("not-on-this-page");
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate("/budget")}>
+      Budget
+    </button>
   );
 }
 
@@ -79,6 +89,32 @@ describe("useRouteFocus", () => {
     const link = await screen.findByRole("button", { name: "Budget" });
     await act(async () => link.click());
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Budget" }));
+  });
+
+  it("moves focus without scrolling the page", async () => {
+    renderApp();
+    const link = await screen.findByRole("button", { name: "Budget" });
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+    await act(async () => link.click());
+    await screen.findByText("Budget page");
+    const onMain = focus.mock.calls.filter((_, i) => focus.mock.contexts[i] === main());
+    expect(onMain).toEqual([[{ preventScroll: true }]]);
+    focus.mockRestore();
+  });
+
+  it("does nothing on a layout with no main region", async () => {
+    const router = createMemoryRouter(
+      [
+        { path: "/", element: <NoMain /> },
+        { path: "/budget", element: <NoMain /> },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+    const link = await screen.findByRole("button", { name: "Budget" });
+    link.focus();
+    await act(async () => link.click());
+    expect(router.state.location.pathname).toBe("/budget");
   });
 
   it("does not move focus for a link to an anchor, a change of query, or back", async () => {

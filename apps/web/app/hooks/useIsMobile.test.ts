@@ -1,4 +1,4 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import useIsMobile, { NAV_COLLAPSED_MEDIA_QUERY } from "./useIsMobile";
@@ -41,6 +41,31 @@ describe("useIsMobile", () => {
     stubViewport(true);
     renderHook(() => useIsMobile());
     expect(window.matchMedia).toHaveBeenCalledWith(NAV_COLLAPSED_MEDIA_QUERY);
+  });
+
+  test("stays false without error where the browser has no matchMedia", () => {
+    vi.stubGlobal("matchMedia", undefined);
+    const { result } = renderHook(() => useIsMobile());
+    expect(result.current).toBe(false);
+  });
+
+  test("follows a change of viewport and stops listening when unmounted", () => {
+    let listener: (() => void) | undefined;
+    const media = {
+      matches: false,
+      addEventListener: vi.fn((_type: string, cb: () => void) => {
+        listener = cb;
+      }),
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue(media));
+    const { result, unmount } = renderHook(() => useIsMobile());
+    expect(result.current).toBe(false);
+    media.matches = true;
+    act(() => listener?.());
+    expect(result.current).toBe(true);
+    unmount();
+    expect(media.removeEventListener).toHaveBeenCalledWith("change", listener);
   });
 
   test("syncs to true after mount on a narrow viewport", () => {

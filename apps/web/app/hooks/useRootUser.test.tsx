@@ -86,6 +86,21 @@ describe("useRootUser", () => {
     expect(renderHook(() => useRootUser()).result.current).toBeNull();
   });
 
+  it("on the server reads the root loader's user", () => {
+    vi.stubGlobal("document", undefined);
+    loaderData.mockReturnValue({ user: signedIn });
+    expect(renderToString(<Probe />)).toContain("user-1");
+  });
+
+  it("forgets the remembered user on a refused session (403) too", () => {
+    loaderData.mockReturnValue({ user: signedIn });
+    const { result, rerender } = renderHook(() => useRootUser());
+    loaderData.mockReturnValue(undefined);
+    forgetRootUserOnAuthError({ status: 403, statusText: "Forbidden", data: null });
+    rerender();
+    expect(result.current).toBeNull();
+  });
+
   it("on the server never falls back to a remembered user", () => {
     loaderData.mockReturnValue({ user: signedIn });
     renderHook(() => useRootUser());

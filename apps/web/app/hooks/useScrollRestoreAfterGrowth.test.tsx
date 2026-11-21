@@ -1,5 +1,11 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { createMemoryRouter, Outlet, RouterProvider, useNavigate } from "react-router";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Outlet,
+  RouterProvider,
+  useNavigate,
+} from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useScrollRestoreAfterGrowth } from "./useScrollRestoreAfterGrowth";
 
@@ -44,6 +50,11 @@ function Shell() {
       <Outlet />
     </>
   );
+}
+
+function Plain() {
+  useScrollRestoreAfterGrowth();
+  return <p>Plain page</p>;
 }
 
 function renderApp() {
@@ -118,6 +129,64 @@ describe("useScrollRestoreAfterGrowth", () => {
     });
     pageGrowsTo(2000);
     expect(scrollY).toBe(300);
+  });
+
+  it("lets go when the reader types, even in a control that stops the key event", async () => {
+    readHomeThenBackWhileShort();
+    await screen.findByText("Home");
+    const field = document.createElement("input");
+    field.addEventListener("keydown", (event) => event.stopPropagation());
+    document.body.appendChild(field);
+    fireEvent.keyDown(field, { key: "a" });
+    pageGrowsTo(2000);
+    expect(scrollY).toBe(300);
+    field.remove();
+  });
+
+  it("removes every input listener it added once it lets go", async () => {
+    const added = vi.spyOn(window, "addEventListener");
+    const removed = vi.spyOn(window, "removeEventListener");
+    readHomeThenBackWhileShort();
+    await screen.findByText("Home");
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    const inputTypes = ["wheel", "touchstart", "pointerdown", "keydown"];
+    const ours = added.mock.calls.filter(
+      ([type, , options]) =>
+        inputTypes.includes(type as string) && (options as AddEventListenerOptions)?.capture,
+    );
+    expect(ours.length).toBeGreaterThanOrEqual(4);
+    for (const [type, listener] of ours) {
+      expect(removed).toHaveBeenCalledWith(type, listener, { capture: true });
+    }
+    added.mockRestore();
+    removed.mockRestore();
+  });
+
+  it("still restores the place, and lets go cleanly, where the browser has no ResizeObserver", async () => {
+    vi.stubGlobal("ResizeObserver", undefined);
+    const router = readHomeThenBackWhileShort();
+    await screen.findByText("Home");
+    expect(scrollTo).toHaveBeenCalledWith(0, 900);
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    // A new page after the hold ends: no error from the clean-up.
+    await act(async () => {
+      await router.navigate("/budget");
+    });
+    expect(await screen.findByText("Budget page")).toBeTruthy();
+  });
+
+  it("does nothing, without error, outside a data router", () => {
+    render(
+      <MemoryRouter>
+        <Plain />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Plain page")).toBeTruthy();
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 
   it("does nothing on a new page (push), which opens at the top", async () => {
