@@ -171,15 +171,15 @@ describe("useTableSort", () => {
 
   it("puts undefined and NaN amounts last, in their given order", () => {
     const rows = [
-      { name: "none", amount: undefined as unknown as null, date: "" },
-      { name: "low", amount: 10, date: "" },
       { name: "nan", amount: Number.NaN, date: "" },
+      { name: "low", amount: 10, date: "" },
+      { name: "none", amount: undefined as unknown as null, date: "" },
       { name: "high", amount: 90, date: "" },
     ];
     const { result } = renderHook(() =>
       useTableSort({ rows, columns, initial: { key: "amount", direction: "asc" } }),
     );
-    expect(names(result.current.sortedRows)).toEqual(["low", "high", "none", "nan"]);
+    expect(names(result.current.sortedRows)).toEqual(["low", "high", "nan", "none"]);
   });
 
   it("starts a newly chosen column in its own first direction", () => {

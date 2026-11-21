@@ -170,6 +170,17 @@ describe("useThemePreference", () => {
     expect(result.current.theme).toBe("dark");
   });
 
+  test("uses a stored light choice over a dark system theme", () => {
+    localStorage.setItem("flump-theme", "light");
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+    );
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.preference).toBe("light");
+    expect(result.current.theme).toBe("light");
+  });
+
   test("keeps the server theme when the browser has no matchMedia", () => {
     vi.stubGlobal("matchMedia", undefined);
     const { result } = renderHook(() => useTheme({ serverTheme: "light" }));

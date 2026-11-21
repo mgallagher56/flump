@@ -141,19 +141,51 @@ describe("scene settled storage", () => {
     expect(isSceneSettled("goals")).toBe(false);
   });
 
+  /** Replaces sessionStorage for one test; the returned function puts the real one back. */
+  const replaceSessionStorage = (fake: Partial<Storage> | undefined) => {
+    const own = Object.getOwnPropertyDescriptor(window, "sessionStorage");
+    Object.defineProperty(window, "sessionStorage", { value: fake, configurable: true });
+    return () => {
+      if (own) Object.defineProperty(window, "sessionStorage", own);
+      else Reflect.deleteProperty(window, "sessionStorage");
+    };
+  };
+
   it("remembers a scene in memory when sessionStorage refuses to write", () => {
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-      throw new Error("quota");
+    const restore = replaceSessionStorage({
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("quota");
+      },
     });
-    markSceneSettled("debts");
-    expect(isSceneSettled("debts")).toBe(true);
+    try {
+      markSceneSettled("debts");
+      expect(isSceneSettled("debts")).toBe(true);
+    } finally {
+      restore();
+    }
   });
 
   it("treats a scene as not settled when sessionStorage refuses to read", () => {
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-      throw new Error("blocked");
+    const restore = replaceSessionStorage({
+      getItem: () => {
+        throw new Error("blocked");
+      },
     });
-    expect(isSceneSettled("pension")).toBe(false);
+    try {
+      expect(isSceneSettled("pension")).toBe(false);
+    } finally {
+      restore();
+    }
+  });
+
+  it("treats a scene as not settled when there is no sessionStorage", () => {
+    const restore = replaceSessionStorage(undefined);
+    try {
+      expect(isSceneSettled("pension")).toBe(false);
+    } finally {
+      restore();
+    }
   });
 
   it("clears only its own keys", () => {

@@ -192,10 +192,21 @@ describe("setup step count storage", () => {
   });
 
   it("reads no count when sessionStorage refuses to read", () => {
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-      throw new Error("blocked");
+    const own = Object.getOwnPropertyDescriptor(window, "sessionStorage");
+    Object.defineProperty(window, "sessionStorage", {
+      value: {
+        getItem: () => {
+          throw new Error("blocked");
+        },
+      },
+      configurable: true,
     });
-    expect(getStoredStepCount()).toBeNull();
+    try {
+      expect(getStoredStepCount()).toBeNull();
+    } finally {
+      if (own) Object.defineProperty(window, "sessionStorage", own);
+      else Reflect.deleteProperty(window, "sessionStorage");
+    }
   });
 
   it("follows a count that goes down at once", () => {
