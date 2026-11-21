@@ -48,8 +48,8 @@ describe("usePrefersReducedMotion", () => {
 
   test("stays false without error where the browser has no matchMedia", () => {
     const original = window.matchMedia;
-    // @ts-expect-error simulating a browser without matchMedia
-    window.matchMedia = undefined;
+    // Simulates a browser without matchMedia.
+    window.matchMedia = undefined as unknown as typeof window.matchMedia;
     try {
       const { result } = renderHook(() => usePrefersReducedMotion());
       expect(result.current).toBe(false);
