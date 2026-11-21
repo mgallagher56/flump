@@ -103,18 +103,17 @@ describe("useRouteFocus", () => {
   });
 
   it("does nothing on a layout with no main region", async () => {
-    const router = createMemoryRouter(
-      [
-        { path: "/", element: <NoMain /> },
-        { path: "/budget", element: <NoMain /> },
-      ],
-      { initialEntries: ["/"] },
-    );
+    // One route for both paths, so the layout stays mounted across the navigation.
+    const router = createMemoryRouter([{ path: "*", element: <NoMain /> }], {
+      initialEntries: ["/"],
+    });
     render(<RouterProvider router={router} />);
     const link = await screen.findByRole("button", { name: "Budget" });
     link.focus();
     await act(async () => link.click());
     expect(router.state.location.pathname).toBe("/budget");
+    // The layout is still on screen, not replaced by an error page.
+    expect(screen.getByRole("button", { name: "Budget" })).toBeTruthy();
   });
 
   it("does not move focus for a link to an anchor, a change of query, or back", async () => {
