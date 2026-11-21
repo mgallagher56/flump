@@ -241,6 +241,7 @@ describe("UserProfileController", () => {
       expect(at(events, 0)).not.toContain("user-123");
       expect(event.removed).toEqual({
         accountDetails: 4,
+        accountGoals: 0,
         snapshotCheckins: 0,
         importBatches: 0,
         transactions: 5,

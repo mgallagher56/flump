@@ -1045,6 +1045,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     const after = await countsFor(USER_A);
     expect(after).toEqual({
       account_details: 0,
+      account_goals: 0,
       accounts: 0,
       agent_audit_events: 1,
       // BE-06: kept by a reset, plus the reset's own record; the consent is withdrawn, not deleted.
