@@ -2,9 +2,20 @@
 
 # Functionality map: overview
 
-Mapped pages: 17 | Sections: 112 | Capabilities: 123 | Actions: 307 | Excluded routes: 10 | Unmapped allowlist (S0–S3): 26
+Mapped pages: 26 | Sections: 148 | Capabilities: 161 | Actions: 374 | Excluded routes: 19 | Unmapped allowlist (S0–S3): 8
 
 ## web
+
+### account-deleted — Account deleted
+
+- Route: `/account-deleted` (auth: `public`, file: `apps/web/app/routes/account-deleted.tsx`)
+- Purpose: Confirm that the user's account and data have been removed, or let them finish removing their login when deletion stopped halfway.
+- Entry points: Redirect after deleting account in Settings Data tab; Direct URL with ?state=pending when login removal is still pending
+
+| Section                                                            | Kind   | Capability                   | Mode     | Facts read | Facts written | Figures | Actions |
+| ------------------------------------------------------------------ | ------ | ---------------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `deleted-confirmation (when pending is false)`                     | notice | `confirm-deletion-and-leave` | navigate | -          | -             | -       | 1       |
+| `finish-deletion (when ?state=pending and a live session remains)` | form   | `complete-pending-deletion`  | delete   | -          | -             | -       | 2       |
 
 ### account-detail — Account detail
 
@@ -103,6 +114,56 @@ Mapped pages: 17 | Sections: 112 | Capabilities: 123 | Actions: 307 | Excluded r
 | `account-changes-drawer (when latest and previous recorded months have account changes)` | drawer  | `inspect-account-changes`    | read  | `balance-history`, `account-name`, `account-type`                          | -                                                     | `net-worth-over-time`                      | 4       |
 | `check-in-sheet (when sheet is checkIn or backfill)`                                     | drawer  | `save-check-in-or-backfill`  | write | `account-balance`, `balance-history`, `check-in-done`                      | `balance-history`, `account-balance`, `check-in-done` | `check-in-calculated-balance`, `net-worth` | 7       |
 
+### import-review — Review import
+
+- Route: `/app/imports/:id` (auth: `required`, file: `apps/web/app/routes/app.imports.$id.tsx`)
+- Purpose: Map imported accounts to Flump accounts, review balance diffs, save staged balances, or undo a saved import.
+- Entry points: Imports list page (Review / View link); Review URL returned by an AI connection staging a balance import
+
+| Section                                                                    | Kind       | Capability              | Mode     | Facts read                           | Facts written                        | Figures | Actions |
+| -------------------------------------------------------------------------- | ---------- | ----------------------- | -------- | ------------------------------------ | ------------------------------------ | ------- | ------- |
+| `header`                                                                   | header     | `navigate-back`         | navigate | -                                    | -                                    | -       | 1       |
+| `summary-kpis (when batch is staged with preview, committed, or reverted)` | kpi-strip  | `view-import-counts`    | read     | -                                    | -                                    | -       | 0       |
+| `account-mapping (when batch is staged with preview)`                      | form       | `map-imported-accounts` | what-if  | -                                    | -                                    | -       | 1       |
+| `diff-table (when batch is staged with preview)`                           | table      | `inspect-and-tick-rows` | what-if  | `account-balance`, `balance-history` | -                                    | -       | 3       |
+| `commit-bar (when batch is staged with preview)`                           | form       | `commit-import`         | write    | -                                    | `account-balance`, `balance-history` | -       | 1       |
+| `post-commit-actions (when batch is committed)`                            | navigation | `view-history-or-undo`  | delete   | -                                    | -                                    | -       | 2       |
+
+### imports — Imports
+
+- Route: `/app/imports` (auth: `required`, file: `apps/web/app/routes/app.imports._index.tsx`)
+- Purpose: View staged, saved, undone, and expired balance import batches and open any batch to review or revisit it.
+- Entry points: Settings Security tab (Review imports link when a connection can stage imports); Import review page (All imports back link)
+
+| Section        | Kind   | Capability                | Mode     | Facts read | Facts written | Figures | Actions |
+| -------------- | ------ | ------------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `header`       | header | `orient`                  | read     | -          | -             | -       | 0       |
+| `imports-list` | table  | `filter-and-sort-imports` | read     | -          | -             | -       | 4       |
+| `imports-list` | table  | `open-import-batch`       | navigate | -          | -             | -       | 1       |
+
+### invite — Invite
+
+- Route: `/invite` (auth: `public`, file: `apps/web/app/routes/invite._index.tsx`)
+- Purpose: Redeem a private-beta invite token from the invite cookie or show a clear message when the invite link cannot be used.
+- Entry points: Redirect from /invite/:token after storing the invite token cookie; Return URL after WorkOS sign-up or sign-in
+
+| Section                                                                           | Kind   | Capability                     | Mode     | Facts read | Facts written | Figures | Actions |
+| --------------------------------------------------------------------------------- | ------ | ------------------------------ | -------- | ---------- | ------------- | ------- | ------- |
+| `invite-outcome (when invite link is unusable or redemption is temporarily busy)` | notice | `recover-from-unusable-invite` | navigate | -          | -             | -       | 1       |
+
+### invites — Invites
+
+- Route: `/app/invites` (auth: `admin`, file: `apps/web/app/routes/app.invites.tsx`)
+- Purpose: Create single-use private-beta invite links, cancel unused links, and remove beta member access.
+- Entry points: Settings Security tab (Manage invites link, visible to beta admins only)
+
+| Section              | Kind   | Capability                | Mode   | Facts read | Facts written | Figures | Actions |
+| -------------------- | ------ | ------------------------- | ------ | ---------- | ------------- | ------- | ------- |
+| `header`             | header | `orient`                  | read   | -          | -             | -       | 0       |
+| `create-invite`      | form   | `generate-invite-link`    | write  | -          | -             | -       | 3       |
+| `invite-links`       | list   | `list-and-cancel-invites` | delete | -          | -             | -       | 1       |
+| `people-with-access` | list   | `list-and-remove-members` | delete | -          | -             | -       | 1       |
+
 ### invoicing — Work log and invoicing
 
 - Route: `/app/invoicing` (auth: `required`, file: `apps/web/app/routes/app.invoicing.tsx`)
@@ -151,6 +212,16 @@ Mapped pages: 17 | Sections: 112 | Capabilities: 123 | Actions: 307 | Excluded r
 | `scenario-zone`        | scenario-zone | `estimate-from-payment`          | what-if | `mortgage-term-and-fix-end`                                                             | -             | `mortgage-budget-loan-estimate`, `mortgage-ltv-rate-band` | 2       |
 | `scenario-zone`        | scenario-zone | `estimate-from-income`           | what-if | `salary`                                                                                | -             | `mortgage-income-multiple-range`                          | 1       |
 | `scenario-zone`        | scenario-zone | `estimate-rate-change`           | what-if | `account-balance`, `account-rate`, `mortgage-term-and-fix-end`                          | -             | `mortgage-rate-comparison`                                | 1       |
+
+### not-found — We cannot find that page
+
+- Route: `/*` (auth: `public`, file: `apps/web/app/routes/$.tsx`)
+- Purpose: Render an accessible 404 error page inside the app layout for any unmatched URL while preserving security headers.
+- Entry points: Any unmatched web URL
+
+| Section       | Kind   | Capability               | Mode     | Facts read | Facts written | Figures | Actions |
+| ------------- | ------ | ------------------------ | -------- | ---------- | ------------- | ------- | ------- |
+| `error-state` | notice | `recover-from-not-found` | navigate | -          | -             | -       | 2       |
 
 ### onboarding — Set up Flump
 
@@ -253,6 +324,30 @@ Mapped pages: 17 | Sections: 112 | Capabilities: 123 | Actions: 307 | Excluded r
 | `calculated-figures (when source is rental or savings and Accounts provide calculated interest offers)` | list      | `add-source-calculated-interest` | write    | `account-balance`, `account-rate`               | `tax-records` | -               | 1       |
 | `records-section`                                                                                       | table     | `manage-source-records`          | write    | `tax-records`                                   | `tax-records` | -               | 6       |
 
+### settings — Settings
+
+- Route: `/app/profile` (auth: `required`, file: `apps/web/app/routes/app.profile.tsx`)
+- Purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, optional modules, sign-in security, AI connections, and data export or deletion.
+- Entry points: Main app account menu (Settings); Deep links from onboarding, retirement, dashboard, and account pages (/app/profile#... or ?tab=security)
+
+| Section                                                                                      | Kind       | Capability                      | Mode     | Facts read                                                 | Facts written                                              | Figures | Actions |
+| -------------------------------------------------------------------------------------------- | ---------- | ------------------------------- | -------- | ---------------------------------------------------------- | ---------------------------------------------------------- | ------- | ------- |
+| `header`                                                                                     | navigation | `switch-settings-tab`           | navigate | -                                                          | -                                                          | -       | 1       |
+| `profile-details (when Profile tab is active)`                                               | form       | `update-name-and-avatar`        | write    | -                                                          | -                                                          | -       | 4       |
+| `age-and-pay (when Profile tab is active)`                                                   | form       | `update-age-salary-pension`     | write    | `birth-year`, `employment-type`, `salary`, `pension-rates` | `birth-year`, `employment-type`, `salary`, `pension-rates` | -       | 7       |
+| `tax-basis (when Profile tab is active)`                                                     | form       | `update-tax-region-and-loans`   | write    | `tax-region`, `student-loan-plan`                          | `tax-region`, `student-loan-plan`                          | -       | 4       |
+| `net-worth-choices (when Profile tab is active and property or student loan accounts exist)` | form       | `toggle-net-worth-basis`        | write    | `net-worth-choices`                                        | `net-worth-choices`                                        | -       | 2       |
+| `check-in-day (when Profile tab is active)`                                                  | form       | `set-check-in-day`              | write    | `check-in-day`                                             | `check-in-day`                                             | -       | 1       |
+| `sections-you-use (when Profile tab is active)`                                              | form       | `toggle-self-assessment-module` | write    | -                                                          | -                                                          | -       | 1       |
+| `security-sign-in (when Security tab is active)`                                             | form       | `request-password-reset`        | write    | -                                                          | -                                                          | -       | 1       |
+| `security-invites (when Security tab is active and user is a beta admin)`                    | navigation | `open-invites-admin`            | navigate | -                                                          | -                                                          | -       | 1       |
+| `ai-connections (when Security tab is active)`                                               | form       | `manage-mcp-tokens`             | write    | -                                                          | -                                                          | -       | 8       |
+| `ai-connections (when Security tab is active)`                                               | form       | `export-ai-context-pack`        | export   | -                                                          | -                                                          | -       | 4       |
+| `security-imports (when Security tab is active and user has a token with staging scope)`     | navigation | `open-imports-list`             | navigate | -                                                          | -                                                          | -       | 1       |
+| `data-export (when Data tab is active)`                                                      | form       | `export-account-json`           | export   | -                                                          | -                                                          | -       | 1       |
+| `reset-financial-data (when Data tab is active)`                                             | form       | `reset-all-financial-data`      | delete   | -                                                          | -                                                          | -       | 1       |
+| `delete-account (when Data tab is active)`                                                   | form       | `delete-user-account`           | delete   | -                                                          | -                                                          | -       | 1       |
+
 ### take-home — Take-home pay
 
 - Route: `/app/take-home` (auth: `required`, file: `apps/web/app/routes/app.take-home.tsx`)
@@ -267,6 +362,30 @@ Mapped pages: 17 | Sections: 112 | Capabilities: 123 | Actions: 307 | Excluded r
 | `scenario-zone (when salary before tax and tax facts are known)` | scenario-zone | `toggle-and-reset-pay-scenario` | what-if | -                                                                                                  | -             | -           | 3       |
 | `scenario-zone (when salary before tax and tax facts are known)` | scenario-zone | `model-pay-rise`                | what-if | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | -             | `take-home` | 2       |
 | `scenario-zone (when salary before tax and tax facts are known)` | scenario-zone | `explore-next-pound`            | what-if | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | -             | -           | 1       |
+
+### tool-detail — Public money calculator
+
+- Route: `/tools/:slug` (auth: `public`, file: `apps/web/app/routes/tools.$slug.tsx`)
+- Purpose: Run one of eight public UK money calculators locally without signing in, read its guide and FAQ, or request a beta invite.
+- Entry points: Tools index page (/tools); Direct URL or marketing calculator link
+
+| Section       | Kind          | Capability                | Mode     | Facts read | Facts written | Figures | Actions |
+| ------------- | ------------- | ------------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `breadcrumbs` | navigation    | `navigate-to-tools-index` | navigate | -          | -             | -       | 1       |
+| `header`      | header        | `orient`                  | read     | -          | -             | -       | 0       |
+| `calculator`  | scenario-zone | `run-public-calculator`   | what-if  | -          | -             | -       | 2       |
+| `guide`       | drawer        | `read-guide-and-faq`      | read     | -          | -             | -       | 1       |
+
+### tools — UK money calculators, free during the beta
+
+- Route: `/tools` (auth: `public`, file: `apps/web/app/routes/tools._index.tsx`)
+- Purpose: Browse all eight public UK money calculators and open any calculator.
+- Entry points: Public signed-out header (Calculators); Tool detail breadcrumbs (Calculators)
+
+| Section      | Kind   | Capability        | Mode     | Facts read | Facts written | Figures | Actions |
+| ------------ | ------ | ----------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `header`     | header | `orient`          | read     | -          | -             | -       | 0       |
+| `tools-grid` | list   | `open-calculator` | navigate | -          | -             | -       | 1       |
 
 ## marketing
 

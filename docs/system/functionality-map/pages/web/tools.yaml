@@ -1,0 +1,36 @@
+id: tools
+app: web
+route: /tools
+title: UK money calculators, free during the beta
+auth: public
+purpose: Browse all eight public UK money calculators and open any calculator.
+entry_points:
+  - Public signed-out header (Calculators)
+  - Tool detail breadcrumbs (Calculators)
+route_file: apps/web/app/routes/tools._index.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/routes/tools._index.tsx
+    capabilities:
+      - id: orient
+        goal: Identify the public UK money calculators directory.
+        mode: read
+        actions: []
+
+  - id: tools-grid
+    name: Calculators
+    kind: list
+    component: apps/web/app/features/signed-out/components/ToolsGrid/ToolsGrid.tsx
+    capabilities:
+      - id: open-calculator
+        goal: Select any of the eight UK money calculators to run it.
+        mode: navigate
+        actions:
+          - id: open-tool-tile
+            control: link
+            label: Open calculator
+            effect: Navigates to the selected calculator page.
+            target: /tools/:slug

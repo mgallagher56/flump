@@ -1,0 +1,117 @@
+id: import-review
+app: web
+route: /app/imports/:id
+title: Review import
+auth: required
+purpose: Map imported accounts to Flump accounts, review balance diffs, save staged balances, or undo a saved import.
+entry_points:
+  - Imports list page (Review / View link)
+  - Review URL returned by an AI connection staging a balance import
+route_file: apps/web/app/routes/app.imports.$id.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/features/imports/components/ImportReviewPage/ImportReviewPage.tsx
+    capabilities:
+      - id: navigate-back
+        goal: Return to the Imports list page.
+        mode: navigate
+        actions:
+          - id: back-to-imports
+            control: link
+            label: All imports
+            effect: Navigates back to /app/imports.
+            target: /app/imports
+
+  - id: summary-kpis
+    name: Import summary strip
+    kind: kpi-strip
+    component: apps/web/app/features/imports/components/ImportReviewPage/ImportReviewPage.tsx
+    when: when batch is staged with preview, committed, or reverted
+    capabilities:
+      - id: view-import-counts
+        goal: View counts of new balances, replaced balances, unchanged balances, and skipped rows.
+        mode: read
+        actions: []
+
+  - id: account-mapping
+    name: Account mapping
+    kind: form
+    component: apps/web/app/features/imports/components/AccountMappingPanel/AccountMappingPanel.tsx
+    when: when batch is staged with preview
+    capabilities:
+      - id: map-imported-accounts
+        goal: Match each account in the import to an existing Flump account or leave unmapped, updating the dry-run diff.
+        mode: what-if
+        actions:
+          - id: select-account-mapping
+            control: select
+            label: Imported account mapping
+            effect: Updates the account mapping and re-runs the dry-run preview.
+
+  - id: diff-table
+    name: All changes
+    kind: table
+    component: apps/web/app/features/imports/components/ImportDiffTable/ImportDiffTable.tsx
+    when: when batch is staged with preview
+    capabilities:
+      - id: inspect-and-tick-rows
+        goal: Filter balance diff rows and opt in to overwriting flagged balances that already exist in Flump.
+        mode: what-if
+        facts_read:
+          - account-balance
+          - balance-history
+        actions:
+          - id: filter-diff-account
+            control: select
+            label: Account
+            effect: Filters the diff table to a single imported account.
+          - id: filter-diff-outcome
+            control: select
+            label: What happens
+            effect: Filters the diff table by row outcome.
+          - id: toggle-overwrite-row
+            control: checkbox
+            label: Replace saved balance
+            effect: Ticks or unticks a flagged row to allow overwriting the existing saved balance.
+
+  - id: commit-bar
+    name: Save staged import
+    kind: form
+    component: apps/web/app/features/imports/components/ImportReviewPage/ImportReviewPage.tsx
+    when: when batch is staged with preview
+    capabilities:
+      - id: commit-import
+        goal: Save the planned new and overwritten balances to Flump.
+        mode: write
+        facts_written:
+          - account-balance
+          - balance-history
+        actions:
+          - id: commit-balances
+            control: button
+            label: Save balances
+            effect: Commits the mapped and ticked balance changes to the backend.
+
+  - id: post-commit-actions
+    name: Saved import actions
+    kind: navigation
+    component: apps/web/app/features/imports/components/ImportReviewPage/ImportReviewPage.tsx
+    when: when batch is committed
+    capabilities:
+      - id: view-history-or-undo
+        goal: Navigate to net worth history or undo the committed import batch.
+        mode: delete
+        actions:
+          - id: view-net-worth-history
+            control: link
+            label: View net worth history
+            effect: Navigates to /app/accounts/history.
+            target: /app/accounts/history
+          - id: undo-import
+            control: button
+            label: Undo import
+            effect: Opens confirmation dialog and reverts all balances written by this batch.
+            confirm: Confirm in the Undo this import dialog to revert the saved balances.

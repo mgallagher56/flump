@@ -1,0 +1,48 @@
+id: account-deleted
+app: web
+route: /account-deleted
+title: Account deleted
+auth: public
+purpose: Confirm that the user's account and data have been removed, or let them finish removing their login when deletion stopped halfway.
+entry_points:
+  - Redirect after deleting account in Settings Data tab
+  - "Direct URL with ?state=pending when login removal is still pending"
+route_file: apps/web/app/routes/account-deleted.tsx
+
+sections:
+  - id: deleted-confirmation
+    name: Account deleted confirmation
+    kind: notice
+    component: apps/web/app/features/settings/components/AccountDeletedNotice/AccountDeletedNotice.tsx
+    when: when pending is false
+    capabilities:
+      - id: confirm-deletion-and-leave
+        goal: Confirm that all data and login have been removed and return to the marketing home page.
+        mode: navigate
+        actions:
+          - id: go-home
+            control: link
+            label: Go to the home page
+            effect: Navigates to the public marketing home page.
+            target: /
+
+  - id: finish-deletion
+    name: Finish deleting your account
+    kind: form
+    component: apps/web/app/features/settings/components/FinishDeletionPanel/FinishDeletionPanel.tsx
+    when: "when ?state=pending and a live session remains"
+    capabilities:
+      - id: complete-pending-deletion
+        goal: Type DELETE and repeat the delete request to finish removing the login.
+        mode: delete
+        actions:
+          - id: type-delete-confirmation
+            control: input
+            label: Type DELETE to confirm
+            effect: Enables the final delete submit button once DELETE is typed.
+            validation: Must match DELETE (case-insensitive).
+          - id: submit-finish-deletion
+            control: submit
+            label: Delete account
+            effect: Repeats the account deletion request to remove the remaining login and sign out.
+            target: POST /app/profile
