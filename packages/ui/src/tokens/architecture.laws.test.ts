@@ -212,13 +212,16 @@ describe("Architecture & Design System Laws", () => {
       const mortgageComponents = getSubdirectories(MORTGAGE_FEATURES_DIR);
       for (const expected of [
         "BtlOverview",
+        "HousingRoomSummary",
+        "IncomeMultipleTool",
+        "LoanFromPaymentTool",
         "LtvMilestones",
         "MortgageAlerts",
         "MortgageSummary",
         "MortgageTracker",
         "OverpayVsSaveCompare",
         "OverpaymentSimulator",
-        "RemortgageShockSim",
+        "RateChangeTool",
       ]) {
         expect(mortgageComponents).toContain(expected);
       }

@@ -43,7 +43,7 @@ import { MortgageSummary } from "~/features/mortgage/components/MortgageSummary"
 import { MortgageTracker } from "~/features/mortgage/components/MortgageTracker";
 import { OverpaymentSimulator } from "~/features/mortgage/components/OverpaymentSimulator";
 import { OverpayVsSaveCompare } from "~/features/mortgage/components/OverpayVsSaveCompare";
-import { RemortgageShockSim } from "~/features/mortgage/components/RemortgageShockSim";
+import { RateChangeTool } from "~/features/mortgage/components/RateChangeTool";
 import { isJointAccount, withWholeBalances } from "~/features/mortgage/jointMortgage";
 import {
   formatIsoMonthYear,
@@ -1019,6 +1019,11 @@ const MortgageContainer: FC = () => {
   const header = (
     <>
       <PageHeader
+        actions={
+          <Button size="sm" variant="outline" onClick={() => navigate("/app/mortgage-estimates")}>
+            Mortgage estimates
+          </Button>
+        }
         description={
           // The empty state carries the explanation, as on the debt page, so both empty pages
           // start at the same height.
@@ -1349,16 +1354,14 @@ const MortgageContainer: FC = () => {
               />
             ),
             "rate-change": (
-              <RemortgageShockSim
-                currentBalance={scenarioValues.loanAmount}
-                currentPayment={scenarioMatchesSaved ? pagePayment : undefined}
-                currentPaymentIsSaved={scenarioMatchesSaved && storedPayment > 0}
-                currentRate={scenarioValues.interestRate}
+              <RateChangeTool
+                annualRatePct={scenarioValues.interestRate > 0 ? scenarioValues.interestRate : null}
+                currentMonthlyPaymentGbp={scenarioMatchesSaved ? pagePayment : undefined}
                 fixEndDate={isBtl ? null : selectedFixEndDate}
+                loanGbp={scenarioValues.loanAmount > 0 ? scenarioValues.loanAmount : null}
+                mode="saved-mortgage"
                 mortgageType={mortgageType}
-                remainingTermYears={
-                  scenarioValues.remainingTerm > 0 ? scenarioValues.remainingTerm : undefined
-                }
+                termYears={scenarioValues.remainingTerm > 0 ? scenarioValues.remainingTerm : null}
               />
             ),
             "overpay-vs-save": (
