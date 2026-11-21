@@ -6,7 +6,7 @@ import { BreathingRoomPreview } from "./BreathingRoomPreview";
 import { BREATHING_ROOM_DESCRIPTION, breathingRoomValue } from "./BreathingRoomPreview.wording";
 
 const meta: Meta<typeof BreathingRoomPreview> = {
-  title: "Patterns/BreathingRoomPreview",
+  title: "3. Patterns/BreathingRoomPreview",
   component: BreathingRoomPreview,
   parameters: {
     layout: "padded",

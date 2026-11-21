@@ -9,7 +9,7 @@ const base = {
 };
 
 const meta: Meta<typeof InviteList> = {
-  title: "Features/Invites/InviteList",
+  title: "3. Patterns/Invites/InviteList",
   component: InviteList,
   parameters: { layout: "padded" },
   args: {

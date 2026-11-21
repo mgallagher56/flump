@@ -5,7 +5,7 @@ import { expect, userEvent, within } from "storybook/test";
 import { PreviewPage } from "./PreviewPage";
 
 const meta: Meta<typeof PreviewPage> = {
-  title: "Pages/PreviewPage",
+  title: "6. Pages/Marketing/PreviewPage",
   component: PreviewPage,
   decorators: [
     (Story) => (

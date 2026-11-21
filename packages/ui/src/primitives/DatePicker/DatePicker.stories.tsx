@@ -5,7 +5,7 @@ import { controlProps, FormField } from "../FormField";
 import { DatePicker } from "./DatePicker";
 
 const meta: Meta<typeof DatePicker> = {
-  title: "Primitives/DatePicker",
+  title: "2. Primitives/DatePicker",
   component: DatePicker,
   parameters: { layout: "centered" },
 };

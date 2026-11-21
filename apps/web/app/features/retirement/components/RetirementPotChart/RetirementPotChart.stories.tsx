@@ -5,7 +5,7 @@ import { RetirementPotChart } from "./RetirementPotChart";
 
 /** The Storybook preview renders every story side by side in light and dark. */
 const meta: Meta<typeof RetirementPotChart> = {
-  title: "Features/Retirement/RetirementPotChart",
+  title: "4. Charts/RetirementPotChart",
   component: RetirementPotChart,
   parameters: { layout: "padded" },
 };
