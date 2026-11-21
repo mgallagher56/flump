@@ -1,5 +1,9 @@
-import { getLatestSupportedUkTaxYear, whatIfGrossChange } from "@flump/finance-engine";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  getLatestSupportedUkTaxYear,
+  ONBOARDING_SEED_STORAGE_KEY,
+  whatIfGrossChange,
+} from "@flump/finance-engine";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   explorerScenario,
@@ -393,6 +397,34 @@ describe("MarginalRateExplorer in 2027/28 (refused rates)", () => {
   });
 });
 
+describe("MarginalRateExplorerStandalone sign-up button", () => {
+  it("shows the default label when only a callback is passed", () => {
+    render(
+      <MarginalRateExplorerStandalone
+        initialValues={{ taxYear: "2026/27" }}
+        persistSeed={false}
+        onSaveAndContinue={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Continue to sign up" })).toBeDefined();
+  });
+
+  it("leaves the onboarding seed unset when persistSeed is false", () => {
+    localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
+    const onSave = vi.fn();
+    render(
+      <MarginalRateExplorerStandalone
+        ctaText="Save and continue"
+        persistSeed={false}
+        onSaveAndContinue={onSave}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+    expect(onSave).toHaveBeenCalled();
+    expect(localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY)).toBeNull();
+  });
+});
+
 describe("explorerScenario", () => {
   it("passes the bonus, the pension and the number of children to the engine", () => {
     const scenario = explorerScenario({
@@ -614,6 +646,44 @@ describe("MarginalRateExplorer results", () => {
       />,
     );
     expect(screen.getByTestId("explorer-refusal")).toBeDefined();
+  });
+
+  it("redraws the chart line and thresholds when Child Benefit is turned on", () => {
+    const line = () => screen.getByTestId("marginal-rate-line").getAttribute("points");
+    const thresholds = () =>
+      screen.getAllByTestId("marginal-rate-threshold").map((g) => g.textContent);
+    const { rerender } = render(<MarginalRateExplorer values={DEFAULTS_2026} onChange={vi.fn()} />);
+    const beforeLine = line();
+    const beforeThresholds = thresholds();
+    rerender(
+      <MarginalRateExplorer
+        values={{ ...DEFAULTS_2026, childBenefit: true, children: 2 }}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(line()).not.toBe(beforeLine);
+    expect(thresholds()).not.toEqual(beforeThresholds);
+  });
+
+  it("announces pence when the next £1,000 crosses a threshold", () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = render(
+        <MarginalRateExplorer values={DEFAULTS_2026} onChange={vi.fn()} />,
+      );
+      rerender(
+        <MarginalRateExplorer values={{ ...DEFAULTS_2026, grossPay: 49_500 }} onChange={vi.fn()} />,
+      );
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      // £687.80, worked out in the test above.
+      expect(
+        screen.getAllByRole("status").some((s) => s.textContent?.includes("an estimated £687.80")),
+      ).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("uses h3 section headings by default", () => {

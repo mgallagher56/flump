@@ -6,7 +6,7 @@ import {
   whatIfGrossChange,
   whatIfSacrificeChange,
 } from "@flump/finance-engine";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DELTA_PANEL_COPY } from "../../patterns/TakeHomeDeltaPanel/copy";
 import { formatMoney } from "../../primitives/Money/Money";
@@ -354,6 +354,29 @@ describe("TaxTrapCalculator inputs and figures", () => {
       ["ENGLAND_NI_WALES", "England, Wales or Northern Ireland"],
       ["SCOTLAND", "Scotland"],
     ]);
+  });
+
+  it("says tax and NI stay the same, and announces nothing, with no contribution", () => {
+    vi.useFakeTimers();
+    try {
+      render(<TaxTrapCalculator taxYear="2026/27" />);
+      fireEvent.change(slider(TAX_TRAP_COPY.contribution), { target: { value: "0" } });
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(outcome(TAX_TRAP_COPY.kpiTaxAndNiChange)).toContain(
+        TAX_TRAP_COPY.noContributionTaxAndNi,
+      );
+      expect(screen.getByRole("status").textContent).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("reads a take-home change under 50p as no change", () => {
+    // A £1 sacrifice at a 62% marginal rate costs about 38p of take-home.
+    render(<TaxTrapCalculator initialContribution={1} taxYear="2026/27" />);
+    expect(outcome(TAX_TRAP_COPY.kpiTakeHomeChange)).toContain("£0");
   });
 
   it("asks onboarding for the tax and pension modules", () => {
