@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SimulatorSplitLayout } from "./SimulatorSplitLayout";
 
@@ -243,5 +244,162 @@ describe("SimulatorSplitLayout Pattern", () => {
     );
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("region", { name: "Parameters" })).toBeDefined();
+  });
+});
+
+describe("SimulatorSplitLayout layout switching and measuring", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const sheet = ({
+    open,
+    id,
+    label,
+    children,
+  }: {
+    open: boolean;
+    id: string;
+    label: string;
+    children: React.ReactNode;
+  }) => (
+    <div aria-label={label} data-open={String(open)} id={id} role="dialog">
+      {children}
+    </div>
+  );
+
+  const layout = (extra: Partial<React.ComponentProps<typeof SimulatorSplitLayout>> = {}) => (
+    <SimulatorSplitLayout
+      content={<div>Chart</div>}
+      controls={<div>Controls</div>}
+      summary="Outcome"
+      renderControlsContainer={sheet}
+      {...extra}
+    />
+  );
+
+  /** A matchMedia stand-in whose answer the test can change, telling listeners as a browser would. */
+  const stubMedia = (initial: boolean) => {
+    let matches = initial;
+    const listeners = new Set<() => void>();
+    vi.stubGlobal("matchMedia", () => ({
+      get matches() {
+        return matches;
+      },
+      addEventListener: (_: string, fn: () => void) => listeners.add(fn),
+      removeEventListener: (_: string, fn: () => void) => listeners.delete(fn),
+    }));
+    return {
+      set: (next: boolean) => {
+        matches = next;
+        act(() => {
+          for (const fn of listeners) fn();
+        });
+      },
+      listeners,
+    };
+  };
+
+  it("moves the controls into the custom container when the screen narrows, and back", () => {
+    const media = stubMedia(true);
+    const { unmount } = render(layout());
+    expect(screen.queryByRole("dialog")).toBeNull();
+    media.set(false);
+    expect(screen.getByRole("dialog", { name: "Parameters" })).toBeDefined();
+    media.set(true);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    unmount();
+    expect(media.listeners.size).toBe(0);
+  });
+
+  it("treats a browser without matchMedia as wide, keeping the controls inline", () => {
+    vi.stubGlobal("matchMedia", undefined);
+    render(layout());
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("region", { name: "Parameters" })).toBeDefined();
+  });
+
+  it("renders the controls inline on the server, before any screen width is known", () => {
+    const html = renderToString(layout());
+    expect(html).toContain('aria-label="Parameters"');
+    expect(html).not.toContain('role="dialog"');
+  });
+
+  it("keeps the controls inline under lg when no custom container is given", () => {
+    stubMedia(false);
+    render(layout({ renderControlsContainer: undefined }));
+    expect(screen.getByRole("region", { name: "Parameters" })).toBeDefined();
+  });
+
+  it("shows no summary bar for a null or false summary", () => {
+    const { rerender } = render(layout({ summary: null }));
+    expect(screen.queryByRole("button", { name: "Adjust" })).toBeNull();
+    rerender(layout({ summary: false }));
+    expect(screen.queryByRole("button", { name: "Adjust" })).toBeNull();
+  });
+
+  it("points Adjust at the custom container only while it is open", () => {
+    stubMedia(false);
+    render(layout());
+    const adjust = screen.getByRole("button", { name: "Adjust" });
+    expect(adjust.getAttribute("aria-controls")).toBeNull();
+    fireEvent.click(adjust);
+    expect(adjust.getAttribute("aria-controls")).toBe(screen.getByRole("dialog").id);
+  });
+
+  describe("fit at the edges", () => {
+    const renderWithHeight = (height: number) => {
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+        () => ({ height }) as DOMRect,
+      );
+      return render(
+        <SimulatorSplitLayout content={<div>Chart</div>} controls={<div>Controls</div>} />,
+      );
+    };
+
+    it("keeps a 16px gap below the header: a column 8px short of the full height scrolls", () => {
+      // 700 tall window, no header offset, 16px gap: 684px available, so a 692px column does not fit.
+      vi.stubGlobal("innerHeight", 700);
+      renderWithHeight(692);
+      expect(screen.getByRole("region", { name: "Parameters" }).dataset.sticky).toBe("false");
+    });
+
+    it("stays sticky for a column exactly as tall as the space available", () => {
+      // 716 - 0 - 16 = 700px available; a 700px column fits exactly.
+      vi.stubGlobal("innerHeight", 716);
+      renderWithHeight(700);
+      expect(screen.getByRole("region", { name: "Parameters" }).dataset.sticky).toBe("true");
+    });
+
+    it("re-measures when the column itself resizes", () => {
+      let callback: (() => void) | undefined;
+      const disconnect = vi.fn();
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(fn: () => void) {
+            callback = fn;
+          }
+          observe() {}
+          disconnect = disconnect;
+        },
+      );
+      vi.stubGlobal("innerHeight", 700);
+      let height = 1200;
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+        () => ({ height }) as DOMRect,
+      );
+      const { unmount } = render(
+        <SimulatorSplitLayout content={<div>Chart</div>} controls={<div>Controls</div>} />,
+      );
+      const region = screen.getByRole("region", { name: "Parameters" });
+      expect(region.dataset.sticky).toBe("false");
+      height = 400;
+      act(() => callback?.());
+      expect(region.dataset.sticky).toBe("true");
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+    });
   });
 });

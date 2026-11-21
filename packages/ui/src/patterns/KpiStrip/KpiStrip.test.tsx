@@ -295,3 +295,66 @@ describe("KpiStrip one value size (R2-2)", () => {
     expect(caption.className).toContain("mt_auto");
   });
 });
+
+describe("KpiStrip unset counting edges", () => {
+  const prompt = { title: "Add your details to see these figures" };
+
+  it("counts any element given unset, not only a KpiCard", () => {
+    expect(
+      countUnsetKpis([
+        <div key="a" {...({ unset: true } as object)}>
+          A
+        </div>,
+        <KpiCard key="b" label="B" value={1} />,
+      ]),
+    ).toEqual({ total: 2, unset: 1 });
+  });
+
+  it("does not count plain text between the cards as a card", () => {
+    expect(countUnsetKpis(["Note", <KpiCard key="a" label="A" value={null} />])).toEqual({
+      total: 1,
+      unset: 1,
+    });
+  });
+
+  it("shows no prompt for a strip with no cards", () => {
+    render(<KpiStrip emptyPrompt={prompt}>{[]}</KpiStrip>);
+    expect(screen.queryByRole("heading", { name: prompt.title })).toBeNull();
+  });
+
+  it("gives the prompt a level 2 heading unless told otherwise", () => {
+    render(
+      <KpiStrip emptyPrompt={prompt}>
+        <KpiCard label="Rate" value={null} />
+      </KpiStrip>,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: prompt.title })).toBeDefined();
+  });
+
+  it("uses the heading level the prompt asks for", () => {
+    render(
+      <KpiStrip emptyPrompt={{ ...prompt, headingLevel: "h3" }}>
+        <KpiCard label="Rate" value={null} />
+      </KpiStrip>,
+    );
+    expect(screen.getByRole("heading", { level: 3, name: prompt.title })).toBeDefined();
+  });
+
+  it("does not warn when a prompt is given or when most cards are set", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    render(
+      <>
+        <KpiStrip emptyPrompt={prompt}>
+          <KpiCard label="Rate" value={null} />
+        </KpiStrip>
+        <KpiStrip>
+          <KpiCard label="Balance" value={182000} />
+          <KpiCard label="Payment" value={940} />
+          <KpiCard label="Rate" value={null} />
+        </KpiStrip>
+      </>,
+    );
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});

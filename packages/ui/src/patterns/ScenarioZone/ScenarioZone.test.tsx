@@ -344,3 +344,43 @@ describe("ScenarioZone", () => {
     });
   });
 });
+
+describe("ScenarioZone footer and heading", () => {
+  it("draws no footer when it has no actions and no notice", () => {
+    render(
+      <ScenarioZone basis="Basis" showNotice={false}>
+        <p>Inputs</p>
+      </ScenarioZone>,
+    );
+    expect(screen.queryByTestId("scenario-zone-footer")).toBeNull();
+  });
+
+  it("keeps the heading out of the Tab order, focusable only by the reset", () => {
+    render(<ScenarioZone basis="Basis">x</ScenarioZone>);
+    expect(screen.getByTestId("scenario-zone-title").getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("opens and closes without an onOpenChange handler, raising no error", () => {
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.error);
+      event.preventDefault();
+    };
+    window.addEventListener("error", onError);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      render(
+        <ScenarioZone basis="Basis" collapsible showLabel="Show what-if">
+          <p>Inputs</p>
+        </ScenarioZone>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Show what-if" }));
+      expect(screen.getByText("Inputs")).toBeDefined();
+      expect(errors).toEqual([]);
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener("error", onError);
+      consoleError.mockRestore();
+    }
+  });
+});

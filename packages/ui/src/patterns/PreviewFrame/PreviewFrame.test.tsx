@@ -60,3 +60,26 @@ describe("PreviewFrame", () => {
     expect(screen.getByRole("figure", { name: "Monthly picture Example" })).toBeDefined();
   });
 });
+
+describe("PreviewFrame switcher, homeowner selected", () => {
+  it("presses the homeowner button and switches back to renting on click", () => {
+    const onHouseholdChange = vi.fn();
+    render(
+      <PreviewFrame
+        household="homeowner"
+        id="test-preview"
+        onHouseholdChange={onHouseholdChange}
+        title="Monthly picture"
+      >
+        <div>Content</div>
+      </PreviewFrame>,
+    );
+    const renterBtn = screen.getByTestId("test-preview-switch-renter");
+    expect(renterBtn.getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByTestId("test-preview-switch-homeowner").getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    fireEvent.click(renterBtn);
+    expect(onHouseholdChange).toHaveBeenCalledWith("renter");
+  });
+});

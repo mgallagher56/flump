@@ -74,3 +74,13 @@ describe("ResultBlock", () => {
     expect(group.querySelector('[class*="label.md"]')).toBeNull();
   });
 });
+
+describe("ResultBlock with no figure", () => {
+  it("treats null, undefined and false as no figure yet", () => {
+    for (const figure of [null, undefined, false]) {
+      const { unmount } = render(<ResultBlock figure={figure} id="rb" label="Breathing room" />);
+      expect(screen.getByTestId("rb").getAttribute("data-known")).toBe("false");
+      unmount();
+    }
+  });
+});

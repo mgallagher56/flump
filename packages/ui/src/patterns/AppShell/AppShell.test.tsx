@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { isActiveItem } from "./AppNav.types";
 import { AppShell } from "./AppShell";
 import { sampleNavItems } from "./AppShell.fixtures";
 
@@ -97,5 +98,16 @@ describe("AppShell", () => {
     const { mobileBottomBarRoot } = await import("../MobileBottomBar/MobileBottomBar.styles");
     expect(mobileBottomBarRoot()).toContain("navInline:d_none");
     expect(mobileBottomBarRoot()).not.toContain("lg:d_none");
+  });
+});
+
+describe("isActiveItem", () => {
+  it("marks a group active only for its own key or one of its children", () => {
+    const plan = sampleNavItems.find((item) => item.key === "plan");
+    if (!plan) throw new Error("fixture needs the plan group");
+    expect(isActiveItem(plan, "pension")).toBe(true);
+    expect(isActiveItem(plan, "plan")).toBe(true);
+    expect(isActiveItem(plan, "home")).toBe(false);
+    expect(isActiveItem(plan, undefined)).toBe(false);
   });
 });

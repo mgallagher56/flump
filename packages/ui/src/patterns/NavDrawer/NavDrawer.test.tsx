@@ -137,3 +137,78 @@ describe("NavDrawer", () => {
     expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
   });
 });
+
+describe("NavDrawer keyboard and mounting", () => {
+  it("renders into document.body, outside the component's own container", () => {
+    const { container } = render(
+      <NavDrawer isOpen onClose={vi.fn()}>
+        <span />
+      </NavDrawer>,
+    );
+    const layer = screen.getByTestId("mobile-drawer-layer");
+    expect(container.contains(layer)).toBe(false);
+    expect(layer.parentElement).toBe(document.body);
+  });
+
+  it("does not call onClose on Escape while closed", () => {
+    const onClose = renderDrawer(false);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("stops listening for Escape once closed, and starts when opened later", () => {
+    const onClose = vi.fn();
+    const tree = (isOpen: boolean) => (
+      <NavDrawer isOpen={isOpen} onClose={onClose}>
+        <span />
+      </NavDrawer>
+    );
+    const { rerender } = render(tree(false));
+    rerender(tree(true));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    rerender(tree(false));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves other keys alone on the last control", () => {
+    renderDrawer();
+    const last = screen.getByRole("button", { name: "Footer action" });
+    last.focus();
+    expect(fireEvent.keyDown(document, { key: "ArrowDown" })).toBe(true);
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("does not wrap Tab or Shift+Tab from a control in the middle", () => {
+    renderDrawer();
+    const middle = screen.getByRole("link", { name: "One" });
+    middle.focus();
+    expect(fireEvent.keyDown(document, { key: "Tab" })).toBe(true);
+    expect(document.activeElement).toBe(middle);
+    expect(fireEvent.keyDown(document, { key: "Tab", shiftKey: true })).toBe(true);
+    expect(document.activeElement).toBe(middle);
+  });
+
+  it("brings focus that escaped the drawer back in, to the first or the last control", () => {
+    renderDrawer();
+    const close = screen.getByRole("button", { name: "Close navigation menu" });
+    const last = screen.getByRole("button", { name: "Footer action" });
+    const outside = screen.getByRole("button", { name: "Opener" });
+    outside.focus();
+    expect(fireEvent.keyDown(document, { key: "Tab" })).toBe(false);
+    expect(document.activeElement).toBe(close);
+    outside.focus();
+    expect(fireEvent.keyDown(document, { key: "Tab", shiftKey: true })).toBe(false);
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("shows the logo it is given", () => {
+    render(
+      <NavDrawer isOpen logo={<span>Flump logo</span>} onClose={vi.fn()}>
+        <span />
+      </NavDrawer>,
+    );
+    expect(screen.getByText("Flump logo")).toBeDefined();
+  });
+});

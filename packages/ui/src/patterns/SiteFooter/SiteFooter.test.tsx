@@ -110,3 +110,83 @@ describe("SiteFooter", () => {
     expect(navEl.className).toContain("m_-1");
   });
 });
+
+describe("SiteFooter links and empty slots", () => {
+  const external = {
+    key: "ext",
+    label: "Status page",
+    href: "https://status.example.com",
+    external: true,
+  };
+  const newTab = {
+    key: "demo",
+    label: "Live demo",
+    href: "https://demo.example.com",
+    newTab: true,
+  };
+
+  it("full: renders with no columns given", () => {
+    render(<SiteFooter blurb="b" bottom="c" />);
+    expect(screen.getByRole("heading", { level: 2, name: "Flump" })).toBeTruthy();
+    expect(screen.queryByRole("navigation")).toBeNull();
+  });
+
+  it("compact: renders no links landmark when it has no links", () => {
+    render(<SiteFooter bottom="c" variant="compact" />);
+    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.getByText("c")).toBeTruthy();
+  });
+
+  it("full: an external link stays in this tab, and only a new-tab link says it opens one", () => {
+    render(
+      <SiteFooter
+        blurb="b"
+        bottom="c"
+        columns={[{ heading: "More", links: [external, newTab] }]}
+      />,
+    );
+    const ext = screen.getByRole("link", { name: "Status page" });
+    expect(ext.getAttribute("target")).toBeNull();
+    expect(ext.textContent).toBe("Status page");
+    const tab = screen.getByRole("link", { name: "Live demo (opens in a new tab)" });
+    expect(tab.getAttribute("target")).toBe("_blank");
+  });
+
+  it("compact: external and new-tab links are plain anchors, and only the new-tab one opens a tab", () => {
+    render(
+      <SiteFooter
+        bottom="c"
+        links={[external, newTab]}
+        renderLink={(link, className, children) => (
+          <a className={className} data-router="yes" href={link.href}>
+            {children}
+          </a>
+        )}
+        variant="compact"
+      />,
+    );
+    const ext = screen.getByRole("link", { name: "Status page" });
+    expect(ext.getAttribute("data-router")).toBeNull();
+    expect(ext.getAttribute("target")).toBeNull();
+    expect(ext.textContent).toBe("Status page");
+    const tab = screen.getByRole("link", { name: "Live demo (opens in a new tab)" });
+    expect(tab.getAttribute("data-router")).toBeNull();
+    expect(tab.getAttribute("target")).toBe("_blank");
+  });
+
+  it("compact: routes an in-site link through renderLink", () => {
+    render(
+      <SiteFooter
+        bottom="c"
+        links={[{ key: "privacy", label: "Privacy", href: "/privacy" }]}
+        renderLink={(link, className, children) => (
+          <a className={className} data-router="yes" href={link.href}>
+            {children}
+          </a>
+        )}
+        variant="compact"
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Privacy" }).getAttribute("data-router")).toBe("yes");
+  });
+});

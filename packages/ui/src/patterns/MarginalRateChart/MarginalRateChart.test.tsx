@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { lineLabelSpot, MarginalRateChart, markersNearPay, yTicksFor } from "./MarginalRateChart";
 import {
   SAMPLE_POINTS,
@@ -287,5 +287,230 @@ describe("MarginalRateChart", () => {
     expect(cls).toContain("h_280px");
     expect(cls).toContain("[@container_(max-width:_479.98px)]:h_200px");
     expect(cls).not.toContain("h_auto");
+  });
+});
+
+describe("MarginalRateChart data handling", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const hitNames = () =>
+    screen
+      .getAllByTestId("marginal-rate-threshold-hit")
+      .map((b) => b.getAttribute("aria-label") ?? "");
+
+  it("leaves out thresholds below zero, past the axis or not a number", () => {
+    renderChart({
+      steppedZones: [],
+      thresholds: [
+        { gross: -1, label: "Below zero" },
+        { gross: Number.NaN, label: "Not a number" },
+        { gross: Number.POSITIVE_INFINITY, label: "Endless" },
+        { gross: 150_001, label: "Past the axis" },
+        { gross: 50_000, label: "On the axis" },
+      ],
+    });
+    expect(hitNames()).toEqual(["On the axis: £50,000 pay before tax"]);
+  });
+
+  it("orders the markers by pay, so Tab moves left to right", () => {
+    renderChart({
+      steppedZones: [],
+      thresholds: [
+        { gross: 100_000, label: "Later" },
+        { gross: 12_570, label: "Earlier" },
+      ],
+    });
+    expect(hitNames()).toEqual([
+      "Earlier: £12,570 pay before tax",
+      "Later: £100,000 pay before tax",
+    ]);
+  });
+
+  it("markersNearPay counts a marker at the pay itself as the one below", () => {
+    const m = [10, 20, 30].map((gross) => ({ gross, name: String(gross) }));
+    expect(markersNearPay(m, 20).map((x) => x.gross)).toEqual([20, 30]);
+    // 25 is 5 from both 20 and 30, so with a reach of 5 both are near.
+    expect(markersNearPay(m, 25, 5).map((x) => x.gross)).toEqual([20, 30]);
+  });
+
+  it("ignores a rate that is not a number when choosing the y axis", () => {
+    // The highest real rate is 40%, so the axis ends at the first 25% step above it: 50%.
+    expect(yTicksFor([0, Number.NaN, 40])).toEqual([0, 25, 50]);
+  });
+
+  it("labels the pay axis in thirds of the highest pay, rounded to £10,000", () => {
+    renderChart();
+    // £150,000 / 3 = £50,000, already a multiple of £10,000: ticks at £0, £50k, £100k and £150k.
+    const money = Array.from(document.querySelectorAll("svg text"))
+      .map((t) => t.textContent ?? "")
+      .filter((t) => t.startsWith("£"));
+    expect(money).toEqual(["£0", "£50k", "£100k", "£150k"]);
+  });
+
+  it("sizes the drawing to its container, shorter on a phone and never narrower than 300px", () => {
+    let width = 400;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width }) as DOMRect,
+    );
+    const svg = () => screen.getByTestId("marginal-rate-chart").querySelector("svg") as SVGElement;
+    const first = renderChart();
+    // 400px is under the 480px phone width: 200px tall.
+    expect(svg().getAttribute("width")).toBe("400");
+    expect(svg().getAttribute("height")).toBe("200");
+    first.unmount();
+    width = 480;
+    const second = renderChart();
+    expect(svg().getAttribute("height")).toBe("280");
+    second.unmount();
+    width = 100;
+    renderChart();
+    expect(svg().getAttribute("width")).toBe("300");
+  });
+
+  it("shows the summary under the title by default", () => {
+    renderChart();
+    const figure = screen.getByRole("figure");
+    const summary = document.getElementById(figure.getAttribute("aria-describedby") ?? "");
+    expect(summary?.className).toContain("textStyle_body.sm");
+  });
+
+  it("redraws the axis when the points change", () => {
+    const { rerender } = renderChart();
+    expect(screen.queryByText("100%")).toBeNull();
+    rerender(
+      <MarginalRateChart
+        points={[
+          { gross: 0, ratePct: 0 },
+          { gross: 75_000, ratePct: 90 },
+          { gross: 150_000, ratePct: 90 },
+        ]}
+        summary={SAMPLE_SUMMARY}
+        thresholds={SAMPLE_THRESHOLDS}
+        title="Estimated share deducted from the next £1,000, by pay"
+      />,
+    );
+    expect(screen.getByText("100%")).toBeDefined();
+  });
+
+  it("redraws the markers when the thresholds change", () => {
+    const { rerender } = renderChart();
+    rerender(
+      <MarginalRateChart
+        points={SAMPLE_POINTS}
+        summary={SAMPLE_SUMMARY}
+        thresholds={SAMPLE_THRESHOLDS.slice(2)}
+        title="Estimated share deducted from the next £1,000, by pay"
+      />,
+    );
+    // Dropping the two £12,570 thresholds leaves five pay levels.
+    expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(5);
+  });
+
+  it("marks your pay at the top of the axis, and not below zero or when it is not a number", () => {
+    const { unmount } = renderChart({ yourPay: 150_000 });
+    expect(screen.getByTestId("marginal-rate-your-pay")).toBeDefined();
+    unmount();
+    for (const yourPay of [-1, Number.NaN]) {
+      const view = renderChart({ yourPay });
+      expect(screen.queryByTestId("marginal-rate-your-pay")).toBeNull();
+      view.unmount();
+    }
+  });
+
+  it("near-pay falls back to every threshold when your pay is past the axis", () => {
+    renderChart({ thresholdFocus: "near-pay", yourPay: 200_000 });
+    expect(screen.getAllByTestId("marginal-rate-threshold")).toHaveLength(6);
+  });
+
+  it("keeps the tooltip open on keys other than Escape", () => {
+    renderChart();
+    const marker = screen.getAllByTestId("marginal-rate-threshold-hit")[0] as HTMLElement;
+    fireEvent.focus(marker);
+    fireEvent.keyDown(marker, { key: "ArrowRight" });
+    expect(screen.getByTestId("marginal-rate-tooltip")).toBeDefined();
+  });
+
+  it("keeps a focused marker's tooltip when the pointer leaves another marker", () => {
+    renderChart();
+    const [first, second] = screen.getAllByTestId("marginal-rate-threshold-hit") as HTMLElement[];
+    if (!first || !second) throw new Error("needs two markers");
+    fireEvent.mouseEnter(second);
+    fireEvent.focus(first);
+    fireEvent.mouseLeave(second);
+    expect(screen.getByTestId("marginal-rate-tooltip").textContent).toContain("£12,570");
+  });
+
+  it("offers no data table when there are no rows", () => {
+    renderChart({ dataTable: [] });
+    expect(screen.queryByRole("button", { name: "Show data" })).toBeNull();
+  });
+
+  it("leaves out the thresholds note when no threshold is drawn", () => {
+    renderChart({ thresholds: [] });
+    expect(screen.queryByText(/Each dashed line marks a threshold/)).toBeNull();
+  });
+
+  it("draws a threshold at £0 and one at the top of the axis", () => {
+    renderChart({
+      steppedZones: [],
+      thresholds: [
+        { gross: 0, label: "From the start" },
+        { gross: 150_000, label: "At the top" },
+      ],
+    });
+    expect(hitNames()).toEqual([
+      "From the start: £0 pay before tax",
+      "At the top: £150,000 pay before tax",
+    ]);
+  });
+
+  it("marks your pay at £0", () => {
+    renderChart({ yourPay: 0 });
+    expect(screen.getByTestId("marginal-rate-your-pay")).toBeDefined();
+  });
+
+  it("puts only the pay ticks on the pay axis line", () => {
+    renderChart();
+    // At the default 600px width the drawing is 280px tall and the pay ticks sit 8px above its foot.
+    const onAxis = Array.from(document.querySelectorAll('svg text[y="272"]')).map(
+      (t) => t.textContent,
+    );
+    expect(onAxis).toEqual(["£0", "£50k", "£100k", "£150k"]);
+  });
+
+  it("redraws at the new width when the container is resized", () => {
+    let width = 640;
+    let notify: (() => void) | undefined;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(fn: () => void) {
+          notify = fn;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const observe = vi.spyOn(ResizeObserver.prototype, "observe");
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width }) as DOMRect,
+    );
+    renderChart();
+    const svg = () => screen.getByTestId("marginal-rate-chart").querySelector("svg") as SVGElement;
+    expect(svg().getAttribute("width")).toBe("640");
+    expect(observe).toHaveBeenCalled();
+    width = 420;
+    act(() => notify?.());
+    expect(svg().getAttribute("width")).toBe("420");
   });
 });
