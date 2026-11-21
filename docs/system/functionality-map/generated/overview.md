@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 26 | Sections: 148 | Capabilities: 161 | Actions: 374 | Excluded routes: 19 | Unmapped allowlist (S0–S3): 8
+Mapped pages: 26 | Sections: 148 | Capabilities: 161 | Actions: 375 | Excluded routes: 19 | Unmapped allowlist (S0–S3): 8
 
 ## web
 
@@ -15,7 +15,7 @@ Mapped pages: 26 | Sections: 148 | Capabilities: 161 | Actions: 374 | Excluded r
 | Section                                                            | Kind   | Capability                   | Mode     | Facts read | Facts written | Figures | Actions |
 | ------------------------------------------------------------------ | ------ | ---------------------------- | -------- | ---------- | ------------- | ------- | ------- |
 | `deleted-confirmation (when pending is false)`                     | notice | `confirm-deletion-and-leave` | navigate | -          | -             | -       | 1       |
-| `finish-deletion (when ?state=pending and a live session remains)` | form   | `complete-pending-deletion`  | delete   | -          | -             | -       | 2       |
+| `finish-deletion (when ?state=pending and a live session remains)` | form   | `complete-pending-deletion`  | delete   | -          | -             | -       | 3       |
 
 ### account-detail — Account detail
 

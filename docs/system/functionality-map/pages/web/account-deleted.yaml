@@ -43,6 +43,11 @@ sections:
             validation: Must match DELETE (case-insensitive).
           - id: submit-finish-deletion
             control: submit
-            label: Delete account
+            label: Remove my login
             effect: Repeats the account deletion request to remove the remaining login and sign out.
             target: POST /app/profile
+          - id: sign-in-again
+            control: button
+            label: Sign in again
+            effect: Signs out via POST /logout and returns to /account-deleted?state=pending after a fresh sign-in when recent login is required.
+            target: POST /logout
