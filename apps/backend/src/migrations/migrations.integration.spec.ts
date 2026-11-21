@@ -122,6 +122,7 @@ const MIGRATION_ONLY_TABLES =
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
   "account_details",
+  "account_goals",
   "accounts",
   "agent_audit_events",
   "audit_events",
