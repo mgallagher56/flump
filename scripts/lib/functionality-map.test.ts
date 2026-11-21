@@ -19,8 +19,6 @@ version: 1
 excluded_routes:
   - route_file: apps/web/app/routes/healthz.ts
     reason: Health check endpoint.
-unmapped_allowlist:
-  - apps/web/app/routes/app._index.tsx
 `;
 
 const VALID_PAGE_YAML = `
@@ -115,7 +113,6 @@ describe("functionality-map", () => {
       valueMap,
       discoveredRoutes: [
         "apps/web/app/routes/healthz.ts",
-        "apps/web/app/routes/app._index.tsx",
         "apps/web/app/routes/app.retirement.tsx",
       ],
     });
@@ -259,49 +256,44 @@ sections:
     ]);
   });
 
-  test("warns on unmapped routes when unmapped_allowlist exists, errors when removed", () => {
+  test("errors on any unmapped route and rejects retired unmapped_allowlist", () => {
     const discovered = [
       "apps/web/app/routes/app.retirement.tsx",
       "apps/web/app/routes/app.new-page.tsx",
     ];
-    const withAllowlist = validateFunctionalityMap({
-      index: { version: 1, excluded_routes: [], unmapped_allowlist: [] },
-      pages: [makePageEntry(VALID_PAGE_YAML)],
-      repo: makeRepo(),
-      valueMap,
-      discoveredRoutes: discovered,
-    });
-    expect(withAllowlist).toHaveLength(1);
-    expect(withAllowlist[0]?.rule).toBe(FM_RULES.unmappedRoute);
-    expect(withAllowlist[0]?.severity).toBe("warn");
-
-    const withoutAllowlist = validateFunctionalityMap({
+    const unmapped = validateFunctionalityMap({
       index: { version: 1, excluded_routes: [] },
       pages: [makePageEntry(VALID_PAGE_YAML)],
       repo: makeRepo(),
       valueMap,
       discoveredRoutes: discovered,
     });
-    expect(withoutAllowlist).toHaveLength(1);
-    expect(withoutAllowlist[0]?.rule).toBe(FM_RULES.unmappedRoute);
-    expect(withoutAllowlist[0]?.severity).toBe("error");
-  });
+    expect(unmapped).toHaveLength(1);
+    expect(unmapped[0]?.rule).toBe(FM_RULES.unmappedRoute);
+    expect(unmapped[0]?.severity).toBe("error");
 
-  test("fails when unmapped_allowlist contains an already-mapped route", () => {
-    const problems = validateFunctionalityMap({
+    const withRetiredAllowlist = validateFunctionalityMap({
       index: {
         version: 1,
         excluded_routes: [],
-        unmapped_allowlist: ["apps/web/app/routes/app.retirement.tsx"],
+        unmapped_allowlist: ["apps/web/app/routes/app.new-page.tsx"],
       },
       pages: [makePageEntry(VALID_PAGE_YAML)],
       repo: makeRepo(),
       valueMap,
-      discoveredRoutes: ["apps/web/app/routes/app.retirement.tsx"],
+      discoveredRoutes: discovered,
     });
-    expect(problems).toHaveLength(1);
-    expect(problems[0]?.rule).toBe(FM_RULES.deadAllowlist);
-    expect(problems[0]?.severity).toBe("error");
+    expect(
+      withRetiredAllowlist.some(
+        (p) =>
+          p.rule === FM_RULES.deadAllowlist &&
+          p.subject === "index.unmapped_allowlist" &&
+          p.severity === "error",
+      ),
+    ).toBe(true);
+    expect(
+      withRetiredAllowlist.some((p) => p.rule === FM_RULES.unmappedRoute && p.severity === "error"),
+    ).toBe(true);
   });
 
   test("renders overview, actions-index, and by-fact views and detects stale views", () => {

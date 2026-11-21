@@ -301,20 +301,12 @@ export function validateFunctionalityMap(opts: {
     }
   }
 
-  const allowlistSet = new Set<string>();
   if (index.unmapped_allowlist !== undefined) {
-    for (const [idx, routeFile] of index.unmapped_allowlist.entries()) {
-      const owner = `index.unmapped_allowlist[${idx}]`;
-      if (!checkPath(owner, routeFile)) continue;
-      if (allowlistSet.has(routeFile)) {
-        add(
-          FM_RULES.duplicateId,
-          routeFile,
-          `${owner}: duplicate unmapped_allowlist entry "${routeFile}"`,
-        );
-      }
-      allowlistSet.add(routeFile);
-    }
+    add(
+      FM_RULES.deadAllowlist,
+      "index.unmapped_allowlist",
+      "index.yaml: unmapped_allowlist is retired in S4; remove it and map every route in pages/ or excluded_routes",
+    );
   }
 
   // --- Pages ---
@@ -539,36 +531,16 @@ export function validateFunctionalityMap(opts: {
   }
 
   // --- Route coverage ---
-  const discoveredSet = new Set(discoveredRoutes);
-  const hasAllowlist = index.unmapped_allowlist !== undefined;
-
   for (const routeFile of discoveredRoutes) {
     const inMapped = mappedRouteFiles.has(routeFile);
     const inExcluded = excludedSet.has(routeFile);
-    const inAllowlist = allowlistSet.has(routeFile);
 
-    if (!inMapped && !inExcluded && !inAllowlist) {
+    if (!inMapped && !inExcluded) {
       add(
         FM_RULES.unmappedRoute,
         routeFile,
         `unmapped route ${routeFile}: add a page YAML in docs/system/functionality-map/pages/ or list it in excluded_routes`,
-        hasAllowlist ? "warn" : "error",
-      );
-    }
-  }
-
-  for (const allowlisted of allowlistSet) {
-    if (!discoveredSet.has(allowlisted)) {
-      add(
-        FM_RULES.deadAllowlist,
-        allowlisted,
-        `unmapped_allowlist entry "${allowlisted}" is not a discovered route`,
-      );
-    } else if (mappedRouteFiles.has(allowlisted) || excludedSet.has(allowlisted)) {
-      add(
-        FM_RULES.deadAllowlist,
-        allowlisted,
-        `unmapped_allowlist entry "${allowlisted}" is already mapped or excluded; remove it from unmapped_allowlist`,
+        "error",
       );
     }
   }
@@ -599,11 +571,7 @@ function renderOverview(pages: FmPage[], index: FmIndex): string {
   );
 
   let out = `${VIEW_HEADER}# Functionality map: overview\n\n`;
-  out += `Mapped pages: ${sorted.length} | Sections: ${sectionCount} | Capabilities: ${capCount} | Actions: ${actionCount} | Excluded routes: ${index.excluded_routes.length}`;
-  if (index.unmapped_allowlist !== undefined) {
-    out += ` | Unmapped allowlist (S0–S3): ${index.unmapped_allowlist.length}`;
-  }
-  out += "\n";
+  out += `Mapped pages: ${sorted.length} | Sections: ${sectionCount} | Capabilities: ${capCount} | Actions: ${actionCount} | Excluded routes: ${index.excluded_routes.length}\n`;
 
   for (const app of FM_APPS) {
     const appPages = sorted.filter((p) => p.app === app);

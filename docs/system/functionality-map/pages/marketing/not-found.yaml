@@ -1,0 +1,76 @@
+id: not-found
+app: marketing
+route: "*"
+title: We cannot find that page | Flump
+auth: public
+purpose: Inform visitors that a marketing URL could not be found and provide a link back to the home page.
+entry_points:
+  - Any unknown URL path on the marketing site
+route_file: apps/marketing/src/pages/NotFoundPage/NotFoundPage.tsx
+
+sections:
+  - id: site-header
+    name: Marketing site header
+    kind: navigation
+    component: apps/marketing/src/components/Header/Header.tsx
+    capabilities:
+      - id: navigate-site
+        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
+        mode: navigate
+        actions:
+          - id: home-logo
+            control: link
+            label: Flump home
+            effect: Navigates to the marketing home page.
+            target: /
+          - id: features-menu
+            control: button
+            label: Features
+            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
+          - id: theme-toggle
+            control: toggle
+            label: Toggle colour theme
+            effect: Switches between light and dark theme.
+          - id: open-app-cta
+            control: link
+            label: Open Flump / Sign up
+            effect: Opens the web app sign-up or dashboard URL.
+
+  - id: not-found-card
+    name: Not found message card
+    kind: notice
+    component: apps/marketing/src/pages/NotFoundPage/NotFoundPage.tsx
+    capabilities:
+      - id: recover-from-404
+        goal: Read the not-found explanation and return to the marketing home page.
+        mode: navigate
+        actions:
+          - id: go-home-link
+            control: link
+            label: Go to the home page
+            effect: Navigates to /.
+            target: /
+
+  - id: site-footer
+    name: Marketing site footer
+    kind: footer
+    component: apps/marketing/src/components/Footer/Footer.tsx
+    capabilities:
+      - id: footer-navigation
+        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
+        mode: navigate
+        actions:
+          - id: footer-features-link
+            control: link
+            label: All features
+            effect: Navigates to /features.
+            target: /features
+          - id: footer-contact-link
+            control: link
+            label: Contact
+            effect: Navigates to /contact.
+            target: /contact
+          - id: footer-signin-link
+            control: link
+            label: Sign in
+            effect: Opens the web app /login route.

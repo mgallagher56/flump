@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 26 | Sections: 148 | Capabilities: 161 | Actions: 375 | Excluded routes: 19 | Unmapped allowlist (S0–S3): 8
+Mapped pages: 34 | Sections: 199 | Capabilities: 213 | Actions: 473 | Excluded routes: 19
 
 ## web
 
@@ -388,6 +388,130 @@ Mapped pages: 26 | Sections: 148 | Capabilities: 161 | Actions: 375 | Excluded r
 | `tools-grid` | list   | `open-calculator` | navigate | -          | -             | -       | 1       |
 
 ## marketing
+
+### ai-connection — AI connection | Flump
+
+- Route: `/features/ai-connection` (auth: `public`, file: `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx`)
+- Purpose: Explain the Flump MCP AI connection, show example questions, explain how testers request access, and list the available MCP tools.
+- Entry points: Marketing header Features menu (AI connection); Features index page (/features); Home page FAQ AI answer; Security page AI security fact; Direct URL (/features/ai-connection or 301 from /mcp)
+
+| Section        | Kind       | Capability               | Mode     | Facts read | Facts written | Figures | Actions |
+| -------------- | ---------- | ------------------------ | -------- | ---------- | ------------- | ------- | ------- |
+| `site-header`  | navigation | `navigate-site`          | navigate | -          | -             | -       | 4       |
+| `hero`         | hero       | `orient-and-start`       | navigate | -          | -             | -       | 1       |
+| `what-you-see` | list       | `read-ai-facts`          | read     | -          | -             | -       | 0       |
+| `questions`    | list       | `read-example-questions` | read     | -          | -             | -       | 0       |
+| `setup`        | content    | `request-ai-access`      | navigate | -          | -             | -       | 1       |
+| `more-detail`  | drawer     | `inspect-mcp-tools`      | read     | -          | -             | -       | 1       |
+| `one-picture`  | navigation | `switch-area`            | navigate | -          | -             | -       | 1       |
+| `final-cta`    | content    | `final-signup`           | navigate | -          | -             | -       | 1       |
+| `site-footer`  | footer     | `footer-navigation`      | navigate | -          | -             | -       | 3       |
+
+### contact — Contact | Flump
+
+- Route: `/contact` (auth: `public`, file: `apps/marketing/src/pages/ContactPage/ContactPage.tsx`)
+- Purpose: Provide the Flump support email address for beta invites, questions, feedback, privacy requests, and complaints, plus a link to security reporting.
+- Entry points: Marketing footer Company column (Contact); AI connection page ("Ask us" link); Invite-only sign-up CTAs (/contact#beta); Direct URL (/contact)
+
+| Section       | Kind       | Capability          | Mode     | Facts read | Facts written | Figures | Actions |
+| ------------- | ---------- | ------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `site-header` | navigation | `navigate-site`     | navigate | -          | -             | -       | 4       |
+| `header`      | header     | `orient`            | read     | -          | -             | -       | 0       |
+| `email-card`  | content    | `contact-support`   | navigate | -          | -             | -       | 2       |
+| `site-footer` | footer     | `footer-navigation` | navigate | -          | -             | -       | 3       |
+
+### feature-detail — Feature area detail | Flump
+
+- Route: `/features/:slug` (auth: `public`, file: `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`)
+- Purpose: Explain one of the five money areas (accounts, budget, pay, savings-and-pension, debt-and-borrowing) with sample figures, deeper tools, and optional embedded calculators.
+- Entry points: Marketing header Features menu; Features index page (/features); Home page feature tiles and "More detail" links; Preview page area links; Direct URL (/features/accounts, /features/budget, /features/pay, /features/savings-and-pension, /features/debt-and-borrowing)
+
+| Section                                                                                                  | Kind          | Capability                | Mode     | Facts read | Facts written | Figures | Actions |
+| -------------------------------------------------------------------------------------------------------- | ------------- | ------------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `site-header`                                                                                            | navigation    | `navigate-site`           | navigate | -          | -             | -       | 4       |
+| `hero`                                                                                                   | hero          | `orient-and-start`        | navigate | -          | -             | -       | 2       |
+| `what-you-see`                                                                                           | list          | `read-area-facts`         | read     | -          | -             | -       | 1       |
+| `see-it (when feature.sample is not "none" (accounts, budget, savings-and-pension, debt-and-borrowing))` | scenario-zone | `switch-sample-household` | what-if  | -          | -             | -       | 1       |
+| `retirement (when slug is savings-and-pension)`                                                          | content       | `read-retirement-plan`    | read     | -          | -             | -       | 1       |
+| `more-detail`                                                                                            | list          | `read-depth-tools`        | read     | -          | -             | -       | 0       |
+| `one-picture`                                                                                            | navigation    | `switch-area`             | navigate | -          | -             | -       | 1       |
+| `try-it (when slug is pay or debt-and-borrowing)`                                                        | scenario-zone | `try-kept-calculator`     | what-if  | -          | -             | -       | 1       |
+| `final-cta`                                                                                              | content       | `final-signup`            | navigate | -          | -             | -       | 1       |
+| `site-footer`                                                                                            | footer        | `footer-navigation`       | navigate | -          | -             | -       | 3       |
+
+### features — Flump features | Flump
+
+- Route: `/features` (auth: `public`, file: `apps/marketing/src/pages/FeaturesIndexPage/FeaturesIndexPage.tsx`)
+- Purpose: Present all five money areas of Flump and the AI connection in one index page with links to each feature page.
+- Entry points: Marketing header Features menu (All features); Marketing home page ("All Flump features on one page"); Marketing footer Product column (All features); Direct URL (/features)
+
+| Section         | Kind       | Capability          | Mode     | Facts read | Facts written | Figures | Actions |
+| --------------- | ---------- | ------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `site-header`   | navigation | `navigate-site`     | navigate | -          | -             | -       | 4       |
+| `header`        | header     | `orient-and-start`  | navigate | -          | -             | -       | 2       |
+| `feature-tiles` | list       | `open-feature-page` | navigate | -          | -             | -       | 1       |
+| `site-footer`   | footer     | `footer-navigation` | navigate | -          | -             | -       | 3       |
+
+### home — All your money. One clear picture. | Flump
+
+- Route: `/` (auth: `public`, file: `apps/marketing/src/pages/HomePage/HomePage.tsx`)
+- Purpose: Introduce Flump's five money areas, let visitors try the pay rise tool, read the FAQ, and request an invite or open the interactive preview.
+- Entry points: Direct URL (/); Marketing header Flump home link; Marketing footer or 404 page home link
+
+| Section         | Kind          | Capability              | Mode     | Facts read | Facts written | Figures | Actions |
+| --------------- | ------------- | ----------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `site-header`   | navigation    | `navigate-site`         | navigate | -          | -             | -       | 4       |
+| `hero`          | hero          | `start-or-preview`      | navigate | -          | -             | -       | 2       |
+| `features`      | list          | `browse-features`       | navigate | -          | -             | -       | 2       |
+| `rough-figures` | content       | `read-how-it-works`     | read     | -          | -             | -       | 0       |
+| `more-detail`   | list          | `explore-deeper-tools`  | navigate | -          | -             | -       | 1       |
+| `pay-rise`      | scenario-zone | `model-pay-rise`        | what-if  | -          | -             | -       | 4       |
+| `security`      | notice        | `read-security-summary` | navigate | -          | -             | -       | 1       |
+| `faq`           | list          | `read-faq`              | read     | -          | -             | -       | 2       |
+| `faq`           | list          | `final-signup`          | navigate | -          | -             | -       | 1       |
+| `site-footer`   | footer        | `footer-navigation`     | navigate | -          | -             | -       | 3       |
+
+### not-found — We cannot find that page | Flump
+
+- Route: `*` (auth: `public`, file: `apps/marketing/src/pages/NotFoundPage/NotFoundPage.tsx`)
+- Purpose: Inform visitors that a marketing URL could not be found and provide a link back to the home page.
+- Entry points: Any unknown URL path on the marketing site
+
+| Section          | Kind       | Capability          | Mode     | Facts read | Facts written | Figures | Actions |
+| ---------------- | ---------- | ------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `site-header`    | navigation | `navigate-site`     | navigate | -          | -             | -       | 4       |
+| `not-found-card` | notice     | `recover-from-404`  | navigate | -          | -             | -       | 1       |
+| `site-footer`    | footer     | `footer-navigation` | navigate | -          | -             | -       | 3       |
+
+### preview — Interactive preview | Flump
+
+- Route: `/preview` (auth: `public`, file: `apps/marketing/src/pages/PreviewPage/PreviewPage.tsx`)
+- Purpose: Let visitors explore interactive sample previews of the Dashboard, Monthly check-in, and Breathing room using static renter and homeowner fixtures.
+- Entry points: Marketing header Preview link; Home page hero Interactive preview button; Features index and feature detail Interactive preview buttons; Marketing footer Product column (Interactive preview); Direct URL (/preview)
+
+| Section                  | Kind          | Capability                    | Mode     | Facts read | Facts written | Figures | Actions |
+| ------------------------ | ------------- | ----------------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `site-header`            | navigation    | `navigate-site`               | navigate | -          | -             | -       | 4       |
+| `header`                 | header        | `orient`                      | read     | -          | -             | -       | 0       |
+| `dashboard-preview`      | scenario-zone | `inspect-dashboard-sample`    | what-if  | -          | -             | -       | 2       |
+| `checkin-preview`        | scenario-zone | `try-checkin-sample`          | what-if  | -          | -             | -       | 3       |
+| `breathing-room-preview` | scenario-zone | `model-breathing-room-sample` | what-if  | -          | -             | -       | 3       |
+| `final-cta`              | content       | `start-from-preview`          | navigate | -          | -             | -       | 1       |
+| `site-footer`            | footer        | `footer-navigation`           | navigate | -          | -             | -       | 3       |
+
+### pricing — Pricing | Flump
+
+- Route: `/pricing` (auth: `public`, file: `apps/marketing/src/pages/PricingPage/PricingPage.tsx`)
+- Purpose: Show that Flump is free during the beta, what the beta includes, and note any possible future paid plan without a price set.
+- Entry points: Marketing header Pricing link; Marketing footer Product column (Pricing); Direct URL (/pricing)
+
+| Section                                             | Kind       | Capability            | Mode     | Facts read | Facts written | Figures | Actions |
+| --------------------------------------------------- | ---------- | --------------------- | -------- | ---------- | ------------- | ------- | ------- |
+| `site-header`                                       | navigation | `navigate-site`       | navigate | -          | -             | -       | 4       |
+| `header`                                            | header     | `orient`              | read     | -          | -             | -       | 0       |
+| `beta-plan`                                         | content    | `start-beta-plan`     | navigate | -          | -             | -       | 1       |
+| `paid-plan (when VITE_SHOW_PAID_PLAN is not false)` | notice     | `read-paid-plan-note` | read     | -          | -             | -       | 0       |
+| `site-footer`                                       | footer     | `footer-navigation`   | navigate | -          | -             | -       | 3       |
 
 ### security — Security and privacy | Flump
 

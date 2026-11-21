@@ -10,12 +10,12 @@ Pages are sharded into one YAML file per page under `pages/{web|marketing}/<page
 
 ## Use it
 
-| Question                                              | Open                                                       |
-| ----------------------------------------------------- | ---------------------------------------------------------- |
-| Which pages, sections, and capabilities exist?        | [generated/overview.md](./generated/overview.md)           |
-| What controls and actions exist across the product?   | [generated/actions-index.md](./generated/actions-index.md) |
-| Which pages and capabilities read or write a fact?    | [generated/by-fact.md](./generated/by-fact.md)             |
-| Which routes are excluded or pending rollout (S0–S3)? | [index.yaml](./index.yaml)                                 |
+| Question                                            | Open                                                       |
+| --------------------------------------------------- | ---------------------------------------------------------- |
+| Which pages, sections, and capabilities exist?      | [generated/overview.md](./generated/overview.md)           |
+| What controls and actions exist across the product? | [generated/actions-index.md](./generated/actions-index.md) |
+| Which pages and capabilities read or write a fact?  | [generated/by-fact.md](./generated/by-fact.md)             |
+| Which routes are excluded (non-UI endpoints)?       | [index.yaml](./index.yaml)                                 |
 
 ## The format
 
@@ -23,7 +23,7 @@ Pages are sharded into one YAML file per page under `pages/{web|marketing}/<page
 
 - `version: 1`
 - `excluded_routes`: non-UI routes (API proxies, file exports, health checks) with `route_file` and a one-line `reason`.
-- `unmapped_allowlist`: temporary list of routes not yet mapped during the S0–S3 rollout (removed in S4).
+- 100% route-coverage enforcement: `unmapped_allowlist` is retired; every discovered route in `apps/web` and `apps/marketing` must be mapped in `pages/` or listed in `excluded_routes`.
 
 ### Page files (`pages/{web|marketing}/<page-id>.yaml`)
 

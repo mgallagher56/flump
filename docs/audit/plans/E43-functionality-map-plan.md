@@ -2,7 +2,7 @@
 
 Decisions: accepted 2026-11-21 (FM1–FM5)
 
-> Status: approved by owner 2026-11-21 (FM1–FM5). Paths are relative to the repository root.
+> Status: complete 2026-11-21 (S0–S4 complete; 100% route-coverage enforcement active). Paths are relative to the repository root.
 
 ## 1. Decisions (for owner sign-off before S0/S1)
 
