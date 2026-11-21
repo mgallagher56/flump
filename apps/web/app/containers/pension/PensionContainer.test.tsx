@@ -652,6 +652,21 @@ describe("PensionContainer", () => {
       expect(zone().textContent).not.toContain("Add your employment type");
     });
 
+    it("with no salary, no payments into pots and no rates, asks for the salary first", () => {
+      useFixture({
+        ...FILLED,
+        userProfile: {
+          ...FILLED.userProfile,
+          annualSalary: null,
+          pensionPercent: null,
+          pensionEmployerPercent: null,
+        },
+      });
+      const { container } = render(<PensionContainer />);
+      expect(container.textContent).toContain("Add your salary to see what goes in each month");
+      expect(container.textContent).not.toContain("Add your contribution rates");
+    });
+
     it("shows the empty state from the root profile when there is no loader data", async () => {
       const { DEFAULT_PROFILE } =
         await vi.importActual<typeof import("~/hooks/useUserProfile")>("~/hooks/useUserProfile");
