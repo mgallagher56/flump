@@ -480,5 +480,10 @@ Given by the owner in session on 21 November 2026, in answer to one list of ever
 - **E28 Making Tax Digital:** the recommendation is accepted. Whether to run the five interviews is not yet answered.
 - **Single source of truth:** AGENTS.md section 16 already makes this a law with a CI check. The E39 and E37 plans now say how each keeps to it.
 
-The coordinator's readings, not the owner's words (E39 section 10a and E37 section 10 list them under "The coordinator's readings"): the stamp duty estimate covers England and Northern Ireland, Scotland and Wales; rates for 70% and 80% loan to value are a straight line between the owner's two points, each band taking the rate of its upper end; over 90% has no default; the rate table carries its date and the page says when it is more than six months old; the VAT rate is typed and never suggested; every new line of wording. New wording still needs the owner's approval under E29a before the web slice merges.
+The coordinator's readings, not the owner's words (E39 section 10a and E37 section 10 list them under "The coordinator's readings"): rates for 70% and 80% loan to value are a straight line between the owner's two points, each band taking the rate of its upper end; over 90% has no default; the rate table carries its date and the page says when it is more than six months old; the VAT rate is typed and never suggested; every new line of wording. New wording still needs the owner's approval under E29a before the web slice merges.
+
+# Owner decisions (2026-11-21, later the same day): stamp duty regimes; Exact
+
+- **E39 MA7.** Asked "Is the stamp duty estimate meant to cover Scotland and Wales as well as England?", the owner answered: "Yes, all three". The estimate covers Stamp Duty Land Tax, Land and Buildings Transaction Tax and Land Transaction Tax. This replaces the coordinator's reading in the entry above.
+- **Exact (from the Expo team).** The owner asked "Should we consider Expo Exact in the future to create apps for every device?" and then: "add it to the general repo docs as a reminder to check in on progress of the Exact project". Recorded in `docs/technology-watch.md`. It is a reminder to look again, not a decision to adopt it; the E12 framework decision (O1) is still open.
 

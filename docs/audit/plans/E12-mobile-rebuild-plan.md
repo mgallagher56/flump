@@ -162,6 +162,8 @@ Recommendations, with the reasoning kept short. The four that need the owner are
 | Flutter, or Swift and Kotlin                         | Closest platform feel.                                                                                                                                                                          | Cannot import the engine, so the maths would be written twice. Two or three codebases for one person.                          |
 | The web app in a wrapper                             | Cheapest.                                                                                                                                                                                       | The owner decided on a native rebuild. Both stores expect more than a wrapped website.                                         |
 
+A newer option, Exact from the Expo team, was looked at on 21 November 2026 and is not ready to build on; it is tracked in [`docs/technology-watch.md`](../../technology-watch.md) and should be checked again when this plan is next revised.
+
 **Recommendation: Expo with a development build, Hermes, the new architecture, Expo Router for navigation, and EAS Build and Submit on the free plan to start.**
 
 EAS cost (**CONFIRMED**, expo.dev/pricing, read 2026-11-14): the free plan includes 15 Android and 15 iOS builds a month, store submission, and over-the-air updates for 1,000 monthly users. The next plan is $19 a month with $45 of build credit. Builds run on a tag or by hand, not per PR, so the free plan is enough until release work starts.
