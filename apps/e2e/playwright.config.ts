@@ -79,14 +79,9 @@ export default defineConfig({
       dependencies: ["links"],
     },
   ],
-  // Retirement is a friends-beta page (retirement.access.ts). Let the fixed dev-bypass test user in,
-  // so the L58 link test can reach it. This config only: the visual, a11y, sweep and interaction
-  // suites keep today's Pension page, without its retirement link. Test harness only.
-  // The id is the backend's fixed dev-bypass user (dev-bypass.verifier.ts), built at runtime so
-  // the no-mock-auth scan keeps passing.
   webServer: webServers(
     {},
-    { RETIREMENT_ALLOWED_USER_IDS: ["dev", "user", "123"].join("_") },
+    {},
     // A timestamped copy of the backend's output, for the read budget and its 429s.
     { backendLog: BACKEND_LOG },
   ),

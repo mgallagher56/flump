@@ -11,7 +11,9 @@ export interface CurrencyInputProps
     "value" | "defaultValue" | "onChange" | "type" | "inputMode" | "onInvalid"
   > {
   /**
-   * Controlled value. `null`, `undefined`, NaN and the infinities show an empty field.
+   * Controlled value. `null`, NaN and the infinities show an empty field; `undefined` leaves the
+   * field uncontrolled (it starts empty on mount, and later `undefined` values keep the current
+   * text).
    *
    * The parent MUST keep `null` as `null`. Never map it to 0 (`value ?? 0`): an empty field means
    * "not set", and 0 is a real amount.
